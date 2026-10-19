@@ -161,3 +161,45 @@ bracket packet and its binary matches) and writes it into WINDOW.md and READY
 (`confirmation_run`). The copied submission tool still refuses unless fresh
 WS128 exceeds 34.57303759192858 tok/s (snapshot) and the live ledger. Not
 launched; the chain build binaries stay untracked like packet58as's.
+
+## 4. packet172c: packet58asb launch failure 1 (views.py vs runtime selection); regenerated
+
+The chain-58asb waiter passed `onecard-chain.sh --check`, then unit
+`packet58-onecard-58as-b` exited 1 within a second in K1a, before any device
+work (GPU fault count unchanged at 2): `window.main -> validate(view) ->
+views.py:17 ValueError: sealed overlap runtime selection changed`. The
+generator had added `chain_flags` and `wait_policy` to `runtime-selection.json`
+but left the inherited `views.py` literal unchanged. packet58as (hand-built)
+had added `wait_policy='spin'` to both. None of seal/verify_ready/lanequeue
+plan/`--check` runs a window's Python entry, so none could see it.
+
+- **Fix:** `bind_views` generates both from one source,
+  `selection_extra(flags)`: `views.py` gets
+  `if runtime!=dict(**GENERATED_RUNTIME_SELECTION, <parent literal>)` (exactly
+  one such check, no key clash with the parent selection, else refused) and
+  `runtime-selection.json` is the parent selection plus the same dict.
+- **New acceptance step:** `predevice_gate` (also
+  `onecard_chain_derive.py --predevice-check <packet>`) runs every chain
+  window's real `window.main` with the queue_runner `--plan` argv and the
+  recorded oneAPI library path, up to its first device-evidence boundary
+  (K1a/K1b: output creation; KD..WS128: previous-window prerequisite). Real:
+  argparse, `validate(view)`, authorization flag, `closed_environment`,
+  `build_gate`, `window_plan`, storage, fault-review parsing, fault latch,
+  record construction. Simulated: priority, affinity, user-unit cgroup. It
+  refused the failed packet58asb-confirm on all 7 windows with the launch
+  error and passes on the packet58as packet that ran chain a. The generator
+  runs it before the temporary lanequeue plan; READY records it
+  (`predevice_rehearsal`) and `ops/packet58asb-orchestration/predevice-rehearsal.json`.
+- **Tests:** 11 pass. New: the real-layout derive passes the rehearsal, and a
+  transient copy of the failure mode (views literal reverted and re-sealed)
+  must refuse on every window with the launch error; both files are restored
+  and the seal digest is checked again.
+- **Failed launch evidence** (`K1a.log`, `queue.json`, fault review and its
+  kernel journal, superseded READY): `data/2026-10-19-packet58asb-failed-launch-1/`
+  with `SHA256SUMS.txt`. The derived packet and orchestration were then removed
+  and regenerated fresh under the same names with the exact brief command.
+- **Regenerated packet58asb-confirm:** rc 0, READY last; temporary lanequeue
+  plan passed; `--check` seal verify ok / check complete; `verify_ready` ready;
+  `--predevice-check` passed on all 7 windows; pin audit 0 parent pins. Chain
+  command and digest `bf838b9481d2a30f…` unchanged (the fix is inside the
+  packet). Still a confirmation chain, not a resubmission. Not launched.

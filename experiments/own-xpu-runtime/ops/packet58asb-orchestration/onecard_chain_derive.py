@@ -157,6 +157,32 @@ def rewrite(text, pairs):
     return text
 
 
+def selection_extra(flags):
+    """The ONLY source of the keys the chain adds to the sealed runtime selection."""
+    return dict(chain_flags=dict(flags), **{flag[2:].replace('-', '_'): value for flag, value in flags.items()})
+
+
+VIEWS_CHECK = 'if runtime!=dict('
+
+
+def bind_views(P, P0, flags):
+    """packet58as hand-added wait_policy to BOTH runtime-selection.json and views.validate's literal;
+    the packet58asb launch failed because only the JSON changed. Generate both from selection_extra."""
+    vt = (P / 'views.py').read_text(); extra = selection_extra(flags)
+    parent = read(P0 / 'runtime-selection.json')
+    refuse(MARK not in vt and vt.count(VIEWS_CHECK) == 1,
+           'views.py must contain exactly one runtime-selection check (if runtime!=dict(...)); cannot bind chain flags')
+    clash = sorted(set(extra) & set(parent))
+    refuse(not clash, f'chain flag keys already in the parent runtime selection: {clash}; derive from a parent without them')
+    put(P / 'views.py', vt.replace(VIEWS_CHECK, 'if runtime!=dict(**GENERATED_RUNTIME_SELECTION,').rstrip('\n') + f'''
+
+{MARK}
+# Same source as runtime-selection.json (onecard_chain_derive.selection_extra).
+GENERATED_RUNTIME_SELECTION = {extra!r}
+''')
+    save(P / 'runtime-selection.json', dict(parent, **extra))
+
+
 def inject(P, flags):
     sd = (P / 'suite_driver.py').read_text(); co = (P / 'composition.py').read_text()
     refuse(MARK not in sd and MARK not in co, 'parent already carries generated flags; derive from its own parent')
@@ -230,6 +256,7 @@ def derive_packet(a, P0, P, flags, root, pairs):
                      ('build/device/p58-cache-fixtures', P0 / 'build/device/p58-cache-fixtures')):
         (P / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, P / rel)
     inject(P, flags)
+    bind_views(P, P0, flags)
     plan_note = plan_json(P)
     for f in P.glob('*.py'):
         compile(f.read_text(), str(f), 'exec')
@@ -560,6 +587,92 @@ def parser_gate(P, flags):
     return row['records']
 
 
+# 4b. Pre-device window rehearsal (CPU) ---------------------------------------
+# Runs every chain window's real Python entry (window.main with the queue_runner
+# --plan argv) up to its first device-evidence boundary: K1a/K1b stop at the
+# output-directory creation, KD..WS128 at the previous-window prerequisite.
+# Executed for real: argparse, views.validate(view), authorization flag,
+# closed_environment, build_gate, memory window_plan, storage, fault-review
+# parsing, fault latch, record/digest construction. Simulated (coordinator and
+# systemd properties): process priority, CPU affinity, the user-unit cgroup.
+PREDEVICE = r"""
+import json,os,sys,subprocess
+from pathlib import Path
+P=Path(sys.argv[1]);out=Path(sys.argv[2])
+class Boundary(Exception):pass
+sys.path.insert(0,str(P))
+from launch_env import library_path   # the chain command's recorded oneAPI path (verify_ready binds it)
+rows=[]
+try:
+    plan=subprocess.run([sys.executable,'-B',str(P/'queue_runner.py'),'--card','0','--view','down-tile16','--output-root',str(P/'evidence'/'.predevice-plan'),'--plan'],
+                        stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=300,env=dict(os.environ,LD_LIBRARY_PATH=library_path()))
+    cmds=json.loads(plan.stdout.strip().splitlines()[-1])['commands']
+except Exception as e:
+    print(json.dumps(dict(passed=False,reason='queue_runner --plan failed: '+repr(e)+' '+(plan.stderr[-600:] if 'plan' in dir() else ''))));sys.exit(3)
+import window as W
+real_mkdir=Path.mkdir
+for name,cmd in cmds.items():
+    argv=list(cmd[cmd.index(str(P/'window.py'))+1:])
+    target=out/name;argv[argv.index('--output')+1]=str(target)
+    mode=argv[argv.index('--window')+1]
+    env={k:v for k,v in (a.split('=',1) for a in cmd[cmd.index('-i')+1:cmd.index('/usr/bin/python3')])}
+    os.environ.clear();os.environ.update(env)
+    W.os.getpriority=lambda *a,_m=mode:0 if _m.startswith('W') else 19
+    W.os.sched_getaffinity=lambda *a,_m=mode:set(range(4))|set(range(16,20)) if _m.startswith('W') else set(range(8,16))|set(range(24,32))
+    seen=[]
+    W.user_unit_gate=lambda cgroup:seen.append('user_unit_gate (simulated)')
+    def prerequisite(path,prev,identity):raise Boundary('previous-window prerequisite '+prev)
+    W.prerequisite=prerequisite
+    def mkdir(self,*a,**k):
+        if Path(self)==target:raise Boundary('output directory creation')
+        return real_mkdir(self,*a,**k)
+    Path.mkdir=mkdir
+    try:
+        W.main(argv);rows.append(dict(window=name,passed=False,reason='window.main returned without reaching a device boundary'))
+    except Boundary as b:
+        rows.append(dict(window=name,mode=mode,passed=True,boundary=str(b),argv=argv,simulated=['priority','affinity','user_unit_gate']))
+    except BaseException as e:
+        rows.append(dict(window=name,mode=mode,passed=False,reason=type(e).__name__+': '+str(e)[:600],argv=argv))
+    finally:
+        Path.mkdir=real_mkdir
+    if target.exists():rows[-1].update(passed=False,reason='rehearsal created '+str(target))
+ok=len(rows)==7 and all(r['passed'] for r in rows)
+print(json.dumps(dict(passed=ok,windows=[r['window'] for r in rows],records=rows)))
+sys.exit(0 if ok else 3)
+"""
+
+
+def predevice_gate(P):
+    """Every chain window's Python entry, on CPU, up to its device boundary; refuses on any pre-device failure."""
+    with tempfile.TemporaryDirectory(prefix='derive-predevice-') as tmp:
+        cp = subprocess.run([sys.executable, '-B', '-c', PREDEVICE, str(P), str(P / 'evidence' / ('.predevice-' + Path(tmp).name))],
+                            cwd=P.parents[3], stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=1800,
+                            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'))
+    for leftover in P.joinpath('evidence').glob('.predevice-*'):
+        shutil.rmtree(leftover)
+    try:
+        row = json.loads(cp.stdout.strip().splitlines()[-1])
+    except (IndexError, ValueError):
+        raise Refused('pre-device window rehearsal crashed: ' + (cp.stderr or cp.stdout)[-1500:])
+    failed = [f"{r['window']}: {r.get('reason')}" for r in row.get('records', []) if not r.get('passed')]
+    refuse(cp.returncode == 0 and row.get('passed') is True,
+           'REFUSED: pre-device window rehearsal failed: ' + ('; '.join(failed) or row.get('reason', '?'))[:2000])
+    return row
+
+
+def predevice_cli(argv):
+    ap = argparse.ArgumentParser(prog='onecard_chain_derive.py --predevice-check',
+                                 description='Run every chain window up to its device boundary on CPU (no launch).')
+    ap.add_argument('packet', type=Path); a = ap.parse_args(argv)
+    resource.setrlimit(resource.RLIMIT_AS, (2_000_000_000, 2_000_000_000))
+    try:
+        row = predevice_gate(a.packet.absolute())
+    except Refused as e:
+        print('onecard_chain_derive: ' + str(e), file=sys.stderr); return 2
+    print(json.dumps(dict(passed=True, windows=row['windows'], boundaries={r['window']: r['boundary'] for r in row['records']})))
+    return 0
+
+
 # 5. Generated seal / verify_ready -------------------------------------------
 SEAL = r'''#!/usr/bin/env python3
 """Generated by ops/onecard_chain_derive.py: verify the derived chain seal (never launch)."""
@@ -680,10 +793,8 @@ def main(argv=None):
             flags=flags, binary_sha256=binary_sha, host_binary_sha256=sha(P / 'build/gnu-host/own-rt-iq3'),
             help=helps, model_windows=list(MODEL_WINDOWS), k1_windows='inherited K1 fixture binary; no model flags',
             parser=records, device_help_sandboxed=True))
-        sel = read(P0 / 'runtime-selection.json'); sel['chain_flags'] = flags
-        for flag, value in flags.items():
-            sel[flag[2:].replace('-', '_')] = value
-        save(P / 'runtime-selection.json', sel)
+        sel = read(P / 'runtime-selection.json')            # written by bind_views (derive_packet)
+        refuse(sel == dict(read(P0 / 'runtime-selection.json'), **selection_extra(flags)), 'runtime selection binding differs')
         threshold = Path(a.threshold_file).resolve(); shutil.copy2(threshold, P / 'record-threshold.snapshot')
         ledger = read(threshold); last = ledger['records'][-1]
         rates = ' / '.join(f'{r:.3f}' for r in bracket['rates'])
@@ -783,6 +894,7 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
         ready = read(P / 'ready.json'); refuse(ready['ready'] is True and ready['chain_command'] == chain_command, 'ready.json not ready')
         bad, manifests = pin_audit(P, root, gate_paths, parent=P0)
         refuse(not bad, f'pin audit refused ({len(bad)} pins): ' + '; '.join(bad[:12]))
+        predevice = predevice_gate(P)
         # Temporary lanequeue plan (live queue untouched).
         O.mkdir()
         job = dict(name=f'{P.name}-chain-A', lane='A', argv=['/usr/bin/python3', '-B', str(P / 'queue_runner.py'), '--authorized-device-window', '--card', '0', '--view', 'down-tile16', '--output-root', str(P / out), '--fault-review', '{REVIEW}'],
@@ -799,10 +911,11 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
         plans = [json.loads(x) for x in cp.stdout.splitlines() if x.startswith('{')]
         refuse(cp.returncode == 0 and len(plans) == 1 and plans[0].get('plan') == 'passed', 'temporary lanequeue plan refused: ' + (cp.stdout + cp.stderr)[-800:])
         save(O / 'help.json', dict(device=help_text['device'], host=help_text['host']))
+        save(O / 'predevice-rehearsal.json', dict(schema='onecard-chain-derive.predevice.v1', device_executed=False, **predevice))
         shutil.copy2(Path(__file__), O / 'onecard_chain_derive.py')
         pfiles = ['build-receipt.json', 'submission-pins.json', 'ready.json', 'WINDOW.md', 'runtime-selection.json', 'submission-policy.json',
                   'record-threshold.snapshot', 'derived-chain.json', 'seal.py', 'verify_ready.py', 'fault_review.py', 'evidence/chain-flags.json']
-        ofiles = ['entry-proposal.jsonl', 'queue-plan.log', 'help.json', 'onecard_chain_derive.py']
+        ofiles = ['entry-proposal.jsonl', 'queue-plan.log', 'help.json', 'predevice-rehearsal.json', 'onecard_chain_derive.py']
         row = dict(schema=f'{P.name}.ready-for-device.v1', packet=P.name, revision='derived:' + P.name,
                    prepared_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(), generator='ops/onecard_chain_derive.py',
                    preparation_passed=True, passed=True, ready_for_device=True, ready_for_device_chain=True, ready_for_coordinator_check=True,
@@ -824,6 +937,9 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
                    pin_audit=dict(passed=True, manifests=len(manifests), relocated=len(relocation), parent_pins=0,
                                   lanequeue_plan='passed (temporary queue dir)'),
                    confirmation_run=bool(confirmation), confirmation=confirmation,
+                   predevice_rehearsal=dict(passed=True, windows=predevice['windows'],
+                                            boundaries={r['window']: r['boundary'] for r in predevice['records']},
+                                            simulated=['priority', 'affinity', 'user_unit_gate']),
                    chain_quality_pending=True, chain_performance_pending=True, no_retry=True, queued=False, device_executed=False,
                    services_started=False, model_payload_reads=False, live_queue_changed=False, submission_performed=False, final_content_write=True)
         for f in (P / 'READY-FOR-DEVICE.json', O / 'READY-FOR-DEVICE.json'):
@@ -839,4 +955,6 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
 
 
 if __name__ == '__main__':
+    if sys.argv[1:2] == ['--predevice-check']:
+        raise SystemExit(predevice_cli(sys.argv[2:]))
     raise SystemExit(main())

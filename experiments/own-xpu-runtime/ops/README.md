@@ -162,6 +162,17 @@ Pin-guard hygiene (packet172b, after the packet58as-b/58asb refusals):
   frozen binaries) stay. Each change is in `evidence/pin-relocation.json`
   (a sealed gate); the final audit refuses any remaining parent or mutable
   cross-packet pin, then the temporary `lanequeue plan` runs the real guard.
+- Runtime selection (packet172c, after the packet58asb launch failure):
+  `runtime-selection.json` and the `views.validate` literal are both generated
+  from `selection_extra(flags)` (`views.py` gets `dict(**GENERATED_RUNTIME_SELECTION, ...)`),
+  as packet58as did by hand. A pre-device rehearsal then runs every chain
+  window's real `window.main` (queue_runner `--plan` argv, recorded oneAPI
+  path) on CPU up to its device boundary: K1a/K1b at output creation,
+  KD..WS128 at the previous-window prerequisite. Priority, affinity and the
+  user-unit cgroup are simulated; `validate(view)`, `build_gate`, memory plan,
+  storage, fault-review parsing and the fault latch run for real. Standalone:
+  `onecard_chain_derive.py --predevice-check <packet>`; receipt
+  `ops/<prefix>-orchestration/predevice-rehearsal.json`.
 - A chain of the line that set the ledger's latest record is disclosed in
   `WINDOW.md`/READY as a confirmation run; the copied submission tool still
   refuses unless fresh WS128 beats that record.

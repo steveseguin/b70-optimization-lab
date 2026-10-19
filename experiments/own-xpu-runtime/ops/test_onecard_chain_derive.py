@@ -6,7 +6,9 @@ lanequeue pin guard resolves its root from its own real path, so a temp-root
 derive was guarded against the wrong packet (blind by construction). It derives
 into the real stage2/ and ops/ under a unique, collision-free prefix, runs the
 real pin guard, the generated seal/verify_ready and a temp copy of
-fn-run/onecard-chain.sh --check, and ALWAYS removes what it created (class
+fn-run/onecard-chain.sh --check and the pre-device window rehearsal (every
+chain window's window.main to its device boundary; it must also refuse the
+packet58asb views.py/runtime-selection mismatch), and ALWAYS removes what it created (class
 cleanup runs even when setUpClass fails) and asserts nothing is left for git.
 Run: nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest test_onecard_chain_derive </dev/null
 """
@@ -204,6 +206,39 @@ class RealLayoutTest(unittest.TestCase):
         self.assertTrue(ready['pin_audit']['passed'])
         for rec in ready['orchestration_provenance'] + ready['parent_provenance']:
             self.assertEqual(set(rec), {'name', 'parent_relpath', 'parent_digest'})
+
+    def predevice(self):
+        return subprocess.run([sys.executable, '-B', str(OPS / 'onecard_chain_derive.py'), '--predevice-check', str(self.P)],
+                              cwd=REPO, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=1200)
+
+    def test_predevice_rehearsal_runs_every_window_to_its_device_boundary(self):
+        ready = json.loads((self.O / 'READY-FOR-DEVICE.json').read_text())
+        self.assertEqual(ready['predevice_rehearsal']['windows'], ['K1a', 'K1b', 'KD', 'W2m', 'WS', 'WS128x', 'WS128'])
+        self.assertEqual(ready['predevice_rehearsal']['boundaries']['K1a'], 'output directory creation')
+        self.assertEqual(ready['predevice_rehearsal']['boundaries']['WS128'], 'previous-window prerequisite WS128x')
+        selection = json.loads((self.P / 'runtime-selection.json').read_text())
+        self.assertEqual(selection['wait_policy'], 'spin'); self.assertEqual(selection['chain_flags'], {'--wait-policy': 'spin'})
+        cp = self.predevice()
+        self.assertEqual(cp.returncode, 0, cp.stderr[-3000:])
+        self.assertFalse(any(self.P.joinpath('evidence').glob('.predevice-*')))
+        # The packet58asb launch failure: runtime-selection.json carried the flag, views.py's literal did not,
+        # under a consistent seal. Reproduce it transiently (views.py + its seal entry), then restore both.
+        views, receipt = self.P / 'views.py', self.P / 'build-receipt.json'
+        original, original_receipt = views.read_bytes(), receipt.read_bytes()
+        try:
+            text = original.decode().replace('if runtime!=dict(**GENERATED_RUNTIME_SELECTION,', 'if runtime!=dict(')
+            self.assertNotEqual(text, original.decode())
+            views.write_text(text)
+            row = json.loads(original_receipt); row['sources'][str(views.relative_to(REPO))] = G.sha(views)
+            receipt.write_text(json.dumps(row, indent=2) + '\n')
+            bad = self.predevice()
+            self.assertEqual(bad.returncode, 2, bad.stdout + bad.stderr)
+            self.assertIn('sealed overlap runtime selection changed', bad.stderr)
+            for window in ('K1a', 'K1b', 'KD', 'W2m', 'WS', 'WS128x', 'WS128'):
+                self.assertIn(window + ': ValueError', bad.stderr)
+        finally:
+            views.write_bytes(original); receipt.write_bytes(original_receipt)
+        self.assertEqual(G.sha(views), json.loads((self.P / 'build-receipt.json').read_text())['sources'][str(views.relative_to(REPO))])
 
     def test_matches_hand_built_packet58as_and_chain_check(self):
         ready = json.loads((self.O / 'READY-FOR-DEVICE.json').read_text())
