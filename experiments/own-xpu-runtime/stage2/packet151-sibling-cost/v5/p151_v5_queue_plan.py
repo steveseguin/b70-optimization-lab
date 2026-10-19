@@ -1,9 +1,11 @@
+import freeze_safe
+freeze_safe.install()
 """Lane-B proposals and temporary plans only. Never edit live queue files."""
 import argparse,json,subprocess,sys,tempfile,shutil
 from p151_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 QUEUE=LOCAL.parents[1]/'ops/lane-queue'
 def proposal(kind):
- return dict(name='packet151-sibling-'+kind+'-B',lane='B',argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','sibling','--kind',kind,'--lane','B','--output',str(P/'evidence'/('device-sibling-'+('smoke' if kind=='smoke' else 'v5')+'-B')),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build'/m/'own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build'/m/'own-rt-iq3')) for m in ('device','gnu-host')]),host_required_available_bytes=97*1024**3+1200*1024**2,expected_seconds=[240,600] if kind=='smoke' else [720,1200],watchdog_seconds=4800))
+ return dict(name='packet151-sibling-'+kind+'-B',lane='B',argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','sibling','--kind',kind,'--lane','B','--output',str(P/'evidence'/('device-sibling-'+('smoke' if kind=='smoke' else 'v5')+'-B')),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build'/m/'own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build'/m/'own-rt-iq3')) for m in ('device','gnu-host')]),host_required_available_bytes=97*1024**3+1200*1024**2,measurement_scope='upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial)',planned_write_bytes_per_view=240_000_000,expected_seconds=[240,600] if kind=='smoke' else [720,1200],watchdog_seconds=4800))
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--stage',action='store_true');a=ap.parse_args()
  limits();snapshot=LOCAL/'lineage-inputs/queue';snapshot.mkdir(exist_ok=True)
@@ -18,12 +20,12 @@ def main():
    tmp=Path(d)
    for src in snapshot.glob('*.py'):shutil.copy2(src,tmp/src.name)
    (tmp/'queue-B.txt').write_text(content)
-   cmd=[sys.executable,'-B',str(QUEUE/'lanequeue.py'),'plan','--lane','B','--directory',str(tmp)]
+   cmd=[sys.executable,'-B',str(P/'cpu_tool.py'),str(QUEUE/'lanequeue.py'),'plan','--lane','B','--directory',str(tmp)]
    log=P/'evidence'/('plan-'+kind+'-B.log')
-   with log.open('w') as out:r=subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=out,stderr=subprocess.STDOUT,timeout=300)
+   with log.open('w') as out:r=freeze_safe.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=out,stderr=subprocess.STDOUT,timeout=300)
    assert r.returncode==0,log.read_text()[-8000:]
   live=QUEUE/name;live.write_text(content)
-  r=subprocess.run([sys.executable,'-B',str(QUEUE.parent/'rehearse_entry.py'),str(live),'--report','--json'],cwd=ROOT,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=240)
+  r=freeze_safe.run([sys.executable,'-B',str(LOCAL/'ops/rehearse_entry.py'),str(live),'--report','--json'],cwd=ROOT,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=240)
   (P/'evidence'/('rehearse-'+kind+'.log')).write_text(r.stdout+r.stderr)
   assert r.returncode==0,r.stdout+r.stderr
   rehearsal=json.loads(r.stdout);assert rehearsal['passed']

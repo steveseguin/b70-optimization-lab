@@ -8,8 +8,11 @@ def verify_ready(preplan=False,variant=None,kind=None,lane=None):
  if preplan:return row
  assert lane=='B' and variant=='sibling','registered lane-B probe only'
  marker=json.loads((P.parent/'READY-FOR-DEVICE.json').read_text())
- assert marker['passed'] and marker['queued'] is False
+ assert marker['passed'] and marker.get('ready_for_device') is True and marker['queued'] is False
+ assert row.get('upper_bound') is True and row.get('mechanism_scope_complete') is False,'registered partial M=2 upper bound required'
  assert marker['cpu_seal_sha256']==sha(P/'cpu-seal.json'),'final composition changed'
+ for name,digest in marker['proposal_sha256'].items():
+  assert sha(ROOT/name)==digest,'final proposal changed: '+name
  for name in GATES:
   path=P/'evidence'/(name+'.json');proof=json.loads(path.read_text())
   assert proof['passed'] and proof['device_executed'] is False,name

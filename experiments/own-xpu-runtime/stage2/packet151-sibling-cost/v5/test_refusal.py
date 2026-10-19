@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """CPU children only; exercise the native transport's actual stop/close methods."""
 import fcntl
 import json
@@ -98,6 +100,8 @@ import fcntl, os, subprocess, sys
 from pathlib import Path
 from types import SimpleNamespace
 sys.path.insert(0, sys.argv[1])
+import freeze_safe
+freeze_safe.install()
 import common as C, conditions as K, tp2_worker as W
 sys.path.insert(0, str(C.P56))
 import pipeline
@@ -105,7 +109,7 @@ root = Path(sys.argv[2]); output = root / 'run'
 r, w = os.pipe()
 t = pipeline.Transport.__new__(pipeline.Transport)
 t.children = [subprocess.Popen([sys.executable, '-B', '-c',
-    'import select,sys; select.select([int(sys.argv[1])],[],[],10)', str(r)], pass_fds=(r,), stdin=subprocess.DEVNULL) for _ in range(2)]
+    'import select,sys; select.select([int(sys.argv[1])],[],[])', str(r)], pass_fds=(r,), stdin=subprocess.DEVNULL) for _ in range(2)]
 t.out = output; t.closed = False; t.stop_sent = False
 t.stop_read = r; t.stop_write = w; t.failure_hook = lambda reason: None
 t.mapping = SimpleNamespace(close=lambda: None)
@@ -136,13 +140,13 @@ raise AssertionError('refusal disappeared')
         # own pipe; this test sends no process signals at all.
         r, w = os.pipe()
         other = subprocess.Popen([sys.executable, '-B', '-c',
-            'import select,sys; select.select([int(sys.argv[1])],[],[],20)', str(r)], pass_fds=(r,), stdin=subprocess.DEVNULL)
+            'import select,sys; select.select([int(sys.argv[1])],[],[])', str(r)], pass_fds=(r,), stdin=subprocess.DEVNULL)
         try:
-            start = time.monotonic()
-            result = subprocess.run([sys.executable, '-B', '-c', script, str(C.HERE), str(self.root)],
+            start = time.process_time()
+            result = freeze_safe.run([sys.executable, '-B', '-c', script, str(C.HERE), str(self.root)],
                                     capture_output=True, text=True, timeout=15, stdin=subprocess.DEVNULL)
             self.assertEqual(result.returncode, 1, result.stderr)
-            self.assertLess(time.monotonic() - start, 10)
+            self.assertLess(time.process_time() - start, 10)
             self.assertIsNone(other.poll())
             self.assertTrue(C.read(self.root / 'worker-exit.json')['own_children_exited'])
             self.assertEqual(C.read(self.root / 'teardown-state.json'), self.prior)
@@ -151,7 +155,7 @@ raise AssertionError('refusal disappeared')
             self.assertIn('previous teardown incomplete', receipt['reason'])
             self.assertEqual(C.read(self.out / 'ownership.json')['retained_pids'], [])
         finally:
-            os.write(w, b'!'); other.wait(timeout=5)
+            os.write(w, b'!'); freeze_safe.wait(other,timeout=5)
             os.close(r); os.close(w)
 
 

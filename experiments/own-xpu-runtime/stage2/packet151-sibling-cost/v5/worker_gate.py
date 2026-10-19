@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """Run every smoke/bracket request and the error teardown path in CPU scratch."""
 import contextlib,json,os,subprocess,sys,tempfile
 from pathlib import Path
@@ -68,7 +70,7 @@ def read_choice(view):return json.loads(Path(view['selection']).read_text())['ch
 def main():
  limits();rows=[]
  for kind in ('smoke','bracket'):
-  r=subprocess.run([sys.executable,'-B',str(P/'worker_gate.py'),'--probe',kind],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=240)
+  r=freeze_safe.run([sys.executable,'-B',str(P/'worker_gate.py'),'--probe',kind],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=240)
   (P/'evidence'/('worker-'+kind+'.log')).write_text(r.stdout+r.stderr);assert r.returncode==0,r.stderr
   rows.append(json.loads(next(x.removeprefix('WORKER_RESULT=') for x in r.stdout.splitlines() if x.startswith('WORKER_RESULT='))))
  save(P/'evidence/worker-gate.json',dict(passed=True,device_executed=False,rows=rows,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'worker_gate.py',P/'tp2_worker.py',P/'bracket.py',P/'conditions.py']}))

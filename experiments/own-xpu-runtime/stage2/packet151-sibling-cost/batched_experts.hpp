@@ -15,10 +15,10 @@ inline UnionSlots union_slot(const iq3::Route*a,const iq3::Route*b,unsigned inde
  if(index<count)return {int(index),matching_slot(a,b,index,count)};
  unsigned j=index-count;return matching_slot(b,a,j,count)<0?UnionSlots{-1,int(j)}:UnionSlots{};
 }
-template<Type T,unsigned K,unsigned V>inline std::array<std::array<float,V>,2> expert_chains(const uint8_t*w,const uint16_t*x0,const uint16_t*x1,unsigned physical,bool live0,bool live1){
+template<Type T,unsigned K,unsigned V>inline std::array<std::array<float,V>,2> expert_chains(const uint8_t*w,const uint16_t*x0,const uint16_t*x1,unsigned physical,bool live0,bool live1,size_t source){
  // Missing union rows have valid scratch/input bindings; only their stores
  // are masked. No divergent loop or changed weight/activation load geometry.
- return wide_pair<T,K,V>(w,x0,x1,physical);
+ return wide_pair<T,K,V>(w,x0,x1,physical,source);
 }
 struct ExpertBound {const uint8_t*w,*peer;const uint16_t*x[2];uint16_t*y[2],*py[2];const iq3::Route*routes[2];uint32_t*status[2],*ps[2],*error[2];const uint32_t*active[2];};
 inline ExpertBound expert_bind(std::span<void*const>p){return {(const uint8_t*)p[0],(const uint8_t*)p[1],{(const uint16_t*)p[2],(const uint16_t*)p[3]},{(uint16_t*)p[4],(uint16_t*)p[5]},{(uint16_t*)p[6],(uint16_t*)p[7]},{(const iq3::Route*)p[8],(const iq3::Route*)p[9]},{(uint32_t*)p[10],(uint32_t*)p[11]},{(uint32_t*)p[12],(uint32_t*)p[13]},{(uint32_t*)p[14],(uint32_t*)p[15]},{(const uint32_t*)p[16],(const uint32_t*)p[17]}};}
@@ -33,8 +33,8 @@ template<Type T>struct ExpertKernel final:Base {
   for(unsigned u=0;u<2*count;++u){auto pair=union_slot(b.routes[0],b.routes[1],u,count);int slots[2]={pair.a,pair.b};if(pair.a<0&&pair.b<0)continue;auto route=pair.a>=0?b.routes[0][pair.a]:b.routes[1][pair.b];bool ok=iq3::valid_route(route,experts,rows,rows);
    for(unsigned row=0;row<rows;++row){bool valid=ok&&row<route.row_count;
     for(unsigned stream=0;stream<(gate?2u:1u);++stream){float values[2][P]{};
-     if(valid){size_t source=size_t(route.expert_id)*rows+route.row_begin+row;auto w=(stream?b.peer:b.w)+source*rb;const uint16_t*x0=b.x[0]+(!gate&&pair.a>=0?pair.a*K:0),*x1=b.x[1]+(!gate&&pair.b>=0?pair.b*K:0);
-      for(unsigned physical=0;physical<P;++physical){auto v=expert_chains<T,K,V>(w,x0,x1,physical,pair.a>=0,pair.b>=0);for(unsigned r=0;r<2;++r)values[r][physical]=p49dvirtual::local_tree<V>(v[r]);}}
+     if(valid){size_t source=size_t(route.expert_id)*rows+route.row_begin+row;auto w=(stream?b.peer:b.w)+(gate?source*rb:0);const uint16_t*x0=b.x[0]+(!gate&&pair.a>=0?pair.a*K:0),*x1=b.x[1]+(!gate&&pair.b>=0?pair.b*K:0);
+      for(unsigned physical=0;physical<P;++physical){auto v=expert_chains<T,K,V>(w,x0,x1,physical,pair.a>=0,pair.b>=0,source);for(unsigned r=0;r<2;++r)values[r][physical]=p49dvirtual::local_tree<V>(v[r]);}}
      for(unsigned r=0;r<2;++r)if(slots[r]>=0){for(unsigned width=1;width<P;width*=2)for(unsigned lane=0;lane<P;lane+=2*width)values[r][lane]=values[r][lane]+values[r][lane+width];(stream?b.py[r]:b.y[r])[slots[r]*rows+row]=iq3::bf16_bits(valid?values[r][0]:iq3::bits_float(0x7fc00000));if(!row){(stream?b.ps[r]:b.status[r])[slots[r]]=!ok;if(!ok&&*b.active[r]&&!*b.error[r])*b.error[r]=1;}}
     }
    }
@@ -48,7 +48,7 @@ template<Type T>struct ExpertKernel final:Base {
    unsigned logical=(it.get_group_linear_id()*(gate?1:2)+(gate?sub/2:sub))*V+lane/P;
    bool in_range=logical<total;unsigned row=logical%nrows,u=logical/nrows;UnionSlots pair;if(in_range)pair=union_slot(b.routes[0],b.routes[1],u,n);int slots[2]={pair.a,pair.b};
    iq3::Route route{};if(pair.a>=0)route=b.routes[0][pair.a];else if(pair.b>=0)route=b.routes[1][pair.b];bool ok=(pair.a>=0||pair.b>=0)&&iq3::valid_route(route,ne,nrows,nrows),valid=ok&&row<route.row_count;float value[2]{};
-   if(valid){size_t source=size_t(route.expert_id)*nrows+route.row_begin+row;const uint16_t*x0=b.x[0]+(!gate&&pair.a>=0?pair.a*K:0),*x1=b.x[1]+(!gate&&pair.b>=0?pair.b*K:0);auto sums=expert_chains<T,K,V>((stream?b.peer:b.w)+source*rb,x0,x1,physical,pair.a>=0,pair.b>=0);for(unsigned r=0;r<2;++r)value[r]=p49dvirtual::local_tree<V>(sums[r]);}
+   if(valid){size_t source=size_t(route.expert_id)*nrows+route.row_begin+row;const uint16_t*x0=b.x[0]+(!gate&&pair.a>=0?pair.a*K:0),*x1=b.x[1]+(!gate&&pair.b>=0?pair.b*K:0);auto sums=expert_chains<T,K,V>((stream?b.peer:b.w)+(gate?source*rb:0),x0,x1,physical,pair.a>=0,pair.b>=0,source);for(unsigned r=0;r<2;++r)value[r]=p49dvirtual::local_tree<V>(sums[r]);}
    for(unsigned r=0;r<2;++r){for(unsigned width=1;width<P;width*=2){float rhs=sycl::select_from_group(sg,value[r],(lane+width)%32);if(physical%(2*width)==0)value[r]=value[r]+rhs;}
     if(!physical&&slots[r]>=0){(stream?b.py[r]:b.y[r])[slots[r]*nrows+row]=iq3::bf16_bits(valid?value[r]:iq3::bits_float(0x7fc00000));if(!row){(stream?b.ps[r]:b.status[r])[slots[r]]=!ok;if(!ok&&*b.active[r]){uint32_t expected=0;sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error[r]).compare_exchange_strong(expected,1);}}}
    }

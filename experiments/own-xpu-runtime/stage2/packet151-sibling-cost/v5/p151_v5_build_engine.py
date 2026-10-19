@@ -49,8 +49,9 @@ def main():
     assert sha(src)==sha(target);inherited[str(src.resolve().relative_to(ROOT))]=sha(target);link[i]=str(target)
   commands.append(run(link,mode+'-link'));artifacts[str((dest/'own-rt-iq3').relative_to(ROOT))]=sha(dest/'own-rt-iq3')
   save(P/'engine-commands.json',commands)
- sources={str(f.relative_to(ROOT)):sha(f) for f in [*[P/'native'/n for n in ('engine_bracket.hpp','draft_bracket.hpp','bracket_boundary.hpp','probe_exchange.hpp')],*P.glob('native-src/*'),*LOCAL.joinpath('native-base').rglob('*'),P/'p151_v5_build_engine.py'] if f.is_file()}
+ sources={str(f.relative_to(ROOT)):sha(f) for f in [*[P/'native'/n for n in ('engine_bracket.hpp','draft_bracket.hpp','bracket_boundary.hpp','sibling.hpp')],*P.glob('native-src/*'),*LOCAL.joinpath('native-base').rglob('*'),P/'p151_v5_build_engine.py'] if f.is_file()}
  sources.update(inherited)
+ sources.update({str(f.relative_to(ROOT)):sha(f) for f in [LOCAL/n for n in ('batched_experts.hpp','batched_rows.hpp','production_rows.hpp','production_expert_chains.hpp','production65.hpp')]})
  save(P/'evidence/build.json',dict(passed=True,device_executed=False,sources=sources,artifacts=artifacts,commands=commands,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,build_bytes=limits()))
 if __name__=='__main__':
  resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()

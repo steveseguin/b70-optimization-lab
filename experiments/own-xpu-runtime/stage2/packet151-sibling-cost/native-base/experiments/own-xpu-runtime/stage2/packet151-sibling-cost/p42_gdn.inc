@@ -1,4 +1,4 @@
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/kernel_guard.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/kernel_guard.hpp"
 #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/p42_gdn.inc"
 inline float lane_tree(sycl::sub_group sg,float v){
  unsigned lane=sg.get_local_linear_id();

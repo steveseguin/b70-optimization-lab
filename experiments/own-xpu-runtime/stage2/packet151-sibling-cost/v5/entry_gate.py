@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """Real closed entry, unit gates, screen lifecycle and both native exec boundaries.
 
 Only operational state and native execution are simulated. Every write goes to
@@ -106,7 +108,7 @@ def main():
    for lane in ('A','B'):
     for neg in (None,'unit','environment'):
      cmd=[sys.executable,'-B',str(P/'entry_gate.py'),'--probe',variant,kind,neg or 'positive',lane]
-     r=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=240)
+     r=freeze_safe.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=240)
      log=P/'evidence'/('entry-'+variant+'-'+kind+'-'+lane+'-'+str(neg)+'.log');log.write_text(r.stdout+r.stderr);assert r.returncode==0,log.read_text()[-6000:]
      result=json.loads(next(x[len('ENTRY_RESULT='):] for x in r.stdout.splitlines() if x.startswith('ENTRY_RESULT=')))
      result['lane']=lane;(negative if neg else rows).append(result)

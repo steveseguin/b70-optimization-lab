@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """Local drain, cooperative-stop and source-closure checks; no device calls."""
 import json,resource,subprocess,sys,re
 from p151_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
@@ -5,7 +7,7 @@ from p151_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 def main():
  limits();rows=[]
  for script in (LOCAL/'test_drain_fix.py',P/'test_refusal.py',P/'test_timing_report.py'):
-  r=subprocess.run([sys.executable,'-B',str(script)],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=90)
+  r=freeze_safe.run([sys.executable,'-B',str(script)],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=90)
   log=P/'evidence'/('safety-'+script.stem+'.log');log.write_text(r.stdout+r.stderr)
   assert r.returncode==0,log.read_text();rows.append(dict(test=str(script.relative_to(ROOT)),log=str(log.relative_to(ROOT)),sha256=sha(log)))
  # The by-value checked mirror is retained in-repository, not rebuilt from siblings.

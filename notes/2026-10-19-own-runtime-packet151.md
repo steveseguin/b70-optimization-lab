@@ -51,3 +51,24 @@ own missing/empty-stream refusals. No device measurement has been made.
 
 Fetch confirmed HEAD and origin/main at d61bfcdf1bb43ec5ac1a962f8cc9b632dbb98da6;
 rebase refused the unrelated dirty tree. Initial free disk was 30.757 GB.
+
+Milestone 2: the inherited GNU/device build and two-compiler paired-arithmetic
+receipts still match their source and binary hashes. The expanded state gate
+passes twice with the same kept-state hash, covering accepted hits, misses,
+rollback, isolated scratch, request reset and subsequent reuse. Static memory
+admission independently derives both ranks from the parent ledger, adds the
+bounded 256 MiB sibling allocation on rank0 and retains the physical-free floor.
+It is a conservative plan; the actual device census is still pending.
+
+The shared report helper is frozen. A private packet151 copy fixes its synthetic
+fixture and pause-sensitive CPU deadlines; the shared launch-environment script
+is executed unchanged with the private pause-aware native parser sandbox.
+Ten analyzer tests pass. Smoke reporting rejects both missing and empty half
+and sibling streams from its own output. No empty stream is treated as zero cost.
+
+Temporary plans and both report rehearsals pass for the two lane-B proposals;
+the live coordinator pin guard passes. No queue was changed. Expected durations
+are 240–600 seconds for smoke and 720–1200 for the bracket; both watchdogs are
+4800 seconds. Writes stay 240 MB per view. Historical retention/payload manifests
+are preserved in lineage-inputs/p151-first-build, rather than discarded or treated
+as current source pins. Final source-bound gate refresh and readiness seal follow.

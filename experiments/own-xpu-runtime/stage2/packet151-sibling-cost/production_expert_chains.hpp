@@ -2,9 +2,10 @@
 // Derived from packet65 wide64: all raw loads and decode_tile calls unchanged.
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/production65.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/build/checked/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/p90_expert.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/build/checked/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/p100_down.hpp"
 namespace p68c {
 using p65::RawTile;using p65::decode_tile;
-template<Type T,unsigned K,unsigned V>inline std::array<std::array<float,V>,2> wide_pair(const uint8_t*w,const uint16_t*x0,const uint16_t*x1,unsigned physical){
+template<Type T,unsigned K,unsigned V>inline std::array<std::array<float,V>,2> wide_pair(const uint8_t*w,const uint16_t*x0,const uint16_t*x1,unsigned physical,size_t source=0){
  constexpr auto l=p49bgemv::layout(T,K);std::array<std::array<float,V>,2> sums{};
  for(unsigned step=0;step<(K+255)/256;++step){
   if constexpr(T==Type::IQ2_S){
@@ -43,13 +44,13 @@ template<Type T,unsigned K,unsigned V>inline std::array<std::array<float,V>,2> w
     unsigned first=step*256+8*(physical*V+block_in_lane*4);if(first>=K)continue;
     unsigned block=first/32;uint32_t codes[4];
 #if defined(__SYCL_DEVICE_ONLY__)
-    sycl::vec<uint32_t,4> words;words.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(w+block*16)));
+    sycl::vec<uint32_t,4> words;words.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(p100::code_address(w,source,block))));
     #pragma unroll
     for(unsigned i=0;i<4;++i)codes[i]=words[i];
 #else
-    for(unsigned i=0;i<4;++i)codes[i]=p49bgemv::load32(w+block*16+4*i);
+    for(unsigned i=0;i<4;++i)codes[i]=p49bgemv::load32(p100::code_address(w,source,block)+4*i);
 #endif
-    uint16_t half=p49bgemv::load16(w+l.halves+2*block);
+    uint16_t half=p49bgemv::load16(p100::half_address(w,source,block));
     #pragma unroll
     for(unsigned c=0;c<4;++c){unsigned chain=block_in_lane*4+c,k=first+8*c;RawTile t;t.a=codes[(c%2)*2];t.b=codes[(c%2)*2+1];t.half=half;
      float values[8];decode_tile<T>(t,k,values);

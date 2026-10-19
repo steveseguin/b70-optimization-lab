@@ -40,6 +40,7 @@ template<Type T>void expert_cases(){
  auto source_bytes=p49bgemv::source_row_bytes(T,k),rb=gate?p90::expert_stride(k):p49bgemv::layout(T,k).row_bytes;auto fmt=iq3::layout(T);
  std::vector<uint8_t>w(experts*rows*rb),peer(w.size()),source(source_bytes);
  for(auto*dest:{&w,&peer})for(unsigned row=0;row<experts*rows;++row){for(auto&v:source)v=uint8_t(random32());for(unsigned block=0;block<k/fmt.elements;++block){uint16_t scale=uint16_t(0x2400+random32()%1024);std::memcpy(source.data()+block*fmt.bytes,&scale,2);}if constexpr(gate)p90::expert_repack(k,source.data(),dest->data()+row*rb);else p49bgemv::repack_row(T,k,source.data(),dest->data()+row*rb);}
+ if constexpr(!gate){w=p100::transpose(w.data(),experts*rows);peer=p100::transpose(peer.data(),experts*rows);}
  for(unsigned mode=0;mode<6;++mode){
   std::vector<uint16_t>x0(k*(gate?1:count)),x1(x0.size());inputs(x0,mode==4?3:0);inputs(x1,mode==4?2:4);
   std::array<iq3::Route,count>r0{{{0,0,rows},{1,0,rows},{2,1,rows-2},{2,1,rows-2}}},r1=r0;
@@ -50,7 +51,7 @@ template<Type T>void expert_cases(){
   std::array<std::array<uint32_t,count>,4>expected_s{},actual_s{};
   uint32_t expected_error[2]={mode==5?1u:0u,0},actual_error[2]={expected_error[0],0},active[2]={mode==5?0u:1u,1},pos=0;
   for(unsigned row=0;row<2;++row){auto x=row?x1.data():x0.data();auto routes=row?r1.data():r0.data();std::array<void*,19>p{w.data(),peer.data(),x,expected_y[row].data(),expected_y[row+2].data(),routes,expected_s[row].data(),expected_s[row+2].data(),x,x,x,x,x,x,x,x,&expected_error[row],&active[row],&pos};
-   if constexpr(gate){p90exp::Kernel<T,k,64,false,true>op;op.rows=rows;op.count=count;op.experts=experts;op.run(p);}else{p49dvirtual::Kernel<T,k,3>op;op.rows=rows;op.count=count;op.experts=experts;op.run(p);}
+   if constexpr(gate){p90exp::Kernel<T,k,64,false,true>op;op.rows=rows;op.count=count;op.experts=experts;op.run(p);}else{p100::Kernel<2>op;op.rows=rows;op.count=count;op.experts=experts;op.run(p);}
   }
   std::array<void*,18>p{w.data(),peer.data(),x0.data(),x1.data(),actual_y[0].data(),actual_y[1].data(),actual_y[2].data(),actual_y[3].data(),r0.data(),r1.data(),actual_s[0].data(),actual_s[1].data(),actual_s[2].data(),actual_s[3].data(),&actual_error[0],&actual_error[1],&active[0],&active[1]};p68c::ExpertKernel<T>op;op.rows=rows;op.count=count;op.experts=experts;op.run(p);
   for(unsigned j=0;j<(gate?4u:2u);++j){same(expected_y[j].data(),actual_y[j].data(),rows*count*2,"expert union row output");same(expected_s[j].data(),actual_s[j].data(),count*4,"expert union status");}same(expected_error,actual_error,8,"expert union errors");

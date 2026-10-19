@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """CPU interception of real pre-exec limit guards; no native process starts."""
 import json,resource,subprocess,sys
 from pathlib import Path
@@ -37,7 +39,7 @@ with patch.object(subprocess,'Popen',side_effect=lambda *a,**k:called.append(a))
  assert not called
 print(json.dumps(dict(passed=True,device_executed=False,capped_launch_refused=True,actual_native_launches=0)))
 '''
- row=subprocess.run([sys.executable,'-B','-c',code,str(P)],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True,timeout=30)
+ row=freeze_safe.run([sys.executable,'-B','-c',code,str(P)],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True,timeout=30)
  result=json.loads(row.stdout)
  result.update(unchanged_unlimited_launch_intercepted=True,changed_limit_refused=True,unlimited_rlimit_census=baseline)
  result['sources']={str(f.relative_to(P.parents[4])):sha(f) for f in (P/'exec_gate.py',P/'p151_v5_exec_limits.py',P/'screen.py',P/'tp2_worker.py')}

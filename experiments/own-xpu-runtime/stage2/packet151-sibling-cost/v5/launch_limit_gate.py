@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """Both real worker launch boundaries preserve every inherited getrlimit."""
 import json,subprocess,sys,resource
 from p151_v5_build_engine import P,ROOT,sha,save
@@ -9,7 +11,7 @@ def main():
  for variant in VALUES:
   for kind in ('smoke','bracket'):
    for lane,mode in __import__('itertools').product(('A','B'),('--limits-probe','--finite-negative')):
-    r=subprocess.run([sys.executable,'-B',str(P/'argument_gate.py'),mode,kind,variant,lane],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
+    r=freeze_safe.run([sys.executable,'-B',str(P/'argument_gate.py'),mode,kind,variant,lane],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
     assert r.returncode==0,r.stderr
     row=json.loads(next(x.removeprefix('LIMITS_RESULT=') for x in r.stdout.splitlines() if x.startswith('LIMITS_RESULT=')))
     assert row['passed'];rows.append(row)

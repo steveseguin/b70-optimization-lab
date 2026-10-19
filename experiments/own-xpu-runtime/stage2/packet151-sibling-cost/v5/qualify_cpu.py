@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """Reproducible serial CPU qualification. Stops at the first refusal."""
 import argparse,subprocess,sys,resource
 from p151_v5_build_engine import P,LOCAL,ROOT,limits
@@ -8,7 +10,7 @@ def main():
  for name,path,args in STEPS[next(i for i,r in enumerate(STEPS) if r[0]==a.start):]:
   limits();print('START',name,flush=True)
   with (P/'evidence'/('qualify-'+name+'.log')).open('w') as log:
-   r=subprocess.run([sys.executable,'-B',str(path),*args],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,timeout=4500,cwd=ROOT)
+   r=freeze_safe.run([sys.executable,'-B',str(path),*args],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,timeout=4500,cwd=ROOT)
   if r.returncode:raise SystemExit(r.returncode)
   if name=='build':
    for mode in ('gnu-host','device'):(P/'build'/mode/'entry-main.o').unlink(missing_ok=True)

@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """Real v5 worker/config/oracle paths, native argv intercepted on CPU only.
 
 Both registered windows for all three class banks are covered.

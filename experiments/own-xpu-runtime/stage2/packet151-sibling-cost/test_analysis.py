@@ -36,6 +36,16 @@ class Analysis(unittest.TestCase):
   self.assertEqual(analyze(self.proof)['decision'],'smoke-data-complete')
   (self.root/'1/prompt0/rank0/sibling-rows.jsonl').unlink()
   with self.assertRaisesRegex(ValueError,'missing stream'):analyze(self.proof)
+ def test_smoke_missing_and_empty_streams(self):
+  self.proof.update(kind='smoke',views=[self.proof['views'][1]])
+  for name in ('timings.jsonl','sibling-rows.jsonl'):
+   f=self.root/'1/prompt0/rank0'/name;raw=f.read_bytes()
+   for missing in (False,True):
+    with self.subTest(stream=name,missing=missing):
+     if missing:f.unlink()
+     else:f.write_text('')
+     with self.assertRaisesRegex(ValueError,'missing stream|empty stream'):analyze(self.proof)
+     f.write_bytes(raw)
  def test_native_result_location(self):
   for view in self.proof['views']:
    for request in view['requests']:

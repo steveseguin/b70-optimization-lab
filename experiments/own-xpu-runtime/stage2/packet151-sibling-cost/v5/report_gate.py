@@ -1,3 +1,5 @@
+import freeze_safe
+freeze_safe.install()
 """CPU regression: real bracket_job imports and report, smoke and five views.
 Fixtures live only in scratch; device/process launches are forbidden.
 """
@@ -40,6 +42,12 @@ def probe(kind,variant,lane):
     for rank in (0,1):
      folder=dest/name/f'rank{rank}';folder.mkdir(parents=True,exist_ok=True);(folder/'p105-transfers.jsonl').write_text('')
      (folder/'timings.jsonl').write_text('')
+   for request in view['requests']:
+    request['guess_rows']=[dict(position=1,guess=1,actual=1,hit=True)]
+    folder=dest/request['prompt_id']/'rank0'
+    measured=dict(position=1,fixture=2,speculative=True,corrected=False,cancelled=False,p151_device_ms=10.,p151_sibling=choice=='candidate',p151_sibling_prepare_ms=0.,half_completion_ms=10.)
+    (folder/'timings.jsonl').write_text(json.dumps(measured)+'\n')
+    if choice=='candidate':(folder/'sibling-rows.jsonl').write_text(json.dumps(dict(position=1,fixture=2,paired_half_device_ms=10.,cancelled=False,discarded=True))+'\n')
    views.append(view);selections.append(selection)
   identity['bracket'].update(kind=kind,views=selections)
   proof.update(kind=kind,views=views);save(out/'run/bracket-inputs.json',proof)
@@ -59,6 +67,18 @@ def probe(kind,variant,lane):
    try:runpy.run_path(str(P/'bracket_job.py'),run_name='__main__')
    except SystemExit as e:assert e.code==0
   assert seen==[kind]
+  if kind=='smoke':
+   # Re-run the actual smoke report against its own damaged output. No reader stub.
+   for name in ('timings.jsonl','sibling-rows.jsonl'):
+    stream=Path(views[0]['output'])/views[0]['requests'][0]['prompt_id']/'rank0'/name
+    raw=stream.read_bytes()
+    for missing in (False,True):
+     if missing:stream.unlink()
+     else:stream.write_text('')
+     try:screen.report_completed(out,dict(started_utc_ns=1,boot_id='CPU-only'),identity,{})
+     except ValueError as error:assert 'stream' in str(error)
+     else:raise AssertionError('smoke accepted absent timing data')
+     stream.write_bytes(raw)
   return dict(passed=True,kind=kind,real_entry='bracket_job.py',real_report='screen.report_completed',requests=12*len(views),sys_path=sys.path,device_executed=False,synthetic_fixtures_retained=False)
 
 def main():
@@ -67,7 +87,7 @@ def main():
  for variant in VALUES:
   for lane in ('A','B'):
    for kind in ('smoke','bracket'):
-    cp=subprocess.run([sys.executable,'-B',str(P/'report_gate.py'),'--probe',kind,variant,lane],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
+    cp=freeze_safe.run([sys.executable,'-B',str(P/'report_gate.py'),'--probe',kind,variant,lane],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
     assert cp.returncode==0,cp.stdout+cp.stderr
     rows.append(dict(json.loads(cp.stdout),variant=variant,lane=lane))
  from p151_v5_build_engine import ROOT,save,sha

@@ -15,16 +15,16 @@
               "rank": 0,
               "draft_rank": 1,
               "target_layers": 24,
-              "target_modeled_allocations_bytes": 28773327988,
+              "target_modeled_allocations_bytes": 29041763444,
               "allocation_reserve_bytes": 46500548,
               "draft_total_bytes": 0,
               "draft_duplicate_head_bytes": 0,
-              "target_total_bytes": 28819828536,
-              "total_with_mtp_bytes": 28819828536,
-              "free_with_mtp_bytes": 5422469320,
+              "target_total_bytes": 29088263992,
+              "total_with_mtp_bytes": 29088263992,
+              "free_with_mtp_bytes": 5154033864,
               "allocation_margin_passed": true,
-              "arena_device_bytes": 28773327988,
-              "arena_headroom_bytes": 3438926732,
+              "arena_device_bytes": 29041763444,
+              "arena_headroom_bytes": 3170491276,
               "arena_margin_passed": true
             },
             {
@@ -48,7 +48,7 @@
       }
     }
   },
-  "scope": "Actual allocation calls with mock backend; physical driver residency unmeasured",
+  "scope": "Parent allocation ledger plus bounded 256 MiB sibling state on rank0; bound, not a new measured runtime census",
   "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split--80128--banks",
   "extra_weight_bytes_per_rank": [
     458787872,
@@ -57,5 +57,9 @@
   "down_layout": "tile16",
   "down_row_bytes": 360,
   "down_transpose_extra_device_bytes": 0,
-  "class_layout_max_extra_per_rank": 629145600
+  "class_layout_max_extra_per_rank": 629145600,
+  "packet151_sibling_reservation_bytes": [
+    268435456,
+    0
+  ]
 }
