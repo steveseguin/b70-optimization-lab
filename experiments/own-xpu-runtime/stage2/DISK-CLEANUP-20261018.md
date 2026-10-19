@@ -901,3 +901,21 @@ Disk/reference work ran at `nice -n 19 ionice -c3 taskset -c 8-15,24-31`;
 the pin/search/archive jobs used a 2 GiB virtual-memory cap. No sudo, service,
 GPU, kill, model/GGUF read, queue mutation, packet-tree mutation or host setting
 change occurred. Only this log and the `CURRENT.md` storage note are committed.
+
+## Coordinator follow-up (2026-10-19 ~00:00 UTC)
+
+disk9 left root at ~30.1 GB, below what packet150's lane-B bracket needs
+(`v5/screen.py`: free − 5 × 1.1 GB planned writes ≥ 25 GB, so ≥ ~30.5 GB).
+Outside the repo, the coordinator then:
+
+- archived `~/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B` and
+  `models--facebook--opt-125m` (unused since 2026-10-06) to
+  `/mnt/raid-models/own-xpu-runtime-archive/hf-hub-2026-10-18/hf-hub-qwen35-08b-opt125m.tar`
+  (2,021,857,280 bytes, `tar -df` verified before removal; restore notes in its README.txt);
+- removed ten **disabled** snap revisions (`snap remove --revision`; active revisions untouched);
+- deleted four superseded Codex app-server daemon releases (0.160.0, 0.160.1,
+  0.161.0, 0.162.0; current 0.163.0 and CLI-matching 0.162.1 kept; none open).
+
+Root free afterwards: 32,164,823,040 bytes. Concurrent repository pack writes
+(~1.4 GB at 23:57 UTC) absorbed most of the snap saving. No packet tree,
+evidence, model, GGUF or host setting was touched.
