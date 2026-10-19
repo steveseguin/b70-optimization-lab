@@ -1,0 +1,44 @@
+{
+  "schema": "packet151.ready-for-device.v1",
+  "passed": true,
+  "ready_for_device": true,
+  "commit": "76ae6cf25f12af7b4b791bbb65537ab1c18c92fe",
+  "commit_definition": "committed source, CPU receipts and proposals immediately before this marker",
+  "proposal_sha256": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p151-smoke-B.txt": "5bde01f8626bdb1ad5e3cac515dbbcd1ca393974b9a78e7fe99807ac76f96ff5",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p151-v5-B.txt": "93037eeb65344c395927a965ab73f667a85de0ca37bac6c567430ace4f8969a4"
+  },
+  "cpu_seal_sha256": "1a72fed1fde7fd02dab6083a58bd596349c942c14d8dc470d4ee5c3e77da41a9",
+  "cpu_gate_sha256": {
+    "build": "93d77194a9947e45f78b337797e16f1b87da4d2adad6d5337cd2ef118f42d3eb",
+    "pair-cpu": "f4ded5754d3314b6198a5680ce2f212a4b52b673ace0a3066217c32295a059df",
+    "analysis": "b0aa45b5c54bea252fea81f6772e8f682eafe4f51ec9531e6a6e210289923eed",
+    "sibling-state": "b7ccd6a03c3f8bce5d91088836263fbda8ca6c4ece0329e6c2b6881e500b4f3e",
+    "safety": "06ea34d092b7c29650e832488f326127a999c71c58d4d64bb23fb04a0e1d3687",
+    "exec-limits": "3b7cf7790df00fa417685fa6e088d6257f9e0455d80b3c5a7e79884896fd0f67",
+    "admission": "1a9e2bec03452c5b712f57f6bc523b1766377981fe623f12b9fc714827ffd3be",
+    "freeze-safe": "76b10b48bf3352c0a0d10c446071ef03076e39ea59111677bb0d47e70e9b0eac",
+    "launch-env": "bab6930d36794455732e88bf9d81596c28a86609958d0c0b1b12fbf23ca01ff2",
+    "entry-gate": "0a5efdf42879a7f14fd38c9607e6650de0d740486492b7ea6f6ebb2e44e4ecf3",
+    "launch-limits": "440ce8bf4d8423e9c4e45b2e83e6c206d6c5a3908c0c6d4f2ff1fceadde71ee6",
+    "worker-gate": "8296868b85997ebf7830e7b3d0eb68790bb41712fcca785e44632793f298d088",
+    "report-gate": "5b83e78f59604a2ffe4066b4f14ccffc5915018e4b20c246a8cf552040bc7d1c",
+    "queue-plan": "dc955ab49df453e63fa7fb94554db42b3cc498e3915e1b6734bb3d70c79a6dc1",
+    "pin-guard": "18c0dd4f2d2fcd96116a8bfaa855d726e42deaefe440b6b45b0dc41292bc95b9"
+  },
+  "measurement_scope": "upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial)",
+  "upper_bound": true,
+  "mechanism_scope_complete": false,
+  "arithmetic": "iq3-p49-split32-v1",
+  "device_executed": false,
+  "device_quality_pending": true,
+  "measured_cost_pending": true,
+  "threshold_ms": 1.952,
+  "decisions": [
+    "reopen packet132 if upper-bound cost <= 1.952 ms",
+    "inconclusive upper bound; full M=2 needed otherwise"
+  ],
+  "policy_calibration": "packet114 independent text only; never the 12-prompt suite",
+  "planned_write_bytes_per_view": 240000000,
+  "queued": false
+}
