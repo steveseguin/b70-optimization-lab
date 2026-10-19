@@ -1,0 +1,180 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/argument_gate.py", line 299, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/argument_gate.py", line 273, in main
+    print('ARGUMENT_RESULT='+json.dumps(probe(args.probe,args.miss,args.candidate,args.old_gate)))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/argument_gate.py", line 246, in probe
+    raise AssertionError('queue did not reach native exec: '+str(result)+' '+(out/'queue.json').read_text())
+AssertionError: queue did not reach native exec: 1 {
+  "schema": "packet58x.arm.v1",
+  "passed": false,
+  "device_executed": true,
+  "view": "p60fusion",
+  "arm": "combined",
+  "commands": {
+    "K1a": [
+      "/usr/bin/nice",
+      "-n",
+      "19",
+      "/usr/bin/taskset",
+      "-c",
+      "8-15,24-31",
+      "/usr/bin/env",
+      "-i",
+      "PATH=/usr/bin:/bin",
+      "OMP_NUM_THREADS=2",
+      "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py",
+      "--authorized-device-window",
+      "--window",
+      "K1",
+      "--card",
+      "0",
+      "--output",
+      "/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/K1a",
+      "--faults-reviewed-through",
+      "2025-12-31T23:59:58Z",
+      "--view",
+      "p60fusion",
+      "--cache-maintenance",
+      "overlap"
+    ],
+    "K1b": [
+      "/usr/bin/nice",
+      "-n",
+      "19",
+      "/usr/bin/taskset",
+      "-c",
+      "8-15,24-31",
+      "/usr/bin/env",
+      "-i",
+      "PATH=/usr/bin:/bin",
+      "OMP_NUM_THREADS=2",
+      "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py",
+      "--authorized-device-window",
+      "--window",
+      "K1",
+      "--card",
+      "0",
+      "--output",
+      "/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/K1b",
+      "--faults-reviewed-through",
+      "2025-12-31T23:59:58Z",
+      "--view",
+      "p60fusion",
+      "--cache-maintenance",
+      "overlap"
+    ],
+    "WSCREEN": [
+      "/usr/bin/taskset",
+      "-c",
+      "0-3,16-19",
+      "/usr/bin/env",
+      "-i",
+      "PATH=/usr/bin:/bin",
+      "OMP_NUM_THREADS=2",
+      "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py",
+      "--authorized-device-window",
+      "--window",
+      "WSCREEN",
+      "--card",
+      "0",
+      "--output",
+      "/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/WSCREEN",
+      "--faults-reviewed-through",
+      "2025-12-31T23:59:58Z",
+      "--view",
+      "p60fusion",
+      "--cache-maintenance",
+      "overlap",
+      "--k1",
+      "/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/K1a/window.json",
+      "--k1",
+      "/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/K1b/window.json"
+    ]
+  },
+  "completed": [
+    "K1a",
+    "K1b"
+  ],
+  "plan": {
+    "schema": "packet58x.plan.v1",
+    "device_executed": false,
+    "view": "p60fusion",
+    "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+    "card": 0,
+    "lane": "A",
+    "scope": "whole-host",
+    "model_lifetimes": 1,
+    "k1_fixture_launches": 2,
+    "windows": [
+      "K1a",
+      "K1b",
+      "WSCREEN"
+    ],
+    "planned_arm_seconds": [
+      1200,
+      1800
+    ],
+    "planned_bracket_seconds": [
+      1200,
+      1800
+    ],
+    "watchdog_seconds": 7200,
+    "view_order": [
+      [
+        "A0",
+        "p60fusion"
+      ],
+      [
+        "B0",
+        "p60fusion"
+      ],
+      [
+        "A1",
+        "p60fusion"
+      ],
+      [
+        "B1",
+        "p60fusion"
+      ],
+      [
+        "A2",
+        "p60fusion"
+      ]
+    ],
+    "bracket_model_seconds": 1560,
+    "internal_gap_seconds": 90,
+    "inter_arm_gap_seconds": 90,
+    "host_required_available_bytes": 98989727744,
+    "host_reserve_bytes": 8589934592,
+    "pinned_expert_bytes": 48627712000,
+    "host_peak_bound_bytes": 90399793152,
+    "planned_write_bytes": 1140850688,
+    "root_stop_floor_bytes": 30000000000,
+    "request_count": 60,
+    "prompts_per_view": 12,
+    "requested_max_new": 128,
+    "oracle": "packet49-integrate",
+    "timing_claim_eligible": false,
+    "submission_eligible": false,
+    "output": "/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined"
+  },
+  "fault_review_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "faults_reviewed_through": "2025-12-31T23:59:58Z",
+  "reviewed_capture_through_us": 1767225600000000,
+  "journal_overlap_us": 2000000,
+  "running": null,
+  "error": "window did not reach native exec: 1 {\n  \"schema\": \"own-runtime.packet58.window.v1\",\n  \"window\": \"WSCREEN\",\n  \"passed\": false,\n  \"qualifying\": false,\n  \"device_executed\": false,\n  \"child_still_running\": false,\n  \"card\": 0,\n  \"pci_bdf\": \"0000:23:00.0\",\n  \"native_visible_card\": 0,\n  \"context\": 4096,\n  \"gpu_count\": 1,\n  \"decode_mode\": \"plain\",\n  \"view\": \"p60fusion\",\n  \"selection_sha256\": \"98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b\",\n  \"boot_id\": \"2cba7160-054a-4ffe-b4c4-e252eb956f5f\",\n  \"build_receipt_sha256\": \"a5543b73460b8452cefa93ae36aeac578c9f921aca578f20a05059240eb078d7\",\n  \"artifacts_sha256\": {\n    \"build/device/p58-cache-fixtures\": \"ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35\",\n    \"build/device/own-rt-iq3\": \"ecd08fff937ab74265e473e7b90cae7afdd165b6d57bc1dae44c553da16e8509\"\n  },\n  \"environment\": {\n    \"LD_LIBRARY_PATH\": \"/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib\",\n    \"OMP_NUM_THREADS\": \"2\",\n    \"PATH\": \"/usr/bin:/bin\",\n    \"NEOReadDebugKeys\": \"1\",\n    \"FilterBdfPath\": \"0000:23:00.0\",\n    \"ZE_ENABLE_PCI_ID_DEVICE_ORDER\": \"1\",\n    \"ZE_AFFINITY_MASK\": \"0\",\n    \"ONEAPI_DEVICE_SELECTOR\": \"level_zero:0\"\n  },\n  \"coordinator_fault_review\": \"2025-12-31T23:59:58Z\",\n  \"started_utc_ns\": 1792369544174497824,\n  \"expected_seconds\": 1560,\n  \"watchdog_seconds\": 7200,\n  \"memory_admission\": {\n    \"pending_lane_admission\": true,\n    \"plan\": {\n      \"admission_mode\": \"measured-peak-whole-host\",\n      \"admitted\": false,\n      \"allocation_inventory\": {\n        \"kv_index_bytes\": 116391936,\n        \"recurrent_bytes\": 59019280,\n        \"sources\": {\n          \"experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lineage/owned-inputs/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r0/census.json\": \"4e1074519846cc27084e574c32f2ec923153237b1cd522d15196fac017344d49\",\n          \"experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lineage/owned-inputs/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r1/census.json\": \"29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0\"\n        },\n        \"target_nonexpert_bytes\": 5815529984\n      },\n      \"arena_limit_bytes\": 32212254720,\n      \"card_capacity_floor_bytes\": 32000000000,\n      \"caveat\": \"One maximum allocation in every view; 18GB limits use, never admission. Live census, driver occupancy and host stops required.\",\n      \"census\": {\n        \"file_backed_nonexpert_bytes\": 33323087360,\n        \"layers\": [\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 0,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 1,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 2329600,\n            \"experts\": 512,\n            \"layer\": 2,\n            \"layer_bytes\": 1192755200\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 3,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 4,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 5,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 6,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 7,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 8,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 9,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 10,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 11,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 12,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 13,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 14,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 15,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 16,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 17,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 18,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 19,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 20,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 21,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 22,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 23,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 24,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 25,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 26,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 27,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 28,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 29,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 30,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 31,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 32,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 33,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 34,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 35,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 36,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 37,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 38,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 39,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 40,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 41,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 42,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 43,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 44,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 45,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 46,\n            \"layer_bytes\": 1009254400\n          },\n          {\n            \"expert_bytes\": 1971200,\n            \"experts\": 512,\n            \"layer\": 47,\n            \"layer_bytes\": 1009254400\n          }\n        ],\n        \"pinned_expert_bytes\": 48627712000,\n        \"source_path\": \"experiments/own-xpu-runtime/stage2/packet58ad-onecard-record/host-admission/tensor-census.json\",\n        \"source_sha256\": \"3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c\"\n      },\n      \"context\": 4096,\n      \"decode_mode\": \"plain\",\n      \"device_categories\": {\n        \"control_transaction_bound\": 1073741824,\n        \"expert_cache_arena\": 21552729600,\n        \"expert_pointer_generation_tables\": 2359296,\n        \"target_4k_bf16_kv_index\": 116391936,\n        \"target_nonexpert\": 5815529984,\n        \"target_recurrent\": 59019280,\n        \"transfer_bound\": 268435456,\n        \"workspace_bound\": 1073741824,\n        \"async_publication_staging\": 1179648\n      },\n      \"device_executed\": false,\n      \"device_margin_bytes\": 240,\n      \"device_owned_bound_bytes\": 29963128848,\n      \"device_reserve_bytes\": 1500000000,\n      \"file_backed_expert_duplicate_allowed\": false,\n      \"gpu_count\": 1,\n      \"host_categories\": {\n        \"pinned_packed_experts\": 48627712000,\n        \"file_backed_nonexpert_and_lookup_bound\": 33323087360,\n        \"resident_lookup_bytes\": 0,\n        \"measured_process_overhead_allowance\": 565325824,\n        \"gpuactive_shadow_bound\": 4294967296,\n        \"capacity_backing_metadata_staging\": 3587463680,\n        \"new_observed_peak_increment\": 1236992\n      },\n      \"host_required_available_bytes\": 98989727744,\n      \"host_reserve_bytes\": 8589934592,\n      \"kv_dtype\": \"BF16\",\n      \"large_pinning_cpu_test_allowed\": false,\n      \"schema\": \"own-runtime.packet58u.memory.v1\",\n      \"memory_view\": \"tile16\",\n      \"window\": \"WSCREEN\",\n      \"whole_host_required\": true,\n      \"host_bound_bytes\": 90399793152,\n      \"derivation\": {\n        \"empirical_core_peak_bytes\": 49193037824,\n        \"extra_margin_bytes\": 4294967296,\n        \"file_allowance_bytes\": 33323087360,\n        \"full_model_windows\": 6,\n        \"host_bound_bytes\": 86811092480,\n        \"host_required_available_bytes\": 95401027072,\n        \"measured_normalized_peak_bytes\": 82516125184,\n        \"measured_view\": \"tile16\",\n        \"resident_device_measured\": false,\n        \"resident_lookup_bytes\": 0,\n        \"shadow_bound_bytes\": 4294967296\n      },\n      \"source_seal_sha256\": \"d8606261d0b267ff108c5a32db3b635dd76c01b2419f8765fdff7777cf20f39f\",\n      \"driver_allowance_bytes\": 536870912,\n      \"async_device_staging_bytes\": 1179648\n    }\n  },\n  \"storage_admission\": {\n    \"synthetic\": true,\n    \"root_free_bytes\": 31256498176,\n    \"root_stop_floor_bytes\": 30000000000\n  },\n  \"systemd_cgroup\": \"0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-A.service\\n\",\n  \"miss_path\": \"zero-copy\",\n  \"k1_refs\": [\n    {\n      \"path\": \"/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/K1a/window.json\",\n      \"sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\n      \"native_k1_sha256\": \"675cd13f4e6b1029b4751a3b6b57d1c7a9a815d42037db3ac208cf8b558f709b\"\n    },\n    {\n      \"path\": \"/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/K1b/window.json\",\n      \"sha256\": \"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\n      \"native_k1_sha256\": \"675cd13f4e6b1029b4751a3b6b57d1c7a9a815d42037db3ac208cf8b558f709b\"\n    }\n  ],\n  \"device_topology\": {\n    \"mask\": {\n      \"NEOReadDebugKeys\": \"1\",\n      \"FilterBdfPath\": \"0000:23:00.0\",\n      \"ZE_ENABLE_PCI_ID_DEVICE_ORDER\": \"1\",\n      \"ZE_AFFINITY_MASK\": \"0\",\n      \"ONEAPI_DEVICE_SELECTOR\": \"level_zero:0\"\n    },\n    \"native_indices\": [\n      0\n    ],\n    \"nodes\": [\n      {\n        \"pci\": \"0000:23:00.0\",\n        \"node\": \"/dev/dri/renderD130\",\n        \"path\": \"/dev/dri/by-path/pci-0000:23:00.0-render\",\n        \"driver\": \"xe\"\n      }\n    ],\n    \"device_nodes_opened\": false\n  },\n  \"native_environment\": {\n    \"LD_LIBRARY_PATH\": \"/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib\",\n    \"OMP_NUM_THREADS\": \"2\",\n    \"PATH\": \"/usr/bin:/bin\",\n    \"NEOReadDebugKeys\": \"1\",\n    \"FilterBdfPath\": \"0000:23:00.0\",\n    \"ZE_ENABLE_PCI_ID_DEVICE_ORDER\": \"1\",\n    \"ZE_AFFINITY_MASK\": \"0\",\n    \"ONEAPI_DEVICE_SELECTOR\": \"level_zero:0\",\n    \"HOME\": \"/tmp/packet58ab-arguments-pjst8gn8/packet/evidence/combined/WSCREEN/native-home\"\n  },\n  \"stop_reasons\": [\n    \"host admission refused: available 71104147456, required 98989727744, shortage 27885580288; no pin or model load\"\n  ],\n  \"lane_admission\": {\n    \"synthetic\": true,\n    \"scope\": \"whole-host\"\n  },\n  \"memory_fence\": {\n    \"synthetic\": true\n  },\n  \"clients\": {\n    \"synthetic\": true\n  },\n  \"ldd\": {\n    \"intercepted\": true\n  }\n}\n",
+  "child_still_running": false
+}
+

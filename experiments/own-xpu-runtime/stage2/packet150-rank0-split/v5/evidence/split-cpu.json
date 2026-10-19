@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "full_shape_read": false,
+  "runs": [
+    {
+      "mode": "off",
+      "repeat": 1,
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "tokens": 7,
+        "all_model_bytes_equal": true,
+        "poison_restore": true
+      },
+      "log_sha256": "089e6617f06b1aed56fe13eb16d015c240530819c2086ddf438cdd1c81d8a10c"
+    },
+    {
+      "mode": "off",
+      "repeat": 2,
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "tokens": 7,
+        "all_model_bytes_equal": true,
+        "poison_restore": true
+      },
+      "log_sha256": "089e6617f06b1aed56fe13eb16d015c240530819c2086ddf438cdd1c81d8a10c"
+    },
+    {
+      "mode": "split",
+      "repeat": 1,
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "tokens": 7,
+        "all_model_bytes_equal": true,
+        "poison_restore": true
+      },
+      "log_sha256": "f8290b097b4de746ad089d8e7b09f3dcc39301a85f258f528346c3cb430796cf"
+    },
+    {
+      "mode": "split",
+      "repeat": 2,
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "tokens": 7,
+        "all_model_bytes_equal": true,
+        "poison_restore": true
+      },
+      "log_sha256": "f8290b097b4de746ad089d8e7b09f3dcc39301a85f258f528346c3cb430796cf"
+    }
+  ],
+  "tests": [
+    "test_analyze.py",
+    "test_timing_report.py"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/split_cpu.py": "f32c4b89bc06e2258f2827ed93a13870e28a12f9bc9d5f92a0b9a3db3634eced",
+    "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/native/split_bytes.cpp": "6516c7f30c3b0e83056766d426736d0c70b0c273e7da2f06fa5a0ae16fda9b7a",
+    "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/native/split_timing.hpp": "2f194dffb76fba1285950ff96c228dd615bf7f09bbc81589a85a84c08543f559",
+    "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/analyze.py": "0bb4af604f47d0d89b037424ee2f0bcf37e1180936f5f1fa244da3fb4266481a",
+    "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/test_analyze.py": "c39833e1126bf092e2c9754ce44b58ad42fa9c6c13a260b01703aeca968eff92",
+    "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/test_timing_report.py": "aeb03d646df8a898c2e19a3ad5b0b6b5fa9102a2e24fe70d1dc7ddc42766fed9",
+    "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/bracket.py": "defe8d2fa008dc02f7b22036d653fec10435db576ee7ce5df34893551bcc97b1"
+  },
+  "suffix_device_equality_pending": true,
+  "peak_rss_kib": 757408
+}

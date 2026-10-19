@@ -7,7 +7,7 @@ _measured=importlib.util.module_from_spec(_spec);_spec.loader.exec_module(_measu
 ADMISSION=json.loads((Path(__file__).parent/'admission.json').read_text())['admission']
 CACHE_BYTES=ADMISSION['cache_bytes']
 PUBLICATION_DEVICE_BYTES=1179648
-EXTRA_HOST_BYTES=32*1024**2+PUBLICATION_DEVICE_BYTES+ADMISSION['extra_cache_bytes']
+EXTRA_HOST_BYTES=32*1024**2+PUBLICATION_DEVICE_BYTES+ADMISSION['extra_cache_bytes']+524288
 
 def window_plan(window,observation=None):
     budget=_measured.window_plan(window,view='tile16')

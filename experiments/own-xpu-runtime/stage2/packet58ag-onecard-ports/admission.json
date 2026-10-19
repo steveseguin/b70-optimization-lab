@@ -10,8 +10,9 @@
       "target_nonexpert": 5815529984,
       "target_recurrent": 59019280,
       "transfer_bound": 268435456,
-      "workspace_bound": 1073741824,
-      "async_publication_staging": 1179648
+      "workspace_bound": 1073479680,
+      "async_publication_staging": 1179648,
+      "exact_half_decode_table": 262144
     },
     "cache_bytes": 21552729600,
     "extra_cache_bytes": 3552729600,
@@ -24,10 +25,10 @@
     "measured_host_peak_bytes": 82517362176,
     "host_margin_bytes": 4294967296,
     "host_reserve_bytes": 8589934592,
-    "host_required_available_bytes": 98989727744,
-    "host_bound_bytes": 90399793152,
+    "host_required_available_bytes": 98990252032,
+    "host_bound_bytes": 90400317440,
     "historical_available_floor_bytes": 119233388544,
-    "historical_host_margin_bytes": 20243660800,
+    "historical_host_margin_bytes": 20243136512,
     "shadow_stop_bytes": 4294967296,
     "windows": [
       {
@@ -113,7 +114,13 @@
       }
     ],
     "transient_policy": "Retain all original 1 GiB workspace, 1 GiB transaction, 256 MiB transfer, full 4K BF16 KV, double pointer tables; add async publication buffer. Fills write inside the one arena, never allocate a second arena.",
-    "live_admission_required": true
+    "live_admission_required": true,
+    "half_decode_accounting": {
+      "device_bytes": 262144,
+      "charged_from_existing_workspace_allowance": true,
+      "workspace_allowance_total_unchanged": 1073741824,
+      "extra_host_shadow_and_transient_bytes": 524288
+    }
   },
   "replay": {
     "source_bindings": {
@@ -357,7 +364,7 @@
   },
   "proceed": true,
   "sources": {
-    "experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion/lineage/58xb-source-snapshot.tar.gz": "8a41bf40e256ae0b5bac7057971cec02a509d465647e8b630ae1f35b1bc68ac5"
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/lineage/58xb-source-snapshot.tar.gz": "8a41bf40e256ae0b5bac7057971cec02a509d465647e8b630ae1f35b1bc68ac5"
   },
   "retained_evidence": {
     "original_archive_member": "history/admission.json",

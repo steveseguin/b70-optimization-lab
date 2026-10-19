@@ -78,7 +78,7 @@ def probe(name, miss, candidate, old_gate=False):
     # source identity in the runtime seal. Never execute the built command.
     sys.path.insert(0,str(LANEQUEUE.parent))
     try:
-        actual = D.module('packet58ab_actual_coordinator', LANEQUEUE)
+        actual = D.module('p58ag_actual_coordinator', LANEQUEUE)
     finally:
         sys.path.pop(0)
     assert actual.command(job, '/tmp/packet58x-review.json', '/tmp/packet58x-exit.json', library) == L.command(
@@ -105,7 +105,7 @@ def probe(name, miss, candidate, old_gate=False):
     assert len(native_hashes)==2
     model = not name.startswith('K1')
     mode = name if model else 'K1'
-    with tempfile.TemporaryDirectory(prefix='packet58ab-arguments-') as directory:
+    with tempfile.TemporaryDirectory(prefix='packet58ag-arguments-') as directory:
         tmp = Path(directory)
         sandbox(tmp)
         packet = tmp/'packet'; packet.mkdir(); (packet/'evidence').mkdir()

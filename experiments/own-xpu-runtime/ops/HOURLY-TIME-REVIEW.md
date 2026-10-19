@@ -76,6 +76,7 @@ Every **READY-FOR-DEVICE** needs both gates, with retained CPU receipts:
    operational state and outputs in temporary paths, away from live queues.
 
 New packets import `ops/launch_env.py` or vendor it with `entry_sandbox.py`.
+New packet briefs must declare `plan.entry_rehearsal.prepare_probe`: a CPU host build with device preparation defines, the real rank argv through first decode, pinned binary/inputs and a completion marker; rehearse storage floors and wall deadlines in both modes (opsreview7).
 It preserves the recorded working oneAPI path, including `umf` and `tcm`;
 existing sealed packets stay frozen. The rehearsal reads the exact lanequeue
 environment and also tests an explicit packet `--library-path` override.

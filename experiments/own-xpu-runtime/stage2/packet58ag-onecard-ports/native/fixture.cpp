@@ -2,6 +2,7 @@
 #define OWN_RT_HOST_ONLY
 #endif
 #include "p60_math.hpp"
+#include "p73_hc.hpp"
 #include <fstream>
 #include <random>
 #include <iostream>
@@ -48,7 +49,7 @@ int main(int argc,char**argv){try{
  if(argc!=2)throw std::runtime_error("output directory required");std::filesystem::create_directories(argv[1]);
  std::ofstream expected(std::filesystem::path(argv[1])/"expected.bin",std::ios::binary),actual(std::filesystem::path(argv[1])/"actual.bin",std::ios::binary);
  unsigned cases=0;
- for(unsigned side=0;side<2;++side)for(unsigned scenario=0;scenario<9;++scenario){
+ for(unsigned wide=0;wide<2;++wide)for(unsigned side=0;side<2;++side)for(unsigned scenario=0;scenario<9;++scenario){
   Data a;a.init(7+side*101);a.position=scenario==1?4095:127;
   if(scenario==2){a.x[0]=0x7fc1;a.x[2560]=0xffc1;}
   if(scenario==3){a.x[0]=0x7f80;a.x[2560]=0xff80;}
@@ -57,7 +58,7 @@ int main(int argc,char**argv){try{
   if(scenario==6)a.active=0;
   if(scenario==7)a.position=4096;
   if(scenario==8){a.gain[3]=iq3::bits_float(0x7fc12345);float inf=iq3::bits_float(0x7f800000);std::memcpy(a.iw.data(),&inf,4);}
-  Data b=a;reference(a.bound());host_norm(b.bound());host_low_inject(b.bound());host_gate_mix(b.bound());
+  Data b=a;reference(a.bound());host_norm(b.bound());host_low_inject(b.bound());if(wide)p73hc::host(b.bound());else host_gate_mix(b.bound());
   a.write(expected);b.write(actual);++cases;
  }
  expected.close();actual.close();if(!expected||!actual)throw std::runtime_error("fixture write failed");

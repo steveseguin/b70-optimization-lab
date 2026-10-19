@@ -1,3 +1,4 @@
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/ordered_retirement.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/async_backend.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
 #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/owner.cpp"
@@ -39,7 +40,7 @@ static int event_card(Event e) {
   return slot.queue;
 }
 struct Bound { std::vector<Allocation> ids; std::vector<void*> pointers; int queue; };
-struct FastOwner { std::unordered_multimap<size_t,Bound> bindings; CopyAudit copies; };
+struct FastOwner { bool ordered_retirement=false; std::unordered_multimap<size_t,Bound> bindings; CopyAudit copies; };
 static std::map<const Device*,FastOwner> fast_owners;
 static std::map<const Device*,Receipt> retained_receipts;
 static size_t binding_hash(std::span<const Allocation> ids) {
@@ -57,6 +58,11 @@ void assert_local_dependencies(std::span<const Event> deps,int queue) {
 }
 }
 
+void set_ordered_retirement(Device& d,bool enabled) {
+  if(d.in_flight())throw std::logic_error("retirement switch requires a quiescent owner");
+  fast_owners.at(&d).ordered_retirement=enabled;
+}
+bool ordered_retirement(const Device& d){return fast_owners.at(&d).ordered_retirement;}
 CopyAudit copy_audit(const Device& d) {return fast_owners.at(&d).copies;}
 std::uint64_t next_handle() {static std::atomic<std::uint64_t> n{1}; return n.fetch_add(1);}
 std::string quote(const std::string& value) {

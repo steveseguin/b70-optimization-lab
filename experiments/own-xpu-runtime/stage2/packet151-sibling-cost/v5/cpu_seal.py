@@ -1,0 +1,43 @@
+import freeze_safe
+freeze_safe.install()
+"""Packet151 source/build admission; device quality and exchange cost stay pending."""
+import argparse,json,subprocess,sys
+from pathlib import Path
+from p151_v5_build_engine import P,LOCAL,ROOT,sha,save
+GATES=('build','pair-cpu','preparation','analysis','sibling-state','safety','exec-limits','admission','freeze-safe','launch-env')
+def check_sources(rows):
+ for name,digest in rows.items():
+  assert (ROOT/name).is_file() and sha(ROOT/name)==digest,'source changed: '+name
+
+def seal():
+ rows={n:json.loads((P/'evidence'/(n+'.json')).read_text()) for n in GATES}
+ for name,row in rows.items():
+  assert row['passed'] and row['device_executed'] is False,name
+  if 'sources' in row:check_sources(row['sources'])
+ check_sources(rows['build']['artifacts'])
+ paths={LOCAL/'analyze.py',LOCAL/'test_analysis.py',LOCAL/'pair_cpu.py',LOCAL/'batch_fixture.cpp'}|set(P.glob('*.py'))|set(P.glob('native/*'))|set(P.glob('native-src/*'))|set(P.glob('configs/*.json'))|set((LOCAL/'proposals').glob('*.txt'))
+ paths.update(P/'lineage'/mode/n for mode in ('off','sibling') for n in ('selection.json','dispatch-speed6.json','memory-plan.json'))
+ paths.update(LOCAL/n for n in ('shared_oracle.py','oracle-binding.json','storage.py','kernel_guard.hpp','chain-registration.json'))
+ for folder in (LOCAL/'native-base',LOCAL/'lineage-inputs/vendor/repo'):
+  paths.update(f for f in folder.rglob('*') if f.is_file() and not f.is_symlink() and 'build' not in f.relative_to(folder).parts)
+ # Evidence root paths are historical regression data, not external dependencies.
+ paths.update(P/'evidence'/(n+'.json') for n in GATES if n!='retained-report-regression')
+ paths.update((LOCAL/'ops').glob('*.py'));paths.add(LOCAL/'ops/PROVENANCE.md')
+ paths.add(P/'smoke-precondition.json')
+ paths.add(LOCAL/'lineage-inputs/p151e-before/cpu-seal.json')
+ sources={str(f.relative_to(ROOT)):sha(f) for f in sorted(paths)}
+ sources.update(rows['build']['sources']);sources.update(rows['build']['artifacts'])
+ freeze_safe.run([sys.executable,'-B',str(LOCAL/'shared_oracle.py'),'--require-complete'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,check=True,timeout=180)
+ row=dict(schema='packet151.cpu-composition.v1',passed=True,device_executed=False,device_quality_pending=True,mechanism_scope_complete=False,upper_bound=True,measurement_scope='upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial)',arithmetic='iq3-p49-split32-v1',sources=sources,variants=['off','sibling'],gates=list(GATES),binary_sha256=sha(P/'build/device/own-rt-iq3'))
+ save(P/'cpu-seal.json',row)
+ for mode in ('off','sibling'):save(P/'lineage'/mode/'screen-seal.json',row)
+ save(P/'placement-validation/wrapper-seal.json',row)
+ return verify()
+def verify():
+ row=json.loads((P/'cpu-seal.json').read_text());assert row['passed'] and row['device_executed'] is False
+ check_sources(row['sources'])
+ for mode in row['variants']:assert json.loads((P/'lineage'/mode/'screen-seal.json').read_text())==row
+ assert json.loads((P/'placement-validation/wrapper-seal.json').read_text())==row
+ return row
+if __name__=='__main__':
+ ap=argparse.ArgumentParser();ap.add_argument('--seal',action='store_true');a=ap.parse_args();seal() if a.seal else verify();print('CPU source/build seal PASS; device quality pending')

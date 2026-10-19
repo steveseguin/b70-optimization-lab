@@ -1,0 +1,26 @@
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+state-GNU-compile PASS
+state-GNU-link PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/state_gate.py", line 33, in <module>
+    if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                                         ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/state_gate.py", line 26, in main
+    with log.open('w') as stream:r=subprocess.run([str(binary),str(selection),sha(selection),str(dest),mode],env=env,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=900)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2141, in _communicate
+    self.wait(timeout=self._remaining_time(endtime))
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/build/state/fixture-GNU', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/build/state/production.json', 'ef253712e45ce4a3d030aa9d4c611a56ca6d73db12bfca2cd272ace966075a3c', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/build/state/GNU-1-production', 'production']' timed out after 899.9999910029874 seconds

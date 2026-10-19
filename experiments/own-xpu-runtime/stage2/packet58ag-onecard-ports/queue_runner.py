@@ -15,7 +15,7 @@ P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('p60fusion','p60fusion'),('smoke','smoke'))
-ROOT = P / 'evidence/card0-hcfusion-a'
+ROOT = P / 'evidence/card0-ports-a'
 
 
 def commands(output, card, review, library, view='p60fusion', maintenance=DEFAULT_MAINTENANCE):

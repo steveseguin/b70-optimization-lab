@@ -29,9 +29,9 @@ def main():
                 rows.append(dict(view=view,miss_path=miss,passed=True,actual_native_argv=actual,cpu_parser_argv=command,
                     changes='host-only parse switch; device authorization removed; nice0 declaration changed to actual nice19; no Weights/Engine constructed'))
                 # Same real parser refuses unknown flags before any allocation.
-                negative=subprocess.run([*command,'--other-fusion','fused'],stdin=subprocess.DEVNULL,capture_output=True,text=True,
+                negative=subprocess.run([*command,'--other-fusion','unknown'],stdin=subprocess.DEVNULL,capture_output=True,text=True,
                     env=dict(PATH='/usr/bin:/bin',OMP_NUM_THREADS='2'),timeout=60)
-                assert negative.returncode!=0 and 'unknown option --other-fusion' in negative.stderr
+                assert negative.returncode!=0 and 'fusion dimension' in negative.stderr
                 negative_rows.append(dict(view=view,miss_path=miss,case='unsupported-fusion',passed=True))
                 original=(out/'bracket-inputs.tsv').read_text()
                 lines=original.splitlines()

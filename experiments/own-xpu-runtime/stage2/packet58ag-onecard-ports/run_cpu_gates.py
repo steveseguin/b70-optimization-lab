@@ -30,7 +30,7 @@ def main():
         proof='reaped driver and observed native descendants; complete one-owner native drain; clean supervisor and journal; same admission.devices_drained path; experiment failure unchanged'))
     import memory_plan as M
     budget=M.window_plan('WSCREEN');required=budget['host_required_available_bytes']
-    assert required==98_989_727_744 and budget['device_owned_bound_bytes']==29_963_128_848
+    assert required==98_990_252_032 and budget['device_owned_bound_bytes']==29_963_128_848
     assert M.admit(dict(MemAvailable=required),budget)['passed']
     census=json.loads((P/'evidence/fullshape-census.json').read_text())
     rows=[r for r in census['allocations'] if r['live']]
@@ -38,6 +38,8 @@ def main():
     assert sum(r['bytes'] for r in rows if r['category']=='KV')==116391936
     assert census['totals']['device']==sum(r['bytes'] for r in rows if r['memory']=='device')
     assert census['totals']['device']<=budget['device_owned_bound_bytes']
+    assert sum(r['bytes'] for r in rows if r['label']=='card0:exact-half-decode-table')==262144
+    assert budget['device_categories']['workspace_bound']+budget['device_categories']['exact_half_decode_table']==1024**3
     assert budget['device_owned_bound_bytes']+budget['driver_allowance_bytes']+budget['device_reserve_bytes']<=32_000_000_000
     save(P/'evidence/memory-budget.json',dict(passed=True,device_executed=False,budget=budget,
         fullshape_device_bytes=census['totals']['device'],fullshape_census_sha256=sha(P/'evidence/fullshape-census.json'),

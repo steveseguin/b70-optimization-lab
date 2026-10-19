@@ -1,0 +1,30 @@
+{
+  "schema": "packet156.host-suffix-slack-bound.v1",
+  "passed": true,
+  "kind": "smoke",
+  "complete_original_analyzer_replay": true,
+  "threshold_ms_per_hit": 0.423078,
+  "scope": "host insertion after completed prefix drain; not hardware prefix completion",
+  "bound": "credit every enclosing window, including misses, boundary windows and required pack/export, with zero adoption/dispatch cost",
+  "device_speed_measurement": false,
+  "candidate_implemented": false,
+  "branch_service_measured_on_bundle8": false,
+  "below_threshold": true,
+  "decision": "close this host suffix-slack arm before implementation",
+  "analyzer_sha256": "dc98e4f8e85429c7fd8d610e9afc53782fc3e8e7ca18df95f081eabe1dde4f23",
+  "method_sha256": "34b664e37a463fcb97ca5c774ffd4579b8a64031a69949242b42b9007171ffe2",
+  "peak_rss_kib": 67052
+}
+[
+  {
+    "index": 0,
+    "choice": "candidate",
+    "first_request_analyzer_passed": true,
+    "median_enclosing_ms_per_interval": 0.04999403863043953,
+    "max_all_window_credit_per_hit_ms": 0.11995825498627546,
+    "observed_class_balanced_fixed64_rate": 58.25456017482055,
+    "counterfactual_all_window_removed_class_balanced_rate": 58.43846621631313,
+    "counterfactual_gain_ceiling_percent": 0.3156938116787522,
+    "all_prompts_below_hit_threshold": true
+  }
+]

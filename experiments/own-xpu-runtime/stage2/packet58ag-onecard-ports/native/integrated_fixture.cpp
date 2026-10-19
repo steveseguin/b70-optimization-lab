@@ -10,11 +10,13 @@ int main(int argc,char**argv){try{
  require(argc==4,"output directory, retained metadata and dispatch");fs::create_directories(argv[1]);
  std::ofstream expected(fs::path(argv[1])/"expected.bin",std::ios::binary),actual(fs::path(argv[1])/"actual.bin",std::ios::binary);
  unsigned cases=0,commands_count=0;
- for(unsigned row=0;row<3;++row){
+ for(unsigned wide=0;wide<2;++wide)for(unsigned row=0;row<3;++row){
   Options options;options.mini=true;Weights weights(options);
-  options.hc="p60fusion";options.mini=false;options.memory="resident";options.nongemv="parallel";options.timing="token";options.seconds=120;options.output=argv[1];
+  options.hc="p60fusion";options.hc_geometry=wide?"hc-wide":"production";options.mini=false;options.memory="resident";options.nongemv="parallel";options.timing="token";options.seconds=120;options.output=argv[1];
   flash::Plan plan;plan.g.context=4096;Engine engine(weights,options,plan);
   engine.devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
+  engine.a.retirement=wide?"ordered-foreground":"production";
+  ownrt::set_ordered_retirement(engine.dev(0),wide);
   engine.owned_bytes={0};engine.buffers.resize(1);engine.weights.resize(1);
   engine.fp32_sources={0};engine.fp32_extents={0};
   std::vector<Allocation> allocations;
@@ -66,8 +68,9 @@ int main(int argc,char**argv){try{
   require(refused&&*error==37,"request reset erased sticky error");*error=0;
   engine.poisoned=true;refused=false;try{p58_reset_request(engine,fs::path(argv[1])/"poison-reset");}catch(const std::exception&){refused=true;}
   require(refused&&engine.poisoned,"request reset erased poisoned owner");engine.poisoned=false;
-  p58_reset_request(engine,fs::path(argv[1])/("reset-"+std::to_string(row)));
+  p58_reset_request(engine,fs::path(argv[1])/("reset-"+std::to_string(wide)+"-"+std::to_string(row)));
   require(engine.a.hc=="p60fusion"&&engine.bracket_arena_hash()==identity&&engine.fp32_sources[0]==0,"reset changed HC/allocations or retained FP32 cache");
+  require(ownrt::ordered_retirement(engine.dev(0))==bool(wide),"reset changed retirement selection");
   engine.put(0,"streams",candidate.x.data(),K*2);
   for(const auto&command:last_commands)engine.finish(0,engine.dev(0).issue(command));engine.drain();
   for(auto pair:{std::pair{"norm",&baseline.norm},{"low",&baseline.low},{"act",&baseline.act},{"gate",&baseline.gate},{"mix",&baseline.mix},{"inject",&baseline.inject}}) {

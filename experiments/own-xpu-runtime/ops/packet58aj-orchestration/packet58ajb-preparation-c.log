@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/preparation_gate.py", line 48, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                 ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/preparation_gate.py", line 38, in main
+    assert cp.returncode==0,cp.stderr[-2500:]
+           ^^^^^^^^^^^^^^^^
+AssertionError: blk.0.attention: p39 read/write alias
+

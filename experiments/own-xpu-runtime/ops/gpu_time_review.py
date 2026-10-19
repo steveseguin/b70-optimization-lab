@@ -16,7 +16,9 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from compile_turn import process_table, device_descendants
@@ -32,6 +34,39 @@ OPS = Path(__file__).resolve().parent
 CHAIN = re.compile(r'^(?:packet|p)\d+.*-chain(?:[.-]|$)')
 RESULTS = Path('/home/steve/own-xpu-runtime-results')
 PROC = Path('/proc')
+
+
+def disk_line(notes):
+    """Read live queue declarations only; never run packet plans or inspect models."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lane-queue'))
+    try:
+        from lanequeue import storage_requirement
+    finally:
+        sys.path.pop(0)
+    largest = None
+    unknown = 0
+    for lane in ('A', 'B'):
+        directory = OPS / 'lane-queue'
+        active_job = read_json(directory / f'inflight-{lane}.json').get('job', {}).get('name')
+        path = directory / f'queue-{lane}.txt'
+        if not path.exists():
+            continue
+        for job in json_lines(path, notes):
+            if job.get('name') == active_job:
+                continue
+            try:
+                reservation = storage_requirement(job)
+                size = reservation['planned_write_bytes']
+                if largest is None or size > largest[0]:
+                    largest = (size, lane, job.get('name', 'unnamed'), reservation['reservation_source'])
+            except (OSError, ValueError, TypeError, KeyError, IndexError, SyntaxError):
+                unknown += 1
+    free = shutil.disk_usage('/').free
+    pending = (f'{largest[0]} bytes ({largest[0]/1e9:.3f} GB; lane {largest[1]}, '
+               f'{largest[2]}; {largest[3]})') if largest else 'none known'
+    return (f'Disk: root free now {free} bytes ({free/1e9:.3f} GB); '
+            f'largest pending reservation: {pending}' +
+            (f'; {unknown} queued reservation(s) unreadable' if unknown else ''))
 
 
 def timestamp(value):
@@ -753,6 +788,7 @@ def main():
     busy_s, gaps = accounting(spans + holds, begin, now)
     fmt = lambda t: t.strftime('%H:%M')
     print(f'Window: last {a.hours:g} h ({fmt(begin)}-{fmt(now)} UTC)')
+    print(disk_line(notes))
     strict_s, _ = accounting([(s, e) for s, e, u, _ in intervals
                               if not WAITERS.match(u) and '-model-' not in u] + holds, begin, now)
     print(f'Device units in flight (union, excl. pure waiters): {busy_s/3600:.2f} h = {100*busy_s/(a.hours*3600):.0f}% of wall time')

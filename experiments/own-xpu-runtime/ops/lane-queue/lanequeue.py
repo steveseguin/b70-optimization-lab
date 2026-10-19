@@ -37,6 +37,8 @@ DRAIN_WAIT_LIMIT = 120.0
 LIVE_WAIT_LIMIT = 1800.0
 HOST_WAIT_LIMIT = 1200.0
 HOST_HEADROOM = 1024 ** 3
+STORAGE_FLOOR = 25_000_000_000  # Decimal GB, matching the packet screens.
+DEFAULT_VIEW_WRITES = 1_100_000_000
 
 
 def require(ok, message):
@@ -46,6 +48,15 @@ def require(ok, message):
 
 class SafetyStop(ValueError):
     """A global admission failure must never become a skippable job refusal."""
+
+
+class StorageRefusal(ValueError):
+    def __init__(self, receipt):
+        self.receipt = receipt
+        super().__init__(f"free-storage floor: free_bytes={receipt['root_free_bytes']} "
+                         f"required_bytes={receipt['required_free_bytes']} "
+                         f"planned_write_bytes={receipt['planned_write_bytes']} "
+                         f"floor_bytes={STORAGE_FLOOR}")
 
 
 def utc():
@@ -197,7 +208,10 @@ def validate_identity(job, lane):
 def validate(job, lane):
     validate_identity(job, lane)
     require(set(job) <= {'name', 'argv', 'script', 'env_extra', 'review', 'lane',
-                         'depends_on', 'plan', 'admission'}, 'unknown job field')
+                         'depends_on', 'plan', 'admission', 'planned_write_bytes'}, 'unknown job field')
+    if 'planned_write_bytes' in job:
+        require(type(job['planned_write_bytes']) is int and job['planned_write_bytes'] >= 0,
+                'planned_write_bytes must be a nonnegative integer')
     for key in ('plan', 'admission'):
         require(key not in job or isinstance(job[key], dict), key + ' must be an object')
     require(('argv' in job) != ('script' in job), 'choose argv or script')
@@ -400,6 +414,15 @@ class Backend:
             return dict(json.loads(receipt.read_text()), source='ExecStopPost')
         return dict(Result='unavailable', ExecMainStatus=None, source='missing')
 
+    def failure_text(self, name, started, ended, log):
+        # systemd-run's log contains manager status, while the child's stderr
+        # is in the journal. Bound the read to this unit's current attempt.
+        cp = subprocess.run(['/usr/bin/journalctl', '--user', '-u', 'screen-' + name + '.service',
+                             '--since', started, '--until', ended, '--no-pager', '-o', 'cat'],
+                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=15)
+        require(cp.returncode == 0 and not cp.stderr.strip(), 'storage refusal journal unavailable')
+        return log.read_text() + '\n' + cp.stdout
+
 
 def command(job, review, receipt, ldp):
     require(re.fullmatch(r'[/A-Za-z0-9_.-]+', str(receipt)), 'receipt path must use plain path characters')
@@ -443,6 +466,90 @@ def option(argv, name):
         if arg.startswith(name + '='):
             return arg.split('=', 1)[1]
     return None
+
+
+def storage_requirement(job, plan=None):
+    """Read declarations without importing packet code or reading models.
+
+    Prefer the proposal, then the packet's CPU plan reservation. For offline
+    review, recover literal WRITES and view counts only from hash-bound packet
+    files. Otherwise reserve 1.1 GB per view: five for --kind bracket, one for
+    other jobs, or the explicit --views count. These are conservative budgets,
+    not measured writes. Invalid declarations refuse instead of becoming zero.
+    """
+    for source, row in (('proposal', job), ('proposal.plan', job.get('plan', {})),
+                        ('proposal.admission', job.get('admission', {})), ('packet plan', plan or {})):
+        if isinstance(row, dict) and 'planned_write_bytes' in row:
+            value = row['planned_write_bytes']
+            require(type(value) is int and value >= 0, 'invalid planned_write_bytes in ' + source)
+            return dict(planned_write_bytes=value, reservation_source=source)
+    argv = job.get('argv', [])
+    kind = option(argv, '--kind')
+    views = 5 if kind == 'bracket' or option(argv, '--bracket') else 1
+    declared_views = option(argv, '--views')
+    if declared_views is not None:
+        require(declared_views.isdecimal() and int(declared_views) > 0, 'invalid --views count')
+        views = int(declared_views)
+    per_view = DEFAULT_VIEW_WRITES
+    source = 'default: 1.1 GB per view'
+    packet = job_script(job).parent
+    seal_path = packet / 'cpu-seal.json'
+    if seal_path.is_file():
+        seal = json.loads(seal_path.read_text())
+        pins = seal.get('sources', {})
+
+        def sealed_bytes(path):
+            if not path.is_file():
+                return None
+            key = str(path.resolve().relative_to(ROOT.resolve())) if path.resolve().is_relative_to(ROOT.resolve()) else str(path)
+            if key not in pins:
+                return None
+            raw = path.read_bytes()
+            require(hashlib.sha256(raw).hexdigest() == pins[key], 'storage reservation pin changed: ' + str(path))
+            return raw
+
+        config = option(argv, '--bracket')
+        variant = option(argv, '--variant')
+        if config:
+            config = resolve(config)
+        elif variant and kind:
+            require(re.fullmatch(r'[A-Za-z0-9_.+-]+', variant) and '/' not in kind,
+                    'invalid storage config identity')
+            config = packet / 'configs' / (variant + '-' + kind + '.json')
+        if config:
+            raw = sealed_bytes(config)
+            if raw is not None:
+                config_views = json.loads(raw)['views']
+                require(isinstance(config_views, list) and config_views, 'invalid sealed view count')
+                views = len(config_views)
+        raw = sealed_bytes(packet / 'screen.py')
+        if raw is not None:
+            for node in ast.parse(raw).body:
+                if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'WRITES'
+                                                       for t in node.targets):
+                    # Select before literal_eval: another profile can use an
+                    # arithmetic expression. Never evaluate packet Python.
+                    require(isinstance(node.value, ast.Dict), 'invalid sealed WRITES table')
+                    profile = option(argv, '--profile') or 'tp2'
+                    selected = [v for k, v in zip(node.value.keys, node.value.values)
+                                if isinstance(k, ast.Constant) and k.value == profile]
+                    if selected and isinstance(selected[0], ast.Constant):
+                        value = ast.literal_eval(selected[0])
+                        require(type(value) is int and value >= 0, 'invalid sealed WRITES reservation')
+                        per_view, source = value, 'sealed screen WRITES x views'
+                    break
+    return dict(planned_write_bytes=per_view * views, reservation_source=source, views=views)
+
+
+def storage_admission(job, plan=None):
+    reservation = storage_requirement(job, plan)
+    free = shutil.disk_usage('/').free
+    required = STORAGE_FLOOR + reservation['planned_write_bytes']
+    row = dict(reservation, root_free_bytes=free, required_free_bytes=required,
+               free_floor_bytes=STORAGE_FLOOR, passed=free >= required)
+    if not row['passed']:
+        raise StorageRefusal(row)
+    return row
 
 
 def host_requirement(job, plan):
@@ -527,6 +634,50 @@ def predevice_evidence(job, observation):
     return dict(receipts=proof, receipt_sha256=hashes, observation=observation, teardown=str(teardown))
 
 
+def storage_refusal_evidence(job, observation, text):
+    """The screen can refuse storage before creating its window/output at all.
+
+    Allow the historical exited-process FD-read race only for this explicit
+    refusal. Any observed device, live child, conflicting receipt or global
+    fault still blocks continuation. Called after ordinary exit + postflight.
+    """
+    require(re.search(r'^(?:ValueError:|RuntimeError:|REFUSED:) .*free-storage floor',
+                      text, re.M | re.I), 'no explicit free-storage floor refusal')
+    require(isinstance(observation, dict) and observation.get('samples', 0) > 0
+            and observation.get('pids') and observation.get('device_fds') == []
+            and observation.get('live_pids') == [], 'storage refusal has device/live/unknown observations')
+    require(isinstance(observation.get('errors'), list) and all(
+            re.fullmatch(r'fd observation (?:unreadable|incomplete): \d+', error)
+            for error in observation['errors']), 'storage refusal observation errors are not FD exit races')
+    require(not os.path.lexists(COORD / f"active-lane-{job['lane']}.json"), 'lane marker remains')
+    require(not list((STAGE / 'screen/v3').glob('fault-*')), 'fault latch remains')
+    teardown = STAGE / 'screen/v3/teardown-state.json'
+    if os.path.lexists(teardown):
+        require(json.loads(teardown.read_text()).get('drained') is True, 'shared teardown undrained or unknown')
+    output = option(job.get('argv', []), '--output')
+    require(output, 'storage refusal needs explicit job --output')
+    output = resolve(output)
+    require(not output.is_symlink(), 'storage refusal output is a symlink')
+    hashes = {}
+    # A prior window, even below another view, disqualifies the whole job.
+    if output.exists():
+        require(output.is_dir(), 'storage refusal output is not a directory')
+        for path in output.rglob('*'):
+            require(not path.is_symlink(), 'storage refusal output contains a symlink')
+            if path.name not in ('window.json', 'queue.json', 'refusal.json') and 'refusal' not in path.name:
+                continue
+            raw = path.read_bytes()
+            row = json.loads(raw)
+            require(isinstance(row, dict) and row.get('device_executed') is False
+                    and row.get('child_still_running', False) is False
+                    and not any(row.get(k) for k in ('completed', 'device_complete', 'child_retained', 'passed')),
+                    'storage refusal receipt does not exclude device work: ' + str(path))
+            hashes[str(path)] = hashlib.sha256(raw).hexdigest()
+    return dict(reason='free-storage floor', device_executed=False, observation=observation,
+                output=str(output), receipt_sha256=hashes,
+                refusal_text=text, refusal_text_sha256=hashlib.sha256(text.encode()).hexdigest())
+
+
 def dependent_names(rows, refused):
     """Transitive explicit dependencies plus the packet's smoke prerequisite."""
     dropped = {refused['name']}
@@ -607,6 +758,7 @@ def plan_job(job, ldp, invoke=subprocess.run):
     if not supports:
         require(not jobs and not option(argv, '--seal'), 'cannot verify sealed job without --plan')
         return dict(name=job['name'], plan='unsupported; static argv/environment checks only',
+                    storage_admission=storage_admission(job),
                     host_required_available_bytes=host_requirement(job, {}))
     clean = []
     skip = False
@@ -641,6 +793,7 @@ def plan_job(job, ldp, invoke=subprocess.run):
                 'host admission plan is not valid JSON')
         metadata = {}
     return dict(name=job['name'], plan='passed', seal='checked by packet plan/wrapper',
+                storage_admission=storage_admission(job, metadata),
                 host_required_available_bytes=host_requirement(job, metadata))
 
 
@@ -872,9 +1025,10 @@ class Queue:
                                 or self.now() < drain_spacing_deadline()
                                 or (required and mem_available() < required + HOST_HEADROOM)):
                             continue
+                        storage = storage_admission(job, plan.get('storage_admission', {}))
                         start, started = self.now(), utc()
                         save(self.active, dict(job=job, start_utc=started, receipt=str(receipt), log=str(log),
-                                               review=review, faults_start=faults_start))
+                                               review=review, faults_start=faults_start, storage_admission=storage))
                 except SafetyStop:
                     raise
                 except Exception as exc:
@@ -916,6 +1070,19 @@ class Queue:
                         evidence['predevice_rejection'] = str(exc)
                 if rc != 0 and postflight_ok and outcome != 'REFUSED-PREDEVICE':
                     try:
+                        require(status['Result'] == 'exit-code' and str(status['ExecMainStatus']) == str(rc),
+                                'ordinary job exit status unavailable')
+                        text = self.backend.failure_text(job['name'], started, ended, log)
+                        proof = storage_refusal_evidence(job, self.backend.device_observation, text)
+                        refusal = self.directory / (run_id + '.storage-refusal.json')
+                        save(refusal, dict(job=job, start_utc=started, end_utc=ended,
+                                           outcome='REFUSED-PREDEVICE', **proof))
+                        evidence['predevice_evidence'] = dict(proof, receipt=str(refusal))
+                        outcome = 'REFUSED-PREDEVICE'
+                    except (ValueError, OSError, AttributeError, subprocess.SubprocessError) as exc:
+                        evidence['storage_refusal_rejection'] = str(exc)
+                if rc != 0 and postflight_ok and outcome != 'REFUSED-PREDEVICE':
+                    try:
                         evidence['report_failure_evidence'] = report_failure_evidence(job)
                         outcome = 'REPORT-FAILED'
                     except (ValueError, OSError) as exc:
@@ -923,6 +1090,7 @@ class Queue:
                 record = dict(rc=rc, **status, start_utc=started, end_utc=ended,
                               end_unix=end_unix, duration_seconds=duration, outcome=outcome,
                               log=str(log), receipt=str(receipt), review=review,
+                              storage_admission=storage,
                               faults_start=faults_start, faults_end=faults_end, **evidence)
                 save(self.active, dict(job=job, **record))
                 self.finish(job, record)
@@ -981,6 +1149,16 @@ def main():
                 row = dict(name=name, line=number, plan='FAILED', reason=str(exc))
                 if isinstance(exc, pin_guard.PinRefusal):
                     row['refusal_receipt'] = exc.receipt
+                if isinstance(exc, StorageRefusal):
+                    receipt = directory / (name + '-' + uuid.uuid4().hex + '.plan-storage-refusal.json')
+                    save(receipt, dict(job=job, utc=utc(), outcome='REFUSED-PREDEVICE',
+                                      device_executed=False, launch_attempted=False, phase='plan',
+                                      reason=str(exc), **exc.receipt))
+                    row.update(outcome='REFUSED-PREDEVICE', refusal_receipt=str(receipt))
+                    print(json.dumps(dict(event='REFUSED-PREDEVICE', name=name,
+                                          receipt=str(receipt), reason=str(exc))), flush=True)
+                    print(json.dumps(dict(event='ALERT', name=name, reason=str(exc) +
+                                          '; continuing plan of independent rows; no launch or retry')), flush=True)
                 failed = True
             print(json.dumps(row), flush=True)
         return int(failed)

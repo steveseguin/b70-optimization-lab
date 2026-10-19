@@ -48,6 +48,9 @@ static int postload_allocation_test(const fs::path& destination) {
   auto mock=std::make_unique<AllocationOnlyMock>();auto* observer=mock.get();
   engine.devices.push_back(std::make_unique<ownrt::Device>(std::move(mock)));
   engine.owned_bytes.resize(1);engine.weights.resize(1);engine.buffers.resize(1);
+  // initialize_cache now uploads the exhaustive half table through the same
+  // foreground staging slab used by the real initialized engine.
+  engine.slab={engine.allocate(0,"half-table-fixture-upload",262144,Category::pinned_slab,Lifetime::transfer,Memory::pinned)};
   // Model the already-loaded expert handles using exact metadata dimensions.
   // No payload file is opened. All logical sizes still go through Arena checks.
   for(const auto& [name,t]:weights.directory) {
@@ -77,8 +80,9 @@ static int postload_allocation_test(const fs::path& destination) {
   }
   require(rejected==2 && observer->allocation_calls==before,"invalid lifetime reached backend");
   engine.initialize_cache(); // Entire real post-weight-upload allocation path.
-  require(observer->allocation_calls-before==4,"post-load allocation sequence changed; audit gate");
-  require(observer->publication_copies==144 && engine.route_sources.size()==48,"incomplete cache setup");
+  require(observer->allocation_calls-before==5,"post-load allocation sequence changed; audit gate");
+  require(observer->publication_copies==145 && engine.route_sources.size()==48,"incomplete cache setup");
+  require(engine.dev(0).arena.row(engine.halfcache).bytes==262144,"exact half table extent");
   require(engine.expert_cache && engine.expert_cache->resident_bytes()==0,"initial LRU state");
   const auto& arena=engine.dev(0).arena;
   require(arena.row(engine.cache_arena).bytes==21552729600ull,"cache allocation extent");
@@ -92,6 +96,6 @@ static int postload_allocation_test(const fs::path& destination) {
   auto receipt=engine.dev(0).shutdown(std::chrono::seconds(5));
   require(receipt.safe_to_exit && receipt.live_bytes==0 && receipt.in_flight==0,"postload teardown");
   save(destination/"teardown.json",receipt.json());
-  save(destination/"result.json","{\"passed\":true,\"device_executed\":false,\"model_reads\":false,\"postload_allocations\":4,\"negative_cases\":2,\"expert_banks\":144,\"route_layers\":48,\"publication_copies\":144,\"backing_bytes\":"+std::to_string(backing)+"}\n");
+  save(destination/"result.json","{\"passed\":true,\"device_executed\":false,\"model_reads\":false,\"postload_allocations\":5,\"negative_cases\":2,\"expert_banks\":144,\"route_layers\":48,\"publication_copies\":145,\"backing_bytes\":"+std::to_string(backing)+"}\n");
   return 0;
 }

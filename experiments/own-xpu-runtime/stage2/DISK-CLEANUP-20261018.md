@@ -829,3 +829,317 @@ Whole-repository search diagnostics preserve 25 inaccessible old Qwen cache/STOP
 Full survey, reference/link/process checks, exact plans, pin snapshots, scripts and verification results are preserved in **`/mnt/raid-models/own-xpu-runtime-archive/disk8-20261018/audit.tar.gz`**, **13,315,636 bytes**, SHA-256 **`da3160c47f4548911b439b5249c3e9309f473aeabb0af31277439e99bd26fd6d`**. Every one of its **97 audit payload files**, plus the embedded manifest, was read and hash-verified. Audit originals remain on RAID.
 
 Closing reading at **2026-10-18T22:53:11.310036+00:00**: **29,396,131,840 bytes (29.396 GB)** available. Concurrent packet writes continued after the final archive checks; no further cleanup resumed. The additional read-only pairwise link census finished and agrees with the earlier 154 incoming-link matches; none intersects the removed paths. Its supplemental receipt is `disk8-20261018/late-check.json`, beside the unchanged sealed audit. All disk8 audit processes have finished.
+
+## disk9 — closed SCREEN bulk audit; no safe bulk remaining (2026-10-18)
+
+**The 34 GB target was not reached. No screen files were moved or removed.**
+Root started at **30,229,794,816 available bytes (30.230 GB)** and had
+**30,220,902,400 bytes (30.221 GB)** at **23:49:44 UTC**, leaving a
+**3,779,097,600-byte shortfall**. Concurrent work continued; this audit reclaimed
+zero bytes. No `ARCHIVED-disk9.json` marker was written because no screen was
+archived. The time box was not used to broaden the authorized scope.
+
+The requested evidence root is
+`experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/`. Its 428 entries
+are **118 directories and 310 nondirectory files**, not 428 screen folders.
+The directory inventory found **4,421,451,776 allocated bytes** matching
+`.bin`, `.log` or `.gz`, before safety exclusions. Only **25 directories**
+matched exact packet identities in `ops/screen-cleanup/closed.json`; their
+suffix-matched files total **186,159,104 allocated bytes**, even before the
+registry's view restrictions, pins and retained receipts are excluded.
+
+Decisions:
+
+- Most bulk belongs to packet identities absent from the closed/parked registry,
+  including 97b, 106b, 101, 104b, 82, 118, 103, 100, 111r, 131b, 136b and 91.
+  A numbered variant was not treated as its differently named parent packet.
+  Packet77 also lacks a registry closure. These folders stay.
+- `frozen_paths.py` completed with exit 0, no diagnostics and **56,234 paths**,
+  referencing **91 screen folders**. Entire pinned folders stay, including
+  packet93 screens. Packet136/124c orchestration and all `packet*-record-bundle`
+  metadata/source references were additionally searched, including the
+  bundle 7/8 screens p118, p124c, p131b and p136b.
+- Packet90 closes only its `hc-weightcache` view. Its other three directories
+  contain **138,399,744 allocated suffix-matched bytes** and remain live under
+  the registry's explicit E1/production exception.
+- Packet120's unfinished trailing control stays, as required by the disk7/8
+  decisions. Its suffix-matched files account for **36,429,824 allocated bytes**.
+- The remaining packet120/127 completed screens and packet90 H1 view contain
+  compressed `state-evidence.json.gz` receipts. The disk5–disk8 method explicitly
+  retains compressed JSON/JSONL, so `.gz` alone is not permission to remove them.
+- After those exclusions, the preliminary list held only 48 tiny log files
+  across packets92–95: **2,016 logical bytes / 131,072 allocated bytes**.
+  Packet93 is frozen. The other ten folders are still referenced by
+  `ops/packet103-orchestration/screens-current.json`: its `live_read.receipts`
+  retains hashes even though these candidates have `excluded` status. The brief
+  says to keep doubtful folders, so those logs stay too. This is a conservative
+  reference decision, not a claim that the frozen-path tool pins those logs.
+
+The audit includes exact screen inventories, per-folder decisions, the completed
+pin snapshot, the closed-registry snapshot, packet103/124c/136 readiness
+snapshots, reference searches and incoming-link checks. Hidden and ignored
+repository metadata/source files were searched; model/tensor contents were not
+read. The broader reference search returned exit 2 for **18 inaccessible old
+Qwen paths**, with no own-runtime access errors. The no-follow own-runtime and
+results-tree link census had no access errors; it also found packet75's alias
+to the shared screen tree. No inaccessible file is claimed inspected.
+
+Audit archive:
+`/mnt/raid-models/own-xpu-runtime-archive/disk9-20261018/audit.tar.gz`,
+**2,797,266 bytes**, SHA-256
+`3408d9c78dff7e23e53da5cb6b1b3c6e1942d467b673ffc4e5eed4db80419747`.
+All **19 audit files**, plus the embedded manifest, were verified from the
+archive; GNU tar independently matched the member set. Adjacent
+`audit.manifest.json`, `audit.tar.gz.sha256` and `audit-verification.json`
+record the checks. Audit originals remain on RAID. To inspect elsewhere,
+verify the archive hash, extract into scratch space, and verify each file
+against `manifest.json`; no screen restoration is needed.
+
+Host: `steve-b70s`. `git pull --rebase` refused unrelated dirty files; fetch
+confirmed `HEAD == origin/main == 1ac34bfa39f11a36a93ba1a727907bf0cbb6b411`.
+Disk/reference work ran at `nice -n 19 ionice -c3 taskset -c 8-15,24-31`;
+the pin/search/archive jobs used a 2 GiB virtual-memory cap. No sudo, service,
+GPU, kill, model/GGUF read, queue mutation, packet-tree mutation or host setting
+change occurred. Only this log and the `CURRENT.md` storage note are committed.
+
+## Coordinator follow-up (2026-10-19 ~00:00 UTC)
+
+disk9 left root at ~30.1 GB, below what packet150's lane-B bracket needs
+(`v5/screen.py`: free − 5 × 1.1 GB planned writes ≥ 25 GB, so ≥ ~30.5 GB).
+Outside the repo, the coordinator then:
+
+- archived `~/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B` and
+  `models--facebook--opt-125m` (unused since 2026-10-06) to
+  `/mnt/raid-models/own-xpu-runtime-archive/hf-hub-2026-10-18/hf-hub-qwen35-08b-opt125m.tar`
+  (2,021,857,280 bytes, `tar -df` verified before removal; restore notes in its README.txt);
+- removed ten **disabled** snap revisions (`snap remove --revision`; active revisions untouched);
+- deleted four superseded Codex app-server daemon releases (0.160.0, 0.160.1,
+  0.161.0, 0.162.0; current 0.163.0 and CLI-matching 0.162.1 kept; none open).
+
+Root free afterwards: 32,164,823,040 bytes. Concurrent repository pack writes
+(~1.4 GB at 23:57 UTC) absorbed most of the snap saving. No packet tree,
+evidence, model, GGUF or host setting was touched.
+
+## disk10 — closed packet compiler outputs to RAID (2026-10-19)
+
+**The 5 GB target was not reached. Safe candidates exhausted: 186 untracked
+compiler dumps in four closed packets reclaimed 27,103,232 allocated bytes
+(27.103 MB / 0.027 GB).** No protected binary, evidence folder, oracle result,
+receipt, seal, model or GGUF was removed. This is an archive of rebuildable
+compiler output, not a change to any runtime or measurement.
+
+The task started at 01:46 UTC on `steve-b70s`. Root initially had
+**30,139,265,024 available bytes (30.139 GB)**. Immediately around the packet
+removals at 02:04:50–02:04:51 UTC, availability rose from **29,444,632,576**
+to **29,471,735,808 bytes**, exactly the allocated bytes reclaimed. After
+verifying and removing this audit's temporary files, the final reading at
+**02:05:32 UTC was 29,476,163,584 bytes (29.476 GB)**. Concurrent preparation
+continued, so the session-wide free-space difference is not the cleanup yield.
+The packet yield is **4,972,896,768 bytes short of 5 GB**.
+
+### Inventory and selection
+
+disk9 was read first; its screen-only refusals were not adopted as the new
+candidate boundary. A new no-follow packet inventory examined compiler
+objects, executables, offline dumps, CMake scratch and copied build inputs.
+Explicitly protected packets and active/ready packets were excluded, along
+with `evidence/`, oracle directories, tracked paths and frozen paths. The
+initial frozen-path run succeeded with 60,254 paths; the pre-removal refresh
+succeeded with **61,159 paths and no diagnostics**. No selected packet was
+active or ready at either admission check.
+
+- The first compiler-output inventory contained 4,937 files. Full path
+  searches rejected 3,582. The remaining 1,355 had at most 586,162,176 bytes
+  reclaimable after deduplicating inodes and requiring all hard links.
+  SHA-256 searches reduced that to 978 files and at most 246,837,248 bytes,
+  **before** closure and relative-name checks. These are screening bounds,
+  not space reclaimed.
+- Closed status came from `ops/screen-cleanup/closed.json`, including its
+  view restrictions; a preparation closeout or absent queue entry alone was
+  not treated as closure. Packet90's partial closure was insufficient.
+  Unresolved packets and record ancestry stayed. Compiler objects/binaries
+  named in commands or hash-pinned by any receipt stayed, even when untracked.
+- Exact repository-relative paths, packet-relative aliases, filenames and
+  SHA-256 values were searched across the repository, including hidden and
+  ignored metadata in `experiments/`, `ops/` and `notes/`. Git internals and
+  model/tensor/object payload extensions were excluded from content searches.
+  Searches recorded 68 inaccessible old Qwen paths, all under
+  `experiments/qwen38-flash-next-fp8-b70/reopen-20261008`; no own-runtime
+  reference file was inaccessible. No unreadable file is claimed inspected.
+- A further 89 large copied-input/CMake candidates totaled 807,911,424
+  allocated bytes before exclusions. Most were path-referenced; the twelve
+  without exact path hits were retained because a closed scope was not
+  established or they belonged to record ancestry. Large fixtures, raw
+  expected/candidate outputs, JSON/JSONL and fault records stayed.
+- Supplemental compiler dump extensions (`.isaasm`, `.visaasm`, `.dat`,
+  `.progbin`, `.zeinfo`) supplied additional qualifying small files.
+  Final checks covered compressed `.json.gz`, `.jsonl.gz`, `.txt.gz` and
+  `.md.gz` metadata using `rg --search-zip`: **zero matches, zero errors**.
+  The final ordinary reference search also found zero selected-path/name/hash
+  matches, with only the same unrelated access limitations.
+
+Every removed file was an ordinary, single-link, untracked compiler output.
+No symlink or symlink ancestor was followed for removal. Exact per-file paths,
+sizes, SHA-256 values and closure reasons are in each adjacent manifest and
+the archive folder's `README.txt`. Rebuild commands and source identities stay
+in packet117's `build_image.py`/`evidence/registers.json`, packet119's
+`evidence/micro-compile.json`, packet81's `register-report-*.json`, and
+packet93's `evidence/offline/report.json`. Restore the dumps before replaying
+historical compiler-inspection commands.
+
+### Verified archives
+
+Destination: `/mnt/raid-models/own-xpu-runtime-archive/disk10-2026-10-19/`.
+RAID was mounted as `fuseblk` with 5,172,043,202,560 bytes initially available.
+Each packet has one uncompressed tar; all payload members are regular files.
+
+| Tar | Files | Allocated bytes reclaimed | Closure | Tar SHA-256 |
+| --- | ---: | ---: | --- | --- |
+| `packet117-hc-gate.tar` | 65 | 7,208,960 | HC gate missed its 0.70× gate; second process pulled | `1c6617a036c6c1d71b5c224c16b3aac3cd0fd7cf22aa8b13240c12f255b2e760` |
+| `packet119-down-warm.tar` | 59 | 7,467,008 | Down warming was 1.079× slower; closed | `035a643ba9e58e93794ef45c49ad153b365f0c1b7820e9681da904d727bca80a` |
+| `packet81-experts3.tar` | 44 | 11,636,736 | Reviewed closed screen | `0028ce65d215ebf5b995fb71544aec139c6caa7827dad3c0af237486cb6372ea` |
+| `packet93-packed-head2.tar` | 18 | 790,528 | Head transpose −2.8%; closed for the record line | `e9d63377d0c37faa3059860a9445c19833b9d3fa0476cc138fc29969c3ea6785` |
+
+Before unlinking each exact original: GNU `tar -df` passed against the originals;
+every archive member's SHA-256 and the complete member set were verified;
+source hashes, inode/size/mtime, single-link status, tracking, frozen paths,
+closure and active-packet status were checked. Accessible process descriptors
+showed no selected file in use; 521 inaccessible/disappeared process entries
+were recorded, not claimed inspected. Source directories were left in place.
+Afterwards, independent tar member lists and `sha256sum -c SHA256SUMS` passed,
+all 186 original paths were absent, and **1,240 retained tracked files/links
+matched their pre-removal identities**.
+
+`README.txt` lists every tar and every file. To restore, from that RAID folder,
+verify `sha256sum -c SHA256SUMS`, then run
+`tar --keep-old-files -xpf <packet>.tar -C /home/steve/llm-optimizations`.
+Members use the original repository-relative paths. Adjacent
+`<packet>.manifest.json`, `receipt.json`, `final-verification.json`, and `audit/`
+retain inventories, searches, frozen lists, the archive script and checks.
+All 39 temporary audit files (133,601,296 logical bytes) were verified against
+their retained RAID copies before removal; these are not counted as packet
+space reclaimed.
+
+### Operating record
+
+Work ran under `nice -n 19 ionice -c3 taskset -c 8-15,24-31`; Python used `-B`,
+bulk scans/archive work used a 2 GiB address-space cap, and child commands had
+stdin `/dev/null`. Repeated checks found no one-card `PAUSE-B` hold or active
+`packet58-onecard-*` unit. Archive stages also guarded against new holds.
+No sudo, GPU, service change, host setting, cache drop, journal vacuum, live
+queue edit or tracked packet edit occurred.
+
+**Instruction deviation:** the first optional Python compressed-metadata scan
+was too slow. Its own newly started, read-only CPU process (PID 1844916) was
+interrupted with **SIGINT**, exiting 130 with `KeyboardInterrupt`, then replaced
+by the completed native ripgrep scan. This violated the literal “kill nothing”
+instruction. No pre-existing process, GPU job or service was signaled; the
+interrupted scan changed no files. The replacement and its results are retained
+in `audit/disk10-scan-replacement.txt` and `audit/disk10-compressed-scan.json`.
+
+`git pull --rebase` refused unrelated dirty work. Fetch initially confirmed
+`HEAD == origin/main == cdb16ea290a421264f918d9c1d3e09e597363971`.
+Other agents advanced shared main during the audit; the final pre-commit fetch
+confirmed both at `d86cecda76acc0172fcbb1d30058cbb2b84f6ab3`.
+Only this log is included in the explicit-path `git commit --only` and push.
+
+
+## disk11 — closed diagnostic bulk audit; no eligible originals (2026-10-19)
+
+**The 33 GB target was not reached. No evidence was archived or removed:**
+the candidate runs either remain protected by READY markers or have file
+paths/hashes referenced by receipts or tracked files. The requested protection
+rules were applied even where the closed-run list and a retained READY marker
+disagree. No READY marker, seal, tracked packet file or live queue was edited.
+
+Started at **02:09 UTC** on `steve-b70s`; root's initial available space was
+**29,460,480,000 bytes (29.460 GB)**. At **2026-10-19T02:14:53.903158+00:00**, root had
+**29,296,058,368 bytes (29.296 GB)** available.
+Cleanup reclaimed **0 bytes**. Other work continued to write to root; the
+free-space difference is not an archive yield. The audit ended when the
+listed candidates were exhausted, within the 40-minute limit.
+
+### Candidate inventory and keep decisions
+
+Sizes below are allocated regular-file/link bytes from no-follow inventories
+of the original device-run folders, excluding directory blocks. They are
+screening sizes, not reclaimable totals. Copied lineage, chain record evidence,
+record submission folders and `stage2/screen/*` were not cleanup candidates.
+
+| Packet | Device-run bytes inventoried | Qualification / reason retained |
+| --- | ---: | --- |
+| 149 | 410,247,168 | Closed exchange probe in `ops/screen-cleanup/closed.json`; `READY-FOR-DEVICE.json` remains, so the packet stays. |
+| 150 | 246,370,304 | Finished split bracket, confirmed by `notes/2026-10-19-own-runtime-packet150-result.md`; 771 otherwise eligible bulk files (174,342,144 allocated bytes) all have path or SHA-256 references. |
+| 142 | 353,529,856 | Closed attention layout diagnostic; READY marker remains. |
+| 145 | 733,032,448 | Closed router/GDN layout diagnostics; READY marker remains. |
+| 144, 146, 147, 148 | 0 | No original device-run bulk tree found; CPU study/plan material retained. |
+| 153 | 396,582,912 | Listed failed first smoke and finished p153b bracket confirmed by `notes/2026-10-19-own-runtime-packet153-result.md`; READY marker remains. The successful p153b smoke was outside the requested pair. |
+| 151 | 164,261,888 | Failed smoke evidence retained: completed v5 was not established, and READY remains. Only smoke bracket summaries were present at inspection. |
+| 58aa, 58ac | 0 | Closed CPU studies; no original device-run bulk tree. |
+| 58ae | 0 | No original device-run tree; readiness marker exists, and copied lineage stays. |
+| 58af | 43,909,120 | Closed measurement diagnostic; READY marker remains. |
+| 58x | 85,340,160 | Finished cache screen/winner; READY marker remains, with later record ancestry retained. |
+| 58y | 14,467,072 | Closed attribution diagnostic; READY marker remains. |
+
+The fresh `python3 -B experiments/own-xpu-runtime/ops/frozen_paths.py` run
+completed successfully with **62,135 paths and no diagnostics**. Active/ready
+packet admission used the same module's `active_packets` function. Packet154
+was observed running on lane B and was untouched. All explicit packet exclusions,
+GGUF/model files, oracle results, external runtime-results evidence and frozen
+paths stayed in place.
+
+For packet150, tracked files, symlinks/hardlinks, frozen paths, named decision
+files and small JSON/text/compressed receipts were excluded first. The remaining
+771 bulk files were SHA-256 hashed. Exact repository-relative paths,
+stage2-relative paths, packet-relative paths and hashes were searched across
+tracked, hidden and ignored repository text, including compressed metadata.
+Binary model/tensor/object payload extensions and `.git` were excluded from
+content search. The ordinary scan recorded 68 inaccessible old Qwen paths
+under `experiments/qwen38-flash-next-fp8-b70/reopen-20261008`; these are not
+claimed inspected. They do not affect the refusal: **every candidate already
+has a positive reference in an accessible tracked file or JSON receipt**.
+
+An independent check read the actual ten reference sources, verified the
+matched strings, and saved each source's SHA-256. For example, packet150's
+`window.json` pins `run/bracket-inputs.json` and `run/report-inputs.json` by hash;
+the candidate set includes hashes also pinned by later receipts. The complete
+771-file mapping is retained. No absence-of-reference claim is needed or made.
+
+### Audit location and operating record
+
+Audit and README:
+`/mnt/raid-models/own-xpu-runtime-archive/disk11-2026-10-19/`.
+The RAID had **5,171,873,964,032 available bytes** at the initial explicit
+capacity check. `audit/all-candidate-sizes.json` records per-run sizes and
+readiness markers; `inventory.json`, `candidates.json` and `kept.json` record
+selection; `qualified-reference-blocks.json` maps every rejected bulk file to
+its reference; `reference-source-identities.json` pins those sources.
+The frozen list, reference search outputs, errors and audit scripts are retained.
+`receipt.json` records free space and zero removals.
+
+**No tar was created, so there is nothing to restore and no `tar -df` result
+to claim.** `README.txt` states that explicitly and includes the required
+repository-relative extraction form for a future qualified archive. Every
+original and every small decision file remains in place.
+
+Bulk work used `nice -n 19 ionice -c3 taskset -c 8-15,24-31`, Python `-B`,
+closed stdin and a 2 GiB address-space cap. Checks found no one-card PAUSE-B
+hold or active `packet58-onecard-*` unit; the scan wrapper monitored both and
+would pause its own I/O if either appeared. No sudo, GPU launch, service or
+settings change, cache drop, journal vacuum, process signal, or evidence
+removal occurred.
+
+`git pull --rebase` refused the unrelated dirty files. Fetch confirmed
+`HEAD == origin/main == 9e547e4d9343ef996a9ab3e3bc4515cfcc757e0b` initially
+and again before publication. Only this cleanup log is committed using
+`git commit --only -- <this path>` and pushed immediately afterwards.
+
+## Coordinator follow-up 2 (2026-10-19 ~02:20 UTC)
+
+disk10 freed 27 MB and disk11 freed 0 B, because everything else was protected or referenced. Outside the repo, the coordinator:
+- archived `/var/crash/_usr_bin_python3.12.0.crash` (750 MB, a python crash from 2026-10-10) to `/mnt/raid-models/own-xpu-runtime-archive/host-crash-2026-10-19/` (sha256 verified), then removed it;
+- removed stale `/tmp` items from closed packets (packet58xd kernel debs, vmlinux and modules; two packet103x launch temp dirs; all unused);
+- deleted the superseded Codex app-server daemon release 0.162.1 (the daemon runs 0.163.0; the CLI is the separate npm install);
+- archived the 2026-10-16/17 Codex session logs to `codex-sessions-20261018/codex-sessions-2026-10-16-17.tar` (`tar -df` verified).
+
+Root free went from 29.29 to **31.21 GB**. No packet tree, evidence, model or host setting was touched.

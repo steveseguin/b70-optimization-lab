@@ -1,5 +1,106 @@
 # Current Workspace State
 
+**October 19, packet156 draft-slack arm closed before a build:** The full
+packet154 test confirms that rank 0 waits for the draft, but the proposed
+place to move hidden work has too little spare time. Even a generous bound
+allows only about 0.29–0.32% improvement in the three controls, below the 2%
+goal. Complete log replays and 14 parser checks pass. No runtime, GPU job,
+service or live queue changed; device readiness is false. The next prepared
+ideas were checked, and none has a new qualifying bound.
+[Work note and evidence](notes/2026-10-19-own-runtime-packet156.md).
+
+**October 19, packet58ajb first-request repair prepared on CPU:** The original
+resident smoke timed out before its first prefill token completed; teardown
+drained safely. Its evidence is preserved. Fresh smoke and five-view proposals
+use a 300-second wait and record the failed operation if it happens again.
+The old logs do not identify that operation, so the cause is still unproven.
+The device-define CPU preparation probe, exact-output checks and entry checks
+pass; actual device checks remain pending. Nothing was launched or queued here.
+The final readiness markers govern coordinator admission.
+[Work note](notes/2026-10-19-own-runtime-packet58aj.md).
+
+**October 19, packet155 preparation stopped at the disk floor:** The private
+bundle9 source and native snapshots are retained, but root free space fell to
+29.812 GB before the CPU fixtures ran. The requested 30 GB stop rule applies.
+The chain is incomplete and refuses launch; CPU checks, submission rehearsal
+and the packet153 bracket decision remain pending. No GPU, service or live
+queue changed. [Work note](notes/2026-10-19-own-runtime-packet155.md).
+
+**October 19, packet154 rank-1 split prepared on CPU:** The private packet150
+copy adds command-correlated scopes to explain rank0's reply wait. Both builds,
+byte checks, analyzer failures, entry and limit checks, 78 simulated requests,
+reports, temporary plans and pin checks pass. The first completed incident must
+prove both timing streams before proceeding. Two lane-B proposals remain
+unqueued; device equality and attribution are pending. No GPU or service was
+started. The final packet readiness marker is the handoff authority.
+[Work note](notes/2026-10-19-own-runtime-packet154.md).
+
+**October 19, packet153 static snapshot tables prepared on CPU:** The private
+packet136 copy builds the snapshot copy table once at load. Capture and rollback
+reuse it, keeping the copied state unchanged. GNU and Intel byte checks agree;
+real copy sizes and reset behavior pass. Two lane-B proposals are prepared,
+not queued. Device equality and speed remain unmeasured; 58.798 tok/s stays the
+two-card record. The final packet readiness marker controls admission.
+[Work note](notes/2026-10-19-own-runtime-packet153.md).
+
+**October 19, 01:20 UTC — 1-card IQ3 record 31.66 tok/s on one Arc Pro B70, submitted and approved (`cmvekebvh00a0rf01q3v2c3cz`).**
+- **Change:** packet58ah = packet58ad + packet58ag's one-card ports (HC-wide, p109 other-fusion, E1 exact half-scale cache).
+- **Bracket:** +3.38% strict, 60/60 exact.
+- **Chain a** WS128 was 30.050, below the record, with 3,736 host major faults. It was not submitted and is disclosed.
+- **Chain b**, the single preregistered quiet-host rerun, measured WS128 **31.662719** with 12/12 prompts exact. It supersedes 30.395631 (+4.17%).
+- **Scope:** 128 tokens; strict512 false.
+- **Next:** packet58aj (resident lookup copies) is being prepared to remove the window-to-window paging variance.
+- [Result note](notes/2026-10-19-own-runtime-packet58ah-chain-a-result.md), [ledger](results/localmaxxing-submissions.md).
+
+**October 19, packet58ahb final quiet-host rerun prepared on CPU:** Chain a
+passed exactness but its 30.050 tok/s timing missed the 30.395631 record; it
+was not submitted. Its evidence and original pins are preserved. Chain b is
+the single preregistered rerun and its WS128 is final either way. All 134
+passive tests, seven intercepted launch paths, submission rehearsal, seals
+and readiness replay pass. Nothing was launched or queued. The coordinator
+must freeze every Codex unit before K1a through completion; the generic
+waiter's WS-only freeze is too late for this rerun. The final orchestration
+marker is the handoff authority. [Work note](notes/2026-10-19-own-runtime-packet58ah-chain-a-result.md#packet58ahb--final-quiet-host-chain-b-handoff).
+
+**October 19, packet58ai miss census prepared on CPU:** The private packet58ad
+copy keeps the 30.396 tok/s record configuration. It counts actual routed cache
+misses and measures original expert events plus a separate resident/miss
+partition diagnostic. Both builds, exact CPU checks, launch paths and shared
+report checks pass. Device equality, overhead and the saving ceiling remain
+unmeasured. One proposal is prepared, not queued; the coordinator must wait
+until both two-card queues are empty. The final packet readiness marker is the
+handoff authority. [Work note](notes/2026-10-19-own-runtime-packet58ai.md).
+
+**October 18, packet58ah full-composition record chain prepared ahead on CPU:**
+The seven-window packet58ad copy binds packet58ag's finished engine by hash
+and selects all four new refinements explicitly. All 134 policy tests, seven
+entry paths, parser and loader checks, submission replay, seals and pin
+admission pass. The original 58ad timing is used only in a labeled rehearsal.
+Device readiness remains false while the parent's bracket is pending; the
+coordinator must recompute it and retain the same whole-host hold. Nothing was
+launched, queued or submitted. The 30.395631 record is unchanged.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet58ah.md).
+
+**October 18, packet58ag one-card ports prepared on CPU:** The private
+packet58ab copy adds wider HC/expert geometry, exact half-scale decoding,
+small target fusions and cheaper foreground event retirement. HC fusion stays
+on. Both compilers' byte checks, all 111 policy tests, entry/report rehearsal
+and both temporary queue plans pass. The first proposal is a 12 × 64 smoke;
+the second compares the old line with the full composition in one five-view
+load. Neither was queued or launched. Device equality and speed remain
+pending, and the running packet58ad chain was left alone.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet58ag.md).
+
+**October 18, packet150 rank-0 split prepared on CPU:** The current banked
+bundle8 copy separates token preparation, snapshot work, the suffix head and
+peer/draft waits. One proposed lane-B load has five exact 64-token views and a
+15-minute cooperative watchdog. Builds, miniature byte/restore checks, launch
+and report rehearsal, limits, drain checks and pin admission pass. Nothing was
+queued or launched. Device attribution remains pending; the 58.798 record is
+unchanged. Packet149's completed probe adds about 7.69 ms per miss, above the
+1 ms gate, so no shared-correction prototype is being built.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet150.md).
+
 **October 18, disk8 archive pass recovered 0.413 GB; reserve still short:**
 Two verified archives preserve 595 closed, unused compiler outputs, logs and
 private cache files on RAID. Root had 29.771 GB free at the final file check,
@@ -1231,6 +1332,14 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
    does not satisfy missing gates.
 
 ## Storage And Recovery
+
+**October 18, disk9 screen audit:** root had **30.221 GB free at 23:49:44 UTC**;
+the requested **34 GB was not reached**. No eligible bulky screen files remained
+under the closed/parked registry and pin rules, so nothing was moved. Most of
+the 4.42 GB suffix-matched inventory belongs to packets without a matching
+closure; the remainder is protected, compressed JSON evidence or tiny logs in
+still-referenced folders. The verified audit is on RAID.
+[Counts, keep decisions and audit archive](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk9--closed-screen-bulk-audit-no-safe-bulk-remaining-2026-10-18).
 
 **October 18, disk7 archive pass:** verified archives of closed build and screen files recovered **1.975 GB**. Root went from **31.284 GB to 33.153 GB free** at 20:09:15 UTC. **The requested 40 GB was not reached**: the other large candidates are protected, still referenced, or lack a clear closure. All JSON receipts, notes, sources, live work and record material stayed. The archives were fully checked before their originals were removed. The final check covered 1,191 moved paths and 28,170 retained files or links, with no errors. [Archive paths, restore instructions and checks](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk7--verified-archive-pass-2026-10-18).
 

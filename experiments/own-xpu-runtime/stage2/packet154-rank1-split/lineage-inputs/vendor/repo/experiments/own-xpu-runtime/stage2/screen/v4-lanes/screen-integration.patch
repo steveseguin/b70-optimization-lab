@@ -1,0 +1,93 @@
+--- a/conditions.py
++++ b/conditions.py
+@@ -1,5 +1,6 @@
+ """Fixed screen conditions and passive ownership checks; no device discovery."""
+ import fcntl
++from drain_gate import DEFAULT_DRAIN_ROOT, screen_teardown_admit
+ import os
+ from pathlib import Path
+ import time
+@@ -61,7 +62,7 @@
+     An incomplete drain leaves an active record and refuses further launches.
+     A coordinator stop is recorded by the caller but cannot bypass this gate.
+     """
+-    def __init__(self, output, root=HERE, now=time.monotonic, sleep=time.sleep):
++    def __init__(self, output, root=DEFAULT_DRAIN_ROOT, now=time.monotonic, sleep=time.sleep):
+         self.output, self.root, self.now, self.sleep = output, root, now, sleep
+         self.lock = None
+         self.boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+@@ -99,9 +100,7 @@
+         self.lock.close()
+ 
+ 
+-def teardown_admit():
+-    path = HERE / 'teardown-state.json'
+-    if path.exists():
+-        row = read(path)
+-        require(row.get('boot_id') != Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+-                or row.get('drained') is True, 'incomplete teardown; coordinator recovery required')
++def teardown_admit(lane):
++    # Only the prelaunch check permits live A computation. Actual Teardown
++    # still locks, waits 60 seconds and refuses an incomplete previous drain.
++    screen_teardown_admit(lane)
+--- a/screen.py
++++ b/screen.py
+@@ -10,6 +10,8 @@
+ import time
+ 
+ import fault_review
++from drain_gate import DEFAULT_DRAIN_ROOT
++from window_adapter import run_lane_b_screen
+ from devices import masked_environment, topology_admit, mask_for
+ from conditions import LANES, cpu_gate, lane_gate, selected_clients, teardown_admit
+ 
+@@ -102,7 +104,7 @@
+         time.sleep(.1)
+ 
+ 
+-def main(argv=None):
++def screen_main(argv=None):
+     args = parser().parse_args(argv)
+     cpu_gate() if args.plan else lane_gate(args.lane)
+     args.lineage, args.output = args.lineage.resolve(), args.output.resolve()
+@@ -123,14 +125,15 @@
+     require(args.fault_review, '--fault-review receipt required')
+     from cpu_seal import verify
+     verify()
+-    teardown_admit()
++    teardown_admit(args.lane)
+     cgroup = Path('/proc/self/cgroup').read_text()
+     unit_gate(cgroup)
+     unit_properties = unit_conditions(cgroup)
+     env = masked_environment(args.lane)
+     boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+     latch_path = HERE / ('fault-' + boot + '-' + args.lane + '.json')
+-    require(not list(HERE.glob('fault-' + boot + '*.json'))
++    require(not list(DEFAULT_DRAIN_ROOT.glob('fault-' + boot + '*.json'))
++            and not list(HERE.glob('fault-' + boot + '*.json'))
+             and not list((HERE.parent / 'v2').glob('fault-' + boot + '*.json'))
+             and not (HERE.parent / ('fault-' + boot + '.json')).exists(),
+             'screen fault/uncertain-owner latch; coordinator recovery required')
+@@ -228,6 +231,22 @@
+             signal.signal(s, handler)
+ 
+ 
++def main(argv=None):
++    args = parser().parse_args(argv)
++    if args.plan:
++        return screen_main(argv)  # no locks, flags, journal or device activity
++    require(args.lane == 'B' and args.pair_dir is None,
++            'chain-coordinated wrapper is standalone lane B only')
++    require(args.authorized_device_window, 'coordinator authorization required')
++    _, cursor = S.journal()
++    def wait_check():
++        nonlocal cursor
++        fresh, cursor = S.journal(cursor)
++        require(not fault_review.fault_lines(fresh), 'fresh fault while waiting for chain hold')
++        require(not (args.output.parent / 'STOP').exists(), 'STOP while waiting for chain hold')
++    return run_lane_b_screen(lambda: screen_main(argv), args.output, wait_check=wait_check)
++
++
+ if __name__ == '__main__':
+     try:
+         raise SystemExit(main())

@@ -7,16 +7,16 @@ def documents():
     from launch_env import library_path
     library=library_path();assert library==json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
     for arm,tag,expected in [('smoke','smoke',[600,900]),('p60fusion','v5',[1200,1800])]:
-        record=dict(name='packet58ab-'+tag+'-A',lane='A',argv=['/usr/bin/python3','-B',str((P/'queue_runner.py').relative_to(ROOT)),
-            '--cache-maintenance','overlap','--arm',arm,'--output',str(P/'evidence/card0-hcfusion-a'/arm),
+        record=dict(name='packet58ag-'+tag+'-A',lane='A',argv=['/usr/bin/python3','-B',str((P/'queue_runner.py').relative_to(ROOT)),
+            '--cache-maintenance','overlap','--arm',arm,'--output',str(P/'evidence/card0-ports-a'/arm),
             '--fault-review','{REVIEW}','--library-path',library,'--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)))
         record['plan']=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build/device'/n).relative_to(ROOT)),sha256=sha(P/'build/device'/n)) for n in ('own-rt-iq3','p58-cache-fixtures')]))
         record['plan']['entry_rehearsal']['binaries'][1].update(args=['--help'],returncode=1,contains='K1 unknown option')
         text=('# Proposal only: one card (card 0), lane A, whole host; lane B must be drained.\n'
             '# Two K1 fixtures, one model load. Tile16, overlap, full BF16 KV, 48 layers, cache 21,552,729,600 bytes.\n'
-            '# Smoke 12 x 64 p60fusion. V5 12 x 128 production/p60fusion/production/p60fusion/production.\n'
+            '# Smoke 12 x 64 full composition. V5 12 x 128 packet58ab/full/packet58ab/full/packet58ab; HC fusion always on.\n'
             '# A0 exact and reported; excluded only from speed/drift (p58wb). Both candidates must beat both warm controls by 2%; warm drift <=3%.\n'
-            f'# Expected {expected[0]}-{expected[1]} seconds; watchdog 7200 seconds (>=4x). Host admission 98,989,727,744 bytes.\n'
+            f'# Expected {expected[0]}-{expected[1]} seconds; watchdog 7200 seconds (>=4x). Host admission 98,990,252,032 bytes.\n'
             '# No queuing or device execution during preparation. READY must be the final content write.\n'+json.dumps(record)+'\n')
         yield arm,tag,expected,text
 
@@ -27,7 +27,7 @@ def main():
         if '--emit-only' in sys.argv:
             local.parent.mkdir(exist_ok=True);local.write_text(raw);external.write_text(raw);continue
         assert local.read_text()==external.read_text()==raw
-        with tempfile.TemporaryDirectory(prefix='p58ab-plan-') as directory:
+        with tempfile.TemporaryDirectory(prefix='p58ag-plan-') as directory:
             (Path(directory)/'queue-A.txt').write_text(raw)
             from ready_document import document
             prospective=Path(directory)/'READY-FOR-DEVICE.json';prospective.write_text(json.dumps(document()))

@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "root_stop_floor_bytes": 25000000000,
+  "k1_reserved_bytes": 33554432,
+  "census_reserved_bytes": 1073741824,
+  "total_reserved_bytes": 1140850688,
+  "record_k1_inventory": [
+    {
+      "observed_record_directory": "experiments/own-xpu-runtime/stage2/packet58ad-onecard-record/evidence/card0-58ad-a/K1a",
+      "total_bytes": 4051914,
+      "method": "file sizes only; no model reads"
+    },
+    {
+      "observed_record_directory": "experiments/own-xpu-runtime/stage2/packet58ad-onecard-record/evidence/card0-58ad-a/K1b",
+      "total_bytes": 4051437,
+      "method": "file sizes only; no model reads"
+    }
+  ],
+  "root_free_bytes": 30861115392,
+  "source_inspection": "vendored p58_native_fixture.cpp writes only k1.json and k1-cases.jsonl; remaining files are supervisor/journal receipts",
+  "reservation_note": "K1 is unchanged and bounded to 20 iterations; allowance exceeds both retained complete K1 directories by eight times; census keeps a full GiB; fresh admission remains mandatory",
+  "preparation_stop_floor_bytes": 27000000000
+}

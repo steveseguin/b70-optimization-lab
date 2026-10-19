@@ -1,0 +1,199 @@
+{
+  "passed": false,
+  "jobs": [
+    {
+      "job": "packet58ai-census-b-smoke-A",
+      "unit": "screen-packet58ai-census-b-smoke-A",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/build/device/p58-cache-fixtures",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "explicit",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py",
+            "line": 41,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/p56_head_support.py",
+            "line": 113,
+            "floor_bytes": 8000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py",
+            "function": "storage",
+            "status": "WARN",
+            "message": "storage helper not safely importable"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/p56_head_support.py",
+            "function": "storage",
+            "status": "PASS",
+            "message": "storage helper accepts 25.5 GB plus planned writes"
+          }
+        ]
+      },
+      "wall_deadlines": {
+        "status": "FAIL",
+        "passed": false,
+        "findings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_driver_snapshot.py",
+            "line": 680,
+            "seconds": 1,
+            "phase": "first_request",
+            "measured_seconds": 60.0,
+            "data_proof": false
+          }
+        ],
+        "limits": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_driver_snapshot.py",
+            "line": 661,
+            "seconds": null,
+            "phase": "load",
+            "measured_seconds": null,
+            "data_proof": false
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_driver_snapshot.py",
+            "line": 630,
+            "seconds": 3600,
+            "phase": "load",
+            "measured_seconds": null,
+            "data_proof": false
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_driver_snapshot.py",
+            "line": 680,
+            "seconds": 1,
+            "phase": "first_request",
+            "measured_seconds": 60.0,
+            "data_proof": false
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_driver_snapshot.py",
+            "line": 692,
+            "seconds": 300,
+            "phase": "first_request",
+            "measured_seconds": 60.0,
+            "data_proof": false
+          }
+        ],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": true,
+        "kinds": [
+          {
+            "passed": true,
+            "kind": "smoke",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "import_paths": [
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census",
+              "/usr/lib/python312.zip",
+              "/usr/lib/python3.12",
+              "/usr/lib/python3.12/lib-dynload",
+              "/usr/local/lib/python3.12/dist-packages",
+              "/usr/lib/python3/dist-packages"
+            ],
+            "device_executed": false,
+            "real_entry_main": true,
+            "report_lineage": "packet58-onecard",
+            "admission_executed": false,
+            "entry_execution": "parser-only",
+            "window": "WSCREEN",
+            "request_count": 12,
+            "candidate_beats_all_controls": false,
+            "warmup_view": null,
+            "comparison_controls": null
+          },
+          {
+            "passed": true,
+            "kind": "bracket",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "import_paths": [
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census",
+              "/usr/lib/python312.zip",
+              "/usr/lib/python3.12",
+              "/usr/lib/python3.12/lib-dynload",
+              "/usr/local/lib/python3.12/dist-packages",
+              "/usr/lib/python3/dist-packages"
+            ],
+            "device_executed": false,
+            "real_entry_main": true,
+            "report_lineage": "packet58-onecard",
+            "admission_executed": false,
+            "entry_execution": "parser-only",
+            "window": "WSCREEN",
+            "request_count": 60,
+            "candidate_beats_all_controls": false,
+            "warmup_view": null,
+            "comparison_controls": null
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    }
+  ]
+}

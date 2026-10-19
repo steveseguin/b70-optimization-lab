@@ -19,7 +19,7 @@ def relocate(data):
     # live; every sibling source reference becomes a private snapshot path.
     old = (str(ROOT)+'/experiments/').encode()
     new = (str(FROZEN)+'/experiments/').encode()
-    data=data.replace(b'packet58ab-cache-capacity',b'packet58ab-onecard-hcfusion')
+    data=data.replace(b'packet58ag-cache-capacity',b'packet58ag-onecard-hcfusion')
     return data.replace(old,new).replace(str(FROZEN/P.relative_to(ROOT)).encode(),str(P).encode())
 
 

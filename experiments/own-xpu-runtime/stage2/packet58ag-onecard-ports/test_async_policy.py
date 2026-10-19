@@ -10,7 +10,7 @@ class AsyncPolicy(unittest.TestCase):
     def test_every_full_window_uses_same_measured_bound(self):
         for w in ('KD','W2m','WS','WS128x','WS128','WSCREEN'):
             p=M.window_plan(w)
-            self.assertEqual(p['host_required_available_bytes'],98989727744)
+            self.assertEqual(p['host_required_available_bytes'],98990252032)
             self.assertEqual(p['host_reserve_bytes'],8*1024**3)
             self.assertEqual(p['host_categories']['gpuactive_shadow_bound'],4*1024**3)
             self.assertEqual(p['async_device_staging_bytes'],1179648)

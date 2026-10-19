@@ -76,7 +76,7 @@ class BracketPolicyTests(unittest.TestCase):
             self.assertEqual(W.A.window_scope(name),'whole-host')
             self.assertGreaterEqual(W.CONFIG[name][1],4*W.CONFIG[name][0])
         self.assertGreaterEqual(W.CONFIG['WSCREEN'][1],4*1800)
-        self.assertEqual(W.M.window_plan('WSCREEN')['host_required_available_bytes'],98_989_727_744)
+        self.assertEqual(W.M.window_plan('WSCREEN')['host_required_available_bytes'],98_990_252_032)
         self.assertEqual(W.M.plan()['device_owned_bound_bytes'],29_963_128_848)
 
     def test_runtime_disk_reserve_at_25gb_boundary(self):

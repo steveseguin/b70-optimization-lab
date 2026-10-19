@@ -25,8 +25,14 @@
             next.choices.at("hc")=="production","bracket storage/unsupported choice differs: reload required");
     require(next.choices.at("route")=="route-exp32-rank4"&&next.choices.at("recurrence")=="rows4-shared","frozen tile16 arithmetic required");
   }
-  void bracket_select(const fs::path& selection,const std::string& digest,const std::string& hc="production") {
+  void bracket_select(const fs::path& selection,const std::string& digest,const std::string& hc="production",const std::string& geometry="",const std::string& experts="",const std::string& fusion="",const std::string& retirement="") {
     require(hc=="production"||hc=="p60fusion","HC dimension");
+    const auto g=geometry.empty()?(hc=="p60fusion"?"hc-wide":"production"):geometry;
+    const auto e=experts.empty()?(hc=="p60fusion"?"wide64+halfcache":"production"):experts;
+    const auto f=fusion.empty()?(hc=="p60fusion"?"fused":"production"):fusion;
+    const auto r=retirement.empty()?(hc=="p60fusion"?"ordered-foreground":"production"):retirement;
+    require(r=="production"||r=="ordered-foreground","retirement dimension");
+    require((g=="production"||g=="hc-wide")&&(e=="production"||e=="wide64"||e=="wide64+halfcache")&&(f=="production"||f=="fused"),"port runtime dimension");
     require(!maintenance.running,"HC switch during compute refused");
     guard();drain();cache_quiesce();verify_configuration();
     require(!poisoned&&!integer(0,"error"),"bracket cannot erase target failure");
@@ -35,7 +41,7 @@
     p49d::Selection next;next.load(selection.string(),digest);
     bracket_domain(next);bracket_domain(sealed_selection);
     const auto before=bracket_arena_hash();
-    a.hc="p60fusion";a.hc_geometry=hc=="p60fusion"?"hc-wide":"production";a.experts=hc=="p60fusion"?"wide64+halfcache":"production";a.other_fusion=hc=="p60fusion"?"fused":"production";
+    a.hc="p60fusion";a.hc_geometry=g;a.experts=e;a.other_fusion=f;a.retirement=r;ownrt::set_ordered_retirement(dev(0),r=="ordered-foreground");
     sealed_selection=std::move(next);a.selection=selection;a.selection_sha256=digest;
     prepared.clear();alternate_prepared.clear();issue_sites.clear();alternate_issue_sites.clear();matrices.clear();
     p=::plan(w,a);index_plan();

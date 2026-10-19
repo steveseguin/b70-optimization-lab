@@ -735,3 +735,82 @@ STOP DOING acknowledged:
 - the Codex prep queue at 0–1 jobs when GPU work ends within 1 h;
 - CPU-only closures without a 15–20 min device test;
 - more class-layout/cold-gap micro levers.
+
+## Review 34 — 2026-10-19 ~00:08 UTC — VERDICT: ACT
+
+**Finding:** in the last 2 h, a device unit was running 56% of wall time, but only 16.5% of available card-minutes were busy. Lane B did ~12 min of real work and spent 55.6 min held for one-card runs. Over 6 h: ~48 min of lane-B device work against 140 min of one-card holds. The two-card record has not moved since 17:50 (58.798). The fault count is still 2.
+
+**Actions (coordinator, 00:09–00:13 UTC):**
+1. **packet150 ran before the packet58ah chain.**
+   - Root was raised to 32.16 GB before release (HF models archived to RAID and verified, disabled snap revisions and old Codex daemon releases removed; commit 935e79717).
+   - `packet150-split-bracket-B` started at 00:09:47 when the p58ag hold released.
+   - The packet58ah chain waiter (launched 00:09:58, ready True) holds both lanes but waits for lane B to drain, so p150 finishes first.
+2. **Disk over-reservation.**
+   - Codex `opsdisk`: lanequeue storage admission before START, storage-floor refusals classed REFUSED-PREDEVICE so the lane continues, and a disk line in `gpu_time_review.py`.
+   - New briefs size planned writes at ≤ 3× measured (~250 MB/view); the 25 GB floor is unchanged.
+3. **packet151 re-scoped.**
+   - The draft-confidence census brief reopened packet132 (closed in its DO-NOT-REPEAT) without meeting its reopen condition. The Codex job was stopped at 00:11.
+   - It was relaunched as `p151b`: a packet149-style one-load v5 that computes and discards a second rank-0 sibling row (output-neutral) to measure the extra cost directly.
+   - Preregistered: ≤ 1.952 ms reopens packet132 (calibration only on packet114's independent text); > 1.952 ms closes it.
+4. **Codex `p152`:** one design per packet150 segment (token_prep, capture_snapshot, suffix_head, merge_handoff_waits, draft_wait), plus ready-to-launch build briefs for the two likeliest, mapped to each possible verdict.
+5. **First-minute data proof** is now required in p151b's smoke. packet58ai (already in progress) gets it as a follow-up before it is queued.
+
+**Also this hour:** packet58ag one-card ports **passed** (B 31.63/31.62 vs controls 30.59/30.51, +3.38% min gain, drift 0.24%, 60/60 exact). The packet58ah record chain is armed.
+
+STOP DOING acknowledged:
+- one-card whole-host holds while a two-card job is device-ready;
+- briefing levers closed in a DO-NOT-REPEAT without their reopen condition;
+- benchmark-tuned gate thresholds;
+- Codex cleanup as the disk fix while reservations are 14× real writes;
+- diagnostics without a first-window analyzer-input check;
+- queuing into a lane with no live driver.
+
+## Review 35 — 2026-10-19 ~01:10 UTC — VERDICT: ACT
+
+**Finding:** 18.4% of card-minutes were busy over 2 h. Lane B did ~19 min of real work and held the host for one-card runs for 50.5 min. The one-card chains (58ah a and b) blocked both two-card prep jobs for ~50 of 60 min. The two-card record has not moved since 17:50. GPU fault count is 2.
+
+**Actions (coordinator, 01:06–01:12 UTC):**
+1. **Ordering.** p58ai (one-card miss census) is not dispatched until p153 and p151 have each had their lane-B smoke and v5. After that it is batched into the next one-card hold.
+2. **p151 as an upper bound.** `fn-run/post-58ahb-launch.sh` stops p151b at the chain-b thaw and launches **p151c**. p151c finishes the current partial M=2 build (dense/expert batched; HC, small tuples and shared-down serial) as a labelled upper bound:
+   - ≤ 1.952 ms reopens packet132;
+   - above that is inconclusive, not a closure.
+   - It also fixes the empty-timing report fixture and uses freeze-safe limits.
+3. **One-card paging fixed in the engine.** Codex **p58aj**, launched at the thaw: packet58ah + packet58t resident lookup copies (29.3 GB anonymous, every row, no cache advice or mlock), admitted through packet58u accounting. Smoke + v5 + chain handoff, prepared and not queued. Chain b of 58ah stays the preregistered last rerun; **no third rerun** of 58ah.
+4. **Freeze-safe limits and waiter deadlines.**
+   - The deadline path in `fn-run/onecard-chain.sh` and the new `fn-run/onecard-chain-quiet2.sh` now thaws Codex and keeps PAUSE-A/B. The running quiet waiter was not edited (editing a running bash script corrupts it).
+   - New briefs forbid wall-clock timeouts that count frozen time.
+   - p153 is checked for false timeouts at the thaw.
+5. **Third two-card candidate.** Codex **p154**, launched at the thaw: a rank-1 split, i.e. a vendored packet150 harness with rank-1 scopes to attribute the 1.54 ms `remote_reply_wait`. It chooses between p152's draft and merge briefs and is queued behind p153.
+
+STOP DOING acknowledged:
+- quiet-host reruns as a paging fix (no best-of-N);
+- one-card diagnostics while a two-card candidate is < 45 min from READY;
+- growing a measurement's scope when a one-sided bound decides;
+- wall-clock limits in freezable Codex units;
+- waiter deadlines that leave Codex frozen.
+
+## Review 36 — 2026-10-19 ~02:06 UTC — VERDICT: ACT
+
+**Finding:** 18.7% of card-minutes were busy over 2 h, and all four cards were idle 47% of the time. Lane A had been idle since 01:16. Two device-ready two-card jobs were serialized on lane B. Three of the last six lane-B launches failed for packaging reasons:
+- p153: a 60 s data-proof deadline;
+- p151: an op that bypassed the preparation registry;
+- p154: a 30 GB device floor.
+
+The Codex two-card prep queue was empty, and root was at 29.6 GB and falling.
+
+**Actions (coordinator, 02:06–02:10 UTC):**
+1. **p151 v5 to lane A.** It was re-planned, rehearsed and queued on lane A, but it **refused pre-device**: `readiness.py` asserts "registered lane-B probe only". The row went back on lane B behind p154's split, the A driver was restarted (`lanequeue-A34`), and a lesson was recorded: CPU plan and rehearsal do not run a packet's readiness lane assertion.
+2. **p58ai ordering.** It will run last in the next one-card session, only if root ≥ 31.2 GB: its `window.py:41` has a 30 GB device floor and it is not resealed. p58aj runs first.
+3. **Codex opsreview7:** `rehearse_entry.py` gains checks for storage-floor literals ≠ 25 GB (with a 25.5 GB + planned-writes admission replay), device-path wall deadlines < 2× the measured phase (cold TTFT 60 s; no deadline on data proofs), and a preparation-path probe (or a WARN when none is declared). Tests replay tonight's three pre-fix files.
+4. **Two-card prep refilled from p154's smoke** (02:03–02:07):
+   - rank 0 waits 1.546 ms/interval on rank 1, of which **1.227 ms is rank 1's draft** (B half 0.171, transport 0.051, merge 0.020);
+   - this meets packet126's reopen condition (measured recoverable wait);
+   - Codex **p156** runs p152's prepared draft_wait brief: hidden-only draft work in rank 1's suffix slack, proposals for both lanes, no wall-clock data proofs, preparation-path probe;
+   - p151's smoke already showed an upper bound far above 1.952 ms (interval 40.1 ms vs 17.0, half A 34.0 ms). Its v5 runs for a clean closure; no full-M=2 brief.
+5. **Disk.** disk10 freed only 27 MB, because most candidates are protected or referenced. Codex **disk11** archives the untracked bulk `run/` evidence of closed diagnostics to the RAID with sha256 manifests, keeping the summary JSONs, until root ≥ 33 GB.
+
+STOP DOING acknowledged:
+- lane-B-only two-card proposals;
+- per-packet disk floor literals;
+- READY without device-path deadline checks;
+- an empty two-card Codex queue with verdicts < 1 h away.

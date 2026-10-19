@@ -1,5 +1,6 @@
 """Real proposal parsing and mocked/native CPU entry, never a service launch."""
 import contextlib
+import ast
 import io
 import json
 from pathlib import Path
@@ -349,6 +350,242 @@ class OnecardReportTest(unittest.TestCase):
             result = entry.rehearse_report(job, launch_env.environment(), root)
             self.assertFalse(result['passed'], result)
             self.assertTrue(all(r['error_type'] == 'KeyError' for r in result['kinds']), result)
+
+
+class PackagingTest(unittest.TestCase):
+    STAGE = entry.ROOT / 'experiments/own-xpu-runtime/stage2'
+
+    def blob(self, revision, path):
+        return subprocess.check_output(['git', '-c', 'core.packedGitWindowSize=16m',
+            '-c', 'core.packedGitLimit=64m', 'show', revision + ':' + str(path.relative_to(entry.ROOT))],
+            cwd=entry.ROOT, text=True, stdin=subprocess.DEVNULL)
+
+    def test_packet153_original_deadline_and_fixed_source(self):
+        path = self.STAGE / 'packet153-snapshot-host/v5/analyze.py'
+        for source, passed in [(self.blob('3813d8dd9^', path), False), (path.read_text(), True)]:
+            result = entry.deadline_scan({path: ast.parse(source)}, {'first_request': 60.})
+            self.assertEqual(result['passed'], passed, result)
+            if not passed:
+                self.assertEqual(len(result['findings']), 2)
+                self.assertTrue(all(r['data_proof'] for r in result['findings']))
+
+    def test_packet154_original_floor_and_fixed_source(self):
+        path = self.STAGE / 'packet154-rank1-split/v5/screen.py'
+        for source, passed in [(self.blob('80d3d7434^', path), False), (path.read_text(), True)]:
+            result = entry.storage_scan({path: ast.parse(source)})
+            self.assertEqual(result['passed'], passed, result)
+            self.assertEqual(len(result['admissions']), 2)
+            if not passed:
+                self.assertTrue(all(r['message_value_mismatch'] for r in result['findings']))
+                self.assertTrue(all(not r['passes_25_5gb_plus_writes'] for r in result['findings']))
+
+    def test_packet58ai_floor_is_caught_through_real_entry(self):
+        script = self.STAGE / 'packet58ai-miss-census/queue_runner.py'
+        packet, sources = entry.packet_sources(dict(argv=['python3', '-B', str(script)]))
+        result = entry.storage_scan(sources)
+        self.assertTrue(any(Path(r['file']).name == 'window.py' and r['floor_bytes'] == 30_000_000_000
+                            for r in result['findings']), result)
+        self.assertFalse(any('lineage' in str(p.relative_to(packet)) for p in sources))
+
+    def test_current_entry_paths_include_report_and_exclude_builds(self):
+        for number, name in [(153, 'snapshot-host'), (154, 'rank1-split')]:
+            script = self.STAGE / f'packet{number}-{name}/v5/bracket_job.py'
+            packet, sources = entry.packet_sources(dict(argv=['python3', '-B', str(script)]))
+            if number == 153:
+                self.assertIn(script.with_name('analyze.py'), sources)
+            self.assertIn(script.with_name('screen.py'), sources)
+            self.assertTrue(entry.storage_scan(sources)['passed'])
+            self.assertTrue(entry.deadline_scan(sources, {'first_request': 60})['passed'])
+            self.assertFalse(any('build' in p.name for p in sources))
+
+    def test_phase_bounds_and_data_proof_never_has_deadline(self):
+        source = '''
+import time
+def first_request():
+    require(elapsed_seconds <= 119, 'cold request')
+    proc.wait(timeout=119)
+    deadline = time.monotonic() + 119
+def load_model():
+    proc.wait(timeout=599)
+def load_ok():
+    proc.wait(timeout=600)
+def data_proof():
+    require(proof['seconds_after_view_start'] <= 9999, 'proof')
+def systemctl():
+    proc.wait(timeout=10)
+'''
+        result = entry.deadline_scan({Path('entry.py'): ast.parse(source)},
+                                     {'first_request': 60, 'load': 300})
+        self.assertEqual(len(result['findings']), 5, result)
+        self.assertEqual(len(result['limits']), 6, result)
+
+    def test_storage_constants_arithmetic_and_message_mismatch(self):
+        source = '''
+FLOOR = 25 * 10**9
+def storage(path, writes):
+    free = shutil.disk_usage('/').free
+    require(free - writes >= FLOOR, '30 GB floor')
+'''
+        result = entry.storage_scan({Path('entry.py'): ast.parse(source)})
+        self.assertFalse(result['passed'])
+        self.assertTrue(result['findings'][0]['message_value_mismatch'])
+        self.assertTrue(result['findings'][0]['passes_25_5gb_plus_writes'])
+
+    def test_dynamic_data_proof_deadlines_and_saved_phase_maxima(self):
+        source = '''
+def data_proof():
+    assert elapsed_seconds <= configured_limit
+    proc.wait(timeout=allowed_seconds)
+def first_request():
+    deadline = started + 80
+'''
+        result = entry.deadline_scan({Path('analyze.py'): ast.parse(source)}, {'first_request': 60})
+        self.assertEqual(len(result['findings']), 3, result)
+        with tempfile.TemporaryDirectory(dir=entry.OPS, prefix='.timing-test-') as directory:
+            evidence = Path(directory) / 'timings.json'
+            evidence.write_text(json.dumps(dict(load_seconds=200, ranks=[
+                dict(load_ms=310000), dict(load=dict(seconds=290)),
+                dict(phase='load', duration_seconds=305)], expected_seconds=9000)))
+            job = dict(plan=dict(entry_rehearsal=dict(timing_evidence=[str(evidence)])))
+            self.assertEqual(entry.measured_phases(job), {'first_request': 60., 'load': 310.})
+
+    def test_unit_storage_floor_and_unreachable_vendor_copy(self):
+        result = entry.storage_scan({Path('screen.py'): ast.parse(
+            "assert free_gb - writes_gb >= 30, '25 GB floor'\n")})
+        self.assertEqual(result['findings'][0]['floor_bytes'], 30_000_000_000)
+        with tempfile.TemporaryDirectory() as directory:
+            packet = Path(directory) / 'packet-fixture'
+            packet.mkdir()
+            (packet / 'entry.py').write_text("import screen\n")
+            (packet / 'screen.py').write_text("assert free >= 25_000_000_000\n")
+            vendor = packet / 'lineage-old'
+            vendor.mkdir()
+            (vendor / 'screen.py').write_text("assert free >= 30_000_000_000\n")
+            _, sources = entry.packet_sources(dict(argv=['python3', '-B', str(packet / 'entry.py')]))
+            self.assertEqual(len(sources), 2)
+            self.assertTrue(entry.storage_scan(sources)['passed'])
+
+    def test_real_storage_helpers_and_import_isolation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'storage.py'
+            source = '''import shutil
+def storage(output, planned_write_bytes):
+    assert shutil.disk_usage('/').free - planned_write_bytes >= FLOOR
+    return True
+'''
+            for floor, status in [('25_000_000_000', 'PASS'), ('30_000_000_000', 'FAIL')]:
+                path.write_text(source.replace('FLOOR', floor))
+                result = entry.replay_storage([dict(path=str(path), function='storage')], entry.launch_env.environment())
+                self.assertEqual(result[0]['status'], status, result)
+            path.write_text("open('/mnt/model.safetensors', 'rb')\n" + source.replace('FLOOR', '25_000_000_000'))
+            result = entry.replay_storage([dict(path=str(path), function='storage')], entry.launch_env.environment())
+            self.assertEqual(result[0]['status'], 'WARN', result)
+
+    def test_both_modes_require_packaging_and_emit_fail_warn(self):
+        base = RehearsalTest()
+        base.setUp()
+        failed = dict(storage_floor=entry.check_result([dict(line=1)]),
+                      wall_deadlines=entry.check_result(), preparation_path=dict(
+                          status='WARN', message='no preparation-path probe declared'))
+        for report_mode in (False, True):
+            with patch.object(entry, 'packaging_checks', return_value=failed) as checks, \
+                 patch.object(entry, 'rehearse_report', return_value=dict(passed=True)):
+                result = entry.rehearse(base.job, base.queue, launch_env.library_path(),
+                    runner=lambda argv, **kw: subprocess.CompletedProcess(argv, 0, 'GNU coreutils', ''), report=report_mode)
+                self.assertFalse(result['passed'])
+                checks.assert_called_once()
+        with tempfile.TemporaryDirectory() as directory:
+            proposal = Path(directory) / 'proposal.txt'
+            proposal.write_text(json.dumps(base.job))
+            for json_mode in (False, True):
+                out, err = io.StringIO(), io.StringIO()
+                with patch.object(entry, 'rehearse', return_value=dict(result, **failed)), \
+                     patch.object(entry, 'lanequeue', return_value=base.queue), \
+                     patch.object(base.queue, 'library_path', return_value=launch_env.library_path()), \
+                     patch('sys.argv', ['rehearse_entry.py', str(proposal), *(['--json'] if json_mode else [])]), \
+                     contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    self.assertEqual(entry.main(), 1)
+                text = err.getvalue() if json_mode else out.getvalue()
+                self.assertIn('FAIL screen-loader-test-B: storage_floor', text)
+                self.assertIn('WARN screen-loader-test-B: preparation_path: no preparation-path probe declared', text)
+                if json_mode:
+                    self.assertIn('storage_floor', json.loads(out.getvalue())['jobs'][0])
+
+    def test_packet151_before_fix_warns_without_declared_probe(self):
+        relative = Path('experiments/own-xpu-runtime/stage2/packet151-sibling-cost')
+        with tempfile.TemporaryDirectory() as directory:
+            # Retain the old source tree shape, never copy weights/builds/evidence.
+            names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only',
+                '5cb2362d9^', '--', str(relative)], cwd=entry.ROOT, text=True,
+                stdin=subprocess.DEVNULL).splitlines()
+            for name in names:
+                if not name.endswith('.py') or any(p.startswith('lineage') for p in Path(name).parts):
+                    continue
+                target = Path(directory) / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(self.blob('5cb2362d9^', entry.ROOT / name))
+            script = Path(directory) / relative / 'v5/bracket_job.py'
+            job = dict(argv=['python3', '-B', str(script)])
+            result = entry.preparation_probe(job, script.parent.parent, launch_env.environment())
+            self.assertEqual(result['status'], 'WARN', result)
+            self.assertEqual(result['message'], 'no preparation-path probe declared')
+
+    def test_packet151_retained_old_binary_fails_and_fixed_passes(self):
+        packet = self.STAGE / 'packet151-sibling-cost'
+        if not (packet / 'v5/build/preparation/fixed/fixture').is_file():
+            self.skipTest('retained CPU preparation binaries not installed')
+        job = json.loads((entry.OPS / 'lane-queue/proposed-p151-smoke-B.txt').read_text())
+        spec = entry.declared_preparation(job, packet)
+        for mode, passed in [('old', False), ('fixed', True)]:
+            binary = packet / f'v5/build/preparation/{mode}/fixture'
+            declared = dict(spec, command=[str(binary), *spec['rank_argv'][1:]], sha256=entry.digest(binary))
+            with self.subTest(mode=mode), patch.object(entry, 'declared_preparation', return_value=declared):
+                result = entry.preparation_probe(job, packet, launch_env.environment())
+            self.assertEqual(result['passed'], passed, result)
+            self.assertEqual(result['preparation_bypassed'], not passed, result)
+
+    def test_packet151_current_report_uses_real_sibling_analysis(self):
+        job = json.loads((entry.OPS / 'lane-queue/proposed-p151-smoke-B.txt').read_text())
+        result = entry.rehearse_report(job, launch_env.environment())
+        self.assertTrue(result['passed'], result)
+        self.assertTrue(all(r['report_completed'] and r['synthetic_evidence'] for r in result['kinds']))
+
+    def test_explicit_preparation_declaration_runs_exact_argv_and_fails_closed(self):
+        binary = Path('/usr/bin/true').resolve()
+        rank = ['/device/real', '--rank', '0', '--context', '4096']
+        spec = dict(command=[str(binary), *rank[1:]], rank_argv=rank,
+                    sha256=entry.digest(binary), contains='first-decode-prepared')
+        job = dict(plan=dict(entry_rehearsal=dict(prepare_probe=spec)))
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            self.assertEqual(argv[argv.index(str(binary)) + 1:], rank[1:])
+            self.assertEqual(kwargs['timeout'], 45)
+            return subprocess.CompletedProcess(argv, 0, 'first-decode-prepared', '')
+        result = entry.preparation_probe(job, None, launch_env.environment(), runner)
+        self.assertTrue(result['passed'], result)
+        self.assertEqual(len(calls), 1)
+        spec['command'][-1] = '8'
+        with self.assertRaises(ValueError):
+            entry.preparation_probe(job, None, launch_env.environment(), runner)
+        self.assertEqual(len(calls), 1)
+
+    def test_preparation_sandbox_only_grants_declared_metadata(self):
+        binary = Path('/usr/bin/cat')
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as outside:
+            scratch = Path(directory).resolve()
+            metadata = Path(outside) / 'plan.tsv'
+            forbidden = Path(outside) / 'model.bin'
+            metadata.write_text('synthetic metadata\n')
+            forbidden.write_text('must not be read\n')
+            with patch.object(entry.entry_sandbox, 'restrict', side_effect=lambda b:
+                              entry.prepare_restrict(Path(b), [metadata], scratch)):
+                good = entry.entry_sandbox.run([str(binary), str(metadata)], binary=binary)
+                bad = entry.entry_sandbox.run([str(binary), str(forbidden)], binary=binary)
+            self.assertEqual(good.returncode, 0)
+            self.assertEqual(good.stdout, 'synthetic metadata\n')
+            self.assertNotEqual(bad.returncode, 0)
+            self.assertEqual(bad.stdout, '')
 
 
 if __name__ == '__main__':

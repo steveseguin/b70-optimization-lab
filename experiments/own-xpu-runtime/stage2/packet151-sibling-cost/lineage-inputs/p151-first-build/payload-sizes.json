@@ -1,0 +1,2311 @@
+{
+  "schema": "packet151.payload-census.v1",
+  "basis": "retained full model launch-plan metadata; packet136 arithmetic; no model bytes read",
+  "historical_input": "experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/evidence/device-router-order600-v5-A/run/ranks/rank0/launch-plan.json",
+  "historical_input_digest": "800e0db47e729688297012d991cb68e0cb1821f00d393e742d8d64b162f81b13",
+  "rows": [
+    {
+      "layer": 0,
+      "site": "blk.0.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.0.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.0.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 0,
+      "site": "blk.0.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.0.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 0,
+      "site": "blk.0.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.0.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.0.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 0,
+      "site": "blk.0.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.0.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 1,
+      "site": "blk.1.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.1.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.1.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 1,
+      "site": "blk.1.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.1.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 1,
+      "site": "blk.1.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.1.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.1.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 1,
+      "site": "blk.1.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.1.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 2,
+      "site": "blk.2.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.2.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.2.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 2,
+      "site": "blk.2.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.2.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 2,
+      "site": "blk.2.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.2.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.2.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 2,
+      "site": "blk.2.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.2.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 3,
+      "site": "blk.3.qsa.ik",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.3.qsa.ik",
+          "elements": 128,
+          "received_half_bytes": 128
+        },
+        {
+          "name": "blk.3.qsa.qgate",
+          "elements": 12288,
+          "received_half_bytes": 12288
+        },
+        {
+          "name": "blk.3.qsa.k",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.3.qsa.v",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.3.qsa.iq",
+          "elements": 512,
+          "received_half_bytes": 512
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 13956
+    },
+    {
+      "layer": 3,
+      "site": "blk.3.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.3.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 3,
+      "site": "blk.3.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.3.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.3.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 3,
+      "site": "blk.3.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.3.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 4,
+      "site": "blk.4.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.4.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.4.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 4,
+      "site": "blk.4.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.4.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 4,
+      "site": "blk.4.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.4.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.4.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 4,
+      "site": "blk.4.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.4.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 5,
+      "site": "blk.5.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.5.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.5.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 5,
+      "site": "blk.5.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.5.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 5,
+      "site": "blk.5.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.5.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.5.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 5,
+      "site": "blk.5.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.5.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 6,
+      "site": "blk.6.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.6.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.6.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 6,
+      "site": "blk.6.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.6.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 6,
+      "site": "blk.6.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.6.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.6.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 6,
+      "site": "blk.6.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.6.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 7,
+      "site": "blk.7.qsa.ik",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.7.qsa.ik",
+          "elements": 128,
+          "received_half_bytes": 128
+        },
+        {
+          "name": "blk.7.qsa.qgate",
+          "elements": 12288,
+          "received_half_bytes": 12288
+        },
+        {
+          "name": "blk.7.qsa.k",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.7.qsa.v",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.7.qsa.iq",
+          "elements": 512,
+          "received_half_bytes": 512
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 13956
+    },
+    {
+      "layer": 7,
+      "site": "blk.7.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.7.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 7,
+      "site": "blk.7.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.7.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.7.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 7,
+      "site": "blk.7.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.7.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 8,
+      "site": "blk.8.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.8.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.8.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 8,
+      "site": "blk.8.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.8.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 8,
+      "site": "blk.8.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.8.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.8.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 8,
+      "site": "blk.8.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.8.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 9,
+      "site": "blk.9.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.9.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.9.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 9,
+      "site": "blk.9.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.9.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 9,
+      "site": "blk.9.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.9.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.9.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 9,
+      "site": "blk.9.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.9.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 10,
+      "site": "blk.10.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.10.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.10.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 10,
+      "site": "blk.10.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.10.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 10,
+      "site": "blk.10.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.10.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.10.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 10,
+      "site": "blk.10.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.10.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 11,
+      "site": "blk.11.qsa.ik",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.11.qsa.ik",
+          "elements": 128,
+          "received_half_bytes": 128
+        },
+        {
+          "name": "blk.11.qsa.qgate",
+          "elements": 12288,
+          "received_half_bytes": 12288
+        },
+        {
+          "name": "blk.11.qsa.k",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.11.qsa.v",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.11.qsa.iq",
+          "elements": 512,
+          "received_half_bytes": 512
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 13956
+    },
+    {
+      "layer": 11,
+      "site": "blk.11.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.11.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 11,
+      "site": "blk.11.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.11.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.11.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 11,
+      "site": "blk.11.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.11.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 12,
+      "site": "blk.12.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.12.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.12.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 12,
+      "site": "blk.12.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.12.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 12,
+      "site": "blk.12.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.12.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.12.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 12,
+      "site": "blk.12.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.12.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 13,
+      "site": "blk.13.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.13.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.13.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 13,
+      "site": "blk.13.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.13.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 13,
+      "site": "blk.13.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.13.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.13.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 13,
+      "site": "blk.13.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.13.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 14,
+      "site": "blk.14.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.14.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.14.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 14,
+      "site": "blk.14.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.14.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 14,
+      "site": "blk.14.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.14.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.14.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 14,
+      "site": "blk.14.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.14.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 15,
+      "site": "blk.15.qsa.ik",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.15.qsa.ik",
+          "elements": 128,
+          "received_half_bytes": 128
+        },
+        {
+          "name": "blk.15.qsa.qgate",
+          "elements": 12288,
+          "received_half_bytes": 12288
+        },
+        {
+          "name": "blk.15.qsa.k",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.15.qsa.v",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.15.qsa.iq",
+          "elements": 512,
+          "received_half_bytes": 512
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 13956
+    },
+    {
+      "layer": 15,
+      "site": "blk.15.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.15.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 15,
+      "site": "blk.15.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.15.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.15.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 15,
+      "site": "blk.15.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.15.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 16,
+      "site": "blk.16.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.16.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.16.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 16,
+      "site": "blk.16.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.16.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 16,
+      "site": "blk.16.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.16.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.16.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 16,
+      "site": "blk.16.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.16.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 17,
+      "site": "blk.17.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.17.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.17.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 17,
+      "site": "blk.17.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.17.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 17,
+      "site": "blk.17.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.17.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.17.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 17,
+      "site": "blk.17.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.17.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 18,
+      "site": "blk.18.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.18.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.18.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 18,
+      "site": "blk.18.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.18.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 18,
+      "site": "blk.18.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.18.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.18.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 18,
+      "site": "blk.18.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.18.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 19,
+      "site": "blk.19.qsa.ik",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.19.qsa.ik",
+          "elements": 128,
+          "received_half_bytes": 128
+        },
+        {
+          "name": "blk.19.qsa.qgate",
+          "elements": 12288,
+          "received_half_bytes": 12288
+        },
+        {
+          "name": "blk.19.qsa.k",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.19.qsa.v",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.19.qsa.iq",
+          "elements": 512,
+          "received_half_bytes": 512
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 13956
+    },
+    {
+      "layer": 19,
+      "site": "blk.19.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.19.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 19,
+      "site": "blk.19.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.19.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.19.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 19,
+      "site": "blk.19.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.19.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 20,
+      "site": "blk.20.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.20.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.20.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 20,
+      "site": "blk.20.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.20.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 20,
+      "site": "blk.20.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.20.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.20.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 20,
+      "site": "blk.20.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.20.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 21,
+      "site": "blk.21.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.21.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.21.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 21,
+      "site": "blk.21.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.21.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 21,
+      "site": "blk.21.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.21.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.21.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 21,
+      "site": "blk.21.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.21.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 22,
+      "site": "blk.22.gdn.z",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.22.gdn.z",
+          "elements": 6144,
+          "received_half_bytes": 6144
+        },
+        {
+          "name": "blk.22.gdn.qkv",
+          "elements": 10240,
+          "received_half_bytes": 10240
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 16388
+    },
+    {
+      "layer": 22,
+      "site": "blk.22.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.22.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 22,
+      "site": "blk.22.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.22.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.22.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 22,
+      "site": "blk.22.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.22.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    },
+    {
+      "layer": 23,
+      "site": "blk.23.qsa.ik",
+      "operation": "gemv",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.23.qsa.ik",
+          "elements": 128,
+          "received_half_bytes": 128
+        },
+        {
+          "name": "blk.23.qsa.qgate",
+          "elements": 12288,
+          "received_half_bytes": 12288
+        },
+        {
+          "name": "blk.23.qsa.k",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.23.qsa.v",
+          "elements": 512,
+          "received_half_bytes": 512
+        },
+        {
+          "name": "blk.23.qsa.iq",
+          "elements": 512,
+          "received_half_bytes": 512
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5120,
+      "rank1_to_rank0_bytes": 13956
+    },
+    {
+      "layer": 23,
+      "site": "blk.23.attention",
+      "operation": "gemv",
+      "input_elements": 6144,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.23.attention",
+          "elements": 2560,
+          "received_half_bytes": 2560
+        }
+      ],
+      "input_bytes": 12288,
+      "expert_ids_bytes": 0,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12288,
+      "rank1_to_rank0_bytes": 2564
+    },
+    {
+      "layer": 23,
+      "site": "blk.23.expsgate",
+      "operation": "expert_gate_up",
+      "input_elements": 2560,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.23.expsgate",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        },
+        {
+          "name": "blk.23.expsup",
+          "elements": 6400,
+          "received_half_bytes": 6400
+        }
+      ],
+      "input_bytes": 5120,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 5160,
+      "rank1_to_rank0_bytes": 12804
+    },
+    {
+      "layer": 23,
+      "site": "blk.23.expsdown",
+      "operation": "routed_gemv",
+      "input_elements": 6400,
+      "input_scalar": "BF16",
+      "outputs": [
+        {
+          "name": "blk.23.expsdown",
+          "elements": 25600,
+          "received_half_bytes": 25600
+        }
+      ],
+      "input_bytes": 12800,
+      "expert_ids_bytes": 40,
+      "error_flag_bytes": 4,
+      "rank0_to_rank1_bytes": 12840,
+      "rank1_to_rank0_bytes": 25604
+    }
+  ],
+  "layers": [
+    {
+      "layer": 0,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 1,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 2,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 3,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 54928
+    },
+    {
+      "layer": 4,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 5,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 6,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 7,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 54928
+    },
+    {
+      "layer": 8,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 9,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 10,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 11,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 54928
+    },
+    {
+      "layer": 12,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 13,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 14,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 15,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 54928
+    },
+    {
+      "layer": 16,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 17,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 18,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 19,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 54928
+    },
+    {
+      "layer": 20,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 21,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 22,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 57360
+    },
+    {
+      "layer": 23,
+      "exchanges": 4,
+      "send_bytes": 35408,
+      "receive_bytes": 54928
+    }
+  ],
+  "exchanges_per_corrected_half": 96,
+  "send_bytes": 849792,
+  "receive_bytes": 1362048
+}
