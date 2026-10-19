@@ -61,21 +61,24 @@ def demand_stream(rows,identity,expected_positions,*,offline=True):
         require(row['staged_bytes']==row['staged_entries']*1971200,'packed byte count')
         require(row['copy_engine']=='copy-only-BCS','wrong copy engine')
         require(row['descriptor_producer']<row['descriptor_readback'],'descriptor event order')
-        if row.get('mode')!='off':require(row['descriptor_readback']<row['missing_consumer'],'missing consumer event order')
+        partitioned=row.get('mode')!='off' and row.get('layout_supported',True)
+        if not row.get('layout_supported',True):
+            require(row['staged_entries']==0 and row['missing_consumer']==0,'unsupported layout entered staging')
+        if partitioned:require(row['descriptor_readback']<row['missing_consumer'],'missing consumer event order')
         require(row['all_consumers_completed'] and row['snapshot_disposition']=='retained-until-policy','consumer closure')
         events=row['events'];ids=[e['id'] for e in events];require(len(ids)==len(set(ids)),'duplicate event')
         by_kind={e['kind']:e for e in events if e['kind']!='packed-H2D'}
-        compute_kinds={'original-mixed-gate','original-mixed-down'} if row.get('mode')=='off' else {'resident-gate','resident-down'}
+        compute_kinds={'original-mixed-gate','original-mixed-down'} if not partitioned else {'resident-gate','resident-down'}
         require({'router','descriptor','descriptor-D2H'}|compute_kinds<=by_kind.keys(),'missing native events')
         require(sum(e['kind']=='packed-H2D' for e in events)==row['staged_entries']*3,'copy event coverage')
         require(row['clock_domain']=='same-device-sycl-profiling','unqualified clock domain')
-        if row.get('mode')!='off':require({'missing-gate','missing-down','stage-map-H2D'}<=by_kind.keys(),'missing consumer edges')
+        if partitioned:require({'missing-gate','missing-down','stage-map-H2D'}<=by_kind.keys(),'missing consumer edges')
         for event in events:
             require(all(type(event[k]) is int and event[k]>0 for k in ('id','start_ns','end_ns')),'event format')
             if offline:require(event['end_ns']>=event['start_ns'],'event interval order')
         if offline:
             for before,after in [('router','descriptor'),('descriptor','descriptor-D2H')]:require(by_kind[before]['end_ns']<=by_kind[after]['start_ns'],'cross-queue producer edge')
-            if row.get('mode')!='off':
+            if partitioned:
                 require(by_kind['stage-map-H2D']['end_ns']<=by_kind['missing-gate']['start_ns'],'gate copy-consumer edge')
                 for e in events:
                     if e['kind']=='packed-H2D':require(e['end_ns']<=by_kind['missing-down']['start_ns'],'down copy-consumer edge')

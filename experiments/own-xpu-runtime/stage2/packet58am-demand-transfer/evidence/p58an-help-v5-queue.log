@@ -1,5 +1,5 @@
-usage: queue_runner.py [-h] [--cache-maintenance {serial,overlap}] --arm
-                       {v5,smoke} --output OUTPUT
+usage: queue_runner.py [-h] [--cache-maintenance {serial,overlap}]
+                       [--localize] --arm {v5,smoke} --output OUTPUT
                        [--fault-review FAULT_REVIEW] [--plan]
                        [--authorized-device-window] --library-path
                        LIBRARY_PATH
@@ -9,6 +9,7 @@ One model lifetime per arm, with two bounded K1 fixtures before the load.
 options:
   -h, --help            show this help message and exit
   --cache-maintenance {serial,overlap}
+  --localize
   --arm {v5,smoke}
   --output OUTPUT
   --fault-review FAULT_REVIEW

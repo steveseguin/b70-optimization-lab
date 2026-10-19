@@ -202,3 +202,30 @@ stream and placing request logs in their own folder. Native bytes are still
 unchanged. Fresh temporary planning, executable-help flags, and shared report
 rehearsal pass; the separate checked marker is written last again. The failed
 attempt and its old launch identities are retained.
+
+The offline event audit then narrowed the failure: layers 0–2 perform expert
+work, while layer 3 onward skip almost immediately. The manifest explains a
+concrete bug at that boundary. Layer 2 uses IQ3_XXS gate/up weights, with
+704,000 bytes per expert; the candidate forced the IQ2_S kernel and its
+524,800-byte layout onto that layer. The earlier CPU byte fixtures used only
+IQ2_S gate/up banks, so they did not cover this dispatch mistake. Recorded
+copy edges are ordered, and no packed expert copy occurred in the failed
+token. The checked2 marker was retired before launch once this was found.
+
+The repair keeps layer 2 on the unchanged parent commands, uses actual bank
+extents in the descriptor, and permits fixed-layout staging only on matching
+banks. A direct partition type check also rejects a wrong quantization.
+The real-plan CPU preparation regression checks that layer 2 has no captured
+demand partitions. The old 240-command census is its negative control; the
+corrected census has 236 commands. New device exactness is still required;
+the original failure, stopped localization attempt, and old seals remain.
+
+The rebuilt GNU and Intel byte gates pass, as do lookup/reset and delayed-lease
+tests. Both real-argv CPU preparation runs report 236 commands and pass the
+layer-2 exclusion check. The old 240-command census is rejected. Compiler peak
+RAM was 757,436,416 bytes. The fresh `packet58amd-demand-smoke-A` and
+`packet58amd-demand-v5-A` rows pass temporary lanequeue plans, report rehearsal,
+and binary-help flag checks. READY grants CPU-qualified smoke admission only;
+the repaired binary has not run on a GPU. V5 still needs the successful smoke
+and actual storage refresh. See the
+[repair closeout](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/p58amd-closeout.md).

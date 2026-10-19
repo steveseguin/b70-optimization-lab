@@ -68,10 +68,12 @@ def main():
     for name in ('allocation-plan.json','storage-budget.json'):
         assert read(name)['passed'];proofs[name]=sha(P/name)
     proofs['wait-budget.json']=sha(P/'wait-budget.json')
+    proofs['evidence/p58amd-incident-audit.json']=sha(P/'evidence/p58amd-incident-audit.json')
     files={}
     for f in P.rglob('*'):
         if not f.is_file():continue
         rel=f.relative_to(P)
+        if str(rel).startswith('screen/evidence/') or f.name=='window.lock' or f.name.startswith('fault-'):continue
         if f.parent==P and f.suffix in ('.py','.md') or rel.parts[0] in ('native','inputs','screen','proposals') or str(rel).startswith('build/native/'):
             if '__pycache__' not in rel.parts:
                 if f.suffix=='.py':ast.parse(f.read_text())
@@ -84,7 +86,7 @@ def main():
     for row in read('lineage/admission-closure.json')['files']:
         assert sha(P/row['owned'])==row['sha256']
         files[str((P/row['owned']).relative_to(ROOT))]=row['sha256']
-    footprint=sum(f.stat().st_size for f in P.rglob('*') if f.is_file() and f.relative_to(P).parts[0]!='evidence')
+    footprint=sum(f.stat().st_size for f in P.rglob('*') if f.is_file() and f.relative_to(P).parts[0]!='evidence' and not str(f.relative_to(P)).startswith('screen/evidence/'))
     assert footprint<300000000
     package=dict(schema='packet58an.queue-packaging.v1',passed=True,ready_for_device=True,device_executed=False,
         parent='packet58aj resident record line',parent_tok_s=31.966820,record='cmveqsmsl00ebrf014yvrsosx',
@@ -115,7 +117,9 @@ def main():
     ready=dict(schema='packet58an.ready.v1',ready_for_device=True,cpu_prepared=True,device_executed=False,
         conditional_smoke_ready=True,v5_ready=False,v5_conditional_on_same_parent_smoke=True,
         parent=package['parent'],parent_tok_s=package['parent_tok_s'],record=package['record'],
-        fallback_used=False,lookups='resident',oracle='iq3-p49-split32-v1',release_condition=RELEASE,
+        fallback_used=True,fallback_scope='unchanged parent expert commands for incompatible IQ3_XXS layer 2',
+        demand_eligible_layers=47,unsupported_layout_layers=[2],device_repair_confirmation_pending=True,
+        lookups='resident',oracle='iq3-p49-split32-v1',release_condition=RELEASE,
         release_amendment_sha256=sha(P/'RELEASE-AMENDMENT.md'),seal_sha256=sha(P/'seal.json'),
         build_receipt_sha256=sha(P/'build-receipt.json'),packaging_sha256=sha(P/'screen-packaging.json'),
         artifacts=artifacts,proofs=proofs,proposals=proposals,lanequeue_proposals=rows,

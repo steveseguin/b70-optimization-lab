@@ -5,6 +5,8 @@
   struct DemandLayer {
     Allocation descriptor=0,stage=0,host=0,host_stage=0;
     std::array<Allocation,3> hosts{},tables{};
+    std::array<size_t,3> bank_bytes{};
+    bool layout_supported=false;
     std::vector<ownrt::PreparedCompute> describe,gate_resident,gate_missing,down_resident,down_missing;
     uint64_t gate_ticket=0,down_ticket=0;
     bool trace=false;unsigned resident_slots=0,staged_entries=0;
@@ -21,8 +23,11 @@
       x.stage=allocate(0,"demand-slot-map-"+suffix,sizeof(p58am::Map),Category::weights,Lifetime::process);
       x.host=allocate(0,"demand-host-descriptor-"+suffix,sizeof(p58am::Map),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
       x.host_stage=allocate(0,"demand-host-slot-map-"+suffix,sizeof(p58am::Map),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
-      for(auto&[name,bank]:expert_banks)if(bank.layer==int(layer)){x.hosts.at(bank.projection)=bank.host;x.tables.at(bank.projection)=bank.table;}
+      for(auto&[name,bank]:expert_banks)if(bank.layer==int(layer)){x.hosts.at(bank.projection)=bank.host;x.tables.at(bank.projection)=bank.table;x.bank_bytes.at(bank.projection)=bank.expert_bytes;}
       for(auto id:x.hosts)require(id,"demand layer bank missing");
+      // This mixed checkpoint includes an IQ3_XXS gate/up layer. Its packed
+      // rows are not IQ2_S: neither reinterpret them nor stage truncated bytes.
+      x.layout_supported=x.bank_bytes==std::array<size_t,3>{p58am::gate_bytes,p58am::up_bytes,p58am::down_bytes};
     }
   }
   void demand_capture(std::vector<ownrt::PreparedCompute>& commands,const std::function<void()>& action){
@@ -33,14 +38,15 @@
     for(const auto& l:p.launches){if(l.op!="expert_gate_up"&&l.op!="routed_gemv")continue;
       auto layer=std::stoi(l.label.substr(4));auto& x=demand_layers.at(layer);const bool down=l.op=="routed_gemv";
       auto& members=matrices.at(&l);p39::Bindings b;b.indirect=true;b.error=buffers[0].at("error").id;b.active=buffers[0].at("active").id;b.position=buffers[0].at("position").id;b.capacity=p.g.context;
-      if(!down)demand_capture(x.describe,[&]{p58am::descriptor(dev(0),members[0].routes,x.tables,x.descriptor,uint64_t(demand_pointer(cache_arena)),a.cache_bytes);});
+      if(!down)demand_capture(x.describe,[&]{p58am::descriptor(dev(0),members[0].routes,x.tables,x.descriptor,uint64_t(demand_pointer(cache_arena)),a.cache_bytes,x.bank_bytes);});
+      if(!x.layout_supported){(down?x.down_resident:x.gate_resident).clear();(down?x.down_missing:x.gate_missing).clear();continue;}
       demand_capture(down?x.down_resident:x.gate_resident,[&]{p58am::partition(dev(0),members,b,halfcache,x.descriptor,x.stage,1,down);});
       demand_capture(down?x.down_missing:x.gate_missing,[&]{p58am::partition(dev(0),members,b,halfcache,x.descriptor,x.stage,2,down);});
     }
     size_t metadata=sizeof(demand_layers)+sizeof(demand_pool)+sizeof(demand_bypass)+96*sizeof(p58am::Map)+512*128;
     size_t commands=0;
     for(auto& x:demand_layers)for(auto* v:{&x.describe,&x.gate_resident,&x.gate_missing,&x.down_resident,&x.down_missing}){
-      require(v->size()==1,"one captured demand operation per hook");commands+=v->size();metadata+=v->capacity()*sizeof(ownrt::PreparedCompute);
+      require(v->size()==((&x.describe==v||x.layout_supported)?1u:0u),"layout-qualified captured demand operation per hook");commands+=v->size();metadata+=v->capacity()*sizeof(ownrt::PreparedCompute);
       for(auto& c:*v)metadata+=c.ids.capacity()*sizeof(Allocation)+c.pointers.capacity()*sizeof(void*)+c.argument_bytes.capacity()+c.operation_bytes.capacity()+1024;
     }
     require(metadata+1048576<=2097152,"demand host metadata/event cap including runtime allowance");
@@ -52,17 +58,17 @@
     const auto& l=p.launches[index];if(l.op!="expert_gate_up"&&l.op!="routed_gemv")return false;
     const unsigned layer=std::stoi(l.label.substr(4));auto&x=demand_layers.at(layer);auto& b=demand_backend();
     if(l.op=="routed_gemv"){
-      if(a.demand=="off"){x.dr=demand_issue_commands(issue_sites.at(index).commands);return true;}
+      if(a.demand=="off"||!x.layout_supported){x.dr=demand_issue_commands(issue_sites.at(index).commands);return true;}
       x.dr=demand_issue_commands(x.down_resident);if(x.down_ticket)b.demand_barrier(x.down_ticket);x.dm=demand_issue_commands(x.down_missing);return true;
     }
-    x.trace=a.demand_diagnostics&&!allocation_probe;x.copies_size=0;x.staged_entries=0;x.resident_slots=0;x.gm=x.dm=x.dr=0;
+    x.trace=a.demand_diagnostics&&!allocation_probe;x.copies_size=0;x.staged_entries=0;x.resident_slots=0;x.gm=x.dm=x.dr=0;x.gate_ticket=x.down_ticket=0;
     auto producer=x.producer=demand_issue_commands(x.describe);
     auto descriptor=x.readback=b.demand_copy(demand_pointer(x.host),demand_pointer(x.descriptor),sizeof(p58am::Map),producer);
-    x.gr=demand_issue_commands(a.demand=="off"?issue_sites.at(index).commands:x.gate_resident); // Host waits only AFTER resident launch.
+    x.gr=demand_issue_commands(a.demand=="off"||!x.layout_supported?issue_sites.at(index).commands:x.gate_resident); // Host waits only AFTER resident launch.
     demand_wait(descriptor);
     auto* desc=static_cast<p58am::Map*>(demand_pointer(x.host));auto* stages=static_cast<p58am::Map*>(demand_pointer(x.host_stage));*stages={};
     bool neighbor=false;for(auto&s:desc->slots){neighbor|=s.valid&&s.resident;x.resident_slots+=s.valid&&s.resident;}
-    if(a.demand=="off")return true;
+    if(a.demand=="off"||!x.layout_supported)return true;
     std::array<int,10> entry;entry.fill(-1);
     for(unsigned slot=0;slot<10;++slot){auto&s=desc->slots[slot];if(!s.valid){++demand_bypass[0];continue;}if(s.resident)continue;auto expert=layer*512+s.expert;bool pending=false;
       if(maintenance.plan)for(auto&f:maintenance.plan->fills)pending|=f.expert==expert;
@@ -85,9 +91,9 @@
     if(!a.demand_diagnostics||allocation_probe||!demand_storage)return;
     std::ofstream out(a.output/"demand-events.jsonl",std::ios::app);
     for(unsigned layer=0;layer<48;++layer){auto&x=demand_layers[layer];if(!x.trace)continue;
-      out<<"{\"schema\":\"packet58am.demand.v1\",\"identity\":"<<ownrt::quote(a.demand_identity)<<",\"position\":"<<maintenance_position<<",\"layer\":"<<layer<<",\"mode\":"<<ownrt::quote(a.demand)<<",\"slot_ids\":[0,1,2,3,4,5,6,7,8,9],\"resident_slots\":"<<x.resident_slots<<",\"staged_entries\":"<<x.staged_entries<<",\"staged_bytes\":"<<x.staged_entries*p58am::expert_bytes<<",\"copy_engine\":\"copy-only-BCS\",\"descriptor_producer\":"<<x.producer<<",\"descriptor_readback\":"<<x.readback<<",\"missing_consumer\":"<<x.gm<<",\"clock_domain\":\"same-device-sycl-profiling\",\"events\":[";
+      out<<"{\"schema\":\"packet58am.demand.v1\",\"identity\":"<<ownrt::quote(a.demand_identity)<<",\"position\":"<<maintenance_position<<",\"layer\":"<<layer<<",\"layout_supported\":"<<(x.layout_supported?"true":"false")<<",\"mode\":"<<ownrt::quote(a.demand)<<",\"slot_ids\":[0,1,2,3,4,5,6,7,8,9],\"resident_slots\":"<<x.resident_slots<<",\"staged_entries\":"<<x.staged_entries<<",\"staged_bytes\":"<<x.staged_entries*p58am::expert_bytes<<",\"copy_engine\":\"copy-only-BCS\",\"descriptor_producer\":"<<x.producer<<",\"descriptor_readback\":"<<x.readback<<",\"missing_consumer\":"<<x.gm<<",\"clock_domain\":\"same-device-sycl-profiling\",\"events\":[";
       bool comma=false;auto emit=[&](const char*kind,uint64_t id,bool copy){if(!id)return;std::array<uint64_t,2> stamp;if(copy)stamp=demand_backend().demand_timing(id);else{auto t=dev(0).timing(id);stamp={t.start_ns,t.end_ns};}out<<(comma?",":"")<<"{\"kind\":"<<ownrt::quote(kind)<<",\"id\":"<<id<<",\"start_ns\":"<<stamp[0]<<",\"end_ns\":"<<stamp[1]<<"}";comma=true;};
-      emit("router",x.router,false);emit("descriptor",x.producer,false);emit("descriptor-D2H",x.readback,true);emit(a.demand=="off"?"original-mixed-gate":"resident-gate",x.gr,false);emit("missing-gate",x.gm,false);emit(a.demand=="off"?"original-mixed-down":"resident-down",x.dr,false);emit("missing-down",x.dm,false);if(a.demand!="off")emit("stage-map-H2D",x.gate_ticket,true);
+      emit("router",x.router,false);emit("descriptor",x.producer,false);emit("descriptor-D2H",x.readback,true);emit((a.demand=="off"||!x.layout_supported)?"original-mixed-gate":"resident-gate",x.gr,false);emit("missing-gate",x.gm,false);emit((a.demand=="off"||!x.layout_supported)?"original-mixed-down":"resident-down",x.dr,false);emit("missing-down",x.dm,false);if(a.demand!="off")emit("stage-map-H2D",x.gate_ticket,true);
       for(unsigned i=0;i<x.copies_size;++i)emit("packed-H2D",x.copies[i],true);
       out<<"],\"all_consumers_completed\":true,\"snapshot_disposition\":\"retained-until-policy\"}\n";x.trace=false;
     }

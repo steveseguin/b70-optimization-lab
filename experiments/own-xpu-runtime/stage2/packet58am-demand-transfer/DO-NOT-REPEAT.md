@@ -20,3 +20,7 @@
   fixtures and both-view real-argv preparation, followed by device smoke.
 - Never run the inherited numeric/event consistency analyzer while the native
   child runs. Complete request markers permit stream format and oracle only.
+- Packet58amd: do not assume all expert banks share a quantization. Layer 2
+  gate/up is IQ3_XXS (704,000 bytes/expert), not IQ2_S (524,800). Fixed-layout
+  partitioning and staging must exclude it and retain the parent commands.
+  Uniform IQ2_S synthetic byte fixtures cannot test mixed-checkpoint dispatch.

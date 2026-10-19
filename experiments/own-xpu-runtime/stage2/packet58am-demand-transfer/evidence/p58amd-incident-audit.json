@@ -1,0 +1,990 @@
+{
+  "schema": "packet58amd.incident-audit.v1",
+  "device_executed": false,
+  "source": "evidence/p58amd-original-incident/S1/incident-retrospective/demand-events.jsonl",
+  "source_sha256": "212ac5b1a28ee222d0aa96f1c1bccabb03602ec2f4ca447f5db38fe3012f6c2b",
+  "packed_expert_copies": 0,
+  "recorded_dependency_edges_ordered": true,
+  "observation": "Layers 0\u20132 have substantial missing-kernel work; layers 3\u201347 take only a few microseconds.",
+  "inference": "The transition into layer 3 is the first localization target; timestamps do not identify the flag writer.",
+  "manifest": "inputs/incident-retrospective/plan.tsv",
+  "manifest_sha256": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+  "exceptional_banks": [
+    {
+      "tensor": "blk.2.ffn_gate_exps.weight",
+      "grid": 21,
+      "bytes_per_expert": 704000
+    },
+    {
+      "tensor": "blk.2.ffn_up_exps.weight",
+      "grid": 21,
+      "bytes_per_expert": 704000
+    }
+  ],
+  "dispatch_bug": "IQ3_XXS layer 2 was unconditionally dispatched through the fixed IQ2_S gate/up kernel.",
+  "cause_identified": true,
+  "device_confirmation_pending": true,
+  "repair_qualified": false,
+  "layers": [
+    {
+      "layer": 0,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 23542,
+        "descriptor": 2083,
+        "descriptor-D2H": 1614,
+        "resident-gate": 2188,
+        "missing-gate": 1207292,
+        "resident-down": 1875,
+        "missing-down": 419166,
+        "stage-map-H2D": 1615
+      }
+    },
+    {
+      "layer": 1,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 22813,
+        "descriptor": 2291,
+        "descriptor-D2H": 1771,
+        "resident-gate": 1875,
+        "missing-gate": 836563,
+        "resident-down": 1771,
+        "missing-down": 418646,
+        "stage-map-H2D": 1875
+      }
+    },
+    {
+      "layer": 2,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 22500,
+        "descriptor": 1979,
+        "descriptor-D2H": 1354,
+        "resident-gate": 1875,
+        "missing-gate": 1232812,
+        "resident-down": 1667,
+        "missing-down": 420104,
+        "stage-map-H2D": 1771
+      }
+    },
+    {
+      "layer": 3,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 2083,
+        "descriptor": 1979,
+        "descriptor-D2H": 1615,
+        "resident-gate": 1875,
+        "missing-gate": 2396,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1563
+      }
+    },
+    {
+      "layer": 4,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 2083,
+        "descriptor-D2H": 1614,
+        "resident-gate": 1979,
+        "missing-gate": 2604,
+        "resident-down": 1771,
+        "missing-down": 1875,
+        "stage-map-H2D": 1459
+      }
+    },
+    {
+      "layer": 5,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1980,
+        "descriptor-D2H": 1406,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1458
+      }
+    },
+    {
+      "layer": 6,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 2083,
+        "descriptor-D2H": 1198,
+        "resident-gate": 1875,
+        "missing-gate": 2291,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1875
+      }
+    },
+    {
+      "layer": 7,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1979,
+        "descriptor": 2084,
+        "descriptor-D2H": 1458,
+        "resident-gate": 2292,
+        "missing-gate": 2292,
+        "resident-down": 1979,
+        "missing-down": 1771,
+        "stage-map-H2D": 1302
+      }
+    },
+    {
+      "layer": 8,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 2292,
+        "descriptor-D2H": 1198,
+        "resident-gate": 1875,
+        "missing-gate": 2188,
+        "resident-down": 1771,
+        "missing-down": 1979,
+        "stage-map-H2D": 1458
+      }
+    },
+    {
+      "layer": 9,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 2084,
+        "descriptor-D2H": 1562,
+        "resident-gate": 1875,
+        "missing-gate": 2395,
+        "resident-down": 1771,
+        "missing-down": 1771,
+        "stage-map-H2D": 1510
+      }
+    },
+    {
+      "layer": 10,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1875,
+        "descriptor-D2H": 1406,
+        "resident-gate": 1875,
+        "missing-gate": 2292,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1823
+      }
+    },
+    {
+      "layer": 11,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1979,
+        "descriptor-D2H": 1666,
+        "resident-gate": 1875,
+        "missing-gate": 2292,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1458
+      }
+    },
+    {
+      "layer": 12,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1875,
+        "descriptor-D2H": 1302,
+        "resident-gate": 1875,
+        "missing-gate": 2187,
+        "resident-down": 1771,
+        "missing-down": 1771,
+        "stage-map-H2D": 1459
+      }
+    },
+    {
+      "layer": 13,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1771,
+        "descriptor-D2H": 1197,
+        "resident-gate": 1979,
+        "missing-gate": 2291,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1667
+      }
+    },
+    {
+      "layer": 14,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1979,
+        "descriptor-D2H": 1250,
+        "resident-gate": 1979,
+        "missing-gate": 2396,
+        "resident-down": 2083,
+        "missing-down": 1771,
+        "stage-map-H2D": 1719
+      }
+    },
+    {
+      "layer": 15,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1875,
+        "descriptor-D2H": 1563,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 1979,
+        "missing-down": 1771,
+        "stage-map-H2D": 1458
+      }
+    },
+    {
+      "layer": 16,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1562,
+        "descriptor": 1875,
+        "descriptor-D2H": 1354,
+        "resident-gate": 2084,
+        "missing-gate": 2292,
+        "resident-down": 1979,
+        "missing-down": 1771,
+        "stage-map-H2D": 1302
+      }
+    },
+    {
+      "layer": 17,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 2084,
+        "descriptor-D2H": 1302,
+        "resident-gate": 1875,
+        "missing-gate": 2396,
+        "resident-down": 1771,
+        "missing-down": 1771,
+        "stage-map-H2D": 1614
+      }
+    },
+    {
+      "layer": 18,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 2187,
+        "descriptor-D2H": 1355,
+        "resident-gate": 1979,
+        "missing-gate": 2395,
+        "resident-down": 1771,
+        "missing-down": 1875,
+        "stage-map-H2D": 1615
+      }
+    },
+    {
+      "layer": 19,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1145,
+        "descriptor": 2187,
+        "descriptor-D2H": 1354,
+        "resident-gate": 1979,
+        "missing-gate": 2187,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1458
+      }
+    },
+    {
+      "layer": 20,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1145,
+        "descriptor": 1979,
+        "descriptor-D2H": 1198,
+        "resident-gate": 1875,
+        "missing-gate": 2500,
+        "resident-down": 1771,
+        "missing-down": 1875,
+        "stage-map-H2D": 1458
+      }
+    },
+    {
+      "layer": 21,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1145,
+        "descriptor": 1875,
+        "descriptor-D2H": 1302,
+        "resident-gate": 1980,
+        "missing-gate": 2500,
+        "resident-down": 1770,
+        "missing-down": 1875,
+        "stage-map-H2D": 1459
+      }
+    },
+    {
+      "layer": 22,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1875,
+        "descriptor-D2H": 1355,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1875
+      }
+    },
+    {
+      "layer": 23,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1979,
+        "descriptor-D2H": 1407,
+        "resident-gate": 1979,
+        "missing-gate": 2188,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1563
+      }
+    },
+    {
+      "layer": 24,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 2188,
+        "descriptor-D2H": 1250,
+        "resident-gate": 1875,
+        "missing-gate": 2188,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1562
+      }
+    },
+    {
+      "layer": 25,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1145,
+        "descriptor": 2291,
+        "descriptor-D2H": 1302,
+        "resident-gate": 1979,
+        "missing-gate": 2187,
+        "resident-down": 1875,
+        "missing-down": 1770,
+        "stage-map-H2D": 1510
+      }
+    },
+    {
+      "layer": 26,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 2188,
+        "descriptor-D2H": 1146,
+        "resident-gate": 1979,
+        "missing-gate": 2291,
+        "resident-down": 1771,
+        "missing-down": 1875,
+        "stage-map-H2D": 1979
+      }
+    },
+    {
+      "layer": 27,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1875,
+        "descriptor-D2H": 1459,
+        "resident-gate": 1875,
+        "missing-gate": 2188,
+        "resident-down": 1875,
+        "missing-down": 1770,
+        "stage-map-H2D": 1562
+      }
+    },
+    {
+      "layer": 28,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1979,
+        "descriptor-D2H": 1146,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 2084,
+        "missing-down": 1770,
+        "stage-map-H2D": 1667
+      }
+    },
+    {
+      "layer": 29,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1979,
+        "descriptor-D2H": 1198,
+        "resident-gate": 1979,
+        "missing-gate": 2500,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1823
+      }
+    },
+    {
+      "layer": 30,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 2083,
+        "descriptor-D2H": 1198,
+        "resident-gate": 1979,
+        "missing-gate": 2188,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 2240
+      }
+    },
+    {
+      "layer": 31,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 2083,
+        "descriptor-D2H": 1563,
+        "resident-gate": 1980,
+        "missing-gate": 2291,
+        "resident-down": 1771,
+        "missing-down": 1875,
+        "stage-map-H2D": 1718
+      }
+    },
+    {
+      "layer": 32,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1875,
+        "descriptor-D2H": 1302,
+        "resident-gate": 1875,
+        "missing-gate": 2500,
+        "resident-down": 1771,
+        "missing-down": 1875,
+        "stage-map-H2D": 1459
+      }
+    },
+    {
+      "layer": 33,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 2188,
+        "descriptor-D2H": 1146,
+        "resident-gate": 1875,
+        "missing-gate": 2500,
+        "resident-down": 1771,
+        "missing-down": 1771,
+        "stage-map-H2D": 1927
+      }
+    },
+    {
+      "layer": 34,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1145,
+        "descriptor": 1875,
+        "descriptor-D2H": 1302,
+        "resident-gate": 1875,
+        "missing-gate": 2604,
+        "resident-down": 1770,
+        "missing-down": 1771,
+        "stage-map-H2D": 1771
+      }
+    },
+    {
+      "layer": 35,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 2188,
+        "descriptor-D2H": 1250,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1562
+      }
+    },
+    {
+      "layer": 36,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1354,
+        "descriptor": 1875,
+        "descriptor-D2H": 1250,
+        "resident-gate": 1875,
+        "missing-gate": 2500,
+        "resident-down": 1771,
+        "missing-down": 1770,
+        "stage-map-H2D": 1614
+      }
+    },
+    {
+      "layer": 37,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1771,
+        "descriptor-D2H": 1250,
+        "resident-gate": 1875,
+        "missing-gate": 2500,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1615
+      }
+    },
+    {
+      "layer": 38,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1771,
+        "descriptor-D2H": 1146,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1875
+      }
+    },
+    {
+      "layer": 39,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1875,
+        "descriptor-D2H": 1406,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 1770,
+        "missing-down": 1771,
+        "stage-map-H2D": 1406
+      }
+    },
+    {
+      "layer": 40,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1875,
+        "descriptor-D2H": 1302,
+        "resident-gate": 2084,
+        "missing-gate": 2188,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1563
+      }
+    },
+    {
+      "layer": 41,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 2187,
+        "descriptor-D2H": 1458,
+        "resident-gate": 1875,
+        "missing-gate": 2187,
+        "resident-down": 1875,
+        "missing-down": 1771,
+        "stage-map-H2D": 1614
+      }
+    },
+    {
+      "layer": 42,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1354,
+        "descriptor": 2188,
+        "descriptor-D2H": 1354,
+        "resident-gate": 1875,
+        "missing-gate": 2291,
+        "resident-down": 1771,
+        "missing-down": 1771,
+        "stage-map-H2D": 1719
+      }
+    },
+    {
+      "layer": 43,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1145,
+        "descriptor": 2083,
+        "descriptor-D2H": 1354,
+        "resident-gate": 1875,
+        "missing-gate": 2500,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1719
+      }
+    },
+    {
+      "layer": 44,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1875,
+        "descriptor-D2H": 1250,
+        "resident-gate": 1875,
+        "missing-gate": 2292,
+        "resident-down": 1771,
+        "missing-down": 1875,
+        "stage-map-H2D": 1719
+      }
+    },
+    {
+      "layer": 45,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1145,
+        "descriptor": 1979,
+        "descriptor-D2H": 1302,
+        "resident-gate": 1980,
+        "missing-gate": 2291,
+        "resident-down": 1875,
+        "missing-down": 1875,
+        "stage-map-H2D": 1666
+      }
+    },
+    {
+      "layer": 46,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1146,
+        "descriptor": 1875,
+        "descriptor-D2H": 1198,
+        "resident-gate": 1979,
+        "missing-gate": 2395,
+        "resident-down": 1875,
+        "missing-down": 1770,
+        "stage-map-H2D": 1406
+      }
+    },
+    {
+      "layer": 47,
+      "ordered_edges": {
+        "router -> descriptor": true,
+        "descriptor -> descriptor-D2H": true,
+        "stage-map-H2D -> missing-gate": true,
+        "missing-gate -> resident-down": true,
+        "resident-down -> missing-down": true
+      },
+      "durations_ns": {
+        "router": 1250,
+        "descriptor": 1979,
+        "descriptor-D2H": 1197,
+        "resident-gate": 1979,
+        "missing-gate": 2292,
+        "resident-down": 1875,
+        "missing-down": 1667,
+        "stage-map-H2D": 1719
+      }
+    }
+  ]
+}

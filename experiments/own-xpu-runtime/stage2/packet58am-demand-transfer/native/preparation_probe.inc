@@ -54,6 +54,11 @@ static int preparation_probe(Options a){
     // Rebuild with actual parity-bank pointer bindings, rather than mutating
     // captured argument blocks. No model bytes are materialized.
     if(parity)e.swap_state_banks();e.prepare_plan();e.prepare_commands();e.cache_begin_position();
+    // Real plan regression: layer 2 is IQ3_XXS, not the fixed IQ2_S staging ABI.
+    // On the old implementation these four vectors each contain a wrong kernel.
+    {auto& x=e.demand_layers.at(2);
+     require(x.gate_resident.empty()&&x.gate_missing.empty()&&x.down_resident.empty()&&x.down_missing.empty(),"mixed-quantization layer captured fixed-layout demand kernels");
+     require(x.bank_bytes[0]==704000&&x.bank_bytes[1]==704000&&x.bank_bytes[2]==921600,"real layer-2 layout regression identity");}
     for(unsigned layer=0;layer<48;++layer){auto&x=e.demand_layers[layer];auto*desc=static_cast<p58am::Map*>(e.demand_pointer(x.descriptor));*desc={};
      for(unsigned slot=0;slot<10;++slot){auto&s=desc->slots[slot];s.valid=1;s.expert=slot;s.resident=slot%2==0;s.generation=1;}
     }

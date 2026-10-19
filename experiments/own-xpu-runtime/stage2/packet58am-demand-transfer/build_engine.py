@@ -9,7 +9,7 @@ def limits():
     assert shutil.disk_usage('/').free>=27_000_000_000,'CPU preparation root floor 27 GB'
     # packet58an's 300 MB cap applies to the build and its source closure.
     # Retained proof logs/receipts are evidence, not build scratch. Keep them.
-    footprint=sum(f.stat().st_size for f in P.rglob('*') if f.is_file() and f.relative_to(P).parts[0]!='evidence')
+    footprint=sum(f.stat().st_size for f in P.rglob('*') if f.is_file() and f.relative_to(P).parts[0]!='evidence' and not str(f.relative_to(P)).startswith('screen/evidence/'))
     assert footprint<300_000_000,'300 MB build and source-closure budget'
 def compiler_turn():
     spec=importlib.util.spec_from_file_location('compile_turn',P.parents[1]/'ops/compile_turn.py')

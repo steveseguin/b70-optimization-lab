@@ -104,3 +104,14 @@ with `finalize_queue_handoff.py`, which writes READY last.
 Ignored native binaries, link objects, RoPE data and scratch are local build
 artifacts with restoration identities in the source closure. This is a lab
 handoff, not a publicly reproducible release package.
+
+Packet58amd fixes mixed-layout dispatch: the checkpoint's layer 2 has IQ3_XXS
+gate/up experts (704,000 bytes each), whereas fixed demand staging supports
+IQ2_S gate/up experts (524,800 bytes each). The original candidate wrongly
+captured IQ2_S kernels for all 48 layers. Layer 2 now keeps the unchanged
+parent gate/up and down commands; only the other 47 layers may stage experts.
+Descriptor residency uses each bank's actual byte extent. The CPU preparation
+regression rejects demand captures for layer 2, and `test_layout.py` rejects
+the original 240-command census against the corrected 236-command census.
+This corrects a dispatch bug; fresh device exactness remains required.
+See the [repair closeout](p58amd-closeout.md) for retained evidence and next gates.

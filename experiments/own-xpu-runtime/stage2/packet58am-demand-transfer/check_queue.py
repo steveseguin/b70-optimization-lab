@@ -1,12 +1,16 @@
 """CPU-only replay of packet58amc checks; no compile, model read or queue mutation."""
-import json,pathlib,subprocess,tempfile,resource,os,time
+import json,pathlib,subprocess,tempfile,resource,os,time,sys
 P=pathlib.Path(__file__).resolve().parent;R=P.parents[3];Q=R/'experiments/own-xpu-runtime/ops/lane-queue';E=P/'evidence';records=[]
 def bounded():resource.setrlimit(resource.RLIMIT_AS,(2*1024**3,2*1024**3))
 def run(name,cmd):
  with (E/f'p58an-{name}.log').open('w') as f:
   cp=subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,cwd=R,preexec_fn=bounded)
  records.append(dict(check=name,returncode=cp.returncode));print(name,cp.returncode,flush=True)
-run('python-tests',['python3','-B',str(P/'checks.py')])
+if '--skip-tests' not in sys.argv:
+ run('python-tests',['python3','-B',str(P/'checks.py')])
+else:
+ assert json.loads((E/'python-tests.json').read_text())['passed']
+ records.append(dict(check='python-tests-already-completed',returncode=0))
 for kind in ('smoke','v5'):
  with tempfile.TemporaryDirectory(prefix='p58an-plan-') as d:
   pathlib.Path(d,'queue-A.txt').write_text((Q/f'proposed-p58am-{kind}-A.txt').read_text())

@@ -15,7 +15,7 @@ P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('v5','demand'),('smoke','smoke'))
-ROOT = P / 'evidence/card0-demand-n'
+ROOT = P / 'evidence/card0-demand-amd-fixed'
 
 
 def commands(output, card, review, library, view='demand', maintenance=DEFAULT_MAINTENANCE):

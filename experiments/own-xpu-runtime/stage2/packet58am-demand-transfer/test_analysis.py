@@ -47,6 +47,12 @@ class Evidence(unittest.TestCase):
         row=dict(schema='packet58am.demand.v1',identity='synthetic-not-device',position=0,layer=0,slot_ids=list(range(10)),staged_bytes=1971200,staged_entries=1,copy_engine='copy-only-BCS',descriptor_producer=2,descriptor_readback=3,missing_consumer=9,all_consumers_completed=True,snapshot_disposition='retained-until-policy',clock_domain='same-device-sycl-profiling',events=events)
         rows=[dict(row,layer=i) for i in range(48)]
         self.assertTrue(demand_stream(rows,'synthetic-not-device',1))
+        fallback=copy.deepcopy(rows)
+        fallback[2].update(layout_supported=False,staged_bytes=0,staged_entries=0,missing_consumer=0)
+        fallback[2]['events']=[dict(e,kind={'resident-gate':'original-mixed-gate','resident-down':'original-mixed-down'}.get(e['kind'],e['kind'])) for e in events if e['kind'] in ('router','descriptor','descriptor-D2H','resident-gate','resident-down')]
+        self.assertTrue(demand_stream(fallback,'synthetic-not-device',1))
+        fallback[2]['staged_entries']=1;fallback[2]['staged_bytes']=1971200
+        with self.assertRaises(ValueError):demand_stream(fallback,'synthetic-not-device',1)
         for field,value in [('staged_bytes',1),('identity','edited'),('missing_consumer',1),('slot_ids',[0]*10),('copy_engine','CCS')]:
             changed=copy.deepcopy(rows);changed[0][field]=value
             with self.assertRaises(ValueError):demand_stream(changed,'synthetic-not-device',1)
