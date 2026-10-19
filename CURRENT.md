@@ -9,12 +9,14 @@ service or live queue changed; device readiness is false. The next prepared
 ideas were checked, and none has a new qualifying bound.
 [Work note and evidence](notes/2026-10-19-own-runtime-packet156.md).
 
-**October 19, packet58aj resident lookup preparation complete on CPU:** The
-private packet58ah copy keeps exact lookup bytes in memory. GNU/Intel output
-and reset checks, policy tests, entry/report checks, seals and pin admission
-pass. Smoke and five-view proposals are prepared, not queued. The later chain
-still refuses launch until its own device checks pass; the coordinator runs
-after p153 and p151 on lane B. The disk stop is 27 GB and no GPU was used.
+**October 19, packet58ajb first-request repair prepared on CPU:** The original
+resident smoke timed out before its first prefill token completed; teardown
+drained safely. Its evidence is preserved. Fresh smoke and five-view proposals
+use a 300-second wait and record the failed operation if it happens again.
+The old logs do not identify that operation, so the cause is still unproven.
+The device-define CPU preparation probe, exact-output checks and entry checks
+pass; actual device checks remain pending. Nothing was launched or queued here.
+The final readiness markers govern coordinator admission.
 [Work note](notes/2026-10-19-own-runtime-packet58aj.md).
 
 **October 19, packet155 preparation stopped at the disk floor:** The private

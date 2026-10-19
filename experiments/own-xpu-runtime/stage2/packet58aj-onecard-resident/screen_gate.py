@@ -11,7 +11,7 @@ ORDER=('K1a','K1b','WSCREEN')
 def main():
     expected=D.read(P/'screen/build-receipt.json')
     expected_hash=D.sha(P/'screen/build-receipt.json')
-    V=P/'screen/evidence/card0-58aj-screen-a'
+    V=P/'screen/evidence/card0-58ajb-screen-a'
     sources={};boots=set();summaries={};queues={}
     def pin(path):
         name=str(path.relative_to(ROOT));digest=D.sha(path)

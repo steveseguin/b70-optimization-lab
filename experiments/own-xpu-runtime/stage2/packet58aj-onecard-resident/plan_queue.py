@@ -8,14 +8,14 @@ def documents():
     lib=library_path()
     sizes=json.loads((P/'payload-sizes.json').read_text())['records']
     for tag,arm in [('smoke','smoke'),('v5','resident')]:
-        job=dict(name='packet58aj-'+tag+'-A',lane='A',argv=[
+        job=dict(name='packet58ajb-'+tag+'-A',lane='A',argv=[
             '/usr/bin/python3','-B',str((Q/'queue_runner.py').relative_to(ROOT)),
-            '--arm',arm,'--output',str(Q/'evidence/card0-58aj-screen-a'/arm),
+            '--arm',arm,'--output',str(Q/'evidence/card0-58ajb-screen-a'/arm),
             '--cache-maintenance','overlap','--fault-review','{REVIEW}',
             '--library-path',lib,'--authorized-device-window'],
             review=str((Q/'fault_review.py').relative_to(ROOT)),env_extra={},
             planned_write_bytes=sizes[tag]['planned_writes']+2*max(sizes[k]['planned_writes'] for k in ('K1a','K1b')))
-        job['plan']=dict(entry_rehearsal=dict(binaries=[
+        job['plan']=dict(entry_rehearsal=dict(preparation_probe_note='Local device-define CPU preparation receipt: packet58aj-onecard-resident/evidence/packet58ajb-preparation.json. Shared prepare_probe cannot admit this unranked one-card argv and private 4 MiB RoPE; keep its WARN explicit.',timing_evidence=[str((Q/'evidence/card0-58aj-screen-a/smoke/WSCREEN/run/run/cold-start.json').relative_to(ROOT))],binaries=[
             dict(path=str((P/'build/device/own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build/device/own-rt-iq3')),
             dict(path=str((P/'build/device/p58-cache-fixtures').relative_to(ROOT)),sha256=sha(P/'build/device/p58-cache-fixtures'),args=['--help'],returncode=1,contains='K1 unknown option')]))
         raw=('# PROPOSAL ONLY. Coordinator waits for completed p153 and p151 lane-B runs.\n'

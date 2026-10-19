@@ -16,7 +16,7 @@ verify=verify_files
 ROOT_GATES=('k1-cpu.json','evidence/fullshape-submit-cpu.json','evidence/postload-allocation-cpu.json',
     'evidence/argument-gate.json','evidence/python-cpu-gates.json','evidence/submission-rehearsal.json',
     'evidence/native-parser.json','evidence/resident-copy-cpu.json','evidence/resident-engine-cpu.json',
-    'evidence/entry-gates.json')
+    'evidence/entry-gates.json','evidence/packet58ajb-preparation.json')
 SCREEN_GATES=('evidence/argument-gate.json','evidence/python-cpu-gates.json','evidence/fullshape-submit-cpu.json',
     'evidence/postload-allocation-cpu.json','evidence/report-gate.json','evidence/entry-gates.json')
 def gates(root,names):
@@ -33,7 +33,8 @@ def create():
     require(set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32)),'helper cores required')
     require(shutil.disk_usage('/').free>=27_000_000_000,'root below 27 GB')
     require(not (P/'READY-FOR-DEVICE.json').exists(),'READY is written last; no reseal')
-    require(not (P/'evidence/card0-58aj-a').exists() and not (Q/'evidence/card0-58aj-screen-a').exists(),'never reseal started outputs')
+    require(not (P/'evidence/card0-58aj-a').exists() and not (Q/'evidence/card0-58ajb-screen-a').exists(),'never reseal started outputs')
+    history=read(P/'evidence/packet58ajb-diagnosis.json');verify_files(ROOT,history['failed_evidence_sha256'])
     built=read(P/'evidence/build.json');require(built['passed'] and not built['device_executed'],'native builds missing')
     artifacts=built['artifacts'];verify_files(P,artifacts)
     require(len(artifacts)==6 and 'build/intel-host/own-rt-iq3' in artifacts,'all six native artifacts required')

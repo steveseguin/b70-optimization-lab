@@ -19,7 +19,9 @@ def resolve(value):
 def validate(job, lane):
     require(isinstance(job, dict), 'job must be an object')
     require(set(job) <= {'name', 'argv', 'script', 'env_extra', 'review', 'lane',
-                         'depends_on', 'plan', 'admission'}, 'unknown job field')
+                         'depends_on', 'plan', 'admission', 'planned_write_bytes'}, 'unknown job field')
+    if 'planned_write_bytes' in job:
+        require(type(job['planned_write_bytes']) is int and job['planned_write_bytes'] >= 0, 'invalid planned_write_bytes')
     require(job.get('lane') == lane, 'job lane differs from queue')
     require(isinstance(job.get('name'), str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,100}', job['name']), 'invalid unit name')
     deps = job.get('depends_on', [])

@@ -24,3 +24,8 @@
 - Keep strict512=false, second fresh timing pending and standard prefill missing.
 - Own source pins only, plus the registered oracle and hash-bound binary inputs.
   No source import from a mutable sibling. Keep source and binary restore paths.
+
+- Packet58ajb: never reuse `card0-58aj-screen-a`; the original smoke exhausted
+  the implicit 60-second wait before its first prefill token. The precise event
+  is unknown. Fresh smoke/v5 use `card0-58ajb-screen-a`, explicit 300-second
+  waits and failure diagnostics. CPU preparation cannot exclude a GPU stall.

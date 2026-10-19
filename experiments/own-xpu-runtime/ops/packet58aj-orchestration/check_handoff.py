@@ -29,6 +29,8 @@ def main():
     assert shutil.disk_usage('/').free >= 27_000_000_000
     subprocess.run([sys.executable, '-B', str(P / 'seal.py'), '--verify'], check=True, stdin=subprocess.DEVNULL)
     assert read(O / 'resume-frozen-audit.json')['passed']
+    assert read(P / 'evidence/packet58ajb-preparation.json')['passed']
+    assert read(P / 'evidence/packet58ajb-diagnosis.json')['new_wait_seconds'] == 300
     assert read(P / 'evidence/python-cpu-gates.json')['tests'] == 134
     assert read(P / 'screen/evidence/python-cpu-gates.json')['checks'] == 103
     assert read(P / 'evidence/argument-gate.json')['checks'] == 7
@@ -66,7 +68,7 @@ def main():
                 timeouts.append(str(f.relative_to(R)) + ':' + str(n.lineno))
     assert not timeouts, timeouts
     assert not (P / 'evidence/card0-58aj-a').exists()
-    assert not (P / 'screen/evidence/card0-58aj-screen-a').exists()
+    assert not (P / 'screen/evidence/card0-58ajb-screen-a').exists()
     row = dict(passed=True, device_executed=False, python_tests=237, fresh_passive_tests=236, retained_native_parser_tests=1,
         real_intercepted_entries=13, chain_wrong_unit_environment_refusals=28,
         pin_admission=pins, shared_entry_report_passed=True, shared_loader_passed=True,
@@ -74,7 +76,7 @@ def main():
         wall_clock_subprocess_timeouts=timeouts, root_free_bytes=shutil.disk_usage('/').free,
         build_bytes=read(P / 'build-receipt.json')['retained_build_bytes'],
         whole_host_device_work_performed=False, queued=False,
-        notes='Retained GNU/Intel exactness and unchanged native builds; refreshed affected Python checks. New device parity and warm neutrality remain pending.')
+        notes='Rebuilt native entries with failure-only wait diagnostics; real device-define CPU preparation and GNU/Intel equality pass. Explicit 300-second waits. Historical timed-out event was not recorded; no claim that a driver stall is excluded. Shared preparation adapter remains WARN for unsupported unranked one-card argv/RoPE access. Device parity and warm neutrality pending.')
     (O / 'final-checks.json').write_text(json.dumps(row, indent=2) + '\n')
     print(json.dumps(row))
 

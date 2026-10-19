@@ -61,3 +61,28 @@ an honest offline payload only; this handoff performs no external write.
 
 Stop gracefully and retain all evidence on failure. No retry, hard kill,
 service restoration, GPU reset, reboot or host-setting change.
+
+## Packet58ajb repair (October 19)
+
+The original smoke failed before its first prefill token completed. Preserve
+`screen/evidence/card0-58aj-screen-a/smoke` unchanged. Use fresh jobs
+`packet58ajb-smoke-A` and `packet58ajb-v5-A`, writing under
+`screen/evidence/card0-58ajb-screen-a/{smoke,resident}`. Neither is queued.
+All model windows explicitly pass `--wait-seconds 300`; K1 retains its existing
+300-second per-wait ceiling and 900-second total deadline. The whole-model
+watchdogs, exact oracle and graceful teardown remain enabled.
+
+The old evidence identifies first prefill, but not the individual event.
+The 300-second deadline is a conservative cold-operation allowance, not proof
+that a stall has been fixed. The first token writes six phase checkpoints; a
+failed wait records its event, phase, token index, copy allocation/size, last
+submitted site and elapsed wait. On any repeat failure retain those files and
+do not retry. Only the fresh smoke and v5 can qualify the chain.
+
+The CPU probe compiles the real entry with device defines, preserves real argv
+and the first prompt token, and runs production prepare/issue paths with a CPU
+transport. It uses synthetic packed bytes, the real embedding vocabulary and
+a bounded PLE row count. It does not test GPU scheduling or 29 GB memory pressure.
+The shared rehearsal's preparation adapter requires ranked argv and cannot
+admit this private RoPE table; its WARN stays explicit. The independent local
+probe receipt is `evidence/packet58ajb-preparation.json`.

@@ -15,7 +15,7 @@ P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('resident','resident'),('smoke','smoke'))
-ROOT = P / 'evidence/card0-58aj-screen-a'
+ROOT = P / 'evidence/card0-58ajb-screen-a'
 
 
 def commands(output, card, review, library, view='resident', maintenance=DEFAULT_MAINTENANCE):

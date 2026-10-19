@@ -10,7 +10,7 @@ def cgroup(unit, user=True):
 
 class LaunchUnit(unittest.TestCase):
     def test_both_proposed_units(self):
-        for name in ('packet58aj-smoke-A', 'packet58aj-v5-A'):
+        for name in ('packet58ajb-smoke-A', 'packet58ajb-v5-A'):
             W.user_unit_gate(cgroup(unit_name(dict(name=name, lane='A', argv=[]))))
 
     def test_coordinator_chain(self):
@@ -23,7 +23,7 @@ class LaunchUnit(unittest.TestCase):
                 W.user_unit_gate(cgroup(unit_name(dict(name=name, lane='A', argv=[]))))
 
     def test_user_service_required(self):
-        unit = unit_name(dict(name='packet58aj-smoke-A', lane='A', argv=[]))
+        unit = unit_name(dict(name='packet58ajb-smoke-A', lane='A', argv=[]))
         for group in (cgroup(unit, user=False), cgroup(unit.replace('.service', '.scope')),
                       cgroup(unit + '/child'), '0::/\n'):
             with self.subTest(group=group), self.assertRaises(ValueError):

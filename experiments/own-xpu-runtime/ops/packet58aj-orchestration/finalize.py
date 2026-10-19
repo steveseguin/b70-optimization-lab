@@ -35,19 +35,24 @@ def main():
     subprocess.run([sys.executable, '-B', str(P / 'seal.py'), '--verify'], check=True, stdin=subprocess.DEVNULL)
     ready = read(P / 'ready.json')
     assert not ready['ready'] and 'smoke/v5 pending' in ready['reason']
-    for name in ('evidence/card0-58aj-a', 'screen/evidence/card0-58aj-screen-a', 'evidence/fault-review-58aj-a.json', 'READY-FOR-DEVICE.json'):
+    for name in ('evidence/card0-58aj-a', 'screen/evidence/card0-58ajb-screen-a', 'evidence/fault-review-58aj-a.json', 'READY-FOR-DEVICE.json'):
         assert not (P / name).exists(), name
     assert not (O / 'READY-FOR-DEVICE.json').exists()
     files = [P / name for name in (
         'build-receipt.json', 'submission-pins.json', 'ready.json',
         'runtime-selection.json', 'readiness-policy.json', 'submission-policy.json',
         'record-threshold.snapshot', 'WINDOW.md', 'MEMORY.md',
-        'evidence/plan-check.json', 'evidence/queue-plans.json')]
+        'evidence/plan-check.json', 'evidence/queue-plans.json',
+        'evidence/packet58ajb-diagnosis.json', 'evidence/packet58ajb-preparation.json')]
     proposals = [R / 'experiments/own-xpu-runtime/ops/lane-queue' / f'proposed-p58aj-{tag}-A.txt' for tag in ('smoke', 'v5')]
     common = dict(
         schema='packet58aj.ready-for-device.v1', packet=P.name,
         prepared_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         preparation_commit=head, preparation_passed=True, passed=True,
+        revision='packet58ajb', wait_seconds=300,
+        prior_failed_smoke='screen/evidence/card0-58aj-screen-a/smoke',
+        failed_event_identity='not recorded; first-prefill timeout; root cause remains unproven',
+        local_device_define_preparation_passed=True, shared_preparation_adapter_status='WARN: unsupported unranked one-card argv and private RoPE access',
         ready_for_coordinator_check=True, ready_for_device_chain=False,
         device_quality_pending=True, device_performance_pending=True,
         runtime_readiness_passed_at_preparation=False,
@@ -80,7 +85,7 @@ def main():
     (P / 'READY-FOR-DEVICE.json').write_text(json.dumps(dict(common,
         ready_for_device=True, readiness_scope='CPU-qualified smoke and v5 proposals; fresh coordinator admission required'), indent=2) + '\n')
     (O / 'READY-FOR-DEVICE.json').write_text(json.dumps(dict(common,
-        ready_for_device=False, readiness_scope='Prepared seven-window chain; own smoke and v5 device qualification pending'), indent=2) + '\n')
+        ready_for_device=True, readiness_scope='CPU-qualified smoke and v5 proposals; seven-window chain still requires own smoke and v5 device qualification'), indent=2) + '\n')
     print('Final packet and conditional chain markers written for ' + head)
 
 

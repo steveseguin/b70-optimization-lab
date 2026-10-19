@@ -838,15 +838,40 @@ public:
   }
   bool progress_pending=false;
   std::function<void()> progress_callback; // same-thread draft readback publication
-  void wait(int c, ownrt::Event e) {
+  // Failure-only event details and six first-prefill checkpoints. No per-site I/O.
+  const char* request_phase="load";
+  const std::string* last_site=nullptr;
+  size_t request_token_index=0;
+  fs::path request_diagnostics;
+  void checkpoint(const char* phase) {
+    request_phase=phase;
+    if(request_token_index==0&&!request_diagnostics.empty()) {
+      std::ofstream f(request_diagnostics/"first-prefill-progress.jsonl",std::ios::app);
+      f<<"{\"phase\":"<<ownrt::quote(phase)<<",\"submitted\":"<<submitted
+       <<",\"host_waits\":"<<host_waits<<"}\n";f.flush();
+    }
+  }
+  void check_wait(bool ok,int c,ownrt::Event event,const char* kind,Allocation allocation,size_t bytes,
+                  std::chrono::steady_clock::time_point started) {
+    if(ok)return;
+    std::ostringstream row;
+    row<<"{\"phase\":"<<ownrt::quote(request_phase)<<",\"token_index\":"<<request_token_index
+      <<",\"kind\":"<<ownrt::quote(kind)<<",\"event\":"<<event<<",\"card\":"<<c
+      <<",\"allocation\":"<<allocation<<",\"bytes\":"<<bytes
+      <<",\"last_submitted_site\":"<<ownrt::quote(last_site?*last_site:"")
+      <<",\"submitted\":"<<submitted<<",\"host_waits\":"<<host_waits
+      <<",\"wait_seconds\":"<<a.wait_seconds<<",\"elapsed_ms\":"<<ms(started)<<"}\n";
+    save((request_diagnostics.empty()?a.output:request_diagnostics)/"wait-timeout.json",row.str());
+    throw std::runtime_error("operation drain timeout; retain owner");
+  }
+  void wait(int c, ownrt::Event e,const char* kind="compute-or-copy-tail",Allocation allocation=0,size_t bytes=0) {
     ++host_waits;auto t0=std::chrono::steady_clock::now();
     if(progress_callback) {
       auto end=std::chrono::steady_clock::now()+std::chrono::seconds(a.wait_seconds);
-      while(!dev(c).complete(e)){if(progress_pending)progress_callback();guard();require(std::chrono::steady_clock::now()<end,"operation drain timeout; retain owner");std::this_thread::yield();}
+      while(!dev(c).complete(e)){if(progress_pending)progress_callback();guard();check_wait(std::chrono::steady_clock::now()<end,c,e,kind,allocation,bytes,t0);std::this_thread::yield();}
       if(progress_pending)progress_callback();
     }
-    require(dev(c).wait(e, std::chrono::seconds(a.wait_seconds)),
-            "operation drain timeout; retain owner");
+    check_wait(dev(c).wait(e, std::chrono::seconds(a.wait_seconds)),c,e,kind,allocation,bytes,t0);
     wait_ms+=ms(t0);
   }
   Allocation allocate(int c, std::string name, size_t bytes, Category cat,
@@ -869,7 +894,7 @@ public:
       std::memcpy(dev(c).arena.row(slab[c]).pointer,
                   static_cast<const uint8_t *>(src) + i, k);
       ownrt::CopyEngine copy(dev(c));
-      wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}));
+      wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}),"upload",dst,k);
       dev(c).retire_completed_events();
     }
     transfer_ms+=ms(started);
@@ -881,7 +906,7 @@ public:
     for (size_t i = 0; i < n; i += 4 * 1024 * 1024) {
       size_t k = std::min(n - i, size_t(4 * 1024 * 1024));
       ownrt::CopyEngine copy(dev(c));
-      wait(c, copy.copy(slab[c], 0, src, i, k, {}));
+      wait(c, copy.copy(slab[c], 0, src, i, k, {}),"readback",src,k);
       dev(c).retire_completed_events();
       std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
     }
@@ -1596,6 +1621,7 @@ public:
     return ++logical;
   }
   flash::Event enqueue(const flash::Launch &l, flash::Event dep) override {
+    last_site=&l.label;
     if(caching() && a.miss_path=="streamed" && l.op=="expert_gate_up")stream_layer(std::stoi(l.label.substr(4)),buffers[0].at(l.inputs[1]).id);
     if(prepared_path){auto index=size_t(&l-p.launches.data());audit_issue_site(index);return issue_site(index,dep);}
     guard();
@@ -1947,6 +1973,7 @@ int main(int argc, char **argv) {
     auto monotonic=[](){return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();};
     const double request_start_seconds=monotonic();
     p58_reset_request(*e,output);
+    e->request_diagnostics=output;e->request_token_index=0;e->last_site=nullptr;
     generated.clear();text.clear();
     std::vector<int> input;
     if(input_path.empty()){require(a.mini,"input required");input={2,5,3,7,1};}
@@ -1957,6 +1984,7 @@ int main(int argc, char **argv) {
     size_t token_index=0;
     double first_generated_ms=0;
     auto step = [&](int token, int fixture_step) {
+      e->request_token_index=token_index;e->checkpoint(fixture_step==0?"prefill-start":"decode-start");
       e->admit_position(int(token_index));e->verify_configuration();
       auto token_start=std::chrono::steady_clock::now();e->cache_begin_position();
       struct rusage process_before{},thread_before{},process_after{},thread_after{};
@@ -1968,12 +1996,15 @@ int main(int argc, char **argv) {
       fs::path fixture_dir=output/("step"+std::to_string(fixture_step));
       if(capture)fs::create_directories(fixture_dir);
       std::vector<std::pair<int,int>> captured;
+      e->checkpoint("token-control-upload");
       for (int c=0;c<a.cards;++c)if(e->buffers[c].count("token"))e->put(c,"token",&token,4);
       double tok_wait=e->wait_ms;
       struct rusage prepare_before{},prepare_after{};
       getrusage(RUSAGE_SELF,&prepare_before);
+      e->checkpoint("resident-lookup-prepare");
       {auto t0=std::chrono::steady_clock::now();e->prepare_token(token);e->prepare_ms=Engine::ms(t0);}
       getrusage(RUSAGE_SELF,&prepare_after);
+      e->checkpoint(fixture_step==0?"prefill-enqueue":"decode-enqueue");
       auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e->wait_ms;
       e->guard();e->family_ms.fill(0);
       for(auto& l:e->p.launches) {
@@ -1995,6 +2026,7 @@ int main(int argc, char **argv) {
       e->enqueue_ms=e->enqueue_including_wait_ms-(e->wait_ms-enqueue_wait);
       e->cache_plan_during_position(); // previous routes, current kernels already enqueued
       // One token-boundary readback contains sticky error and greedy output.
+      e->checkpoint(fixture_step==0?"prefill-compute-drain":"decode-compute-drain");
       e->drain(); // commit.final is Q1; readback is Q0
       auto& owner=e->dev(0);ownrt::CopyEngine copy(owner);
       auto start_transfer=std::chrono::steady_clock::now();
@@ -2052,6 +2084,7 @@ int main(int argc, char **argv) {
         <<",\"peer\":"<<copies.peer[c]-copy_before.peer[c]
         <<",\"device_local\":"<<copies.device_local[c]-copy_before.device_local[c]<<"}";
       token_rows<<"]}\n";
+      if(token_index==1)e->checkpoint("first-prefill-complete");
       e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
     };
     int next=-1;auto prefill_start=std::chrono::steady_clock::now();

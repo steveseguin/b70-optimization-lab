@@ -128,3 +128,78 @@ orchestration `READY-FOR-DEVICE.json` files are the final content writes,
 followed only by read-only pin/seal checks and their separate commit/push.
 [Final CPU checks](../experiments/own-xpu-runtime/ops/packet58aj-orchestration/final-checks.json)
 and [coordinator contract](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/WINDOW.md).
+
+## First-request timeout repair — p58ajb, resumed as p58ajb2
+
+The interrupted preparation was recovered without rebuilding its valid native
+outputs or repeating its completed engine proof. Pull refused the shared dirty
+tree; fetch confirmed HEAD matched origin/main. All work here was CPU-only,
+nice19 on helper cores, with closed child stdin. Nothing was queued or launched.
+
+The failed WSCREEN omitted `--wait-seconds`, selecting the native default of
+60 seconds. K1a/K1b used a 300-second per-wait ceiling within a 900-second
+fixture deadline. The passing 58ag WSCREEN (58ah's qualification) and 58ah WS
+also used 60 seconds. Their cold first-token times were about 23–24 seconds,
+with recorded host waits around 70 milliseconds. A 59.6-second whole-request
+TTFT is not evidence that one device event needs 60 seconds.
+
+The failed resident run completed load, lookup-copy SHA256 verification and
+request reset, then timed out before its first prefill token completed. It
+never reached decode. The exact waited event was not recorded, so the root
+cause remains unproven: a long cold operation, memory pressure and a device
+stall cannot be distinguished from the old receipts. Review found no new lock
+or ordering edge in resident lookup preparation; it changes the source of
+packed row reads, retaining the existing staging, copy queue and dependencies.
+This is a bounded timeout mitigation with better evidence, not a claim that
+a GPU stall has been fixed.
+
+All model windows now explicitly use 300 seconds per wait, retaining the
+watchdogs. This is at least four times the measured cold-token envelope and
+the owner's reported 59.6-second TTFT, and meets the requested 300-second
+minimum. First prefill now records phase checkpoints; a failed wait records
+the event, phase, token, upload/readback allocation and size, last submitted
+site and elapsed wait. The arithmetic and `iq3-p49-split32-v1` oracle stay
+unchanged. Fresh jobs are `packet58ajb-smoke-A` and `packet58ajb-v5-A`, under
+`screen/evidence/card0-58ajb-screen-a/{smoke,resident}`.
+
+The retained real-entry CPU probe uses device defines, real argv with the new
+wait, `lookups=resident` and the real first prompt token. Production allocation,
+prepare and first-prefill issue paths pass: 1,119 prepared operations, 1,110
+issued operations and 1,480 sites. It substitutes a CPU transport and synthetic
+packed weights, including bounded PLE rows; peak child RSS was 1,106,771,968
+bytes. It does not test GPU scheduling or full resident-memory pressure.
+On resume, the probe binary hash and generated entry were verified against
+the retained receipt and current source. All 116 historical diagnosis input
+hashes still match, including the failed smoke and predecessor timing files.
+
+The GNU/Intel exact-output, repeat, request-reset, frozen-58ah equality and
+wrong-oracle refusal proofs passed before interruption and remain valid.
+Resume reran the 134 passive chain tests and six intercepted screen entries
+because their source receipts were stale. The 103 screen checks remain bound
+to their tested source. Both actual proposals again passed the shared native
+loader/parser and one-card report rehearsal. Its preparation adapter still
+reports WARN: it cannot admit this unranked one-card argv/private RoPE path.
+The independent device-define probe supplies the scoped preparation evidence;
+no synthetic rank or sandbox bypass was added.
+
+Stale proposal and rebuilt-binary receipts left by the interruption were
+refreshed from the passing checks. The original copy/parent manifests are
+preserved under `lineage/packet58ajb-before`. Both temporary queue plans,
+the seven-window plan, final seal and pin admission pass. Build files total
+160,608,865 bytes. Root had over 30 GB free during final checks, above the
+27 GB preparation floor. The original failed smoke stays unchanged. Its three
+1,688,594-byte kernel-boot logs are retained to establish the incident's fault
+baseline; restore their exact bytes from this commit's Git blobs. Generated
+driver caches stay on disk and are ignored by Git, not deleted.
+
+The preparation is committed and pushed before the two READY files are written
+last and committed separately. Both markers set `ready_for_device=true` for
+the fresh smoke/v5 proposals, with coordinator admission still required.
+Both retain `ready_for_device_chain=false`; `ready.json` still refuses the
+seven-window chain until its own exact smoke and five-view device gate pass.
+Device quality and performance remain pending. No service, GPU job, live
+queue, host setting or external submission was changed.
+
+Evidence: [diagnosis](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/packet58ajb-diagnosis.json),
+[CPU preparation](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/packet58ajb-preparation.json),
+[final checks](../experiments/own-xpu-runtime/ops/packet58aj-orchestration/final-checks.json).

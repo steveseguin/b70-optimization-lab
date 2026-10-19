@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/argument_gate.py", line 302, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/argument_gate.py", line 279, in main
+    assert result.returncode==0,result.stderr
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/argument_gate.py", line 302, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/argument_gate.py", line 272, in main
+    print('ARGUMENT_RESULT='+json.dumps(probe(args.probe,args.miss,args.candidate,args.old_gate)))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/argument_gate.py", line 75, in probe
+    L.validate(job, 'A')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/coordinator_snapshot.py", line 21, in validate
+    require(set(job) <= {'name', 'argv', 'script', 'env_extra', 'review', 'lane',
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/coordinator_snapshot.py", line 10, in require
+    raise ValueError(message)
+ValueError: unknown job field
+

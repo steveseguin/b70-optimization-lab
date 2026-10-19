@@ -47,8 +47,13 @@ class SuiteTests(unittest.TestCase):
         args=types.SimpleNamespace(window='WS128',output=self.root,miss_mode='zerocopy')
         with patch.object(D,'ROOT',self.root),patch.object(D,'sha',return_value='a'*64):
             cmd=D.native_command(args,{'prompts':[bundle]},self.root/'table')
+        self.assertEqual(cmd[cmd.index('--wait-seconds')+1],'300')
         self.assertEqual(cmd[cmd.index('--card')+1],'0')
         self.assertEqual(cmd[cmd.index('--miss-path')+1],'zero-copy')
         self.assertEqual(cmd[cmd.index('--retain-steps')+1],'none')
+        native=(Path(__file__).parent/'native/generated/main.cpp').read_text()
+        self.assertIn('check_wait(dev(c).wait(e, std::chrono::seconds(a.wait_seconds))',native)
+        self.assertIn('check_wait(std::chrono::steady_clock::now()<end',native)
+        self.assertIn('wait-timeout.json',native)
 
 if __name__=='__main__':unittest.main()
