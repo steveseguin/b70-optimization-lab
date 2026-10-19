@@ -1590,3 +1590,20 @@ about 3.2 hours.
   earlier-point questions, readings, the answer lines' growth).
 - A fault prediction missed → read why before anything else.
 - The entries are shown and balosu68 still goes wrong → read the reply; the note's wording is read first.
+
+## Campaign 49 paused (06:59-08:10 EDT): seed 0 cut short by the memory guard; the cited entry fixes balosu68; written 2026-10-19 08:18:18 EDT
+
+- **Seed 0 (arm 1) did not finish.** At 07:59:15 the server's host-memory guard fired (available fell from 2.06 to
+  1.40 GiB within two seconds) and stopped the server at client call 960 of about 1,300 (item 474 of 1,233 noted);
+  the run ended with no score. No fault line; the runner's health probe passed at 08:00:28. Largest processes at the
+  guard: the two TP workers (3.86 and 3.79 GB), the API server (1.49 GB), the engine core (0.91 GB), the operator's
+  Claude Code (0.88 GB) and a Codex process (0.37 GB). What took the 0.55 GiB is not yet known.
+- **Up to then the lever did what was registered.** `--cited-entries` showed 9 entries for the 9 audits that had
+  come in, each the archived item the audit cites. balosu68's (item 351, "item 320: balosu68 went down by
+  seventy-two."): the first reply started from a stale value (`−55 + 72 = 17`), the `--lookups` question
+  followed, and the second wrote `−12 + 72 = 60`, the true value. The NOTES held `balosu68: 60` from that cut on
+  (campaigns 47 and 48: −12 to the end).
+- **Paused by the owner at 08:01** ("lets put this on pause and setup our computer here for inference"): the runner
+  was stopped before seed 2's client started, seed 2's server was stopped gracefully once ready (08:09), and the
+  cards now serve the TP2 package (below in `CURRENT.md`). Campaign 49 is resumed from scratch (both seeds) when
+  the owner frees the cards.
