@@ -1,0 +1,102 @@
+{
+  "schema": "own-runtime.packet174.ready.v1",
+  "ready_for_device": true,
+  "passed": true,
+  "device_executed": false,
+  "packet": "packet174-onecard-fillkick",
+  "job": "packet174-v5-A",
+  "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p174-v5-A.txt",
+  "proposal_sha256": "4a706a3ed158cd8ba0b3d446b19639b4244c8358fc6bd0187fa7879dfc6e7e81",
+  "lane": "A",
+  "scope": "whole-host",
+  "gpu_count": 1,
+  "card": 0,
+  "model_loads": 1,
+  "windows": [
+    "K1a",
+    "K1b",
+    "WSCREEN"
+  ],
+  "separate_smoke_required": false,
+  "opening_contract": "No separate smoke: bracket opens with K1a/K1b and exact A0 control.",
+  "arm_order": [
+    "spin",
+    "spin-kick",
+    "spin",
+    "spin-kick",
+    "spin"
+  ],
+  "labels": [
+    "A0",
+    "B0",
+    "A1",
+    "B1",
+    "A2"
+  ],
+  "arms": {
+    "A": "packet58as spin parent (--fill-kick off)",
+    "B": "spin plus one non-blocking zeCommandListHostSynchronize(maintenance list, 0) after each non-empty fill batch (--fill-kick on)"
+  },
+  "process_wide_option": "--fill-kick off|on (default off); accepted with every engine chain window argv (KD, W2m, WS, WS128x, WS128); the bracket per-view selection sets the same p174::fill_kick switch",
+  "warmup": "A0 exact, excluded only from speed and drift",
+  "prompts_per_view": 12,
+  "max_new": 128,
+  "required_exact_requests": 60,
+  "oracle": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "resident_lookups_all_views": true,
+  "winner_minimum_gain_over_every_warm_control": 0.005,
+  "maximum_control_drift_fraction": 0.03,
+  "mechanism_readout": "summary.json mechanism_readout: slow-readback fraction, readback ms per same-token fill MB, fill MB per token, decode hit rate, kicks; kept on every outcome",
+  "decision_rule": "B wins and the readback slope collapses: fills were waiting for a host synchronization; port --fill-kick on to the record chain. B neutral and slope persists: close; fill execution is gated below the host flush (next: fill volume or kernel-store tail readback, priced in notes/2026-10-19-own-runtime-packet174.md).",
+  "unchanged": [
+    "which experts are planned, filled, evicted and published, and when",
+    "kernels",
+    "arithmetic",
+    "selection",
+    "spin policy",
+    "resident lookups",
+    "foreground copies"
+  ],
+  "per_operation_wait_seconds": 600,
+  "spin_budget_microseconds": 250,
+  "sleep_after_spin_microseconds": 20,
+  "yield_every_iterations": 256,
+  "device_disk_floor_bytes": 25000000000,
+  "cpu_disk_stop_bytes": 27000000000,
+  "host_required_available_bytes": 98990252032,
+  "no_wall_clock_data_proof_limits": true,
+  "live_checks": "stream presence/format and exactness only",
+  "native_readers": "ionice -c3",
+  "build_receipt_sha256": "bcfcc74891556a5bce50fa7f1c6b665c5ea90aa444e2b2e96dab7ebd68b2ea69",
+  "checks": {
+    "evidence/fill-kick.json": "ad67cf12fb68f785e54476343d9a1223170468c799fd0c6518c2800c89a4681c",
+    "evidence/cpu-exactness.json": "b9cccd769c4b11fbe2dfdb2f52c74b14ae1534dfa9a0a24dd9ed46fd07e44683",
+    "evidence/wait-tests.json": "6bf35ba07fec1a885f992dfdb26b6d5a8df7012f208b8686bba4a10f92ab440d",
+    "evidence/preparation.json": "7b6e5ccbd849f431716544eaed34da3a756cabafe01cfc9d1ca14e7596bdb6f7",
+    "evidence/analyzer-real-parent.json": "eb5751cd8c01e8e99e9f883a6c99432d1b1dbf34ae3a5db5d5edca5648ff7781",
+    "evidence/flags.json": "ce77f265cffc0c1b41407f5c2b25291f6e3eba3219fd4bafb497f0743a9ad75e",
+    "evidence/entry-imports.json": "5056d37c925ce6c59c7acdb7df3149e8c978fdf1ca4d24364945bc3b6417700a",
+    "evidence/queue-plans.json": "085694a0ca80e5c985c2a5911c891e0c26c883832e02113ef7dd71750608de20",
+    "evidence/shared-entry-report-final.json": "f3e312dd2e57b6969c75a4fe7137e170b047240c99ee7e8bc66d35c779612627",
+    "evidence/pin-guard.json": "a3874324d741f033c38e1bc8ac2f58a9867377b294fc83ed96b46bc22c58c734",
+    "evidence/fillkick-delta-test.json": "45e0993121b7a42e695b9d40dbcd567e5e9a8480038db5fef97aed300788e559"
+  },
+  "shared_tool_limitations": [
+    "Shared --report passes. Its generic report rehearsal is synthetic only; no separate smoke row exists.",
+    "Shared preparation adapter has no unranked one-card CPU transport probe. Private preparation_gate.py exercised the real device argv/plan and all reset paths (evidence/preparation.json); synthetic transport/weights, no GPU."
+  ],
+  "device_exactness": "pending",
+  "device_speed": "pending",
+  "fresh_process_repeat": false,
+  "strict512": false,
+  "submission_eligible": false,
+  "compile_turns": 1,
+  "coordinator_requirements": "Whole-host lane A; lane B drained/excluded; fresh fault review; no retry; graceful drain; leave cards empty",
+  "parent": {
+    "name": "packet58as-onecard-spinwait",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait",
+    "parent_commit": "244c77853d014e09f62eb5387d1cc013285d0fd1"
+  },
+  "preparation_head_commit": "a9a48a76e56fadc42a73c6b93c6b380fd815909f"
+}

@@ -195,8 +195,8 @@ def native_command(args, output, miss_path):
 
 def user_unit_gate(cgroup):
     paths = [line.split(':', 2)[-1] for line in cgroup.splitlines()]
-    require(any('/user@' in p and p.rsplit('/', 1)[-1] == 'packet58-onecard-174-a.service' for p in paths),
-            'coordinator-owned packet58-onecard-174-a systemd user service required')
+    # packet174 carries the packet58as record-chain tooling inert: no chain unit is admitted.
+    require(False, 'packet174 has no record chain; the only entry is screen/queue_runner.py')
 
 
 class PinnedExpertProgress:

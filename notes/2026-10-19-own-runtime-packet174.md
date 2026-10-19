@@ -47,3 +47,7 @@ I joined `cache.jsonl` to the timing rows **by position**: one cache row per pos
 - **Decision.**
   - B wins and the slope collapses: port `--fill-kick on` into the record chain. Then reprice admission, since more fills become affordable.
   - Neutral and the slope persists: fill execution is gated below the host flush. Next are (d2), or the fill volume with a re-measured miss cost.
+
+## State
+
+READY for the one-load lane-A kill test (`packet174-v5-A`). Nothing was queued or launched. All CPU gates passed in one compile turn: GNU/Intel byte gates, the `--fill-kick` parser in five engine windows with the parent binary refusing it, the source-delta test, the real preparation run, the analyzer, flags, imports, temporary `lanequeue plan`, `rehearse_entry --report` (one documented WARN) and the pin guard. The packet tree and READY are committed together.

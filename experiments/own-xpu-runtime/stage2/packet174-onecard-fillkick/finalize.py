@@ -3,7 +3,7 @@ import json,shutil,subprocess
 from pathlib import Path
 from build_engine import P,ROOT,sha,save
 Q=P/'screen';OPS=P.parents[1]/'ops'
-CHECKS=('fill-kick','cpu-exactness','wait-tests','preparation','analyzer-real-parent','flags','entry-imports','queue-plans','shared-entry-report-final','pin-guard','python-cpu-gates')
+CHECKS=('fill-kick','cpu-exactness','wait-tests','preparation','analyzer-real-parent','flags','entry-imports','queue-plans','shared-entry-report-final','pin-guard','fillkick-delta-test')
 def main():
  ready=P/'READY-FOR-DEVICE.json';assert not ready.exists()
  assert not (Q/'evidence/card0-174-v5-a').exists()

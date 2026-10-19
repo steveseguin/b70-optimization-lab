@@ -13,6 +13,9 @@ def main():
     old='getpriority(PRIO_PROCESS, 0) == a.native_nice'
     assert text.count(old)==1
     text=text.replace(old,'getpriority(PRIO_PROCESS, 0) == 19 /* CPU probe: observed priority only */')
+    # packet174: the probe compiled inside build_engine's single compile turn is reused when its
+    # generated source is byte-identical (resume after a non-compile failure); never a second compile.
+    reuse=os.environ.get('P174_REUSE_PROBE')=='1' and (work/'prepare-probe').is_file() and (work/'probe-main.cpp').is_file() and (work/'probe-main.cpp').read_text()==text
     (work/'probe-main.cpp').write_text(text)
     original=json.loads((P/'lineage/58ag-build-commands.json').read_text())
     oldroot=str(P.parent/'packet58ag-onecard-ports');commands=[]
@@ -25,7 +28,8 @@ def main():
             command=[s for s in command if not s.endswith('/single_device.o') and not s.endswith('/own-rt-iq3-entry.cpp.o')]
             command=[str(work/'probe.o') if s==str(B/'device/entry-main.o') else s for s in command]
             command[command.index('-o')+1]=str(work/'prepare-probe')
-        with compiler_turn(),(work/(name+'.log')).open('w') as log:
+        if not reuse:
+         with compiler_turn(),(work/(name+'.log')).open('w') as log:
             subprocess.run(command,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3)))
         commands.append(command)
     sys_path=str(P/'screen');import sys
@@ -60,7 +64,7 @@ def main():
     assert len(view_sensors)==5
     for f in view_sensors:
         assert [json.loads(x)['phase'] for x in f.read_text().splitlines()]==['before_view_reset','after_view_reset']
-    row.update(real_arm_sequence=True,real_reset_sensors=130,view_resets=5,requests=60)
+    row.update(real_arm_sequence=True,real_reset_sensors=130,view_resets=5,requests=60,probe_reused_from_single_compile_turn=bool(reuse))
     assert row['peak_child_rss_bytes']<4*1024**3
     save(P/'evidence/preparation.json',row)
     print('CPU device-define preparation PASS',row['prepared'],row['issued'],row['peak_child_rss_bytes'],flush=True)
