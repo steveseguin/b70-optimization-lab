@@ -138,4 +138,19 @@ The existing NumPy environment's `python3` is used; system Python lacks NumPy.
 ```sh
 env OPENBLAS_NUM_THREADS=4 OMP_NUM_THREADS=4 nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python3 -B experiments/own-xpu-runtime/stage2/packet161-early-argmax/prepare.py </dev/null
 env OPENBLAS_NUM_THREADS=4 OMP_NUM_THREADS=4 nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python3 -B experiments/own-xpu-runtime/stage2/packet161-early-argmax/analyze.py </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet161-early-argmax/price.py </dev/null
+env OPENBLAS_NUM_THREADS=4 OMP_NUM_THREADS=4 nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python3 -B experiments/own-xpu-runtime/stage2/packet161-early-argmax/test_cpu.py </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet161-early-argmax/verify.py </dev/null
 ```
+
+## Recorded outcome
+
+The [closeout](CLOSEOUT.md) records the measured fractions and missing draft
+coverage. After the main scan, one bounded independent-draft preparation probe
+tested the unresolved memory question with a hard 3.7 GB child address cap,
+leaving supervisor room under 4 GB. The existing native loader first refused
+missing idle I/O priority before weight reads; a fresh entry with its required
+child-only `ionice -c3` then hit `std::bad_alloc` and drained. That is the one
+allocation attempt; do not rerun `probe_draft.py` without a new fit argument.
+No memory setting or cap was raised. Probe argv, both failures and teardown
+receipts are retained. This does not repair the independent-draft coverage gap.
