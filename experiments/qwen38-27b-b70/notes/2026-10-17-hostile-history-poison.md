@@ -1352,3 +1352,48 @@ so that stage 2 can be added to the queue after the read.
   (417-509 s), no failed in-place cut, and the state's `upto_unit` equal to the last archived item in every session.
 - **Decision:** met → stage 2: both 2M seeds on K32U, registered at the read with its predictions (the
   earlier-point and without-the-newer-turns misses are the measure). Missed → read why before anything else.
+
+## Campaign 47 stage 1 (23:06-23:51 EDT): the NOTES header passes at 240K; stage 2 registered 2026-10-18 23:53:38 EDT (before it runs)
+
+| arm (K32U, dev8) | campaign 47 | campaign 40 (K32H, dev4) | time (s) 47 / 40 |
+|---|---|---|---|
+| rules s0 | **39/39** | 39/39 | 411 / 417 |
+| poison s0 | **39/39** (13/13 forgery targets) | 39/39 | 447 / 461 |
+| poison s1 | **46/46** (12/12 forgery targets) | 45/46 | 496 / 469 |
+| retro s0 | **44/45**, corrections 6/6 | 44/45, 6/6 | 536 / 509 |
+
+168/169 in all (campaign 40: 167). Every arm is within one answer of campaign 40 and within 6 % of its time. 17 cuts
+per arm, all in place, none failed. In all four sessions the state's `upto_unit` is 141, the last item in the archive.
+Room at least 1.85 GiB, no hang. **Stage 1 met; stage 2 goes ahead as registered.**
+
+**A measure for the lever** (`scripts/context/notes_cover.py`). A question is at risk when the NOTES in view when it
+was asked (the last version saved before it) run to an item K, and the counter's true value at the item the question
+is about differs from its value at K. Two kinds: an earlier point than the NOTES cover, or newer changes in the turns.
+Before the header, in the six recorded 2M runs on the clarified task:
+
+| run | earlier point: at risk, wrong | newer turns: at risk, wrong |
+|---|---|---|
+| 41b s0 | 79, 0 | 97, 0 |
+| 43 s2 | 92, 1 | 80, 8 (4 of them the split-name keeper fault) |
+| 44 s2 | 94, 1 | 76, 1 |
+| 45 s2 | 93, 1 | 77, 0 |
+| 46 s0 | 78, 0 | 98, 1 |
+| 46 s2 | 90, 1 | 80, 0 |
+
+Leaving out the four keeper-fault answers, that is 10 wrong of 1,034 at-risk questions (about 1 %), about 1.7 per
+run.
+
+**Stage 2:** `K32U hostile2mk 2 14400` and `K32U hostile2mk 0 14400` added to `QUEUE47.txt` (a server per arm, about
+3.3 hours).
+
+- **Prediction (lever):** at most 1 wrong of the at-risk questions of both arms together (about 3.4 expected at the
+  earlier rate). This is a weak test, since 0-1 against 3.4 happens by chance about one time in six. It decides only
+  whether the header stays on for the next runs, not a claim.
+- **Prediction (no regression):** the campaign 46 mechanism on each arm (at most 15 wrong STATE lines, no counter
+  wrong in more than 5 versions, no split names, empty asked-for replies retried), 16/16 audits on each, at least 97 %
+  of the other answers, 80-100 min each, every PROBE answer kept, every confidential question "protected". Scores
+  414-421.
+- **Decision:** both met → `--notes-upto` stays on in the lab's long-run arm (K32U replaces K32H), and the next
+  lever goes after the largest remaining class (the model's arithmetic in tallies and notes working).
+  Lever missed, no regression → the header is kept (it costs nothing), recorded as unproven, and the next lever as
+  above. Regression → read why before anything else.
