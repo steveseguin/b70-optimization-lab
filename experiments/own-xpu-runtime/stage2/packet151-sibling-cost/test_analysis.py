@@ -18,7 +18,7 @@ class Analysis(unittest.TestCase):
   for i in (1,3):
    for p in range(12):
     f=self.root/str(i)/('prompt'+str(p))/'rank0/timings.jsonl';r=json.loads(f.read_text());r['half_completion_ms']=12;f.write_text(json.dumps(r))
-  self.assertEqual(analyze(self.proof)['decision'],'close-this-implementation')
+  self.assertEqual(analyze(self.proof)['decision'],'inconclusive upper bound; full M=2 needed')
  def test_missing_half(self):
   (self.root/'1/prompt0/rank0/timings.jsonl').unlink()
   with self.assertRaisesRegex(ValueError,'missing stream'):analyze(self.proof)
@@ -36,6 +36,11 @@ class Analysis(unittest.TestCase):
   self.assertEqual(analyze(self.proof)['decision'],'smoke-data-complete')
   (self.root/'1/prompt0/rank0/sibling-rows.jsonl').unlink()
   with self.assertRaisesRegex(ValueError,'missing stream'):analyze(self.proof)
+ def test_native_result_location(self):
+  for view in self.proof['views']:
+   for request in view['requests']:
+    f=Path(view['output'])/request['prompt_id']/'native-result.json';f.write_text(json.dumps(dict(guess_rows=request.pop('guess_rows'))))
+  self.assertEqual(analyze(self.proof)['decision'],'reopen-packet132')
  def test_nonfinite(self):
   f=self.root/'1/prompt0/rank0/timings.jsonl';r=json.loads(f.read_text());r['p151_device_ms']=float('nan');f.write_text(json.dumps(r))
   with self.assertRaisesRegex(ValueError,'invalid'):analyze(self.proof)

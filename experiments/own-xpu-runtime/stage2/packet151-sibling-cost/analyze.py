@@ -2,6 +2,7 @@
 import argparse,json,math,statistics
 from pathlib import Path
 GATE_MS=1.952
+SCOPE='upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial)'
 
 def need(ok,message):
  if not ok:raise ValueError(message)
@@ -17,11 +18,15 @@ def lines(path):
 def view_data(view):
  root=Path(view['output']);data={};rates={};intervals=[];cancelled=0
  need(view.get('passed') is True,'view quality failed')
- requests=view['requests'];need(len(requests)==12,'complete 12-prompt view required')
+ requests=[dict(r) for r in view['requests']];need(len(requests)==12,'complete 12-prompt view required')
  need(len({r['prompt_id'] for r in requests})==12,'duplicate prompt')
  for request in requests:
   need(request.get('exact_oracle') is True and request.get('passed') is True and request.get('cached_tokens')==0,'oracle/cache gate failed')
   name=request['prompt_id'];directory=root/name
+  native_path=directory/'native-result.json'
+  native=json.loads(native_path.read_text()) if native_path.is_file() else request
+  need('guess_rows' in native,'missing native proposal stream')
+  request['guess_rows']=native['guess_rows']
   timing=lines(directory/'rank0/timings.jsonl')
   halves=[r for r in timing if r.get('speculative') is True and not r.get('corrected')]
   need(halves,'missing speculative half A timings')
@@ -66,7 +71,7 @@ def analyze(proof):
  # Timing fields in guesses are deliberately excluded from identity.
  def identity(requests):return [(r['prompt_id'],r['tokens'],[(g['position'],g['guess'],g['actual'],g['hit']) for g in r['guess_rows']]) for r in requests]
  need(all(identity(q)==identity(parsed[0][1]) for _,q in parsed),'tokens/proposals/acceptance changed')
- result=dict(schema='packet151.sibling-cost.v1',passed=True,diagnostic=True,qualifying=False,device_measurement=True,kind=kind,views=rows,threshold_ms=GATE_MS,
+ result=dict(schema='packet151.sibling-cost.v1',passed=True,diagnostic=True,qualifying=False,device_measurement=True,kind=kind,views=rows,threshold_ms=GATE_MS, measurement_scope=SCOPE, upper_bound=True,
    cost_definition='candidate minus adjacent controls, matched complete speculative halves; host completion includes sibling preparation and state copies; device event sums separately',
    decision='smoke-data-complete' if kind=='smoke' else None,policy_calibration='packet114 independent text only; never the 12-prompt suite')
  if kind=='bracket':
@@ -76,7 +81,7 @@ def analyze(proof):
    rows[i]['extra_sibling_device_ms']=rows[i]['rank0_half_A_device_ms']-(rows[i-1]['rank0_half_A_device_ms']+rows[i+1]['rank0_half_A_device_ms'])/2
   cost=statistics.mean(rows[i]['extra_sibling_ms'] for i in (1,3))
   drift=max(r['rank0_half_A_ms'] for r in controls)-min(r['rank0_half_A_ms'] for r in controls)
-  result.update(measured_extra_sibling_ms=cost,control_drift_ms=drift,control_drift_percent=100*drift/min(r['rank0_half_A_ms'] for r in controls),candidate_spread_ms=abs(rows[1]['extra_sibling_ms']-rows[3]['extra_sibling_ms']),decision='reopen-packet132' if cost<=GATE_MS else 'close-this-implementation')
+  result.update(measured_extra_sibling_ms=cost,control_drift_ms=drift,control_drift_percent=100*drift/min(r['rank0_half_A_ms'] for r in controls),candidate_spread_ms=abs(rows[1]['extra_sibling_ms']-rows[3]['extra_sibling_ms']),decision='reopen-packet132' if cost<=GATE_MS else 'inconclusive upper bound; full M=2 needed')
  return result
 
 def main():

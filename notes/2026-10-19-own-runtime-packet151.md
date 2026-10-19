@@ -38,3 +38,16 @@ no cost measurement and packet132 is not reopened or newly closed by this work.
 Storage planning uses 240 MB per view, 1.2 GB total, based on packet149's measured
 402 MB bracket (under 3x). The device floor remains 25 GB; this CPU task stops
 below 30 GB and caps builds at 300 MB. No proposal is queued.
+
+### packet151c — upper-bound scope (October 19)
+
+The owner narrowed the requested device experiment to the existing partial M=2
+build: **upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial)**.
+The analyzer now reopens packet132 when the measured extra cost is at most
+1.952 ms. A higher result is inconclusive and calls for full M=2; it cannot
+close packet132. Policy calibration remains on packet114 independent text,
+never the 12-prompt suite. All nine analyzer tests pass, including the smoke's
+own missing/empty-stream refusals. No device measurement has been made.
+
+Fetch confirmed HEAD and origin/main at d61bfcdf1bb43ec5ac1a962f8cc9b632dbb98da6;
+rebase refused the unrelated dirty tree. Initial free disk was 30.757 GB.

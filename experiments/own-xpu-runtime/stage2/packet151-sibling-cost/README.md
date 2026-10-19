@@ -1,6 +1,6 @@
 # Packet151: discarded sibling cost
 
-CPU preparation in progress; **not ready for device execution**. No GPU was
+CPU gates are being finalized for an **upper-bound diagnostic**. No GPU was
 launched and no timing measurement is claimed. The record remains 58.798 tok/s.
 
 This private tree starts from packet136's bundle8 source, through packet149's
@@ -13,9 +13,7 @@ The candidate shares large dense and routed-expert weight loads using the lab's
 packet68c paired accumulators, ported to bundle8's cached FP32 expert scales.
 Each row keeps the original ordered reductions and BF16 stores. HC, small
 projection tuples, fused shared-down and non-matrix sites currently use two
-serial production submissions within the layer. **This is not yet the complete
-same-launch M=2 implementation requested by the brief.** Its scope must not be
-reported as a fully shared-weight half or used to close that broader mechanism.
+serial production submissions within the layer. **upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial).** Serial extra submissions can overstate sibling cost. This scope is sufficient to reopen packet132 at or below the threshold; a larger cost is inconclusive.
 
 A private state image is recopied from the current prefix before each alternate
 half, with separate scratch, recurrence, KV, PLE and host-history handling.
@@ -33,8 +31,7 @@ rates; cancelled halves are counted and the cost uses matched complete positions
 
 The fixed cost threshold is 1.952 ms. A completed, admitted measurement at or
 below it permits packet132 policy work on packet114 independent text only.
-Above it closes this specific measured implementation, never a universal hardware
-limit. No calibration or prompt selection uses the 12-prompt suite.
+Above it means “inconclusive upper bound; full M=2 needed”, never closure. No calibration or prompt selection uses the 12-prompt suite.
 
 Disk planning is 240 MB per view, 1.2 GB for five views: at most three times
 packet149's measured 402 MB bracket. The 25 GB device free-space floor stays;
