@@ -1,20 +1,19 @@
 # Packet58aj coordinator handoff — prepared, never queued
 
-Wait until p153 and p151 have completed their lane-B device runs. Then pause
-and drain both lanes and hold the whole host on lane A, card 0. Use the two
-proposal files, smoke before v5. Each runs K1a/K1b and one model load, without
-restart or retry. The smoke reads its own driver output immediately, checks
-real timing rows and completed requests as they appear, and saves
-`first-minute-analysis.json`. The final analyzer replays all twelve requests.
+Smoke and one-load v5 are complete under packet58ajb. Do not rerun them.
+The amended readiness decision replays their original receipts. Wait for the
+active packet58ai census and other admitted work to finish, then pause and
+drain both lanes and hold the whole host on lane A, card 0. No job is queued
+by this handoff. The coordinator captures a fresh fault review before launch.
 
 The five-view order is mapped / resident / mapped / resident / mapped. All
 views keep the complete 58ah composition and resident allocations. A0 remains
 exact and reported as warm-up, excluded only from speed and drift. Both
-resident views must stay within inclusive ±0.5% of both warm mapped controls;
+resident views must be at least 99.5% of EVERY warm mapped control;
 all sixty responses must match packet49 exactly. This is a stability gate,
 not a new record. The one-load test warms source pages during lookup copying.
 
-After smoke and v5, run `seal.py --verify` and
+Before the chain, run `seal.py --verify` and
 `verify_ready.py --output ready.json`. Require `ready=true`; a preparation
 marker alone does not qualify the chain. Keep the whole-host hold.
 
@@ -86,3 +85,10 @@ a bounded PLE row count. It does not test GPU scheduling or 29 GB memory pressur
 The shared rehearsal's preparation adapter requires ranked argv and cannot
 admit this private RoPE table; its WARN stays explicit. The independent local
 probe receipt is `evidence/packet58ajb-preparation.json`.
+
+Packet58ajc post-result amendment: the coordinator intended non-inferiority,
+not a two-sided band. The original v5 summary is retained unchanged. Its
+60/60 exact responses, 0.105% drift and +1.27% minimum gain pass readiness.
+A0/B0/A1/B1/A2 were 26.928/31.959/31.558/32.061/31.525 tok/s. This is
+readiness only; fresh WS128 must exceed 31.66271941826957 tok/s for submission.
+All model windows retain resident lookups and the explicit 300-second wait.

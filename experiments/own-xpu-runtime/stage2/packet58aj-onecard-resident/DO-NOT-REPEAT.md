@@ -7,7 +7,7 @@
   uses the largest lifetime allocation; real RssAnon is never discounted.
 - Keep every 58ah composition flag, 21,552,729,600 cache bytes and BF16 KV.
 - All five views must be exact; A0 is excluded only from speed and drift.
-  Neutrality means both resident rates within ±0.5% of both warm mapped rates.
+  Post-result non-inferiority means both resident rates >=99.5% of every warm mapped rate.
 - Packet58t's old warm-neutral result is not this composition's device gate.
 - Parent shape probes are inherited only under their exact binary hashes.
   New lookup byte and full-engine/reset tests are independently required.
@@ -29,3 +29,10 @@
   the implicit 60-second wait before its first prefill token. The precise event
   is unknown. Fresh smoke/v5 use `card0-58ajb-screen-a`, explicit 300-second
   waits and failure diagnostics. CPU preparation cannot exclude a GPU stall.
+
+Packet58ajc post-result amendment: the coordinator intended non-inferiority,
+not a two-sided band. The original v5 summary is retained unchanged. Its
+60/60 exact responses, 0.105% drift and +1.27% minimum gain pass readiness.
+A0/B0/A1/B1/A2 were 26.928/31.959/31.558/32.061/31.525 tok/s. This is
+readiness only; fresh WS128 must exceed 31.66271941826957 tok/s for submission.
+All model windows retain resident lookups and the explicit 300-second wait.

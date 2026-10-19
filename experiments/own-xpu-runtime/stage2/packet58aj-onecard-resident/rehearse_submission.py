@@ -86,6 +86,9 @@ def main():
         assert S.POLICY['supersedes']['reference_submission'] in current_notes
         assert S.POLICY['readiness_amendment'] in current_notes
         assert len(current_notes)<=2000
+        for text in ('128-token', 'no strict512', 'anonymous exact resident', 'Post-result',
+                     '26.928/31.959/31.558/32.061/31.525', '60/60 exact', '58ah a:', '58ah quiet-host b'):
+            assert text in current_notes, text
     # Exercise the real CLI from its final location with repository-relative
     # artifact paths. Only the synthetic seal is patched; REPO_ROOT is untouched.
     import submission_cli
@@ -110,9 +113,9 @@ def main():
         current_predecessor=S.POLICY['supersedes'],notes_characters=len(current_notes),
         real_bundle_notes_characters=len(notes),fault_counters=derived['fault_counters'],
         peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024)
-    assert report['peak_rss_bytes']<4*1024**3
+    assert report['peak_rss_bytes']<2_000_000_000
     (P/'evidence/submission-rehearsal.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))
 if __name__=='__main__':
-    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+    resource.setrlimit(resource.RLIMIT_AS,(2_000_000_000,2_000_000_000))
     main()

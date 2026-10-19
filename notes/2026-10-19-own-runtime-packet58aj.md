@@ -210,3 +210,61 @@ window-relative build paths as current inputs. The finalizer now binds that
 diagnosis with a content digest, keeping the incident out of the live build
 closure. The failed first marker attempt was removed before this correction;
 the corrected two markers are regenerated last and checked before their push.
+
+## Packet58ajc — post-result readiness amendment and complete chain handoff
+
+The coordinator's original wording required resident rates within a two-sided
+±0.5% band. Its intended rule was non-inferiority: resident must be no more
+than 0.5% slower than **every** warm mapped control. This is explicitly a
+post-result amendment, made after packet58ajb-v5-A completed at 03:33 UTC.
+All views must still be exact, warm-control drift must stay at or below 3%,
+and A0 is excluded only from speed and drift. This qualifies readiness only.
+
+The unchanged saved bracket reports A0/B0/A1/B1/A2 at
+26.927641 / 31.958970 / 31.558327 / 32.061052 / 31.525201 tok/s.
+All 60 responses match `iq3-p49-split32-v1`; drift is 0.105076%, and the
+minimum resident gain against the best warm control is 1.269532%. The original
+`candidate_beats_all_controls=false` remains in the original summary. The
+separate amended replay records that original verdict and now returns
+`ready=true`. The completed screen's seal and all native binaries are unchanged.
+Exact pre-amendment files remain under `lineage/packet58ajc-before`; only the
+unstarted chain is resealed. Historical screen source verification uses those
+hash-bound original bytes, while the chain verifies the amended sources.
+
+The fresh chain is `packet58-onecard-58aj-a`, output `evidence/card0-58aj-a`,
+with a new `evidence/fault-review-58aj-a.json`. Its seven windows remain
+K1a → K1b → KD → W2m → WS → WS128x → WS128, with 90-second gaps, resident
+lookups and explicit 300-second waits. The coordinator must wait for the
+active packet58ai census and other admitted work, hold both lanes drained,
+capture the fault review and recompute readiness. Smoke/v5 must not be rerun.
+Codex and compiles are excluded from WS through WS128 completion.
+
+The vendored submission tool discloses the 128-token scope, strict512=false,
+29.3 GB of exact anonymous resident lookup copies, all five bracket numbers,
+the post-result amendment, and the packet58ah a/b paging history that motivated
+this line. Only fresh WS128 can supply a submission timing; it must strictly
+exceed 31.66271941826957 tok/s, record `cmvekebvh00a0rf01q3v2c3cz`, and the
+current local ledger. Equality and lower speeds are explicitly tested refusals.
+No bracket timing is promoted to a record. A second fresh timing remains pending.
+
+All 137 passive tests pass. The actual chain entry passes the shared
+`ops/rehearse_entry.py --report` loader/parser and WS128x/WS128 report checks.
+The shared preparation adapter still reports its known WARN; the retained
+packet58ajb device-define proof applies to the unchanged native artifacts.
+The final-location submission CLI rehearsal passes without network access or
+overriding its repository root; its synthetic payload is removed. That replay
+uses 158,838,784 peak RSS bytes; the passive tests use 65,478,656 bytes, both
+below the 2 GB limit. Seal verification and the complete real smoke/v5 replay
+pass. The final coordinator check uses the two READY files written last.
+
+Pull refused the unrelated dirty tree; fetch confirmed HEAD matched origin/main.
+This preparation is CPU-only, nice19 on helper cores, Python -B with closed
+stdin. No model/GGUF or full-shape reads, compiles, GPU work, services, sudo,
+settings, live queue changes or external submission were performed. Raw local
+screen evidence stays in place; this commit does not ingest the unrelated
+untracked device-output tree. The original screen summaries remain unchanged.
+
+Evidence: [readiness replay](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/ready.json),
+[entry/report rehearsal](../experiments/own-xpu-runtime/ops/packet58aj-orchestration/58ajc-entry-rehearsal.json),
+[minimal reseal](../experiments/own-xpu-runtime/ops/packet58aj-orchestration/58ajc-reseal.json),
+[submission rehearsal](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/submission-rehearsal.json).

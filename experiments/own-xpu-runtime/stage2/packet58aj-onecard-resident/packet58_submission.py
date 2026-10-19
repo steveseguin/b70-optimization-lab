@@ -48,7 +48,7 @@ SCOPE = POLICY['scope']
 CHAIN_ATTEMPT = 'a'
 RERUN_DISCLOSURE = ('58ah a: 30.050 tok/s, not submitted, 3,736 major faults vs 124 in WS128x. '
  '58ah quiet-host b final: 31.662719 tok/s, submitted cmvekebvh00a0rf01q3v2c3cz; 24 faults vs 2,079 in WS128x. '
- 'Paging cause unproven; no third run. 58aj changes backing, not arithmetic.')
+ 'This a/b paging history motivates 58aj resident backing; cause unproven; no third run; arithmetic unchanged.')
 
 
 def require(condition, message):
@@ -481,13 +481,13 @@ def derive(e):
 def submission_notes(result):
     fault=result['fault_counters'];previous=result['comparison']
     text=(MODEL+'. Quantized compressed version, separate from FP8. Lab own Intel Xe runtime; one Arc Pro B70. '
-          'Target-only greedy; no draft/MTP. 29.32 GB exact resident lookup copies; host-pinned experts; 21.55 GB device expert cache (21,552,729,600 bytes); zero-copy misses; '
-          'tile16; HC fusion + HC-wide, wide64+exact half-scale cache, other-fusion, ordered foreground retirement; overlapped cache maintenance. BF16 KV at context 4096. '
+          'Target-only greedy; no draft/MTP. 29.3 GB anonymous exact resident lookup copies; 21.55 GB expert cache; zero-copy misses; '
+          'tile16, HC-wide fusion, wide64+half-cache, other-fusion, ordered retirement, overlapped cache maintenance; BF16 KV, context4096. '
           '12 cold prompts / 1536 exact tokens against packet49 CPU oracle iq3-p49-split32-v1; '
           'fresh WS/WS128x/WS128 exactness repeats. cached_tokens=0; no prompt/KV/response reuse. '
           '128-token owner scope: realistic_final_gate.passed=false; no strict512 claim. '
           'WS128 only: median of six class medians; 99 intervals from events 1 to 100 after TTFT. '
-          'tokSTotal is median output/(last token-request start). WS128x is exactness only. '
+          'WS128x exactness only. '
           'Second fresh whole-host timing run still needed for a speed verdict. Standard 512-token prefill '
           'and full natural completion unmeasured. '
           f"Per-token process faults over {fault['tokens']} tokens: major={fault['major']}, minor={fault['minor']}; new GPU fault lines={fault['new_gpu_fault_lines']}. "
