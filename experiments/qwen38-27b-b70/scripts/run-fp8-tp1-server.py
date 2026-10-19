@@ -103,6 +103,10 @@ def build(args, name, out, image_env):
             cmd[index + 1] = json.dumps(json.loads(args.spec_config_json))
     if args.eager:
         cmd.append('--enforce-eager')
+    if args.vision:
+        # Serving (owner, 2026-10-19): load the vision tower too. The qualified record serves text only; no lab gate
+        # covers image inputs.
+        cmd.remove('--language-model-only')
     if args.prefix_cache == 'align':
         # Research only (E0, notes/2026-10-05-prefix-cache-exactness-prereg.md): prefix caching with the recurrent
         # state stored at every attention block boundary. Hit == cold by construction needs --batched equal to one
@@ -168,6 +172,7 @@ def main():
     ap.add_argument('--seqs', type=int, default=1, help='concurrent sequences the server accepts (qualified value is 1)')
     ap.add_argument('--mtp', type=int, default=0, choices=range(0, 8))
     ap.add_argument('--eager', action='store_true')
+    ap.add_argument('--vision', action='store_true', help='also load the vision tower (image inputs; not lab-gated)')
     ap.add_argument('--draft-int4', action='store_true')
     ap.add_argument('--cpu-embed', action='store_true')
     ap.add_argument('--image', default=IMAGE, help='image id; env/cmd still come from the qualified R304 record')
