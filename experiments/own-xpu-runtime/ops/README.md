@@ -140,11 +140,38 @@ Order, and fail-closed refusals (exit 2, created dirs removed, no READY):
 
 The new packet gets the parent packet's top-level harness plus `selections/`,
 `frozen-inputs/`, `host-admission/` and `native/`, with only the packet name,
-unit, output and fault-review names rewritten. Parent CPU gate receipts are
-copied byte for byte. `seal.py` and `verify_ready.py` are generated; the
-parent's own versions are packet specific. `--packet` and `--out` must not exist.
-`test_onecard_chain_derive.py` regenerates a packet58as equivalent from
-packet58aj in a temporary root of symlinks.
+unit, output and fault-review names rewritten. `seal.py` and `verify_ready.py`
+are generated; the parent's own versions are packet specific. `--packet` and
+`--out` must not exist.
+
+Pin-guard hygiene (packet172b, after the packet58as-b/58asb refusals):
+
+- The `--packet` prefix (text before the first `-`, `packet<digits><letters>`)
+  must not match any existing `stage2/<prefix>-*`, `ops/<prefix>-*` or
+  `ops/lane-queue/proposed-p<number>-*`, and `--out` must be
+  `ops/<prefix>-<label>`. The pin guard globs `ops/<prefix>-*` into the packet
+  closure; `packet58as-b-confirm` pulled in `packet58as-orchestration`. The
+  refusal suggests a free prefix.
+- No copied or generated manifest may pin the parent packet. Before sealing,
+  every manifest that `pin_guard.collect_pins` reads (found by wrapping
+  `read_metadata`, plus the inherited gate receipts) is rewritten: a parent pin
+  is repointed to this packet's copy only when it has the pinned bytes,
+  otherwise it becomes `{name, parent_relpath, parent_digest}`; a sub-bundle
+  seal (`host-admission/seal.json`) is re-bound only for siblings this run
+  rewrote. Shared immutable pins (packet49 oracle, models, other packets'
+  frozen binaries) stay. Each change is in `evidence/pin-relocation.json`
+  (a sealed gate); the final audit refuses any remaining parent or mutable
+  cross-packet pin, then the temporary `lanequeue plan` runs the real guard.
+- A chain of the line that set the ledger's latest record is disclosed in
+  `WINDOW.md`/READY as a confirmation run; the copied submission tool still
+  refuses unless fresh WS128 beats that record.
+
+`test_onecard_chain_derive.py`: refusal cases in a temporary root of symlinks;
+the positive case derives into the REAL `stage2/` and `ops/` under a unique
+`packet990t*` prefix (the guard resolves its own real root, so a temp-root
+derive was checked against the wrong packet), runs the real pin guard,
+`verify_ready.py` and `onecard-chain.sh --check`, and always removes the dirs
+and asserts git sees nothing left.
 
 ## Regression checks
 

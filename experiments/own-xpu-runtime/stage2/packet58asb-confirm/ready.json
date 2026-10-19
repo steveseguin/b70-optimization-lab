@@ -1,0 +1,27 @@
+{
+  "schema": "onecard-chain-derive.ready.v1",
+  "passed": true,
+  "ready": true,
+  "device_executed": false,
+  "chain_command": "systemd-run --user --unit=packet58-onecard-58as-b --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2 /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58asb-confirm/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58asb-confirm/evidence/card0-58as-b --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58asb-confirm/evidence/fault-review-58as-b.json < /dev/null",
+  "coordinator_only": true,
+  "launch_performed": false,
+  "bracket_passed": true,
+  "candidate_beats_all_controls": true,
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "rates": [
+    31.900929457585114,
+    34.576943918764464,
+    31.83773787531652,
+    34.56840016469365,
+    31.807236518013138
+  ],
+  "control_drift_fraction": 0.0009589439587468848,
+  "minimum_gain": 0.08576810011034688,
+  "record_gain_measured": false,
+  "chain_flags": {
+    "--wait-policy": "spin"
+  },
+  "build_receipt_sha256": "e802c5350c3d8dad620e96daf22215184904a3ff640064865808502f551c50f1",
+  "submission_pins_sha256": "d9b6e00437c19091c5df1cdfad65c4834ef5c7bac2e5b3b06e72449532064199"
+}

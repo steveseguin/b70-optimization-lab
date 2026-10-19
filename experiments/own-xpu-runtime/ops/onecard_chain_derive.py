@@ -17,14 +17,23 @@ Order: bracket gate -> --help gate (device binary in the Landlock entry sandbox,
 host binary plain) -> copy the parent chain harness into the NEW packet with
 identity rewrites, the new binaries and the flags appended to every model
 window argv -> real-parser gate (--p58r-parse-test) for every model window ->
-seal -> verify_ready -> temporary lanequeue plan -> READY written last.
+pin relocation (pin_guard audit) -> seal -> verify_ready -> temporary lanequeue
+plan -> READY written last.
 Any refusal removes the directories this run created and writes no READY.
+
+Pin-guard hygiene (packet172b): the --packet prefix (text before the first '-')
+must not collide with any existing stage2/ops/proposal prefix, because the pin
+guard globs ops/<prefix>-* into the packet's closure. Every pin in copied or
+generated metadata must point inside the new packet at a file with identical
+bytes, or become a non-pin provenance record {name, parent_relpath,
+parent_digest}; evidence/pin-relocation.json lists each change.
 """
-import argparse, datetime, hashlib, json, os, resource, shlex, shutil, subprocess, sys, tempfile
+import argparse, datetime, hashlib, json, os, re, resource, shlex, shutil, subprocess, sys, tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
 OPS = Path(__file__).resolve().parent
+PREFIX = re.compile(r'packet\d+[a-z]*')
 MODEL_WINDOWS = ('KD', 'W2m', 'WS', 'WS128x', 'WS128')
 SKIP_TOP = {'READY-FOR-DEVICE.json', 'ready.json', 'build-receipt.json', 'submission-pins.json',
             'seal.py', 'verify_ready.py', 'queue.lock', 'WINDOW.md'}
@@ -227,6 +236,276 @@ def derive_packet(a, P0, P, flags, root, pairs):
     return copied, gates, plan_note
 
 
+# 3a. Packet prefix gate (pin guard globs ops/<prefix>-*) ----------------------
+def prefix_taken(prefix, stage, ops):
+    number = prefix[len('packet'):]
+    hits = [*stage.glob(prefix + '-*'), *ops.glob(prefix + '-*'),
+            *(ops / 'lane-queue').glob('proposed-p' + number + '-*')]
+    hits += [p for p in (stage / prefix, ops / prefix) if p.exists()]
+    return sorted({str(p) for p in hits})
+
+
+def free_prefix(prefix, stage, ops):
+    letters = 'abcdefghijklmnopqrstuvwxyz'
+    for suffix in [*letters, *(a + b for a in letters for b in letters)]:
+        if not prefix_taken(prefix + suffix, stage, ops):
+            return prefix + suffix
+    return None
+
+
+def prefix_gate(P, O):
+    prefix, sep, label = P.name.partition('-')
+    refuse(sep == '-' and label and PREFIX.fullmatch(prefix),
+           f'--packet name must be packet<digits><letters>-<label> (the pin guard identifies packets by that prefix): {P.name!r}')
+    refuse(O.name.startswith(prefix + '-'),
+           f'--out must be ops/{prefix}-<label> so the pin guard reads this orchestration with its packet: {O.name!r}')
+    taken = prefix_taken(prefix, P.parent, O.parent)
+    if taken:
+        free = free_prefix(prefix, P.parent, O.parent)
+        shown = ', '.join(str(Path(t).relative_to(P.parent.parent)) for t in taken[:6]) + (f' (+{len(taken) - 6} more)' if len(taken) > 6 else '')
+        raise Refused(f'REFUSED --packet {P.name}: its prefix {prefix!r} (text before the first "-") collides with '
+                      f'existing {shown}. The pin guard globs stage2/{prefix}-* and ops/{prefix}-* into the packet '
+                      f'closure, so another packet\'s pins would be checked as this packet\'s (the packet58as-b-confirm '
+                      f'failure). Use a free prefix' + (f', for example --packet .../stage2/{free}-{label} --out .../ops/{free}-orchestration.' if free else '.'))
+    return prefix
+
+
+# 3b. Pin relocation: every pin inside the new packet with identical bytes, or provenance
+def load_guard():
+    if str(OPS / 'lane-queue') not in sys.path:
+        sys.path.insert(0, str(OPS / 'lane-queue'))
+    import pin_guard
+    return pin_guard
+
+
+def guard_manifests(guard, P, root, extra=()):
+    """Every manifest pin_guard.collect_pins reads for P (wrapped read_metadata), plus extra roots."""
+    read, paths, seen = guard.read_metadata, guard.metadata_paths, []
+    def wrapped(path):
+        seen.append(Path(path)); return read(path)
+    guard.read_metadata = wrapped
+    guard.metadata_paths = lambda packet, root=root: sorted(set(paths(packet, root)) | {Path(e) for e in extra})
+    try:
+        pins, _ = guard.collect_pins(P, root)
+    finally:
+        guard.read_metadata, guard.metadata_paths = read, paths
+    return list(dict.fromkeys(seen)), pins
+
+
+def manifest_entries(guard, path):
+    raw = guard.read_metadata(path)
+    if path.name.endswith(('.json', '.json.gz')) or raw.lstrip().startswith((b'{', b'[')):
+        row = json.loads(raw)
+        direct = (guard.is_pin_file(path) and isinstance(row, dict) and 'schema' not in row
+                  and all(isinstance(v, str) for v in row.values()))
+        return 'json', row, direct, list(guard.extract_pins(row, 'sources' if direct else ''))
+    lines = raw.decode().splitlines(); entries = []
+    for line in lines:
+        m = re.fullmatch(r'([0-9a-fA-F]{64})\s+\*?(.+)', line) if line.strip() and not line.startswith('#') else None
+        if m:
+            entries.append((m[2], m[1].lower()))
+    return 'text', lines, False, entries
+
+
+HASH_MAPS = {'sources', 'screen_sources', 'files_sha256', 'artifacts', 'gates', 'pins', 'files'}
+
+
+def transform(row, fix, map_name=''):
+    """Mirror pin_guard.extract_pins; fix(name, digest) -> None | ('path', new) | ('digest', new) | ('record', dict)."""
+    if isinstance(row, list):
+        return [transform(item, fix, map_name) for item in row]
+    if not isinstance(row, dict):
+        return row
+    hash_map = map_name in HASH_MAPS or map_name.endswith(('_sources', '-sources'))
+    record_path = row.get('path', row.get('file'))
+    if isinstance(record_path, str) and ('sha256' in row or 'hash' in row):
+        pk = 'path' if 'path' in row else 'file'; hk = 'sha256' if 'sha256' in row else 'hash'
+        act = fix(record_path, str(row[hk]).lower())
+        rest = transform({k: v for k, v in row.items() if k not in {'path', 'file', 'sha256', 'hash'}}, fix, '')
+        if act is None:
+            return {k: (rest[k] if k in rest else v) for k, v in row.items()}
+        if act[0] == 'path':
+            return {k: (act[1] if k == pk else rest.get(k, v)) for k, v in row.items()}
+        if act[0] == 'digest':
+            return {k: (act[1] if k == hk else rest.get(k, v)) for k, v in row.items()}
+        return dict(act[1], **{k: v for k, v in rest.items() if k not in act[1]})
+    out = {}
+    for key, value in row.items():
+        if isinstance(value, str) and re.fullmatch(r'[0-9a-fA-F]{64}', value):
+            name = None
+            if hash_map or '/' in key or '.' in key and not key.endswith(('_sha256', '.sha256')):
+                name = key
+            elif key.endswith('_sha256') and isinstance(row.get(key[:-7]), str) and ('/' in row[key[:-7]] or '.' in row[key[:-7]]):
+                act = fix(row[key[:-7]], value.lower())
+                if act and act[0] == 'path':
+                    out[key[:-7]] = act[1]; out[key] = value; continue
+                if act and act[0] == 'digest':
+                    out[key] = act[1]; continue
+                if act:
+                    out[key[:-7]] = act[1]; continue   # path field becomes the provenance record; digest key dropped
+            elif key in {'sha256', 'hash'} and any(isinstance(row.get(f), str) for f in ('path', 'file')):
+                if any(fix(row[f], value.lower()) for f in ('path', 'file') if isinstance(row.get(f), str)):
+                    raise Refused('unsupported pin shape for relocation: ' + json.dumps({k: row[k] for k in ('path', 'file') if k in row}))
+            if name is not None:
+                act = fix(name, value.lower())
+                if act is None:
+                    out[key] = value
+                elif act[0] == 'path':
+                    out[act[1]] = value
+                elif act[0] == 'digest':
+                    out[key] = act[1]
+                else:
+                    out[key] = act[1]
+                continue
+            if key not in out:
+                out[key] = value
+        elif isinstance(value, dict) and hash_map and 'sha256' in value and not {'path', 'file'}.intersection(value):
+            act = fix(key, str(value['sha256']).lower())
+            inner = transform({k: v for k, v in value.items() if k != 'sha256'}, fix, '')
+            if act is None:
+                out[key] = dict(value, **inner)
+            elif act[0] == 'path':
+                out[act[1]] = dict(value, **inner)
+            elif act[0] == 'digest':
+                out[key] = dict(value, **inner, sha256=act[1])
+            else:
+                out[key] = dict(act[1], **{k: v for k, v in inner.items() if k not in act[1]})
+        elif isinstance(value, (dict, list)):
+            out[key] = transform(value, fix, key if isinstance(value, dict) else '')
+        else:
+            out.setdefault(key, value)
+    return out
+
+
+def relocate_pins(P, P0, root, extra, changed=None):
+    """Rewrite copied/generated metadata so the pin guard sees only packet-local identical-byte pins.
+
+    A pin into the parent packet becomes the new packet's own copy only when that copy has the
+    pinned bytes; otherwise it becomes {name, parent_relpath, parent_digest}. A packet-local
+    sub-bundle seal (e.g. host-admission/seal.json) is re-bound only for siblings this run
+    rewrote, with the parent binding kept as provenance. Shared immutable pins the guard allows
+    outside both packets (packet49 oracle, model files, other packets' frozen binaries and
+    completed evidence) are kept. Parent files are never modified."""
+    guard = load_guard(); stage = root / 'experiments/own-xpu-runtime/stage2'
+    changed = set() if changed is None else changed; log = []
+
+    def rel(p):
+        p = Path(p)
+        return str(p.relative_to(root)) if p.is_relative_to(root) else str(p)
+
+    def inside(p):
+        return p.is_relative_to(P) and p.resolve().is_relative_to(P.resolve())
+
+    def spell(name, manifest, target):
+        if os.path.isabs(name):
+            new = str(target)
+        elif Path(name).parts and Path(name).parts[0] in {'stage1', 'stage2'}:
+            new = str(target.relative_to(root / 'experiments/own-xpu-runtime'))
+        elif Path(name).parts and Path(name).parts[0] in {'experiments', 'notes', 'scripts', 'data', 'ops'}:
+            new = str(target.relative_to(root))
+        else:
+            base = P if manifest.parent.name in {'evidence', 'build'} else manifest.parent
+            new = os.path.relpath(target, base)
+        refuse(guard.pin_path(new, manifest, P, root) == target, f'pin respelling failed: {name} -> {new}')
+        return new
+
+    for _ in range(8):
+        manifests, pins = guard_manifests(guard, P, root, extra)
+        oracle = {(p, h) for p, h, s in pins if s.name == 'oracle-binding.json'}
+        edits = 0
+        for manifest in manifests:
+            kind, row, direct, entries = manifest_entries(guard, manifest)
+            actions = {}
+            for name, digest in entries:
+                target = guard.pin_path(name, manifest, P, root)
+                if inside(target):
+                    if target.is_file() and sha(target) == digest:
+                        continue
+                    parent = P0 / target.relative_to(P)
+                    seal_local = (manifest.name == 'seal.json' and manifest.parent != P and manifest.parent.relative_to(P).parts[0] in COPY_DIRS
+                                  and target.parent == manifest.parent and target in changed and target.is_file()
+                                  and parent.is_file() and sha(parent) == digest)
+                    if seal_local:
+                        actions[(name, digest)] = ('digest', sha(target)); kind_ = 'rebound sub-bundle seal entry to the relocated sibling'
+                    else:
+                        actions[(name, digest)] = ('record', dict(name=target.name, parent_relpath=rel(parent), parent_digest=digest))
+                        kind_ = 'provenance (packet copy missing or not byte-identical)'
+                    log.append(dict(manifest=rel(manifest), pin=name, action=kind_, parent_relpath=rel(parent), parent_digest=digest,
+                                    derived_relpath=rel(target), derived_digest=sha(target) if target.is_file() else None))
+                elif target.is_relative_to(P0):
+                    own = P / target.relative_to(P0)
+                    if own.is_file() and sha(own) == digest:
+                        actions[(name, digest)] = ('path', spell(name, manifest, own)); kind_ = 'repointed to identical packet copy'
+                    else:
+                        actions[(name, digest)] = ('record', dict(name=target.name, parent_relpath=rel(target), parent_digest=digest))
+                        kind_ = 'provenance (parent file; no identical packet copy)'
+                    log.append(dict(manifest=rel(manifest), pin=name, action=kind_, parent_relpath=rel(target), parent_digest=digest,
+                                    derived_relpath=rel(own) if kind_.startswith('repointed') else None))
+                elif not guard.immutable_reason(target, digest, P, oracle, stage):
+                    actions[(name, digest)] = ('record', dict(name=target.name, parent_relpath=rel(target), parent_digest=digest))
+                    log.append(dict(manifest=rel(manifest), pin=name, action='provenance (mutable file outside both packets)',
+                                    parent_relpath=rel(target), parent_digest=digest))
+            if not actions:
+                continue
+            refuse(inside(manifest), f'offending pins sit in a manifest outside the new packet: {manifest}')
+            refuse(not manifest.name.endswith('.gz'), f'cannot relocate pins in compressed manifest {manifest}')
+            fix = lambda n, d: actions.get((n, d))
+            if kind == 'json':
+                new = transform(row, fix, 'sources' if direct else '')
+                put(manifest, json.dumps(new, indent=2, ensure_ascii=False) + '\n')
+            else:
+                out = []
+                for line in row:
+                    m = re.fullmatch(r'([0-9a-fA-F]{64})(\s+\*?)(.+)', line) if line.strip() and not line.startswith('#') else None
+                    act = fix(m[3], m[1].lower()) if m else None
+                    out.append(line if act is None else m[1] + m[2] + act[1] if act[0] == 'path' else act[1] + m[2] + m[3]
+                               if act[0] == 'digest' else '# provenance ' + json.dumps(act[1], sort_keys=True))
+                put(manifest, '\n'.join(out) + '\n')
+            changed.add(manifest); edits += 1
+        if not edits:
+            return log
+    raise Refused('pin relocation did not converge in 8 rounds')
+
+
+def pin_audit(P, root, extra=(), parent=None):
+    """Final audit: pin_guard semantics on the derived packet plus no pin into the parent packet."""
+    guard = load_guard(); stage = root / 'experiments/own-xpu-runtime/stage2'
+    manifests, pins = guard_manifests(guard, P, root, extra)
+    oracle = {(p, h) for p, h, s in pins if s.name == 'oracle-binding.json'}
+    bad = []
+    for manifest in manifests:
+        for name, digest in manifest_entries(guard, manifest)[3]:
+            target = guard.pin_path(name, manifest, P, root)
+            if target.is_relative_to(P) and target.resolve().is_relative_to(P.resolve()):
+                if not (target.is_file() and sha(target) == digest):
+                    bad.append(f'{manifest}: {name} (packet-local, missing or different bytes)')
+            elif parent is not None and target.is_relative_to(parent):
+                bad.append(f'{manifest}: {name} (pin into the parent packet)')
+            elif not guard.immutable_reason(target, digest, P, oracle, stage):
+                bad.append(f'{manifest}: {name} (cross-packet mutable pin)')
+    return bad, manifests
+
+
+def confirmation_of(last, root, bracket_packet, binary_sha):
+    """A chain of the line that set the ledger's latest record is a confirmation, never a resubmission."""
+    path = Path((last.get('result') or {}).get('path', ''))
+    parts = path.parts
+    pkt = parts[parts.index('stage2') + 1] if 'stage2' in parts[:-1] else None
+    if not pkt:
+        return None
+    binary = root / 'experiments/own-xpu-runtime/stage2' / pkt / 'build/device/own-rt-iq3'
+    same_binary = binary.is_file() and sha(binary) == binary_sha
+    if pkt != bracket_packet.name and not same_binary:
+        return None
+    thr = last['threshold_tok_s']
+    return dict(record_packet=pkt, reference_submission=last['reference_submission'], threshold_tok_s=thr,
+                same_chain_binary=same_binary, chain_binary_sha256=binary_sha, resubmission=False,
+                text=(f'Confirmation run, not a resubmission: the ledger\'s latest record {last["reference_submission"]} '
+                      f'({thr:.3f} tok/s) came from {pkt}' + (f' with this same chain binary {binary_sha[:16]}' if same_binary else '')
+                      + f'. This packet is a further fresh chain of that record line. The submission tool refuses unless fresh '
+                      f'WS128 exceeds {thr} tok/s and the live ledger; a run at or below it is confirmation evidence only.'))
+
+
 # 4. Real-parser gate per model window ----------------------------------------
 PARSE = r'''
 import json,subprocess,sys,tempfile
@@ -377,6 +656,7 @@ def main(argv=None):
         refuse(P.parent.name == 'stage2' and O.parent.name == 'ops' and O.parent.parent == P.parent.parent,
                '--packet must be <root>/experiments/own-xpu-runtime/stage2/<name> and --out its sibling ops/<name>')
         refuse(not P.exists() and not O.exists(), 'refusing to write into an existing packet or orchestration dir')
+        prefix_gate(P, O)
         O0 = Path(a.parent_orch).absolute(); R0 = read(O0 / 'READY-FOR-DEVICE.json')
         refuse(R0.get('ready_for_device_chain') is True and R0.get('passed') is True, 'parent orchestration is not READY')
         refuse(hashlib.sha256(R0['chain_command'].encode()).hexdigest() == R0['chain_command_digest_sha256'], 'parent chain command digest differs')
@@ -420,13 +700,15 @@ def main(argv=None):
             f'otherwise the submission tool refuses.')
         save(P / 'submission-policy.json', policy)
         chain_command = rewrite(R0['chain_command'], [(str(P0), str(P)), *pairs])
+        confirmation = confirmation_of(last, root, bracket_packet, binary_sha)
         derived = dict(schema='onecard-chain-derive.v1', flags=flags, chain_command=chain_command,
                        chain_output=str((P / out).relative_to(root)), unit=a.unit,
                        boot_check='cpu-rehearsal' if a.cpu_rehearsal else 'current-boot',
                        bracket=dict(summary=record(summary, root), window=record(summary.parent / 'window.json', root),
                                     **{k: bracket[k] for k in ('rates', 'control_drift_fraction', 'minimum_gain', 'exact_requests', 'request_count', 'boot_id')}),
                        parent=dict(orchestration=record(O0 / 'READY-FOR-DEVICE.json', root), packet=P0.name),
-                       identity_rewrites=[dict(parent=x, derived=y) for x, y in pairs], plan_output=plan_note)
+                       identity_rewrites=[dict(parent=x, derived=y) for x, y in pairs], plan_output=plan_note,
+                       confirmation=confirmation)
         save(P / 'derived-chain.json', derived)
         put(P / 'seal.py', SEAL); put(P / 'verify_ready.py', VERIFY)
         put(P / 'WINDOW.md', f'''# {P.name} record-chain coordinator contract (generated)
@@ -449,7 +731,19 @@ Bracket (readiness only): {rates} tok/s, {bracket["exact_requests"]}/{bracket["r
 drift {bracket["control_drift_fraction"]*100:.3f}%, minimum gain +{bracket["minimum_gain"]*100:.2f}%.
 Only fresh WS128 supplies record timing; it must exceed {last["threshold_tok_s"]} tok/s
 ({last["reference_submission"]}) and the live ledger.
+{confirmation['text'] if confirmation else ''}
+Pin hygiene: copied parent metadata pins only this packet's identical-byte files or
+carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocation.json.
 ''')
+        # Pin relocation: no copied or generated manifest may pin the parent packet.
+        gate_paths = [P / n for n in inherited_gates] + [P / 'evidence/chain-flags.json']
+        relocation = relocate_pins(P, P0, root, gate_paths)
+        save(P / 'evidence/pin-relocation.json', dict(
+            schema='onecard-chain-derive.pin-relocation.v1', passed=True, device_executed=False, parent_packet=P0.name,
+            rule='a pin into the parent packet is repointed only to an identical-byte copy in this packet; otherwise it '
+                 'becomes {name, parent_relpath, parent_digest}; a packet-local sub-bundle seal is re-bound only for '
+                 'siblings this run rewrote; shared immutable pins (oracle, models, frozen binaries) are kept',
+            changes=relocation))
         # Seal: every packet-local file; inherited gates byte-identical to the parent.
         prc = read(P0 / 'build-receipt.json')
         excluded = {'build-receipt.json', 'submission-pins.json', 'ready.json', 'READY-FOR-DEVICE.json'}
@@ -458,14 +752,27 @@ Only fresh WS128 supplies record timing; it must exceed {last["threshold_tok_s"]
             files += [f for f in (P / d).rglob('*') if f.is_file() and '__pycache__' not in f.parts]
         artifacts = {r: sha(P / r) for r in ('build/device/own-rt-iq3', 'build/device/p58-cache-fixtures', 'build/gnu-host/own-rt-iq3')}
         gates = {n: sha(P / n) for n in inherited_gates}; gates['evidence/chain-flags.json'] = sha(P / 'evidence/chain-flags.json')
-        for n in inherited_gates:
-            refuse(sha(P / n) == sha(P0 / n), 'inherited gate copy differs: ' + n)
+        gates['evidence/pin-relocation.json'] = sha(P / 'evidence/pin-relocation.json')
+        relocated_gates = sorted(n for n in inherited_gates if sha(P / n) != sha(P0 / n))
+        relocated_manifests = sorted({c['manifest'] for c in relocation})
+        for n in relocated_gates:
+            refuse(str((P / n).relative_to(root)) in relocated_manifests, 'inherited gate copy differs without a pin relocation: ' + n)
         receipt = {k: v for k, v in prc.items() if k not in ('sources', 'artifacts', 'gates', 'bracket_native', 'superseded_bracket_objects', 'chain_interface_patch', 'closure_before_packet58asd')}
         receipt.update(sources={str(f.relative_to(root)): sha(f) for f in files}, artifacts=artifacts, gates=gates,
                        chain_flags=flags, native_recompiled=binary_sha != prc['artifacts'].get('build/device/own-rt-iq3'),
                        parent_build_receipt=record(P0 / 'build-receipt.json', root), revision='derived:' + P.name,
-                       inherited_gates_from_parent=sorted(inherited_gates), copied_from_parent=copied)
+                       inherited_gates_from_parent=sorted(inherited_gates),
+                       inherited_gate_parent_provenance=[record(P0 / n, root) for n in sorted(inherited_gates)],
+                       relocated_gates=relocated_gates, copied_from_parent=copied)
         save(P / 'build-receipt.json', receipt)
+        # Keys inherited from the parent receipt may pin parent files too: relocate the receipt alone.
+        before = {f: sha(f) for f in P.rglob('*') if f.is_file() and 'build' not in f.relative_to(P).parts[:1]}
+        late = relocate_pins(P, P0, root, gate_paths)
+        refuse(all(sha(f) == h for f, h in before.items() if f != P / 'build-receipt.json'),
+               'late pin relocation touched files other than build-receipt.json')
+        if late:
+            receipt = read(P / 'build-receipt.json'); receipt['receipt_pin_relocation'] = late
+            save(P / 'build-receipt.json', receipt)
         names = [n for n in ('packet58_submission.py', 'composition.py', 'submission_cli.py', 'shared_submission_cli.py', 'suite_metrics.py', 'submission-policy.json', 'record-threshold.snapshot') if (P / n).is_file()]
         save(P / 'submission-pins.json', dict(schema=f'{P.name}.submission-pins.v1', build_receipt_sha256=sha(P / 'build-receipt.json'),
                                               sources={str((P / n).relative_to(root)): sha(P / n) for n in names}, artifacts=artifacts, finalized_before_chain=True))
@@ -474,6 +781,8 @@ Only fresh WS128 supplies record timing; it must exceed {last["threshold_tok_s"]
             cp = subprocess.run([sys.executable, '-B', str(P / args[0]), *args[1:]], cwd=root, stdin=subprocess.DEVNULL, capture_output=True, text=True, env=env, timeout=600)
             refuse(cp.returncode == 0, f'{args[0]} refused: ' + (cp.stdout + cp.stderr)[-1500:])
         ready = read(P / 'ready.json'); refuse(ready['ready'] is True and ready['chain_command'] == chain_command, 'ready.json not ready')
+        bad, manifests = pin_audit(P, root, gate_paths, parent=P0)
+        refuse(not bad, f'pin audit refused ({len(bad)} pins): ' + '; '.join(bad[:12]))
         # Temporary lanequeue plan (live queue untouched).
         O.mkdir()
         job = dict(name=f'{P.name}-chain-A', lane='A', argv=['/usr/bin/python3', '-B', str(P / 'queue_runner.py'), '--authorized-device-window', '--card', '0', '--view', 'down-tile16', '--output-root', str(P / out), '--fault-review', '{REVIEW}'],
@@ -512,6 +821,9 @@ Only fresh WS128 supplies record timing; it must exceed {last["threshold_tok_s"]
                    files_sha256={str((P / n).relative_to(root)): sha(P / n) for n in pfiles},
                    orchestration_provenance=[record(O / n, root) for n in ofiles],
                    parent_provenance=[record(O0 / 'READY-FOR-DEVICE.json', root), record(P0 / 'build-receipt.json', root)],
+                   pin_audit=dict(passed=True, manifests=len(manifests), relocated=len(relocation), parent_pins=0,
+                                  lanequeue_plan='passed (temporary queue dir)'),
+                   confirmation_run=bool(confirmation), confirmation=confirmation,
                    chain_quality_pending=True, chain_performance_pending=True, no_retry=True, queued=False, device_executed=False,
                    services_started=False, model_payload_reads=False, live_queue_changed=False, submission_performed=False, final_content_write=True)
         for f in (P / 'READY-FOR-DEVICE.json', O / 'READY-FOR-DEVICE.json'):

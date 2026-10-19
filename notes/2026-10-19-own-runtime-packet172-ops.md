@@ -95,3 +95,69 @@ clock. It is labelled `lanequeue START/DONE device evidence (no child clock)`.
 This covers packet166 B1, lane B, 08:25:15 to 08:28:59 UTC, 223.96 s (result
 387a97e4f). Refusals, failures, open STARTs and known admission waits do not
 count. The test uses the real interval (24 tests pass). Commit 737330c3a.
+
+## 3. packet172b: generator failed on the real repo (pin guard); fixed
+
+The tests above passed only in a temporary root. The lanequeue pin guard
+resolves its root from its own real path, so the temp-root derive was guarded
+against the job-name match `packet58as-*`, i.e. the real packet58as: the
+positive test was blind by construction. On the real repo (about 11:00 UTC)
+the temporary `lanequeue plan` refused twice:
+
+1. `--packet stage2/packet58as-b-confirm`: the guard globs `ops/<prefix>-*`
+   (prefix = text before the first `-`), so `ops/packet58as-orchestration` and
+   its pins into packet58as-onecard-spinwait joined the new packet's closure.
+   **Fix:** `prefix_gate` refuses any `--packet` whose prefix is not
+   `packet<digits><letters>` or matches an existing `stage2/<prefix>-*`,
+   `ops/<prefix>-*` or `ops/lane-queue/proposed-p<number>-*`; `--out` must be
+   `ops/<prefix>-<label>`. The refusal names the collisions and a free prefix
+   (`packet58asa` for that name). It runs before anything is created.
+2. `--packet stage2/packet58asb-confirm`: copied metadata still pinned the
+   parent (`evidence/argument-gate.json` -> packet58aj `views.json`,
+   `views.py`, `window.py`). An audit with `pin_guard.collect_pins` and a
+   wrapped `read_metadata` found 303 offending pins in 11 manifests, not one:
+   five inherited gates (`argument-gate`, `python-cpu-gates`, `native-parser`,
+   `resident-copy-cpu`, `entry-gates`), `k1-cpu.json`, `admission.json`,
+   `copy-manifest.json`, `parent-binding.json` (parent lineage, missing in the
+   new packet), and `host-admission/measured-peaks.json`/`base-plan.json`
+   (100 pins into packet58aj `lineage/owned-inputs`). **Fix:** `relocate_pins`
+   rewrites every manifest the guard reads (plus the inherited gates) before
+   sealing: a parent pin is repointed to this packet's copy only when that
+   copy has the pinned bytes (110 pins); otherwise it becomes
+   `{name, parent_relpath, parent_digest}` (193). `host-admission/seal.json`
+   is the one re-bound seal (2 entries, siblings this run rewrote; the parent
+   binding stays as provenance), because `memory_plan.verify_seal` needs a
+   valid bundle seal. Shared immutable pins (packet49 oracle) stay. All
+   changes: `evidence/pin-relocation.json` (sealed gate); parent gate digests:
+   `build-receipt.json` `inherited_gate_parent_provenance`/`relocated_gates`.
+   A final `pin_audit` refuses any pin into the parent or any mutable
+   cross-packet pin before the temporary `lanequeue plan` runs the real guard.
+
+Tests (`ops/test_onecard_chain_derive.py`, 10 pass): refusal cases in a
+temp root (renamed to free `packet990tmp*` prefixes); prefix-gate cases
+(packet58as-b-confirm refusal with a verified free suggestion, CLI refusal
+creates nothing, `--out` prefix and name shape); confirmation detection on the
+live ledger; and a REAL-layout derive under a random `packet990t*` prefix into
+`stage2/` and `ops/`: the guard's `packet_for_job` must pick that packet,
+`check_job` passes, no manifest pins the parent, `verify_ready.py` and a
+`onecard-chain.sh --check` copy (log path only) pass. A class cleanup
+registered before the derive removes both dirs even on failure and asserts
+`git status` shows nothing left.
+
+### packet58asb-confirm (derived for real, READY)
+
+Exact command from the brief (no `--cpu-rehearsal`), rc 0, READY last.
+Checks: `lanequeue plan` on a temporary queue dir `plan: passed`;
+`onecard-chain.sh packet58asb-confirm packet58asb-orchestration --check`
+`seal verify: ok`, `check complete`; `verify_ready.py` ready (boot 2cba7160,
+the bracket's boot). Chain command digest `bf838b9481d2a30f…`, unit
+`packet58-onecard-58as-b`, output `evidence/card0-58as-b`.
+
+This is a confirmation chain, not a resubmission: a second fresh chain of the
+packet58as record line (record cmvf31py400furf01tv54rxo7, 34.573 tok/s, chain
+a) with the same chain binary `4f957f34ae11011f…` and `--wait-policy spin`.
+The generator detects this from the ledger (latest record's packet equals the
+bracket packet and its binary matches) and writes it into WINDOW.md and READY
+(`confirmation_run`). The copied submission tool still refuses unless fresh
+WS128 exceeds 34.57303759192858 tok/s (snapshot) and the live ledger. Not
+launched; the chain build binaries stay untracked like packet58as's.
