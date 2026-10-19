@@ -174,7 +174,7 @@ def summarize_bracket(out,candidate,manifest,maintenance=DEFAULT_MAINTENANCE):
 
 def summarize_checked(out,manifest):
     entry=manifest['prompts'][0]
-    row=compare_request(out/'run',ORACLE/'results'/entry['prompt_id'],entry,64,'none')
+    row=compare_request(out/'run'/entry['prompt_id'],ORACLE/'results'/entry['prompt_id'],entry,64,'none')
     return dict(passed=True,diagnostic_only=True,view='S1',request_count=1,requests=[row],
                 candidate_beats_all_controls=False,timing_claim_eligible=False,submission_eligible=False)
 

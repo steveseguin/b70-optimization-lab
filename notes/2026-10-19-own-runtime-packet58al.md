@@ -192,3 +192,13 @@ only this diagnostic row; the main READY is false during repair. The
 coordinator observed the marker and began the row; this CPU task launched
 no device or service and changed no live queue. Native sources/binaries
 are unchanged pending localized evidence.
+
+The first checked attempt stopped gracefully before localization: its
+non-suite request reset reopened the root load-progress stream, and the
+pinned-memory sensor correctly refused the truncated stream. This was a
+harness error, not a new sticky-device result. `packet58amd-demand-checked2-A`
+uses a two-field, one-row suite file instead, preserving the load-progress
+stream and placing request logs in their own folder. Native bytes are still
+unchanged. Fresh temporary planning, executable-help flags, and shared report
+rehearsal pass; the separate checked marker is written last again. The failed
+attempt and its old launch identities are retained.

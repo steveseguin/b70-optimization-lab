@@ -20,7 +20,7 @@ def main():
     row=json.loads(next(l for l in proposal.read_text().splitlines() if l.startswith('{')))
     v=json.loads((P/'proposals/checked.json').read_text())
     assert v['views']==['S1'] and v['prompts']==1 and '--checked' in v['native_argv']
-    assert '--bracket-inputs' not in v['native_argv'] and '--suite-inputs' not in v['native_argv']
+    assert '--bracket-inputs' not in v['native_argv'] and '--suite-inputs' in v['native_argv']
     assert not Path(v['output']).exists()
     # Refresh only adapted harness source pins; compiled source/artifacts stay unchanged.
     receipt=json.loads((P/'build-receipt.json').read_text())
@@ -60,7 +60,7 @@ def main():
     save(P/'evidence/p58amd-checked-checks.json',dict(passed=True,device_executed=False,records=records,
         report_scope='shared rehearsal tests inherited smoke/bracket report routes; checked native failure is diagnostic only'))
     files={str(f.relative_to(ROOT)):sha(f) for f in (P/'screen').glob('*.py')}
-    for f in [proposal,P/'proposals/checked.json',P/'build/device/own-rt-iq3',P/'build-receipt.json',P/'evidence/p58amd-checked-checks.json',P/'evidence/p58amd-checked-plan.log',P/'evidence/p58amd-checked-rehearse.json']:
+    for f in [proposal,P/'proposals/checked.json',P/'inputs/checked-first.tsv',P/'build/device/own-rt-iq3',P/'build-receipt.json',P/'evidence/p58amd-checked-checks.json',P/'evidence/p58amd-checked-plan.log',P/'evidence/p58amd-checked-rehearse.json']:
         files[str(f.relative_to(ROOT))]=sha(f)
     save(P/'checked-READY.json',dict(ready_for_device=True,diagnostic_only=True,job_name=v['job_name'],
         proposal=str(proposal.relative_to(ROOT)),device_executed=False,queued=False,files=files,

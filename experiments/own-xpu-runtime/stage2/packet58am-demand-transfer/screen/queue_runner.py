@@ -87,7 +87,7 @@ def main(argv=None):
     view='checked' if args.localize else dict(STAGES)[args.arm]; output=args.output.resolve()
     if args.localize:
         W.require(args.arm=='smoke','checked localization uses smoke safety gates')
-    W.require(output == (P/'evidence/card0-demand-amd-checked/checked' if args.localize else ROOT/args.arm) and not output.exists(), 'fixed fresh arm output required')
+    W.require(output == (P/'evidence/card0-demand-amd-checked2/checked' if args.localize else ROOT/args.arm) and not output.exists(), 'fixed fresh arm output required')
     metadata=plan(output,'smoke' if args.localize else view)
     if args.localize:metadata.update(view='checked',view_order=[('S1','demand')],request_count=1,prompts_per_view=1,diagnostic_only=True)
     if args.plan:
