@@ -31,4 +31,10 @@ class ResidentTests(unittest.TestCase):
         for record in row['records'].values():
             self.assertGreater(record['measured_bytes'],0)
             self.assertLessEqual(record['planned_writes'],3*record['measured_bytes'])
+        from plan_queue import documents
+        for tag,job,_ in documents():
+            measured=sum(row['records'][k]['measured_bytes'] for k in ('K1a','K1b',tag))
+            declared=row['records'][tag]['planned_writes']+2*max(row['records'][k]['planned_writes'] for k in ('K1a','K1b'))
+            self.assertEqual(job['planned_write_bytes'],declared)
+            self.assertLessEqual(declared,3*measured)
 if __name__=='__main__':unittest.main()

@@ -74,7 +74,7 @@ def miniature():
         result=subprocess.run(list(map(str,[binary,*base[1:],'--suite-inputs',suite,'--bracket-inputs',table,'--output',bad])),stdin=subprocess.DEVNULL,capture_output=True,text=True,env=ENV)
         assert result.returncode and not (bad/'B0').exists()
     save(P/'evidence/resident-engine-cpu.json',dict(passed=True,device_executed=False,synthetic_only=True,records=rows,
-        reference_file_sha256=ref,frozen58ah_output_equal=True,cross_compiler_equal=True,bracket_reset_equal=True,wrong_oracle_refused=True,
+        reference_outputs=[dict(relative_output=n,digest_sha256=h) for n,h in ref.items()],frozen58ah_output_equal=True,cross_compiler_equal=True,bracket_reset_equal=True,wrong_oracle_refused=True,
         full_production_packet49_device_parity='pending'))
 
 def main():

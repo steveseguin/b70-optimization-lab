@@ -78,3 +78,53 @@ The predecessor is now 58ah chain b: 31.66271941826957 tok/s, submitted as
 cmvekebvh00a0rf01q3v2c3cz. Both 58ah attempts and their paging counts are
 disclosed by the submission tool. Its successful replay uses explicitly
 labeled synthetic substitutions over old 58ad evidence, never a new result.
+
+## CPU preparation complete — p58ajr
+
+The retained work and resumed fixes pass. There are 134 fresh chain tests and
+102 fresh screen tests, plus the unchanged native size-parser test retained
+from its previous successful compile/run. Its test source, parser header and
+original successful log are hash-checked. The redundant new parser attempt
+was interrupted by PID while waiting for the two-card preparation marker;
+it had started no compiler or native child. The interrupted log is retained.
+No compiler priority was bypassed and no native binary changed on resume.
+
+The pin guard exposed 68 inherited object links pointing outside the private
+packet. They now point to 43,865,080 bytes of exact owned copies, preserving
+the symlink layout. Restoration checks pass. Total build files are
+138,229,800 bytes, below 300 MB. The old refusal is preserved. The miniature
+GNU/Intel equality and reset proof was rerun after fixing a receipt schema
+that had described temporary output digests as repository pins. The original
+receipt and executed copy-gate producer remain under lineage; the copy-gate
+function is unchanged. Relative proposal pins were also corrected.
+
+Both shared `ops/rehearse_entry.py --report` checks pass on the actual final
+proposals, and `ops/launch_env.py` passes on both device entry binaries. The
+13 intercepted entry paths, 28 chain unit/environment refusals, complete
+report replay, honest offline submission rehearsal, seven-window plan, both
+temporary lanequeue plans and both pin admissions pass. The seal binds 694
+source entries; the pin guard checked 731 obligations. No Python subprocess
+wall timeout remains in the active packet/screen helpers.
+
+The proposals declare their complete measured write budgets explicitly:
+48,683,776 bytes for smoke and 78,362,228 bytes for v5, including K1a/K1b.
+The chain reserves 397,492,208 bytes. Each is at most three times the measured
+predecessor bytes; no generic 1.1 GB/view reservation is used. Root free space
+was 29.542 GB at the final checks, above the new 27 GB preparation stop;
+lanequeue and each device window require 25 GB after reserved writes.
+
+`ready.json` is deliberately false because this composition's own smoke and
+five-view device bracket do not exist yet. The final packet marker qualifies
+those proposals for coordinator admission; the orchestration marker prepares
+the seven-window chain but keeps `ready_for_device_chain=false`. The
+coordinator waits for p153/p151 lane-B runs, runs smoke then v5 on lane A with
+the whole host held, and recomputes `verify_ready.py` before the chain. Codex
+freezing begins only at WS. Both 58ah attempts remain disclosed; only fresh
+58aj WS128 can supply a new timing. Strict512 and a second fresh timing are
+still pending. Nothing was queued, launched, submitted or left running here.
+
+The sealed preparation is committed and pushed first. Then the packet and
+orchestration `READY-FOR-DEVICE.json` files are the final content writes,
+followed only by read-only pin/seal checks and their separate commit/push.
+[Final CPU checks](../experiments/own-xpu-runtime/ops/packet58aj-orchestration/final-checks.json)
+and [coordinator contract](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/WINDOW.md).

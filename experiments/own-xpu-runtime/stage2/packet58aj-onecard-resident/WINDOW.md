@@ -44,8 +44,11 @@ retains the 4 GiB shadow stop. See MEMORY.md for the production-size table.
 CPU preparation stops below 27 GB root free. Device admission retains 25 GB
 after the declared writes, checked again by lanequeue before START.
 The saved payload-size inventory budgets twice the actual predecessor bytes
-(62.18 MB for v5; 32.50 MB for smoke; 397.49 MB for the seven-window chain),
-below the requested three-times ceiling. Missing storage is an
+(62.18 MB for v5 WSCREEN; 32.50 MB for smoke WSCREEN; 397.49 MB for the seven-window chain),
+below the requested three-times ceiling. The proposal totals include both K1
+fixtures: 78,362,228 bytes for v5 and 48,683,776 bytes for smoke. These totals
+are explicit `planned_write_bytes` fields, so lanequeue does not substitute
+its generic 1.1 GB allowance. Missing storage is an
 admission refusal, not permission to delete evidence or lower the floor.
 No subprocess wall-clock timeouts may count a frozen Codex interval.
 

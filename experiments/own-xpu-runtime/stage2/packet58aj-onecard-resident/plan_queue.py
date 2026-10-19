@@ -6,13 +6,15 @@ Q=P/'screen';OPS=P.parents[1]/'ops';QUEUE=OPS/'lane-queue'
 def documents():
     from launch_env import library_path
     lib=library_path()
+    sizes=json.loads((P/'payload-sizes.json').read_text())['records']
     for tag,arm in [('smoke','smoke'),('v5','resident')]:
         job=dict(name='packet58aj-'+tag+'-A',lane='A',argv=[
             '/usr/bin/python3','-B',str((Q/'queue_runner.py').relative_to(ROOT)),
             '--arm',arm,'--output',str(Q/'evidence/card0-58aj-screen-a'/arm),
             '--cache-maintenance','overlap','--fault-review','{REVIEW}',
             '--library-path',lib,'--authorized-device-window'],
-            review=str((Q/'fault_review.py').relative_to(ROOT)),env_extra={})
+            review=str((Q/'fault_review.py').relative_to(ROOT)),env_extra={},
+            planned_write_bytes=sizes[tag]['planned_writes']+2*max(sizes[k]['planned_writes'] for k in ('K1a','K1b')))
         job['plan']=dict(entry_rehearsal=dict(binaries=[
             dict(path=str((P/'build/device/own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build/device/own-rt-iq3')),
             dict(path=str((P/'build/device/p58-cache-fixtures').relative_to(ROOT)),sha256=sha(P/'build/device/p58-cache-fixtures'),args=['--help'],returncode=1,contains='K1 unknown option')]))

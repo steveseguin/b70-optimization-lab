@@ -4,16 +4,44 @@ from pathlib import Path
 from build_engine import limits,save,sha
 P=Path(__file__).resolve().parent;ROOT=P.parents[4]
 
+PARSER_TEST='test_drm_size.DrmSize.test_native_matches_python'
+def retained_parser():
+    prior=P.parent/'lineage/prior-screen-python-cpu-gates.json'
+    log=P.parent/'lineage/prior-screen-python-cpu-gates.log'
+    row=json.loads(prior.read_text())
+    assert row['passed'] and row['checks']==103 and sha(log)==row['log_sha256']
+    assert 'test_native_matches_python (test_drm_size.DrmSize.test_native_matches_python) ... ok' in log.read_text()
+    test=P/'test_drm_size.py';header=P/'native/drm_size.hpp'
+    assert sha(test)==row['sources'][str(test.relative_to(ROOT))]
+    parent=P.parent/'lineage/58ag-snapshot/build-receipt.json'
+    recorded=json.loads(parent.read_text())['sources']['experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/drm_size.hpp']
+    assert sha(header)==recorded
+    return dict(test=PARSER_TEST,passed=True,reused=True,reason='Unchanged native parser already compiled and passed; retain valid work without a redundant compiler turn.',
+        sources={str(f.relative_to(ROOT)):sha(f) for f in (prior,log,test,header,parent)})
+
+def passive_child():
+    import unittest
+    def flatten(suite):
+        for test in suite:
+            if isinstance(test,unittest.TestSuite):yield from flatten(test)
+            else:yield test
+    tests=list(flatten(unittest.defaultTestLoader.discover(str(P))))
+    assert sum(t.id()==PARSER_TEST for t in tests)==1
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(t for t in tests if t.id()!=PARSER_TEST))
+    return 0 if result.wasSuccessful() else 1
+
 def main():
     limits();started=time.monotonic()
     for f in P.glob('*.py'):ast.parse(f.read_text(),filename=str(f))
+    reused=retained_parser() if '--reuse-native-parser' in sys.argv else None
     command=[sys.executable,'-B','-m','unittest','discover','-s',str(P),'-p','test_*.py','-v']
+    if reused:command=[sys.executable,'-B',str(Path(__file__)),'--passive-child']
     result=subprocess.run(command,stdin=subprocess.DEVNULL,capture_output=True,text=True)
     (P/'evidence/python-cpu-gates.log').write_text(result.stdout+result.stderr)
     assert result.returncode==0,result.stderr[-6000:]
     import re
     count=int(re.search(r'Ran (\d+) tests',result.stderr)[1])
-    save(P/'evidence/python-cpu-gates.json',dict(passed=True,device_executed=False,checks=count,seconds=time.monotonic()-started,
+    save(P/'evidence/python-cpu-gates.json',dict(passed=True,device_executed=False,checks=count+bool(reused),fresh_checks=count,retained_native_parser=reused,seconds=time.monotonic()-started,
         log_sha256=sha(P/'evidence/python-cpu-gates.log'),sources={str(f.relative_to(ROOT)):sha(f) for f in P.glob('*.py')}))
     scanner=P/'check_drain_fix.py'
     result=subprocess.run([sys.executable,'-B',str(scanner),str(P),'--json'],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
@@ -51,4 +79,5 @@ def main():
 if __name__=='__main__':
     # These tests exercise the runtime's real refusal of inherited AS caps.
     # No native/GPU process is launched; measured RSS remains under 4 GiB.
+    if '--passive-child' in sys.argv:raise SystemExit(passive_child())
     main()

@@ -7,7 +7,7 @@ the shared ops --report checker on both exact proposals.
 import json,resource,tempfile
 from pathlib import Path
 import test_bracket as T
-from build_engine import P,sha,save
+from build_engine import P,ROOT,sha,save
 
 def main():
     T.SummaryTests.setUpClass();fixture=T.SummaryTests();rows=[]
@@ -23,7 +23,7 @@ def main():
             except ValueError as e:assert 'token identity' in str(e)
             else:raise AssertionError('final-token corruption accepted')
         proposal=P/'proposals'/('proposed-p58aj-'+tag+'-A.txt')
-        rows.append(dict(proposal=str(proposal.relative_to(P)),proposal_sha256=sha(proposal),candidate=candidate,
+        rows.append(dict(proposal=str(proposal.relative_to(ROOT)),proposal_sha256=sha(proposal),candidate=candidate,
             requests=summary['request_count'],cap=summary['requested_max_new'],passed=True,final_token_corruption_refused=True))
     save(P/'evidence/report-gate.json',dict(passed=True,device_executed=False,synthetic_only=True,real_report_function='suite_driver.summarize_bracket',records=rows,shared_ops_report_supported=True))
     print('Both one-card real report paths PASS; shared --report is verified separately by entry_gate.py')

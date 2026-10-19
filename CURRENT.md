@@ -1,9 +1,11 @@
 # Current Workspace State
 
-**October 19, packet58aj preparation resumed on CPU:** The resident lookup
-copy and byte checks are retained. Entry, report and submission checks pass
-after updating the disk stop to 27 GB. Final seals and the small compiler
-check remain pending. Nothing was queued or launched.
+**October 19, packet58aj resident lookup preparation complete on CPU:** The
+private packet58ah copy keeps exact lookup bytes in memory. GNU/Intel output
+and reset checks, policy tests, entry/report checks, seals and pin admission
+pass. Smoke and five-view proposals are prepared, not queued. The later chain
+still refuses launch until its own device checks pass; the coordinator runs
+after p153 and p151 on lane B. The disk stop is 27 GB and no GPU was used.
 [Work note](notes/2026-10-19-own-runtime-packet58aj.md).
 
 **October 19, packet155 preparation stopped at the disk floor:** The private
