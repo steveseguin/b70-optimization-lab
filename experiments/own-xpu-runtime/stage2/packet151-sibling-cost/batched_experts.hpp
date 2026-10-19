@@ -1,4 +1,7 @@
 #pragma once
+#ifndef OWN_RT_HOST_ONLY
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/native-base/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/prepared_submission.hpp"
+#endif
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/batched_rows.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/production_expert_chains.hpp"
 namespace p68c {
@@ -43,7 +46,7 @@ template<Type T>struct ExpertKernel final:Base {
 #else
  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
   auto b=expert_bind(p);unsigned nrows=rows,n=count,ne=experts,total=2*n*rows,groups=(total+(gate?1:2)*V-1)/((gate?1:2)*V);
-  return q.submit([&](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(size_t(groups)*64,64),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(size_t(groups)*64,64),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
    auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32,stream=gate?sub%2:0,physical=lane%P;
    unsigned logical=(it.get_group_linear_id()*(gate?1:2)+(gate?sub/2:sub))*V+lane/P;
    bool in_range=logical<total;unsigned row=logical%nrows,u=logical/nrows;UnionSlots pair;if(in_range)pair=union_slot(b.routes[0],b.routes[1],u,n);int slots[2]={pair.a,pair.b};

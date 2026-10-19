@@ -98,3 +98,79 @@ writes READY-FOR-DEVICE.json as the last packet write. That marker records the
 source commit and exact proposal hashes, with ready_for_device=true and
 queued=false. This admits an upper-bound measurement, not a quality or speed
 claim: device output equality and the actual sibling cost remain pending.
+
+### packet151d — preparation refusal repair (October 19)
+
+The failed lane-B smoke at 01:37:25–01:39:01 UTC remains untouched in
+`v5/evidence/device-sibling-smoke-B/`. Its rank0 preparation records exist,
+but its token timing streams are empty. The first sibling schedule was being
+prepared during prefill, and the new paired SYCL operations called `q.submit`
+instead of the owner's `prepared_submit` capture boundary. That submits work
+while the owner expects to collect a command, then trips “native operation
+bypassed preparation”. The new command groups also needed value captures so
+their argument blocks survive preparation.
+
+The paired dense, finish, expert and helper operations now enter the same
+preparation hook as their originals, with captures by value. No arithmetic,
+reduction order, quantization or KV format changed. Sibling selection is now
+inactive for `fixture == 0` prefill; corrected halves remain excluded.
+
+The real-shape preparation gate reads the failed rank0 launch argv and the
+saved tensor plan, with the Intel device compile command (no HOST_ONLY define).
+Its backend uses disjoint inert weight addresses, real-sized runtime buffers,
+and marker events. It reads no GGUF payload and never constructs a device
+queue. Frozen M=1 operations are mocked because several query device capability
+before capture; those operations already prepared successfully in the failed
+native run. Every new paired operation must populate the actual native
+SubmissionCapture. Old direct submissions are trapped before queue contact.
+This is a dispatch/preparation proof, not full-model numerical inference.
+The CPU sandbox remains nice19 despite the original argv declaring native nice0.
+
+Fixture bring-up first caught the CPU/native nice mismatch, then overlapping
+placeholder weight extents, then a frozen M=1 capability query. These were
+fixture problems, not GPU incidents; the final fixture models disjoint weight
+extents and mocks only the inherited operation boundary. The retained debug
+trace is CPU-only. No GPU, service, sudo, settings change or live queue edit was
+performed for this repair.
+
+The production host/device rebuild, two GNU and two Intel arithmetic runs,
+and two fresh miniature state runs share one reseal compiler-arbiter turn.
+The preparation regression uses separate arbiter turns during fixture bring-up.
+All four arithmetic runs pass 1,478 byte comparisons and retain the prior
+`7d4ca1c5030aef0011c19bc146e049e5d791783f05f90f62d4aa8472b25b08ac`
+output hash. Both state runs retain
+`b52b061962d5915cb849fbc0ba3a70b7dd25bec4a0bbe74a6afcc391170e08a3`,
+including hits, misses, rollback, scratch isolation and request reset, with an
+added prefill exclusion check. Device equality and cost remain pending.
+
+The CPU-only rebuild floor is now 29 GB with the existing 300 MB total build
+cap: unrelated activity put root free space just below 30 GB (29.991 GB at the
+check). The device admission floor remains 25 GB. CPU compiler waits use the
+pause-aware clock; the regression has no wall-clock inference deadline. No
+cold-TTFT deadline was added to the smoke's data proof.
+
+The old-code CPU negative reproduces the exact failure after load and all 748
+ordinary rank0 sites prepare: `blk.0.gdn.qkv`, operation
+`p68c::ProductionDense<iq3::Type::Q6_K,2560,1,false>`. The real geometry is
+hidden width 2560, expert width 640 and top10. The failure is in the first
+prefill's paired-command preparation, before any half timing is written.
+
+The final preparation regression passes: prefill positions 0 and 1 have zero
+paired captures; positions 2, 31, 32 and 33 prepare 114 paired sites per schedule,
+552 native captures total, traversing both parities and the 32→64 context
+extent. The old-code negative still fails at `blk.0.gdn.qkv`. A further fixture
+correction supplies positive synthetic marker intervals to satisfy the existing
+profiling validator; those numbers are not measurements. See the packet's
+[preparation closeout](../experiments/own-xpu-runtime/stage2/packet151-sibling-cost/PREPARATION-CLOSEOUT.md)
+for the evidence boundaries and revisit conditions.
+
+Final reseal: all 16 CPU receipts pass, including real entry/limit boundaries,
+all 78 worker requests, strict smoke/bracket reports, temporary queue plans,
+private `ops/rehearse_entry.py --report`, and the live coordinator pin guard.
+The two proposals now use `packet151d-sibling-smoke-B` and
+`packet151d-sibling-bracket-B`, writing to fresh `device151d-sibling-smoke-B`
+and `device151d-sibling-v5-B` directories. Neither is queued. Peak recorded
+child RSS is 1,404,904 KiB, below 4 GB. The original failure inputs are hash-bound
+in `v5/evidence/p151d-failure-inputs.json`; the full failed smoke stays on disk.
+Source, receipts, proposals and this note are committed and pushed first;
+`READY-FOR-DEVICE.json` is written last and committed/pushed separately.

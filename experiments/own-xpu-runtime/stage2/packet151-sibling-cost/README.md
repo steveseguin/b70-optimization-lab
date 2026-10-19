@@ -37,7 +37,8 @@ Above it means “inconclusive upper bound; full M=2 needed”, never closure. N
 
 Disk planning is 240 MB per view, 1.2 GB for five views: at most three times
 packet149's measured 402 MB bracket. The 25 GB device free-space floor stays;
-CPU preparation stops below 30 GB. New builds stay below 300 MB and CPU
+The bounded packet151d CPU reseal stops below 29 GB (300 MB build cap);
+the earlier packet151c floor was 30 GB. New builds stay below 300 MB and CPU
 builds have a 4 GiB address-space cap. Entry-boundary CPU probes use a 4 GiB
 data cap while checking the native unlimited-AS requirement; native execution is intercepted. Compilation uses ops/compile_turn.py.
 
@@ -61,8 +62,15 @@ temporary plans and pin-guard receipts. The static rank admission retains the
 Historical pre-rebuild retention/payload manifests are preserved byte-for-byte
 under `lineage-inputs/p151-first-build/`, outside active pin discovery.
 
-All 15 current CPU receipts pass. The reproducible pending-gate runner is
+The readiness marker lists the current CPU receipts. The reproducible pending-gate runner is
 `v5/qualify_cpu.py`; it verifies the existing build/operator pins and performs no
 GGUF/full-shape reads. `v5/finalize_ready.py` writes the final marker only after
 source, receipts and proposals are committed. Earlier pre-seal refusals are
 retained under `lineage-inputs/preseal-diagnostics/`.
+
+Packet151d fixes paired SYCL submissions that bypassed preparation and disables
+the discarded row during prefill. `v5/preparation_gate.py` uses the real failed
+rank arguments and real shapes with the device compile flags, but mocks weight
+loading and device execution. Its old-code negative must fail at the native
+preparation boundary; the fixed code must cover prefill, both bank parities and
+the 32-token context boundary. Numeric parity is checked separately.

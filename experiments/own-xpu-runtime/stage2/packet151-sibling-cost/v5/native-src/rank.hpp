@@ -132,7 +132,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  candidate={};candidate.pending=true;candidate.position=request.position;candidate.fixture=request.fixture;candidate.speculative=request.speculative;
  if(e.a.rank==0){candidate.h0=e.history0;candidate.h1=e.history1;
   if(e.buffers[0].count("token_history"))candidate.token_history=e.readback(0,e.buffers[0].at("token_history").id,16);}
- const bool sibling_active=sibling&&!corrected&&e.sealed_selection.choices.at("probe")=="sibling";
+ const bool sibling_active=sibling&&request.fixture>0&&!corrected&&e.sealed_selection.choices.at("probe")=="sibling";
  auto sibling_started=std::chrono::steady_clock::now();if(sibling_active)sibling->begin(request.token);
  const double sibling_prepare_ms=sibling_active?Engine::ms(sibling_started):0;
  auto prepare_start=std::chrono::steady_clock::now();

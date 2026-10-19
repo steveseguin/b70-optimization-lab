@@ -1,4 +1,7 @@
 #pragma once
+#ifndef OWN_RT_HOST_ONLY
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/native-base/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/prepared_submission.hpp"
+#endif
 // Packet68c: packet33 segment and packet49c vector kernels with two independent
 // accumulators. K, split, workgroup and subgroup geometry remain compile-time.
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/batched_rows.hpp"
@@ -67,7 +70,7 @@ template<Type T,unsigned K,unsigned Split,bool Attention=false>struct Production
   // packet33: one SG/workgroup. packet49c attention: eight SG/workgroup,
   // each retaining one original split and the original global partial layout.
   constexpr unsigned WG=Attention?256:32;
-  return q.submit([&](sycl::handler&h){h.depends_on(deps);
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);
    h.parallel_for(sycl::nd_range<1>(((size_t(n)*Split*32+WG-1)/WG)*WG,WG),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
     unsigned logical=it.get_global_linear_id()/32,row=logical/Split,part=logical%Split;if(row>=n)return;
     unsigned lane=it.get_sub_group().get_local_linear_id();auto bounds=iq3::kopt2::bounds(K,part,Split);
@@ -85,7 +88,7 @@ template<bool Attention>struct ProductionFinish final:Base {
 #else
  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
   auto b=production_bind(p);unsigned n=rows;
-  return q.submit([&](sycl::handler&h){h.depends_on(deps);
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);
    if constexpr(Attention){sycl::local_accessor<float,1>factor(8,h);
     h.parallel_for(sycl::nd_range<1>(((size_t(n)+255)/256)*256,256),[=](sycl::nd_item<1>it){
      unsigned row=it.get_global_linear_id(),local=it.get_local_linear_id();bool enabled[2];

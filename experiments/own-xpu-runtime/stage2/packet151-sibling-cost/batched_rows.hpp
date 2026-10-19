@@ -1,4 +1,7 @@
 #pragma once
+#ifndef OWN_RT_HOST_ONLY
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/native-base/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/prepared_submission.hpp"
+#endif
 // Packet68c. Two independent ordered accumulators consume each decoded weight.
 // No across-row reduction, tensor core, FMA, or changed BF16 boundary.
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/build/checked/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/p49d_small.hpp"
@@ -57,7 +60,7 @@ struct DenseKernel final:Base {
 #else
  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
   auto ss=shapes;auto n=count;std::array<DenseBound,4> bs{};unsigned total=0;for(unsigned j=0;j<n;++j){bs[j]=dense_bind(p,j);total+=ss[j].split==4?ss[j].rows:(ss[j].rows+3)/4;}
-  return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<float,1> partial(8,h);
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<float,1> partial(8,h);
    h.parallel_for(sycl::nd_range<1>(size_t(total)*128,128),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
     unsigned group=it.get_group_linear_id(),j=0;for(;j+1<n;++j){unsigned groups=ss[j].split==4?ss[j].rows:(ss[j].rows+3)/4;if(group<groups)break;group-=groups;}
     auto s=ss[j];auto b=bs[j];auto tmp=partial.template get_multi_ptr<sycl::access::decorated::no>().get();
@@ -102,7 +105,7 @@ struct Tail final:Base {
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const>p)const override{for(unsigned r=0;r<2;++r){auto b=bind(p,r);for(unsigned i=0;i<rows;++i)row(b,kind,i);}}
 #else
- sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{auto a=bind(p,0),b=bind(p,1);auto k=kind;unsigned n=rows;return q.submit([&](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::range<1>(n),[=](sycl::id<1>id){row(a,k,id[0]);row(b,k,id[0]);});});}
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{auto a=bind(p,0),b=bind(p,1);auto k=kind;unsigned n=rows;return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::range<1>(n),[=](sycl::id<1>id){row(a,k,id[0]);row(b,k,id[0]);});});}
 #endif
 };
 } // namespace p68c

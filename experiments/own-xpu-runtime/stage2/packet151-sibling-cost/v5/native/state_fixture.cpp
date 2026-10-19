@@ -13,8 +13,8 @@ static std::string run_case(const fs::path&out,bool enabled){
   for(auto&[name,b]:e.buffers[0]){auto raw=e.readback(0,b.id,b.n*flash::scalar_bytes(b.type));all.insert(all.end(),raw.begin(),raw.end());}
   for(auto&[name,id]:e.state_spares){auto raw=e.readback(0,id,e.dev(0).arena.row(id).bytes);all.insert(all.end(),raw.begin(),raw.end());}
  };
- auto step=[&](int pos,int token,bool spec,bool corrected=false){pipeline::Request request{pipeline::half,token,pos,pos+1,int(spec),pos+1,{}};
-  auto r=pipeline::half_step(e,candidate,request,shared.data(),image,false,corrected,&sibling);require(!r.error,"fixture sticky error");
+ auto step=[&](int pos,int token,bool spec,bool corrected=false){pipeline::Request request{pipeline::half,token,pos,pos==0?0:pos+1,int(spec),pos+1,{}};
+  auto r=pipeline::half_step(e,candidate,request,shared.data(),image,false,corrected,&sibling);require(!r.error,"fixture sticky error");if(pos==0&&all.empty())require(sibling.caches.empty(),"prefill prepared sibling");
  };
  step(0,2,false);candidate={};
  step(1,5,true);pipeline::undo(e,candidate,image,false);

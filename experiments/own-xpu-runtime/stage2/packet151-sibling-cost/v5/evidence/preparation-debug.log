@@ -1,0 +1,31 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+warning: File "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
+To enable execution of this file add
+	add-auto-load-safe-path /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+To completely disable this security protection add
+	set auto-load safe-path /
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+For more information about this security protection see the
+"Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
+	info "(gdb)Auto-loading safe path"
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff736e6ea in sycl::_V1::queue::get_device() const () from /opt/intel/oneapi/compiler/2026.0/bin/../lib/libsycl.so.9
+#0  0x00007ffff736e6ea in sycl::_V1::queue::get_device() const () from /opt/intel/oneapi/compiler/2026.0/bin/../lib/libsycl.so.9
+#1  0x0000000000504262 in p28::Kernel<(iq3::Type)8, 2560u, 4u, 1u, false, false>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const ()
+#2  0x000000000078b7a6 in p151audit::Backend::prepare(ownrt::Operation const&, std::span<void* const, 18446744073709551615ul>) ()
+#3  0x000000000064041c in ownrt::Device::capture_operation(ownrt::Operation const&, std::shared_ptr<ownrt::Operation const>, std::span<unsigned long const, 18446744073709551615ul>) ()
+#4  0x00000000004f047e in p28::submit(ownrt::Device&, std::vector<iq3::kopt2::Matrix, std::allocator<iq3::kopt2::Matrix> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, unsigned int) ()
+#5  0x000000000077e5b2 in Engine::linear(flash::Launch const&) ()
+#6  0x0000000000778caa in Engine::execute_site(flash::Launch const&) ()
+#7  0x00000000006eb20f in Engine::prepare_commands() ()
+#8  0x00000000006ce660 in pipeline::banks(Engine&) ()
+#9  0x00000000006cc100 in main ()

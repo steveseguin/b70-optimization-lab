@@ -1,5 +1,7 @@
 """Packet142 local incremental build; compiler turns always use the ops arbiter."""
 import hashlib,importlib.util,json,os,resource,shutil,subprocess,time
+import freeze_safe
+freeze_safe.install()
 from pathlib import Path
 P=Path(__file__).resolve().parent;LOCAL=P.parent;ROOT=P.parents[4];STAGE=P.parents[1];BASE=LOCAL;B=P/'build'
 CHECKED=LOCAL/'build/checked'/LOCAL.relative_to(ROOT)
@@ -12,14 +14,15 @@ def save(p,row):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dum
 def limits():
  assert os.getpriority(os.PRIO_PROCESS,0)==19
  assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
- assert shutil.disk_usage('/').free>=30_000_000_000
+ # p151d bounded rebuild: <=300 MB total, retain at least 29 GB free.
+ assert shutil.disk_usage('/').free>=29_000_000_000
  size=sum(f.stat().st_size for f in LOCAL.rglob('*') if f.is_file() and not f.is_symlink() and 'build' in f.parts and not f.is_relative_to(P/'evidence'))
  assert size<=300_000_000,size
  return size
 def compiler_turn():
  import sys
  if str(LOCAL) not in sys.path:sys.path.append(str(LOCAL))
- spec=importlib.util.spec_from_file_location('ops_compile_turn',STAGE.parent/'ops/compile_turn.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m.turn()
+ spec=importlib.util.spec_from_file_location('ops_compile_turn',STAGE.parent/'ops/compile_turn.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);m.time=freeze_safe.ActiveClock();return m.turn()
 def run(cmd,name):
  limits();t=time.monotonic()
  with compiler_turn(),(B/(name+'.log')).open('w') as log:subprocess.run(list(map(str,cmd)),stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1200)

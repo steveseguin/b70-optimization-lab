@@ -4,7 +4,7 @@ freeze_safe.install()
 import argparse,json,subprocess,sys
 from pathlib import Path
 from p151_v5_build_engine import P,LOCAL,ROOT,sha,save
-GATES=('build','pair-cpu','analysis','sibling-state','safety','exec-limits','admission','freeze-safe','launch-env')
+GATES=('build','pair-cpu','preparation','analysis','sibling-state','safety','exec-limits','admission','freeze-safe','launch-env')
 def check_sources(rows):
  for name,digest in rows.items():
   assert (ROOT/name).is_file() and sha(ROOT/name)==digest,'source changed: '+name
