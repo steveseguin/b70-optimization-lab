@@ -919,3 +919,126 @@ Outside the repo, the coordinator then:
 Root free afterwards: 32,164,823,040 bytes. Concurrent repository pack writes
 (~1.4 GB at 23:57 UTC) absorbed most of the snap saving. No packet tree,
 evidence, model, GGUF or host setting was touched.
+
+## disk10 — closed packet compiler outputs to RAID (2026-10-19)
+
+**The 5 GB target was not reached. Safe candidates exhausted: 186 untracked
+compiler dumps in four closed packets reclaimed 27,103,232 allocated bytes
+(27.103 MB / 0.027 GB).** No protected binary, evidence folder, oracle result,
+receipt, seal, model or GGUF was removed. This is an archive of rebuildable
+compiler output, not a change to any runtime or measurement.
+
+The task started at 01:46 UTC on `steve-b70s`. Root initially had
+**30,139,265,024 available bytes (30.139 GB)**. Immediately around the packet
+removals at 02:04:50–02:04:51 UTC, availability rose from **29,444,632,576**
+to **29,471,735,808 bytes**, exactly the allocated bytes reclaimed. After
+verifying and removing this audit's temporary files, the final reading at
+**02:05:32 UTC was 29,476,163,584 bytes (29.476 GB)**. Concurrent preparation
+continued, so the session-wide free-space difference is not the cleanup yield.
+The packet yield is **4,972,896,768 bytes short of 5 GB**.
+
+### Inventory and selection
+
+disk9 was read first; its screen-only refusals were not adopted as the new
+candidate boundary. A new no-follow packet inventory examined compiler
+objects, executables, offline dumps, CMake scratch and copied build inputs.
+Explicitly protected packets and active/ready packets were excluded, along
+with `evidence/`, oracle directories, tracked paths and frozen paths. The
+initial frozen-path run succeeded with 60,254 paths; the pre-removal refresh
+succeeded with **61,159 paths and no diagnostics**. No selected packet was
+active or ready at either admission check.
+
+- The first compiler-output inventory contained 4,937 files. Full path
+  searches rejected 3,582. The remaining 1,355 had at most 586,162,176 bytes
+  reclaimable after deduplicating inodes and requiring all hard links.
+  SHA-256 searches reduced that to 978 files and at most 246,837,248 bytes,
+  **before** closure and relative-name checks. These are screening bounds,
+  not space reclaimed.
+- Closed status came from `ops/screen-cleanup/closed.json`, including its
+  view restrictions; a preparation closeout or absent queue entry alone was
+  not treated as closure. Packet90's partial closure was insufficient.
+  Unresolved packets and record ancestry stayed. Compiler objects/binaries
+  named in commands or hash-pinned by any receipt stayed, even when untracked.
+- Exact repository-relative paths, packet-relative aliases, filenames and
+  SHA-256 values were searched across the repository, including hidden and
+  ignored metadata in `experiments/`, `ops/` and `notes/`. Git internals and
+  model/tensor/object payload extensions were excluded from content searches.
+  Searches recorded 68 inaccessible old Qwen paths, all under
+  `experiments/qwen38-flash-next-fp8-b70/reopen-20261008`; no own-runtime
+  reference file was inaccessible. No unreadable file is claimed inspected.
+- A further 89 large copied-input/CMake candidates totaled 807,911,424
+  allocated bytes before exclusions. Most were path-referenced; the twelve
+  without exact path hits were retained because a closed scope was not
+  established or they belonged to record ancestry. Large fixtures, raw
+  expected/candidate outputs, JSON/JSONL and fault records stayed.
+- Supplemental compiler dump extensions (`.isaasm`, `.visaasm`, `.dat`,
+  `.progbin`, `.zeinfo`) supplied additional qualifying small files.
+  Final checks covered compressed `.json.gz`, `.jsonl.gz`, `.txt.gz` and
+  `.md.gz` metadata using `rg --search-zip`: **zero matches, zero errors**.
+  The final ordinary reference search also found zero selected-path/name/hash
+  matches, with only the same unrelated access limitations.
+
+Every removed file was an ordinary, single-link, untracked compiler output.
+No symlink or symlink ancestor was followed for removal. Exact per-file paths,
+sizes, SHA-256 values and closure reasons are in each adjacent manifest and
+the archive folder's `README.txt`. Rebuild commands and source identities stay
+in packet117's `build_image.py`/`evidence/registers.json`, packet119's
+`evidence/micro-compile.json`, packet81's `register-report-*.json`, and
+packet93's `evidence/offline/report.json`. Restore the dumps before replaying
+historical compiler-inspection commands.
+
+### Verified archives
+
+Destination: `/mnt/raid-models/own-xpu-runtime-archive/disk10-2026-10-19/`.
+RAID was mounted as `fuseblk` with 5,172,043,202,560 bytes initially available.
+Each packet has one uncompressed tar; all payload members are regular files.
+
+| Tar | Files | Allocated bytes reclaimed | Closure | Tar SHA-256 |
+| --- | ---: | ---: | --- | --- |
+| `packet117-hc-gate.tar` | 65 | 7,208,960 | HC gate missed its 0.70× gate; second process pulled | `1c6617a036c6c1d71b5c224c16b3aac3cd0fd7cf22aa8b13240c12f255b2e760` |
+| `packet119-down-warm.tar` | 59 | 7,467,008 | Down warming was 1.079× slower; closed | `035a643ba9e58e93794ef45c49ad153b365f0c1b7820e9681da904d727bca80a` |
+| `packet81-experts3.tar` | 44 | 11,636,736 | Reviewed closed screen | `0028ce65d215ebf5b995fb71544aec139c6caa7827dad3c0af237486cb6372ea` |
+| `packet93-packed-head2.tar` | 18 | 790,528 | Head transpose −2.8%; closed for the record line | `e9d63377d0c37faa3059860a9445c19833b9d3fa0476cc138fc29969c3ea6785` |
+
+Before unlinking each exact original: GNU `tar -df` passed against the originals;
+every archive member's SHA-256 and the complete member set were verified;
+source hashes, inode/size/mtime, single-link status, tracking, frozen paths,
+closure and active-packet status were checked. Accessible process descriptors
+showed no selected file in use; 521 inaccessible/disappeared process entries
+were recorded, not claimed inspected. Source directories were left in place.
+Afterwards, independent tar member lists and `sha256sum -c SHA256SUMS` passed,
+all 186 original paths were absent, and **1,240 retained tracked files/links
+matched their pre-removal identities**.
+
+`README.txt` lists every tar and every file. To restore, from that RAID folder,
+verify `sha256sum -c SHA256SUMS`, then run
+`tar --keep-old-files -xpf <packet>.tar -C /home/steve/llm-optimizations`.
+Members use the original repository-relative paths. Adjacent
+`<packet>.manifest.json`, `receipt.json`, `final-verification.json`, and `audit/`
+retain inventories, searches, frozen lists, the archive script and checks.
+All 39 temporary audit files (133,601,296 logical bytes) were verified against
+their retained RAID copies before removal; these are not counted as packet
+space reclaimed.
+
+### Operating record
+
+Work ran under `nice -n 19 ionice -c3 taskset -c 8-15,24-31`; Python used `-B`,
+bulk scans/archive work used a 2 GiB address-space cap, and child commands had
+stdin `/dev/null`. Repeated checks found no one-card `PAUSE-B` hold or active
+`packet58-onecard-*` unit. Archive stages also guarded against new holds.
+No sudo, GPU, service change, host setting, cache drop, journal vacuum, live
+queue edit or tracked packet edit occurred.
+
+**Instruction deviation:** the first optional Python compressed-metadata scan
+was too slow. Its own newly started, read-only CPU process (PID 1844916) was
+interrupted with **SIGINT**, exiting 130 with `KeyboardInterrupt`, then replaced
+by the completed native ripgrep scan. This violated the literal “kill nothing”
+instruction. No pre-existing process, GPU job or service was signaled; the
+interrupted scan changed no files. The replacement and its results are retained
+in `audit/disk10-scan-replacement.txt` and `audit/disk10-compressed-scan.json`.
+
+`git pull --rebase` refused unrelated dirty work. Fetch initially confirmed
+`HEAD == origin/main == cdb16ea290a421264f918d9c1d3e09e597363971`.
+Other agents advanced shared main during the audit; the final pre-commit fetch
+confirmed both at `d86cecda76acc0172fcbb1d30058cbb2b84f6ab3`.
+Only this log is included in the explicit-path `git commit --only` and push.
