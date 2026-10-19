@@ -1,8 +1,11 @@
 # Packet166 negative-result index
 
-No device result exists yet. This preparation does not close M=2 prefill.
+No device result exists yet. This preparation closes neither M=2 prefill nor MTP.
 The analyzer may append a measured closure only after complete exact device
-coverage and200 interleaved pairs at each registered layer/position.
+coverage and 200 interleaved pairs at each registered layer/position. Prefill
+closes if any layer/context exceeds 1.5; MTP closes if any weighted-context
+projection gains less than 5% over 31.966820. Synthetic adapter closures live
+only under `evidence/private-report-cases/` and are not device conclusions.
 
 | Arm | Outcome | Evidence | Revisit condition |
 | --- | --- | --- | --- |

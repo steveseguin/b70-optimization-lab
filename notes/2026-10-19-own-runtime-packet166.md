@@ -69,3 +69,58 @@ rehearsal tool. After that lands, rerun the same proposal rehearsal, bind its
 current hashes, and reseal readiness. The execution gate explicitly refuses a
 failed shared rehearsal or stale CPU/preparation binary/proposal identities.
 Until then, the proposed device row must remain unqueued.
+
+## Packet166b — private report qualification and one-card MTP projection
+
+The packet is now ready for a coordinator-owned device slot. Nothing was launched
+or queued. This update stayed on CPU, at nice 19 on cores 8–15/24–31, with Python
+bytecode disabled, stdin closed and the existing 4 GiB cap. No compiler, service,
+sudo command, settings, other packet tree or shared tool was changed.
+
+The [private report adapter](../experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/report_adapter.py)
+exercises the actual report entry and analyzer. Complete synthetic layer streams
+use the real native CPU buffer census and cover both briefs, MTP-only and closing
+both. Invalid oracle evidence is refused before any tail is written. The retained
+real parent timestamps replay correctly and are still refused as the wrong
+workload. There is no packet166 device timing stream yet. Synthetic test reports
+and closures are clearly separated under `evidence/private-report-cases/`; they
+have not closed either real lever.
+
+The failed shared `--report` receipt and its raw logs are unchanged. The execution
+gate now requires the hash-pinned private receipt, current proposal identity and
+its complete report dependencies. READY documents the shared schema limitation.
+The temporary-copy lanequeue plan and real entry plan pass. The fresh CPU
+preparation run passes all help flags and 2,412 real arm/reset steps. Both
+unchanged native CPU traces still agree on all 414 buffers, and their source,
+binary and oracle hashes remain valid. No native source changed, so no rebuild
+or repeat model read was needed. The device free-space floor stays 25 GB.
+
+The analyzer now adds a one-card MTP decode sensitivity beside every prefill
+projection. [Packet147 §5, lines 320–338](../experiments/own-xpu-runtime/stage2/packet147-lever-synthesis/PLAN.md#5-one-card-mtp-changed-ram-assumption-unchanged-need-for-a-new-graph)
+gives `cycle = D + V2 + (1-a)*R + new feedback/cache cost` and
+`rate = 1000*(1+a)/cycle`, using `a=0.787401575`, `D=1.794747301 ms`,
+`R=0.980923 ms`. These preserve the precision behind the brief's 0.787 and
+1.79 ms. [Packet58h, lines 169–216](../experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md#timing-model-and-sensitivity)
+explains the underlying transferred assumptions and rollback receipt. Exact
+copies of both source documents are retained in packet166's `lineage/`.
+
+Packet147's **V2 plus feedback/cache ≤57.886273 ms** was the +2% budget against
+**29.259764 tok/s**, not today's record. The adapter reproduces that arithmetic.
+Against **31.966820**, the corresponding budget is **52.814627 ms** and the
+required M2/M1 ratio is **≤1.688316**. V2 is projected by applying the measured
+36-GDN/12-QSA layer ratio to `1000/31.966820` ms. The +5% verify-brief threshold
+is **≤1.638248**. These are sensitivities with zero new feedback/cache cost, not
+measured one-card speed; the brief must account for those costs and memory.
+
+Every layer/context at or below 1.5 writes the exact stage-1 prefill brief.
+Independently, MTP projection at least +5% in every context writes a one-card
+verify brief. Failing either condition writes that arm's negative-index row;
+failing both closes both. Exact `iq3-p49-split32-v1` output, BF16 state/KV,
+unchanged target verification, repeated/fresh-process checks and actual complete
+performance gates remain required before any model claim.
+
+Seven analyzer tests and the private adapter checks pass. `seal_ready.py`
+rechecks the evidence and exact future marker with the real pin guard, then
+writes `READY-FOR-DEVICE.json` last and checks the read-only execution gate.
+The coordinator's normal device admission, fault, drain and storage guards remain
+in force. No layer ratio, prefill rate or decode improvement is claimed yet.

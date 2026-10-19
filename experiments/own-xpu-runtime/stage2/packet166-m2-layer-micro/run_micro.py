@@ -62,8 +62,14 @@ def execution_gate():
     prep=read(P/'evidence/preparation.json')
     proposal=P.parents[1]/'ops/lane-queue/proposed-p166-micro-B.txt'
     require(prep.get('passed') is True and prep['native_sha256']==builds['device'] and prep['proposal_sha256']==sha(proposal),'preparation belongs to another native/proposal identity')
-    rehearsal=read(P/'evidence/rehearsal.json')
-    require(rehearsal.get('passed') is True and all(r['proposal_sha256']==sha(proposal) for r in rehearsal['records']),'required shared proposal rehearsal failed or stale')
+    report_path=P/'evidence/private-report.json'
+    require(ready['private_report_sha256']==sha(report_path),'private report receipt changed')
+    rehearsal=read(report_path)
+    require(rehearsal.get('passed') is True and rehearsal['proposal_sha256']==sha(proposal),'private report adapter failed or stale')
+    verify_map(ROOT,rehearsal['sources'])
+    qualification=read(P/'evidence/private-rehearsal.json')
+    require(qualification.get('passed') is True and qualification['proposal_sha256']==sha(proposal),'private proposal qualification failed or stale')
+    verify_map(ROOT,qualification['sources'])
 
 
 def storage_admit():

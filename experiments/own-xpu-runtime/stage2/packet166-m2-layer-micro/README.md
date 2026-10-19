@@ -51,11 +51,32 @@ analyzer also retains complete device-span ratios, including gaps between events
 The primary ratio is `2 * T(M2) / (T(M1 row0) + T(M1 row1))`. The direct paired
 versus two-serial ratio is also retained. Every registered layer/position must
 have primary ratio ≤ 1.5 to write a stage 1 exact-prefill build brief. Otherwise the
-completed measurement writes a local DO-NOT-REPEAT closure. Missing evidence
-never closes the prefill lever. The prefill projection is `2 * baseline / ratio`;
+completed measurement writes a local prefill DO-NOT-REPEAT row. Independently,
+every registered context must project at least +5% one-card MTP decode to write
+`MTP-VERIFY-BRIEF.md`; otherwise it writes the MTP DO-NOT-REPEAT row. If neither
+qualifies, both close. Missing evidence never closes either lever.
+The prefill projection is `2 * baseline / ratio`;
 90 tok/s is explicitly provisional. A 36-GDN/12-QSA weighted estimate gives the
 representative 48-layer verifier cost, excluding embeddings, PLE, head, transfers,
 host scheduling and drafting. None is a measured full-model rate.
+
+Beside each prefill projection, the one-card decode sensitivity transfers the
+36-GDN/12-QSA weighted M2/M1 device ratio onto `1000/31.966820` ms/token:
+`V2 = ratio * 1000/31.966820`, `cycle = D + V2 + (1-a)*R`, and
+`tok/s = 1000*(1+a)/cycle`. [Packet147 §5](../packet147-lever-synthesis/PLAN.md#5-one-card-mtp-changed-ram-assumption-unchanged-need-for-a-new-graph),
+lines 320–338, supplies `a=0.787401575`, `D=1.794747301 ms` and
+`R=0.980923 ms` (approximately 0.787 and 1.79 ms). Its underlying
+[packet58h evidence](../packet58h-onecard-mtp/FEASIBILITY.md#timing-model-and-sensitivity),
+lines 169–216, explains their transferred, unmeasured one-card status.
+Pinned copies are retained under `lineage/`.
+
+Packet147's **57.886273 ms** limit for V2 plus new feedback/cache work belongs
+to its older **29.259764 tok/s** baseline. The **31.966820** record instead needs
+**≤52.814627 ms**, or **M2/M1 ≤1.688316**, to project +2% with no new costs.
+The +5% verify-brief threshold is **≤1.638248**. Every reported projected rate
+assumes zero new feedback/cache work; actual feedback, cache pollution/shrink,
+rollback and lifetime costs must be established by the verify brief. These
+are diagnostic sensitivities, not a new decode result or a full-build approval.
 
 Preparation commands (nice 19, allowed CPU affinity, idle I/O, ≤4 GiB):
 
@@ -82,12 +103,25 @@ reset. The shared Landlock rehearsal disallows GPU access. `check_preparation.py
 checks the sensor sequence, allocation persistence, real launch environment,
 actual I/O priority, declared help flags and proposal identity.
 
-The shared report adapter is presently restricted to packet162's matrix schema
-and 0.85 threshold. Packet166 must retain its failed shared report receipt and
-remain unready until a truthful layer-event adapter is available. The local
-report tests exercise both 1.5 branches on explicitly synthetic receipts; the
-separate parent test replays actual retained device timestamps and rejects that
-parent workload as full-layer evidence.
+The failed shared report receipt is preserved unchanged in `evidence/rehearsal.json`
+and `evidence/shared-rehearsal.*`: that attempt used packet162's matrix schema
+and 0.85 threshold. `report_adapter.py` now exercises the actual
+`run_micro.report_completed` entry, analyzer and every reachable decision tail on
+complete synthetic layer streams derived from the native CPU buffer census.
+It also replays the available real parent timestamps and rejects that different
+workload as full-layer evidence. No packet166 device stream exists yet. The
+private receipt and all its inputs/outputs are hash-pinned by READY and rechecked
+by the execution gate; `shared_tool_limitations` records the shared limitation.
+The real entry plan and `lanequeue plan` run on a temporary queue copy.
+No shared tool or live queue is modified by this qualification.
+
+To repeat the CPU-only report qualification after source edits, run
+`prepare_proposal.py`, `check_preparation.py`, the seven `test_*.py` tests,
+`rehearse.py`, and finally `seal_ready.py`, using the same resource limits above.
+Retain the failed shared receipt. `seal_ready.py` validates existing native
+source/binary identities and both real-weight CPU traces; no native source changed
+in packet166b, so no rebuild or repeated model read was needed. It checks the exact
+future READY closure with the real pin guard and writes READY last.
 
 `rope.bf16.gz` retains the exact frozen BF16 rotary table in this packet. The
 build restores it to `build/rope.bf16` and verifies both packed and raw hashes.

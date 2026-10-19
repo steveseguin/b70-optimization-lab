@@ -5,6 +5,32 @@ from pathlib import Path
 P=Path(__file__).resolve().parent
 LAYERS={0:'GDN',3:'QSA'}
 POSITIONS=(2,3,31)
+# Packet147 PLAN.md:320-338; full precision retained from packet58h's evidence.
+MTP_ACCEPTANCE=0.787401575
+MTP_DRAFT_MS=1.794747301
+MTP_RESTORE_MS=0.980923
+ONE_CARD_RECORD_TPS=31.966820
+def mtp_projection(ratio):
+ require(math.isfinite(ratio) and ratio>0,'invalid M2/M1 projection ratio')
+ m1=1000/ONE_CARD_RECORD_TPS
+ overhead=MTP_DRAFT_MS+(1-MTP_ACCEPTANCE)*MTP_RESTORE_MS
+ v2=ratio*m1
+ cycle=overhead+v2
+ rate=1000*(1+MTP_ACCEPTANCE)/cycle
+ budget=1000*(1+MTP_ACCEPTANCE)/(1.02*ONE_CARD_RECORD_TPS)-overhead
+ return dict(projected_not_measured=True,measured_layer_ratio=ratio,
+  record_tps=ONE_CARD_RECORD_TPS,record_scope='one-card WS128; strict512 false',
+  acceptance_assumption=MTP_ACCEPTANCE,draft_ms_assumption=MTP_DRAFT_MS,
+  restore_ms_assumption=MTP_RESTORE_MS,baseline_m1_ms=m1,projected_v2_ms=v2,
+  cycle_ms=cycle,projected_tps=rate,gain_percent=100*(rate/ONE_CARD_RECORD_TPS-1),
+  v2_plus_feedback_budget_ms_for_2_percent=budget,
+  maximum_m2_over_m1_for_2_percent=budget/m1,
+  maximum_m2_over_m1_for_5_percent=(1000*(1+MTP_ACCEPTANCE)/(1.05*ONE_CARD_RECORD_TPS)-overhead)/m1,
+  historical_packet147_budget_ms=57.886273,historical_packet147_baseline_tps=29.259764,
+  formula='V2=measured_layer_ratio*(1000/31.966820); cycle=D+V2+(1-a)*R; rate=1000*(1+a)/cycle',
+  assumption='Transfer weighted layer device ratio to full one-card M1 wall time; new feedback/cache cost assumed zero, unmeasured and must be charged by verify brief',
+  citations=['experiments/own-xpu-runtime/stage2/packet147-lever-synthesis/PLAN.md:320-338',
+             'experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:169-216'])
 COMMON={'hc_norm','hc_low_inject','hc_gate_mix','projection','small_tuple','attention_projection','combine','route_shared_activation','expert_gate_up','expert_activation','expert_down','shared_down_mix'}
 CLASSES={0:COMMON|{'conv','gdn_recurrence','gdn_norm_gate'},3:COMMON|{'qsa_prepare','qsa_pool','qsa_select','qsa_attention'}}
 BASE_COUNTS=dict(hc_norm=2,hc_low_inject=2,hc_gate_mix=2,projection=2,small_tuple=2,attention_projection=2,combine=1,route_shared_activation=1,expert_gate_up=1,expert_activation=1,expert_down=1,shared_down_mix=1)
@@ -79,8 +105,11 @@ def analyze(path,baseline_prefill_tps=None):
   selected={r['layer']:r['ops']['layer_device_sum'] for r in outputs if r['position']==pos}
   one=36*selected[0]['m1_mean_ns']+12*selected[3]['m1_mean_ns'];two=36*selected[0]['m2_ns']+12*selected[3]['m2_ns'];ratio=two/one
   projections.append(dict(position=pos,weighted_m2_over_m1=ratio,representative_48_layer_m1_device_ms=one/1e6,representative_m2_verifier_device_ms=two/1e6,implied_extra_verifier_device_ms=(two-one)/1e6,implied_prefill_speedup=2/ratio,implied_prefill_tps=None if baseline_prefill_tps is None else baseline_prefill_tps*2/ratio,scope='projection from one layer of each family; excludes embeddings, PLE, head, transfers, host scheduling and draft'))
+ for projection in projections:
+  projection['one_card_mtp_decode']=mtp_projection(projection['weighted_m2_over_m1'])
  passes=all(r['ops']['layer_device_sum']['m2_over_m1']<=1.5 for r in outputs)
- return dict(schema='packet166.layer-micro.analysis.v1',diagnostic_only=True,model_output_claim=False,full_build_authorized=False,samples_sha256=sha(path),finite_bytes_equal=True,cpu_oracle_match=True,zero_errors=True,decision='build brief: exact M=2 prefill stage 1' if passes else 'close: measured layer M2/M1 > 1.5',threshold=1.5,ratio_definition='2*M2/(M1_row0+M1_row1)',layers=outputs,projections=projections,baseline_prefill_tps=baseline_prefill_tps,baseline_is_provisional=baseline_prefill_tps==90)
+ mtp_passes=all(p['one_card_mtp_decode']['gain_percent']>=5 for p in projections)
+ return dict(schema='packet166.layer-micro.analysis.v2',diagnostic_only=True,model_output_claim=False,full_build_authorized=False,samples_sha256=sha(path),finite_bytes_equal=True,cpu_oracle_match=True,zero_errors=True,decision='build brief: exact M=2 prefill stage 1' if passes else 'close: measured layer M2/M1 > 1.5',prefill_build_brief=passes,mtp_verify_brief=mtp_passes,mtp_decision='verify brief: projected one-card MTP >= +5%' if mtp_passes else 'close: projected one-card MTP < +5% in at least one context',threshold=1.5,mtp_gain_threshold_percent=5,ratio_definition='2*M2/(M1_row0+M1_row1)',layers=outputs,projections=projections,baseline_prefill_tps=baseline_prefill_tps,baseline_is_provisional=baseline_prefill_tps==90)
 def evaluate(output):
  output=Path(output);result=analyze(output/'samples.jsonl',90.0)
  (output/'analysis.json').write_text(json.dumps(result,indent=2)+'\n')
@@ -88,6 +117,10 @@ def evaluate(output):
   (output/'BUILD-BRIEF.md').write_text('# Exact M=2 prefill: stage 1\n\nLayer device diagnostic passes the 1.5 ratio gate. Integrate two causal rows using the pinned kernels, retain both row outputs and complete BF16 state, then prove all 48 layers against the unchanged packet49 oracle, odd tails, resets and two fresh processes. Measure complete 512-token TTFT on two fresh servers before any headline. This micro does not authorize publication.\n')
  else:
   with (P/'DO-NOT-REPEAT.md').open('a') as f:f.write('\n| Fully paired causal M=2 layer micro | >1.5 ratio in at least one registered layer/context; close this M=2 prefill stage | '+str(output/'analysis.json')+' | New mechanism with independently justified lower full-layer cost |\n')
+ if result['mtp_verify_brief']:
+  (output/'MTP-VERIFY-BRIEF.md').write_text('# One-card exact MTP verify brief\n\nThe transferred layer ratio projects at least +5% over 31.966820 tok/s at every registered context. This is a projection, not measured decode. First prove complete cycle/lifetime and device-memory accounting, including draft feedback, cache shrink/pollution, rejected rows and full BF16 rollback. Preserve iq3-p49-split32-v1 per-row arithmetic and target verification of every accepted token. Prove exact target-oracle outputs, repeats and two fresh processes. Charge D + V2 + (1-a)*R plus all new feedback/cache work; measure the complete cold suite and prefill before any promotion. Packet147 PLAN.md:320-338 supplies transferred assumptions; this micro authorizes only this verification brief.\n')
+ else:
+  with (P/'DO-NOT-REPEAT.md').open('a') as f:f.write('\n| One-card causal M=2 MTP projection | <+5% versus 31.966820 in at least one registered context; close this MTP verify arm | '+str(output/'analysis.json')+' | New measured ratio/cycle mechanism including feedback and cache costs |\n')
  return result
 if __name__=='__main__':
  import argparse
