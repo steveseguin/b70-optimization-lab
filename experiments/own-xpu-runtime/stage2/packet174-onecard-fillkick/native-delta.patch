@@ -1,0 +1,181 @@
+--- a/native/generated/main.cpp
++++ b/native/generated/main.cpp
+@@ -1,3 +1,4 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/fill_kick.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/spin_wait.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/resident_lookup.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/drm_size.hpp"
+@@ -154,6 +155,7 @@
+   std::string selection_sha256;
+   bool legacy=false,argument_audit=false,audit_prepare_each=false;
+   std::string wait_policy="poll"; bool wait_policy_supplied=false;
++  std::string fill_kick="off"; bool fill_kick_supplied=false;
+   int wait_seconds=60;
+   int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
+   std::string memory = "layer-streaming";
+@@ -200,6 +202,7 @@
+     else if (k == "--selection") a.selection=value();
+     else if (k == "--selection-sha256") a.selection_sha256=value();
+     else if (k == "--wait-policy") {a.wait_policy=value();a.wait_policy_supplied=true;require(a.wait_policy=="poll"||a.wait_policy=="spin","wait policy dimension");}
++    else if (k == "--fill-kick") {a.fill_kick=value();a.fill_kick_supplied=true;require(a.fill_kick=="off"||a.fill_kick=="on","fill kick dimension");}
+     else if (k == "--wait-seconds") a.wait_seconds=std::stoi(value());
+     else if (k == "--checked") a.checked = true;
+     else if (k == "--nongemv") a.nongemv = value();
+@@ -595,6 +598,7 @@
+   uint64_t maintenance_position=0;
+   double maintenance_plan_ms=0;
+   uint64_t publication_uploads=0,publication_bytes=0;
++  uint64_t fill_kicks=0,route_hits=0,routes_seen=0;
+   double publication_host_ms=0;
+   bool overlapping()const{return a.cache_maintenance=="overlap";}
+   void cache_quiesce() {
+@@ -647,8 +651,17 @@
+       }
+       cache_fill_bytes+=maintenance.plan->fill_bytes;cache_fills+=maintenance.plan->fills.size();
+       maintenance.submitted(true,last);
++      if(p174::fill_kick&&!maintenance.plan->fills.empty())kick_fills();
+     }
+   }
++  void kick_fills() {
++#ifdef OWN_RT_HOST_ONLY
++    ++fill_kicks; // host fills are synchronous mock copies; the kick is a counted no-op
++#else
++    auto* kick=dynamic_cast<p174::FillKick*>(p58v::backend(dev(0)));require(kick,"fill kick backend");
++    kick->kick_fills();++fill_kicks;
++#endif
++  }
+   void cache_plan_during_position() {
+     if(!expert_cache||!overlapping()||previous_routes.empty()||maintenance.state!=p58v::Protocol::State::idle)return;
+     auto start=std::chrono::steady_clock::now();maintenance.prepare(*expert_cache,previous_routes);
+@@ -1033,11 +1046,15 @@
+     drain();std::vector<uint32_t> ids;auto bytes=static_cast<const uint8_t*>(dev(0).arena.row(route_log).pointer);
+     for(size_t i=0;i<route_sources.size();++i){auto row=route_ids(reinterpret_cast<const iq3::Route*>(bytes+i*n),route_sources[i].first);ids.insert(ids.end(),row.begin(),row.end());}
+     if(overlapping()) {
++      for(auto id:ids)if(expert_cache->resident(id)&&!(maintenance.state==p58v::Protocol::State::filling&&maintenance.plan&&
++        maintenance.plan->table.at(id).gate==expert_cache->experts().at(id).host_gate))++route_hits;
++      routes_seen+=ids.size();
+       expert_cache->observe(ids);previous_routes=std::move(ids);
+       cache_log<<"{\"position\":"<<maintenance_position<<",\"mode\":\"overlap\",\"plan_ms\":"<<maintenance_plan_ms
+         <<",\"state\":"<<int(maintenance.state)<<",\"fill_bytes_total\":"<<cache_fill_bytes<<",\"fills_total\":"<<cache_fills
+         <<",\"publication_uploads_total\":"<<publication_uploads<<",\"publication_bytes_total\":"<<publication_bytes
+-        <<",\"publication_host_ms_total\":"<<publication_host_ms<<"}\n";
++        <<",\"publication_host_ms_total\":"<<publication_host_ms<<",\"fill_kicks_total\":"<<fill_kicks
++        <<",\"route_hits_total\":"<<route_hits<<",\"routes_total\":"<<routes_seen<<"}\n";
+       cache_log.flush();
+       save(a.output/"cache-stats.json","{\"fill_bytes_total\":"+std::to_string(cache_fill_bytes)+",\"fills_total\":"+std::to_string(cache_fills)+",\"miss_path\":\"zero-copy\",\"mode\":\"overlap\"}\n");
+     } else fill_cache(ids);
+@@ -1845,14 +1862,14 @@
+ 
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/bracket_table.hpp"
+ int main(int argc, char **argv) {
+-  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --wait-seconds --p58r-parse-test --help\n";return 0;}
++  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --fill-kick off|on (default:off) --wait-seconds --p58r-parse-test --help\n";return 0;}
+ #ifdef OWN_RT_HOST_ONLY
+   if(argc>2&&std::string(argv[1])=="--p58r-parse-test") {
+     try {
+       auto parsed=parse(argc-1,argv+1);auto views=bracket_table(parsed);
+       require(views.size()==1||views.size()==5,"parser bracket coverage");
+       require(!fs::exists(parsed.output),"fresh parser output required");fs::create_directories(parsed.output);
+-      save(parsed.output/"parser.json","{\"passed\":true,\"device_executed\":false,\"model_reads\":false,\"views\":"+std::to_string(views.size())+",\"wait_policy\":"+ownrt::quote(parsed.wait_policy)+",\"cache_allocation_bytes\":"+std::to_string(parsed.cache_bytes)+"}\n");return 0;
++      save(parsed.output/"parser.json","{\"passed\":true,\"device_executed\":false,\"model_reads\":false,\"views\":"+std::to_string(views.size())+",\"wait_policy\":"+ownrt::quote(parsed.wait_policy)+",\"fill_kick\":"+ownrt::quote(parsed.fill_kick)+",\"cache_allocation_bytes\":"+std::to_string(parsed.cache_bytes)+"}\n");return 0;
+     }catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
+   }
+ #endif
+@@ -1886,6 +1903,7 @@
+   try {
+     a = parse(argc, argv);
+     require(!a.wait_policy_supplied||(a.draft_capture.empty()&&a.rank<0),"wait policy applies to single-owner request views");
++    require(!a.fill_kick_supplied||(a.draft_capture.empty()&&a.rank<0),"fill kick applies to single-owner request views");
+     if(a.priority_probe){
+ #ifdef OWN_RT_HOST_ONLY
+       require(!fs::exists(a.output), "priority output exists");fs::create_directories(a.output);
+@@ -1962,7 +1980,10 @@
+     if(!a.bracket_inputs.empty())save(root_output/"loaded-arena-descriptors.txt",e->bracket_arena_descriptors());
+     for(const auto& view:bracket_views) {
+     w->use_resident_lookups=view.resident;
+-    p58as::spin_enabled=a.bracket_inputs.empty()?a.wait_policy=="spin":view.hc=="spin";
++    p58as::spin_enabled=a.bracket_inputs.empty()?a.wait_policy=="spin":(view.hc=="spin"||view.hc=="spin-kick");
++    // p174: process-wide fill kick, switched with the wait policy at the already
++    // drained view boundary. Single-view (chain window) runs take --fill-kick.
++    p174::fill_kick=a.bracket_inputs.empty()?a.fill_kick=="on":view.hc=="spin-kick";
+     const auto view_output=view.label.empty()?root_output:root_output/view.label;
+     if(!view.label.empty()) {
+       fs::create_directories(view_output);record_host_memory(view_output,"before_view_reset");e->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);record_host_memory(view_output,"after_view_reset");
+@@ -1970,7 +1991,8 @@
+       save(view_output/"lookup-backing.json","{\"resident\":"+std::string(view.resident?"true":"false")+",\"copies\":"+w->residency+"}\n");
+       save(view_output/"boundary.json","{\"passed\":true,\"selection_sha256\":"+ownrt::quote(view.digest)+
+         ",\"cache_maintenance\":"+ownrt::quote(view.maintenance)+
+-        ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+",\"wait_policy\":"+ownrt::quote(view.hc)+
++        ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+",\"wait_policy\":"+ownrt::quote(view.hc=="spin-kick"?std::string("spin"):view.hc)+",\"bracket_arm\":"+ownrt::quote(view.hc)+
++        ",\"fill_kick\":"+ownrt::quote(std::string(p174::fill_kick?"on":"off"))+
+         ",\"cache_cap\":"+ownrt::quote(view.capacity)+",\"cache_allocation_bytes\":21552729600,\"cache_started_empty\":true"+
+         ",\"arena_descriptors_sha256\":"+ownrt::quote(loaded_arena)+",\"weight_descriptors_sha256\":"+ownrt::quote(loaded_weights)+
+         ",\"allocation_ids_preserved\":true,\"weight_uploads_during_switch\":0,\"cache_fill_bytes_total\":"+std::to_string(e->cache_fill_bytes)+
+--- a/native/generated/single_device.cpp
++++ b/native/generated/single_device.cpp
+@@ -1,3 +1,4 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/fill_kick.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/spin_wait.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/ordered_retirement.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/native/async_backend.hpp"
+@@ -25,7 +26,7 @@
+       for(const auto& d:p.get_devices(sycl::info::device_type::gpu)) out.push_back(d);
+   return out;
+ }
+-class SyclDevice final : public Backend, public p58v::AsyncBackend, public ForegroundPrefix {
++class SyclDevice final : public Backend, public p58v::AsyncBackend, public ForegroundPrefix, public p174::FillKick {
+   ForegroundTails foreground_tails_;
+   std::unique_ptr<sycl::queue> maintenance_queue_;
+   ze_command_list_handle_t maintenance_native_=nullptr;
+@@ -174,6 +175,13 @@
+     try {fill_tail_=copied;fill_ticket_=next_handle();return fill_ticket_;}
+     catch(...) {hold_for_supervisor();}
+   }
++  void kick_fills() override {
++    check_error();
++    // p174: one non-blocking query right after a fill batch, so the driver hands
++    // the queued maintenance copies to the copy engine now. Never waits.
++    auto r=zeCommandListHostSynchronize(maintenance_native_,0);
++    if(r!=ZE_RESULT_SUCCESS&&r!=ZE_RESULT_NOT_READY)hold_for_supervisor();
++  }
+   bool fill_complete(Event ticket) override {
+     check_error();if(!ticket||ticket!=fill_ticket_)throw std::logic_error("foreign maintenance ticket");
+     return fill_tail_.get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;
+--- a/native/bracket_table.hpp
++++ b/native/bracket_table.hpp
+@@ -13,17 +13,18 @@
+     require(v.digest==a.selection_sha256&&v.selection==a.selection,"immutable tile16 identity");
+     require(v.maintenance==a.cache_maintenance,"maintenance fixed throughout capacity bracket");
+     require(v.capacity=="max","fixed maximum cache");
+-    require(v.hc=="poll"||v.hc=="spin","lookup dimension");v.resident=true;
+-    require(!a.wait_policy_supplied||a.wait_policy==v.hc,"wait policy conflicts with bracket view");
++    require(v.hc=="spin"||v.hc=="spin-kick","fill kick dimension");v.resident=true;
++    require(!a.wait_policy_supplied||a.wait_policy=="spin","wait policy conflicts with bracket view");
++    require(!a.fill_kick_supplied,"bracket selects the fill kick per view");
+     views.push_back(v);
+   }
+   require(f.eof()&&(views.size()==1||views.size()==5),"complete smoke or five-view bracket required");
+   if(views.size()==1) {
+-    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max"&&views[0].hc=="spin","fixed maximum smoke");
++    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max"&&views[0].hc=="spin-kick","fixed maximum smoke");
+   } else {
+     require(a.mini||a.tokens==128,"128-token bracket required");
+     const char* labels[]={"A0","B0","A1","B1","A2"};
+-    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].hc==(i%2?"spin":"poll"),"production/p60fusion bracket order");
++    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].hc==(i%2?"spin-kick":"spin"),"production/p60fusion bracket order");
+   }
+   return views;
+ }
+--- a/native/fill_kick.hpp
++++ b/native/fill_kick.hpp
+@@ -0,0 +1,10 @@
++#pragma once
++// Packet174: process-wide maintenance fill kick (default off = packet58as).
++// Set only by the owner thread at a drained view boundary.
++namespace p174 {
++inline thread_local bool fill_kick=false;
++struct FillKick {
++  virtual ~FillKick()=default;
++  virtual void kick_fills()=0; // non-blocking; never waits for fill completion
++};
++}
