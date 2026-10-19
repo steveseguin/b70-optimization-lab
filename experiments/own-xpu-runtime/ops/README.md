@@ -173,6 +173,19 @@ Pin-guard hygiene (packet172b, after the packet58as-b/58asb refusals):
   storage, fault-review parsing and the fault latch run for real. Standalone:
   `onecard_chain_derive.py --predevice-check <packet>`; receipt
   `ops/<prefix>-orchestration/predevice-rehearsal.json`.
+- Runtime-read closure (packet172d, after packet58asb launch 2 stopped in KD
+  post-processing on `lineage/fixtures/58c-supervisor/source-manifest.json`):
+  the parent's `lineage/` and `screen-reader/` are copied byte for byte with
+  the other copied dirs and sealed. `--closure-check <packet>` scans every
+  non-test harness module for constant path joins under its packet/module root
+  and `lineage/`/`fixtures/` literals; each one the parent has must exist in
+  the derived packet (lineage/fixtures byte-identical; run outputs, build
+  objects and lock files excepted). `--postnative-check <packet> [--evidence DIR]`
+  runs each window's post-native report path (native receipt checks,
+  `k1_summary`, `postload_observation` with the chain's own budget/memory
+  records, native file hashing, summary save) on a temp copy of a completed
+  chain's device evidence (default: the bracket packet's latest complete
+  `evidence/card0-*`). The generator runs both before the lanequeue plan.
 - A chain of the line that set the ledger's latest record is disclosed in
   `WINDOW.md`/READY as a confirmation run; the copied submission tool still
   refuses unless fresh WS128 beats that record.

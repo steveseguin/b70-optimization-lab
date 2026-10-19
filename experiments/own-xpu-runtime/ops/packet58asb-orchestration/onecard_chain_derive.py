@@ -37,7 +37,9 @@ PREFIX = re.compile(r'packet\d+[a-z]*')
 MODEL_WINDOWS = ('KD', 'W2m', 'WS', 'WS128x', 'WS128')
 SKIP_TOP = {'READY-FOR-DEVICE.json', 'ready.json', 'build-receipt.json', 'submission-pins.json',
             'seal.py', 'verify_ready.py', 'queue.lock', 'WINDOW.md'}
-COPY_DIRS = ('selections', 'frozen-inputs', 'host-admission', 'native')
+# lineage/: runtime-read closure (packet58asb launch 2: legacy_memory_plan.seed_observation reads
+# lineage/fixtures/58c-supervisor after the KD native run). Copied byte for byte, sealed as sources.
+COPY_DIRS = ('selections', 'frozen-inputs', 'host-admission', 'native', 'lineage', 'screen-reader')
 TEXT = ('.py', '.json', '.md', '.snapshot', '.txt', '.tsv', '.jsonl')
 INVALID = '__onecard_chain_derive_invalid__'
 MARK = '# >>> onecard_chain_derive generated chain flags'
@@ -587,6 +589,102 @@ def parser_gate(P, flags):
     return row['records']
 
 
+# 4a. Static runtime-read closure check ---------------------------------------
+ROOT_EXPR = re.compile(r"Path\(__file__\)(?:\.resolve\(\))?\.(parent|parents\[(\d+)\])$")
+OUTPUT_TOPS = {'evidence', 'build', 'submission', 'screen'}
+RUNTIME_CREATED = {'queue.lock', 'window.lock'}     # opened with mode 'a' by queue_runner/window (created on use)
+
+
+def _root_base(node, py, roots):
+    """Base directory of a root expression: Path(__file__)...parent[s[N]], a known root name, or root.parents[N]."""
+    import ast
+    if isinstance(node, ast.Name):
+        return roots.get(node.id)
+    text = ast.unparse(node); m = ROOT_EXPR.match(text)
+    if m:
+        return py.parent if m[1] == 'parent' else py.parents[int(m[2])]
+    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Attribute) and node.value.attr == 'parents' \
+            and isinstance(node.value.value, ast.Name) and node.value.value.id in roots and isinstance(node.slice, ast.Constant):
+        return roots[node.value.value.id].parents[node.slice.value]
+    if isinstance(node, ast.Attribute) and node.attr == 'parent' and isinstance(node.value, ast.Name) and node.value.id in roots:
+        return roots[node.value.id].parent
+    return None
+
+
+def _joins(tree, py):
+    """Constant path joins rooted at a packet/module root, and lineage/fixtures string literals."""
+    import ast
+    roots, found = {}, []
+    for stmt in ast.walk(tree):
+        if isinstance(stmt, ast.Assign):
+            for target in stmt.targets:
+                names = [target] if isinstance(target, ast.Name) else list(getattr(target, 'elts', []))
+                values = [stmt.value] if isinstance(target, ast.Name) else list(getattr(stmt.value, 'elts', []))
+                for n, v in zip(names, values):
+                    if isinstance(n, ast.Name):
+                        base = _root_base(v, py, roots)
+                        if base is None and isinstance(v, ast.BinOp) and isinstance(v.op, ast.Div):
+                            parts, left = [], v
+                            while isinstance(left, ast.BinOp) and isinstance(left.op, ast.Div):
+                                parts.insert(0, left.right); left = left.left
+                            b = _root_base(left, py, roots)
+                            if b is not None and parts and all(isinstance(x, ast.Constant) and isinstance(x.value, str) for x in parts):
+                                base = b.joinpath(*[x.value for x in parts])
+                        if base is not None:
+                            roots[n.id] = base
+    for node in ast.walk(tree):
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+            parts, left = [], node
+            while isinstance(left, ast.BinOp) and isinstance(left.op, ast.Div):
+                parts.insert(0, left.right); left = left.left
+            base = _root_base(left, py, roots)
+            consts = []
+            for part in parts:
+                if isinstance(part, ast.Constant) and isinstance(part.value, str):
+                    consts.append(part.value)
+                else:
+                    break
+            if base is not None and consts:
+                found.append((base.joinpath(*consts), ast.unparse(node)[:120]))
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str) and re.match(r'(lineage|fixtures)/[\w.@+-]', node.value) and '\n' not in node.value:
+            found.append((py.parent / node.value.split()[0], node.value[:120]))
+    return found
+
+
+def closure_check(P, P0, root):
+    """Every packet file/dir a harness module names (constant joins under its root, lineage/fixtures
+    literals) that the parent packet has must exist in the derived packet; lineage/fixtures bytes identical."""
+    import ast
+    missing, checked = [], 0
+    modules = [f for f in P.rglob('*.py') if '__pycache__' not in f.parts and not f.name.startswith('test_')
+               and f.relative_to(P).parts[0] not in {'lineage', 'frozen-inputs', 'build', 'evidence', 'submission'}]
+    for py in sorted(modules):
+        try:
+            tree = ast.parse(py.read_text())
+        except SyntaxError as e:
+            missing.append(f'{py.relative_to(P)}: unparsable ({e})'); continue
+        for target, where in _joins(tree, py):
+            target = Path(os.path.normpath(target))
+            if not target.is_relative_to(P):
+                continue                      # shared repo paths resolve identically for parent and derived packet
+            rel = target.relative_to(P); twin = P0 / rel
+            if not twin.exists() or not rel.parts or rel.parts[0] in OUTPUT_TOPS or str(rel) in RUNTIME_CREATED:
+                continue                      # run outputs, build tools' objects and sealed artifacts/gates are checked elsewhere
+            checked += 1
+            frozen = rel.parts[0] in ('lineage', 'fixtures') or 'fixtures' in rel.parts
+            if twin.is_dir():
+                for f in twin.rglob('*'):
+                    if f.is_file() and '__pycache__' not in f.parts:
+                        g = P / f.relative_to(P0)
+                        if not g.is_file() or (frozen and sha(g) != sha(f)):
+                            missing.append(f'{py.relative_to(P)}: {where} -> {g.relative_to(P)} (dir closure)')
+            elif not target.is_file():
+                missing.append(f'{py.relative_to(P)}: {where} -> {rel} (missing)')
+            elif frozen and sha(target) != sha(twin):
+                missing.append(f'{py.relative_to(P)}: {where} -> {rel} (bytes differ from parent)')
+    return sorted(set(missing)), checked
+
+
 # 4b. Pre-device window rehearsal (CPU) ---------------------------------------
 # Runs every chain window's real Python entry (window.main with the queue_runner
 # --plan argv) up to its first device-evidence boundary: K1a/K1b stop at the
@@ -671,6 +769,99 @@ def predevice_cli(argv):
         print('onecard_chain_derive: ' + str(e), file=sys.stderr); return 2
     print(json.dumps(dict(passed=True, windows=row['windows'], boundaries={r['window']: r['boundary'] for r in row['records']})))
     return 0
+
+
+# 4c. Post-native report rehearsal on REAL device evidence (CPU) ----------------
+# window.main after the native child exits: native receipt checks, K1 summary,
+# postload_observation (memory plan + seed observation), native file hashing and
+# summary save, on a temp copy of a completed chain's evidence. The budget and
+# memory admission come from that chain's own window.json records.
+POSTNATIVE = r"""
+import json,os,shutil,sys,tempfile
+from pathlib import Path
+P=Path(sys.argv[1]);src=Path(sys.argv[2]);tmp=Path(sys.argv[3])
+sys.path.insert(0,str(P))
+import window as W
+ORDER=('K1a','K1b','KD','W2m','WS','WS128x','WS128');rows=[]
+for i,name in enumerate(ORDER):
+    mode='K1' if name.startswith('K1') else name;out=tmp/name
+    try:
+        shutil.copytree(src/name,out,symlinks=True,ignore=shutil.ignore_patterns('native-home'))
+        row=json.loads((src/name/'window.json').read_text())
+        W.require(row.get('passed') is True and row.get('device_executed') is True,'parent evidence window did not pass: '+name)
+        if mode=='K1':
+            summary=W.k1_summary(json.loads((out/'run/k1.json').read_text()))
+            files={n:W.sha(out/n) for n in ('run/k1.json','run/k1-cases.jsonl')}
+        else:
+            prev=json.loads((src/ORDER[i-1]/'window.json').read_text())
+            budget=W.M.window_plan(mode) if mode in ('KD','WS128') else W.M.window_plan(mode,prev['postload_memory'])
+            receipt=json.loads((out/'run/receipt.json').read_text())
+            W.require(receipt.get('passed') is True and receipt.get('safe_to_exit') is True and receipt.get('window')==mode,'native driver receipt incomplete')
+            summary=json.loads((out/'run/summary.json').read_text())
+            observation=W.postload_observation(out,budget,row['memory_admission'])
+            files={str(p.relative_to(out)):W.sha(p) for p in (out/'run').rglob('*') if p.is_file()}
+        summary['timing_claim_eligible']=mode=='WS128'
+        W.save(out/'summary.json',summary)
+        rows.append(dict(window=name,passed=True,native_files=len(files)))
+    except BaseException as e:
+        rows.append(dict(window=name,passed=False,reason=type(e).__name__+': '+str(e)[:600]))
+    finally:
+        shutil.rmtree(out,ignore_errors=True)
+ok=len(rows)==7 and all(r['passed'] for r in rows)
+print(json.dumps(dict(passed=ok,evidence=str(src),records=rows)));sys.exit(0 if ok else 3)
+"""
+
+
+def chain_evidence(*packets):
+    """A completed one-card chain output (all 7 windows passed on the device) to rehearse reports on."""
+    for packet in packets:
+        for d in sorted((packet / 'evidence').glob('card0-*'), reverse=True):
+            rows = [d / w / 'window.json' for w in ('K1a', 'K1b', *MODEL_WINDOWS)]
+            if all(r.is_file() for r in rows) and all(read(r).get('passed') is True and read(r).get('device_executed') is True for r in rows):
+                return d
+    return None
+
+
+def postnative_gate(P, evidence):
+    refuse(evidence is not None and Path(evidence).is_dir(), 'no completed chain device evidence for the post-native rehearsal')
+    with tempfile.TemporaryDirectory(prefix='derive-postnative-') as tmp:
+        cp = subprocess.run([sys.executable, '-B', '-c', POSTNATIVE, str(P), str(evidence), tmp],
+                            cwd=P.parents[3], stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=1800,
+                            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'))
+    try:
+        row = json.loads(cp.stdout.strip().splitlines()[-1])
+    except (IndexError, ValueError):
+        raise Refused('post-native rehearsal crashed: ' + (cp.stderr or cp.stdout)[-1500:])
+    failed = [f"{r['window']}: {r.get('reason')}" for r in row.get('records', []) if not r.get('passed')]
+    refuse(cp.returncode == 0 and row.get('passed') is True, 'REFUSED: post-native report rehearsal failed: ' + '; '.join(failed)[:2000])
+    return row
+
+
+def packet_parent(P, root):
+    d = read(P / 'derived-chain.json'); P0 = P.parent / d['parent']['packet']
+    bracket = root / d['bracket']['summary']['parent_relpath']
+    bp = next((p for p in bracket.parents if p.parent.name == 'stage2'), None)
+    return P0, bp
+
+
+def checks_cli(argv):
+    """--closure-check / --postnative-check <packet> [--evidence DIR] on an existing derived packet."""
+    mode = argv[0]; ap = argparse.ArgumentParser(prog='onecard_chain_derive.py ' + mode)
+    ap.add_argument('packet', type=Path); ap.add_argument('--evidence', type=Path); a = ap.parse_args(argv[1:])
+    resource.setrlimit(resource.RLIMIT_AS, (2_000_000_000, 2_000_000_000))
+    P = a.packet.absolute(); root = P.parents[3]; P0, bp = packet_parent(P, root)
+    try:
+        if mode == '--closure-check':
+            missing, checked = closure_check(P, P0, root)
+            refuse(not missing, f'REFUSED: runtime-read closure incomplete ({len(missing)}): ' + '; '.join(missing[:15]))
+            print(json.dumps(dict(passed=True, checked=checked)))
+        else:
+            ev = a.evidence or chain_evidence(*(x for x in (bp, P0) if x))
+            row = postnative_gate(P, ev)
+            print(json.dumps(dict(passed=True, evidence=row['evidence'], windows=[r['window'] for r in row['records']])))
+        return 0
+    except Refused as e:
+        print('onecard_chain_derive: ' + str(e), file=sys.stderr); return 2
 
 
 # 5. Generated seal / verify_ready -------------------------------------------
@@ -894,7 +1085,10 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
         ready = read(P / 'ready.json'); refuse(ready['ready'] is True and ready['chain_command'] == chain_command, 'ready.json not ready')
         bad, manifests = pin_audit(P, root, gate_paths, parent=P0)
         refuse(not bad, f'pin audit refused ({len(bad)} pins): ' + '; '.join(bad[:12]))
+        missing, closure_checked = closure_check(P, P0, root)     # after seal/verify_ready: generated files exist
+        refuse(not missing, f'REFUSED: runtime-read closure incomplete ({len(missing)}): ' + '; '.join(missing[:15]))
         predevice = predevice_gate(P)
+        postnative = postnative_gate(P, chain_evidence(bracket_packet, P0))
         # Temporary lanequeue plan (live queue untouched).
         O.mkdir()
         job = dict(name=f'{P.name}-chain-A', lane='A', argv=['/usr/bin/python3', '-B', str(P / 'queue_runner.py'), '--authorized-device-window', '--card', '0', '--view', 'down-tile16', '--output-root', str(P / out), '--fault-review', '{REVIEW}'],
@@ -912,10 +1106,12 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
         refuse(cp.returncode == 0 and len(plans) == 1 and plans[0].get('plan') == 'passed', 'temporary lanequeue plan refused: ' + (cp.stdout + cp.stderr)[-800:])
         save(O / 'help.json', dict(device=help_text['device'], host=help_text['host']))
         save(O / 'predevice-rehearsal.json', dict(schema='onecard-chain-derive.predevice.v1', device_executed=False, **predevice))
+        save(O / 'postnative-rehearsal.json', dict(schema='onecard-chain-derive.postnative.v1', device_executed=False,
+                                                   closure_check=dict(passed=True, checked=closure_checked), **postnative))
         shutil.copy2(Path(__file__), O / 'onecard_chain_derive.py')
         pfiles = ['build-receipt.json', 'submission-pins.json', 'ready.json', 'WINDOW.md', 'runtime-selection.json', 'submission-policy.json',
                   'record-threshold.snapshot', 'derived-chain.json', 'seal.py', 'verify_ready.py', 'fault_review.py', 'evidence/chain-flags.json']
-        ofiles = ['entry-proposal.jsonl', 'queue-plan.log', 'help.json', 'predevice-rehearsal.json', 'onecard_chain_derive.py']
+        ofiles = ['entry-proposal.jsonl', 'queue-plan.log', 'help.json', 'predevice-rehearsal.json', 'postnative-rehearsal.json', 'onecard_chain_derive.py']
         row = dict(schema=f'{P.name}.ready-for-device.v1', packet=P.name, revision='derived:' + P.name,
                    prepared_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(), generator='ops/onecard_chain_derive.py',
                    preparation_passed=True, passed=True, ready_for_device=True, ready_for_device_chain=True, ready_for_coordinator_check=True,
@@ -940,6 +1136,9 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
                    predevice_rehearsal=dict(passed=True, windows=predevice['windows'],
                                             boundaries={r['window']: r['boundary'] for r in predevice['records']},
                                             simulated=['priority', 'affinity', 'user_unit_gate']),
+                   runtime_closure_check=dict(passed=True, checked=closure_checked, copied_dirs=list(COPY_DIRS)),
+                   postnative_rehearsal=dict(passed=True, evidence=str(Path(postnative['evidence']).relative_to(root)),
+                                             windows=[r['window'] for r in postnative['records']]),
                    chain_quality_pending=True, chain_performance_pending=True, no_retry=True, queued=False, device_executed=False,
                    services_started=False, model_payload_reads=False, live_queue_changed=False, submission_performed=False, final_content_write=True)
         for f in (P / 'READY-FOR-DEVICE.json', O / 'READY-FOR-DEVICE.json'):
@@ -957,4 +1156,6 @@ carries {{name, parent_relpath, parent_digest}} provenance; evidence/pin-relocat
 if __name__ == '__main__':
     if sys.argv[1:2] == ['--predevice-check']:
         raise SystemExit(predevice_cli(sys.argv[2:]))
+    if sys.argv[1:2] in (['--closure-check'], ['--postnative-check']):
+        raise SystemExit(checks_cli(sys.argv[1:]))
     raise SystemExit(main())

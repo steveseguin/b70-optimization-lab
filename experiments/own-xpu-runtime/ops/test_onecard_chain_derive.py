@@ -8,7 +8,10 @@ into the real stage2/ and ops/ under a unique, collision-free prefix, runs the
 real pin guard, the generated seal/verify_ready and a temp copy of
 fn-run/onecard-chain.sh --check and the pre-device window rehearsal (every
 chain window's window.main to its device boundary; it must also refuse the
-packet58asb views.py/runtime-selection mismatch), and ALWAYS removes what it created (class
+packet58asb views.py/runtime-selection mismatch), the static runtime-read
+closure check and the post-native report rehearsal on packet58as chain-a
+device evidence (both must refuse the packet58asb launch-2 missing
+lineage/fixtures), and ALWAYS removes what it created (class
 cleanup runs even when setUpClass fails) and asserts nothing is left for git.
 Run: nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest test_onecard_chain_derive </dev/null
 """
@@ -239,6 +242,34 @@ class RealLayoutTest(unittest.TestCase):
         finally:
             views.write_bytes(original); receipt.write_bytes(original_receipt)
         self.assertEqual(G.sha(views), json.loads((self.P / 'build-receipt.json').read_text())['sources'][str(views.relative_to(REPO))])
+
+    def check(self, mode):
+        return subprocess.run([sys.executable, '-B', str(OPS / 'onecard_chain_derive.py'), mode, str(self.P)],
+                              cwd=REPO, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=1800)
+
+    def test_runtime_closure_and_postnative_reports_on_real_device_evidence(self):
+        ready = json.loads((self.O / 'READY-FOR-DEVICE.json').read_text())
+        self.assertTrue(ready['runtime_closure_check']['passed'])
+        self.assertEqual(ready['postnative_rehearsal']['windows'], ['K1a', 'K1b', 'KD', 'W2m', 'WS', 'WS128x', 'WS128'])
+        self.assertIn('packet58as-onecard-spinwait/evidence/card0-', ready['postnative_rehearsal']['evidence'])
+        fixture = self.P / 'lineage/fixtures/58c-supervisor/source-manifest.json'
+        self.assertEqual(G.sha(fixture), G.sha(AJ / 'lineage/fixtures/58c-supervisor/source-manifest.json'))
+        for mode in ('--closure-check', '--postnative-check'):
+            cp = self.check(mode)
+            self.assertEqual(cp.returncode, 0, mode + cp.stderr[-3000:])
+        # The packet58asb launch-2 failure: KD post-processing read lineage/fixtures/58c-supervisor.
+        aside = fixture.with_name('.aside-source-manifest.json')
+        fixture.rename(aside)
+        try:
+            bad = self.check('--closure-check')
+            self.assertEqual(bad.returncode, 2); self.assertIn('lineage/fixtures/58c-supervisor/source-manifest.json', bad.stderr)
+            bad = self.check('--postnative-check')
+            self.assertEqual(bad.returncode, 2)
+            for window in ('KD', 'W2m', 'WS', 'WS128x', 'WS128'):
+                self.assertIn(window + ': FileNotFoundError', bad.stderr)
+            self.assertNotIn('K1a:', bad.stderr)
+        finally:
+            aside.rename(fixture)
 
     def test_matches_hand_built_packet58as_and_chain_check(self):
         ready = json.loads((self.O / 'READY-FOR-DEVICE.json').read_text())

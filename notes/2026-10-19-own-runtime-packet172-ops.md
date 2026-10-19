@@ -203,3 +203,44 @@ plan/`--check` runs a window's Python entry, so none could see it.
   `--predevice-check` passed on all 7 windows; pin audit 0 parent pins. Chain
   command and digest `bf838b9481d2a30f…` unchanged (the fix is inside the
   packet). Still a confirmation chain, not a resubmission. Not launched.
+
+## 5. packet172d: packet58asb launch 2 stopped after the KD native run; regenerated
+
+K1a, K1b and the KD native receipt passed (GPU fault count unchanged at 2).
+KD's Python post-processing then stopped: `window.json` stop_reasons
+`[Errno 2] ... packet58asb-confirm/lineage/fixtures/58c-supervisor/source-manifest.json`
+(`window.postload_observation -> legacy_memory_plan.seed_observation`), and
+lane admission did not complete. The generator never copied the parent's
+`lineage/`; none of the CPU checks executes post-native code. Same class as
+packet58ame this morning.
+
+- **Fix:** `lineage/` and `screen-reader/` join the copied dirs (byte for byte,
+  sealed as sources). With lineage present, 30 more parent pins are repointed
+  to identical copies instead of provenance (275 relocations in total).
+- **Static closure check** (`closure_check`, `--closure-check`): AST scan of
+  every non-test harness module for constant joins under `Path(__file__)`
+  roots (and names derived from them) plus `lineage/`/`fixtures/` literals.
+  Anything the parent has must exist in the derived packet. On the failed
+  packet it refused with the 58c-supervisor fixture, `lineage/58ag-build-commands.json`,
+  `lineage/synthetic-lookup-receipt.json` and `screen-reader/drain_gate.py`.
+- **Post-native rehearsal** (`postnative_gate`, `--postnative-check`): the
+  window's post-native code on a temp copy of packet58as chain-a's real device
+  evidence (`stage2/packet58as-onecard-spinwait/evidence/card0-58as-a/<window>`),
+  using that chain's own budgets and memory records. On the failed packet:
+  KD..WS128 FileNotFoundError on the fixture (the launch error), K1a/K1b pass.
+- **Tests:** 12 pass. New: the regenerated packet passes both checks; with the
+  fixture moved aside, both refuse with the launch-2 error, then it is restored.
+- **Failed launch 2 evidence:** `data/2026-10-19-packet58asb-failed-launch-2/`
+  (`card0-58as-b/` K1a/K1b/KD receipts and logs, queue.json, fault review,
+  superseded READY; `SHA256SUMS.txt` covers 498 files). The per-window
+  `native-home/` Level Zero compiler caches (15 MB) moved out of Git to
+  `/home/steve/own-xpu-runtime-results/packet58asb-confirm/failed-launch-2/`;
+  their checksums stay in `SHA256SUMS.txt`. `*.jsonl` files (window
+  journals, host-memory samples) are gitignored under `data/` and stay on
+  disk there, also covered by `SHA256SUMS.txt`.
+- **Regenerated packet58asb-confirm** (exact brief command, fresh dirs): rc 0,
+  READY last; lanequeue plan passed; `--check` ok; `verify_ready` ready;
+  `--predevice-check`, `--closure-check` (84 targets) and `--postnative-check`
+  (7 windows on card0-58as-a) passed; pin audit 0 parent pins. Chain digest
+  `bf838b9481d2a30f…` unchanged. Confirmation run, not a resubmission. Not
+  launched.
