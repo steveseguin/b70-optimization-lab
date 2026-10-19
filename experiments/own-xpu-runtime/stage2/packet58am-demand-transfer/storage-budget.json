@@ -1,0 +1,86 @@
+{
+  "passed": true,
+  "performance_extrapolation": false,
+  "measured_directories": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58ah-onecard-record/evidence/card0-58ah-b/K1a",
+      "bytes": 4046707
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58ah-onecard-record/evidence/card0-58ah-b/K1b",
+      "bytes": 4046714
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58ah-onecard-record/evidence/card0-58ah-b/KD",
+      "bytes": 22321118
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58ah-onecard-record/evidence/card0-58ah-b/WS128",
+      "bytes": 16843381
+    }
+  ],
+  "new_schema_measurement_kind": "serialized synthetic records; not device evidence",
+  "synthetic_row": {
+    "schema": "packet58am.demand.v1",
+    "identity": "packet58am-demand-a-smoke-A",
+    "position": 999999,
+    "layer": 47,
+    "mode": "bcs-demand-retained32x2",
+    "slot_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "resident_slots": 10,
+    "staged_entries": 10,
+    "staged_bytes": 19712000,
+    "copy_engine": "copy-only-BCS",
+    "descriptor_producer": 18446744073709551615,
+    "descriptor_readback": 18446744073709551615,
+    "missing_consumer": 18446744073709551615,
+    "clock_domain": "same-device-sycl-profiling",
+    "events": [],
+    "all_consumers_completed": true,
+    "snapshot_disposition": "retained-until-policy"
+  },
+  "synthetic_event": {
+    "kind": "packed-H2D",
+    "id": 18446744073709551615,
+    "start_ns": 18446744073709551615,
+    "end_ns": 18446744073709551615
+  },
+  "serialized_base_row_bytes": 524,
+  "serialized_event_bytes": 110,
+  "maximum_bytes_per_position": 89088,
+  "measured_parent_positions": 2386,
+  "root_floor_bytes": 25000000000,
+  "cpu_preparation_stop_bytes": 27000000000,
+  "root_free_at_preparation": 29522169856,
+  "estimates": {
+    "smoke": {
+      "matched_measured_volume_estimate_bytes": 319225937,
+      "planned_outstanding_write_bytes": 478838906,
+      "baseline_bytes": 22843748,
+      "new_schema_diagnostic_bytes": 288288768,
+      "positions": 3236,
+      "reservation_over_estimate": 1.5000000015662889,
+      "requires_actual_smoke_volume_refresh_before_admission": false
+    },
+    "v5": {
+      "matched_measured_volume_estimate_bytes": 84216905,
+      "planned_outstanding_write_bytes": 126325358,
+      "baseline_bytes": 84216905,
+      "new_schema_diagnostic_bytes": 0,
+      "positions": 11930,
+      "reservation_over_estimate": 1.5000000059370502,
+      "requires_actual_smoke_volume_refresh_before_admission": true
+    }
+  }
+}

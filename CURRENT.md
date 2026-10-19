@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 19, packet58am demand-transfer candidate built on CPU:** The new
+one-card candidate keeps packet58ah's full 31.663 tok/s composition. Both
+compilers pass the byte checks, and the actual device binary passes the CPU
+preparation probe with the smoke and five-view arguments. The analyzer keeps
+the real parent's slow first request. Smoke and v5 proposals are prepared;
+readiness stays false until the census bound is at least 1.000 ms/token, and
+v5 also needs the same-parent overlap smoke. Nothing was launched or queued.
+[Work note](notes/2026-10-19-own-runtime-packet58am.md).
+
 **October 19, packet162b diagnostic micro prepared on CPU:** The small
 real-row kernel comparison builds and its CPU byte, parser and analyzer tests
 pass. The shared entry probe and temporary queue plan pass, but the required
