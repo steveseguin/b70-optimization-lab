@@ -231,7 +231,10 @@ def storage_scan(sources):
                     ast.Gt, ast.GtE, ast.Lt, ast.LtE, ast.Eq, ast.NotEq)) for n in ast.walk(expression)):
                 row['passes_25_5gb_plus_writes'] = bool(eval(compile(expression, '<storage-admission>', 'eval'), {'__builtins__': {}}))
             admissions.append(row)
-            if any(f != STORAGE_FLOOR for f in floors) or row.get('message_value_mismatch') or row.get('passes_25_5gb_plus_writes') is False:
+            # Coordinator 2026-10-19: only floors STRICTER than the shared 25 GB device floor can refuse a
+            # healthy launch (packet154's 30 GB). Looser inherited floors (packet56 head support's 8 GB) sit
+            # beside the packet's own 25 GB admission and are harmless, so they are not findings.
+            if any(f > STORAGE_FLOOR for f in floors) or row.get('message_value_mismatch') or row.get('passes_25_5gb_plus_writes') is False:
                 findings.append(row)
     return check_result(findings, admissions=admissions, functions=functions)
 
