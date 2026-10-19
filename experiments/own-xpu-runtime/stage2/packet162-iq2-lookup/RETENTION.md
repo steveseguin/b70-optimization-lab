@@ -23,3 +23,17 @@ The initial and second receipts remain under `evidence/logic-attempt1/` and
 `evidence/attempt2/`. They are superseded by the final actual-native plus
 raw-chain check, not deleted or silently presented as passes. No device
 binary, device evidence, performance curve or public recipe exists here.
+
+## Packet162b diagnostic artifacts
+
+Keep `micro.cpp`, `micro_candidate.hpp`, `build_micro.py`, `prepare_micro.py`,
+`run_micro.py`, `micro_analyze.py`, `test_micro.py`, `validate_native.py`,
+`seal_micro.py`, the private `native-pinned/` headers and all
+`evidence/micro-prep/` receipts, including the three failed build logs and the
+unsupported shared report result. The source/compiler dependency closure and
+binary hashes are in `evidence/micro-prep/build.json`. Local ignored native
+binaries can be rebuilt with `build_micro.py`. The two ignored selected-row
+files total 20,992,000 bytes, contain model weights and are not committed;
+restore from the admitted GGUF with `prepare_micro.py`, using the exact expert
+IDs, tensor offsets and per-expert SHA256 values in `inputs.json`. No full-bank
+copy, model result or speed sample was generated. Nothing was discarded.

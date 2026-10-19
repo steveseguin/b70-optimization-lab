@@ -1,5 +1,10 @@
 # Packet162 negative-result index
 
+October 19 follow-up: the owner requested the [packet162b device-speed
+diagnostic](MICRO162B.md) before more NaN work. CPU preparation exists, but
+the shared report check blocks readiness. No device-speed result exists and
+no final speed-based closure is asserted. Rows below preserve the earlier study.
+
 | Date | Arm / inference | Result | Revisit condition |
 | --- | --- | --- | --- |
 | 2026-10-19 | L0: shared Boolean circuit replacing the IQ2 grid, unchanged E1 rows | All 1,024 integer words exact; best of eleven fixed orders still 1,288 nodes. Finite full shapes and native host outputs pass; Intel auxiliary NaN chains differ. CPU ~22–40×, not a GPU timing verdict. Closed before device. | Materially smaller dependency graph, complete strict byte parity and a credible replacement-work budget. |

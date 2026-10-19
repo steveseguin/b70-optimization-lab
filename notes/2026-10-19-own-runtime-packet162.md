@@ -46,3 +46,35 @@ live queue or existing packet/screen/ops edits. Main was fetched; after the
 configured pull refused, explicit main fetch confirmed HEAD == origin/main
 at `64eb64aae72c1cc2411fbf53f22caab9f49b9175`. Other workers continued committing
 on main; their work and existing dirty files were preserved.
+
+## Packet162b — device-speed micro prepared, shared report adapter pending
+
+The owner asked to measure device speed before spending more time on NaNs.
+The small diagnostic now builds. It compares the actual production gate/up
+kernel with the eleven-bit decoder, using real rows from ten fixed experts
+in each of two layers. Candidate rows use about 11 MB per test, with 0.512 MB
+extra over the original rows. It records 200 alternating pairs per finite
+input case and compares output and status bytes. NaN inputs are reported
+separately. It runs no model.
+
+The one-card census ended before any GGUF reads. About 21 MB was then read
+on CPU, checking before every expert read that no packet58 unit was active.
+Both builds pass. All final CPU bytes match on synthetic and real rows,
+including invalid routes and NaN inputs; the old auxiliary NaN failures
+remain unresolved. Seven analyzer/report tests and six parser/refusal cases
+pass. The analyzer refuses incomplete streams and CPU timing as device proof.
+
+The proposal is fresh, uses card 2 on lane B, keeps the 25 GB disk floor,
+and allows a 20-minute cooperative watchdog for an expected five-minute
+experiment. The exact binary's preparation probe and temporary-copy queue
+plan pass. Shared entry checks pass, with zero gate-identity refusals.
+
+**The required shared report rehearsal cannot accept a standalone micro.**
+Its unchanged code supports model-screen and one-card model reports only.
+The micro's actual report path passes its own tests, but the shared tool's
+failed report result is preserved. Those shared tools are frozen in this
+brief, so they were not edited and READY remains false. A shared micro-report
+adapter is the remaining handoff requirement. Nothing was queued or run on
+a GPU. No speed verdict or final DO-NOT-REPEAT row was invented.
+
+[Micro contract, receipts and reproduction](../experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/MICRO162B.md).

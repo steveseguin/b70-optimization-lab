@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 19, packet162b diagnostic micro prepared on CPU:** The small
+real-row kernel comparison builds and its CPU byte, parser and analyzer tests
+pass. The shared entry probe and temporary queue plan pass, but the required
+report rehearsal has no standalone-micro adapter. That failure is retained;
+READY remains false. No GPU, service or live queue changed.
+[Work note](notes/2026-10-19-own-runtime-packet162.md#packet162b--device-speed-micro-prepared-shared-report-adapter-pending).
+
 **October 19, packet162 IQ2 lookup study closed on CPU:** A new exact integer
 encoding fits the two-card memory plan with 629 MB extra per rank. Both trial
 decoders match finite tests and the native host kernel's final bytes, but

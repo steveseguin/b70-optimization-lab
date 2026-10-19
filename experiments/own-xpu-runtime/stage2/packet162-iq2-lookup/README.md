@@ -1,6 +1,11 @@
 # Packet162 — remove the IQ2 grid dependency
 
-**Decision: close these two implementations before device preparation.**
+**October 19 follow-up: [packet162b diagnostic preparation](MICRO162B.md).**
+The native micro and CPU tests are complete; shared report-schema compatibility
+blocks final readiness. The proposal is not queued and no device was run.
+The historical decision below and its NaN evidence are preserved.
+
+**Original CPU decision: close these two implementations before device preparation.**
 An exact 11-bit integer encoding fits the modeled rank-1 arena, but neither
 implementation passes every CPU byte check. Finite cases and the actual native
 host kernel's final outputs/status pass; auxiliary NaN chain/tree checks differ.

@@ -1,0 +1,88 @@
+{
+  "cpu_preparation_passed": true,
+  "device_executed": false,
+  "model_output_claim": false,
+  "identity": {
+    "build_receipt_sha256": "5aad90d097596c81abca06d544ec96d3984f8326d014858eebc22e35794dbaee",
+    "binary_sha256": "58451ef85510bad06fa19e6a7235fb5fad7398ed7e63b33f458cb7769e92b5d9",
+    "inputs_sha256": "4d8d92220a9f7b3b9ad2bafeb970cff36dbb8c21d1729e49f6b332bb5b7da30d"
+  },
+  "comparisons": [
+    {
+      "source": "synthetic",
+      "finite_bytes_equal": true,
+      "nan_input_behavior": [
+        {
+          "kind": "bytes",
+          "shape": "synthetic",
+          "fixture": 2,
+          "invalid": 0,
+          "different_bytes": 0,
+          "bytes_equal": true
+        },
+        {
+          "kind": "bytes",
+          "shape": "synthetic",
+          "fixture": 2,
+          "invalid": 1,
+          "different_bytes": 0,
+          "bytes_equal": true
+        }
+      ],
+      "stream_sha256": "22aa9f2fd5353044851126e04f33efb6cca4725244add4392dbbf9983e27dea6"
+    },
+    {
+      "source": "real",
+      "finite_bytes_equal": true,
+      "nan_input_behavior": [
+        {
+          "kind": "bytes",
+          "shape": "layer0",
+          "fixture": 2,
+          "invalid": 0,
+          "different_bytes": 0,
+          "bytes_equal": true
+        },
+        {
+          "kind": "bytes",
+          "shape": "layer0",
+          "fixture": 2,
+          "invalid": 1,
+          "different_bytes": 0,
+          "bytes_equal": true
+        },
+        {
+          "kind": "bytes",
+          "shape": "layer24",
+          "fixture": 2,
+          "invalid": 0,
+          "different_bytes": 0,
+          "bytes_equal": true
+        },
+        {
+          "kind": "bytes",
+          "shape": "layer24",
+          "fixture": 2,
+          "invalid": 1,
+          "different_bytes": 0,
+          "bytes_equal": true
+        }
+      ],
+      "stream_sha256": "cff2afaf59a4150ebec3b0407096ded767a59c42580002d0ce92c83961d3ad37"
+    }
+  ],
+  "analyzer_tests_passed": true,
+  "packet_report_path_tested": true,
+  "shared_entry_command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/rehearse_entry.py",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/proposed-p162-micro-B.txt",
+    "--report",
+    "--json"
+  ],
+  "shared_entry_returncode": 1,
+  "shared_report_passed": false,
+  "temporary_plan_passed": true,
+  "production_header_equal": true
+}

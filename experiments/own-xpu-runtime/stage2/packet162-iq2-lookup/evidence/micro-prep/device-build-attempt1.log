@@ -1,0 +1,96 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/micro.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p90_expert.hpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p65_expert.hpp:5:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49d_expert.hpp:5:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_expert_kernel.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_gemv.hpp:19:7: error: SYCL kernel cannot use exceptions
+   19 |  else throw std::invalid_argument("p48 unsupported format");
+      |       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p90_layout.hpp:5:68: note: called by 'expert_stride'
+    5 | inline constexpr size_t expert_stride(unsigned k){return p49bgemv::layout(iq3::Type::IQ2_S,k).halves+4*(k/256);}
+      |                                                                    ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/enum_candidate.hpp:69:17: note: called by 'wide_chains<iq3::Type::IQ2_S, 2560U, 8U, false>'
+   69 |     t.b=(w[p90::expert_stride(K)+step*4+physical]>>chain)&1;float values[8];decode_tile<T>(t,k,values,decoded);
+      |                 ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/enum_candidate.hpp:104:10: note: called by 'chains'
+  104 |   return wide_chains<T,K,V>(w,x,lane);
+      |          ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/enum_candidate.hpp:130:39: note: called by 'operator()'
+  130 |      value=p49dvirtual::local_tree<V>(chains((stream?b.peer:b.w)+source*b.rb,b.x+(paired?0:slot*K),physical));
+      |                                       ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/kernel_launch_helper.hpp:133:5: note: called by 'kernel_parallel_for<(lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/enum_candidate.hpp:125:59), sycl::nd_item<>, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/enum_candidate.hpp:125:59)>'
+  133 |     KernelFunc(detail::Builder::getElement(detail::declptr<ElementType>()));
+      |     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/micro.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p90_expert.hpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p65_expert.hpp:5:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49d_expert.hpp:5:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_expert_kernel.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_gemv.hpp:19:13: error: SYCL kernel cannot call an undefined function without SYCL_EXTERNAL attribute
+   19 |  else throw std::invalid_argument("p48 unsupported format");
+      |             ^
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:179:13: note: '~invalid_argument' declared here
+  179 |     virtual ~invalid_argument() _GLIBCXX_NOTHROW;
+      |             ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_gemv.hpp:13:18: note: called by 'layout'
+   13 | constexpr Layout layout(Type t,unsigned k){
+      |                  ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/micro.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p90_expert.hpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/kernel_guard.hpp:3:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/sycl.hpp:51:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/core.hpp:21:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/accessor.hpp:12:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/buffer.hpp:12:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/backend_types.hpp:13:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ostream:40:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ios:44:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/ios_base.h:46:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/system_error:43:
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:138:13: error: SYCL kernel cannot call an undefined function without SYCL_EXTERNAL attribute
+  138 |     virtual ~logic_error() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
+      |             ^
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:138:13: note: '~logic_error' declared here
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:179:13: note: called by '~invalid_argument'
+  179 |     virtual ~invalid_argument() _GLIBCXX_NOTHROW;
+      |             ^
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:60:5: error: SYCL kernel cannot call an undefined function without SYCL_EXTERNAL attribute
+   60 |     ~__cow_string();
+      |     ^
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:60:5: note: '~__cow_string' declared here
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:138:13: note: called by '~logic_error'
+  138 |     virtual ~logic_error() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
+      |             ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/micro.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p90_expert.hpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/kernel_guard.hpp:3:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/sycl.hpp:51:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/core.hpp:21:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/accessor.hpp:12:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/buffer.hpp:12:
+In file included from /opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/backend_types.hpp:13:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ostream:40:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ios:41:
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/exception:36:
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/exception.h:63:13: error: SYCL kernel cannot call an undefined function without SYCL_EXTERNAL attribute
+   63 |     virtual ~exception() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
+      |             ^
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/exception.h:63:13: note: '~exception' declared here
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:138:13: note: called by '~logic_error'
+  138 |     virtual ~logic_error() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
+      |             ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/micro.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p90_expert.hpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p65_expert.hpp:5:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49d_expert.hpp:5:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_expert_kernel.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_gemv.hpp:19:13: error: SYCL kernel cannot call an undefined function without SYCL_EXTERNAL attribute
+   19 |  else throw std::invalid_argument("p48 unsupported format");
+      |             ^
+/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/stdexcept:173:14: note: 'invalid_argument' declared here
+  173 |     explicit invalid_argument(const char*) _GLIBCXX_TXN_SAFE;
+      |              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p49b_gemv.hpp:13:18: note: called by 'layout'
+   13 | constexpr Layout layout(Type t,unsigned k){
+      |                  ^
+6 errors generated.
