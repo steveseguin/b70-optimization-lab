@@ -32,7 +32,7 @@ def main():
   measured_parent_total_bytes=243_000_000,device_free_floor_bytes=25_000_000_000,
   cpu_preparation_free_floor_bytes=27_000_000_000,root_free_at_seal_bytes=shutil.disk_usage('/').free,
   cpu_peak_rss_kib=prep['peak_rss_kib'],
-  limitation='CPU readiness only. No device timing, full-model parity, overhead or measured top-two ranking exists for packet157. Both proposals remain unqueued.')
+  limitation='Packet157b CPU reseal only. The original lane-A smoke completed device work but failed its first-request analyzer on printed ms rounding; its evidence is retained. Full-suite device parity, overhead and top-two ranking remain pending. All four fresh proposals are unqueued.')
  save(LOCAL/'READY-FOR-DEVICE.json',marker)  # LAST artifact write.
  for r in plans['rows']:assert m.check_job(json.loads((ROOT/r['proposal_name']).read_text()))['passed']
  print('Packet157 READY: both lanes, A first; four proposals unqueued; device evidence pending')

@@ -18,7 +18,7 @@ def probe(variant,kind,negative=None,lane="A"):
  from launch_env import apply
  verify();D.oracle_inputs()
  baseline=exec_limits.snapshot();seen=[];envs=[];units=[];reservations=[];oracle=[];result={}
- unit='screen-packet157-'+variant+'-'+kind+'-'+lane+'.service'
+ unit='screen-packet157b-'+variant+'-'+kind+'-'+lane+'.service'
  group='0::/user.slice/user-1000.slice/user@1000.service/app.slice/'+unit+'\n'
  if negative=='unit':group=group.replace('screen-packet157','wrong-packet157')
  original_read=Path.read_text;original_open=Path.open;original_run=subprocess.run;original_glob=Path.glob;original_exists=Path.exists

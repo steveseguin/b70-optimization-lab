@@ -4,8 +4,8 @@ from pathlib import Path
 from p157_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 QUEUE=LOCAL.parents[1]/'ops/lane-queue'
 def proposal(kind,lane):
- return dict(name='packet157-split-'+kind+'-'+lane,lane=lane,
-  argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','split','--kind',kind,'--lane',lane,'--output',str(P/'evidence'/('device-p157-'+kind+'-'+lane)),'--fault-review','{REVIEW}','--authorized-device-window'],
+ return dict(name='packet157b-split-'+kind+'-'+lane,lane=lane,
+  argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','split','--kind',kind,'--lane',lane,'--output',str(P/'evidence'/('device-p157b-'+kind+'-'+lane)),'--fault-review','{REVIEW}','--authorized-device-window'],
   env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),
   plan=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build'/m/'own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build'/m/'own-rt-iq3')) for m in ('device','gnu-host')]),host_required_available_bytes=97*1024**3+1200*1024**2,expected_seconds=[420,600],watchdog_seconds=2400))
 def main():

@@ -53,3 +53,44 @@ claimed yet. Those require the unqueued smoke and one-load C/T/C/T/C bracket.
 Detailed evidence and reproduction commands are in the
 [packet README](../experiments/own-xpu-runtime/stage2/packet157-draft-decomp/README.md)
 and its `v5/evidence/` directory.
+
+## Packet157b: printed-duration tolerance repair
+
+The original `packet157-split-smoke-A` ran at 02:52:39–02:55:09 UTC. Device
+work completed, then the first-request proof refused `host duration disagrees`.
+There were no GPU faults reported; marker/latch archival belongs to the
+coordinator. This repair does not launch or queue another attempt.
+
+The retained incident64 rank-1 stream contains 6,940 host intervals. Exactly
+one failed the former absolute 0.02 ms check: sequence 1, position 0,
+`wait_rank0_command`, printed as 28540.4 ms while its timestamps span
+28540.420976 ms. The native stream prints its first duration with six significant
+digits before setting precision 17 for timestamps. Changing that writer would
+require rebuilding native code, so this patch changes only the Python check.
+It now accepts an absolute difference at most `max(0.02, 1e-5 * ms)` milliseconds.
+The other 0.02 ms check concerns group conservation, not printed durations
+against timestamps, and remains unchanged.
+
+Seven analyzer tests pass, including the exact failing row, both +1 ms and
+-1 ms disagreements, and a short-interval error exceeding the original floor.
+The three timing-report tests pass. All 6,940 retained intervals pass the new
+check. See [repair receipt](../experiments/own-xpu-runtime/stage2/packet157-draft-decomp/v5/evidence/packet157b-analyzer.json)
+and [regression tests](../experiments/own-xpu-runtime/stage2/packet157-draft-decomp/v5/test_analyze.py).
+The previous split-CPU receipt and readiness marker are retained beside the
+repair receipt. `v5/reseal157b.py` refreshes the Python test evidence after
+checking that the native sources and other prior inputs are unchanged; it
+explicitly retains the earlier native byte runs rather than claiming new ones.
+
+The four proposal filenames stay the same. Their fresh job names are
+`packet157b-split-{smoke,bracket}-{A,B}` and their fresh output directories are
+`v5/evidence/device-p157b-{smoke,bracket}-{A,B}`. The packet-local entry rehearsal
+uses those new service names. Preparation uses nice 19, CPUs 8-15,24-31,
+`python3 -B`, closed stdin and a 2,000,000,000-byte process data limit.
+Native binaries, other packets, screen state and live queues remain untouched.
+
+All four temporary queue plans and `v5/rehearse_entry.py PROPOSAL --report`
+rehearsals pass. The four positive entry routes and twelve refusal cases,
+both-lane report gate, immutable pin guard and actual loader check pass.
+The reseal/rehearsal runner's peak child RSS was 54,616 KiB. The final
+`READY-FOR-DEVICE.json` is written last, after these receipts and this note;
+device quality, overhead and ranking still require the fresh device runs.
