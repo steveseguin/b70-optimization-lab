@@ -27,14 +27,14 @@ def main():
   dest.mkdir(exist_ok=False)
   env=dict(os.environ,OMP_NUM_THREADS='2',LD_LIBRARY_PATH='/opt/intel/oneapi/compiler/2026.0/lib')
   log=P/'evidence'/f'state-{compiler}-{repeat}-{mode}.log'
-  with log.open('w') as stream:r=subprocess.run([sys.executable,'-B',str(P/'state_gate.py'),'--worker',str(binary),str(selection),sha(selection),str(dest),mode],env=env,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=900)
+  with log.open('w') as stream:r=subprocess.run([sys.executable,'-B',str(P/'state_gate.py'),'--worker',str(binary),str(selection),sha(selection),str(dest),mode,'sequence-only'],env=env,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=900)
   assert r.returncode==0,log.read_text()[-6000:]
   result=json.loads((dest/'result.json').read_text());raw=dest/'cases.txt';archive=P/'evidence'/f'state-{compiler}-{repeat}-{mode}.txt.gz';archive.write_bytes(gzip.compress(raw.read_bytes(),mtime=0))
   result.update(compiler=compiler,repeat=repeat,mode=mode,transcript_sha256=sha(archive),snapshot=json.loads((dest/'speculative-snapshot.json').read_text()))
   print(compiler,repeat,mode,'PASS',flush=True);return result
  with ThreadPoolExecutor(max_workers=2) as pool:rows=list(pool.map(execute,jobs))
  assert len({r['canonical_sha256'] for r in rows})==1,'compiler/repeat/mode state bytes differ'
- save(P/'evidence/state.json',dict(passed=True,device_executed=False,model_read=False,full_shape_read=False,runs=rows,six_rotation_states=True,immutable_table_reset_checked=True,workers=2,worker_limit_bytes=1280*1024**2,peak_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'state_gate.py',P/'native/state_bytes.cpp',CHECKED/'strict_snapshot.hpp',CHECKED/'request_reset.hpp',P/'native-src/main.cpp')}))
+ save(P/'evidence/state.json',dict(passed=True,device_executed=False,model_read=False,full_shape_read=False,runs=rows,scope='98-step mixed sequence plus three corruption negatives; real extents separately checked',six_rotation_states=True,immutable_table_reset_checked=True,workers=2,worker_limit_bytes=1280*1024**2,peak_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'state_gate.py',P/'native/state_bytes.cpp',CHECKED/'strict_snapshot.hpp',CHECKED/'request_reset.hpp',P/'native-src/main.cpp')}))
 if __name__=='__main__':
  if '--worker' in sys.argv:
   resource.setrlimit(resource.RLIMIT_AS,(1280*1024**2,1280*1024**2));os.execv(sys.argv[2],sys.argv[2:])

@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 19, packet153 static snapshot tables prepared on CPU:** The private
+packet136 copy builds the snapshot copy table once at load. Capture and rollback
+reuse it, keeping the copied state unchanged. GNU and Intel byte checks agree;
+real copy sizes and reset behavior pass. Two lane-B proposals are prepared,
+not queued. Device equality and speed remain unmeasured; 58.798 tok/s stays the
+two-card record. The final packet readiness marker controls admission.
+[Work note](notes/2026-10-19-own-runtime-packet153.md).
+
 **October 19, 01:20 UTC — 1-card IQ3 record 31.66 tok/s on one Arc Pro B70, submitted and approved (`cmvekebvh00a0rf01q3v2c3cz`).**
 - **Change:** packet58ah = packet58ad + packet58ag's one-card ports (HC-wide, p109 other-fusion, E1 exact half-scale cache).
 - **Bracket:** +3.38% strict, 60/60 exact.

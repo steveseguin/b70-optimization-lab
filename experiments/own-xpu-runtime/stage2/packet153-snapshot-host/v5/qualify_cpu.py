@@ -1,7 +1,7 @@
 """Serial CPU preparation driver. Never launches devices or edits live queues."""
 import resource,subprocess,sys
 from p153_v5_build_engine import P,ROOT,limits
-STEPS=[('build','p153_v5_build_engine.py',[]),('state','state_gate.py',[]),('real-shape','real_shape_gate.py',[]),('controller','controller_gate.py',[]),('admission','admission_gate.py',[]),('analysis','analysis_gate.py',[]),('submission','submission_rehearsal.py',[]),('safety','safety_gate.py',[]),('limits','exec_gate.py',[]),('stage-proposals','p153_v5_queue_plan.py',['--stage']),('seal','cpu_seal.py',['--seal']),('entry','entry_gate.py',[]),('launch-limits','launch_limit_gate.py',[]),('worker','worker_gate.py',[]),('report','report_gate.py',[]),('queue','p153_v5_queue_plan.py',[]),('pins','pin_gate.py',[])]
+STEPS=[('build','p153_v5_build_engine.py',[]),('state','state_gate.py',[]),('real-shape','real_shape_gate.py',[]),('controller','controller_gate.py',[]),('switch','switch_gate.py',[]),('admission','admission_gate.py',[]),('analysis','analysis_gate.py',[]),('submission','submission_rehearsal.py',[]),('safety','safety_gate.py',[]),('limits','exec_gate.py',[]),('stage-proposals','p153_v5_queue_plan.py',['--stage']),('seal','cpu_seal.py',['--seal']),('entry','entry_gate.py',[]),('launch-limits','launch_limit_gate.py',[]),('worker','worker_gate.py',[]),('report','report_gate.py',[]),('queue','p153_v5_queue_plan.py',[]),('pins','pin_gate.py',[])]
 def main():
  import argparse
  assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)

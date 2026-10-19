@@ -23,6 +23,10 @@ class Proof(unittest.TestCase):
    path.write_text('\n'.join(json.dumps(r) for r in rows if r.get('p150_segment')!=name)+'\n')
    with self.subTest(scope=name),self.assertRaises(ValueError):analyze.data_proof(self.root,self.row)
   path.write_text(raw)
+ def test_empty_native_trace(self):
+  for key in ('rank_trace','guess_rows'):
+   row=dict(self.row);row[key]=[]
+   with self.assertRaises(ValueError):analyze.data_proof(self.root,row)
  def test_missing_native_trace(self):
   row=dict(self.row);row.pop('rank_trace')
   with self.assertRaises(ValueError):analyze.data_proof(self.root,row)

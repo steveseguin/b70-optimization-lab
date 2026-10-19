@@ -45,3 +45,6 @@ No GGUF/full-shape input is read while the record chain runs.
 Only `READY-FOR-DEVICE.json`, written last after gates, can admit this packet.
 Inherited metadata is under `lineage-inputs/` and proves no new device result.
 Proposals are prepared only, never queued by this task.
+
+See [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) for the exact
+completed test scope and retained failed attempts. Device results remain pending.

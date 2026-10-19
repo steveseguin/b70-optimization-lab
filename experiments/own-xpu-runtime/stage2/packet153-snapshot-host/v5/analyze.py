@@ -105,6 +105,7 @@ def data_proof(root, request):
     native_path=dest/'native-result.json'
     native=json.loads(native_path.read_text()) if native_path.is_file() else request
     demand('rank_trace' in native and 'guess_rows' in native,'missing native correction stream')
+    demand(native['rank_trace'] and native['guess_rows'],'empty native correction stream')
     from timing_report import summarize
     v=dict(index=0,choice='candidate',output=str(root),requests=[request])
     timing=summarize(Path(root),[v])

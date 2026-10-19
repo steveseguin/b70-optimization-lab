@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_read": false,
+  "full_shape_read": false,
+  "sequence": [
+    "production",
+    "static",
+    "production",
+    "static",
+    "production"
+  ],
+  "runs": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "GNU",
+      "repeat": 1
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "GNU",
+      "repeat": 2
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "Intel",
+      "repeat": 1
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "Intel",
+      "repeat": 2
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/switch_gate.py": "58857e208b13a0ee157ee45c013df8471178d822ac73136820f0291821790768",
+    "experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/native/switch_bytes.cpp": "1e50f6416c283a314998c940fa9799189462fbf8e1d60238d08a315277105f98",
+    "experiments/own-xpu-runtime/stage2/packet153-snapshot-host/v5/native/engine_bracket.hpp": "9c429dcb76d768e907ee983ee92ddb7a060e1263a50c078f12a70285acbfda38",
+    "experiments/own-xpu-runtime/stage2/packet153-snapshot-host/build/checked/experiments/own-xpu-runtime/stage2/packet153-snapshot-host/strict_snapshot.hpp": "f2ebf3258e82fc24e6fa007cb1a2d3becc1b4fcb2eb2bbd88ddeac2b4c8bdf37",
+    "experiments/own-xpu-runtime/stage2/packet153-snapshot-host/build/checked/experiments/own-xpu-runtime/stage2/packet153-snapshot-host/request_reset.hpp": "19aad330023a206452f53214685f68798e5dabd9c0adb3e69641d75e12e5f6de"
+  }
+}

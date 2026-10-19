@@ -2,7 +2,7 @@
 import argparse,json,subprocess,sys
 from pathlib import Path
 from p153_v5_build_engine import P,LOCAL,ROOT,sha,save
-GATES=('build','state','real-shape','admission','analysis','submission-rehearsal','controller','safety','exec-limits','loader')
+GATES=('build','state','real-shape','admission','analysis','submission-rehearsal','controller','safety','exec-limits','loader','switch')
 def check_sources(rows):
  for name,digest in rows.items():
   assert (ROOT/name).is_file() and sha(ROOT/name)==digest,'source changed: '+name
@@ -23,6 +23,7 @@ def seal():
  # Evidence root paths are historical regression data, not external dependencies.
  paths.update(P/'evidence'/(n+'.json') for n in GATES if n!='retained-report-regression')
  sources={str(f.relative_to(ROOT)):sha(f) for f in sorted(paths)}
+ for gate in rows.values():sources.update(gate.get('sources',{}))
  sources.update(rows['build']['sources']);sources.update(rows['build']['artifacts'])
  subprocess.run([sys.executable,'-B',str(LOCAL/'shared_oracle.py'),'--require-complete'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,check=True,timeout=180)
  row=dict(schema='packet153.cpu-composition.v1',passed=True,device_executed=False,device_quality_pending=True,arithmetic='iq3-p49-split32-v1',sources=sources,variants=['production','static'],gates=list(GATES),binary_sha256=sha(P/'build/device/own-rt-iq3'))

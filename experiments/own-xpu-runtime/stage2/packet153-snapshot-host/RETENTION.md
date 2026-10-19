@@ -18,3 +18,10 @@ compressed under v5/evidence; no full raw state arrays or model payload are
 committed. Rebuild through v5/qualify_cpu.py using the recorded commands and
 immutable binaries. Aborted/frozen CPU attempts remain local; their refusal log
 and work-note explanation are retained. Build output remains below 300 MB.
+
+The inherited RoPE binary/header, composition JSON, realistic-suite vocabulary
+files and retained report inputs exceed 1 MiB. They are exact vendored inputs
+needed to reproduce the closed source and report paths; restore their original
+bytes from this commit, not by regenerating approximate substitutes. Inherited
+report-regression receipts are historical parser checks, not packet153 device
+measurements or active admission dependencies.

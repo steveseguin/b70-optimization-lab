@@ -1,66 +1,54 @@
-# Packet136 banked rollback bundle preparation — closeout
-
+# Packet153 CPU preparation closeout
 <!-- campaign-closeout -->
 
 ## Question and identity
 
-Prepare bundle7 (packet124c) plus packet131b banked rollback before its lane-B
-verdict, without launching anything. Exactly two selections are sealed:
-`rollback_state=copy|banks`. Native binaries and selections match packet131b;
-the arithmetic remains `iq3-p49-split32-v1` and KV remains BF16.
+Can packet136 banked bundle8 remove per-cycle rank-0 snapshot descriptor
+construction and upload while retaining iq3-p49-split32-v1 state? October 19,
+2026, CPU preparation on steve-b70s for the two-card lane-B smoke and one-load
+production/static/production/static/production bracket. No device measurement.
 
 ## Outcome
 
-CPU preparation passes. All 182 parent symlinks survive, including the original
-packet49 oracle. All 88 tests, 11 subtests and five worker tests pass. Extended
-admission covers eleven Python windows, 31 intercepted native argument lists,
-eleven queue windows, twelve input preflights and six real oracle checks.
-Six confirm entries pass real CPU admission through both intercepted ranks.
-Both compositions pass their full-size CPU checks. The 22 startup paths are
-verified; unchanged K2 uses the explicitly labeled frozen receipt described
-below. The new six-job lane-A proposal passes temporary planning only.
+The implementation and CPU gates qualify a static table shared by all six bank
+roles. Captures and restores submit one copy instead of upload plus copy. The
+984 descriptors occupy 47,232 bytes once at load; the 19,025,640 copied bytes
+remain unchanged. Device output equality and speed are pending. The historical
+58.798 tok/s record is unchanged. The final readiness marker controls admission.
 
-Readiness remains false: composed A smoke and grid results are absent, and
-packet131b B is incomplete. Both lanes must be exact and improve at least
-0.5% against every same-lane control. No new device speed or output is claimed;
-the 58.223834 bundle7 record remains current. Build storage is 256,692,386 bytes.
+## What worked
 
-## Useful mechanisms
+Eight fresh GNU/Intel production/static runs produced one canonical digest for
+the 98-step mixed sequence and three corruption negatives, including forced
+rollback, six bank roles and reset. Actual copy geometry passed separately at
+nine positions through 4095 with synthetic bytes, redzones and older QSA rows.
+Actual Engine switches and immutable-table reset protection passed both
+compilers twice. Timing analysis rejects missing streams and scopes. The own
+submission helper replayed copied packet136 evidence and rejected relabeling it.
 
-Bind reused binaries, native selections and bank-state transcripts by hashes.
-Keep oracle authority outside repository source maps and run the real safe-path
-and oracle checks even for `--plan`. Recompute device rates and acceptance from
-raw receipts. Require identical native selection on both lanes, fresh chain
-output, complete drain and uncapped native launch admission. Embed the runtime
-environment in every proposed launch command.
+## What failed or remains uncertain
 
-## Failures and uncertainty
+Two coordinator freezes consumed much of the preparation window. The first
+state attempt timed out after a freeze; another partial run was interrupted.
+Their logs are retained and are not passing evidence. The final bounded state
+run used the existing sequence-only mode, not the originally planned full
+12-position state matrix. Its exact execution driver is retained. The regular
+reproduction driver recompiles. A stale source seal correctly refused an entry
+rehearsal and was regenerated before repeating it. No GPU output, event cost,
+first-minute device proof or throughput improvement has yet been measured.
 
-An inherited compiler metadata layout initially duplicated its source argument;
-the local harness normalizes it without changing frozen sources or binaries.
-The shared K2 native CPU fixture refused allocation under the 4-GiB cap and
-cleaned up fully. Its unchanged binary and packet124c archive are hash-verified,
-with `reused_unchanged=true` and `fresh_native_run=false`; the cap was not raised.
-Other startup paths ran locally. K2's real Python argument path and timing
-receipt replay still execute. Both original refusal logs are retained.
+## Evidence and patches
 
-Device correctness and speed remain unknown. The submission tooling retains
-the honest owner-authorized 128-token scope, with strict512 final gate false.
+- [CPU composition](v5/cpu-seal.json), [state](v5/evidence/state.json),
+  [real geometry](v5/evidence/real-shape.json), [switch/reset](v5/evidence/switch.json).
+- [Source delta](snapshot-static.patch), [retained evidence policy](RETENTION.md),
+  [excluded work](DO-NOT-REPEAT.md), [preparation note](../../../../notes/2026-10-19-own-runtime-packet153.md).
+- [Queue rehearsal](v5/evidence/queue-plan.json) and [pin admission](v5/evidence/pin-guard.json).
 
-## Retained evidence
+## When to revisit
 
-- [Copy and symlink audit](../../ops/packet136-orchestration/inputs/symlink-audit.json)
-- [Extended argument and queue gate](../../ops/packet136-orchestration/evidence/argument-gate.json)
-- [CPU audit](../../ops/packet136-orchestration/cpu-final.json)
-- [Readiness](../../ops/packet136-orchestration/ready.json)
-- [Runbook](../../ops/packet136-orchestration/README.md)
-- [Retention and restoration](RETENTION.md)
-- [Bank patch](snapshot-banks.patch)
-
-## Next evidence and revisit conditions
-
-After independently admitted device work, run orchestration with
-`--evidence-only`, then verify readiness. A failed lane closes this composition
-for the captured identity; it does not authorize a chain. Changed source,
-selection, binary, oracle authority or linked artifact invalidates the relevant
-CPU receipts. No service or job is launched by this preparation.
+The coordinator may use the final readiness marker to queue the lane-B smoke.
+Only a successful smoke with its first-minute timing proof admits the bracket.
+Inspect the unchanged target output before making any performance claim. The
+static path can remove host table work and one upload submission, not all of
+the measured 0.743 ms snapshot/accept/rollback scope.

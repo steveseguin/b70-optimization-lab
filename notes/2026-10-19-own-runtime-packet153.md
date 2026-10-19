@@ -51,3 +51,24 @@ at its original 58.798108759182306 rate and refused to label it packet153.
 Historical pins in that rehearsal live only in temporary scratch. No submission
 payload is retained, sent or used as a new measurement. The longer byte-state
 matrix is still running before final sealing.
+
+Final CPU qualification update: the second coordinator freeze also interrupted
+the long state matrix. The completed gate is explicitly narrower than the
+original twelve-position plan: the existing 98-step sequence-only mode plus
+three corruption negatives, GNU and Intel, production and static, twice each
+from fresh processes. All eight canonical digests agree. Six bank-role pairs,
+forced rollback and request reset are covered; nine real-copy positions through
+4095 pass separately. Failed/partial attempts remain local evidence and are not
+counted. The exact final execution driver is retained, while the normal driver
+still recompiles its fixtures. The live binaries and all runtime sources match
+the tested seal. Peak recorded state RSS was 849.5 MiB; two workers were each
+capped at 1.25 GiB. Generated builds remain local and below 300 MB.
+
+The new table is 47,232 bytes (984 extents), uploaded once. Capture and restore
+copy the same 19,025,640 bytes with no per-cycle descriptor build or upload.
+No lane-to-extent map was added. All device output and timing claims are pending.
+The smoke and five-view proposals are prepared only; neither is queued. The
+25 GB launch floor, 240 MB/view allowance and 3,600-second watchdog are retained.
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet153-snapshot-host/CPU-PREPARATION-CLOSEOUT.md)
+and the last-written readiness marker bind the final gate outcome. No GPU,
+service, privileged operation or live queue edit was performed by this task.
