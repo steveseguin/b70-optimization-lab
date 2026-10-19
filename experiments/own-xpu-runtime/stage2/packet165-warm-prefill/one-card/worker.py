@@ -47,7 +47,7 @@ def native_command(output,table):
  for k,v in [('--max-new',512),('--seconds',7200),('--wait-seconds',600),('--output',output/'native'),
   ('--suite-inputs',table),('--input',HERE/'inputs/prefill512/tokens.txt'),('--plan',HERE/'inputs/plan.tsv'),
   ('--identity',HERE/'inputs/identity.tsv'),('--selection',HERE/'selection.json'),('--selection-sha256',sha(HERE/'selection.json')),('--dispatch',HERE/'dispatch.json')]:replace(k,v)
- return cmd
+ return ['/usr/bin/ionice','-c3',*cmd]
 
 def prove_drain(receipts):
  for row in receipts:

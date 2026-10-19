@@ -84,3 +84,29 @@ script are retained. This is a local preparation packet, not a public recipe.
 
 Final READY markers are written after all CPU checks and seals. Actual512 runs,
 long-output oracle extension and any quality decision remain future work.
+
+## Packet165c — one-card idle I/O launch repair
+
+The one-card native command now runs under `/usr/bin/ionice -c3`, matching
+packet58aj. The old packet163 attempt refused before reading model bytes or
+starting compute; its evidence is preserved. Binary, model, arithmetic,
+full-precision KV, requests, waits and budgets are unchanged.
+
+Both proposals have fresh `p165c` names and `device-p165c-*` output paths, with
+the second load referencing its new first load. All four real entry/worker
+sequences pass the intercepted exec gate: the real ionice child reports Linux
+I/O class3, every native flag is accepted by built help, imports use the closed
+launch environment, all request streams and oracle prefixes pass, and the
+analyzer reproduces real parent device evidence. The CPU native fixture passes
+56 resets and224 sensor checks across the four registered sequences. Only that
+CPU test fixture was compiled; production binaries were unchanged.
+
+Temporary lanequeue plans and shared report rehearsals pass. The first plan's
+stale READY proposal-pin refusal is retained; pending markers deny launch until
+final checks complete. Existing shared preparation-adapter warnings remain
+visible. Final READY files are written last with `ready_for_device=true`.
+No GPU, model read, service, sudo, host setting or live queue changed. Work used
+nice19, cores8–15/24–31, Python `-B`, stdin `/dev/null`, under4GB memory and a
+26MB CPU fixture build. The unrelated dirty workspace was preserved.
+
+[Repair, checks and retained prior identities](../experiments/own-xpu-runtime/stage2/packet165c-ionice/README.md).

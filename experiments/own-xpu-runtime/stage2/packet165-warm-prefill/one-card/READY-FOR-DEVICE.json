@@ -2,22 +2,20 @@
   "ready": true,
   "device_executed": false,
   "queued": false,
-  "created_utc_ns": 1792393178181029281,
-  "seal_sha256": "8c3cbf0980f0f92ac9e4f48048160c96398e515b358d4a1f1d7da942b34fd466",
+  "created_utc_ns": 1792394617945539387,
+  "seal_sha256": "64afe803950ab7b897dc9cc09e21b102d2bc7b375ca9d995498b835a0aad1f01",
   "checks": {
     "evidence/build.json": "420fa50d45c65f36433eecd9797388c6ef1c34cd4c891ba6f9f4584a09290fc5",
     "evidence/identity-check.json": "051fc8971943f04cf252160dfeb5d8fe76748f29ff520829993561ec7c0b421b",
     "evidence/delta-check.json": "d684273f6b7efd873c2b1223c8ed2d37f300d693535b83c8c175f8d2f02ee9db",
     "evidence/analyzer-tests.json": "f4d1772b70956df064974bfab01648d9b0c7cdf5c8d4c97cb4e808cd2718ac5a",
     "evidence/report512-test.json": "e5c4f34a1e46a6106281f6caf316c97ecae73e9110cd71be00bf4d347ca8f94e",
-    "evidence/real-arm-sequence.json": "1870b8aca3799f065d6dc314425a7b2bbf76237980a4656af71c2e9bdebedd0e",
     "evidence/native-sequence.json": "9810f0e8cdebad36a942bc08572b4cc771b97af00208df951a896d4bbfeaed01",
     "evidence/preparation-probe.json": "ecf52864f23d80d4e6d2527ee632ac58466f3684990bcb2c1031dd07701568ae",
-    "evidence/device-path-imports.json": "da15b26cce754beb632d2c34ca3b9e027f2807515ee8b82623451e24eab5fd32",
-    "evidence/flags.json": "69c1081fc8d0861704c7a4d2950b954deecc88fe65a120c8d2dfc52bc492ea9e",
-    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/evidence/packet165b/rehearse-one-card-A.json": "2b5ba7ae24175ad8f5b5ccfa0e06deba916b33d445728dbcd87562ad394696de",
-    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/evidence/packet165b/plan-one-card-A.log": "9c5d13f8b27264167c76ba5b61bad88994a6d837db554ea9a2e44bb114d66fd6",
-    "seal.json": "8c3cbf0980f0f92ac9e4f48048160c96398e515b358d4a1f1d7da942b34fd466"
+    "seal.json": "64afe803950ab7b897dc9cc09e21b102d2bc7b375ca9d995498b835a0aad1f01",
+    "lineage/packet165c/launch-checks.json": "9956bbdc974847e53225510a33de32cc5c7bae2769e415e3bfaa78b2ceedfba2",
+    "lineage/packet165c/native-sensors.json": "2dbc0decb2186d39f667ccf2d2fb98400611b063161c7d9221860d44cd9b919f",
+    "lineage/packet165c/proposal-checks.json": "0a620aa0210ea5a1879f69f905f09e8578d9128530db2bc808855f242a92c276"
   },
   "scope": "CPU preparation passed; warm512 speed and full-output quality remain unmeasured",
   "oracle_cap": 128,
@@ -25,5 +23,9 @@
   "execution_order": "incident-retrospective once, reset, prefill512, remaining11 once",
   "synthetic_report_scope": "shared64/128 plus local512; synthetic CPU evidence is not performance or arithmetic qualification",
   "native_probe_scope": "real target reset and device preparation paths, CPU marker transport; first64 mutable bytes sampled; allocation IDs/pointers/categories preserved; synthetic sensors are not model output or timing evidence",
-  "draft_probe_scope": "two-card: exact extracted draft reset method on real Engine and synthetic facade; constructor, draft kernels, model data and arithmetic not exercised"
+  "draft_probe_scope": "two-card: exact extracted draft reset method on real Engine and synthetic facade; constructor, draft kernels, model data and arithmetic not exercised",
+  "ready_for_device": true,
+  "preparation": "packet165c CPU gates passed",
+  "native_io_class": "idle (ionice -c3)",
+  "proposal_sha256": "45686b41409a7c2ed568ab096e015552e15f3d87f1abb38549890f2a61d77416"
 }
