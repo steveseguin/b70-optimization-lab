@@ -124,3 +124,28 @@ rechecks the evidence and exact future marker with the real pin guard, then
 writes `READY-FOR-DEVICE.json` last and checks the read-only execution gate.
 The coordinator's normal device admission, fault, drain and storage guards remain
 in force. No layer ratio, prefill rate or decode improvement is claimed yet.
+
+## Device result (coordinator, 2026-10-19 08:25–08:29 UTC)
+
+`packet166-causal-m2-layer-micro-B1` ran on lane B, card 2. Every buffer matched bytewise and matched the CPU oracle, with zero errors and 200 interleaved repeats per arm. Fault count stayed 2.
+
+Ratio = 2·M2/(M1 row0 + M1 row1):
+
+| Layer | Pos 2 | Pos 3 | Pos 31 |
+| --- | ---: | ---: | ---: |
+| GDN (layer 0) | 1.596 | 1.581 | 1.577 |
+| QSA (layer 3) | 1.622 | 1.621 | 1.592 |
+
+- Expert gate/up does not amortize: about **2.65–2.88×**. Two tokens route to different experts, and adjacent-route unions average 16.5 vs 10 experts (packet58aa).
+- Expert down is about **2.03–2.08×**.
+- HC norm/inject are about **1.7×**.
+- Projections are about **1.24–1.33×**. Norms, activations and the combine step are about **1.0×**.
+
+**Exact M=2 prefill stage 1: closed** by the preregistered rule (> 1.5 in every layer/context). The projected M=2 prefill would be about 111 tok/s, a 1.24× speedup; the DO-NOT-REPEAT row has been added.
+
+**One-card MTP:** the analyzer projects **+6.46%** (34.03 tok/s, weighted ratio 1.615; the +5% limit is 1.638, the +2% limit 1.688) and wrote `MTP-VERIFY-BRIEF.md`. The projection still assumes:
+- zero draft feedback/cache cost;
+- transfer of the layer ratio to full wall time;
+- packet58h's a = 0.787, D = 1.795 ms, R = 0.981 ms.
+
+packet58aa's revisit condition requires a **complete** cycle, which also means pricing the expert cache shrink from 21.55 to about 18.2 GB so that the 3.34 GB draft fits in device memory (headroom is 240 bytes today). Next step: packet170, a CPU complete-cycle accounting, before any build.

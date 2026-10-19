@@ -1,0 +1,3 @@
+# One-card exact MTP verify brief
+
+The transferred layer ratio projects at least +5% over 31.966820 tok/s at every registered context. This is a projection, not measured decode. First prove complete cycle/lifetime and device-memory accounting, including draft feedback, cache shrink/pollution, rejected rows and full BF16 rollback. Preserve iq3-p49-split32-v1 per-row arithmetic and target verification of every accepted token. Prove exact target-oracle outputs, repeats and two fresh processes. Charge D + V2 + (1-a)*R plus all new feedback/cache work; measure the complete cold suite and prefill before any promotion. Packet147 PLAN.md:320-338 supplies transferred assumptions; this micro authorizes only this verification brief.
