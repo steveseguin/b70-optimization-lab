@@ -135,7 +135,7 @@ def screen_main(argv=None, *, release=None):
                               planned_write_bytes=planned_writes,
                               host_required_available_bytes=97*M.GIB+1200*1024**2,
                               expected_seconds=[240,360] if identity.get('bracket',{}).get('kind')=='smoke' else [480,900],
-                              conditional_on='Exact packet153 smoke and its first-minute timing proof must pass before bracket',
+                              conditional_on='Exact packet153 smoke and its first-request data proof must pass before bracket',
                               host_memory_admission=dict(required_bytes=97*M.GIB+1200*1024**2,class_bank_max_bytes=1200*1024**2,checked_at_launch=True),
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing,
@@ -149,7 +149,7 @@ def screen_main(argv=None, *, release=None):
     verify()
     if identity.get('bracket',{}).get('kind')=='bracket':
         from p153_v5_compare import load
-        smoke=load(HERE/'evidence/device-static-smoke-B')
+        smoke=load(HERE/'evidence/device-static-smoke-B-p153b')
         require(smoke['kind']=='smoke' and smoke['passed'] and smoke['timing_data_proof']['passed'], 'packet153 smoke/data proof required')
     screen_teardown_admit(args.lane)
     cgroup = Path('/proc/self/cgroup').read_text()

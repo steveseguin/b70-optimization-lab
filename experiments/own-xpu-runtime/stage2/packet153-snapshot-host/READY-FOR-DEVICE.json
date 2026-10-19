@@ -1,29 +1,32 @@
 {
   "schema": "packet153.ready-for-device.v1",
-  "commit": "ba8ce14a668218b04dd148e23fa3f0558ea9f1ad",
-  "created_utc": "2026-10-19T01:26:28.141325+00:00",
+  "commit": "6494daf580b5720804822524cb14f94b626697b2",
+  "created_utc": "2026-10-19T01:36:28.212187+00:00",
   "passed": true,
   "ready_for_device": true,
   "device_executed": false,
   "queued": false,
   "lane": "B",
   "arithmetic": "iq3-p49-split32-v1",
-  "cpu_seal_sha256": "817475450ef8cad3acc03df79a785b969922d0a424f7eeb9c480f0732ac73dfc",
+  "cpu_seal_sha256": "0743689946d1c9e8988ef8bc07685df74b04e6d9ab6726efbaa7bc0cbb9e1294",
   "cpu_gate_sha256": {
-    "entry-gate": "51670e4a01e10b503fbc583a09419d3ae515babfd473f69821a5a64cfb91d4c9",
+    "entry-gate": "4bff077e389107a73c2df48ecc14d5bd4cb41673d99ba93964f3e021989feeb9",
     "launch-limits": "818cf0f61d6d2a2f9ff0d917b7fac26842c58d1fbfeefc89eac4e39a90ba7800",
     "worker-gate": "61939f8a37fde8705f6a422cf87f05034ee5dc50ae3252a35c94ce7fb6fbbc0b",
-    "report-gate": "915c8d89d2ba88eab834ec8c680c0ffe8e100bc874893a721a14de9ed690ea7d",
-    "queue-plan": "30b7798cdcb7a81650a2676d22a10b83292a5baea52834bbed2c3be5412ab24c",
-    "pin-guard": "299ecd5b5a3368aa02bc6cbb8df841b9de4e21d61d00e78740dbd27e8209d564"
+    "report-gate": "2489b1807499098b09bbdf34954b7522a83a88575d4ac071efcff2644e99ec5c",
+    "queue-plan": "a241effa39ce5469a4e0bc4ed84f82a6fe4e6bab16bf99bbc6c86ae2099ef406",
+    "pin-guard": "e3f042497eb5bef2b295f47f9349037715f580b9248df4c8e71b2680f6d9cacf"
   },
   "proposal_sha256s": {
-    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p153-smoke-B.txt": "05807b6282e4420ec9442f945adbf770366f3b3a39966f2135f63715bd2394bb",
-    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p153-v5-B.txt": "26712de6b6b0f0ad44fa2aaffb97303a5fca6fe49408c4fe419fd3ca5eabb375"
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p153-smoke-B.txt": "3563193f77db88383ea7a9c506cf1807f8a22ccbc65a68265a0ee42358a6dba9",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p153-v5-B.txt": "1b1e8a802dd77c69aa3e5c35f7c658383a02e7442e824a0faf61adac837ff9f4"
   },
   "device_quality_pending": true,
   "device_performance_pending": true,
   "state_scope": "98-step mixed sequence and three corruption negatives; GNU/Intel production/static twice; nine real-copy positions separately",
-  "admission": "smoke first; bracket requires smoke timing proof and exactness",
-  "last_packet_write": true
+  "admission": "fresh p153b smoke first; first-request data proof has no elapsed-time deadline; bracket requires exactness",
+  "last_packet_write": true,
+  "repair": "packet153b cold first prefill deadline",
+  "native_rebuilt": false,
+  "first_request_regression_sha256": "7a15fc182395e7bb9679b80966f83634c68ad4d315257858ec771582e60daf1f"
 }

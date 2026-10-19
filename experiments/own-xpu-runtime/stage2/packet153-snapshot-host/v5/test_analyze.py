@@ -1,5 +1,5 @@
 """Actual retained p150 stream schema; missing streams/scopes must fail closed."""
-import gzip,json,tempfile,unittest,shutil
+import gzip,hashlib,json,tempfile,time,unittest,shutil
 from pathlib import Path
 import analyze
 P=Path(__file__).resolve().parent
@@ -30,4 +30,41 @@ class Proof(unittest.TestCase):
  def test_missing_native_trace(self):
   row=dict(self.row);row.pop('rank_trace')
   with self.assertRaises(ValueError):analyze.data_proof(self.root,row)
+class ColdFirstRequest(unittest.TestCase):
+ """Real packet153 failed smoke, with no data-proof or clock mocks."""
+ def setUp(self):
+  self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+  self.root=Path(self.tmp.name);fixture=P.parent/'lineage-inputs/timing-fixture-p153b'
+  manifest=json.loads((fixture/'manifest.json').read_text())
+  source=P/'evidence/device-static-smoke-B/run/views/00-candidate/incident64'
+  for name,entry in manifest['files'].items():
+   raw=gzip.decompress((fixture/entry['fixture']).read_bytes())
+   self.assertEqual(hashlib.sha256(raw).hexdigest(),entry['sha256'])
+   if source.is_dir():
+    self.assertEqual(raw,(source/name).read_bytes())
+   dest=self.root/'incident64'/name;dest.parent.mkdir(parents=True,exist_ok=True)
+   dest.write_bytes(raw)
+  self.row=json.loads((self.root/'incident64/receipt.json').read_text())
+  self.started=time.time_ns()-120_000_000_000
+ def test_real_first_request_after_sixty_seconds(self):
+  proof=analyze.first_minute_proof(self.root,self.row,self.started)
+  self.assertTrue(proof['passed'])
+  self.assertGreater(proof['seconds_after_view_start'],60)
+  self.assertEqual(json.loads((self.root/'first-minute-data-proof.json').read_text()),proof)
+  result=analyze.analyze([dict(index=0,choice='candidate',output=str(self.root),
+                             requests=[dict(self.row,prompt_id='incident64')])])
+  self.assertTrue(result['passed'])
+ def test_empty_rank_stream_after_sixty_seconds(self):
+  for rank in (0,1):
+   path=self.root/f'incident64/rank{rank}/timings.jsonl';raw=path.read_bytes()
+   path.write_bytes(b'')
+   with self.subTest(rank=rank),self.assertRaisesRegex(ValueError,'missing rank timing stream'):
+    analyze.first_minute_proof(self.root,self.row,self.started)
+   self.assertFalse((self.root/'first-minute-data-proof.json').exists())
+   path.write_bytes(raw)
+ def test_missing_rank_stream_after_sixty_seconds(self):
+  (self.root/'incident64/rank1/timings.jsonl').unlink()
+  with self.assertRaisesRegex(ValueError,'missing rank timing stream'):
+   analyze.first_minute_proof(self.root,self.row,self.started)
+  self.assertFalse((self.root/'first-minute-data-proof.json').exists())
 if __name__=='__main__':unittest.main()

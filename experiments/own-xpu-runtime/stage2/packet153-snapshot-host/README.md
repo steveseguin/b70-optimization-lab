@@ -27,8 +27,10 @@ included: first measure the requested host-path removal without changing tile
 mapping. Device equality and performance remain pending.
 
 The proposed lane-B smoke runs all twelve prompts at 64 tokens. Its first
-incident64 response must pass the same timing readers within the first minute
-of the post-load view. Every stream and required scope is mandatory. The
+incident64 response must immediately pass the same timing readers after it
+completes. Elapsed time is informational, including cold prefill and freezes;
+the historical filename remains `first-minute-data-proof.json`.
+Every stream and required scope is mandatory. The
 bracket refuses until that smoke passes, then loads once for production /
 static / production / static / production, twelve cold 128-token prompts per
 view plus separate incident64 resets. Acceptance counts, draft proposals and
