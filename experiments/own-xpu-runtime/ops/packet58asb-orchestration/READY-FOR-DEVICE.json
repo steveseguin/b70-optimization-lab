@@ -2,7 +2,7 @@
   "schema": "packet58asb-confirm.ready-for-device.v1",
   "packet": "packet58asb-confirm",
   "revision": "derived:packet58asb-confirm",
-  "prepared_utc": "2026-10-19T11:17:16.097104+00:00",
+  "prepared_utc": "2026-10-19T11:25:19.902623+00:00",
   "generator": "ops/onecard_chain_derive.py",
   "preparation_passed": true,
   "passed": true,
@@ -82,9 +82,9 @@
   "bracket_boot_check": "current-boot",
   "preparation_ram_budget_bytes": 2000000000,
   "files_sha256": {
-    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/build-receipt.json": "e802c5350c3d8dad620e96daf22215184904a3ff640064865808502f551c50f1",
-    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/submission-pins.json": "d9b6e00437c19091c5df1cdfad65c4834ef5c7bac2e5b3b06e72449532064199",
-    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/ready.json": "f60aca0857cf7abcfe6f4984c5ac99ac54fc76ce825fe70e0848a6a3aa08d34a",
+    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/build-receipt.json": "5cc80463cfd40ea21d9c2d2bde7ed649f3855ffffd4cacdb8be318f0e8f5b4a0",
+    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/submission-pins.json": "104196c1adc46be33f4925a1a8b0dc49c0c3d7ee9fe811516a44e74dbe4098d6",
+    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/ready.json": "d64c2f1e33c91c5d301f787f9200e7247accdb6b6df451626b2be409ce251634",
     "experiments/own-xpu-runtime/stage2/packet58asb-confirm/WINDOW.md": "06801adee55838b3a4fa90f2eae1f0772d6fb013c00dfd79c012e4246a52d21f",
     "experiments/own-xpu-runtime/stage2/packet58asb-confirm/runtime-selection.json": "fefc2f704e3888894134038e53a78ad45b8751975766be405f57934329ff90bd",
     "experiments/own-xpu-runtime/stage2/packet58asb-confirm/submission-policy.json": "dfd7cf9d856a5f760d167b5baa62127af27db3fa024ee6b89a64a433884df820",
@@ -93,7 +93,7 @@
     "experiments/own-xpu-runtime/stage2/packet58asb-confirm/seal.py": "9f8b7cdf602c202be3f72cb59f57fc8b999a6c44026ed2bfe7df17fc7ebcace9",
     "experiments/own-xpu-runtime/stage2/packet58asb-confirm/verify_ready.py": "7d36ff3228e3b70903cb9b909c36b490cb4887d8cdef663239d134dddd942cb9",
     "experiments/own-xpu-runtime/stage2/packet58asb-confirm/fault_review.py": "1c131cf0230787ad68dd82dc9a0247589e4c44b960f3aa81244efff0cec0dded",
-    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/evidence/chain-flags.json": "404016a5f46425e7d68e058833017784c61f53eb992100390039393c51467216"
+    "experiments/own-xpu-runtime/stage2/packet58asb-confirm/evidence/chain-flags.json": "000957e4735115479ec74e550c59d6394f9005cbe9f4dbfe33f38002042f7af4"
   },
   "orchestration_provenance": [
     {
@@ -104,7 +104,7 @@
     {
       "name": "queue-plan.log",
       "parent_relpath": "experiments/own-xpu-runtime/ops/packet58asb-orchestration/queue-plan.log",
-      "parent_digest": "f06e2be17b16c2377e4add0e37ccb7bad3a880a58cb85b75868417daa9287909"
+      "parent_digest": "2d39c975f21298150f9a933408c60427e6f71d8dc20d5f310927350a372b0c73"
     },
     {
       "name": "help.json",
@@ -112,9 +112,14 @@
       "parent_digest": "015307ce7e625a83853c7f44bc05f37f27267e1aaf26398d30550b124f4af47a"
     },
     {
+      "name": "predevice-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58asb-orchestration/predevice-rehearsal.json",
+      "parent_digest": "a4c0f25dad4bef8b4245f56809652a03a522e2fe7c5250a84264e2b4a3b4c0de"
+    },
+    {
       "name": "onecard_chain_derive.py",
       "parent_relpath": "experiments/own-xpu-runtime/ops/packet58asb-orchestration/onecard_chain_derive.py",
-      "parent_digest": "df56d8e15abc86c1cfa3a8d4878f8f3a1ebb8f92d2548ada115bac51aef22347"
+      "parent_digest": "89276a43a388297409300669379e6232bf83ec907cac1e2232558f44bbb23755"
     }
   ],
   "parent_provenance": [
@@ -145,6 +150,32 @@
     "chain_binary_sha256": "4f957f34ae11011fa9a2caba6a79e981559e9f9fa0fa3958e20a90460d1b745e",
     "resubmission": false,
     "text": "Confirmation run, not a resubmission: the ledger's latest record cmvf31py400furf01tv54rxo7 (34.573 tok/s) came from packet58as-onecard-spinwait with this same chain binary 4f957f34ae11011f. This packet is a further fresh chain of that record line. The submission tool refuses unless fresh WS128 exceeds 34.57303759192858 tok/s and the live ledger; a run at or below it is confirmation evidence only."
+  },
+  "predevice_rehearsal": {
+    "passed": true,
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ],
+    "boundaries": {
+      "K1a": "output directory creation",
+      "K1b": "output directory creation",
+      "KD": "previous-window prerequisite K1",
+      "W2m": "previous-window prerequisite KD",
+      "WS": "previous-window prerequisite W2m",
+      "WS128x": "previous-window prerequisite WS",
+      "WS128": "previous-window prerequisite WS128x"
+    },
+    "simulated": [
+      "priority",
+      "affinity",
+      "user_unit_gate"
+    ]
   },
   "chain_quality_pending": true,
   "chain_performance_pending": true,
