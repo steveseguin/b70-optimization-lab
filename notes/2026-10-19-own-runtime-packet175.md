@@ -78,3 +78,14 @@ included in B:
 
 The coordinator admits one proposal on whichever lane is free. After the run, read
 `evidence/d2-micro-<lane>1/analysis.json`.
+
+## Device result (coordinator, 2026-10-19 11:22–11:24 UTC)
+
+`packet175-d2-warm-ahead-micro-B1` ran on lane B, card 2, and finished DONE. A and B outputs were byte-identical, and the fault count stayed 2.
+
+| Layer | Dense A ms/row | B GEMV only | Warm-ahead alone | B incl. warm-ahead | Reduction (median) | GEMV-only reduction |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 (GDN) | 0.300 | 0.255 | 0.198 | 0.453 | **−50.9%** | +15.0% |
+| 3 (QSA) | 0.555 | 0.524 | 0.210 | 0.734 | **−32.2%** | +5.5% |
+
+Weighted B/A is **1.439**, against a gate of ≤ 0.97. **Decision: close D2.** Prefetching makes the GEMV itself 5.5–15% faster, but the separate warm-ahead kernel re-reads the same weight bytes from DRAM. That costs more than the GEMV saves, because the card is bandwidth-bound and the single CCS cannot overlap the warm kernel with other compute. Any variant that reads the weights twice is dead for the same reason. Only a prefetch that is free in bandwidth terms could change this, and on a bandwidth-bound card there is no such slot.
