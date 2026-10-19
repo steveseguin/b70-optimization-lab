@@ -15,7 +15,8 @@ CHECK=importlib.util.module_from_spec(spec);spec.loader.exec_module(CHECK)
 def oracle_inputs():
     """Verify sealed completion and original input bytes without model payload reads."""
     binding = read(HERE / 'oracle-binding.json')
-    for name, digest in binding['files_sha256'].items():
+    for row in binding['parent_records']:
+        name,digest=row['parent_relpath'],row['parent_digest']
         require(sha(ROOT / name) == digest, 'oracle source binding: ' + name)
     require(sha(ORACLE/'results/completion.json')==binding['completion_sha256'], 'registered oracle completion changed')
     completion = read(ORACLE / 'results/completion.json')

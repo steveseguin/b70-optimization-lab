@@ -16,3 +16,21 @@ optimization lever.
   class differences. Never fill the missing ranked table from old synthetic
   prices, sampled intrusive timers or assumed transfer percentages.
 * Queue plan and report-adapter passes do not override false native readiness.
+
+## packet168b additions
+
+* Do not make a changed expert route a hard refusal inside a skip arm. Any
+  upstream skip legitimately changes router inputs, so the old
+  `require(same_routes)` would have stopped the device run at the first arm.
+  The marker-only CPU fixture could not detect this. Record
+  `route_identity_preserved` instead. The expert count and shapes stay fixed.
+* Do not read the residual as transfer cost. It is subtraction-only and also
+  holds the split head, controller/mailbox time, overlap and any
+  passes-per-token difference.
+* Do not split the fused router/shared-expert launches into two classes.
+* The device worker imports `fault_review.py`, which needs
+  `lineage/window_driver.py`. Any new screen that imports it must carry that
+  file (the report adapter caught this).
+* Rank 1's census image (`--census-probe`) costs measured device bytes. The
+  parent memory plan would refuse rank 1 at startup unless
+  `memory-plan-census.json` adds them.

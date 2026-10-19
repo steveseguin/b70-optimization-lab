@@ -17,6 +17,7 @@ def turn():
     mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod);return mod.turn()
 def main():
     limits();commands=json.loads((P/'lineage/build-inputs.json').read_text());rows=[]
+    inputs={str(f.relative_to(P)):sha(f) for f in [P/'native_probe.hpp',P/'lineage/build-inputs.json',*sorted((P/'native-source').rglob('*.hpp')),*sorted((P/'native-source').rglob('*.cpp'))]}
     for label in ('compile','link'):
         with turn(),(P/'build'/f'{label}.log').open('w') as log:
             start=time.monotonic()
@@ -25,6 +26,7 @@ def main():
         print(label,'PASS',flush=True)
     rss=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024
     assert rss<=4*1024**3
-    save(P/'evidence/build.json',dict(passed=True,device_executed=False,commands=rows,peak_child_rss_bytes=rss,binary_sha256=sha(P/'build/device/own-rt-iq3')))
+    assert all(sha(P/n)==h for n,h in inputs.items()),'native source changed during build'
+    save(P/'evidence/build.json',dict(passed=True,device_executed=False,commands=rows,inputs_sha256=inputs,peak_child_rss_bytes=rss,binary_sha256=sha(P/'build/device/own-rt-iq3')))
 if __name__=='__main__':
     resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,)*2);main()

@@ -1,13 +1,36 @@
 {
-  "ready_for_device": false,
-  "blockers": [
-    "Native probe is isolated target-half replay, not the requested matched bundle8 interval.",
-    "Cross-card transfer arm intentionally refuses; both target head partitions/merge are not covered.",
-    "Fused router/shared-activation and shared-down/combine require explicit class ownership or overlapping-intervention labels.",
-    "Full real arm sequence, K1a/K1b and all12-prompt exact native control views are not implemented/qualified.",
-    "No device census measurement or measured ranked lever list exists."
-  ],
-  "control_exactness": "pending device; no control skipped",
+  "ready_for_device": null,
+  "blockers": [],
+  "control_exactness": "C0/C1/C2 x 12 prompts must equal the iq3-p49-split32-v1 oracle prefix in-run; no control skipped",
   "measured_ranked_table_available": false,
-  "no_optional_smoke": "No optional smoke is proposed. Required opening K1a/K1b and exact control are still missing; this is a blocker, not a waiver."
+  "measured_classes": [
+    "attention",
+    "gdn",
+    "routed_experts",
+    "router_shared_expert",
+    "dense_hc",
+    "norms_glue"
+  ],
+  "fused_class": "router_shared_expert = route+shared activation and shared-down+mixture launches (one fused class)",
+  "residual": "exact native control ms/token minus sum of six isolated body-pass marginals; transfer, split head and overlap are not causally isolated",
+  "dropped_to_residual": [
+    "cross-card transfer",
+    "split head/argmax/merge"
+  ],
+  "memory": {
+    "rank0_image_bytes_always_present": 344064536,
+    "rank1_backing_bytes": 373887468,
+    "rank1_planned_total_with_mtp_bytes": 31801101510,
+    "rank1_planned_free_bytes": 2441196346,
+    "rank1_arena_headroom_bytes": 411153210,
+    "device_validation": {
+      "name": "census.json",
+      "parent_relpath": "stage2/packet165-warm-prefill/two-card/evidence/device-warm512-B-a/run/ranks/rank0/census.json",
+      "parent_digest": "f4b2b68ac0537211bf2d7d95c6cdd64e44675f7d232d6647be43bea4f14ef4f7",
+      "device_rank0_image_bytes": 344064536,
+      "fixture_rank0_image_bytes": 344064536
+    },
+    "source": "CPU fixture production-arena census (diagnostic labels only); rank0 image equals real device rank0 image; device residency unmeasured"
+  },
+  "no_optional_smoke": "No optional smoke. The run opens with an excluded distinct warm-up and the exact C0 control on all 12 prompts; any oracle mismatch stops the run."
 }

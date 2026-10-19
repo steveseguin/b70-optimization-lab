@@ -310,6 +310,7 @@ class Transport:
             cmd += ["--host-path",getattr(args,"host_path","prepared")]
             if getattr(args,"argument_audit",False):cmd += ["--argument-audit"]
             if getattr(args,"audit_prepare_each",False):cmd += ["--audit-prepare-each"]
+            if getattr(args,"census_probe",False):cmd += ["--census-probe"] # packet168 diagnostic command20 only
             if args.oracle:cmd += ["--oracle",str(args.oracle)]
             if getattr(args,"selection_sha256",None):cmd += ["--selection",str(P/"selection.json"),"--selection-sha256",args.selection_sha256]
             if args.dispatch:cmd += ["--dispatch",str(args.dispatch)]

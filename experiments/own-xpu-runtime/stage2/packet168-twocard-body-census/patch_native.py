@@ -11,6 +11,8 @@ def change(name,edits):
     path.write_text(text)
     (P/'lineage'/f'{name}.patch').write_text(''.join(difflib.unified_diff(original.splitlines(True),text.splitlines(True),fromfile='a/'+name,tofile='b/'+name)))
 def main():
+    from census_contract import NATIVE_ORDER
+    (P/'native_arm_order.hpp').write_text('#pragma once\n#include <array>\nnamespace p168 { inline constexpr std::array<int,'+str(len(NATIVE_ORDER))+'> arm_order{'+','.join(map(str,NATIVE_ORDER))+'}; }\n')
     change('main.cpp',[
       ('struct Options {','struct Options {\n  bool census_probe=false;'),
       ('Options: --argument-audit','Options: --census-probe --argument-audit'),

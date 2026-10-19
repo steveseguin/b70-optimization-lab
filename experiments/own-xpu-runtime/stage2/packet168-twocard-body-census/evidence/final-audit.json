@@ -1,11 +1,185 @@
 {
   "passed": true,
-  "device_readiness": false,
-  "scope": "retained incomplete preparation integrity, not a qualification pass",
-  "python_sources_parsed": 36,
-  "json_key_maps_checked": 55,
-  "incomplete_device_entry_refused": true,
-  "native_observations": 264,
-  "real_sensor_samples": 2376,
-  "maximum_native_cpu_rss_bytes": 823324672
+  "device_executed": false,
+  "gate_results": [
+    {
+      "gate": "pin-guard",
+      "passed": true,
+      "detail": {
+        "python_sources": 40,
+        "problems": []
+      }
+    },
+    {
+      "gate": "device-build",
+      "passed": true,
+      "detail": "eb08726930e7155d078ff724f3d19d1fc87a7eeb5426112bac6c40737f843175"
+    },
+    {
+      "gate": "native-real-arm-sequence",
+      "passed": true,
+      "detail": {
+        "observations": [
+          324,
+          324
+        ],
+        "sensors": [
+          2268,
+          2268
+        ],
+        "peak_rss": [
+          822149120,
+          789864448
+        ],
+        "compute_is_marker_only": true
+      }
+    },
+    {
+      "gate": "worker-real-arm-sequence",
+      "passed": true,
+      "detail": {
+        "good": {
+          "mutate": null,
+          "refused": false,
+          "report_passed": true,
+          "observations": 108,
+          "probe_commands": 144,
+          "resets": 220,
+          "native_requests": 109,
+          "ranked": [
+            "dense_hc",
+            "router_shared_expert",
+            "norms_glue",
+            "routed_experts",
+            "gdn",
+            "attention"
+          ],
+          "residual_present": true
+        },
+        "refusals": [
+          "control/setup oracle mismatch: dense_hc/sql-debugging",
+          "probe restore/repair/format"
+        ]
+      }
+    },
+    {
+      "gate": "analyzer-tests",
+      "passed": true,
+      "detail": {
+        "tests": 10
+      }
+    },
+    {
+      "gate": "analyzer-real-parent-evidence",
+      "passed": true,
+      "detail": [
+        [
+          "packet136",
+          58.798108759182306
+        ],
+        [
+          "packet163-a",
+          58.60973580729929
+        ],
+        [
+          "packet163-b",
+          58.625233424957
+        ],
+        [
+          "packet165-device-warm512-B-a",
+          58.631652925994246
+        ],
+        [
+          "packet165-device-warm512-B-b",
+          58.55650230474334
+        ]
+      ]
+    },
+    {
+      "gate": "report-adapter",
+      "passed": true,
+      "detail": 11
+    },
+    {
+      "gate": "flags-help-imports",
+      "passed": true,
+      "detail": [
+        "PASS device-path imports, oracle inputs, census memory plan",
+        "PASS device-path imports, oracle inputs, census memory plan"
+      ]
+    },
+    {
+      "gate": "census-memory-plan",
+      "passed": true,
+      "detail": {
+        "rank0_image_bytes_always_present": 344064536,
+        "rank1_backing_bytes": 373887468,
+        "rank1_planned_total_with_mtp_bytes": 31801101510,
+        "rank1_planned_free_bytes": 2441196346,
+        "rank1_arena_headroom_bytes": 411153210,
+        "device_validation": {
+          "name": "census.json",
+          "parent_relpath": "stage2/packet165-warm-prefill/two-card/evidence/device-warm512-B-a/run/ranks/rank0/census.json",
+          "parent_digest": "f4b2b68ac0537211bf2d7d95c6cdd64e44675f7d232d6647be43bea4f14ef4f7",
+          "device_rank0_image_bytes": 344064536,
+          "fixture_rank0_image_bytes": 344064536
+        },
+        "source": "CPU fixture production-arena census (diagnostic labels only); rank0 image equals real device rank0 image; device residency unmeasured"
+      }
+    },
+    {
+      "gate": "lanequeue-plan-temp-copies",
+      "passed": true,
+      "detail": [
+        {
+          "lane": "B",
+          "kind": "plan",
+          "returncode": 0,
+          "passed": true
+        },
+        {
+          "lane": "A",
+          "kind": "plan",
+          "returncode": 0,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "gate": "waits-floor-bounds",
+      "passed": true,
+      "detail": {
+        "wait_seconds": 600,
+        "controller_wait_seconds": 1200,
+        "device_floor_bytes": 25000000000,
+        "planned_write_bytes": 1844418014,
+        "projected_census_bytes": 922209007
+      }
+    },
+    {
+      "gate": "entry-plan",
+      "passed": true,
+      "detail": " with other lane required idle\", \"command\": [\"/usr/bin/python3\", \"-B\", \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/census_worker.py\", \"--output\", \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/evidence/never-created/run\", \"--lane\", \"B\"], \"second_fresh_attempt\": false, \"submission_eligible\": false}\n"
+    },
+    {
+      "gate": "device-entry-denied-before-ready",
+      "passed": true,
+      "detail": "verify_ready refuses while READY is absent/false"
+    }
+  ],
+  "rehearse_receipts": [
+    {
+      "lane": "B",
+      "kind": "rehearse",
+      "returncode": 1,
+      "passed": false
+    },
+    {
+      "lane": "A",
+      "kind": "rehearse",
+      "returncode": 1,
+      "passed": false
+    }
+  ],
+  "failed": []
 }

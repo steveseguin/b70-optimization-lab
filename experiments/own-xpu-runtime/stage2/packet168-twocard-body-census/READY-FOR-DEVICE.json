@@ -1,46 +1,69 @@
 {
-  "schema": "packet168.readiness.v1",
-  "ready": false,
-  "ready_for_device": false,
+  "schema": "packet168.readiness.v2",
+  "ready": true,
+  "ready_for_device": true,
   "device_executed": false,
-  "model_loads": 0,
+  "model_loads_planned": 1,
   "measured_ranked_table_available": false,
-  "seal_sha256": "a7ed4873c8b3902de744086205b80c7c53c505ddd8aab1fb7ad7e494c731610a",
+  "seal_sha256": "72e6539aa8b83302bf655c4e9b4960538f949b3234956ac825194773310179a0",
   "evidence_sha256": {
-    "evidence/build.json": "59c1ffcc6dc1faa25e366ee174754a62f4c035c23cb94371b3c741a1eec834d3",
-    "evidence/cpu-builder-origin.json": "85d067a54b86965b4bf6b5cfd2d15b1dfeabd71e74e49c4ffd886474c27de5fc",
-    "evidence/cpu-builder-status.json": "9bb16a09427fb7f6ec85fbd38be57420976d79e02d70a294e8edb86fa4e6c8c2",
-    "evidence/final-audit.json": "2c52688a37e7d0b91a1e55b87165f527b3a4dd33e62a2b4695467f7338886ca0",
-    "evidence/launch-checks.json": "b0df306902357af75f8dc9129c957a19542030bcb1a17942ba695dc6a9930941",
+    "evidence/analyzer-tests.json": "589aed7fe0c25487869f5c8d9265ca5aaa2a08ec661d29a3f2d24f1d4c528fed",
+    "evidence/build.json": "82ea5907a7935c54f0512dc9a034fb30c4ccf1075617ed30a058626b176aa197",
+    "evidence/cpu-builder-origin.json": "becdcbc4401b4fecbf6965fc9c3e1fc3add360aa235f4ff430648f45c6f0fd2a",
+    "evidence/cpu-builder-status.json": "89cd0cd79e52e82cd059243dd987f41acf4c747c9eba08cff997e4503613bd56",
+    "evidence/final-audit.json": "2bec263eff1fa51b95fe544260fc28a626c9f5d6bc23eba6adcb858888aa0fe2",
+    "evidence/launch-checks.json": "f81cc063f28156a560559c94e49eb6473f310bdd1c26bcaf4888f721b118d124",
     "evidence/native-delta.json": "3424ffc2a028f55129ff0421f2bf6c3611bfa6f9740ffa6f91f1980b7550e602",
-    "evidence/native-lifecycle.json": "e1d0bba24ed0df44956824c521a5aea70c475dbcbe48303cba1040697f5dff56",
+    "evidence/native-lifecycle.json": "b9c15f5de66c6ed61c45e6ddfae9518d337b68ab37183c23531c342e103d6637",
     "evidence/native-marker-failure.json": "403e3bebbc1572c392ac3d73872f43853bc4a27062d61ea49690876f2b8c9bbc",
-    "evidence/preparation-build.json": "d2adc8e40fe727e62fc9a882bbacb6bc6ee662807fb6a14395e7fa57daad50dc",
-    "evidence/real-parent-replay.json": "c147c7224fa1928eeccbb738aff24314dd9d58fd4af46f3e1192a75275a4196a",
-    "evidence/report-adapter.json": "ca25bbe48a5fef5747193af8a1abc969ddb8bdc29933a24aeebdf4bd40add6dc",
+    "evidence/packet168-original.json": "0c10806c4f346507288d8814c18a79e27aae7af7569fad814d912f5a7e730e6b",
+    "evidence/preparation-build.json": "258b1613ce44062cc419aebe0c3b6377442c28adc6e2bf5f84f30eeb890e3873",
+    "evidence/real-parent-replay.json": "299684aed32f8679ab07ff66fed164f3264d87e31dc14f42de82441fb1a276a5",
+    "evidence/report-adapter.json": "78db6e4511847947e84a9d80b1cea42e3fd7ca4c4a42d905ce79a0ffa13dd8f5",
     "evidence/shared-packaging.json": "c94d1f6624513c91f33c1f0354fb601a3f50d07a496c70844dd72714207d1a66",
-    "evidence/whitespace-review.json": "c0113a65e03b0e30caffef3d0a2f98445b809cc65bca620dcc30147e903abce8"
+    "evidence/whitespace-review.json": "c0113a65e03b0e30caffef3d0a2f98445b809cc65bca620dcc30147e903abce8",
+    "evidence/worker-gate.json": "b9584e0d72c5779086fd16b8fe60deda59770f40a916c823ecbb847e1adfa29b"
   },
-  "blockers": [
-    "Native probe is isolated target-half replay, not the requested matched bundle8 interval.",
-    "Cross-card transfer arm intentionally refuses; both target head partitions/merge are not covered.",
-    "Fused router/shared-activation and shared-down/combine require explicit class ownership or overlapping-intervention labels.",
-    "Full real arm sequence, K1a/K1b and all12-prompt exact native control views are not implemented/qualified.",
-    "No device census measurement or measured ranked lever list exists."
-  ],
+  "blockers": [],
   "lane": "B",
   "cards": [
     2,
     3
   ],
   "alternative_lane": "A",
+  "proposals": [
+    "proposed-p168-body-census-B-v2.txt",
+    "proposed-p168-body-census-A-v2.txt"
+  ],
+  "jobs": [
+    "packet168-body-census-B-v2",
+    "packet168-body-census-A-v2"
+  ],
+  "measured_classes": [
+    "attention",
+    "gdn",
+    "routed_experts",
+    "router_shared_expert",
+    "dense_hc",
+    "norms_glue"
+  ],
+  "residual": {
+    "definition": "exact native control ms/token minus sum of six measured class marginals",
+    "includes": [
+      "cross-card transfer",
+      "split head/argmax/merge",
+      "controller/mailbox",
+      "overlap"
+    ],
+    "causally_isolated": false
+  },
   "shared_tool_limitations": [
-    "Frozen shared report rehearsal refuses this custom census entry/report schema; actual failed receipts retained.",
-    "Private twelve-view adapter passes only synthetic entry/parser/analyzer/report cases, not device orchestration.",
-    "No complete preparation-path probe is declared; partial native real-copy lifecycle is not a substitute."
+    "Shared ops/rehearse_entry.py --report cannot run this custom census report (receipts evidence/shared-rehearse-*-v2.*.log retained); qualified instead by the packet-private report adapter (evidence/report-adapter.json: real entry/parser/analyzer/report, 11 cases) and the worker gate (evidence/worker-gate.json), as accepted for packet58aq.",
+    "Shared rehearsal also WARNs that no preparation-path probe is declared: the census uses the parent-proven packet165 Transport start path unchanged except --census-probe; the native CPU fixture (evidence/native-lifecycle.json) runs the real parser, allocation and probe lifecycle with the device argv on both ranks."
   ],
   "optional_smoke": false,
-  "opening_checks": "K1a/K1b and exact control remain unimplemented/unqualified; no smoke waiver",
+  "opening_checks": "No optional smoke: the single load opens with a distinct excluded warm-up and then the exact C0 control on all 12 prompts (oracle-prefix checked in-run; any mismatch stops before a probe). Chain-only K1a/K1b windows do not apply to this one-window screen.",
+  "arms_reported_as_speed": false,
   "no_performance_claim": true,
   "submission_eligible": false
 }

@@ -2,7 +2,7 @@
   "passed": true,
   "device_executed": false,
   "synthetic_only": true,
-  "scope": "entry/parser/analyzer/report only; does not qualify missing native sequence",
+  "scope": "entry/parser/analyzer/report route only; native sequence is qualified by native-lifecycle.json and worker-gate.json",
   "results": [
     {
       "case": "complete",
@@ -10,7 +10,7 @@
       "actual_pass": true,
       "real_entry": true,
       "real_report": true,
-      "observations": 144
+      "observations": 108
     },
     {
       "case": "missing-view",
@@ -18,7 +18,7 @@
       "actual_pass": false,
       "real_entry": true,
       "real_report": true,
-      "observations": 143
+      "observations": 107
     },
     {
       "case": "drift",
@@ -26,7 +26,7 @@
       "actual_pass": false,
       "real_entry": true,
       "real_report": true,
-      "observations": 144
+      "observations": 108
     },
     {
       "case": "bad-repair",
@@ -34,7 +34,7 @@
       "actual_pass": false,
       "real_entry": true,
       "real_report": true,
-      "observations": 144
+      "observations": 108
     },
     {
       "case": "bad-oracle",
@@ -42,7 +42,7 @@
       "actual_pass": false,
       "real_entry": true,
       "real_report": true,
-      "observations": 144
+      "observations": 108
     },
     {
       "case": "partial-class",
@@ -50,7 +50,7 @@
       "actual_pass": false,
       "real_entry": true,
       "real_report": true,
-      "observations": 144
+      "observations": 108
     },
     {
       "case": "isolated-prototype",
@@ -58,13 +58,45 @@
       "actual_pass": false,
       "real_entry": true,
       "real_report": true,
-      "observations": 144
+      "observations": 108
+    },
+    {
+      "case": "missing-residual",
+      "expected_pass": false,
+      "actual_pass": false,
+      "real_entry": true,
+      "real_report": true,
+      "observations": 108
+    },
+    {
+      "case": "missing-probe-rank",
+      "expected_pass": false,
+      "actual_pass": false,
+      "real_entry": true,
+      "real_report": true,
+      "observations": 108
+    },
+    {
+      "case": "changed-chronology",
+      "expected_pass": false,
+      "actual_pass": false,
+      "real_entry": true,
+      "real_report": true,
+      "observations": 108
+    },
+    {
+      "case": "bad-setup",
+      "expected_pass": false,
+      "actual_pass": false,
+      "real_entry": true,
+      "real_report": true,
+      "observations": 108
     }
   ],
   "source_sha256": {
     "entry.py": "f431e313f650aafc3053eef4c89a62e74c03d95ecb81578c8f33c82ee8156ce7",
-    "screen.py": "46a6d564edf9cf3da5dfdd14434a581d94439db4d29a7f8e0f43479c0c091f37",
-    "analyze.py": "826d08dfb747710d1908387b65a9f9a3ebcefca2f493c22e82e4ec1f2198664b",
-    "report_adapter.py": "1a57e086e5d69b5d04f6ac1a746edc15cba91d77c1ab64f297d14a56f2276597"
+    "screen.py": "bf69a5e485b44b9f833326173847e335e6c98a6a34003b19c031687847f5cec5",
+    "analyze.py": "90fb87e371044601d0f0867b95e034c9b06c54301ebdf2469b73d6deeac4bae1",
+    "report_adapter.py": "90baa2baa8445b3df92ca81e18571579d64cc8216ab2e899c85c62bdcc09cafc"
   }
 }

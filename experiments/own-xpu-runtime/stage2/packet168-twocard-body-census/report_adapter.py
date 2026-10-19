@@ -1,4 +1,4 @@
-"""Exercise actual entry/parser/report with12-view synthetic data; no device."""
+"""Exercise actual entry/parser/report with synthetic v2 census data; no device."""
 import copy,json,tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -8,18 +8,23 @@ from build_engine import P,save,sha
 
 def main():
     results=[]
-    for case in ('complete','missing-view','drift','bad-repair','bad-oracle','partial-class','isolated-prototype'):
+    for case in ('complete','missing-view','drift','bad-repair','bad-oracle','partial-class','isolated-prototype','missing-residual','missing-probe-rank','changed-chronology','bad-setup'):
         with tempfile.TemporaryDirectory(prefix='p168-report-')as tmp:
-            out=Path(tmp);doc=fixture()
+            out=Path(tmp);doc=fixture();arm=lambda v:next(r for r in doc['observations']if r['view']==v)
             if case=='missing-view':doc['observations'].pop()
             if case=='drift':
                 for row in doc['observations']:
                     if row['view']=='C0':row['interval_ms']=18
-            if case=='bad-repair':next(r for r in doc['observations']if r['view']=='attention')['repair_exact']=False
+            if case=='bad-repair':arm('attention')['probes'][2]['repair_exact']=False
             if case=='bad-oracle':doc['observations'][0]['tokens'][0]^=1
-            if case=='partial-class':next(r for r in doc['observations']if r['view']=='lm_head_argmax')['class_coverage_complete']=False
+            if case=='partial-class':arm('router_shared_expert')['probes'][0]['class_coverage_complete']=False
             if case=='isolated-prototype':doc['measurement_scope']='isolated_B_replay'
-            (out/'census-input.json').write_text(json.dumps(doc))
+            if case=='missing-residual':doc['report_classes'].pop()
+            if case=='missing-probe-rank':arm('gdn')['probes']=arm('gdn')['probes'][:3]
+            if case=='changed-chronology':doc['observations'][12:14]=reversed(doc['observations'][12:14])
+            if case=='bad-setup':arm('dense_hc')['setup_exact']=False
+            (out/'run').mkdir()
+            (out/'run/census-input.json').write_text(json.dumps(doc))
             def finish(argv):
                 args=screen.parser().parse_args(argv)
                 r=screen.report_completed(args.output,dict(device_executed=False),
@@ -34,7 +39,7 @@ def main():
             results.append(dict(case=case,expected_pass=case=='complete',actual_pass=result['passed'],
               real_entry=True,real_report=True,observations=len(doc['observations'])))
     save(P/'evidence/report-adapter.json',dict(passed=True,device_executed=False,synthetic_only=True,
-      scope='entry/parser/analyzer/report only; does not qualify missing native sequence',results=results,
+      scope='entry/parser/analyzer/report route only; native sequence is qualified by native-lifecycle.json and worker-gate.json',results=results,
       source_sha256={str(f.relative_to(P)):sha(f)for f in(P/'entry.py',P/'screen.py',P/'analyze.py',Path(__file__))}))
-    print('PASS private12-view report adapter; native readiness remains false')
+    print('PASS private census report adapter (eleven cases)')
 if __name__=='__main__':main()

@@ -16,7 +16,7 @@ def rate(rows):
         value=99/(stamps[-1]-stamps[0]);classes.setdefault(suite_metrics.PROMPT_CLASSES[pid],[]).append(value)
     return statistics.median(statistics.median(v) for v in classes.values())
 def main():
-    limits();stage=P.parent;records=[];pins={}
+    limits();stage=P.parent;records=[];pins={}  # repo-relative path -> digest; saved only as records
     parent_roots=[('packet136',stage/'packet136-record-bundle/build/device-cards01-a/WS128/run','repeat-1'),
       ('packet163-a',stage/'packet163-full-gate/two-card/evidence/device-full512-B-a/run','requests'),
       ('packet163-b',stage/'packet163-full-gate/two-card/evidence/device-full512-B-b/run','requests')]
@@ -53,6 +53,7 @@ def main():
           reason='No class differencing/restore stream in parent; cannot rank classes',
           retained_stream_sha256=sha(target)))
     save(P/'evidence/real-parent-replay.json',dict(passed=True,device_executed=False,
-      new_performance_measurement=False,records=records,source_sha256=pins))
+      new_performance_measurement=False,records=records,
+      parent_records=[dict(name=Path(name).name,parent_relpath=name,parent_digest=digest) for name,digest in pins.items()]))
     print('PASS real parent streams:',[(r['parent'],r['primary_tok_s'])for r in records])
 if __name__=='__main__':main()

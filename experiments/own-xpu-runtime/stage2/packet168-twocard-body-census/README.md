@@ -1,97 +1,100 @@
-# Packet168 — body census preparation is incomplete
+# Packet168: partial two-card body census (packet168b)
 
-**Do not launch this packet.** It does not yet implement the requested measured,
-ranked bundle8 census. The readiness marker is false. The two-card record remains
-58.798108759182306 tok/s; this packet adds no device measurement or lever price.
+This is a diagnostic census of the bundle-8 two-card record line
+(packet136, 58.798108759182306 tok/s, `iq3-p49-split32-v1`). It runs in one
+load on lane B (cards 2 and 3); the lane-A twin is an alternative, not a second
+load. **Its arms are never reported as speed.** `READY-FOR-DEVICE.json` gives the
+final gate state, and `evidence/final-audit.json` lists each gate.
 
-The private copy retains packet136's bundle8 selection and compiled arithmetic
-objects through packet165's relocated two-card source. The earlier512-token
-parser extension is retained; the planned diagnostic cap is32. Target weights,
-80,128-row draft prefix, BF16 KV,24/24 placement and
-`iq3-p49-split32-v1` are unchanged. The new optional native flag enables a
-diagnostic command and rank1 snapshot backing. It is absent from normal controls.
+## What the coordinator decided (packet168b)
 
-The complete repository search is in [prior-search.txt](evidence/prior-search.txt).
-Packet128b failed its overhead gate at51.475451 tok/s. Packet140 expressly says
-bundle8 body class times are unmeasured. Packet160's13.086387ms B value is a host
-envelope including suffix/head dependencies, not an additive GPU class sum.
-This packet does not revive per-class event timers or use packet110 to price
-a new mechanism.
+These six classes are measured. Each is skipped in an isolated body probe with
+exact snapshot repair:
 
-## What is implemented
+| Class | Native `classify()` code | Launches |
+|---|---|---|
+| attention | 1 | `qsa_*` |
+| gdn | 2 | `gdn`, `conv`, `gdn_norm_gate` |
+| router_shared_expert | 3 | route + shared activation, shared-down + mixture (**one fused class**; the fused launches are never split) |
+| routed_experts | 4 | `expert_gate_up`, `routed_gemv`, `expert_gather` |
+| dense_hc | 6 | remaining GEMV / HC stages |
+| norms_glue | 7 | stage-0 norms and glue |
 
-* A private SYCL entry build reusing the exact parent kernel objects.
-* A prototype native command20 that snapshots, runs a skipped-class probe,
-  restores, runs an unchanged repair, compares repaired bytes to an unchanged
-  local control, and restores again. No probe token is published.
-* A production-shape CPU transport fixture for both ranks. Snapshot copies
-  execute real byte copies; ordinary model kernels are markers. Deliberately
-  poisoned stream bytes must restore exactly. Each rank runs132 partial
-  observations and1,188 real host-sensor samples. This proves only that partial
-  lifecycle, not model arithmetic or the full requested arm sequence.
-* A strict analyzer and real report route. A complete qualified input produces
-  nine ranked marginal differences, paired separately against all three controls,
-  their spread, shares of17ms, prior-lever boundaries and30%/50% conditional
-  ceilings for the top two. No interpolation or additive class-cost claim is
-  made. Failed qualification writes empty rankings.
-* Real parent-stream replay: packet136 **58.798108759182306**; packet163
-  **58.60973580729929 /58.625233424957**; packet165
-  **58.631652925994246 /58.55650230474334**. All60 real request streams pass
-  the census's control validator with both actual reset receipts and oracle
-  prefixes. Corrupted copies are refused. These are historical measurements,
-  not packet168 measurements and not new class timing evidence.
-* Fresh blocked lane-B and lane-A twin proposal rows, temporary queue plans,
-  built-help/import checks, retained shared-tool failures and a private
-  twelve-view report adapter. No live queue was changed.
+The cross-card transfer (`handoff*`) and the split head (`logits`, `argmax`)
+have no skip arm. They are reported only as the **residual**:
+exact native control ms/token minus the sum of the six class marginals. The
+residual also absorbs controller/mailbox time, overlap and any difference in
+passes per token. It is never called causally isolated, and negative values are
+kept.
 
-## Why this is not device-ready
+## The device sequence (`census_worker.py`)
 
-The prototype times an isolated target-half replay. It does not reproduce the
-native overlapped emission schedule, so its intervals cannot be labeled the
-requested17ms-token marginals. The analyzer deliberately rejects that scope.
+The run uses one load of the unchanged packet136 engine. The only change is the
+`--census-probe` flag, which enables native command 20 and gives rank 1 a
+snapshot image.
 
-The cross-card transfer arm refuses. The local logits/argmax mask does not cover
-the remote suffix, export/import, merge and confirmation. The selected code also
-fuses route with shared activation, and shared-down with expert mixture/blend;
-independent source-label skips do not establish separate class ownership. Those
-boundaries need a coupled implementation and explicit overlap accounting.
+1. A distinct, excluded warm-up runs first. It uses the 512-token prefill
+   prompt, which is not one of the 12 census prompts.
+2. The views run in the order C0, attention, gdn, routed_experts, C1,
+   router_shared_expert, dense_hc, norms_glue, C2. Each view covers all
+   12 prompts.
+3. Every request starts with a complete native reset and decodes 64 tokens. The
+   tokens must equal the oracle prefix in-run.
+4. In a class view, the native rank runs command 20 on both ranks after the
+   prompt's exact setup request. Each call does three repeats of the following:
+   snapshot, then a control pass, restore, an arm pass with the class skipped,
+   restore, a repair pass, and restore. The repaired bytes must equal the
+   control bytes, and each restore must equal the pre-probe image. Otherwise the
+   rank stops. No probe token is published.
+5. Arm passes can change expert identities, because the router sees different
+   inputs. The expert count and shapes stay fixed. Such changes are recorded
+   (`route_identity_preserved`) and not hidden.
 
-The required K1a/K1b, all12-prompt opening/middle/closing exact native controls,
-full nine-class real arm sequence and new snapshot memory census are not
-qualified. No optional smoke is proposed; the required opening checks are
-missing work, not waived checks. `screen.py` refuses device execution even if
-someone incorrectly edits the readiness Boolean.
+`analyze.py` (schema `packet168.census.v2`) refuses each of the following:
 
-The frozen shared report checker cannot run this custom census report layout.
-Its real receipts are retained. `report_adapter.py` exercises the actual private
-entry, parser, analyzer and report on144 synthetic observations, including
-missing-view, drift, bad-repair, wrong-oracle, partial-class and isolated-probe
-refusals. This adapter does **not** qualify the missing native orchestrator.
+* a missing view, prompt, rank or repeat;
+* changed chronology;
+* a control or setup request that is not exact;
+* a failed restore or repair;
+* an empty class mask or partial class coverage;
+* a published probe token;
+* control-view mean drift above 1%.
 
-## Bounds and reproduction
+The largest per-prompt drift is reported for information only. Each class
+marginal is the median over prompts of (rank0 + rank1) median(control − arm),
+in ms per isolated body pass. The top two classes also get 30% and 50%
+conditional ceilings, which are sensitivities and not measured speed.
 
-CPU tools use `nice -n19 taskset -c8-15,24-31 python3 -B`, stdin `/dev/null`,
-with4GiB address-space limits for builds/native probes. Compilation and native
-CPU fixtures acquire `ops/compile_turn.py`; they do not bypass a timing hold.
-CPU preparation stops below27GB free. No GPU, model payload, service, sudo or
-host setting was used or changed.
+## CPU qualification (no GPU, no model payload)
 
-The blocked plan reserves twice the measured parent's retained-plus-peak-raw
-bytes, below3×; device floor25GB, per-operation waits600s, outer watchdog7200s,
-no wall-clock stream-proof cutoff. These are planning bounds, not a new measured
-load or memory admission. The inherited native transport uses `ionice -c3`.
+* `build_engine.py`: the private SYCL entry, which reuses the parent kernel
+  objects (compile turn).
+* `prepare_cpu.py` and `run_cpu.py`: the native fixture on both ranks. It runs
+  the registered order × 12 prompts × 3 repeats (324 probe rows per rank) with
+  real snapshot byte copies and real host-memory sensors. Compute is
+  marker-only, so the fixture proves the lifecycle, not arithmetic. It also
+  dumps the production-arena census.
+* `package.py`: writes `memory-plan-census.json`. This is the parent plan plus
+  the measured rank-1 snapshot backing. The fixture's rank-0 image equals the
+  real device rank-0 image from packet165's
+  `device-warm512-B-a`, byte for byte. Parent margin rules still apply. The
+  script also writes the budget, the identity, the v2 proposals and the seal.
+* `worker_gate.py`: drives the real worker, `suite.reset`, NativeController and
+  analyzer over a host transport. That transport replays the real native
+  fixture probe rows, and the gate checks that a wrong token or a failed
+  repair is refused.
+* `test_analyze.py`, `replay_parent.py` (60 real parent streams; packet136
+  reproduces 58.798109), `report_adapter.py`, `launch_checks.py` (every worker
+  rank flag checked against the built `--help`; device-path imports, oracle
+  binding and census memory plan checked under the real A/B environment) and
+  `check_packaging.py` (`lanequeue plan` on temporary copies; shared
+  rehearsal receipts).
+* `finalize.py`: checks every gate and writes READY **last**.
 
-Run the scripts in this order to reproduce the retained preparation:
+There is no optional smoke. The single load opens with the excluded warm-up and
+the exact C0 control on all 12 prompts. Chain-only K1a/K1b windows do not apply
+to this one-window screen.
 
-1. `patch_native.py`, `build_engine.py`.
-2. `prepare_cpu.py`, `run_cpu.py` (partial lifecycle; final qualification stays false).
-3. `test_analyze.py`, `replay_parent.py`, `launch_checks.py`, `report_adapter.py`.
-4. `package.py`, `check_packaging.py`; inspect the retained shared refusals.
-5. `finalize.py` writes the false READY marker last.
-
-The native fixture is not an arithmetic oracle. Its real-copy backend catches
-snapshot corruption that a marker-only backend would miss; it does not test
-SYCL snapshot kernels or GPU execution. Both facts are recorded in its receipt.
-
-[Work note](../../../../notes/2026-10-19-own-runtime-packet168.md),
-[retention](RETENTION.md), [remaining work](qualification.json).
+The [work note](../../../../notes/2026-10-19-own-runtime-packet168.md),
+[retention](RETENTION.md) and [packet168 original receipts](evidence/packet168-original.json)
+have more detail.

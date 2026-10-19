@@ -1,6 +1,7 @@
 #define main unused_device_entry
 #include "probe-main.cpp"
 #undef main
+#include "../../native_arm_order.hpp"
 // Snapshot transport must actually copy bytes. Treating it as a marker would
 // make a zero-filled fixture pass without exercising restoration.
 ownrt::Event p151audit::Backend::compute(const ownrt::Operation& op,std::span<void*const> ptr,std::span<const ownrt::Event>) {
@@ -20,6 +21,8 @@ int main(int argc,char**argv){try{
  Engine e(w,a,plan_);e.deadline=std::chrono::steady_clock::time_point::max();e.initialize();
  if(a.rank==0)pipeline::banks(e);else{e.prepare_plan();e.prepare_commands();}
  pipeline::SpeculativeImage image(e,true);pipeline::Candidate candidate;
+ // Production allocation census including diagnostic snapshot backing.
+ save(a.output/"census.json",e.dev(0).arena.census());
  std::vector<uint8_t> shared(pipeline::shared_bytes);
  const auto initial=p168::signature(e);image.begin(shared.data());
  auto stream=e.buffers[0].at("streams");std::memset(e.dev(0).arena.row(stream.id).pointer,0xa5,stream.n*flash::scalar_bytes(stream.type));
@@ -27,20 +30,38 @@ int main(int argc,char**argv){try{
  image.restore();e.drain();require(p168::signature(e)==initial,"real snapshot poison was not restored");
  // Production preparation and copies execute on a CPU marker transport.
  // Compute kernels are markers, so this proves lifecycle, not arithmetic.
- for(int view:{0,1,2,3,4,0,5,6,7,9,0}){
+ std::map<int,size_t> physical;
+ for(size_t index=0;index<e.p.launches.size();++index){
+  const auto& l=e.p.launches[index];
+  physical[p168::classify(l)]+=e.issue_sites.at(index).commands.size();
+  if(l.op=="route"||l.op=="moe_combine"||l.label.find("shexp")!=std::string::npos)
+   require(p168::classify(l)==3,"split fused router/shared class");
+ }
+ for(int arm:{1,2,3,4,6,7})require(physical[arm]>0,"empty physical class");
+ {
+  std::ofstream ownership(a.output/"class-ownership.jsonl");
+  for(size_t index=0;index<e.p.launches.size();++index){
+   const auto& l=e.p.launches[index];
+   ownership<<"{\"label\":"<<ownrt::quote(l.label)<<",\"op\":"<<ownrt::quote(l.op)
+    <<",\"arm\":"<<p168::classify(l)<<",\"physical_commands\":"<<e.issue_sites.at(index).commands.size()<<"}\n";
+  }
+ }
+ for(int view:p168::arm_order){
    for(int prompt=0;prompt<12;++prompt){
      e.put(0,"position",&prompt,4);p168::sensor(e,"fixture-before-reset");
      image.boundary();p168::sensor(e,"fixture-after-reset");
-     pipeline::Request r{20,view,prompt,1,0,prompt+1,{}};
+     pipeline::Request r{20,view,prompt,3,0,prompt+1,{}}; // REPEATS=3
      p168::probe(e,image,r,shared.data());
    }
  }
- bool missing_transfer_refused=false;
- try{pipeline::Request r{20,8,0,1,0,1,{}};p168::probe(e,image,r,shared.data());}
- catch(const std::exception&){missing_transfer_refused=true;}
- require(missing_transfer_refused,"unimplemented transfer accepted");
+ for(int arm:{5,8,9}){
+  bool refused=false;
+  try{pipeline::Request r{20,arm,0,1,0,1,{}};p168::probe(e,image,r,shared.data());}
+  catch(const std::exception&){refused=true;}
+  require(refused,"residual or split-fusion arm accepted");
+ }
  require(p151audit::prepared>0&&p151audit::issued>0,"actual preparation/issue bypassed");
  e.shutdown();std::cout<<"PASS private native arm lifecycle rank="<<a.rank
-   <<" observations=132 missing_transfer_refused=true; marker transport, not arithmetic or complete census qualification\n";
+   <<" observations=324 residual_arms_refused=true; six-class sequence, marker transport, not arithmetic or native interval qualification\n";
  return 0;
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}}
