@@ -1,0 +1,58 @@
+{
+  "schema": "own-runtime.packet58aq.ready.v1",
+  "ready_for_device": true,
+  "passed": true,
+  "device_executed": false,
+  "scope": "whole-host",
+  "lane": "A",
+  "gpu_count": 1,
+  "coordinator_holds": "PAUSE-B",
+  "model_loads": 1,
+  "optional_smoke_required": false,
+  "diagnostic_only": true,
+  "strict512": false,
+  "submission_eligible": false,
+  "arithmetic": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "runtime": "packet58aj resident composition, publication skip-and-repair diagnostic",
+  "arm_order": [
+    "control",
+    "no-upload",
+    "no-scatter",
+    "drain-only",
+    "wait-split",
+    "control"
+  ],
+  "prompts_per_view": 12,
+  "max_new": 32,
+  "per_operation_wait_seconds": 600,
+  "planned_model_screen_seconds": [
+    600,
+    900
+  ],
+  "build_receipt_sha256": "c3660d9adbe5f68181f043a31f1831f10ccd0a1cd136f5d566fb53463d38076c",
+  "checks": {
+    "evidence/cpu-exactness.json": "6a0dc84811adbee7360c77cde4ea3a986e79929f33695d98224422dbda3a217f",
+    "evidence/preparation.json": "9f3bb4c17b0c9d80ffe04d0e0fb8e4622d109b877ecfde5122a5380ba37704b6",
+    "evidence/analyzer-real-parent.json": "accefe1a7a82ed9269668575ea0b29349ae24fac95b536f542d38d1c8a68d7c7",
+    "evidence/report-adapter.json": "756222fb2d752514618af6dfcdd43f93fc859dacdbe5d77dc6c4021e85a24db2",
+    "evidence/flags.json": "ee5cf35f5e70abc42a9b485b54972c348ba31ee5c08d122867a9e3012d971beb",
+    "evidence/queue-plans.json": "efbd7b71efb85eff6b08550190abe2672bee0791b095ae6abdeb1dd8aa7de0f8",
+    "evidence/storage.json": "e2d64b3ada4dd48eefd0ca0d38dcf49333c16e882c7364773e8a85198f028734",
+    "evidence/entry-split.json": "40a26f1ff8927f46fd6a236ddb24b661d81875657ffab6c8614637ae8fc5daab",
+    "evidence/entry-smoke.json": "62c7b339ee3694efe1ae5e83569d44b44d81c062d2e2e1419a6a7eb5c0cf84ca",
+    "evidence/shared-entry-report-final.json": "6a79eda739f4bea016baab034944a3116a652b3dd17fe7c6dfebe4bee990c3ab"
+  },
+  "proposals": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58aq-split-A.txt": "59bb0367ecd1a9c1d230ca5604d10855438209e91ae389949d5341bec940c85c",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58aq-smoke-A.txt": "95d8fffaf68e2795794f97b1767531d8645815a2330537d08faad0615a70cd09"
+  },
+  "shared_tool_limitations": [
+    "Frozen ops --report has five-view/128-token fixture: smoke passes; six-view bracket fixture fails. Private report_adapter exercises actual report and all decision tails.",
+    "Shared preparation adapter requires --rank; private device-define one-card probe runs actual 72-request, six-view reset paths with real sensors."
+  ],
+  "native_outputs_exact_on_device": "pending",
+  "publication_split_ms_per_token": null,
+  "host_wait_split_ms_per_token": null,
+  "preparation_commit": "ac37d1027b55567c92c4be8e63acfb5691dc87c6"
+}

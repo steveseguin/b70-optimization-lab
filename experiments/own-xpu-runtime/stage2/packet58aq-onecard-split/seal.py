@@ -11,6 +11,15 @@ def main():
   for root,key in ((ROOT,'sources'),(Q,'artifacts'),(Q,'gates')):
    for n,h in row[key].items():assert sha(root/n)==h,n
   print('PASS packet58aq sealed inputs');return
+ exact=json.loads((P/'evidence/cpu-exactness.json').read_text())
+ for r in exact['records']:
+  assert r['binary_sha256']==sha(P/'build'/r['compiler']/'own-rt-iq3')
+  assert r.get('view_resets')==6 and r['resets']==72 and r['real_sensor_samples']==156
+ prep=json.loads((P/'evidence/preparation.json').read_text())
+ assert prep['target_binary_sha256']==sha(P/'build/device/own-rt-iq3')
+ assert prep['native_source_sha256']==sha(P/'native/generated/main.cpp')
+ assert prep['probe_source_sha256']==sha(P/'native/preparation_probe.cpp')
+ assert prep['real_reset_sensors']==156 and prep['view_resets']==6
  gates={}
  for leaf in ('argument-gate.json','fullshape-submit-cpu.json','postload-allocation-cpu.json'):
   f=Q/'evidence'/leaf;r=json.loads(f.read_text());assert r['passed'] and not r['device_executed'];gates['evidence/'+leaf]=sha(f)
