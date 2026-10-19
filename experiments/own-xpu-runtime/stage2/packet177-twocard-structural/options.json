@@ -1,0 +1,440 @@
+{
+ "schema": "packet177.structural-options.v1",
+ "diagnostic_only": true,
+ "device_executed": false,
+ "note": "conditional planning numbers, not speeds; pct is vs the pooled interval mean of the 58.798109 record",
+ "base_pooled_mean_ms": 17.0552,
+ "record_equivalent_ms": 17.0073,
+ "options": [
+  {
+   "id": "a",
+   "name": "intra-layer tensor parallelism of dense/HC GEMVs (exact row split, 3 data phases/layer)",
+   "single_user_pct": {
+    "ideal_at_device_copy_floor": 2.89,
+    "with_split_costs_at_floor": -5.28,
+    "at_measured_peer_wall": -15.61,
+    "at_measured_dependent_round": -31.96
+   },
+   "break_even_phase_us": 6.62,
+   "labels": "compute from measured A/B; replicated work transferred (p45 K2); phase latency transferred (packet12); split costs assumed",
+   "verdict": "closed: even a 3.3 us/phase device-copy floor with zero split overhead stays under +3%; it replaces the speculative pipeline and pays ~7.4 ms replicated HC/router/shared work per card",
+   "prior": [
+    "notes/2026-10-15-p45-within-layer-split-step1.md (REJECT)",
+    "packet14-tp2 (41 exchanges, 1.53 ms/layer)",
+    "packet160 (a1-a3, c)",
+    "packet148 row/head cooperation +1.0-1.9%"
+   ]
+  },
+  {
+   "id": "b",
+   "name": "different layer placement / pipeline depth / interleave",
+   "single_user_pct": {
+    "ceiling_perfect_rebalance": 2.91,
+    "measured": [
+     -3.9,
+     -1.95,
+     -2.3,
+     -1.3,
+     -46.8
+    ]
+   },
+   "labels": "ceiling from measured rank0 draft wait 1.23 ms; moves measured",
+   "verdict": "closed: every measured move lost (25/23 -3.9%, head rows -1.95%, draft on rank0 -2.3/-1.3%, depth-2 -46.8%); interleaving one sequence needs depth>=2 guessing",
+   "prior": [
+    "packet120",
+    "packet127",
+    "packet79",
+    "packet71c",
+    "packet123",
+    "packet156",
+    "draft-line closure"
+   ]
+  },
+  {
+   "id": "c",
+   "name": "lossless dense byte reduction (same values, different read layout)",
+   "single_user_pct": {
+    "S1a_retained_metadata_scales": 3.7,
+    "S1b_fp32_d_plus_int8_sc": 3.53,
+    "S2_planar6_codes_fp32_scales": 5.22,
+    "S3_gguf_pack_free_unpack": 9.32
+   },
+   "measured_p74_pct": [
+    -0.8,
+    -2.4,
+    -2.9
+   ],
+   "labels": "byte cuts measured from the format; time transfer f=0.85 assumed; p74 measured",
+   "verdict": "OPEN: S1 (read retained fp16 d + int8 sub-scales instead of expanded FP32 scales) cuts Q6 dense bytes 14.4% with one multiply per 8-weight lane step; ceiling +3.70%. S2/S3 need a new unpack mechanism (p74).",
+   "recommended": true
+  },
+  {
+   "id": "d",
+   "name": "two-sequence pipeline (multi-user aggregate, separate class)",
+   "aggregate_tok_s": 76.33,
+   "per_user_tok_s": 38.16,
+   "four_seq_m2_aggregate_tok_s": 95.4,
+   "labels": "slot from measured A/B; M2 ratio measured (packet166); schedule modelled",
+   "verdict": "second metric only: exact by construction (M=1 kernels per sequence), +30% aggregate, but LocalMaxxing withholds aggregate tokSOut; neural.download concurrency profile only",
+   "localmaxxing_recordable": false
+  },
+  {
+   "id": "e1",
+   "name": "host wait policy / copy engine on two cards",
+   "single_user_pct": {
+    "remove_all_copy_stalls": 0.59
+   },
+   "labels": "measured (p154/p160/p134); audit of base/ tree",
+   "verdict": "nothing to port: two-card waits are already pure spin (sleep20=0, 0 voluntary switches/half), no fills exist, every copy is on the in-order CCS queue; total copy-related stall <0.1 ms/token"
+  },
+  {
+   "id": "e2",
+   "name": "3-card / 4-card pipelines",
+   "verdict": "out of scope for the 2-card record class; a single sequence over more stages needs depth>=2 speculation (p71c -46.8%) or TP (closed above)"
+  }
+ ],
+ "detail": {
+  "a_tensor_parallel": {
+   "compute_ms": 16.101,
+   "rows": {
+    "device_event_floor": {
+     "phase_us": 3.3,
+     "exchange_ms": 0.475,
+     "T_ideal_ms": 16.576,
+     "pct_ideal": 2.89,
+     "T_with_split_costs_ms": 18.006,
+     "pct_with_split_costs": -5.28
+    },
+    "bounce_idle": {
+     "phase_us": 15.19,
+     "exchange_ms": 2.187,
+     "T_ideal_ms": 18.289,
+     "pct_ideal": -6.74,
+     "T_with_split_costs_ms": 19.719,
+     "pct_with_split_costs": -13.51
+    },
+    "peer_wall": {
+     "phase_us": 18.6,
+     "exchange_ms": 2.678,
+     "T_ideal_ms": 18.78,
+     "pct_ideal": -9.18,
+     "T_with_split_costs_ms": 20.21,
+     "pct_with_split_costs": -15.61
+    },
+    "peer_round": {
+     "phase_us": 52.33,
+     "exchange_ms": 7.536,
+     "T_ideal_ms": 23.637,
+     "pct_ideal": -27.84,
+     "T_with_split_costs_ms": 25.067,
+     "pct_with_split_costs": -31.96
+    }
+   },
+   "break_even_phase_us_ideal": 6.62
+  },
+  "b_placement_depth": {
+   "ceiling_save_ms_per_hit": 0.615,
+   "ceiling_pct": 2.91,
+   "measured_moves_pct": [
+    -3.9,
+    -1.95,
+    -2.3,
+    -1.3,
+    -46.8
+   ]
+  },
+  "c_lossless_dense_bytes": {
+   "S1a_retained_metadata_scales": {
+    "q6_byte_cut": 0.144,
+    "q8_byte_cut": 0.056,
+    "dense_lane_only": {
+     "card_ms_saved_if_free": 1.0,
+     "ceiling_pct": 3.7
+    },
+    "dense_lane_plus_hc": {
+     "card_ms_saved_if_free": 1.112,
+     "ceiling_pct": 4.13
+    }
+   },
+   "S1b_fp32_d_plus_int8_sc": {
+    "q6_byte_cut": 0.137,
+    "q8_byte_cut": 0.0,
+    "dense_lane_only": {
+     "card_ms_saved_if_free": 0.957,
+     "ceiling_pct": 3.53
+    },
+    "dense_lane_plus_hc": {
+     "card_ms_saved_if_free": 0.957,
+     "ceiling_pct": 3.53
+    }
+   },
+   "S2_planar6_codes_fp32_scales": {
+    "q6_byte_cut": 0.2,
+    "q8_byte_cut": 0.0,
+    "dense_lane_only": {
+     "card_ms_saved_if_free": 1.392,
+     "ceiling_pct": 5.22
+    },
+    "dense_lane_plus_hc": {
+     "card_ms_saved_if_free": 1.392,
+     "ceiling_pct": 5.22
+    }
+   },
+   "S3_gguf_pack_free_unpack": {
+    "q6_byte_cut": 0.344,
+    "q8_byte_cut": 0.056,
+    "dense_lane_only": {
+     "card_ms_saved_if_free": 2.392,
+     "ceiling_pct": 9.32
+    },
+    "dense_lane_plus_hc": {
+     "card_ms_saved_if_free": 2.504,
+     "ceiling_pct": 9.8
+    }
+   },
+   "measured_p74_pct": [
+    -0.8,
+    -2.4,
+    -2.9
+   ]
+  },
+  "d_two_sequence_pipeline": {
+   "slot_ms": 13.102,
+   "aggregate_tok_s": 76.33,
+   "per_user_tok_s": 38.16,
+   "vs_single_user_pct": 29.8,
+   "four_seq_m2_slot_ms": 20.953,
+   "four_seq_m2_aggregate_tok_s": 95.4,
+   "localmaxxing_recordable": false,
+   "note": "aggregate only; docs/localmaxxing.md withholds aggregate tokSOut; publishable as a neural.download concurrency profile"
+  },
+  "e_transfer_behind_compute": {
+   "busy_minus_idle_ms": 0.0512,
+   "ceiling_pct_one_handoff": 0.3,
+   "all_copy_stalls_removed_pct": 0.59,
+   "wait_policy": "two-card already pure spin (P56X_SLEEP20=0); no fills; all copies on the in-order CCS queue"
+  }
+ },
+ "inputs": {
+  "record_tok_s": {
+   "value": 58.798108759,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet160-critical-path/PLAN.md"
+  },
+  "hits": {
+   "value": 932,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet160-critical-path/PLAN.md"
+  },
+  "misses": {
+   "value": 256,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet160-critical-path/PLAN.md"
+  },
+  "T_hit_ms": {
+   "value": 14.704424,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet160-critical-path/PLAN.md"
+  },
+  "T_miss_ms": {
+   "value": 25.613427,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet160-critical-path/PLAN.md"
+  },
+  "D_ms": {
+   "value": 1.597226,
+   "label": "measured",
+   "source": "packet160 hit mean"
+  },
+  "A_ms": {
+   "value": 12.482216,
+   "label": "measured",
+   "source": "packet160 hit mean (rank0 next-A host envelope)"
+  },
+  "B_ms": {
+   "value": 13.086387,
+   "label": "measured",
+   "source": "packet160 hit mean (rank1 body+target head+suffix/merge)"
+  },
+  "R_ms": {
+   "value": 0.551168,
+   "label": "measured",
+   "source": "packet160 miss mean"
+  },
+  "C_ms": {
+   "value": 11.818807,
+   "label": "measured",
+   "source": "packet160 miss mean"
+  },
+  "rank0_capture_ms": {
+   "value": 0.743247,
+   "label": "measured",
+   "source": "packet150 rank0 capture/accept/rollback host scope"
+  },
+  "rank0_draft_wait_ms": {
+   "value": 1.23,
+   "label": "measured",
+   "source": "packet154 rank0 wait for rank1 draft (draft-line closure note)"
+  },
+  "dense_hc_ms": {
+   "value": 11.53183,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/evidence/device-census-B-v3/CENSUS.md"
+  },
+  "dense_hc_rank": {
+   "value": [
+    5.574,
+    5.955
+   ],
+   "label": "measured",
+   "source": "notes/2026-10-19-own-runtime-packet168.md"
+  },
+  "routed_experts_ms": {
+   "value": 5.53478,
+   "label": "measured",
+   "source": "packet168 v3"
+  },
+  "router_shared_ms": {
+   "value": 3.34122,
+   "label": "measured",
+   "source": "packet168 v3"
+  },
+  "gdn_ms": {
+   "value": 2.0499,
+   "label": "measured",
+   "source": "packet168 v3"
+  },
+  "norms_glue_ms": {
+   "value": 1.8347,
+   "label": "measured",
+   "source": "packet168 v3"
+  },
+  "hc_share_of_dense": {
+   "value": 0.29,
+   "label": "transferred",
+   "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/ROOFLINE.md (GDN 66.4/228 us, QSA 66.0/240 us)"
+  },
+  "peer10k_event_us": {
+   "value": 3.3,
+   "label": "transferred",
+   "source": "experiments/own-xpu-runtime/stage2/packet12-peer/cards2-3-20261011/receipt.json (device event time, 10 KiB peer copy)"
+  },
+  "peer10k_wall_us": {
+   "value": 18.6,
+   "label": "transferred",
+   "source": "packet12 receipt, wall median incl. submit+wait"
+  },
+  "peer_round_us": {
+   "value": 52.33,
+   "label": "transferred",
+   "source": "packet12 60 dependent peer rounds"
+  },
+  "bounce_hidden_idle_us": {
+   "value": 15.19,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/RESULT.json hidden/idle"
+  },
+  "bounce_hidden_busy_us": {
+   "value": 66.44,
+   "label": "measured",
+   "source": "packet87t hidden/compute (export behind queued compute)"
+  },
+  "tp_data_phases": {
+   "value": 144,
+   "label": "measured",
+   "source": "notes/2026-10-15-p45-within-layer-split-step1.md (48 layers x 3, dependency proof on executed plans)"
+  },
+  "tp_replicated_ms": {
+   "value": 7.37714,
+   "label": "transferred",
+   "source": "p45 step-1 partial replicated work R (S7 K2 kernels; excludes norms/mixes/PLE/indexer)"
+  },
+  "tp_split_fixed_ms": {
+   "value": 0.75,
+   "label": "assumed",
+   "source": "half-shape kernels keep their ~3-5 us launch/tail floor: ~10 split launches/layer x 48 x ~1.5 us"
+  },
+  "expert_imbalance_ms": {
+   "value": 0.68,
+   "label": "transferred",
+   "source": "TWO-CARD-TP.md E[max]=6.23/10 uniform-routing model on 5.535 ms experts"
+  },
+  "p120_25_23_pct": {
+   "value": -3.9,
+   "label": "measured",
+   "source": "notes/2026-10-18-own-runtime-packet120-grid-result.md"
+  },
+  "p127_head_rows_pct": {
+   "value": -1.95,
+   "label": "measured",
+   "source": "notes/2026-10-18-own-runtime-packet127-grid-result.md"
+  },
+  "p79_draft_rank0_pct": {
+   "value": [
+    -2.3,
+    -1.3
+   ],
+   "label": "measured",
+   "source": "notes/2026-10-17-own-runtime-packet79.md"
+  },
+  "p71c_depth2_pct": {
+   "value": -46.8,
+   "label": "measured",
+   "source": "packet160 PLAN.md (d3)"
+  },
+  "p74_packed_dense_pct": {
+   "value": [
+    -0.8,
+    -2.4,
+    -2.9
+   ],
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet74-packed-dense/DO-NOT-REPEAT.md"
+  },
+  "p175_d2_ratio": {
+   "value": 1.44,
+   "label": "measured",
+   "source": "notes/2026-10-19-own-runtime-packet175.md (dense 1.44x slower)"
+  },
+  "m2_layer_ratio": {
+   "value": 1.6,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json (1.58-1.63, exact per row)"
+  },
+  "copy_stalls_two_card_ms": {
+   "value": 0.1,
+   "label": "measured",
+   "source": "upper bound from p154 transport 0.051 ms + p160 G 0.021/0.013 ms per interval"
+  },
+  "d1_mid_pct": {
+   "value": 0.68,
+   "label": "assumed",
+   "source": "packet173 lever table mid estimate (micro pending)"
+  },
+  "q6_expanded_Bpw": {
+   "value": 1.25,
+   "label": "measured",
+   "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/BYTE-MODEL.md (K + 4K/16)"
+  },
+  "q6_gguf_Bpw": {
+   "value": 0.8203125,
+   "label": "measured",
+   "source": "GGUF Q6_K block 210 B / 256 weights"
+  },
+  "q8_expanded_Bpw": {
+   "value": 1.125,
+   "label": "measured",
+   "source": "BYTE-MODEL.md (K + 4K/32)"
+  },
+  "q8_gguf_Bpw": {
+   "value": 1.0625,
+   "label": "measured",
+   "source": "GGUF Q8_0 block 34 B / 32 weights"
+  },
+  "dense_bw_bound_frac": {
+   "value": 0.85,
+   "label": "assumed",
+   "source": "share of non-HC dense time that scales with bytes (big GEMVs run 0.79-0.93 of the 537 GB/s copy reference, packet110)"
+  }
+ }
+}
