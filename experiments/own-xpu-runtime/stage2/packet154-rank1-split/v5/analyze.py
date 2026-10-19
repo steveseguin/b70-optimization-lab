@@ -113,6 +113,7 @@ def analyze(views, synthetic=False, smoke=False):
         req=[request_split(Path(v['output']),r) for r in v['requests']]
         rows.append(dict(index=v['index'],choice=v['choice'],requests=req,
                          overlap_ms_per_cycle={k:statistics.median(r['overlap_ms_per_cycle'][k] for r in req) for k in BUCKETS},
+                         rank1_scope_ms_per_cycle={k:statistics.median(r['rank1_scope_ms_per_cycle'].get(k,0.) for r in req) for k in sorted(set(GROUPS))},
                          remote_reply_wait_ms_per_cycle=statistics.median(r['remote_reply_wait_ms_per_cycle'] for r in req)))
     controls=[r for r in rows if r['choice']=='control']
     decision='smoke proves streams only'
@@ -124,7 +125,15 @@ def analyze(views, synthetic=False, smoke=False):
         elif majority(['b_half','merge_compute']):decision='B-half issue/completion or prefix/merge compute; no transport-only build'
         elif majority(['transport']):decision='packet152 merge brief: transfer/publication path'
         else:decision='mixed, pending device residence, rank0 dependency or unassigned; no mechanism selected'
-    return dict(schema='packet154.rank1-split.v1',device_evidence=True,
+    scope_summary={}
+    if controls:
+        for name in sorted(GROUPS):
+            values=[r['rank1_scope_ms_per_cycle'][name] for r in controls]
+            scope_summary[name]=dict(control_median_ms_per_cycle=statistics.median(values),
+                control_range_ms=max(values)-min(values),
+                replay_minus_skip_ms_per_cycle=[r['rank1_scope_ms_per_cycle'][name]-statistics.mean(values)
+                    for r in rows if r['choice']=='candidate'],removable=False)
+    return dict(schema='packet154.rank1-split.v1',scope_summary=scope_summary,device_evidence=True,
                 speed_evidence_eligible=False,removable_segments=[],views=rows,decision=decision,
                 clock='same-host steady monotonic; exact command sequence and op join',
                 limitation='Host submission/completion intervals include queue and polling delay. Pending draft is not GPU compute. Medians of components are not additive. No wait is removable by observation.')

@@ -26,7 +26,7 @@ def probe(kind,variant="split"):
    if event in ('subprocess.Popen','os.posix_spawn') and list(args[1])==oracle_command:
     oracle_calls.append(oracle_command);return
    if event in ('subprocess.Popen','os.system','os.exec','os.posix_spawn'):raise Forbidden('execution forbidden')
-  sys.addaudithook(audit);trace=[];bad=[False]
+  sys.addaudithook(audit);trace=[];bad=[False];destination=[None]
   class Transport:
    def __init__(self,args,out,*a,**k):self.out=out;self.children=[];self.closed=False;self.stop_write=-1;trace.append('load')
    def stop(self,*a):trace.append('stop')
@@ -43,13 +43,25 @@ def probe(kind,variant="split"):
     save(dest/f'boundary-rank{rank}.json',proof);proofs.append(proof)
    return proofs
   def reset(transport,dest):
+   destination[0]=dest
    for rank in (0,1):(dest/f'rank{rank}').mkdir(parents=True)
    trace.append('reset')
   def request(transport,args,prompt,count):
    tokens=list(expected[tuple(prompt)][:count])
-   if bad[0]:tokens[0]+=1
+   if bad[0] is True:tokens[0]+=1
    trace.append('request:'+str(count))
-   return dict(passed=True,tokens=tokens,cached_tokens=0,output_token_sha256=D.token_hash(tokens))
+   from analyze import REQUIRED
+   def sample(name,rank,start,end,seq):return dict(p154_segment=name,rank=rank,start=start,end=end,ms=(end-start)*1000,sequence=seq,op=1,position=seq,replay=False)
+   r0=[];r1=[]
+   for seq in range(1,64):
+    start=100+seq-1+.1
+    r0.append(sample('remote_reply_wait',0,start,start+.002,seq))
+    r1.append(sample('command',1,start-.01,start+.002,seq))
+    for n,name in enumerate(REQUIRED):r1.append(sample(name,1,start+n*.00001,start+(n+1)*.00001,seq))
+   for rank,rows in ((0,r0),(1,r1)):
+    (destination[0]/f'rank{rank}/timings.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
+   if bad[0]=='empty':(destination[0]/'rank1/timings.jsonl').write_text('')
+   return dict(passed=True,tokens=tokens,cached_tokens=0,token_timestamps=list(range(100,164)),output_token_sha256=D.token_hash(tokens))
   with patch.object(pipeline,'Transport',Transport),patch.object(suite,'reset',reset),patch.object(suite,'run_request',request),patch.object(bracket,'switch_reset',switch),patch.object(worker,'DeviceMonitor',Monitor),patch.object(worker,'masked_environment',return_value={}),patch.object(worker,'Teardown',side_effect=lambda *a,**k:contextlib.nullcontext()):
    code=worker.run(row,tmp/'positive',900)
    n=1 if kind=='smoke' else 5;assert code==0 and trace.count('load')==1 and sum(x.startswith('request:') for x in trace)==13*n and trace[-1]=='close-success',trace
@@ -60,7 +72,11 @@ def probe(kind,variant="split"):
    code=worker.run(row,tmp/'negative',900)
    assert code==1 and trace.count('load')==1 and trace.count('request:64')==1 and trace[-2:]==['stop','close-failure'],trace
    assert not (tmp/'negative/report-inputs.json').exists()
-   assert len(oracle_calls)>=2
+   trace.clear();bad[0]='empty'
+   code=worker.run(row,tmp/'empty-stream',900)
+   assert code==1 and trace.count('request:64')==1 and trace[-2:]==['stop','close-failure'],trace
+   assert 'empty rank1 scope stream' in (tmp/'empty-stream/failure.json').read_text()
+   assert len(oracle_calls)>=3
    return dict(passed=True,device_executed=False,kind=kind,positive_trace=positive,negative_trace=trace,requests=n*13,all_view_requests=True,real_oracle_commands=oracle_calls,native_execution_forbidden=True,synthetic_device_receipts_retained=False)
 
 def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['probe']

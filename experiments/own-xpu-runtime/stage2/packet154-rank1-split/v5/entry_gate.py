@@ -21,11 +21,18 @@ def probe(variant,kind,negative=None,lane="A"):
  unit='screen-packet154-'+variant+'-'+kind+'-'+lane+'.service'
  group='0::/user.slice/user-1000.slice/user@1000.service/app.slice/'+unit+'\n'
  if negative=='unit':group=group.replace('screen-packet154','wrong-packet154')
- original_read=Path.read_text;original_open=Path.open;original_run=subprocess.run
+ original_read=Path.read_text;original_open=Path.open;original_run=subprocess.run;original_glob=Path.glob;original_exists=Path.exists
  props=dict(Restart='no',SendSIGKILL='no',KillMode='process',ExitType='cgroup',TimeoutStopUSec='infinity')
  with tempfile.TemporaryDirectory(prefix='entry142-',dir=P/'evidence') as d:
   tmp=Path(d);out=tmp/'device';lock=tmp/'lane.lock'
   def read(path,*a,**k):return group if str(path)=='/proc/self/cgroup' else original_read(path,*a,**k)
+  def globbed(path,pattern,*a,**k):
+   if str(pattern).startswith('fault-'):
+    return iter([tmp/'synthetic-latch.json'] if negative=='latch' else [])
+   return original_glob(path,pattern,*a,**k)
+  def exists(path):
+   if path.name.startswith('fault-') and path.suffix=='.json':return negative=='latch'
+   return original_exists(path)
   def opened(path,*a,**k):
    if str(path).endswith('/screen/v3/lane-'+lane+'.lock'):return original_open(lock,*a,**k)
    return original_open(path,*a,**k)
@@ -68,7 +75,7 @@ def probe(variant,kind,negative=None,lane="A"):
    raise AssertionError('native boundary not reached')
   original_popen=subprocess.Popen
   with contextlib.ExitStack() as stack:
-   for item in [patch.object(Path,'read_text',read),patch.object(Path,'open',opened),patch.object(subprocess,'run',side_effect=run),patch.object(subprocess,'Popen',side_effect=worker),
+   for item in [patch.object(Path,'read_text',read),patch.object(Path,'open',opened),patch.object(Path,'glob',globbed),patch.object(Path,'exists',exists),patch.object(subprocess,'run',side_effect=run),patch.object(subprocess,'Popen',side_effect=worker),
     patch.object(readiness,'verify_ready',side_effect=lambda **k:verify()),patch.object(compare,'load',return_value=dict(kind='smoke',passed=True,request_count=12,max_new=64)),
     patch.object(screen,'Reservation',Lease),patch.object(screen,'lane_gate'),patch.object(screen,'screen_teardown_admit'),
     patch.object(screen.fault_review,'validate',return_value=({},'','','CPU-only')),
@@ -104,7 +111,7 @@ def main():
  for variant in VALUES:
   for kind in ('smoke','bracket'):
    for lane in ('A','B'):
-    for neg in (None,'unit','environment'):
+    for neg in (None,'unit','environment','latch'):
      cmd=[sys.executable,'-B',str(P/'entry_gate.py'),'--probe',variant,kind,neg or 'positive',lane]
      r=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True)
      log=P/'evidence'/('entry-'+variant+'-'+kind+'-'+lane+'-'+str(neg)+'.log');log.write_text(r.stdout+r.stderr);assert r.returncode==0,log.read_text()[-6000:]

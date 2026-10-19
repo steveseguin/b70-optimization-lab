@@ -2,7 +2,7 @@
 import argparse,json,subprocess,sys
 from pathlib import Path
 from p154_v5_build_engine import P,LOCAL,ROOT,sha,save
-GATES=('build','retained-report-regression','split-cpu','controller','safety','exec-limits')
+GATES=('build','retained-report-regression','split-cpu','controller','safety','exec-limits','admission')
 def check_sources(rows):
  for name,digest in rows.items():
   assert (ROOT/name).is_file() and sha(ROOT/name)==digest,'source changed: '+name

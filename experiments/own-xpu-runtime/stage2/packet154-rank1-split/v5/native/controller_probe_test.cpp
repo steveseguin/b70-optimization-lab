@@ -21,6 +21,8 @@ struct Reply {int32_t status,token,error,bytes,sequence,rank,reserved[2];double 
 }
 #include <iomanip>
 #include "split_timing.hpp"
+#include <limits>
+#include "../../p105_common.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/native-base/experiments/own-xpu-runtime/stage2/packet154-rank1-split/native_controller.hpp"
 using namespace pipeline;
 namespace p56x {const bool sleep20=false;}
@@ -58,6 +60,13 @@ Outcome run_case(native38::Config c,bool probe){
 }
 int main(){try{
  unsigned cases=0,total_misses=0;
+ for(float a:{-1.f,0.f,-0.f,1.f,std::numeric_limits<float>::infinity(),std::numeric_limits<float>::quiet_NaN()})
+ for(float b:{-1.f,0.f,-0.f,1.f,std::numeric_limits<float>::infinity(),std::numeric_limits<float>::quiet_NaN()})
+ for(unsigned error:{0u,1u,2u}){
+  p105::Best x{a,7,error,0},y{b,int(p105::prefix)+3,0,0};auto original=p105::merge(x,y),replay=p105::merge(x,y);
+  require(std::memcmp(&original,&replay,16)==0,"rank1 pure merge bytes differ");
+  p105::Best readback;std::memcpy(&readback,&original,16);require(std::memcmp(&readback,&original,16)==0,"export replay differs");
+ }
  for(int count:{8,64,128}){
   native38::Config c;c.mode=0;c.count=count;c.overlap=1;c.prompt={1,2,3,4,5};
   auto reference=run_case(c,false);

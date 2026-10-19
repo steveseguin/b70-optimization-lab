@@ -1,6 +1,6 @@
 # Packet154: correlate rank 1 with rank 0's remote reply wait
 
-CPU preparation in progress. No device result, speed gain or readiness is claimed.
+CPU qualification complete. No device result or speed gain is claimed.
 Vendored packet150 v5 harness and its packet136 source closure; arithmetic remains
 `iq3-p49-split32-v1`. Every prior packet and shared operations tool stays frozen.
 The 58.798 tok/s record remains unchanged.
@@ -36,3 +36,18 @@ caps remain 4 GiB. Root floor 30 GB; build ceiling 300 MB.
 
 Proposals are prepared for lane B only, never queued. Final handoff is
 `READY-FOR-DEVICE.json`, written last after validation (or with explicit blockers).
+
+CPU qualification: GNU and Intel builds; four miniature byte/restore runs;
+two controller repeats per compiler including pure merge/export bytes; five
+analyzer tests; per-rank modeled admission; four real entry routes and twelve
+negative routes (unit/environment/latch); inherited-limit checks; 78 simulated
+requests plus corruption and empty-stream aborts; shared report and loader
+checks; two temporary queue plans and pin admission. All pass. Device quality,
+overhead and the rank1 attribution decision remain pending.
+
+Reproduce preparation with `nice -n 19 taskset -c 8-15,24-31 python3 -B
+experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/qualify_cpu.py`, stdin
+from `/dev/null`. This compiles on CPU and never queues or opens a device.
+The final marker is separate and must be rewritten only after every check.
+Fresh runtime storage admission requires 30 GB plus the proposed writes;
+CPU readiness does not waive that check or any live coordinator latch.

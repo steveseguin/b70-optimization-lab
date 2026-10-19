@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 19, packet154 rank-1 split prepared on CPU:** The private packet150
+copy adds command-correlated scopes to explain rank0's reply wait. Both builds,
+byte checks, analyzer failures, entry and limit checks, 78 simulated requests,
+reports, temporary plans and pin checks pass. The first completed incident must
+prove both timing streams before proceeding. Two lane-B proposals remain
+unqueued; device equality and attribution are pending. No GPU or service was
+started. The final packet readiness marker is the handoff authority.
+[Work note](notes/2026-10-19-own-runtime-packet154.md).
+
 **October 19, packet153 static snapshot tables prepared on CPU:** The private
 packet136 copy builds the snapshot copy table once at load. Capture and rollback
 reuse it, keeping the copied state unchanged. GNU and Intel byte checks agree;

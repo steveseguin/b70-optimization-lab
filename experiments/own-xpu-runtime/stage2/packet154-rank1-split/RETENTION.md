@@ -1,22 +1,15 @@
-# Packet150 retention
+# Packet154 retention
 
-Keep the closed source copy, exact GNU/Intel binaries and immutable inherited
-object symlinks, miniature CPU fixture, oracle inputs, CPU receipts and proposals.
-`retention-census.json` records regular files of at least 1 MiB with their hashes
-and purposes. No model weights are included. The original symlink objects and
-packet136 history remain under `lineage-inputs/` as provenance, not live source.
+Retain the vendored source closure, the packet136 compiler command provenance,
+and build/vendor-objects. These exact objects (about 46 MB total) close the
+incremental link without depending on mutable parents. They are intentional
+build evidence, including members over 1 MiB. Their source paths, copied paths
+and SHA256 values are in evidence/vendor-objects.json and immutable-binaries.json.
+Restore missing tracked objects with Git; do not silently relink against a parent.
+The native source closure remains available for rebuilding, and engine-commands
+records the exact incremental compiler/link invocations.
 
-Rebuild the native entries with `v5/p154_v5_build_engine.py`, controller mocks
-with `v5/controller_gate.py`, and the miniature replay/restore fixture with
-`v5/split_cpu.py`. Use nice19, cores8–15/24–31, Python `-B`, stdin `/dev/null`;
-all native compilation goes through the shared ops compiler arbiter. Original
-ELF inputs are verified against `immutable-binaries.json` before each link.
-Exact commands, artifact hashes and source hashes are in
-`v5/engine-commands.json` and `v5/evidence/build.json`.
-
-The retained prompt inputs are required by the oracle manifest, not model
-weights. Rope tables and generated headers are retained source dependencies.
-The report-schema fixture is needed for CPU-only real report-path rehearsal;
-its old times are never packet154 measurements. The original retained packet145
-trace regression is read-only. Never remove frozen parent artifacts or replace
-literal symlinks with dereferenced copies. Python caches are excluded.
+Generated CPU fixture directories are bounded test scratch. Device evidence,
+when separately authorized, is budgeted at 145 MB per view and retained without
+inventing outputs. Do not delete earlier packet evidence or consolidate archives
+as part of this packet. Build products must remain below 300 MB.

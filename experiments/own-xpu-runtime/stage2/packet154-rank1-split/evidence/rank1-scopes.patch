@@ -1,0 +1,233 @@
+--- normalized-packet150/v5/native/split_timing.hpp
++++ experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/native/split_timing.hpp
+@@ -1,17 +1,21 @@
+ #pragma once
+ namespace p154 {
+-struct Sample { std::string name; int position; bool replay; double ms; double start; double end; };
++struct Sample { std::string name; int position; bool replay; double ms; double start; double end; int sequence; int op; };
+ inline thread_local std::vector<Sample> samples;
++inline thread_local int sequence=0, op=0;
++struct Identity {int old_sequence=sequence,old_op=op;Identity(int s,int o){sequence=s;op=o;}~Identity(){sequence=old_sequence;op=old_op;}};
++struct Scope {const char* name;int position;bool replay;std::chrono::steady_clock::time_point start=std::chrono::steady_clock::now();Scope(const char*n,int p,bool r=false):name(n),position(p),replay(r){};~Scope();};
+ inline double record(const char* name,int position,bool replay,std::chrono::steady_clock::time_point start){
+  const auto end=std::chrono::steady_clock::now();
+  double elapsed=std::chrono::duration<double,std::milli>(end-start).count();
+- samples.push_back({name,position,replay,elapsed,std::chrono::duration<double>(start.time_since_epoch()).count(),std::chrono::duration<double>(end.time_since_epoch()).count()});return elapsed;
++ samples.push_back({name,position,replay,elapsed,std::chrono::duration<double>(start.time_since_epoch()).count(),std::chrono::duration<double>(end.time_since_epoch()).count(),sequence,op});return elapsed;
+ }
++inline Scope::~Scope(){record(name,position,replay,start);}
+ template<class F> double measure(const char* name,int position,bool replay,F fn){
+  const auto start=std::chrono::steady_clock::now();fn();return record(name,position,replay,start);
+ }
+ inline void flush(std::ostream& out,int rank){
+- for(const auto& r:samples)out<<"{\"p154_segment\":\""<<r.name<<"\",\"position\":"<<r.position<<",\"rank\":"<<rank<<",\"replay\":"<<(r.replay?"true":"false")<<",\"ms\":"<<r.ms<<",\"start\":"<<std::setprecision(17)<<r.start<<",\"end\":"<<r.end<<"}\n";
++ for(const auto& r:samples)out<<"{\"p154_segment\":\""<<r.name<<"\",\"position\":"<<r.position<<",\"sequence\":"<<r.sequence<<",\"op\":"<<r.op<<",\"rank\":"<<rank<<",\"replay\":"<<(r.replay?"true":"false")<<",\"ms\":"<<r.ms<<",\"start\":"<<std::setprecision(17)<<r.start<<",\"end\":"<<r.end<<"}\n";
+  samples.clear();require(bool(out),"p154 segment receipt");
+ }
+ }
+--- normalized-packet150/v5/native-src/rank.hpp
++++ experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/native-src/rank.hpp
+@@ -113,6 +113,7 @@
+  }
+ }
+ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
++ p154::Scope half_scope("half_total_rank1",request.position);
+  const auto p154_half_begin=std::chrono::steady_clock::now();
+  require(!candidate.pending,"half before resolving prior candidate");
+  require(request.position>=0&&request.position<e.p.g.context,"half position bound");
+@@ -137,10 +138,10 @@
+  if(e.a.rank==0){
+  const auto h0=e.history0,h1=e.history1;
+  p154::measure("token_prep",request.position,false,[&]{e.prepare_token(request.token);});
+- p154::measure("token_prep_duplicate",request.position,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){
++ p154::measure("token_prep_duplicate",request.position,true,[&]{if(false){
+  e.history0=h0;e.history1=h1;e.prepare_token(request.token);}});
+  }
+- else if(!prepared_inputs){size_t n=4*e.p.g.h*2;require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);}
++ else if(!prepared_inputs){p154::Scope scope("b_import",request.position);size_t n=4*e.p.g.h*2;require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);}
+  double prepare_ms=Engine::ms(prepare_start);auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e.wait_ms;
+  std::array<int,48> captured{};size_t captured_count=0,issued=0;
+  auto cancel_at_boundary=[&](){
+@@ -162,7 +163,7 @@
+   if(request.fixture==0&&(ready?ready->prefill_skip:(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")))continue;
+   if(e.progress_pending&&e.progress_callback)e.progress_callback();
+   if(l.label=="logits"&&e.head_export)e.head_export(request.sequence,request.position,request.fixture);
+-  e.enqueue(l,e.logical);
++  if(e.a.rank==1&&!l.label.starts_with("blk."))p154::measure("target_tail_issue",request.position,false,[&]{e.enqueue(l,e.logical);});else e.enqueue(l,e.logical);
+   if(e.correction_exchange&&(l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up")&&(ends(l.label,".gdn.z")||ends(l.label,".qsa.ik")||ends(l.label,".attention")||l.op=="expert_gate_up"||ends(l.label,".expsdown")))e.correction_exchange(l);
+   if(l.label=="logits"&&e.head_publish)e.head_publish();
+   if(e.progress_pending&&e.progress_callback)e.progress_callback();
+@@ -180,8 +181,9 @@
+  catch(...){e.dev(0).before_compute={};e.dev(0).after_compute={};throw;}
+  e.dev(0).before_compute={};e.dev(0).after_compute={};
+  if(cancel_at_boundary())candidate.cancelled=true;
++ if(e.a.rank==1)p154::record("b_issue",request.position,false,enqueue_start);
+  double enqueue_ms=Engine::ms(enqueue_start)-(e.wait_ms-enqueue_wait);
+- e.drain();if(e.a.rank==0)p154::record("layer_body",request.position,false,enqueue_start);if(request.fixture>0&&e.head_merge)e.head_merge(request.sequence,request.position,request.fixture);int error=e.integer(0,"error");require(!error,"sticky rank error (never rolled back)");
++ p154::measure("b_completion",request.position,false,[&]{e.drain();});if(e.a.rank==0)p154::record("layer_body",request.position,false,enqueue_start);if(request.fixture>0&&e.head_merge)e.head_merge(request.sequence,request.position,request.fixture);int error=e.integer(0,"error");require(!error,"sticky rank error (never rolled back)");
+  if(e.a.rank==0&&!candidate.cancelled){e.swap_state_banks();candidate.swapped=true;}
+  if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*4*e.p.g.h*2);for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=4*e.p.g.h*2;candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}
+  if(captured_count){std::vector<uint8_t> zero(48*4*e.p.g.h*2,0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
+@@ -287,6 +289,7 @@
+   Reply ready{};ready.rank=a.rank;transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;
+   auto execute=[&](const Request& r)->Reply {
++   p154::Identity identity(r.sequence,r.op);p154::Scope command_scope("command",r.position);
+    if(a.rank==1)engine->reply_report.before(r.op);
+    auto received=std::chrono::steady_clock::now();
+    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
+@@ -300,6 +303,7 @@
+     auto before=std::chrono::steady_clock::now();double gpu=engine->gemv_ms+engine->nongemv_ms;
+     struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};static_assert(sizeof(Publication)==40);
+     auto publish_draft=[&,r](int token,double wall_ms,double gpu_ms){
++     p154::Identity identity(r.sequence,r.op);p154::Scope scope("draft_publication",r.position);
+      Publication v{int32_t(token>=0&&token<engine->p.g.vocab),r.position+1,token,int32_t(token<0&&r.fixture!=0),uint64_t(wall_ms*1e6),r.sequence,0,gpu_ms};
+      std::memcpy(static_cast<uint8_t*>(mapping)+2*slot_bytes,&v,sizeof v);
+      if(r.speculative){auto& mailbox=*reinterpret_cast<native38::Mailbox*>(static_cast<uint8_t*>(mapping)+2*slot_bytes+256);native38::publish(mailbox.draft_sequence,uint32_t(r.sequence));}
+@@ -307,7 +311,8 @@
+     if(r.speculative){
+      require(!async_half_ready,"duplicate asynchronous draft");
+      async_half_ready=a.rank==1;async_half_position=r.position;async_half_token=r.token;
+-     if(provider->begin(r.token,r.position,r.fixture!=0)){
++     bool begun=false;p154::measure("draft_issue",r.position,false,[&]{begun=provider->begin(r.token,r.position,r.fixture!=0);});
++     if(begun){
+       engine->progress_callback=[&,publish_draft](){if(provider->submitting())if(auto completed=provider->poll_result())publish_draft(completed->token,completed->wall_ms,completed->gpu_ms);};
+      }else {engine->progress_callback={};publish_draft(-1,Engine::ms(before),0);}
+     }else {int token=provider->run(r.token,r.position,r.fixture!=0);publish_draft(token,Engine::ms(before),engine->gemv_ms+engine->nongemv_ms-gpu);}
+@@ -316,7 +321,7 @@
+    else if(r.op==half){
+     require(!head_runtime||native_active,"p105 head split requires native controller");
+     bool prepared_inputs=async_half_ready;
+-    if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
++    if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");p154::measure("b_import",r.position,false,[&]{provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);});async_half_ready=false;}
+     engine->correction_exchange_calls=engine->correction_send_bytes=engine->correction_receive_bytes=0;
+     if(completing_redo&&engine->sealed_selection.choices.at("probe")=="xchg")
+       engine->correction_exchange=[&](const flash::Launch& l){probe.exchange(l);};
+--- normalized-packet150/v5/native-src/mtp.hpp
++++ experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/native-src/mtp.hpp
+@@ -224,7 +224,9 @@
+    catch(...){e.dev(0).end_capture();e.preparing_commands=false;throw;}
+   }
+  }
++ std::chrono::steady_clock::time_point p154_pending;int p154_sequence=0,p154_position=0;
+  int compute(int confirmed,int target_position,bool head,bool asynchronous=false){
++  p154_pending=std::chrono::steady_clock::now();p154_sequence=p154::sequence;p154_position=target_position;
+   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
+   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
+   e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
+@@ -248,6 +250,7 @@
+    // No host access occurs until the final copy event reports completion.
+    ownrt::CopyEngine copy(e.dev(0));copy.copy(publication,0,id("error"),0,4,{});
+    publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;
++   p154_pending=std::chrono::steady_clock::now();
+    pending_start=start;pending_head=head;pending_confirmed=confirmed;async_pending=true;e.progress_pending=true;
+    return -1;
+   }
+@@ -264,6 +267,7 @@
+  struct Completion {int token=-1;double wall_ms=0,gpu_ms=0;};
+  std::optional<Completion> poll_result(){
+   if(!async_pending||!e.dev(0).complete(publication_event))return {};
++  p154::Identity identity(p154_sequence,9);p154::record("draft_completion_pending",p154_position,false,p154_pending);p154::Scope scope("draft_completion_host",p154_position);
+   int status=0,token=-1;auto* bytes=static_cast<const uint8_t*>(e.dev(0).arena.row(publication).pointer);
+   std::memcpy(&status,bytes,4);if(pending_head)std::memcpy(&token,bytes+4,4);
+   Completion done;done.wall_ms=Engine::ms(pending_start);
+--- normalized-packet150/native-base/experiments/own-xpu-runtime/stage2/packet150-rank0-split/native_controller.hpp
++++ experiments/own-xpu-runtime/stage2/packet154-rank1-split/native-base/experiments/own-xpu-runtime/stage2/packet154-rank1-split/native_controller.hpp
+@@ -37,7 +37,7 @@
+   else {require(load(m.reply_sequence)==seq,"native outstanding mailbox");require(seq<UINT32_MAX,"native sequence overflow");r.sequence=int32_t(seq+1);commands[rank]=r;m.request=r;publish(m.request_sequence,++seq);}
+  }
+  Reply wait(int rank){require(pending[rank],"native wait idle");Reply r;
+-  if(rank==0)r=local;else{if(before_remote_wait)before_remote_wait(commands[rank]);uint32_t seen=load(m.reply_sequence);p154::measure("remote_reply_wait",commands[rank].position,false,[&]{if(seen!=seq)wait_change(m.reply_sequence,seen,m,seconds,cancel);});require(load(m.reply_sequence)==seq,"native reply sequence");r=m.reply;}
++  if(rank==0)r=local;else{p154::Identity identity(commands[rank].sequence,commands[rank].op);if(before_remote_wait)before_remote_wait(commands[rank]);uint32_t seen=load(m.reply_sequence);p154::measure("remote_reply_wait",commands[rank].position,false,[&]{if(seen!=seq)wait_change(m.reply_sequence,seen,m,seconds,cancel);});require(load(m.reply_sequence)==seq,"native reply sequence");r=m.reply;}
+   require(!load(m.abort),"native peer failed");require(!r.status&&!r.error,"native failed operation");pending[rank]=false;trace.push_back({rank,commands[rank],r,sent[rank]});return r;
+  }
+  Reply call(int rank,int op,int token=0,int position=0,int fixture=0,int speculative=0){start(rank,op,token,position,fixture,speculative);return wait(rank);}
+@@ -45,9 +45,9 @@
+ };
+ inline void worker(Mailbox& m,int seconds,const std::function<Reply(const Request&)>& execute,const std::function<void()>& cancel,const std::function<void(const Request&)>& published={},const std::function<void()>& finish_reports={}){
+  uint32_t seen=load(m.reply_sequence);
+- for(;;){if(load(m.request_sequence)==seen)wait_change(m.request_sequence,seen,m,seconds,cancel);cancel();require(!load(m.abort),"native peer failed");uint32_t next=load(m.request_sequence);require(next==seen+1,"native worker sequence");Request r=m.request;
++ for(;;){auto waiting=std::chrono::steady_clock::now();if(load(m.request_sequence)==seen)wait_change(m.request_sequence,seen,m,seconds,cancel);cancel();require(!load(m.abort),"native peer failed");uint32_t next=load(m.request_sequence);require(next==seen+1,"native worker sequence");Request r=m.request;p154::Identity identity(r.sequence,r.op);p154::record("wait_rank0_command",r.position,false,waiting);
+   if(r.op==0){if(finish_reports)finish_reports();m.reply={};publish(m.reply_sequence,next);return;}
+-  m.reply=execute(r);publish(m.reply_sequence,next);if(published)published(r);seen=next;
++  m.reply=execute(r);p154::measure("reply_publication",r.position,false,[&]{publish(m.reply_sequence,next);});if(published)published(r);seen=next;
+  }
+ }
+ struct Config {int draft_rank=1,mode=0,count=0,overlap=1,dumps=0,vocab=31;std::vector<int> prompt,script,eos;};
+@@ -72,7 +72,7 @@
+   uint32_t expected_draft=0;double draft_started=0;
+   if(draft_pending){expected_draft=c.draft_rank==0?uint32_t(p):pending_draft_sequence;draft_started=issued_draft_at;if(c.draft_rank==1&&b.pending[1])b.wait(1);draft_pending=false;}
+   p154::measure("handoff_host",p,false,[&]{b.handover();});half_start(1,token,p);double half_started=clock_now();
+-  if(expected_draft){double waiting=clock_now();uint32_t seen=load(b.m.draft_sequence);p154::measure("draft_wait",p,false,[&]{if(seen!=expected_draft)wait_change(b.m.draft_sequence,seen,b.m,b.seconds,b.cancel);});p154::measure("draft_zero_wait",p,true,[&]{if(b.split_replay)require(load(b.m.draft_sequence)==expected_draft,"p154 satisfied draft wait");});
++  if(expected_draft){double waiting=clock_now();uint32_t seen=load(b.m.draft_sequence);p154::measure("draft_wait",p,false,[&]{if(seen!=expected_draft)wait_change(b.m.draft_sequence,seen,b.m,b.seconds,b.cancel);});p154::measure("draft_zero_wait",p,true,[&]{if(false)require(load(b.m.draft_sequence)==expected_draft,"p154 satisfied draft wait");});
+    require(load(b.m.draft_sequence)==expected_draft,"native draft publication sequence");
+    struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};Publication v{};std::memcpy(&v,b.shared+2*slot_bytes,sizeof v);
+    if(v.valid==1&&v.position==p+1&&!v.error&&v.sequence==int32_t(expected_draft)&&v.token>=0&&v.token<c.vocab)draft_guess=v.token;
+--- normalized-packet150/native-base/experiments/own-xpu-runtime/stage2/packet150-rank0-split/p105_runtime.hpp
++++ experiments/own-xpu-runtime/stage2/packet154-rank1-split/native-base/experiments/own-xpu-runtime/stage2/packet154-rank1-split/p105_runtime.hpp
+@@ -35,6 +35,7 @@
+   require(bool(timings),"p105 timing write");
+  }
+  void export_hidden(Mailbox& box,uint32_t sequence,int pos,int fixture){
++  p154::Scope timing_scope("hidden_export_issue",pos);
+   require(e.a.rank==1&&sequence&&fixture>0,"p105 export identity");
+   require(!load(box.abort)&&load(box.request)==load(box.reply)&&sequence>load(box.request),"p105 outstanding/stale export");
+   require(!export_event,"p105 duplicate hidden export");
+@@ -45,6 +46,7 @@
+   export_sequence=sequence;export_position=pos;export_fixture=fixture;
+  }
+  void publish_hidden(Mailbox& box){
++  p154::Scope scope("hidden_export_completion",export_position);
+   require(e.a.rank==1&&export_event&&!load(box.abort),"p105 hidden publication ownership");
+   // Called just after prefix submission. Do not retire events: that head is
+   // still running. Both queues are drained by the normal half boundary.
+@@ -59,14 +61,14 @@
+   require(e.a.rank==0&&seq&&fixture>0,"p105 suffix ownership");
+   auto check=[&]{cancel();require(!load(box.abort),"p105 peer failed");};
+   p154::measure("head_hidden_wait",pos,false,[&]{require(p56x::wait([&]{return load(box.request)==seq;},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 hidden timeout");check();});
+-  p154::measure("head_zero_wait",pos,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){require(load(box.request)==seq,"p154 satisfied wait");check();}});
++  p154::measure("head_zero_wait",pos,true,[&]{if(false){require(load(box.request)==seq,"p154 satisfied wait");check();}});
+   require(box.position==pos&&box.fixture==fixture&&load(box.reply)<seq,"p105 stale position/duplicate service");
+   e.drain(); // local speculative half has completed; no model-state writes below.
+   std::memcpy(e.dev(0).arena.row(staging).pointer,box.hidden,hidden_bytes);
+   p154::measure("head_import",pos,false,[&]{transfer(hidden,staging,hidden_bytes,"hidden-import");});
+   uint32_t zero=0,one=1;e.upload(0,error,0,&zero,4);e.upload(0,active,0,&one,4);
+   p154::measure("suffix_head",pos,false,[&]{for(const auto& command:suffix_commands)e.tail=e.dev(0).issue(command);e.drain();});
+-  p154::measure("suffix_duplicate",pos,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){for(const auto& command:suffix_commands)e.tail=e.dev(0).issue(command);e.drain();}});
++  p154::measure("suffix_duplicate",pos,true,[&]{if(false){for(const auto& command:suffix_commands)e.tail=e.dev(0).issue(command);e.drain();}});
+   p154::measure("head_export",pos,false,[&]{transfer(staging,best,16,"best-export");});
+   std::memcpy(&box.best,e.dev(0).arena.row(staging).pointer,16);check();publish(box.reply,seq);
+   p154::record("head_service_total",pos,false,p154_service_start);
+@@ -74,14 +76,17 @@
+  template<class Cancel> void merge_target(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel){
+   require(e.a.rank==1&&load(box.request)==seq&&box.position==pos&&box.fixture==fixture,"p105 merge ownership");
+   // Pack uses the unchanged prefix argmax and its sticky finite flag.
+-  e.tail=pack(e.dev(0),logits,index,error,best,prefix,0);e.drain();transfer(staging,best,16,"prefix-export");
++  p154::measure("prefix_pack",pos,false,[&]{e.tail=pack(e.dev(0),logits,index,error,best,prefix,0);e.drain();});p154::measure("prefix_export",pos,false,[&]{transfer(staging,best,16,"prefix-export");});
+   Best local;std::memcpy(&local,e.dev(0).arena.row(staging).pointer,16);
+   auto check=[&]{cancel();require(!load(box.abort),"p105 peer failed");};
+-  require(p56x::wait([&]{return load(box.reply)==seq;},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 best timeout");check();
+-  auto result=merge(local,box.best);
++  p154::measure("wait_rank0_suffix",pos,false,[&]{require(p56x::wait([&]{return load(box.reply)==seq;},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 best timeout");check();});
++  p154::measure("suffix_zero_wait",pos,true,[&]{if(e.sealed_selection.choices.at("probe")=="split")require(load(box.reply)==seq,"p154 satisfied suffix predicate");});
++  Best result;p154::measure("merge_compute",pos,false,[&]{result=merge(local,box.best);});
++  p154::measure("merge_duplicate",pos,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){auto duplicate=merge(local,box.best);require(std::memcmp(&duplicate,&result,sizeof(Best))==0,"p154 pure merge replay differs");}});
++  p154::measure("export_duplicate",pos,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){Best duplicate;std::memcpy(&duplicate,e.dev(0).arena.row(staging).pointer,16);require(std::memcmp(&duplicate,&local,16)==0,"p154 completed export bytes differ");}});
+   // Invalid partitions may have diagnostic indices; no nonfinite winner emits.
+   if(result.error){e.upload(0,error,0,&result.error,4);throw std::runtime_error("p105 sticky nonfinite target head");}
+-  e.upload(0,index,0,&result.index,4);
++  p154::measure("merge_import",pos,false,[&]{e.upload(0,index,0,&result.index,4);});
+  }
+ };
+ }
+--- normalized-packet150/native-base/experiments/own-xpu-runtime/stage2/packet150-rank0-split/strict_snapshot.hpp
++++ experiments/own-xpu-runtime/stage2/packet154-rank1-split/native-base/experiments/own-xpu-runtime/stage2/packet154-rank1-split/strict_snapshot.hpp
+@@ -321,7 +321,7 @@
+    if(bytes)saved.push_back({id,skip,bytes,offset,source.redo_overwrite});offset+=bytes;
+   }
+   require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;
+-  copy(false);p154::measure("snapshot_duplicate",position,true,[&]{if(e.sealed_selection.choices.at("probe")=="split")copy(false);});if(e.miss_banks()){e.rotate_spare_bank();rotated=true;}++captures;saved_bytes+=offset;
++  copy(false);p154::measure("snapshot_duplicate",position,true,[&]{if(false)copy(false);});if(e.miss_banks()){e.rotate_spare_bank();rotated=true;}++captures;saved_bytes+=offset;
+  }
+  void accept(){require(valid,"snapshot accept without speculation");e.drain();rotated=false;valid=false;}
+  void restore(bool for_redo=false,int position=-1,int token=-1){

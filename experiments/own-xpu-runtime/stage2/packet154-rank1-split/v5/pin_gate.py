@@ -10,6 +10,6 @@ def main():
  for item in json.loads((P/'evidence/queue-plan.json').read_text())['rows']:
   f=ROOT/item['proposal_name']
   row=m.check_job(json.loads(f.read_text()));assert row['passed'];rows.append(row)
- assert len(rows)==1
+ assert len(rows)==2
  save(P/'evidence/pin-guard.json',dict(passed=True,device_executed=False,rows=rows,sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'pin_gate.py',snapshot)}))
 if __name__=='__main__':main()

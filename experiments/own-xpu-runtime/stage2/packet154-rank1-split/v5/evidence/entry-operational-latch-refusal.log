@@ -1,0 +1,28 @@
+split smoke A entry PASS
+split smoke B entry PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/entry_gate.py", line 118, in <module>
+    else:main()
+         ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/entry_gate.py", line 110, in main
+    log=P/'evidence'/('entry-'+variant+'-'+kind+'-'+lane+'-'+str(neg)+'.log');log.write_text(r.stdout+r.stderr);assert r.returncode==0,log.read_text()[-6000:]
+                                                                                                                       ^^^^^^^^^^^^^^^
+AssertionError: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/entry_gate.py", line 117, in <module>
+    if '--probe' in sys.argv:print('ENTRY_RESULT='+json.dumps(probe(sys.argv[-4],sys.argv[-3],None if sys.argv[-2]=='positive' else sys.argv[-2],sys.argv[-1])))
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/entry_gate.py", line 85, in probe
+    code=bracket_job.main(['--variant',variant,'--kind',kind,'--lane',lane,'--output',str(out),'--fault-review',str(tmp/'review.json'),'--authorized-device-window'])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/bracket_job.py", line 24, in main
+    return screen.main(args)
+           ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/screen.py", line 337, in main
+    return screen_main(argv, release=release)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/screen.py", line 157, in screen_main
+    require(not list(HERE.glob('fault-' + boot + '*.json'))
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py", line 27, in require
+    raise ValueError(reason)
+ValueError: screen fault/uncertain-owner latch; coordinator recovery required
+
