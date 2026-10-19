@@ -876,3 +876,26 @@ STOP DOING acknowledged:
 - re-running diagnostics after a second packaging failure when a direct measurement supersedes them;
 - in-run consistency analyzers (inherited ones too);
 - new two-card single-lever ≥ 3% studies on bundle 8.
+
+## Review 40 — 2026-10-19 ~06:04 UTC — VERDICT: ACT
+
+**Finding:** 13.3% of card-minutes were busy over 2 h. Four of five device runs since 04:00 died on harness/packaging:
+- census-c and census-d;
+- p155 W0p (`shared extent`, a window its bracket never exercised);
+- p58amd checked1 (pinned-progress sensor refusal after a reset).
+
+The p58am checked2 row was READY but blocked by a deeper packet latch (`screen/fault-*.json`, outside stale-sweep's glob) and by p163 on lane B. Only one Codex job was running, with nothing prepared after p58am. The two-card record has been flat ~12 h.
+
+**Actions (coordinator, 06:04–06:06 UTC):**
+1. **checked1 latch archived** (sensor refusal, owner dead, faults 2, card-0 idle) to `coordination/chain-lanes-v1/reviewed/`. p163 B-b had already started (06:04:08), so it was not removed. Meanwhile **p58amd found the root cause without checked2**: a wrong-layout kernel capture (240 vs 236 commands). It rebuilt with a regression test, and checked2 is moot. `fn-run/after-p58amd.sh` → `hold-p58am3.sh` runs the sequential smoke → v5 when p58amd's fresh READY lands. It waits out B-b; the one-card p163 rows stay unqueued until then.
+2. **Codex p58ap** pre-seals the p58am record chain (58aj chain structure, p58am binary by hash). READY is gated on the v5 passing (≥ +0.5% over every warm control, exact, drift ≤ 3%). Submission requires WS128 > 31.966820.
+3. **Codex p164**, a layer-body lever: split route's 0.79 ms/half (packet141 events) and price an exact router-epilogue route fusion (ties included). Packet73 deferred it and it was never revisited. A one-card screen brief follows if the ceiling is ≥ +2%.
+4. **Rule for every row, diagnostic ones included:** a CPU real-arm-sequence gate (real sensors on synthetic streams through every reset path). Chain briefs must CPU-execute every window's native argv (W0p/W0-prefill included). This is in the p58ap brief and the heartbeat. stale-sweep will be widened to packet `screen/fault-*.json` latches in a new copy; the running script stays untouched.
+5. **p163 is gap filler:** its remaining loads run only when no speed row is READY. The first two-card full512 run (B-a) passed the realistic final gate at 58.61 tok/s.
+
+STOP DOING acknowledged:
+- widening loads ahead of READY speed diagnostics;
+- diagnostic rows without the CPU real-arm-sequence gate;
+- harness-only latches left while READY rows wait;
+- a single Codex job with an empty pipeline;
+- schedule/protocol levers over the layer body (~85% of each interval).
