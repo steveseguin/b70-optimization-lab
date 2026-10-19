@@ -1,0 +1,103 @@
+{
+  "schema": "packet154b.pin-admission.v1",
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "native_rebuilt": false,
+  "live_queues_modified": false,
+  "checks": {
+    "unit": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "test_pin_guard"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154b-pin-guard-unit.log",
+      "sha256": "392fb7a217a49b2de65cc6fa7db10c303dfa55098384fb01f00f2d8ccdc9507f"
+    },
+    "cpu-seal": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/cpu_seal.py"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154b-cpu-seal.log",
+      "sha256": "764a72bfee139e3b226c3eab6b60c50d7ab4664d617ec23f77b200fb2e8a2f89"
+    },
+    "smoke-plan": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p154b-plan-39z_c07z"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154b-smoke-plan.log",
+      "sha256": "fb2d901ab779f7385670a8e90e59c6e3af66c9dad4899b8b112aa5376753cbd2"
+    },
+    "smoke-rehearsal": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/rehearse_entry.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/proposed-p154-smoke-B.txt",
+        "--report",
+        "--json"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154b-smoke-rehearsal.log",
+      "sha256": "27e2b0b61da5e94eb5eef15bf32bf747a27f018b57c31439efb8dd775d5c9404"
+    },
+    "smoke-prelaunch-pins": {
+      "passed": true,
+      "packet": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split",
+      "pins": 1024,
+      "manifests": 22,
+      "model_hashes_deferred": []
+    },
+    "split-plan": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p154b-plan-06wtfssr"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154b-split-plan.log",
+      "sha256": "b2d3b69cf5ea2b2e0f7420e357aa8bcb123f47d971fda65df4f3a8ecc865dbaa"
+    },
+    "split-rehearsal": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/rehearse_entry.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/proposed-p154-split-B.txt",
+        "--report",
+        "--json"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154b-split-rehearsal.log",
+      "sha256": "65423ed475e57deafc3a102b9f41f6e8578195c17e35fd1e8a29a4b3be058f6e"
+    },
+    "split-prelaunch-pins": {
+      "passed": true,
+      "packet": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split",
+      "pins": 1024,
+      "manifests": 22,
+      "model_hashes_deferred": []
+    }
+  },
+  "max_child_rss_kib": 33460
+}

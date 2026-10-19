@@ -65,3 +65,39 @@ and `proposed-p154-split-B.txt`. Device equality and measured attribution remain
 pending. CPU readiness never waives fresh storage, memory, ownership or fault
 admission. The 58.798 tok/s record is unchanged. The final marker is written
 last, after the qualification milestone is committed and pushed.
+
+## Packet154b — final-marker pin admission repair
+
+The coordinator's refusal was reproduced against the complete final marker.
+The guard follows hash-linked JSON and treats `source` / `source_sha256` as
+a live pin, even in origin evidence. All six packet150 origin entries were
+therefore mutable cross-packet dependencies. The final marker also pinned this
+work note outside the packet. The earlier pin pass preceded that final closure
+and did not establish admission of the handed-off marker.
+
+`evidence/scope-origins.json` now records repository-relative origin names under
+`origin_provenance_only`. Its six `path` / `sha256` records bind only the existing
+vendored packet154 copies. Original source hashes remain in Git history. The
+marker links this work note as provenance only. No runtime source, binary,
+proposal, arithmetic, smoke scope proof or deadline changed; no native rebuild
+was needed. The unchanged CPU seal still verifies `iq3-p49-split32-v1`.
+
+Validation: both lane-B proposals pass the live `lanequeue.py plan --lane B
+--directory <temporary-copy>` and the shared `ops/rehearse_entry.py <proposal>
+--report --json`. All 23 live `test_pin_guard` unit tests pass. The same live
+`lanequeue.check_pins` used immediately before launch passes for both jobs.
+`evidence/p154b-admission.json` records commands and hashed logs; the original
+seven-pin refusal is retained in `evidence/p154b-before-refusal.json`.
+
+The initial rehearsal used a 2,000,000,000-byte address-space hard cap, below
+the frozen sandbox's fixed 2 GiB limit, so child setup refused before execution.
+That failure is retained as `evidence/p154b-smoke-rehearsal-cap-refusal.log`.
+Repeating with the sandbox's matching 2 GiB cap passes. Checks used nice 19,
+CPUs 8–15 and 24–31, Python `-B`, and closed stdin. No new elapsed-wall timeout
+was added. No GGUF payload, GPU, service, sudo, settings, live queue or other
+packet was touched. Device equality and attribution still await the coordinator.
+
+Entry HEAD matched origin/main at `651fb9c65a63a573d4e9f3c15cf3d254eaf4ea5a`
+after pull refused unrelated dirty files. The minimal readiness reseal is the
+last packet write, with `ready_for_device: true`; fresh storage and operational
+admission remain mandatory. Only packet154 and this note belong to this commit.

@@ -1,0 +1,45 @@
+{
+  "passed": false,
+  "jobs": [
+    {
+      "job": "packet154-split-smoke-B",
+      "unit": "screen-packet154-split-smoke-B",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": false,
+          "phase": "ldd",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/build/device/own-rt-iq3",
+          "error": "native inventory, loader, or bounded entry check failed"
+        },
+        {
+          "passed": false,
+          "phase": "ldd",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/build/gnu-host/own-rt-iq3",
+          "error": "native inventory, loader, or bounded entry check failed"
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "smoke",
+            "error": "bounded report rehearsal failed"
+          },
+          {
+            "passed": false,
+            "kind": "bracket",
+            "error": "bounded report rehearsal failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false
+    }
+  ]
+}
