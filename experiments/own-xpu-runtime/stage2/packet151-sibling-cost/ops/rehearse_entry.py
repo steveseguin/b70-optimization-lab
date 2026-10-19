@@ -648,7 +648,7 @@ def report_probe(job, kind, scratch, source_root):
         return 0
     # Bracket admission reads a previous device smoke. Replace only that
     # prerequisite reader, never finish/report/summary or its imported symbols.
-    # Names come from the actual entry's `from ... import load`, not a guessed
+    # Names come from the actual entry's prerequisite import, not a guessed
     # generic compare module which could mask the very collision under test.
     from contextlib import ExitStack
     with ExitStack() as stack:
@@ -657,9 +657,10 @@ def report_probe(job, kind, scratch, source_root):
         stack.enter_context(patch.object(screen, 'main', side_effect=finish))
         if kind == 'bracket':
             for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and any(a.name == 'load' for a in node.names):
+                if isinstance(node, ast.ImportFrom) and any(a.name in ('load', 'checked_smoke') for a in node.names):
                     module = importlib.import_module(node.module)
-                    stack.enter_context(patch.object(module, 'load', return_value=dict(
+                    reader = next(a.name for a in node.names if a.name in ('load', 'checked_smoke'))
+                    stack.enter_context(patch.object(module, reader, return_value=dict(
                         kind='smoke', passed=True, request_count=12, max_new=64)))
         try:
             runpy.run_path(str(path), run_name='__main__')

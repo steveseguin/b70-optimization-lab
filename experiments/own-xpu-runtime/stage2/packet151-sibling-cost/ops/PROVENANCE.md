@@ -2,6 +2,9 @@
 
 Shared `ops/` is frozen. These copies retain its CPU sandbox and real report execution.
 Only the synthetic half/sibling fixtures, private import paths, and pause-aware CPU deadlines differ.
+Packet151e also recognizes the entry's `checked_smoke` prerequisite reader for
+the synthetic report rehearsal. Real smoke admission has separate retained-receipt
+regressions; report execution and its validation remain real and unchanged.
 `launch_env.py` is byte-identical to the shared authority.
 
 Upstream identities (historical provenance, not mutable runtime source pins):

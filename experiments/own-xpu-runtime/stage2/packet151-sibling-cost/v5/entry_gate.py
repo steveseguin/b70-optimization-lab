@@ -14,7 +14,7 @@ class Reached(BaseException):pass
 class Forbidden(BaseException):pass
 
 def probe(variant,kind,negative=None,lane="A"):
- import screen,bracket_job,readiness,p151_v5_compare as compare,tp2_worker,p151_v5_exec_limits as exec_limits
+ import smoke_precondition,screen,bracket_job,readiness,p151_v5_compare as compare,tp2_worker,p151_v5_exec_limits as exec_limits
  from cpu_seal import verify
  from common import D
  from launch_env import apply
@@ -71,7 +71,7 @@ def probe(variant,kind,negative=None,lane="A"):
   original_popen=subprocess.Popen
   with contextlib.ExitStack() as stack:
    for item in [patch.object(Path,'read_text',read),patch.object(Path,'open',opened),patch.object(subprocess,'run',side_effect=run),patch.object(subprocess,'Popen',side_effect=worker),
-    patch.object(readiness,'verify_ready',side_effect=lambda **k:verify()),patch.object(compare,'load',return_value=dict(kind='smoke',passed=True,request_count=12,max_new=64)),
+    patch.object(readiness,'verify_ready',side_effect=lambda **k:verify()),patch.object(smoke_precondition,'checked_smoke',return_value=dict(kind='smoke',passed=True,request_count=12,max_new=64)),
     patch.object(screen,'Reservation',Lease),patch.object(screen,'lane_gate'),patch.object(screen,'screen_teardown_admit'),
     patch.object(screen.fault_review,'validate',return_value=({},'','','CPU-only')),
     patch.object(screen.S,'journal',return_value=('','CPU-only')),patch.object(screen.S,'ldd_preflight',return_value={'synthetic':True}),

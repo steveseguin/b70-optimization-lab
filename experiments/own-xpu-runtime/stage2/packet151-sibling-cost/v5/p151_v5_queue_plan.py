@@ -5,13 +5,21 @@ import argparse,json,subprocess,sys,tempfile,shutil
 from p151_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 QUEUE=LOCAL.parents[1]/'ops/lane-queue'
 def proposal(kind):
- return dict(name='packet151d-sibling-'+kind+'-B',lane='B',argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','sibling','--kind',kind,'--lane','B','--output',str(P/'evidence'/('device151d-sibling-'+('smoke' if kind=='smoke' else 'v5')+'-B')),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build'/m/'own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build'/m/'own-rt-iq3')) for m in ('device','gnu-host')]),host_required_available_bytes=97*1024**3+1200*1024**2,measurement_scope='upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial)',planned_write_bytes_per_view=240_000_000,expected_seconds=[240,600] if kind=='smoke' else [720,1200],watchdog_seconds=4800))
+ revision = 'packet151d' if kind == 'smoke' else 'packet151e'
+ return dict(name=revision+'-sibling-'+kind+'-B',lane='B',argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','sibling','--kind',kind,'--lane','B','--output',str(P/'evidence'/(('device151d-sibling-' if kind=='smoke' else 'device151e-sibling-')+('smoke' if kind=='smoke' else 'v5')+'-B')),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build'/m/'own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build'/m/'own-rt-iq3')) for m in ('device','gnu-host')]),host_required_available_bytes=97*1024**3+1200*1024**2,measurement_scope='upper bound (partial M=2: HC/small tuples/shared-down/non-matrix serial)',planned_write_bytes_per_view=240_000_000,expected_seconds=[240,600] if kind=='smoke' else [720,1200],watchdog_seconds=4800))
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--stage',action='store_true');a=ap.parse_args()
  limits();snapshot=LOCAL/'lineage-inputs/queue';snapshot.mkdir(exist_ok=True)
  for src in QUEUE.glob('*.py'):shutil.copy2(src,snapshot/src.name)
  rows=[]
  for kind in ('smoke','bracket'):
+  if kind=='smoke':
+   if not a.stage:
+    old=json.loads((P/'evidence/queue-plan.json').read_text())
+    item=next(r for r in old['rows'] if r['proposal_name'].endswith('proposed-p151-smoke-B.txt'))
+    assert sha(ROOT/item['proposal_name'])==item['sha256']
+    rows.append(item)
+   continue
   name='proposed-p151-'+('smoke' if kind=='smoke' else 'v5')+'-B.txt';row=proposal(kind);content=json.dumps(row)+'\n';mirror=LOCAL/'proposals'/name
   if a.stage:mirror.write_text(content);continue
   assert mirror.read_text()==content,'stage proposals before sealing'
@@ -20,7 +28,7 @@ def main():
    tmp=Path(d)
    for src in snapshot.glob('*.py'):shutil.copy2(src,tmp/src.name)
    (tmp/'queue-B.txt').write_text(content)
-   cmd=[sys.executable,'-B',str(P/'cpu_tool.py'),str(QUEUE/'lanequeue.py'),'plan','--lane','B','--directory',str(tmp)]
+   cmd=[sys.executable,'-B',str(QUEUE/'lanequeue.py'),'plan','--lane','B','--directory',str(tmp)]
    log=P/'evidence'/('plan-'+kind+'-B.log')
    with log.open('w') as out:r=freeze_safe.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=out,stderr=subprocess.STDOUT,timeout=300)
    assert r.returncode==0,log.read_text()[-8000:]

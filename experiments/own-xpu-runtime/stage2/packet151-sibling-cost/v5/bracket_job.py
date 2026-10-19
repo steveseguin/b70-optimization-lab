@@ -16,9 +16,8 @@ def main(argv=None):
  from readiness import verify_ready
  verify_ready(preplan=a.plan,variant=a.variant,kind=a.kind,lane=a.lane)
  if not a.plan and a.kind=='bracket':
-  from p151_v5_compare import load
-  smoke=load(HERE/'evidence'/('device-'+a.variant+'-smoke-'+a.lane))
-  require(smoke.get('kind')=='smoke' and smoke.get('passed') and smoke.get('request_count')==12 and smoke.get('max_new')==64,'exact matching 12x64 smoke required')
+  from smoke_precondition import checked_smoke
+  checked_smoke(a.variant,a.lane)
  import screen
  args=['--lane',a.lane,'--placement','1','--lineage',str(HERE/'lineage'/a.variant),'--bracket',str(HERE/'configs'/(a.variant+'-'+a.kind+'.json')),'--output',str(a.output)]
  if a.plan:args+=['--plan']

@@ -150,7 +150,7 @@ def finish_smoke(output,window,identity,proof,isolation,oracle):
     result['first_minute_data_proof']=True
     save(output/'bracket-summary.json',result);return result
 
-def load(output):
+def load(output, *, wrapper_seal_sha256=None):
     """Read shared-lifetime views without impersonating fresh v4 server windows."""
     output=Path(output)
     window=read(output/'window.json')
@@ -171,7 +171,7 @@ def load(output):
     require(class_copies(output,identity)==result['class_copies'],'class copy receipt changed')
     require(window['identity']==identity, 'bracket window identity differs')
     from common import HERE
-    if not recovered:require(window['wrapper_seal_sha256']==sha(HERE/'placement-validation/wrapper-seal.json'), 'wrapper seal changed')
+    if not recovered:require(window['wrapper_seal_sha256']==(wrapper_seal_sha256 or sha(HERE/'placement-validation/wrapper-seal.json')), 'wrapper seal changed')
     require(window['oracle_completion_sha256']==sha(D.ORACLE/'results/completion.json'), 'oracle changed')
     require(read(output/'suite-manifest.snapshot.json')==D.oracle_inputs(), 'oracle prompt suite changed')
     oracle=lambda prompt:D.CHECK.token_record(D.ORACLE/'results'/prompt)

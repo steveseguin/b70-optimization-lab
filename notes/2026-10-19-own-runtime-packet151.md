@@ -174,3 +174,40 @@ child RSS is 1,404,904 KiB, below 4 GB. The original failure inputs are hash-bou
 in `v5/evidence/p151d-failure-inputs.json`; the full failed smoke stays on disk.
 Source, receipts, proposals and this note are committed and pushed first;
 `READY-FOR-DEVICE.json` is written last and committed/pushed separately.
+
+### packet151e — bracket smoke lookup repair (October 19)
+
+The 02:18:14 UTC bracket refusal happened before device work: its fixed folder
+name selected the failed `device-sibling-smoke-B`, instead of the exact smoke
+completed at 02:01:46 in `device151d-sibling-smoke-B`. The bracket now resolves
+`--output` from the current lane-B smoke proposal and fails closed on missing,
+failed, changed or mismatched smoke evidence. It retains every existing device
+completion, teardown, artifact hash, oracle and exact-output check.
+
+The Python-only reseal preserves the smoke's original wrapper seal under
+`lineage-inputs/p151e-before/`. A sealed prerequisite receipt binds the completed
+window and that historical seal. Admission also checks the current native binary,
+selection, dispatch, memory plan, smoke configuration, lane and variant against
+the smoke identity. Both native binaries and all native source remain unchanged;
+there was no rebuild. The passing and failed device folders remain untouched.
+
+Four CPU regression tests admit the current passing smoke and reject the old
+failed smoke, a missing output and a failed result. See
+`v5/test_smoke_precondition.py` and `v5/evidence/p151e-smoke-precondition.log`.
+Real intercepted entry checks, real report checks, temporary queue planning,
+the private `ops/rehearse_entry.py --report` and coordinator pin checks pass.
+The first private report rehearsal stopped in its CPU sandbox because its
+fixture still mocked the old prerequisite reader; its retained log is
+`v5/evidence/p151e-rehearse-initial.log`. The private helper now recognizes the
+new reader, without changing report validation or the shared helper.
+
+Only the bracket proposal changes: `packet151e-sibling-bracket-B`, writing to
+fresh `v5/evidence/device151e-sibling-v5-B`. The current smoke proposal and live
+queues are unchanged. Source and receipts are committed/pushed first, then
+`READY-FOR-DEVICE.json` is rewritten last with `ready_for_device=true` and
+committed/pushed separately. The bracket cost measurement remains pending.
+
+All checks used nice19, CPUs 8–15/24–31, Python `-B`, closed stdin and a 2 GiB
+process memory cap. No GPU, service, sudo, settings change, GGUF payload read
+or compile was performed. Rebase refused unrelated dirty files; fetch confirmed
+HEAD and origin/main at `cf21667b09c393d26314111a7b35c7bf6c443e44` before edits.

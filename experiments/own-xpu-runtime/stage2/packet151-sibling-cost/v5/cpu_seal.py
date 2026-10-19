@@ -23,6 +23,8 @@ def seal():
  # Evidence root paths are historical regression data, not external dependencies.
  paths.update(P/'evidence'/(n+'.json') for n in GATES if n!='retained-report-regression')
  paths.update((LOCAL/'ops').glob('*.py'));paths.add(LOCAL/'ops/PROVENANCE.md')
+ paths.add(P/'smoke-precondition.json')
+ paths.add(LOCAL/'lineage-inputs/p151e-before/cpu-seal.json')
  sources={str(f.relative_to(ROOT)):sha(f) for f in sorted(paths)}
  sources.update(rows['build']['sources']);sources.update(rows['build']['artifacts'])
  freeze_safe.run([sys.executable,'-B',str(LOCAL/'shared_oracle.py'),'--require-complete'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,check=True,timeout=180)
