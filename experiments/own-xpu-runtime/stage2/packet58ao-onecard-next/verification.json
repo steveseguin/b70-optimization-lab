@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "utc": "2026-10-19T05:15:59.267770+00:00",
+  "commands": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/analyze.py"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next",
+        "-p",
+        "test_analyze.py",
+        "-v"
+      ],
+      "returncode": 0
+    }
+  ],
+  "tests": 8,
+  "replay_reproduces_analysis": true,
+  "input_hashes_rechecked": 150,
+  "negative_indexes": 63,
+  "negative_search_lines": 204,
+  "markdown_links_checked": 57,
+  "peak_child_rss_bytes": 29753344,
+  "address_space_cap_bytes": 4294967296,
+  "nice": 19,
+  "cpu_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "root_available_bytes": 29362339840,
+  "device_executed": false,
+  "compile_executed": false,
+  "model_payload_read": false,
+  "packet58ap_created": false,
+  "ready_marker_created": false
+}
