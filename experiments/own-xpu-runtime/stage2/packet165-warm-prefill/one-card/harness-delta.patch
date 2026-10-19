@@ -1,0 +1,172 @@
+--- packet163/cpu_seal.py
++++ packet165/cpu_seal.py
+@@ -8,4 +8,8 @@
+   path=HERE/name
+   require(path.resolve().is_relative_to(HERE),'seal escapes private packet')
+   require(sha(path)==expected,'sealed packet file changed: '+name)
++ native=read(HERE/'inherited-native.json')
++ from common import ROOT
++ for name,expected in native['embedded_readonly_dependencies'].items():
++  require(sha(ROOT/name)==expected,'frozen embedded native dependency changed: '+name)
+  return pins
+--- packet163/identity.json
++++ packet165/identity.json
+@@ -2,7 +2,7 @@
+   "parent": "packet58aj-onecard-resident",
+   "gpu_count": 1,
+   "arithmetic": "iq3-p49-split32-v1",
+-  "binary_sha256": "467e22c9fb1292bfb3c0ade9fcad628b349bc40fd2c556c61b61d10ea6110197",
++  "binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+   "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+   "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+   "context": 4096,
+@@ -17,5 +17,9 @@
+     "response-cap parser128->512",
+     "pre-device --help",
+     "suite request admission12->13"
+-  ]
++  ],
++  "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
++  "native_binary_unchanged_from_packet163": false,
++  "native_arithmetic_unchanged_from_packet163": true,
++  "native_delta": "absolute include and constant paths packet163-full-gate -> packet165-warm-prefill"
+ }
+--- packet163/measurement.py
++++ packet165/measurement.py
+@@ -51,21 +51,39 @@
+  if prompt_id=='prefill512':
+   ms=result.get('prefill_ms',result.get('prompt_wall_ms'))
+   require(len(prompt_tokens)==512 and type(ms)in(int,float) and math.isfinite(ms) and ms>0,'512-input prefill timing missing')
+-  metrics['prefill']=dict(input_tokens=512,users=1,elapsed_ms=ms,tok_s=512000/ms,
+-    timing_definition='native prompt loop start through first generated token; includes final prompt position and output head; excludes load/reset; not HTTP TTFT',
+-    construction='first 512 tokenizer IDs from one unrepeated real-document excerpt, no special tokens',cached_tokens=0,oracle_covered=False)
++  # Primary prefill rate is request TTFT based, not an invented device duration.
++  ttft_ms=1000*(result['timing_rows'][0]['completed_monotonic']-result['request_start_monotonic'])
++  require(math.isfinite(ttft_ms) and ttft_ms>0,'positive request TTFT required')
++  warm=result.get('warmup')
++  if warm is not None:
++   require(warm.get('prompt_id')==IDS[0] and warm.get('prompt_token_sha256')!=digest(prompt_tokens),'warm-up identity')
++   require(warm.get('completed_before_prefill')is True and warm.get('state_reset_before_prefill')is True and warm.get('cached_tokens')==0 and warm.get('request_count_before_prefill')==1,'warm-up/reset evidence')
++   hashes=[warm.get('receipt_sha256'),*warm.get('reset_sha256',[])]
++   require(len(hashes)>=2 and all(isinstance(h,str) and len(h)==64 and all(c in '0123456789abcdef' for c in h) for h in hashes),'warm-up/reset receipt hashes')
++  metrics['prefill']=dict(input_tokens=512,users=1,elapsed_ms=ttft_ms,tok_s=512000/ttft_ms,
++    timing_definition='512 / request TTFT seconds: request_start_monotonic through first generated-token completed_monotonic; excludes model load; includes host and first-token work and any reset inside the native request interval; not HTTP TTFT',
++    request_start_boundary=result.get('request_start_boundary','legacy native request boundary'),
++    native_prompt_loop_ms=ms,native_prompt_loop_tok_s=512000/ms,
++    native_prompt_loop_definition='native prompt-loop wall time through first generated token, including final prompt position and output head; not device-only time',
++    prefill_phase_device_ms=None,prefill_phase_device_status='not available: unchanged token-timing build does not expose an isolated device prefill phase',
++    construction='first 512 tokenizer IDs from one unrepeated real-document excerpt, no special tokens',cached_tokens=0,oracle_covered=False,
++    warmup=warm,measurement_temperature='warm-runtime/cold-prompt' if warm else 'cold-first-request or legacy evidence; not packet165 warm proof')
++
+  return metrics
+ 
+ def aggregate(rows,prefill=None,identity=None,reference=None):
+  require([r['prompt_id'] for r in rows]==list(IDS),'complete fixed suite in registered order required')
+  require(all(r.get('passed') is True and r.get('cached_tokens')==0 for r in rows),'failed/cacheful request')
++ if prefill and prefill.get('prefill',{}).get('warmup'):
++  warm=prefill['prefill']['warmup']
++  require(warm['prompt_token_sha256']==rows[0]['prompt_token_sha256'],'warm-up must be the first registered suite input')
+  result=M.aggregate(rows);result.pop('raw_payload_fields',None)
+  failures=[]
+  if any(r.get('requested_max_new')!=512 for r in rows):failures.append('requested cap must be 512 for every prompt')
+  if any(r.get('finish_reason') not in ('eos','length') for r in rows):failures.append('natural completion or response cap missing')
+  if any(not r.get('metric_window_eligible') for r in rows):failures.append('every prompt must supply the first 100 generated events')
+  if {r['prompt_class'] for r in rows}!=set(M.PROMPT_CLASSES.values()):failures.append('varied classes incomplete')
+- result.update(schema='packet163.full-gate.v1',passed=True,kind='full512',requests=rows,request_count=12,
++ result.update(schema='packet165.warm-prefill.v1',passed=True,kind='full512',requests=rows,request_count=12,
+   requested_max_new=512 if not any(r.get('requested_max_new')!=512 for r in rows) else None,
+   arithmetic=ARITHMETIC,kv_dtype='BF16',context=4096,prompt_kv_response_reuse=False,cache_zero=True,
+   strict512=not failures,realistic_final_gate=dict(passed=not failures,failures=failures,scope='performance workload only; independent quality gate below'),
+--- packet163/screen.py
++++ packet165/screen.py
+@@ -55,6 +55,7 @@
+   source_report_sha256=sha(output/'run/report-inputs.json'),report_after_device_release=True)
+  # Generic shared rehearsal intentionally supplies64/128 receipts: those stay strict512=false.
+  if result.get('strict512'):
++  require(proof.get('prefill',{}).get('prefill',{}).get('warmup') is not None,'warm prefill proof required')
+   require(proof.get('prefill') is not None and proof.get('device_isolation',{}).get('passed') is True,'full512 needs prefill and device isolation')
+  save(output/'summary.json',result);save(output/'bracket-summary.json',result)
+  return result
+@@ -78,7 +79,7 @@
+   host_required_available_bytes=budget['host_required_available_bytes'],planned_write_bytes=budget['planned_write_bytes'],
+   expected_seconds=budget['expected_seconds'],watchdog_seconds=7200,per_operation_wait_seconds=budget['wait_seconds'],
+   reservation_scope='whole-host'if args.lane=='A'else'lane-B with other lane required idle',command=command,
+-  second_fresh_attempt=bool(args.reference),prefill=dict(users=1,cached_tokens=0),submission_eligible=False)
++  second_fresh_attempt=bool(args.reference),prefill=dict(users=1,cached_tokens=0,request_index=1,warmup_prompt=measurement.IDS[0],suite_prompt_used_once=True),submission_eligible=False)
+  if args.plan:
+   print(json.dumps(plan));return 0
+  require(args.kind=='full512','short synthetic report modes cannot launch devices')
+--- packet163/worker.py
++++ packet165/worker.py
+@@ -8,21 +8,35 @@
+ 
+ def entries():
+  manifest=read(HERE/'lineage/oracle128/suite-manifest.json')
+- result=[dict(prompt_id='prefill512',prompt_tokens=512)] + manifest['prompts']
++ # The first registered prompt is the distinct warm-up, run ONCE.
++ result=[manifest['prompts'][0],dict(prompt_id='prefill512',prompt_tokens=512),*manifest['prompts'][1:]]
+  for row in result:
+   row['tokens']=list(map(int,(HERE/'inputs'/row['prompt_id']/'tokens.txt').read_text().split()))
+   require(len(row['tokens'])==row['prompt_tokens'],'input length')
++ require(len({tuple(e['tokens']) for e in result})==13,'all prompts must be distinct; no warm-up reuse')
+  return result
+ 
+ def expected(entry):
+  if entry['prompt_id']=='prefill512':return None
+  return read(HERE/'lineage/oracle128'/ (entry['prompt_id']+'.json'))['tokens']
+ 
+-def record_request(dest,entry,result):
++def record_request(dest,entry,result,observed):
+  result.update(requested_max_new=512,prompt_tokens=len(entry['tokens']))
+  # Do not change cache counts; they come from reset/engine evidence.
+  check=measurement.stream_check(result,expected(entry))
+  result.update(prompt_id=entry['prompt_id'],oracle_check=check)
++ if entry['prompt_id']=='prefill512':
++  warm_id=measurement.IDS[0]
++  require(list(observed)==[warm_id],'prefill must be second, after exactly one distinct request')
++  warm=read(observed[warm_id]['path'])
++  warm_tokens=entries()[0]['tokens']
++  require(warm_tokens!=entry['tokens'] and warm.get('cached_tokens')==0,'distinct uncached warm-up required')
++  require(warm['request_end_monotonic']<=result['request_start_monotonic'],'warm-up must finish before prefill')
++  result['warmup']=dict(prompt_id=warm_id,prompt_token_sha256=measurement.digest(warm_tokens),
++    receipt_sha256=sha(Path(observed[warm_id]['path'])),output_tokens=len(warm['tokens']),
++    completed_before_prefill=True,request_count_before_prefill=1,suite_prompt_used_once=True,
++    state_reset_before_prefill=True,reset_sha256=result['request_reset_sha256'],cached_tokens=0)
++
+  save(dest/'receipt.json',result)
+  return dict(path=str(dest/'receipt.json'),prompt_id=entry['prompt_id'])
+ 
+@@ -59,8 +73,10 @@
+    if not(dest/'lookup-request-complete.json').exists():continue
+    result=read(path);reset=read(dest/'reset.json')
+    require(reset.get('passed')is True and reset.get('cached_tokens')==0 and reset.get('allocation_ids_preserved')is True,'cold request reset missing')
++   result['request_reset_sha256']=[sha(dest/'reset.json')]
++   result['request_start_boundary']='before native reset (TTFT includes reset)'
+    streams={name:measurement.check_file_stream(dest/name)for name in('timings.jsonl','prefill-timings.jsonl')}
+-   observed[entry['prompt_id']]=record_request(dest,entry,result)
++   observed[entry['prompt_id']]=record_request(dest,entry,result,observed)
+    save(dest/'stream-proof.json',dict(passed=True,streams=streams,scope='presence/format and oracle prefix only'))
+  try:
+   with(output/'native.log').open('w')as log:
+@@ -108,9 +124,11 @@
+    result=pipeline.NativeController(transport,pipeline.Draft('mtp'),True,False).run(entry['tokens'],512,(248044,248046))
+    for rank in(0,1):
+     reset=read(dest/f'rank{rank}/reset.json');require(reset.get('passed')is True and reset.get('allocation_ids_preserved')is True,'native complete reset required')
++   result['request_reset_sha256']=[sha(dest/f'rank{rank}/reset.json')for rank in(0,1)]
++   result['request_start_boundary']='after full reset (TTFT excludes reset)'
+    result.update(passed=True,arithmetic='iq3-p49-split32-v1',cached_tokens=0,cache_zero_evidence='both native full-allocation reset receipts; no reuse path',
+     request_start_monotonic=transport.work_start,request_end_monotonic=transport.work_end)
+-   observed[entry['prompt_id']]=record_request(dest,entry,result);previous=dest
++   observed[entry['prompt_id']]=record_request(dest,entry,result,observed);previous=dest
+   suite.reset(transport,output/'after-suite');completed_streams(previous);transport.close(True)
+   save(output/'teardown.json',prove_drain([read(ranks/f'rank{i}/receipt.json')for i in(0,1)]))
+   return observed
+@@ -132,6 +150,7 @@
+  observed=one(a.output,items)if read(HERE/'identity.json')['gpu_count']==1 else two(a.output,items)
+  # This process has released every device before doing metric aggregation.
+  rows=[measurement.request(read(observed[e['prompt_id']]['path']),e['tokens'],e['prompt_id'],expected(e))for e in items]
+- save(a.output/'report-inputs.json',dict(passed=True,requests=rows[1:],prefill=rows[0],device_isolation=dict(passed=True,scope='outer whole-host admission and complete owner drain'),lane=a.lane))
++ by_id={r['prompt_id']:r for r in rows}
++ save(a.output/'report-inputs.json',dict(passed=True,requests=[by_id[i] for i in measurement.IDS],prefill=by_id['prefill512'],execution_order=[e['prompt_id'] for e in items],device_isolation=dict(passed=True,scope='outer whole-host admission and complete owner drain'),lane=a.lane))
+  return 0
+ if __name__=='__main__':raise SystemExit(main())

@@ -1,0 +1,82 @@
+{
+  "schema": "packet165.design-sensitivity.v1",
+  "measured": false,
+  "promotion_eligible": false,
+  "provisional_baseline_tok_s": 90.0,
+  "baseline_scope": "brief estimate from roughly80-token two-card warm requests; NOT measured512 prefill",
+  "formula": "S0 / ((1-f) + f/M)",
+  "assumptions": [
+    "f is unmeasured",
+    "zero added routing/dispatch/buffer/attention/pipeline overhead",
+    "all scalable work gets ideal1/M cost"
+  ],
+  "rows": [
+    {
+      "batch": 2,
+      "ideal_scalable_fraction": 0.5,
+      "tok_s": 120.0,
+      "ttft_512_seconds": 4.266666666666667
+    },
+    {
+      "batch": 2,
+      "ideal_scalable_fraction": 0.75,
+      "tok_s": 144.0,
+      "ttft_512_seconds": 3.5555555555555554
+    },
+    {
+      "batch": 2,
+      "ideal_scalable_fraction": 0.9,
+      "tok_s": 163.63636363636363,
+      "ttft_512_seconds": 3.128888888888889
+    },
+    {
+      "batch": 2,
+      "ideal_scalable_fraction": 1.0,
+      "tok_s": 180.0,
+      "ttft_512_seconds": 2.8444444444444446
+    },
+    {
+      "batch": 8,
+      "ideal_scalable_fraction": 0.5,
+      "tok_s": 160.0,
+      "ttft_512_seconds": 3.2
+    },
+    {
+      "batch": 8,
+      "ideal_scalable_fraction": 0.75,
+      "tok_s": 261.8181818181818,
+      "ttft_512_seconds": 1.9555555555555555
+    },
+    {
+      "batch": 8,
+      "ideal_scalable_fraction": 0.9,
+      "tok_s": 423.52941176470597,
+      "ttft_512_seconds": 1.2088888888888887
+    },
+    {
+      "batch": 8,
+      "ideal_scalable_fraction": 1.0,
+      "tok_s": 720.0,
+      "ttft_512_seconds": 0.7111111111111111
+    }
+  ],
+  "routing_model": "hypothetical independent uniform ten-of512 expert selections; real overlap unmeasured",
+  "routes": [
+    {
+      "batch": 2,
+      "expected_expert_union": 19.8046875,
+      "weight_reuse_factor": 1.009861932938856
+    },
+    {
+      "batch": 8,
+      "expected_expert_union": 74.7397383398046,
+      "weight_reuse_factor": 1.0703810553400601
+    },
+    {
+      "batch": 32,
+      "expected_expert_union": 239.63571484583883,
+      "weight_reuse_factor": 1.3353602162593363
+    }
+  ],
+  "interpretation": "conditional ceilings for the assumed model, not hardware limits, predictions, benchmarks or performance-curve points"
+}

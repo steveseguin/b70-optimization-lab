@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "wrapper_help": "usage: entry.py [-h] --lane {A,B} [--kind {full512,smoke,bracket}] --output\n                OUTPUT [--reference REFERENCE] [--fault-review FAULT_REVIEW]\n                [--authorized-device-window] [--plan]\n\nOne fresh model load: 512-input prefill, then every fixed realistic prompt.\n\noptions:\n  -h, --help            show this help message and exit\n  --lane {A,B}\n  --kind {full512,smoke,bracket}\n                        smoke/bracket accepted only by offline report\n                        compatibility tests\n  --output OUTPUT\n  --reference REFERENCE\n  --fault-review FAULT_REVIEW\n  --authorized-device-window\n  --plan\n",
+  "rows": [
+    {
+      "name": "packet165-one-card-full512-A-a",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window"
+      ]
+    },
+    {
+      "name": "packet165-one-card-full512-A-b",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window",
+        "--reference"
+      ]
+    }
+  ],
+  "internal_help": {
+    "worker.py": "usage: worker.py [-h] --output OUTPUT --lane {A,B}\n\noptions:\n  -h, --help       show this help message and exit\n  --output OUTPUT\n  --lane {A,B}\n",
+    "screen.py": "usage: screen.py [-h] --lane {A,B} [--kind {full512,smoke,bracket}] --output\n                 OUTPUT [--reference REFERENCE] [--fault-review FAULT_REVIEW]\n                 [--authorized-device-window] [--plan]\n\noptions:\n  -h, --help            show this help message and exit\n  --lane {A,B}\n  --kind {full512,smoke,bracket}\n  --output OUTPUT\n  --reference REFERENCE\n  --fault-review FAULT_REVIEW\n  --authorized-device-window\n  --plan\n"
+  },
+  "internal_pipeline_flags": [],
+  "native_probe_sha256": "ecf52864f23d80d4e6d2527ee632ac58466f3684990bcb2c1031dd07701568ae",
+  "native_flag_source": "actual Transport command builder or one-card native_command; built executable --help"
+}

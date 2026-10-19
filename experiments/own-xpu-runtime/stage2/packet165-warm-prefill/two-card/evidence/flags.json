@@ -1,0 +1,74 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "wrapper_help": "usage: entry.py [-h] --lane {A,B} [--kind {full512,smoke,bracket}] --output\n                OUTPUT [--reference REFERENCE] [--fault-review FAULT_REVIEW]\n                [--authorized-device-window] [--plan]\n\nOne fresh model load: 512-input prefill, then every fixed realistic prompt.\n\noptions:\n  -h, --help            show this help message and exit\n  --lane {A,B}\n  --kind {full512,smoke,bracket}\n                        smoke/bracket accepted only by offline report\n                        compatibility tests\n  --output OUTPUT\n  --reference REFERENCE\n  --fault-review FAULT_REVIEW\n  --authorized-device-window\n  --plan\n",
+  "rows": [
+    {
+      "name": "packet165-two-card-full512-A-a",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window"
+      ]
+    },
+    {
+      "name": "packet165-two-card-full512-A-b",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window",
+        "--reference"
+      ]
+    },
+    {
+      "name": "packet165-two-card-full512-B-a",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window"
+      ]
+    },
+    {
+      "name": "packet165-two-card-full512-B-b",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window",
+        "--reference"
+      ]
+    }
+  ],
+  "internal_help": {
+    "worker.py": "usage: worker.py [-h] --output OUTPUT --lane {A,B}\n\noptions:\n  -h, --help       show this help message and exit\n  --output OUTPUT\n  --lane {A,B}\n",
+    "screen.py": "usage: screen.py [-h] --lane {A,B} [--kind {full512,smoke,bracket}] --output\n                 OUTPUT [--reference REFERENCE] [--fault-review FAULT_REVIEW]\n                 [--authorized-device-window] [--plan]\n\noptions:\n  -h, --help            show this help message and exit\n  --lane {A,B}\n  --kind {full512,smoke,bracket}\n  --output OUTPUT\n  --reference REFERENCE\n  --fault-review FAULT_REVIEW\n  --authorized-device-window\n  --plan\n",
+    "pipeline.py": "usage: pipeline.py [-h] [--binary BINARY] --output OUTPUT [--input INPUT]\n                   [--oracle ORACLE] [--dispatch DISPATCH] [--mini] [--device]\n                   [--draft DRAFT [DRAFT ...]] [--draft-rank {0,1}]\n                   [--target-split {0,23,24}] [--draft-head {full}]\n                   [--draft-fault {none,wrong,error,stall,suppress,garbage,late-error}]\n                   [--script SCRIPT] [--prompt-overlap {on,off}]\n                   [--dump-state] [--card CARD] [--tokens TOKENS]\n                   [--context CONTEXT] [--seconds SECONDS]\n                   [--wait-seconds WAIT_SECONDS] [--native-nice NATIVE_NICE]\n                   [--retain-steps RETAIN_STEPS]\n                   [--cancel-launch CANCEL_LAUNCH] [--timing {token,class}]\n                   [--suite-manifest SUITE_MANIFEST] [--repeat REPEAT]\n                   [--controller {python,native}]\n                   [--host-path {legacy,prepared}] [--argument-audit]\n                   [--audit-prepare-each]\n\nBounded two-process controller; CPU host backend by default. No threads.\n\noptions:\n  -h, --help            show this help message and exit\n  --binary BINARY\n  --output OUTPUT\n  --input INPUT\n  --oracle ORACLE\n  --dispatch DISPATCH\n  --mini\n  --device\n  --draft DRAFT [DRAFT ...]\n  --draft-rank {0,1}\n  --target-split {0,23,24}\n  --draft-head {full}\n  --draft-fault {none,wrong,error,stall,suppress,garbage,late-error}\n  --script SCRIPT\n  --prompt-overlap {on,off}\n  --dump-state\n  --card CARD\n  --tokens TOKENS, --max-new TOKENS\n  --context CONTEXT\n  --seconds SECONDS\n  --wait-seconds WAIT_SECONDS\n  --native-nice NATIVE_NICE\n  --retain-steps RETAIN_STEPS\n  --cancel-launch CANCEL_LAUNCH\n  --timing {token,class}\n  --suite-manifest SUITE_MANIFEST\n  --repeat REPEAT\n  --controller {python,native}\n  --host-path {legacy,prepared}\n  --argument-audit\n  --audit-prepare-each\n"
+  },
+  "internal_pipeline_flags": [
+    "--output",
+    "--device",
+    "--binary",
+    "--dispatch",
+    "--controller",
+    "--draft",
+    "--draft-rank",
+    "--target-split",
+    "--context",
+    "--tokens",
+    "--retain-steps",
+    "--timing",
+    "--native-nice",
+    "--card",
+    "--seconds",
+    "--wait-seconds"
+  ],
+  "native_probe_sha256": "b73f3fa7a90c55385cfbdee0f398e76a8cdbee4855b91f0ba1a4e26ac2338ebc",
+  "native_flag_source": "actual Transport command builder or one-card native_command; built executable --help"
+}

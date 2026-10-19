@@ -1,0 +1,465 @@
+{
+  "results": [
+    {
+      "rank": 0,
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/native-sequence165/prepare-probe",
+        "--rank",
+        "0",
+        "--channel",
+        "7",
+        "--stop-fd",
+        "3",
+        "--shared",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/preparation163/run-1792388808260305987/capture/shared.bin",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/preparation163/run-1792388808260305987/capture/rank0",
+        "--memory",
+        "resident",
+        "--context",
+        "4096",
+        "--seconds",
+        "7200",
+        "--wait-seconds",
+        "600",
+        "--native-nice",
+        "0",
+        "--timing",
+        "token",
+        "--max-new",
+        "512",
+        "--retain-steps",
+        "none",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/inputs/plan.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/inputs/identity.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+        "--host-path",
+        "prepared",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/selection.json",
+        "--selection-sha256",
+        "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/dispatch.json",
+        "--authorized-device-window"
+      ],
+      "returncode": 0,
+      "peak_rss_bytes": 1172246528,
+      "stdout": "PASS native sequence rank=0 requests=13 target_resets=14 draft_method_resets=14 pending_and_poisoned_refused=true mutable_samples=15344\n",
+      "stderr": "",
+      "output": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/native-sequence165/run-1792391552851724674-rank0",
+      "sensor_checks": [
+        {
+          "request_id": "incident-retrospective",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "b49521b1c75b774898d037c7bd38735ac53660e3bdc0c59eeb96bae28193c3d9"
+        },
+        {
+          "request_id": "incident-retrospective",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "d1ddb5065433805847cda16f2088dd3bab129c7993691c8a73c707790d4e4351"
+        },
+        {
+          "request_id": "incident-retrospective",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "e5b3782170000b8c65691615ea785b8d839ecf55f352c03b240198832015f77d"
+        },
+        {
+          "request_id": "incident-retrospective",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "cbb5ed0f05e854ea6b65fba8a34c09f9118b6f5c063657b232dec31348410e16"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "e606e5778f13983c4600d5f48ad1b3ff6b49760507a81f9c21a640253416deb7"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "00c13fab215479aac785b68743437af296d7872cb304927ed17b7cc752611480"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "a9ff6d39ca2e5a33499a8f37f4dd369bfd78e2c9698f5259429301c14d8a7248"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "d34d776e279b5b5b5c399af77010889b68ad801a1b0e94ed04e14519fc120bd2"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "92638b0589093e462ed96b8fd606dccc106f20fbc9cca901569c0c44af65d156"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "87557216af7af815afa71f8393ee352dc9486137aae9dc0c768c75f17e8caaa7"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "6e5b3f71514a9f5492c2a9afe1d2bc13508034c829f3ad10e7b7c59691138fda"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "4b1885b57f3ae884ed4fd22bc4bc01be0b5a0ae2c112a9526446248d94b34065"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "3d31d56556406bde23d8b9d4980bceef546840527736afc18518a0f9b54baade"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "22a6d5a171c558e1aa087af2984bb2909696004cfe5dc81ced8fcdc4ef6d60b0"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "c1f1aa93d5c3d5e9be286b99e7042062a971e9b329b5b2d7485f26136c5de959"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "b277e4a608d6553588d8cdae4be16c5905bec4b21b541d3890d7998638f9fedb"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "c2411b146a78c3ad0aaa9625802d850f7ed1ef807ddf4dff9176cf5f4e475cdf"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "da722f4b8c1f10172e983a9d26097844eb52df991e9b8bae95dd8cdf635a43ec"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "5ef86a3070a85261f912bb360f64b9f1e2d6a24f30da2ce426280c1d1fec437c"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "9845c2e019588838c569748f52683ae5fe5c0fec9ecc7bc69ea22cca25585d81"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "15d25d37d299676a7d22938ea526cd3f4a94b99ed92f84c10b56b229b290a158"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "2d7f915596c532740b47e41e50283d3c6981304911b40d97e20cd01ba6773e83"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "a446261347ebbb5228e8f2b8a7da03ca405e205862c4f0d7a2e1e135f12cfb0b"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "7b8d81252677aed8365b4851f490cef9ecc55e4941126b254b940d9e97386d23"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "f7ef4ba6ecdcf0820cf9ba99424d2fd2c21dbe87a3d204750853f12b791458e6"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "59d2e1a12c0d97c92ae186125ccba8b5af01766703b4c62f4e533b362d3ed00b"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "a8b29e5522f9ec944f324c9a370b139d7dd5d1c3191fc5fbca66d513529a3e35"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "591533c06176c5caf546b5b86269d1b848a1227db276a719c2aaaa5c9c74f9a1"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "8798209315f60ac57b526aba934c03725b6ceedae3b1d0d0acabfb4c2fb639b7"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "f0d11fd849f1e4fd313f239427e77bb44f0cfb0a42965617ad983a6f2ac4f48e"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "d45b36b36b6abe173214cdfc150aeb6b9160b0573e71d7d55f5337507e07339a"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "8143fe7c9b6596eaf41ecf57252a3dae0fe9639d5a03779441f362e20e681f6a"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "41e0bdd9a5834ddc047a0e14ec26f8a0b99fc48ee798b6b9acdf9a1b7e09b02d"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "7661b83eb3e6c9000f7ee3b757409e876efe2cc50b2ae4067bec751600b318a3"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "8ecab4123647c5bc660b4ff52c493a93c8396caa8eb806602f9e0fd9e952636d"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "96bef64ac1179cc7888f8129dd11dff252272a1d28e0bd3fa9573684aaf8f6ed"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "2c87d2adbb3354516aadc5e76adece7159080f78f9daeaf0747b9f8d0b924ddd"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "44b1a972ef1740698d1da2dfc027c25278c05dc01ea4a24c131ea9131ade13c0"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "75b120655cdffee83db8d276eddc420fcc09a00c73d2ea206735f5c5c494e2c8"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "4eabfc513849d1c5ff011a0fbb0a2acf24a6ddfe7d64fff058575140ff92016f"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "d60949055ce7fdb773d160da6ddda00c545f7d29130dfdd35c7a54b1e6e40676"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "e60f2b3fc4c3e63f6c307b435818ab69a30cec0c2e07fdc6ddc2002baab9881a"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "349136a4b5aef2073483bfcdc435db81f85a9b1040c04115e9f0aac1459bc41f"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "3ba39996dea9b4f7bbf27bc54f7ba48b533e902f3980f4a0c2998980e0ea3e3c"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "fda0a9c2737ce125e88046d5e11b036a7ec163ed4c15b2d5caa49c5340ab92f3"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "4c2bff0077d943d152e66e8dbb54b99bc62cc7b2564752430979bcf2c51d882f"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "b9ccb061916a2b2a1d7f7cc527273acae75f3d153cb498d99bbfd911134c225f"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "c914c6a19c49b09ab886df5750d35102ba863930115e4cf4707eee4cf52cfe1f"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "timings.jsonl",
+          "rows": 5,
+          "sha256": "05eafe5585c8881fed7f4ab5122dae68214f5ab3cb0eae677b899231fc2b34fc"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "e529fa51818906c5938317b875115d1207da76b72fd18c81dad7672adf4b0f4b"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "6045a9ce3bd14a21c806ae7b4def20360add74ee352c971072da3c0fcbbea31b"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "1162aea5160345e2181173fe864168ef2c5941f390af4aaf01b9d47f9a1063a8"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "541ba30fdd9b7c5adb0acf793a8ed962eeb396a41440d8ddc4210f61837925da"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "9286502b8e9682da36d8049018ffea31766d83bfec5afcdcb4622933080194d9"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "754d79f83d3507530e75907a0b02dd05c3a6a0a7d1fa34d0961e03f14997c2f5"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "1f0cd355de1edf632119eecc3bf16f2599cdb93abdfd3c8bf68bca8469272222"
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/native-sequence165/prepare-probe",
+        "--rank",
+        "1",
+        "--channel",
+        "9",
+        "--stop-fd",
+        "3",
+        "--shared",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/preparation163/run-1792388808260305987/capture/shared.bin",
+        "--cards",
+        "1",
+        "--card",
+        "1",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/preparation163/run-1792388808260305987/capture/rank1",
+        "--memory",
+        "resident",
+        "--context",
+        "4096",
+        "--seconds",
+        "7200",
+        "--wait-seconds",
+        "600",
+        "--native-nice",
+        "0",
+        "--timing",
+        "token",
+        "--max-new",
+        "512",
+        "--retain-steps",
+        "none",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--draft-mtp",
+        "--draft-fault",
+        "none",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/inputs/plan.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/inputs/identity.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+        "--host-path",
+        "prepared",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/selection.json",
+        "--selection-sha256",
+        "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/dispatch.json",
+        "--authorized-device-window"
+      ],
+      "returncode": 0,
+      "peak_rss_bytes": 720060416,
+      "stdout": "PASS native sequence rank=1 requests=13 target_resets=14 draft_method_resets=14 pending_and_poisoned_refused=true mutable_samples=14714\n",
+      "stderr": "",
+      "output": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/build/native-sequence165/run-1792391568492766022-rank1"
+    }
+  ]
+}
