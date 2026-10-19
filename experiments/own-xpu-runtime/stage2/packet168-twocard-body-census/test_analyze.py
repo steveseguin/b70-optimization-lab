@@ -30,11 +30,13 @@ def fixture():
       measurement_scope='native_exact_controls_plus_isolated_body_class_probes',
       tokens_per_request=TOKENS,repeats_per_probe=REPEATS,observations=rows)
 
-def arm_row(d,cls='attention'):return next(r for r in d['observations'] if r['view']==cls)
+def arm_row(d,cls='gdn'):return next(r for r in d['observations'] if r['view']==cls)
 
 class Tests(unittest.TestCase):
     def test_valid_synthetic(self):
-        r=analyze(fixture());self.assertTrue(r['passed']);self.assertEqual(len(r['ranked']),6)
+        r=analyze(fixture());self.assertTrue(r['passed']);self.assertEqual(len(r['ranked']),5)
+        self.assertNotIn('attention',{x['kernel_class'] for x in r['ranked']})
+        self.assertIn('attention (qsa_*; no arm since v3)',r['residual']['includes'])
         self.assertEqual({x['kernel_class'] for x in r['ranked']},set(CLASSES))
         self.assertFalse(r['residual']['causally_isolated'])
         for v in CONTROLS:
@@ -42,7 +44,7 @@ class Tests(unittest.TestCase):
               r['control_means_ms'][v]-sum(x['measured_marginal_ms_per_body_pass'] for x in r['ranked']))
         # Per-rank saving .2+.01*index, summed over two ranks.
         self.assertEqual(r['ranked'][0]['kernel_class'],'norms_glue')
-        self.assertAlmostEqual(r['ranked'][0]['measured_marginal_ms_per_body_pass'],.5)
+        self.assertAlmostEqual(r['ranked'][0]['measured_marginal_ms_per_body_pass'],2*(.2+.01*CLASSES.index('norms_glue')))
         self.assertEqual(r['ranked'][0]['route_identity_changed_probes'],24)
         self.assertEqual(len(r['top_two_conditional_ceilings']),2)
     def test_probe_refusals(self):
@@ -108,4 +110,85 @@ class Tests(unittest.TestCase):
         native=(P/'native_arm_order.hpp').read_text()
         self.assertIn('{'+','.join(map(str,NATIVE_ORDER))+'}',native)
         self.assertNotIn(RESIDUAL,ARM_CODES)
+        self.assertNotIn('attention',ARM_CODES);self.assertIn(1,REFUSED_NATIVE_ARMS)
+        self.assertEqual(CLASSES,('gdn','routed_experts','router_shared_expert','dense_hc','norms_glue'))
+    def test_old_attention_arm_set_refused(self):
+        # A v2-shaped stream (attention view/class) no longer matches the contract.
+        d=fixture();d['order']=['C0','attention',*d['order'][1:]]
+        with self.assertRaisesRegex(ValueError,'order'):analyze(d)
+        d=fixture();d['report_classes']=['attention',*d['report_classes']]
+        with self.assertRaisesRegex(ValueError,'coverage'):analyze(d)
+
+# --- v3 sticky-error model (device-census-B-v2 root cause) -----------------
+# qsa_select/qsa_attention are prepared with launch extent
+# min(context,((P_admitted+32)//32)*32) (main.cpp admit_position/1285) and the
+# device guard trips when pos>launch_extent-tokens (kernels.hpp position_limit,
+# round2.hpp:11). The probe body pass runs at P=prompt+63 after the setup
+# request admitted only P-1. Real launch plans of both ranks come from the v2
+# device evidence. classify() mirrors native_probe.hpp exactly.
+V2=P/'lineage/v2-root-cause'  # copies of the gitignored v2 device evidence
+OLD_ORDER=('C0','attention','gdn','routed_experts','C1','router_shared_expert','dense_hc','norms_glue','C2')
+OLD_ARM_CODES={'attention':1,**ARM_CODES}
+def stage(label):
+    if not label.startswith('blk.'):return -1
+    end=label.find('.',4)
+    if end==-1 or end==4 or not label[4:end].isdigit():return -1
+    cls=label[end+1:]
+    if not(cls.startswith('hc.a.') or cls.startswith('hc.f.')):return -1
+    return {'norm':0,'low':1,'gate':2,'act':3,'mix':3,'inject':3}.get(cls[5:],-1)
+def classify(l):
+    op,n=l['op'],l['label']
+    if n in('logits','argmax') or op in('handoff','handoff_result'):return -1
+    if op in('begin','commit','check_status'):return 0
+    if op.startswith('qsa_'):return 1
+    if op in('gdn','conv','gdn_norm_gate'):return 2
+    if op in('route','moe_combine') or 'router' in n or 'shexp' in n:return 3
+    if op in('expert_gate_up','routed_gemv','expert_gather') or 'exps' in n:return 4
+    if stage(n)==0:return 7
+    if op=='gemv' or stage(n)>0:return 6
+    return 7
+def bound(pos):return min(4096,((pos+32)//32)*32)
+def probe_positions():return {pid:len((P/'inputs'/pid/'tokens.txt').read_text().split())+TOKENS-1 for pid in IDS}
+def sticky_trips(order,arm_codes,admit):
+    trips=[];positions=probe_positions()
+    for rank in (0,1):
+        launches=json.loads((V2/f'rank{rank}-launch-plan.json').read_text())['launches']
+        for view in order:
+            if view in CONTROLS:continue
+            for pid in IDS:
+                pos=positions[pid];extent=bound(pos if admit else pos-1)
+                for name,skip in (('control',0),('arm',arm_codes[view]),('repair',0)):
+                    run=[l for l in launches if classify(l)>=0 and not(skip and classify(l)==skip)]
+                    guarded=[l for l in run if l['op'] in('qsa_select','qsa_attention')]
+                    if guarded and pos>extent-1:trips.append((rank,view,pid,name))
+    return trips
+
+class StickyGuard(unittest.TestCase):
+    def test_v2_position_reproduced(self):
+        # Device evidence: benchmark-analysis last half step 127, launch extent 128.
+        self.assertEqual(probe_positions()['benchmark-analysis'],128)
+        self.assertEqual([p for p,v in probe_positions().items() if v%32==0],['benchmark-analysis'])
+        receipt=read(V2/'failure-receipt.json');row=receipt['setup_last_half_step']
+        self.assertEqual((row['position'],row['launch_extent'],receipt['probe_position']),(127,128,128))
+        self.assertEqual(receipt['rank0_probe_phases_recorded'],['packet168-before-control-snapshot'])
+    def test_old_arm_set_fails(self):
+        trips=sticky_trips(OLD_ORDER,OLD_ARM_CODES,admit=False)
+        self.assertTrue(trips)
+        self.assertEqual(trips[0],(0,'attention','benchmark-analysis','control'))
+        self.assertEqual({t[2] for t in trips},{'benchmark-analysis'})
+    def test_dropping_attention_alone_still_fails(self):
+        # The control and repair passes always run qsa_*; the arm choice cannot fix it.
+        trips=sticky_trips(ORDER,ARM_CODES,admit=False)
+        self.assertTrue(trips);self.assertTrue(all(t[3] in('control','arm','repair') for t in trips))
+        self.assertIn((0,'gdn','benchmark-analysis','control'),trips)
+    def test_v3_every_arm_clear_after_admission(self):
+        self.assertEqual(sticky_trips(ORDER,ARM_CODES,admit=True),[])
+    def test_remaining_arms_never_skip_qsa_or_position_ops(self):
+        for rank in (0,1):
+            launches=json.loads((V2/f'rank{rank}-launch-plan.json').read_text())['launches']
+            for arm in NATIVE_ARMS:
+                if not arm:continue
+                skipped=[l for l in launches if classify(l)==arm]
+                self.assertTrue(skipped)
+                self.assertFalse([l for l in skipped if l['op'].startswith('qsa_') or l['op'] in('begin','commit','check_status')])
 if __name__=='__main__':unittest.main()

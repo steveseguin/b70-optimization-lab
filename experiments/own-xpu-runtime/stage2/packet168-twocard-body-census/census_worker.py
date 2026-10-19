@@ -1,4 +1,4 @@
-"""One load: exact native controls plus six isolated body-class probes.
+"""One load: exact native controls plus five isolated body-class probes.
 
 Diagnostic only. Every control and every pre-probe setup request must equal the
 registered iq3-p49-split32-v1 oracle prefix. A probe snapshots, skips one class,

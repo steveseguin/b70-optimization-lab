@@ -7,7 +7,6 @@
   "final_arm_sequence_passed": true,
   "native_order": [
     0,
-    1,
     2,
     4,
     0,
@@ -16,13 +15,29 @@
     7,
     0
   ],
-  "reason": "six-class body lifecycle passes on the registered order x12 prompts x3 repeats; marker compute, real snapshot copies",
+  "probe_positions": [
+    150,
+    153,
+    140,
+    146,
+    131,
+    128,
+    130,
+    134,
+    132,
+    124,
+    127,
+    123
+  ],
+  "probe_position_admitted": true,
+  "v2_uncovered_probe_positions_per_rank": 8,
+  "reason": "five-class body lifecycle passes on the registered order x12 prompts x3 repeats at the real probe positions; the v2 uncovered extent (benchmark-analysis P=128) is reproduced and admitted; marker compute, real snapshot copies",
   "results": [
     {
       "rank": 0,
       "returncode": 0,
-      "peak_rss_bytes": 822149120,
-      "stdout": "PASS private native arm lifecycle rank=0 observations=324 residual_arms_refused=true; six-class sequence, marker transport, not arithmetic or native interval qualification\n",
+      "peak_rss_bytes": 823283712,
+      "stdout": "PASS private native arm lifecycle rank=0 observations=288 v2_uncovered_probe_positions=8 residual_arms_refused=true; five-class sequence at real probe positions, marker transport, not arithmetic or native interval qualification\n",
       "stderr": "",
       "argv": [
         "/usr/bin/ionice",
@@ -79,18 +94,33 @@
         "--authorized-device-window",
         "--census-probe"
       ],
-      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/build/preparation163/run-1792403931765581133-0",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/build/preparation163/run-1792406211757050173-0",
+      "probe_positions": [
+        150,
+        153,
+        140,
+        146,
+        131,
+        128,
+        130,
+        134,
+        132,
+        124,
+        127,
+        123
+      ],
+      "v2_uncovered_probe_positions": 8,
       "census_device_bytes": 27986860116,
       "partial_lifecycle_passed": true,
-      "observations": 324,
-      "real_sensor_samples": 2268,
+      "observations": 288,
+      "real_sensor_samples": 2016,
       "snapshot_poison_restored": true
     },
     {
       "rank": 1,
       "returncode": 0,
-      "peak_rss_bytes": 789864448,
-      "stdout": "PASS private native arm lifecycle rank=1 observations=324 residual_arms_refused=true; six-class sequence, marker transport, not arithmetic or native interval qualification\n",
+      "peak_rss_bytes": 790806528,
+      "stdout": "PASS private native arm lifecycle rank=1 observations=288 v2_uncovered_probe_positions=8 residual_arms_refused=true; five-class sequence at real probe positions, marker transport, not arithmetic or native interval qualification\n",
       "stderr": "",
       "argv": [
         "/usr/bin/ionice",
@@ -150,11 +180,26 @@
         "--authorized-device-window",
         "--census-probe"
       ],
-      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/build/preparation163/run-1792404061290850068-1",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/build/preparation163/run-1792406326335216918-1",
+      "probe_positions": [
+        150,
+        153,
+        140,
+        146,
+        131,
+        128,
+        130,
+        134,
+        132,
+        124,
+        127,
+        123
+      ],
+      "v2_uncovered_probe_positions": 8,
       "census_device_bytes": 28445508480,
       "partial_lifecycle_passed": true,
-      "observations": 324,
-      "real_sensor_samples": 2268,
+      "observations": 288,
+      "real_sensor_samples": 2016,
       "snapshot_poison_restored": true
     }
   ]

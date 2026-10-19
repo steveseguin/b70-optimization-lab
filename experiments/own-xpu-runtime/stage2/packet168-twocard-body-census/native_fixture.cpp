@@ -46,15 +46,27 @@ int main(int argc,char**argv){try{
     <<",\"arm\":"<<p168::classify(l)<<",\"physical_commands\":"<<e.issue_sites.at(index).commands.size()<<"}\n";
   }
  }
+ // v3: probe at the REAL device positions (prompt tokens + 63) after admitting
+ // only P-1, which is the state the 64-token setup request leaves. Count the
+ // prompts whose prepared qsa extent does not cover P: that is the v2 device
+ // failure condition (control pass sticky error at benchmark-analysis, P=128).
+ std::vector<int> positions;
+ {const char* s=std::getenv("P168_PROBE_POSITIONS");require(s!=nullptr,"P168_PROBE_POSITIONS required");
+  std::stringstream in(s);std::string x;while(std::getline(in,x,','))positions.push_back(std::stoi(x));}
+ require(positions.size()==12,"twelve real probe positions");
+ int uncovered=0,observations=0;
  for(int view:p168::arm_order){
    for(int prompt=0;prompt<12;++prompt){
-     e.put(0,"position",&prompt,4);p168::sensor(e,"fixture-before-reset");
+     const int pos=positions[prompt];
+     e.admit_position(pos-1);e.put(0,"position",&pos,4);p168::sensor(e,"fixture-before-reset");
      image.boundary();p168::sensor(e,"fixture-after-reset");
+     uncovered+=pos>e.context_extent-1; // device guard: pos>launch_extent-tokens
      pipeline::Request r{20,view,prompt,3,0,prompt+1,{}}; // REPEATS=3
-     p168::probe(e,image,r,shared.data());
+     p168::probe(e,image,r,shared.data());observations+=3;
+     require(pos<=e.context_extent-1&&e.integer(0,"position")==pos,"probe extent/position after restore");
    }
  }
- for(int arm:{5,8,9}){
+ for(int arm:{1,5,8,9}){
   bool refused=false;
   try{pipeline::Request r{20,arm,0,1,0,1,{}};p168::probe(e,image,r,shared.data());}
   catch(const std::exception&){refused=true;}
@@ -62,6 +74,6 @@ int main(int argc,char**argv){try{
  }
  require(p151audit::prepared>0&&p151audit::issued>0,"actual preparation/issue bypassed");
  e.shutdown();std::cout<<"PASS private native arm lifecycle rank="<<a.rank
-   <<" observations=324 residual_arms_refused=true; six-class sequence, marker transport, not arithmetic or native interval qualification\n";
+   <<" observations="<<observations<<" v2_uncovered_probe_positions="<<uncovered<<" residual_arms_refused=true; five-class sequence at real probe positions, marker transport, not arithmetic or native interval qualification\n";
  return 0;
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}}

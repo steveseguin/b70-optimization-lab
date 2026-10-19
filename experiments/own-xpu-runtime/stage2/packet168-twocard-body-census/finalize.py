@@ -92,12 +92,14 @@ def main():
     save(P/'READY-FOR-DEVICE.json',dict(schema='packet168.readiness.v2',ready=ready,ready_for_device=ready,
       device_executed=False,model_loads_planned=1,measured_ranked_table_available=False,
       seal_sha256=sha(P/'seal.json'),evidence_sha256=receipts,blockers=failed,
-      lane='B',cards=[2,3],alternative_lane='A',proposals=['proposed-p168-body-census-B-v2.txt','proposed-p168-body-census-A-v2.txt'],
-      jobs=['packet168-body-census-B-v2','packet168-body-census-A-v2'],
-      measured_classes=list(C.CLASSES),residual=dict(definition='exact native control ms/token minus sum of six measured class marginals',
-        includes=['cross-card transfer','split head/argmax/merge','controller/mailbox','overlap'],causally_isolated=False),
+      lane='B',cards=[2,3],alternative_lane='A',proposals=[f'proposed-p168-body-census-{l}-{package.VERSION}.txt' for l in 'BA'],
+      jobs=[f'packet168-body-census-{l}-{package.VERSION}' for l in 'BA'],
+      supersedes=dict(job='packet168-body-census-B-v2',evidence='evidence/device-census-B-v2',
+        root_cause='control-pass sticky error: probe ran at unadmitted position 128 (benchmark-analysis) with qsa launch extent 128'),
+      measured_classes=list(C.CLASSES),residual=dict(definition='exact native control ms/token minus sum of five measured class marginals',
+        includes=['attention (no arm since v3)','cross-card transfer','split head/argmax/merge','controller/mailbox','overlap'],causally_isolated=False),
       shared_tool_limitations=[] if all(r['passed'] for r in rehearse) else [
-        'Shared ops/rehearse_entry.py --report cannot run this custom census report (receipts evidence/shared-rehearse-*-v2.*.log retained); '
+        'Shared ops/rehearse_entry.py --report cannot run this custom census report (receipts evidence/shared-rehearse-*-'+package.VERSION+'.*.log retained); '
         'qualified instead by the packet-private report adapter (evidence/report-adapter.json: real entry/parser/analyzer/report, 11 cases) '
         'and the worker gate (evidence/worker-gate.json), as accepted for packet58aq.',
         'Shared rehearsal also WARNs that no preparation-path probe is declared: the census uses the parent-proven packet165 Transport '

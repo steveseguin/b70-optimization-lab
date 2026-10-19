@@ -34,3 +34,19 @@ optimization lever.
 * Rank 1's census image (`--census-probe`) costs measured device bytes. The
   parent memory plan would refuse rank 1 at startup unless
   `memory-plan-census.json` adds them.
+
+## packet168 v3 additions (after device-census-B-v2)
+
+* Do not run a diagnostic body pass at a position the engine has not admitted.
+  The setup request admits only its last half-step position P-1, but `commit`
+  leaves the device position at P. When P is a multiple of 32 the prepared
+  `qsa_select`/`qsa_attention` launch extent equals P, and the device guard
+  `pos > position_limit(s) - s.tokens` sets the sticky error. In v2 this hit
+  the **control** pass at benchmark-analysis (65 + 63 = 128), so it was not an
+  attention-arm effect, and dropping an arm cannot fix it. `probe()` now calls
+  `admit_position(P)` before the image and signature, and mirrors the guard on
+  the host.
+* Do not trust a CPU fixture that probes at positions 0..11. Fixture positions
+  must be the real probe positions (prompt tokens + 63).
+* Attention has no arm since v3 (packet173 finds no attention lever). Its
+  `qsa_*` launches run in every pass and are part of the residual.

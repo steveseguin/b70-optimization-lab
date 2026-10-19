@@ -127,3 +127,73 @@ flag cleared at 05:58.
 
 The jobs are `packet168-body-census-B-v2` (lane B, cards 2 and 3) and the
 lane-A twin. They are not queued.
+
+## v3 fix loop after the B-v2 device failure (2026-10-19, CPU only)
+
+`packet168-body-census-B-v2` (commit 30ba2c94a) ran on lane B from 10:22 to
+10:27 UTC and exited with rc 1. Rank 0 failed with "packet168 arm raised sticky
+error" and rank 1 was stopped cooperatively. The GPU fault count stayed at 2,
+and teardown completed.
+
+**Root cause.** The attention skip did not cause this failure. The probe
+passed on the first five prompts. It failed on the sixth prompt,
+benchmark-analysis (65 tokens), in the **control** pass of repeat 0: only the
+`before-control-snapshot` sensor was recorded. The setup request's last half
+step was at position 127, with launch extent 128. `commit` left the device
+position at 128.
+
+`native_probe.hpp` ran the body pass without calling `admit_position`. So
+`qsa_select`/`qsa_attention` were still prepared with extent
+`((127+32)/32)*32 = 128`. These are set in `main.cpp:1285` (`s.extent`) and
+`main.cpp:1465-1469` (`admit_position`). The device guard
+`pos > position_limit(s) - s.tokens` then fired. It is defined in
+`kernels.hpp:25`, where `position_limit` is `launch_extent` for select and
+attention, and it fires in `round2.hpp:11`, `specialised.hpp:94` and
+`kernels.hpp:122`. All three write the sticky error in slot 15.
+
+Of the 12 probe positions (prompt tokens + 63), only 128 is a multiple of 32.
+Every view would have failed at that prompt, including any view without the
+attention arm.
+
+**Changes.**
+
+* `probe()` now reads the device position, calls `admit_position(P)` before the
+  image and signature (as a non-speculative half step does), and mirrors the
+  guard on the host.
+* As instructed, the attention arm is dropped. `qsa_*` runs in every pass and
+  is part of the residual (packet173 finds no attention lever).
+* The final arm set is gdn(2), routed_experts(4), router_shared_expert(3),
+  dense_hc(6) and norms_glue(7). The order is
+  C0, gdn, routed_experts, C1, router_shared_expert, dense_hc, norms_glue, C2.
+* Native arm 1 is now refused, like 5, 8 and 9.
+* None of the remaining arms skips a `qsa_*`, `begin`, `commit` or
+  `check_status` launch. So none can change the position or extent. Their other
+  sticky sources (route42 non-finite input, route and status validity, p39
+  capacity) only see restored state from the exact setup request.
+
+**CPU proof.**
+
+* `test_analyze.StickyGuard` models the exact guard over the real v2 launch
+  plans of both ranks, copied to `lineage/v2-root-cause/`:
+  * The old arm set without admission fails. Its first trip is
+    (rank 0, attention, benchmark-analysis, control), which matches the device.
+  * The new arm set without admission **still fails**.
+  * The v3 arm set with admission passes every view, prompt and pass.
+* The native CPU fixture now probes at the real positions. It first admits
+  P-1, and it reproduces the uncovered extent once per view on each rank (8).
+  `probe()` admits the position, and 288 rows per rank pass. Marker compute
+  with real snapshot copies; peak RSS 823 MB.
+* The analyzer has 16 tests, including one that refuses a v2-shaped
+  (attention) stream. The 60 real parent streams pass, and packet136 replays at
+  58.798109.
+* The worker gate covers 96 observations and 120 probe commands. A wrong token
+  and a bad repair are both refused.
+* The report adapter passes 11 cases. Flags were checked against the rebuilt
+  binary's `--help`.
+* `lanequeue plan` passes on temporary copies for B and A. The shared rehearse
+  refuses for the same reasons as in v2 (accepted limitation).
+
+**Proposals.** `ops/lane-queue/proposed-p168-body-census-B-v3.txt` (job
+`packet168-body-census-B-v3`) and the lane-A twin `-A-v3`. Not queued. The v2
+proposal and lineage files are unchanged. `READY-FOR-DEVICE.json` is written
+last by `finalize.py`, in a separate commit.

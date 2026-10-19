@@ -1,5 +1,13 @@
 # Packet168: partial two-card body census (packet168b)
 
+**v3 (current).** The B-v2 run failed because of a control-pass sticky error.
+The probe ran at the unadmitted position 128 (benchmark-analysis) against a
+qsa launch extent of 128. v3 makes two changes. First, `probe()` admits the
+device position before its passes. Second, attention has no arm and is part of
+the residual. Five classes are measured. The jobs are
+`packet168-body-census-{B,A}-v3`. The six-class text below is the historical
+v2 design. See `DO-NOT-REPEAT.md` and `lineage/v2-root-cause/`.
+
 This is a diagnostic census of the bundle-8 two-card record line
 (packet136, 58.798108759182306 tok/s, `iq3-p49-split32-v1`). It runs in one
 load on lane B (cards 2 and 3); the lane-A twin is an alternative, not a second

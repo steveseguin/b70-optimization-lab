@@ -1,8 +1,8 @@
 """Partial body census analyzer. Refuse incomplete or confounded evidence.
 
-Six measured classes come from isolated, exactly repaired body probes on both
-ranks (paired control/arm passes in one probe call). Cross-card transfer, the
-split head and every overlap effect are only a subtraction residual:
+Five measured classes come from isolated, exactly repaired body probes on both
+ranks (paired control/arm passes in one probe call). Attention (no arm since
+v3), cross-card transfer, the split head and every overlap effect are only a subtraction residual:
 residual = exact native control ms/token - sum(measured class marginals).
 The residual is never called causally isolated, and negative values are kept.
 """
@@ -59,7 +59,7 @@ def analyze(doc):
     require(doc.get('schema')=='packet168.census.v2','census stream schema')
     require(doc.get('diagnostic_only') is True and doc.get('model_loads')==1,'one diagnostic load required')
     require(doc.get('order')==list(ORDER),'real arm order differs')
-    require(doc.get('report_classes')==list(REPORT_CLASSES),'exact six-class plus residual coverage required')
+    require(doc.get('report_classes')==list(REPORT_CLASSES),'exact five-class plus residual coverage required')
     require(doc.get('engine_identity')=='packet136-bundle8','bundle8 identity')
     require(doc.get('measurement_scope')=='native_exact_controls_plus_isolated_body_class_probes','measurement scope')
     require(doc.get('tokens_per_request')==TOKENS and doc.get('repeats_per_probe')==REPEATS,'registered request/probe bounds')
@@ -96,8 +96,8 @@ def analyze(doc):
     residual=dict(kernel_class=RESIDUAL,diagnostic_only=True,causally_isolated=False,
       residual_ms_per_token=statistics.median(residual_by_control.values()),
       paired_control_residual_ms=residual_by_control,
-      definition='exact native control ms/token minus sum of six isolated body-pass class marginals; not causally isolated',
-      includes=['cross-card transfer','split head/argmax/merge','controller/mailbox','overlap and any passes-per-token difference'],
+      definition='exact native control ms/token minus sum of five isolated body-pass class marginals; not causally isolated',
+      includes=['attention (qsa_*; no arm since v3)','cross-card transfer','split head/argmax/merge','controller/mailbox','overlap and any passes-per-token difference'],
       negative_values_retained=True)
     top=[]
     for r in ranked[:2]:

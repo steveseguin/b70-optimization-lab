@@ -1,5 +1,5 @@
 #pragma once
-// Isolated body probe (six classes). It cannot certify an overlapped native
+// Isolated body probe (five arm classes; attention class 1 always runs = residual). It cannot certify an overlapped native
 // emission interval: suffix/mailbox/head traffic is outside this loop and is
 // reported only inside the subtraction residual.
 // No diagnostic token, confirmation or shared stream is published.
@@ -42,11 +42,24 @@ static std::string routes(Engine& e) {
 }
 static void probe(Engine& e,pipeline::SpeculativeImage& image,
                   const pipeline::Request& request,uint8_t* shared) {
- require(e.a.census_probe&&(request.token==0||request.token==1||request.token==2||request.token==3||request.token==4||request.token==6||request.token==7),"packet168 six-class diagnostic arm only");
+ require(e.a.census_probe&&(request.token==0||request.token==2||request.token==3||request.token==4||request.token==6||request.token==7),"packet168 five-class diagnostic arm only");
  require(request.fixture>=1&&request.fixture<=8,"packet168 bounded repeats1..8");
  // No same-shape transfer arm is implemented by this prototype. Refuse it,
  // rather than report an empty mask as a measured zero transfer cost.
- image.boundary();e.drain();const auto before=signature(e);
+ image.boundary();e.drain();
+ // v3 fix for device-census-B-v2 (benchmark-analysis, 65+63 -> position 128):
+ // the setup request's last half step admitted position P-1 only, so the
+ // prepared qsa_select/qsa_attention launch extent is ((P-1+32)/32)*32. The
+ // body pass runs at the device position P (commit incremented it). When P is
+ // a multiple of 32 that extent equals P and the device guard
+ // pos>position_limit(s)-s.tokens (kernels.hpp/round2.hpp) set the sticky
+ // error in the CONTROL pass. Admit P exactly as a non-speculative half step
+ // does, before the image and the signature, and mirror the guard on host.
+ const int position=e.integer(0,"position");
+ require(position>=0&&position<e.p.g.context,"packet168 probe position bound");
+ e.admit_position(position);
+ require(position<=e.context_extent-1,"packet168 probe position outside prepared launch extent");
+ const auto before=signature(e);
  std::ofstream out(e.a.output/"packet168-probes.jsonl",std::ios::app);
  auto execute=[&](int arm){
    size_t skipped=0;auto start=std::chrono::steady_clock::now();

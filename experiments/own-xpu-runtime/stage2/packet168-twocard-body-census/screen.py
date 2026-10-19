@@ -1,7 +1,7 @@
 """Packet168 census window: one load, parent-proven admission/supervision path.
 
 Import and --plan never touch a GPU. Device work is census_worker.py only:
-exact controls C0/C1/C2 on all 12 prompts and six isolated body-class probes.
+exact controls C0/C1/C2 on all 12 prompts and five isolated body-class probes.
 Arms are diagnostic and never reported as speed.
 """
 import argparse,json,os,signal,shutil,subprocess,time

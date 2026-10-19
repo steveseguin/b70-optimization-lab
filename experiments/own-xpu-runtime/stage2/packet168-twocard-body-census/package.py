@@ -4,6 +4,8 @@ from pathlib import Path
 from build_engine import P,ROOT,limits,save,sha
 from census_contract import ORDER
 OPS=P.parents[1]/'ops'
+# v2 rows/evidence are device run evidence and are never rewritten.
+VERSION='v3'
 BLOCKERS=[]  # filled only by failed gates; finalize.py refuses READY if any remain
 def seal():
     selected={}
@@ -59,8 +61,9 @@ def main():
       control_exactness='C0/C1/C2 x 12 prompts must equal the iq3-p49-split32-v1 oracle prefix in-run; no control skipped',
       measured_ranked_table_available=False,measured_classes=list(C.CLASSES),
       fused_class='router_shared_expert = route+shared activation and shared-down+mixture launches (one fused class)',
-      residual='exact native control ms/token minus sum of six isolated body-pass marginals; transfer, split head and overlap are not causally isolated',
-      dropped_to_residual=['cross-card transfer','split head/argmax/merge'],memory=memory,
+      residual='exact native control ms/token minus sum of five isolated body-pass marginals; attention, transfer, split head and overlap are not causally isolated',
+      dropped_to_residual=list(C.DROPPED_TO_RESIDUAL),
+      v3_probe_fix='probe admits the device position before the body passes (v2 control-pass sticky error at benchmark-analysis P=128, launch extent 128)',memory=memory,
       no_optional_smoke='No optional smoke. The run opens with an excluded distinct warm-up and the exact C0 control on all 12 prompts; any oracle mismatch stops the run.'))
     parent=json.loads((P.parent/'packet165-warm-prefill/two-card/budget.json').read_text())
     requests=1+len(C.ORDER)*len(C.IDS)+1
@@ -75,16 +78,16 @@ def main():
       cold_phase_note='parent measured cold-phase floor 60 s; native wait 600 s = 10x, controller wait 1200 s = 20x',
       watchdog_seconds=7200,wall_clock_data_proof_limit=None,diagnostic_snapshot_memory=memory))
     identity=json.loads((P/'identity.json').read_text())
-    identity.update(measurement_protocol='packet168 partial body census: exact native controls + six isolated body-class probes; diagnostic only',
+    identity.update(measurement_protocol='packet168 partial body census v3: exact native controls + five isolated body-class probes (attention in residual; probe position admitted); diagnostic only',
       binary_sha256=sha(P/'build/device/own-rt-iq3'),native_delta='optional diagnostic command20 and rank1 snapshot allocation (--census-probe); controls run unchanged kernels and are oracle-exact in-run',
       record='packet136 bundle8',record_tok_s=58.798108759182306,measurement_delta=['--census-probe diagnostic command20','64-token exact controls','pre-device --help'])
     save(P/'identity.json',identity)
     seal();budget=json.loads((P/'budget.json').read_text())
     for lane in ('B','A'):
-        name=f'packet168-body-census-{lane}-v2'
+        name=f'packet168-body-census-{lane}-{VERSION}'
         job=dict(name=name,lane=lane,
           argv=['/usr/bin/python3','-B',str((P/'entry.py').relative_to(ROOT)),
-            '--lane',lane,'--kind','census','--output',str(P/'evidence'/f'device-census-{lane}-v2'),
+            '--lane',lane,'--kind','census','--output',str(P/'evidence'/f'device-census-{lane}-{VERSION}'),
             '--fault-review','{REVIEW}','--authorized-device-window'],
           env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),
           planned_write_bytes=budget['planned_write_bytes'],
@@ -92,10 +95,10 @@ def main():
             qualification='diagnostic census; arms never reported as speed; READY-FOR-DEVICE.json binds the seal',
             entry_rehearsal=dict(binaries=[dict(path=str((P/'build/device/own-rt-iq3').relative_to(ROOT)),
               sha256=sha(P/'build/device/own-rt-iq3'),args=['--help'],returncode=0,contains='Options:')],
-              preparation_probe_note='Native CPU fixture: six-class arm sequence x12 prompts x3 repeats on both ranks with real snapshot copies; worker_gate.py drives the real worker sequence.')))
-        proposal=OPS/'lane-queue'/f'proposed-p168-body-census-{lane}-v2.txt'
+              preparation_probe_note='Native CPU fixture: five-class arm sequence x12 prompts x3 repeats at the real probe positions on both ranks with real snapshot copies; worker_gate.py drives the real worker sequence.')))
+        proposal=OPS/'lane-queue'/f'proposed-p168-body-census-{lane}-{VERSION}.txt'
         proposal.write_text('# packet168 partial body census. Choose B (cards 2+3); A is an alternative twin, never a second load. Not queued.\n'+json.dumps(job)+'\n')
-        save(P/'lineage'/f'proposal-{lane}.json',job)
+        save(P/'lineage'/f'proposal-{lane}-{VERSION}.json',job)
     seal()
     print('Lane B and A twin proposals written; no live queue changed')
 if __name__=='__main__':main()

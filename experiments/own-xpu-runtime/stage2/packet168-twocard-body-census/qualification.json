@@ -4,7 +4,6 @@
   "control_exactness": "C0/C1/C2 x 12 prompts must equal the iq3-p49-split32-v1 oracle prefix in-run; no control skipped",
   "measured_ranked_table_available": false,
   "measured_classes": [
-    "attention",
     "gdn",
     "routed_experts",
     "router_shared_expert",
@@ -12,11 +11,13 @@
     "norms_glue"
   ],
   "fused_class": "router_shared_expert = route+shared activation and shared-down+mixture launches (one fused class)",
-  "residual": "exact native control ms/token minus sum of six isolated body-pass marginals; transfer, split head and overlap are not causally isolated",
+  "residual": "exact native control ms/token minus sum of five isolated body-pass marginals; attention, transfer, split head and overlap are not causally isolated",
   "dropped_to_residual": [
+    "attention",
     "cross-card transfer",
     "split head/argmax/merge"
   ],
+  "v3_probe_fix": "probe admits the device position before the body passes (v2 control-pass sticky error at benchmark-analysis P=128, launch extent 128)",
   "memory": {
     "rank0_image_bytes_always_present": 344064536,
     "rank1_backing_bytes": 373887468,

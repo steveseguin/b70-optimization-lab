@@ -15,7 +15,7 @@ def main():
             if case=='drift':
                 for row in doc['observations']:
                     if row['view']=='C0':row['interval_ms']=18
-            if case=='bad-repair':arm('attention')['probes'][2]['repair_exact']=False
+            if case=='bad-repair':arm('routed_experts')['probes'][2]['repair_exact']=False
             if case=='bad-oracle':doc['observations'][0]['tokens'][0]^=1
             if case=='partial-class':arm('router_shared_expert')['probes'][0]['class_coverage_complete']=False
             if case=='isolated-prototype':doc['measurement_scope']='isolated_B_replay'
