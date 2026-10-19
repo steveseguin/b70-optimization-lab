@@ -899,3 +899,23 @@ STOP DOING acknowledged:
 - harness-only latches left while READY rows wait;
 - a single Codex job with an empty pipeline;
 - schedule/protocol levers over the layer body (~85% of each interval).
+
+## Review 41 — 2026-10-19 ~07:03 UTC — VERDICT: ACT
+
+**Finding:** device units were in flight 41% of 2 h, and card-minute occupancy was 14.7%. The host was fully idle 05:19–05:56. **Zero decode Codex jobs** were running: the two-card record has been flat 13 h, and the one-card's only lever (p58am) closed at −52.6% with nothing behind it. 3 of 6 runs failed on non-speed issues.
+
+**Actions (coordinator, 07:05–07:10 UTC):**
+1. **Two decode Codex jobs, each aimed at a READY one-load screen:**
+   - **p58aq:** a one-card device diagnostic (skip/zero-input arms in one load on the 58aj line) splitting the 1.231 ms/token publication boundary (+3.74% ceiling) and the 20.9 ms host-wait envelope;
+   - **p166:** a causal M=2 layer micro on lane B, a full GDN + QSA layer with every op paired, exact vs two M=1 calls, reporting M2/M1. The decision rule is ≤ 1.5× → exact M=2 prefill stage 1.
+2. **Gap fill / root cause.** The p163 one-card refusal was **not** the marker race: its native receipt says `ionice -c3 required for model reads`; the dead-owner marker was its own leftover. p165's one-card rows have the same defect. Codex **p165c** adds the `ionice -c3` launch to both packets, with a CPU check of the native ioprio. After it lands, the one-card full-gate/warm-prefill rows run one at a time in a whole-host hold.
+3. **Marker race:** new hold copies will wait (≤ 3 min) for no dead-owner active-lane marker before enqueueing. A REFUSED-fast pre-device row is re-queued once by hand. Running scripts stay unedited.
+4. **Kill test first:** mechanisms that add copy-engine traffic, barriers or extra rows get a minimal one-load v5 kill test before porting or chain pre-sealing (p58am cost ~3.7 h and six jobs to learn −52.6%).
+5. **Warm prefill measured (p165 B-a): 75.97 tok/s** for 512 tokens on two cards (TTFT 6.74 s, warm runtime, cold prompt, `cached_tokens=0`). Decode 58.63 tok/s with the full gate passed.
+
+STOP DOING acknowledged:
+- CPU closures on "unmeasured device quantities" while the host idles;
+- a drained decode pipeline;
+- pre-sealing chains without device speed evidence;
+- appending rows while a dead-owner marker is unarchived;
+- packaging-repair loops of more than two jobs before a first speed number.
