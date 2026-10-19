@@ -30,5 +30,5 @@ with tempfile.TemporaryDirectory(prefix='packet58asc-plan-') as tmp:
 (O/'queue-plan.log').write_text(cp.stdout+cp.stderr)
 assert cp.returncode==0,cp.stdout+cp.stderr
 plans=[json.loads(line) for line in cp.stdout.splitlines()];assert len(plans)==1 and plans[0]['plan']=='passed'
-save(O/'chain-checks.json',dict(passed=True,device_executed=False,windows=list(commands),gap_seconds=90,native_commands=native,temporary_queue=True,live_queue_changed=False,native_argv_static_only=True,native_interface_passed=False,queue_plan=plans,bracket_binary_sha256=sha(P/'build/device/own-rt-iq3'),peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024))
+save(O/'chain-checks.json',dict(passed=True,device_executed=False,windows=list(commands),gap_seconds=90,native_commands=native,temporary_queue=True,live_queue_changed=False,native_argv_static_only=True,native_interface_passed=json.loads((P/'evidence/chain-native-interface.json').read_text())['passed'],queue_plan=plans,chain_binary_sha256=sha(P/'build/device/own-rt-iq3'),bracket_binary=next(r for r in json.loads((P/'evidence/build.json').read_text())['bracket_native'] if r['name']=='build/device/own-rt-iq3'),peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024))
 print('PASS seven-window argv, exact oracle inputs and temporary lanequeue plan')

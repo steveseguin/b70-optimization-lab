@@ -14,6 +14,7 @@ static std::vector<BracketView> bracket_table(const Options& a) {
     require(v.maintenance==a.cache_maintenance,"maintenance fixed throughout capacity bracket");
     require(v.capacity=="max","fixed maximum cache");
     require(v.hc=="poll"||v.hc=="spin","lookup dimension");v.resident=true;
+    require(!a.wait_policy_supplied||a.wait_policy==v.hc,"wait policy conflicts with bracket view");
     views.push_back(v);
   }
   require(f.eof()&&(views.size()==1||views.size()==5),"complete smoke or five-view bracket required");

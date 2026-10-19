@@ -1,6 +1,7 @@
 {
   "passed": true,
   "device_executed": false,
+  "revision": "packet58asd",
   "commands": [
     {
       "name": "gnu-host-entry-main",
@@ -275,10 +276,43 @@
     }
   ],
   "artifacts": {
-    "build/device/own-rt-iq3": "83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2",
-    "build/intel-host/own-rt-iq3": "51849ddd3ea65980ce7b23893d76c7268c798150d2f15abf9ffa0f1f9f2b26ca",
-    "build/gnu-host/own-rt-iq3": "7afd610a549e30c7a97938deae0b8cce3df2aecdb5096fe2c919b7cb2d31a524"
+    "build/device/own-rt-iq3": "4f957f34ae11011fa9a2caba6a79e981559e9f9fa0fa3958e20a90460d1b745e",
+    "build/intel-host/own-rt-iq3": "6f12f9442f72fd9975dc9820a460bb82713094ac90f27b3c2f6d9abd3c8b708e",
+    "build/gnu-host/own-rt-iq3": "00d1baf85a11e32409f4e7a12b084ae5d93811ec0f03e1ce5d2c84d06efc7487"
   },
+  "bracket_native": [
+    {
+      "name": "build/device/own-rt-iq3",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/bracket/device/own-rt-iq3",
+      "parent_digest": "83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2"
+    },
+    {
+      "name": "build/gnu-host/own-rt-iq3",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/bracket/gnu-host/own-rt-iq3",
+      "parent_digest": "7afd610a549e30c7a97938deae0b8cce3df2aecdb5096fe2c919b7cb2d31a524"
+    },
+    {
+      "name": "build/intel-host/own-rt-iq3",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/bracket/intel-host/own-rt-iq3",
+      "parent_digest": "51849ddd3ea65980ce7b23893d76c7268c798150d2f15abf9ffa0f1f9f2b26ca"
+    }
+  ],
+  "unchanged_k1_fixture": {
+    "name": "build/device/p58-cache-fixtures",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/device/p58-cache-fixtures",
+    "parent_digest": "1b822cfdc1fd664f8fc02a571d3b346e4560cd31d8b1fe7956c6284eaca6a485"
+  },
+  "source_patch": {
+    "name": "chain-interface.patch",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/chain-interface.patch",
+    "parent_digest": "57ba0ba08651da94630c7888a3bd435d5e7d3cfde4ecb32c6d5331c187c46b73"
+  },
+  "wait_tests": [
+    "gnu",
+    "intel"
+  ],
+  "k1_rebuilt": false,
+  "preparation_probe_rerun": false,
   "compile_turns": 1,
-  "peak_child_rss_bytes": 749805568
+  "peak_child_rss_bytes": 748920832
 }

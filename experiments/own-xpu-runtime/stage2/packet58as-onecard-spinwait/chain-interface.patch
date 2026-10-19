@@ -1,0 +1,62 @@
+--- bracket/native/generated/main.cpp
++++ chain/native/generated/main.cpp
+@@ -153,6 +153,7 @@
+   fs::path selection;
+   std::string selection_sha256;
+   bool legacy=false,argument_audit=false,audit_prepare_each=false;
++  std::string wait_policy="poll"; bool wait_policy_supplied=false;
+   int wait_seconds=60;
+   int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
+   std::string memory = "layer-streaming";
+@@ -198,6 +199,7 @@
+     else if (k == "--dispatch") a.dispatch=value();
+     else if (k == "--selection") a.selection=value();
+     else if (k == "--selection-sha256") a.selection_sha256=value();
++    else if (k == "--wait-policy") {a.wait_policy=value();a.wait_policy_supplied=true;require(a.wait_policy=="poll"||a.wait_policy=="spin","wait policy dimension");}
+     else if (k == "--wait-seconds") a.wait_seconds=std::stoi(value());
+     else if (k == "--checked") a.checked = true;
+     else if (k == "--nongemv") a.nongemv = value();
+@@ -1843,14 +1845,14 @@
+ 
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/bracket_table.hpp"
+ int main(int argc, char **argv) {
+-  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds --p58r-parse-test --help\n";return 0;}
++  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --wait-seconds --p58r-parse-test --help\n";return 0;}
+ #ifdef OWN_RT_HOST_ONLY
+   if(argc>2&&std::string(argv[1])=="--p58r-parse-test") {
+     try {
+       auto parsed=parse(argc-1,argv+1);auto views=bracket_table(parsed);
+       require(views.size()==1||views.size()==5,"parser bracket coverage");
+       require(!fs::exists(parsed.output),"fresh parser output required");fs::create_directories(parsed.output);
+-      save(parsed.output/"parser.json","{\"passed\":true,\"device_executed\":false,\"model_reads\":false,\"views\":"+std::to_string(views.size())+",\"cache_allocation_bytes\":"+std::to_string(parsed.cache_bytes)+"}\n");return 0;
++      save(parsed.output/"parser.json","{\"passed\":true,\"device_executed\":false,\"model_reads\":false,\"views\":"+std::to_string(views.size())+",\"wait_policy\":"+ownrt::quote(parsed.wait_policy)+",\"cache_allocation_bytes\":"+std::to_string(parsed.cache_bytes)+"}\n");return 0;
+     }catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
+   }
+ #endif
+@@ -1883,6 +1885,7 @@
+   {cpu_set_t cpus;CPU_ZERO(&cpus);if(sched_getaffinity(0,sizeof cpus,&cpus)==0){std::ostringstream o;o<<'[';bool comma=false;for(int i=0;i<CPU_SETSIZE;++i)if(CPU_ISSET(i,&cpus)){o<<(comma?",":"")<<i;comma=true;}o<<']';affinity_json=o.str();}}
+   try {
+     a = parse(argc, argv);
++    require(!a.wait_policy_supplied||(a.draft_capture.empty()&&a.rank<0),"wait policy applies to single-owner request views");
+     if(a.priority_probe){
+ #ifdef OWN_RT_HOST_ONLY
+       require(!fs::exists(a.output), "priority output exists");fs::create_directories(a.output);
+@@ -1959,7 +1962,7 @@
+     if(!a.bracket_inputs.empty())save(root_output/"loaded-arena-descriptors.txt",e->bracket_arena_descriptors());
+     for(const auto& view:bracket_views) {
+     w->use_resident_lookups=view.resident;
+-    p58as::spin_enabled=view.hc=="spin";
++    p58as::spin_enabled=a.bracket_inputs.empty()?a.wait_policy=="spin":view.hc=="spin";
+     const auto view_output=view.label.empty()?root_output:root_output/view.label;
+     if(!view.label.empty()) {
+       fs::create_directories(view_output);record_host_memory(view_output,"before_view_reset");e->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);record_host_memory(view_output,"after_view_reset");
+--- bracket/native/bracket_table.hpp
++++ chain/native/bracket_table.hpp
+@@ -14,6 +14,7 @@
+     require(v.maintenance==a.cache_maintenance,"maintenance fixed throughout capacity bracket");
+     require(v.capacity=="max","fixed maximum cache");
+     require(v.hc=="poll"||v.hc=="spin","lookup dimension");v.resident=true;
++    require(!a.wait_policy_supplied||a.wait_policy==v.hc,"wait policy conflicts with bracket view");
+     views.push_back(v);
+   }
+   require(f.eof()&&(views.size()==1||views.size()==5),"complete smoke or five-view bracket required");

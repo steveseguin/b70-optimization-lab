@@ -13,6 +13,9 @@ def main():
  with patch.object(S,'SEAL_SHA',h),patch.object(socket,'socket',side_effect=AssertionError('network forbidden')):
   r=S.derive(e);notes=S.submission_notes(r)
   for text in ('128-token','no strict512','anonymous exact resident','31.901/34.577/31.838/34.568/31.807','60/60 exact','+8.58%','0.096%','Bounded spin','~33% vs ~25%','no setting or governor change','arithmetic unchanged','1.108 ms/token','cmveqsmsl00ebrf014yvrsosx'):assert text in notes,text
+  # packet58asd: the chain-binary rebuild disclosure carries both binary hashes and the source diff hash.
+  build=json.loads((P/'evidence/build.json').read_text())
+  for text in ('rebuilt with only CLI --wait-policy',build['artifacts']['build/device/own-rt-iq3'],*[x['parent_digest'] for x in build['bracket_native'] if x['name']=='build/device/own-rt-iq3'],build['source_patch']['parent_digest']):assert text in notes,text
   assert not r['realistic_final_gate']['passed'] and not r['fresh_timing_repeat_passed']
   cli=submission_cli.load_submitter();assert cli.REPO_ROOT==S.ROOT
   (P/'submission').mkdir(exist_ok=True)

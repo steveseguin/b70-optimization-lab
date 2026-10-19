@@ -124,3 +124,61 @@ Evidence: [coordinator contract](../experiments/own-xpu-runtime/stage2/packet58a
 [submission rehearsal](../experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/submission-rehearsal.json),
 [temporary plan](../experiments/own-xpu-runtime/ops/packet58as-orchestration/queue-plan.log),
 [final readiness](../experiments/own-xpu-runtime/ops/packet58as-orchestration/READY-FOR-DEVICE.json).
+
+## Packet58asd — one rebuild exposes the spin wait to the record chain
+
+The p58asc blocker is removed with one native interface change. `own-rt-iq3`
+now takes a process-wide `--wait-policy poll|spin` option. **Poll is the
+default**, so every existing caller is unchanged. In a single-view run the
+policy is applied at the view boundary through the same `p58as::wait()` that
+the bracket's B views used (`spin_enabled = bracket_inputs.empty() ? policy ==
+spin : view.hc == spin`). Model load therefore keeps the default poll, exactly
+as in the bracket. The bracket table still selects per view. If a supplied
+policy conflicts with a bracket view, the run is refused. A supplied policy is
+also refused for a draft-capture or rank owner, which bypasses the view loop.
+Nothing else changed: arithmetic, selection, kernels and `single_device.cpp`
+are as before (the recompiled `single_device.o` is byte-identical).
+
+| | sha256 |
+|---|---|
+| bracket device own-rt-iq3 (kept in `build/bracket/`) | `83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2` |
+| chain device own-rt-iq3 | `4f957f34ae11011fa9a2caba6a79e981559e9f9fa0fa3958e20a90460d1b745e` |
+| chain GNU / Intel host | `00d1baf8…7487` / `6f12f944…708e` |
+| source diff `chain-interface.patch` | `57ba0ba08651da94630c7888a3bd435d5e7d3cfde4ecb32c6d5331c187c46b73` |
+
+**K1a/K1b are unchanged.** The abandoned Codex draft added `--wait-policy spin`
+to K1 by `#include`-ing the packet58j fixture source into the g++ help wrapper.
+That would not compile (it needs SYCL), and the fixture's waits never read
+`p58as::spin_enabled`, so the flag would have been inert. It was reverted. K1
+is the inherited, non-qualifying fixture byte and zero-copy check. It still runs
+the unchanged fixture wrapper and core with no flag, as it did in the bracket.
+Every model window (KD/W2m/WS/WS128x/WS128) passes `--wait-policy spin`.
+
+Gates (CPU only, nice19, CPUs 8–15/24–31, one `ops/compile_turn.py` turn):
+- GNU and Intel builds and both wait tests pass.
+- The [wait-policy gate](../experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/wait-policy.json) passes:
+  - GNU and Intel runs with spin, poll and no flag reproduce packet58aj's miniature step bytes and tokens (6/6).
+  - The real argv of all five chain model windows parses as spin, and parses as poll without the flag.
+  - An unknown value is refused.
+  - The bracket binary refuses the same argv (`unknown option --wait-policy`) and accepts it without the flag. This is the test that fails on the old binary.
+  - Bracket conflict and draft-capture refusals pass.
+- The existing 120-reset GNU/Intel bracket byte gate passes on the new binaries (`evidence/chain-cpu-exactness.json`).
+- The native parser gate (35 composition refusals), the flags gate, the seven-window argument gate and 137 Python tests pass.
+- The sandboxed device-binary interface proof passes.
+- The submission dry-run passes, with both binary hashes and the diff hash in the notes (1,894 of 2,000 characters).
+- The temporary-copy `lanequeue plan` passes.
+
+The shared `rehearse_entry --report` still fails only on its known generic
+`screen-*` unit assumption and on the absence of a preparation probe. Both
+binaries' ldd/help checks, storage and deadline checks pass, as in p58asc.
+
+Minimal reseal: the bracket's evidence (`cpu-exactness.json`, `flags.json`) and
+original screen seal stay byte-identical. The active screen closure now points
+at the `lineage/packet58asd-before/` native copies and the retained bracket
+executable. Three ignored `entry-main.o` intermediates were recompiled; they
+are listed with their bracket digests. The device-define preparation probe was
+not rerun: it is bracket-binary evidence, and no full-shape reads were allowed.
+`verify_ready.py` now binds the bracket identity through `bracket_native`. It
+requires the chain binary to be the recorded rebuild and returns ready=true.
+Both READY markers were written last. No GPU, service, sudo, setting, live
+queue write or chain launch occurred.

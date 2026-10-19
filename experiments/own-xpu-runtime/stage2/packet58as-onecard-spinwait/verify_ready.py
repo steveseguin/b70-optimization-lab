@@ -39,9 +39,15 @@ def verify():
     run=subprocess.run(['/usr/bin/python3','-B',str(P/'screen_gate.py')],stdin=subprocess.DEVNULL,capture_output=True,text=True)
     require(run.returncode==0,'58as v5 pending or invalid: '+run.stderr.strip()[-1800:])
     screen=json.loads(run.stdout)
-    require(screen['native_artifacts']==seal['artifacts'],'parent engine/build differs')
+    # packet58asd: only own-rt-iq3 was rebuilt (CLI --wait-policy); the bracket's
+    # engine identity is bound through the seal's bracket_native records.
+    bracket={r['name']:r['parent_digest'] for r in seal['bracket_native']}
+    require(set(bracket)=={'build/device/own-rt-iq3'} and interface.get('bracket_binary_sha256')==bracket['build/device/own-rt-iq3'],'bracket binary record differs')
+    require(screen['native_artifacts']=={n:bracket.get(n,h) for n,h in seal['artifacts'].items()},'parent engine/build differs')
+    require(seal['artifacts']['build/device/own-rt-iq3']!=bracket['build/device/own-rt-iq3'] and seal.get('native_recompiled') is True,'chain binary must be the wait-policy rebuild')
+    require(seal['chain_interface_patch']['parent_digest']==interface['source_patch']['parent_digest']==W.sha(P/'chain-interface.patch'),'chain interface patch differs')
     result=evaluate(screen['rows'])
-    return dict(result,bracket_passed=True,boot_id=screen['boot_id'],screen_evidence=[dict(name=Path(n).name,parent_relpath=n,parent_digest=h) for n,h in screen['sources'].items()],parent_queue_snapshots=screen['queue_snapshots'],screen_build_sha256=screen['build_sha256'],build_receipt_sha256=W.sha(P/'build-receipt.json'),submission_pins_sha256=W.sha(P/'submission-pins.json'))
+    return dict(result,bracket_passed=True,boot_id=screen['boot_id'],chain_binary_sha256=seal['artifacts']['build/device/own-rt-iq3'],bracket_binary_sha256=bracket['build/device/own-rt-iq3'],chain_interface_patch_sha256=seal['chain_interface_patch']['parent_digest'],screen_evidence=[dict(name=Path(n).name,parent_relpath=n,parent_digest=h) for n,h in screen['sources'].items()],parent_queue_snapshots=screen['queue_snapshots'],screen_build_sha256=screen['build_sha256'],build_receipt_sha256=W.sha(P/'build-receipt.json'),submission_pins_sha256=W.sha(P/'submission-pins.json'))
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path);args=ap.parse_args()
     row=dict(schema='packet58as.ready.v1',passed=False,ready=False,device_executed=False,chain_command=chain_command(),coordinator_only=True,launch_performed=False)

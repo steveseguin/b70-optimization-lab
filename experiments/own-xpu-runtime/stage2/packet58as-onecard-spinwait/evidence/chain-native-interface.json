@@ -1,14 +1,53 @@
 {
-  "schema": "packet58asc.chain-native-interface.v1",
-  "passed": false,
+  "schema": "packet58asd.chain-native-interface.v1",
+  "passed": true,
   "diagnostic_passed": true,
   "device_executed": false,
-  "native_recompiled": false,
-  "binary_sha256": "83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2",
-  "matches_completed_bracket": true,
-  "reason": "Existing bracket binary has no --wait-policy option; --hc spin also refuses. Single-view bracket_table uses a.hc (production/p60fusion), so spin_enabled is false. Spin is selectable only through --bracket-inputs, which permits S0 at 64 tokens or A0/B0/A1/B1/A2 at 128 tokens, requires 12 prompts and retain-steps none; it cannot express KD/W2m (8 tokens) or WS (retained layers). No compliant seven-window spin chain is possible without changing the native binary.",
+  "native_recompiled": true,
+  "binary_sha256": "4f957f34ae11011fa9a2caba6a79e981559e9f9fa0fa3958e20a90460d1b745e",
+  "bracket_binary_sha256": "83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2",
+  "matches_completed_bracket": false,
+  "reason": "Chain binary is a rebuild of the packet58as bracket binary that differs only by the process-wide --wait-policy poll|spin CLI option (default poll). Every chain model window (KD/W2m/WS/WS128x/WS128) passes --wait-policy spin through the same p58as::wait() the bracket B views used; K1a/K1b keep the unchanged inherited K1 fixture.",
+  "chain_windows_accepting_spin": [
+    "KD",
+    "W2m",
+    "WS",
+    "WS128x",
+    "WS128"
+  ],
+  "default_wait_policy": "poll",
+  "source_patch": {
+    "name": "chain-interface.patch",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/chain-interface.patch",
+    "parent_digest": "57ba0ba08651da94630c7888a3bd435d5e7d3cfde4ecb32c6d5331c187c46b73"
+  },
+  "wait_policy_gate": {
+    "name": "wait-policy.json",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/wait-policy.json",
+    "parent_digest": "1d3386bd28982d270087f8e0ceb996e21bef08388f932bd50daff6c84f137801"
+  },
   "checks": [
     {
+      "binary": "chain",
+      "argv": [
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --wait-seconds --p58r-parse-test --help\n",
+      "stderr": ""
+    },
+    {
+      "binary": "chain",
+      "argv": [
+        "--wait-policy",
+        "bogus"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "wait policy dimension\n"
+    },
+    {
+      "binary": "bracket",
       "argv": [
         "--help"
       ],
@@ -17,6 +56,7 @@
       "stderr": ""
     },
     {
+      "binary": "bracket",
       "argv": [
         "--wait-policy",
         "spin"
@@ -24,33 +64,29 @@
       "returncode": 1,
       "stdout": "",
       "stderr": "unknown option --wait-policy\n"
-    },
-    {
-      "argv": [
-        "--hc",
-        "spin"
-      ],
-      "returncode": 1,
-      "stdout": "",
-      "stderr": "HC dimension\n"
     }
   ],
   "source_evidence": [
     {
       "name": "native/generated/main.cpp",
       "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/generated/main.cpp",
-      "parent_digest": "e36a9894ed337f04b75713258d554a37303b76c6948155ae49d9872c7e5c98c4"
+      "parent_digest": "24be9322a2a94cca27999a350f6b1795c0ade0f5b8825542be6e800ec368373b"
     },
     {
       "name": "native/bracket_table.hpp",
       "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/bracket_table.hpp",
-      "parent_digest": "bfecf9c8f0eecfa979fc768ca5c50776444bfc1e262c6f16c13385219d3b3623"
+      "parent_digest": "7610ed346a1539b5bfd1991df89abe8842fb7c2b0c777f41289da67f8ee54be4"
     },
     {
       "name": "native/spin_wait.hpp",
       "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/spin_wait.hpp",
       "parent_digest": "7d20a148eb1dcb1df4ba5a598c75ec4395a936543c92d68f3c6753c0b366035c"
+    },
+    {
+      "name": "native/generated/single_device.cpp",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/generated/single_device.cpp",
+      "parent_digest": "14bae35428ae1e35ad73af6e05f4ceb8b63b71bc2700e9e625c37237bfd2bd04"
     }
   ],
-  "peak_rss_bytes": 19398656
+  "peak_rss_bytes": 19550208
 }
