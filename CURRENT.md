@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 19, packet155 preparation stopped at the disk floor:** The private
+bundle9 source and native snapshots are retained, but root free space fell to
+29.812 GB before the CPU fixtures ran. The requested 30 GB stop rule applies.
+The chain is incomplete and refuses launch; CPU checks, submission rehearsal
+and the packet153 bracket decision remain pending. No GPU, service or live
+queue changed. [Work note](notes/2026-10-19-own-runtime-packet155.md).
+
 **October 19, packet154 rank-1 split prepared on CPU:** The private packet150
 copy adds command-correlated scopes to explain rank0's reply wait. Both builds,
 byte checks, analyzer failures, entry and limit checks, 78 simulated requests,

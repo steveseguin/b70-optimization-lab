@@ -1,21 +1,19 @@
-# Packet136: bundle8 candidate, bundle7 plus banked rollback
+# Packet155 — bundle9 preparation stopped at the disk floor
 
-New symlink-preserving copy of frozen packet124c. The only selectable dimension
-is `rollback_state=copy|banks`; the candidate adopts packet131b's exact native
-bank rotation. All 182 parent links survive, including the packet49 oracle.
-Packet133 supplies orchestration patterns only; its suffix candidate is absent.
+**Incomplete; not ready for device use.** Root free space fell to 29.812 GB
+before the first CPU fixture ran. The owner's 30 GB stop rule ended preparation.
+No GPU, service, queue change, compile or fixture execution occurred.
 
-The two compositions reuse packet131b's qualified binaries and state proof.
-New local CPU preparation and the argument/queue gates bind this copy. CPU
-checks cannot establish full-model device equality or speed. The record stays
-58.223834 tok/s (`cmvdx8urg0068rf01vvb32bcs`).
+This is a symlink-preserving packet136 source copy with private packet153
+native source/binary snapshots. The proposed selection adds `snapshot_host=static`
+and keeps `probe=off`. The remaining bundle8 choices are unchanged. Existing
+packets were not edited. The 58.798 tok/s record is unchanged.
 
-[Orchestration and commands](../../ops/packet136-orchestration/README.md),
-[readiness](../../ops/packet136-orchestration/ready.json),
-[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md),
-[work note](../../../../notes/2026-10-18-own-runtime-packet136.md).
+Copied orchestration and receipts are unfinished historical scaffolding.
+Their inherited pass fields certify no packet155 behavior. In particular,
+chain seals, startup gates, policy maps and submission notes need adaptation.
+`verify_ready.py` currently refuses unconditionally; it is not a completed
+bracket recomputation tool. No copied command is approved for launch.
 
-Chain admission requires a composed 12 × 64 smoke and exact fresh-load
-C/X/C/X/C comparisons on both lanes, with both candidate repeats at least 0.5%
-over every control. Packet131b's original B evidence supplies B; packet136's
-proposal supplies A. No device work or live queue changes are part of this task.
+See [work note](../../../../notes/2026-10-19-own-runtime-packet155.md) and the
+[final marker](../../ops/packet155-orchestration/READY-FOR-DEVICE.json).

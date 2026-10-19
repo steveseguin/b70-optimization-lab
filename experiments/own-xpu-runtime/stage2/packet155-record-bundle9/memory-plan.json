@@ -15,32 +15,32 @@
               "rank": 0,
               "draft_rank": 1,
               "target_layers": 24,
-              "target_modeled_allocations_bytes": 28144182388,
+              "target_modeled_allocations_bytes": 28773393524,
               "allocation_reserve_bytes": 46500548,
               "draft_total_bytes": 0,
               "draft_duplicate_head_bytes": 0,
-              "target_total_bytes": 28190682936,
-              "total_with_mtp_bytes": 28190682936,
-              "free_with_mtp_bytes": 6051614920,
+              "target_total_bytes": 28819894072,
+              "total_with_mtp_bytes": 28819894072,
+              "free_with_mtp_bytes": 5422403784,
               "allocation_margin_passed": true,
-              "arena_device_bytes": 28144182388,
-              "arena_headroom_bytes": 4068072332,
+              "arena_device_bytes": 28773393524,
+              "arena_headroom_bytes": 3438861196,
               "arena_margin_passed": true
             },
             {
               "rank": 1,
               "draft_rank": 1,
               "target_layers": 24,
-              "target_modeled_allocations_bytes": 28071621028,
+              "target_modeled_allocations_bytes": 28700766628,
               "allocation_reserve_bytes": 1228800,
               "draft_total_bytes": 3354364214,
               "draft_duplicate_head_bytes": 0,
-              "target_total_bytes": 28072849828,
-              "total_with_mtp_bytes": 31427214042,
-              "free_with_mtp_bytes": 2815083814,
+              "target_total_bytes": 28701995428,
+              "total_with_mtp_bytes": 32056359642,
+              "free_with_mtp_bytes": 2185938214,
               "allocation_margin_passed": true,
-              "arena_device_bytes": 31425985242,
-              "arena_headroom_bytes": 786269478,
+              "arena_device_bytes": 32055130842,
+              "arena_headroom_bytes": 157123878,
               "arena_margin_passed": true
             }
           ]
@@ -48,7 +48,7 @@
       }
     }
   },
-  "scope": "Actual allocation calls with mock backend; physical driver residency unmeasured",
+  "scope": "Actual allocation calls with mock backend; physical driver residency unmeasured; packet153 adds conservative 64KiB rank0 immutable descriptor reserve; no new full-shape execution",
   "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split--80128--banks",
   "extra_weight_bytes_per_rank": [
     458787872,
@@ -56,5 +56,7 @@
   ],
   "down_layout": "tile16",
   "down_row_bytes": 360,
-  "down_transpose_extra_device_bytes": 0
+  "down_transpose_extra_device_bytes": 0,
+  "class_layout_max_extra_per_rank": 629145600,
+  "packet153_static_table_reserve_bytes_rank0": 65536
 }
