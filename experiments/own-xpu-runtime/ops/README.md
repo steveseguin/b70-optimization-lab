@@ -101,6 +101,51 @@ stream schemas still need a fixture; varying view count alone does not invent
 their timing fields. This shared check exercises the build-brief branch;
 packet58aq's private suite remains the gate for all its other decision tails.
 
+## One-card chain generator
+
+`onecard_chain_derive.py` turns a winning one-load v5 bracket, a READY parent
+one-card chain orchestration and a changed flag/binary into a sealed chain
+packet plus orchestration that `fn-run/onecard-chain.sh <packet> <orch> --check`
+accepts (packet172; see `notes/2026-10-19-own-runtime-packet172-ops.md`).
+
+```sh
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/onecard_chain_derive.py \
+  --parent-orch experiments/own-xpu-runtime/ops/packet58aj-orchestration \
+  --packet experiments/own-xpu-runtime/stage2/<new-chain-packet> \
+  --out experiments/own-xpu-runtime/ops/<new-chain-packet>-orchestration \
+  --unit packet58-onecard-<tag>-a --output evidence/card0-<tag>-a \
+  --flag wait-policy=spin --binary <device own-rt-iq3> --host-binary <gnu-host own-rt-iq3> \
+  --bracket-summary <bracket packet>/screen/evidence/<v5>/resident/WSCREEN/summary.json \
+  --threshold-file scripts/packet58_onecard_record_threshold.json </dev/null
+```
+
+Order, and fail-closed refusals (exit 2, created dirs removed, no READY):
+
+1. Bracket: `passed`, `candidate_beats_all_controls`, `control_drift_passed`
+   with drift <= 3%, five views, every request `exact_oracle`, and a passed
+   WSCREEN `window.json` (its boot id is rechecked at launch).
+2. `--help`: the device binary (in the Landlock `entry_sandbox`, no `/dev/dri`)
+   and the host build must both list every flag. A flag that is missing while the
+   bracket packet's `native/bracket_table.hpp`, `views.py` or
+   `runtime-selection.json` names the dimension is refused as
+   **bracket-table-only** (the packet58asc failure: chain windows cannot use a
+   bracket table; add a native CLI option as in packet58asd).
+3. Real parser: for KD/W2m/WS/WS128x/WS128 the copied `suite_driver.native_command`
+   argv (flags appended) must pass the host build's `--p58r-parse-test`; an
+   invalid value must be refused and the argv without the flag must still parse.
+   K1a/K1b keep the parent's fixture binary.
+4. Seal (`seal.py --verify`), `verify_ready.py` (calls the parent harness's
+   `window.build_gate()`, oracle binding, pins, fresh output, bracket digests and
+   boot), a temporary `lanequeue plan`, then both READY markers last.
+
+The new packet gets the parent packet's top-level harness plus `selections/`,
+`frozen-inputs/`, `host-admission/` and `native/`, with only the packet name,
+unit, output and fault-review names rewritten. Parent CPU gate receipts are
+copied byte for byte. `seal.py` and `verify_ready.py` are generated; the
+parent's own versions are packet specific. `--packet` and `--out` must not exist.
+`test_onecard_chain_derive.py` regenerates a packet58as equivalent from
+packet58aj in a temporary root of symlinks.
+
 ## Regression checks
 
 ```sh
