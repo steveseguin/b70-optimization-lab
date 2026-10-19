@@ -814,3 +814,24 @@ STOP DOING acknowledged:
 - per-packet disk floor literals;
 - READY without device-path deadline checks;
 - an empty two-card Codex queue with verdicts < 1 h away.
+
+## Review 37 — 2026-10-19 ~03:05 UTC — VERDICT: ACT
+
+**Finding:** 23.5% of card-minutes were busy over 2 h (21.2% over 6 h), and the host was fully idle for ~37 min. Both lane-A runs this hour failed after the engine was running:
+- p58aj: a 60 s first-prefill wait;
+- p157: a 0.02 ms absolute analyzer tolerance.
+
+Five of the last ~8 first device runs were lost to harness code. The two-card record has been flat for ~9 h; the GPU fault count is 2.
+
+**Actions (coordinator, 03:05–03:12 UTC):**
+1. **Queue p58aj without an idle gap.** `fn-run/hold-onecard4.sh` (armed 03:05) runs p58aj smoke → v5 (all Codex frozen) → p58ai census right after p157's lane-A sequence. p58aj is a whole-host job, so it cannot overlap p157. The session started at 03:08:36.
+2. **Analyzers never stop exact runs.** Future briefs require in-run checks for stream presence/format and oracle exactness only; numeric consistency is checked after the run with relative tolerances; CPU inputs must include real cold-path rows from parent evidence. This is in the p58al/p160 briefs and in memory (`first-smokes-fail-on-packaging`).
+3. **Draft line closed.** The p157b smoke failed a third time ("invalid device interval") and was not repaired. On p158's roofline, the draft kernels total ≈ 1.38 ms with ≈ 0.48 ms of positive gap, ≤ +2.3% at full closure and ≈ +0.45% at 20% transfer. p158 was stopped. The DO-NOT-REPEAT row and closure note are committed (686b2aae1).
+4. **p58ai was already resealed** to the 25 GB floor (60a56785a, 02:35) and is in this session. Codex **p58al** prepares the rank-4 (post-router demand transfer) build mapped to p58ai's verdict.
+5. **Freed Codex slot:** **p160**, a two-card critical-path mechanism study. It covers structural changes to the B-half → draft → next-A chain (split draft across ranks, provisional early start, within-layer expert parallel) and briefs only a candidate with a ≥ 3% supported ceiling.
+
+STOP DOING acknowledged:
+- ready packets left unqueued;
+- absolute numeric in-run checks;
+- further draft diagnostics or builds;
+- archiving disk to satisfy a packet literal.

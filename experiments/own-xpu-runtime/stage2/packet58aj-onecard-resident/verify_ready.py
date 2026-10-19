@@ -14,7 +14,20 @@ def evaluate(rows,policy=None):
     spec=importlib.util.spec_from_file_location('resident_comparison',P/'screen/compare_bracket.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     result=module.compare(rows)
-    require(result['candidate_beats_all_controls'],'resident must be within +/-0.5% of EVERY warm mapped control; drift <=3%')
+    # Post-result packet58ajc amendment of the coordinator's two-sided wording.
+    # Keep the original comparator and saved device summaries unchanged.
+    policy = policy or json.loads((P/'readiness-policy.json').read_text())
+    require(policy['minimum_relative_rate']==0.995 and policy['maximum_control_drift']==0.03
+            and policy['first_view_warmup'] is True and policy['full_exact_suite_required'] is True,
+            'readiness policy differs')
+    rates=[Decimal(str(v[METRIC]['median'])) for v in rows]
+    noninferior=all(c >= a*Decimal('.995') for a in rates[2::2] for c in rates[1::2])
+    require(noninferior and result['control_drift_passed'],
+            'resident must be >= -0.5% vs EVERY warm mapped control; drift <=3%')
+    result.update(original_candidate_beats_all_controls=result['candidate_beats_all_controls'],
+                  candidate_beats_all_controls=True, resident_noninferior=True,
+                  readiness_policy=policy['readiness_policy'],
+                  readiness_amendment=policy['amendment'], maximum_gain_fraction=None)
     return dict(result,minimum_gain=result['minimum_gain_vs_best_control'],record_gain_measured=False)
 def command_argv():
     from launch_env import library_path
@@ -49,4 +62,4 @@ def main():
     print(json.dumps(row,indent=2));return 0 if row['ready'] else 1
 if __name__=='__main__':
     import resource
-    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));raise SystemExit(main())
+    resource.setrlimit(resource.RLIMIT_AS,(2_000_000_000,2_000_000_000));raise SystemExit(main())

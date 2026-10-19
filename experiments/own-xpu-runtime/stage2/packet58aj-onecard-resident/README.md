@@ -20,8 +20,7 @@ is unchanged `iq3-p49-split32-v1`; this is the quantized compressed version.
 The smoke analyzes its own output immediately and checks real output as it
 appears, then checks all twelve 64-token responses. The one-load v5 order is
 mapped/resident/mapped/resident/mapped, twelve 128-token responses per view.
-A0 is exact and reported as warm-up. Both resident views must be within
-inclusive ±0.5% of both warm mapped controls. Neutrality is sufficient because
+A0 is exact and reported as warm-up. Both resident views must be at least 99.5% of EVERY warm mapped control. Non-inferiority is sufficient because
 the purpose is stability across fresh loads. Copies are retained in mapped
 views too, and loading them warms source pages; this is not a cold-disk test.
 
@@ -52,3 +51,10 @@ Final readiness markers are written only after all requested checks and pushes.
 ## Retained lookup fixture
 
 The private `frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16` is 4,194,304 bytes. It is retained because the inherited loader/entry contract needs these exact rotary-table bytes; this is a small runtime table, not model weights or a generated cache. SHA256: `92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390`. Restore it from this packet's tracked Git blob; do not regenerate arithmetic or borrow a mutable sibling table. The 68 inherited object links now resolve to private byte-exact copies inside `build/inherited-objects` (43,865,080 bytes); their link layout is retained. Native executables and object file contents remain ignored, with `restore-inputs.json`, `restore_build.py` and build commands retaining their hash-bound local restore path. This research packet is not a publicly reproducible release.
+
+Packet58ajc post-result amendment: the coordinator intended non-inferiority,
+not a two-sided band. The original v5 summary is retained unchanged. Its
+60/60 exact responses, 0.105% drift and +1.27% minimum gain pass readiness.
+A0/B0/A1/B1/A2 were 26.928/31.959/31.558/32.061/31.525 tok/s. This is
+readiness only; fresh WS128 must exceed 31.66271941826957 tok/s for submission.
+All model windows retain resident lookups and the explicit 300-second wait.

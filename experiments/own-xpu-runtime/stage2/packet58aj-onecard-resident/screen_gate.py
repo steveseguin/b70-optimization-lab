@@ -64,4 +64,4 @@ def main():
     print(json.dumps(dict(passed=True,smoke_passed=True,rows=summaries['resident']['views'],native_artifacts=expected['artifacts'],build_sha256=expected_hash,boot_id=next(iter(boots)),sources=completed,queue_snapshots=queues)))
 if __name__=='__main__':
     import resource
-    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+    resource.setrlimit(resource.RLIMIT_AS,(2_000_000_000,2_000_000_000));main()

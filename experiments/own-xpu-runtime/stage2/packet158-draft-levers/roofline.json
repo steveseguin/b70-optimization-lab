@@ -1,0 +1,338 @@
+{
+  "schema": "packet158.draft-roofline.v1",
+  "design_only": true,
+  "device_executed": false,
+  "generated_utc": "2026-10-19T02:59:36.986556+00:00",
+  "bandwidth_GB_s": 537,
+  "measurement_scope": "packet122 cyclic replay;128 occupied tokens;two processes",
+  "historical": [
+    {
+      "process": 1,
+      "context": 128,
+      "repeats": 40,
+      "rows": [
+        {
+          "group": "input_norm_embedding_mix",
+          "useful_bytes": 39774088,
+          "memory_reference_ms": 0.07406720297951583,
+          "measured_ms": 0.184380225,
+          "gap_ms": 0.11031302202048418
+        },
+        {
+          "group": "attention_projections",
+          "useful_bytes": 102962432,
+          "memory_reference_ms": 0.19173637243947858,
+          "measured_ms": 0.2325598,
+          "gap_ms": 0.04082342756052143
+        },
+        {
+          "group": "attention",
+          "useful_bytes": 425248,
+          "memory_reference_ms": 0.0007918957169459963,
+          "measured_ms": 0.08852565,
+          "gap_ms": 0.08773375428305401
+        },
+        {
+          "group": "routed_experts",
+          "useful_bytes": 77726542,
+          "memory_reference_ms": 0.14474216387337058,
+          "measured_ms": 0.30745097499999996,
+          "gap_ms": 0.16270881112662938
+        },
+        {
+          "group": "shared_expert",
+          "useful_bytes": 9863690,
+          "memory_reference_ms": 0.018368137802607078,
+          "measured_ms": 0.04198185,
+          "gap_ms": 0.023613712197392923
+        },
+        {
+          "group": "final_norm",
+          "useful_bytes": 13257600,
+          "memory_reference_ms": 0.02468826815642458,
+          "measured_ms": 0.054822775,
+          "gap_ms": 0.030134506843575416
+        },
+        {
+          "group": "head_gemv",
+          "useful_bytes": 256574976,
+          "memory_reference_ms": 0.477793251396648,
+          "measured_ms": 0.445335975,
+          "gap_ms": -0.03245727639664803
+        },
+        {
+          "group": "argmax_publication",
+          "useful_bytes": 160300,
+          "memory_reference_ms": 0.0002985102420856611,
+          "measured_ms": 0.0263777,
+          "gap_ms": 0.026079189757914338
+        }
+      ]
+    },
+    {
+      "process": 1,
+      "context": 4096,
+      "repeats": 40,
+      "rows": [
+        {
+          "group": "input_norm_embedding_mix",
+          "useful_bytes": 39774088,
+          "memory_reference_ms": 0.07406720297951583,
+          "measured_ms": 0.201874675,
+          "gap_ms": 0.12780747202048418
+        },
+        {
+          "group": "attention_projections",
+          "useful_bytes": 102962432,
+          "memory_reference_ms": 0.19173637243947858,
+          "measured_ms": 0.242622125,
+          "gap_ms": 0.05088575256052141
+        },
+        {
+          "group": "attention",
+          "useful_bytes": 4619040,
+          "memory_reference_ms": 0.008601564245810055,
+          "measured_ms": 0.60999215,
+          "gap_ms": 0.6013905857541899
+        },
+        {
+          "group": "routed_experts",
+          "useful_bytes": 77726542,
+          "memory_reference_ms": 0.14474216387337058,
+          "measured_ms": 0.310127125,
+          "gap_ms": 0.16538496112662943
+        },
+        {
+          "group": "shared_expert",
+          "useful_bytes": 9863690,
+          "memory_reference_ms": 0.018368137802607078,
+          "measured_ms": 0.042057250000000004,
+          "gap_ms": 0.023689112197392927
+        },
+        {
+          "group": "final_norm",
+          "useful_bytes": 13257600,
+          "memory_reference_ms": 0.02468826815642458,
+          "measured_ms": 0.05485935,
+          "gap_ms": 0.03017108184357542
+        },
+        {
+          "group": "head_gemv",
+          "useful_bytes": 256574976,
+          "memory_reference_ms": 0.477793251396648,
+          "measured_ms": 0.44543495,
+          "gap_ms": -0.032358301396648026
+        },
+        {
+          "group": "argmax_publication",
+          "useful_bytes": 160300,
+          "memory_reference_ms": 0.0002985102420856611,
+          "measured_ms": 0.026421999999999998,
+          "gap_ms": 0.026123489757914335
+        }
+      ]
+    },
+    {
+      "process": 2,
+      "context": 128,
+      "repeats": 40,
+      "rows": [
+        {
+          "group": "input_norm_embedding_mix",
+          "useful_bytes": 39774088,
+          "memory_reference_ms": 0.07406720297951583,
+          "measured_ms": 0.18462495,
+          "gap_ms": 0.11055774702048418
+        },
+        {
+          "group": "attention_projections",
+          "useful_bytes": 102962432,
+          "memory_reference_ms": 0.19173637243947858,
+          "measured_ms": 0.232625,
+          "gap_ms": 0.04088862756052142
+        },
+        {
+          "group": "attention",
+          "useful_bytes": 425248,
+          "memory_reference_ms": 0.0007918957169459963,
+          "measured_ms": 0.08852625,
+          "gap_ms": 0.08773435428305401
+        },
+        {
+          "group": "routed_experts",
+          "useful_bytes": 77726542,
+          "memory_reference_ms": 0.14474216387337058,
+          "measured_ms": 0.307926975,
+          "gap_ms": 0.16318481112662941
+        },
+        {
+          "group": "shared_expert",
+          "useful_bytes": 9863690,
+          "memory_reference_ms": 0.018368137802607078,
+          "measured_ms": 0.041942625000000004,
+          "gap_ms": 0.023574487197392927
+        },
+        {
+          "group": "final_norm",
+          "useful_bytes": 13257600,
+          "memory_reference_ms": 0.02468826815642458,
+          "measured_ms": 0.054791425,
+          "gap_ms": 0.030103156843575417
+        },
+        {
+          "group": "head_gemv",
+          "useful_bytes": 256574976,
+          "memory_reference_ms": 0.477793251396648,
+          "measured_ms": 0.44535922499999997,
+          "gap_ms": -0.03243402639664805
+        },
+        {
+          "group": "argmax_publication",
+          "useful_bytes": 160300,
+          "memory_reference_ms": 0.0002985102420856611,
+          "measured_ms": 0.026333199999999998,
+          "gap_ms": 0.026034689757914335
+        }
+      ]
+    },
+    {
+      "process": 2,
+      "context": 4096,
+      "repeats": 40,
+      "rows": [
+        {
+          "group": "input_norm_embedding_mix",
+          "useful_bytes": 39774088,
+          "memory_reference_ms": 0.07406720297951583,
+          "measured_ms": 0.201625075,
+          "gap_ms": 0.12755787202048416
+        },
+        {
+          "group": "attention_projections",
+          "useful_bytes": 102962432,
+          "memory_reference_ms": 0.19173637243947858,
+          "measured_ms": 0.24206775,
+          "gap_ms": 0.05033137756052142
+        },
+        {
+          "group": "attention",
+          "useful_bytes": 4619040,
+          "memory_reference_ms": 0.008601564245810055,
+          "measured_ms": 0.609921925,
+          "gap_ms": 0.6013203607541899
+        },
+        {
+          "group": "routed_experts",
+          "useful_bytes": 77726542,
+          "memory_reference_ms": 0.14474216387337058,
+          "measured_ms": 0.31075759999999997,
+          "gap_ms": 0.1660154361266294
+        },
+        {
+          "group": "shared_expert",
+          "useful_bytes": 9863690,
+          "memory_reference_ms": 0.018368137802607078,
+          "measured_ms": 0.042039,
+          "gap_ms": 0.023670862197392922
+        },
+        {
+          "group": "final_norm",
+          "useful_bytes": 13257600,
+          "memory_reference_ms": 0.02468826815642458,
+          "measured_ms": 0.0548255,
+          "gap_ms": 0.03013723184357542
+        },
+        {
+          "group": "head_gemv",
+          "useful_bytes": 256574976,
+          "memory_reference_ms": 0.477793251396648,
+          "measured_ms": 0.44545585,
+          "gap_ms": -0.032337401396648036
+        },
+        {
+          "group": "argmax_publication",
+          "useful_bytes": 160300,
+          "memory_reference_ms": 0.0002985102420856611,
+          "measured_ms": 0.0263281,
+          "gap_ms": 0.026029589757914338
+        }
+      ]
+    }
+  ],
+  "packet157": null,
+  "ranked": [
+    {
+      "group": "routed_experts",
+      "useful_bytes": 77726542,
+      "memory_reference_ms": 0.14474216387337058,
+      "measured_ms": 0.307688975,
+      "gap_ms": 0.1629468111266294
+    },
+    {
+      "group": "input_norm_embedding_mix",
+      "useful_bytes": 39774088,
+      "memory_reference_ms": 0.07406720297951583,
+      "measured_ms": 0.1845025875,
+      "gap_ms": 0.11043538452048418
+    },
+    {
+      "group": "attention",
+      "useful_bytes": 425248,
+      "memory_reference_ms": 0.0007918957169459963,
+      "measured_ms": 0.08852594999999999,
+      "gap_ms": 0.087734054283054
+    },
+    {
+      "group": "attention_projections",
+      "useful_bytes": 102962432,
+      "memory_reference_ms": 0.19173637243947858,
+      "measured_ms": 0.2325924,
+      "gap_ms": 0.040856027560521424
+    },
+    {
+      "group": "final_norm",
+      "useful_bytes": 13257600,
+      "memory_reference_ms": 0.02468826815642458,
+      "measured_ms": 0.0548071,
+      "gap_ms": 0.030118831843575417
+    },
+    {
+      "group": "argmax_publication",
+      "useful_bytes": 160300,
+      "memory_reference_ms": 0.0002985102420856611,
+      "measured_ms": 0.02635545,
+      "gap_ms": 0.026056939757914337
+    },
+    {
+      "group": "shared_expert",
+      "useful_bytes": 9863690,
+      "memory_reference_ms": 0.018368137802607078,
+      "measured_ms": 0.0419622375,
+      "gap_ms": 0.023594099697392925
+    },
+    {
+      "group": "head_gemv",
+      "useful_bytes": 256574976,
+      "memory_reference_ms": 0.477793251396648,
+      "measured_ms": 0.44534759999999995,
+      "gap_ms": -0.03244565139664804
+    }
+  ],
+  "leading_dot_flops": {
+    "input_norm_embedding_mix": 78725120,
+    "attention_projections": 102891520,
+    "routed_experts": 114114560,
+    "shared_expert": 9835520,
+    "final_norm": 13107200,
+    "head_gemv": 410255360,
+    "argmax_publication": 0
+  },
+  "warning": "Useful-byte reference, not measured DRAM traffic or attainable savings. Negative gaps retained. Host and device times overlap.",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet122-draft-budget/roofline.json": "0f36fa70cff1fe16481d88cc45589d7b9c0c950d5cce7e11361f82daaa782d29",
+    "experiments/own-xpu-runtime/stage2/packet122-draft-budget/evidence/micro-B-1/window.json": "48bd6a465f46661ec68855db42d822fdd8ae3e99d05f518f2532d64bb893790b",
+    "experiments/own-xpu-runtime/stage2/packet122-draft-budget/evidence/micro-B-1/native/iterations.jsonl": "28aad4c6bbf851da1889c33ed0873ea26eaecd01df611a0ef0ab9bacd4376c36",
+    "experiments/own-xpu-runtime/stage2/packet122-draft-budget/evidence/micro-B-2/window.json": "ec18ba8d49c5402430252ef4beed4b7e91d623bdb40157288aa47cf66bc2ce5a",
+    "experiments/own-xpu-runtime/stage2/packet122-draft-budget/evidence/micro-B-2/native/iterations.jsonl": "8ce7720ca8e9fd334387fa6fe5a259b07a7346075aa5e6ee7838742f9d7d592f"
+  }
+}

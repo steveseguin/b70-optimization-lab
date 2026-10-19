@@ -55,7 +55,7 @@ The [proposal](../../ops/lane-queue/proposed-p58ai-census-A.txt) remains outside
 the live queues. Its model watchdog is 7200 seconds against an expected job
 duration of at most 900 seconds. Queue and in-flight checks refuse other work.
 
-After a coordinator run, `analyze.py evidence/card0-census-b/combined`
+After a coordinator run, `analyze.py <proposal --output>`
 reads the sealed native receipts and checks the complete log closure, all
 48 layers at each position, oracle/record tokens, control drift and overhead.
 It writes no speed claim. The [plan](PLAN.md) defines both thresholds and the

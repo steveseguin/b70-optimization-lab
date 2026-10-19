@@ -1,0 +1,228 @@
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:1:# Packet120 boundaries
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:3:[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md): placement admitted
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:4:on CPU; device equality, residency and speed remain pending.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:6:- Only placement changes: target layer24, from rank1 to rank0. Both views use
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:7:  the exact same packet118 bundle7 selection and fixed 80,128 draft prefix.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:9:- No CPU arithmetic pass is a real-model output or speed result. Device output
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:11:- No rank0 expert offload was necessary. E1 half-cache is device storage.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:12:- No inferred driver residency from arena bytes. Keep raw per-client DRM
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:13:  counters, allocator bytes and unmeasured global free VRAM distinct.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:14:- Do not treat the full 2.3 ms outside-command time as target-race slack. The
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:15:  shared race slack is about 0.52 ms on packet108's source line. Measure misses.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:17:  that canary path. Real split25 requires rank1 draft and context4096; no 32K.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:19:  and identical per-prompt draft acceptance are independent requirements.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:20:- Keep all existing packets, shared screens and live queues unchanged. Source
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:21:  changes during a CPU proof invalidate it; rerun after source edits finish.
+experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md:22:- No Python import may install a resource cap in a device launcher. Both rank
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:1:# Packet157 boundaries
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:3:Reviewed packets101, 106/106b, 108, 114, 122 (budget and HC), 126, 129 and 146.
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:4:Do not retest already-selected HC, wide heads, speculative suffix splits,
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:5:load8, prefix selection, early stateful draft without a private transaction,
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:7:Packet122's synthetic capture timings do not measure the live draft. Packet126
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:8:requires recovered wait evidence; packet154 supplies host wait evidence, not a
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:9:kernel ranking. Packet157 measures kernels before choosing a different lever.
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:11:Never treat host time as device compute, add overlapping host/device clocks,
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:12:accept an empty stream, rank synthetic timings as measured, or qualify a speed
+experiments/own-xpu-runtime/stage2/packet157-draft-decomp/DO-NOT-REPEAT.md:13:result from this single diagnostic load. Full device output parity remains pending.
+experiments/own-xpu-runtime/stage2/packet112-route-select/DO-NOT-REPEAT.md:1:# Packet112 boundaries
+experiments/own-xpu-runtime/stage2/packet112-route-select/DO-NOT-REPEAT.md:5:| Reimplement route-fast as a new win | It is already selected by packet103 and timed by packet107/110. Compare against it. |
+experiments/own-xpu-runtime/stage2/packet112-route-select/DO-NOT-REPEAT.md:6:| Reconstruct router logits from packet100b IDs | Impossible; use the provenance-bound packet107 harness rows. |
+experiments/own-xpu-runtime/stage2/packet112-route-select/DO-NOT-REPEAT.md:8:| Interpret NaN/Inf rows as normal timing samples | Production rejects them. Check untouched outputs; exclude rejection time from speed gates. |
+experiments/own-xpu-runtime/stage2/packet112-route-select/DO-NOT-REPEAT.md:9:| Integrate before both fresh micro owners save >=50% | Forbidden. Keep the standalone micro and retain a failed gate as a closed arm. |
+experiments/own-xpu-runtime/stage2/packet112-route-select/DO-NOT-REPEAT.md:10:| CPU limit at module import | Forbidden; device jobs import these helpers. CPU CLI entrypoints only. |
+experiments/own-xpu-runtime/stage2/packet107-specialised-layers/DO-NOT-REPEAT.md:1:# Packet107 boundaries
+experiments/own-xpu-runtime/stage2/packet107-specialised-layers/DO-NOT-REPEAT.md:3:- Shared GDN head preparation is closed: Intel NaN output payload changes from
+experiments/own-xpu-runtime/stage2/packet107-specialised-layers/DO-NOT-REPEAT.md:5:- Do not duplicate a norm per consumer workgroup (packet94), serialize whole
+experiments/own-xpu-runtime/stage2/packet107-specialised-layers/DO-NOT-REPEAT.md:6:  layers (packet24), or count fewer launches as performance (packets34/46).
+experiments/own-xpu-runtime/stage2/packet107-specialised-layers/DO-NOT-REPEAT.md:7:- QSA local KV sharing is unmeasured. Keep all four heads' original reductions.
+experiments/own-xpu-runtime/stage2/packet107-specialised-layers/DO-NOT-REPEAT.md:10:- Synthetic operator timings never become a model or LocalMaxxing headline.
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:1:# Packet114 boundaries
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:3:| Closed choice | Evidence and next condition |
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:6:| Crop the target or allocate another head | Full-shape gates preserve target captures and loaded arenas; resident rank1 shares its complete head. |
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:7:| Reuse old draft proposals as the KD reference | Both views execute their own prefix-selected draft host path; target captures and oracle stay unchanged. |
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:8:| Require equal acceptance between different prefix arms | A smaller prefix can change proposals. Compare exact target tokens; require deterministic counts within each arm and report A/B counts separately. |
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:9:| Treat corpus coverage as actual acceptance or linear head scaling as measured speed | See the explicitly post-selection cost model. Only the device bracket measures these. |
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:10:| Import a CPU resource cap into a device job | Import audit refuses resource-limit changes or launches. Caps belong only to CPU main processes. |
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:12:| Promote a one-load 128-token screen | Full lossless, fresh-process and performance gates remain independent. |
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:14:[CPU closeout](CPU-PREPARATION-CLOSEOUT.md). Parent packet56/59c/103 boundaries
+experiments/own-xpu-runtime/stage2/packet114-draft-prefix/DO-NOT-REPEAT.md:15:remain applicable except the owner's explicitly authorized new prefix selection.
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:1:# Packet59c decisions
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:3:- Do not infer draft speed from target-format or isolated warm microtimings.
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:4:  Packet59's supplied engine screen is slower; keep all-on as a diagnostic arm.
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:5:- Do not conflate allocated context with active selected attention length.
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:6:- Do not enable a fusion without its packet59 producer; native init refuses it.
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:7:- Do not change target choices, the draft prefix, weight formats or BF16 KV.
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:8:- Do not collapse empty launch slots: context recapture uses original indices.
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:9:- Do not treat mini BF16 routes as production INT8/packed attention coverage;
+experiments/own-xpu-runtime/stage2/packet59c-draft-select/DO-NOT-REPEAT.md:15:- Keep [packet59's inherited decisions](../packet59-fast-draft/DO-NOT-REPEAT.md).
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:1:# Packet59 decisions
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:3:- Never substitute target IQ2/IQ4/Q6/Q8 readers for draft BF16/INT8 weights.
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:4:- Never change the 91,392-row prefix from screen acceptance or prompt outputs.
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:5:- Do not use packet56 draft logits as a packet59 draft oracle; only the target
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:7:- Do not reopen packet52's losing free-order grid. Its target-format winners
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:8:  are not evidence for a faster draft-format implementation.
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:9:- Keep one capture Site per original launch, including empty fused sites:
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:13:- Keep inherited [packet56 decisions](../packet56-draft-prefix/DO-NOT-REPEAT.md)
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:14:  except its old draft-order restriction, explicitly relaxed by this brief.
+experiments/own-xpu-runtime/stage2/packet59-fast-draft/DO-NOT-REPEAT.md:15:- The prepared-submit overlay lifts launch ranges into the capture list. Keep
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:1:# Packet 34: do not repeat
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:3:| Closed shortcut or defect | Evidence | Revisit condition |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:5:| Reuse packet22's eight-entry raw ABI receipt for current private kernels | [Raw ABI review](review-raw-abi.md), [gate](raw-abi-gate.json) | Current named typed entries and fresh final-image ABI qualification. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:6:| Benchmark one-card streaming and call it resident launch replay | [Token-data review](review-token-data.md) | Stable resident bindings; no weight staging or host route reads in measured region. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:7:| Allocate packed dense bytes for an expanded R5 dispatch | Initial `census/failure.json` in CPU evidence archive; `Fixture::setup` | Use packet29's exact row expansion and account its real bytes. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:8:| Drop the last fused normalization when cutting layers 24–47 | [Fixture helper](fixture34.hpp) | Preserve the unchanged final combine kernel and its output. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:9:| Compile K0 without the benchmark-only kernels | [Build review](review-window-build.md), [capture gate](capture-gates.json) | K0 and R1 share every embedded device image byte. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:10:| Count host GEMV submissions as native launches | [Census](census.json), [launch plan](launch-plan.jsonl) | Include 78 native-only split-GEMV finish kernels; R1 asserts 1,142. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:11:| Upload parity without consuming it | [Token-data review](review-token-data.md) | Device boundary selection plus exact selected-bank byte check; disclose boundary outside capture. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:12:| Accept route reordering as different selected experts | `Fixture::dynamic`, CPU receipts | Compare sorted per-layer expert sets; validate unique in-range IDs. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:13:| Infer no graph pool growth from application allocation bytes | README and memory receipts | Driver counter plus repeated-recording observations, or explicit pending bounded-memory verdict. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:14:| Clear eager events before completion or erase captured owner IDs early | [Lifetime review](review-lifetime.md) | Prove idle and preserve synthetic IDs until owner retirement. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:15:| Retry failed native teardown | [Lifetime review](review-lifetime.md), lifetime tests | Retain owner; coordinator owns recovery. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:16:| Run many CPU gates concurrently beside a GPU window | Owner's scope | Sequential gates, OMP2, compile jobs<=2, inherited affinity/nice19/idle I/O. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:17:| Trust an object written after a source edit began mid-compilation | Final ASan rebuild audit | Freeze source while compiling; force rebuilding affected object and fresh gates. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:18:| Turn old reviewed whole-boot faults into a new packet 34 latch before any native launch | [October 12 refusal archive](evidence/20261012-k0-refused-old-boot-fault-lines/README.md), [window tests](window-tests.json) | Explicit UTC coordinator review bound across K0/R1; new faults still latch. Without review, faults older than one hour refuse without latching only if no packet 34 launch was attempted on that boot. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:19:| Pass a bare calendar time to journalctl as though it were UTC | `test_review_timezone_and_empty_interval_cursor` | Parse timezone-aware UTC input and pass `--since @epoch`; preserve cursor when no newer entries exist. |
+experiments/own-xpu-runtime/stage2/packet34-replay-bench/DO-NOT-REPEAT.md:21:No device experiment closed here. Graph behavior and speed remain unmeasured.
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:1:# Packet105 guardrails
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:3:Packet105b addendum: never accept a one-prompt smoke or a skipped private suffix
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:4:active flag. The repaired gate must detect the old post-reset failure. Require
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:6:before a grid. See [CPU closeout](closeout.md). Frozen fixture copies with lost
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:7:execute permission are replaced only by byte-verified links inside the new
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:8:packet; never chmod or rewrite the frozen parent to repair a test harness.
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:10:- Keep packet97e's fixed target arithmetic and draft choices. Parent selection and
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:11:  orchestration outputs are mutable and must never enter this packet's seals.
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:12:- Never use rank0 speculative streams for the suffix. Only rank1's verified,
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:14:- Do not snapshot suffix scratch. The first census found 1,572,128 unwanted bytes;
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:16:- Do not publish hidden bytes before their copy completes, or wait for the copy
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:17:  before submitting the prefix head. BCS must be a dedicated copy-only queue;
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:20:  nonfinite error prevents a token; preserve that refusal and every logit byte.
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:23:- A lane-B head result never qualifies lane A (packet93). Each placement needs
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:25:- All eleven startup windows, especially KD's draft-only host reference, must
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:26:  pass for every view after any source change. A partial startup pass is invalid.
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:28:CPU implementation closeout and unresolved device gates: [closeout](closeout.md).
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:1:# Packet108 boundaries
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:3:- Fresh per-kernel p97+down-tile16 attribution is unavailable: empty device
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:4:  event files are not zero-cost classes. Historical class estimates stay labeled.
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:6:- Draft INT8 load-only is distinct from p59 geometry/fusion and p104 transpose;
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:7:  do not reintroduce those closed mechanisms through this arm.
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:8:- Packet100b captured target routes. Draft replay is a proxy diagnostic.
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:9:- No long GNU/Intel byte/startup/allocation/seal/grid work before a measured
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:11:- Pending head splits and QSA work are owned by packets105b/106b/107.
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:12:- All FP operations, output/status bytes and reductions must stay exact.
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:13:  No approximate math, new early exit, prefix change or KV compression.
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:14:- The CPU-only preparation cannot run its own device job or edit live queues.
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:16:[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md). No measured verdict
+experiments/own-xpu-runtime/stage2/packet108-draft-loads/DO-NOT-REPEAT.md:17:exists for the new load-only arm yet.
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:1:# Packet156 boundaries
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:10:| 79 | Draft stays on rank1; no relocation, reverse-hidden dependency or full-head copy. Rank0 placements lost 2.3%/1.3%. |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:11:| 101 | No attention/HC geometry retune or reapplication of already-selected kernels. Prefix remains the bundle8 80,128 rows. |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:12:| 106/106b | No draft-head partition or suffix dispatch. 106b's draft split lost; the +0.36% was its target-head-only split, not the draft. [Measured note](../../../../notes/2026-10-18-own-runtime-packet106b-grid-result.md). |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:13:| 108 | No INT8 load8 micro retry; same branch arithmetic is only rescheduled. Its old draft duration does not price current exposed work. |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:14:| 122 HC/budget | No HC mapping/fusion retry. Historical norm+projection events exclude copy, host work and current idle slack, so cannot certify the complete branch ceiling. |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:15:| 126 | No guessed-token draft transaction, embedding, merge_add, cache/position advance or second unresolved target. Packet154 satisfies the need to locate exposed draft work; sufficient suffix slack is a separate condition. |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:19:| Date | Closed arm | Evidence and reason | Revisit condition |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:21:| 2026-10-19 | Hidden-only draft staged at the existing host boundary after prefix drain, while awaiting the same suffix | [Closeout](ANALYSIS-CLOSEOUT.md) and complete command-correlated replay: even crediting required pack/export and misses as free overlap is below the requested +2% bound. No implementation/device screen was admitted. | New current-line evidence supporting at least 0.423078 ms/hit net hidden-branch saving in a legal idle window. An earlier device-queued boundary is a different design and needs its own producer/completion evidence, exact ownership proof and both-lane proposals. |
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:23:Do not equate rank0's 1.227 ms draft overlap with rank1 suffix idle time.
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:25:Do not infer hardware completion time from host drain return. A closed
+experiments/own-xpu-runtime/stage2/packet156-draft-slack/DO-NOT-REPEAT.md:26:host-insertion mechanism does not close the draft optimization lane.
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:1:# Packet105 guardrails
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:3:- Keep packet97e's fixed target arithmetic and draft choices. Parent selection and
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:4:  orchestration outputs are mutable and must never enter this packet's seals.
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:5:- Never use rank0 speculative streams for the suffix. Only rank1's verified,
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:7:- Do not snapshot suffix scratch. The first census found 1,572,128 unwanted bytes;
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:9:- Do not publish hidden bytes before their copy completes, or wait for the copy
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:10:  before submitting the prefix head. BCS must be a dedicated copy-only queue;
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:13:  nonfinite error prevents a token; preserve that refusal and every logit byte.
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:16:- A lane-B head result never qualifies lane A (packet93). Each placement needs
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:18:- All eleven startup windows, especially KD's draft-only host reference, must
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:19:  pass for every view after any source change. A partial startup pass is invalid.
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:21:CPU implementation closeout and unresolved device gates: [closeout](closeout.md).
+experiments/own-xpu-runtime/stage2/packet146-prompt-lookup/DO-NOT-REPEAT.md:1:# Packet146 — do not repeat
+experiments/own-xpu-runtime/stage2/packet146-prompt-lookup/DO-NOT-REPEAT.md:3:| Date | Closed arm | Evidence and reason | Revisit condition |
+experiments/own-xpu-runtime/stage2/packet146-prompt-lookup/DO-NOT-REPEAT.md:5:| 2026-10-18 | Within-request prompt/generated-token suffix lookup (lengths 2–6) as a second exact speculative guess or MTP arbiter for a headline | [Policy analysis and closeout](ANALYSIS.md): AGENTS.md and LocalMaxxing rules disable n-gram/history acceleration. Narrower repeated-history wording and `freshResponseNgramValidated` do not expressly authorize request-local lookup. The brief requires stopping on ambiguity; no acceptance study, design or runtime work was done. | Explicit policy revision or owner ruling resolving this exact request-local case, followed by independent held-out acceptance of at least +1.5 points and the usual quality/performance gates. Do not work around the rule with labels, boolean flags or `--allow-non-headline`. |
+experiments/own-xpu-runtime/stage2/packet146-prompt-lookup/DO-NOT-REPEAT.md:7:This closes the policy-gated arm, not the optimization lane. Acceptance and
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:1:# Packet101 boundaries
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:5:| Seal packet97's mutable selection or orchestration evidence as a live dependency | Its selection changed after the original A control, refusing A grid-1. Fresh seals keep only allowed parent build inputs, snapshot the build identity receipt locally, and use packet101's own selections. Restart the complete bracket with fresh outputs; never reuse old A grid-0. [Reseal](RESEAL.md). |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:6:| Re-test packet69 draft-HC as a new packet97 win | Already active: all 14 settings and identical HC kernel bytes. `draft_hc` aliases control; `combined` aliases attention. No HC-only GPU job. Revisit only for a distinct HC mechanism. [Audit](evidence/source-audit.json). |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:7:| Attribute packet69 combined +0.82% solely to attention and HC | Its selection also enabled target and draft wide64 heads. Do not transfer that speed or its old HC cost to packet97. |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:8:| Use 3,200 bytes as expanded Q6 row stride | Useful reads differ from 3,380-byte storage. Full-shape initialization, head allocations and the existing p33 kernel retain the layout helper. No wide-head revival. |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:9:| Repeat packet79 placement, packet83 compressed/prefix heads or packet87 split protocol | Out of scope; draft stays rank1, full unchanged 91,392-row prefix. No new transport. |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:10:| Reapply the old 1.5% source bar | Packet97b allows one exact first-lane win over both controls, with unchanged per-prompt acceptance. Mean-only wins and ties fail. |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:11:| Treat CPU gates as model output or speed evidence | Device 13/13 outputs, acceptance and speed remain pending. Records use lane A and need the later full chain. |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:14:[Closeout](CPU-PREPARATION-CLOSEOUT.md).
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:1:# Packet129 boundaries
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:3:- Never use suite acceptance to select the format, prefix or corpus.
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:5:  timings as a speed result. Production remains the only proposer in this job.
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:7:  future changes before attention/cache append.
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:10:- Preserve publisher FP8 values and scales. BF16 rounding of their product is
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:12:- Do not allocate a second full expert bank: rank1's arena cannot hold it.
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:13:- Preserve oracle and source symlinks; real CLI checks must use the actual tree.
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:14:- CPU resource limits never belong in runtime imports or device-launch paths.
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:15:- No candidate-as-production timing proposal until independent acceptance passes.
+experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/DO-NOT-REPEAT.md:17:[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md). The experiment itself
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:1:# Packet79 boundaries
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:5:| Historical placement`0` means 24/24 | False; explicitly pass split24. The old default is 22/26. |
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:6:| Copy full target head to rank0 | Excluded. Exactly91,392 expanded Q6 rows are allocated. |
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:7:| Change draft arithmetic to relocate it | Unnecessary; all kernels and their compiled objects remain packet75-identical. |
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:8:| Synchronous rank0 draft | Do not introduce it; the existing native wait callback progresses asynchronous completion. |
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:9:| Parent planned memory is a real new census | False; use the full production post-load mock for both ranks and placements. |
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:10:| CPU-only token parity establishes device quality | False; all 13 packet49 screen checks and later full-chain gates remain required. |
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:14:[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md:16:| 2026-10-17 | packet79 MTP draft on rank 0 (placements 0-split23, 0) | -2.3% / -1.3% on lane A, exact; misses +2.1 ms | draft depends on rank-1 final state; packet45 already measured rank-0 draft as a loss | do not repeat |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:1:# Packet126 boundaries
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:3:| Closed assumption | Evidence / revisit condition |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:5:| Moving D before the head removes D from rank1's cycle | Single CCS still executes both. With no recovered wait, misses add one wasted D and the measured-command scenario loses 1.95–1.96%. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:6:| The zero-wait scenario proves the lever is below 0.5% | False. Compatible unmeasured head decompositions cross the gate; the result is inconclusive, not a measured loss. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:7:| B minus A is available head wait | B includes remote suffix service and retirement. Require position-bound readiness/service/merge timestamps. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:8:| Discarding the guessed token repairs a missed early draft | DRAFT advances cache, position and async state. Require an exact private transaction, terminal rollback and forced-miss tests. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:9:| Start A[p+2] while A[p+1] is unresolved in the current controller | One pending candidate/snapshot; a second unresolved target half needs a separate state design. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:10:| Reuse packet124's device evidence for a scheduling change | A changed schedule needs its own byte/state/startup/seal gates and 12×64 smoke before a bracket. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:11:| Use the historical 1.4 ms head as the current split-head timer | Not measured on bundle7; no row-count scaling or invented current class time. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:14:wait supporting ≥0.5% after speculative-draft waste and transaction costs.
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:1:# Packet66 boundaries
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:3:- Do not run GPU work from CPU preparation; the lane-B coordinator owns it.
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:4:- Never edit packet61x, the frozen screen trees, packet64 orchestration or
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:5:  other jobs' packet65/packet64-attribution paths.
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:8:- Restore the exact old attention extent, not the extent recomputed from the
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:10:- Scratch allocations require transaction lifetime in the owner contract.
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:14:- Route union bytes are an opportunity for a future reuse kernel, not the
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:15:  bytes the current serial expert kernels read.
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:16:- No a2, second-pass time or output equality on the device is claimed until
+experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md:17:  the complete 12-prompt coordinator screen passes. See [closeout](CPU-CLOSEOUT.md).
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:1:# Packet106 boundaries
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:3:Packet106b addendum: only production, head split and combined head/draft split
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:4:are scheduled. Do not materialize the unused draft-only view to satisfy an
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:6:B grid. A requires an exact improving B winner. CPU evidence and remaining
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:7:device steps are in the [closeout](CPU-PREPARATION-CLOSEOUT.md).
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:9:- Keep all 91,392 draft prefix rows available on rank1 for misses. No draft
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:10:  trunk relocation, compressed head or changed prefix is part of this arm.
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:12:  target equality may dispatch the draft suffix.
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:13:- Keep target and draft suffix state/mailboxes separate and outside rollback.
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:14:- Request reset clears auxiliary active flags. Restore each before suffix
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:15:  argmax, and retain the CPU reset regression check.
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:16:- CPU byte/startup gates do not establish device equality or speed. First
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:20:- Pin immutable inputs and local source snapshots, never parent orchestration
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:21:  outputs or a moving selection. Existing source packets remain frozen.
+experiments/own-xpu-runtime/stage2/packet122-draft-budget/DO-NOT-REPEAT.md:1:# Packet122 budget boundaries
+experiments/own-xpu-runtime/stage2/packet122-draft-budget/DO-NOT-REPEAT.md:3:- Do not substitute packet77 times for current event measurements.
+experiments/own-xpu-runtime/stage2/packet122-draft-budget/DO-NOT-REPEAT.md:5:- Do not add this event sum to D; it is inside the draft command.
+experiments/own-xpu-runtime/stage2/packet122-draft-budget/DO-NOT-REPEAT.md:6:- Do not interpret /555GB/s unique useful bytes as a hard floor or promised speedup.
+experiments/own-xpu-runtime/stage2/packet122-draft-budget/DO-NOT-REPEAT.md:7:- Do not edit this probe while developing the separate HC candidate.
+experiments/own-xpu-runtime/stage2/packet122-draft-budget/DO-NOT-REPEAT.md:8:- Device measurements, equality and timing repeats remain pending.
+experiments/own-xpu-runtime/stage2/packet122-draft-budget/DO-NOT-REPEAT.md:10:[CPU closeout](CPU-PREPARATION-CLOSEOUT.md).
+experiments/own-xpu-runtime/stage2/packet122-draft-hc/DO-NOT-REPEAT.md:1:# Packet122 boundaries
+experiments/own-xpu-runtime/stage2/packet122-draft-hc/DO-NOT-REPEAT.md:5:| Treat the old HC fusions as a new optimization | Already selected in packet118. The new arm changes subgroup mapping and independent sigmoid placement only. |
+experiments/own-xpu-runtime/stage2/packet122-draft-hc/DO-NOT-REPEAT.md:6:| Omit exceptional-value checks | Both compilers pass 16 complete gate/mix cases twice, including NaN payloads; keep the serial exceptional fallback. |
+experiments/own-xpu-runtime/stage2/packet122-draft-hc/DO-NOT-REPEAT.md:9:| Treat CPU equality as device equality or a speed gain | Device micros and full bracket remain pending. |
+experiments/own-xpu-runtime/stage2/packet122-draft-hc/DO-NOT-REPEAT.md:10:| Reopen draft load8, split prefix/rank0 draft or tune prefix N from benchmark outputs | Those arms remain closed; fixed 80,128 follows packet114's non-benchmark rule. |
+experiments/own-xpu-runtime/stage2/packet122-draft-hc/DO-NOT-REPEAT.md:12:[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:1:# Packet106 boundaries
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:3:- Keep all 91,392 draft prefix rows available on rank1 for misses. No draft
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:4:  trunk relocation, compressed head or changed prefix is part of this arm.
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:6:  target equality may dispatch the draft suffix.
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:7:- Keep target and draft suffix state/mailboxes separate and outside rollback.
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:8:- Request reset clears auxiliary active flags. Restore each before suffix
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:9:  argmax, and retain the CPU reset regression check.
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:10:- CPU byte/startup gates do not establish device equality or speed. First
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:14:- Pin immutable inputs and local source snapshots, never parent orchestration
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:15:  outputs or a moving selection. Existing source packets remain frozen.

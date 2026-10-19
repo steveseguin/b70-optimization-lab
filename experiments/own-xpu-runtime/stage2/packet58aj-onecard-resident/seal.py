@@ -83,7 +83,16 @@ def main():
     if args.verify:
         for root in (P,Q):
             row=read(root/'build-receipt.json')
-            for where,key in ((ROOT,'sources'),(root,'artifacts'),(root,'gates')):verify_files(where,row[key])
+            # Completed 58ajb screen retains its original seal and comparator.
+            # Historical root sources changed by 58ajc have exact saved bytes;
+            # the chain seal above binds both those bytes and current sources.
+            for name,digest in row['sources'].items():
+                historical=P/'lineage/packet58ajc-before'/(ROOT/name).resolve().name
+                direct=(ROOT/name).resolve().parent==P
+                if root==Q and direct and historical.is_file():
+                    require(sha(historical)==digest,'historical screen source changed: '+name)
+                else:require(sha(ROOT/name)==digest,'changed sealed input: '+name)
+            for where,key in ((root,'artifacts'),(root,'gates')):verify_files(where,row[key])
         pins=read(P/'submission-pins.json');verify_files(ROOT,pins['sources']);require(pins['build_receipt_sha256']==sha(P/'build-receipt.json'),'stale submission pins')
     else:row=create()
     print(json.dumps(dict(passed=True,device_executed=False,sources=len(row['sources']),build_bytes=row['retained_build_bytes'])))

@@ -14,14 +14,23 @@ def rows(rates=(25,25,25,25,25)):
 class ReadyTests(unittest.TestCase):
     def test_inclusive_gain(self):self.assertTrue(R.evaluate(rows())['passed'])
     def test_each_candidate_and_each_control(self):
-        for rate in (24.875,25,25.125):self.assertTrue(R.evaluate(rows((10,rate,25,rate,25)))['passed'])
+        for rate in (24.875,25,25.125,32):self.assertTrue(R.evaluate(rows((10,rate,25,rate,25)))['passed'])
         for i in (1,3):
-            for rate in (24.87499,25.12501):
+            for rate in (24.87499,):
                 rates=[10,25,25,25,25];rates[i]=rate
                 with self.subTest(i=i,rate=rate),self.assertRaisesRegex(ValueError,'EVERY'):R.evaluate(rows(rates))
     def test_warm_controls_not_cold_a0(self):
         self.assertTrue(R.evaluate(rows((1,25,25,25,25)))['passed'])
-        with self.assertRaises(ValueError):R.evaluate(rows((1,25,24.8,25,25)))
+        self.assertTrue(R.evaluate(rows((1,25,24.8,25,25)))['passed'])
+        with self.assertRaises(ValueError):R.evaluate(rows((1,25,25,25,25.2)))
+    def test_drift_boundary(self):
+        self.assertTrue(R.evaluate(rows((1,103,100,103,103)))['passed'])
+        with self.assertRaises(ValueError):R.evaluate(rows((1,104,100,104,103.00001)))
+    def test_measured_bracket_amendment(self):
+        result=R.evaluate(rows((26.928,31.959,31.558,32.061,31.525)))
+        self.assertTrue(result['resident_noninferior'])
+        self.assertFalse(result['original_candidate_beats_all_controls'])
+        self.assertFalse(result['submission_eligible'])
     def test_nonexact_first_view_refuses(self):
         data=rows((22,27,26,27,26));data[0]['requests'][0]['exact_oracle']=False
         with self.assertRaisesRegex(ValueError,'exact'):R.evaluate(data)

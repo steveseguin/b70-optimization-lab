@@ -225,6 +225,15 @@ class SubmissionTests(unittest.TestCase):
             changed(e,'WS128/window.json',lambda row:row['native_files'].__setitem__('run/receipt.json',digest))
             with self.assertRaisesRegex(ValueError,'overlapped cache argv|full composition'):S.derive(e)
 
+    def test_equal_or_lower_than_threshold_refused(self):
+        speed=S.derive(self.e)['primary_metric']['value_tok_s']
+        for threshold in (speed, speed+1):
+            evidence=S.Evidence(copy.deepcopy(self.fixture.members))
+            changed(evidence,'record-threshold.json',
+                    lambda row:row['records'][-1].update(threshold_tok_s=threshold))
+            with self.subTest(threshold=threshold),self.assertRaisesRegex(ValueError,'not above matching one-card threshold'):
+                S.derive(evidence)
+
     def test_final_location_cli_root(self):
         self.assertEqual(submission_cli.load_submitter().REPO_ROOT,S.ROOT)
 

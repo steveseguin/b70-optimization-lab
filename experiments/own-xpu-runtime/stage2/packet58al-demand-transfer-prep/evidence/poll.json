@@ -1,0 +1,47 @@
+{
+  "schema": "packet58al.census-observation.v1",
+  "observed_utc": "2026-10-19T03:42:27.088962+00:00",
+  "census_readiness_sha256": "b1c38639a3937c45ede18472079db6fc6fa99026cdd840f677cc1bbb40f58953",
+  "census_declared_record_tok_s": 30.396,
+  "census_preparation_probe": "WARN: no safe real-rank-argv native harness for this one-card entry; not claimed",
+  "census_preparation_scope": "CPU-prepared first device smoke; fresh live coordinator admission required; five-view census is a later separate run",
+  "census_attempt_exits": [
+    {
+      "path": "experiments/own-xpu-runtime/ops/lane-queue/packet58ai-census-b-smoke-A-10bb1f78ac204e058e699e7b6c516a2b.exit.json",
+      "sha256": "249daab8f6c8d1ed7d9b717230126acddf0c64db8b73c35abf79bd292d4d825d",
+      "fields": {
+        "ExecMainStatus": "1",
+        "Result": "exit-code"
+      }
+    }
+  ],
+  "coordinator_identity_repair": {
+    "path": "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/evidence/p58aic-identity.json",
+    "sha256": "af2c400353250d4db65f7307a4b8517de24bc510f47caffc66b8dd999cbe4734",
+    "evidence": {
+      "passed": true,
+      "device_executed": false,
+      "checks": [
+        {
+          "name": "packet58ai-census-b-smoke-A",
+          "own_queued_and_inflight": "PASS"
+        },
+        {
+          "name": "packet58ai-census-c-smoke-A",
+          "own_queued_and_inflight": "PASS"
+        }
+      ],
+      "wrong_lane_refused": true
+    }
+  },
+  "census_work_note": {
+    "path": "notes/2026-10-19-own-runtime-packet58ai.md",
+    "sha256": "a0aceb830d332a4196a5ed98bff9abf524845b3cd7cbe5f346edca0880f8c15a"
+  },
+  "reports": [],
+  "status": "pending-completed-census",
+  "upper_bound_ms_per_token": null,
+  "build_released": false,
+  "device_readiness": false,
+  "action": "Apply DECISION.md only to a complete, exact, stable, hash-bound census; no launch from this prep"
+}
