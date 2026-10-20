@@ -6,7 +6,7 @@ Qwen3.8 27B FP8 TP2, Flash-Next own-runtime TP1/TP2, Gemma4 Q8 and Nemotron.
 The FP8 six-request 512-token prompt screen measured median2164.081tok/s;
 its repeated output IDs matched, and the experimental server stopped cleanly.
 All47 publication checks, Pages tests, and phone/desktop browser checks pass.
-Publication is being pushed and checked live; [closeout ledger](notes/2026-10-20-model-package-closeout.md)
+Recipes and source/evidence downloads are live and hash-verified; [closeout ledger](notes/2026-10-20-model-package-closeout.md)
 records the exact scope. Native full512 quality, context/multi-user qualification
 and clean-host admission remain pending; Nemotron's replay remains deferred.
 

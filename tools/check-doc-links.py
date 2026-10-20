@@ -8,7 +8,9 @@ tries to follow it. Offline and fast, so it can run on every change.
 usage: check-doc-links.py [--all-tracked | PATH ...] [--json OUT]
 The default scope remains the public guides and site entry points. --all-tracked
 also covers experiment notes and other tracked Markdown/HTML, including staged
-new files. It reads working-tree contents, not the staged blob contents.
+new files. It reads working-tree contents, not the staged blob contents. Link destinations
+must also be Git-tracked (or implied tracked directories) in this mode; local
+untracked artifacts cannot make a clean-checkout failure pass.
 Run --all-tracked from the repository root.
 
 Exit 1 for new broken repository links, unreadable documents, or invalid pinned
@@ -70,8 +72,31 @@ def targets(path: str):
         yield from parser.links
 
 
-def check_file(path: str, root: str, unverified=None):
+def portable_exists(path: str, root: str, tracked=None):
+    """Do not let ignored artifacts or host-bound symlinks validate Git links."""
+    if not os.path.exists(path):
+        return False
+    if tracked is None:
+        return True
+    relative = os.path.relpath(os.path.abspath(path), root)
+    if relative not in tracked:
+        return False
+    candidate = Path(path)
+    if candidate.is_symlink() and os.path.isabs(os.readlink(candidate)):
+        return False
+    resolved = os.path.relpath(candidate.resolve(), root)
+    return resolved in tracked
+
+
+def check_file(path: str, root: str, unverified=None, tracked=None):
     bad = []
+    document = Path(path)
+    if document.is_symlink():
+        target = os.readlink(document)
+        if os.path.isabs(target) or not document.resolve().is_relative_to(Path(root).resolve()):
+            raise OSError(f"host-bound symlink document: {target}")
+        if tracked is not None and not portable_exists(path, root, tracked):
+            raise OSError(f"symlink document target is not present in the tracked checkout: {target}")
     for raw in targets(path):
         if raw.startswith(SKIP) or not raw.strip():
             continue
@@ -90,12 +115,12 @@ def check_file(path: str, root: str, unverified=None):
             continue
         base = root if link.startswith("/") else os.path.dirname(path)
         resolved = os.path.normpath(os.path.join(base, link.lstrip("/")))
-        if not os.path.exists(resolved):
+        if not portable_exists(resolved, root, tracked):
             bad.append({"link": raw, "resolved": os.path.relpath(resolved, root)})
     return bad
 
 
-def tracked_documents(root: str):
+def tracked_inventory(root: str):
     prefix = subprocess.run(["git", "-C", root, "rev-parse", "--show-prefix"],
                             check=True, stdout=subprocess.PIPE)
     if prefix.stdout.strip():
@@ -104,21 +129,24 @@ def tracked_documents(root: str):
                             check=True, stdout=subprocess.PIPE)
     # NUL separation preserves spaces and newlines; --cached includes new
     # staged files and excludes untracked scratch files and staged deletions.
-    return sorted({os.fsdecode(p) for p in result.stdout.split(b"\0")
-                   if p and p.lower().endswith((b".md", b".html"))})
+    files = {os.fsdecode(p) for p in result.stdout.split(b"\0") if p}
+    directories = {str(parent) for name in files for parent in Path(name).parents}
+    documents = sorted(p for p in files if p.lower().endswith((".md", ".html")))
+    return documents, files | directories
 
 
 def load_baseline(filename: str, root: str):
     """Honor old link-only exceptions; verify any supplied evidence bindings."""
     try:
         with open(filename, encoding="utf-8") as stream:
-            entries = json.load(stream)["known_broken"]
+            data = json.load(stream)
+            entries = data["known_broken"]
         if not isinstance(entries, list):
             raise ValueError("known_broken must be a list")
     except FileNotFoundError:
-        return set(), []  # The historical default baseline is optional.
+        return set(), {}, []  # The historical default baseline is optional.
     except (OSError, ValueError, KeyError, TypeError) as exc:
-        return set(), [f"{filename}: cannot read baseline: {exc}"]
+        return set(), {}, [f"{filename}: cannot read baseline: {exc}"]
     known, errors = set(), []
     repo = Path(root).resolve()
     for number, entry in enumerate(entries, 1):
@@ -153,7 +181,34 @@ def load_baseline(filename: str, root: str):
                         raise ValueError(f"{hash_field} mismatch for {relative}; pinned exception changed")
             except (OSError, ValueError) as exc:
                 errors.append(f"{label}: {exc}")
-    return known, errors
+    host_documents = {}
+    hosts = data.get("known_host_symlink_documents", [])
+    if not isinstance(hosts, list):
+        errors.append(f"{filename}: known_host_symlink_documents must be a list")
+        hosts = []
+    for number, entry in enumerate(hosts, 1):
+        try:
+            relative = entry["document"]
+            expected = entry["symlink_target"]
+            digest = entry["symlink_sha256"]
+            if (not isinstance(relative, str) or not relative or Path(relative).is_absolute()
+                    or ".." in Path(relative).parts):
+                raise ValueError("document must be a repository-relative symlink path")
+            path = repo / relative
+            if (not isinstance(expected, str) or not HOST_PATH.match(expected)
+                    or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)):
+                raise ValueError("host symlink target and SHA256 must be explicitly pinned")
+            if not path.is_symlink():
+                raise ValueError("historical host document is no longer a symlink")
+            actual = os.readlink(path)
+            if actual != expected or hashlib.sha256(os.fsencode(actual)).hexdigest() != digest:
+                raise ValueError("historical symlink identity changed")
+            if relative in host_documents:
+                raise ValueError("duplicate historical host document")
+            host_documents[relative] = expected
+        except (KeyError, TypeError, OSError, ValueError) as exc:
+            errors.append(f"{filename} host symlink entry {number}: {exc}")
+    return known, host_documents, errors
 
 
 def main() -> int:
@@ -168,9 +223,9 @@ def main() -> int:
     if a.all_tracked and a.paths:
         ap.error("--all-tracked cannot be combined with explicit paths")
     root = os.getcwd()
-    known, baseline_errors = load_baseline(a.baseline, root)
+    known, host_documents, baseline_errors = load_baseline(a.baseline, root)
     try:
-        paths = tracked_documents(root) if a.all_tracked else a.paths
+        paths, tracked = tracked_inventory(root) if a.all_tracked else (a.paths, None)
     except (OSError, subprocess.CalledProcessError, ValueError) as exc:
         ap.exit(2, f"cannot list tracked documents: {exc}\n")
     paths = paths if a.all_tracked or paths else sorted(
@@ -183,10 +238,14 @@ def main() -> int:
     findings = {}
     unverified = {}
     read_errors = {}
+    known_host_documents = {}
     for p in paths:
         unchecked = []
+        if p in host_documents:
+            known_host_documents[p] = host_documents[p]
+            continue  # Verified symlink bytes only; never open the host destination.
         try:
-            bad = check_file(p, root, unchecked)
+            bad = check_file(p, root, unchecked, tracked)
         except OSError as exc:
             read_errors[p] = str(exc)
             continue
@@ -215,6 +274,8 @@ def main() -> int:
             print(f"    - {item['reason']}: {item['link']}")
         if len(unchecked) > 3:
             print(f"    ... {len(unchecked) - 3} more (use --json for all)")
+    for p, target in sorted(known_host_documents.items()):
+        print(f"known-host-bound document {p}: {target} (target not read)")
     for p, error in sorted(read_errors.items()):
         print(f"unreadable document {p}: {error}")
     for error in baseline_errors:
@@ -230,7 +291,8 @@ def main() -> int:
                        "findings": findings, "known_broken_total": known_total,
                        "known_broken": {p: v for p, v in baselined.items() if v},
                        "unverified_total": unchecked_total, "unverified": unverified,
-                       "read_errors": read_errors, "baseline_errors": baseline_errors},
+                       "read_errors": read_errors, "baseline_errors": baseline_errors,
+                       "known_host_symlink_documents": known_host_documents},
                       stream, ensure_ascii=False, indent=1)
     return 0 if total == 0 and not read_errors and not baseline_errors else 1
 

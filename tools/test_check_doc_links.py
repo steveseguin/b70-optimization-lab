@@ -191,5 +191,84 @@ hidden += up[layer, position](silu(down[layer, position](hidden)))
         self.assertIn("repository root", result.stderr)
 
 
+    def test_all_tracked_rejects_untracked_target_until_staged(self):
+        self.git("init", "-q", "-b", "main")
+        self.write("README.md", "[file](evidence/run.json) [directory](evidence/)")
+        self.write("evidence/run.json", "{}")
+        self.git("add", "README.md")
+        result = self.run_check("--all-tracked", "--json", "report.json")
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads((self.root / "report.json").read_text())["broken_total"], 2)
+        self.git("add", "evidence/run.json")
+        result = self.run_check("--all-tracked")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_tracked_relative_symlink_requires_tracked_target(self):
+        self.git("init", "-q", "-b", "main")
+        self.write("README.md", "[link](alias.txt)")
+        self.write("actual.txt", "target")
+        (self.root / "alias.txt").symlink_to("actual.txt")
+        self.git("add", "README.md", "alias.txt")
+        self.assertEqual(self.run_check("--all-tracked").returncode, 1)
+        self.git("add", "actual.txt")
+        self.assertEqual(self.run_check("--all-tracked").returncode, 0)
+
+    def test_relative_symlink_document_cannot_read_untracked_source(self):
+        self.git("init", "-q", "-b", "main")
+        self.write("source.txt", "No links here")
+        (self.root / "note.md").symlink_to("source.txt")
+        self.git("add", "note.md")
+        result = self.run_check("--all-tracked")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("symlink document target is not present", result.stdout)
+        self.git("add", "source.txt")
+        result = self.run_check("--all-tracked")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_new_host_symlink_document_fails_even_if_target_exists(self):
+        self.git("init", "-q", "-b", "main")
+        source = self.write("local.txt", "a locally readable document")
+        (self.root / "host.md").symlink_to(source)
+        self.git("add", "host.md")
+        result = self.run_check("--all-tracked", "--json", "report.json")
+        self.assertEqual(result.returncode, 1)
+        report = json.loads((self.root / "report.json").read_text())
+        self.assertIn("host-bound symlink", report["read_errors"]["host.md"])
+
+    def test_pinned_historical_symlink_never_reads_target_and_detects_changes(self):
+        self.git("init", "-q", "-b", "main")
+        source = self.write("local.txt", "[must never be opened](missing.md)")
+        link = self.root / "host.md"
+        link.symlink_to(source)
+        self.git("add", "host.md")
+        self.write("data/doc-link-baseline.json", json.dumps({"known_broken": [],
+            "known_host_symlink_documents": [{"document": "host.md", "symlink_target": str(source),
+                "symlink_sha256": hashlib.sha256(str(source).encode()).hexdigest()}]}))
+        for remove_target in (False, True):
+            if remove_target:
+                source.unlink()
+            result = self.run_check("--all-tracked", "--json", "report.json")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads((self.root / "report.json").read_text())
+            self.assertEqual(report["known_host_symlink_documents"], {"host.md": str(source)})
+            self.assertEqual(report["findings"], {})
+        link.unlink()
+        link.symlink_to(self.root / "changed.txt")
+        result = self.run_check("--all-tracked")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("historical symlink identity changed", result.stdout)
+
+    def test_host_symlink_target_is_not_a_portable_link_destination(self):
+        self.git("init", "-q", "-b", "main")
+        source = self.write("tracked.txt", "target")
+        self.write("README.md", "[host-bound link](alias.txt)")
+        (self.root / "alias.txt").symlink_to(source)
+        self.git("add", "README.md", "tracked.txt", "alias.txt")
+        result = self.run_check("--all-tracked", "--json", "report.json")
+        self.assertEqual(result.returncode, 1)
+        report = json.loads((self.root / "report.json").read_text())
+        self.assertEqual(report["findings"]["README.md"][0]["link"], "alias.txt")
+
+
 if __name__ == "__main__":
     unittest.main()
