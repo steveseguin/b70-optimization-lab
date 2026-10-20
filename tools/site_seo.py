@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import html
+from pathlib import Path
 
 SITE = "https://neural.download/"
 SITE_NAME = "neural.download"
@@ -64,6 +65,12 @@ def seo_head(
     depth: int = 0,
 ) -> str:
     """Everything between <title> and the stylesheet, minus JSON-LD."""
+    # New model pages may precede their individual preview card. Share the
+    # existing site card until the model card is present, rather than a 404.
+    if image.startswith(SITE + "models/cards/"):
+        card = Path(__file__).resolve().parent.parent / image.removeprefix(SITE)
+        if not card.is_file():
+            image, image_alt = DEFAULT_IMAGE, DEFAULT_IMAGE_ALT
     description = clip(description)
     return f"""<meta name="description" content="{esc(description)}">
 {favicon_links(depth)}
