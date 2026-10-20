@@ -1,0 +1,363 @@
+{
+  "at": "2026-10-20T04:09:53.547607+00:00",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "scope": "Restore three owner-requested daily endpoints after approved validation window, one launch each, no restart policy. No benchmark or image qualification claimed. FP8 launcher warmups passed; vision bounded text probe returned READY.",
+  "units": [
+    {
+      "unit": "qwen38-27b-fp8",
+      "port": 18130,
+      "properties": "Restart=no\nMainPID=2483664\nKillMode=process\nSendSIGKILL=no\nId=qwen38-27b-fp8.service\nActiveState=active\nSubState=running\nActiveEnterTimestamp=Tue 2026-10-20 00:00:34 EDT\n",
+      "models": {
+        "object": "list",
+        "data": [
+          {
+            "id": "qwen38-27b-fp8",
+            "object": "model",
+            "created": 1792469393,
+            "owned_by": "vllm",
+            "root": "/model",
+            "parent": null,
+            "max_model_len": 32768,
+            "permission": [
+              {
+                "id": "modelperm-94054852b1a8be55",
+                "object": "model_permission",
+                "created": 1792469393,
+                "allow_create_engine": false,
+                "allow_sampling": true,
+                "allow_logprobs": true,
+                "allow_search_indices": false,
+                "allow_view": true,
+                "allow_fine_tuning": false,
+                "organization": "*",
+                "group": null,
+                "is_blocking": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "unit": "qwen38-27b-fp8-tp1-test",
+      "port": 18131,
+      "properties": "Restart=no\nMainPID=2484941\nKillMode=process\nSendSIGKILL=no\nId=qwen38-27b-fp8-tp1-test.service\nActiveState=active\nSubState=running\nActiveEnterTimestamp=Tue 2026-10-20 00:03:49 EDT\n",
+      "models": {
+        "object": "list",
+        "data": [
+          {
+            "id": "qwen38-27b-fp8",
+            "object": "model",
+            "created": 1792469393,
+            "owned_by": "vllm",
+            "root": "/model",
+            "parent": null,
+            "max_model_len": 32768,
+            "permission": [
+              {
+                "id": "modelperm-9aad174dbef24930",
+                "object": "model_permission",
+                "created": 1792469393,
+                "allow_create_engine": false,
+                "allow_sampling": true,
+                "allow_logprobs": true,
+                "allow_search_indices": false,
+                "allow_view": true,
+                "allow_fine_tuning": false,
+                "organization": "*",
+                "group": null,
+                "is_blocking": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "unit": "qwen38-27b-vision",
+      "port": 18100,
+      "properties": "Restart=no\nMainPID=2486934\nKillMode=process\nSendSIGKILL=no\nId=qwen38-27b-vision.service\nActiveState=active\nSubState=running\nActiveEnterTimestamp=Tue 2026-10-20 00:08:10 EDT\n",
+      "models": {
+        "models": [
+          {
+            "name": "qwen38-27b-vision",
+            "model": "qwen38-27b-vision",
+            "modified_at": "",
+            "size": "",
+            "digest": "",
+            "type": "model",
+            "description": "",
+            "tags": [
+              ""
+            ],
+            "capabilities": [
+              "completion",
+              "multimodal"
+            ],
+            "parameters": "",
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "",
+              "families": [
+                ""
+              ],
+              "parameter_size": "",
+              "quantization_level": ""
+            }
+          }
+        ],
+        "object": "list",
+        "data": [
+          {
+            "id": "qwen38-27b-vision",
+            "aliases": [
+              "qwen38-27b-vision"
+            ],
+            "tags": [],
+            "object": "model",
+            "created": 1792469393,
+            "owned_by": "llamacpp",
+            "meta": {
+              "vocab_type": 2,
+              "n_vocab": 248320,
+              "n_ctx": 262144,
+              "n_ctx_train": 262144,
+              "n_embd": 5120,
+              "n_params": 27320697856,
+              "size": 18654756864,
+              "ftype": "Q5_K - Small"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "fp8_readiness": {
+    "18130": {
+      "state": {
+        "schema": "neural.download.fp8-tp1-serving-state.v1",
+        "started_at": "2026-10-20T04:00:34.152108+00:00",
+        "owner_pid": 2483664,
+        "container_name": "neural-fp8-tp1-cc633b0ccd234e65",
+        "container_id": "274594e14576db0f1ec5956912f0cd0580e1583f36f1b5fc54f0090749c12e55",
+        "image_id": "sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
+        "local_image_id": "sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
+        "model": "qwen38-27b-fp8",
+        "profile": "recommended",
+        "model_dir": "/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7",
+        "state_dir": "/home/steve/inference/qwen38-27b-fp8-card0-20261020-restore",
+        "port": 18130,
+        "status": "ready",
+        "ready_at": "2026-10-20T04:03:32.972505+00:00"
+      },
+      "models": {
+        "object": "list",
+        "data": [
+          {
+            "id": "qwen38-27b-fp8",
+            "object": "model",
+            "created": 1792469290,
+            "owned_by": "vllm",
+            "root": "/model",
+            "parent": null,
+            "max_model_len": 32768,
+            "permission": [
+              {
+                "id": "modelperm-ab0f4c35253f8d36",
+                "object": "model_permission",
+                "created": 1792469290,
+                "allow_create_engine": false,
+                "allow_sampling": true,
+                "allow_logprobs": true,
+                "allow_search_indices": false,
+                "allow_view": true,
+                "allow_fine_tuning": false,
+                "organization": "*",
+                "group": null,
+                "is_blocking": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "18131": {
+      "state": {
+        "schema": "neural.download.fp8-tp1-serving-state.v1",
+        "started_at": "2026-10-20T04:03:49.426534+00:00",
+        "owner_pid": 2484941,
+        "container_name": "neural-fp8-tp1-009c5ea1bce64af1",
+        "container_id": "78a98c3cbeb316368524aba09cd5fa2866f08fc6756dd555144c556d2f88ced2",
+        "image_id": "sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
+        "local_image_id": "sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
+        "model": "qwen38-27b-fp8",
+        "profile": "recommended",
+        "model_dir": "/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7",
+        "state_dir": "/home/steve/inference/qwen38-27b-fp8-card3-20261020-restore",
+        "port": 18131,
+        "status": "ready",
+        "ready_at": "2026-10-20T04:06:58.208707+00:00"
+      },
+      "models": {
+        "object": "list",
+        "data": [
+          {
+            "id": "qwen38-27b-fp8",
+            "object": "model",
+            "created": 1792469290,
+            "owned_by": "vllm",
+            "root": "/model",
+            "parent": null,
+            "max_model_len": 32768,
+            "permission": [
+              {
+                "id": "modelperm-99e62e9a33853116",
+                "object": "model_permission",
+                "created": 1792469290,
+                "allow_create_engine": false,
+                "allow_sampling": true,
+                "allow_logprobs": true,
+                "allow_search_indices": false,
+                "allow_view": true,
+                "allow_fine_tuning": false,
+                "organization": "*",
+                "group": null,
+                "is_blocking": false
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "vision_readiness": {
+    "at": "2026-10-20T04:09:03.627427+00:00",
+    "models": {
+      "models": [
+        {
+          "name": "qwen38-27b-vision",
+          "model": "qwen38-27b-vision",
+          "modified_at": "",
+          "size": "",
+          "digest": "",
+          "type": "model",
+          "description": "",
+          "tags": [
+            ""
+          ],
+          "capabilities": [
+            "completion",
+            "multimodal"
+          ],
+          "parameters": "",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "",
+            "families": [
+              ""
+            ],
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        }
+      ],
+      "object": "list",
+      "data": [
+        {
+          "id": "qwen38-27b-vision",
+          "aliases": [
+            "qwen38-27b-vision"
+          ],
+          "tags": [],
+          "object": "model",
+          "created": 1792469343,
+          "owned_by": "llamacpp",
+          "meta": {
+            "vocab_type": 2,
+            "n_vocab": 248320,
+            "n_ctx": 262144,
+            "n_ctx_train": 262144,
+            "n_embd": 5120,
+            "n_params": 27320697856,
+            "size": 18654756864,
+            "ftype": "Q5_K - Small"
+          }
+        }
+      ]
+    },
+    "kernel": "-- No entries --\n"
+  },
+  "vision_generation": {
+    "at": "2026-10-20T04:09:24.623334+00:00",
+    "request": {
+      "model": "qwen38-27b-vision",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with only the word READY."
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 32,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "READY"
+          }
+        }
+      ],
+      "created": 1792469364,
+      "model": "qwen38-27b-vision",
+      "system_fingerprint": "b1-9fee29e",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 19,
+        "total_tokens": 21,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "id": "chatcmpl-GWDgRtAoWVA1LXjIQMYkR01apOVkGGtu",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 19,
+        "prompt_ms": 663.1370000000001,
+        "prompt_per_token_ms": 34.901947368421055,
+        "prompt_per_second": 28.651696406624872,
+        "predicted_n": 2,
+        "predicted_ms": 116.236,
+        "predicted_per_token_ms": 116.236,
+        "predicted_per_second": 8.603186620324168,
+        "draft_n": 3,
+        "draft_n_accepted": 3
+      }
+    }
+  },
+  "kernel_since_restore": "Oct 20 00:00:00 steve-b70s kernel: audit: type=1400 audit(1792468800.846:245): apparmor=\"DENIED\" operation=\"capable\" class=\"cap\" profile=\"/usr/sbin/cupsd\" pid=2483333 comm=\"cupsd\" capability=12  capname=\"net_admin\"\nOct 20 00:00:02 steve-b70s kernel: audit: type=1400 audit(1792468802.090:246): apparmor=\"DENIED\" operation=\"open\" class=\"file\" profile=\"snap.firmware-updater.firmware-notifier\" name=\"/proc/sys/vm/max_map_count\" pid=2483300 comm=\"firmware-notifi\" requested_mask=\"r\" denied_mask=\"r\" fsuid=1000 ouid=0\nOct 20 00:00:14 steve-b70s kernel: docker0: port 1(vethb739779) entered disabled state\nOct 20 00:00:14 steve-b70s kernel: vethdda414f: renamed from eth0\nOct 20 00:00:14 steve-b70s kernel: docker0: port 1(vethb739779) entered disabled state\nOct 20 00:00:14 steve-b70s kernel: vethb739779 (unregistering): left allmulticast mode\nOct 20 00:00:14 steve-b70s kernel: vethb739779 (unregistering): left promiscuous mode\nOct 20 00:00:14 steve-b70s kernel: docker0: port 1(vethb739779) entered disabled state\nOct 20 00:00:34 steve-b70s kernel: docker0: port 1(veth1a09275) entered blocking state\nOct 20 00:00:34 steve-b70s kernel: docker0: port 1(veth1a09275) entered disabled state\nOct 20 00:00:34 steve-b70s kernel: veth1a09275: entered allmulticast mode\nOct 20 00:00:34 steve-b70s kernel: veth1a09275: entered promiscuous mode\nOct 20 00:00:34 steve-b70s kernel: eth0: renamed from veth8378c72\nOct 20 00:00:34 steve-b70s kernel: docker0: port 1(veth1a09275) entered blocking state\nOct 20 00:00:34 steve-b70s kernel: docker0: port 1(veth1a09275) entered forwarding state\nOct 20 00:03:49 steve-b70s kernel: docker0: port 2(vethb4fd37d) entered blocking state\nOct 20 00:03:49 steve-b70s kernel: docker0: port 2(vethb4fd37d) entered disabled state\nOct 20 00:03:49 steve-b70s kernel: vethb4fd37d: entered allmulticast mode\nOct 20 00:03:49 steve-b70s kernel: vethb4fd37d: entered promiscuous mode\nOct 20 00:03:49 steve-b70s kernel: eth0: renamed from veth9c28876\nOct 20 00:03:49 steve-b70s kernel: docker0: port 2(vethb4fd37d) entered blocking state\nOct 20 00:03:49 steve-b70s kernel: docker0: port 2(vethb4fd37d) entered forwarding state\n",
+  "kernel_fault_regex": "(xe [0-9a-f:.]+|drm\\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|\\bhung\\b|wedged|device lost)|soft lockup",
+  "fault_matches": false,
+  "memory_blocks": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "power_swap_cache_settings_changed": false,
+  "files": {
+    "plan.json": "1e435d4fcddb2a9685ebe6390c81cee0982080f66993d798b7c71e640405a6a6",
+    "serve-term-only.py": "1edd42eafe114f2339280056fe34b4c061a0536407621715cda7a23083ffa8f9",
+    "vision.sh": "c778d2e2c3f8705d5b1c37a4e63c36fe83791fd71490528fb6ef6f97a9681487"
+  }
+}

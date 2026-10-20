@@ -14,11 +14,11 @@ decisions. No inference of permission to reboot or change power/memory settings.
 
 | Lane | Available evidence | Work / remaining gate |
 | --- | --- | --- |
-| Qwen3.8 27B FP8 TP2 | October17 strict/context checks; October19 public-source acceptance passed; separate October7 multi-user and cache profiles | Integrate overlay0.2.0, acceptance bundle, exact measured curves and reproducible commands; keep46.013 on steve-b70s distinct from historical90.3 on Turin; exact-overlay512 synthetic prefill now2164.081tok/s across6requests; clean-host install pending |
-| Flash-Next IQ3 own-runtime TP2 | packet136 short128 record58.798; packet163/165 full512 and512 prefill | Update stale packet44 recipe, bind current evidence and build instructions; native full512 target-oracle/no-loss promotion and portable admission incomplete |
-| Flash-Next IQ3 own-runtime TP1 | packet58as short128 record34.573; packet58aj/165 full512 and512 prefill | Create separate candidate recipe; never assign58as timing to58aj; source build closed:42 translation units + link; device requalification remains pending |
-| Gemma4 Q8 | exact October15 production and candidate prefill JSONs | Publish actual-length production measurements; candidate13–22% kernel improvement remains unshipped without exact build closure; correct headline metric/axes |
-| Nemotron3.5 UD-Q4_K_M | August22 raw suites/logs recovered, hash-bound; only1/12 text-output hashes match between runs | Improve reconstruction recipe/evidence links; strict headline and GPU replay remain deferred, not passed |
+| Qwen3.8 27B FP8 TP2 | October17 strict/context checks; October19 public-source acceptance passed; separate October7 multi-user and cache profiles | Integrated overlay0.2.0, acceptance bundle, exact measured curves and reproducible commands; keep46.013 on steve-b70s distinct from historical90.3 on Turin; exact-overlay512 synthetic prefill now2164.081tok/s across6requests; clean-host install pending |
+| Flash-Next IQ3 own-runtime TP2 | packet136 short128 record58.798; packet163/165 full512 and512 prefill | Replaced stale packet44 recipe, bound current evidence and build instructions; native full512 target-oracle/no-loss promotion and portable admission incomplete |
+| Flash-Next IQ3 own-runtime TP1 | packet58as short128 record34.573; packet58aj/165 full512 and512 prefill | Created separate candidate recipe; never assign58as timing to58aj; source build closed:42 translation units + link; device requalification remains pending |
+| Gemma4 Q8 | exact October15 production and candidate prefill JSONs | Published actual-length production measurements; candidate13–22% kernel improvement remains unshipped without exact build closure; correct headline metric/axes |
+| Nemotron3.5 UD-Q4_K_M | August22 raw suites/logs recovered, hash-bound; only1/12 text-output hashes match between runs | Updated reconstruction recipe/evidence links; strict headline and GPU replay remain deferred, not passed |
 
 Own-runtime current native request loop is sequential; no verified multi-user
 service exists. Context capacity4096 is not a measured curve. Its sealed entry
@@ -45,10 +45,10 @@ All45 local publication workflow commands passed before final device receipts
 and upstream integration; narrow/wide browser, no-script text, chart values and
 copy controls passed. New measurements render as scoped tables, never headlines.
 
-Still to finish: regenerate catalog/model pages/README;
-run repository publication checks and scoped CPU tests; review exact package
-claims and dependencies; commit focused paths on main, push, verify CI and live
-pages. A missing or failed qualification stays visibly pending in the public
+Catalog, model pages and README are regenerated. Focused package commits are
+on main and preserve concurrent ctxkeeper and Pages deployment changes. Final
+post-integration checks, endpoint restoration and live deployment verification
+are recorded below as they complete. A missing or failed qualification stays visibly pending in the public
 recipe. No new benchmark result has been submitted by this continuation.
 
 
@@ -73,3 +73,22 @@ Daily card0 FP8 warmup passed and :18130 was ready at04:03UTC; card3 restoration
 started next. Original profiles/device maps are preserved, with TERM-only cleanup
 and no automatic restart. The [saved restore definition](../data/2026-10-20-model-package-closeout/local-daily-restore-plan.json)
 records the exact commands instead of relying on transient-unit history.
+
+## Final integration and restoration
+
+All47 publication workflow commands passed after integrating concurrent upstream
+changes, with existing PyYAML verified instead of reinstalling it. Pages staging
+unit tests (10) passed. All five changed pages passed at390px and1440px, including
+no-script native measurements, copy controls, exact chart values and anchors.
+The [final check receipt](../data/2026-10-20-model-package-closeout/final-publication-checks.json)
+records each command and exit code. Independent final review found no material
+publication blocker.
+
+All three owner-requested daily endpoints are restored on their original cards
+and ports18130/18131/18100. Each started once, FP8 startup generation passed, and
+vision returned READY to a bounded text probe. No image benchmark was added.
+No new GPU fault, power/memory setting change, restart loop or forced kill.
+See the [restoration receipt](../data/2026-10-20-model-package-closeout/local-daily-restoration-result.json).
+Native quality/portable admission, native context and multi-user measurement,
+FP8 clean-host installation, and owner-deferred Nemotron replay remain open
+research/qualification items. Packaged evidence is not a claim that these passed.

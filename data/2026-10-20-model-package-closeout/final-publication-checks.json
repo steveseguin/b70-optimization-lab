@@ -1,0 +1,384 @@
+{
+  "head": "5306bc0c7eeb4b0ec4eb547d01ba6e21753bb57b",
+  "initial_status": "",
+  "steps": [
+    {
+      "number": 1,
+      "workflow_command": "python3 tools/validate-repro-guides.py",
+      "executed_command": "python3 tools/validate-repro-guides.py",
+      "returncode": 0,
+      "seconds": 1.316,
+      "log": "01.log"
+    },
+    {
+      "number": 2,
+      "workflow_command": "node --test tools/test_guides_browser.cjs",
+      "executed_command": "node --test tools/test_guides_browser.cjs",
+      "returncode": 0,
+      "seconds": 0.414,
+      "log": "02.log"
+    },
+    {
+      "number": 3,
+      "workflow_command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "executed_command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "returncode": 0,
+      "seconds": 1.416,
+      "log": "03.log"
+    },
+    {
+      "number": 4,
+      "workflow_command": "python3 tools/validate-recipe-publication.py",
+      "executed_command": "python3 tools/validate-recipe-publication.py",
+      "returncode": 0,
+      "seconds": 5.672,
+      "log": "04.log"
+    },
+    {
+      "number": 5,
+      "workflow_command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "executed_command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "returncode": 0,
+      "seconds": 0.515,
+      "log": "05.log"
+    },
+    {
+      "number": 6,
+      "workflow_command": "python3 tools/sync-public-result-summary.py --check",
+      "executed_command": "python3 tools/sync-public-result-summary.py --check",
+      "returncode": 0,
+      "seconds": 0.064,
+      "log": "06.log"
+    },
+    {
+      "number": 7,
+      "workflow_command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "executed_command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "returncode": 0,
+      "seconds": 0.064,
+      "log": "07.log"
+    },
+    {
+      "number": 8,
+      "workflow_command": "python3 tools/build-family-pages.py --check",
+      "executed_command": "python3 tools/build-family-pages.py --check",
+      "returncode": 0,
+      "seconds": 0.415,
+      "log": "08.log"
+    },
+    {
+      "number": 9,
+      "workflow_command": "python3 -m unittest tools/test_build_family_pages.py",
+      "executed_command": "python3 -m unittest tools/test_build_family_pages.py",
+      "returncode": 0,
+      "seconds": 1.817,
+      "log": "09.log"
+    },
+    {
+      "number": 10,
+      "workflow_command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "executed_command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "10.log"
+    },
+    {
+      "number": 11,
+      "workflow_command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "executed_command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.032,
+      "log": "11.log"
+    },
+    {
+      "number": 12,
+      "workflow_command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "executed_command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "returncode": 0,
+      "seconds": 0.565,
+      "log": "12.log"
+    },
+    {
+      "number": 13,
+      "workflow_command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "executed_command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.064,
+      "log": "13.log"
+    },
+    {
+      "number": 14,
+      "workflow_command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "executed_command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "returncode": 0,
+      "seconds": 1.316,
+      "log": "14.log"
+    },
+    {
+      "number": 15,
+      "workflow_command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "executed_command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "returncode": 0,
+      "seconds": 0.465,
+      "log": "15.log"
+    },
+    {
+      "number": 16,
+      "workflow_command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "executed_command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.032,
+      "log": "16.log"
+    },
+    {
+      "number": 17,
+      "workflow_command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "executed_command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.164,
+      "log": "17.log"
+    },
+    {
+      "number": 18,
+      "workflow_command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "executed_command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "18.log"
+    },
+    {
+      "number": 19,
+      "workflow_command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "executed_command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "returncode": 0,
+      "seconds": 3.219,
+      "log": "19.log"
+    },
+    {
+      "number": 20,
+      "workflow_command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "executed_command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "20.log"
+    },
+    {
+      "number": 21,
+      "workflow_command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "executed_command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "returncode": 0,
+      "seconds": 1.966,
+      "log": "21.log"
+    },
+    {
+      "number": 22,
+      "workflow_command": "python3 -m unittest tools/test_build_model_pages.py",
+      "executed_command": "python3 -m unittest tools/test_build_model_pages.py",
+      "returncode": 0,
+      "seconds": 0.164,
+      "log": "22.log"
+    },
+    {
+      "number": 23,
+      "workflow_command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "executed_command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "returncode": 0,
+      "seconds": 0.364,
+      "log": "23.log"
+    },
+    {
+      "number": 24,
+      "workflow_command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "executed_command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "24.log"
+    },
+    {
+      "number": 25,
+      "workflow_command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+      "executed_command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+      "returncode": 0,
+      "seconds": 0.064,
+      "log": "25.log"
+    },
+    {
+      "number": 26,
+      "workflow_command": "python3 tools/extract-fp8-one-launch-prefill.py",
+      "executed_command": "python3 tools/extract-fp8-one-launch-prefill.py",
+      "returncode": 0,
+      "seconds": 0.064,
+      "log": "26.log"
+    },
+    {
+      "number": 27,
+      "workflow_command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+      "executed_command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+      "returncode": 0,
+      "seconds": 0.164,
+      "log": "27.log"
+    },
+    {
+      "number": 28,
+      "workflow_command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+      "executed_command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "28.log"
+    },
+    {
+      "number": 29,
+      "workflow_command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+      "executed_command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+      "returncode": 0,
+      "seconds": 0.064,
+      "log": "29.log"
+    },
+    {
+      "number": 30,
+      "workflow_command": "python3 tools/build-model-pages.py",
+      "executed_command": "python3 tools/build-model-pages.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "30.log"
+    },
+    {
+      "number": 31,
+      "workflow_command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "executed_command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "returncode": 0,
+      "seconds": 0.214,
+      "log": "31.log"
+    },
+    {
+      "number": 32,
+      "workflow_command": "python3 tools/check-doc-links.py",
+      "executed_command": "python3 tools/check-doc-links.py",
+      "returncode": 0,
+      "seconds": 0.264,
+      "log": "32.log"
+    },
+    {
+      "number": 33,
+      "workflow_command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "executed_command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "returncode": 0,
+      "seconds": 2.267,
+      "log": "33.log"
+    },
+    {
+      "number": 34,
+      "workflow_command": "python3 -m unittest tools/test_check_doc_links.py",
+      "executed_command": "python3 -m unittest tools/test_check_doc_links.py",
+      "returncode": 0,
+      "seconds": 0.765,
+      "log": "34.log"
+    },
+    {
+      "number": 35,
+      "workflow_command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "executed_command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "returncode": 0,
+      "seconds": 0.364,
+      "log": "35.log"
+    },
+    {
+      "number": 36,
+      "workflow_command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "executed_command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "returncode": 0,
+      "seconds": 1.616,
+      "log": "36.log"
+    },
+    {
+      "number": 37,
+      "workflow_command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "executed_command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.865,
+      "log": "37.log"
+    },
+    {
+      "number": 38,
+      "workflow_command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "executed_command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.264,
+      "log": "38.log"
+    },
+    {
+      "number": 39,
+      "workflow_command": "python3 -B tools/test-restore-source-archives.py",
+      "executed_command": "python3 -B tools/test-restore-source-archives.py",
+      "returncode": 0,
+      "seconds": 0.164,
+      "log": "39.log"
+    },
+    {
+      "number": 40,
+      "workflow_command": "python3 -m unittest tools/test_xccl_probe.py",
+      "executed_command": "python3 -m unittest tools/test_xccl_probe.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "40.log"
+    },
+    {
+      "number": 41,
+      "workflow_command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "executed_command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "41.log"
+    },
+    {
+      "number": 42,
+      "workflow_command": "python3 tools/check-manifest-paths.py",
+      "executed_command": "python3 tools/check-manifest-paths.py",
+      "returncode": 0,
+      "seconds": 0.164,
+      "log": "42.log"
+    },
+    {
+      "number": 43,
+      "workflow_command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "executed_command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "returncode": 0,
+      "seconds": 0.665,
+      "log": "43.log"
+    },
+    {
+      "number": 44,
+      "workflow_command": "pip install --quiet pyyaml",
+      "executed_command": "python3 -c \"import yaml; print(yaml.__version__)\"",
+      "returncode": 0,
+      "seconds": 0.032,
+      "log": "44.log"
+    },
+    {
+      "number": 45,
+      "workflow_command": "python3 tools/check-container-packet.py",
+      "executed_command": "python3 tools/check-container-packet.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "45.log"
+    },
+    {
+      "number": 46,
+      "workflow_command": "python3 -m unittest tools/test_check_container_packet.py",
+      "executed_command": "python3 -m unittest tools/test_check_container_packet.py",
+      "returncode": 0,
+      "seconds": 0.314,
+      "log": "46.log"
+    },
+    {
+      "number": 47,
+      "workflow_command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "executed_command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "returncode": 0,
+      "seconds": 0.264,
+      "log": "47.log"
+    }
+  ],
+  "final_status": "",
+  "passed": true
+}

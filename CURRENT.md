@@ -1,5 +1,25 @@
 # Current Workspace State
 
+**October 20, 04:09 UTC — model recipe closeout validated; all three daily endpoints restored.**
+Five text recipes now carry source/build instructions and scoped measurements:
+Qwen3.8 27B FP8 TP2, Flash-Next own-runtime TP1/TP2, Gemma4 Q8 and Nemotron.
+The FP8 six-request 512-token prompt screen measured median2164.081tok/s;
+its repeated output IDs matched, and the experimental server stopped cleanly.
+All47 publication checks, Pages tests, and phone/desktop browser checks pass.
+Publication is being pushed and checked live; [closeout ledger](notes/2026-10-20-model-package-closeout.md)
+records the exact scope. Native full512 quality, context/multi-user qualification
+and clean-host admission remain pending; Nemotron's replay remains deferred.
+
+The owner-requested daily services are active again on the four-card host:
+`qwen38-27b-fp8` at18130 (card0), `qwen38-27b-fp8-tp1-test` at18131 (card3),
+and `qwen38-27b-vision` at18100 (cards1+2). Both FP8 startup generation checks
+passed; the vision endpoint returned READY to one bounded text probe. Original
+model/device/profile settings are unchanged; cleanup uses a single owned TERM,
+with automatic restart and forced kill disabled. No new kernel GPU fault was
+seen. Memory blocks53–56 remain offline and57 online on boot2cba7160; no
+power, swap or cache settings changed. [Restoration receipt](data/2026-10-20-model-package-closeout/local-daily-restoration-result.json).
+Turin remains under the separate ctxkeeper campaign below; do not disturb it.
+
 **October 20, 03:40 UTC — recipe publication closeout resumed from OMP (owner request; text lanes only).**
 The approved work is finishing optimized-model recipes, measured decode/prefill/
 context/concurrency coverage, and neural.download/README publication. October17
