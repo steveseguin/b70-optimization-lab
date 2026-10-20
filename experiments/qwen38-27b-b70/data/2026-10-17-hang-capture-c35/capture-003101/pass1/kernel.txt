@@ -1,0 +1,81 @@
+Oct 18 00:28:18.850534 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=64460 PROTO=2 
+Oct 18 00:28:53.624369 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=57443 PROTO=2 
+Oct 18 00:29:02.385743 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=53328 PROTO=2 
+Oct 18 00:29:21.838748 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=43141 PROTO=2 
+Oct 18 00:29:41.478216 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=27147 PROTO=2 
+Oct 18 00:29:59.009177 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=50836 PROTO=2 
+Oct 18 00:30:24.849508 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=15151 PROTO=2 
+Oct 18 00:30:40.615336 steve-TURIND8-2L2T kernel: [UFW BLOCK] IN=enp161s0f0np0 OUT= MAC=01:00:5e:00:00:fb:de:2b:32:3d:65:c1:08:00 SRC=192.168.2.26 DST=224.0.0.251 LEN=32 TOS=0x00 PREC=0x00 TTL=1 ID=40609 PROTO=2 
+Oct 18 00:31:00.642744 steve-TURIND8-2L2T kernel: xe 0000:03:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=15, state=0x3
+Oct 18 00:31:00.657832 steve-TURIND8-2L2T kernel: xe 0000:03:00.0: [drm] Tile0: GT0: Timedout job: seqno=78, lrc_seqno=78, guc_id=15, flags=0x20 in python3 [751311]
+Oct 18 00:31:00.657905 steve-TURIND8-2L2T kernel: kworker/u64:5: page allocation failure: order:9, mode:0x40820(GFP_ATOMIC|__GFP_COMP), nodemask=(null),cpuset=/,mems_allowed=0
+Oct 18 00:31:00.657915 steve-TURIND8-2L2T kernel: CPU: 0 UID: 0 PID: 751613 Comm: kworker/u64:5 Tainted: G        W           7.0.0-38-generic #38~24.04.4-Ubuntu PREEMPT(lazy) 
+Oct 18 00:31:00.657922 steve-TURIND8-2L2T kernel: Tainted: [W]=WARN
+Oct 18 00:31:00.657930 steve-TURIND8-2L2T kernel: Hardware name:  TURIND8-2L2T/TURIND8-2L2T, BIOS 10.06 05/09/2025
+Oct 18 00:31:00.657937 steve-TURIND8-2L2T kernel: Workqueue: gt-ordered-wq drm_sched_job_timedout [gpu_sched]
+Oct 18 00:31:00.657943 steve-TURIND8-2L2T kernel: Call Trace:
+Oct 18 00:31:00.657951 steve-TURIND8-2L2T kernel:  <TASK>
+Oct 18 00:31:00.657960 steve-TURIND8-2L2T kernel:  dump_stack_lvl+0x76/0xa0
+Oct 18 00:31:00.657966 steve-TURIND8-2L2T kernel:  dump_stack+0x10/0x20
+Oct 18 00:31:00.657972 steve-TURIND8-2L2T kernel:  warn_alloc+0x171/0x1f0
+Oct 18 00:31:00.657980 steve-TURIND8-2L2T kernel:  __alloc_pages_slowpath.constprop.0+0x609/0xa00
+Oct 18 00:31:00.657987 steve-TURIND8-2L2T kernel:  __alloc_frozen_pages_noprof+0x34a/0x370
+Oct 18 00:31:00.657994 steve-TURIND8-2L2T kernel:  alloc_pages_mpol+0x7e/0x1a0
+Oct 18 00:31:00.658000 steve-TURIND8-2L2T kernel:  ? xe_guc_log_snapshot_alloc+0x10c/0x170 [xe]
+Oct 18 00:31:00.658006 steve-TURIND8-2L2T kernel:  alloc_frozen_pages_noprof+0x5c/0xd0
+Oct 18 00:31:00.658012 steve-TURIND8-2L2T kernel:  ___kmalloc_large_node+0xf8/0x120
+Oct 18 00:31:00.658017 steve-TURIND8-2L2T kernel:  __kmalloc_large_node_noprof+0x24/0xd0
+Oct 18 00:31:00.658024 steve-TURIND8-2L2T kernel:  ? xe_guc_log_snapshot_alloc+0x10c/0x170 [xe]
+Oct 18 00:31:00.658029 steve-TURIND8-2L2T kernel:  __kmalloc_noprof+0x3fe/0x5c0
+Oct 18 00:31:00.658038 steve-TURIND8-2L2T kernel:  xe_guc_log_snapshot_alloc+0x10c/0x170 [xe]
+Oct 18 00:31:00.658044 steve-TURIND8-2L2T kernel:  xe_guc_log_snapshot_capture+0x40/0x1a0 [xe]
+Oct 18 00:31:00.658259 steve-TURIND8-2L2T kernel:  devcoredump_snapshot+0x103/0x1c0 [xe]
+Oct 18 00:31:00.658267 steve-TURIND8-2L2T kernel:  xe_devcoredump+0x128/0x190 [xe]
+Oct 18 00:31:00.658277 steve-TURIND8-2L2T kernel:  ? _dev_notice+0x74/0xa0
+Oct 18 00:31:00.658512 steve-TURIND8-2L2T kernel:  ? schedule_timeout+0x8d/0x110
+Oct 18 00:31:00.658518 steve-TURIND8-2L2T kernel:  guc_exec_queue_timedout_job+0x459/0xd60 [xe]
+Oct 18 00:31:00.658525 steve-TURIND8-2L2T kernel:  ? __pfx_autoremove_wake_function+0x10/0x10
+Oct 18 00:31:00.658531 steve-TURIND8-2L2T kernel:  drm_sched_job_timedout+0x8b/0x1c0 [gpu_sched]
+Oct 18 00:31:00.658537 steve-TURIND8-2L2T kernel:  process_one_work+0x1af/0x430
+Oct 18 00:31:00.658543 steve-TURIND8-2L2T kernel:  worker_thread+0x1bf/0x350
+Oct 18 00:31:00.658549 steve-TURIND8-2L2T kernel:  ? __pfx_worker_thread+0x10/0x10
+Oct 18 00:31:00.658560 steve-TURIND8-2L2T kernel:  kthread+0xfb/0x140
+Oct 18 00:31:00.658566 steve-TURIND8-2L2T kernel:  ? __pfx_kthread+0x10/0x10
+Oct 18 00:31:00.658571 steve-TURIND8-2L2T kernel:  ret_from_fork+0x1f8/0x2b0
+Oct 18 00:31:00.658577 steve-TURIND8-2L2T kernel:  ? __pfx_kthread+0x10/0x10
+Oct 18 00:31:00.658581 steve-TURIND8-2L2T kernel:  ret_from_fork_asm+0x1a/0x30
+Oct 18 00:31:00.658587 steve-TURIND8-2L2T kernel:  </TASK>
+Oct 18 00:31:00.658594 steve-TURIND8-2L2T kernel: Mem-Info:
+Oct 18 00:31:00.658599 steve-TURIND8-2L2T kernel: active_anon:1022015 inactive_anon:1775292 isolated_anon:0
+                                                   active_file:166919 inactive_file:249880 isolated_file:0
+                                                   unevictable:6947 dirty:254 writeback:0
+                                                   slab_reclaimable:69696 slab_unreclaimable:161012
+                                                   mapped:166169 shmem:65125 pagetables:20234
+                                                   sec_pagetables:6418 bounce:0
+                                                   kernel_misc_reclaimable:0
+                                                   free:50567 free_pcp:14170 free_cma:3639
+Oct 18 00:31:00.658607 steve-TURIND8-2L2T kernel: Node 0 active_anon:4088060kB inactive_anon:7101168kB active_file:667676kB inactive_file:999520kB unevictable:27788kB isolated(anon):0kB isolated(file):0kB mapped:664676kB dirty:1016kB writeback:0kB shmem:260500kB shmem_thp:0kB shmem_pmdmapped:0kB anon_thp:0kB kernel_stack:22836kB pagetables:80936kB sec_pagetables:25672kB all_unreclaimable? no Balloon:0kB gpu_active:1363320kB gpu_reclaim:0kB
+Oct 18 00:31:00.658617 steve-TURIND8-2L2T kernel: Node 0 DMA free:13312kB boost:0kB min:72kB low:88kB high:104kB reserved_highatomic:0KB free_highatomic:0KB active_anon:0kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0kB zspages:0kB present:15996kB managed:15360kB mlocked:0kB bounce:0kB free_pcp:0kB local_pcp:0kB free_cma:0kB
+Oct 18 00:31:00.658624 steve-TURIND8-2L2T kernel: lowmem_reserve[]: 0 2362 15555 15555 15555
+Oct 18 00:31:00.658629 steve-TURIND8-2L2T kernel: Node 0 DMA32 free:71988kB boost:0kB min:9844kB low:12304kB high:14764kB reserved_highatomic:0KB free_highatomic:0KB active_anon:613296kB inactive_anon:937148kB active_file:30732kB inactive_file:419152kB unevictable:368kB writepending:68kB zspages:0kB present:2486036kB managed:2419344kB mlocked:368kB bounce:0kB free_pcp:3508kB local_pcp:188kB free_cma:6924kB
+Oct 18 00:31:00.658639 steve-TURIND8-2L2T kernel: lowmem_reserve[]: 0 0 13192 13192 13192
+Oct 18 00:31:00.658648 steve-TURIND8-2L2T kernel: Node 0 Normal free:116968kB boost:0kB min:57664kB low:72080kB high:86496kB reserved_highatomic:0KB free_highatomic:0KB active_anon:3474764kB inactive_anon:6164020kB active_file:636944kB inactive_file:580368kB unevictable:27420kB writepending:948kB zspages:0kB present:13848256kB managed:13509188kB mlocked:24332kB bounce:0kB free_pcp:53172kB local_pcp:2012kB free_cma:7632kB
+Oct 18 00:31:00.658656 steve-TURIND8-2L2T kernel: lowmem_reserve[]: 0 0 0 0 0
+Oct 18 00:31:00.658753 steve-TURIND8-2L2T kernel: Node 0 DMA: 0*4kB 0*8kB 0*16kB 0*32kB 0*64kB 0*128kB 0*256kB 0*512kB 1*1024kB (U) 2*2048kB (UM) 2*4096kB (M) = 13312kB
+Oct 18 00:31:00.658759 steve-TURIND8-2L2T kernel: Node 0 DMA32: 369*4kB (UMC) 470*8kB (UMEC) 410*16kB (UMEC) 309*32kB (UMEC) 64*64kB (UMEC) 31*128kB (MC) 71*256kB (UMC) 43*512kB (UC) 2*1024kB (C) 0*2048kB 0*4096kB = 71988kB
+Oct 18 00:31:00.658766 steve-TURIND8-2L2T kernel: Node 0 Normal: 3430*4kB (UMEC) 3235*8kB (UMEC) 892*16kB (UMEC) 448*32kB (UMEC) 158*64kB (UMEC) 86*128kB (UMEC) 80*256kB (UM) 14*512kB (UM) 0*1024kB 0*2048kB 0*4096kB = 116976kB
+Oct 18 00:31:00.658774 steve-TURIND8-2L2T kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=1048576kB
+Oct 18 00:31:00.658780 steve-TURIND8-2L2T kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+Oct 18 00:31:00.658787 steve-TURIND8-2L2T kernel: 679445 total pagecache pages
+Oct 18 00:31:00.658792 steve-TURIND8-2L2T kernel: 193517 pages in swap cache
+Oct 18 00:31:00.658798 steve-TURIND8-2L2T kernel: Free swap  = 35720580kB
+Oct 18 00:31:00.658802 steve-TURIND8-2L2T kernel: Total swap = 37748728kB
+Oct 18 00:31:00.658808 steve-TURIND8-2L2T kernel: 4087572 pages RAM
+Oct 18 00:31:00.658812 steve-TURIND8-2L2T kernel: 0 pages HighMem/MovableOnly
+Oct 18 00:31:00.658817 steve-TURIND8-2L2T kernel: 101599 pages reserved
+Oct 18 00:31:00.658824 steve-TURIND8-2L2T kernel: 0 pages cma reserved
+Oct 18 00:31:00.658908 steve-TURIND8-2L2T kernel: 0 pages hwpoisoned
+Oct 18 00:31:00.658913 steve-TURIND8-2L2T kernel: Memory cgroup min protection 0kB -- low protection 0kB
+Oct 18 00:31:00.658918 steve-TURIND8-2L2T kernel: xe 0000:03:00.0: [drm] Xe device coredump has been created
+Oct 18 00:31:00.659179 steve-TURIND8-2L2T kernel: xe 0000:03:00.0: [drm] Check your /sys/class/drm/card2/device/devcoredump/data
+Oct 18 00:31:01.102739 steve-TURIND8-2L2T kernel: traps: py-spy[763314] general protection fault ip:7f46b02a7d6c sp:7ffef215c0c0 error:0 in py-spy[a7d6c,7f46b0200000+53f000]

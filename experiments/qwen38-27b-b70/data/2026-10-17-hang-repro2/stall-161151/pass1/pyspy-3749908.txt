@@ -1,0 +1,28 @@
+Process 3749908: /opt/venv/bin/python3 /opt/venv/bin/vllm serve --model /model --served-model-name qwen38-27b-fp8 --host 0.0.0.0 --port 8000 --tensor-parallel-size 2 --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization 0.95 --max-model-len 262144 --block-size 64 --max-num-seqs 1 --max-num-batched-tokens 832 --enable-prefix-caching --mamba-cache-mode align --enable-prompt-tokens-details --language-model-only --speculative-config {"method": "qwen3_next_mtp", "num_speculative_tokens": 5} --compilation-config {"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}} --prefix-cache-retention-interval=13312
+Python v3.12.3 (/usr/bin/python3.12)
+
+Thread 1 (active): "MainThread"
+    run (asyncio/runners.py:118)
+    run (asyncio/runners.py:194)
+    run (uvloop/__init__.py:96)
+    cmd (vllm/entrypoints/cli/serve.py:153)
+    main (vllm/entrypoints/cli/main.py:97)
+    <module> (vllm:10)
+Thread 512 (idle): "MPClientEngineMonitor"
+    select (selectors.py:415)
+    wait (multiprocessing/connection.py:1136)
+    monitor_engine_liveness (vllm/v1/engine/utils.py:263)
+    monitor_engine_cores (vllm/v1/engine/core_client.py:723)
+    run (threading.py:1010)
+    _bootstrap_inner (threading.py:1073)
+    _bootstrap (threading.py:1030)
+Thread 513 (active): "ThreadPoolExecutor-4_0"
+    _worker (concurrent/futures/thread.py:89)
+    run (threading.py:1010)
+    _bootstrap_inner (threading.py:1073)
+    _bootstrap (threading.py:1030)
+Thread 530 (active): "ThreadPoolExecutor-3_0"
+    _worker (concurrent/futures/thread.py:89)
+    run (threading.py:1010)
+    _bootstrap_inner (threading.py:1073)
+    _bootstrap (threading.py:1030)
