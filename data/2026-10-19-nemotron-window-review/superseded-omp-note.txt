@@ -1,0 +1,46 @@
+# 2026-10-19 — Nemotron stock-headline window: wedged by Gemma auto-restore, deferred
+
+**Status: not run. Deferred by owner. Do not retry without the preconditions below.**
+
+## What happened
+
+A strict-headline replay window for `nemotron35-lightning-udq4km-tp1` (prereg
+`data/2026-08-27-neural-download-stock-headline-closure-prereg.json`, profile `nemotron35-lightning-udq4km-tp1`,
+pinned runtime `~/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31`) was attempted on turin
+around 22:35–22:44 EDT:
+
+1. Owner's ctx stack (`ctx-fp8-tp2-server`, `ctx-keeper-proxy`, `ctx-campaign49b`) was stopped with owner approval.
+2. The runner's no-model-process gate (`pgrep -f 'llama-(server|bench|batched-bench)|vllm'`) false-positives on
+   turin's **earlyoom** daemon, whose `--prefer` regex lists `vllm`. earlyoom was stopped with sudo.
+3. At 22:24 `ctx-campaign49b` was stopped; its script
+   (`experiments/qwen38-27b-b70/scripts/longrun-campaign37.sh`) **restores the Gemma quad LAN service on exit**
+   (line ~515, `gemma4-26b-two-b70-recipe.sh`). Gemma backends began loading at 22:39:09.
+4. At 22:39:35 the Nemotron llama-server scope started on SYCL0 while Gemma quad backends were claiming the same
+   cards → xe driver wedge → **turin hard-rebooted ~22:44** (journal ends without panic lines).
+5. Boot default auto-started the enabled `gemma4-26b-q8-quad-backends/frontdoor` system services and earlyoom;
+   the ctx stack (transient user units) did not survive the reboot.
+
+No evidence was produced; the partial attempt dir was deleted. r1a/r1b remain **not run** — any future
+reporting must not cite this window.
+
+## Preconditions for the next attempt (all required)
+
+1. `sudo systemctl mask --now gemma4-26b-q8-quad-backends.service gemma4-26b-q8-quad-frontdoor.service`
+   (stop is not enough: the campaign exit path and boot both restart them; unmask after the window).
+2. `sudo systemctl stop earlyoom` (gate false positive; restart after).
+3. Stop `ctx-fp8-tp2-server`, `ctx-keeper-proxy` first; stop `ctx-campaign49b` **last and expect it to
+   re-enable Gemma on exit** — re-mask after stopping it, or stop it before masking.
+4. Verify `pgrep -af 'lla[m]a-(server|bench|batched-bench)|vll[m]'` is empty and both `/dev/dri/renderD128/129`
+   are idle before launching the runner.
+5. Launch the runner under `systemd-run --user` or `nohup` — a foreground ssh run dies with the session.
+
+## Turin restoration state (after the window)
+
+- `ctx-fp8-tp2-server` restored on port 18196, receipt dir `.../tp2-w262144-s2-xp-mtp5-p832-c49b-a3`
+  (a2 was the crashed session; the launcher requires a fresh `--out`).
+- `ctx-keeper-proxy` restored on port 18200, state-dir `.../proxy-state/c49b-K32C-hostile2mk-s2`, serving.
+- `ctx-campaign49b` **not** restored: its transient unit's environment (`RUN`, `QUEUE`, `SUDO_ASKPASS`, …) was
+  lost in the reboot and the script's receipt-dir guard aborts on existing dirs. Relaunch via the owning
+  session/tooling with the original env.
+- Gemma quad services are **stopped** and must stay stopped while the FP8 server holds both cards
+  (`--mem 0.95` TP2); starting them concurrently caused the wedge above.
