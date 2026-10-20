@@ -101,7 +101,7 @@ for full-512 results or promoted through an incomplete quality gate.
 
 | Updated text recipe | Decode observations | Prefill / context / concurrency coverage |
 | --- | --- | --- |
-| [27B FP8 TP2](packages/qwen38-27b-fp8-tp2-b70/README.md) | Current-host acceptance 46.013 tok/s; historical Turin 90.3 tok/s | Exact overlay screens 2K–32K; separate validated multi-user profile through 64 requests |
+| [27B FP8 TP2](packages/qwen38-27b-fp8-tp2-b70/README.md) | Current-host acceptance 46.013 tok/s; historical Turin 90.3 tok/s | 512-input synthetic prefill 2164.081 tok/s (six requests); separate overlay screens 2K–32K and validated multi-user profile through 64 requests |
 | [Flash-Next IQ3 own runtime TP1](repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md) | Full 512 cap 31.510–31.782 tok/s, two loads | 512 / native TTFT reading 32.595–32.752 tok/s; context curve absent; one request at a time |
 | [Flash-Next IQ3 own runtime TP2](repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md) | Full 512 cap 58.557–58.632 tok/s, two loads | 512 / native TTFT reading 75.884–75.973 tok/s; context curve absent; one request at a time |
 | [Gemma 4 Q8](packages/gemma4-26b-a4b-q8-b70/README.md) | Qualified 122.160357 tok/s; existing record | Separate production prefill 1307.54/1167.81/909.27 tok/s at 1867/7623/29400 actual tokens; faster kernel remains unshipped |

@@ -63,7 +63,25 @@ Reading speed is input tokens divided by the server's first-execution-to-first-t
 duration, aggregated by the same class medians. It is not HTTP TTFT or isolated
 kernel throughput. [2K–16K measurements](../../experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json) and
 [24K–32K measurements](../../experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json) retain every row and repeat.
-A 512-token reading measurement for this exact overlay remains pending.
+The [October 20 512-token screen](../../data/2026-10-20-fp8-one-launch-prefill/summary.json)
+measured **2,164.081 input tokens/s** on `steve-b70s` with the current
+recommended overlay 0.2.0 (range **2,128.151–2,197.159** across six requests).
+This is the median of all six one-request server prefill histogram rates:
+two repeats each of synthetic prose, code and documents, one persistent
+server, MTP5, 33,024-token capacity, exact 512-token inputs, zero cached
+tokens and 128 forced output tokens (`ignore_eos`). Full numeric outputs
+matched within each repeated class; this screen has no no-MTP oracle and
+adds no quality attestation or strict headline. It is separate from the
+turin context curve and from both the historical **90.3 tok/s** pair and
+latest **46.013 tok/s** strict acceptance. HTTP TTFT includes passive
+request-admission checks and is retained separately from server prefill.
+The [91-file evidence packet](../../data/2026-10-20-fp8-one-launch-prefill/README.md)
+contains every request, SSE stream, histogram, pinned source snapshot and
+clean SIGTERM shutdown receipt. Verify it without starting a server:
+
+```bash
+python3 tools/extract-fp8-one-launch-prefill.py
+```
 
 Verify the current acceptance packet without starting a server:
 

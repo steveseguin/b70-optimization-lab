@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Run an existing FP8 service unchanged except for owned TERM-only cleanup."""
+import fcntl
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sys
+import time
+
+source = Path(sys.argv[1])
+expected_sha256 = sys.argv[2]
+if hashlib.sha256(source.read_bytes()).hexdigest() != expected_sha256:
+    raise SystemExit('Saved launcher source changed; no launch attempted')
+spec = importlib.util.spec_from_file_location('daily_fp8', source)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+
+def stop_owned(state, record):
+    with (state / 'stop.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        receipt = state / 'stop-request.json'
+        if receipt.exists():
+            return
+        identity = record.get('container_id')
+        if not identity:
+            raise RuntimeError('No saved container identity; refusing signal')
+        container = module.inspect_container(identity)
+        if container is None:
+            module.write_json(receipt, dict(at=module.now(), container_id=identity, already_absent=True))
+            return
+        module.owned(record, container)
+        module.write_json(receipt, dict(at=module.now(), container_id=identity, signal='TERM', escalation=False))
+        if container['State']['Running']:
+            result = module.run(['docker', 'kill', '--signal=TERM', identity], check=False, timeout=30)
+            (state / 'stop.log').write_text(result.stdout + result.stderr)
+            if result.returncode:
+                raise RuntimeError('Single TERM request failed; no retry')
+        deadline = time.monotonic() + 180
+        while time.monotonic() < deadline:
+            container = module.inspect_container(identity)
+            if container is None or not container['State']['Running']:
+                module.write_json(state / 'graceful-stop.json', dict(at=module.now(), stopped=True, escalation=False))
+                return
+            module.owned(record, container)
+            time.sleep(2)
+        module.write_json(state / 'graceful-stop.json', dict(at=module.now(), stopped=False, operator_action_required=True))
+        raise RuntimeError('Container remains alive after TERM; no KILL or restart')
+
+module.stop_owned = stop_owned
+sys.argv = [str(source)] + sys.argv[3:]
+sys.exit(module.main())

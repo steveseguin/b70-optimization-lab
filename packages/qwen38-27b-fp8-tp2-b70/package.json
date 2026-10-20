@@ -599,6 +599,11 @@
     "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/manifest.json",
     "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/evidence.tar.gz",
     "experiments/qwen38-27b-b70/notes/2026-09-17-clean-host-replay-plan.md",
+    "data/2026-10-20-fp8-one-launch-prefill/README.md",
+    "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+    "data/2026-10-20-fp8-one-launch-prefill/manifest.json",
+    "data/2026-10-20-fp8-one-launch-prefill/evidence.tar.gz",
+    "tools/extract-fp8-one-launch-prefill.py",
     "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/source-drift.json",
     "tools/source_drift_proofs.py"
   ],
@@ -1821,5 +1826,77 @@
       "speed_promoted": false,
       "evidence": "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json"
     }
+  },
+  "text_measurements": {
+    "scope": "October 20 synthetic screen on steve-b70s, two selected B70s, one persistent server, recommended FP8 overlay 0.2.0, MTP5, one user, 33024-token capacity. Six requests: two repeats each of prose/code/docs, exact 512 input tokens, 128 forced output tokens (ignore_eos), zero cached tokens. Reading is input tokens / one-request server prefill histogram duration, not isolated kernel throughput or HTTP TTFT. Writing uses 99 intervals between tokens 1 and 100 from SSE arrival timestamps. TTFT includes the passive request-admission guard. Warmups are excluded. Full output IDs match within each repeated class; no no-MTP oracle comparison was made. These observations are not a new headline or quality promotion and do not pool with turin measurements.",
+    "evidence": "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+    "rows": [
+      {
+        "label": "Prose repeat 1",
+        "status": "synthetic ignore_eos screen; no new quality attestation",
+        "evidence": "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+        "decode_tok_s": 56.40117071277592,
+        "prefill_tok_s": 2128.1513553457826,
+        "prefill_input_tokens": 512,
+        "ttft_ms": 255.94148301752284,
+        "response_cap": 128,
+        "samples": 1
+      },
+      {
+        "label": "Code repeat 1",
+        "status": "synthetic ignore_eos screen; no new quality attestation",
+        "evidence": "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+        "decode_tok_s": 65.07921475388468,
+        "prefill_tok_s": 2145.6665800940664,
+        "prefill_input_tokens": 512,
+        "ttft_ms": 252.9148139874451,
+        "response_cap": 128,
+        "samples": 1
+      },
+      {
+        "label": "Docs repeat 1",
+        "status": "synthetic ignore_eos screen; no new quality attestation",
+        "evidence": "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+        "decode_tok_s": 59.46534163588857,
+        "prefill_tok_s": 2167.605084113441,
+        "prefill_input_tokens": 512,
+        "ttft_ms": 252.17346899444237,
+        "response_cap": 128,
+        "samples": 1
+      },
+      {
+        "label": "Prose repeat 2",
+        "status": "synthetic ignore_eos screen; no new quality attestation",
+        "evidence": "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+        "decode_tok_s": 56.96186445903894,
+        "prefill_tok_s": 2165.258628232991,
+        "prefill_input_tokens": 512,
+        "ttft_ms": 266.1846049595624,
+        "response_cap": 128,
+        "samples": 1
+      },
+      {
+        "label": "Code repeat 2",
+        "status": "synthetic ignore_eos screen; no new quality attestation",
+        "evidence": "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+        "decode_tok_s": 65.15271954779571,
+        "prefill_tok_s": 2162.9027828632634,
+        "prefill_input_tokens": 512,
+        "ttft_ms": 251.4634319813922,
+        "response_cap": 128,
+        "samples": 1
+      },
+      {
+        "label": "Docs repeat 2",
+        "status": "synthetic ignore_eos screen; no new quality attestation",
+        "evidence": "data/2026-10-20-fp8-one-launch-prefill/summary.json",
+        "decode_tok_s": 59.80754656462309,
+        "prefill_tok_s": 2197.1585271100416,
+        "prefill_input_tokens": 512,
+        "ttft_ms": 247.8239299962297,
+        "response_cap": 128,
+        "samples": 1
+      }
+    ]
   }
 }
