@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 20 — Flash-Next result discovery corrected.** The native one-/two-card
+recipes were live but absent from the homepage table. Both now have explicit lab
+measurement rows, and the two-card result is linked near the top and in the
+Flash-Next section. The family summary no longer implies four-card-only support.
+Quality and portability gaps remain visible; no result was promoted or rerun,
+and no serving state changed.
+
 **October 20, 04:09 UTC — model recipe closeout validated; all three daily endpoints restored.**
 Five text recipes now carry source/build instructions and scoped measurements:
 Qwen3.8 27B FP8 TP2, Flash-Next own-runtime TP1/TP2, Gemma4 Q8 and Nemotron.
