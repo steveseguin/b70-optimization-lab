@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 20, 11:15 EDT — ctxkeeper 1.2.0 is the stable release (Latest); campaign 50 gate passed.** c50c ran
+the registered G1-G4 against the public prerelease assets: G1 repair through the pip wheel **40/40 fixed, 40/40
+clean, 7/7 audit, 12 min 18 s**; G2 the 300K demo through the Docker image built from the public source archive
+**4/4**; G3 the README SDK snippet **all three contracts**; G4 Gemma 100K **4/4**. Kernel log clean; cards left
+empty. c50b's G1 failure (one empty `shell {"command": ""}` from the model ending freeagent's run at ticket
+37/44) did not repeat on byte-identical installs and is recorded as a client fragility, not a keeper regression
+(the proxy's empty-reply retry condition is unchanged since 1.0.1). The release notes carry the gate results;
+skindeep.ai/context-use.html now offers 1.2.0 as the stable download. Full record: campaign-50 section of
+`notes/2026-10-10-context-16k-baseline.md`; receipts under `context-longrun-20261012/c50c/`.
+
 **October 20, 10:35 EDT — ctxkeeper 1.2.0 prerelease published; release gate (campaign 50) running.** Version
 aligned at 1.2.0 (pyproject, `__version__`, README, Dockerfile URLs); 112 unit tests and the notesdelta sync
 check pass. Wheel + flat source archive built and published as **prerelease `ctxkeeper-v1.2.0`** with the six

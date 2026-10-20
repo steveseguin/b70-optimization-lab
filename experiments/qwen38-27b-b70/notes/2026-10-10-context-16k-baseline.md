@@ -3332,3 +3332,18 @@ are `scripts/ctxkeeper-release-gate.sh` and `scripts/ctxkeeper-release-gate-chec
   content), and an empty-arguments tool call passes it in both; c19c/c20b never emitted one. The gate sequence
   stops on a failed check as registered. Rerun once, unchanged artifacts, as **c50c**: variance check on a rare
   model slip; if it repeats, the release decision changes.
+
+- **c50c (10:47-11:12), same artifacts as c50b: the gate is met, all four checks.** Server ready cleanly; kernel
+  log clean; cards left empty at the end (Gemma loaded in transient units for G4 and stopped after).
+
+| Check | Registered | Result (c50c) |
+| --- | --- | --- |
+| G1 freeagent + pip-installed 1.2.0, `--recipe qwen` only, repair-n40-s2x | fixed 40/40, clean >= 38, audit >= 6, <= 45 min | **40/40, clean 40/40 (R1 38/38, R2 33/33, R3 27/27), audit 7/7, 12 min 18 s**; proxy 6/6 in-place cuts, none failed |
+| G2 `long_chat.py` 300K through the Docker image built from the public source archive | 4/4 | **4/4** (304,552 tokens); 24 cuts, none failed |
+| G3 README OpenAI SDK snippet through the pip install | plain + tool call + stream in SDK types | **all three contracts passed** (G3-sdk.json retains the responses) |
+| G4 Gemma 4 26B Q8 on llama.cpp, 100K demo, `--recipe agent --budget 15360` | no bar | **4/4** (101,671 tokens) |
+
+  c50b's G1 failure does not repeat with byte-identical installs: one empty `shell {"command": ""}` from the
+  model at ticket 37/44 ended that run (freeagent's final-words rule); the proxy's empty-reply retry has the
+  same condition since 1.0.1 and an empty-arguments tool call passes it in both. Recorded as a known client
+  fragility, not a keeper regression. **1.2.0 promoted from prerelease to stable (Latest) on these results.**
