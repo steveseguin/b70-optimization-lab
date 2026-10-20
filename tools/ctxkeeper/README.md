@@ -140,6 +140,10 @@ lists every file's SHA-256.
 
 ## Quick start
 
+The managed Chat Completions path currently requires an upstream reachable without an API key.
+Client Authorization headers are not forwarded on that path; use `api_key="unused"` as an SDK placeholder.
+Keep this unauthenticated proxy on localhost or a trusted private network.
+
 1. Run a model server that speaks the OpenAI API and accepts at least 32K tokens per request (more is fine; the
    proxy keeps each request under its window). For example vLLM on port 8000.
 2. Start the proxy in front of it:
@@ -174,7 +178,7 @@ Python with the official SDK:
 
 ```python
 from openai import OpenAI
-client = OpenAI(base_url="http://127.0.0.1:18200/v1", api_key="unused")   # the key is passed on to your server
+client = OpenAI(base_url="http://127.0.0.1:18200/v1", api_key="unused")   # SDK placeholder for an unauthenticated local server
 reply = client.chat.completions.create(model="your-model", messages=history)
 ```
 
