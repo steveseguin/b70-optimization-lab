@@ -1607,3 +1607,12 @@ about 3.2 hours.
   was stopped before seed 2's client started, seed 2's server was stopped gracefully once ready (08:09), and the
   cards now serve the TP2 package (below in `CURRENT.md`). Campaign 49 is resumed from scratch (both seeds) when
   the owner frees the cards.
+
+## Campaign 49 resumed (c49b, 20:17 EDT): the owner freed the cards; written 2026-10-19 20:20 EDT
+
+- The owner freed the cards at 20:16 ("you can free the existing cards; stop the existing service"): `systemctl
+  --user stop qwen27b-lan qwen27b-fp8`, both inactive; host memory back from 2 to 13 GiB available, no process on
+  either card. The serving units stay down; the runner restores Gemma at the end, as after every campaign.
+- Relaunch: `RUN=c49b`, the same `QUEUE49.txt` (both seeds from scratch; the morning's partial seed 0 stays under
+  `runs/c49/`), `KEEPER_VERSION=1.2.0.dev10`, `LEAN_CLIENT=1`, unit `ctx-campaign49b`, same runner. The registered
+  predictions and decision above stand for c49b.
