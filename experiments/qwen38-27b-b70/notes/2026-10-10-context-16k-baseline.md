@@ -3315,3 +3315,11 @@ The quality bars and workloads are unchanged. G1 and G2 also require a nonempty 
 cut counters, so a passing answer score alone cannot stand in for evidence that context management ran.
 Failed-cut counts are recorded, not assigned an additional quality threshold. The runner and receipt checker
 are `scripts/ctxkeeper-release-gate.sh` and `scripts/ctxkeeper-release-gate-check.py`; 15 CPU-only gate tests pass.
+
+#### Campaign 50 attempts, 2026-10-20 EDT
+
+- **c50 (10:21): failed in preflight before any card work.** The fresh gate venv held only the release wheel;
+  line 170 (`import openai`, the G3 client library) failed. No server was started; cleanup status 0; receipts
+  under `context-longrun-20261012/c50/`. The README's SDK section already tells users to `pip install openai`.
+- **c50b (10:24): relaunched** with the OpenAI SDK (3.35.1) added to the same venv (wheel installed from the
+  public prerelease URL, hashes matching SHA256SUMS). Running.

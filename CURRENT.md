@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 20, 10:35 EDT — ctxkeeper 1.2.0 prerelease published; release gate (campaign 50) running.** Version
+aligned at 1.2.0 (pyproject, `__version__`, README, Dockerfile URLs); 112 unit tests and the notesdelta sync
+check pass. Wheel + flat source archive built and published as **prerelease `ctxkeeper-v1.2.0`** with the six
+assets of 1.1.0's layout and SHA256SUMS. Public-URL verification passed: fresh-venv pip install of the wheel URL
+reports 1.2.0 with installed-module hashes matching the sums; `docker build` from the archive URL runs 1.2.0.
+First gate attempt c50 failed preflight (venv lacked the `openai` SDK that G3 needs; no cards touched);
+relaunched as **c50b** with the SDK added — G1 repair running at 10:24. skindeep.ai/context-use.html now carries
+the campaign-49 both-seed results and the prerelease status (stable download stays 1.1.0 until the gate passes).
+
 **October 20 — homepage layout cleanup.** The Flash-Next lab-result link now
 has its own callout. Native result rows use consistent card badges and show the
 quality limitation once; their measured ranges are excluded from scalar speed
