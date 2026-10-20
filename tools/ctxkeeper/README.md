@@ -27,7 +27,7 @@ Measured on Qwen3.8-27B (FP8, served by vLLM on two Intel Arc Pro B70 cards), wi
 | **Real code repair**: 40 bugs to fix in a real Python library, handed out one ticket at a time, with three house rules announced along the way, then questions about the earliest fixes | **40/40 fixed, 40/40 following every rule, 7/7 questions right**, in 16 min (`--recipe qwen`); 36-38 min (`--recipe agent`); both with `--recite-when` for the tickets | Sliding 32K window: 22 to 35 of 40 clean, 0/7 questions. Summarizing the history: 33 to 40 of 40, 0 to 7 of 7 |
 | **The same task with a separate agent program** that manages nothing itself ([freeagent](../freeagent/freeagent.py)) | **40/40, 40/40, 7/7 in 33 min**, reading 2.9M prompt tokens; at release, with `--recipe qwen` and no other option: **40/40, 40/40, 7/7 in 31 min** | The same agent sending everything into a 262K window: same score, 55 min, 29.9M prompt tokens |
 | **Memory over 1M tokens**: 228 questions about things said up to a million tokens earlier | **226/228 (99%)** in 50 min | A 200K window: 166/228 (73%), every one of 29 standing-rule questions wrong, 228 min |
-| **2M tokens with planted traps** (values that change and change back, corrections, pronouns) | **351/382 (92%)**, 0 of 12 traps fell for | (not run: no window holds it) |
+|**2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream|seed 2 **414/423, every forgery target kept, 16/16 corrections applied**; seed 0 **416/423**, two targets and one correction lost to a single model mix-up (the keeper fault behind it fixed in this version)|(not run: no window holds it)|
 
 ## Tested before release
 
@@ -84,6 +84,37 @@ Full record, every run and what went wrong: the lab note
 (campaigns 10 to 20, the agents in campaign 20, data in
 [`data/2026-10-15-context-campaign20/`](../../experiments/qwen38-27b-b70/data/2026-10-15-context-campaign20/)) and
 [HISTORY.md](HISTORY.md). One model, one machine: see [Limits](#limits).
+
+## Which model do I need?
+
+Everything above was measured on **Qwen3.8-27B** (official FP8, vLLM, one or two Intel Arc Pro B70 cards). One smoke
+test also passed on **Gemma 4 26B** (Q8_0 GGUF, llama.cpp): the demo below, 4/4, at a 15,360-token view
+(`--recipe agent --budget 15360`). Any current model of that class should work if it:
+
+- **calls a tool reliably when the answer is not in view** — the only tool is `recall`, a text search over the
+  archived turns;
+- **can keep a simple notes layout** (RULES / STATE / OPEN, changes-only updates with the working shown);
+- sits behind a server that **accepts at least ~33K tokens a request** (the default view is 32K, reply included;
+  the proxy keeps every request under it).
+
+Practical guidance, measured on the Qwen setup unless noted:
+
+- **Let the model keep its own notes.** A separate, smaller keeper (LFM2.5-24B-A2B Q8 on a second card) was worse
+  and slower: 19/39 in 38 min on the 240K stream, where the main model scored 39/39 in 16, and only 20 of 40
+  rule-clean on the repair task. It reads every turn afresh; the main model re-reads its own cached view. The
+  second-model options (`--notes-upstream` and friends) are for trying other keepers, not for production.
+- **View size:** 32K is the default and about the fastest (24K-48K tie on question streams). The repair-task floor
+  is ~16K (at 12K a house rule slipped). Below 16K the notes no longer fit beside the newest turns; add
+  `--inplace-fit` (10 min at 12K, 13 min at 8K, 81 and 84 of 85 answers over two streams). A bigger view is only
+  slower: the model re-reads more each turn.
+- **Thinking:** fine for the agent's turns; `--recipe qwen` pins `reasoning_effort: medium` so the notes calls keep
+  the same prompt and come from the server's cache (91% of notes tokens served from cache). Notes themselves are
+  written without thinking.
+- **Server features:** turn the server's prefix cache on — it does most of the notes work. With speculative
+  decoding (MTP) keep notes in line (the default): background notes were correct but 8% slower there. Without
+  speculative decoding, on a server running two requests at once, `--notes-async defer --prewarm` saved 14-18%.
+- **One card is enough:** the same repair score in 21 min (two cards: 16).
+- Measured with one conversation at a time. Separate conversations keep separate state, locks and archives.
 
 ## Install
 
@@ -255,8 +286,9 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 - **Measured with one model family on one machine** (Qwen3.8-27B FP8, vLLM, Intel Arc Pro B70). Gemma 4 26B on
   llama.cpp passed one smoke test (the demo, 4/4). Other models should work if they call tools reliably and can
   follow the notes format; that has not been measured.
-- **The notes are written by the model, so they can be wrong.** On the hardest test (2M tokens with traps) about
-  1 in 130 notes lines was silently wrong; on the 1M test, 1 in 1,435. The archive keeps the original text, so a
+- **The notes are written by the model, so they can be wrong.** On the hardest test (2M tokens with forged notices
+  and retroactive corrections) 1 to 5 counter lines of 8,500-17,100 were silently wrong in a run; on the 1M test,
+  1 in 1,435. The archive keeps the original text, so a
   wrong note can be found and fixed by a search, but nothing guarantees the model looks. In the twelve-agent test,
   one notes line wrongly said seven questions had never been asked; the agent (pi) believed it and deleted the
   answers it had already written.
@@ -269,14 +301,33 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
-**Unreleased** (lab, 2026-10-17): `--upstream-retries N` (default 0, off) with `--upstream-wait SECONDS` (default
+**1.2.0** (2026-10-19): fixes from the two-million-token hostile campaigns (39-49), and new options.
+
+Keeper faults fixed, on by default, each found by a recorded 2M run: a CHANGES line that opens with its item
+(`(item 820) jami27: ...`) is read as that name's change, not as a new name (142 stray lines in campaign 48); a full
+rewrite that drops a STATE name the moved-out turns do not mention puts it back; a CHANGES line listing several
+entries of its own is no longer questioned part by part (the answer-list flood of campaign 47); a NOTES line that
+states no number of its own no longer replaces a number the NOTES hold; and with `--notes-checks near`, an amount
+found by an archive search counts as stated.
+
+New options, off by default: `--lookups` (a notes line that waits on an archived item, is doubted, or works an
+amount out from one is asked again with what the item says), `--cited-entries` (a turn that cites an archived item
+for a name gets what the item says shown in the notes request), `--notes-upto` (the NOTES heading says up to which
+item the STATE runs), `--sum-check` (a reply whose working has a false multiplication step is asked for once more,
+with the step named), `--upstream-retries` with `--upstream-wait` (send a failed call again once the server is
+healthy, for servers a supervisor restarts). The per-step record of each is kept below.
+
+Default behaviour otherwise is unchanged: with the new options off, the only differences from 1.1.0 are the fault
+fixes above.
+
+**1.2.0 development** (lab, 2026-10-17): `--upstream-retries N` (default 0, off) with `--upstream-wait SECONDS` (default
 900): when the model server fails a call (no answer, or HTTP 5xx), the proxy polls the server's `/health` until it
 answers 200 and sends the same call again, at most N times; a refusal (HTTP 4xx) is passed on as before. For long
 tasks on a server that may be restarted under them (for example by a supervisor after a GPU fault): a greedy call
 to an exact server gets the answer the failed one would have had, so the task loses only the time. Not measured
 yet on a real restart.
 
-Unreleased (1.2.0.dev0, 2026-10-17), a new option, off by default: `--lookups` (with `--notes-mode inplace` and
+Development (1.2.0.dev0, 2026-10-17), a new option, off by default: `--lookups` (with `--notes-mode inplace` and
 `--recall-label`). A CHANGES line that says it waits on an archived entry (`amount not yet known, must recall item
 32`) is asked again, once per cut. The question shows what that item says about the name: each sentence that names
 it, with the next one, word for word. The note checks count what is shown as stated, as they do an archive
@@ -381,14 +432,14 @@ versions of the NOTES, in both campaigns. `--lookups` could not help: it asks ab
 and there was no such line. On the two campaign-48 runs the option would show 16 entries per run, one for each
 audit and each the one the audit cites, about 1,700 characters in all.
 
-Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
+Also in 1.2.0 (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
 replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the
 last item number (5) and the line was asked again. Lab campaign 31: a counter that waited on an archive search was
 reversed twice that way. Only for a STATE value that is a plain number; descriptions (`contains lines for tickets 10
 and 11`) are written as before. A replay of 29,272 saved lines changed only those lines.
 
-Also unreleased (1.1.1.dev0, 2026-10-17): with `--notes-checks near`, an amount the model took from an archive search
+Also in 1.2.0 (1.1.1.dev0, 2026-10-17): with `--notes-checks near`, an amount the model took from an archive search
 counts as stated. The proxy keeps the text of its latest searches (up to 120,000 characters, in memory) as evidence
 for the amount check only, never as a mention of a name. Before, a correct line worked out from a recalled entry was
 "an amount the turns do not state" and was left out. Lab campaign 30: an audit naming only the item of the entry it

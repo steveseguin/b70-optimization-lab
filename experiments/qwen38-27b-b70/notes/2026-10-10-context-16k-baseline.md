@@ -3286,3 +3286,24 @@ server folder that launch left; neither ran a request. Records `c24c-stopped.log
 - What the fix opens beyond ctxkeeper: a multi-user server with drafting **and** prefix caching (agents, multi-turn
   chat) now passes the two-request check; the 2-16-user drafting sweep was run without prefix caching, so a sweep with
   it is the next measurement before any claim.
+
+### Campaign 50, registered 2026-10-19 before any run: the release gate for ctxkeeper 1.2.0
+
+The gate of campaign 19 (the release gate for 1.0.0), rerun for 1.2.0: **what the README tells a user to run**,
+installed the way a user installs it (pip from the public GitHub release into a fresh venv; the Docker image built
+from the release's source archive), against the research server of the campaigns (two-card FP8, 262K window, recipe
+unchanged), once campaign 49b's cards are free. Gemma stays stopped for it and is restored after.
+
+- **G1, freeagent + `ctxkeeper --recipe qwen`, nothing else**, on `repair-n40-s2x` (the campaign-19 G1 bar):
+  expected fixed 40/40, clean 38 or more, audit 6 or more, 45 minutes or less. If clean falls under 38, the README
+  recommends `--recite-when` for tasks whose instructions arrive in tool results, and says what was lost without it.
+- **G2, `examples/long_chat.py` through the Docker image** (`--recipe qwen`, client thinking off), 300,000 tokens:
+  more than the server's own 262K window. Expected 4/4 checks.
+- **G3, the README's OpenAI SDK snippet** through the pip-installed proxy: one plain reply, one tool call and one
+  streamed reply come back in the SDK's types.
+- **G4, after the server is down:** Gemma 4 26B Q8 on llama.cpp (the LAN service, `balanced` recipe), the demo at
+  100,000 tokens through `--recipe agent --budget 15360`. No quality bar (a smoke test of a second model family);
+  4/4 expected as in campaign 19, and Gemma returns to `throughput` afterwards.
+
+1.2.0 carries the 2M hostile-campaign fixes (Changes in `tools/ctxkeeper/README.md`); the gate exists because the
+release's own checks are the only ones run exactly as a user runs them.
