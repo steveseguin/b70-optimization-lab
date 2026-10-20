@@ -14,7 +14,7 @@ your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (
                           shows a bounded view
 ```
 
-Development version 1.2.0.dev10 (latest stable release: 1.1.0) · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
+Version 1.2.0 (previous release: 1.1.0) · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
 `ctxkeeper.py`, `notesdelta.py`) · in plain words: <https://skindeep.ai/context-use.html>
 
 ## Does it work?
@@ -26,7 +26,7 @@ Measured on Qwen3.8-27B (FP8, served by vLLM on two Intel Arc Pro B70 cards), wi
 | **Real code repair**: 40 bugs to fix in a real Python library, handed out one ticket at a time, with three house rules announced along the way, then questions about the earliest fixes | **40/40 fixed, 40/40 following every rule, 7/7 questions right**, in 16 min (`--recipe qwen`); 36-38 min (`--recipe agent`); both with `--recite-when` for the tickets | Sliding 32K window: 22 to 35 of 40 clean, 0/7 questions. Summarizing the history: 33 to 40 of 40, 0 to 7 of 7 |
 | **The same task with a separate agent program** that manages nothing itself ([freeagent](../freeagent/freeagent.py)) | **40/40, 40/40, 7/7 in 33 min**, reading 2.9M prompt tokens; at release, with `--recipe qwen` and no other option: **40/40, 40/40, 7/7 in 31 min** | The same agent sending everything into a 262K window: same score, 55 min, 29.9M prompt tokens |
 | **Memory over 1M tokens**: 228 questions about things said up to a million tokens earlier | **226/228 (99%)** in 50 min | A 200K window: 166/228 (73%), every one of 29 standing-rule questions wrong, 228 min |
-| **2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream | On 1.2.0.dev10, seed 0: **421/423, every forgery target kept, 16/16 corrections applied**. The second seed on this version is pending after interrupted runs. On dev9, the two seeds scored 414/423 and 416/423. | (not run: no window holds it) |
+| **2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream | On 1.2.0, both seeds (lab campaign 49, hash-bound public audits): **421/423 and 417/423, 16/16 corrections applied on both seeds**; every forged line the notes carried was flagged, and no forged value, method, rule or removal was ever adopted. Two of 97 forgery-target answers slipped on silent arithmetic (the notes held the right value throughout), so the lab's strictest preregistered bar is not claimed. On dev9, the two seeds scored 414/423 and 416/423. | (not run: no window holds it) |
 
 The hostile test uses task-specific settings (K32C), including notes thinking, archive labels, rule matching,
 lookups, cited entries and arithmetic checks. It is not a measurement of the default `--recipe qwen` settings.
@@ -121,26 +121,26 @@ Practical guidance, measured on the Qwen setup unless noted:
 
 ## Install
 
-Pick one. All three come from the [1.1.0 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.1.0)
+Pick one. All three come from the [1.2.0 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.2.0)
 (small files; nothing clones the lab's large repository):
 
 ```bash
-R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.1.0
+R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.2.0
 
 # 1. pip (gives you the `ctxkeeper` command)
 python3 -m venv .venv-ctxkeeper
 . .venv-ctxkeeper/bin/activate
-python -m pip install "$R/ctxkeeper-1.1.0-py3-none-any.whl"
+python -m pip install "$R/ctxkeeper-1.2.0-py3-none-any.whl"
 
 # 2. Docker (builds the image from the 90 KB source archive)
-docker build -t ctxkeeper $R/ctxkeeper-1.1.0.tar.gz
+docker build -t ctxkeeper $R/ctxkeeper-1.2.0.tar.gz
 
 # 3. just the two files (run with python3 ctxkeeper.py ...)
 curl -LO $R/ctxkeeper.py
 curl -LO $R/notesdelta.py
 ```
 
-The source archive `ctxkeeper-1.1.0.tar.gz` also holds the demo below, the tests and this README; the release page
+The source archive `ctxkeeper-1.2.0.tar.gz` also holds the demo below, the tests and this README; the release page
 lists every file's SHA-256.
 
 ## Quick start
@@ -164,7 +164,7 @@ Keep this unauthenticated proxy on localhost or a trusted private network.
    codename, a budget and a standing rule at the start, and asks about them at the end.
 
    ```bash
-   R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.1.0
+   R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.2.0
    curl --fail --location --output long_chat.py "$R/long_chat.py"
    python3 long_chat.py --base-url http://127.0.0.1:18200/v1
    ```
@@ -325,7 +325,9 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
-**1.2.0 (in development)**: fixes from the two-million-token hostile campaigns (39-49), and new options.
+**1.2.0** (2026-10-20): fixes from the two-million-token hostile campaigns (39-49), and new options. Both 2M
+seeds were rerun on it as lab campaign 49: 421/423 and 417/423, 16/16 corrections applied on both seeds, with
+hash-bound public audits.
 
 Keeper faults fixed, on by default, each found by a recorded 2M run: a CHANGES line that opens with its item
 (`(item 820) jami27: ...`) is read as that name's change, not as a new name (142 stray lines in campaign 48); a full

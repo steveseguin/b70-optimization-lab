@@ -1,5 +1,5 @@
 # ctxkeeper in a container: standard library only, so the image is just Python and two files.
-#   docker build -t ctxkeeper https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.1.0/ctxkeeper-1.1.0.tar.gz
+#   docker build -t ctxkeeper https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.2.0/ctxkeeper-1.2.0.tar.gz
 #   docker run --rm --network host -v ctxkeeper-state:/state ctxkeeper --recipe agent --upstream http://127.0.0.1:8000
 FROM python:3.12-slim
 WORKDIR /app
