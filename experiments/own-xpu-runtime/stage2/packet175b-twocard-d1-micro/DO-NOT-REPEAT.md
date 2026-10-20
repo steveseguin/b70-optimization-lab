@@ -23,3 +23,4 @@ Checked before work (see `evidence/do-not-repeat-search.txt`):
 
 | Arm | Outcome | Evidence | Revisit condition |
 | --- | --- | --- | --- |
+| D1 same-bit scale-word multicast in the dense lane (one owner load per 32-word chunk + select_from_group; packet175 harness, real packet166 M1 launch order + 256 MiB interposer) | packet175b device micro: weighted dense GEMV B/A 1.0665 > 0.97 (reduction -6.65%); changed-site B/A per layer L0 1.0766, L3 1.1429; paired p10/p90 per layer L0 0.9915/1.1079, L3 1.0906/1.0963. Evidence /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/d1-micro-B1. | Native evidence of a scale-load issue stall in the dense lane AND a different multicast mechanism with a measured dense GEMV B/A <= 0.97. |

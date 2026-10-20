@@ -56,7 +56,8 @@ def main():
    else:sources[str(Path(arg).relative_to(ROOT))]=sha(arg)
   assert sorted(replaced)==sorted(stems),(replaced,stems)
   commands.append(run(link,mode+'-link'));artifacts[str((dest/'own-rt-iq3').relative_to(P))]=sha(dest/'own-rt-iq3')
- for f in [*P.glob('native/*'),*P.glob('native-src/*'),*LOCAL.glob('*.hpp'),*LOCAL.glob('*.cpp'),*LOCAL.joinpath('build/checked').rglob('*'),P/'prepare_sources.py',P/'build_engine.py',P/'source-copy-provenance.json']:
+ native=[P/'native'/name for name in ('engine_bracket.hpp','draft_bracket.hpp','bracket_boundary.hpp')]
+ for f in [*native,*P.glob('native-src/*'),*LOCAL.glob('*.hpp'),*LOCAL.glob('*.cpp'),*LOCAL.joinpath('build/checked').rglob('*'),P/'prepare_sources.py',P/'build_engine.py',P/'source-copy-provenance.json']:
   if f.is_file():sources[str(f.relative_to(ROOT))]=sha(f)
  sources.update(json.loads((P/'source-copy-provenance.json').read_text())['sources'])
  save(P/'engine-commands.json',commands)

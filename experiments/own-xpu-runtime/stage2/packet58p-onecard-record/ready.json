@@ -1,11 +1,43 @@
 {
   "schema": "packet58p.ready.v1",
-  "passed": false,
-  "ready": false,
+  "passed": true,
+  "ready": true,
   "device_executed": false,
   "chain_command": "systemd-run --user --unit=packet58-onecard-58p-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH\" /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58p-onecard-record/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/fault-review-58p.json < /dev/null",
   "coordinator_only": true,
   "launch_performed": false,
-  "command_status": "proposed; refuses until fresh receipt verification passes",
-  "reason": "58n receipts pending or invalid: ValueError: incomplete/wrong-view screen"
+  "command_status": "ready for coordinator; live admission and fault review still required",
+  "exact_prompts": [
+    12,
+    12,
+    12
+  ],
+  "rates": [
+    20.793904287612392,
+    26.16236538440502,
+    21.017146335091887
+  ],
+  "gains": [
+    0.25817475268416984,
+    0.24481054503209454
+  ],
+  "control_drift": 0.010735937051152389,
+  "screen_sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-before/queue.json": "d07744c9eaf4b5c2c615c3ecc506f03b4135c216333119e15b09b362bfa418e6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-before/K1a/window.json": "6adc0f28c301b1ef581deac2703ab44130fc85a600e7f4532186940ed567a7f8",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-before/K1b/window.json": "333f828e89e9d8b087d4b7494baf0dad25178da567316157ffc72849df27c9c8",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-before/WSCREEN/window.json": "8a501c3527553f1a60cfe2225c9020c9d3dd725d2340ffb3eb800b119dfec51e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/down-tile16/queue.json": "aeaf741a08897ce15a5fa0e45681827e9a447cca221faa4b4764b1cf81665d31",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/down-tile16/K1a/window.json": "37f0c8d86ce40a9e9403a9c47d2953bf48a49258d629b4874acefd189f92ab39",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/down-tile16/K1b/window.json": "99b64ba02960816aa5285305fde2c4f4be817c1be633d44c2da04d022ad41fd6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/down-tile16/WSCREEN/window.json": "188f0a98fe0eabfc8628c6ac618c5a0f17070496b3f6d70c07e26a9aa5d6bdec",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-after/queue.json": "98ee7eb3f1d11a6037d6d0d4ea467fa89e1c543439ade67dc78ac1c2b19357d9",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-after/K1a/window.json": "14f922194c88a8373c4e1e4884867dedef8c94a93d45bd1d29a31a37e7717585",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-after/K1b/window.json": "689e64f3d286254f05b1679477df409284f9e4b428e13a40438bac01017681ca",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/evidence/card0-loo-a/production-after/WSCREEN/window.json": "1f4efeee48c7bbc67203c18dd689fa07337c42be02a4d3cffe19cbf7ba088e58"
+  },
+  "screen_build_sha256": "338055881a685e3c09a066e6ba2832e4de36a9be486bc4280c94f450474fc411",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "build_receipt_sha256": "e8a68448e60b995b7f76e3c31f3063adb7af4caf7c0e955e328f16450a8f8672",
+  "submission_pins_sha256": "76184bb013ea9e527602c0370b9ac8229aacdbd71d143b6c4e5d3ca4d94f606e"
 }

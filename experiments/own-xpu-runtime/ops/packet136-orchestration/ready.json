@@ -1,6 +1,6 @@
 {
   "schema": "packet136.ready.v1",
-  "ready": false,
+  "ready": true,
   "device_executed": false,
   "evidence_rule": "identical-native-selection-both-v4-lanes-v1",
   "decision": "experiments/own-xpu-runtime/ops/packet136-orchestration/decisions/087f9da3c434e862.json",
@@ -97,5 +97,271 @@
   "proposal_plan_sha256": "7f6e78285292009a2c6e8590d950b6d0dc4ed7c328897b1e7c60e2873ebf2290",
   "confirm_entries_sha256": "7c268f9270866e1f34797f3308fbf936cab93b0bf0b6b2b316039c2a399b7684",
   "cpu_preparation_ready": true,
-  "reason": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle: REFUSED: pending A composed 12x64 smoke\n; /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle: REFUSED: pending A grid 0: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control\n"
+  "smoke": {
+    "result": {
+      "passed": true,
+      "kind": "smoke",
+      "request_count": 12,
+      "max_new": 64
+    },
+    "selection_sha256": "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+    "window_sha256": "ebeabf8924716dad15c8ebb4ab624d6fdf750ca27bdddafc977c1acb9f7c7141",
+    "evidence_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-smoke12"
+  },
+  "composition": {
+    "passed": true,
+    "lanes": {
+      "A": {
+        "passed": true,
+        "ratio": 1.0077577630560213,
+        "control_drift_percent": 0.041241576827477644,
+        "acceptance_counts": [
+          {
+            "prompt_id": "incident-retrospective",
+            "hits": 96,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "code-review",
+            "hits": 99,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "customer-email",
+            "hits": 96,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "hits": 103,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "release-plan",
+            "hits": 98,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "hits": 101,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "hits": 107,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "hits": 83,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "technical-guide",
+            "hits": 107,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "risk-register",
+            "hits": 108,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "hits": 94,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "decision-memo",
+            "hits": 101,
+            "guesses": 127
+          }
+        ],
+        "selection_sha256": "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+        "evidence_path": "experiments/own-xpu-runtime/stage2/packet136-record-bundle",
+        "window_sha256": [
+          "d47eeded710347a26fcf6adb7e75dbb90a38ac6a2144e77ca781315570540608",
+          "c7077c500ce83c85390b02cf32337753d779a4a144c475d57eca565077756754",
+          "b9ea467b080ccb1213afb7b79b5ab71d4250fed119aa78bf7f743d3743ed3ea5",
+          "62145774b55fa1add6508db0eca32295f4e912f28ce8bdb2c630bcffa8c3fa79",
+          "9d35794cd2a85fd4b56037b06524aa42e6ea7d6e1f425668ba117e3f8b09fffe"
+        ],
+        "summary_sha256": {
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control/run/report-inputs.json": "421fae365762e31b933fafab61573d5289a6fd6b11028600ebd7be7dd362c839",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control/run/teardown.json": "469243de313b76bc4cfe5936e84b4e8f71c4a715e3b70828f8a462bdd51a401f",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control/run/device-isolation.json": "589ab46c84e662ba080a3ef19143d20d41c3987bece1ca808a668df2ab5d9138",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control/run/summary.json": "88bb5646d4f6fd80a2807800249d4bad749616da53f4c84bccf5ebd596d1d030",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control/identity.json": "185be46e727cfa2eeeeecfb50d4afe7fde07cb5224481f8f69692a05993e1730",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control/run/incident64/receipt.json": "aaad189cb6f5fbfe4386f1b06086e8a37f84e6657df598bbec925b4b67d2e203",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-1-candidate/run/report-inputs.json": "61092f47b3de202e7062aeefec6aece625f97dc927dd206e9e7a403ce4e524f8",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-1-candidate/run/teardown.json": "58b385756fb36f09cc77cac31cb3880d43c4ac96e0ef3309dd5621dc4f7d0542",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-1-candidate/run/device-isolation.json": "95acb7f914641fe30aa49fa17350857ddd2a840a22fb0086b4f94692ecb3b8f1",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-1-candidate/run/summary.json": "ba9ca45ff1ac2eff2d52c437fc19a09765f0c5163f1438475a710858646a5b58",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-1-candidate/identity.json": "ee70bd12b75be05d5c21f3f4aa9ffab92c52d03a0bfb8af6122998390aefd408",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-1-candidate/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-1-candidate/run/incident64/receipt.json": "1d26355ad5323368e272915621459e0edad153f24f5fcf07f2e70da4cb9d4412",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-2-control/run/report-inputs.json": "62e40ff62681474a3e90b7a2482c81354f9d48df9a387e16b49795e617f79adc",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-2-control/run/teardown.json": "507f359d877a5d2215c74bdc132dc03678aee518a78b7a31c25d33a356f785bd",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-2-control/run/device-isolation.json": "f46550462aa523f89b46e335224d1ce73aa350b8b495d2aa9db7347c59738af9",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-2-control/run/summary.json": "471bf4a61499d1beae20871b3a4e2468f40247f66804657c18bc7bca86938678",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-2-control/identity.json": "185be46e727cfa2eeeeecfb50d4afe7fde07cb5224481f8f69692a05993e1730",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-2-control/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-2-control/run/incident64/receipt.json": "83dc6358436b60ea2758e00f2ff8cc1f9b92303a769e68dd4fb461a8c298778c",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-3-candidate/run/report-inputs.json": "eaa03e0460c250ee2a7e1d8e44717c764e72ad22b601761eeb7be1f9e2796b9c",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-3-candidate/run/teardown.json": "2979ebb03a244271662d0918713afb38a887c9afde8d5c486f8eb750ccb1af10",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-3-candidate/run/device-isolation.json": "69f7142001af722b652e2544ce711f3f510edacdc29d827358b9674a8ea3724b",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-3-candidate/run/summary.json": "da5c4fca8509ad5feb5254633cd01f07d16a75e8b855c7670c83900ed90bfd37",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-3-candidate/identity.json": "ee70bd12b75be05d5c21f3f4aa9ffab92c52d03a0bfb8af6122998390aefd408",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-3-candidate/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-3-candidate/run/incident64/receipt.json": "8ebf5b62ba1b12fccfc58013327d3c4c40d2f34cc246249c37b5685df20f0362",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-4-control/run/report-inputs.json": "5e7a93ca09b9f7ea7b56966a35b0ebc84277650e2647c2183a834ac2d8a640c2",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-4-control/run/teardown.json": "32d703c662f7e9839727a58bc140f128f5dd2c8a4508890d6745a6a3a5060b00",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-4-control/run/device-isolation.json": "88f16351b7be00bee60c013e622259ec5c30b747f1071e0a4c332c7da4dfff49",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-4-control/run/summary.json": "e239a48aad477c8352558a9c11baa7ac11f39df6eea29d279c5645efe7f98605",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-4-control/identity.json": "185be46e727cfa2eeeeecfb50d4afe7fde07cb5224481f8f69692a05993e1730",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-4-control/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-4-control/run/incident64/receipt.json": "57558664691a692fb26aea9410f5a1f532189847d4ffc33390f955aee0b3e1f2"
+        }
+      },
+      "B": {
+        "passed": true,
+        "ratio": 1.0080805454993929,
+        "control_drift_percent": 0.10749195233541453,
+        "acceptance_counts": [
+          {
+            "prompt_id": "incident-retrospective",
+            "hits": 96,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "code-review",
+            "hits": 99,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "customer-email",
+            "hits": 96,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "hits": 103,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "release-plan",
+            "hits": 98,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "hits": 101,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "hits": 107,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "hits": 83,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "technical-guide",
+            "hits": 107,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "risk-register",
+            "hits": 108,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "hits": 94,
+            "guesses": 127
+          },
+          {
+            "prompt_id": "decision-memo",
+            "hits": 101,
+            "guesses": 127
+          }
+        ],
+        "selection_sha256": "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+        "evidence_path": "experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks",
+        "window_sha256": [
+          "d48219f651eeb674d9e490468e93047cdefa56bf3eb2d5b55d32782598373682",
+          "4796772fcdef5531c64467df6107a3c6ae17b0d37cabb1f283968c519eba780f",
+          "8fe98f912aa38243e053e95a70518f8997f71116edd231b193b12b13cd57cee3",
+          "f34b1973c6adefe4647427700cfbc11701811c6d7159e107332d42dc793e1232",
+          "1edcdc0408815c548baae48e419460bb22b195337a80ee8e35c4c270fb4f834c"
+        ],
+        "summary_sha256": {
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-0-control/run/report-inputs.json": "c8e028209d6bfa0db8eb7444c77f63e382c0ac3476c619dc9aca1c69d908187d",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-0-control/run/teardown.json": "07aadf91f8b800cd859bfaea5bd57b1e65e1fee028cbfaa4495178c39ac069d0",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-0-control/run/device-isolation.json": "3ce2e72457a79ff9f09d24be36d71287a478b7b1a86cad2b6a2651edf7f983d8",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-0-control/run/summary.json": "ff8ed1e340d567c77d6ce6c09c114399a4e34ef76e139168a84c53141f095366",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-0-control/identity.json": "18bfa305c710f771c7be8f3f412c602afbabd10c9a5b653ad98cc9a52183c704",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-0-control/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-0-control/run/incident64/receipt.json": "d106d42d06a3834cc2e357304aec5afb56a1ba197f3298a71018abed98d7b3eb",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-1-candidate/run/report-inputs.json": "e2abfc905f719300bd0dc256c5289ea1e414bc6283d804b35d928f94dc5d6fe9",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-1-candidate/run/teardown.json": "ad8759b517f782a8fa63d4a7ee569917932cf0564189f9a9a0006253635c9f00",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-1-candidate/run/device-isolation.json": "7053f8820fd3621d4c447a430287dbbc367d8c87ade038213858aaf2dbbcf100",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-1-candidate/run/summary.json": "267da9af2f4ea48f295e36984edd3a0e60099dd3ccdc2acae7ec7279d8b10184",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-1-candidate/identity.json": "31c4e30a45d8916cb63d4b10ccd692273b5932d98e399157dfe72311c98e8737",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-1-candidate/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-1-candidate/run/incident64/receipt.json": "25d226e8d0c0f6a1ac7c1ddc64609893ee606c0b1fc7b5abee6d6fb17b4f9d31",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-2-control/run/report-inputs.json": "30a16f778d333ec67aa4aa36d2b1fd205d77f3b0015f3f098adf7aeb8e0c45dd",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-2-control/run/teardown.json": "d5f86314d44301199bba98add4ef89bbc2a36fd8f26d85e10afb9adab5bcdee5",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-2-control/run/device-isolation.json": "d22ef3eb562b4feadabda7a2978ea6c5fda8c1d43ea41057f7150bed16723b03",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-2-control/run/summary.json": "d522101a3b561cae808499d3bfe9548981ad243f3dd031b7e30b5ba481a9a549",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-2-control/identity.json": "18bfa305c710f771c7be8f3f412c602afbabd10c9a5b653ad98cc9a52183c704",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-2-control/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-2-control/run/incident64/receipt.json": "a8d5aa7e513f5773595a9fec85e44e2802685f9ab313144bc31d034c961c5a82",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-3-candidate/run/report-inputs.json": "a522616294781f0137e6fb9d445fb66e74a9876310080e16c940962665ad3fd4",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-3-candidate/run/teardown.json": "7bab10c5b30a5841f6201d682453fc863f65c0925cf6a37b0a6c743d59f08182",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-3-candidate/run/device-isolation.json": "f1be1be5e91ad0c3c65d5172adc3cbb9662722aec30634cf5844c87ca3c6f0fc",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-3-candidate/run/summary.json": "7ef8a149d38b11545ad15dc780452449af979208b86c5a4c911d6840e4167f4f",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-3-candidate/identity.json": "31c4e30a45d8916cb63d4b10ccd692273b5932d98e399157dfe72311c98e8737",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-3-candidate/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-3-candidate/run/incident64/receipt.json": "93aff0f6b984da473987995fe82d1b3b661f7f5ffac5031984bec65ac3eba779",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-4-control/run/report-inputs.json": "80082dd9a4d6ee3787fd573e5be351122f30a0bbae2d3a4a7ba7e018dc7a4795",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-4-control/run/teardown.json": "58dc3cefbf69ec1c2d09d795fb8b2d8ba8342195fed95c2e52e5f0caf1dd704b",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-4-control/run/device-isolation.json": "bfe4cc693d310ff2e18bc5b05b38804db9c2f1fa236d6864e19480b5679ebe40",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-4-control/run/summary.json": "d5c08f5bd88d1f8e32a66edbae427bf3cc7340928f62bc17a7318561bd5f5cc8",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-4-control/identity.json": "18bfa305c710f771c7be8f3f412c602afbabd10c9a5b653ad98cc9a52183c704",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-4-control/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+          "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p131b-e5cfcb55493f-B-4-control/run/incident64/receipt.json": "769df56c83a0aa258dcde382d820088a7fe4a28dc0421a557a00c3a94900df0a"
+        }
+      }
+    },
+    "threshold_ratio": 1.005
+  },
+  "storage": {
+    "passed": true,
+    "device_executed": false,
+    "root_free_bytes": 35551395840,
+    "required_free_bytes": 31956735309,
+    "margin_bytes": 3594660531,
+    "build_bytes": 190069171,
+    "build_budget_bytes": 1200000000,
+    "retained_build_bytes": 190069171,
+    "retained_build_fits": true,
+    "cpu_build_peak_limit_bytes": 250000000,
+    "free_floor_bytes": 25000000000,
+    "parent_model_reserve_bytes": 0,
+    "parent_model_maximum_reserve_bytes": 0,
+    "oracle_growth_reserve_bytes": 0,
+    "early_retained_limit_bytes": 128000000,
+    "own_chain_peak_bytes": 5946804480,
+    "full_chain_uncompressed_bytes": 10582804480
+  },
+  "pins": {
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/build-receipt.json": "fa9cf3d1372cecfc7c75d30814e6f2ba5138b410e45ff0f140d25da9a823e975",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/submission-pins.json": "e9e08e4a419e86f6f6dd3c76b48bd449e11d34a3c0138713182187e2954b7ab7",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/startup103.json": "5c9548956d2f01f2031a8829f31f8a6333c437eb061c6470fc2a3ad8033e3e35"
+  }
 }

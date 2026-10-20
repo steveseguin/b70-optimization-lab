@@ -2,7 +2,7 @@
 #define main p121_unused_model_entry
 #include "../native-src/main.cpp"
 #undef main
-static std::string canonical(Engine& e,const std::vector<uint8_t>& shared) {
+static std::string canonical(Engine& e,const std::vector<uint8_t>& shared,std::string* detail=nullptr) {
  std::ostringstream out;
  for(const auto&[id,owner]:e.allocations){const auto&r=e.dev(owner.first).arena.row(id);
   if(!r.live||r.category==Category::weights||r.category==Category::pinned_slab)continue;
@@ -17,7 +17,7 @@ static std::string canonical(Engine& e,const std::vector<uint8_t>& shared) {
  for(auto&v:e.selected)for(auto x:v)out<<x<<':';for(auto x:e.loaded_layer)out<<x<<':';
  for(auto&[name,slot]:e.buffers[0])out<<name<<':'<<slot.id<<'\n';
  for(auto&[name,id]:e.state_spares)out<<name<<':'<<id<<'\n';
- out<<hash(shared);auto s=out.str();return hash(std::vector<uint8_t>(s.begin(),s.end()));
+ out<<hash(shared);auto s=out.str();if(detail)*detail=s;return hash(std::vector<uint8_t>(s.begin(),s.end()));
 }
 static unsigned transport_cases(){
  unsigned checks=0;
@@ -33,7 +33,7 @@ static unsigned transport_cases(){
  return checks;
 }
 int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
- require(argc==5,"selection hash output mode");Options a;
+ require(argc==5||(argc==6&&std::string(argv[5])=="sequence-only"),"selection hash output mode [sequence-only]");Options a;
  a.mini=true;a.pipeline_mini=true;a.context=320;a.cards=1;a.card=0;a.rank=0;a.draft_rank=1;
  a.memory="resident";a.gemv="r5";a.nongemv="parallel";a.selection=argv[1];a.selection_sha256=argv[2];a.output=argv[3];
  fs::create_directories(a.output);Weights w(a);
@@ -42,6 +42,10 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
  {pipeline::SpeculativeImage image(*e);std::vector<uint8_t> shared(pipeline::shared_bytes,0);pipeline::Candidate c;int accepted=0;
  auto reset=[&](int position){image.boundary();c={};
   auto meta=a.output/"reset.txt";save(meta,a.output.string()+"\n\n");pipeline::request_reset(*e,c,nullptr,meta,accepted);
+  // Request reset preserves compiled launch extents. Give reference and
+  // candidate exactly the same initial prepared banks, retaining both extents
+  // in the canonical comparison rather than hiding this non-byte state.
+  e->admit_position(0);e->swap_state_banks();e->admit_position(0);e->swap_state_banks();
   std::fill(shared.begin(),shared.end(),0);
   // Position zero is a fixture-only edge: a zeroed publication means "none"
   // in production, which never speculates before the initial target token.
@@ -52,7 +56,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
  auto accept=[&]{pipeline::publish(*e,c);if(c.speculative)image.accept();c={};};
  std::vector<int> positions;for(int i=0;i<32;++i)positions.push_back(i);
  for(int p:{32,33,63,64,95,96,127,128,255,256,319})positions.push_back(p);
- for(int p:positions){++position_classes;
+ for(int p:positions){if(argc==6)break;++position_classes;
   reset(p);half(5,p,false);accept();const auto expected=canonical(*e,shared);
   std::vector<int> cuts{-1};if(p==3||p==4||p==31||p==32||p==63||p==64||p==127||p==128||p==319)cuts={-1,0,1,17};
   for(int cut:cuts){
@@ -78,8 +82,8 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
  }
  // Two bank parities, live committed histories/KV, and repeated table rebuilds
  // across 31->32 and 63->64. Compare each step to a direct-target sequence.
- std::vector<std::string> direct;reset(0);
- for(int p=0;p<98;++p){half(5,p,false);accept();direct.push_back(canonical(*e,shared));}
+ std::vector<std::string> direct,details;reset(0);
+ for(int p=0;p<98;++p){half(5,p,false);accept();std::string detail;direct.push_back(canonical(*e,shared,&detail));details.push_back(detail);}
  reset(0);
  for(int p=0;p<98;++p){
   if(p%3==0){half(5,p,true);accept();}
@@ -89,7 +93,8 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
    else require(image.before_command(true,p,5),"consecutive redo");
    half(5,p,false);if(p%3==1)image.finish_redo();accept();
   }
-  const auto actual=canonical(*e,shared);require(actual==direct[p],"consecutive target state differs");
+  std::string detail;const auto actual=canonical(*e,shared,&detail);
+  if(actual!=direct[p]){save(a.output/"expected-state.txt",details[p]);save(a.output/"actual-state.txt",detail);throw std::runtime_error("consecutive target state differs at position "+std::to_string(p));}
   evidence<<"sequence:"<<p<<':'<<actual<<'\n';++cases;
  }
  if(e->reuse_restore_table()){

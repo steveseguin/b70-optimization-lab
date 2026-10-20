@@ -41,3 +41,27 @@ of at least 1.000 ms/token. The same-parent smoke must then prove exactness and
 useful overlap before v5. All final hashes and proof status are in
 [the packet](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/README.md),
 its build receipt, seal and final readiness marker. No speedup is claimed.
+
+## Packet58amc — direct-screen amendment; release blocked on CPU
+
+The coordinator's 04:40 decision now replaces the census gate in a separate
+release amendment. The original decision stays unchanged. The two fresh
+proposals use a private copy of packet58aj's queue and window harness, with
+its sensors, fault review, whole-host admission and graceful drain. Nothing
+was queued or launched.
+
+The requested resident parent is not in the built candidate. Both real
+preparation probes stop at `unknown option --lookups`, before any model or
+device open. Compiling was forbidden, so this task cannot repair that gap.
+Both temporary queue plans also reject inherited parent metadata pins. The
+shared report checker passes the five-view report but rejects the two-view
+smoke because its adapter expects only twelve requests. The actual smoke
+contains twenty-four; it was not reduced to make the checker pass.
+
+All twelve packet tests, both compilers' existing byte and ownership fixtures
+(twice each), both private entry plans and both real launch-environment imports
+pass. Storage and deadline checks pass. Readiness was written last as false,
+with all failures bound, because these jobs do not yet meet the release gates.
+The source/binary and preregistration hashes remain unchanged. No compile, GPU,
+service, sudo, setting or model payload read occurred. Peak measured child RAM
+was below 65 MB. [Handoff and exact blockers](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/HANDOFF-P58AMC.md).
