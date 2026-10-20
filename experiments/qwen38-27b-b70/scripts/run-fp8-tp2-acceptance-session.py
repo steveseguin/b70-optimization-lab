@@ -39,14 +39,17 @@ ROOT = Path(__file__).resolve().parents[3]
 MODEL = Path('/mnt/fast-ai/llm-models/qwen3.8-27b-fp8')
 IMAGE = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
 REFERENCE_STRICT = Path('/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict')
-# The qualified fresh server this replay must match (image, arguments, environment). Default: the review campaign's
-# depth-5 server; QUALIFIED_CONTAINER selects another qualified receipt (the comm-2 allgather server since 2026-09-17).
-QUALIFIED_CONTAINER = Path(os.environ.get('QUALIFIED_CONTAINER', '/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp5/container-final.json'))
+# The qualified fresh server this replay must match (image, arguments, environment): the 2026-10-17 gates C1 server
+# (MTP5 + b70_fa_verify_rows 0.2.0 one launch), the package's argv plus B70_FA_VERIFY_ROWS_ONE_LAUNCH=1
+# (data/2026-10-17-tp2-one-launch-gates/; gates 2-3 of notes/2026-10-17-tp2-package-one-launch-proposal.md).
+# QUALIFIED_CONTAINER selects another qualified receipt.
+QUALIFIED_CONTAINER = Path(os.environ.get('QUALIFIED_CONTAINER') or
+                           ROOT / 'experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/server-C1-container-final.json')
 HEALTH = ROOT / 'scripts/check-qwen36-xpu-xccl-health.sh'
 XPU_PYTHON = Path.home() / '.venvs/vllm-xpu/bin/python'
 PINNED = ['packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
-          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.1.0.dist-info/entry_points.txt',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.2.0.dist-info/entry_points.txt',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/entry_points.txt',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',

@@ -32,7 +32,12 @@ FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine re
 # experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/). Its own acceptance packet is
 # pending. `seqs` is --max-num-seqs (1 when absent); `env` is added on top of BASE_ENV.
 PROFILES = {
-    'recommended': dict(depth=5, shortlist=True),   # MTP depth 5, draft-only INT4 shortlist head
+    # B70_FA_VERIFY_ROWS_ONE_LAUNCH=1 (overlay 0.2.0): the six verify rows in one kernel launch instead of six
+    # per-row calls; same arithmetic, bitwise-equal answers (census 4,190/4,190 on pages 64 and 832, strict 12/12
+    # twice, context 2K/8K/16K and long 24K/30.7K/32K exact vs no MTP; gates 1-3 of
+    # experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md, owner go 2026-10-19).
+    # depth-1 and multi-user keep their measured launch arguments byte for byte.
+    'recommended': dict(depth=5, shortlist=True, env={'B70_FA_VERIFY_ROWS_ONE_LAUNCH': '1'}),
     'depth-1': dict(depth=1, shortlist=False),      # the September 14 recipe (MTP depth 1, full-vocabulary draft head)
     'multi-user': dict(depth=0, shortlist=False, seqs=64, env={
         'B70_CHUNKED_UPLOAD': '1',             # the overlay's default, written out as in the measured launch
@@ -268,6 +273,17 @@ def check_available(port, name):
     if inspect_container(name) is not None:
         raise RuntimeError('Selected container name already exists.')
     nodes = sorted(Path('/dev/dri').glob('renderD*'))
+    # Hosts with more than two B70s set B70_FP8_RENDER_NODES to the two render node names of the pair this
+    # server will own (the pair the container's level_zero:0,1 selects, in PCI order; e.g. the lab's four-card
+    # host runs 'renderD130,renderD131'). The ownership check then covers exactly that pair. Unset, the host
+    # must expose exactly two render devices, as before. Host-side preflight only; the container configuration
+    # is unchanged. See experiments/qwen38-27b-b70/notes/2026-09-17-clean-host-replay-plan.md.
+    mask = [node.strip() for node in os.environ.get('B70_FP8_RENDER_NODES', '').split(',') if node.strip()]
+    if mask:
+        nodes = [Path('/dev/dri') / node for node in mask]
+        missing = [str(node) for node in nodes if not node.exists()]
+        if missing:
+            raise RuntimeError(f'B70_FP8_RENDER_NODES names devices that do not exist: {missing}.')
     if len(nodes) != 2:
         raise RuntimeError('This profile requires exactly two exposed render devices; device remapping is outside this guide.')
     result = run(['fuser', *map(str, nodes)], check=False)

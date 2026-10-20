@@ -589,7 +589,14 @@
     "experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/results.json",
     "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md",
     "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
-    "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/manifest.json"
+    "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/manifest.json",
+    "experiments/qwen38-27b-b70/notes/2026-10-17-fp8-writing-attention.md",
+    "experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md",
+    "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json",
+    "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+    "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/server-C1-container-final.json",
+    "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json",
+    "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/manifest.json"
   ],
   "performance_profiles": [
     {
@@ -599,26 +606,54 @@
       "unit": "tok/s",
       "x_metric": "context_tokens",
       "x_label": "Input tokens",
-      "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-context-summary.json",
+      "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token. Since 2026-10-19 the recommended profile runs b70_fa_verify_rows 0.2.0 with B70_FA_VERIFY_ROWS_ONE_LAUNCH=1 (the six verify rows in one kernel launch; bitwise-equal answers, gates in experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md); these points are that configuration, measured in experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json, with the public-source acceptance replay in the linked packet. The pre-one-launch points were 87.957 / 114.013 / 96.292 at 2K / 8K / 16K (2026-09-16-fp8-review).",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json",
       "points": [
         {
           "context_tokens": 2048,
-          "value": 87.957,
+          "value": 92.68,
           "samples": 6
         },
         {
           "context_tokens": 8192,
-          "value": 114.013,
+          "value": 133.568,
           "samples": 6
         },
         {
           "context_tokens": 16384,
-          "value": 96.292,
+          "value": 123.568,
           "samples": 6
         }
       ],
       "public_label": "Writing speed after the prompt · recommended (MTP depth 5)"
+    },
+    {
+      "id": "r310-decode-vs-context-tp2-mtp5-long-corpus",
+      "label": "Writing speed after the prompt · MTP depth 5 · long corpus",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_metric": "context_tokens",
+      "x_label": "Input tokens",
+      "scope": "Same server and method as r310-decode-vs-context-tp2-mtp5 (one launch, tokens 1-100 after the first token, median per content type then across types, 6 requests per point), but on the September long corpus (experiments/qwen38-27b-b70/data/2026-09-17-long-corpus/corpus.json): different text from the 2K/8K/16K curve, so the two sets are not one curve. Measured 2026-10-17, gate 3 of the one-launch proposal; every continuation identical to a fresh no-MTP server at the same length. No-MTP rates at these lengths on the same corpus: 30.97 / 30.43 / 30.29 tok/s.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+      "points": [
+        {
+          "context_tokens": 24576,
+          "value": 80.14,
+          "samples": 6
+        },
+        {
+          "context_tokens": 30720,
+          "value": 80.87,
+          "samples": 6
+        },
+        {
+          "context_tokens": 32768,
+          "value": 97.33,
+          "samples": 6
+        }
+      ],
+      "public_label": "Writing speed after the prompt, long corpus · recommended (MTP depth 5)"
     },
     {
       "id": "r310-prefill-vs-context-tp2-mtp5",
