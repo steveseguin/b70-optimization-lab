@@ -1,7 +1,6 @@
 # ctxkeeper
 
-**Let an AI agent keep working on one long task after its conversation has grown far past what the model can read
-at once, without forgetting what it was told.**
+**Keep an AI agent working on long tasks, with current notes and searchable conversation history.**
 
 ctxkeeper is a small proxy that sits between your agent (or chat app) and your model server. Your agent keeps
 sending its whole history, as agents do. The proxy shows the model a short, current view of it: the opening
@@ -94,8 +93,8 @@ test also passed on **Gemma 4 26B** (Q8_0 GGUF, llama.cpp): the demo below, 4/4,
 - **calls a tool reliably when the answer is not in view** — the only tool is `recall`, a text search over the
   archived turns;
 - **can keep a simple notes layout** (RULES / STATE / OPEN, changes-only updates with the working shown);
-- sits behind a server that **accepts at least ~33K tokens a request** (the default view is 32K, reply included;
-  the proxy keeps every request under it).
+- sits behind a server with **room for the default 32K view and the reply**. The proxy estimates token counts;
+  allow headroom and keep individual messages and requested output lengths within the server's capacity.
 
 Practical guidance, measured on the Qwen setup unless noted:
 
@@ -125,7 +124,9 @@ Pick one. All three come from the [1.1.0 release](https://github.com/steveseguin
 R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.1.0
 
 # 1. pip (gives you the `ctxkeeper` command)
-pip install $R/ctxkeeper-1.1.0-py3-none-any.whl
+python3 -m venv .venv-ctxkeeper
+. .venv-ctxkeeper/bin/activate
+python -m pip install "$R/ctxkeeper-1.1.0-py3-none-any.whl"
 
 # 2. Docker (builds the image from the 90 KB source archive)
 docker build -t ctxkeeper $R/ctxkeeper-1.1.0.tar.gz
@@ -144,14 +145,14 @@ The managed Chat Completions path currently requires an upstream reachable witho
 Client Authorization headers are not forwarded on that path; use `api_key="unused"` as an SDK placeholder.
 Keep this unauthenticated proxy on localhost or a trusted private network.
 
-1. Run a model server that speaks the OpenAI API and accepts at least 32K tokens per request (more is fine; the
-   proxy keeps each request under its window). For example vLLM on port 8000.
+1. Run a model server that speaks the OpenAI API, with headroom beyond the default 32K view. Token counts are
+   estimated, and a single oversized message may still exceed the server's limit. For example vLLM on port 8000.
 2. Start the proxy in front of it:
 
    ```bash
    ctxkeeper --upstream http://127.0.0.1:8000 --recipe agent    # any OpenAI-compatible server
    ctxkeeper --upstream http://127.0.0.1:8000 --recipe qwen     # Qwen3.x behind vLLM: the fastest measured settings
-   # Docker: docker run --rm --network host -v ctxkeeper-state:/state ctxkeeper --recipe agent --upstream http://127.0.0.1:8000
+   # Linux Docker: docker run --rm --network host -v ctxkeeper-state:/state ctxkeeper --host 127.0.0.1 --recipe agent --upstream http://127.0.0.1:8000
    ```
 
 3. Point your agent or app at `http://127.0.0.1:18200/v1` instead of the server.
@@ -159,7 +160,8 @@ Keep this unauthenticated proxy on localhost or a trusted private network.
    codename, a budget and a standing rule at the start, and asks about them at the end.
 
    ```bash
-   curl -LO $R/long_chat.py      # or examples/long_chat.py in the source archive
+   R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.1.0
+   curl --fail --location --output long_chat.py "$R/long_chat.py"
    python3 long_chat.py --base-url http://127.0.0.1:18200/v1
    ```
 
@@ -174,16 +176,30 @@ Anything that can be given an OpenAI-compatible base URL works, if it:
 - asks for one reply per request (`n` = 1). Streaming works, but the reply arrives in one piece at the end (the
   proxy must first see whether the model wanted to search its archive).
 
-Python with the official SDK:
+Python with the official SDK (a separate optional dependency). In your client terminal, create and activate
+an environment; this also works when the proxy runs in Docker:
+
+```bash
+python3 -m venv .venv-client
+. .venv-client/bin/activate
+python -m pip install openai
+```
+
+Use this Python code with a model ID from `http://127.0.0.1:18200/v1/models`:
 
 ```python
 from openai import OpenAI
 client = OpenAI(base_url="http://127.0.0.1:18200/v1", api_key="unused")   # SDK placeholder for an unauthenticated local server
+history = [{"role": "user", "content": "Remember: our project is called Cedar."}]
 reply = client.chat.completions.create(model="your-model", messages=history)
+print(reply.choices[0].message.content)
+history.append(reply.choices[0].message.model_dump(exclude_none=True))
+# Append each new user message and send the whole history on the next call.
 ```
 
 Several conversations can share one proxy. Each is recognized by its model name, system messages and first user
-message; to name one yourself, send the header `X-Ctx-Session: <any id>`.
+message. Conversations with identical openings can collide; if your client supports headers, send a unique
+`X-Ctx-Session: <conversation-id>` for each one, keeping that ID on later calls and when resuming.
 
 If your task delivers new instructions inside **tool results** (tickets, emails, files) rather than as user
 messages, tell the proxy what they look like, so it repeats the standing rules right after each one:
@@ -317,7 +333,8 @@ found by an archive search counts as stated.
 New options, off by default: `--lookups` (a notes line that waits on an archived item, is doubted, or works an
 amount out from one is asked again with what the item says), `--cited-entries` (a turn that cites an archived item
 for a name gets what the item says shown in the notes request), `--notes-upto` (the NOTES heading says up to which
-item the STATE runs), `--sum-check` (a reply whose working has a false multiplication step is asked for once more,
+item the STATE runs), `--rule-scan` (ask about uncovered rule-like turns), `--hold-open` (repeat rules and recent
+searches while a question is open), `--sum-check` (a reply whose working has a false multiplication step is asked for once more,
 with the step named), `--upstream-retries` with `--upstream-wait` (send a failed call again once the server is
 healthy, for servers a supervisor restarts). The per-step record of each is kept below.
 
