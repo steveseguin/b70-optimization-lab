@@ -1,0 +1,20 @@
+{
+  "schema": "neural.download.source-drift.v1",
+  "date": "2026-10-19",
+  "entries": [
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py",
+      "frozen_sha256": "205a1b572f5905f910aee865255d44d2cff86f33b99ea37a74d0ae84d668032c",
+      "current_sha256": "1784c4f21c40f5c821c75ba893c6f4a28e034a49251ba36a842322439844e1fa",
+      "acceptance": "pending",
+      "reason": "Commit ec04c3a52ba8d992f01516f7338510d7f1ceabbc adds an opt-in --allow-cached flag for a separately registered prefix-cache sweep, reports that flag, and permits cached batches only when selected. The default still requires zero cached tokens, and all token comparisons remain unchanged. A whole-module AST proof admits only those exact edits; this does not establish fresh serving acceptance or qualify the opt-in policy from this packet.",
+      "retire_by": "A fresh acceptance session producing a new packet with the current exact source identity; preserve this historical manifest, archive and source pins.",
+      "proof": {
+        "kind": "allow_cached_default_false"
+      },
+      "change": "Optional --allow-cached CLI policy and report field; default cache-zero and token-identity gates unchanged.",
+      "declared": "2026-10-19"
+    }
+  ],
+  "replay_scope": "The original archive and manifest remain unchanged. The collector recomputes historical gates from frozen sources, separately proves the exact declared comparator drift, and reports current-source acceptance pending."
+}

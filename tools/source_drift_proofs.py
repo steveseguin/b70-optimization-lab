@@ -86,4 +86,50 @@ def prove_model_metadata_addition(entry, frozen_source, current_source):
     assert restored == before, "model identity or original manifest fields changed"
 
 
-PROOFS = {"default_timeout_120": prove_default_timeout_120, "model_metadata_addition": prove_model_metadata_addition}
+def prove_allow_cached_default_false(entry, frozen_source, current_source):
+    """Prove exactly the optional cache-policy flag and its report field.
+
+    The default cache-zero verdict and all token comparisons retain the frozen
+    behavior. Opting into cached inputs is a different policy, not new evidence
+    or fresh acceptance of the historical packet.
+    """
+    before, after = tree(frozen_source), tree(current_source)
+    mains = [n for n in after.body if isinstance(n, ast.FunctionDef) and n.name == "main"]
+    assert len(mains) == 1, "expected one main function"
+    main = mains[0]
+    added_flag = tree("ap.add_argument('--allow-cached', action='store_true', "
+                      "help='prefix caching on: cache hits do not fail a batch (its tokens still must match)')").body[0]
+    flags = [n for n in main.body if dump(n) == dump(added_flag)]
+    assert len(flags) == 1, "allow-cached must be exactly the reviewed opt-in flag with default false"
+    main.body.remove(flags[0])
+    results = [n for n in main.body if isinstance(n, ast.Assign) and
+               len(n.targets) == 1 and isinstance(n.targets[0], ast.Name) and n.targets[0].id == "result"]
+    assert len(results) == 1 and isinstance(results[0].value, ast.Dict), "result report assignment differs"
+    result = results[0].value
+    indices = [i for i, key in enumerate(result.keys) if isinstance(key, ast.Constant) and key.value == "allow_cached"]
+    assert len(indices) == 1, "expected exactly one added allow_cached report field"
+    index = indices[0]
+    assert dump(result.values[index]) == dump(tree("a.allow_cached").body[0].value), "cache report value differs"
+    del result.keys[index]
+    del result.values[index]
+    optional_gate = tree("all_exact &= not mismatches and (a.allow_cached or batch.get('cached_tokens_all_zero') is True)").body[0]
+    frozen_gate = tree("all_exact &= not mismatches and batch.get('cached_tokens_all_zero') is True").body[0]
+
+    class Normalize(ast.NodeTransformer):
+        replaced = 0
+
+        def visit_AugAssign(self, node):
+            if dump(node) == dump(optional_gate):
+                self.replaced += 1
+                return copy.deepcopy(frozen_gate)
+            return self.generic_visit(node)
+
+    normalize = Normalize()
+    normalize.visit(main)
+    assert normalize.replaced == 1, "expected exactly the reviewed optional cache gate"
+    assert dump(before) == dump(after), "module differs beyond optional allow-cached default equivalence"
+
+
+PROOFS = {"default_timeout_120": prove_default_timeout_120,
+          "model_metadata_addition": prove_model_metadata_addition,
+          "allow_cached_default_false": prove_allow_cached_default_false}
