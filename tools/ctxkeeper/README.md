@@ -28,6 +28,10 @@ Measured on Qwen3.8-27B (FP8, served by vLLM on two Intel Arc Pro B70 cards), wi
 | **Memory over 1M tokens**: 228 questions about things said up to a million tokens earlier | **226/228 (99%)** in 50 min | A 200K window: 166/228 (73%), every one of 29 standing-rule questions wrong, 228 min |
 | **2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream | On 1.2.0.dev10, seed 0: **421/423, every forgery target kept, 16/16 corrections applied**. The second seed on this version is pending after interrupted runs. On dev9, the two seeds scored 414/423 and 416/423. | (not run: no window holds it) |
 
+The hostile test uses task-specific settings (K32C), including notes thinking, archive labels, rule matching,
+lookups, cited entries and arithmetic checks. It is not a measurement of the default `--recipe qwen` settings.
+The [registered runner](../../experiments/qwen38-27b-b70/scripts/longrun-campaign37.sh) records the full configuration.
+
 ## Tested before release
 
 Version 1.0.0 was installed the way a user installs it (pip into a fresh environment; the Docker image built from

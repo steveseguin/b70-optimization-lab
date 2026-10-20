@@ -64,6 +64,24 @@ def g1(trial, elapsed):
         "readme_recite_when_required": d.get("clean", -1) < 38}
 
 
+def proxy_receipt(path):
+    sessions = json.loads(Path(path).read_text())
+    if not isinstance(sessions, dict) or not sessions:
+        raise ValueError("proxy status must contain at least one session")
+    totals = dict.fromkeys(("cuts", "requests", "inplace_cuts", "inplace_failed", "notes_failed", "recalls"), 0)
+    for session in sessions.values():
+        if not isinstance(session, dict) or "cuts" not in session:
+            raise ValueError("proxy session is missing cut counters")
+        for key in totals:
+            value = session.get(key, 0)
+            if type(value) is not int or value < 0:
+                raise ValueError(f"invalid proxy counter: {key}")
+            totals[key] += value
+    if totals["cuts"] == 0:
+        raise ValueError("long conversation completed without evidence of context management")
+    return {"sessions": len(sessions), **totals, "receipt": str(path)}
+
+
 def demo(path, rc, gate):
     if gate not in ("G2", "G4"):
         raise ValueError("only G2 and G4 use the long_chat demo")
@@ -139,19 +157,26 @@ def main():
         record(out, gate, status, {"message": message})
     elif a.action == "g1":
         out, trial, elapsed = a.args
+        data = {}
         try:
             ok, data = g1(trial, float(elapsed))
+            data["proxy"] = proxy_receipt(Path(out) / "G1-proxy-status.json")
         except Exception as exc:
-            ok, data = False, {"error": str(exc)}
+            ok = False
+            data["error"] = str(exc)
         record(out, "G1", "passed" if ok else "failed", data)
         print(json.dumps(data, ensure_ascii=False))
         return 0 if ok else 1
     elif a.action == "demo":
         out, gate, path, rc = a.args
+        data = {}
         try:
             ok, data = demo(path, int(rc), gate)
+            if gate == "G2":
+                data["proxy"] = proxy_receipt(Path(out) / "G2-proxy-status.json")
         except Exception as exc:
-            ok, data = False, {"error": str(exc)}
+            ok = False
+            data["error"] = str(exc)
         record(out, gate, "passed" if ok else "failed", data)
         print(json.dumps(data, ensure_ascii=False))
         return 0 if ok else 1

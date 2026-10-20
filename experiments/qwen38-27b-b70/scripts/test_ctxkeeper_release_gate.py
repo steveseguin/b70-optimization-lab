@@ -75,6 +75,31 @@ class GateTests(unittest.TestCase):
         self.assertFalse(gate.demo(self.demo(history=262144), 0, "G2")[0])
         self.assertFalse(gate.demo(self.demo(passed=3), 1, "G2")[0])
 
+    def test_proxy_receipt_requires_real_context_management(self):
+        path = self.root / "proxy.json"
+        for receipt in ({}, [], {"a": None}, {"a": {}}, {"a": {"cuts": 0}},
+                        {"a": {"cuts": "2"}}, {"a": {"cuts": True}},
+                        {"a": {"cuts": -1}}, {"a": {"cuts": 1.5}}):
+            with self.subTest(receipt=receipt):
+                self.put("proxy.json", receipt)
+                with self.assertRaises(ValueError):
+                    gate.proxy_receipt(path)
+        self.put("proxy.json", {"a": {"cuts": 2, "inplace_failed": 1}, "b": {"cuts": 3}})
+        result = gate.proxy_receipt(path)
+        self.assertEqual(result["sessions"], 2)
+        self.assertEqual(result["cuts"], 5)
+        self.assertEqual(result["inplace_failed"], 1)  # Recorded, not a new quality bar.
+
+    def test_long_gates_fail_without_proxy_evidence_then_pass_with_it(self):
+        for name, args in (("G1", ("g1", self.root, self.root, 60)),
+                           ("G2", ("demo", self.root, "G2", self.demo(), 0))):
+            with self.subTest(gate=name):
+                self.assertEqual(self.command(*args).returncode, 1)
+                self.put(f"{name}-proxy-status.json", {"session": {"cuts": 3}})
+                self.assertEqual(self.command(*args).returncode, 0)
+                row = json.loads((self.root / "status.json").read_text())["gates"][name]
+                self.assertEqual(row["proxy"]["cuts"], 3)
+
     def test_g4_quality_observational_but_full_100k_required(self):
         for passed in range(5):
             with self.subTest(passed=passed):

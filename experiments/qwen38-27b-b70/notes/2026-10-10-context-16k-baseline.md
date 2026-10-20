@@ -3307,3 +3307,11 @@ unchanged), once campaign 49b's cards are free. Gemma stays stopped for it and i
 
 1.2.0 carries the 2M hostile-campaign fixes (Changes in `tools/ctxkeeper/README.md`); the gate exists because the
 release's own checks are the only ones run exactly as a user runs them.
+
+**Recovery clarification, 2026-10-20, before any campaign-50 run:** the owner's standing rule to leave the
+cards empty supersedes the restoration sentences above. G4 loads the balanced Gemma recipe in transient units;
+all units owned by this gate are stopped gracefully afterwards, without enabling or restoring resident service.
+The quality bars and workloads are unchanged. G1 and G2 also require a nonempty saved proxy status with positive
+cut counters, so a passing answer score alone cannot stand in for evidence that context management ran.
+Failed-cut counts are recorded, not assigned an additional quality threshold. The runner and receipt checker
+are `scripts/ctxkeeper-release-gate.sh` and `scripts/ctxkeeper-release-gate-check.py`; 15 CPU-only gate tests pass.

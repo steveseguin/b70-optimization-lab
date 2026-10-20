@@ -63,3 +63,20 @@ Stable download page published at https://skindeep.ai/context-use.html (website 
 All five 1.1.0 download assets match published SHA256SUMS; pip from the public wheel URL and Docker from
 the public source URL both report 1.1.0. Desktop/phone layouts and local anchors pass; search vectors match
 the new index. GitHub Pages deployment succeeded and the live page was fetched and checked.
+
+## Public recipe-site deployment repaired (October 20)
+
+The legacy neural.download Jekyll build failed on machine-specific symlinks in archived runtime packets.
+The repository contains over 11 GB of tracked regular files, so copying the entire tree is not a viable fix.
+`tools/stage-pages.py` now stages the static pages, copy-button targets, and linked evidence, including all
+catalog/family manifest references. It preserves source bytes and refuses symlinks and missing required assets.
+Historical Markdown and directory-link warnings remain in the uploaded inventory; no frozen files or link
+baseline were rewritten. Missing model preview cards use the existing site card until their own image exists.
+
+`publish-site` run 39367130246 succeeded for commit c674df916. The live catalog matches all 32 packages, a
+downloaded guide README matches the source bytes, and the home page links directly to the proxy setup guide.
+GitHub Pages now uses the checked-in Actions workflow. Stager tests: 10 passed; page-generator tests: 84 passed;
+public doc links and all 6,607 manifest paths pass. The wider research-history link backlog remains separate.
+
+The proxy guide's client environment, example variables, session IDs and estimated-context limits were also
+corrected and deployed (skindeep commit ba13b33). Campaign 49d remains the only GPU workload.
