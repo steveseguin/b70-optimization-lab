@@ -3323,3 +3323,12 @@ are `scripts/ctxkeeper-release-gate.sh` and `scripts/ctxkeeper-release-gate-chec
   under `context-longrun-20261012/c50/`. The README's SDK section already tells users to `pip install openai`.
 - **c50b (10:24): relaunched** with the OpenAI SDK (3.35.1) added to the same venv (wheel installed from the
   public prerelease URL, hashes matching SHA256SUMS). Running.
+- **c50b (10:24-10:33): G1 failed, G2-G4 not run.** freeagent through the pip-installed 1.2.0 (`--recipe qwen`,
+  public wheel): 33/40 fixed, 32 clean, audit 0/7, 500 s; proxy 5/5 in-place cuts, none failed, 7 repeat loops
+  broken, kernel log clean. Cause (receipts in `context-longrun-20261012/c50b/`): at ticket 37/44 the model
+  emitted `shell {"command": ""}`; freeagent treats a call without a command as its final words
+  (`freeagent.py`: `if not cmd: break`) and ended the run before the remaining tickets and the audit questions.
+  Not a 1.2.0 regression: the proxy's empty-reply retry has the same condition since 1.0.1 (no tool calls AND no
+  content), and an empty-arguments tool call passes it in both; c19c/c20b never emitted one. The gate sequence
+  stops on a failed check as registered. Rerun once, unchanged artifacts, as **c50c**: variance check on a rare
+  model slip; if it repeats, the release decision changes.
