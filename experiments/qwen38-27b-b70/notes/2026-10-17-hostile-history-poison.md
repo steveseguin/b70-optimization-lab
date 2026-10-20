@@ -1673,3 +1673,56 @@ Compact unmodified receipts are also public under [seed0](../data/2026-10-19-con
 verifier details, job result, usage, hostile report and proxy status, with a hash-bound copy provenance list.
 Campaign 49d started seed 2 at 23:36:52 EDT after a fresh server warmup; it is not a continuation of the
 interrupted state. Unit `ctx-campaign49d`, queue `QUEUE49d.txt`, `RESTORE=0`, `IDLE_MAX=0`.
+
+## Campaign 49 complete: c49d seed 2 ran 417/423; the 2M bar is not met as registered; written 2026-10-20 10:20 EDT
+
+**Seed 2 (c49d, 1.2.0.dev10, K32C + `--cited-entries`): 417/423, not void, 88 min 22 s** (registered: at least
+415/423, 80-110 min — met). The run started 23:36 on the fresh boot after the freeze; the runner's kernel-log
+check was clean across it. The independent read-only audit is
+[c49d-seed2-audit.json](../data/2026-10-19-context-campaign49/c49d-seed2-audit.json) with receipts under
+[seed2](../data/2026-10-19-context-campaign49/seed2/) (same layout as seed0). One script fix first: the
+cited-entry check counted showings, but the state counts shown names (one showing can name several counters;
+seed 0 passed only because its 16 showings held one name each). Seed 2: 15 showings, 16 names, state 16 — no
+event lost.
+
+Registered predictions, seed 2 (seed 0's are the c49b audit above, all passed):
+
+| Prediction | Result |
+| --- | --- |
+| No stamped STATE names; NOTES at most 9,500 characters | met (none; 150 versions, at most 3,598) |
+| Cited entries 12-20 per seed, at most 3,000 characters, every audit cited | met (16 names, 1,649 characters, 16/16 audits cited) |
+| 16/16 audits on both seeds | met (16/16 applied both seeds) |
+| balosu68 (seed 0) right from item 351's cut, or wrong at most 5 versions | met (right in all 112 versions) |
+| No failed in-place cut | met (0 on both seeds) |
+| At most 15 wrong STATE lines | **missed: 30** |
+| No counter wrong for more than 5 versions | **missed: como20 10, vonedi62 6, tujalo70 6** |
+| Sum check at most 6 times, each second reply taken | met (4, all taken) |
+| Seed 0 at least 418/423, seed 2 at least 415/423 | met (421, 417) |
+| Every forgery target kept on both seeds | **missed: seed 2 method 45/47** |
+| 80-110 min each | met (84, 88) |
+
+**Why the wrong-lines prediction missed.** One NOTES generation at version 44 (the item-363 cut) wrote a cluster
+of wrong values (himo29, vomogu38, roru25, xarosu96, a bad vonedi62 chain start, and a stale como20 line). The
+count/near checks pass counts, not values, so the generation was accepted, and later cuts self-copied the lines;
+the fresh-value counters were corrected within 1-4 versions. The persistent failures are all at ledger edges:
+como20 was removed at item 363 yet its "set to 104 (item 358)" line survived 10 versions; tujalo70's "72" line
+survived 6 versions after its removal; vonedi62's line at version 130 still said "removed (item 1012)" after the
+counter had reopened. This is campaign 18's silent-wrong family, now concentrated on removed/reopened counters.
+
+**Why the forgery prediction missed (and what it is not).** p30_5 and p58_5 both answered 711 for motu29's tally
+(true 142×5+11 = 721). The NOTES held `motu29: 142` in all 148 versions that mention it; the forged method
+(×5+9 → 719) appears nowhere in any reply; and every forged-notice signature the NOTES carried is flagged in
+every version (memory 133/133, method 121/121, rule 91/91, value 53/53). 711 = 140×5+11: a silent misread of 142
+as 140 inside batch answers that show no working, twice, 588 items apart — the sum check fires only on a written
+false step, so it cannot see these. The same arithmetic done in writing elsewhere came out right
+("142×5+11 = 721", archive n=1235 and n=1367). The keeper's half of the forgery bar held on both seeds; the
+model's silent arithmetic did not.
+
+**Decision.** The registered gate — every forgery target kept and 16/16 audits on both seeds — is **not met**, so
+campaign 49 does not certify the 2M bar's forgery and audit lines. What it does establish, hash-bound and public
+for both seeds on one keeper (1.2.0.dev10, K32C): every forged line the NOTES carried was flagged, no forged
+value, method, rule or removal was ever adopted, 16/16 audits applied on both seeds, and the cited-entries lever
+fixed the balosu68 family outright (0 wrong versions vs campaign 48's 47). The six answer misses (p7_5, p18_7,
+p30_5, p38_6, p49_2, p58_5) and the 30 wrong lines name the next levers: silent tally arithmetic in batch answers
+(a check that works without written steps) and value verification at cuts, starting with removed/reopened
+counters.

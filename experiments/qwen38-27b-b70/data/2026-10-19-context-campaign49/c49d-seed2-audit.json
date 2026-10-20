@@ -1,0 +1,723 @@
+{
+  "schema": "ctxkeeper.hostile-release-audit.v1",
+  "seed": 2,
+  "audited_at": "2026-10-20T13:56:59.720588+00:00",
+  "script": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+    "sha256": "931c74f47d17c845c09127895156299fd5a4b11a891cbb2721408822f465d623",
+    "bytes": 15829
+  },
+  "provenance": {
+    "notes-history.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49d-K32C-hostile2mk-s2/99bada9c37d20fb9/notes-history.jsonl",
+      "sha256": "0c2f5fd26185b7e1c1e90b20391b42258f93bcf5f732458c3f0a0fa59c0f16c7",
+      "bytes": 459178
+    },
+    "events.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49d-K32C-hostile2mk-s2/99bada9c37d20fb9/events.jsonl",
+      "sha256": "73ab7f6d549fa74a12d0333b86db3c62391f74a33ad07d639fa1d2fedd55a3b2",
+      "bytes": 329075
+    },
+    "archive.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49d-K32C-hostile2mk-s2/99bada9c37d20fb9/archive.jsonl",
+      "sha256": "f97fd5e7ac07b0acb0261c190a7cbcf808449db736f94c9ab57ea54cd0414e02",
+      "bytes": 19713542
+    },
+    "state.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49d-K32C-hostile2mk-s2/99bada9c37d20fb9/state.json",
+      "sha256": "11dd2ce23dcb19924829f64ff0a0ad8142317e8cd6fd9476d1e13a6d2df80364",
+      "bytes": 4069
+    },
+    "details": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c49d/hostile2mk/jobs/K32C__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__gvSdfwq/verifier/details.json",
+      "sha256": "03e8ab3e267edb0fa02c0fe33206193253b213a4039b3b19c0064f4812f2b22b",
+      "bytes": 19465
+    },
+    "reference": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s2/tests/reference.json",
+      "sha256": "230900d4d425f30d23184cd68ceddfdb8f6ccbc25a86708d5737928aa18f5763",
+      "bytes": 624262
+    },
+    "spec": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s2/tests/spec.json",
+      "sha256": "41fa40b643af62b252ad2924d28047ada06aef92f92262fafa6e00803e1a6b3d",
+      "bytes": 11109
+    }
+  },
+  "all_checked_predictions_passed": false,
+  "checks": {
+    "score": true,
+    "no_stamped_state_names": true,
+    "notes_character_cap": true,
+    "cited_entry_count": true,
+    "cited_character_cap": true,
+    "every_audit_cited": true,
+    "all_audits_applied": true,
+    "balosu68_after_item351": null,
+    "no_failed_inplace_cut": true,
+    "wrong_state_lines_cap": false,
+    "wrong_versions_per_counter_cap": false,
+    "sum_checks_cap": true,
+    "sum_check_second_reply_taken": true,
+    "every_forgery_target_kept": false
+  },
+  "score": {
+    "correct": 417,
+    "total": 423,
+    "void": false,
+    "untargeted_correct": 307,
+    "untargeted_total": 311,
+    "misses": [
+      {
+        "key": "p7_5",
+        "answer": 311,
+        "expected": 321,
+        "probe": {
+          "q": "As of item 146, using the house method, what is the tally of zini52?",
+          "a": 321,
+          "type": "procedure",
+          "item": 147,
+          "ref_item": 2,
+          "distance": 145,
+          "tokens_back": 235075
+        }
+      },
+      {
+        "key": "p18_7",
+        "answer": -222,
+        "expected": -269,
+        "probe": {
+          "q": "What value did vonedi62 hold at the end of item 375?",
+          "a": -269,
+          "type": "old_value",
+          "item": 378,
+          "ref_item": 375,
+          "distance": 3,
+          "tokens_back": 3444
+        }
+      },
+      {
+        "key": "p30_5",
+        "answer": 711,
+        "expected": 721,
+        "probe": {
+          "q": "As of item 629, using the house method, what is the tally of motu29?",
+          "a": 721,
+          "type": "procedure",
+          "item": 630,
+          "ref_item": 2,
+          "distance": 628,
+          "tokens_back": 1019047
+        }
+      },
+      {
+        "key": "p38_6",
+        "answer": 141,
+        "expected": 294,
+        "probe": {
+          "q": "What value does misaro34 hold now?",
+          "a": 294,
+          "type": "current",
+          "item": 798,
+          "ref_item": 796,
+          "distance": 2,
+          "tokens_back": 1712
+        }
+      },
+      {
+        "key": "p49_2",
+        "answer": 259,
+        "expected": 135,
+        "probe": {
+          "q": "What value did como20 hold at the end of item 1023?",
+          "a": 135,
+          "type": "old_value",
+          "item": 1029,
+          "ref_item": 1023,
+          "distance": 6,
+          "tokens_back": 8504
+        }
+      },
+      {
+        "key": "p58_5",
+        "answer": 711,
+        "expected": 721,
+        "probe": {
+          "q": "As of item 1217, using the house method, what is the tally of motu29?",
+          "a": 721,
+          "type": "procedure",
+          "item": 1218,
+          "ref_item": 2,
+          "distance": 1216,
+          "tokens_back": 1973473
+        }
+      }
+    ]
+  },
+  "notes": {
+    "versions": 150,
+    "maximum_characters": 3598,
+    "stamped_names": [],
+    "counter_lines_checked": 8465,
+    "wrong_counter_lines": [
+      {
+        "version": 44,
+        "item": 363,
+        "counter": "himo29",
+        "notes_value": "110",
+        "true_value": 56
+      },
+      {
+        "version": 44,
+        "item": 363,
+        "counter": "vonedi62",
+        "notes_value": "opened at -117",
+        "true_value": -164
+      },
+      {
+        "version": 44,
+        "item": 363,
+        "counter": "vomogu38",
+        "notes_value": "-111",
+        "true_value": -94
+      },
+      {
+        "version": 44,
+        "item": 363,
+        "counter": "roru25",
+        "notes_value": "349",
+        "true_value": 445
+      },
+      {
+        "version": 44,
+        "item": 363,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 44,
+        "item": 363,
+        "counter": "xarosu96",
+        "notes_value": "565",
+        "true_value": 712
+      },
+      {
+        "version": 45,
+        "item": 371,
+        "counter": "himo29",
+        "notes_value": "130",
+        "true_value": 76
+      },
+      {
+        "version": 45,
+        "item": 371,
+        "counter": "vonedi62",
+        "notes_value": "vonedi62: -173 - 73 = -246 (item 371)",
+        "true_value": -293
+      },
+      {
+        "version": 45,
+        "item": 371,
+        "counter": "roru25",
+        "notes_value": "296",
+        "true_value": 392
+      },
+      {
+        "version": 45,
+        "item": 371,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 46,
+        "item": 379,
+        "counter": "himo29",
+        "notes_value": "208",
+        "true_value": 154
+      },
+      {
+        "version": 46,
+        "item": 379,
+        "counter": "vonedi62",
+        "notes_value": "vonedi62: -173 - 73 = -246 (item 371)",
+        "true_value": -355
+      },
+      {
+        "version": 46,
+        "item": 379,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 47,
+        "item": 387,
+        "counter": "vonedi62",
+        "notes_value": "vonedi62: -173 - 73 = -246 (item 371)",
+        "true_value": -355
+      },
+      {
+        "version": 47,
+        "item": 387,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 48,
+        "item": 395,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 49,
+        "item": 403,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 50,
+        "item": 411,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 51,
+        "item": 420,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 52,
+        "item": 428,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 53,
+        "item": 436,
+        "counter": "como20",
+        "notes_value": "set to 104 (item 358)",
+        "true_value": null
+      },
+      {
+        "version": 86,
+        "item": 706,
+        "counter": "batu30",
+        "notes_value": "removed (item 559, \"struck off the books\")",
+        "true_value": -190
+      },
+      {
+        "version": 92,
+        "item": 756,
+        "counter": "tujalo70",
+        "notes_value": "72",
+        "true_value": null
+      },
+      {
+        "version": 93,
+        "item": 764,
+        "counter": "tujalo70",
+        "notes_value": "72",
+        "true_value": null
+      },
+      {
+        "version": 94,
+        "item": 772,
+        "counter": "tujalo70",
+        "notes_value": "72",
+        "true_value": null
+      },
+      {
+        "version": 95,
+        "item": 781,
+        "counter": "tujalo70",
+        "notes_value": "72",
+        "true_value": null
+      },
+      {
+        "version": 96,
+        "item": 789,
+        "counter": "tujalo70",
+        "notes_value": "72",
+        "true_value": null
+      },
+      {
+        "version": 97,
+        "item": 798,
+        "counter": "tujalo70",
+        "notes_value": "72",
+        "true_value": null
+      },
+      {
+        "version": 123,
+        "item": 1008,
+        "counter": "vonedi62",
+        "notes_value": "194 (now stands at 307)",
+        "true_value": 307
+      },
+      {
+        "version": 130,
+        "item": 1064,
+        "counter": "vonedi62",
+        "notes_value": "removed (item 1012, \"removed from the ledger\")",
+        "true_value": -61
+      }
+    ],
+    "wrong_versions_per_counter": {
+      "himo29": 3,
+      "vonedi62": 6,
+      "vomogu38": 1,
+      "roru25": 2,
+      "como20": 10,
+      "xarosu96": 1,
+      "batu30": 1,
+      "tujalo70": 6
+    },
+    "inplace_failed": 0
+  },
+  "balosu68": null,
+  "cited_entries": {
+    "showings": 15,
+    "characters": 1649,
+    "audits": [
+      {
+        "counter": "vogufa93",
+        "audit_item": 185,
+        "entry_item": 95,
+        "cited_showings": 1,
+        "following_cuts": [
+          192
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 35,
+        "answer": 35,
+        "applied": true
+      },
+      {
+        "counter": "jamija78",
+        "audit_item": 218,
+        "entry_item": 60,
+        "cited_showings": 1,
+        "following_cuts": [
+          224
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 101,
+        "answer": 101,
+        "applied": true
+      },
+      {
+        "counter": "zini52",
+        "audit_item": 263,
+        "entry_item": 47,
+        "cited_showings": 1,
+        "following_cuts": [
+          265
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 75,
+        "answer": 75,
+        "applied": true
+      },
+      {
+        "counter": "losuta99",
+        "audit_item": 265,
+        "entry_item": 146,
+        "cited_showings": 1,
+        "following_cuts": [
+          265
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 555,
+        "answer": 555,
+        "applied": true
+      },
+      {
+        "counter": "motu29",
+        "audit_item": 307,
+        "entry_item": 30,
+        "cited_showings": 1,
+        "following_cuts": [
+          315
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 142,
+        "answer": 142,
+        "applied": true
+      },
+      {
+        "counter": "qihizi14",
+        "audit_item": 343,
+        "entry_item": 59,
+        "cited_showings": 1,
+        "following_cuts": [
+          347
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 507,
+        "answer": 507,
+        "applied": true
+      },
+      {
+        "counter": "xaxatu53",
+        "audit_item": 353,
+        "entry_item": 39,
+        "cited_showings": 1,
+        "following_cuts": [
+          355
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -45,
+        "answer": -45,
+        "applied": true
+      },
+      {
+        "counter": "fadigu49",
+        "audit_item": 382,
+        "entry_item": 236,
+        "cited_showings": 1,
+        "following_cuts": [
+          387
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 470,
+        "answer": 470,
+        "applied": true
+      },
+      {
+        "counter": "penike87",
+        "audit_item": 442,
+        "entry_item": 317,
+        "cited_showings": 1,
+        "following_cuts": [
+          444
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 566,
+        "answer": 566,
+        "applied": true
+      },
+      {
+        "counter": "mipe29",
+        "audit_item": 456,
+        "entry_item": 53,
+        "cited_showings": 1,
+        "following_cuts": [
+          460
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 546,
+        "answer": 546,
+        "applied": true
+      },
+      {
+        "counter": "keruba67",
+        "audit_item": 463,
+        "entry_item": 11,
+        "cited_showings": 1,
+        "following_cuts": [
+          468
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -217,
+        "answer": -217,
+        "applied": true
+      },
+      {
+        "counter": "suneba10",
+        "audit_item": 541,
+        "entry_item": 76,
+        "cited_showings": 1,
+        "following_cuts": [
+          542
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 153,
+        "answer": 153,
+        "applied": true
+      },
+      {
+        "counter": "wetutu97",
+        "audit_item": 580,
+        "entry_item": 172,
+        "cited_showings": 1,
+        "following_cuts": [
+          584
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 325,
+        "answer": 325,
+        "applied": true
+      },
+      {
+        "counter": "gumoba83",
+        "audit_item": 719,
+        "entry_item": 261,
+        "cited_showings": 1,
+        "following_cuts": [
+          723
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -41,
+        "answer": -41,
+        "applied": true
+      },
+      {
+        "counter": "petu78",
+        "audit_item": 724,
+        "entry_item": 284,
+        "cited_showings": 1,
+        "following_cuts": [
+          731
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 670,
+        "answer": 670,
+        "applied": true
+      },
+      {
+        "counter": "saru45",
+        "audit_item": 739,
+        "entry_item": 240,
+        "cited_showings": 1,
+        "following_cuts": [
+          739
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 139,
+        "answer": 139,
+        "applied": true
+      }
+    ]
+  },
+  "forgeries": [
+    {
+      "kind": "memory",
+      "item": 148,
+      "targets": 13,
+      "kept": 13,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 133,
+        "flagged_versions": 133,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "method",
+      "item": 246,
+      "targets": 47,
+      "kept": 45,
+      "failed_keys": [
+        "p30_5",
+        "p58_5"
+      ],
+      "notes": {
+        "matching_versions": 121,
+        "flagged_versions": 121,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "rule",
+      "item": 493,
+      "targets": 36,
+      "kept": 36,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 91,
+        "flagged_versions": 91,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "value",
+      "item": 801,
+      "targets": 1,
+      "kept": 1,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 53,
+        "flagged_versions": 53,
+        "unflagged_versions": []
+      }
+    }
+  ],
+  "sum_checks": [
+    {
+      "event": "a false step in the working: asked again",
+      "steps": [
+        [
+          "37*5+11",
+          197,
+          196
+        ]
+      ],
+      "taken": true,
+      "still": [],
+      "at": 1792467871.0
+    },
+    {
+      "event": "a false step in the working: asked again",
+      "steps": [
+        [
+          "151*5+11",
+          756,
+          766
+        ]
+      ],
+      "taken": true,
+      "still": [],
+      "at": 1792469394.4
+    },
+    {
+      "event": "a false step in the working: asked again",
+      "steps": [
+        [
+          "142*5+11",
+          711,
+          721
+        ]
+      ],
+      "taken": true,
+      "still": [],
+      "at": 1792469905.9
+    },
+    {
+      "event": "a false step in the working: asked again",
+      "steps": [
+        [
+          "142*5+11",
+          711,
+          721
+        ]
+      ],
+      "taken": true,
+      "still": [],
+      "at": 1792470148.1
+    }
+  ],
+  "event_counts": {
+    "in-place notes reply": 197,
+    "in-place notes asked again": 43,
+    "in-place notes: a misspelled name put right": 16,
+    "recall": 193,
+    "in-place notes: an empty reply asked again without thinking": 2,
+    "in-place notes: a doubtful line accepted after the second reply": 3,
+    "a false step in the working: asked again": 4,
+    "in-place notes: lines left out (the turns do not bear them out)": 2,
+    "in-place notes: cited archived entries shown": 15,
+    "in-place notes reply rejected": 2,
+    "in-place notes: no usable second reply, the first stands": 1,
+    "in-place notes: lines for names the turns do not mention left out": 3
+  },
+  "scope": "Saved STATE counters use notes_truth.py parsing and the generator's true state at archive.n <= NOTES.upto. Non-counter records are excluded. This does not certify runtime, GPU health, another seed, or release readiness."
+}

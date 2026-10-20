@@ -13,6 +13,20 @@ Flash-Next section. The family summary no longer implies four-card-only support.
 Quality and portability gaps remain visible; no result was promoted or rerun,
 and no serving state changed.
 
+**October 20, 10:07 EDT — campaign 49 complete: the 2M bar is not met as registered.** c49d seed 2 (ctxkeeper
+1.2.0.dev10, K32C + `--cited-entries`) ran **417/423 in 88 min** on the post-freeze boot (kernel log clean),
+after c49b seed 0's independently audited **421/423**. 16/16 audits on both seeds; no forged value, method, rule
+or removal was ever adopted (every forged NOTES line flagged in every version it entered). The registered gate —
+every forgery target kept on both seeds — failed on two silent tally slips (motu29 answered 711 for 721 twice,
+588 items apart, no written working for the sum check to catch; the NOTES held 142 correctly throughout) and on
+the wrong-STATE-line caps (30 lines, cap 15; removed/reopened counters stale for 6-10 versions). Hash-bound
+audits and receipts for both seeds are public under
+`experiments/qwen38-27b-b70/data/2026-10-19-context-campaign49/`; the full read is in
+`notes/2026-10-17-hostile-history-poison.md` (campaign-49-complete section). Next levers per the registration:
+silent tally arithmetic in batch answers, and value verification at cuts starting with removed/reopened
+counters. Turin's cards are idle (`RESTORE=0`; no ctx/gemma/qwen units running). The release lane below
+(installer, public page, campaign-50 gate) is unchanged by this verdict.
+
 **October 20, 04:09 UTC — model recipe closeout validated; all three daily endpoints restored.**
 Five text recipes now carry source/build instructions and scoped measurements:
 Qwen3.8 27B FP8 TP2, Flash-Next own-runtime TP1/TP2, Gemma4 Q8 and Nemotron.

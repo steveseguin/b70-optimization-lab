@@ -32,8 +32,14 @@ Each clause is a standing work queue, not a milestone:
   1.2.0.dev9 with a check for false multiplication steps. On it (campaign 48) seed 2 kept every forgery target
   with 16/16 audits (414/423), the first 2M run to do so; seed 0 (416/423) lost two targets and an audit to one
   model mix-up (an audit's counter put on another that had changed by the same amount). 1.2.0.dev10 fixes a
-  stamped-name keeper fault and adds `--cited-entries` (the archived entry an audit cites, shown up front);
-  campaign 49 runs both seeds on it. Open at 2M-10M+ and for contradictory streams.
+  stamped-name keeper fault and adds `--cited-entries` (the archived entry an audit cites, shown up front).
+  Campaign 49 (2026-10-19/20, both seeds on it, hash-bound public audits): seed 0 421/423 with every forgery
+  target kept and 16/16 audits; seed 2 417/423 with 16/16 audits and no forged value, method, rule or removal
+  ever adopted (every forged NOTES line flagged in every version), but two tally answers slipped silently (711
+  for 721 on a counter the NOTES held correctly, no written working for the sum check to catch) and the
+  wrong-STATE-line caps were missed (30 lines; removed/reopened counters stale for 6-10 versions), so the
+  registered 2M bar is still not met. The levers left at 2M: silent tally arithmetic in batch answers and value
+  verification at cuts, starting with removed/reopened counters. Open at 2M-10M+ and for contradictory streams.
 - **flat cost** — wall time and tokens per 100K of history stay flat and then fall. Flat to 1M is measured
   (8.3-9.5 min/100K, no trend); the measured wastes of 2026-10-13 (notes path reading 37 tokens per token written,
   cache-hit rates of 2-90% on the same code path) are the current targets, after which the next most expensive

@@ -186,7 +186,8 @@ def audit(args):
         elif kind == "a false step in the working: asked again":
             require(isinstance(event["taken"], bool), "invalid sum-check taken field")
             sums.append(event)
-    require(len(cited) == state["cited_shown"], "cited-entry event/state counts disagree")
+    require(sum(len(e["names"]) for e in cited) == state["cited_shown"],
+            "cited-entry event/state counts disagree")  # state counts shown names; one event can show several
     require(len(sums) == state.get("sum_checks", 0), "sum-check event/state counts disagree")
     audit_rows, targeted = [], set()
     for rec in ref["retro"]:
