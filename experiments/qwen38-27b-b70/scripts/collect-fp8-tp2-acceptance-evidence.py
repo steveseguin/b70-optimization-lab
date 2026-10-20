@@ -35,14 +35,15 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user'
+DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance'
 EXPECTED_IMAGE = 'sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
 # Same-image no-MTP strict run (two cards, R310) and the qualified depth-5 research container, both from the
 # 2026-09-16 review campaign (experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 REFERENCE_STRICT = Path('/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict')
-# The qualified fresh server this replay must match (image, arguments, environment). Default: the review campaign's
-# depth-5 server; QUALIFIED_CONTAINER selects another qualified receipt (the comm-2 allgather server since 2026-09-17).
-QUALIFIED_CONTAINER = Path(os.environ.get('QUALIFIED_CONTAINER', '/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp5/container-final.json'))
+# The qualified fresh server this replay must match (image, arguments, environment): the 2026-10-17 gates C1 server
+# (MTP5 + b70_fa_verify_rows 0.2.0 one launch); QUALIFIED_CONTAINER selects another qualified receipt.
+QUALIFIED_CONTAINER = Path(os.environ.get('QUALIFIED_CONTAINER') or
+                           ROOT / 'experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/server-C1-container-final.json')
 CONFIGURATION = {'image_id': EXPECTED_IMAGE, 'model': 'Qwen/Qwen3.8-27B-FP8', 'cards': 2, 'mtp_depth': 5,
                  'draft_shortlist': '/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt', 'max_model_len': 33024,
                  'max_num_batched_tokens': 4096, 'max_num_seqs': 1, 'prefix_caching': False}
@@ -277,7 +278,7 @@ def derive(files):
             **({'multi_user': multi_user} if multi_user is not None else {}),
             'strict': {'no_mtp_reference_exact': exact, 'requests': len(right), 'decode_tokens_s': speed,
                        'no_mtp_reference_decode_tokens_s': reference_speed, 'speedup_vs_no_mtp': speed / reference_speed,
-                       'interpretation': os.environ.get('FIRST_SERVER_NOTE', 'second fresh depth-5 server of the two-run pair (the first is the comm-2 campaign tp2-ag-mtp5 stage, 2026-09-17, allgather allreduce overlay); outputs identical to the same-image no-MTP reference')},
+                       'interpretation': os.environ.get('FIRST_SERVER_NOTE', 'fresh depth-5 one-launch server (b70_fa_verify_rows 0.2.0, B70_FA_VERIFY_ROWS_ONE_LAUNCH=1) qualified against the 2026-10-17 gates server-C1 container receipt; outputs identical to the same-image no-MTP reference')},
             'practical': {'requests': len(practical['rows']), 'tasks': 3, 'repeats': 2, 'rows': [{'task': r['task'], 'repeat': r['repeat'], 'passed': r['passed'], 'input_tokens': r.get('prompt_tokens'), 'output_tokens': r.get('completion_tokens'), 'http_ttft_ms': 1000 * r['http_ttft_s'] if 'http_ttft_s' in r else None, 'token_identity': r.get('repeat_identity')} for r in practical['rows']]},
             'timing_scope': 'Practical HTTP TTFT is a transport measurement; no server-prefill headline inferred. Strict decode uses the canonical first-100-token interval definition.',
             'limits': ['one configured lab host; existing hash-verified model files and Docker layers reused',

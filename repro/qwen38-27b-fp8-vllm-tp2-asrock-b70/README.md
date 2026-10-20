@@ -1,19 +1,19 @@
 # Reproduce official Qwen3.8 27B FP8 TP2 on two B70s
 
 > **Status: `candidate-portable-repro`.** Use the current digest-pinned R310
-> package below. Single-user MTP5 passed the October 4 acceptance with all
+> package below. Single-user MTP5 with one-launch verification passed the October 19 acceptance with all
 > 12 reference outputs exact; the separate MTP0 multi-user profile passed
 > short and long-prompt output checks at 16, 32 and 64 users on October 7.
-> Both used the configured lab host. A clean Intel-driver/Docker installation,
+> These used configured lab hosts. A clean Intel-driver/Docker installation,
 > independent-host replay and prolonged serving remain untested.
 
 Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp2-b70/README.md).
 
-## Choose the current profile (reviewed October 10, 2026)
+## Choose the current profile (reviewed October 19, 2026)
 
 This is the **27B dense model on two B70s**, not Flash-Next 125B-A6B.
 Use [`recommended`](../../packages/qwen38-27b-fp8-tp2-b70/README.md#start)
-for one request at a time with target-verified MTP5. The current launcher with
+for one request at a time with target-verified MTP5. The earlier launcher with
 chunked weight upload measured **90.318721 tok/s** in the
 [October 4 acceptance](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/summary.json),
 with 12/12 outputs identical to no MTP. That is one acceptance run, separate
@@ -89,6 +89,60 @@ historical, not a tested installer for a fresh host. The
 [current one-card guide's platform and rebuild boundary](../qwen38-27b-fp8-vllm-tp1-b70/README.md#platform-and-rebuild-boundary)
 also explains the R310 source base shared by this two-card image. Do not build
 its later one-card R311/R312 attention stages for this package.
+
+## Current package acceptance and context measurements
+
+The recommended profile uses `b70_fa_verify_rows` 0.2.0 with
+`B70_FA_VERIFY_ROWS_ONE_LAUNCH=1`: it checks the six drafted rows in one
+attention launch with the same arithmetic. Depth-1 and multi-user keep their
+previous launch arguments. The [October 17 gates](../../experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md)
+passed the page-size census, strict repeats, chat quality and exact context
+comparisons through a 32,768-token input.
+
+The [October 19 public-source acceptance](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json), downloaded
+from commit `421b07e4655c20d4a52ba6b6f6a7c38d164d1c60`, passed all 12 strict
+reference comparisons and six practical requests, including repeat token
+identity, cache-zero checks and a clean stop. It used two selected cards on
+`steve-b70s`, the four-card lab host, and measured **46.013 tok/s** on one
+server. The historical **90.3 tok/s** pair was measured on turin with the
+earlier overlay; it is retained as a separately scoped record. These host
+results are not pooled and do not establish a matched speed regression or
+improvement. Model files and Docker layers were reused after verification;
+a clean driver/Docker installation and independent beginner replay remain pending.
+
+These October 17 measurements used one server on turin, full FP16 KV, MTP5,
+one user, no prompt caching and 128-token continuations. Each point has six
+requests: two repeats for each of prose, code and documents. Writing speed
+uses 99 intervals between tokens 1 and 100; aggregation is the median within
+each class, then across the three classes. Separate warmups are excluded.
+Every measured continuation matches the no-MTP reference. These are context
+screens, not a new fixed-suite speed record; the two corpora stay separate.
+
+| Input tokens | Writing, tok/s | Reading, tok/s | Corpus |
+| ---: | ---: | ---: | --- |
+| 2,048 | 92.680 | 3596.125 | 2K–16K text |
+| 8,192 | 133.568 | 3398.049 | 2K–16K text |
+| 16,384 | 123.568 | 3247.845 | 2K–16K text |
+| 24,576 | 80.140 | 3115.340 | Long text |
+| 30,720 | 80.867 | 3029.731 | Long text |
+| 32,768 | 97.332 | 3000.594 | Long text |
+
+Reading speed is input tokens divided by the server's first-execution-to-first-token
+duration, aggregated by the same class medians. It is not HTTP TTFT or isolated
+kernel throughput. [2K–16K measurements](../../experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json) and
+[24K–32K measurements](../../experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json) retain every row and repeat.
+A 512-token reading measurement for this exact overlay remains pending.
+
+Verify the current acceptance packet without starting a server:
+
+```bash
+python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py
+```
+
+The [manifest](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/manifest.json) pins all 109 files in the
+[evidence archive](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/evidence.tar.gz), including the downloaded source,
+reference outputs, runtime identity, launch and stop receipts. Historical
+acceptance packets remain unchanged.
 
 ## Historical September one-user measurements
 

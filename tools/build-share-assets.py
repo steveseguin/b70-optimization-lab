@@ -90,12 +90,12 @@ def site_card(path: Path) -> None:
     img.save(path, optimize=True)
 
 
-def model_card(path: Path, name: str, headline: str | None, unit: str, subline: str) -> None:
+def model_card(path: Path, name: str, headline: str | None, unit: str, subline: str, *, pending_label: str = "NOT MEASURED YET", name_size: int = 66) -> None:
     img = Image.new("RGB", (W, H), SPOT)
     d = ImageDraw.Draw(img)
     brand_mark(d, 72, 56, 56)
     d.text((140, 62), "NEURAL.DOWNLOAD · MEASURED ON INTEL ARC PRO B70", font=mono(24), fill=WHITE)
-    name_font = font(66)
+    name_font = font(name_size)
     lines = wrap(d, name.upper(), name_font, 1056)[:2]
     y = 140
     for line in lines:
@@ -107,7 +107,7 @@ def model_card(path: Path, name: str, headline: str | None, unit: str, subline: 
         d.text((72 + num_w + 22, y + 118), unit.upper(), font=mono(28), fill=WHITE)
         y += 200
     else:
-        d.text((72, y + 24), "NOT MEASURED YET", font=font(56), fill=MUTED)
+        d.text((72, y + 24), pending_label, font=font(48 if len(pending_label) > 20 else 56), fill=MUTED)
         y += 110
     sub_font = font(28, bold=False)
     for line in wrap(d, subline, sub_font, 1056)[:2]:
@@ -196,7 +196,9 @@ def main() -> None:
         hw = pkg.get("hardware") or {}
         cards_n = hw.get("cards", 1)
         sub = f"{cards_n}× Intel Arc Pro B70 · {lib.get('quantization', '')} · {lib.get('runtime_label', '')}".strip(" ·")
-        model_card(cards / f"{pkg['id']}.png", pkg.get("name") or pkg["id"], fmt(fm.get("value")) or None, fm.get("unit", "tok/s") + " measured", sub)
+        model_card(cards / f"{pkg['id']}.png", pkg.get("name") or pkg["id"], fmt(fm.get("value")) or None, fm.get("unit", "tok/s") + " measured", sub,
+                   pending_label="LAB TIMINGS · QUALITY PENDING" if pkg.get("text_measurements") else "NOT MEASURED YET",
+                   name_size=48 if pkg.get("text_measurements") else 66)
         written += 1
 
     # Family pages: hero from featured_results, else the promoted packet metric

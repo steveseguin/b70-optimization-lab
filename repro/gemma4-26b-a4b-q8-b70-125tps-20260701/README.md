@@ -1,4 +1,4 @@
-# Gemma 4 26B A4B Q8 on 1x B70, 125 tok/s
+# Gemma 4 26B A4B Q8 on one B70, 122.16 tok/s
 
 > **Certification: `candidate-portable-repro`, not a starter guide.** Install,
 > restore, launch, and validation material is closed for the lab's own hosts;
@@ -28,8 +28,9 @@ Use the active script packet for day-to-day reruns:
 
 ## Headline Result
 
-- Primary metric: `124.97714084813418 tok/s` median generated-token throughput
-  for streamed tokens 1-100 after TTFT.
+- Primary metric: **`122.16035656735696 tok/s`**, median within each input
+  class, then median across the six class medians, using 99 inter-token
+  intervals between generated tokens 1 and 100 after TTFT.
 - Suite: fixed realistic cold prompt suite, 12 unique prompts, each prompt run
   once.
 - Output length: `MAX_TOKENS=512`.
@@ -47,14 +48,20 @@ Record metrics from the evidence JSON:
 
 | Metric | Value |
 | --- | ---: |
-| median tok/s, tokens 1-100 after TTFT | `124.97714084813418` |
-| p10 tok/s, tokens 1-100 after TTFT | `103.83610041293295` |
-| mean tok/s, tokens 1-100 after TTFT | `122.4743547166875` |
+| class-balanced median, 99 intervals (headline) | `122.16035656735696` |
+| all-prompt median, 99 intervals (secondary) | `123.72736943965284` |
+| historical 100-event compatibility median | `124.97714084813418` |
+| historical 100-event compatibility p10 | `103.83610041293295` |
+| historical 100-event compatibility mean | `122.4743547166875` |
 | median TTFT | `178.6938319564797 ms` |
 | median full512 after-TTFT tok/s | `114.87107033590775` |
 | median wall full512 tok/s | `108.58112847853889` |
 
-Same-family support rows include `123.67689864739785`,
+The packet directory retains its historical `125tps` name; that does not
+change the current metric. The older support/replay figures below retain
+their original accounting and must not be substituted for the headline.
+
+Same-family historical support rows include `123.67689864739785`,
 `121.59076340768573`, `121.41411987308553`, `119.94842631460949`,
 `119.26425148518223`, and `113.63257982764395 tok/s`. This lane has several
 percent run-to-run variance, so close comparisons require same-window controls.
@@ -401,3 +408,81 @@ That service recipe uses `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`,
 SWA left-bound, KQ register/broadcast, phase prefill ubatch `2048`, 32K
 context, FA on, and VMM. It passed exact long-context JSON validation with
 `cached_tokens=0`, but it is not a short-decode record replacement.
+
+### October 10: actual lengths in the 16K-slot sweep
+
+The [draft-3 sweep](../../data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json)
+and [no-draft sweep](../../data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json)
+use actual server prompt counts on the graph's x axis. Earlier graphs used
+requested lengths; the values below correct those coordinates without
+changing any measured rates. Requested counts remain metadata in the package.
+
+| Requested input tokens | Actual input tokens | Prefill, draft 3 (tok/s) | Prefill, no draft (tok/s) | Samples per setting |
+| ---: | ---: | ---: | ---: | ---: |
+| 300 | 292 | 933.9 | 937.4 | 3 |
+| 512 | 509 | 1,323.8 | 1,327.8 | 3 |
+| 2,048 | 2,042 | 2,061.5 | 2,050.1 | 3 |
+| 8,192 | 8,185 | 1,697.7 | 1,705.1 | 2 |
+| 15,800 | 15,793 | 1,488.3 | 1,495.2 | 2 |
+
+These are median server prompt-counter rates with deterministic oneDNN,
+prefill micro-batch 2048, f16 KV, one 16K slot and 256-token response caps.
+Each request disables prompt reuse and records zero cached tokens. The
+509-token result is not relabeled as a measured 512-token result.
+
+### October 15: production prompt-reading profile
+
+The package also includes a separate measured curve for the production
+compatibility build with deterministic oneDNN, prefill micro-batch 1024,
+no draft, f16 KV, and one 32,768-token slot. It ran on card 1 of the
+two-B70 host while the LAN service used card 0. These controls differ from
+the July curve and October 10 16K-slot sweep; their points are kept separate.
+
+| Actual input tokens | Mean prefill (tok/s) | Observed range (tok/s) | Samples |
+| ---: | ---: | ---: | ---: |
+| 1,867 | 1,307.54 | 1,305.68–1,310.50 | 4 |
+| 7,623 | 1,167.81 | 1,167.49–1,168.01 | 4 |
+| 29,400 | 909.27 | 909.07–909.40 | 4 |
+
+Each point averages two timings on each of two fresh servers. The rate is
+the server's `prompt_n * 1000 / prompt_ms`, from full-precision JSON receipts,
+not prompt length divided by time to first token. The same diagnostic long
+prompts were repeated with `cache_prompt=false`, `--cache-ram 0`, and
+`--ctx-checkpoints 0`; timed requests asked for one generated token after
+the suite and long-output checks. This is a prompt-reading diagnostic,
+not the varied cold-suite decode headline. A 512-token prefill point was
+not measured under these controls.
+
+The [derived evidence summary](../../experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json)
+retains every timing, its source hash, and the aggregation. Check it locally
+without loading a model:
+
+```bash
+python3 experiments/gemma4-26b-a4b-q8-b70/scripts/summarize-prefill-reorder.py
+```
+
+### October 15 coalesced conversion: measured, not shipped
+
+The separately built conversion kernel read the same prompts **21.49%,
+19.23%, and 13.20% faster**, respectively. The retained JSONs reproduce
+12/12 suite token matches for new-a versus production-a, and 3/3 long-prompt
+token matches for production-b, new-a, new-b and verification versus
+production-a. The log records the remaining suite comparisons and 524,288
+byte-compared conversion calls with no mismatches. These are scoped
+experimental results; the package runtime and its decode headline do not
+include this change.
+
+The [conversion delta](../../experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/convert-change-vs-production.diff)
+and [preregistered experiment/results](../../experiments/gemma4-26b-a4b-q8-b70/notes/2026-10-15-prefill-reorder-check.md)
+are retained. The latter pins only abbreviated test-build binary hashes
+(`c2bddf55…` server, `8f416c95…` shared library). An exact compatibility
+source/build receipt, full binary/library digests and tracked long-prompt
+inputs are still missing. A delta against an unidentified production tree
+does not close a public build. The historical runner also moves and restores
+host services; it is evidence, not a current replay command.
+
+Before publishing the faster profile, close those inputs and the patched
+build, then retain a clean rebuild and full quality/performance replay under
+that separately declared identity. The first attempt's `speed-check-*`
+files used different settings and cannot supply this curve. Neither service
+adoption nor changing a flag alone satisfies the missing build/replay gates.

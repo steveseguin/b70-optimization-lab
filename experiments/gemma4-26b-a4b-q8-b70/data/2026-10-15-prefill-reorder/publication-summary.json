@@ -1,0 +1,342 @@
+{
+  "format": "neural.download.gemma-prefill-reorder-summary.v1",
+  "source_attempt": "2026-10-15 second attempt, 19:26–20:03 EDT",
+  "metric": "Server prompt_n * 1000 / prompt_ms; arithmetic mean of four request rates per point",
+  "controls": {
+    "target": "Gemma 4 26B A4B UD-Q8_K_XL",
+    "runtime": "llama.cpp c926 production compatibility build",
+    "host": "steve-TURIND8-2L2T",
+    "measuring_card": 1,
+    "cards_used_by_test": 1,
+    "other_host_work": "Gemma LAN service on card 0",
+    "context_tokens": 32768,
+    "parallel": 1,
+    "kv_type": "f16",
+    "speculation": "off",
+    "GGML_SYCL_DNNL_DETERMINISTIC": "1",
+    "LLAMA_PREFILL_UBATCH_SIZE": "1024",
+    "temperature": 0,
+    "timed_request_output_cap": 1,
+    "cache_policy": "cache_prompt=false per request; cache-ram=0; ctx-checkpoints=0",
+    "workload": "Same three diagnostic long prompts repeated twice per server after suite and long-output checks",
+    "headlining": false
+  },
+  "production": [
+    {
+      "context_tokens": 1867,
+      "value": 1307.541789553131,
+      "samples": 4,
+      "min": 1305.6811466496026,
+      "max": 1310.5037542738778,
+      "observations": [
+        {
+          "server": "prod-a",
+          "id": "long-2k",
+          "rep": 1,
+          "prompt_n": 1867,
+          "prompt_ms": 1424.643,
+          "prompt_per_second": 1310.5037542738778
+        },
+        {
+          "server": "prod-a",
+          "id": "long-2k",
+          "rep": 2,
+          "prompt_n": 1867,
+          "prompt_ms": 1427.489,
+          "prompt_per_second": 1307.890989002367
+        },
+        {
+          "server": "prod-b",
+          "id": "long-2k",
+          "rep": 1,
+          "prompt_n": 1867,
+          "prompt_ms": 1429.4560000000001,
+          "prompt_per_second": 1306.0912682866767
+        },
+        {
+          "server": "prod-b",
+          "id": "long-2k",
+          "rep": 2,
+          "prompt_n": 1867,
+          "prompt_ms": 1429.905,
+          "prompt_per_second": 1305.6811466496026
+        }
+      ]
+    },
+    {
+      "context_tokens": 7623,
+      "value": 1167.8076527224289,
+      "samples": 4,
+      "min": 1167.4934178212823,
+      "max": 1168.0127235703221,
+      "observations": [
+        {
+          "server": "prod-a",
+          "id": "long-8k",
+          "rep": 1,
+          "prompt_n": 7623,
+          "prompt_ms": 6527.563,
+          "prompt_per_second": 1167.8171470731113
+        },
+        {
+          "server": "prod-a",
+          "id": "long-8k",
+          "rep": 2,
+          "prompt_n": 7623,
+          "prompt_ms": 6526.47,
+          "prompt_per_second": 1168.0127235703221
+        },
+        {
+          "server": "prod-b",
+          "id": "long-8k",
+          "rep": 1,
+          "prompt_n": 7623,
+          "prompt_ms": 6529.3730000000005,
+          "prompt_per_second": 1167.4934178212823
+        },
+        {
+          "server": "prod-b",
+          "id": "long-8k",
+          "rep": 2,
+          "prompt_n": 7623,
+          "prompt_ms": 6527.059,
+          "prompt_per_second": 1167.9073224250003
+        }
+      ]
+    },
+    {
+      "context_tokens": 29400,
+      "value": 909.2718901854017,
+      "samples": 4,
+      "min": 909.0736777314642,
+      "max": 909.3959813544129,
+      "observations": [
+        {
+          "server": "prod-a",
+          "id": "long-24k",
+          "rep": 1,
+          "prompt_n": 29400,
+          "prompt_ms": 32329.151,
+          "prompt_per_second": 909.3959813544129
+        },
+        {
+          "server": "prod-a",
+          "id": "long-24k",
+          "rep": 2,
+          "prompt_n": 29400,
+          "prompt_ms": 32335.127,
+          "prompt_per_second": 909.2279118000681
+        },
+        {
+          "server": "prod-b",
+          "id": "long-24k",
+          "rep": 1,
+          "prompt_n": 29400,
+          "prompt_ms": 32340.613,
+          "prompt_per_second": 909.0736777314642
+        },
+        {
+          "server": "prod-b",
+          "id": "long-24k",
+          "rep": 2,
+          "prompt_n": 29400,
+          "prompt_ms": 32329.364,
+          "prompt_per_second": 909.3899898556618
+        }
+      ]
+    }
+  ],
+  "candidate_not_shipped": {
+    "points": [
+      {
+        "context_tokens": 1867,
+        "value": 1588.530340092809,
+        "samples": 4,
+        "min": 1585.4414524579863,
+        "max": 1592.7221045429687,
+        "observations": [
+          {
+            "server": "new-a",
+            "id": "long-2k",
+            "rep": 1,
+            "prompt_n": 1867,
+            "prompt_ms": 1177.313,
+            "prompt_per_second": 1585.814477543355
+          },
+          {
+            "server": "new-a",
+            "id": "long-2k",
+            "rep": 2,
+            "prompt_n": 1867,
+            "prompt_ms": 1174.108,
+            "prompt_per_second": 1590.1433258269258
+          },
+          {
+            "server": "new-b",
+            "id": "long-2k",
+            "rep": 1,
+            "prompt_n": 1867,
+            "prompt_ms": 1172.207,
+            "prompt_per_second": 1592.7221045429687
+          },
+          {
+            "server": "new-b",
+            "id": "long-2k",
+            "rep": 2,
+            "prompt_n": 1867,
+            "prompt_ms": 1177.59,
+            "prompt_per_second": 1585.4414524579863
+          }
+        ]
+      },
+      {
+        "context_tokens": 7623,
+        "value": 1392.3276461641588,
+        "samples": 4,
+        "min": 1392.1558600940887,
+        "max": 1392.6029636520211,
+        "observations": [
+          {
+            "server": "new-a",
+            "id": "long-8k",
+            "rep": 1,
+            "prompt_n": 7623,
+            "prompt_ms": 5473.9220000000005,
+            "prompt_per_second": 1392.6029636520211
+          },
+          {
+            "server": "new-a",
+            "id": "long-8k",
+            "rep": 2,
+            "prompt_n": 7623,
+            "prompt_ms": 5475.599,
+            "prompt_per_second": 1392.1764541194489
+          },
+          {
+            "server": "new-b",
+            "id": "long-8k",
+            "rep": 1,
+            "prompt_n": 7623,
+            "prompt_ms": 5474.817,
+            "prompt_per_second": 1392.3753067910764
+          },
+          {
+            "server": "new-b",
+            "id": "long-8k",
+            "rep": 2,
+            "prompt_n": 7623,
+            "prompt_ms": 5475.68,
+            "prompt_per_second": 1392.1558600940887
+          }
+        ]
+      },
+      {
+        "context_tokens": 29400,
+        "value": 1029.3267870301754,
+        "samples": 4,
+        "min": 1028.7550328515774,
+        "max": 1029.6545771560625,
+        "observations": [
+          {
+            "server": "new-a",
+            "id": "long-24k",
+            "rep": 1,
+            "prompt_n": 29400,
+            "prompt_ms": 28578.232,
+            "prompt_per_second": 1028.7550328515774
+          },
+          {
+            "server": "new-a",
+            "id": "long-24k",
+            "rep": 2,
+            "prompt_n": 29400,
+            "prompt_ms": 28554.794,
+            "prompt_per_second": 1029.5994430917624
+          },
+          {
+            "server": "new-b",
+            "id": "long-24k",
+            "rep": 1,
+            "prompt_n": 29400,
+            "prompt_ms": 28553.265,
+            "prompt_per_second": 1029.6545771560625
+          },
+          {
+            "server": "new-b",
+            "id": "long-24k",
+            "rep": 2,
+            "prompt_n": 29400,
+            "prompt_ms": 28563.154000000002,
+            "prompt_per_second": 1029.298095021299
+          }
+        ]
+      }
+    ],
+    "gain_percent": [
+      21.48983327222831,
+      19.225768294831937,
+      13.2034101285474
+    ],
+    "flag": "LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1",
+    "reproducible_build_identity_closed": false,
+    "missing": [
+      "Full test-build server and shared-library hashes (note retains prefixes only)",
+      "Exact production compatibility source/toolchain/build receipt to which the delta applied",
+      "Tracked long prompt inputs; historical runner names a host-only JSON path",
+      "Clean rebuild and full-gate replay of the separately declared candidate profile"
+    ]
+  },
+  "quality": {
+    "long_token_comparisons_replayed": "prod-b, new-a, new-b, verify each equal prod-a: 3/3",
+    "suite_token_comparison_replayed": "new-a equals prod-a: 12/12, identical prompt hashes",
+    "suite_comparisons_retained_only_in_log": "prod-b, new-b, verify equal prod-a: 12/12 each",
+    "conversion_check_retained_only_in_log": "524288 calls, 0 mismatched calls, 0 mismatch lines",
+    "scope": "Token parity for tested prompts; not a general mathematical proof or a new headline attestation"
+  },
+  "sources": [
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-check.log",
+      "sha256": "f2d58eaaf6b421687cf4fa74763dab352a361c85392c22e714bbadb0ac99af61"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/convert-change-vs-production.diff",
+      "sha256": "8e9e08db4cd950e2e2095dec262a7c3be8a43370cabf9f504cb4d57a03920d66"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/scripts/gemma-identity-check.sh",
+      "sha256": "e33a800e6534e240b7e735c5633bab5e1406991055fe2170c774a8be51e50fd7"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/notes/2026-10-15-prefill-reorder-check.md",
+      "sha256": "41fa7333ff22f9642db966031fcda4c189cb585692948b2712c54ede88a5dfa8"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-prod-a.json",
+      "sha256": "d69ab24608ce4f5db17b46413a6a52f0254a366b0f8f4c415466bba9297b8007"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-prod-b.json",
+      "sha256": "68a29421d43a7632d33f8d09182af42cd4db14f0e60535ca5c4e0ed8faaa0518"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-new-a.json",
+      "sha256": "9ecc2980453d4e3fb474c4e2e4a2ccf11cd31ea4a944400dd643bbe389022491"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-new-b.json",
+      "sha256": "932ea81269d3b32b143fe1aee15d755ed4c02d11a7acdb5aeaa883b4dbb37d82"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-verify.json",
+      "sha256": "2ad7adaba5df3b68560c5ca5966a7c9d2130d48144405385e0fac966b6cb435e"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/suite-prod-a.json",
+      "sha256": "702b8f42ac2803b559ae3146d2a900976cf9b2b79a0882f1a4d63dbd96e4bbfe"
+    },
+    {
+      "path": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/suite-new-a.json",
+      "sha256": "48bc0220f070fe517bfe84d4ed704ac6400c292cc9956c2f5b58aefd2819f86f"
+    }
+  ]
+}

@@ -7,20 +7,74 @@ answers.
 
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` (MTP depth 5, draft shortlist, allgather allreduce) | 33,024 tokens | **90.3 tok/s** | Not measured on this exact overlay |
+| `recommended` (MTP depth 5, draft shortlist, allgather allreduce) | 33,024 tokens | **90.3 tok/s historical turin pair; 46.0 latest acceptance on steve-b70s** | See current measurements below |
 | `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | Not measured on this exact profile |
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html). LocalMaxxing:
 [`cmu5qk0kz07zglq01eh1opkhx`](https://www.localmaxxing.com/runs/cmu5qk0kz07zglq01eh1opkhx) (90.48 tok/s, approved September 17, measured on the earlier launcher that still allowed the container 4 GiB of swap; the
-October 3 re-acceptance of the no-swap launcher measured 90.01; the current chunked-upload launcher measured 90.3187 on October 4, which the table rounds to 90.3;
+October 3 re-acceptance of the no-swap launcher measured 90.01; the earlier chunked-upload launcher measured 90.3187 on October 4;
 the ring-allreduce recipe's [`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17), 88.41 tok/s, stands as history).
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
 [review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 
-The current [single-user receipt](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/summary.json) is one acceptance run. The catalog retains its separately identified two-server September pair (90.309841 tok/s). The older 3,642 / 3,436 / 3,282 prompt-reading rates used ring allreduce; the 3,763 / 3,535 / 3,384 rates used no MTP. Neither is a measurement of today's recommended overlay. See the recipe for the separate measured reading profiles.
+The earlier [single-user receipt](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/summary.json) is one acceptance run. The catalog retains its separately identified two-server September pair (90.309841 tok/s). The older 3,642 / 3,436 / 3,282 prompt-reading rates used ring allreduce; the 3,763 / 3,535 / 3,384 rates used no MTP. Neither is a measurement of today's recommended overlay. See the recipe for the separate measured reading profiles.
 
 This is the **27B dense model**, distinct from [Flash-Next 125B-A6B on four cards](../qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
+
+## Current package acceptance and context measurements
+
+The recommended profile uses `b70_fa_verify_rows` 0.2.0 with
+`B70_FA_VERIFY_ROWS_ONE_LAUNCH=1`: it checks the six drafted rows in one
+attention launch with the same arithmetic. Depth-1 and multi-user keep their
+previous launch arguments. The [October 17 gates](../../experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md)
+passed the page-size census, strict repeats, chat quality and exact context
+comparisons through a 32,768-token input.
+
+The [October 19 public-source acceptance](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json), downloaded
+from commit `421b07e4655c20d4a52ba6b6f6a7c38d164d1c60`, passed all 12 strict
+reference comparisons and six practical requests, including repeat token
+identity, cache-zero checks and a clean stop. It used two selected cards on
+`steve-b70s`, the four-card lab host, and measured **46.013 tok/s** on one
+server. The historical **90.3 tok/s** pair was measured on turin with the
+earlier overlay; it is retained as a separately scoped record. These host
+results are not pooled and do not establish a matched speed regression or
+improvement. Model files and Docker layers were reused after verification;
+a clean driver/Docker installation and independent beginner replay remain pending.
+
+These October 17 measurements used one server on turin, full FP16 KV, MTP5,
+one user, no prompt caching and 128-token continuations. Each point has six
+requests: two repeats for each of prose, code and documents. Writing speed
+uses 99 intervals between tokens 1 and 100; aggregation is the median within
+each class, then across the three classes. Separate warmups are excluded.
+Every measured continuation matches the no-MTP reference. These are context
+screens, not a new fixed-suite speed record; the two corpora stay separate.
+
+| Input tokens | Writing, tok/s | Reading, tok/s | Corpus |
+| ---: | ---: | ---: | --- |
+| 2,048 | 92.680 | 3596.125 | 2K–16K text |
+| 8,192 | 133.568 | 3398.049 | 2K–16K text |
+| 16,384 | 123.568 | 3247.845 | 2K–16K text |
+| 24,576 | 80.140 | 3115.340 | Long text |
+| 30,720 | 80.867 | 3029.731 | Long text |
+| 32,768 | 97.332 | 3000.594 | Long text |
+
+Reading speed is input tokens divided by the server's first-execution-to-first-token
+duration, aggregated by the same class medians. It is not HTTP TTFT or isolated
+kernel throughput. [2K–16K measurements](../../experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json) and
+[24K–32K measurements](../../experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json) retain every row and repeat.
+A 512-token reading measurement for this exact overlay remains pending.
+
+Verify the current acceptance packet without starting a server:
+
+```bash
+python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py
+```
+
+The [manifest](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/manifest.json) pins all 109 files in the
+[evidence archive](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/evidence.tar.gz), including the downloaded source,
+reference outputs, runtime identity, launch and stop receipts. Historical
+acceptance packets remain unchanged.
 
 ## What you need
 
@@ -42,6 +96,12 @@ exact bytes these measurements used. The image name says INT4 because two packag
 serves the official **FP8** weights. Add `--profile depth-1` for the previous recipe. Startup takes several minutes;
 wait for `Ready`. The launcher checks the pinned model and runtime, fixes the qualified settings, preserves logs,
 refuses competing GPU work, and never restarts the server on its own.
+
+On a host exposing more than two render devices, `B70_FP8_RENDER_NODES` can name
+the two nodes checked for ownership (the replay used `renderD130,renderD131`).
+This is a host preflight selection, not GPU remapping: it must match the pair
+selected by the fixed container device configuration. Check the PCI mapping
+before using it; see the [device-selection plan](../../experiments/qwen38-27b-b70/notes/2026-09-17-clean-host-replay-plan.md).
 
 ## Many users at once
 

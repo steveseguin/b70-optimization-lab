@@ -185,3 +185,16 @@ Architecture notes established at intake: Ornith 1.5 = `qwen35moe`
 (256 experts / 8 used, 41 layers, GQA 16/2, 262144 native) — supported by
 today's upstream. Nemotron 3.5 Lightning and LFM2.5 arch strings to be read
 from their GGUF headers at verification.
+
+### Scoped text observations
+
+A package may expose single-length lab measurements without promoting a headline
+or inventing a context curve. Optional `text_measurements` contains `scope`,
+repository `evidence`, and a nonempty `rows` array. Each row requires a unique
+`label`, `status`, repository `evidence`, positive finite `decode_tok_s`,
+`prefill_tok_s`, and `ttft_ms`, plus positive integer `prefill_input_tokens`,
+`response_cap`, and `samples`. Declare all receipts in package dependencies.
+State measurement windows, cache state, sample definitions and quality limits
+in the scope. These rows render as a static table; they never seed a promoted
+headline, featured pick, or optimization projection. Use performance profiles
+only for actual multi-point sweeps.

@@ -1,5 +1,25 @@
 # Current Workspace State
 
+**October 20, 03:40 UTC — recipe publication closeout resumed from OMP (owner request; text lanes only).**
+The approved work is finishing optimized-model recipes, measured decode/prefill/
+context/concurrency coverage, and neural.download/README publication. October17
+FP8 one-launch adoption is authorized. OMP's acceptance run finished successfully;
+its receipts are being preserved and integrated. Own-runtime full512/prefill
+receipts already exist and are being separated from the newer capped records.
+Nemotron remains owner-deferred after an interrupted attempt; its reboot cause
+is unresolved, and the old account of a campaign EXIT trap was incorrect.
+See [closeout ledger](notes/2026-10-20-model-package-closeout.md) and
+[incident correction](notes/2026-10-19-nemotron-stock-headline-window.md).
+
+At 03:33 UTC the four-card host had no model service or campaign lock active;
+all three daily endpoints remained stopped from the approved validation window.
+Memory blocks53–56 were offline and57 online on boot2cba7160; no settings were
+changed. Root free space was11GiB, below own-runtime's25GB launch floor, and
+MemAvailable about86.6GiB was also below its sealed admission. Do not weaken the
+checks. Turin's restored server/proxy were stopped by another actor at03:30 UTC;
+its repository is being edited concurrently. Do not restore or take its cards
+from stale handoff assumptions. No new GPU work has been launched in this review.
+
 **October 19, 23:32 EDT — ctxkeeper release recovery on turin.** The reboot interrupted campaign 49c before a seed-2 result was saved. Campaign 49b seed 0 survives: **421/423, every forgery target kept, 16/16 audits**, with the saved notes independently checked. The post-reboot restored proxy and idle FP8 server were stopped gracefully at 23:30 (server `stop_confirmed=true`, no current-boot GPU fault lines); cards were empty during release preparation. At 23:34 EDT campaign 49d started the registered seed-2-only queue with fresh state, dev10, the lean client, and `RESTORE=0` (unit `ctx-campaign49d`). The owner has authorized continuing the release checks and prioritizes a usable public proxy download page and guide. Next: a fresh seed-2 run, installed-package release checks, public downloads, and live-page verification. Campaigns leave the cards empty; the older instructions to restore resident Gemma below are superseded. The 3 TB USB drive is mounted at `/media/steve/3TB GREEN HDD`; no data was moved. Release checklist: [ctxkeeper 1.2.0](drafts/ctxkeeper-1.2.0-release-runbook.md).
 
 

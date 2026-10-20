@@ -3,6 +3,7 @@ import ast
 import hashlib
 import importlib.util
 import json
+import tarfile
 from pathlib import Path
 import subprocess
 import tempfile
@@ -50,6 +51,39 @@ def constant_paths(path):
             elif isinstance(value, ast.BinOp) and isinstance(value.right, ast.Constant):
                 found.setdefault(node.targets[0].id, value.right.value)
     return found
+
+
+
+class SourceArchiveFilterTests(unittest.TestCase):
+    def source_filter(self):
+        # Exercise the accepted runner's nested filter without entering main or starting processes.
+        tree = ast.parse((SCRIPTS / 'run-fp8-tp2-acceptance-session.py').read_text())
+        node = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == 'source_filter')
+        namespace = {'tarfile': tarfile, 'skipped_links': []}
+        exec(compile(ast.Module(body=[node], type_ignores=[]), '<archive-filter>', 'exec'), namespace)
+        return namespace['source_filter'], namespace['skipped_links']
+
+    def test_absolute_host_link_is_skipped_and_recorded(self):
+        filter_fn, skipped = self.source_filter()
+        member = tarfile.TarInfo('source/unrelated/oracle')
+        member.type = tarfile.SYMTYPE
+        member.linkname = '/mnt/host-only/oracle'
+        with tempfile.TemporaryDirectory() as dest:
+            self.assertIsNone(filter_fn(member, dest))
+        self.assertEqual(skipped, ['source/unrelated/oracle'])
+
+    def test_regular_source_survives_but_traversal_is_rejected(self):
+        filter_fn, skipped = self.source_filter()
+        with tempfile.TemporaryDirectory() as dest:
+            self.assertEqual(filter_fn(tarfile.TarInfo('source/serve.py'), dest).name, 'source/serve.py')
+            with self.assertRaises(tarfile.OutsideDestinationError):
+                filter_fn(tarfile.TarInfo('../outside'), dest)
+            member = tarfile.TarInfo('source/escape')
+            member.type = tarfile.SYMTYPE
+            member.linkname = '../../outside'
+            with self.assertRaises(tarfile.LinkOutsideDestinationError):
+                filter_fn(member, dest)
+        self.assertEqual(skipped, [])
 
 
 class ConfigurationTests(unittest.TestCase):

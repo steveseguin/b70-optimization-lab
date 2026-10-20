@@ -39,14 +39,17 @@ ROOT = Path(__file__).resolve().parents[3]
 MODEL = Path('/mnt/fast-ai/llm-models/qwen3.8-27b-fp8')
 IMAGE = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
 REFERENCE_STRICT = Path('/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict')
-# The qualified fresh server this replay must match (image, arguments, environment). Default: the review campaign's
-# depth-5 server; QUALIFIED_CONTAINER selects another qualified receipt (the comm-2 allgather server since 2026-09-17).
-QUALIFIED_CONTAINER = Path(os.environ.get('QUALIFIED_CONTAINER', '/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp5/container-final.json'))
+# The qualified fresh server this replay must match (image, arguments, environment): the 2026-10-17 gates C1 server
+# (MTP5 + b70_fa_verify_rows 0.2.0 one launch), the package's argv plus B70_FA_VERIFY_ROWS_ONE_LAUNCH=1
+# (data/2026-10-17-tp2-one-launch-gates/; gates 2-3 of notes/2026-10-17-tp2-package-one-launch-proposal.md).
+# QUALIFIED_CONTAINER selects another qualified receipt.
+QUALIFIED_CONTAINER = Path(os.environ.get('QUALIFIED_CONTAINER') or
+                           ROOT / 'experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/server-C1-container-final.json')
 HEALTH = ROOT / 'scripts/check-qwen36-xpu-xccl-health.sh'
 XPU_PYTHON = Path.home() / '.venvs/vllm-xpu/bin/python'
 PINNED = ['packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
-          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.1.0.dist-info/entry_points.txt',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.2.0.dist-info/entry_points.txt',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/entry_points.txt',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',
@@ -404,8 +407,20 @@ def main():
         shutil.copyfileobj(response, handle)
     archive_bytes = archive.read_bytes()
     clean = out / 'clean-source'; clean.mkdir()
+    skipped_links = []
+
+    def source_filter(member, dest):
+        # The repository carries host-local absolute symlinks (the own-xpu-runtime lane's oracle links), which are
+        # not package sources; Python's data filter rejects them with AbsoluteLinkError. Skip and record them so the
+        # acceptance download survives their presence; the pinned package files below are still read and hashed.
+        try:
+            return tarfile.data_filter(member, dest)
+        except tarfile.AbsoluteLinkError:
+            skipped_links.append(member.name)
+            return None
+
     with tarfile.open(archive) as tf:
-        tf.extractall(clean, filter='data')
+        tf.extractall(clean, filter=source_filter)
     source_dir = next(clean.iterdir())
     files = []
     for rel in PINNED:
@@ -416,7 +431,8 @@ def main():
         'commit': a.commit, 'url': url, 'archive_sha256': sha(archive_bytes), 'archive_bytes': len(archive_bytes),
         'source_dir': str(source_dir), 'new_directory': True, 'git_worktree': (source_dir / '.git').exists(),
         'anonymous_download': True, 'model_files_reused_after_fresh_verification': True, 'docker_layer_cache_reused': True,
-        'registry_credentials_present_for_ghcr': any('ghcr.io' in k for k in docker_auth), 'files': files})
+        'registry_credentials_present_for_ghcr': any('ghcr.io' in k for k in docker_auth), 'files': files,
+        'skipped_absolute_symlinks': skipped_links})
     say(f'source {source_dir.name}: pinned files match working tree: {all(f["matches_working_tree"] for f in files)}')
 
     # 2. model verification and image pull, exactly as the package guide says

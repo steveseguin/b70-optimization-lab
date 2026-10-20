@@ -16,11 +16,11 @@ figure; neither is the current headline.
 > **Status: source-verified reconstruction candidate, not a beginner install.**
 > The exact aggregate source stack now applies cleanly from its pinned base.
 > The original record binary hash and historical local Q4_0 draft hash were not
-> retained, and this audit host does not have the record's oneAPI 2026.0
-> toolchain or a B70 replay slot. A rebuilt package must pass the full canary and
-> cold-suite gates before anyone calls it reproduced.
+> retained. Source rebuilds passed the lab-host gates on September 7; a fresh
+> OS installation and byte-identical historical replay remain unverified.
+> Every new build must pass the full canary and cold-suite gates.
 
-Start with the [125 tok/s reproduction guide](../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md).
+Start with the [reproduction guide](../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md).
 Every required project artifact is linked inside our repository:
 
 - [canonical aggregate patch](../../patches/gemma4-26b-a4b-q8-b70/README.md);
@@ -62,6 +62,36 @@ headline. Prefill is approximated as actual prompt tokens divided by TTFT.
 See the [compact profile](../../data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json)
 and [all 32 source rows](../../data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json).
 
-The next promotion step is a clean one-B70 rebuild with oneAPI 2026.0, a newly
-recorded Q4_0 draft digest, `512/512` canary pass, 12/12 cache-zero cold suite,
-and retained source/model/binary receipts.
+## Latest prompt-reading measurements
+
+The October 10 16K-slot sweep now plots actual input tokens instead of the
+requested lengths. The request for 512 tokens produced **509 tokens**:
+prefill was **1,323.8 tok/s with draft 3** or **1,327.8 tok/s without a
+draft** (median of three timings per setting). That is a measured 509-token
+result, not a measured 512-token result. The five actual graph coordinates
+are 292, 509, 2,042, 8,185 and 15,793; requested counts remain annotations.
+See the [draft-3 receipts](../../data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json)
+and [no-draft receipts](../../data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json).
+
+A separate October 15 production profile measures **1,307.54 / 1,167.81 /
+909.27 tok/s** at **1,867 / 7,623 / 29,400 actual input tokens**, respectively.
+Each point averages four timings on two servers. It uses one 32K slot, no
+draft, f16 KV, deterministic oneDNN, and prefill micro-batch 1024. Timings
+come directly from the server's prompt counters, with prompt caching
+disabled. The diagnostic prompts repeat; this is not the cold-suite decode
+headline or the July curve's TTFT approximation.
+
+The [guide's exact table and method](../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md#october-15-production-prompt-reading-profile)
+and [source-linked timing summary](../../experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json)
+keep the complete precision and observed ranges.
+
+The October 15 experimental coalesced conversion measured 13–22% faster
+prefill with tested token parity, but **has not shipped in this package**.
+Full build/library identities, tracked prompt inputs and clean-rebuild
+replay remain open. Its gain is not silently applied to the package curves
+or the decode headline. The guide links the retained patch and exact gates.
+
+The remaining baseline packaging gate is an end-to-end fresh-host install
+with retained source/model/binary receipts; the documented September 7
+lab-host rebuild is already complete. The historical binary and draft
+identity gaps remain explicit.

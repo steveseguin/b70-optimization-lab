@@ -343,6 +343,22 @@ def video_observations(measurements, section="all"):
     return summary if section == "summary" else table if section == "table" else summary + table
 
 
+def text_observations(measurements):
+    """Keep single-length observations visible without inventing a curve or headline."""
+    rows = []
+    for row in measurements["rows"]:
+        cells = [f'{row["decode_tok_s"]:.3f}', f'{row["prefill_tok_s"]:.3f}',
+                 f'{row["prefill_input_tokens"]:,}', f'{row["ttft_ms"] / 1000:.3f}',
+                 str(row["response_cap"]), str(row["samples"]), row["status"]]
+        rows.append(f'<tr><th scope="row"><a class="inline" href="{GITHUB}{esc(row["evidence"])}">{esc(row["label"])}</a></th>'
+                    + ''.join(f'<td>{esc(value)}</td>' for value in cells) + '</tr>')
+    return ('<h2 id="text-observations">Measured text timings <span class="badge todo">Scoped observations</span></h2>'
+            + f'<p class="scope">{esc(measurements["scope"])} <a class="inline" href="{GITHUB}{esc(measurements["evidence"])}">Exact values and test details</a></p>'
+            + '<div class="table-scroll" tabindex="0" role="region" aria-label="Text timing table; scroll horizontally on small screens"><table style="min-width:760px"><caption>Recorded timings; quality limits and workload definitions apply to every row.</caption>'
+            + '<thead><tr><th>Setup</th><th>Writing tokens/s</th><th>Reading tokens/s</th><th>Input tokens</th><th>First-token wait (s)</th><th>Response cap</th><th>Reading samples</th><th>Status</th></tr></thead><tbody>'
+            + ''.join(rows) + '</tbody></table></div>')
+
+
 def page(pkg, all_pkgs, family=None):
     lib = pkg["library"]
     is_video = "video" in lib.get("modalities", [])
@@ -454,7 +470,8 @@ def page(pkg, all_pkgs, family=None):
             capacity_note = f" · {capacity:,}-token capacity" if isinstance(capacity, int) else ""
             prefill_highlight += (f'<div class="measured"><span class="big">{esc(fmt(point["value"]))}</span><span class="unit">input tokens/s</span></div>'
                                  f'<p class="scope">512 input tokens · one user · {esc(cards)} GPU(s){esc(draft_note)}{esc(capacity_note)}. Separate prompt-reading test; no saved prompt cache.</p>')
-    prefill_section = '<h2 id="prefill">Reading speed (prefill)</h2>' + prefill_highlight + (render_profiles(prefill_profiles) or '<p>Not measured yet for this setup.</p>')
+    prefill_fallback = ('<p>Single-length reading measurements appear in the <a class="inline" href="#text-observations">timing table above</a>. A prompt-length sweep remains pending.</p>' if pkg.get('text_measurements') else '<p>Not measured yet for this setup.</p>')
+    prefill_section = '<h2 id="prefill">Reading speed (prefill)</h2>' + prefill_highlight + (render_profiles(prefill_profiles) or prefill_fallback)
     metric_explanation = '<p class="scope">Tokens are pieces of words. Higher tokens per second means faster reading or writing; a shorter wait is better. Each test uses its own settings. Drafts are checked by the main model. Open a test to see its graph and exact values.</p>'
     if is_video:
         prefill_section = '<h2 id="prefill">Prompt reading</h2><p>Language-model prefill rates do not apply to this video timing. Text-encoding time is not reported separately.</p>'
@@ -571,6 +588,8 @@ def page(pkg, all_pkgs, family=None):
             )
         if pkg.get("video_measurements"):
             measured_html += video_observations(pkg["video_measurements"], section="summary")
+    if pkg.get("text_measurements"):
+        measured_html += text_observations(pkg["text_measurements"])
     seo_title = (
         f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured"
         if has_featured_metric

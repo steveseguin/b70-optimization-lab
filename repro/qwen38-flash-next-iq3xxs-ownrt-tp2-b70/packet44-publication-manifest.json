@@ -1,0 +1,1858 @@
+{
+  "format": "neural.download.recipe-publication.v2",
+  "recipe_id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
+  "runtime_kind": "native-text-lab-replay",
+  "publication_status": "draft",
+  "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/packet44-replay.md",
+  "repository": {
+    "url": "https://github.com/steveseguin/b70-optimization-lab",
+    "source_commit": "421a4ab5029680c2f88c78c7c7fdb4a05d6fc6c4",
+    "build_scripts": [
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/build.py",
+        "sha256": "8274efd8b12869fc9c7ffa1c19e5a561b1b1597fc28672ddd60491fe9603b860"
+      }
+    ],
+    "immutable_inputs": [
+      {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp",
+        "sha256": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp",
+        "sha256": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp",
+        "sha256": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp",
+        "sha256": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp",
+        "sha256": "f3b311c18744091930ed4a038db8acb4fd4b30d8e348a62a0c25d377d309f1fc"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp",
+        "sha256": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp",
+        "sha256": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp",
+        "sha256": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp",
+        "sha256": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp",
+        "sha256": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp",
+        "sha256": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+        "sha256": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp",
+        "sha256": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp",
+        "sha256": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp",
+        "sha256": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp",
+        "sha256": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet4/owner_test.cpp",
+        "sha256": "90b62340aff81aaa2c8bee620b6ddfea13d9d9231b1f64e94140139181d498b1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/CMakeLists.txt",
+        "sha256": "0137a49b173573768706cca6d07a7686d4936b6b5301b10fc6e7a010d698c54d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/adapter.cpp",
+        "sha256": "031609948a0bc912e127ca56428577e2f882b86a5f6e1b0526e8a9adf8bf5ff6"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/adapter.hpp",
+        "sha256": "ed38260c7ca1ddeab55f465e2635ae9f97f31970424b412d7e9ba9ca071a63be"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/adapter_fixture.cpp",
+        "sha256": "8b72f5892f11bdea401964b76ddd640e0cc1e60bfd8bcb56ed19fd0eec5104a8"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/adapter_fixture.hpp",
+        "sha256": "3d5f54acad04c13009ffe15457d373496df0e191d2625718ff7cc6b24c95dfc5"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/argument_block.hpp",
+        "sha256": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/argument_block_test.cpp",
+        "sha256": "5f00c97ed3c3a5fb3b499427bfd9625eebc76a811aaa3a4b97868d01ffaf38e2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/argument_state_gate.py",
+        "sha256": "7d82e2c7fe0fd7e888b469beaac0bbd8ed575b1b530c0369c54bb20c392a2b35"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/arithmetic.hpp",
+        "sha256": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/audit_rollback.py",
+        "sha256": "e64222e3317f980bfc7b8f92f78bb1b65184692961f49ccfa6813d85dbb8af91"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/authority_test.cpp",
+        "sha256": "d15d1e01a7b27fce68c5ca6ed03574aff3d2db05a638c7070496e27723d18fe1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/backend.hpp",
+        "sha256": "0496927e624ec32e44be489d7e1ffe3248ecf8d6021ff92f791d0619e02760e4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/build.py",
+        "sha256": "8274efd8b12869fc9c7ffa1c19e5a561b1b1597fc28672ddd60491fe9603b860"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/build_native_controller.py",
+        "sha256": "e1986fe83f844e626ae6b2208edf12ad37889419e903dd817ce96296026362b1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/canary.hpp",
+        "sha256": "f935960a7c01433fbc1333abc68587fe437b73e7b27616c85e7070abd46a7854"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/canary_host_gate.py",
+        "sha256": "324e95d17009bc1109ccb139019c3dd48fedd98f59a88e7e63a9358beb52427b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capacity_cpu_gate.py",
+        "sha256": "d4708b464b18ec643790caab8f9af62398979ace0dfece7dad873624f4b75d5f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capacity_draft_gate.py",
+        "sha256": "6ccc1f79196cc4cb48d8c145ff22d0d4928063931fb80edc04fcb025361c6898"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capacity_fixture_gate.py",
+        "sha256": "a83814ece7334b3bd277c936aefa2d2edf097088cc5dc40fe5e1881af0dd7c4d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capacity_rollback_asan.py",
+        "sha256": "e1c5d66f2e8d0e2c64b2bf32f38e470229dac57a849aa847f68eef03d908890a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capacity_selection_gate.cpp",
+        "sha256": "d2135ab287d8456a4c87851e46ad1a9e9b37b360e90d76410fe533d3966c71ba"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capacity_selection_gate.py",
+        "sha256": "22dde3b8596fd3ca832e21d951ef86eded742173df08a19cc8059157430fe36d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capture_cpu.py",
+        "sha256": "be51260a96b63566e659123ff4d5df0ebf903ffb6563cc2af855a297ec629233"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/capture_gate.py",
+        "sha256": "11bd9bd9d10814c5e565696af13db63a82234d059ef81ffe6ba90f6c71f42334"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/chain_test.cpp",
+        "sha256": "ad003ecd4336f09a643950894bada31c76fece436a0f7c5d2d72bddda5f670d4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/cleanup.py",
+        "sha256": "8d4b37733d3355c3ece31390574d141244ad5a3f6b8e8663134e1c519bf3ad2e"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/cleanup_objects.py",
+        "sha256": "97489526288f91eda0405d964e32a401105c7fc40bdba8724f41ed28b72d040f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/compare_controllers.py",
+        "sha256": "7ae05d33287a23db33b3a7482735dfbab57fc479590d786ca42015c087f99cfb"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/compare_draft.py",
+        "sha256": "ab8174523bb3bcfe9134aa519cbe128b41db16303864ec6445b14c3316ae404c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/context_window_gate.py",
+        "sha256": "739e69c542c13f50e95625302e17e8521e3c03b865d7be7e99486641a43a7497"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/core_v2.hpp",
+        "sha256": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/cpu_campaign.py",
+        "sha256": "7d76ffe1b2db7486f5d62e73580dbe042d2ba4bd9cdc153a079ac1103d4aeb39"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/cpu_gates.py",
+        "sha256": "98c883e721bf867436d4a1964aba218d0c955685bfe47e2fc95ec193b5f40e58"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/cpu_handover_report.py",
+        "sha256": "b2305a04e1dc16fd1eefbd2ecf0885292e99aee4926d7e23e3b949d38b992186"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/cpu_status.py",
+        "sha256": "f22965b4c6484f2c257ffa477b6d71c797f538f4379c1ff95bf595119a03a6ca"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/detmath.hpp",
+        "sha256": "eba96cc4599d21ab24fe97276bda0c954c60878d3b696a77393abbfa2a4e049c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/dispatch-all-new.json",
+        "sha256": "9cfbed87822c21243004a56ff20748b7134d631e7247c3843a0358b55827f454"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/dispatch-default.json",
+        "sha256": "b05c2b3688f30772a878e8ba9f6477271dc65dd28978f89f25e0ee1884ee9fd9"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/dispatch-incumbent.json",
+        "sha256": "f913ec4073ee9b8a2717cc56b55de5e36c2df40bab3c996b928e867b178f6b0f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/dispatch-p33.json",
+        "sha256": "51954f199abfb68414fa20d1d717fca76cad2d08e6f6d53d86236e98e2edcd5e"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/dispatch-p38.json",
+        "sha256": "2c7783ae00f9bbaee355a285b56fe46fc2178e483274c5e03c8e0e1bcbf335a5"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/dispatch.hpp",
+        "sha256": "976a59a53d77d4456efaf7b6883180543e571a3afa5f3d0b4637f0df61b28196"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/dispatch_registry.hpp",
+        "sha256": "72d9ad5510b40489e6baf7728bd414ce2c4739b9d2e7ddff4f4071b2ce8144a5"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/draft_auth_gate.py",
+        "sha256": "30a167ca3a30d5da04ffe87d5b53232b1002e839c09b9b4158260473bda3e7d0"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/draft_baseline.py",
+        "sha256": "36cd4c796542133223257dcdb2cba47770669a4e2fdbfd1ee40c2d8f241eb790"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/draft_window.py",
+        "sha256": "0fad1a3a5f0a21bc54aad838585eadc46d27e66a52da65d681ac75c406c4591c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/entry_codes.py",
+        "sha256": "f85208c77c7f7111161a9436e7170032be84143785198315e80d88b89c42545a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/epilogue_hook.hpp",
+        "sha256": "37a1d35582ff2d542f85a802cbf9ac9d7ba536222123edcc2050bc2ff8b33a96"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/expert_down.cpp",
+        "sha256": "027dd4750e4d285b55dd83e4289c19bee59398fbe84ca54e63d139866e1451ba"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/expert_down.hpp",
+        "sha256": "eb327fb716344751870064c00c843ec3147219f996dfd89a8818c70fede03ffb"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/expert_down_review_gate.py",
+        "sha256": "d7b3cfb3c843cb24b087bdcded2cfe65179443d78e18ae95fd993b50f7bd582e"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/expert_down_review_test.cpp",
+        "sha256": "cc7e193293eb46a4581eff59f24a05c8fd1d774c584f7ef1c8bdf0fb86e304ee"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/failure.hpp",
+        "sha256": "7b02ca42a4d27a0aa47e9db0fb478194998cbe26dfc38670b80f0f36252e5c36"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/fault_gates.py",
+        "sha256": "aacd1e55f0c9a2871d2802656a1e47b42b2074489c63ee6c72c45d01261cd168"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/final_build.py",
+        "sha256": "20ad97b47e0ddbd596ab7b0880e9bd4dbce6bf359d72963eb444ebab128cf1df"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/final_checks.py",
+        "sha256": "bc3f777c57973697e9786490365dc6fc48f9830c446dbd6b59f62b4f813d1b43"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/finalize_docs.py",
+        "sha256": "7de3dd4690a4d8502991d5154b38497e9a0621ad881f085d6a2eebc7d8cb0668"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/finish_cpu.py",
+        "sha256": "f394bb0e67b9499a1b828962e1ce91c71a6b5a4aee64bceaebb3589d410aceb2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/finish_cpu_gates.py",
+        "sha256": "d97065d24da804ba99011a847e17b1f4f823f830106c0d8bc6b1933b7e538ec1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/fixture_driver.cpp",
+        "sha256": "139123d27d61582e8d2f6dd443cacc7d12337d79a600d44063489d87f30a9fd1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/fixture_gate.py",
+        "sha256": "4b18ad0a141cab57b5b221556ef24723d2e39a0ac23f24ac41cf9391a1807715"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/fixture_support.py",
+        "sha256": "e6ce81fc08bc32862ed88dee24131dccd92cd11e6101834714d3a099877aa0e4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/fixture_validation.hpp",
+        "sha256": "747bb6149c2783bffaa5df2fc3d48ac61f5fc87bbfb03ed7c08bcf33ea4f0858"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/gates.py",
+        "sha256": "c47cde3fbbd9a9ad1753ac164133f57da1316e0c8252ba709d42e6a963a16b2a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/gemv_timing.cpp",
+        "sha256": "4181a6d79c5c84886d2a052213d5a84d584e142bc310468bb7e9407c601ca205"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/generate_rope.py",
+        "sha256": "ae2491090146d5665c66cb4d44a68c26b76bd270ac4534e5b819a1069f52b74a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/host_issue_benchmark.cpp",
+        "sha256": "2368aaed46469f309f2421412cc789af295f1ae4421d8902aed7a3106286b6fc"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/identity_tree_test.py",
+        "sha256": "2edace0d97492b2ec37390e9f19e887e529bd2fab0726301ff05e26794b6e9ca"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/integration_inventory.py",
+        "sha256": "169a3fe1563b3a504e4b492693f40d1d0c83c76691a81d71c0abd4619906e2ac"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/integrity_audit.py",
+        "sha256": "3db31bf0949ceed3c04fb7d8c27941689978420559db837131430d422d4a3120"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/jit_smoke.cpp",
+        "sha256": "e55ed2bfe8baaf3e976cd5a1334aee3bd901ba45fdcb8769e37b66db5324e0da"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/k2-class-registry.json",
+        "sha256": "fedf79c7dcc975a286d47da8ef8550bf46c3d03386a18ca622d652a3c754dbe2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/k2_failure.hpp",
+        "sha256": "0b5edc160fe37e77e7293ffa937eac531ec29773275c517627a57e930a1ac900"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/k2_fixture.cpp",
+        "sha256": "d579d8599c0941759b54a4afcae6d0b5dfe3169c84b4ebfd268ee3860ff16030"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/k2_incumbents.hpp",
+        "sha256": "0443bb11aced12e3c9c96745f285e02779e217f991c57d7092b72832a7849616"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/k2_summary.py",
+        "sha256": "caf95768673ae391d4bc26a930f9086e49bd4d2f03695da97b42e39012d8915d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/kernel-registry.json",
+        "sha256": "f90172f6c0a36b80e38165c6ab4dec4cc580e60056e29a80a6814dc1f3e13b41"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/kernel_gate.py",
+        "sha256": "dda5ca15289d17e9405ea9a8fcca6da5b002b1bcbec222e324943225159232c7"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/kernel_guard.hpp",
+        "sha256": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/kernel_overlay.py",
+        "sha256": "ce04187e0c9aa194668f864991d8a7a6feb699f57c2f512e7a5bc0d1c780cfcd"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/kernels.hpp",
+        "sha256": "a8c19f5ccf8dec343f70ca14223d5ac52df42c8c3ae68072179f61e285e17466"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/lifetime_mock.hpp",
+        "sha256": "97afe6f81d53824d2c5636a0d34aa924c63d11e3c2263e950812d464d79dfa62"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/lifetime_test.cpp",
+        "sha256": "c812297c867bd719ef0ce1ea29b71f0e9a82218ff79da2d3f4ad976ecc66121a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/main.cpp",
+        "sha256": "ba06d8010554bca23463c9acade6872e603d279b7253adf7fdd60611137472d5"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/math_bridge.cpp",
+        "sha256": "f8ee94baa5c748dd3f2cdbe974435b89d9b26094a0063b7d0655313bfba82c1f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/math_gate.py",
+        "sha256": "63611b83ffafeb436a4a8fb445f301665d66a57f4364f46a445d2369560ae35c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/memory_gate.py",
+        "sha256": "68481c0c90c802e2a2a3295d98cd2eca9a0985f9052b4708ab19aa234a623b50"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/memory_plan.py",
+        "sha256": "4f5dc2d8256781e8989b7828024084702c17cc7e0147f72644c81ad88ef32f31"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/merge_dispatch.py",
+        "sha256": "f78ae9b6fff6d9fddd56a661f413cb2aca0a80bec1da108f2b3b8d5c3e33ad02"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/mock_order.hpp",
+        "sha256": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/mtp.hpp",
+        "sha256": "cdf088f333b9fb52da1e3b509676676c824d83435edc7615b83e4f7b6b50307a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/mtp_gates.py",
+        "sha256": "b23be80f838ba645a02373b70cffb16485c76ad442740d95cc5dbedc2cf51b7e"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/mtp_kernels.cpp",
+        "sha256": "1b179214aecb9e4910cc414c5ecb272510143f02d9edf4a1de5ae44d455370b4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/mtp_kernels.hpp",
+        "sha256": "f6ae6a4781051e85dbc82b429b3eb06d2f07a625237138d67ffacd6992a2a674"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/native.cpp",
+        "sha256": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/native.hpp",
+        "sha256": "c0b710b43748dfeb23bb317254053106d68fc967d9ecdfe43f17f56a80d372b4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/native_controller.hpp",
+        "sha256": "582097261c478c30fb511c43771e53b071eabf17ea87c2f4af1196657e9a43a0"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/native_controller_gate.py",
+        "sha256": "2efc60baca2cbbb364fb70f70a4e649654bb412070c3d866c01c157ccfeebca3"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/native_controller_test.cpp",
+        "sha256": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/native_mailbox_fault_test.cpp",
+        "sha256": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/native_mini_gate.py",
+        "sha256": "aa5859a27c141476abb8885f1feda049de9a0622d757a8b85655659d61d8c8c7"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/nongemv_fixture.cpp",
+        "sha256": "acc4c0a6d2aed8b377fadf5b35f59adf67510b44b9229f8e765f51ab46f374a9"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/owner.cpp",
+        "sha256": "b792de9ae31c600e81f44b2496de49d4ce08c091a4d33a9b7ba70df41b223b45"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/owner.hpp",
+        "sha256": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/owner_api.hpp",
+        "sha256": "70009b6570429a2888ab5111a80e001e7b0097f85faff924585a79edb1baf223"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/owner_retire.cpp",
+        "sha256": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p25_bridge.cpp",
+        "sha256": "b6bbeedea17c3d52e32f1a9adcc9d9be0876d300f55ab1756b2a481fbb874905"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p25_bridge.hpp",
+        "sha256": "c5d1765997de414df8df8df3a0c19de29f5d0250fbe387e5dc303762ef0bff80"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p25_candidates.hpp",
+        "sha256": "98d34f0ac7ce729410780c61016e88f6789baf5e2ec5510c79142ea33888df57"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p28/dense.hpp",
+        "sha256": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p28/expert.hpp",
+        "sha256": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p28/registry.hpp",
+        "sha256": "add5690af080348ac78cbc3a19e41ac4e46fcef133cc6c2a162e3089ea377d85"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p28/submit.cpp",
+        "sha256": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p28/submit.hpp",
+        "sha256": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_attention.cpp",
+        "sha256": "72403adc474cad4c112e59b2f2ffbff7fe0e52dba2874a36feb8c41df829e815"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_attention.hpp",
+        "sha256": "9d5eb89f4aa6515922a74b144a4bc3d19813169261f1cb1bb2ce6bf042608ddf"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_attention_cpu.cpp",
+        "sha256": "d961c8e9b194fd8a0c890ce8d225855142600e5ddbcfa0c37f55350a2daf643c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_small.cpp",
+        "sha256": "fe8eee300850e3531ceeeecfff9c25300a99b7c7ef4202c3bda791e0f7f9733a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_small.hpp",
+        "sha256": "4304140e67c89512773d3adefa306f2153d1dd13585224e2ce0bb61182ca4261"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_small_cpu.cpp",
+        "sha256": "999d4e9cd642945328c2fca175e01708cbf5d85e69f951961a1f69045a95c885"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_submit.cpp",
+        "sha256": "dab72a991d33df0becdedd69e1e659720ad725465940d704d3badb15c689449f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p30_submit.hpp",
+        "sha256": "16502b1bf1d7c2f6669bd60d59ecb0885274958907371851a8d82951654f3fbd"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33_candidate_cpu.cpp",
+        "sha256": "711b730573ef4d600108cc455f79dabdfbdb557f3c57a4df64171e010ad2d53f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33_candidate_gates.py",
+        "sha256": "9e392836d79f43cc3da4bab945dbae85c66f172a3b3b480972ec7a209bd05988"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33_candidates.hpp",
+        "sha256": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33_linked_fixture.cpp",
+        "sha256": "1abb466123de8a71898ade5d65cf35aee16395481331cf99836e33d6051b4fe6"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33_linked_fixture_gate.py",
+        "sha256": "aac1dac3a41c78f075d750179d76be52c4bc94f0928042b5834ab7d158aed9d2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33_submit.cpp",
+        "sha256": "c7bcacd934e0d06639aaecf46625a0c3e1a8fea47dda799d415e5c392f21b84a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33_submit.hpp",
+        "sha256": "b6833e2d825934c64d58d03e5b274e4bd1e87e7bd13082b8ca9caf01e3e302c8"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33r2.cpp",
+        "sha256": "f6ad0f6150aff1d337264bda76e7f30afecd4b20558af601bcf2231b6fde25c4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p33r2.hpp",
+        "sha256": "f7d736727f5c77bd78a2eff8460c1b56e7984ef7bbb21c4cd803507df73c6895"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p38_kernel_gate.py",
+        "sha256": "78291d7566b02562641fddc06c8d5f2c974c416430803be08b943d4a6a761248"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/p38_qsa_cpu.cpp",
+        "sha256": "5235d2dfc19618141484c821262a9c3772283dee9a9e94d36a85ad14ee74d38c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/performance.cpp",
+        "sha256": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/performance.hpp",
+        "sha256": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/pipeline.py",
+        "sha256": "a2c7f11bde5877df1234581fdafc9ade9b29fe4ea423ead5c7cbc3f334ff4d34"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/pipeline_draft_agreement.py",
+        "sha256": "281a0df7b60a7b896aeaabd56f5205d52ecd965d3073f14d9019cd4691bd2b35"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/post_python_gates.py",
+        "sha256": "c623b4ea02b3e026cdccfa0965a0bcb8f22eda0645db19fa80ccac90a7e7c42d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prepare.py",
+        "sha256": "6af3404d6dd8a492e9f9270c4de8eac0aaf2838e2160f878471a4ee3e1900ef4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prepare_mtp.py",
+        "sha256": "aa3f59f9b6817dfdfc5168d0396c6f82eeee66d9040cbe40c754efc00adf58a0"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prepared_host_benchmark.py",
+        "sha256": "cdde1566b26f1c04be41bf8a33d47747fc957ea410af2bd6f026e0002fcc4677"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prepared_invalidation_test.cpp",
+        "sha256": "b082a461f27c10b7e678e6c37f810e78fef6fa587645ae0e327a730ece01f27d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prepared_issue_benchmark.cpp",
+        "sha256": "722edbeb96cf5794b8494323c80d8a7e50554610377956c3d0ad68ff8da479ba"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prepared_submission.hpp",
+        "sha256": "41405cfc3c10727e245536993f647601b99705cdc9ac070e29f2ef695ffed2b9"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prepared_unit_gate.py",
+        "sha256": "f384f0ea9dfdc9c39b07a51dd7b44cd707febb700218b69e1aff1f38cb84d75f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prototype/fixtures.py",
+        "sha256": "79e063e49e7202e2a640297c5ee64a3e9daee4f6bafe5d9e1502387f9da35b6c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prototype/snapshot/core_v2.hpp",
+        "sha256": "279a51b16593f1a8432205ea65422b037a533783bdbd79152f17e2b4a9d8b6bb"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prototype/snapshot/detmath.hpp",
+        "sha256": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prototype/snapshot/kernels.hpp",
+        "sha256": "804c720eb7339e1d90c786ca43c8399fbe52999dd668ea43c30ad7a559a677f1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prototype/snapshot/reference.hpp",
+        "sha256": "41ff760abf1a4f7234f02ee209e232f4be2071273a3c703935472350a4db668b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/prototype/snapshot/rope.hpp",
+        "sha256": "1cef648de09ac4b115f1966033f2e341c870203a7415a39d58a8bbe2adb6c643"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/queue_gate.py",
+        "sha256": "8ab69ee0c421f521715476280289017b644695fd5dc2b95c0f8d59280d5010e6"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/queue_test.cpp",
+        "sha256": "92864c3a1ab28b9432f9fea437698259f9286fe7fde818573ab2975488906a1b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/rank.hpp",
+        "sha256": "37a9e7ad4b2ce7559c39c9beeac5ea3a8c08ebcd49ac97f20e38cfe518dd353a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/rank_canary.hpp",
+        "sha256": "e5ac0589c32fde6e25ab57da94f90fd4e3d1608a4a70f5d3382a490d105e303d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/real_campaign.py",
+        "sha256": "af2e22772394f947abe369d41a557178e6638b0da10061bdfcf94700a2a4b3fa"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/real_controller_gate.py",
+        "sha256": "da0f50f4a4c54a87d5c4e7889c95dc821b2a794c83ba4e8f964a266db9c05818"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/rebind_agreement.py",
+        "sha256": "945e5eb811b909fc5d6c1c692a5c3d54eb9b46efcf0a4408992a00e3a9006b66"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/reference_reproduce.py",
+        "sha256": "b2aa903cd8f34aefa8c4e976f10bbba1725934d21b8c9b3a35ac4411f69847a3"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/remaining_cpu.py",
+        "sha256": "bc3f777c57973697e9786490365dc6fc48f9830c446dbd6b59f62b4f813d1b43"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/remaining_cpu_gates.py",
+        "sha256": "a519a64c61be941fcd28f355996166dcdc4b1966ab5d3a95a37cabc7347950b6"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/repair_build.py",
+        "sha256": "f6a45a493853d9750ea29356b21f1f488b04f98feb0eda4a2b717361490a735b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/repair_gates.py",
+        "sha256": "fe59d610c2cd277348b271f100f8be7b51c040d4224934f97659d927f60e4c3c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/repair_qualification.py",
+        "sha256": "7bf94aa13252de36e26895c6124e1999ba4b5f393e2436fb79f74eb184c663ea"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/request_reset.hpp",
+        "sha256": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/request_state_inventory.hpp",
+        "sha256": "1341737c1005f0bf7ae216648c4ee29805d5e3efa384184ee76e98521a275902"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/resident_host_gate.py",
+        "sha256": "8bcf55a3902a2be944c0ae5761f87eb885302f92159839540c5e7c32e409cfeb"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/resume_draft_references.py",
+        "sha256": "4b5de0c30b689dad4a206d52e585e1f1264d6366c7d2a7662d87fc8d8f605986"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/resume_intel_composite.py",
+        "sha256": "e05316af5774c6c122ab3f92eab03b0c1aed1d42f8949bf5d2124ae0dae3fa4b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/resume_qualification.py",
+        "sha256": "27c39b4149710f6516d8d18b2261e61614afc8f4f0ec4eeda0ea65d6946566a8"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/resume_suite_after_refusal.py",
+        "sha256": "3740b372c024b5e9f5a7fd8b2ea6a5addafe2328fd9f27fc1238ad517cd96476"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/retain_window.py",
+        "sha256": "df41b4a74b23739e770cd5a74b3ccd325513e941ff18b0b9edd4eb3d7c797aff"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/review_prepared_gate.py",
+        "sha256": "fdc2369b51459a3dd294a57b602158fa22cb54289a1fec509d8ff4f0fd22c183"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/rope.bf16",
+        "sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/rope.hpp",
+        "sha256": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/round2.hpp",
+        "sha256": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/round2_submit.cpp",
+        "sha256": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/round2_submit.hpp",
+        "sha256": "d9231c86021695fb1e6f0e84f833380bc5e5d685d6a92f52292ffe191718a7ad"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/run_fault_gate.py",
+        "sha256": "f3620395b2d5b0fbd5f7178a88f978ea6fdcdda9f68b8d2da245393247c8f146"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/run_native_gates.py",
+        "sha256": "76fa98e087e3915e1df2449b9562f8511c90b36f6b5254d1c8378f9d3ddc6ac1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/runtime_kernels.cpp",
+        "sha256": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/runtime_kernels.hpp",
+        "sha256": "49e2a958a36a087b379b2e85d90ee34c63817659b31c617ced9e5854f7774501"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/seal.py",
+        "sha256": "831346232991f2e8d4fc137dd17a0239ed28fc3ad91ef165503a1785813aae4d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/seal_context.py",
+        "sha256": "e04215cdd10dba791f4f7ab4d74168719a502b7a9a565f5aded0145bb1f3b5f1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/single_device.cpp",
+        "sha256": "4275f214b3727f5d23231b844992db35443446d004c0d34b5cc30b374a3fe11b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/small_gemv.cpp",
+        "sha256": "36f250c15ef6de5081f934bbb85daf7476c9b36efb70f0708ef0bba2b39123af"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/small_gemv.hpp",
+        "sha256": "8da011c8025e8a3fec2c7d8e4e23eec08d212ad85be649ad0fc1009d75d4e872"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/small_gemv_fixture.cpp",
+        "sha256": "eabb9be3ad02ffa3794a8d2591634c2f538e7cbd1ad99f05a2076c17b98c4338"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/small_gemv_fixture.hpp",
+        "sha256": "8bd00ce4476cd9427c1f1bc9d222c3ee6ec66c41fb95d3fedbf663323a690180"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/specialised.hpp",
+        "sha256": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/specialised_submit.cpp",
+        "sha256": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/specialised_submit.hpp",
+        "sha256": "bfbff1b46cf52ef5dd07ab0ea78350295af8932d3d18379623ab0b95967b742a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/storage.py",
+        "sha256": "7285e6f08cb592f7ef5f85a599a62bffc74f64ce4c21d49bba31717b4992cbc5"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/submission_overlay.py",
+        "sha256": "c5c5d24589c3311d48676b5932df0c2316b8f2891b9378910f1a7377bc6ec868"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/suite.py",
+        "sha256": "ed127772210ddcef8d797aef422cbfb5ae5302210c3bc0aa510ecef5aa360dfb"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/suite_export.py",
+        "sha256": "6c4b0a2a2d5778d81263c3101335eb35b1a389d79a4977217ce15ae3780c548f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/suite_gates.py",
+        "sha256": "d209c17d779c2e8710d8ac78a791552436da1084e2515f6f65bdf663504be17b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/synthetic.hpp",
+        "sha256": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_cleanup_paths.py",
+        "sha256": "d3e2c988d384dc349b96dbbba797d5e755fa6e87307331ab01558c156505c9b1"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_controller_review.py",
+        "sha256": "d794647d3ca3e40143f13288153ec16588832cf7c3a8ad698f45cf45e33f6661"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_draft_window_cleanup.py",
+        "sha256": "fa46a1cc85bdb1b43f54e8217bb3d911388e2d7b9c63339ecfbcf2675ae06c34"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_failure_storage.py",
+        "sha256": "d2bc95e6db229729949e696d6429616586a7a6dd4bb8e9e1712fc08a941735d2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_k2_admission.py",
+        "sha256": "3474170b4d2746faca9803617aa73608f48f05d4860e92e29feed78d384a6e78"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_k2_selection.py",
+        "sha256": "afb6669afb518093ad9f1a4c5f57ae56cf318801047fd404cfa905de6729122b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_mtp_controller.py",
+        "sha256": "446fefdcef898d10629bff5698eb3bbdbc9b2238ab42f05ebfb50ca2be1d0dd3"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_p38_k2.py",
+        "sha256": "be6a2902b448c721e7bbcb4cd902b391c55fdfcfe9b5620244300fd5e68932d9"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_receipt_metadata.py",
+        "sha256": "b09e74107a178cb01111f4fd1a27588b440ef88da24841c097c7556f686b7316"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_retain_window.py",
+        "sha256": "a452f368591e295b4c1eb1a7058d308ee5b0e5fde1cf0e6d6671e6ea0d00722e"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_seal_bootstrap.py",
+        "sha256": "514a7192d35fe4015a45a23484acc8772809d30a4abf884588ef199ea5c7042c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_state_machine.py",
+        "sha256": "a92c0b8da6d974e3357f9211e513294eee15e0975e7ce48b40d331782c6b33d2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_state_retention.py",
+        "sha256": "3a5dbca0a17937139df29adfd4b0dd110e9dadd1d3f2e894545932218f9f4811"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_storage_race.py",
+        "sha256": "4633a0f7df6a7e70c4ed416b38a13ba509b59f7cd4c72e06d5fa78b6d36474a6"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_submission_overlay.py",
+        "sha256": "32ca9c17e17dc1b9bbd61780ebd6198a8e3783dd710e3329b3f6aae761479895"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_suite_compiler.py",
+        "sha256": "73358d245bcb339fb4a9efadce522b8459d56b4cfd15b65e558a48b93a67c117"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_suite_export_retention.py",
+        "sha256": "d53b93827ec7f5b1d583ef6b1886ce0e9d7ede940e3d8d40a2f1b1d28448c1e4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_suite_warmup.py",
+        "sha256": "7c0dd710ac4f7cca3f8fe1fae084636b8d7875bc7f2f5c434fafb51021960d8c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_window.py",
+        "sha256": "cb05ab154b11d516a763bd054fdbc6ced0aac030a963c04e42d5acc30e3c29ee"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_window_seal_admission.py",
+        "sha256": "ab26efc28f2b0c9542c4a8645adf04b32fdfd74418c0bc84afad17e94ff4dd95"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_window_storage.py",
+        "sha256": "ee3f366a8ccc8bf9336721c716a38b0110ab8a3fbc334315941bed834cdd5b1a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/validation_gate.py",
+        "sha256": "bd4fa79e0b8a0cbe03d8b2f79355f18e44ec8ab81bfcb9cfe556e9709a018fef"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/validation_mirror.py",
+        "sha256": "1006456d47ac73d0425cf33e04e440e567959fe6783d8106d0c5ebcec65b2fde"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/window.py",
+        "sha256": "f78c10c54349177ebeb480aa45daf5ffb4546a067610de8fbbe43d5567bb24d5"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/window_cpu_gate.py",
+        "sha256": "219f065ae77f0306b603a2ac88bafde8b8b73acfe9f85d60423707eb6d86868b"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/window_safety.py",
+        "sha256": "353ce418d0570d3b85d23dc63dc91f7e005e528e91057d7a7ee620d390d02264"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp",
+        "sha256": "5391274d85d8f62e0398e80297744bcd85f23a16ac8c252a9a925bacbd630e8f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp",
+        "sha256": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp",
+        "sha256": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp",
+        "sha256": "2ea8d49225e539b31db9884b86c46bb80769935d9f6a4e23e78375e8d3178403"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp",
+        "sha256": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp",
+        "sha256": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp",
+        "sha256": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp",
+        "sha256": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp",
+        "sha256": "1094da5f48201e42fec563a0ea91018cd3d706d5ae5f80bcef17d28b002f4f64"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp",
+        "sha256": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp",
+        "sha256": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp",
+        "sha256": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp",
+        "sha256": "ff0852ed39e4a33fb4002440a8bae301ca3003c4a391bcfce2feb946d589aa72"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp",
+        "sha256": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp",
+        "sha256": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/coordinator_windows.sh",
+        "sha256": "c060b5a4e7454b036c040b10a28a24ef6b2544e8093db9c723e29a546ad89cd2"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet38-integrated/official-tensors.json",
+        "sha256": "435a923d51b0eb587da13fc35afcd490e229bd74b8dc7a46fc1b6c372febbad3"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/draft-baseline-oracle.json",
+        "sha256": "e3f370a255f873c26c6aa79caf2c75707833959ac073730c53abf3a438ede020"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/evidence/draft-baseline-rows.jsonl.gz",
+        "sha256": "bb9d16a60e5537266dc9cd00a9fb029cacf11389498f067ac7041fcf582cfba8"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/amend_long_suite.py",
+        "sha256": "1f3b51d582a6afac2fd80eea95e1d49426b2545d2974367bad1a836d41f7f404"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/long_suite_cpu_gate.py",
+        "sha256": "0c051448f49e55ffe433697fe54cead9d9882653dd3db93076a97c421da58ebe"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet44-context/test_suite_long.py",
+        "sha256": "0d9c7c631f7782f15fe7b3293547841b8b14e268c9d417a254f356212ed02d33"
+      },
+      {
+        "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-long/suite_check.py",
+        "sha256": "e9d375c647951f9efe006167c7f572cffa68313ca43fd76fed48859551f02f68"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/long-inputs-20261012/suite-manifest.json",
+        "sha256": "6b63f8d7d49943f0ac0202ba9a55b8e3f87248db72aeb26fd76ddcee23d161f4"
+      }
+    ]
+  },
+  "release": {
+    "assets": [],
+    "remote_verified_at": null
+  },
+  "validation": {
+    "clean_source_build": false,
+    "runtime_smoke": false,
+    "quality_gate": false
+  },
+  "evidence": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet38-integrated/receipts-cards01-20261012-chain/README.md",
+      "sha256": "3e3132b57be30a08b291821d0f970ac59972c9dd48d19d86b699c0fb1ce646e3"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/build-receipt.json",
+      "sha256": "809d6327ce9f144089049aa715a70ff8fb4aff9bbe59e43f2ce499be58fcf759"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/memory-plan.json",
+      "sha256": "7c85f7992cfa93523fd724e2a0c7990e1e2bad97f2d25b27c58c494a3416cb87"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/mtp-manifest.tsv",
+      "sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/K0/window.json",
+      "sha256": "b82eea369e7725b9edbbaa900a6b37413b5f040c77ae8498f0b2c02459a172a2"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/K1a/window.json",
+      "sha256": "091429028a952bae4981278849063a72a36620cca9e760d2a2b0b431655bc929"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/K1b/window.json",
+      "sha256": "17023e09a1a9735d5232030993cde3187c83fe32cd2aa53e71e7ad3c76ea4049"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/K2/dispatch-measured.json",
+      "sha256": "1b54f95a329e9c5cac0b3f6360843a30887a155b8125544144f65cce04786390"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/K2/window.json",
+      "sha256": "86397ad446234222c956e8f0812f3b1dffc31faa51dbbe161e7ba824c00ea7bc"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/KD/window.json",
+      "sha256": "29727ae5ff1f3817153c9b09fe710f0ed492408f02fef566e32a4e72ac9498bb"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/README.md",
+      "sha256": "58d769864151d931723795d3c9591cc5d7b40c0f09958f5c73aa900917680b99"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/W0p/window.json",
+      "sha256": "5ccf6ee946d6ac5719c6a3601ed7d66245955041fd83adc5d78513d3195e0c23"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/W2m/window.json",
+      "sha256": "5373090d0956c863c1eac4408b860517796ae4fa6efddd4317efc75c0f0ae04d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WL/receipt.json",
+      "sha256": "ea830d45a223e1f65325a1f1569a698cbdafd77528f7ae44a07c59a2d1a5ea4c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WL/repeat-1/LONG-A/receipt.json",
+      "sha256": "3b329a1335eba194238af928a7852410d641500b269f5bc4aa08cc6a31c06146"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WL/repeat-1/LONG-B/receipt.json",
+      "sha256": "c36cd7979e03aab5b6f9ac2371dbb732d5bf6a624271a38d04c24998e137da39"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WL/suite-manifest.snapshot.json",
+      "sha256": "6b63f8d7d49943f0ac0202ba9a55b8e3f87248db72aeb26fd76ddcee23d161f4"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WL/summary.json",
+      "sha256": "ea830d45a223e1f65325a1f1569a698cbdafd77528f7ae44a07c59a2d1a5ea4c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WL/window.json",
+      "sha256": "2950c5a0cf92ffb31a3bc5719e033a3ca29da99ee3c5125ff55f387f31020d36"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/receipt.json",
+      "sha256": "e72ce456c7103256017ef75b56bcc8ab9c8ba057ba2cc2f019dc876ffd88c27d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/architecture-tradeoff/receipt.json",
+      "sha256": "2da816e89159921a06a75f86a7ce88d2920eda4dd764744958673e95fc57f469"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/benchmark-analysis/receipt.json",
+      "sha256": "78de35e6f85470582a0ed15f56bffdcf9655e72888a65f432a6c5b219ddd273c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/bug-report-synthesis/receipt.json",
+      "sha256": "3c29beddf5dbc6629941768109ee82260877b2b8ebbee72c842fac610b01e3f4"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/code-review/receipt.json",
+      "sha256": "6d1f037dbbfe2dc7b5e38040a5368b3e080df0cc9dea202f288b1f99b4f7a207"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/customer-email/receipt.json",
+      "sha256": "7ecb29c8a169e638de858c9330bd176d1ea93c23c3e27cadbec5eab251377b7b"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/decision-memo/receipt.json",
+      "sha256": "e348bbf12648682ba6e324a7e59f7f49f0c8836934b0b600573de0854d4e7ce4"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/incident-retrospective/receipt.json",
+      "sha256": "07016b9d3bb641d875c0cca2859afed739ba3d15519aee39b7ad9f4004b1e56d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/performance-hypotheses/receipt.json",
+      "sha256": "30cf81f2e6bff28613ebfe6783fffec0ed7bee31adf3f66930480fc838c34b80"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/release-plan/receipt.json",
+      "sha256": "d2a015c79d4f8eaabdc159630b570e8ce2ffd0d5f2f7dc38dadfb6ad2f29d471"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/risk-register/receipt.json",
+      "sha256": "fbe656f7fd466b2dbc39bd9ab8b644a5bc88a2591369bf1e153526a8807b6365"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/sql-debugging/receipt.json",
+      "sha256": "4a1c95b8e3632417e40bbe0c7179c05deece99c3c8110b7a72cd96cf6a4aa8b9"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/repeat-1/technical-guide/receipt.json",
+      "sha256": "69b4b9dbd8884e7b522aba68993605892f9e999bacfd5859057d2df0be4e8ac0"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/suite-manifest.snapshot.json",
+      "sha256": "acb9a4295f21620e809f47d893898ae63f2d21b25c128f1eed16d7dea15c6236"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/summary.json",
+      "sha256": "e72ce456c7103256017ef75b56bcc8ab9c8ba057ba2cc2f019dc876ffd88c27d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/window.json",
+      "sha256": "1afbdd3a284a7a97b4429925ed4df2585b7afb270737865d5159fc33f9b05495"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/receipt.json",
+      "sha256": "2d2ea27dc04c8e50df08860dbbe1dacc77a4a2ca4768dfb978f8332786662df9"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/architecture-tradeoff/receipt.json",
+      "sha256": "7f9192d54ac5d36558b5333a9dd04ed37cdd5ff86aeb8919b9574d47d6924c02"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/benchmark-analysis/receipt.json",
+      "sha256": "9f6bb32cdde0f2610f01503120070dd1205ef0069dc12f9b40716a2a398a689d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/bug-report-synthesis/receipt.json",
+      "sha256": "5d4413220d194c9f50e21eec8da4c1673a415febc6f38b63afe9570000ef40d6"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/code-review/receipt.json",
+      "sha256": "53b902f4f4a37923b54b07fd1099893143a6032f49503107867d6d4d1048d177"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/customer-email/receipt.json",
+      "sha256": "4a46cec6016804324419fa6348e48848bc5acaf5f59ce4f75b449b83c1e70a71"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/decision-memo/receipt.json",
+      "sha256": "06f1fc97e7245bde4ec4f9d572ec80d1a660524d82109b402db1d51ff6144821"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/incident-retrospective/receipt.json",
+      "sha256": "a9103002da75875739cf989faf97c0fac67a95ddfb8d8cf6697da9a45ab24925"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/performance-hypotheses/receipt.json",
+      "sha256": "064ed65eb34ef980d7f193daf488049983aa8ed3735f67dab990ce0682ae13b2"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/release-plan/receipt.json",
+      "sha256": "d5aa2e4d84bbc1fe769af89029f6cfe79cb60d90d665946d7ee2884a89500a7c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/risk-register/receipt.json",
+      "sha256": "fbd9e121fdd8ec5e3b2936e16d0f444b58c46bc4780ca2f578ad81c70dc1c004"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/sql-debugging/receipt.json",
+      "sha256": "7e1321195a334175c2904039719303b1b825673d818535e7d3edb71ad3afec1e"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-1/technical-guide/receipt.json",
+      "sha256": "24687446cef2215085b863e8d4d7fe4bc41e789743630827db5f42de93b8d53c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/architecture-tradeoff/receipt.json",
+      "sha256": "348f65dd205bcac41381bc021543054a78d22eda567c65ca51c14e046f11e62d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/benchmark-analysis/receipt.json",
+      "sha256": "67a032787362dfae8536b9c8a35fe9416b9708768291c8e7f7c0176bbad103aa"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/bug-report-synthesis/receipt.json",
+      "sha256": "e03522681e6a311339dbb3f4456f11f194cc80945f42fdc3af2ef7700de26a1f"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/code-review/receipt.json",
+      "sha256": "debc528f67124b7a46e5116d0a16e7d29059c1862cd9456d42823fbe82b29fa6"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/customer-email/receipt.json",
+      "sha256": "bb2fcbe0d7d2c4ed567bb62ddf7ccc7a95cf5089ca48be9c85a5f7503843bf09"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/decision-memo/receipt.json",
+      "sha256": "b860ce4d28c262fac5051f5083c027bb26f0a57c90bd7686fc37058a5ad68165"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/incident-retrospective/receipt.json",
+      "sha256": "6e78cddd672a8b3d143486eefea6cabf92b68c24568da3c083d7901e74cc798d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/performance-hypotheses/receipt.json",
+      "sha256": "3868b6dae09748c799209ccbc002ba5fe20e2da29c388964acb4d9b65a0ece31"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/release-plan/receipt.json",
+      "sha256": "bce3e7f8ec5fd121053a46e17f3555a64e60e12c1b011d17a47278a36de5fcd8"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/risk-register/receipt.json",
+      "sha256": "657598412614a9071d95e7d9253430ad09460d1522ab049d48afa1872e18822a"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/sql-debugging/receipt.json",
+      "sha256": "5d63fa75f084402aea3c4cb6867cce4f89d167e85dfde78f7869420e6505b0ec"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/repeat-2/technical-guide/receipt.json",
+      "sha256": "c9fd576e29c5d63abcb4755e373ecc59c79e914b5e234f82916e609781ee5469"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/suite-manifest.snapshot.json",
+      "sha256": "86cff0fec5f84edb7244577c734be26753b288b28ccb7eac96965d03ceb8a47a"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/summary.json",
+      "sha256": "2d2ea27dc04c8e50df08860dbbe1dacc77a4a2ca4768dfb978f8332786662df9"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS64/window.json",
+      "sha256": "f667dd9800c340ba01dc62b23059faab1721a0dfec8ac7776c7e24499636d1d3"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/receipt.json",
+      "sha256": "8804b24c9b091f288184be508af8236240253e6c3c0292fca96720891b43148d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/architecture-tradeoff/receipt.json",
+      "sha256": "ce16f6c1d4557f7c57a7b50d731ae38d63c88c5823c519039dc41a1c2284e2b7"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/benchmark-analysis/receipt.json",
+      "sha256": "bd83c49c1e3f4e2f61866e50421c8827653e2fd55888f643473e3cfdd6ceae7a"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/bug-report-synthesis/receipt.json",
+      "sha256": "2360a5398d1c520f445caa8da2c8b375b488bb10a4d6e2cf2fc50a9fa485421f"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/code-review/receipt.json",
+      "sha256": "b5670b7c6bd761c3a0541a8c3a22238f1715d22d45fafcdaf3df28afd19384e3"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/customer-email/receipt.json",
+      "sha256": "1a0867b67057a42b159c25354ed3c2b5243e1bae41480609a2681f88ef9fe044"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/decision-memo/receipt.json",
+      "sha256": "1efe83f015fe7a8a3a98703eea12db0f612fa67d4f46cde2985b14ac614f1ab6"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/incident-retrospective/receipt.json",
+      "sha256": "c0fbcde4be8833bdaebb617fba3c9787d4ae7145aed0fcdf865ec678c5d96d1c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/performance-hypotheses/receipt.json",
+      "sha256": "ab8c9f4cae2cd2d45a8ccc8765f4256ea544b7b8d4bcf95ab4f13c47ffe580b5"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/release-plan/receipt.json",
+      "sha256": "b62f4ed7ebbfd73f95e54150be303de5186259b0522ae14f469a847ba7faac66"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/risk-register/receipt.json",
+      "sha256": "2a960c53f162e355a113a6f5d546c00940f1d00e2f5491e928e8e12d75435be0"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/sql-debugging/receipt.json",
+      "sha256": "fae846cdbbcaf4c8760c6a291c46b6d20db9ca060830027db6139b688aa810c4"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/repeat-1/technical-guide/receipt.json",
+      "sha256": "0809fa1746e9303eaf772e28931428998c6e536ae5537c3e0662083057dbf308"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/suite-manifest.snapshot.json",
+      "sha256": "acb9a4295f21620e809f47d893898ae63f2d21b25c128f1eed16d7dea15c6236"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/summary.json",
+      "sha256": "8804b24c9b091f288184be508af8236240253e6c3c0292fca96720891b43148d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WSs128/window.json",
+      "sha256": "2c5d80cad8d781ee3ac9ce09be7995b1ceb5cb506a9e1c0fbd22470673e901cb"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/coordinator-queue.log",
+      "sha256": "a849b5e2067784507d3a4854e87122daa92908fced2af2be8597f4f6a77c8e57"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/K0/window.json",
+      "sha256": "c584465e0c1d0306a7ced7547a185a7e9ccab7e468e650c5270763f13f10bf33"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/K1a/window.json",
+      "sha256": "156d9719b1275fa69eb1c75217b5865a58142028da8e3091730056a1cef7fd5a"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/K1b/window.json",
+      "sha256": "b99c3c9c070a59cb9969b98ef633d95c7407afc36da0b1a494f975bf225ecd0f"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/K2/dispatch-measured.json",
+      "sha256": "1b54f95a329e9c5cac0b3f6360843a30887a155b8125544144f65cce04786390"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/K2/window.json",
+      "sha256": "ed62ac8921d89efeea6cbd9681e1fb2f2ed0122c228402724dc51744864b6edf"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/KD/window.json",
+      "sha256": "2ef4477cdcec30b45c4fd8c7db47d917c4b73d727c2d1bcd5af42968a6cd2ae5"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/README.md",
+      "sha256": "8a4e850eb819ce715b73891043e5418de3b75c21a28b9011567b27abfef94f92"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/W0p/window.json",
+      "sha256": "e643a3365b9177de4d1ac154b2dd7dcec33b8a9ad472f5cf6ee82d8797a61665"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/W2m/window.json",
+      "sha256": "846404bb9a339dd66022a10c1fa51f5f944d5b82619d597bc8fd460da9211940"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/receipt.json",
+      "sha256": "035e7a480b4a322f6bce24c7043b089f0e8861a5718083aee5018f079df633ae"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/architecture-tradeoff/receipt.json",
+      "sha256": "cbb6ddb8e210f1df2a46a01990d780f6e56dab41919025647f4106a7e0fb1c00"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/benchmark-analysis/receipt.json",
+      "sha256": "6d4920372167c7045bd65a6532e16b22264e17912821f65a1f21f2411e40b4ea"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/bug-report-synthesis/receipt.json",
+      "sha256": "33e059907e3d6b8208653e355d41f63e56064826650230413a3f8413523c9eea"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/code-review/receipt.json",
+      "sha256": "6b426c85eeb1367e062724593a85b647461057ecdaea465220d1c9adf86c8d1d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/customer-email/receipt.json",
+      "sha256": "01eb7421e96c977f0543fc7e58860541ad809239cc94dcd9ab73709245320493"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/decision-memo/receipt.json",
+      "sha256": "b21e230f56c305972e6cd08e74e5b14b4654d8c9bea9bf0c18d4b931546abb56"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/incident-retrospective/receipt.json",
+      "sha256": "ce837a5db6d75e1abb2804df125717741e6b3455d9d751b362c2f1ecbb184933"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/performance-hypotheses/receipt.json",
+      "sha256": "82bd2fecebabd581d716707483a7087e1c6bc3c1393b76d37979099f92fba4e6"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/release-plan/receipt.json",
+      "sha256": "282cd13f77d622a31fbd4aac2b404c2901a105cc135486ce7639064df1dba07f"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/risk-register/receipt.json",
+      "sha256": "ad2b25d1eee063bc865eab38e0ee06b22c98b107d576c2fd402063e58b9f54f7"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/sql-debugging/receipt.json",
+      "sha256": "29e049e848f7296b30cd6e560e8e5a16aa4256053b8b7471c6d5395dff2eea81"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/repeat-1/technical-guide/receipt.json",
+      "sha256": "52b178b9f232eafe32e830f6f22cf3d86511c5399b4cbc3d3d7db03549360174"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/suite-manifest.snapshot.json",
+      "sha256": "acb9a4295f21620e809f47d893898ae63f2d21b25c128f1eed16d7dea15c6236"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/summary.json",
+      "sha256": "035e7a480b4a322f6bce24c7043b089f0e8861a5718083aee5018f079df633ae"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/window.json",
+      "sha256": "8f7f37f2c8c1039160f25af787aa30c1e7a8fd77b8061ba65bc93bb1204d1e36"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/receipt.json",
+      "sha256": "ff4eb7e9826bffa76eb07b241ef72b0dc0c635c217a1f06b2c1ff7601efbe9f1"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/architecture-tradeoff/receipt.json",
+      "sha256": "d9b42b6d394ee38f9d3c63d89103a5e9c2655d916d2ed5e5c1f3306338c9453d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/benchmark-analysis/receipt.json",
+      "sha256": "4e41ff03968af0eeb7c096f9c5479fa94c6b11829463b4b893d7e2ad000083a9"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/bug-report-synthesis/receipt.json",
+      "sha256": "eb01f0ca174f6d070d7d8ad78a9ff8e7ba6b112f7745c33b5d4bfaeb355f03fb"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/code-review/receipt.json",
+      "sha256": "ede2c2e3f5dd15d80b08c1bb57872fcc382a9183259e304c9e4ea8fc03c0d5a2"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/customer-email/receipt.json",
+      "sha256": "d3f71d80d7e8ce75b276201dbcc8d162873df34a86ef5184c20f44c537162783"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/decision-memo/receipt.json",
+      "sha256": "3f619565d661b75b7aa578c398b24ce46110dee1aa63e2e3fd2a5a3a7037d1ec"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/incident-retrospective/receipt.json",
+      "sha256": "9a88432595283486ccd78ce22aa03c3737ca8a1229fd17b59e046a15523465bc"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/performance-hypotheses/receipt.json",
+      "sha256": "05e5034685545066f4ebb8174eeb81c4c02608564efb35bdbbb4ebf557f7d097"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/release-plan/receipt.json",
+      "sha256": "bf8d64ea69bb6b85af1b6e6351b617dd4bae9bda035400d6062450268bdc934e"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/risk-register/receipt.json",
+      "sha256": "7bb4f1b30245e537519be850c55efbf55584a7148f1d762c5b615ee66f6ddb67"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/sql-debugging/receipt.json",
+      "sha256": "c8127441b25f3b38e3e68686250eaf25981fec6d23d6f3755dcb1ac2c6fa2687"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-1/technical-guide/receipt.json",
+      "sha256": "e6d697f622ebdabcc92f2b7c44b86d51d2ede456e53e21b79f27fccc7406b036"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/architecture-tradeoff/receipt.json",
+      "sha256": "b21035713532bc2e277a9d6a45d0804e449665fd5127907288ab08b96938634b"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/benchmark-analysis/receipt.json",
+      "sha256": "bc61a55a9f074dc6322dd685e70680b90ff409cfc787a1fe960ecc1b006aae8e"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/bug-report-synthesis/receipt.json",
+      "sha256": "f7c3e3ff4c3eedd0a98c3d3eb9d0963f0a8af923e0e735d2f6d056b03481db38"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/code-review/receipt.json",
+      "sha256": "70882a02178195a4d4858eb2a37f579748ed9002a4b930a7958f1a942f878381"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/customer-email/receipt.json",
+      "sha256": "597d221c82f8bc352323e25d70290707c96a3b1610d2ce2016cd53fd6cbaaddd"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/decision-memo/receipt.json",
+      "sha256": "abf9ef935c229cdecf86c70c8852bb51f76ed7a1254174060f429daf6b9f4f6c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/incident-retrospective/receipt.json",
+      "sha256": "c79dabc5ea8b47c75b49d2d5dca27dc98e74fc81653455641558a775e7559a04"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/performance-hypotheses/receipt.json",
+      "sha256": "aa295e2a2a1639a634c379b94756df0d1b83b379b8672f37522119d59c69d977"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/release-plan/receipt.json",
+      "sha256": "f726b9933cd27f345b9a679aed9fee1651fc557c286c70a1b175e1123750c6d4"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/risk-register/receipt.json",
+      "sha256": "f03a454a30859723fafc39f4a0b43fd78099b81951ae17f1dfcea7174de9f558"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/sql-debugging/receipt.json",
+      "sha256": "40774cfb2e6c3aecfb3634a3a32b0346b1545fe149e4a6521d8cad49dd41c8f4"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/repeat-2/technical-guide/receipt.json",
+      "sha256": "b0633416df937a7e2be1f68cfb31551630f095f93f4ba40c9cd2483215532f2a"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/suite-manifest.snapshot.json",
+      "sha256": "86cff0fec5f84edb7244577c734be26753b288b28ccb7eac96965d03ceb8a47a"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/summary.json",
+      "sha256": "ff4eb7e9826bffa76eb07b241ef72b0dc0c635c217a1f06b2c1ff7601efbe9f1"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS64/window.json",
+      "sha256": "b2098cf9a8b60d95568c040999d01df3993eb44ee786915e3dfcc23f01409033"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/coordinator-queue.log",
+      "sha256": "d4762aec6ea24bad5fc28393a59fe848d8330049b9b0022561bc4180500558c0"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/suite-inputs-20261012-cap128/suite-manifest.json",
+      "sha256": "acb9a4295f21620e809f47d893898ae63f2d21b25c128f1eed16d7dea15c6236"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-localmaxxing-payload-queue.json",
+      "sha256": "6f75ba1f5478b6780046878ceaa002ca6d010a47fc8e30f9259cc8f9186ba30b"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-promotion-attestation.json",
+      "sha256": "802d46314eed7d03f0584fdfd3c3232a9bc86be0a809c73e0781adf44fb6d2f2"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json",
+      "sha256": "32a9ca2f1a8aac772dba393084cbf89295ee8e2eb6fe6f8f2efb2f2c8897f096"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json",
+      "sha256": "a5807f19898d09af66bbd2c9616392483ccf0f4fd74550999776c69aeec3506e"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/architecture-tradeoff/receipt.json",
+      "sha256": "b04d2d9cf1c72b4f02ceb05e6d2423d63ff0d407d8658b13545f2c11fc0269b0"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/architecture-tradeoff/result.json",
+      "sha256": "5e8637ebce4a25a5297e272d68b5a9f67bac17bf5084a338764268b98e68a875"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/architecture-tradeoff/tokens.jsonl",
+      "sha256": "14c928a14432f64b52fb8f8d0d69f36add2408d7c571aa1260fc570397974289"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/benchmark-analysis/receipt.json",
+      "sha256": "cc2b0fc596999d17b1ea8044d106e624d27fd1a9bbe77ed5eff518fff228d3f1"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/benchmark-analysis/result.json",
+      "sha256": "2bb893ecda46d812e0b71a7ca5c0e5d28985a8f9a06f586e107982ac6e284c9c"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/benchmark-analysis/tokens.jsonl",
+      "sha256": "e7b71039eb52327deff5bdd7c866a64e15fdee1a8d9f6b1aaa24267bb6f71d7a"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/bug-report-synthesis/receipt.json",
+      "sha256": "5e8540cf237e72c9c39defdcf6c4840317e5d62d19cf766c2fe6262365ed49c5"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/bug-report-synthesis/result.json",
+      "sha256": "2c16ec9ef45047d66c2139d37797ffc696a26d63957dd6e57cd49800d00dd6fc"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/bug-report-synthesis/tokens.jsonl",
+      "sha256": "92544183ceb8581ced75eca0b3fb41b3f9172eaa62fda7b4281b992ae3dce94a"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/code-review/receipt.json",
+      "sha256": "028567d764a4b6d3a8fd0c22b92038af5060f702481d1f112cde8e4bee352da1"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/code-review/result.json",
+      "sha256": "54c99409ae2687da688edb438a9ccb38697d9edac2bdfc6d8666e83f878e5a2e"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/code-review/tokens.jsonl",
+      "sha256": "14746b872aba2218dd8beb7c9cd67b6bced03696a23417d04df741c697d00059"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/customer-email/receipt.json",
+      "sha256": "579d6ef2783989da106a85a0006f5b3ff4202829ccb4f5e18d9ff1be69e1fa87"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/customer-email/result.json",
+      "sha256": "6fd549a66f295f98acecb35e4cc5fa8bfe449e99668063a76c087078bba63f04"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/customer-email/tokens.jsonl",
+      "sha256": "ceb324c9dd34508a3200286714c780a47ca410e61a30340d649a022d3aabc229"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/decision-memo/receipt.json",
+      "sha256": "67b78ea04ae07920c9fcb20c29b6a873fe71e6d2426e7697fa37f83e59637ac4"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/decision-memo/result.json",
+      "sha256": "3c0379ee7f8f210e870f17e4b0bea845a5b17075f917012083593d6ceb7d1675"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/decision-memo/tokens.jsonl",
+      "sha256": "826cca8e408ddd2e6378dcca9876fcf248eb17398ca773739f0fa880263ac8da"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/incident-retrospective/receipt.json",
+      "sha256": "07189d8468d0930af69a7cdefd4d847f8e8c71ae7ca8e095d82f668401b49276"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/incident-retrospective/result.json",
+      "sha256": "7a911a55b044ec36989ca9bcc0468d954cdb8ce8b5c217e2e2ce361d7ff627a2"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/incident-retrospective/tokens.jsonl",
+      "sha256": "5f27a3508e27d730c755691701b92017f7792ad809d2b4bf8972c914257b23ee"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/performance-hypotheses/receipt.json",
+      "sha256": "5644517b9ab0cec6b3acb8c30769d05024f2fac7b4c77cb9fea66244b50c091d"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/performance-hypotheses/result.json",
+      "sha256": "5eae139ef3c1f5238f121fa3b2606c7b4215cfe3737057968d011b4c0d3b7d8d"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/performance-hypotheses/tokens.jsonl",
+      "sha256": "91474589c9172ad6ae379688c3877233fed5754f50d068c5af1b1fa5b183d52c"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/release-plan/receipt.json",
+      "sha256": "0a428f37c2c442e83667bda07fca760f317a5fdbb11b4699269b04f2b5af82ff"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/release-plan/result.json",
+      "sha256": "db62b5a964fa909d114d5a94016891c9b80a280d0ec5e65058f5aff9df921ce7"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/release-plan/tokens.jsonl",
+      "sha256": "983594878b469f0af77ffd8b1fc8b13746179a6c29884cabd0fea5bc220bac72"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/risk-register/receipt.json",
+      "sha256": "bcf4b017c67a2d73d07165af138455064ec4047806e434691edd7b270995a5fa"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/risk-register/result.json",
+      "sha256": "99d8887f68526f1d39addd1b6a8f02b425077cf8004e691e49bd778c3c92cd81"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/risk-register/tokens.jsonl",
+      "sha256": "9c49007643d3f73db836e6ab2e4b8a212c1a169745b318c1f3d3c50679ef4343"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/sql-debugging/receipt.json",
+      "sha256": "e1e70fef0726661486572e013c38bed8ff32a154dbbaf43eecd5b07c51eb16b5"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/sql-debugging/result.json",
+      "sha256": "66f8b669d2b2402d8b7c98b5a008bfd24c3d678c9ee87426a4c11928c4793029"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/sql-debugging/tokens.jsonl",
+      "sha256": "207e16a92af83948dbe606bf2d655e6d74f30c42aade3adce2944fae772fc9f0"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/technical-guide/receipt.json",
+      "sha256": "28390a516055fdf4db0be878738f1445a4d79385b7a552b7961379ff2c3f6024"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/technical-guide/result.json",
+      "sha256": "d2b24b685c52a1dbecbc74974fbe16f61dab6913a68ba64593fb43283600170f"
+    },
+    {
+      "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite128/technical-guide/tokens.jsonl",
+      "sha256": "8653c58df7a7a8812cf1fdfa4f754d79474d30b1742c1af56f66e4c99bd6aa62"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/packet44-replay.md",
+      "sha256": "31a86036d2dc04def6f5a7ff8bd15b7c2be353c56f81597087ac4dce16073d51"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/expected-outputs.md",
+      "sha256": "5a8898337d842cb9b7340b95a16d7f1a03dfe14845b136b85e08ced213be35cc"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/models.json",
+      "sha256": "63636242dd1b0ffdadc890e3af4480e7a16949dc36eccf8be4a5892b14c20738"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/preflight.py",
+      "sha256": "43b2500385cd20f33a404e0b2cc3c83c12d9517b7dcd183086733b56c0583416"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/verify.py",
+      "sha256": "c48852390af8dc162287131c6c752dbb9a028a36cd5ccb7cee8485f205e4862f"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh",
+      "sha256": "c581ed3794174878ec473d07a5f3fd2098a7c3549ee18fdad2bcce479618d25f"
+    },
+    {
+      "path": "results/qwen38-flash-next-ud-iq3xxs-b70/packet44-results.md",
+      "sha256": "7a9aa1f789c1d52e976f4c9082fe752cf7db9227b69799807b3238108243c299"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/test_verify.py",
+      "sha256": "ed24c4d1fc1410107b610a7df9f6b025f1bb50c6419f8b5269c57e902c9ee3d7"
+    }
+  ],
+  "chains": {
+    "packet44-context-c4096-c32768": {
+      "status": "sealed-lab-evidence-public-rebuild-pending",
+      "source_commit": "421a4ab5029680c2f88c78c7c7fdb4a05d6fc6c4",
+      "evidence": [
+        {
+          "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json",
+          "sha256": "32a9ca2f1a8aac772dba393084cbf89295ee8e2eb6fe6f8f2efb2f2c8897f096"
+        },
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/WS128/window.json",
+          "sha256": "1afbdd3a284a7a97b4429925ed4df2585b7afb270737865d5159fc33f9b05495"
+        },
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards23-20261013-c32768/WS128/window.json",
+          "sha256": "8f7f37f2c8c1039160f25af787aa30c1e7a8fd77b8061ba65bc93bb1204d1e36"
+        }
+      ]
+    }
+  },
+  "missing": [
+    "Pristine clean-source rebuild and independent supported-host device replay",
+    "oneAPI 2026.1 port and requalification; recorded compiler is 2026.0",
+    "Portable regeneration of local model admission, input bundles and capture prerequisites",
+    "Public binary, build-log and toolchain release assets with remote verification",
+    "512-token natural-completion final performance gate, two fresh suites and current promotion-attestation format",
+    "Standard 512-token prefill measurement"
+  ],
+  "generated_inputs": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet44-context/build/fusion-rope.hpp",
+      "sha256": "1bbb9d0ff339bd4ed20f02505aeaef484d906e8162d20ea247bae3889ecd7428",
+      "generator": "experiments/own-xpu-runtime/stage2/packet44-context/build.py prepare",
+      "input": "experiments/own-xpu-runtime/stage2/packet44-context/rope.bf16"
+    }
+  ]
+}

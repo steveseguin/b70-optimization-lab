@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
+    "summary": "Official Qwen FP8 weights on two B70 cards, target-verified MTP5, full FP16 KV and 33,024-token capacity. The recommended profile uses exact one-launch attention verification. Historical turin short-prompt record: 90.3 tok/s; the latest configured-host acceptance on steve-b70s measured 46.0 tok/s. Measured context curves and hardware limits are reported separately.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -37,15 +37,15 @@
       "32K input"
     ],
     "published_at": "2026-08-27",
-    "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host installation is untested. The separate October 7 multi-user profile (MTP0) passed token identity at 16/32/64 users on short and 2K–8K prompts, two same-server passes; those batch-wall rates are capacity measurements, not this single-user headline.",
+    "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host installation is untested. The separate October 7 multi-user profile (MTP0) passed token identity at 16/32/64 users on short and 2K\u20138K prompts, two same-server passes; those batch-wall rates are capacity measurements, not this single-user headline. October 19: the recommended profile now uses verify-rows 0.2.0 in one launch. October 17 exact context screens on turin cover 2K\u201332K inputs in two separate corpora. Public-source replay on two selected B70s of steve-b70s passed 12/12 strict and 6/6 practical requests at 46.013 tok/s; this single-server acceptance is not pooled with, or promoted over, the historical 90.3 tok/s pair. Clean driver/Docker installation remains pending.",
     "featured_metric": {
       "value": 90.30984105545438,
       "unit": "tok/s",
-      "label": "Writing speed · MTP depth 5 · allgather allreduce · two cards",
-      "scope": "Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
+      "label": "Historical writing speed \u00b7 MTP depth 5 \u00b7 two cards",
+      "scope": "Historical September measurement on turin, before one-launch verification. Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
     },
-    "public_summary": "Official FP8 Qwen 27B on two B70 cards. Choose recommended for one person: about 90.3 output tokens/s with target-verified MTP5. Choose multi-user for shared requests: 875 tokens/s combined at 64 short requests, or 66 combined with 2K–8K inputs. The multi-user results are two same-server capacity passes with outputs equal to the solo references; clean-host installation is still untested."
+    "public_summary": "Official FP8 Qwen 27B on two B70 cards. Choose recommended for one person. The historical turin writing result is 90.3 tokens/s; the latest acceptance on another configured lab host measured 46.0. Choose multi-user for shared requests: 875 tokens/s combined at 64 short requests, or 66 with 2K\u20138K inputs. Clean-host installation remains untested."
   },
   "contributors": [
     {
@@ -590,41 +590,82 @@
     "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md",
     "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
     "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/manifest.json",
+    "experiments/qwen38-27b-b70/notes/2026-10-17-fp8-writing-attention.md",
+    "experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md",
+    "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json",
+    "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+    "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/server-C1-container-final.json",
+    "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json",
+    "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/manifest.json",
+    "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/evidence.tar.gz",
+    "experiments/qwen38-27b-b70/notes/2026-09-17-clean-host-replay-plan.md",
     "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/source-drift.json",
     "tools/source_drift_proofs.py"
   ],
   "performance_profiles": [
     {
       "id": "r310-decode-vs-context-tp2-mtp5",
-      "label": "Writing speed after the prompt · MTP depth 5 · INT4 draft shortlist",
+      "label": "Writing speed after the prompt \u00b7 MTP depth 5 \u00b7 INT4 draft shortlist",
       "metric": "decode",
       "unit": "tok/s",
       "x_metric": "context_tokens",
       "x_label": "Input tokens",
-      "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-context-summary.json",
+      "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token. Since 2026-10-19 the recommended profile runs b70_fa_verify_rows 0.2.0 with B70_FA_VERIFY_ROWS_ONE_LAUNCH=1 (the six verify rows in one kernel launch; bitwise-equal answers, gates in experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md); these points are that configuration, measured in experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json, with a separate public-source acceptance replay in experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json. The pre-one-launch points were 87.957 / 114.013 / 96.292 at 2K / 8K / 16K (2026-09-16-fp8-review). These are output-exact context screening measurements on turin, with separate warmups, not a new fixed-suite speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json",
       "points": [
         {
           "context_tokens": 2048,
-          "value": 87.957,
+          "value": 92.68001291702649,
           "samples": 6
         },
         {
           "context_tokens": 8192,
-          "value": 114.013,
+          "value": 133.56800234678246,
           "samples": 6
         },
         {
           "context_tokens": 16384,
-          "value": 96.292,
+          "value": 123.56832114196222,
           "samples": 6
         }
       ],
-      "public_label": "Writing speed after the prompt · recommended (MTP depth 5)"
+      "public_label": "Writing speed after the prompt \u00b7 recommended (MTP depth 5)",
+      "source_data": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json",
+      "promotion_qualified": false
+    },
+    {
+      "id": "r310-decode-vs-context-tp2-mtp5-long-corpus",
+      "label": "Writing speed after the prompt \u00b7 MTP depth 5 \u00b7 long corpus",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_metric": "context_tokens",
+      "x_label": "Input tokens",
+      "scope": "Same server and method as r310-decode-vs-context-tp2-mtp5 (one launch, tokens 1-100 after the first token, median per content type then across types, 6 requests per point), but on the September long corpus (experiments/qwen38-27b-b70/data/2026-09-17-long-corpus/corpus.json): different text from the 2K/8K/16K curve, so the two sets are not one curve. Measured 2026-10-17, gate 3 of the one-launch proposal; every continuation identical to a fresh no-MTP server at the same length. No-MTP rates at these lengths on the same corpus: 30.97 / 30.43 / 30.29 tok/s. These are output-exact context screening measurements on turin, with separate warmups, not a new fixed-suite speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+      "points": [
+        {
+          "context_tokens": 24576,
+          "value": 80.14047220018278,
+          "samples": 6
+        },
+        {
+          "context_tokens": 30720,
+          "value": 80.8666155487646,
+          "samples": 6
+        },
+        {
+          "context_tokens": 32768,
+          "value": 97.33232997326823,
+          "samples": 6
+        }
+      ],
+      "public_label": "Writing speed after the prompt, long corpus \u00b7 recommended (MTP depth 5)",
+      "source_data": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+      "promotion_qualified": false
     },
     {
       "id": "r310-prefill-vs-context-tp2-mtp5",
-      "label": "Prompt reading speed · MTP depth 5 · INT4 draft shortlist",
+      "label": "Prompt reading speed \u00b7 MTP depth 5 \u00b7 INT4 draft shortlist",
       "metric": "prefill",
       "unit": "tok/s",
       "x_metric": "context_tokens",
@@ -648,11 +689,11 @@
           "samples": 6
         }
       ],
-      "public_label": "Prompt reading speed · recommended (MTP depth 5)"
+      "public_label": "Prompt reading speed \u00b7 recommended (MTP depth 5)"
     },
     {
       "id": "r310-decode-vs-context-tp2-mtp0",
-      "label": "Writing speed after the prompt · No MTP",
+      "label": "Writing speed after the prompt \u00b7 No MTP",
       "metric": "decode",
       "unit": "tok/s",
       "x_metric": "context_tokens",
@@ -676,11 +717,11 @@
           "samples": 6
         }
       ],
-      "public_label": "Writing speed after the prompt · no MTP"
+      "public_label": "Writing speed after the prompt \u00b7 no MTP"
     },
     {
       "id": "r310-prefill-vs-context-tp2-mtp0",
-      "label": "Prompt reading speed · No MTP",
+      "label": "Prompt reading speed \u00b7 No MTP",
       "metric": "prefill",
       "unit": "tok/s",
       "x_metric": "context_tokens",
@@ -704,11 +745,11 @@
           "samples": 6
         }
       ],
-      "public_label": "Prompt reading speed · no MTP"
+      "public_label": "Prompt reading speed \u00b7 no MTP"
     },
     {
       "id": "r310-decode-vs-mtp-depth",
-      "label": "Writing speed by MTP depth · INT4 draft shortlist",
+      "label": "Writing speed by MTP depth \u00b7 INT4 draft shortlist",
       "metric": "decode",
       "unit": "tok/s",
       "x_metric": "speculative_tokens",
@@ -1420,13 +1461,13 @@
     },
     {
       "id": "short-prompt-server-prefill-control",
-      "label": "Reading speed with a short prompt · 2 GPUs",
-      "public_label": "Reading speed · 2 GPUs · 1-token draft",
+      "label": "Reading speed with a short prompt \u00b7 2 GPUs",
+      "public_label": "Reading speed \u00b7 2 GPUs \u00b7 1-token draft",
       "metric": "prefill",
       "unit": "tok/s",
       "x_metric": "context_tokens",
       "x_label": "Input length (tokens)",
-      "scope": "One user, 2 GPUs, 128–512 input tokens; no saved prompt cache. A separate short-input test, using the existing allocation method.",
+      "scope": "One user, 2 GPUs, 128\u2013512 input tokens; no saved prompt cache. A separate short-input test, using the existing allocation method.",
       "public_scope": "How fast the server reads a short prompt before making its first token. One user; no saved prompt cache. A separate short-input test.",
       "measurement_kind": "server_prefill",
       "evidence": "experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md",
@@ -1469,14 +1510,14 @@
     },
     {
       "id": "server-prefill-fp8-focus-27b-fp8",
-      "label": "Reading speed at 512 and 2,048 input tokens · 2 GPUs",
-      "public_label": "Reading speed · 2 GPUs · 1-token draft · 4K capacity",
+      "label": "Reading speed at 512 and 2,048 input tokens \u00b7 2 GPUs",
+      "public_label": "Reading speed \u00b7 2 GPUs \u00b7 1-token draft \u00b7 4K capacity",
       "metric": "prefill",
       "unit": "tok/s",
       "x_metric": "context_tokens",
       "x_label": "Input length (tokens)",
       "measurement_kind": "server_prefill",
-      "scope": "One user, 2 GPUs, 512–2,048 input tokens; 4096-token capacity and batch budget; no saved prompt cache. Separate test on the published R304 runtime.",
+      "scope": "One user, 2 GPUs, 512\u20132,048 input tokens; 4096-token capacity and batch budget; no saved prompt cache. Separate test on the published R304 runtime.",
       "public_scope": "How fast the server reads your prompt before making its first token. One user, room for 4,096 tokens, no saved prompt cache. Unrepeated prose, code and documents.",
       "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md",
       "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/summary.json",
@@ -1499,7 +1540,7 @@
         "profiler_configured": true,
         "profiler_active_during_measurement": false
       },
-      "technical_method": "Measured 2026-09-14 UTC on ASRock B70. Input tokens divided by vLLM server prefill duration from first scheduled execution to first token, obtained from one-request histogram deltas; not isolated GPU throughput or HTTP TTFT. Each point averages two control-arm rates. Each arm takes the median of three repeats per prose/code/documentation class, then the median across classes (18 measured requests per length). Unrepeated source excerpts truncated to exact numeric input IDs, 128 output tokens with ignore_eos, zero cached tokens; warmups and the optional profiler request excluded. Complete outputs repeat exactly. All 12 natural-completion strict-suite outputs matched the qualified reference. One loaded server per setup; no runtime optimization or new decode record promoted. The earlier short-prefill test used another corpus and a 1024-token capacity/batch budget; it is preserved separately and does not establish a speedup. At 2048 scheduled rows, W8A16 uses its natural oneDNN catalog beyond the fixed-K hook’s 512-row range.",
+      "technical_method": "Measured 2026-09-14 UTC on ASRock B70. Input tokens divided by vLLM server prefill duration from first scheduled execution to first token, obtained from one-request histogram deltas; not isolated GPU throughput or HTTP TTFT. Each point averages two control-arm rates. Each arm takes the median of three repeats per prose/code/documentation class, then the median across classes (18 measured requests per length). Unrepeated source excerpts truncated to exact numeric input IDs, 128 output tokens with ignore_eos, zero cached tokens; warmups and the optional profiler request excluded. Complete outputs repeat exactly. All 12 natural-completion strict-suite outputs matched the qualified reference. One loaded server per setup; no runtime optimization or new decode record promoted. The earlier short-prefill test used another corpus and a 1024-token capacity/batch budget; it is preserved separately and does not establish a speedup. At 2048 scheduled rows, W8A16 uses its natural oneDNN catalog beyond the fixed-K hook\u2019s 512-row range.",
       "promotion_qualified": false,
       "points": [
         {
@@ -1516,8 +1557,8 @@
     },
     {
       "id": "server-prefill-recommended-fp8-33024-control",
-      "label": "Reading speed at 512–16,384 input tokens · FP8 depth-1 profile",
-      "public_label": "Reading speed · depth-1 profile · 2 GPUs · 1-token draft · 33,024-token capacity",
+      "label": "Reading speed at 512\u201316,384 input tokens \u00b7 FP8 depth-1 profile",
+      "public_label": "Reading speed \u00b7 depth-1 profile \u00b7 2 GPUs \u00b7 1-token draft \u00b7 33,024-token capacity",
       "metric": "prefill",
       "unit": "tok/s",
       "x_metric": "context_tokens",
@@ -1569,8 +1610,8 @@
     },
     {
       "id": "multi-user-oct7-short",
-      "label": "Short prompts · combined writing speed · two cards",
-      "public_label": "Short prompts · all users together",
+      "label": "Short prompts \u00b7 combined writing speed \u00b7 two cards",
+      "public_label": "Short prompts \u00b7 all users together",
       "metric": "aggregate_decode",
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
@@ -1599,13 +1640,13 @@
     },
     {
       "id": "multi-user-oct7-long",
-      "label": "2K–8K-token prompts · combined writing speed · two cards",
-      "public_label": "2K–8K-token prompts · all users together",
+      "label": "2K\u20138K-token prompts \u00b7 combined writing speed \u00b7 two cards",
+      "public_label": "2K\u20138K-token prompts \u00b7 all users together",
       "metric": "aggregate_decode",
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Simultaneous requests",
-      "scope": "Two B70s, official 27B FP8 weights, FP16 KV, MTP0 multi-user profile, R310 image, 33,024 total-token capacity, prefix caching off. Combined HTTP batch-wall rate (generated tokens / batch wall seconds), including prompt processing. Two passes on one configured host/server; every token array equals its solo reference. Capacity diagnostic, not the cold realistic single-user headline or a two-fresh-server speed comparison. Natural output lengths from the fixed 2K–8K input suite.",
+      "scope": "Two B70s, official 27B FP8 weights, FP16 KV, MTP0 multi-user profile, R310 image, 33,024 total-token capacity, prefix caching off. Combined HTTP batch-wall rate (generated tokens / batch wall seconds), including prompt processing. Two passes on one configured host/server; every token array equals its solo reference. Capacity diagnostic, not the cold realistic single-user headline or a two-fresh-server speed comparison. Natural output lengths from the fixed 2K\u20138K input suite.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
       "source_data": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
       "promotion_qualified": false,
@@ -1658,7 +1699,7 @@
       "serve": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py"
     },
     "shared_implementation": "tools/container-packet",
-    "note": "Generated from the qualified whole-graph launcher with the current pinned public runtime: two cards, MTP1, V1 runner, 33,024 total tokens, batch 4,096, one active sequence, prefix caching disabled. The package-specific serve.py is the recommended persistent start/status/stop path. Older shared smoke and preflight scripts require an explicit two-gpu profile and are retained for advanced use."
+    "note": "Generated from the qualified recommended launcher: two cards, MTP5, one-launch verify rows 0.2.0, V1 runner, 33,024 total tokens, batch 4,096, one active sequence, prefix caching disabled. serve.py owns the tested start/status/stop path. Older shared smoke/preflight scripts remain advanced paths."
   },
   "recommended_setup": {
     "cards": 2,
@@ -1765,6 +1806,20 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
       "research_result": "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md",
       "note": "experiments/qwen38-27b-b70/notes/2026-10-07-multi-user-profile-acceptance-plan.md"
+    },
+    "verify_rows_one_launch": true,
+    "verify_rows_overlay_version": "0.2.0",
+    "acceptance_evidence": "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json",
+    "latest_acceptance": {
+      "source_commit": "421b07e4655c20d4a52ba6b6f6a7c38d164d1c60",
+      "host": "steve-b70s (two selected B70s of four)",
+      "decode_tokens_s": 46.012925094989214,
+      "strict_exact": 12,
+      "strict_requests": 12,
+      "practical_passes": 6,
+      "fresh_servers": 1,
+      "speed_promoted": false,
+      "evidence": "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json"
     }
   }
 }

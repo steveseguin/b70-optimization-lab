@@ -216,6 +216,35 @@
           "public_label": "Wait for the first token · July 2026 service sweep, up to 32K tokens"
         },
         {
+          "id": "prefill-vs-context-throughput-recipe",
+          "label": "Prompt reading · production build · one 32K slot · no draft",
+          "public_label": "Reading speed · one user · no draft · production build, October 15",
+          "public_scope": "Three measured prompt lengths with four timings each. This uses a different prompt-reading setup from the July and October 10 curves. The faster experimental kernel has not shipped.",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Actual input tokens",
+          "scope": "One B70 (card 1 on the two-card host; LAN service on card 0), llama.cpp c926 production compatibility binary; service profile, one 32768-token slot, f16 KV, no speculation, deterministic oneDNN, prefill micro-batch 1024. Diagnostic long prompts, temperature 0, 1-token timed replies; cache_prompt=false, cache-ram=0, ctx-checkpoints=0. Server prompt_n * 1000 / prompt_ms, arithmetic mean of two repeats on each of two fresh servers after suite and long-output checks. Full-precision JSON receipts; no inferred points. This is scoped prefill evidence, not a cold-suite decode headline or the unshipped coalesced-kernel gain.",
+          "evidence": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json",
+          "points": [
+            {
+              "context_tokens": 1867,
+              "value": 1307.541789553131,
+              "samples": 4
+            },
+            {
+              "context_tokens": 7623,
+              "value": 1167.8076527224289,
+              "samples": 4
+            },
+            {
+              "context_tokens": 29400,
+              "value": 909.2718901854017,
+              "samples": 4
+            }
+          ]
+        },
+        {
           "id": "sweep-decode-vs-draft-length-2048",
           "label": "Writing speed by MTP draft length · after a 2,000-token prompt",
           "public_label": "Writing speed · different draft lengths · one user · after a 2,000-token prompt",
@@ -323,38 +352,43 @@
           "public_label": "Writing speed · one user · 3-token draft (single-user recipe)",
           "public_scope": "Writing speed after the answer starts, for prompts from 300 to 16,000 tokens. Longer prompts slow writing because every new token looks back over the whole prompt.",
           "x_metric": "context_tokens",
-          "x_label": "Input tokens",
-          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length.",
+          "x_label": "Actual input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only.",
           "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
           "points": [
             {
-              "context_tokens": 300,
+              "context_tokens": 292,
               "value": 121.9,
               "samples": 3,
+              "requested_context_tokens": 300,
               "measured_prompt_tokens": 292
             },
             {
-              "context_tokens": 512,
+              "context_tokens": 509,
               "value": 117.4,
               "samples": 3,
+              "requested_context_tokens": 512,
               "measured_prompt_tokens": 509
             },
             {
-              "context_tokens": 2048,
+              "context_tokens": 2042,
               "value": 109.0,
               "samples": 3,
+              "requested_context_tokens": 2048,
               "measured_prompt_tokens": 2042
             },
             {
-              "context_tokens": 8192,
+              "context_tokens": 8185,
               "value": 91.8,
               "samples": 2,
+              "requested_context_tokens": 8192,
               "measured_prompt_tokens": 8185
             },
             {
-              "context_tokens": 15800,
+              "context_tokens": 15793,
               "value": 91.9,
               "samples": 2,
+              "requested_context_tokens": 15800,
               "measured_prompt_tokens": 15793
             }
           ]
@@ -367,44 +401,49 @@
           "public_label": "Reading speed (prefill) · one user · 3-token draft (single-user recipe)",
           "public_scope": "How fast the server reads the prompt before the answer starts, measured by the server's own counters with no saved prompt cache. The draft does not change reading speed.",
           "x_metric": "context_tokens",
-          "x_label": "Input tokens",
+          "x_label": "Actual input tokens",
           "measurement_kind": "server_prefill",
           "operating_profile": {
             "speculative_tokens": 3,
             "max_model_len": 16384,
             "tensor_parallel_size": 1
           },
-          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
           "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
           "points": [
             {
-              "context_tokens": 300,
+              "context_tokens": 292,
               "value": 933.9,
               "samples": 3,
+              "requested_context_tokens": 300,
               "measured_prompt_tokens": 292
             },
             {
-              "context_tokens": 512,
+              "context_tokens": 509,
               "value": 1323.8,
               "samples": 3,
+              "requested_context_tokens": 512,
               "measured_prompt_tokens": 509
             },
             {
-              "context_tokens": 2048,
+              "context_tokens": 2042,
               "value": 2061.5,
               "samples": 3,
+              "requested_context_tokens": 2048,
               "measured_prompt_tokens": 2042
             },
             {
-              "context_tokens": 8192,
+              "context_tokens": 8185,
               "value": 1697.7,
               "samples": 2,
+              "requested_context_tokens": 8192,
               "measured_prompt_tokens": 8185
             },
             {
-              "context_tokens": 15800,
+              "context_tokens": 15793,
               "value": 1488.3,
               "samples": 2,
+              "requested_context_tokens": 15800,
               "measured_prompt_tokens": 15793
             }
           ]
@@ -417,38 +456,43 @@
           "public_label": "Writing speed · one user · no draft (shared-server recipe)",
           "public_scope": "Writing speed after the answer starts, for prompts from 300 to 16,000 tokens. Longer prompts slow writing because every new token looks back over the whole prompt.",
           "x_metric": "context_tokens",
-          "x_label": "Input tokens",
-          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length.",
+          "x_label": "Actual input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only.",
           "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
           "points": [
             {
-              "context_tokens": 300,
+              "context_tokens": 292,
               "value": 77.9,
               "samples": 3,
+              "requested_context_tokens": 300,
               "measured_prompt_tokens": 292
             },
             {
-              "context_tokens": 512,
+              "context_tokens": 509,
               "value": 74.3,
               "samples": 3,
+              "requested_context_tokens": 512,
               "measured_prompt_tokens": 509
             },
             {
-              "context_tokens": 2048,
+              "context_tokens": 2042,
               "value": 62.7,
               "samples": 3,
+              "requested_context_tokens": 2048,
               "measured_prompt_tokens": 2042
             },
             {
-              "context_tokens": 8192,
+              "context_tokens": 8185,
               "value": 57.8,
               "samples": 2,
+              "requested_context_tokens": 8192,
               "measured_prompt_tokens": 8185
             },
             {
-              "context_tokens": 15800,
+              "context_tokens": 15793,
               "value": 56.2,
               "samples": 2,
+              "requested_context_tokens": 15800,
               "measured_prompt_tokens": 15793
             }
           ]
@@ -461,38 +505,43 @@
           "public_label": "Reading speed (prefill) · one user · no draft (shared-server recipe)",
           "public_scope": "How fast the server reads the prompt before the answer starts, measured by the server's own counters with no saved prompt cache. The draft does not change reading speed.",
           "x_metric": "context_tokens",
-          "x_label": "Input tokens",
-          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
+          "x_label": "Actual input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
           "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
           "points": [
             {
-              "context_tokens": 300,
+              "context_tokens": 292,
               "value": 937.4,
               "samples": 3,
+              "requested_context_tokens": 300,
               "measured_prompt_tokens": 292
             },
             {
-              "context_tokens": 512,
+              "context_tokens": 509,
               "value": 1327.8,
               "samples": 3,
+              "requested_context_tokens": 512,
               "measured_prompt_tokens": 509
             },
             {
-              "context_tokens": 2048,
+              "context_tokens": 2042,
               "value": 2050.1,
               "samples": 3,
+              "requested_context_tokens": 2048,
               "measured_prompt_tokens": 2042
             },
             {
-              "context_tokens": 8192,
+              "context_tokens": 8185,
               "value": 1705.1,
               "samples": 2,
+              "requested_context_tokens": 8192,
               "measured_prompt_tokens": 8185
             },
             {
-              "context_tokens": 15800,
+              "context_tokens": 15793,
               "value": 1495.2,
               "samples": 2,
+              "requested_context_tokens": 15800,
               "measured_prompt_tokens": 15793
             }
           ]
@@ -505,38 +554,43 @@
           "public_label": "Wait for the first token · one user · cold prompt",
           "public_scope": "How long the user waits for the answer to start when nothing about the prompt is cached. With a shared system prompt cached, only the new part counts.",
           "x_metric": "context_tokens",
-          "x_label": "Input tokens",
-          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Wait is the server's prompt time for a cold prompt.",
+          "x_label": "Actual input tokens",
+          "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only. Wait is the server's prompt time for a cold prompt.",
           "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
           "points": [
             {
-              "context_tokens": 300,
+              "context_tokens": 292,
               "value": 310.0,
               "samples": 3,
+              "requested_context_tokens": 300,
               "measured_prompt_tokens": 292
             },
             {
-              "context_tokens": 512,
+              "context_tokens": 509,
               "value": 380.0,
               "samples": 3,
+              "requested_context_tokens": 512,
               "measured_prompt_tokens": 509
             },
             {
-              "context_tokens": 2048,
+              "context_tokens": 2042,
               "value": 970.0,
               "samples": 3,
+              "requested_context_tokens": 2048,
               "measured_prompt_tokens": 2042
             },
             {
-              "context_tokens": 8192,
+              "context_tokens": 8185,
               "value": 4800.0,
               "samples": 2,
+              "requested_context_tokens": 8192,
               "measured_prompt_tokens": 8185
             },
             {
-              "context_tokens": 15800,
+              "context_tokens": 15793,
               "value": 10550.0,
               "samples": 2,
+              "requested_context_tokens": 15800,
               "measured_prompt_tokens": 15793
             }
           ]
@@ -812,19 +866,39 @@
         "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft1.json",
         "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft3.json",
         "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
-        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json"
+        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json",
+        "experiments/gemma4-26b-a4b-q8-b70/scripts/summarize-prefill-reorder.py",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-check.log",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/convert-change-vs-production.diff",
+        "experiments/gemma4-26b-a4b-q8-b70/scripts/gemma-identity-check.sh",
+        "experiments/gemma4-26b-a4b-q8-b70/notes/2026-10-15-prefill-reorder-check.md",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-prod-a.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-prod-b.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-new-a.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-new-b.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-verify.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/suite-prod-a.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/suite-new-a.json",
+        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft1.json",
+        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft2.json",
+        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft4.json",
+        "data/profiles/2026-10-10/gemma-sweep/single-16k-draft5.json",
+        "tools/gemma4-26b-sweep-to-package.py"
       ],
       "evidence": [
         "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
         "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json",
         "data/gemma4-q8-gpu0-125repro-compat2026.1-20260907T040139Z/summary.json",
         "data/gemma4-q8-gpu0-125repro-container2026.0-20260907T040615Z/summary.json",
-        "data/gemma4-q8-gpu0-125repro-container2026.0-run2-20260907T041051Z/summary.json"
+        "data/gemma4-q8-gpu0-125repro-container2026.0-run2-20260907T041051Z/summary.json",
+        "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json"
       ],
       "missing": [
         "historical llama-server binary SHA-256",
         "historical locally quantized Q4_0 MTP draft SHA-256 and byte size (the reconstructed draft is repeat-stable at 1f6706e4… across three builds)",
-        "beginner recovery flow exercised end-to-end on a fresh host (documented; the pinned oneAPI 2026.0 container path and two clean-rebuild gate replays were verified on the lab host on 2026-09-07)"
+        "beginner recovery flow exercised end-to-end on a fresh host (documented; the pinned oneAPI 2026.0 container path and two clean-rebuild gate replays were verified on the lab host on 2026-09-07)",
+        "October 15 coalesced-prefill candidate: full build/library digests, exact compatibility source/build receipt, tracked long prompt inputs and clean rebuild/full-gate replay; its 13–22% measured gains are not included in the package runtime or published performance profiles"
       ]
     },
     {
@@ -2160,7 +2234,7 @@
         ],
         "published_at": "2026-08-22",
         "featured_metric": null,
-        "benchmark_status": "The 72.169452/72.035976 varied-suite observations and reasoning-off canary summary are preserved in the guide, but their raw operating-point and canary JSON files are not closed in this repository. Import and hash-bind those files, then replay the quality/determinism gate before assigning a strict headline."
+        "benchmark_status": "Historical August22 raw suites, canaries and server logs are now imported and hash-bound. The 72.169452/72.035976 tok/s text-delta observations remain non-headline: native-token-ID quality/determinism replay is incomplete. October19 replay was interrupted and owner-deferred; no qualified new result."
       },
       "contributors": [
         {
@@ -2259,7 +2333,7 @@
         }
       ],
       "known_limitations": [
-        "With reasoning ON, repeated identical requests are not hash-stable (thinking-channel sampling); deterministic with reasoning off - the recipe default.",
+        "Historical reasoning-off canaries passed eight repeats, but only 1/12 complete text-output hashes match between the two August22 suite runs. Full-suite strict determinism is not established. Reasoning-on canaries were also unstable.",
         "MoE rate reflects ~3B active parameters.",
         "1M native context not exercised beyond 32K here.",
         "Two-card layer split measured 69.45/69.49 tok/s vs 72.17/72.04 on one card (-3.7%): use one card for single-stream decode."
@@ -2288,10 +2362,10 @@
       },
       "commands": {
         "preflight": "python3 scripts/verify-neural-download-model.py repro/nemotron-35-lightning-30b-a3b-b70/model-manifest.json \"$MODEL_DIR\" && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
-        "launch": "$BUILD_DIR/bin/llama-server --model $MODEL_DIR/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-UD-Q4_K_M.gguf --alias nemotron --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+        "launch": "\"$BUILD_DIR/bin/llama-server\" --model \"$MODEL_DIR/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-UD-Q4_K_M.gguf\" --alias nemotron --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --split-mode none --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --no-cache-prompt --slot-prompt-similarity 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100 >nemotron-server.log 2>&1 & echo $! >nemotron-server.pid",
         "health": "curl -fsS http://127.0.0.1:18100/health",
         "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model nemotron --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
-        "stop": "pkill -x llama-server"
+        "stop": "kill -TERM \"$(cat nemotron-server.pid)\"  # verify this PID still belongs to this launch first"
       },
       "dependencies": [
         "repro/nemotron-35-lightning-30b-a3b-b70/README.md",
@@ -2304,11 +2378,26 @@
         "docs/neural-download-packet-standard.md",
         "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json",
         "scripts/bench-openai-realistic-suite.py",
-        "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json"
+        "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+        "data/nemotron35-operating-points-20260822/manifest.json",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-std.benchA.json",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-std.benchB.json",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-std.canaries.json",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-std.canary-server.log",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-std.serverA.log",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-std.serverB.log",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-tp2.benchA.json",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-tp2.benchB.json",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-tp2.canaries.json",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-tp2.serverA.log",
+        "data/nemotron35-operating-points-20260822/nemotron-35-lightning-tp2.serverB.log"
       ],
       "missing": [
         "tested clean-host platform installation",
-        "context beyond 32K of the 1M native window"
+        "context beyond 32K of the 1M native window",
+        "native-token-ID strict two-attempt replay and promotion attestation (owner deferred after interrupted October19 attempt)",
+        "standard 512-input-token prefill and measured multi-user performance",
+        "clean-source runtime reproduction qualified against the historical binary/toolchain identity"
       ]
     },
     {
@@ -7219,7 +7308,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
+        "summary": "Official Qwen FP8 weights on two B70 cards, target-verified MTP5, full FP16 KV and 33,024-token capacity. The recommended profile uses exact one-launch attention verification. Historical turin short-prompt record: 90.3 tok/s; the latest configured-host acceptance on steve-b70s measured 46.0 tok/s. Measured context curves and hardware limits are reported separately.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -7246,15 +7335,15 @@
           "32K input"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host installation is untested. The separate October 7 multi-user profile (MTP0) passed token identity at 16/32/64 users on short and 2K–8K prompts, two same-server passes; those batch-wall rates are capacity measurements, not this single-user headline.",
+        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host installation is untested. The separate October 7 multi-user profile (MTP0) passed token identity at 16/32/64 users on short and 2K–8K prompts, two same-server passes; those batch-wall rates are capacity measurements, not this single-user headline. October 19: the recommended profile now uses verify-rows 0.2.0 in one launch. October 17 exact context screens on turin cover 2K–32K inputs in two separate corpora. Public-source replay on two selected B70s of steve-b70s passed 12/12 strict and 6/6 practical requests at 46.013 tok/s; this single-server acceptance is not pooled with, or promoted over, the historical 90.3 tok/s pair. Clean driver/Docker installation remains pending.",
         "featured_metric": {
           "value": 90.30984105545438,
           "unit": "tok/s",
-          "label": "Writing speed · MTP depth 5 · allgather allreduce · two cards",
-          "scope": "Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
+          "label": "Historical writing speed · MTP depth 5 · two cards",
+          "scope": "Historical September measurement on turin, before one-launch verification. Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
         },
-        "public_summary": "Official FP8 Qwen 27B on two B70 cards. Choose recommended for one person: about 90.3 output tokens/s with target-verified MTP5. Choose multi-user for shared requests: 875 tokens/s combined at 64 short requests, or 66 combined with 2K–8K inputs. The multi-user results are two same-server capacity passes with outputs equal to the solo references; clean-host installation is still untested."
+        "public_summary": "Official FP8 Qwen 27B on two B70 cards. Choose recommended for one person. The historical turin writing result is 90.3 tokens/s; the latest acceptance on another configured lab host measured 46.0. Choose multi-user for shared requests: 875 tokens/s combined at 64 short requests, or 66 with 2K–8K inputs. Clean-host installation remains untested."
       },
       "contributors": [
         {
@@ -7799,6 +7888,15 @@
         "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md",
         "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
         "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/manifest.json",
+        "experiments/qwen38-27b-b70/notes/2026-10-17-fp8-writing-attention.md",
+        "experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md",
+        "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/server-C1-container-final.json",
+        "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/manifest.json",
+        "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/evidence.tar.gz",
+        "experiments/qwen38-27b-b70/notes/2026-09-17-clean-host-replay-plan.md",
         "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/source-drift.json",
         "tools/source_drift_proofs.py"
       ],
@@ -7810,26 +7908,58 @@
           "unit": "tok/s",
           "x_metric": "context_tokens",
           "x_label": "Input tokens",
-          "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-context-summary.json",
+          "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token. Since 2026-10-19 the recommended profile runs b70_fa_verify_rows 0.2.0 with B70_FA_VERIFY_ROWS_ONE_LAUNCH=1 (the six verify rows in one kernel launch; bitwise-equal answers, gates in experiments/qwen38-27b-b70/notes/2026-10-17-tp2-package-one-launch-proposal.md); these points are that configuration, measured in experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json, with a separate public-source acceptance replay in experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json. The pre-one-launch points were 87.957 / 114.013 / 96.292 at 2K / 8K / 16K (2026-09-16-fp8-review). These are output-exact context screening measurements on turin, with separate warmups, not a new fixed-suite speed record.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 87.957,
+              "value": 92.68001291702649,
               "samples": 6
             },
             {
               "context_tokens": 8192,
-              "value": 114.013,
+              "value": 133.56800234678246,
               "samples": 6
             },
             {
               "context_tokens": 16384,
-              "value": 96.292,
+              "value": 123.56832114196222,
               "samples": 6
             }
           ],
-          "public_label": "Writing speed after the prompt · recommended (MTP depth 5)"
+          "public_label": "Writing speed after the prompt · recommended (MTP depth 5)",
+          "source_data": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-context.summary.json",
+          "promotion_qualified": false
+        },
+        {
+          "id": "r310-decode-vs-context-tp2-mtp5-long-corpus",
+          "label": "Writing speed after the prompt · MTP depth 5 · long corpus",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "Same server and method as r310-decode-vs-context-tp2-mtp5 (one launch, tokens 1-100 after the first token, median per content type then across types, 6 requests per point), but on the September long corpus (experiments/qwen38-27b-b70/data/2026-09-17-long-corpus/corpus.json): different text from the 2K/8K/16K curve, so the two sets are not one curve. Measured 2026-10-17, gate 3 of the one-launch proposal; every continuation identical to a fresh no-MTP server at the same length. No-MTP rates at these lengths on the same corpus: 30.97 / 30.43 / 30.29 tok/s. These are output-exact context screening measurements on turin, with separate warmups, not a new fixed-suite speed record.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+          "points": [
+            {
+              "context_tokens": 24576,
+              "value": 80.14047220018278,
+              "samples": 6
+            },
+            {
+              "context_tokens": 30720,
+              "value": 80.8666155487646,
+              "samples": 6
+            },
+            {
+              "context_tokens": 32768,
+              "value": 97.33232997326823,
+              "samples": 6
+            }
+          ],
+          "public_label": "Writing speed after the prompt, long corpus · recommended (MTP depth 5)",
+          "source_data": "experiments/qwen38-27b-b70/data/2026-10-17-tp2-one-launch-gates/C1-long.summary.json",
+          "promotion_qualified": false
         },
         {
           "id": "r310-prefill-vs-context-tp2-mtp5",
@@ -8867,7 +8997,7 @@
           "serve": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py"
         },
         "shared_implementation": "tools/container-packet",
-        "note": "Generated from the qualified whole-graph launcher with the current pinned public runtime: two cards, MTP1, V1 runner, 33,024 total tokens, batch 4,096, one active sequence, prefix caching disabled. The package-specific serve.py is the recommended persistent start/status/stop path. Older shared smoke and preflight scripts require an explicit two-gpu profile and are retained for advanced use."
+        "note": "Generated from the qualified recommended launcher: two cards, MTP5, one-launch verify rows 0.2.0, V1 runner, 33,024 total tokens, batch 4,096, one active sequence, prefix caching disabled. serve.py owns the tested start/status/stop path. Older shared smoke/preflight scripts remain advanced paths."
       },
       "recommended_setup": {
         "cards": 2,
@@ -8974,6 +9104,20 @@
           "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
           "research_result": "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md",
           "note": "experiments/qwen38-27b-b70/notes/2026-10-07-multi-user-profile-acceptance-plan.md"
+        },
+        "verify_rows_one_launch": true,
+        "verify_rows_overlay_version": "0.2.0",
+        "acceptance_evidence": "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json",
+        "latest_acceptance": {
+          "source_commit": "421b07e4655c20d4a52ba6b6f6a7c38d164d1c60",
+          "host": "steve-b70s (two selected B70s of four)",
+          "decode_tokens_s": 46.012925094989214,
+          "strict_exact": 12,
+          "strict_requests": 12,
+          "practical_passes": 6,
+          "fresh_servers": 1,
+          "speed_promoted": false,
+          "evidence": "experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json"
         }
       }
     },
@@ -12243,13 +12387,13 @@
       ]
     },
     {
-      "manifest": "packages/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/package.json",
+      "manifest": "packages/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/package.json",
       "format": "b70-model-package-v1",
-      "id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
-      "name": "Flash-Next UD-IQ3_XXS quantized compressed version: own Xe runtime, two B70 cards",
+      "id": "qwen38-flash-next-iq3xxs-ownrt-tp1-b70",
+      "name": "Qwen3.8 Flash-Next UD-IQ3_XXS — own runtime, one GPU",
       "status": "candidate",
       "audience": "expert",
-      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md",
       "clean_host_tested": false,
       "certification": {
         "classification": "lab-replay",
@@ -12258,10 +12402,10 @@
       "library": {
         "model_family": "Qwen3.8 Flash-Next UD-IQ3_XXS",
         "publisher": "Unsloth (quantized Qwen weights)",
-        "variant": "UD-IQ3_XXS quantized compressed version; own arithmetic-v2 oracle",
-        "summary": "Our Xe runtime on two B70 cards. The approved capped lab result is 37.856264 tok/s, with all twelve 128-token outputs exactly matching CPU oracles. Separate from official FP8. Clean-host replay and the 512-token final performance gate remain pending.",
+        "variant": "UD-IQ3_XXS quantized weights",
+        "summary": "One B70, target-only full-512 lab replay: writing 31.51–31.78 tok/s; reading a new 512-token prompt 32.59–32.75 tok/s. Full-output quality and portable replay pending.",
         "quantization": "UD-IQ3_XXS",
-        "runtime_label": "Own Xe runtime (packet 44)",
+        "runtime_label": "Own Xe runtime (packet58aj / packet165c)",
         "operating_systems": [
           "Linux"
         ],
@@ -12281,20 +12425,166 @@
           "iq3xxs",
           "own runtime",
           "b70",
-          "two cards",
+          "one-card",
+          "target-only",
+          "lab replay"
+        ],
+        "published_at": "2026-10-19",
+        "featured_metric": null,
+        "benchmark_status": "Two fresh full-512 suites: 31.510–31.782 tok/s, 512-input reading 32.595–32.752 tok/s. Oracle checks first 128 only; longer outputs repeat-exact. Separate packet58as approved capped record 34.573038 is not this profile."
+      },
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 1,
+        "host_ram_min_bytes": 137438953472,
+        "model_weight_bytes": 81961823936,
+        "note": "128 GiB lab host; 98990252032 bytes host memory available required; whole-host isolation, one user, native lab replay."
+      },
+      "model": {
+        "repository": "unsloth/Qwen3.8-Flash-Next-GGUF",
+        "hfId": "unsloth/Qwen3.8-Flash-Next-GGUF",
+        "revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+        "manifest": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/models.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "engine": "Own Xe runtime (packet58aj / packet165c); arithmetic iq3-p49-split32-v1",
+        "source_commit": "ac37d1027b55567c92c4be8e63acfb5691dc87c6",
+        "build_entrypoint": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/build-native.py",
+        "compiler": "Intel oneAPI compiler 2026.0; clean-source CPU compile and link passed; rebuilt binary device qualification pending",
+        "kv_cache": "BF16",
+        "note": "Measured packet165 identity, context 4096, BF16 KV; retained source/build evidence. Native benchmark only; no HTTP endpoint. Target-only, host-pinned experts and device cache.",
+        "build_guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/BUILD.md",
+        "cpu_build_evidence": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json"
+      },
+      "project_patches": {
+        "required": false,
+        "items": [],
+        "note": "Own source runtime; no external runtime base or patch overlay."
+      },
+      "commands": {
+        "benchmark": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py benchmark --cards 1 --name \"$RUN_NAME\" --unit \"$RUN_UNIT\" --fault-review \"$FAULT_REVIEW\" --authorized-device-window",
+        "health": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py health --cards 1",
+        "launch": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py launch --cards 1 --name \"$RUN_NAME\" --unit \"$RUN_UNIT\" --fault-review \"$FAULT_REVIEW\" --authorized-device-window",
+        "preflight": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py preflight --cards 1 --name \"$RUN_NAME\"",
+        "stop": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py stop --cards 1 --unit \"$RUN_UNIT\""
+      },
+      "dependencies": [
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70",
+        "experiments/own-xpu-runtime",
+        "experiments/qwen38-flash-next-ud-iq3xxs-b70",
+        "results/qwen38-flash-next-ud-iq3xxs-b70",
+        "notes/2026-10-19-own-runtime-packet165-one-card-result.md"
+      ],
+      "evidence": [
+        "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+        "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/identity.json",
+        "notes/2026-10-19-own-runtime-packet165-one-card-result.md",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json"
+      ],
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "status": "integrated",
+          "contribution": "Model-specific Xe runtime, packet49 deterministic CPU oracle, native measurement and full request-state reset.",
+          "validated_effect": "Two fresh full-512 workload passes; first 128 output tokens oracle-exact, complete output repeat agreement; full-output quality remains pending.",
+          "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab"
+        }
+      ],
+      "missing": [
+        "Supported-host device requalification of newly rebuilt binaries; CPU compile alone does not qualify runtime performance",
+        "Portable model admission, device mapping and current-boot fault review; frozen lab guards remain in force",
+        "Independent full-output oracle and explicit no-quality-loss decision beyond 128 output tokens",
+        "Independent oracle for the 512-input-token reading request",
+        "Actual prompt-length context sweep on this exact identity",
+        "Concurrent-sequence implementation and measured multi-user gate",
+        "Public release assets and clean-host replay; no starter/production certification"
+      ],
+      "text_measurements": {
+        "scope": "Each fresh load runs twelve cold suite prompts and one distinct 512-input-token prompt, with one user and a 4096-token context allocation. Decode is the class-balanced first-100-token generation rate across the twelve suite prompts. Each reading row measures one 512-input-token request on the warm runtime; native TTFT includes first-token work. One-card TTFT includes the request-state reset. The independent oracle covers only the first 128 output tokens; full-output quality remains pending.",
+        "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+        "rows": [
+          {
+            "label": "Fresh load 1 (one-card)",
+            "status": "lab observation; full-output quality pending",
+            "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-a/bracket-summary.json",
+            "decode_tok_s": 31.782374599713044,
+            "prefill_tok_s": 32.75163308775883,
+            "prefill_input_tokens": 512,
+            "ttft_ms": 15632.808251975803,
+            "response_cap": 512,
+            "samples": 1
+          },
+          {
+            "label": "Fresh load 2 (one-card)",
+            "status": "lab observation; full-output quality pending",
+            "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-b/bracket-summary.json",
+            "decode_tok_s": 31.509652472547543,
+            "prefill_tok_s": 32.59467885386928,
+            "prefill_input_tokens": 512,
+            "ttft_ms": 15708.08543000021,
+            "response_cap": 512,
+            "samples": 1
+          }
+        ]
+      }
+    },
+    {
+      "manifest": "packages/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
+      "name": "Qwen3.8 Flash-Next UD-IQ3_XXS — own runtime, two GPUs",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
+      "clean_host_tested": false,
+      "certification": {
+        "classification": "lab-replay",
+        "publication_status": "draft"
+      },
+      "library": {
+        "model_family": "Qwen3.8 Flash-Next UD-IQ3_XXS",
+        "publisher": "Unsloth (quantized Qwen weights)",
+        "variant": "UD-IQ3_XXS quantized weights",
+        "summary": "Two B70 cards, target-verified MTP full-512 lab replay: writing 58.56–58.63 tok/s; reading a new 512-token prompt 75.88–75.97 tok/s. Full-output quality and portable replay pending.",
+        "quantization": "UD-IQ3_XXS",
+        "runtime_label": "Own Xe runtime (bundle 8 / packet165)",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding"
+        ],
+        "tags": [
+          "qwen",
+          "quantized compressed version",
+          "iq3xxs",
+          "own runtime",
+          "b70",
+          "two-card",
           "mtp",
           "lab replay"
         ],
-        "published_at": "2026-10-13",
+        "published_at": "2026-10-19",
         "featured_metric": null,
-        "benchmark_status": "Approved LocalMaxxing cmv6pugme0020oa01fjrho6nx: 37.85626413203107 tok/s class-balanced over 99 intervals at capacity 4096, 12/12 exact 128-token requests. This capped observation is retained in Test details; 512-token final gate and fresh full-suite repeats pending. Standard 512-token prefill not measured."
+        "benchmark_status": "Two fresh full-512 suites: 58.557–58.632 tok/s, 512-input reading 75.884–75.973 tok/s. Oracle checks first 128 only; longer outputs repeat-exact. Approved 58.798109 record has a 128-token cap. Strict quality promotion pending."
       },
       "hardware": {
         "accelerator": "Intel Arc Pro B70 32 GiB",
         "cards": 2,
         "host_ram_min_bytes": 137438953472,
         "model_weight_bytes": 81961823936,
-        "note": "97 GiB available required by guarded model windows; adjacent pair, two rank processes (TP2)."
+        "note": "128 GiB lab host; 105411248128 bytes host memory available required; whole-host isolation, one user, native lab replay."
       },
       "model": {
         "repository": "unsloth/Qwen3.8-Flash-Next-GGUF",
@@ -12304,12 +12594,14 @@
       },
       "runtime": {
         "kind": "native",
-        "engine": "Own Xe runtime, packet44-context; arithmetic iq3-p17-detmath-v2",
-        "source_commit": "421a4ab5029680c2f88c78c7c7fdb4a05d6fc6c4",
-        "build_entrypoint": "experiments/own-xpu-runtime/stage2/packet44-context/build.py",
-        "compiler": "Intel oneAPI compiler 2026.0; 2026.1 rebuild unverified",
+        "engine": "Own Xe runtime (bundle 8 / packet165); arithmetic iq3-p49-split32-v1",
+        "source_commit": "ac37d1027b55567c92c4be8e63acfb5691dc87c6",
+        "build_entrypoint": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/build-native.py",
+        "compiler": "Intel oneAPI compiler 2026.0; clean-source CPU compile and link passed; rebuilt binary device qualification pending",
         "kv_cache": "BF16",
-        "note": "Source build; no published image or binary assets. Native controller, official MTP draft with draft-only 8-bit requantization, unchanged target verification."
+        "note": "Measured packet165 identity, context 4096, BF16 KV; retained source/build evidence. Native benchmark only; no HTTP endpoint. Official MTP draft on rank 1; target-verified; banked rollback state.",
+        "build_guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/BUILD.md",
+        "cpu_build_evidence": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json"
       },
       "project_patches": {
         "required": false,
@@ -12317,29 +12609,25 @@
         "note": "Own source runtime; no external runtime base or patch overlay."
       },
       "commands": {
-        "benchmark": "bash repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh benchmark --authorized-device-window",
-        "health": "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/verify.py",
-        "launch": "bash repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh launch --authorized-device-window",
-        "preflight": "nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/preflight.py --model-dir \"$TARGET_DOWNLOAD/UD-IQ3_XXS\" --draft-dir \"$DRAFT_DOWNLOAD\" --vram-report \"$VRAM_REPORT\" --card \"$CARD\" --context 4096",
-        "stop": "bash repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh stop"
+        "benchmark": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py benchmark --cards 2 --lane B --name \"$RUN_NAME\" --unit \"$RUN_UNIT\" --fault-review \"$FAULT_REVIEW\" --authorized-device-window",
+        "health": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py health --cards 2",
+        "launch": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py launch --cards 2 --lane B --name \"$RUN_NAME\" --unit \"$RUN_UNIT\" --fault-review \"$FAULT_REVIEW\" --authorized-device-window",
+        "preflight": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py preflight --cards 2 --lane B --name \"$RUN_NAME\"",
+        "stop": "python3 -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/replay.py stop --cards 2 --unit \"$RUN_UNIT\""
       },
       "dependencies": [
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/expected-outputs.md",
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/models.json",
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/manifests/evidence.json",
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/publication-manifest.json",
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/verify.py",
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/preflight.py",
-        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/scripts/window.sh",
-        "experiments/own-xpu-runtime/stage1",
-        "experiments/own-xpu-runtime/stage2",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70",
+        "experiments/own-xpu-runtime",
         "experiments/qwen38-flash-next-ud-iq3xxs-b70",
-        "results/qwen38-flash-next-ud-iq3xxs-b70/README.md"
+        "results/qwen38-flash-next-ud-iq3xxs-b70",
+        "notes/2026-10-19-own-runtime-packet165-two-card-result.md"
       ],
       "evidence": [
-        "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json",
-        "results/qwen38-flash-next-ud-iq3xxs-b70/README.md"
+        "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+        "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/identity.json",
+        "notes/2026-10-19-own-runtime-packet165-two-card-result.md",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json"
       ],
       "contributors": [
         {
@@ -12347,20 +12635,49 @@
           "name": "neural.download lab",
           "kind": "lab",
           "status": "integrated",
-          "contribution": "Model-specific Xe runtime, deterministic arithmetic-v2 CPU oracle, native two-rank controller and target-verified draft integration.",
-          "validated_effect": "12/12 capped requests exact; 37.856264 class-balanced tok/s at 4096 capacity. This is not a matched FP8 or cross-arithmetic quality comparison.",
-          "evidence": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json",
+          "contribution": "Model-specific Xe runtime, packet49 deterministic CPU oracle, native measurement and full request-state reset.",
+          "validated_effect": "Two fresh full-512 workload passes; first 128 output tokens oracle-exact, complete output repeat agreement; full-output quality remains pending.",
+          "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
           "profile": "https://github.com/steveseguin/b70-optimization-lab"
         }
       ],
       "missing": [
-        "Pristine clean-source rebuild and independent supported-host device replay",
-        "oneAPI 2026.1 port and requalification; recorded compiler is 2026.0",
-        "Portable regeneration of local model admission, input bundles and capture prerequisites",
-        "Public binary, build-log and toolchain release assets with remote verification",
-        "512-token natural-completion final performance gate, two fresh suites and current promotion-attestation format",
-        "Standard 512-token prefill measurement"
-      ]
+        "Supported-host device requalification of newly rebuilt binaries; CPU compile alone does not qualify runtime performance",
+        "Portable model admission, device mapping and current-boot fault review; frozen lab guards remain in force",
+        "Independent full-output oracle and explicit no-quality-loss decision beyond 128 output tokens",
+        "Independent oracle for the 512-input-token reading request",
+        "Actual prompt-length context sweep on this exact identity",
+        "Concurrent-sequence implementation and measured multi-user gate",
+        "Public release assets and clean-host replay; no starter/production certification"
+      ],
+      "text_measurements": {
+        "scope": "Each fresh load runs twelve cold suite prompts and one distinct 512-input-token prompt, with one user and a 4096-token context allocation. Decode is the class-balanced first-100-token generation rate across the twelve suite prompts. Each reading row measures one 512-input-token request on the warm runtime; native TTFT includes first-token work. Two-card TTFT starts after the request-state reset. The independent oracle covers only the first 128 output tokens; full-output quality remains pending.",
+        "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+        "rows": [
+          {
+            "label": "Fresh load 1 (two-card)",
+            "status": "lab observation; full-output quality pending",
+            "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/evidence/device-warm512-B-a/bracket-summary.json",
+            "decode_tok_s": 58.631652925994246,
+            "prefill_tok_s": 75.9725323173476,
+            "prefill_input_tokens": 512,
+            "ttft_ms": 6739.2777939967345,
+            "response_cap": 512,
+            "samples": 1
+          },
+          {
+            "label": "Fresh load 2 (two-card)",
+            "status": "lab observation; full-output quality pending",
+            "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/evidence/device-warm512-B-b/bracket-summary.json",
+            "decode_tok_s": 58.55650230474334,
+            "prefill_tok_s": 75.88433122243367,
+            "prefill_input_tokens": 512,
+            "ttft_ms": 6747.110922005959,
+            "response_cap": 512,
+            "samples": 1
+          }
+        ]
+      }
     }
   ]
 }

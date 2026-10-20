@@ -11,6 +11,22 @@ SPEC.loader.exec_module(MODULE)
 
 
 class HumanPages(unittest.TestCase):
+    def test_scoped_text_observations_remain_static_and_unpromoted(self):
+        package = json.loads((ROOT / 'packages/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/package.json').read_text())
+        output = MODULE.page(package, [package])
+        self.assertIsNone(package['library']['featured_metric'])
+        self.assertIn('31.782', output)
+        self.assertIn('32.752', output)
+        self.assertIn('15.633', output)
+        self.assertIn('full-output quality pending', output)
+        self.assertIn('<caption>Recorded timings', output)
+        self.assertIn('Single-length reading measurements', output)
+        self.assertIn('No projection', output)
+        package['text_measurements']['rows'][0]['label'] = '<script>alert(1)</script>'
+        output = MODULE.text_observations(package['text_measurements'])
+        self.assertNotIn('<script>', output)
+        self.assertIn('&lt;script&gt;', output)
+
     def test_featured_picks_keep_topology_and_quality_boundaries(self):
         from featured_picks import groups, render
         catalog = json.loads((ROOT / 'packages/catalog.json').read_text())
@@ -70,7 +86,7 @@ class HumanPages(unittest.TestCase):
         self.assertEqual({r['package_id'] for r in rank['deployments']},
                          {r['id'] for r in catalog['packages']})
         for r in rank['families'] + rank['deployments']:
-            if r.get('family_id') == 'minimax-h3' or r.get('package_id') == 'qwen38-flash-next-iq3xxs-ownrt-tp2-b70':
+            if r.get('family_id') == 'minimax-h3' or r.get('package_id') in ('qwen38-flash-next-iq3xxs-ownrt-tp1-b70', 'qwen38-flash-next-iq3xxs-ownrt-tp2-b70'):
                 self.assertTrue(all(r[k] is None for k in ('score', 'popularity', 'recency_capability', 'optimization')))
                 self.assertIn('Not scored', r['score_status'])
                 continue

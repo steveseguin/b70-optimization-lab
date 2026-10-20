@@ -23,7 +23,34 @@ class ReproGuideValidationTest(unittest.TestCase):
         repo = Path(__file__).resolve().parents[1]
         errors, counts = MODULE.validate(repo)
         self.assertEqual(errors, [])
-        self.assertEqual(sum(counts.values()), 44)
+        self.assertEqual(sum(counts.values()), 45)
+
+    def test_text_observations_reject_invalid_measurements(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / 'timing.json').write_text('{}')
+            row = dict(label='Load 1', status='Quality pending', evidence='timing.json',
+                       decode_tok_s=31.782, prefill_tok_s=32.752, ttft_ms=15632.8,
+                       prefill_input_tokens=512, response_cap=512, samples=1)
+            obs = dict(scope='One length only', evidence='timing.json', rows=[row])
+            self.assertEqual(MODULE._validate_text_measurements(repo, 'example', obs), [])
+            for field in ('decode_tok_s', 'prefill_tok_s', 'ttft_ms'):
+                value = row[field]
+                for bad in (0, -1, True, float('nan'), float('inf'), None):
+                    row[field] = bad
+                    self.assertTrue(MODULE._validate_text_measurements(repo, 'example', obs))
+                row[field] = value
+            for field in ('samples', 'prefill_input_tokens', 'response_cap'):
+                value = row[field]
+                for bad in (0, -1, True, 1.5, None):
+                    row[field] = bad
+                    self.assertTrue(MODULE._validate_text_measurements(repo, 'example', obs))
+                row[field] = value
+            obs['rows'].append(dict(row))
+            self.assertTrue(any('duplicate label' in e for e in MODULE._validate_text_measurements(repo, 'example', obs)))
+            obs['rows'].pop()
+            row['evidence'] = 'missing.json'
+            self.assertTrue(any('does not resolve' in e for e in MODULE._validate_text_measurements(repo, 'example', obs)))
 
     def test_video_observations_require_real_evidence_and_valid_timing(self):
         with tempfile.TemporaryDirectory() as raw:

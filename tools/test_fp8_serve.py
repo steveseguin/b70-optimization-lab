@@ -204,8 +204,8 @@ class ServingTests(unittest.TestCase):
             self.assertEqual(json.loads((root / 'state/state.json').read_text())['status'], 'failed')
 
 
-# The launcher bytes the current acceptance packet was measured with (packet sha256 9668a6ba..., git blob below).
-FROZEN_SERVE_BLOB = 'eac8cccd41b964bc3641cb33631c69a6c299faac'
+# The launcher bytes the current acceptance packet was measured with (packet sha256 0cd8074f..., git blob below).
+FROZEN_SERVE_BLOB = '178c0a3b6a64be832131419d80d268d907a5d9f2'
 
 
 def frozen_serve():

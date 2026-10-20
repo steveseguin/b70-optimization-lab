@@ -5359,6 +5359,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 "qwen38-flash-next-fp8-tp4-mtp2-research": "D",
                 "qwen38-flash-next-fp8-tp4-mtp4-research": "D",
                 "qwen38-flash-next-iq3xxs-ownrt-tp2-b70": "C",
+                "qwen38-flash-next-iq3xxs-ownrt-tp1-b70": "C",
             },
         )
         estimates = {item["id"]: item for item in family["estimates"]}

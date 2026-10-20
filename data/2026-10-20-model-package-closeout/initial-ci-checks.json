@@ -1,0 +1,257 @@
+{
+  "note": "Initial audit before correcting new package links/family mapping and binding verified pre-existing archive link debt. Final validation recorded separately. PyYAML was already installed; import/version checked in lieu of reinstalling it.",
+  "checks": [
+    {
+      "command": "python3 tools/validate-repro-guides.py",
+      "executed": "python3 tools/validate-repro-guides.py",
+      "returncode": 0,
+      "seconds": 1.2
+    },
+    {
+      "command": "node --test tools/test_guides_browser.cjs",
+      "executed": "node --test tools/test_guides_browser.cjs",
+      "returncode": 0,
+      "seconds": 0.43
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "executed": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "returncode": 0,
+      "seconds": 1.13
+    },
+    {
+      "command": "python3 tools/validate-recipe-publication.py",
+      "executed": "python3 tools/validate-recipe-publication.py",
+      "returncode": 0,
+      "seconds": 5.23
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "executed": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "returncode": 0,
+      "seconds": 0.45
+    },
+    {
+      "command": "python3 tools/sync-public-result-summary.py --check",
+      "executed": "python3 tools/sync-public-result-summary.py --check",
+      "returncode": 0,
+      "seconds": 0.04
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "executed": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "returncode": 0,
+      "seconds": 0.06
+    },
+    {
+      "command": "python3 tools/build-family-pages.py --check",
+      "executed": "python3 tools/build-family-pages.py --check",
+      "returncode": 1,
+      "seconds": 0.36
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_family_pages.py",
+      "executed": "python3 -m unittest tools/test_build_family_pages.py",
+      "returncode": 1,
+      "seconds": 1.7
+    },
+    {
+      "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "executed": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "returncode": 0,
+      "seconds": 0.07
+    },
+    {
+      "command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "executed": "python3 tools/sync-short-prefill-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.04
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "executed": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "returncode": 0,
+      "seconds": 0.54
+    },
+    {
+      "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "executed": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.04
+    },
+    {
+      "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "executed": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "returncode": 0,
+      "seconds": 1.19
+    },
+    {
+      "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "executed": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "returncode": 0,
+      "seconds": 0.14
+    },
+    {
+      "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "executed": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.03
+    },
+    {
+      "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "executed": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.12
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "executed": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "returncode": 0,
+      "seconds": 0.08
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "executed": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "returncode": 0,
+      "seconds": 3.21
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "executed": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "returncode": 0,
+      "seconds": 0.1
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "executed": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "returncode": 0,
+      "seconds": 1.89
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_model_pages.py",
+      "executed": "python3 -m unittest tools/test_build_model_pages.py",
+      "returncode": 0,
+      "seconds": 0.12
+    },
+    {
+      "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "executed": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "returncode": 0,
+      "seconds": 0.32
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "executed": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "returncode": 0,
+      "seconds": 0.09
+    },
+    {
+      "command": "python3 tools/build-model-pages.py",
+      "executed": "python3 tools/build-model-pages.py",
+      "returncode": 0,
+      "seconds": 0.08
+    },
+    {
+      "command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "executed": "git diff --exit-code -- index.html learn/hardware.html models",
+      "returncode": 0,
+      "seconds": 0.19
+    },
+    {
+      "command": "python3 tools/check-doc-links.py",
+      "executed": "python3 tools/check-doc-links.py",
+      "returncode": 1,
+      "seconds": 0.26
+    },
+    {
+      "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "executed": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "returncode": 1,
+      "seconds": 2.17
+    },
+    {
+      "command": "python3 -m unittest tools/test_check_doc_links.py",
+      "executed": "python3 -m unittest tools/test_check_doc_links.py",
+      "returncode": 0,
+      "seconds": 0.78
+    },
+    {
+      "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "executed": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "returncode": 0,
+      "seconds": 0.35
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "executed": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "returncode": 0,
+      "seconds": 1.59
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "executed": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.77
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "executed": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.23
+    },
+    {
+      "command": "python3 -B tools/test-restore-source-archives.py",
+      "executed": "python3 -B tools/test-restore-source-archives.py",
+      "returncode": 0,
+      "seconds": 0.13
+    },
+    {
+      "command": "python3 -m unittest tools/test_xccl_probe.py",
+      "executed": "python3 -m unittest tools/test_xccl_probe.py",
+      "returncode": 0,
+      "seconds": 0.07
+    },
+    {
+      "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "executed": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "returncode": 0,
+      "seconds": 0.12
+    },
+    {
+      "command": "python3 tools/check-manifest-paths.py",
+      "executed": "python3 tools/check-manifest-paths.py",
+      "returncode": 0,
+      "seconds": 0.11
+    },
+    {
+      "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "executed": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "returncode": 0,
+      "seconds": 0.59
+    },
+    {
+      "command": "pip install --quiet pyyaml",
+      "executed": "python3 -c \"import yaml; print(yaml.__version__)\"",
+      "returncode": 0,
+      "seconds": 0.03
+    },
+    {
+      "command": "python3 tools/check-container-packet.py",
+      "executed": "python3 tools/check-container-packet.py",
+      "returncode": 0,
+      "seconds": 0.11
+    },
+    {
+      "command": "python3 -m unittest tools/test_check_container_packet.py",
+      "executed": "python3 -m unittest tools/test_check_container_packet.py",
+      "returncode": 0,
+      "seconds": 0.32
+    },
+    {
+      "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "executed": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "returncode": 0,
+      "seconds": 0.23
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "schema": "neural.download.ownrt.cpu-build-validation.v1",
+  "date": "2026-10-20",
+  "scope": "CPU compilation and linking only; neither produced executable was launched. Historical device results do not transfer to these binaries.",
+  "manifest_sha256": "4fe31ce15decc95e3f48650dfa27e98193e5d862dfdb69169ac6f49c30a287ff",
+  "helper_sha256": "f93a09f777ae95cf0f6a7f1137b211b8413125f6e1419b09f02e496948487c6f",
+  "source_archive_sha256": "92a4858e3b4009fb3cc8e0ed4d75c7d49a88e2eaef988086e69a89c33e1a9966",
+  "source_file_count": 962,
+  "compiled_from_source": true,
+  "device_executed": false,
+  "arithmetic_qualified": false,
+  "evidence_archive": {
+    "path": "build-validation-evidence.tar.gz",
+    "sha256": "6de52052eceafd2ca8e2823d336a6825eee1dfc441f238c4801b3928333b777e",
+    "bytes": 364102
+  },
+  "lanes": [
+    {
+      "cards": 1,
+      "passed_cpu_compile": true,
+      "translation_units": 42,
+      "link_commands": 1,
+      "commands_match_published_manifest": true,
+      "source_snapshot_matches_published_manifest": true,
+      "dependency_closure_passed": true,
+      "compiler_dependency_files": 42,
+      "unique_project_dependency_paths": 416,
+      "device_executed": false,
+      "reused_object_files": false,
+      "arithmetic_qualified": false,
+      "historical_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+      "built_binary_sha256": "9daf844d682a6a50aa9984187782d6ef5e250af6395011efe2fc566ba0ff0ed1",
+      "built_binary_bytes": 20076208,
+      "historical_binary_hash_matches": false,
+      "seconds": 313.3242667319719,
+      "peak_child_rss_bytes": 712663040,
+      "cpu_affinity": [
+        8,
+        9
+      ],
+      "nice": 19,
+      "compiler_versions": {
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n"
+      },
+      "receipt_sha256": "55427e47fca1919084c26dfde56626c8c0df78d86455eb9c427ac98bb4683d3c",
+      "evidence_prefix": "one-card/",
+      "build_directory": "/dev/shm/ownrt-portable-build-one-20261020",
+      "helper_capture": "Reconstructed initial helper; actual execution command list and compiler dependency outputs independently checked against final published manifest and guards."
+    },
+    {
+      "cards": 2,
+      "passed_cpu_compile": true,
+      "translation_units": 45,
+      "link_commands": 1,
+      "commands_match_published_manifest": true,
+      "source_snapshot_matches_published_manifest": true,
+      "dependency_closure_passed": true,
+      "compiler_dependency_files": 45,
+      "unique_project_dependency_paths": 609,
+      "device_executed": false,
+      "reused_object_files": false,
+      "arithmetic_qualified": false,
+      "historical_binary_sha256": "cb2cef7125f8c20356e83f2a1fdd07c5318ce1518aecff659bdd76e2983c4e3a",
+      "built_binary_sha256": "c2573efd738d6cdbdccee9495a92e6e3ec81b03923c6102c2f6f7008dbcc48da",
+      "built_binary_bytes": 21444080,
+      "historical_binary_hash_matches": false,
+      "seconds": 329.3170186061179,
+      "peak_child_rss_bytes": 712761344,
+      "cpu_affinity": [
+        8,
+        9
+      ],
+      "nice": 19,
+      "compiler_versions": {
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+        "g++": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
+      },
+      "receipt_sha256": "c3b4381c9cf3553b47c239c9b36ed23812ae7a6fd492b3d60cd2d272fe5d6646",
+      "evidence_prefix": "two-card/",
+      "build_directory": "/dev/shm/ownrt-portable-build-two-20261020",
+      "helper_capture": "Exact helper copied before compilation; SHA-256 recorded in build receipt."
+    }
+  ],
+  "initial_run_note": "The one-card run started before output snapshots and stronger dependency path checks were added to the helper, and before manifest provenance labels were clarified. The original manifest hash is retained. All source file hashes, archive, compile/link plans and actual executed commands match the final manifest. All 42 compiler dependency files were subsequently rechecked with the final dependency closure checks. Final helper source preparation and the complete two-card compile were run directly."
+}

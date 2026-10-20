@@ -1,0 +1,145 @@
+{
+  "schema": "neural.download.fp8-one-launch-prefill-prereg.v1",
+  "registered_at": "2026-10-20T03:47:03.284978+00:00",
+  "status": "prepared-not-run",
+  "scope": "One-server synthetic 512-token prefill screen, six measured requests with ignore_eos; not a strict headline or no-quality-loss gate",
+  "source_files": [
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/run-one-launch-prefill-screen.py",
+      "sha256": "9dc6d0a0fd6c1b1ecbc3edf2cde03ba8832dbde222a693148369ce689b44b7fb"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
+      "sha256": "c4a0f63fd6a443a622fede83a628377767bf070db7485beb7c2f0de2144a004d"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py",
+      "sha256": "e23eae66a8cd140427337336f850b2b3c31dd95d93616f40d42ec9249abbef93"
+    },
+    {
+      "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
+      "sha256": "e603fd7ec4506ce6a1078cfe293c6b37fe574ac01b4535557f6dc07251a56ccd"
+    },
+    {
+      "path": "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+      "sha256": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9"
+    },
+    {
+      "path": "scripts/check-qwen36-xpu-xccl-health.sh",
+      "sha256": "29a4ad7b8d58e307ed364e24948f3c8db396d3acf67b16a281e3ac8473024561"
+    },
+    {
+      "path": "tools/xccl_probe.py",
+      "sha256": "64c0b2f0cfb902ddd4650065eca834707ea06ed3816dde9d8bc98a4b14b905d9"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/METADATA",
+      "sha256": "30863c0b9c9f1b2290bcbac45a8c87e3ad6dd05ea5bcbc0f825a8a8cf2b7af69"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/entry_points.txt",
+      "sha256": "30e42b710fa7d73849d32e91195d150d72f7ce7b220264007b8a9199543d63cc"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py",
+      "sha256": "dc54f5abee63fb4c231386d70b0cdabec703c2c0a6e183518523ddd330ff04f7"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload-0.1.0.dist-info/METADATA",
+      "sha256": "43ce03e5c02e147cb7bdc969b62bba94089dbf9041ce6d4370dc2652a421c100"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload-0.1.0.dist-info/entry_points.txt",
+      "sha256": "d14252e21c217115339e88d7ffcd8999990eb053ab8d71069a4896c2281f941c"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py",
+      "sha256": "175d33068dda0cdad1b2e783e1c1b6356785b14cd42663171218fa17cef27aee"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill-0.1.0.dist-info/METADATA",
+      "sha256": "f82a4aae3f735145e655a3a5e2c09a535575d3b55a3043b17555f4cf66a9a199"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill-0.1.0.dist-info/entry_points.txt",
+      "sha256": "884bc74011e87b313bcc470af1775faa7a7e5236423e00a1f1a2765cd26b7b1e"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py",
+      "sha256": "d3e977967580ae7b27abaee215cdbc8a33b942c519a980a61b84480a84f65cdb"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq-0.1.0.dist-info/METADATA",
+      "sha256": "78bcdec2b050c249aa18938acc8feabfb5a848b0cbb8416893bb8ecf8971bdb7"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq-0.1.0.dist-info/entry_points.txt",
+      "sha256": "1ae0376e4198aba8c8fe1fe7963009db79209d84dd4610c3ed9be4996248cf45"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py",
+      "sha256": "e04c3a719556cf80f745363040f0e1ca53441098a53c92b2019169ee14240594"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.2.0.dist-info/METADATA",
+      "sha256": "7194b1f7a78e87c775b38b3ffd03c98f10c228a624ed20625fcdf95f54ab5232"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.2.0.dist-info/entry_points.txt",
+      "sha256": "de5c691307f8787a90b0fc1a96767adad67f141183f57102743b0fa5fce6e044"
+    },
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py",
+      "sha256": "cb39769f121500e700005496bb65c74052f674e5b38a6a49706835fba5ca8a4b"
+    }
+  ],
+  "overlay_files": [
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/METADATA",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/entry_points.txt",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload-0.1.0.dist-info/METADATA",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload-0.1.0.dist-info/entry_points.txt",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill-0.1.0.dist-info/METADATA",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill-0.1.0.dist-info/entry_points.txt",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq-0.1.0.dist-info/METADATA",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq-0.1.0.dist-info/entry_points.txt",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.2.0.dist-info/METADATA",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.2.0.dist-info/entry_points.txt",
+    "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py"
+  ],
+  "fixed_host": "steve-b70s",
+  "fixed_gpus": [
+    "0000:23:00.0",
+    "0000:27:00.0"
+  ],
+  "fixed_image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+  "fixed_profile": "recommended",
+  "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+  "launch_adapter": "Only stop_owned callback changes: ownership-checked SIGTERM, at most180s passive wait, no escalation/retry",
+  "server_attempts": 1,
+  "client": {
+    "input_tokens": 512,
+    "max_tokens": 128,
+    "repeats": 2,
+    "classes": [
+      "prose",
+      "code",
+      "docs"
+    ],
+    "max_model_len": 33024
+  },
+  "headline_eligible": false,
+  "no_quality_loss_gate": false,
+  "fixed_output": "/mnt/usb-models/bench-results/fp8-one-launch-prefill-20261020",
+  "disk_free_floors_gib": {
+    "root": 5,
+    "output": 30
+  },
+  "disk_floor_rationale": "Run-only: cached image verified before probes, no build/pull; new output/cache on USB filesystem; both floors monitored throughout",
+  "health_policy": "One device probe at a time, abort before next device or XCCL on failure/fault; postflight only after success",
+  "client_adapter": "Passive journal guard before each HTTP admission; unchanged request/numeric client logic; extra HTTP proxy overhead disclosed",
+  "undrained_work": "Retain result/HALTED receipt and hold locks passively until operator signals controller"
+}

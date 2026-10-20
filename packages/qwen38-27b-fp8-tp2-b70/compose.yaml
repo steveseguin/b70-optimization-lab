@@ -32,6 +32,7 @@ x-b70-common: &b70-common
   environment:
     B70_ALLGATHER_ALLREDUCE: "1"
     B70_FA_VERIFY_ROWS: "1"
+    B70_FA_VERIFY_ROWS_ONE_LAUNCH: "1"
     CCL_ATL_TRANSPORT: "ofi"
     CCL_RECV: "direct"
     CCL_SEND: "direct"
@@ -121,6 +122,7 @@ services:
     environment:
       B70_ALLGATHER_ALLREDUCE: "1"
       B70_FA_VERIFY_ROWS: "1"
+      B70_FA_VERIFY_ROWS_ONE_LAUNCH: "1"
       CCL_ATL_TRANSPORT: "ofi"
       CCL_RECV: "direct"
       CCL_SEND: "direct"

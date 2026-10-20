@@ -211,6 +211,35 @@
       "public_label": "Wait for the first token · July 2026 service sweep, up to 32K tokens"
     },
     {
+      "id": "prefill-vs-context-throughput-recipe",
+      "label": "Prompt reading · production build · one 32K slot · no draft",
+      "public_label": "Reading speed · one user · no draft · production build, October 15",
+      "public_scope": "Three measured prompt lengths with four timings each. This uses a different prompt-reading setup from the July and October 10 curves. The faster experimental kernel has not shipped.",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_metric": "context_tokens",
+      "x_label": "Actual input tokens",
+      "scope": "One B70 (card 1 on the two-card host; LAN service on card 0), llama.cpp c926 production compatibility binary; service profile, one 32768-token slot, f16 KV, no speculation, deterministic oneDNN, prefill micro-batch 1024. Diagnostic long prompts, temperature 0, 1-token timed replies; cache_prompt=false, cache-ram=0, ctx-checkpoints=0. Server prompt_n * 1000 / prompt_ms, arithmetic mean of two repeats on each of two fresh servers after suite and long-output checks. Full-precision JSON receipts; no inferred points. This is scoped prefill evidence, not a cold-suite decode headline or the unshipped coalesced-kernel gain.",
+      "evidence": "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json",
+      "points": [
+        {
+          "context_tokens": 1867,
+          "value": 1307.541789553131,
+          "samples": 4
+        },
+        {
+          "context_tokens": 7623,
+          "value": 1167.8076527224289,
+          "samples": 4
+        },
+        {
+          "context_tokens": 29400,
+          "value": 909.2718901854017,
+          "samples": 4
+        }
+      ]
+    },
+    {
       "id": "sweep-decode-vs-draft-length-2048",
       "label": "Writing speed by MTP draft length · after a 2,000-token prompt",
       "public_label": "Writing speed · different draft lengths · one user · after a 2,000-token prompt",
@@ -318,38 +347,43 @@
       "public_label": "Writing speed · one user · 3-token draft (single-user recipe)",
       "public_scope": "Writing speed after the answer starts, for prompts from 300 to 16,000 tokens. Longer prompts slow writing because every new token looks back over the whole prompt.",
       "x_metric": "context_tokens",
-      "x_label": "Input tokens",
-      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length.",
+      "x_label": "Actual input tokens",
+      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only.",
       "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
       "points": [
         {
-          "context_tokens": 300,
+          "context_tokens": 292,
           "value": 121.9,
           "samples": 3,
+          "requested_context_tokens": 300,
           "measured_prompt_tokens": 292
         },
         {
-          "context_tokens": 512,
+          "context_tokens": 509,
           "value": 117.4,
           "samples": 3,
+          "requested_context_tokens": 512,
           "measured_prompt_tokens": 509
         },
         {
-          "context_tokens": 2048,
+          "context_tokens": 2042,
           "value": 109.0,
           "samples": 3,
+          "requested_context_tokens": 2048,
           "measured_prompt_tokens": 2042
         },
         {
-          "context_tokens": 8192,
+          "context_tokens": 8185,
           "value": 91.8,
           "samples": 2,
+          "requested_context_tokens": 8192,
           "measured_prompt_tokens": 8185
         },
         {
-          "context_tokens": 15800,
+          "context_tokens": 15793,
           "value": 91.9,
           "samples": 2,
+          "requested_context_tokens": 15800,
           "measured_prompt_tokens": 15793
         }
       ]
@@ -362,44 +396,49 @@
       "public_label": "Reading speed (prefill) · one user · 3-token draft (single-user recipe)",
       "public_scope": "How fast the server reads the prompt before the answer starts, measured by the server's own counters with no saved prompt cache. The draft does not change reading speed.",
       "x_metric": "context_tokens",
-      "x_label": "Input tokens",
+      "x_label": "Actual input tokens",
       "measurement_kind": "server_prefill",
       "operating_profile": {
         "speculative_tokens": 3,
         "max_model_len": 16384,
         "tensor_parallel_size": 1
       },
-      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
+      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, MTP draft 3; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
       "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
       "points": [
         {
-          "context_tokens": 300,
+          "context_tokens": 292,
           "value": 933.9,
           "samples": 3,
+          "requested_context_tokens": 300,
           "measured_prompt_tokens": 292
         },
         {
-          "context_tokens": 512,
+          "context_tokens": 509,
           "value": 1323.8,
           "samples": 3,
+          "requested_context_tokens": 512,
           "measured_prompt_tokens": 509
         },
         {
-          "context_tokens": 2048,
+          "context_tokens": 2042,
           "value": 2061.5,
           "samples": 3,
+          "requested_context_tokens": 2048,
           "measured_prompt_tokens": 2042
         },
         {
-          "context_tokens": 8192,
+          "context_tokens": 8185,
           "value": 1697.7,
           "samples": 2,
+          "requested_context_tokens": 8192,
           "measured_prompt_tokens": 8185
         },
         {
-          "context_tokens": 15800,
+          "context_tokens": 15793,
           "value": 1488.3,
           "samples": 2,
+          "requested_context_tokens": 15800,
           "measured_prompt_tokens": 15793
         }
       ]
@@ -412,38 +451,43 @@
       "public_label": "Writing speed · one user · no draft (shared-server recipe)",
       "public_scope": "Writing speed after the answer starts, for prompts from 300 to 16,000 tokens. Longer prompts slow writing because every new token looks back over the whole prompt.",
       "x_metric": "context_tokens",
-      "x_label": "Input tokens",
-      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length.",
+      "x_label": "Actual input tokens",
+      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only.",
       "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
       "points": [
         {
-          "context_tokens": 300,
+          "context_tokens": 292,
           "value": 77.9,
           "samples": 3,
+          "requested_context_tokens": 300,
           "measured_prompt_tokens": 292
         },
         {
-          "context_tokens": 512,
+          "context_tokens": 509,
           "value": 74.3,
           "samples": 3,
+          "requested_context_tokens": 512,
           "measured_prompt_tokens": 509
         },
         {
-          "context_tokens": 2048,
+          "context_tokens": 2042,
           "value": 62.7,
           "samples": 3,
+          "requested_context_tokens": 2048,
           "measured_prompt_tokens": 2042
         },
         {
-          "context_tokens": 8192,
+          "context_tokens": 8185,
           "value": 57.8,
           "samples": 2,
+          "requested_context_tokens": 8192,
           "measured_prompt_tokens": 8185
         },
         {
-          "context_tokens": 15800,
+          "context_tokens": 15793,
           "value": 56.2,
           "samples": 2,
+          "requested_context_tokens": 15800,
           "measured_prompt_tokens": 15793
         }
       ]
@@ -456,38 +500,43 @@
       "public_label": "Reading speed (prefill) · one user · no draft (shared-server recipe)",
       "public_scope": "How fast the server reads the prompt before the answer starts, measured by the server's own counters with no saved prompt cache. The draft does not change reading speed.",
       "x_metric": "context_tokens",
-      "x_label": "Input tokens",
-      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
+      "x_label": "Actual input tokens",
+      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only. Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
       "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
       "points": [
         {
-          "context_tokens": 300,
+          "context_tokens": 292,
           "value": 937.4,
           "samples": 3,
+          "requested_context_tokens": 300,
           "measured_prompt_tokens": 292
         },
         {
-          "context_tokens": 512,
+          "context_tokens": 509,
           "value": 1327.8,
           "samples": 3,
+          "requested_context_tokens": 512,
           "measured_prompt_tokens": 509
         },
         {
-          "context_tokens": 2048,
+          "context_tokens": 2042,
           "value": 2050.1,
           "samples": 3,
+          "requested_context_tokens": 2048,
           "measured_prompt_tokens": 2042
         },
         {
-          "context_tokens": 8192,
+          "context_tokens": 8185,
           "value": 1705.1,
           "samples": 2,
+          "requested_context_tokens": 8192,
           "measured_prompt_tokens": 8185
         },
         {
-          "context_tokens": 15800,
+          "context_tokens": 15793,
           "value": 1495.2,
           "samples": 2,
+          "requested_context_tokens": 15800,
           "measured_prompt_tokens": 15793
         }
       ]
@@ -500,38 +549,43 @@
       "public_label": "Wait for the first token · one user · cold prompt",
       "public_scope": "How long the user waits for the answer to start when nothing about the prompt is cached. With a shared system prompt cached, only the new part counts.",
       "x_metric": "context_tokens",
-      "x_label": "Input tokens",
-      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length. Wait is the server's prompt time for a cold prompt.",
+      "x_label": "Actual input tokens",
+      "scope": "One Intel Arc Pro B70, llama.cpp SYCL compat build c926 with the deterministic oneDNN switch, 16-bit KV, launched through the production launcher (its kernel switches on), temperature 0, 256-token answers, prompt cache off for every measured request. Speeds are the server's own timing counters. One user, one 16K slot, no draft; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only. Wait is the server's prompt time for a cold prompt.",
       "evidence": "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
       "points": [
         {
-          "context_tokens": 300,
+          "context_tokens": 292,
           "value": 310.0,
           "samples": 3,
+          "requested_context_tokens": 300,
           "measured_prompt_tokens": 292
         },
         {
-          "context_tokens": 512,
+          "context_tokens": 509,
           "value": 380.0,
           "samples": 3,
+          "requested_context_tokens": 512,
           "measured_prompt_tokens": 509
         },
         {
-          "context_tokens": 2048,
+          "context_tokens": 2042,
           "value": 970.0,
           "samples": 3,
+          "requested_context_tokens": 2048,
           "measured_prompt_tokens": 2042
         },
         {
-          "context_tokens": 8192,
+          "context_tokens": 8185,
           "value": 4800.0,
           "samples": 2,
+          "requested_context_tokens": 8192,
           "measured_prompt_tokens": 8185
         },
         {
-          "context_tokens": 15800,
+          "context_tokens": 15793,
           "value": 10550.0,
           "samples": 2,
+          "requested_context_tokens": 15800,
           "measured_prompt_tokens": 15793
         }
       ]
@@ -807,18 +861,38 @@
     "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft1.json",
     "data/profiles/2026-10-10/gemma-sweep/p8x4k-draft3.json",
     "data/profiles/2026-10-10/gemma-sweep/single-16k-draft0.json",
-    "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json"
+    "data/profiles/2026-10-10/gemma-sweep/single-16k-draft3.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json",
+    "experiments/gemma4-26b-a4b-q8-b70/scripts/summarize-prefill-reorder.py",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-check.log",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/convert-change-vs-production.diff",
+    "experiments/gemma4-26b-a4b-q8-b70/scripts/gemma-identity-check.sh",
+    "experiments/gemma4-26b-a4b-q8-b70/notes/2026-10-15-prefill-reorder-check.md",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-prod-a.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-prod-b.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-new-a.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-new-b.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/identity-long-verify.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/suite-prod-a.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/suite-new-a.json",
+    "data/profiles/2026-10-10/gemma-sweep/single-16k-draft1.json",
+    "data/profiles/2026-10-10/gemma-sweep/single-16k-draft2.json",
+    "data/profiles/2026-10-10/gemma-sweep/single-16k-draft4.json",
+    "data/profiles/2026-10-10/gemma-sweep/single-16k-draft5.json",
+    "tools/gemma4-26b-sweep-to-package.py"
   ],
   "evidence": [
     "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
     "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json",
     "data/gemma4-q8-gpu0-125repro-compat2026.1-20260907T040139Z/summary.json",
     "data/gemma4-q8-gpu0-125repro-container2026.0-20260907T040615Z/summary.json",
-    "data/gemma4-q8-gpu0-125repro-container2026.0-run2-20260907T041051Z/summary.json"
+    "data/gemma4-q8-gpu0-125repro-container2026.0-run2-20260907T041051Z/summary.json",
+    "experiments/gemma4-26b-a4b-q8-b70/data/2026-10-15-prefill-reorder/publication-summary.json"
   ],
   "missing": [
     "historical llama-server binary SHA-256",
     "historical locally quantized Q4_0 MTP draft SHA-256 and byte size (the reconstructed draft is repeat-stable at 1f6706e4… across three builds)",
-    "beginner recovery flow exercised end-to-end on a fresh host (documented; the pinned oneAPI 2026.0 container path and two clean-rebuild gate replays were verified on the lab host on 2026-09-07)"
+    "beginner recovery flow exercised end-to-end on a fresh host (documented; the pinned oneAPI 2026.0 container path and two clean-rebuild gate replays were verified on the lab host on 2026-09-07)",
+    "October 15 coalesced-prefill candidate: full build/library digests, exact compatibility source/build receipt, tracked long prompt inputs and clean rebuild/full-gate replay; its 13–22% measured gains are not included in the package runtime or published performance profiles"
   ]
 }

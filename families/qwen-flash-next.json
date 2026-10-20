@@ -6,7 +6,7 @@
   "name": "Qwen Flash-Next",
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
-  "updated_at": "2026-10-13",
+  "updated_at": "2026-10-20",
   "summary": "Flash-Next is Qwen’s 125B model with about 6B parameters active per token. On four B70 cards it writes 46.854250 tokens/s for one person, using official FP8 weights, BF16 KV and one target-verified draft token. The fixed cold realistic suite kept all 12 reference outputs unchanged. The previous matched line measured 37.825654 tokens/s. A separate 32K-input test measured 44.052 tokens/s; it is a depth diagnostic, not the same benchmark. Prompt-reading throughput is not measured for the headline setup. The recipe is an expert lab replay; a clean-host install, portable safe replay and sustained-use qualification remain open. The 875 tokens/s shared-user result belongs to the separate Qwen 27B two-card package. Historical coverage classifies all 25 practical TP4 eager-text MTP/context cells through 8K; those screens remain separate from the approved record.",
   "featured_results": [
     {
@@ -147,7 +147,9 @@
       "vLLM XPU 1372c62d + staged kernels 2f829747",
       "vLLM XPU 2169dbfe (overlay on 1372c62d) + staged kernels 2f829747",
       "vLLM XPU 1b2a17c1 (overlay on 1372c62d) + staged kernels 2f829747",
-      "Own Xe runtime packet 44 through 421a4ab50"
+      "Own Xe runtime packet 44 through 421a4ab50",
+      "Own Xe runtime packet165; packet58aj target-only; arithmetic iq3-p49-split32-v1; BF16 KV",
+      "Own Xe runtime packet165; packet136 bundle8 with target-verified draft; arithmetic iq3-p49-split32-v1; BF16 KV"
     ],
     "tp": [
       1,
@@ -3118,43 +3120,86 @@
     },
     {
       "id": "qwen38-flash-next-iq3xxs-ownrt-tp2-b70",
-      "label": "Qwen3.8 Flash-Next UD-IQ3_XXS · separate quantized compressed version · own Xe runtime TP2",
+      "label": "Qwen3.8 Flash-Next UD-IQ3_XXS · own Xe runtime · 2 B70 cards",
       "revision": "qwen38-flash-next-ud-iq3xxs",
       "artifact_id": "qwen38-flash-next-ud-iq3xxs-766911a",
       "quantization": "UD-IQ3_XXS",
-      "runtime": "Own Xe runtime packet 44 through 421a4ab50; arithmetic-v2; native controller; official target-verified MTP draft head",
+      "runtime": "Own Xe runtime packet165; packet136 bundle8 with target-verified draft; arithmetic iq3-p49-split32-v1; BF16 KV",
       "cards": 2,
       "status": "candidate",
-      "evidence_level": "B70-verified 128-token lab replay; public build and 512-token final performance gate pending",
+      "evidence_level": "Two fresh full-512 lab suites; independent oracle covers first 128 output tokens; full-output quality and portable device replay pending",
       "coverage": [
-        "decode screen",
-        "exactness against own CPU oracle",
-        "runtime provenance",
-        "lab-replay recipe"
+        "decode observations",
+        "512-input prompt-reading observations",
+        "first-128-token oracle comparisons",
+        "complete-output fresh-load repeat agreement",
+        "source-build recipe",
+        "guarded lab replay"
       ],
       "manifest": "packages/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/package.json",
       "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md",
-      "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
-      "limitations": "LocalMaxxing cmv6pugme0020oa01fjrho6nx approved the 37.856264 class-balanced 99-interval result. Its 128-token cap is screening evidence under the current 512-token final gate. All 12 requests match the arithmetic-v2 CPU oracle for these quantized bytes. This is not a performance or quality comparison with official FP8.",
+      "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+      "limitations": "No strict headline: independent oracle ends at 128 output tokens, and the 512-input reading request has no independent oracle. Actual context-length and concurrency sweeps are missing. Frozen host/device/fault guards remain in force; newly compiled binaries require device qualification. Historical packet44 capacity tests are not context-length measurements for this identity.",
       "grades": {
         "capability": {
           "grade": "C",
-          "scope": "Bounded 128-token text generation for the separate Unsloth UD-IQ3_XXS model on two B70 cards, using own arithmetic-v2 and target-verified MTP.",
-          "basis": "All twelve varied requests match their quantized-model CPU oracle exactly. This does not establish official-FP8 quality equivalence, a 512-token natural-completion final gate, or general deployment readiness.",
-          "reviewed_at": "2026-10-13",
+          "scope": "2-card packet165 native text observations, 4096-token allocation, single user, response cap512.",
+          "basis": "Twelve varied suite prompts and one distinct 512-input prompt per fresh load, repeated twice. First128 oracle comparisons pass; complete outputs repeat, but independent full-output quality and portable device replay remain pending.",
+          "reviewed_at": "2026-10-20",
           "evidence": [
-            "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
-            "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json"
+            "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json"
           ]
         },
         "evidence": {
           "grade": "C",
-          "scope": "Sealed packet44 4,096-capacity 128-token suite and independent 32,768-capacity card-pair receipts; expert lab replay.",
-          "basis": "Source identities, per-prompt tokens and timings, CPU oracles and receipt chains are retained. Public pristine-build assets, clean-host replay and the current 512-token final performance gate remain open; capacity results are not a real-prompt-length curve.",
-          "reviewed_at": "2026-10-13",
+          "scope": "2-card packet165 native text observations, 4096-token allocation, single user, response cap512.",
+          "basis": "Twelve varied suite prompts and one distinct 512-input prompt per fresh load, repeated twice. First128 oracle comparisons pass; complete outputs repeat, but independent full-output quality and portable device replay remain pending.",
+          "reviewed_at": "2026-10-20",
           "evidence": [
-            "results/qwen38-flash-next-ud-iq3xxs-b70/README.md",
-            "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json"
+            "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "qwen38-flash-next-iq3xxs-ownrt-tp1-b70",
+      "label": "Qwen3.8 Flash-Next UD-IQ3_XXS · own Xe runtime · 1 B70 card",
+      "revision": "qwen38-flash-next-ud-iq3xxs",
+      "artifact_id": "qwen38-flash-next-ud-iq3xxs-766911a",
+      "quantization": "UD-IQ3_XXS",
+      "runtime": "Own Xe runtime packet165; packet58aj target-only; arithmetic iq3-p49-split32-v1; BF16 KV",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "Two fresh full-512 lab suites; independent oracle covers first 128 output tokens; full-output quality and portable device replay pending",
+      "coverage": [
+        "decode observations",
+        "512-input prompt-reading observations",
+        "first-128-token oracle comparisons",
+        "complete-output fresh-load repeat agreement",
+        "source-build recipe",
+        "guarded lab replay"
+      ],
+      "manifest": "packages/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/package.json",
+      "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md",
+      "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+      "limitations": "No strict headline: independent oracle ends at 128 output tokens, and the 512-input reading request has no independent oracle. Actual context-length and concurrency sweeps are missing. Frozen host/device/fault guards remain in force; newly compiled binaries require device qualification. Historical packet44 capacity tests are not context-length measurements for this identity.",
+      "grades": {
+        "capability": {
+          "grade": "C",
+          "scope": "1-card packet165 native text observations, 4096-token allocation, single user, response cap512.",
+          "basis": "Twelve varied suite prompts and one distinct 512-input prompt per fresh load, repeated twice. First128 oracle comparisons pass; complete outputs repeat, but independent full-output quality and portable device replay remain pending.",
+          "reviewed_at": "2026-10-20",
+          "evidence": [
+            "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json"
+          ]
+        },
+        "evidence": {
+          "grade": "C",
+          "scope": "1-card packet165 native text observations, 4096-token allocation, single user, response cap512.",
+          "basis": "Twelve varied suite prompts and one distinct 512-input prompt per fresh load, repeated twice. First128 oracle comparisons pass; complete outputs repeat, but independent full-output quality and portable device replay remain pending.",
+          "reviewed_at": "2026-10-20",
+          "evidence": [
+            "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json"
           ]
         }
       }

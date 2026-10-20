@@ -1,0 +1,105 @@
+{
+  "format": "neural.download.recipe-publication.v2",
+  "recipe_id": "qwen38-flash-next-iq3xxs-ownrt-tp1-b70",
+  "runtime_kind": "native-text-lab-replay",
+  "publication_status": "draft",
+  "guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md",
+  "repository": {
+    "url": "https://github.com/steveseguin/b70-optimization-lab",
+    "source_commit": "ac37d1027b55567c92c4be8e63acfb5691dc87c6",
+    "build_scripts": [
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/localize_native.py",
+        "sha256": "51c246346fb0e147acc5d49883cd7e8c783574e4a37b59fb0d6404b88b27ffbe"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/build_engine.py",
+        "sha256": "9154a833607f7462564088fc613d706061f6ff97e57e7c773bed93e3bcac1094"
+      }
+    ],
+    "immutable_inputs": [
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/identity.json",
+        "sha256": "0316c2b1a16addaa9cb3bdc4e4ebaf0797b2d2b0c7dfdcb81add7d222cc31984"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/seal.json",
+        "sha256": "64afe803950ab7b897dc9cc09e21b102d2bc7b375ca9d995498b835a0aad1f01"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/lineage/packet165-build.json",
+        "sha256": "103ae80be18fa235f5101fc206de3177406d58ce9eccb19b7df89396e70f940c"
+      }
+    ]
+  },
+  "release": {
+    "assets": [],
+    "remote_verified_at": null
+  },
+  "validation": {
+    "clean_source_build": false,
+    "runtime_smoke": false,
+    "quality_gate": false
+  },
+  "evidence": [
+    {
+      "path": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+      "sha256": "14af9c9d4a6095c27d8e32c8946c302c4f5673b126b5394d32cf8c21f790b635"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/identity.json",
+      "sha256": "0316c2b1a16addaa9cb3bdc4e4ebaf0797b2d2b0c7dfdcb81add7d222cc31984"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/seal.json",
+      "sha256": "64afe803950ab7b897dc9cc09e21b102d2bc7b375ca9d995498b835a0aad1f01"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-a/bracket-summary.json",
+      "sha256": "bc1e102897d938c8de5a2bca58a918bb0408858001237bf3e2a98118aff03a7c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-b/bracket-summary.json",
+      "sha256": "fffcf37e57aea66601b5acf926103c5d6b6f3c57ae1e18404f587d045623c41a"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/build-native.py",
+      "sha256": "f93a09f777ae95cf0f6a7f1137b211b8413125f6e1419b09f02e496948487c6f"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/native-build.json",
+      "sha256": "4fe31ce15decc95e3f48650dfa27e98193e5d862dfdb69169ac6f49c30a287ff"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/native-sources.tar.gz",
+      "sha256": "92a4858e3b4009fb3cc8e0ed4d75c7d49a88e2eaef988086e69a89c33e1a9966"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json",
+      "sha256": "a8b7ff51c90ea418cbb698b95d1171eec151580ec1c49fafb127c8f41f1404f2"
+    },
+    {
+      "path": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation-evidence.tar.gz",
+      "sha256": "6de52052eceafd2ca8e2823d336a6825eee1dfc441f238c4801b3928333b777e"
+    }
+  ],
+  "missing": [
+    "Supported-host device requalification of newly rebuilt binaries; CPU compile alone does not qualify runtime performance",
+    "Portable model admission, device mapping and current-boot fault review; frozen lab guards remain in force",
+    "Independent full-output oracle and explicit no-quality-loss decision beyond 128 output tokens",
+    "Independent oracle for the 512-input-token reading request",
+    "Actual prompt-length context sweep on this exact identity",
+    "Concurrent-sequence implementation and measured multi-user gate",
+    "Public release assets and clean-host replay; no starter/production certification"
+  ],
+  "measurement_scope": "Local native full-512 observations; no submission or strict headline; first128 oracle coverage only.",
+  "cpu_source_build": {
+    "passed": true,
+    "evidence": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json",
+    "cards": 1,
+    "translation_units": 42,
+    "compiled_binary_sha256": "9daf844d682a6a50aa9984187782d6ef5e250af6395011efe2fc566ba0ff0ed1",
+    "device_executed": false,
+    "scope": "All translation units compiled and linked without inherited objects. This compile-only observation does not satisfy the draft recipe certification gates or qualify device behavior."
+  }
+}

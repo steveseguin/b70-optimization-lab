@@ -1,6 +1,56 @@
 # Qwen3.8 Flash-Next UD-IQ3_XXS — quantized compressed version
 
-## Own Xe runtime record: packet 44, October 13
+## Current measured own-runtime profiles, October 19
+
+These are separate from the official FP8 model. The full-512 workload has now
+been measured on two fresh loads per topology; the older package's statement
+that all 512-token prefill is unmeasured is superseded for these identities.
+
+| Profile | Writing, first 99 intervals | Reading, 512 input / native TTFT | Context allocation / users |
+| --- | ---: | ---: | --- |
+| Two cards, bundle 8 / packet136 through packet165 | 58.632 / 58.557 tok/s | 75.973 / 75.884 tok/s | 4,096 / 1 |
+| One card, target-only packet58aj through packet165c | 31.782 / 31.510 tok/s | 32.752 / 32.595 tok/s | 4,096 / 1 |
+
+Each slash separates two observed fresh loads, not an error interval. Twelve
+varied prompts ran once per load with a 512-token response cap, plus a distinct
+512-input-token document. Outputs match across both loads. The CPU oracle
+covers only the first 128 output tokens of the twelve suite prompts. The
+reading request has no independent oracle, and full-output quality approval
+remains false. These are measured lab observations, **not strict public
+headlines or submission-eligible results**.
+
+Reading is 512 / native request TTFT after a different prompt warms the runtime,
+with full request-state reset and zero cached tokens. It includes first-token
+work; one-card timing additionally includes reset while two-card timing starts
+after reset. It is not isolated device prefill or HTTP TTFT. Only one suite
+prompt finished naturally in each run; full-natural-completion medians in the
+raw receipts therefore have sample count 1 and are not twelve-prompt medians.
+
+The separately approved capped records are two-card **58.798109 tok/s**
+(packet136, October 18, `cmve4dtir007wrf01k57sdf23`) and one-card **34.573038
+tok/s** (packet58as bounded spin, October 19, `cmvf31py400furf01tv54rxo7`).
+They use the older 128-token cap. Packet58as does not have the full-512/prefill
+measurements above; packet58aj does. See the [submission ledger](../localmaxxing-submissions.md).
+
+Actual prompt-length scaling and concurrency remain unmeasured on these exact
+identities. The native controller processes one request at a time. Historical
+256/4K/32K capacity allocations below are not a prompt-length speed curve and
+cannot supply these missing measurements.
+
+- [Exact derived measurements with source hashes](ownrt-measurements-20261019.json).
+- [CPU-only extraction and independent timestamp/oracle-prefix/repeat checks](extract-ownrt-measurements.py).
+- [Two-card current candidate replay](../../repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md).
+- [One-card current candidate replay](../../repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md).
+- [Original October 13 result page](packet44-results.md) and [packet44 replay](../../repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/packet44-replay.md).
+
+CPU evidence checks can be repeated without model loading or GPU access:
+
+```bash
+python3 -B results/qwen38-flash-next-ud-iq3xxs-b70/extract-ownrt-measurements.py
+```
+
+
+## Historical own-runtime record: packet 44, October 13
 
 **Two B70 cards, two rank processes (TP2), native controller, full BF16 KV,
 official MTP draft head with target verification.** This quantized compressed

@@ -1,0 +1,197 @@
+{
+  "schema": "neural.download.ownrt-observations.v1",
+  "profiles": [
+    {
+      "topology": "one-card",
+      "identity": {
+        "parent": "packet58aj-onecard-resident",
+        "gpu_count": 1,
+        "arithmetic": "iq3-p49-split32-v1",
+        "binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+        "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "context": 4096,
+        "kv_dtype": "BF16",
+        "parent_rate": 31.96682,
+        "oracle_cap": 128,
+        "requested_max_new": 512,
+        "attempts": 2,
+        "model_loads_per_attempt": 1,
+        "parent_binary_sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c",
+        "measurement_delta": [
+          "response-cap parser128->512",
+          "pre-device --help",
+          "suite request admission12->13"
+        ],
+        "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
+        "native_binary_unchanged_from_packet163": false,
+        "native_arithmetic_unchanged_from_packet163": true,
+        "native_delta": "absolute include and constant paths packet163-full-gate -> packet165-warm-prefill"
+      },
+      "identity_evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/identity.json",
+      "identity_sha256": "0316c2b1a16addaa9cb3bdc4e4ebaf0797b2d2b0c7dfdcb81add7d222cc31984",
+      "measurement_scope": "Twelve cold suite prompts and one distinct 512-input-token prompt per fresh load; two loads; one user; context allocation 4096.",
+      "prefill_definition": "512 input tokens / native request TTFT seconds; warm runtime, cold prompt; includes first-token work; not isolated device prefill or HTTP TTFT.",
+      "prefill_oracle_covered": false,
+      "context_length_sweep": "not measured on this identity",
+      "concurrency_sweep": "not measured; controller runs one request at a time",
+      "submission_eligible": false,
+      "rows": [
+        {
+          "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-a/bracket-summary.json",
+          "sha256": "bc1e102897d938c8de5a2bca58a918bb0408858001237bf3e2a98118aff03a7c",
+          "decode_class_balanced_tok_s": 31.782374599713044,
+          "suite_requests": 12,
+          "response_cap": 512,
+          "prefill_tok_s": 32.75163308775883,
+          "prefill_ttft_ms": 15632.808251975803,
+          "prefill_prompt_loop_tok_s": 34.12210616176581,
+          "request_start_boundary": "before native reset (TTFT includes reset)",
+          "full_natural_completion_statistics": {
+            "median": 33.15616716061242,
+            "mean": 33.15616716061242,
+            "p10": 33.15616716061242,
+            "count": 1
+          },
+          "quality": {
+            "oracle_identity": "iq3-p49-split32-v1",
+            "oracle_cap": 128,
+            "all_available_oracle_tokens_exact": true,
+            "full_output_oracle_exact": false,
+            "beyond_128": "pending fresh-load determinism; never oracle-exact",
+            "fresh_process_determinism_checked": false,
+            "no_quality_loss_decision": false
+          },
+          "fresh_load_repeat": null
+        },
+        {
+          "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-b/bracket-summary.json",
+          "sha256": "fffcf37e57aea66601b5acf926103c5d6b6f3c57ae1e18404f587d045623c41a",
+          "decode_class_balanced_tok_s": 31.509652472547543,
+          "suite_requests": 12,
+          "response_cap": 512,
+          "prefill_tok_s": 32.59467885386928,
+          "prefill_ttft_ms": 15708.08543000021,
+          "prefill_prompt_loop_tok_s": 33.91746153183414,
+          "request_start_boundary": "before native reset (TTFT includes reset)",
+          "full_natural_completion_statistics": {
+            "median": 32.84420007983251,
+            "mean": 32.84420007983251,
+            "p10": 32.84420007983251,
+            "count": 1
+          },
+          "quality": {
+            "oracle_identity": "iq3-p49-split32-v1",
+            "oracle_cap": 128,
+            "all_available_oracle_tokens_exact": true,
+            "full_output_oracle_exact": false,
+            "beyond_128": "determinism-checked across two fresh loads; not oracle-exact",
+            "fresh_process_determinism_checked": true,
+            "no_quality_loss_decision": false
+          },
+          "fresh_load_repeat": {
+            "passed": true,
+            "request_count": 13,
+            "scope": "all emitted tokens, including EOS/cap and prefill response"
+          }
+        }
+      ]
+    },
+    {
+      "topology": "two-card",
+      "identity": {
+        "parent": "packet136-record-bundle",
+        "gpu_count": 2,
+        "arithmetic": "iq3-p49-split32-v1",
+        "binary_sha256": "cb2cef7125f8c20356e83f2a1fdd07c5318ce1518aecff659bdd76e2983c4e3a",
+        "selection_sha256": "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "context": 4096,
+        "kv_dtype": "BF16",
+        "parent_rate": 58.798109,
+        "oracle_cap": 128,
+        "requested_max_new": 512,
+        "attempts": 2,
+        "model_loads_per_attempt": 1,
+        "parent_binary_sha256": "fd7e8b6f5fb24c5042d051f59026091a9184c0f15149d7de110528b7d3ac5451",
+        "measurement_delta": [
+          "response-cap parser128->512",
+          "pre-device --help"
+        ],
+        "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
+        "native_binary_unchanged_from_packet163": false,
+        "native_arithmetic_unchanged_from_packet163": true,
+        "native_delta": "absolute include and constant paths packet163-full-gate -> packet165-warm-prefill"
+      },
+      "identity_evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/identity.json",
+      "identity_sha256": "36c89c17985a09520eac333485d77cbf82536b640f1d71096ffba32876cbba95",
+      "measurement_scope": "Twelve cold suite prompts and one distinct 512-input-token prompt per fresh load; two loads; one user; context allocation 4096.",
+      "prefill_definition": "512 input tokens / native request TTFT seconds; warm runtime, cold prompt; includes first-token work; not isolated device prefill or HTTP TTFT.",
+      "prefill_oracle_covered": false,
+      "context_length_sweep": "not measured on this identity",
+      "concurrency_sweep": "not measured; controller runs one request at a time",
+      "submission_eligible": false,
+      "rows": [
+        {
+          "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/evidence/device-warm512-B-a/bracket-summary.json",
+          "sha256": "46a31c5cb4bc814faa98f66719a5fbc8bffe3d5af75e512f4ea8c5531b5af3b9",
+          "decode_class_balanced_tok_s": 58.631652925994246,
+          "suite_requests": 12,
+          "response_cap": 512,
+          "prefill_tok_s": 75.9725323173476,
+          "prefill_ttft_ms": 6739.2777939967345,
+          "prefill_prompt_loop_tok_s": 75.9725323173476,
+          "request_start_boundary": "after full reset (TTFT excludes reset)",
+          "full_natural_completion_statistics": {
+            "median": 55.70663196801052,
+            "mean": 55.70663196801052,
+            "p10": 55.70663196801052,
+            "count": 1
+          },
+          "quality": {
+            "oracle_identity": "iq3-p49-split32-v1",
+            "oracle_cap": 128,
+            "all_available_oracle_tokens_exact": true,
+            "full_output_oracle_exact": false,
+            "beyond_128": "pending fresh-load determinism; never oracle-exact",
+            "fresh_process_determinism_checked": false,
+            "no_quality_loss_decision": false
+          },
+          "fresh_load_repeat": null
+        },
+        {
+          "evidence": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/evidence/device-warm512-B-b/bracket-summary.json",
+          "sha256": "3c5556fb4aa486e9d36f1a512716db0f1925a0fa083dcda29742c6d9145a5910",
+          "decode_class_balanced_tok_s": 58.55650230474334,
+          "suite_requests": 12,
+          "response_cap": 512,
+          "prefill_tok_s": 75.88433122243367,
+          "prefill_ttft_ms": 6747.110922005959,
+          "prefill_prompt_loop_tok_s": 75.88433122243367,
+          "request_start_boundary": "after full reset (TTFT excludes reset)",
+          "full_natural_completion_statistics": {
+            "median": 55.686627587509285,
+            "mean": 55.686627587509285,
+            "p10": 55.686627587509285,
+            "count": 1
+          },
+          "quality": {
+            "oracle_identity": "iq3-p49-split32-v1",
+            "oracle_cap": 128,
+            "all_available_oracle_tokens_exact": true,
+            "full_output_oracle_exact": false,
+            "beyond_128": "determinism-checked across two fresh loads; not oracle-exact",
+            "fresh_process_determinism_checked": true,
+            "no_quality_loss_decision": false
+          },
+          "fresh_load_repeat": {
+            "passed": true,
+            "request_count": 13,
+            "scope": "all emitted tokens, including EOS/cap and prefill response"
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "Measured lab observations, not a promotion attestation. Exact oracle covers the first 128 output tokens only; longer outputs and the prefill response match across two fresh loads."
+}

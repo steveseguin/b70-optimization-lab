@@ -32,11 +32,21 @@ def rel(d, label):
 
 
 def ctx_points(r, field, scale=1.0):
-    """x = the requested prompt length (the measured prompt_n is within 20 tokens; kept in the evidence file)."""
+    """Plot observed token counts; retain requested lengths only as annotations."""
     pts = []
-    for k, v in sorted(r["single"].items(), key=lambda kv: int(kv[0])):
+    for k, v in r["single"].items():
         if v.get(field) is not None:
-            pts.append({"context_tokens": int(k), "value": round(v[field] * scale, 3), "samples": len(v["runs"]), "measured_prompt_tokens": int(v["prompt_n"])})
+            actual = v["prompt_n"]
+            if isinstance(actual, bool) or not isinstance(actual, int) or actual <= 0:
+                raise ValueError(f"{k}: missing positive measured prompt count")
+            if not v["runs"] or any(run.get("prompt_n") != actual for run in v["runs"]):
+                raise ValueError(f"{k}: repeats do not share the measured prompt count")
+            pts.append({"context_tokens": actual, "value": round(v[field] * scale, 3),
+                        "samples": len(v["runs"]), "requested_context_tokens": int(k),
+                        "measured_prompt_tokens": actual})
+    pts.sort(key=lambda p: p["context_tokens"])
+    if len({p["context_tokens"] for p in pts}) != len(pts):
+        raise ValueError("duplicate actual prompt lengths; cannot draw separate points at one length")
     return pts
 
 
@@ -70,21 +80,21 @@ def main():
         if not r:
             continue
         name = draft_desc[dn]
-        base_scope = f"{BUILD_NOTE} One user, one 16K slot, {name}; prompts of about 300, 2K, 8K and 16K tokens of filler text, median of the runs at each length."
+        base_scope = f"{BUILD_NOTE} One user, one 16K slot, {name}; prompts of about 300, 512, 2K, 8K and 16K tokens of filler text, median of the runs at each length. The x axis uses actual server prompt counts (292, 509, 2042, 8185, 15793); requested lengths remain annotations only."
         pub = "3-token draft (single-user recipe)" if dn == 3 else "no draft (shared-server recipe)"
         profiles.append({"id": f"sweep-decode-vs-context-{tag}", "label": f"Writing speed after the prompt · {name}", "metric": "decode", "unit": "tok/s",
                          "public_label": f"Writing speed · one user · {pub}", "public_scope": "Writing speed after the answer starts, for prompts from 300 to 16,000 tokens. Longer prompts slow writing because every new token looks back over the whole prompt.",
-                         "x_metric": "context_tokens", "x_label": "Input tokens", "scope": base_scope, "evidence": rel(d, r["label"]), "points": ctx_points(r, "decode_tps")})
+                         "x_metric": "context_tokens", "x_label": "Actual input tokens", "scope": base_scope, "evidence": rel(d, r["label"]), "points": ctx_points(r, "decode_tps")})
         profiles.append({"id": f"sweep-prefill-vs-context-{tag}", "label": f"Prompt reading speed · {name}", "metric": "prefill", "unit": "tok/s",
                          "public_label": f"Reading speed (prefill) · one user · {pub}", "public_scope": "How fast the server reads the prompt before the answer starts, measured by the server's own counters with no saved prompt cache. The draft does not change reading speed.",
-                         "x_metric": "context_tokens", "x_label": "Input tokens",
+                         "x_metric": "context_tokens", "x_label": "Actual input tokens",
                          **({"measurement_kind": "server_prefill", "operating_profile": {"speculative_tokens": dn, "max_model_len": 16384, "tensor_parallel_size": 1}} if dn == 3 else {}),
                          "scope": base_scope + " Reading speed is prompt tokens divided by the server's prompt time, with no saved prompt cache.",
                          "evidence": rel(d, r["label"]), "points": ctx_points(r, "prefill_tps")})
         if dn == 0:
             profiles.append({"id": "sweep-ttft-vs-context-no-draft", "label": "Wait for the first token · no draft", "metric": "ttft", "unit": "ms",
                              "public_label": "Wait for the first token · one user · cold prompt", "public_scope": "How long the user waits for the answer to start when nothing about the prompt is cached. With a shared system prompt cached, only the new part counts.",
-                             "x_metric": "context_tokens", "x_label": "Input tokens", "scope": base_scope + " Wait is the server's prompt time for a cold prompt.",
+                             "x_metric": "context_tokens", "x_label": "Actual input tokens", "scope": base_scope + " Wait is the server's prompt time for a cold prompt.",
                              "evidence": rel(d, r["label"]), "points": ctx_points(r, "ttft_s", 1000.0)})
 
     # 3. many people at once
@@ -120,7 +130,9 @@ def main():
             p_["public_label"] = old_labels[p_["id"]]
     pkg["performance_profiles"] = keep + profiles
     deps = pkg.setdefault("dependencies", [])
-    for ev in sorted({p["evidence"] for p in profiles}):
+    # Draft-length profiles combine several files; keep those inputs in the
+    # package as well as the representative file used for the graph link.
+    for ev in sorted({p["evidence"] for p in profiles} | {rel(d, label) for label in rows}):
         if ev not in deps:
             deps.append(ev)
     json.dump(pkg, open(PKG, "w"), indent=2, ensure_ascii=False)
