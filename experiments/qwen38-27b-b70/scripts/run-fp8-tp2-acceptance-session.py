@@ -407,8 +407,20 @@ def main():
         shutil.copyfileobj(response, handle)
     archive_bytes = archive.read_bytes()
     clean = out / 'clean-source'; clean.mkdir()
+    skipped_links = []
+
+    def source_filter(member, dest):
+        # The repository carries host-local absolute symlinks (the own-xpu-runtime lane's oracle links), which are
+        # not package sources; Python's data filter rejects them with AbsoluteLinkError. Skip and record them so the
+        # acceptance download survives their presence; the pinned package files below are still read and hashed.
+        try:
+            return tarfile.data_filter(member, dest)
+        except tarfile.AbsoluteLinkError:
+            skipped_links.append(member.name)
+            return None
+
     with tarfile.open(archive) as tf:
-        tf.extractall(clean, filter='data')
+        tf.extractall(clean, filter=source_filter)
     source_dir = next(clean.iterdir())
     files = []
     for rel in PINNED:
@@ -419,7 +431,8 @@ def main():
         'commit': a.commit, 'url': url, 'archive_sha256': sha(archive_bytes), 'archive_bytes': len(archive_bytes),
         'source_dir': str(source_dir), 'new_directory': True, 'git_worktree': (source_dir / '.git').exists(),
         'anonymous_download': True, 'model_files_reused_after_fresh_verification': True, 'docker_layer_cache_reused': True,
-        'registry_credentials_present_for_ghcr': any('ghcr.io' in k for k in docker_auth), 'files': files})
+        'registry_credentials_present_for_ghcr': any('ghcr.io' in k for k in docker_auth), 'files': files,
+        'skipped_absolute_symlinks': skipped_links})
     say(f'source {source_dir.name}: pinned files match working tree: {all(f["matches_working_tree"] for f in files)}')
 
     # 2. model verification and image pull, exactly as the package guide says
