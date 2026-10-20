@@ -53,3 +53,13 @@ All other guide checks pass, including recipe publication manifests, package/cat
 manifest paths, historical pin checks, generated pages and container packet checks. Keep these
 failures visible; they do not certify the affected frozen acceptance packet. Raw logs are retained
 under `/home/steve/.cache/ctxkeeper-release-validation/`.
+
+The undeclared FP8 comparator change is now resolved by a narrow whole-module AST proof and a drift
+declaration, preserving frozen files and keeping current-source acceptance pending. Its 32 targeted tests
+pass (one existing skip), the collector passes historical gates, and the historical pin check passes.
+The 550-link research-history backlog remains; it is not hidden by a baseline update.
+
+Stable download page published at https://skindeep.ai/context-use.html (website commit 0e3d81b).
+All five 1.1.0 download assets match published SHA256SUMS; pip from the public wheel URL and Docker from
+the public source URL both report 1.1.0. Desktop/phone layouts and local anchors pass; search vectors match
+the new index. GitHub Pages deployment succeeded and the live page was fetched and checked.

@@ -1668,3 +1668,8 @@ Unlike the historical runners, the current campaign defaults to `RESTORE=0`: lea
 
 Reproducible audit: [seed-0 JSON](../data/2026-10-19-context-campaign49/c49b-seed0-audit.json) and
 [audit script](../scripts/context/audit_hostile_release.py). The result binds every raw input by SHA-256.
+
+Compact unmodified receipts are also public under [seed0](../data/2026-10-19-context-campaign49/seed0/):
+verifier details, job result, usage, hostile report and proxy status, with a hash-bound copy provenance list.
+Campaign 49d started seed 2 at 23:36:52 EDT after a fresh server warmup; it is not a continuation of the
+interrupted state. Unit `ctx-campaign49d`, queue `QUEUE49d.txt`, `RESTORE=0`, `IDLE_MAX=0`.

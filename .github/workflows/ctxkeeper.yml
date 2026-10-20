@@ -6,11 +6,15 @@ on:
       - 'tools/ctxkeeper/**'
       - 'experiments/qwen38-27b-b70/scripts/context/clm_keeper.py'
       - '.github/workflows/ctxkeeper.yml'
+      - 'experiments/qwen38-27b-b70/scripts/ctxkeeper-release-*'
+      - 'experiments/qwen38-27b-b70/scripts/test_ctxkeeper_release_gate.py'
   pull_request:
     paths:
       - 'tools/ctxkeeper/**'
       - 'experiments/qwen38-27b-b70/scripts/context/clm_keeper.py'
       - '.github/workflows/ctxkeeper.yml'
+      - 'experiments/qwen38-27b-b70/scripts/ctxkeeper-release-*'
+      - 'experiments/qwen38-27b-b70/scripts/test_ctxkeeper_release_gate.py'
 permissions:
   contents: read
 jobs:
@@ -26,6 +30,7 @@ jobs:
           python-version: ${{ matrix.python }}
       # the proxy's checks are a copy of the lab harness's: the copy must match
       - run: python3 tools/ctxkeeper/sync_notesdelta.py
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p test_ctxkeeper_release_gate.py
       - run: python3 -m unittest test_ctxkeeper test_notesdelta
         working-directory: tools/ctxkeeper
       # what a user installs: the package builds, the command runs, the version agrees with the code
