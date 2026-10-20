@@ -15,7 +15,7 @@ your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (
 ```
 
 Version 1.2.0 (previous release: 1.1.0) · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
-`ctxkeeper.py`, `notesdelta.py`) · in plain words: <https://skindeep.ai/context-use.html>
+`ctxkeeper.py`, `notesdelta.py`) · download and setup: <https://skindeep.ai/ctxkeeper.html>
 
 ## Does it work?
 
