@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 20 — homepage layout cleanup.** The Flash-Next lab-result link now
+has its own callout. Native result rows use consistent card badges and show the
+quality limitation once; their measured ranges are excluded from scalar speed
+bars. Buttons wrap cleanly, anchored rows clear the opaque sticky header, and
+long filenames wrap on narrow phones. Measurements and serving state are unchanged.
+
 **October 20 — Flash-Next result discovery corrected.** The native one-/two-card
 recipes were live but absent from the homepage table. Both now have explicit lab
 measurement rows, and the two-card result is linked near the top and in the

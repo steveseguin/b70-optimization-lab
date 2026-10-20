@@ -83,7 +83,7 @@ Style genome (duotone-hixffp):
   /* persistent primary navigation */
   .site-nav {
     position: sticky; top: 0; z-index: 50;
-    background: rgba(246, 241, 229, .97); border-bottom: 2px solid var(--ink);
+    background: var(--paper); border-bottom: 2px solid var(--ink);
   }
   .site-nav .wrap { display: flex; align-items: stretch; min-height: 56px; max-width: 1280px; }
   .brand {
@@ -179,8 +179,17 @@ Style genome (duotone-hixffp):
   .model-picker .variant-row th.model { padding-left: 26px; white-space: nowrap; }
   .model-picker .variant-row th.model .variant-label { display: inline; }
   .variant-label { font-size: 12px; color: var(--muted); font-weight: 400; display: inline; }
-  .model-picker .native-observation small,
-  .model-picker .native-observation th.model .variant-label { display: block; white-space: normal; font-size: 12px; font-weight: 400; line-height: 1.4; margin-top: 4px; color: var(--muted); }
+  .model-picker .native-observation { scroll-margin-top: 96px; }
+  .model-picker .native-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+  .model-picker .native-title .card-chip { margin: 0; vertical-align: baseline; }
+  .model-picker .native-observation small { display: block; white-space: normal; font-family: var(--body); font-size: 11.5px; font-weight: 400; line-height: 1.4; margin-top: 4px; color: var(--muted); }
+  .research-links.native-result-link { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-bottom: 20px; }
+  .native-result-link .status { margin: 0; }
+  #flash-next-record p { max-width: 80ch; }
+  #flash-next-record h3 { margin: 28px 0 8px; }
+  #flash-next-record .pick-bars { max-width: 640px; }
+  .section-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0 24px; }
+  .section-actions a:not(.button) { border-bottom: 1px solid currentColor; font-size: 13px; }
   .guide-actions .icon-btn { padding: 5px 7px; line-height: 0; }
   .guide-actions .icon-btn svg { display: block; }
   .copy-md { line-height: 1; }
@@ -250,7 +259,7 @@ Style genome (duotone-hixffp):
   .pick-head h3 small { display: block; margin-top: 3px; font-family: var(--mono); font-size: 10.5px; font-weight: 400; text-transform: none; color: var(--muted); }
   .pick-head .eyebrow { margin: 0 0 6px; color: var(--spot-dark); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
   .pick-head .eyebrow.research { color: var(--muted); }
-  .pick-why { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 52ch; }
+  .pick-why { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 52ch; overflow-wrap: anywhere; }
   .pick-bars { display: grid; gap: 7px; align-self: center; }
   .pick-bar-row { display: grid; grid-template-columns: 118px 1fr 112px; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10.5px; }
   .pick-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
@@ -511,7 +520,8 @@ Style genome (duotone-hixffp):
 <section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next own-runtime lab result</a> (quality checks pending). <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
+    <p class="research-links native-result-link"><span class="status research">Lab result</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next on two B70s: 58.56–58.63 tok/s</a><span>Full-output quality checks pending.</span></p>
     <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>
 <h3 id="task-picks">Pick the job you want to do</h3>
@@ -1161,21 +1171,21 @@ Style genome (duotone-hixffp):
           <th scope="rowgroup" colspan="7"><a href="models/qwen-flash-next.html">Qwen3.8 Flash-Next 125B-A6B</a> <small>Alibaba &middot; one-, two- and four-card setups &middot; experienced users</small></th>
         </tr>
         <tr class="variant-row native-observation" id="flash-next-ownrt-1-card">
-          <th scope="row" class="model"><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html">1&times; B70 &middot; Flash-Next IQ3_XXS</a><small class="variant-label">Own Xe runtime &middot; MTP &middot; BF16 KV</small></th>
+          <th scope="row" class="model"><span class="native-title"><span class="card-chip">1 card</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html">IQ3_XXS &middot; own runtime</a></span><small>MTP &middot; BF16 KV</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">Lab result</span><small>Full-output quality pending</small></td>
-          <td class="num r model-speed" data-label="1 user" title="Two fresh loads of the 512-output-cap suite. First-100-token writing rate; independent oracle checks only the first 128 output tokens. Lab observations, not a certified headline."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">31.51&ndash;31.78</a><small>quality pending</small></td>
+          <td class="num r model-speed" data-speed-range data-label="1 user" title="Two fresh loads of the 512-output-cap suite. First-100-token writing rate; independent oracle checks only the first 128 output tokens. Lab observations, not a certified headline."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">31.51&ndash;31.78</a></td>
           <td class="num r model-32k mut" data-label="32K input">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="num r model-agg mut" data-label="Many users">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill" data-label="Prefill" title="512 input tokens / native first-token wait, including first-token work; two fresh loads, one request each. Independent reading-request oracle pending."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">32.59&ndash;32.75</a><small>512 tokens</small></td>
+          <td class="num r model-prefill" data-label="Prefill" title="512 input tokens / native first-token wait, including first-token work; two fresh loads, one request each. Independent reading-request oracle pending."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">32.59&ndash;32.75</a></td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">Results and recipe</a></div></td>
         </tr>
         <tr class="variant-row native-observation" id="flash-next-ownrt-2-card">
-          <th scope="row" class="model"><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html">2&times; B70 &middot; Flash-Next IQ3_XXS</a><small class="variant-label">Own Xe runtime &middot; MTP &middot; BF16 KV</small></th>
+          <th scope="row" class="model"><span class="native-title"><span class="card-chip two">2 cards</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html">IQ3_XXS &middot; own runtime</a></span><small>MTP &middot; BF16 KV</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">Lab result</span><small>Full-output quality pending</small></td>
-          <td class="num r model-speed" data-label="1 user" title="Two fresh loads of the 512-output-cap suite. First-100-token writing rate; independent oracle checks only the first 128 output tokens. Lab observations, not a certified headline."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">58.56&ndash;58.63</a><small>quality pending</small></td>
+          <td class="num r model-speed" data-speed-range data-label="1 user" title="Two fresh loads of the 512-output-cap suite. First-100-token writing rate; independent oracle checks only the first 128 output tokens. Lab observations, not a certified headline."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">58.56&ndash;58.63</a></td>
           <td class="num r model-32k mut" data-label="32K input">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="num r model-agg mut" data-label="Many users">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill" data-label="Prefill" title="512 input tokens / native first-token wait, including first-token work; two fresh loads, one request each. Independent reading-request oracle pending."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">75.88&ndash;75.97</a><small>512 tokens</small></td>
+          <td class="num r model-prefill" data-label="Prefill" title="512 input tokens / native first-token wait, including first-token work; two fresh loads, one request each. Independent reading-request oracle pending."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">75.88&ndash;75.97</a></td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Results and recipe</a></div></td>
         </tr>
         <tr class="variant-row">
@@ -1342,7 +1352,7 @@ Style genome (duotone-hixffp):
   <div class="wrap">
     <h2>Flash-Next on one, two or four cards</h2>
     <p><strong>Two-card own-runtime result:</strong> the IQ3_XXS version writes <strong>58.56&ndash;58.63 tok/s</strong> and reads a 512-token prompt at <strong>75.88&ndash;75.97 tok/s</strong> across two fresh loads. Full-output quality and portable replay checks remain pending. These are lab measurements using different weights and software from the four-card FP8 result below.</p>
-    <p><a class="button" href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Two-card results and recipe</a> <a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">One-card own-runtime results</a></p>
+    <div class="section-actions"><a class="button" href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Two-card results and recipe</a><a class="button secondary" href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">One-card results</a></div>
     <h3>Four-card FP8 result</h3>
     <p>Qwen3.8 Flash-Next is a 125B model with about 6B parameters active per token. Its certified single-user FP8 result is <strong>46.854250 tok/s</strong> on four B70s, with one target-verified draft token and full BF16 KV. Lossless here means matching the registered target outputs; the inherited code-task miss remains in the quality report.</p>
     <div class="pick-bars">
@@ -1350,7 +1360,8 @@ Style genome (duotone-hixffp):
       <div class="pick-bar-row"><span class="pick-bar-label"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907.html">Previous</a></span><div class="pick-track"><div class="pick-fill" style="width:80.73%"></div></div><span class="pick-val">37.83 tok/s</span></div>
     </div>
     <p>Both bars use the fixed cold realistic suite and the median across prompt classes after the first token. One user, four cards; separate scale from the shared-chat results above. Prompt-reading speed at 512 tokens is not measured for this setup.</p>
-    <p><a class="button" href="models/qwen-flash-next.html">Results and comparisons</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md">Expert reproduction guide</a> · Native runtime; clean-host install and portable container still pending.</p>
+    <div class="section-actions"><a class="button" href="models/qwen-flash-next.html">Results and comparisons</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md">Expert reproduction guide</a></div>
+    <p class="sub">Expert lab replay; clean-host install and portable container still pending.</p>
   </div>
 </section>
 
@@ -1556,10 +1567,10 @@ Style genome (duotone-hixffp):
 </script>
 
 <script>
-  // Draw a bar under every one-user speed in the full table (one scale per table) and quieten rows without a headline.
+  // Draw bars for scalar one-user speeds; scoped ranges are not ranked on this scale.
   (function () {
     document.querySelectorAll('table.model-picker').forEach(function (table) {
-      var cells = Array.prototype.slice.call(table.querySelectorAll('td.model-speed'));
+      var cells = Array.prototype.slice.call(table.querySelectorAll('td.model-speed:not([data-speed-range])'));
       var vals = cells.map(function (td) {
         var t = (td.textContent || '').replace(/[^0-9.]/g, '');
         return td.classList.contains('mut') ? NaN : parseFloat(t);
