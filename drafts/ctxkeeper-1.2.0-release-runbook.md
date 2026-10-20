@@ -1,0 +1,55 @@
+# ctxkeeper 1.2.0 release checklist
+
+Recovered after the October 19 reboot. This file is durable; the earlier `/tmp` drafts were lost.
+The owner prioritizes a usable public proxy: downloads, guide, model advice and honest test results.
+
+## Verified so far
+
+- Stable public release is 1.1.0. Working proxy is 1.2.0.dev10; package metadata now agrees.
+- 112 local unit tests pass; `sync_notesdelta.py` confirms the harness copy matches. Fresh-venv pip installation reports the matching 1.2.0.dev10 version.
+- c49b seed 0: 421/423, all forgery targets, 16/16 audits; all mechanism predictions independently pass.
+- Seed 2 has no completed dev10 result. c49b was stopped and c49c was interrupted by the reboot.
+- All 32 model-package manifests match the catalog; navigation now includes all 32.
+- HISTORY.md is retained unchanged. Newer behavior belongs in README Changes.
+
+## Remaining release work
+
+1. Run the registered seed-2 stream with fresh state, dev10 and the same K32C flags. Retain interrupted runs.
+   Use campaign37 runner, `LEAN_CLIENT=1`, `RESTORE=0`, `IDLE_MAX=0`, a fresh run label and seed-2-only queue.
+   Never run builds or heavy repository checks beside the two-card server. Do not auto-retry failures.
+2. Record final measurements and limits. Do not claim the two-seed bar until both completed runs support it.
+3. Align code, package version, README, Docker example and public page for 1.2.0; preserve historical results.
+4. Build a wheel and source archive containing Dockerfile, program files, demo, tests, README and LICENSE.
+   Publish immutable checksums and standalone program/demo files. Keep build artifacts outside Git.
+5. Install and test the built files in a fresh environment. Build Docker while cards are empty.
+   Publish as a prerelease first so campaign 50 can test actual public download URLs before stable promotion.
+6. Download public assets and verify checksums. Install wheel from the public URL; build Docker from the
+   public source-archive URL. Record installed file hashes. Run campaign 50 G1-G4 exactly as registered:
+   repair 40/40 fixed, >=38 clean, >=6/7 audit and <=45 min; Docker long-chat 300K 4/4; SDK plain/tool/stream;
+   Gemma 100K smoke with --recipe agent --budget 15360 (report result, no quality gate). Leave cards empty.
+7. Publish the GitHub stable release only after required checks; update release notes with actual results.
+8. Update `/home/steve/skindeep/content/context-use.html`, run refresh_long_context then build_site;
+   inspect desktop and phone; publish and fetch live page, download links, guide and evidence links.
+9. Push focused verified commits on main. Check GitHub CI and deployed output. Keep incomplete model recipe
+   qualifications explicit; no candidate becomes a starter without its clean-host replay.
+
+## Boundaries
+
+GitHub downloads and source-built Docker require no new account setup. PyPI and a prebuilt registry image
+are optional distribution channels; do not make the usable public release depend on missing credentials.
+Power settings, swap, caches and reboot are not part of this release. No resident server restoration.
+
+## Repository-wide validation at recovery
+
+All `run:` checks in `.github/workflows/guides.yml` were exercised locally (the PyYAML install step
+was satisfied by the existing import). Three checks fail on pre-existing unrelated evidence:
+
+- FP8 TP2 acceptance unit tests and acceptance collector: `compare-ladder-oracles.py` differs from
+  the frozen packet and has no source-drift declaration. The current task did not modify that script.
+- Whole-repository document audit: 550 new-to-baseline broken links in 95 documents, plus 4 known-broken.
+  The focused public documentation link check passes.
+
+All other guide checks pass, including recipe publication manifests, package/catalog validation,
+manifest paths, historical pin checks, generated pages and container packet checks. Keep these
+failures visible; they do not certify the affected frozen acceptance packet. Raw logs are retained
+under `/home/steve/.cache/ctxkeeper-release-validation/`.

@@ -1,5 +1,8 @@
 # Current Workspace State
 
+**October 19, 23:32 EDT — ctxkeeper release recovery on turin.** The reboot interrupted campaign 49c before a seed-2 result was saved. Campaign 49b seed 0 survives: **421/423, every forgery target kept, 16/16 audits**, with the saved notes independently checked. The post-reboot restored proxy and idle FP8 server were stopped gracefully at 23:30 (server `stop_confirmed=true`, no current-boot GPU fault lines); cards are empty while release preparation runs. The owner has authorized continuing the release checks and prioritizes a usable public proxy download page and guide. Next: a fresh seed-2 run, installed-package release checks, public downloads, and live-page verification. Campaigns leave the cards empty; the older instructions to restore resident Gemma below are superseded. The 3 TB USB drive is mounted at `/media/steve/3TB GREEN HDD`; no data was moved. Release checklist: [ctxkeeper 1.2.0](drafts/ctxkeeper-1.2.0-release-runbook.md).
+
+
 **October 19, ~15:40 UTC — daily inference: three validated Qwen3.8 27B endpoints on all four B70s (owner request: single-user speed, MTP, prompt caching, images optional).** Systemd user units (linger on), localhost only; serving copies in `/home/steve/inference/` (packages untouched):
 - `qwen38-27b-fp8.service`, card L0 0 (PCI 23:00.0), `:18130/v1`, model `qwen38-27b-fp8`: official FP8 rev 017b9c7, vLLM R312d-c, MTP5, `--enable-prefix-caching --mamba-cache-mode align`, 32K context. Validated: 45.8 tok/s single-user decode, 7,168/8,607 cached tokens (TTFT 5.3→0.95 s), identical outputs, deterministic.
 - `qwen38-27b-fp8-tp1-test.service` (the name is historical; it is a permanent second instance), card L0 3 (PCI 47:00.0), `:18131/v1`, same config; validated 45.1 tok/s.

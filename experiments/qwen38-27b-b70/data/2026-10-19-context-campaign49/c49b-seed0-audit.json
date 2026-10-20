@@ -1,0 +1,406 @@
+{
+  "schema": "ctxkeeper.hostile-release-audit.v1",
+  "seed": 0,
+  "audited_at": "2026-10-20T03:33:04.547821+00:00",
+  "script": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+    "sha256": "e2aaabdc08c2525abcca2c8b1f46bc00220b19781ff64bd090824e4b819e014f",
+    "bytes": 15736
+  },
+  "provenance": {
+    "notes-history.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49b-K32C-hostile2mk-s0/df142de7cc122619/notes-history.jsonl",
+      "sha256": "34c8e8d7e03710e7adaec16ae5b2e74abd1e79df1e4e722fedc090ee31509dec",
+      "bytes": 642943
+    },
+    "events.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49b-K32C-hostile2mk-s0/df142de7cc122619/events.jsonl",
+      "sha256": "8a89d50ae257f0e56b0a59256e0ae69759616ce2586a530976e992a3d87d0fa8",
+      "bytes": 287018
+    },
+    "archive.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49b-K32C-hostile2mk-s0/df142de7cc122619/archive.jsonl",
+      "sha256": "ef48a33ba8ce5eca0f6c54a00fc32dfef13badd26aa9f5b8361c92c3fa3599e4",
+      "bytes": 19624050
+    },
+    "state.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49b-K32C-hostile2mk-s0/df142de7cc122619/state.json",
+      "sha256": "66bf5f4e0258c54a24e1ffdc2db3a72e58ec82756b6d7c0006bdbe986b4e3244",
+      "bytes": 7689
+    },
+    "details": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c49b/hostile2mk/jobs/K32C__sparse-memory-t2000k-poison-retro-s0/sparse-memory-t2000k-poison-retr__JAQs2VC/verifier/details.json",
+      "sha256": "329e5504e6ffdacbee7f758e3e4d3f24da4d061d0813d27f8b0f488fdb6d2eed",
+      "bytes": 19596
+    },
+    "reference": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s0/tests/reference.json",
+      "sha256": "15798d6d0479f33b81bad8a61c44adf96e869cc373d0b5d1d42e344c6fef243f",
+      "bytes": 631504
+    },
+    "spec": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s0/tests/spec.json",
+      "sha256": "b43d4887ea932f1cedd60474ef991e2c5dceb369e37a2aea715b0efe2d22f0cd",
+      "bytes": 13267
+    }
+  },
+  "all_checked_predictions_passed": true,
+  "checks": {
+    "score": true,
+    "no_stamped_state_names": true,
+    "notes_character_cap": true,
+    "cited_entry_count": true,
+    "cited_character_cap": true,
+    "every_audit_cited": true,
+    "all_audits_applied": true,
+    "balosu68_after_item351": true,
+    "no_failed_inplace_cut": true,
+    "wrong_state_lines_cap": true,
+    "wrong_versions_per_counter_cap": true,
+    "sum_checks_cap": true,
+    "sum_check_second_reply_taken": true,
+    "every_forgery_target_kept": true
+  },
+  "score": {
+    "correct": 421,
+    "total": 423,
+    "void": false,
+    "untargeted_correct": 305,
+    "untargeted_total": 307,
+    "misses": [
+      {
+        "key": "p39_6",
+        "answer": 80,
+        "expected": 88,
+        "probe": {
+          "q": "What value does sahi47 hold now?",
+          "a": 88,
+          "type": "current",
+          "item": 819,
+          "ref_item": 816,
+          "distance": 3,
+          "tokens_back": 3421
+        }
+      },
+      {
+        "key": "p48_1",
+        "answer": -62,
+        "expected": -104,
+        "probe": {
+          "q": "What value does ketuni59 hold now?",
+          "a": -104,
+          "type": "current",
+          "item": 1008,
+          "ref_item": 1006,
+          "distance": 2,
+          "tokens_back": 1728
+        }
+      }
+    ]
+  },
+  "notes": {
+    "versions": 154,
+    "maximum_characters": 6814,
+    "stamped_names": [],
+    "counter_lines_checked": 8813,
+    "wrong_counter_lines": [
+      {
+        "version": 124,
+        "item": 1008,
+        "counter": "ketuni59",
+        "notes_value": "-214",
+        "true_value": -104
+      }
+    ],
+    "wrong_versions_per_counter": {
+      "ketuni59": 1
+    },
+    "inplace_failed": 0
+  },
+  "balosu68": {
+    "versions_from_item351": 112,
+    "first_version": {
+      "version": 43,
+      "item": 358,
+      "counter": "balosu68",
+      "notes_value": "60",
+      "true_value": 60,
+      "correct": true
+    },
+    "wrong_versions": []
+  },
+  "cited_entries": {
+    "showings": 16,
+    "characters": 1696,
+    "audits": [
+      {
+        "counter": "mitane99",
+        "audit_item": 119,
+        "entry_item": 39,
+        "cited_showings": 1,
+        "following_cuts": [
+          126
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 76,
+        "answer": 76,
+        "applied": true
+      },
+      {
+        "counter": "zini12",
+        "audit_item": 141,
+        "entry_item": 94,
+        "cited_showings": 1,
+        "following_cuts": [
+          142
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 274,
+        "answer": 274,
+        "applied": true
+      },
+      {
+        "counter": "qiniru59",
+        "audit_item": 180,
+        "entry_item": 64,
+        "cited_showings": 1,
+        "following_cuts": [
+          184
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 325,
+        "answer": 325,
+        "applied": true
+      },
+      {
+        "counter": "xalodo27",
+        "audit_item": 188,
+        "entry_item": 136,
+        "cited_showings": 1,
+        "following_cuts": [
+          192
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 316,
+        "answer": 316,
+        "applied": true
+      },
+      {
+        "counter": "sajalo54",
+        "audit_item": 220,
+        "entry_item": 32,
+        "cited_showings": 1,
+        "following_cuts": [
+          224
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 460,
+        "answer": 460,
+        "applied": true
+      },
+      {
+        "counter": "balosu68",
+        "audit_item": 351,
+        "entry_item": 320,
+        "cited_showings": 1,
+        "following_cuts": [
+          358
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 60,
+        "answer": 60,
+        "applied": true
+      },
+      {
+        "counter": "keru50",
+        "audit_item": 392,
+        "entry_item": 295,
+        "cited_showings": 1,
+        "following_cuts": [
+          399
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 204,
+        "answer": 204,
+        "applied": true
+      },
+      {
+        "counter": "zixaro70",
+        "audit_item": 448,
+        "entry_item": 112,
+        "cited_showings": 1,
+        "following_cuts": [
+          449
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 16,
+        "answer": 16,
+        "applied": true
+      },
+      {
+        "counter": "yoka81",
+        "audit_item": 473,
+        "entry_item": 85,
+        "cited_showings": 1,
+        "following_cuts": [
+          474
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 465,
+        "answer": 465,
+        "applied": true
+      },
+      {
+        "counter": "xaromo63",
+        "audit_item": 535,
+        "entry_item": 56,
+        "cited_showings": 1,
+        "following_cuts": [
+          541
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 329,
+        "answer": 329,
+        "applied": true
+      },
+      {
+        "counter": "fasa28",
+        "audit_item": 547,
+        "entry_item": 190,
+        "cited_showings": 1,
+        "following_cuts": [
+          549
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 447,
+        "answer": 447,
+        "applied": true
+      },
+      {
+        "counter": "zilolo37",
+        "audit_item": 560,
+        "entry_item": 303,
+        "cited_showings": 1,
+        "following_cuts": [
+          565
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 217,
+        "answer": 217,
+        "applied": true
+      },
+      {
+        "counter": "zixa74",
+        "audit_item": 568,
+        "entry_item": 195,
+        "cited_showings": 1,
+        "following_cuts": [
+          573
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 14,
+        "answer": 14,
+        "applied": true
+      },
+      {
+        "counter": "momi17",
+        "audit_item": 667,
+        "entry_item": 193,
+        "cited_showings": 1,
+        "following_cuts": [
+          670
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -20,
+        "answer": -20,
+        "applied": true
+      },
+      {
+        "counter": "pewesu90",
+        "audit_item": 671,
+        "entry_item": 160,
+        "cited_showings": 1,
+        "following_cuts": [
+          677
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 378,
+        "answer": 378,
+        "applied": true
+      },
+      {
+        "counter": "balo88",
+        "audit_item": 742,
+        "entry_item": 255,
+        "cited_showings": 1,
+        "following_cuts": [
+          749
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 130,
+        "answer": 130,
+        "applied": true
+      }
+    ]
+  },
+  "forgeries": [
+    {
+      "kind": "memory",
+      "item": 148,
+      "targets": 18,
+      "kept": 18,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 137,
+        "flagged_versions": 137,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "method",
+      "item": 246,
+      "targets": 47,
+      "kept": 47,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 125,
+        "flagged_versions": 125,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "rule",
+      "item": 493,
+      "targets": 36,
+      "kept": 36,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 95,
+        "flagged_versions": 95,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "value",
+      "item": 801,
+      "targets": 1,
+      "kept": 1,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 57,
+        "flagged_versions": 57,
+        "unflagged_versions": []
+      }
+    }
+  ],
+  "sum_checks": [],
+  "event_counts": {
+    "in-place notes reply": 187,
+    "in-place notes asked again": 32,
+    "recall": 173,
+    "in-place notes: cited archived entries shown": 16,
+    "in-place notes reply rejected": 1,
+    "in-place notes: a doubtful line accepted after the second reply": 1
+  },
+  "scope": "Saved STATE counters use notes_truth.py parsing and the generator's true state at archive.n <= NOTES.upto. Non-counter records are excluded. This does not certify runtime, GPU health, another seed, or release readiness."
+}

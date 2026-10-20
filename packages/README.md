@@ -40,6 +40,12 @@ evidence and remaining gates):
 | Family | Deployment packet |
 | --- | --- |
 | Flash-Next UD-IQ3_XXS (separate quantized model) | [Own Xe runtime, two B70 cards; lab replay](qwen38-flash-next-iq3xxs-ownrt-tp2-b70/) |
+| Flash-Next FP8 | [Exact-GDN MTP1 four-B70 record replay](qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/) |
+| Flash-Next FP8 | [MTP0 W13/N64 four-B70 retained recipe](qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/) |
+| Flash-Next FP8 | [MTP1 four-B70 retained recipe](qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/) |
+| Flash-Next FP8 | [MTP1 host-placement four-B70 retained recipe](qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/) |
+| Flash-Next FP8 | [MTP1 Triton hyper-connection four-B70 retained recipe](qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907/) |
+| Flash-Next FP8 | [MTP1 reference Triton kernels four-B70 retained recipe](qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/) |
 | MiniMax-H3 | [Owner-approved Comfy-Org pruned BF16 video, two-B70 measured batch; rebuild incomplete](minimax-h3-pruned-bf16-tp2-b70-20261004/) |
 | LTX 2.5 | [145-frame continuation video, four-B70 lab replay](ltx25-continuation-stream-b70-145f-20261010/) |
 | Gemma 4 26B A4B | [Q8 one-B70 reconstruction](gemma4-26b-a4b-q8-b70/) |
@@ -51,12 +57,18 @@ evidence and remaining gates):
 | Nemotron 3.5 Lightning 30B-A3B | [UD-Q4_K_M one-B70](nemotron-35-lightning-30b-a3b-b70/) |
 | Ornith 1.5 35B-A3B | [Q4_K_M one-B70](ornith-15-35b-a3b-q4km-b70/) |
 | Ornith 1.5 9B | [Q8_0 one-B70](ornith-15-9b-q8-b70/) |
+| Qwen3.5 4B | [W4A16 + native MTP one- or two-B70](qwen35-4b-w4a16-b70/) |
+| Qwen3.5 9B | [FP8-dynamic + native MTP one-B70](qwen35-9b-fp8-b70/) |
+| Qwen3.5 9B | [W4A16 + native MTP one- or two-B70](qwen35-9b-w4a16-b70/) |
 | Qwen3.8 27B | [Q5_K_S 256K + vision + MTP one-B70](qwen38-27b-256k-vision-mtp-b70/) |
+| Qwen3.8 27B | [official FP8 vLLM one-B70](qwen38-27b-fp8-tp1-b70/) |
 | Qwen3.8 27B | [official FP8 vLLM two-B70](qwen38-27b-fp8-tp2-b70/) |
+| Qwen3.8 27B | [AutoRound INT4 fixed-K two-B70](qwen38-27b-int4-fixed-k-tp2-b70/) |
 | Qwen3.8 27B | [Q4_K_M one-B70](qwen38-27b-q4km-tp1-b70/) |
 | Qwen3.8 27B | [Q4_K_M + Q4_0 MTP2 one-B70](qwen38-27b-q4km-mtp2-tp1-b70/) |
 | Qwen3.8 27B | [Q4_K_M + Q4_0 MTP2 two-B70](qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/) |
 | Qwen3.8 27B | [Q8_0 one-B70](qwen38-27b-q8-tp1-b70/) |
+| Qwen3.8 27B | [Q8_0 + Q4_0 MTP2 one-B70](qwen38-27b-q8-q4mtp-mtp2-tp1-b70/) |
 | Qwen3.8 27B | [Q4_K_M two-B70](qwen38-27b-q4km-tp2-asrock-b70/) |
 | Qwen3.8 27B | [Q8_0 two-B70](qwen38-27b-q8-tp2-b70/) |
 

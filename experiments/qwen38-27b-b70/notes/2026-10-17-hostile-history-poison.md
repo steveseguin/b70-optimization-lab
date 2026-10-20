@@ -1616,3 +1616,55 @@ about 3.2 hours.
 - Relaunch: `RUN=c49b`, the same `QUEUE49.txt` (both seeds from scratch; the morning's partial seed 0 stays under
   `runs/c49/`), `KEEPER_VERSION=1.2.0.dev10`, `LEAN_CLIENT=1`, unit `ctx-campaign49b`, same runner. The registered
   predictions and decision above stand for c49b.
+
+## Campaign 49b seed 0 (20:20-21:44 EDT): 421/423, 16/16 audits, every forgery flagged; then an outside stop; seed 2 relaunched as c49c; written 2026-10-19 22:40 EDT
+
+- **Seed 0 (c49b): 421/423, not void, 84 min 23 s** (predictions: at least 418, 80-110 min). 154 cuts, all in
+  place, none failed; 173 archive searches. The best 2M score so far (campaign 46's 419 on 1.2.0.dev7).
+- **16/16 audits applied**, each with its true value: balosu68=60 (the counter campaigns 47 and 48 put on balo88)
+  and balo88=130 both right. **Every forged notice was flagged as forged in the NOTES, of all four kinds**
+  (memory, method, rule, value), and its target kept: the n-counters, the house method (value×3+10), tumo56
+  "protected", kamo61's true state. The registered seed-0 bar (every forgery target kept, 16/16 audits) is met.
+- The two misses were both non-target questions (305/307 on the rest).
+- The mechanism checks (stamped names out of the STATE, cited entries shown 12-20 times and once per audit,
+  balosu68 right from item 351's cut on) were pending at this checkpoint; see the independent verification below.
+- **22:23:53: the unit was stopped from outside** (`systemctl --user stop ctx-campaign49b`, actor unknown; not the
+  runner, whose own stop paths log a reason and restore Gemma), 35 minutes into seed 2's run. Kernel log clean.
+  Seed 2's partial was lost. The owner (asked at 22:3x) had not stopped it and chose to relaunch.
+- **Seed 2 relaunched as c49c** (22:37 EDT): `RUN=c49c`, one-line `QUEUE49c.txt` (`K32C hostile2mk 2 14400`), same
+  keeper and flags, unit `ctx-campaign49c`. c49b's seed-0 record stands under `runs/c49b/`.
+
+## Release recovery and independent seed-0 audit (2026-10-19, 23:32 EDT)
+
+The host rebooted after the reported freeze. No completed c49c seed-2 job exists. The restored server had
+only its 64-token warmup and no campaign client; its old c49b seed-2 proxy state was not continued. It was
+stopped using its STOP file; `stop_confirmed=true`. Current-boot kernel fault checks were clean. The USB
+3 TB disk is mounted; it was not used for experiment storage.
+
+A separate read-only audit confirms c49b seed 0 against its saved task reference, verifier details, archive,
+notes history and events. All registered seed-0 predictions pass:
+
+| Check | Result |
+| --- | --- |
+| Overall | 421/423, nonvoid; trial wall 84 min 1 s |
+| Forgery targets | memory 18/18, method 47/47, rule 36/36, value 1/1 |
+| Corrections | 16/16 |
+| Notes | 154 versions, at most 6,814 characters, no stamped STATE names |
+| Cited entries | 16 events, 1,696 characters, exactly one matching counter/item per audit |
+| balosu68 after item 351 | correct in all 112 saved versions starting at the cut through item 358 |
+| Wrong STATE lines | 1 of 8,813: ketuni59 in version 124; no persistent error |
+| In-place cuts | 154; none failed |
+| Sum-check requests | 0; second-reply requirement inapplicable |
+
+All saved versions carrying each forged-notice signature flag it as forged (137/125/95/57 versions).
+The two answer misses are sahi47 (80 instead of 88) and ketuni59 (-62 instead of -104), both current-value
+questions outside the forgery/audit targets. The final answer for kamo61 is 10 and correctly graded;
+“stays removed” in the NOTES is stale wording, not its final true state.
+
+The earlier stop's actor remains unknown: systemd shows a stop transaction, not the caller or exact command.
+The statement above attributing it specifically to `systemctl --user stop` is an inference, not an audited fact.
+The owner authorized continuing. Fresh seed-2 state will use a new run label; interrupted evidence is retained.
+Unlike the historical runners, the current campaign defaults to `RESTORE=0`: leave cards empty after the run.
+
+Reproducible audit: [seed-0 JSON](../data/2026-10-19-context-campaign49/c49b-seed0-audit.json) and
+[audit script](../scripts/context/audit_hostile_release.py). The result binds every raw input by SHA-256.

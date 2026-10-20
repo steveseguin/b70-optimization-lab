@@ -68,7 +68,8 @@ RUN=${RUN:-c28}
 KV=${KEEPER_VERSION:-1.2.0.dev1}
 TAIL=${TAIL:-1}
 EDIT=${EDIT:-0}
-RESTORE=${RESTORE:-1}
+# A campaign leaves the cards empty unless the owner explicitly requests hosting.
+RESTORE=${RESTORE:-0}
 PER_ARM=${PER_ARM:-1}
 TRAJ=${TRAJ:-0}
 ONE_LAUNCH=${ONE_LAUNCH:-1}

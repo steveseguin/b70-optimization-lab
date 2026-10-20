@@ -15,7 +15,7 @@ your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (
                           shows a bounded view
 ```
 
-Version 1.1.0 · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
+Development version 1.2.0.dev10 (latest stable release: 1.1.0) · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
 `ctxkeeper.py`, `notesdelta.py`) · in plain words: <https://skindeep.ai/context-use.html>
 
 ## Does it work?
@@ -27,12 +27,12 @@ Measured on Qwen3.8-27B (FP8, served by vLLM on two Intel Arc Pro B70 cards), wi
 | **Real code repair**: 40 bugs to fix in a real Python library, handed out one ticket at a time, with three house rules announced along the way, then questions about the earliest fixes | **40/40 fixed, 40/40 following every rule, 7/7 questions right**, in 16 min (`--recipe qwen`); 36-38 min (`--recipe agent`); both with `--recite-when` for the tickets | Sliding 32K window: 22 to 35 of 40 clean, 0/7 questions. Summarizing the history: 33 to 40 of 40, 0 to 7 of 7 |
 | **The same task with a separate agent program** that manages nothing itself ([freeagent](../freeagent/freeagent.py)) | **40/40, 40/40, 7/7 in 33 min**, reading 2.9M prompt tokens; at release, with `--recipe qwen` and no other option: **40/40, 40/40, 7/7 in 31 min** | The same agent sending everything into a 262K window: same score, 55 min, 29.9M prompt tokens |
 | **Memory over 1M tokens**: 228 questions about things said up to a million tokens earlier | **226/228 (99%)** in 50 min | A 200K window: 166/228 (73%), every one of 29 standing-rule questions wrong, 228 min |
-|**2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream|seed 2 **414/423, every forgery target kept, 16/16 corrections applied**; seed 0 **416/423**, two targets and one correction lost to a single model mix-up (the keeper fault behind it fixed in this version)|(not run: no window holds it)|
+| **2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream | On 1.2.0.dev10, seed 0: **421/423, every forgery target kept, 16/16 corrections applied**. The second seed on this version is pending after interrupted runs. On dev9, the two seeds scored 414/423 and 416/423. | (not run: no window holds it) |
 
 ## Tested before release
 
 Version 1.0.0 was installed the way a user installs it (pip into a fresh environment; the Docker image built from
-the source archive; the program files are byte-identical to this release's) and run as written, against the same
+the source archive) and run as written, against the same
 Qwen server unless noted:
 
 | Check | Result |
@@ -301,7 +301,7 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
-**1.2.0** (2026-10-19): fixes from the two-million-token hostile campaigns (39-49), and new options.
+**1.2.0 (in development)**: fixes from the two-million-token hostile campaigns (39-49), and new options.
 
 Keeper faults fixed, on by default, each found by a recorded 2M run: a CHANGES line that opens with its item
 (`(item 820) jami27: ...`) is read as that name's change, not as a new name (142 stray lines in campaign 48); a full
