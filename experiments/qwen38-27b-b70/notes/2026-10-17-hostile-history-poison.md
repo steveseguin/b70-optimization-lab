@@ -1726,3 +1726,36 @@ fixed the balosu68 family outright (0 wrong versions vs campaign 48's 47). The s
 p30_5, p38_6, p49_2, p58_5) and the 30 wrong lines name the next levers: silent tally arithmetic in batch answers
 (a check that works without written steps) and value verification at cuts, starting with removed/reopened
 counters.
+
+## Campaign 51: both 2M seeds on ctxkeeper 1.2.1.dev0 (a reply that stands is still checked; the count question scoped; evidence for a start from memory), registered 2026-10-20 21:10 EDT (before any run)
+
+Arm **K32C** of campaign 49, flags unchanged, on ctxkeeper 1.2.1.dev0. The queue is `QUEUE51.txt`: `K32C hostile2mk
+0 14400`, then `K32C hostile2mk 2 14400`, a server per arm, about 3 hours. Unit `ctx-campaign51`,
+`KEEPER_VERSION=1.2.1.dev0`, `LEAN_CLIENT=1`, `RESTORE=0`, `IDLE_MAX=0`.
+
+Basis (the campaign-49 records above): every wrong NOTES line of the two seeds traces to five decision points — one
+stood-pat cut (c49d's v44: the asked-again reply hit the token cap and the first reply stood unchecked; six
+counters' updates missing or wrong — himo29, como20, roru25, vomogu38, xarosu96, vonedi62 — self-copying six to ten
+versions; 30 of seed 2's 31 wrong lines trace to it) and four doubtful lines accepted whose working started from
+memory (c49b: ketuni59 from -172, the NOTES holding -62; c49d: vonedi62 twice, jami27 from 192, holding 162).
+1.2.1.dev0 closes them: the reply that stands goes through the remaining checks; the count question asks for only
+the names it names; a doubted start the NOTES do not hold and the turns do not state comes with the archive's
+entries for the name, newest first.
+
+**Predictions:**
+- **Wrong STATE lines (the release audit):** seed 0 at most 1 in about 8,800 (campaign 49b: 1); seed 2 at most 5 in
+  about 8,500 (campaign 49d: 30).
+- **Answers:** seed 0 at least 421/423 (campaign 49b: 421); seed 2 at least 419/423 (campaign 49d: 417 — the v44
+  cluster's stale lines cost the four non-target misses; the two tally slips stay, below).
+- **Audits:** 16/16 applied on both seeds; no forged value, method, rule or removal adopted (untouched path).
+- **Mechanism:** no "no usable second reply" cut ends without its remaining checks run; no reply to the count
+  question is cut off by the reply cap; at most about 8 working questions per seed carry archive evidence
+  (campaign 49 had 6 such from-memory starts in 19 working questions over both seeds).
+- **Cost:** wall time within 10 % of campaign 49's (84 and 88 min); in-place re-asks within 20 % of 32/49.
+- **Not claimed:** the strictest 2M bar. The two tally slips (silent batch arithmetic, 711 for 721) are lever 1 for
+  dev12; dev11 does not touch the answer path.
+
+**Decision:**
+- Both seeds at or over the predictions → the notes-side levers of campaign 49 are closed; the remaining bar line is
+  the batch-answer arithmetic, dev12 next.
+- A wrong-line count over the prediction → read which decision point still stands before anything else.

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Campaign 51 (2026-10-20, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32C is
+# campaign 49's, flags unchanged, on ctxkeeper 1.2.1.dev0 (a reply that stands is still checked; the count question
+# asks for only the names it names; a doubted start from memory comes with the archive's entries). Earlier header
+# follows.
 # Campaign 49 (2026-10-19, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32C is K32S
 # with ctxkeeper 1.2.0.dev10's --cited-entries (a sentence of the turns being noted that cites an archived item for a
 # counter gets what that item says about the counter shown in the notes request). The tools/ctxkeeper check also
