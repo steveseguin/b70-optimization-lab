@@ -20,6 +20,9 @@ Docs should point to those artifacts instead of duplicating every script.
   no current repro is starter-certified.
 - [Model Packages](../packages/README.md): user-facing machine-readable package
   front doors for promoted deployment and research recipes.
+- [The Own Xe Runtime](own-runtime.md): the custom SYCL/Xe engine for Qwen3.8
+  hybrid models — measured state, exactness discipline, session-swap contract,
+  and open qualification items.
 - [Model Family Coverage](../families/README.md): normalized lineage,
   quantization variants, TP/MTP/context axes, and explicit
   measured/screened/closed/estimated coverage states behind the public model
