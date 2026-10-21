@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "synthetic": true,
+  "launches": 3,
+  "merged_tokens": 384,
+  "oracle_cap": 128,
+  "gates": [
+    "save K tokens EOS-free",
+    "repeat restore determinism",
+    "merged == full512 row-A reference [0:K+M)",
+    "oracle-128 prefix on merged stream",
+    "reset/drain discipline per leg"
+  ],
+  "refusals": [
+    "restore2 divergence",
+    "EOS inside save tokens",
+    "continuation mismatch vs reference"
+  ],
+  "native_transport_mocked": true,
+  "scope": "real Python worker checkpoint orchestration with synthetic streams; no arithmetic/performance claim; native CPU round trip in checkpoint_probe.py"
+}

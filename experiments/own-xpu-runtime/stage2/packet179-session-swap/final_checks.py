@@ -1,0 +1,79 @@
+"""Verify every CPU gate and current seal; READY is the final file mutation."""
+import argparse,json,subprocess,time
+from pathlib import Path
+from build_engine import P,ROOT,sha,save,limits
+ap=argparse.ArgumentParser();ap.add_argument('--ready',action='store_true');args=ap.parse_args();limits()
+assert subprocess.check_output(['git','branch','--show-current'],text=True).strip()=='main'
+read=lambda f:json.loads(f.read_text())
+root_checks={}
+for leaf in ('packet163-replay.json',):
+    f=P/'evidence'/leaf;assert read(f)['passed'];root_checks[str(f.relative_to(P))]=sha(f)
+ready=[]
+for name,lanes in [('one-card','A')]:
+    p=P/name;checks={}
+    for leaf in ('native-delta.json','build.json','identity-check.json','delta-check.json','analyzer-tests.json','report512-test.json',
+                 'real-arm-sequence.json','native-sequence.json','preparation-probe.json','device-path-imports.json','flags.json',
+                 'checkpoint-probe.json','checkpoint-test.json'):
+        f=p/'evidence'/leaf;r=read(f);assert r['passed'] and r['device_executed'] is False,(name,leaf)
+        checks[str(f.relative_to(p))]=sha(f)
+    build=read(p/'evidence/build.json')
+    assert build['reused_object_files'] is True and build['kernel_objects_unchanged'] is True
+    assert build['arithmetic_qualified'] is False
+    assert build['parent_binary_sha256']=='1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf'
+    assert build['binary_sha256']!=build['parent_binary_sha256']
+    native=read(p/'evidence/native-sequence.json')
+    assert native['target_resets_per_native_owner']==14 and native['sensor_streams_per_reset']==4
+    assert native['peak_child_rss_bytes']<4*1024**3
+    assert len(native['results'])==1
+    for result in native['results']:
+        assert result['returncode']==0 and len(result['sensor_checks'])==56
+    probe=read(p/'evidence/checkpoint-probe.json')
+    assert probe['round_trip']['merged_equal_reference'] and probe['round_trip']['repeat_restore_identical']
+    for lane in lanes:
+        stem='one-'+lane
+        report=P/'evidence'/f'rehearse-{stem}.json';r=read(report)
+        assert r['passed'] and len(r['jobs'])==2
+        assert all(j['passed'] and j['report']['passed'] and not j['service_started'] for j in r['jobs'])
+        checks[str(report.relative_to(ROOT))]=sha(report)
+        log=P/'evidence'/f'plan-{stem}.log'
+        rows=[json.loads(line) for line in log.read_text().splitlines() if line.startswith('{')]
+        assert len(rows)==2 and all(r['plan']=='passed' for r in rows)
+        checks[str(log.relative_to(ROOT))]=sha(log)
+        for attempt in ('a','b'):assert not (p/'evidence'/f'device-p179-full512-{lane}-{attempt}').exists()
+        assert not (p/'evidence'/f'device-p179-checkpoint-{lane}-b').exists()
+    seal=read(p/'seal.json')
+    for leaf,h in seal['files'].items():assert sha(p/leaf)==h,(name,leaf)
+    identity=read(p/'identity.json');assert sha(p/'build/device/own-rt-iq3')==identity['binary_sha256']
+    assert identity['native_arithmetic_unchanged_from_packet163'] and not identity['native_binary_unchanged_from_packet163']
+    assert identity['parent_binary_sha256']==build['parent_binary_sha256']
+    for rel,h in read(p/'inherited-native.json')['embedded_readonly_dependencies'].items():
+        assert (ROOT/rel).is_relative_to(p) and sha(ROOT/rel)==h
+    budget=read(p/'budget.json');assert budget['device_floor_bytes']==25_000_000_000 and budget['cpu_stop_bytes']==27_000_000_000
+    checks['seal.json']=sha(p/'seal.json')
+    proposal=ROOT/'experiments/own-xpu-runtime/ops/lane-queue'/f'proposed-p179-{name}-A.txt'
+    ready.append((p,dict(ready=True,device_executed=False,queued=False,created_utc_ns=time.time_ns(),
+        seal_sha256=sha(p/'seal.json'),checks=checks,
+        scope='experimental session checkpoint/restore (SESSION-SWAP-DESIGN.md v1.1): entry-TU-only native delta over a packet165 byte-identical kernel relink passed every host-side gate including the CPU synthetic save/restore round trip and fail-closed refusals; device qualification is pending and nothing arithmetic or performance is qualified until the device run',
+        oracle_cap=128,full_output_oracle_exact=False,execution_order='row A: incident-retrospective once, reset, prefill512, remaining11 once; row B: save K=256, restore M=128 twice, merged-equality gate at [0:384)',
+        synthetic_report_scope='shared64/128 plus local512; synthetic CPU evidence is not performance or arithmetic qualification',
+        native_probe_scope=native['scope'],draft_probe_scope=native['draft_scope'],
+        checkpoint_probe_scope=probe['scope'],
+        experimental_checkpoint=True,parent_binary_sha256=build['parent_binary_sha256'],
+        kernel_objects_byte_identical_to_packet165=True,
+        first_execution='rebuilt binary executed only host-side --help in capture_flags/rehearsal',
+        proposal_sha256=sha(proposal))))
+    print(name,'final checks PASS',flush=True)
+proposals=ROOT/'experiments/own-xpu-runtime/ops/lane-queue'
+proposal_rows=[]
+for name,lane in [('one-card','A')]:
+    f=proposals/f'proposed-p179-{name}-{lane}.txt';proposal_rows.append(dict(path=str(f.relative_to(ROOT)),sha256=sha(f)))
+    jobs=[json.loads(s) for s in f.read_text().splitlines() if s and not s.startswith('#')]
+    assert len(jobs)==2 and all(j['name'].startswith('packet179-') for j in jobs)
+    assert jobs[0]['name'].endswith('-full512-A-a') and jobs[1]['name'].endswith('-checkpoint-A-b')
+if args.ready:
+    for p,value in ready:save(p/'READY-FOR-DEVICE.json',value)
+    save(P/'READY-FOR-DEVICE.json',dict(ready=True,device_executed=False,queued=False,created_utc_ns=time.time_ns(),
+        packets={str((p/'READY-FOR-DEVICE.json').relative_to(P)):sha(p/'READY-FOR-DEVICE.json') for p,_ in ready},proposals=proposal_rows,checks=root_checks,
+        experimental_checkpoint=True,device_qualification_pending=True,full_output_oracle_exact=False,
+        scope='CPU preparation of the session-checkpoint one-card packet only; one-card lane A whole-host; device qualification pending; no queue action'))
+    print('READY written last; no GPU run or queue action')

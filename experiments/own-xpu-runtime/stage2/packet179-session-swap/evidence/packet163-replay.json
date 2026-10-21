@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "source_is_real_device_evidence": true,
+  "new_measurement": false,
+  "results": [
+    {
+      "attempt": "a",
+      "source": "experiments/own-xpu-runtime/stage2/packet163-full-gate/two-card/evidence/device-full512-B-a",
+      "primary_decode_tok_s": 58.60973580729929,
+      "prefill": {
+        "input_tokens": 512,
+        "users": 1,
+        "elapsed_ms": 65335.67050698912,
+        "tok_s": 7.836454359877275,
+        "timing_definition": "512 / request TTFT seconds: request_start_monotonic through first generated-token completed_monotonic; excludes model load; includes host and first-token work and any reset inside the native request interval; not HTTP TTFT",
+        "request_start_boundary": "legacy native request boundary",
+        "native_prompt_loop_ms": 65335.67050698912,
+        "native_prompt_loop_tok_s": 7.836454359877275,
+        "native_prompt_loop_definition": "native prompt-loop wall time through first generated token, including final prompt position and output head; not device-only time",
+        "prefill_phase_device_ms": null,
+        "prefill_phase_device_status": "not available: unchanged token-timing build does not expose an isolated device prefill phase",
+        "construction": "first 512 tokenizer IDs from one unrepeated real-document excerpt, no special tokens",
+        "cached_tokens": 0,
+        "oracle_covered": false,
+        "warmup": null,
+        "measurement_temperature": "cold-first-request or legacy evidence; not packet165 warm proof"
+      },
+      "real_evidence": true
+    },
+    {
+      "attempt": "b",
+      "source": "experiments/own-xpu-runtime/stage2/packet163-full-gate/two-card/evidence/device-full512-B-b",
+      "primary_decode_tok_s": 58.625233424957,
+      "prefill": {
+        "input_tokens": 512,
+        "users": 1,
+        "elapsed_ms": 65238.195588986855,
+        "tok_s": 7.848163110238336,
+        "timing_definition": "512 / request TTFT seconds: request_start_monotonic through first generated-token completed_monotonic; excludes model load; includes host and first-token work and any reset inside the native request interval; not HTTP TTFT",
+        "request_start_boundary": "legacy native request boundary",
+        "native_prompt_loop_ms": 65238.195588986855,
+        "native_prompt_loop_tok_s": 7.848163110238336,
+        "native_prompt_loop_definition": "native prompt-loop wall time through first generated token, including final prompt position and output head; not device-only time",
+        "prefill_phase_device_ms": null,
+        "prefill_phase_device_status": "not available: unchanged token-timing build does not expose an isolated device prefill phase",
+        "construction": "first 512 tokenizer IDs from one unrepeated real-document excerpt, no special tokens",
+        "cached_tokens": 0,
+        "oracle_covered": false,
+        "warmup": null,
+        "measurement_temperature": "cold-first-request or legacy evidence; not packet165 warm proof"
+      },
+      "real_evidence": true
+    }
+  ],
+  "raw_per_request_receipts": "retention-cleaned from frozen packet163; medians re-verified against surviving real bracket-summary.json and packet165 replay receipt",
+  "parent_replay_sha256": "a372103013c539da37a9ee9b31dc43f57988700e692bf3def2883c954c655b14"
+}

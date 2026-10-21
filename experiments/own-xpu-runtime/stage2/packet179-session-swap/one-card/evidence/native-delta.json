@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "entry_tu_only": true,
+  "patched": [
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp"
+  ],
+  "added": [
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/checkpoint.hpp"
+  ],
+  "parent_main_sha256": "b0fa053d10814becedba2c104e7bc91618f9422fd476aac371eb6b3cd2da68d1",
+  "patched_main_sha256": "8b8a090d8c69142d7bba93cd6bdb745237210410b89fab6e7da7207dbe782232",
+  "checkpoint_hpp_sha256": "058e3f33d5b2371530b192b0faaafb51b57ca2dd2311af869e7094761c66ccdc",
+  "patch_sha256": "238e3c702a2dcf41d2b8ae320256c4ab75a679c1765d19fdebb176fe0ed370d5",
+  "harness_files": [
+    "worker.py",
+    "measurement.py",
+    "screen.py",
+    "entry.py",
+    "native-help-flags.json",
+    "budget.json"
+  ],
+  "kernel_arithmetic": "unchanged by construction: only the entry TU textual closure changed; kernel objects relinked byte-identical from packet165 by build_checkpoint.py",
+  "scope": "experimental session checkpoint/restore (SESSION-SWAP-DESIGN.md v1.1); argv + run() hooks + new header; device qualification pending"
+}

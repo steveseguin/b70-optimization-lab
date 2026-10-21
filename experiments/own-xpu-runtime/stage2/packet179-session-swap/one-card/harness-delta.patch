@@ -1,0 +1,385 @@
+--- packet165/budget.json
++++ packet179/budget.json
+@@ -154,7 +154,7 @@
+     "all_bytes_scaled": true,
+     "projected_peak_bytes": 28570626
+   },
+-  "planned_write_bytes": 57141252,
++  "planned_write_bytes": 300000000,
+   "multiplier_over_scaled_measured": 2,
+   "actual_512_write_measurement_pending": true,
+   "device_floor_bytes": 25000000000,
+@@ -165,8 +165,8 @@
+   "minimum_per_operation_wait_multiple": 21.06129167244187,
+   "load_watchdog_seconds": 7200,
+   "expected_seconds": [
+-    800,
+-    1800
++    1200,
++    3600
+   ],
+   "no_wall_clock_data_proof_deadline": true,
+   "scope": "one fresh load; prefill plus12x512. Separate run repeats this reserve; never overlap.",
+@@ -174,5 +174,8 @@
+   "controller_wait_seconds": null,
+   "measured_cold_phase_floor_seconds": 60,
+   "native_wait_multiple_over_cold_phase_floor": 10,
+-  "measured_parent_driver_cache_bytes": 10598672
++  "measured_parent_driver_cache_bytes": 10598672,
++  "checkpoint_planned_blob_bytes": 200000000,
++  "checkpoint_note": "checkpoint blobs ~76-175 MB per save at gate fill plus a third native run; floors unchanged",
++  "checkpoint_extra_model_loads": 2
+ }
+--- packet165/entry.py
++++ packet179/entry.py
+@@ -5,7 +5,7 @@
+ def main(argv=None):
+  ap=argparse.ArgumentParser(description=__doc__)
+  ap.add_argument('--lane',choices=('A','B'),required=True)
+- ap.add_argument('--kind',choices=('full512','smoke','bracket'),default='full512',help='smoke/bracket accepted only by offline report compatibility tests')
++ ap.add_argument('--kind',choices=('full512','smoke','bracket','checkpoint'),default='full512',help='smoke/bracket accepted only by offline report compatibility tests; checkpoint is the experimental session save/restore gate')
+  ap.add_argument('--output',type=Path,required=True)
+  ap.add_argument('--reference',type=Path)
+  ap.add_argument('--fault-review',type=Path)
+--- packet165/identity.json
++++ packet179/identity.json
+@@ -2,7 +2,7 @@
+   "parent": "packet58aj-onecard-resident",
+   "gpu_count": 1,
+   "arithmetic": "iq3-p49-split32-v1",
+-  "binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
++  "binary_sha256": "8d18538475e00200032846d51dce11e0d38392dc9962778ffd01b03dd75394a7",
+   "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+   "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+   "context": 4096,
+@@ -12,7 +12,7 @@
+   "requested_max_new": 512,
+   "attempts": 2,
+   "model_loads_per_attempt": 1,
+-  "parent_binary_sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c",
++  "parent_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+   "measurement_delta": [
+     "response-cap parser128->512",
+     "pre-device --help",
+@@ -21,5 +21,5 @@
+   "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
+   "native_binary_unchanged_from_packet163": false,
+   "native_arithmetic_unchanged_from_packet163": true,
+-  "native_delta": "absolute include and constant paths packet163-full-gate -> packet165-warm-prefill"
++  "native_delta": "entry TU only: checkpoint/restore argv, run() save hook and restore-after-reset integration, new checkpoint.hpp (SESSION-SWAP-DESIGN.md v1.1); every kernel object byte-identical to packet165"
+ }
+--- packet165/inherited-native.json
++++ packet179/inherited-native.json
+@@ -1,9 +1,9 @@
+ {
+   "parent": "experiments/own-xpu-runtime/stage2/packet163-full-gate/one-card",
+-  "binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
++  "binary_sha256": "8d18538475e00200032846d51dce11e0d38392dc9962778ffd01b03dd75394a7",
+   "embedded_readonly_dependencies": {
+-    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
++    "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
+   },
+   "native_recompiled": true,
+-  "parent_binary_sha256": "467e22c9fb1292bfb3c0ade9fcad628b349bc40fd2c556c61b61d10ea6110197"
++  "parent_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf"
+ }
+--- packet165/measurement.py
++++ packet179/measurement.py
+@@ -105,3 +105,24 @@
+   result['fresh_load_repeat']=dict(passed=True,request_count=13,scope='all emitted tokens, including EOS/cap and prefill response')
+   result['no_speed_verdict_until_two_fresh_loads']=False
+  return result
++
++def checkpoint_check(save,restore1,restore2,reference,expected,k,m):
++ """Restart-and-continue exactness plus repeat determinism (design 7.1/7.2/7.3)."""
++ for leg in (save,restore1,restore2):stream_check(leg)
++ require(len(save['tokens'])==k and not any(t in EOS for t in save['tokens']),'checkpoint save must complete K tokens without EOS')
++ require(restore1['tokens']==restore2['tokens'],'repeat restore determinism')
++ require(len(restore1['tokens'])==m,'restore continuation length')
++ merged=save['tokens']+restore1['tokens']
++ require(merged==reference.get('tokens',[])[:k+m],'merged checkpoint stream differs from the uninterrupted fresh-process reference')
++ combined=dict(save)
++ combined.update(tokens=merged,requested_max_new=k+m,
++  timing_rows=save['timing_rows']+restore1['timing_rows'],
++  request_start_monotonic=save['request_start_monotonic'],request_end_monotonic=restore1['request_end_monotonic'])
++ oracle=stream_check(combined,expected)
++ rows=reference.get('timing_rows',[]);require(len(rows)>=k,'reference timing stream short')
++ cold_prefix_ms=1000*(rows[k-1]['completed_monotonic']-reference['request_start_monotonic'])
++ return dict(passed=True,device_executed=False,merged_tokens=k+m,reference_tokens_compared=k+m,
++  repeat_restore_identical=True,save_eos_free=True,oracle_check=oracle,
++  cold_prefix_ms=cold_prefix_ms,
++  cold_prefix_definition='uninterrupted reference request start through its K-th generated token (cold prefill plus decode of the same prefix), same prompt same binary',
++  restore_continuation_wall_ms=1000*(restore1['request_end_monotonic']-restore1['request_start_monotonic']))
+--- packet165/native-help-flags.json
++++ packet179/native-help-flags.json
+@@ -12,6 +12,11 @@
+   "--cards",
+   "--channel",
+   "--checked",
++  "--checkpoint-delete",
++  "--checkpoint-id",
++  "--checkpoint-inspect",
++  "--checkpoint-restore",
++  "--checkpoint-save",
+   "--context",
+   "--dispatch",
+   "--draft-capture",
+--- packet165/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
++++ packet179/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
+@@ -157,10 +157,11 @@
+   std::string memory = "layer-streaming";
+   bool resident_lookups=false;
+   fs::path inputs, output, model, plan, auth, oracle, suite_inputs, bracket_inputs;
++  fs::path checkpoint_save, checkpoint_restore; std::string checkpoint_id;
+ };
+ static Options parse(int argc, char **argv) {
+   // PACKET163_HELP_BEGIN: metadata only; before device or model access.
+-  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
++  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --checkpoint-delete --checkpoint-id --checkpoint-inspect --checkpoint-restore --checkpoint-save --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
+   // PACKET163_HELP_END
+ 
+   Options a;
+@@ -234,6 +235,9 @@
+     else if (k == "--lookups") {auto v=value();require(v=="mapped"||v=="resident","lookup dimension");a.resident_lookups=v=="resident";}
+     else if (k == "--bracket-inputs") a.bracket_inputs=value();
+     else if (k == "--suite-inputs") a.suite_inputs=value();
++    else if (k == "--checkpoint-save") a.checkpoint_save=value();
++    else if (k == "--checkpoint-restore") a.checkpoint_restore=value();
++    else if (k == "--checkpoint-id") a.checkpoint_id=value();
+     else if (k == "--input" || k == "--prompt-tokens")
+       a.inputs = value();
+     else if (k == "--output")
+@@ -284,6 +288,13 @@
+ #else
+   require(a.authorized || a.record, "--authorized-device-window required");
+ #endif
++  require(a.checkpoint_save.empty()||a.checkpoint_restore.empty(),"checkpoint save and restore are exclusive");
++  require((a.checkpoint_save.empty()&&a.checkpoint_restore.empty())||a.suite_inputs.empty(),"checkpoint modes are single-request only");
++  require(a.checkpoint_id.empty()||(!a.checkpoint_save.empty()||!a.checkpoint_restore.empty()),"--checkpoint-id requires a checkpoint mode");
++  if(!a.checkpoint_save.empty()||!a.checkpoint_restore.empty())
++    require(!a.checkpoint_id.empty()&&a.checkpoint_id.size()<=64&&
++            a.checkpoint_id.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")==std::string::npos,
++            "checkpoint id must be nonempty and filename-safe");
+   require(a.native_nice>=0 && a.native_nice<=19 && getpriority(PRIO_PROCESS, 0) == a.native_nice, "native priority differs from declared --native-nice");
+   require(getenv("OMP_NUM_THREADS") &&
+               std::string(getenv("OMP_NUM_THREADS")) == "2",
+@@ -1764,6 +1775,7 @@
+      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp"
++#include "checkpoint.hpp"
+ 
+ // SPEED6_SCRATCH_POLICY_BEGIN
+ // Scope the footprint reduction to the previously refused split23/dr1 arm.
+@@ -1865,6 +1877,11 @@
+     catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
+   }
+ #endif
++  // Device-free checkpoint maintenance; parse() would require device authorization.
++  if(argc==3&&(std::string(argv[1])=="--checkpoint-inspect"||std::string(argv[1])=="--checkpoint-delete")) {
++    try{return pipeline::checkpoint_host_tool(argv[1]+2,argv[2]);}
++    catch(const std::exception& error){std::cerr<<"checkpoint "<<(argv[1]+2)<<" failed: "<<error.what()<<"\n";return 1;}
++  }
+   std::unique_ptr<Engine> e;
+   std::unique_ptr<Weights> w;
+   fs::path output;
+@@ -2092,11 +2109,26 @@
+       e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
+     };
+     int next=-1;auto prefill_start=std::chrono::steady_clock::now();
+-    for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
+-    prefill_ms=Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    // Restore runs AFTER p58_reset_request (its zeroing makes sliced-KV byte-exact
++    // and its reset.json receipt stays a hard gate); the prefill loop is skipped and
++    // token_index starts at N so step()/admit_position match the uninterrupted run.
++    pipeline::RestoredCheckpoint restored;const bool restoring=!a.checkpoint_restore.empty();double checkpoint_restore_ms=0;
++    if(restoring){auto restore_start=std::chrono::steady_clock::now();
++      restored=pipeline::checkpoint_restore(*e,a.checkpoint_restore,a.checkpoint_id,input);
++      checkpoint_restore_ms=Engine::ms(restore_start);next=restored.next_token;token_index=size_t(restored.position);}
++    else for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
++    prefill_ms=restoring?0:Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    std::ostringstream restore_ms_row;restore_ms_row.precision(17);restore_ms_row<<checkpoint_restore_ms;
++    const std::string restore_ms_json=restoring?restore_ms_row.str():"null";
+     for(auto& v:e->class_ms)v=0;for(auto& v:e->class_launches)v=0;for(auto& v:e->class_groups)v=0;
+     auto decode_start=std::chrono::steady_clock::now();
+-    if(!a.first)for(int i=0;i<a.tokens;++i){
++    if(!a.first&&restoring)for(int i=0;i<a.tokens;++i){
++      next=step(next,i+2);
++      generated.push_back(next);
++      std::cout<<"token_id "<<next<<'\n';
++      if(next==p.g.eos || (!a.mini && next==248046))break;
++    }
++    else if(!a.first)for(int i=0;i<a.tokens;++i){
+       if(!a.bracket_inputs.empty()) {
+         const auto& expected=expected_tokens.at(request_id);
+         require(generated.size()<expected.size()&&next==expected[generated.size()],"packet49 oracle token mismatch: "+view.label+"/"+request_id+" token "+std::to_string(generated.size()));
+@@ -2107,6 +2139,7 @@
+       if(i+1<a.tokens)next=step(next,i+2);
+     }
+     require(a.bracket_inputs.empty()||generated==expected_tokens.at(request_id),"packet49 completion length mismatch");
++    if(!a.checkpoint_save.empty())pipeline::checkpoint_save(*e,a.checkpoint_save,a.checkpoint_id,input,generated);
+     decode_ms=Engine::ms(decode_start);
+     e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::ostringstream rr;rr.precision(17);
+@@ -2114,7 +2147,7 @@
+       <<",\"cached_tokens\":0,\"gpu_count\":1,\"decode_mode\":\"plain\",\"context\":"<<a.context
+       <<",\"request_start_monotonic\":"<<request_start_seconds<<",\"request_end_monotonic\":"<<monotonic()
+       <<",\"prompt_tokens\":"<<input.size()<<",\"requested_max_new\":"<<a.tokens
+-      <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
++      <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms<<",\"checkpoint_restore_ms\":"<<restore_ms_json
+       <<",\"tokens\":[";
+     for(size_t i=0;i<generated.size();++i)rr<<(i?",":"")<<generated[i];
+     rr<<"],\"timing_rows\":[";
+--- packet165/screen.py
++++ packet179/screen.py
+@@ -21,7 +21,7 @@
+ def parser():
+  ap=argparse.ArgumentParser()
+  ap.add_argument('--lane',choices=('A','B'),required=True)
+- ap.add_argument('--kind',choices=('full512','smoke','bracket'),default='full512')
++ ap.add_argument('--kind',choices=('full512','smoke','bracket','checkpoint'),default='full512')
+  ap.add_argument('--output',type=Path,required=True)
+  ap.add_argument('--reference',type=Path)
+  ap.add_argument('--fault-review',type=Path)
+@@ -45,6 +45,16 @@
+  return values
+ 
+ def report_completed(output,record,identity,coordination):
++ if identity.get('bracket',{}).get('kind')=='checkpoint':
++  receipt=read(output/'run/checkpoint-receipt.json')
++  require(receipt.get('passed') is True and receipt.get('device_executed') is False,'checkpoint gate receipt incomplete')
++  result=dict(receipt)
++  result.update(kind='checkpoint',lane=identity['lane'],
++   scope=coordination.get('scope','report-rehearsal'),device_executed=bool(record.get('device_executed')),
++   source_receipt_sha256=sha(output/'run/checkpoint-receipt.json'),report_after_device_release=True,
++   strict512=False,submission_eligible=False,experimental_checkpoint=True)
++  save(output/'summary.json',result);save(output/'bracket-summary.json',result)
++  return result
+  proof=read(output/'run/report-inputs.json')
+  require(proof.get('passed') is True,'measurement worker incomplete')
+  rows=proof['requests']
+@@ -74,15 +84,20 @@
+   args.reference=args.reference.resolve();require(args.reference.parent==HERE/'evidence' and args.reference!=args.output,'fresh same-packet reference required')
+  budget=read(HERE/'budget.json')
+  spec=dict(measurement_identity=identity,lane=args.lane,profile='onecard'if one else'tp2',bracket=dict(kind=args.kind),reference=str(args.reference)if args.reference else None)
+- command=['/usr/bin/python3','-B',str(HERE/'worker.py'),'--output',str(args.output/'run'),'--lane',args.lane]
++ command=['/usr/bin/python3','-B',str(HERE/'worker.py'),'--output',str(args.output/'run'),'--lane',args.lane,'--kind',args.kind]
++ if args.reference:command+=['--reference',str(args.reference)]
+  plan=dict(passed=True,device_executed=False,model_loads=1,request_count=13,requested_max_new=512,prefill_input_tokens=512,oracle_exact_tokens=128,
+   host_required_available_bytes=budget['host_required_available_bytes'],planned_write_bytes=budget['planned_write_bytes'],
+   expected_seconds=budget['expected_seconds'],watchdog_seconds=7200,per_operation_wait_seconds=budget['wait_seconds'],
+   reservation_scope='whole-host'if args.lane=='A'else'lane-B with other lane required idle',command=command,
+   second_fresh_attempt=bool(args.reference),prefill=dict(users=1,cached_tokens=0,request_index=1,warmup_prompt=measurement.IDS[0],suite_prompt_used_once=True),submission_eligible=False)
++ if args.kind=='checkpoint':
++  plan.update(model_loads=3,request_count=3,requested_max_new=None,prefill=None,
++   checkpoint=dict(prompt=measurement.IDS[0],save_max_new=256,restore_max_new=128,restore_launches=2,experimental=True,
++    gate='save K=256 then two independent restore M=128 continuations; merged stream must equal this packet\'s full512 row-A reference at [0:384); repeat-restore determinism; oracle-128 prefix on the merged stream'))
+  if args.plan:
+   print(json.dumps(plan));return 0
+- require(args.kind=='full512','short synthetic report modes cannot launch devices')
++ require(args.kind in('full512','checkpoint'),'short synthetic report modes cannot launch devices')
+  require(args.authorized_device_window and args.fault_review,'coordinator authorization and fault review required')
+  from readiness import verify_ready
+  verify_ready()
+--- packet165/worker.py
++++ packet179/worker.py
+@@ -4,6 +4,10 @@
+ from common import HERE,D,read,save,require,sha
+ import measurement
+ import exec_limits
++
++CHECKPOINT_PROMPT='incident-retrospective'
++CHECKPOINT_K=256
++CHECKPOINT_M=128
+ 
+ 
+ def entries():
+@@ -48,6 +52,70 @@
+   ('--suite-inputs',table),('--input',HERE/'inputs/prefill512/tokens.txt'),('--plan',HERE/'inputs/plan.tsv'),
+   ('--identity',HERE/'inputs/identity.tsv'),('--selection',HERE/'selection.json'),('--selection-sha256',sha(HERE/'selection.json')),('--dispatch',HERE/'dispatch.json')]:replace(k,v)
+  return ['/usr/bin/ionice','-c3',*cmd]
++
++def checkpoint_command(output,max_new,mode,ckpt_root):
++ """Single-request native argv for one checkpoint leg (save or restore)."""
++ cmd=read(HERE/'parent-native-argv.json')
++ require(cmd.count('--suite-inputs')==1,'native flag --suite-inputs')
++ at=cmd.index('--suite-inputs');del cmd[at:at+2]
++ def replace(k,v):require(cmd.count(k)==1,'native flag '+k);cmd[cmd.index(k)+1]=str(v)
++ cmd[0]=str(HERE/'build/device/own-rt-iq3')
++ for k,v in [('--max-new',max_new),('--seconds',7200),('--wait-seconds',600),('--output',output),
++  ('--input',HERE/'inputs'/CHECKPOINT_PROMPT/'tokens.txt'),('--plan',HERE/'inputs/plan.tsv'),
++  ('--identity',HERE/'inputs/identity.tsv'),('--selection',HERE/'selection.json'),('--selection-sha256',sha(HERE/'selection.json')),('--dispatch',HERE/'dispatch.json')]:replace(k,v)
++ return ['/usr/bin/ionice','-c3',*cmd,mode,str(ckpt_root),'--checkpoint-id','gate']
++
++def run_native(cmd,output):
++ """One fresh native process with the same polling/stop discipline as one()."""
++ child=None;stop=[]
++ def signal_stop(sig,frame):
++  stop.append(sig)
++  if child is not None and child.poll()is None:child.send_signal(signal.SIGTERM)
++ handlers={s:signal.signal(s,signal_stop)for s in(signal.SIGINT,signal.SIGTERM)}
++ try:
++  with(output/'native.log').open('w')as log:
++   exec_limits.check();child=subprocess.Popen(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
++   while child.poll()is None:
++    require(not stop,'coordinator stop');time.sleep(.25)
++  require(child.returncode==0 and not stop,'native failed; no retry')
++ finally:
++  for s,h in handlers.items():signal.signal(s,h)
++
++def checkpoint(output,reference):
++ """Design 7.1/7.2 gate: save K=256, two independent restore M=128 continuations.
++
++ Reference is this packet's own full512 row-A run of the same prompt and binary.
++ """
++ require(measurement.IDS[0]==CHECKPOINT_PROMPT,'checkpoint gate prompt')
++ prompt=list(map(int,(HERE/'inputs'/CHECKPOINT_PROMPT/'tokens.txt').read_text().split()))
++ oracle=read(HERE/'lineage/oracle128'/(CHECKPOINT_PROMPT+'.json'))['tokens']
++ reference_result=read(Path(reference)/'run/native'/CHECKPOINT_PROMPT/'result.json')
++ root=output/'checkpoints';results={}
++ for leg,max_new,mode in [('save',CHECKPOINT_K,'--checkpoint-save'),('restore1',CHECKPOINT_M,'--checkpoint-restore'),('restore2',CHECKPOINT_M,'--checkpoint-restore')]:
++  legout=output/'run'/leg;legout.mkdir(parents=True)
++  dest=legout/'native'
++  cmd=checkpoint_command(dest,max_new,mode,root);save(legout/'launch.json',dict(argv=cmd))
++  run_native(cmd,legout)
++  require((dest/'lookup-request-complete.json').is_file(),'completion marker missing: '+leg)
++  reset=read(dest/'reset.json')
++  require(reset.get('passed')is True and reset.get('cached_tokens')==0 and reset.get('allocation_ids_preserved')is True,'cold request reset missing: '+leg)
++  streams={'timings.jsonl':measurement.check_file_stream(dest/'timings.jsonl')}
++  if leg=='save':streams['prefill-timings.jsonl']=measurement.check_file_stream(dest/'prefill-timings.jsonl')
++  save(dest/'stream-proof.json',dict(passed=True,streams=streams,scope='presence/format only; restore legs have an empty prefill stream by construction'))
++  results[leg]=read(dest/'result.json')
++  results[leg]['request_reset_sha256']=[sha(dest/'reset.json')]
++ manifest=read(root/'gate/manifest.json')
++ require(manifest.get('format')=='ownrt.session-checkpoint.v1' and manifest.get('label')=='experimental','checkpoint manifest identity')
++ check=measurement.checkpoint_check(results['save'],results['restore1'],results['restore2'],reference_result,oracle,CHECKPOINT_K,CHECKPOINT_M)
++ save(output/'checkpoint-receipt.json',dict(check,
++  prompt_id=CHECKPOINT_PROMPT,prompt_tokens=len(prompt),save_max_new=CHECKPOINT_K,restore_max_new=CHECKPOINT_M,
++  save_seconds=manifest['measurements']['save_seconds'],save_bytes=manifest['measurements']['save_bytes'],
++  restore_ms=results['restore1'].get('checkpoint_restore_ms'),
++  manifest_sha256=sha(root/'gate/manifest.json'),manifest=manifest,
++  reference=str(Path(reference)),reference_result_sha256=sha(Path(reference)/'run/native'/CHECKPOINT_PROMPT/'result.json'),
++  reset_sha256={leg:results[leg]['request_reset_sha256'] for leg in results},
++  scope='experimental session checkpoint restart-and-continue gate; merged K+M stream versus this packet\'s uninterrupted full512 row-A reference; oracle cap 128 on the merged stream; not a performance claim'))
++ save(output/'teardown.json',prove_drain([read(output/'run'/leg/'native/receipt.json') for leg in ('save','restore1','restore2')]))
+ 
+ def prove_drain(receipts):
+  for row in receipts:
+@@ -143,10 +211,15 @@
+   for s,h in handlers.items():signal.signal(s,h)
+ 
+ def main():
+- ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);ap.add_argument('--lane',choices=('A','B'),required=True);a=ap.parse_args()
++ ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);ap.add_argument('--lane',choices=('A','B'),required=True)
++ ap.add_argument('--kind',choices=('full512','checkpoint'),default='full512');ap.add_argument('--reference',type=Path);a=ap.parse_args()
+  require((a.output.parent/'window.json').is_file(),'outer admitted window required')
+  identity=read(a.output.parent/'identity.json');require(identity['lane']==a.lane,'lane binding')
+- a.output.mkdir();items=entries()
++ a.output.mkdir()
++ if a.kind=='checkpoint':
++  require(a.reference is not None,"--kind checkpoint requires --reference (this packet's full512 row-A output)")
++  checkpoint(a.output,a.reference);return 0
++ items=entries()
+  observed=one(a.output,items)if read(HERE/'identity.json')['gpu_count']==1 else two(a.output,items)
+  # This process has released every device before doing metric aggregation.
+  rows=[measurement.request(read(observed[e['prompt_id']]['path']),e['tokens'],e['prompt_id'],expected(e))for e in items]
