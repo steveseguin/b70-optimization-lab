@@ -10,6 +10,17 @@ stripping removed, and unsupported detection-rate claims withdrawn. Saved benchm
 histories, not the proxy's managed requests. No new campaign or server was launched by this review; the existing
 campaign-51 runner was active when checked and was left untouched.
 
+**October 20, evening EDT — device requalification: the sealed full512 profiles bit-exactly reproduce on this boot; daily endpoints restored.** Four fresh
+loads against the historical sealed packet165 binary (`cb2cef71…`) under whole-host reservation and sealed
+admission: TP2 58.724/58.676 and TP1 31.766/31.774 tok/s (published loads 58.632/58.557 and 31.782/31.510),
+all 6,495 output tokens byte-identical across loads **and** to the original sealed qualification brackets,
+oracle exactness intact. Evidence in commit `72bddd50d`; receipt in
+`data/2026-10-20-model-package-closeout/device-requalification-20261020.md`. The portable rebuilt binaries
+(`c2573efd…`, CPU-compile-validated only) still need their own device gate — the engine binary is seal-pinned
+in both card seals, so qualification means a new sealed packet: next campaign item. All three daily endpoints
+were recreated from the closeout restore plan afterward (FP8 on fresh `-restore2` state dirs — the serve
+tooling refuses state-dir reuse by design); 18130/18131/18100 all serving.
+
 **October 20, 11:15 EDT — ctxkeeper 1.2.0 is the stable release (Latest); campaign 50 gate passed.** c50c ran
 the registered G1-G4 against the public prerelease assets: G1 repair through the pip wheel **40/40 fixed, 40/40
 clean, 7/7 audit, 12 min 18 s**; G2 the 300K demo through the Docker image built from the public source archive
