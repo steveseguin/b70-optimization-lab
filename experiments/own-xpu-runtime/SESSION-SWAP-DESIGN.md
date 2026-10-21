@@ -52,11 +52,20 @@ are fixed-size. Host mirrors that must be recorded for exact resumption:
 (`context_extent`/`alternate_context_extent`, re-derived at restore by
 `admit_position(max_position)`), and the full token array with its sha256.
 
-Immutable and therefore excluded: model weights (≈82 GB, three GGUF shards
-pinned by `identity.tsv`), `rope.bf16` (sha256-verified at startup), expert
-cache contents (immutable weights; residency is performance state only —
-restore re-warms through normal misses, documented as a first-decode-after-
-restore timing effect, never a correctness input).
+Immutable and therefore excluded: model weights (≈82 GB, three GGUF shards).
+Model identity is the packet's `identity.tsv` stat pins (size/dev/ino/mtime/
+ctime per shard) plus its sha256 — recorded in the manifest instead of a
+content hash, since hashing 82 GB at save is impractical. `rope.bf16`
+(sha256-verified at startup) and `ple_metadata` (static GGUF-derived, re-put
+by the request reset) are likewise covered by the model-identity check rather
+than stored. Expert cache contents are immutable weights; residency is
+performance state only — restore re-warms through normal misses, documented
+as a first-decode-after-restore timing effect, never a correctness input.
+
+Restore runs **after** the per-request reset (not in place of it): the
+reset's zeroing of all request allocations is what makes sliced-KV restore
+byte-exact (untouched tail rows are zero in both arms), and its `reset.json`
+receipt is an existing hard gate.
 
 ## 3. Interface contract
 
@@ -130,7 +139,7 @@ approximate restores.
   "label": "experimental",
   "checkpoint_id": "caller-supplied",
   "created": "ISO-8601",
-  "model": {"weights_sha256": "…", "identity_tsv_sha256": "…"},
+  "model": {"identity_tsv_sha256": "…", "shard_stat_rows": [{"size": …, "dev": …, "ino": …, "mtime": …, "ctime": …}]},
   "engine": {"binary_sha256": "…", "packet": "packet165", "profile": "tp1-full512"},
   "geometry": {"layers": 48, "qsa_layers": [3,7,…,47], "kvh": 2, "ad": 256,
                "gdn": {"kh": 16, "vh": 48, "d": 128}, "context": 4096},
@@ -148,11 +157,14 @@ approximate restores.
 Reusing the packet165 harness disciplines (`measurement.py` stream checks,
 fresh-process repeat equality):
 
-1. **Restart-and-continue (correctness):** run a request to token K, save,
-   kill the process, restart, restore, decode to K+M. The M restored tokens
-   must equal, bit-for-bit, an uninterrupted fresh-process reference run of
-   the same prefix. Oracle-prefix discipline as in the sealed profiles
-   (oracle cap 128 for the gate; full-array comparison for the receipt).
+1. **Restart-and-continue (correctness):** run a request to token K (natural
+   exit at `--max-new K`, full receipts and drain proof — stronger evidence
+   than a kill), save, start a fresh process, restore, decode M more tokens.
+   The merged K+M stream must equal, bit-for-bit, an uninterrupted
+   fresh-process reference run of the same prompt and same binary (the
+   packet's own full512 reference row at [0:K+M)). Oracle-prefix discipline
+   as in the sealed profiles (oracle cap 128 for the gate, full-array
+   equality for the receipt).
 2. **Repeat determinism:** two independent save→restore→continue cycles from
    the same checkpoint produce identical continuations.
 3. **Cold-start comparison (speed, reported alongside):** restore time
