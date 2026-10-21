@@ -1,0 +1,56 @@
+--- packet165/identity.json
++++ packet178/identity.json
+@@ -2,7 +2,7 @@
+   "parent": "packet58aj-onecard-resident",
+   "gpu_count": 1,
+   "arithmetic": "iq3-p49-split32-v1",
+-  "binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
++  "binary_sha256": "6fa840abbf598fcdfa1d7d9d558ba2b41bbbe1129c3a5e50bbb362f26489bf10",
+   "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+   "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+   "context": 4096,
+@@ -12,7 +12,7 @@
+   "requested_max_new": 512,
+   "attempts": 2,
+   "model_loads_per_attempt": 1,
+-  "parent_binary_sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c",
++  "parent_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+   "measurement_delta": [
+     "response-cap parser128->512",
+     "pre-device --help",
+@@ -21,5 +21,5 @@
+   "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
+   "native_binary_unchanged_from_packet163": false,
+   "native_arithmetic_unchanged_from_packet163": true,
+-  "native_delta": "absolute include and constant paths packet163-full-gate -> packet165-warm-prefill"
++  "native_delta": "portable rebuild from hash-pinned archive native-sources.tar.gz 92a4858e3b4009fb with @SOURCE@ relocated to packet178 one-card/native-portable; no arithmetic, flag or parser edits"
+ }
+--- packet165/inherited-native.json
++++ packet178/inherited-native.json
+@@ -1,9 +1,9 @@
+ {
+-  "parent": "experiments/own-xpu-runtime/stage2/packet163-full-gate/one-card",
+-  "binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
++  "parent": "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card",
++  "binary_sha256": "6fa840abbf598fcdfa1d7d9d558ba2b41bbbe1129c3a5e50bbb362f26489bf10",
++  "parent_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+   "embedded_readonly_dependencies": {
+-    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
++    "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/native-portable/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
+   },
+-  "native_recompiled": true,
+-  "parent_binary_sha256": "467e22c9fb1292bfb3c0ade9fcad628b349bc40fd2c556c61b61d10ea6110197"
++  "native_recompiled": true
+ }
+--- packet165/runtime-constants.json
++++ packet178/runtime-constants.json
+@@ -1,7 +1,7 @@
+ [
+   {
+-    "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16",
+-    "local": "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16",
++    "source": "native-sources.tar.gz member experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16",
++    "local": "native-portable/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rope.bf16",
+     "sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390",
+     "bytes": 4194304
+   }
