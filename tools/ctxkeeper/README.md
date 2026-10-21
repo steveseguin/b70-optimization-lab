@@ -325,6 +325,14 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
+Development (1.3.0.dev0, 2026-10-21): opt-in `--save-conversations` retains full client requests,
+returned replies and actual main-call views in a deduplicated SQLite journal. Local `--sessions list`
+and `--sessions export --session NAME` commands recover saved exchanges after a restart, including
+recent turns that have never reached the recall archive. See [saved conversations](CONVERSATIONS.md)
+for setup, continuation, backup and failure semantics. This is text-based recovery, not GPU-state
+restoration; runtime checkpoint integration and performance qualification remain pending. Stable
+PyPI 1.2.0 is unchanged.
+
 Development (1.2.2.dev0, not a stable release): `--sum-check` first asks once for working on tool-call blocks
 containing at least three integer assignments whose absolute values are 100 or more, when a value is absent from
 the managed view and has no written arithmetic equality. It then checks multiplication in the reply that stands,
@@ -523,7 +531,7 @@ windows and `--log-calls`. Default behaviour is unchanged (same requests, same s
 
 ```bash
 cd tools/ctxkeeper
-python3 -m unittest test_ctxkeeper test_notesdelta     # against a scripted model; no server needed
+python3 -m unittest test_ctxkeeper test_notesdelta test_conversations  # scripted models; no server needed
 python3 sync_notesdelta.py                             # the checks are a copy of the lab harness's: must match
 ```
 

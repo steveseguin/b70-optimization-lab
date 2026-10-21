@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 21 — ctxkeeper durable conversations implemented in development 1.3.0.dev0.**
+The two-card host's work is the text-storage side of the session-swap effort.
+Opt-in `--save-conversations` retains complete requests, returned replies and
+actual main-call views; local list/export commands support text-based resume.
+141 CPU/scripted-model tests and 15 release-gate tests pass, including abrupt
+process exit, archived-history resume, concurrent sessions and streaming HTTP.
+A fresh package installation and separate-process export pass. Setup and the
+runtime integration boundary: [saved conversations](tools/ctxkeeper/CONVERSATIONS.md).
+PyPI 1.2.0 remains stable; GPU restore is not implemented or claimed here. The
+other host owns the runtime contract, qualification and public runtime pages.
+No GPU jobs, model services or website files were changed by this work.
+
 **October 20 — ctxkeeper published on PyPI.** The owner configured the trusted publisher and authorized upload.
 Stable 1.2.0 is now available from PyPI, GitHub and skindeep.ai/ctxkeeper.html. The dedicated
 `skindeepai/ctxkeeper` workflow passed and uploaded the release; a fresh PyPI installation reports 1.2.0 and

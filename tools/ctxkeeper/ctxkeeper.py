@@ -38,9 +38,11 @@ Standard library only (this file and notesdelta.py). State (archive, notes) is k
 from __future__ import annotations
 
 import argparse
+from contextlib import closing, contextmanager
 import hashlib
 import json
 import re
+import sqlite3
 import sys
 import threading
 import time
@@ -53,7 +55,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.2.dev0"
+__version__ = "1.3.0.dev0"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -724,6 +726,145 @@ class Archive:
         return f"[{len(hits)} matches; showing {which}; {more}]\n" + "\n".join(shown)
 
 
+# ------------------------------------------------------------------ optional full conversation journal
+class Conversations:
+    """Durable client exchanges and actual main-call views; no model tensors or executable tool actions.
+
+    Each request is independent (clients may edit or branch history). Identical messages share one object,
+    while each ordered message list is retained. No transaction stays open during a model call.
+    """
+
+    def __init__(self, root: Path, create: bool = False) -> None:
+        self.path = Path(root) / "conversations.sqlite3"
+        if create:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            # Exclusive creation sets private permissions without changing existing files or directories.
+            try:
+                import os
+                fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                os.close(fd)
+            except FileExistsError:
+                pass
+        elif not self.path.is_file():
+            raise ValueError("no saved conversations; start ctxkeeper with --save-conversations first")
+        self.readonly = not create
+        with self.connect() as db:
+            version = db.execute("PRAGMA user_version").fetchone()[0]
+            if version not in (0, 1) or (version == 0 and not create):
+                raise ValueError("unsupported conversation journal version")
+            if version == 0:
+                db.executescript("""
+                    BEGIN IMMEDIATE;
+                    CREATE TABLE objects (hash TEXT PRIMARY KEY, data TEXT NOT NULL);
+                    CREATE TABLE turns (
+                        id INTEGER PRIMARY KEY, session TEXT NOT NULL, created REAL NOT NULL,
+                        status TEXT NOT NULL, request TEXT NOT NULL, response TEXT,
+                        state TEXT, error TEXT);
+                    CREATE INDEX turns_session ON turns(session, id);
+                    CREATE TABLE calls (
+                        id INTEGER PRIMARY KEY, turn INTEGER NOT NULL REFERENCES turns(id),
+                        request TEXT NOT NULL, response TEXT, error TEXT);
+                    PRAGMA user_version = 1;
+                    COMMIT;
+                """)
+
+    @contextmanager
+    def connect(self):
+        uri = self.path.resolve().as_uri() + ("?mode=ro" if self.readonly else "?mode=rw")
+        with closing(sqlite3.connect(uri, uri=True, timeout=30)) as db:
+            db.row_factory = sqlite3.Row
+            db.execute("PRAGMA foreign_keys = ON")
+            with db:
+                yield db
+
+    @staticmethod
+    def put(db, value) -> str:
+        # Preserve object order too: a chat template may render tool schemas in that order.
+        data = json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+        digest = hashlib.sha256(data.encode()).hexdigest()
+        db.execute("INSERT OR IGNORE INTO objects VALUES (?, ?)", (digest, data))
+        return digest
+
+    @staticmethod
+    def get(db, digest):
+        row = db.execute("SELECT data FROM objects WHERE hash = ?", (digest,)).fetchone()
+        if row is None or hashlib.sha256(row[0].encode()).hexdigest() != digest:
+            raise ValueError("saved conversation object is missing or damaged")
+        return json.loads(row[0])
+
+    def pack(self, db, body):
+        return self.put(db, {"fields": {k: v for k, v in body.items() if k != "messages"},
+                             "has_messages": "messages" in body,
+                             "messages": [self.put(db, m) for m in body["messages"]]
+                             if body.get("messages") is not None else None})
+
+    def unpack(self, db, digest):
+        packed = self.get(db, digest)
+        body = packed["fields"]
+        if packed["has_messages"]:
+            body["messages"] = [self.get(db, h) for h in packed["messages"]] if packed["messages"] is not None else None
+        return body
+
+    def begin(self, session: str, body: dict) -> int:
+        with self.connect() as db:
+            return db.execute("INSERT INTO turns(session, created, status, request) VALUES (?, ?, 'pending', ?)",
+                              (session, time.time(), self.pack(db, body))).lastrowid
+
+    def call(self, turn: int, body: dict) -> int:
+        with self.connect() as db:
+            return db.execute("INSERT INTO calls(turn, request) VALUES (?, ?)",
+                              (turn, self.pack(db, body))).lastrowid
+
+    def answered(self, call: int, response: dict) -> None:
+        with self.connect() as db:
+            db.execute("UPDATE calls SET response = ? WHERE id = ?", (self.put(db, response), call))
+
+    def finish(self, turn: int, response: dict, state: dict) -> None:
+        with self.connect() as db:
+            db.execute("UPDATE turns SET status = 'complete', response = ?, state = ? WHERE id = ?",
+                       (self.put(db, response), self.put(db, state), turn))
+
+    def failed(self, turn: int, error: Exception) -> None:
+        with self.connect() as db:
+            db.execute("UPDATE turns SET status = 'failed', error = ? WHERE id = ?",
+                       (type(error).__name__, turn))
+
+    def listing(self, session: str | None = None) -> list[dict]:
+        with self.connect() as db:
+            if session is not None:
+                rows = db.execute("SELECT id, session, created, status, error FROM turns WHERE session = ? ORDER BY id",
+                                  (session,))
+            else:
+                rows = db.execute("""SELECT session, COUNT(*) AS turns, MAX(id) AS latest_turn,
+                                     MAX(created) AS updated FROM turns GROUP BY session ORDER BY latest_turn DESC""")
+            return [dict(row) for row in rows]
+
+    def export(self, session: str, turn: int | None = None) -> dict:
+        with self.connect() as db:
+            row = db.execute("SELECT * FROM turns WHERE session = ? AND (? IS NULL OR id = ?) ORDER BY id DESC LIMIT 1",
+                             (session, turn, turn)).fetchone()
+            if row is None:
+                raise ValueError("saved session or turn not found")
+            request = self.unpack(db, row["request"])
+            response = self.get(db, row["response"]) if row["response"] else None
+            calls = [{"request": self.unpack(db, c["request"]),
+                      "response": self.get(db, c["response"]) if c["response"] else None}
+                     for c in db.execute("SELECT * FROM calls WHERE turn = ? ORDER BY id", (row["id"],))]
+            continuation = None
+            if row["status"] == "complete":
+                choices = (response or {}).get("choices") or []
+                message = choices[0].get("message") if choices else None
+                if isinstance(message, dict) and message.get("role") == "assistant":
+                    continuation = {"headers": {"X-Ctx-Session": session},
+                                    "body": dict(request, messages=(request.get("messages") or []) + [message]),
+                                    "pending_tool_calls": message.get("tool_calls") or []}
+            return {"format": "ctxkeeper.conversation.v1", "session": session, "turn": row["id"],
+                    "created": row["created"], "status": row["status"], "error": row["error"],
+                    "request": request, "response": response, "main_calls": calls,
+                    "keeper_state": self.get(db, row["state"]) if row["state"] else None,
+                    "continuation": continuation}
+
+
 # ------------------------------------------------------------------ one conversation
 class Session:
     def __init__(self, root: Path, key: str) -> None:
@@ -831,8 +972,10 @@ class Keeper:
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
                  inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
                  lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False,
-                 notes_upto: bool = False, sum_check: bool = False, cited_entries: bool = False) -> None:
+                 notes_upto: bool = False, sum_check: bool = False, cited_entries: bool = False,
+                 save_conversations: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
+        self.conversations = Conversations(self.root, create=True) if save_conversations else None
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
         # chat_template_kwargs, and notes_prepass: tool results longer than this many characters cut down for it
@@ -943,6 +1086,10 @@ class Keeper:
         msgs = body.get("messages") or []
         key = header or fingerprint([{"role": "model", "content": str(body.get("model"))}] + msgs[:head_length(msgs)])
         key = re.sub(r"[^A-Za-z0-9_.-]", "_", key)[:64]
+        if key in (".", ".."):
+            raise ValueError("invalid session name")
+        if self.conversations and header is not None and header != key:
+            raise ValueError("saved session names must be 1-64 letters, digits, dots, underscores or hyphens")
         with self.lock:
             if key not in self.sessions:
                 self.sessions[key] = Session(self.root, key)
@@ -956,8 +1103,12 @@ class Keeper:
         """One call to a model server, timed (the session's state keeps the totals: where a run's minutes went).
         Notes calls go to the separate keeper's server when there is one (--notes-upstream)."""
         t, wall, resp = time.monotonic(), time.time(), None
+        turn = getattr(self.clock, "turn", None)
+        call = self.conversations.call(turn, body) if self.conversations and turn and kind == "main" else None
         try:
             resp = (self.ask_notes if kind == "notes" and self.ask_notes is not None else self.ask)(body)
+            if call is not None:
+                self.conversations.answered(call, resp)
             return resp
         finally:
             dt = time.monotonic() - t
@@ -1769,13 +1920,26 @@ class Keeper:
         s.state["async_applied"] = s.state.get("async_applied", 0) + 1
         return True
 
+    @contextmanager
+    def record_turn(self, s: Session, body: dict):
+        """Save input before any model call, with per-thread identity so async notes cannot borrow this turn."""
+        self.clock.turn = self.conversations.begin(s.dir.name, body) if self.conversations else None
+        try:
+            yield
+        except Exception as error:
+            if self.clock.turn is not None:
+                self.conversations.failed(self.clock.turn, error)
+            raise
+        finally:
+            self.clock.turn = None
+
     def complete(self, body: dict[str, Any], header: str | None = None) -> dict[str, Any]:
         """One chat completion through the keeper. Returns the server's response for the client."""
         if (body.get("n") or 1) != 1:
             raise ValueError("ctxkeeper handles one choice per request (n = 1)")
         began, self.clock.spent, self.clock.calls = time.monotonic(), 0.0, 0
         s = self.session(body, header)
-        with s.lock:
+        with s.lock, self.record_turn(s, body):
             messages = one_system_message(list(body.get("messages") or []))
             if self.memory_note:
                 messages = with_memory_note(messages)
@@ -1970,6 +2134,8 @@ class Keeper:
             s.state["upstream_s"] = round(s.state.get("upstream_s", 0.0) + self.clock.spent, 3)
             s.state["handle_s"] = round(s.state.get("handle_s", 0.0) + time.monotonic() - began, 3)
             s.save()
+            if self.clock.turn is not None:
+                self.conversations.finish(self.clock.turn, resp, s.state)
             return resp
 
 
@@ -2196,6 +2362,12 @@ def main() -> None:
                          "will leave, so that the first request after it finds it in the prefix cache")
     ap.add_argument("--log-calls", action="store_true", help="write every call to a model server to calls.jsonl")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
+    ap.add_argument("--save-conversations", action="store_true",
+                    help="also retain full client exchanges and main-call views in conversations.sqlite3 (plain text)")
+    ap.add_argument("--sessions", choices=("list", "export"),
+                    help="read saved conversations locally and exit; no server or model call")
+    ap.add_argument("--session", help="with --sessions: saved X-Ctx-Session name or automatic session key")
+    ap.add_argument("--turn", type=int, help="with --sessions export: a particular saved turn (default: latest)")
     ap.add_argument("--timeout", type=float, default=1800)
     ap.add_argument("--upstream-retries", type=int, default=0,
                     help="when the model server fails a call (no answer, or HTTP 5xx), wait for it to answer again "
@@ -2211,6 +2383,20 @@ def main() -> None:
     if first.recipe:
         ap.set_defaults(**RECIPES[first.recipe])
     a = ap.parse_args()
+    if a.sessions:
+        if a.sessions == "export" and not a.session:
+            ap.error("--sessions export needs --session")
+        if a.turn is not None and a.sessions != "export":
+            ap.error("--turn needs --sessions export")
+        try:
+            saved = Conversations(a.state_dir)
+            result = saved.listing(a.session) if a.sessions == "list" else saved.export(a.session, a.turn)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        except (ValueError, OSError, sqlite3.Error) as error:
+            ap.error(str(error))
+        return
+    if a.session is not None or a.turn is not None:
+        ap.error("--session and --turn are local inspection options; use --sessions")
     upstream = a.upstream.rstrip("/")
     keeper_url = a.notes_upstream.rstrip("/") if a.notes_upstream else None
     system = a.notes_system
@@ -2239,7 +2425,8 @@ def main() -> None:
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
                     lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open,
-                    notes_upto=a.notes_upto, sum_check=a.sum_check, cited_entries=a.cited_entries)
+                    notes_upto=a.notes_upto, sum_check=a.sum_check, cited_entries=a.cited_entries,
+                    save_conversations=a.save_conversations)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

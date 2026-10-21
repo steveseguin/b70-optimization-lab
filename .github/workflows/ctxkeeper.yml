@@ -31,7 +31,7 @@ jobs:
       # the proxy's checks are a copy of the lab harness's: the copy must match
       - run: python3 tools/ctxkeeper/sync_notesdelta.py
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p test_ctxkeeper_release_gate.py
-      - run: python3 -m unittest test_ctxkeeper test_notesdelta
+      - run: python3 -m unittest test_ctxkeeper test_notesdelta test_conversations
         working-directory: tools/ctxkeeper
       # what a user installs: the package builds, the command runs, the version agrees with the code
       - run: |

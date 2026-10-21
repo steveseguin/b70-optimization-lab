@@ -1,5 +1,22 @@
 # ctxkeeper: how it got here
 
+## 2026-10-21 — development 1.3.0.dev0: full conversation recovery
+
+The archive previously held cut turns, while current notes lived in state.json;
+the newest client exchange still depended on the client keeping its transcript.
+An optional SQLite conversation journal now commits each original input before
+model work, records actual main-call views and their replies, and saves the final
+selected response and diagnostic state before returning it. Message objects are
+deduplicated without collapsing their order. Failed/pending turns and edited
+branches remain available. Local list/export commands provide a continuation
+body without executing tools or contacting a model. Async notes cannot borrow
+the foreground request's journal identity.
+
+The [development guide](CONVERSATIONS.md) explains text-based resume, required
+tool-result reconciliation, storage and the boundary with the experimental own
+runtime checkpoint contract. This does not restore VRAM state or claim new model
+benchmark results. Stable 1.2.0 remains the published package.
+
 The build-by-build record behind version 1.0.0, kept as it was written while the proxy was measured (2026-10-11 to
 2026-10-12; the later campaigns are in the lab note). For using the proxy, read [README.md](README.md).
 
