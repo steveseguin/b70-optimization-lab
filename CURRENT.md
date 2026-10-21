@@ -1,9 +1,10 @@
 # Current Workspace State
 
-**October 20 — ctxkeeper release review.** Stable 1.2.0 is already available from GitHub and
-skindeep.ai/ctxkeeper.html. The dedicated `skindeepai/ctxkeeper` publisher passed tests and builds but cannot
-upload until the owner adds the pending PyPI publisher. Its workflow now validates release identity and package
-contents; the exact form fields and remaining upload check are in `drafts/ctxkeeper-1.2.0-release-runbook.md`.
+**October 20 — ctxkeeper published on PyPI.** The owner configured the trusted publisher and authorized upload.
+Stable 1.2.0 is now available from PyPI, GitHub and skindeep.ai/ctxkeeper.html. The dedicated
+`skindeepai/ctxkeeper` workflow passed and uploaded the release; a fresh PyPI installation reports 1.2.0 and
+both runtime module hashes match the stable release. The setup page uses the PyPI command and correct proxy
+port (18200). Details and receipt: `drafts/ctxkeeper-1.2.0-release-runbook.md`.
 Lab 1.2.2.dev0 remains development: retry ordering and numeric parsing were corrected, task-specific claim
 stripping removed, and unsupported detection-rate claims withdrawn. Saved benchmark snapshots were full client
 histories, not the proxy's managed requests. No new campaign or server was launched by this review; the existing

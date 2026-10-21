@@ -2,19 +2,21 @@
 
 ## Current status after release review (2026-10-20)
 
-**1.2.0 is already stable on GitHub and the public setup page.** Campaign 50's release gate passed;
+**1.2.0 is published on PyPI, GitHub and the public setup page.** Campaign 50's release gate passed;
 the recovery checklist below is historical. Public assets were downloaded again during review and matched
 all five entries in SHA256SUMS. The dedicated publishing repository is
 [skindeepai/ctxkeeper](https://github.com/skindeepai/ctxkeeper), not the lab repository.
 
 Its first PyPI attempt passed tests and built the package but failed with `invalid-publisher` because the
-PyPI account has no matching trusted publisher. The package was not uploaded. The reviewed workflow now
+PyPI account had no matching trusted publisher. After the owner added it and authorized publication,
+[run 39532956626](https://github.com/skindeepai/ctxkeeper/actions/runs/39532956626) successfully uploaded 1.2.0.
+The reviewed workflow now
 validates the stable tag against package/code versions and source contents, tests the package, checks both
 distributions with Twine, and verifies a clean wheel installation. A separate publishing job uses OIDC.
 The source archive now includes the Dockerfile, example, tests and HISTORY. Runtime modules remain byte-identical
 to the GitHub stable release; the immutable `v1.2.0` tag has not moved.
 
-Pending publisher form values (GitHub tab):
+Configured publisher values (GitHub tab):
 
 | Field | Value |
 | --- | --- |
@@ -24,21 +26,23 @@ Pending publisher form values (GitHub tab):
 | Workflow name | `workflow.yml` |
 | Environment name | `pypi` |
 
-The `pypi` GitHub environment already exists. The user adds the pending publisher in their PyPI account;
-no token or password is needed. First run the workflow on `main` with `release_tag=v1.2.0` and `publish=false`
-to validate. This passed at commit `a5f3bb7` in
+The `pypi` GitHub environment and PyPI trusted publisher are configured. No token or password is needed.
+The validation-only run on `main` with `release_tag=v1.2.0` and `publish=false` passed at commit `a5f3bb7` in
 [run 39532121058](https://github.com/skindeepai/ctxkeeper/actions/runs/39532121058): validation successful,
 publication deliberately skipped. Stable source tests: 112 run, one skipped; strict Twine checks pass for
-wheel and source archive; installed runtime hashes match the GitHub release. After the user confirms the form is saved, run:
+wheel and source archive; installed runtime hashes match the GitHub release. The completed publish used:
 
 ```bash
 gh workflow run workflow.yml --repo skindeepai/ctxkeeper --ref main -f release_tag=v1.2.0 -f publish=true
 ```
 
-Verify the completed upload, install `ctxkeeper==1.2.0` from PyPI in a fresh environment and compare its runtime
-module hashes with the stable release. Only then replace the live page's working GitHub-wheel installation
-command with `pip install ctxkeeper`. A pre-existing local website draft already makes that replacement;
-keep it unpublished until the PyPI check succeeds. Public page: <https://skindeep.ai/ctxkeeper.html>.
+A fresh environment installed `ctxkeeper==1.2.0` directly from PyPI and its command reported 1.2.0. Both runtime
+module hashes match the stable release. The downloaded wheel and source archive match PyPI's published SHA-256
+digests: [validation receipt](../experiments/qwen38-27b-b70/data/2026-10-20-ctxkeeper-review/pypi-published-validation.json).
+The setup page now uses `pip install ctxkeeper`, links the dedicated repository, and points clients at the actual
+default proxy port, 18200. Desktop/phone layout and local links passed. Public page: <https://skindeep.ai/ctxkeeper.html>.
+The lab's additional CI also passed both Python 3.10 and 3.12, including the Docker check, in
+[run 39532361242](https://github.com/steveseguin/b70-optimization-lab/actions/runs/39532361242).
 
 The lab's 1.2.2.dev0 bare-number checker is separate, experimental development. It is not part of this PyPI
 release. Its unsupported offline efficacy estimate was removed; unit coverage does not establish a benchmark
