@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The own runtime: a custom Xe engine for Qwen3.8 Flash-Next — neural.download</title>
+<meta name="description" content="What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="canonical" href="https://neural.download/own-runtime.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/own-runtime.html">
+<meta property="og:title" content="The own runtime: a custom Xe engine for Qwen3.8 Flash-Next — neural.download">
+<meta property="og:description" content="What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.">
+<meta property="og:image" content="https://neural.download/og-image.png">
+<meta property="og:image:secure_url" content="https://neural.download/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/own-runtime.html">
+<meta name="twitter:title" content="The own runtime: a custom Xe engine for Qwen3.8 Flash-Next — neural.download">
+<meta name="twitter:description" content="What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.">
+<meta name="twitter:image" content="https://neural.download/og-image.png">
+<meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"The own runtime: a custom Xe engine for Qwen3.8 Flash-Next","description":"What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.","url":"https://neural.download/own-runtime.html","dateModified":"2026-10-21","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","custom inference engine","Qwen3.8 Flash-Next"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"The own runtime","item":"https://neural.download/own-runtime.html"}]}
+</script>
+<link rel="stylesheet" href="learn/learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="models/">Models</a>
+    <a href="learn.html">Learn</a>
+    <a href="guides.html">Recipes</a>
+    <a href="index.html#lab-speeds">Benchmarks</a>
+    <a href="index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="index.html">Home</a> / The own runtime</p>
+  <p class="eyebrow">Lab engine · SYCL/Xe · Intel Arc Pro B70</p>
+  <h1>The own runtime, in plain terms</h1>
+  <p>A custom inference engine the lab built for Qwen3.8 Flash-Next on Arc Pro B70 cards. It exists to prove two things at once: speed (sealed records) and exactness (every published output byte-identical to its oracle, with receipts). This page is the honest version: what is measured, what is capped, and what the engine refuses to claim.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>It is a research engine, not a product.</strong> There is nothing to download and install today; the reproducible artifacts are the lab's recipes and evidence, linked below.</li>
+      <li><strong>It is fast where measured:</strong> 58.557–58.632 tok/s decode on two B70s and 31.510–31.782 tok/s on one, with prompt reading at 75.884–75.973 and 32.595–32.752 tok/s respectively — every figure from sealed, receipted runs.</li>
+      <li><strong>Exactness is a gate, not a hope.</strong> A run that cannot prove itself byte-identical does not publish.</li>
+      <li><strong>The gaps are declared, not hidden:</strong> 128-token oracle caps, a pending rebuilt-binary qualification, no sampler, no multi-user controller, no context curve beyond 4,096 tokens.</li>
+    </ul>
+  </div>
+
+  <h2>What the engine is</h2>
+  <p>The own runtime (own-xpu-runtime) is a custom SYCL/Xe inference engine for Qwen3.8 hybrid-architecture models on Intel Arc Pro B70 GPUs, built and validated in this lab under a fail-closed packet campaign. Qwen3.8 Flash-Next is a hybrid: 48 layers made of 36 GDN (gated delta net, linear attention) layers and 12 QSA full-attention layers, a 512-expert top-10 mixture-of-experts, and a PLE early layer. The engine is designed around that exact structure — per-layer plans, a resident expert cache, snapshot banks — instead of inheriting generic kernels from a general-purpose runtime.</p>
+  <p>Why build one at all, when vLLM and llama.cpp already serve this hardware? Two reasons, and neither is a claim of exclusivity: those runtimes remain excellent and are the right choice for most setups on this site. The lab wanted (a) an architecture-fit kernel plan for this specific hybrid, and (b) engine-level access to session state — checkpoint/restore, residency, future context features — that frontends do not expose. Owning the whole stack makes both possible.</p>
+
+  <h2>Measured state <span class="badge lab">Lab-measured</span></h2>
+  <p>Every row below carries receipts in the lab repository. Caps are stated, not hidden: where a suite stops at 128 tokens, the table says so.</p>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Lane</th><th>Profile</th><th class="num">Decode (tok/s)</th><th class="num">Prompt reading (tok/s)</th><th>Exactness</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Flash-Next UD-IQ3_XXS, 2×B70</td>
+        <td>full512, 4,096 ctx, sealed packet165</td>
+        <td class="num best">58.557–58.632 (fresh suites); requalified 58.724 / 58.676 on 2026-10-20</td>
+        <td class="num">75.884–75.973</td>
+        <td>Oracle checks first 128 tokens; full 6,495-token arrays repeat-exact across loads and identical to the original sealed qualification</td>
+      </tr>
+      <tr>
+        <td>Flash-Next UD-IQ3_XXS, 1×B70</td>
+        <td>full512, 4,096 ctx, sealed packet165</td>
+        <td class="num">31.510–31.782; requalified 31.766 / 31.774</td>
+        <td class="num">32.595–32.752</td>
+        <td>Same discipline as the two-card lane</td>
+      </tr>
+      <tr>
+        <td>Flash-Next records (packet58as, approved on LocalMaxxing)</td>
+        <td>128-token capped suites</td>
+        <td class="num">58.798109 two-card · 34.573038 one-card</td>
+        <td class="num">—</td>
+        <td>Capped-record scope stated on the package pages</td>
+      </tr>
+      <tr>
+        <td>Qwen3.8 27B, GGUF-comparable lane (packet44)</td>
+        <td>128-token 12-prompt suite</td>
+        <td class="num">37.59 / 37.77 @ 4,096 ctx · 37.71 / 37.70 @ 32,768 ctx (llama.cpp reference on the same suite: 28.49)</td>
+        <td class="num">—</td>
+        <td>12/12 requests bit-exact at both capacities</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn">
+    <span class="tag">Pending, on purpose</span>
+    <p>Strict quality promotion for the full512 profiles is <strong>pending</strong> and labeled as such on the packages. Oracle coverage beyond 128 tokens is an explicit, declared gap. Separately, the portable source rebuild (CPU-compile-validated, 42 translation units) produces a binary with a different hash than the sealed historical one; the engine binary is seal-pinned, so qualification of the rebuild means a new sealed packet. Until then, published device results belong to the historical binary — and the packages say so.</p>
+  </div>
+
+  <h2>Exactness is the gate</h2>
+  <p>The campaign's discipline: sealed sources, admission-checked device windows, fresh-process determinism, oracle prefixes, and fail-closed comparisons. An output that cannot be shown byte-identical to its oracle — or to an independent repeat run — does not get published as a result. That is why the table can carry a requalification at all: on 2026-10-20 the sealed full512 profiles were re-measured fresh — 58.724 / 58.676 tok/s two-card and 31.766 / 31.774 one-card — with outputs identical to the original sealed qualification.</p>
+
+  <h2>Session checkpoint/restore <span class="badge spec">Experimental</span></h2>
+  <p>One capability the custom stack unlocks is whole-session checkpoint/restore: save a computed session, stop the engine, restart, restore, and keep decoding. The contract — save/inspect/restore/delete, compatibility checks, prefix-plus-delta rules, and the exactness gates — is written down in the <a href="experiments/own-xpu-runtime/SESSION-SWAP-DESIGN.md">session-swap design</a>. It is labeled <strong>experimental</strong> everywhere until its restart-and-continue exactness test passes on a supported host. No completed save/restore benchmark exists yet, so this page claims none.</p>
+
+  <h2>Honest non-goals today</h2>
+  <ul>
+    <li><strong>No sampler.</strong> Greedy argmax only — there is no RNG state, temperature, or top-k/p anywhere in the engine.</li>
+    <li><strong>No multi-user controller.</strong> The packet165 controller is sequential; concurrency curves exist only for the vLLM FP8 packages on this site.</li>
+    <li><strong>No context curve for the own-runtime full512 profiles.</strong> Measured at 4,096 tokens; other capacities are unmeasured, not claimed.</li>
+    <li><strong>No shipped product.</strong> The runtime is a lab engine under active qualification. What you can take away today are the recipes and evidence below — not a download.</li>
+  </ul>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html"><b>Two-card package</b><span>Qwen3.8 Flash-Next UD-IQ3_XXS — own runtime, two GPUs</span></a>
+      <a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html"><b>One-card package</b><span>Qwen3.8 Flash-Next UD-IQ3_XXS — own runtime, one GPU</span></a>
+      <a href="docs/own-runtime.md"><b>Lab front door</b><span>docs/own-runtime.md — the source of truth with receipts</span></a>
+      <a href="experiments/own-xpu-runtime/SESSION-SWAP-DESIGN.md"><b>Session-swap design</b><span>The checkpoint/restore contract (experimental)</span></a>
+      <a href="https://skindeep.ai/own-runtime.html"><b>Product-style overview</b><span>The same engine, presented on skindeep.ai</span></a>
+      <a href="experiments/own-xpu-runtime/README.md"><b>Engine campaign</b><span>Packets, scoreboard, and design docs in the lab repo</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
+  <span><a href="learn.html">Learn</a> · <a href="guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
+</div></footer>
+</body>
+</html>

@@ -504,6 +504,15 @@ def page(pkg, all_pkgs, family=None):
         if family
         else ""
     )
+    # Optional per-package pointer to a root-level engine explainer page
+    # (packages set "engine_page": "own-runtime.html"). Absent by default, so
+    # pages without the field render byte-identical output.
+    engine_page = pkg.get("engine_page")
+    engine_related = (
+        f'<a href="../{esc(engine_page)}"><b>The own runtime engine</b><span>What it is, what we measured, what it refuses to claim</span></a>'
+        if engine_page
+        else ""
+    )
     ld = {
         "@context": "https://schema.org",
         "@type": "TechArticle",
@@ -721,7 +730,7 @@ def page(pkg, all_pkgs, family=None):
     <h2>Keep going</h2>
     <div class="related-grid">
       {family_related}
-{("      " + related_html) if related_html else ""}
+{("      " + engine_related + "\n") if engine_related else ""}{("      " + related_html) if related_html else ""}
       <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
       <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
       <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
