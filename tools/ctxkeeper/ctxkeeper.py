@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.1.dev0"
+__version__ = "1.2.2.dev0"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -83,6 +83,15 @@ _SUM_NUM = r"[-−]?\d+"
 _SUM_EXPR = rf"{_SUM_NUM}(?:\s*[-+*×−]\s*{_SUM_NUM})*"
 SUM_CHAIN = re.compile(rf"(?<![\w.]){_SUM_EXPR}(?:\s*=\s*{_SUM_EXPR})+(?!\w|\.\d)")   # `142×5+11 = 710+11 = 721`
 SUM_OPERATOR = set("+-*/×−÷()%^")
+# --sum-check also asks for working on large integer assignments in tool-call answer blocks.
+BARE_NOTE = ("[[A check of your last reply found numbers it states with no working and no source in the notes or "
+             "turns: {items}. That reply was not sent. Show the working for each, one step at a time, and give your "
+             "reply once more.]]")
+BARE_ASSIGN = re.compile(r"(?<![\w.-])\\?[\"']?([A-Za-z_][\w-]{2,})\\?[\"']?\s*[:=]\s*(-?\d{1,100})(?![\w.])")
+BARE_NUM = re.compile(r"(?<![\w.+-])-?\d{1,100}(?![\w.])")
+BARE_LABEL = re.compile(r"(?i)\bitem\s+\d+(?:\s*/\s*\d{3,})?|\b\d+\s*/\s*\d{3,}\b")
+BARE_MIN = 100                               # under this a number is everywhere: an index, a count, a small value
+BARE_PAIRS = 3                               # heuristic threshold for an answer-like block in one call
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
 MEMORY_NOTE = """
 
@@ -290,6 +299,8 @@ def false_steps(text: str) -> list[tuple[str, int, int]]:
     out = []
     for m in SUM_CHAIN.finditer(text):
         before, after = text[:m.start()].rstrip(" \t")[-1:], text[m.end():].lstrip(" \t")
+        if text[:m.start()].strip() == "(thinking)":
+            before = ""                              # text_of's marker is not part of the expression
         if (before in SUM_OPERATOR or after[:1] in SUM_OPERATOR or re.match(r",\d", text[m.end():])
                 or re.search(r"\d,$", text[:m.start()])):
             continue
@@ -303,6 +314,30 @@ def false_steps(text: str) -> list[tuple[str, int, int]]:
                     or len(str(abs(va))) - len(str(abs(vb))) >= 2):  # `8556*8190 = 69, ...`: a number cut short
                 continue
             out.append((a, vb, va))
+    return out
+
+
+def bare_numbers(message: dict[str, Any], view: list[dict[str, Any]]) -> list[tuple[str, int]]:
+    """The `key: number` assignments in a reply's tool calls that nothing in the view states and no working in the
+    reply shows, as (key, number). An answer block is BARE_PAIRS or more assignments of absolute value at least BARE_MIN in one
+    call. A number clears when the view states it or an arithmetic-shaped equality in the reply ends in it.
+    This is a heuristic, not proof of a source or correct arithmetic; false_steps checks multiplication later.
+    Plain-text answer blocks are outside its scope. Very large integers (over 100 digits) are ignored."""
+    blocks = []
+    for call in message.get("tool_calls") or []:
+        args = str((call.get("function") or {}).get("arguments") or "")
+        pairs = [(k, int(v)) for k, v in BARE_ASSIGN.findall(args) if abs(int(v)) >= BARE_MIN]
+        if len(pairs) >= BARE_PAIRS:
+            blocks.append((args, pairs))
+    if not blocks:
+        return []
+    text = text_of({k: v for k, v in message.items() if k != "tool_calls"})
+    in_view = {int(n) for n in BARE_NUM.findall(BARE_LABEL.sub(" ", json.dumps(view, ensure_ascii=False, default=str)))}
+    out = []
+    for args, pairs in blocks:
+        worked = text + "\n" + args
+        out.extend((k, v) for k, v in pairs if v not in in_view
+                   and not re.search(r"(?<![\w.])[-\d][\d\s+*/().×x-]*=\s*" + re.escape(str(v)) + r"(?![\w.]|,\d)", worked))
     return out
 
 
@@ -896,6 +931,9 @@ class Keeper:
         # passed on as it is (unless it is empty or a search: then the first). Campaigns 43-46 (2M, seed 2): 11 of 25
         # wrong tallies came from such a step. Across 183 recorded keeper sessions (1,426 multiplication chains in the
         # model's replies, coding and agent sessions among them) the check finds 18 steps, each a real slip, and no other.
+        # The same ask-once discipline covers the number that was worked out in the head: a reply whose answer block
+        # states a number no view states and no working produces (BARE_NOTE) is asked to show the working once, and
+        # the sum check then checks that working. Each check asks at most once; the sum-check retry is final.
         self.sum_check = bool(sum_check)
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
@@ -1874,6 +1912,27 @@ class Keeper:
                     rounds.append("recall(" + ", ".join(f"{k}={v!r}" for k, v in args.items()) + ") returned:\n" + text)
                 full = full or room < RECALL_MARGIN
                 out = dict(out, messages=out["messages"] + [msg] + results)
+            # Final client replies are not appended to out; only intermediate recall calls and results are.
+            bare_view = out["messages"]
+            bare = bare_numbers(msg, bare_view) if self.sum_check else []
+            if bare and (msg.get("tool_calls") or str(msg.get("content") or "").strip()):
+                s.state["bare_checks"] = s.state.get("bare_checks", 0) + 1
+                note = BARE_NOTE.format(items="; ".join(f"{k} is {v}" for k, v in bare))
+                again = dict(out, messages=out["messages"] + [{"role": "user", "content": note}])
+                second = self.upstream(again, s)
+                self.learn(s, again["messages"], second)
+                m2 = ((second.get("choices") or [{}])[0].get("message") or {})
+                calls2 = m2.get("tool_calls") or []
+                taken = bool(calls2 or str(m2.get("content") or "").strip()) and not any(
+                    ((c.get("function") or {}).get("name")) == "recall" for c in calls2)
+                s.log_event({"event": "a bare number in the reply: asked again", "items": [list(x) for x in bare],
+                             "taken": taken, "still": [list(x) for x in bare_numbers(
+                                 m2, bare_view)] if taken else None})
+                if taken:
+                    resp, msg = second, m2
+                else:
+                    s.state["bare_checks_first_stood"] = s.state.get("bare_checks_first_stood", 0) + 1
+            # Check any working introduced by the bare-number retry, too. Each check retries at most once.
             steps = false_steps(text_of(msg)) if self.sum_check else []
             if steps and (msg.get("tool_calls") or str(msg.get("content") or "").strip()):
                 s.state["sum_checks"] = s.state.get("sum_checks", 0) + 1
@@ -2060,8 +2119,8 @@ def main() -> None:
                     help="with --recall-label: the NOTES heading says up to which --recall-unit the STATE runs, that "
                          "the turns after it are newer, and that a value at an earlier one is not the STATE's")
     ap.add_argument("--sum-check", action="store_true",
-                    help="a reply whose working has a false multiplication step (`145×5+11 = 726`) is asked for "
-                         "once more, with a note naming the step and its value, and that second reply is passed on")
+                    help="ask once for working on tool-call blocks with at least three large integer assignments "
+                         "when values have no source or working; then ask once about false multiplication steps")
     ap.add_argument("--hold-open", action="store_true",
                     help="with --recite-when and --think-until: while a question is open (from the message that asks it "
                          "until one matching --think-until), every request gets the RULES recital and the archive "

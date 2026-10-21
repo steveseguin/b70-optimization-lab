@@ -325,6 +325,19 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
+Development (1.2.2.dev0, not a stable release): `--sum-check` first asks once for working on tool-call blocks
+containing at least three integer assignments whose absolute values are 100 or more, when a value is absent from
+the managed view and has no written arithmetic equality. It then checks multiplication in the reply that stands,
+including working supplied by that retry. Each check can add one model call; an empty or recall-only retry leaves
+the preceding reply standing. With `--sum-check` off, the answer path is unchanged.
+
+This is an experimental heuristic. A number elsewhere in the view can hide an unsupported answer, and legitimate
+settings can trigger a question. Plain-text answer blocks are outside its scope; very large integers (over 100
+digits) are ignored. The final arithmetic retry is passed on, not retried indefinitely. The earlier offline
+“112 asks / five wrong answers caught” estimate was withdrawn: it used truncated client histories rather than
+the actual managed requests. No benchmark improvement or retry rate is established for this version. Review and
+evidence: [lab note](../../experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md).
+
 Development (1.2.1.dev0, 2026-10-20), from lab campaign 49 (2M hostile, both seeds, 421/423 and 417/423), all on by
 default. Campaign 49's wrong NOTES lines traced to five decision points; these three changes close them:
 

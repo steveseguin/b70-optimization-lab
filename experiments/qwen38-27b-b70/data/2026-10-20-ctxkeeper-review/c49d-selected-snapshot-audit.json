@@ -1,0 +1,81 @@
+{
+  "scope": "Selected client snapshot mapping audit, not keeper-managed view or runtime efficacy measurement",
+  "trajectory": {
+    "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c49d/hostile2mk/jobs/K32C__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__gvSdfwq/agent/trajectory.json",
+    "sha256": "d1d9ff511d0d41bfe836b6cb1f2b1e22b6760abf9606a0fe4f085fe135c9d601",
+    "messages": 2598,
+    "assistant_messages": 1298
+  },
+  "snapshot_count": 1300,
+  "selected": [
+    {
+      "trajectory_index": 1322,
+      "assistant_zero_index": 660,
+      "snapshot_path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c49d/hostile2mk/jobs/K32C__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__gvSdfwq/agent/context_snapshots/turn-0660.json",
+      "snapshot_sha256": "ac33d5fe73fe428fba4f10c2a783cc394cff47a8435eca27cfdc27d2fae3594d",
+      "metadata": {
+        "step": 660,
+        "tokens": 1049591,
+        "token_method": "tiktoken:o200k_base",
+        "n_messages": 1322,
+        "kind": "agent"
+      },
+      "exact_trajectory_prefix": true,
+      "serialized_message_characters": 5142235,
+      "711_occurrences": []
+    },
+    {
+      "trajectory_index": 2560,
+      "assistant_zero_index": 1279,
+      "snapshot_path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c49d/hostile2mk/jobs/K32C__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__gvSdfwq/agent/context_snapshots/turn-1279.json",
+      "snapshot_sha256": "4125bc61e4ccadd3a322f40501699e1ef96f6a69678f9115e34dce1e95f30096",
+      "metadata": {
+        "step": 1279,
+        "tokens": 2030072,
+        "token_method": "tiktoken:o200k_base",
+        "n_messages": 2560,
+        "kind": "agent"
+      },
+      "exact_trajectory_prefix": true,
+      "serialized_message_characters": 9920369,
+      "711_occurrences": [
+        {
+          "message_index": 1322,
+          "role": "assistant",
+          "excerpt": "ung apprentice\\\\\\\",\\\\\\\"p30_4\\\\\\\":\\\\\\\"protected\\\\\\\",\\\\\\\"p30_5\\\\\\\":711,\\\\\\\"p30_6\\\\\\\":706,\\\\\\\"p30_7\\\\\\\":507})\\\\njson.dump(d,open(p,'w'),"
+        },
+        {
+          "message_index": 1322,
+          "role": "assistant",
+          "excerpt": "n- p30_3: \\\"young apprentice\\\"\\n- p30_4: \\\"protected\\\"\\n- p30_5: 711\\n- p30_6: 706\\n- p30_7: 507\\n\\nWrite to /app/answers.json while "
+        },
+        {
+          "message_index": 1322,
+          "role": "assistant",
+          "excerpt": "n- p30_3: \\\"young apprentice\\\"\\n- p30_4: \\\"protected\\\"\\n- p30_5: 711\\n- p30_6: 706\\n- p30_7: 507\\n\\nWrite to /app/answers.json while "
+        },
+        {
+          "message_index": 1491,
+          "role": "tool",
+          "excerpt": "ool_call_id\": \"chatcmpl-tool-b71bde674db6e646\", \"content\": \"ITEM 711/1233 (UPDATE)\\nThe cook complained about the draught behind the "
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "Both selected snapshots exactly equal trajectory[:reply_index], so selected ordinal association is correct.",
+    "The snapshots are unpruned client histories of over 1M and 2M tokens; they cannot represent the 32K keeper-managed view.",
+    "At index 2560 the prior assistant reply 1322 contributes three 711 occurrences (tool args and two reasoning fields); ITEM 711/1233 contributes one more.",
+    "Truncating serialized history to 400000 characters removes much of the client history, not a validated keeper view.",
+    "There are 1298 assistant messages; trailing snapshots 1298 and 1299 are final history snapshots, not extra assistant requests.",
+    "No runtime trigger rate or wrong-answer detection rate can be asserted from this comparison."
+  ],
+  "keeper_state_directory": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c49d-K32C-hostile2mk-s2/99bada9c37d20fb9",
+  "keeper_state_files": [
+    "archive.jsonl",
+    "calls.jsonl",
+    "events.jsonl",
+    "notes-history.jsonl",
+    "state.json"
+  ]
+}

@@ -1411,6 +1411,170 @@ class Policy(unittest.TestCase):
         s = next(iter(k.sessions.values()))
         self.assertEqual((s.state["sum_checks"], s.state["sum_checks_first_stood"]), (1, 1))
 
+    def test_a_bare_answer_block_is_asked_for_again(self):
+        seen = []
+
+        def writes(value, working):
+            r = reply(None, [{"id": "w", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command":
+                "python3 -c \"import json; d={}; d.update({'p20_1': 153, 'p20_2': 598, 'p20_3': 706, 'p20_5': %d}); "
+                "json.dump(d, open('/app/answers.json', 'w'))\"" % value})}}])
+            r["choices"][0]["message"]["reasoning_content"] = working
+            return r
+
+        def model(body):
+            seen.append(body)
+            if "A check of your last reply" in str(body["messages"][-1].get("content")):
+                return writes(736, "saru45 = 145 → tally = 145×5+11 = 736")
+            return writes(726, "Answers: p20_1 153, p20_2 598, p20_3 706, p20_5 726")
+
+        msgs = [{"role": "system", "content": "You are a careful assistant."},
+                {"role": "user", "content": "STATE\n- p20_1 is 153\n- p20_2 is 598\n- p20_3 is 706\n- saru45: 145\n"
+                                            "What is the tally of saru45 (value×5+11)? Write p20_5 with the others."}]
+        k = ck.Keeper(model, Path(self.dir.name) / "b", budget=100000, sum_check=True)
+        resp = k.complete({"model": "m", "messages": msgs})
+        self.assertIn("736", resp["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"])
+        self.assertEqual(len(seen), 2)
+        self.assertEqual(seen[1]["messages"][:-1], seen[0]["messages"])          # the same request, and the note
+        self.assertEqual(seen[1]["messages"][-1], {"role": "user", "content": ck.BARE_NOTE.format(items="p20_5 is 726")})
+        s = next(iter(k.sessions.values()))
+        self.assertEqual(s.state["bare_checks"], 1)
+        events = [json.loads(l) for l in (s.dir / "events.jsonl").read_text().splitlines()]
+        self.assertIn({"event": "a bare number in the reply: asked again", "items": [["p20_5", 726]],
+                       "taken": True, "still": []}, [{k2: e[k2] for k2 in e if k2 not in ("t", "at")} for e in events])
+        seen.clear()
+        off = ck.Keeper(model, Path(self.dir.name) / "o", budget=100000)
+        resp = off.complete({"model": "m", "messages": msgs})
+        self.assertEqual(len(seen), 1)                                            # off by default: the reply goes as it is
+        self.assertIn("726", resp["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"])
+
+    def test_stated_and_worked_numbers_stand_and_a_search_in_reply_leaves_the_first(self):
+        seen = []
+
+        def writes():
+            return reply(None, [{"id": "w", "type": "function", "function": {"name": "bash", "arguments": json.dumps(
+                {"command": "d.update({'p20_1': 153, 'p20_2': 598, 'p20_5': 736})"})}}])
+
+        def model(body):
+            seen.append(body)
+            r = writes()
+            r["choices"][0]["message"]["reasoning_content"] = "tally = 145×5+11 = 736"
+            return r
+
+        msgs = [{"role": "system", "content": "You are a careful assistant."},
+                {"role": "user", "content": "STATE\n- p20_1 is 153\n- p20_2 is 598\n- saru45: 145\nTally?"}]
+        k = ck.Keeper(model, Path(self.dir.name) / "c", budget=100000, sum_check=True)
+        k.complete({"model": "m", "messages": msgs})
+        self.assertEqual(len(seen), 1)                                            # in view or worked: nothing to ask
+        self.assertNotIn("bare_checks", next(iter(k.sessions.values())).state)
+
+        def silent_then_search(body):
+            seen.append(body)
+            if "A check of your last reply" in str(body["messages"][-1].get("content")):
+                return reply(None, [{"id": "c", "type": "function",
+                                     "function": {"name": "recall", "arguments": "{}"}}])
+            r = writes()
+            r["choices"][0]["message"]["reasoning_content"] = "Answers: p20_5 736"   # bare: 736 is nowhere, no working
+            return r
+
+        seen.clear()
+        k2 = ck.Keeper(silent_then_search, Path(self.dir.name) / "d", budget=100000, sum_check=True)
+        resp = k2.complete({"model": "m", "messages": msgs})
+        self.assertEqual(len(seen), 2)
+        self.assertIn("736", resp["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"])
+        self.assertNotIn("recall", str(resp["choices"][0]["message"].get("tool_calls")))   # the client never sees it
+        s2 = next(iter(k2.sessions.values()))
+        self.assertEqual((s2.state["bare_checks"], s2.state["bare_checks_first_stood"]), (1, 1))
+
+    def test_bare_numbers_finds_only_the_unstated_unworked_assignments_in_a_block(self):
+        def msg(args, reasoning=""):
+            m = {"role": "assistant", "content": None, "tool_calls": [
+                {"id": "w", "type": "function", "function": {"name": "bash", "arguments": args}}]}
+            if reasoning:
+                m["reasoning_content"] = reasoning
+            return m
+
+        view = [{"role": "user", "content": "STATE\n- p20_1 is 153\n- p20_2 is 598\n- saru45: 145\nITEM 726/1233"}]
+        block = '{"command": "d.update({\\"p20_1\\": 153, \\"p20_2\\": 598, \\"p20_5\\": 726})"}'
+        for args, reasoning, want in [
+            (block, "", [("p20_5", 726)]),                       # 153 and 598 are sources; the item label is not
+            (block, "tally = 143×5+11 = 715+11 = 726", []),       # a written chain ends in the answer
+            ('{"command": "d.update({\\"p20_5\\": 726, \\"p20_6\\": 311})"}', "", []),       # two assignments: settings, not answers
+            ('{"command": "d.update({\\"p20_5\\": 90, \\"p20_6\\": 42, \\"p20_7\\": 17})"}', "", []),   # small numbers are everywhere
+        ]:
+            self.assertEqual(ck.bare_numbers(msg(args, reasoning), view), want, (args, reasoning))
+        no_calls = {"role": "assistant", "content": "p20_5: 726, p20_6: 311, p20_7: 219"}   # words are not the graded write
+        self.assertEqual(ck.bare_numbers(no_calls, view), [])
+        self.assertIn(("p20_5", 726), ck.bare_numbers(msg(block), [{"role": "user", "content": "ITEM 726/1233"}]),
+                      "an item number is not the answer's source")
+
+    def test_bare_retry_working_is_checked_before_it_reaches_the_client(self):
+        seen = []
+
+        def model(body):
+            seen.append(body)
+            value = 736 if len(seen) == 3 else 726
+            r = reply(None, [{"id": "w", "type": "function", "function": {
+                "name": "write", "arguments": json.dumps({"first": 153, "second": 598, "total": value})}}])
+            if len(seen) > 1:
+                r["choices"][0]["message"]["reasoning"] = f"145×5+11 = {value}"
+            return r
+
+        k = ck.Keeper(model, Path(self.dir.name), budget=100000, sum_check=True)
+        response = k.complete({"model": "m", "messages": [{"role": "user", "content": "153, 598; total of 145×5+11?"}]})
+        self.assertEqual(len(seen), 3)
+        self.assertEqual(seen[1]["messages"][-1]["content"], ck.BARE_NOTE.format(items="total is 726"))
+        self.assertEqual(seen[2]["messages"][-1]["content"], ck.SUM_NOTE.format(steps="145×5+11 is 736, not 726"))
+        self.assertIn('"total": 736', ck.text_of(response["choices"][0]["message"]))
+        state = next(iter(k.sessions.values())).state
+        self.assertEqual((state["bare_checks"], state["sum_checks"]), (1, 1))
+
+    def test_empty_bare_retry_keeps_the_first_reply(self):
+        calls = []
+        first = reply(None, [{"id": "w", "type": "function", "function": {
+            "name": "write", "arguments": '{"first": 153, "second": 598, "total": 726}'}}])
+
+        def model(body):
+            calls.append(body)
+            return first if len(calls) == 1 else reply(None)
+
+        k = ck.Keeper(model, Path(self.dir.name), budget=100000, sum_check=True)
+        response = k.complete({"model": "m", "messages": [{"role": "user", "content": "Write the values."}]})
+        self.assertIs(response, first)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(next(iter(k.sessions.values())).state["bare_checks_first_stood"], 1)
+
+    def test_bare_numbers_respects_source_values_and_numeric_boundaries(self):
+        message = {"tool_calls": [{"function": {"arguments": '{"first": 153, "second": 598, "total": 726}'}}]}
+        for source in ('p30_5: 726', '"p30_5": 726', 'q30_5: 726', 'count = 726', '-726'):
+            with self.subTest(source=source):
+                view = [{"role": "user", "content": "153 598 " + source}]
+                self.assertEqual(ck.bare_numbers(message, view), [("total", 726)] if source == '-726' else [])
+        view = [{"role": "user", "content": "153 598"}]
+        for working in ('id9 = 726', '1 = 726.5', '1 = 726e3', '1 = 726foo', '1 = 726,500'):
+            self.assertEqual(ck.bare_numbers(dict(message, reasoning=working), view), [("total", 726)], working)
+        for field in ("reasoning_content", "reasoning", "content"):
+            self.assertEqual(ck.bare_numbers(dict(message, **{field: "143×5+11 = 726"}), view), [])
+        for value in ('726.5', '726e3', '726foo'):
+            args = '{"first": 153, "second": 598, "total": ' + value + '}'
+            self.assertEqual(ck.bare_numbers({"tool_calls": [{"function": {"arguments": args}}]}, []), [])
+
+    def test_bare_numbers_requires_three_large_pairs_in_each_call(self):
+        calls = [{"function": {"arguments": args}} for args in (
+            '{"first": 100, "second": -100}', '{"third": 999}', '{"small": 99}')]
+        self.assertEqual(ck.bare_numbers({"tool_calls": calls}, []), [])
+        combined = {"tool_calls": [{"function": {"arguments": '{"first": 100, "second": -100, "third": 999}'}}]}
+        self.assertEqual(ck.bare_numbers(combined, []), [("first", 100), ("second", -100), ("third", 999)])
+        self.assertEqual(ck.bare_numbers(combined, [{"role": "user", "content": "ITEM 999/1233; 100 -100"}]),
+                         [("third", 999)])
+
+    def test_oversize_numbers_cannot_crash_bare_check(self):
+        huge = "9" * 5000
+        view = [{"role": "user", "content": huge}]
+        self.assertEqual(ck.bare_numbers({"content": "done"}, view), [])
+        args = '{"first": 100, "second": 200, "third": 300, "huge": ' + huge + '}'
+        self.assertEqual(ck.bare_numbers({"tool_calls": [{"function": {"arguments": args}}]}, view),
+                         [("first", 100), ("second", 200), ("third", 300)])
+
     def test_a_thinking_reply_gets_a_short_leash_first(self):
         seen = []
 

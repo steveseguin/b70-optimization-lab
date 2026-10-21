@@ -1759,3 +1759,55 @@ entries for the name, newest first.
 - Both seeds at or over the predictions → the notes-side levers of campaign 49 are closed; the remaining bar line is
   the batch-answer arithmetic, dev12 next.
 - A wrong-line count over the prediction → read which decision point still stands before anything else.
+
+## Development review: bare-number checks and release separation (2026-10-20)
+
+The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
+working on tool-call blocks containing at least three integer assignments with absolute values at least 100,
+when a number is absent from the managed view and no arithmetic-shaped equality ends in it. Each call's block
+is considered separately; plain-text answers are not included. The detector does not know the task's expected
+answers. Existing `--sum-check` enables it; the option remains off by default.
+
+Review fixes: remove probe-shaped `BARE_CLAIM` stripping (it removed user facts, treated p-keys differently from
+q-keys, and missed JSON-escaped quotes); remove redundant probe-key label stripping; respect numeric boundaries
+instead of reading pieces of decimals/identifiers/scientific notation; ignore integers over 100 digits rather
+than raising on conversion; support both `reasoning` and `reasoning_content`; avoid scanning a view when no
+call has a qualifying block. Strip complete item-position labels together. Ask for bare-number working before
+the existing multiplication check, so newly written false multiplication gets checked. The `(thinking)` marker
+inserted by `text_of` no longer makes a leading arithmetic expression look like part of parentheses. Each
+check retries at most once; the arithmetic retry is final. Empty or recall replies preserve the prior reply.
+
+**Withdraw the earlier “112 asks / all five wrong bare answers caught / no noise” estimate.** It was not a
+measurement of the shipped detector or its runtime inputs. The selected c49d snapshots are exactly the full
+client-history prefixes, not the keeper's 32K managed requests:
+
+| Reply index | Snapshot | Messages | Serialized characters |
+| --- | --- | --- | --- |
+| 1322 | turn-0660 | 1322 | 5,142,235 |
+| 2560 | turn-1279 | 2560 | 9,920,369 |
+
+The earlier 400,000-character truncation dropped most of those histories. At reply 2560, `711` occurs in the
+old reply 1322's arguments and reasoning plus ITEM 711's label. Removing selected old claims to improve this
+result would tune the implementation against the wrong view. The actual sent requests are not saved in these
+snapshots; the proxy call log holds counts/timing rather than request bodies. A validated reconstruction or a
+new preregistered run recording the managed view is needed before claiming a trigger rate or accuracy benefit.
+Count retry turns separately from flagged assignments. The selected inputs and their SHA-256 hashes are in
+[the snapshot audit](../data/2026-10-20-ctxkeeper-review/c49d-selected-snapshot-audit.json).
+
+Validation uses scripted models, including incorrect working introduced by a retry, empty/recall fallbacks,
+quoted user sources, both reasoning fields, numeric boundaries, large numerals and per-call thresholds.
+The harness `clm_keeper.py` does not vendor this reply path; `notesdelta.py` is unchanged. The campaign-49 audit
+is left as its historical gate: no guessed bare-check cap is added and no campaign-52 result is asserted.
+HISTORY.md remains the preserved 1.0 development record; current changes are in the package README.
+
+Stable 1.2.0 is already released on GitHub and passed campaign 50. The separate `skindeepai/ctxkeeper`
+repository is preparing that same stable runtime for PyPI, not this candidate. Its tests/build had passed;
+the upload failed solely because the pending trusted publisher was absent. The release runbook now records
+the actual repository, workflow, environment and the account form values. No GPU job was started or stopped
+for this review.
+
+Review validation: 123 proxy/notes tests and 15 release-gate tests pass; notesdelta matches its harness copy.
+Public-document links and manifest paths pass. The historical pin check passes its declared recovery policy
+while retaining the existing 231 historical drifts (230 recoverable, one explicitly blocked); no frozen pin
+was updated to hide drift. Dedicated stable-release workflow validation passed in
+[run 39532121058](https://github.com/skindeepai/ctxkeeper/actions/runs/39532121058), with publication skipped.

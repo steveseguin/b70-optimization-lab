@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 20 — ctxkeeper release review.** Stable 1.2.0 is already available from GitHub and
+skindeep.ai/ctxkeeper.html. The dedicated `skindeepai/ctxkeeper` publisher passed tests and builds but cannot
+upload until the owner adds the pending PyPI publisher. Its workflow now validates release identity and package
+contents; the exact form fields and remaining upload check are in `drafts/ctxkeeper-1.2.0-release-runbook.md`.
+Lab 1.2.2.dev0 remains development: retry ordering and numeric parsing were corrected, task-specific claim
+stripping removed, and unsupported detection-rate claims withdrawn. Saved benchmark snapshots were full client
+histories, not the proxy's managed requests. No new campaign or server was launched by this review; the existing
+campaign-51 runner was active when checked and was left untouched.
+
 **October 20, 11:15 EDT — ctxkeeper 1.2.0 is the stable release (Latest); campaign 50 gate passed.** c50c ran
 the registered G1-G4 against the public prerelease assets: G1 repair through the pip wheel **40/40 fixed, 40/40
 clean, 7/7 audit, 12 min 18 s**; G2 the 300K demo through the Docker image built from the public source archive
