@@ -135,6 +135,35 @@ Stable aliases under `/mnt/fast-ai/llm-models/` are
 require the USB mount. As of the 2026-08-30 reclaim below, the BF16 aliases
 also resolve to the verified USB copies.
 
+## 2026-10-20 Turin Relocation (USB NTFS write failure)
+
+The USB cold store (`/mnt/usb-models`, NTFS via fuseblk) began refusing all
+writes with `ENOSPC` despite ~99 GiB of reported free space (metadata-zone
+exhaustion is suspected; volume needs chkdsk). The approved archive pass was
+rerouted to turin over the LAN. Each tree was hashed per file (SHA-256),
+copied with rsync, re-hashed on turin, compared equal, and only then deleted
+locally; the comparison log is `/tmp/archive-turin-20261020.log`. **No
+compatibility symlinks exist** — references to the old hot paths below now
+resolve on turin (`turin:/home/steve/archived-from-b70s-20261020/`). Root
+filesystem free space went from 9.4 GiB to 35 GiB.
+
+| Tree | Bytes | Turin destination (prefix `/home/steve/archived-from-b70s-20261020/`) | Former hot path |
+| --- | ---: | --- | --- |
+| Packet evidence hold | 12,871,573,557 | `evidence-hold-20261019` | `/home/steve/evidence-hold-20261019` |
+| Qwen3.6 27B AutoRound INT4 bench tree | 6,501,355,536 | `bench-results-qwen36-27b-autoround-int4-b70` | `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70` |
+| Muse Glimmer 30B bench tree | 1,652,443,981 | `bench-results-muse-glimmer-30b` | `/mnt/fast-ai/bench-results/muse-glimmer-30b` |
+| Qwen2.7 Q6K M6 top1 bench tree | 1,361,172,260 | `bench-results-qwen27-q6k-m6-top1` | `/mnt/fast-ai/bench-results/qwen27-q6k-m6-top1` |
+| Gemma 4 26B Q8 bench tree | 1,348,413,473 | `bench-results-gemma4-26b-a4b-q8` | `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8` |
+| Qwen3.5 9B W4A16 pwdynm1r | 582,733,278 | `bench-results-qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-pwdynm1r` | `/mnt/fast-ai/bench-results/qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-pwdynm1r` |
+| Qwen3.5 9B W4A16 pwdynm1 | 582,707,391 | `bench-results-qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-pwdynm1` | `/mnt/fast-ai/bench-results/qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-pwdynm1` |
+| Qwen3.5 9B W4A16 pwdyn1 | 582,681,532 | `bench-results-qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-pwdyn1` | `/mnt/fast-ai/bench-results/qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-pwdyn1` |
+| Qwen3.6 27B MTP GGUF Q4 bench tree | 392,157,931 | `bench-results-qwen36-27b-mtp-gguf-q4-b70` | `/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70` |
+| Qwen2.7 dFlash SYCL bench tree | 354,227,804 | `bench-results-qwen27-dflash-sycl-b70` | `/mnt/fast-ai/bench-results/qwen27-dflash-sycl-b70` |
+
+The evidence hold's own `MANIFEST.txt` travels inside its archive. The
+`ltx25-baseline-20260913` tree (195 GiB, `output` + `quarantine`) was not
+touched; it does not fit any current cold target and needs an owner decision.
+
 ## 2026-08-30 Internal-NVMe Reclaim
 
 The following older local copies were removed after their external copies were
