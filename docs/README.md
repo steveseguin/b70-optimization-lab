@@ -23,6 +23,9 @@ Docs should point to those artifacts instead of duplicating every script.
 - [The Own Xe Runtime](own-runtime.md): the custom SYCL/Xe engine for Qwen3.8
   hybrid models — measured state, exactness discipline, session-swap contract,
   and open qualification items.
+- [Portability Replay Standard](portability-replay.md): how clean-host and
+  non-originating-host replay `missing` items get closed — procedure, receipt
+  set, closeout path, and the current burn-down order.
 - [Model Family Coverage](../families/README.md): normalized lineage,
   quantization variants, TP/MTP/context axes, and explicit
   measured/screened/closed/estimated coverage states behind the public model
