@@ -885,6 +885,135 @@ class InPlace(unittest.TestCase):
         self.assertIn("an empty reply asked again without thinking", ev)
         self.assertIn("abcd01: 999", ev)
 
+    def test_a_reply_that_stands_for_want_of_a_usable_second_is_still_checked(self):
+        """Campaign 49d (2M, seed 2): the reply asked again about unaccounted mentions hit the token cap, the first
+        reply stood as it was — the count question unanswered, the working check never run — and the missing and
+        wrong lines self-copied for six to ten NOTES versions. The reply that stands gets the remaining checks."""
+        class CapThenFix(LedgerModel):
+            def __init__(self):
+                super().__init__()
+                self.done = False
+
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                if last.startswith("The turns mention these names"):          # the asked-again reply hits the cap
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    resp = reply("")
+                    resp["choices"][0]["finish_reason"] = "length"
+                    resp["usage"] = {"prompt_tokens": 1000, "completion_tokens": 8192}
+                    return resp
+                if last.startswith("Check these lines"):
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    return reply("NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabcd01: 9\nOPEN\n")
+                resp = super().__call__(body)
+                msg = resp["choices"][0]["message"]
+                text = str(msg.get("content") or "")
+                if not self.done and text.startswith("NEW RULES"):
+                    self.done = True                                        # one abcd01 change left unwritten, and
+                    msg["content"] = (text.replace("\nabcd01: 9", "", 1)    # a line whose start the turns do not state
+                                      .replace("\nOPEN", "\nabcd00: 500 - 479 = 0\nOPEN", 1))
+                return resp
+
+        model = CapThenFix()
+        keeper = self.keeper(model, notes_checks="near")
+        base = conversation(6)
+        base[5]["content"] += " The clerk moved counter abcd01 to 9."          # abcd01 is mentioned twice, written once
+        for n in range(1, 7):
+            keeper.complete({"model": "m", "messages": base[:2 * n + 2]})
+        s = next(iter(keeper.sessions.values()))
+        notes = s.state["notes"].splitlines()
+        ev = self.events(keeper)
+        self.assertEqual(s.state["inplace_failed"], 0)
+        self.assertIn("no usable second reply, the first stands", ev)
+        self.assertLess(ev.index("no usable second reply"), ev.index('"why": "working"'))   # the working check ran on it
+        self.assertIn("abcd01: 9", notes)                                      # the fix the asked questions led to
+        self.assertIn("abcd00: 0", notes)
+        self.assertNotIn("500", s.state["notes"])
+
+    def test_the_count_question_asks_for_only_the_names_it_names(self):
+        """Campaign 49d (2M, seed 2): asked for the three complete sections again, the reply ran past the token cap.
+        The count question now asks for only the lines of the names it names; the other lines stand (merge_replies)."""
+        class Omitting(LedgerModel):
+            def __init__(self):
+                super().__init__()
+                self.done = False
+
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                if last.startswith("The turns mention these names"):          # the scoped reply: only the named name
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    return reply("NEW RULES\n(none)\nCHANGES\nabcd00: 3\nOPEN\n")
+                resp = super().__call__(body)
+                msg = resp["choices"][0]["message"]
+                text = str(msg.get("content") or "")
+                if not self.done and text.startswith("NEW RULES"):
+                    self.done = True
+                    msg["content"] = text.replace("\nabcd00: 3", "", 1)      # one of abcd00's changes left unwritten
+                return resp
+
+        model = Omitting()
+        keeper = self.keeper(model, notes_checks="near")
+        base = conversation(6)
+        base[5]["content"] += " The clerk moved counter abcd00 to 3."
+        for n in range(1, 7):
+            keeper.complete({"model": "m", "messages": base[:2 * n + 2]})
+        s = next(iter(keeper.sessions.values()))
+        asked = [r["messages"][-1]["content"] for r in model.notes_requests]
+        count = next(m for m in asked if m.startswith("The turns mention these names"))
+        self.assertIn("abcd00", count)
+        self.assertIn("ONLY the lines for these names", count)
+        self.assertNotIn("three complete sections", count)
+        self.assertFalse([m for m in asked if m.startswith("Your reply did not use the layout")])   # the scoped reply is taken as it is
+        notes = s.state["notes"].splitlines()
+        self.assertIn("abcd00: 3", notes)                                      # the scoped reply's line
+        self.assertIn("abcd01: 7", notes)                                      # the first reply's other lines stand
+        self.assertEqual(s.state["inplace_failed"], 0)
+
+    def test_a_doubted_start_from_memory_comes_with_the_archive_entries(self):
+        """Campaign 49 (2M): seed 0's one wrong line and two of seed 2's stood after the asked-again reply kept a
+        start the NOTES did not hold and the turns did not state (ketuni59 from -172, the NOTES holding -62). The
+        question now comes with what the archive says about the name."""
+        class Memory(LedgerModel):
+            def __init__(self):
+                super().__init__()
+                self.replies = 0
+                self.on_check = ["NEW RULES\n(none)\nCHANGES\nabcd01: 3\nOPEN\n"]
+
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                if last.startswith("Check these lines") and self.on_check:
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    return reply(self.on_check.pop(0))
+                resp = super().__call__(body)
+                msg = resp["choices"][0]["message"]
+                text = str(msg.get("content") or "")
+                if text.startswith("NEW RULES"):
+                    self.replies += 1
+                    if self.replies == 2:                  # the second cut's first reply: a start from memory
+                        msg["content"] = text.replace("\nOPEN", "\nabcd01: 500 - 479 = 3\nOPEN", 1)
+                return resp
+
+        model = Memory()
+        keeper = self.keeper(model, notes_checks="near", lookups=True, recall_label=r"ITEM (\d+):", recall_unit="item")
+        base = conversation(16)
+        base[7]["content"] += " The clerk moved counter abcd01 to 3."          # cut 2's turns mention abcd01 again
+        for n in range(1, 17):
+            keeper.complete({"model": "m", "messages": base[:2 * n + 2]})
+        s = next(iter(keeper.sessions.values()))
+        asked = [r["messages"][-1]["content"] for r in model.notes_requests]
+        check = next((m for m in asked if m.startswith("Check these lines")), "")
+        self.assertIn("What the archive says", check)
+        self.assertIn("abcd01 to 7", check)                                    # the archived entry, shown with the question
+        self.assertIn('"evidence": ["abcd01"]', self.events(keeper))
+        notes = s.state["notes"]
+        self.assertIn("abcd01: 3", notes.splitlines())
+        self.assertNotIn("500", notes)
+        self.assertEqual(s.state["inplace_failed"], 0)
+
     def test_a_number_the_turns_do_not_state_is_left_out_after_the_second_reply(self):
         again = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabcd01: 7\nabcd01: 999\nabcd02: 14\nOPEN\n"
         model = self.Tampering({1: ["abcd01: 999"]}, on_check=[again])

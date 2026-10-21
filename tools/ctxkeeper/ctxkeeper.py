@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0"
+__version__ = "1.2.1.dev0"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -1310,17 +1310,23 @@ class Keeper:
             if delta is None and earlier is not None and (not text or finish == "length" or asked_layout):
                 # Asked about some lines of a reply that was in the layout, the model wrote nothing usable (X32n,
                 # seed 1: an empty reply, twice; the whole cut then went to the full rewrite, which lost a change).
-                # The reply before it stands, without the lines whose number the turns do not state.
+                # The reply before it stands, without the lines whose number the turns do not state — and the checks
+                # below still run on it: a reply that stands unchecked can keep a change the turns never made and miss
+                # every change they did (campaign 49d, 2M, seed 2: the asked-again reply hit the token cap; the first
+                # reply stood with mentions unaccounted, and the missing and wrong lines self-copied for six to ten
+                # NOTES versions). `earlier` first, so the merge below is a no-op and a line left out here does not
+                # come back when a later reply of this cut is merged. The unusable reply is not echoed in an
+                # asked-again message: what stands is the reply before it.
                 log({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
                 kept = self.supported(earlier, texts, strict)
                 near = nd.numbers_near(nd.state_keys(notes) + [k for k, _ in kept["changes"]], texts + list(s.recalled) + looked) if self.notes_checks == "near" else None
                 delta, dropped = nd.without_doubtful(notes, dict(kept, rules=list(rules_seen)), seen, strict, near)
-                new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
-                info.pop("steps", None)
                 if dropped:
                     log({"event": "in-place notes: lines left out (the turns do not bear them out)", "lines": dropped[:12]})
-                why = ""
-                break
+                earlier = delta
+                text = ("NEW RULES\n" + ("\n".join("- " + r for r in delta["rules"]) if delta["rules"] else "(none)")
+                        + "\nCHANGES\n" + ("\n".join(f"{k}: {v}" for k, v in delta["changes"]) or "(none)")
+                        + (("\nOPEN\n" + "\n".join(delta["open"])) if delta.get("open") else ""))
             if delta is None:
                 why = "reply cut off by the token cap" if finish == "length" else "reply without the NEW RULES / CHANGES layout"
                 log({"event": "in-place notes reply rejected", "attempt": attempt, "why": why, "reply_start": text[:160]})
@@ -1391,12 +1397,21 @@ class Keeper:
                 continue
             if info["mismatch"] and not asked_working:
                 # asked once more, with thinking and with the lines named; the second reply stands (the check has
-                # false alarms: a model that thinks may start from a value it worked out itself)
+                # false alarms: a model that thinks may start from a value it worked out itself). A doubted line
+                # whose start the NOTES do not hold and the turns do not state comes with what the archive says
+                # about the name, so the asked-for reply can work the line out instead of repeating it.
                 asked_working = True
                 counts["inplace_reasks"] += 1
-                log({"event": "in-place notes asked again", "why": "working", "lines": info["mismatch"][:6]})
+                doubted = [delta["changes"][i] for i in info.get("mismatch_at", [])[:6] if 0 <= i < len(delta["changes"])]
+                proof = self.evidence(s, notes, doubted, texts, near, seen) if self.lookups else []
+                msg = nd.MISMATCH_RETRY.format(lines="; ".join(info["mismatch"][:6]))
+                if proof:
+                    msg += "\n\n" + nd.EVIDENCE_NOTE.format(names=", ".join(n for n, _ in proof),
+                                                            entries="\n".join(f"{n}:\n{t}" for n, t in proof)[:LOOKUP_CHARS])
+                log({"event": "in-place notes asked again", "why": "working", "lines": info["mismatch"][:6],
+                     "evidence": [n for n, _ in proof]})
                 req = req + [{"role": "assistant", "content": text},
-                             {"role": "user", "content": nd.MISMATCH_RETRY.format(lines="; ".join(info["mismatch"][:6]))}]
+                             {"role": "user", "content": msg}]
                 thinking = True if self.notes_thinking is not None else None
                 continue
             if self.tokens(s, [{"role": "user", "content": new}]) > 2 * self.notes_cap:
@@ -1477,6 +1492,52 @@ class Keeper:
             if said:
                 out.append((name, numbers, "\n".join(dict.fromkeys(said))))
         return out[:8]
+
+    def evidence(self, s: Session, notes: str, changes: list[tuple[str, str]], texts: list[str],
+                 near: dict[str, set[int]] | None, seen: set[int] | None) -> list[tuple[str, str]]:
+        """--lookups: of the CHANGES lines the checks doubt, those whose working starts from a value that is neither
+        the one the NOTES hold nor a number the turns state for the name — a start from memory, wrong or pointless
+        every time it was looked at — each with what the archive says about the name, newest first. Campaign 49 (2M):
+        seed 0's one wrong line and two of seed 2's stood because the asked-again reply kept such a start (ketuni59
+        from -172, the NOTES holding -62; jami27 from 192, holding 162). Shown the entries, the reply can work the
+        line out. Only labelled units are quoted; without --recall-label there is no unit number to name them by."""
+        held: dict[str, int | None] = {}
+        sec = ""
+        for ln in notes.splitlines():
+            head = nd.section_of(ln)
+            if head:
+                sec = head
+            elif ln.strip() and sec == "STATE":
+                k, v = nd.fact_of(ln)
+                held[k] = nd.number_of(v)
+        rows = [r for r in s.archive.labelled(self.recall_label)
+                if r["role"] in ("tool", "user") and r.get("k") is not None]
+        here = "\n".join(texts)
+        out: list[tuple[str, str]] = []
+        for name, value in changes:
+            if name == nd.LOOSE or any(name == n for n, _ in out):
+                continue
+            w = nd.work_out(value)
+            if w is None or w[0] is None:
+                continue                                       # no numeric start to check
+            start = w[0]
+            stated = near.get(name, set()) if near is not None else (seen or set())
+            if start == held.get(name) or start in stated:
+                continue                                       # starts from the held value, or one the turns state
+            said = []
+            for r in reversed(rows):                           # newest first: the value now is what the last entries bear out
+                parts = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", r["text"]) if x.strip()]
+                for j, x in enumerate(parts):
+                    if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", x, re.I):
+                        got = " ".join(parts[j:j + 2])[:400]
+                        if got not in here:
+                            said.append(f"{self.recall_unit} {r['k']}: {got}")
+                        break                                  # one mention of the name per unit is enough here
+                if len(said) >= 4:
+                    break
+            if said:
+                out.append((name, "\n".join(dict.fromkeys(said))))
+        return out[:4]
 
     def unit_ref(self) -> re.Pattern:
         """A reference to one or more units (recall_unit): `item 32`, `items 3 and 5`."""

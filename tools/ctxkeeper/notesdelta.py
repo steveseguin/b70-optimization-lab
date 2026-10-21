@@ -876,6 +876,16 @@ MISMATCH_RETRY = ("Check these lines of your CHANGES against the NOTES and the t
                   "it, write the set as a line of its own first. Then reply with the three complete sections again.")
 
 
+# Appended to MISMATCH_RETRY (with the archive evidence) when a doubted line's working starts from a value the NOTES
+# do not hold and the turns do not state: a start from memory, or the NOTES themselves wrong. Campaign 49 (2M): seed
+# 0's one wrong line and two of seed 2's stood after the asked-again reply kept such a start (ketuni59 from -172,
+# the NOTES holding -62; jami27 from 192, holding 162).
+EVIDENCE_NOTE = ("The working of {names} starts from a value the NOTES do not hold and the turns do not state: it is "
+                 "from memory, or the NOTES are wrong. What the archive says about it, newest first:\n{entries}\n"
+                 "Work from what the entries bear out; if the NOTES hold a wrong value, write the correction as a line "
+                 "of its own.")
+
+
 def state_keys(notes: str) -> list[str]:
     """The names of the STATE lines of the NOTES."""
     keys, sec = [], ""
@@ -889,9 +899,12 @@ def state_keys(notes: str) -> list[str]:
 
 
 COUNT_RETRY = ("The turns mention these names more often than your CHANGES account for: {names}. Go through the turns again "
-               "for each of them, one mention at a time. Then reply with the three complete sections again, every change "
-               "included: a change is a line of its own or one step in the working of a line. For a mention that changes "
-               "nothing, write `name: (no change)`.")
+               "for each of them, one mention at a time. Then reply in the same layout (NEW RULES, then CHANGES), writing "
+               "ONLY the lines for these names, every change of theirs included: a change is a line of its own or one step "
+               "in the working of a line. For a mention that changes nothing, write `name: (no change)`. The lines you "
+               "wrote for every other name stand; do not repeat them. (A full re-listing of every line runs long and has "
+               "been cut off by the token cap: campaign 49d, 2M, seed 2, where the names this question named then kept "
+               "stale values for six to ten NOTES versions.)")
 
 
 def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:

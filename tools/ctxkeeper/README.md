@@ -325,6 +325,23 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
+Development (1.2.1.dev0, 2026-10-20), from lab campaign 49 (2M hostile, both seeds, 421/423 and 417/423), all on by
+default. Campaign 49's wrong NOTES lines traced to five decision points; these three changes close them:
+
+- A reply that was asked again and came back unusable (cut off by the token cap, or empty) no longer ends the cut's
+  checks. The reply that then stands goes through the remaining checks (archived entries it waits on, working that
+  does not follow) before it is taken. Campaign 49d, seed 2: the asked-again reply hit the token cap and the first
+  reply stood unchecked — six counters' updates never landed or landed wrong (himo29, como20, roru25, vomogu38,
+  xarosu96, vonedi62), and the lines self-copied for six to ten NOTES versions. Thirty of seed 2's thirty-one wrong
+  lines trace to that one cut.
+- The mentions-not-accounted-for question asks for only the lines of the names it names, in the same layout, instead
+  of the three complete sections again; the merge keeps the rest. A full re-listing of a long CHANGES runs past the
+  token cap — that is what cut off the campaign-49d reply.
+- With `--lookups`, a doubted line whose working starts from a value the NOTES do not hold and the turns do not
+  state now comes with what the archive says about the name, newest first. Seed 0's one wrong line and two of seed
+  2's stood after the asked-again reply repeated a start from memory (ketuni59 from -172, the NOTES holding -62;
+  jami27 from 192, holding 162). Six such starts in the nineteen working questions of the two seeds.
+
 **1.2.0** (2026-10-20): fixes from the two-million-token hostile campaigns (39-49), and new options. Both 2M
 seeds were rerun on it as lab campaign 49: 421/423 and 417/423, 16/16 corrections applied on both seeds, with
 hash-bound public audits.
