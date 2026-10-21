@@ -4,7 +4,7 @@
 The two-card host's work is the text-storage side of the session-swap effort.
 Opt-in `--save-conversations` retains complete requests, returned replies and
 actual main-call views; local list/export commands support text-based resume.
-141 CPU/scripted-model tests and 15 release-gate tests pass, including abrupt
+142 CPU/scripted-model tests and 15 release-gate tests pass, including abrupt
 process exit, archived-history resume, concurrent sessions and streaming HTTP.
 A fresh package installation and separate-process export pass. Setup and the
 runtime integration boundary: [saved conversations](tools/ctxkeeper/CONVERSATIONS.md).

@@ -1102,13 +1102,11 @@ class Keeper:
     def upstream(self, body: dict[str, Any], s: Session | None = None, kind: str = "main") -> dict[str, Any]:
         """One call to a model server, timed (the session's state keeps the totals: where a run's minutes went).
         Notes calls go to the separate keeper's server when there is one (--notes-upstream)."""
-        t, wall, resp = time.monotonic(), time.time(), None
         turn = getattr(self.clock, "turn", None)
         call = self.conversations.call(turn, body) if self.conversations and turn and kind == "main" else None
+        t, wall, resp = time.monotonic(), time.time(), None
         try:
             resp = (self.ask_notes if kind == "notes" and self.ask_notes is not None else self.ask)(body)
-            if call is not None:
-                self.conversations.answered(call, resp)
             return resp
         finally:
             dt = time.monotonic() - t
@@ -1123,6 +1121,8 @@ class Keeper:
                             "cached": cached_of(resp or {}), "written": usage.get("completion_tokens"),
                             "finish": ((resp or {}).get("choices") or [{}])[0].get("finish_reason"),
                             "timings": (resp or {}).get("timings")})
+            if call is not None and resp is not None:
+                self.conversations.answered(call, resp)  # storage time is not model-server time
 
     def learn(self, s: Session, sent: list[dict[str, Any]], response: dict[str, Any]) -> None:
         """Characters per token, from the server's own count. Only sizeable prompts teach (on a short one the tool

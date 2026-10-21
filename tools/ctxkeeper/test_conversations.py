@@ -208,6 +208,27 @@ class SavedConversations(unittest.TestCase):
                 keeper.complete(self.body, "work")
         self.assertEqual(called, [])
 
+    def test_model_timing_excludes_journal_writes(self):
+        clock = [0.0]
+        def model(body):
+            clock[0] += 2.0
+            return reply("ok")
+        keeper = self.keeper(model)
+        journal = keeper.conversations
+        keeper.clock.turn = journal.begin("work", self.body)
+        original_call, original_answered = journal.call, journal.answered
+        def slow_call(*args):
+            clock[0] += 10.0
+            return original_call(*args)
+        def slow_answered(*args):
+            clock[0] += 20.0
+            return original_answered(*args)
+        with patch.object(ck.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(journal, "call", side_effect=slow_call), \
+                patch.object(journal, "answered", side_effect=slow_answered):
+            keeper.upstream(self.body)
+        self.assertEqual(keeper.clock.spent, 2.0)
+
     def test_corrupted_object_and_unknown_schema_are_rejected(self):
         self.keeper().complete(self.body, "work")
         with sqlite3.connect(self.root / "conversations.sqlite3") as db:
