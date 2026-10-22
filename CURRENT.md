@@ -1,5 +1,21 @@
 # Current Workspace State
 
+**October 21, late evening EDT — one-card device window ran: packet178 portable rebuild and packet179 checkpoint both qualified on device.**
+The window approved at ~15:40 had not actually run (PAUSE-A latch + a session-bound runner; the
+daily endpoints were down 6 h for nothing) and both packets were refused by the lane queue's pin
+guard (1056 / 123 cross-packet pins that the packets' own pre-READY plan could not see). Repairs are
+in-packet only (`b8fded755`, `064452363`); the endpoints were restored first, then the window ran
+under unit `lanequeue-A34` 02:13–02:55 UTC with fault count 2 → 2. packet178 (portable rebuild
+`6fa840ab…`): two fresh loads 31.83 / 31.81 tok/s, oracle-128 exact, all 12 output hashes identical
+between loads and to packet179's reference load. packet179 (checkpoint engine `8d185384…`): reference
+load 31.85 tok/s, oracle exact; save at K=256 (1.10 s, 68.8 MB, 20 blobs) + two fresh-process
+restores with M=128 → merged 384 tokens equal the reference at [0:384), repeat restores identical,
+restore 0.46 s + 6.78 s continuation vs 36.75 s cold prefix. SESSION-SWAP-DESIGN.md §7 gates 1–4 are
+met on device; the manifest label stays `experimental` until an engine revision changes the string.
+Endpoints restored as `*-20261021-restore4`. Incident, repairs and receipts:
+`notes/2026-10-21-own-runtime-window-pin-guard-refusal.md`. Rule: a window is running only when
+`events-A.jsonl` shows START; run the live `lanequeue.py plan` before stopping any endpoint.
+
 **October 21 — packet179 integration review (source-only).** The committed
 engine resumes an unfinished generation from its original prompt; general new
 conversation turns and restore-then-save are not implemented yet. Metadata

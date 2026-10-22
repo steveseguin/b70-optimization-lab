@@ -56,6 +56,35 @@
 - Verified by the coordinator: 0 cross-packet pins, both rows plan `passed`, device binary
   8d18538475e00200… unchanged, proposal byte-identical.
 
-## Window result
+## packet178 repair (commit b8fded755)
 
-(filled in below when the window runs)
+- `build.json.relocated_source_sha256` re-keyed to `one-card/native-portable/<member>` (same
+  hashes; receipt regenerated, nothing recompiled); `portable-inputs.json` pins fixed to
+  `one-card/lineage/portable/<name>` (a third defect hidden behind the first refusal).
+- `native_sequence_probe.py` compiles packet-private copies and links this packet's own rebuilt
+  objects; sensor hashes identical to the earlier run.
+- `final_checks.py --ready` re-runs `pin_guard.check_job` on both rows after writing READY.
+- Packet binary is `6fa840ab…bf10` (the `9daf844d…` in commit 1d611502f is the `/dev/shm`
+  validation build, as the original build receipt already recorded).
+
+## Window result (2026-10-22 02:13–02:55 UTC, runner unit lanequeue-A34, lane A whole-host)
+
+Pre-flight: live `plan` passed all four rows; endpoints stopped at 02:13:24Z (MemAvailable
+120.8 GB ≥ 100.1 GB required); PAUSE-A archived/removed for the window and re-armed at 02:54:53Z.
+Kernel fault count 2 → 2 across every row.
+
+| row | outcome | duration | result |
+|---|---|---|---|
+| packet178-one-card-full512-A-a | DONE | 496 s | passed, oracle-128 exact, primary 31.83 tok/s |
+| packet178-one-card-full512-A-b | DONE | 495 s | passed, oracle-128 exact, primary 31.81 tok/s; fresh-process determinism checked |
+| packet179-one-card-full512-A-a | DONE | 499 s | passed, oracle-128 exact, primary 31.85 tok/s (reference for row B) |
+| packet179-one-card-checkpoint-A-b | DONE | 699 s | passed: save at K=256 (1.10 s, 68,756,516 B, 20 blobs, EOS-free), two fresh-process restores + M=128; merged 384 tokens == reference [0:384) (384 compared), repeat restores identical, oracle-128 exact; restore 458 ms + continuation 6.78 s vs cold prefix 36.75 s |
+
+- packet178 A/B: all 12 `output_token_sha256` identical between the two fresh loads; the
+  portable rebuild (6fa840ab…) reproduces the packet165 line (parent rate 31.97 tok/s).
+- packet179 row A outputs are identical to packet178's for all 12 prompts (checkpoint build
+  8d185384…, a packet165 relink), so the portable rebuild and the relink agree token-for-token.
+- SESSION-SWAP-DESIGN.md §7 gates 1–4 are met on device; the manifest still says
+  `label: "experimental"` because changing the string is an engine change (next packet).
+- Endpoints restored afterwards as `*-20261021-restore4` (receipts in
+  `/home/steve/inference/20261021-restore4/`).
