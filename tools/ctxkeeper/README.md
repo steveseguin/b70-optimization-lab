@@ -14,7 +14,7 @@ your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (
                           shows a bounded view
 ```
 
-Version 1.2.0 (previous release: 1.1.0) · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
+Version 1.3.0 (previous release: 1.2.0) · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
 `ctxkeeper.py`, `notesdelta.py`) · download and setup: <https://skindeep.ai/ctxkeeper.html>
 
 ## Does it work?
@@ -26,7 +26,7 @@ Measured on Qwen3.8-27B (FP8, served by vLLM on two Intel Arc Pro B70 cards), wi
 | **Real code repair**: 40 bugs to fix in a real Python library, handed out one ticket at a time, with three house rules announced along the way, then questions about the earliest fixes | **40/40 fixed, 40/40 following every rule, 7/7 questions right**, in 16 min (`--recipe qwen`); 36-38 min (`--recipe agent`); both with `--recite-when` for the tickets | Sliding 32K window: 22 to 35 of 40 clean, 0/7 questions. Summarizing the history: 33 to 40 of 40, 0 to 7 of 7 |
 | **The same task with a separate agent program** that manages nothing itself ([freeagent](../freeagent/freeagent.py)) | **40/40, 40/40, 7/7 in 33 min**, reading 2.9M prompt tokens; at release, with `--recipe qwen` and no other option: **40/40, 40/40, 7/7 in 31 min** | The same agent sending everything into a 262K window: same score, 55 min, 29.9M prompt tokens |
 | **Memory over 1M tokens**: 228 questions about things said up to a million tokens earlier | **226/228 (99%)** in 50 min | A 200K window: 166/228 (73%), every one of 29 standing-rule questions wrong, 228 min |
-| **2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream | On 1.2.0, both seeds (lab campaign 49, hash-bound public audits): **421/423 and 417/423, 16/16 corrections applied on both seeds**; every forged line the notes carried was flagged, and no forged value, method, rule or removal was ever adopted. Two of 97 forgery-target answers slipped on silent arithmetic (the notes held the right value throughout), so the lab's strictest preregistered bar is not claimed. On dev9, the two seeds scored 414/423 and 416/423. | (not run: no window holds it) |
+| **2M tokens, hostile**: forged notices of four kinds and quiet retroactive corrections planted in the stream | On 1.3.0, both seeds (lab campaign 55, hash-bound public audits): **423/423 and 420/423, 16/16 corrections applied on both seeds, every forged notice kept out, 0 and 2 wrong STATE lines in about 8,700 checked**; on 1.2.0 (campaign 49): 421/423 and 417/423 | (not run: no window holds it) |
 
 The hostile test uses task-specific settings (K32C), including notes thinking, archive labels, rule matching,
 lookups, cited entries and arithmetic checks. It is not a measurement of the default `--recipe qwen` settings.
@@ -121,26 +121,26 @@ Practical guidance, measured on the Qwen setup unless noted:
 
 ## Install
 
-Pick one. All three come from the [1.2.0 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.2.0)
+Pick one. All three come from the [1.3.0 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.3.0)
 (small files; nothing clones the lab's large repository):
 
 ```bash
-R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.2.0
+R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.3.0
 
 # 1. pip (gives you the `ctxkeeper` command)
 python3 -m venv .venv-ctxkeeper
 . .venv-ctxkeeper/bin/activate
-python -m pip install "$R/ctxkeeper-1.2.0-py3-none-any.whl"
+python -m pip install "$R/ctxkeeper-1.3.0-py3-none-any.whl"
 
 # 2. Docker (builds the image from the 90 KB source archive)
-docker build -t ctxkeeper $R/ctxkeeper-1.2.0.tar.gz
+docker build -t ctxkeeper $R/ctxkeeper-1.3.0.tar.gz
 
 # 3. just the two files (run with python3 ctxkeeper.py ...)
 curl -LO $R/ctxkeeper.py
 curl -LO $R/notesdelta.py
 ```
 
-The source archive `ctxkeeper-1.2.0.tar.gz` also holds the demo below, the tests and this README; the release page
+The source archive `ctxkeeper-1.3.0.tar.gz` also holds the demo below, the tests and this README; the release page
 lists every file's SHA-256.
 
 ## Quick start
@@ -164,7 +164,7 @@ Keep this unauthenticated proxy on localhost or a trusted private network.
    codename, a budget and a standing rule at the start, and asks about them at the end.
 
    ```bash
-   R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.2.0
+   R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.3.0
    curl --fail --location --output long_chat.py "$R/long_chat.py"
    python3 long_chat.py --base-url http://127.0.0.1:18200/v1
    ```
@@ -325,50 +325,21 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
-Development (1.3.0.dev0, 2026-10-21): opt-in `--save-conversations` retains full client requests,
-returned replies and actual main-call views in a deduplicated SQLite journal. Local `--sessions list`
-and `--sessions export --session NAME` commands recover saved exchanges after a restart, including
-recent turns that have never reached the recall archive. See [saved conversations](CONVERSATIONS.md)
-for setup, continuation, backup and failure semantics. This is text-based recovery, not GPU-state
-restoration; runtime checkpoint integration and performance qualification remain pending. Stable
-PyPI 1.2.0 is unchanged.
+**1.3.0** (2026-10-22): four keeper fixes from the two-million-token hostile campaigns 51-55, each gated by
+replaying the audited sessions before any run, and opt-in durable conversations. Both 2M seeds on it (lab campaign 55,
+hash-bound public audits): 423/423 and 420/423, 16/16 corrections applied on both seeds, every forged notice kept
+out, 0 and 2 wrong STATE lines (campaign 51 on 1.2.1.dev0, the same settings: 419 and 402 with 10 and 15).
 
-Development 1.3.0.dev1 (2026-10-21): a STATE change written as `old set to new` is stored as the new value with its
-remarks, the value the keeper already read; campaign 51 seed 0 had six such lines scored wrong as written ([history](HISTORY.md)).
-`--set-check` (off by default) asks once about a set or a removal the turns state for a name that none of its CHANGES lines takes.
-Development 1.3.0.dev2 (2026-10-22): a notes reply cut off by the reply cap keeps its complete lines, and the retry merges over them ([history](HISTORY.md)).
-Development 1.3.0.dev3 (2026-10-22): a notes reply that repeats one line six times or more is a loop: never applied, asked for once more.
-Development 1.3.0.dev4 (2026-10-22): `--set-check` also asks about a stated set for a name the notes hold that the reply left out entirely.
-
-Development (1.2.2.dev0, not a stable release): `--sum-check` first asks once for working on tool-call blocks
-containing at least three integer assignments whose absolute values are 100 or more, when a value is absent from
-the managed view and has no written arithmetic equality. It then checks multiplication in the reply that stands,
-including working supplied by that retry. Each check can add one model call; an empty or recall-only retry leaves
-the preceding reply standing. With `--sum-check` off, the answer path is unchanged.
-
-This is an experimental heuristic. A number elsewhere in the view can hide an unsupported answer, and legitimate
-settings can trigger a question. Plain-text answer blocks are outside its scope; very large integers (over 100
-digits) are ignored. The final arithmetic retry is passed on, not retried indefinitely. The earlier offline
-“112 asks / five wrong answers caught” estimate was withdrawn: it used truncated client histories rather than
-the actual managed requests. No benchmark improvement or retry rate is established for this version. Review and
-evidence: [lab note](../../experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md).
-
-Development (1.2.1.dev0, 2026-10-20), from lab campaign 49 (2M hostile, both seeds, 421/423 and 417/423), all on by
-default. Campaign 49's wrong NOTES lines traced to five decision points; these three changes close them:
-
-- A reply that was asked again and came back unusable (cut off by the token cap, or empty) no longer ends the cut's
-  checks. The reply that then stands goes through the remaining checks (archived entries it waits on, working that
-  does not follow) before it is taken. Campaign 49d, seed 2: the asked-again reply hit the token cap and the first
-  reply stood unchecked — six counters' updates never landed or landed wrong (himo29, como20, roru25, vomogu38,
-  xarosu96, vonedi62), and the lines self-copied for six to ten NOTES versions. Thirty of seed 2's thirty-one wrong
-  lines trace to that one cut.
-- The mentions-not-accounted-for question asks for only the lines of the names it names, in the same layout, instead
-  of the three complete sections again; the merge keeps the rest. A full re-listing of a long CHANGES runs past the
-  token cap — that is what cut off the campaign-49d reply.
-- With `--lookups`, a doubted line whose working starts from a value the NOTES do not hold and the turns do not
-  state now comes with what the archive says about the name, newest first. Seed 0's one wrong line and two of seed
-  2's stood after the asked-again reply repeated a start from memory (ketuni59 from -172, the NOTES holding -62;
-  jami27 from 192, holding 162). Six such starts in the nineteen working questions of the two seeds.
+On by default: a STATE change written as `old set to new` is stored as the new value with its remarks (six lines of
+campaign 51 seed 0 were scored wrong as written); a notes reply cut off by the reply cap keeps its complete lines
+and the retry merges over them; a notes reply that repeats one line six times or more is a loop, never applied,
+asked for once more without thinking (every reply that ever hit the cap in seven audited runs was such a loop, and
+one had been applied). New option, off by default: `--set-check`, which asks once about a set or a removal the turns
+state for a counter that none of the reply's lines takes, including a counter the reply left out entirely when the
+notes already hold it (its first live question landed on the cluster that cost campaign 49 thirty wrong lines).
+Opt-in `--save-conversations` keeps complete requests, replies and main-call views in a SQLite journal, with
+`--sessions list` and `--sessions export --session NAME` for text-based resume after a restart ([saved
+conversations](CONVERSATIONS.md)); text recovery only, no GPU state. History: [HISTORY.md](HISTORY.md).
 
 **1.2.0** (2026-10-20): fixes from the two-million-token hostile campaigns (39-49), and new options. Both 2M
 seeds were rerun on it as lab campaign 49: 421/423 and 417/423, 16/16 corrections applied on both seeds, with

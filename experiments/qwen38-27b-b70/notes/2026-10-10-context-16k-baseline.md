@@ -3347,3 +3347,15 @@ are `scripts/ctxkeeper-release-gate.sh` and `scripts/ctxkeeper-release-gate-chec
   model at ticket 37/44 ended that run (freeagent's final-words rule); the proxy's empty-reply retry has the
   same condition since 1.0.1 and an empty-arguments tool call passes it in both. Recorded as a known client
   fragility, not a keeper regression. **1.2.0 promoted from prerelease to stable (Latest) on these results.**
+
+## Campaign 56: the registered release gate (G1-G4) on the ctxkeeper 1.3.0 prerelease assets, registered 2026-10-22 14:24 EDT (before any run)
+
+The campaign-50 gate, unchanged, on the public 1.3.0 prerelease (GitHub release `ctxkeeper-v1.3.0`, assets built from
+`tools/ctxkeeper` at the aligned 1.3.0 commit; SHA256SUMS on the release page): a fresh venv installed from the public
+wheel URL plus the OpenAI SDK, a Docker image built from the public source-archive URL, `scripts/ctxkeeper-release-gate.sh`
+with `VERSION=1.3.0 RUN=c56`. Bars as registered for campaign 50: **G1** freeagent + `ctxkeeper --recipe qwen` on
+`repair-n40-s2x`: 40/40 fixed, at least 38 clean, at least 6/7 audit, under 45 min; **G2** `long_chat.py` through the
+Docker image, 300,000 tokens, 4/4; **G3** the README's SDK snippet: plain reply, tool call, stream; **G4** Gemma 4 26B
+Q8 100K smoke (reported, no quality gate), after the FP8 server is down. Cards empty before and after; nothing else runs
+on this host. Pass → stable promotion and the PyPI upload are the owner's; a failed check stops the sequence and is
+read before anything is rerun.

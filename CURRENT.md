@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 22, 14:24 EDT — ctxkeeper 1.3.0 release candidate: package aligned, built and fresh-installed; prerelease and the
+registered release gate (campaign 56) next.** The four keeper fixes of campaigns 51-55 plus the opt-in conversation
+journal are 1.3.0; the README carries campaign 55's two-seed result. Wheel, source archive and the standalone files
+are built from the aligned tree with checksums; a fresh venv installs the wheel and reports 1.3.0. The gate runs on
+the public prerelease URLs exactly as for 1.2.0; stable promotion and PyPI are the owner's call.
+
 **October 22, 14:20 EDT — campaign 55 done: seed 0 423/423 and seed 2 420/423 with two wrong STATE lines, both audits PASS.**
 On ctxkeeper 1.3.0.dev4 both seeds of the 2M hostile stream keep every forgery target and apply all 16 audits; seed 2's
 two wrong lines were single-version slips, and its three misses were two old-value questions the model answered "None"

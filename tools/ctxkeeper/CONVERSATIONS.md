@@ -1,4 +1,4 @@
-# Saved conversations (development 1.3.0.dev0)
+# Saved conversations (1.3.0)
 
 The development build can keep complete client exchanges, including the newest
 reply, and export them after a restart. This is **text-based resume**, independent
