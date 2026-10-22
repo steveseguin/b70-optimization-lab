@@ -1,0 +1,21 @@
+2026-10-22T06:44:09.687572+00:00 window start
+2026-10-22T06:44:09.687942+00:00 queue-A.txt rewritten with 2 rows from regenerated proposals
+2026-10-22T06:44:10.608156+00:00 live plan passed for all 2 rows
+2026-10-22T06:44:10.623630+00:00 stopping endpoints: ['qwen38-27b-vision', 'qwen38-27b-fp8-tp1-test', 'qwen38-27b-fp8']
+2026-10-22T06:44:18.463358+00:00 stop rc=0 
+2026-10-22T06:44:28.478901+00:00 endpoints stopped; MemAvailable=120691044352 required=100063993856
+2026-10-22T06:44:29.405988+00:00 PAUSE-A archived and removed for the approved window (PAUSE-B untouched)
+2026-10-22T06:44:29.431727+00:00 runner launch rc=0  Running as unit: lanequeue-A35.service; invocation ID: 109497e51e9444889dc1030e8671b49d
+2026-10-22T06:44:29.436350+00:00 watching: started=[] done=[] unit=active
+2026-10-22T06:44:34.436693+00:00 EVENT {"event": "START", "lane": "A", "name": "packet180-one-card-full512-A-a", "utc": "2026-10-22T06:44:31.812013Z"}
+2026-10-22T06:52:54.981279+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "A", "name": "packet180-one-card-full512-A-a", "rc": 0, "utc": "2026-10-22T06:52:51.272885Z"}
+2026-10-22T06:54:25.076700+00:00 EVENT {"event": "START", "lane": "A", "name": "packet180-one-card-lifecycle-A-b", "utc": "2026-10-22T06:54:23.650843Z"}
+2026-10-22T06:54:30.087270+00:00 watching: started=['packet180-one-card-full512-A-a', 'packet180-one-card-lifecycle-A-b'] done=['packet180-one-card-full512-A-a'] unit=active
+2026-10-22T07:04:30.734977+00:00 watching: started=['packet180-one-card-full512-A-a', 'packet180-one-card-lifecycle-A-b'] done=['packet180-one-card-full512-A-a'] unit=active
+2026-10-22T07:13:51.331940+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "A", "name": "packet180-one-card-lifecycle-A-b", "rc": 0, "utc": "2026-10-22T07:13:50.428737Z"}
+2026-10-22T07:13:51.340795+00:00 watch result: {"done": ["packet180-one-card-full512-A-a", "packet180-one-card-lifecycle-A-b"], "terminal": null}
+2026-10-22T07:13:51.346308+00:00 STOP-A written; waiting for the runner to exit at its boundary
+2026-10-22T07:13:56.362541+00:00 runner unit state: inactive; STOP-A removed; PAUSE-A re-armed
+2026-10-22T07:13:56.416267+00:00 restoring endpoints: /usr/bin/python3 -u /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/restore-endpoints-20261021.py 20261022-restore5
+2026-10-22T07:23:15.481101+00:00 restore rc=0
+2026-10-22T07:23:15.481416+00:00 window end

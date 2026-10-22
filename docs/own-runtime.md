@@ -23,6 +23,7 @@ receipts).
 | Flash-Next UD-IQ3_XXS, 1×B70 | full512, 4096 ctx, sealed packet165 | 31.510–31.782 tok/s; requalified 31.766/31.774 | 32.595–32.752 tok/s | same discipline |
 | Flash-Next UD-IQ3_XXS, 1×B70, portable source rebuild (packet178, binary `6fa840ab…`) | full512, 4096 ctx | 31.83 / 31.81 tok/s (two fresh loads, 2026-10-22) | not re-measured on this row | oracle-128 exact; all 12 `output_token_sha256` identical across loads and identical to the sealed packet165 line — the rebuild reproduces the published one-card line ([window record](../notes/2026-10-21-own-runtime-window-pin-guard-refusal.md), evidence `experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/device-p178-full512-A-{a,b}/`) |
 | Flash-Next UD-IQ3_XXS, 1×B70, checkpoint engine (packet179, packet165 relink) | save at K=256, fresh-process restore, M=128 | restore 0.458 s + 6.78 s continuation vs 36.75 s cold prefix; reference load 31.85 tok/s | — | merged 384 tokens == uninterrupted reference at [0:384); two independent restores identical; oracle-128 exact; save 1.10 s / 68,756,516 B / 128 blobs. Same-generation resume only; manifest label stays `experimental` (evidence `…/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/`) |
+| Flash-Next UD-IQ3_XXS, 1×B70, checkpoint engine v2 (packet180, binary `f68714ce…`, 2026-10-22) | save at K=256, restore + append a 126-token turn, M1=128; restore-then-save, resume M2=64 | restore 0.41–0.46 s; append prefill of the 127 remaining input tokens 5.59 s vs 16.0 s cold prefill of all 469 (2.66×); reference load 31.78 tok/s | — | append output == one-shot reference [0:128]; restore-then-save chain == reference [128:192]; repeat append identical and re-saved state byte-identical (128 blobs); inspect/delete tools passed; 36/36 gates (evidence `…/packet180-session-swap-v2/one-card/evidence/device-p180-lifecycle-A-b/`) |
 | Flash-Next records (packet58as, approved on LocalMaxxing) | 128-token capped suites | 58.798109 (two-card) · 34.573038 (one-card) | — | capped-record scope stated on the package pages |
 | Qwen3.8 27B (GGUF-comparable lane, packet44) | 128-token 12-prompt suite | 37.59/37.77 tok/s @ 4,096 ctx · 37.71/37.70 @ 32,768 ctx (llama.cpp reference on the same suite: 28.49) | — | 12/12 requests bit-exact at both capacities |
 
@@ -48,10 +49,12 @@ declared gap.
   Its §7 gates 1–4 (restart-and-continue byte identity, repeat determinism,
   cold-start comparison, admission discipline) passed on device on
   2026-10-22 for the same-generation operation (table above; contract v1.2).
-  The label stays `experimental` because only an interrupted generation can
-  be resumed from its original prompt today: appending a new turn,
-  restore-then-save and a metadata-only inspect are the next engine items
-  (contract §10 item 0).
+  packet180 (2026-10-22, same window discipline) added and qualified on
+  device: appending a new turn to a restored session, restore-then-save,
+  one manifest source of truth with a tamper refusal, a shared lock for
+  save/restore/delete, and single-JSON / metadata-only inspect. The manifest
+  label is still the string `experimental`; changing it is an engine string
+  change carried by the next relink.
 
 ## Open items (tracked, in priority order)
 
@@ -66,11 +69,12 @@ declared gap.
    outranks new hardware claims. The TP1 portability replay needs about
    92 GiB of host RAM (the two-card host has 15 GiB), so it waits for a
    suitable host.
-3. **Session swap, next engine revision** per contract §10 item 0: new-turn
-   append on a restored prefix, restore-then-save, one authoritative parsed
-   manifest with a negative test, a shared restore/delete lock, a
-   metadata-only inspect; then the manifest label can change. The v1
-   same-generation gate is done (2026-10-22).
+3. **Session swap, next engine revision**: flip the manifest label string;
+   batch appended tokens through the chunked prefill path (the append
+   prefill ran at ~22.7 tok/s against ~29 tok/s cold); then TP2 checkpoints
+   (contract §10 item 1). Done on device 2026-10-22: same-generation resume
+   (packet179) and append + restore-then-save + lock/manifest/inspect
+   (packet180).
 
 ## Honest non-goals today
 
@@ -79,6 +83,6 @@ declared gap.
   concurrency curves exist only for the vLLM FP8 packages.
 - No context curve for the own-runtime full512 profiles: measured at 4096;
   other capacities are unmeasured, not claimed.
-- No new-turn resume: checkpoint/restore resumes an interrupted generation
-  from its original prompt; it cannot yet append the next question to a
-  saved conversation or re-save after a restore.
+- No ctxkeeper adapter yet: append and restore-then-save are qualified
+  on device, but ctxkeeper does not call the checkpoint operations; the
+  manifest label is still `experimental` until the next relink changes it.

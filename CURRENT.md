@@ -10,6 +10,23 @@ campaign 49 had once, and the next lever is to keep a cut-off reply's complete l
 they were meant to on both seeds. Cards empty. Audits and receipts: `experiments/qwen38-27b-b70/data/2026-10-21-context-campaign52/`;
 the read: the campaign-52 section of `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`.
 
+**October 22, 03:25 EDT — packet180 session-swap v2 qualified on device: append a new turn, restore-then-save, one manifest source, shared lock, inspect modes.**
+Built CPU-only off packet179 (entry TU only, 41 kernel objects relinked byte-identical from packet165,
+binary `f68714ce…`), sealed, READY with the pin guard at 0 cross-packet pins, then run in a one-card
+window 06:44–07:23 UTC (driver unit `window-p180-driver`, runner `lanequeue-A35`; the three daily
+endpoints had been idle since 03:03Z, were stopped only after the live plan passed, and are back as
+`*-20261022-restore5`, all validations true; no kernel fault lines). Row a: 31.78 tok/s, oracle exact,
+all 12 outputs identical to packet179 row a. Row b (36/36 gates): save at K=256 → fresh-process restore
++ a 126-token appended turn + 128 decoded tokens == the one-shot reference [0:128]; restore-then-save into
+S2, resume S2 + 64 == reference [128:192]; repeat append identical and S2b blobs == S2 blobs; restore
+0.41–0.46 s; append prefill of 127 tokens 5.59 s vs 16.0 s cold prefill of 469 (2.66×); inspect/delete
+tools passed. Label still the string `experimental` (string change goes in the next relink). Next lever:
+batch appended tokens through the chunked prefill path (append ran at ~22.7 tok/s vs ~29 cold).
+Packet: `experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/`; note
+`notes/2026-10-22-packet180-session-swap-v2.md`. Earlier today (same host): neural.download and skindeep.ai
+cleanups, every one- and two-card recipe rewritten to one seven-step quick start, package manifests fixed
+(`e46e5fbfc`…`7e036a7c9`).
+
 **October 21, 23:34 EDT — campaign 51 complete and read; ctxkeeper 1.3.0.dev1 carries two levers; campaign 52 registered.**
 Seed 2 (rerun c51b) answered 402 of 423 in 85 min: 16 answers were lost when the model overwrote its own answers
 file at the third probe batch (a client slip, not the keeper's), and the notes held a struck-off counter at its old
