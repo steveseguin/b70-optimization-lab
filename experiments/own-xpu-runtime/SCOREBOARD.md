@@ -2,6 +2,8 @@
 
 **At the reference's 4,096-position context, the 128-token twelve-prompt suite: decode median 37.59 tok/s, submission median (99 intervals, tokens 1–100) 37.77 tok/s, every request bit-exact ([packet 44, cards 0+1][p44c]); at 32,768 positions: 37.71 / 37.70 tok/s ([cards 2+3][p44d]).** The reference on the same twelve prompts at 4,096 is 28.49 tok/s. At the original 256-position capacity the same suite runs 38.25 tok/s ([packet 38][p38r]); sequential (no guesses) 25.36 tok/s at 256 and 25.00 at 4,096. Nothing has been submitted to LocalMaxxing yet: the 128-token evidence its gate needs now exists (this chain); submission is the owner's decision.
 
+**Current approved LocalMaxxing records (128-token capped suite, exact vs `iq3-p49-split32-v1`):** two-card 58.798109 tok/s (packet136, `cmve4dtir007wrf01k57sdf23`); one-card **35.926720 tok/s** (packet182c: packet58as spin line + packet176 kernel foreground I/O, chain `packet58-onecard-182-a`, 2026-10-22, `cmvjejvoi03qcrf0138emu5a6`), superseding 34.573038 (`cmvf31py400furf01tv54rxo7`).
+
 [Packet 44][p44] took packet 38's runtime to real context capacities with the output
 bit-identical at 256, 4,096 and 32,768 positions (same tokens, same layer fixtures,
 same development-prompt speed within 2%: 39.05 → 38.33 → 38.22 tok/s). Capacity changes

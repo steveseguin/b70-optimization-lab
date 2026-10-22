@@ -6,8 +6,8 @@ flags after the `__main__` guard, and the 10-19 cleanup deleted the chain eviden
 34.59/35.95/34.58, +3.93 %, drift 0.018 %, all exact. Its guarded waiter derived `packet182c-chain` and ran the
 7-window chain in the same window (09:47–10:21 UTC): all passed, WS128 exact and timing-claim eligible. Fill
 pacing/deferral (resume item b) priced at ≤ +1.4 % and closed. Endpoints were idle, stopped only after the live
-plan, and are back as `*-20261022-restore7` (validations true); PAUSE-A re-armed. Submission bundle in preparation;
-the ledger entry and `--update-record` follow the LocalMaxxing submission. Packets:
+plan, and are back as `*-20261022-restore7` (validations true); PAUSE-A re-armed. Submitted to LocalMaxxing 10:32 UTC: HTTP 201, run
+`cmvjejvoi03qcrf0138emu5a6`, status APPROVED; threshold file updated; ledger entry in `results/localmaxxing-submissions.md`. Packets:
 `stage2/packet182-onecard-kio-rebracket/` (note `notes/2026-10-22-packet182-onecard-kio-rebracket.md`),
 `stage2/packet182c-chain/`, `ops/packet182c-orchestration/`.
 

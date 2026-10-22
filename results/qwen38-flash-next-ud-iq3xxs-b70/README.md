@@ -67,10 +67,11 @@ prompt finished naturally in each run; full-natural-completion medians in the
 raw receipts therefore have sample count 1 and are not twelve-prompt medians.
 
 The separately approved capped records are two-card **58.798109 tok/s**
-(packet136, October 18, `cmve4dtir007wrf01k57sdf23`) and one-card **34.573038
-tok/s** (packet58as bounded spin, October 19, `cmvf31py400furf01tv54rxo7`).
-They use the older 128-token cap. Packet58as does not have the full-512/prefill
-measurements above; packet58aj does. See the [submission ledger](../localmaxxing-submissions.md).
+(packet136, October 18, `cmve4dtir007wrf01k57sdf23`) and one-card **35.926720
+tok/s** (packet182c: packet58as bounded spin + packet176 kernel foreground token
+I/O, October 22, `cmvjejvoi03qcrf0138emu5a6`; supersedes packet58as 34.573038,
+`cmvf31py400furf01tv54rxo7`). They use the older 128-token cap. Those record
+packets do not have the full-512/prefill measurements above; packet58aj does. See the [submission ledger](../localmaxxing-submissions.md).
 
 Actual prompt-length scaling and concurrency remain unmeasured on these exact
 identities. The native controller processes one request at a time. Historical
