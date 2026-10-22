@@ -105,3 +105,32 @@ at `8bf76113f`. This qualifies **same-generation save/restart/resume** only; the
 five gaps above (appended turns, restore-then-save, one manifest source of truth,
 shared locking, inspect modes) are the next engine work and ctxkeeper still does
 not call the checkpoint operations. The manifest label stays `experimental`.
+
+## Update 2026-10-22, 15:29 EDT: the five gaps are closed on device; what the adapter needs now
+
+packet180 (append, restore-then-save, one manifest source, shared lock, inspect modes; lifecycle row 36/36 on device)
+and packet181 (`qualified-one-card` label, `contract: v1.2+p181`, packet180 read compatibility, prompt-path record;
+43/43) close every item of the review above. The contract's status block carries the details and sources. The
+append rule for an integrator: `--input` = the saved processed history + the pending token + the new tokens; the
+engine refuses unless the saved part matches token for token; the appended tokens run at the warm per-position
+rate in a long-running process (the 22.7 tok/s seen on device was a fresh process's cold expert cache).
+
+**The adapter, with ownership.** ctxkeeper is an HTTP proxy that speaks OpenAI chat completions to a server; the
+engine is a bounded native process that takes token ids. Three pieces are needed, two of them not ctxkeeper's:
+
+1. *Runtime (four-card host):* a request front for the engine that accepts a chat request (messages, or already
+   rendered token ids) and returns a completion, holding the process warm between requests, with the four
+   checkpoint operations as calls on that front and `inspect` cheap. Without it there is nothing for a proxy to
+   address. TP2 is out of scope for v1.
+2. *Integrator, first deliverable, CPU only:* a rendering-parity harness. ctxkeeper deals in messages; a checkpoint
+   is valid only for an exact token prefix. The harness renders a message list with the pinned chat template and
+   tokenizer (`one-card/tokenizer-identity.tsv`: GGUF shard-1 header incl. the template, `tokenizer.py`) and must
+   reproduce the engine's reference prompt ids exactly for the recorded packet prompts; a JSON message hash is not
+   a token-prefix hash (CONVERSATIONS.md). Inputs needed from the runtime owner: the pinned tokenizer files and
+   three recorded (messages, token ids) pairs from the sealed profile.
+3. *Integrator, after 1 and 2:* the parking policy in ctxkeeper (which sessions to park at a cut, when, eviction),
+   addressing checkpoints by id, consuming `inspect` metadata, and the rule that a note edit or any change inside
+   the saved prefix re-prefills rather than restores. The conversation journal of 1.3.0 is the text side of this
+   and stays independent of the runtime's compatibility decisions.
+
+Until piece 1 exists, ctxkeeper does not call the checkpoint operations; this review's boundary stands.

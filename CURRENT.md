@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 22, 15:29 EDT — session-swap contract brought up to date with packet180/181.** The contract now says what the
+four-card host qualified today: append, restore-then-save, one manifest source, a shared lock, cheap inspect, the
+`qualified-one-card` label, tokenizer identity pins; the five integration gaps of yesterday's review are closed. The
+integration review names what the ctxkeeper adapter needs next and who owns it: a warm request front for the engine
+(runtime side), then a rendering-parity harness here (messages to the exact token prefix), then the parking policy.
+No GPU work; cards empty.
+
 **October 22, 14:59 EDT — ctxkeeper 1.3.0 passed the release gate (campaign 56) on its public prerelease assets.** G1 40/40
 fixed, 40/40 clean, 7/7 audit in 15 min; G2 300K chat 4/4 through the Docker image; G3 all three SDK contracts; G4 Gemma
 100K smoke 4/4. Kernel clean, cards empty. The prerelease is ready for stable promotion and the PyPI upload, both the

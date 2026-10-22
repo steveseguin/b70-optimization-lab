@@ -1,9 +1,32 @@
 # Session Swap Design — Checkpoint/Restore for the Own Runtime
 
-**Status: PROPOSED — EXPERIMENTAL.** Checkpoint restoration is labeled
-experimental everywhere (interface, manifests, pages) until the
-restart-and-continue exactness test in §7 passes on a supported host.
-This document is the contract the ctxkeeper integration builds against.
+**Status: QUALIFIED ON ONE CARD (manifest label `qualified-one-card`,
+contract string `v1.2+p181`), 2026-10-22.** Same-generation resume passed on
+device in packet179; append and restore-then-save in packet180 (lifecycle row,
+36/36 gates); the qualified label, packet180 read-compatibility and the
+prompt-path record in packet181 (43/43 gates). Scope: the one-card tp1-full512
+profile only; TP2 checkpoints are not implemented; there is no ctxkeeper
+adapter yet. Checkpoints written by earlier engines keep their `experimental`
+label and still restore; restore is decided by the identity and semantic
+checks, never by the label. This document is the contract the ctxkeeper
+integration builds against.
+
+**v1.3 (2026-10-22, integrator's reconciliation with packet180/181).** The
+five gaps of the 2026-10-21 source review are closed in the engine: an append
+operation (`--input` = the saved processed history + the pending token + the
+new tokens; refused unless the saved part matches exactly), restore-then-save
+(a restored session saves again; the re-saved state is byte-identical to a
+fresh one-shot save of the same history), one authoritative parsed manifest
+with the TSV mirror cross-checked, a sibling flock shared by restore and
+delete (a concurrent delete reports `in_use` and the restore stays exact; a
+wrong delete target creates no lock file), and two inspect modes (metadata
+without reading blobs; full with every blob hashed). Tokenizer and chat
+template identity is pinned in `one-card/tokenizer-identity.tsv` (GGUF shard-1
+header including the chat template, `tokenizer.py`) and checked before the
+model load. Sources: `notes/2026-10-22-packet180-session-swap-v2.md`,
+`notes/2026-10-22-packet181-session-swap-v3.md`, packets
+`stage2/packet180-session-swap-v2/` and `stage2/packet181-session-swap-v3/`.
+The v1.2 remarks below describe the packet179 engine and are kept as history.
 
 **v1.2 (2026-10-21, reconciliation with the packet179 implementation at
 `4250d39dc4c1`, from the integrator's source review
@@ -242,7 +265,8 @@ requirements, integrated with ctxkeeper's parking policy.
 
 ## 10. Follow-ups (post-v1, in order)
 
-0. Integration gaps from the packet179 source review (v1.2), in the
+0. *(closed by packet180/181 on 2026-10-22; kept as the record of what was
+   asked)* Integration gaps from the packet179 source review (v1.2), in the
    integrator's order: an append operation (exact saved prefix plus new
    input, with pending-token semantics and a tokenizer/template identity);
    restore-then-save (repeated parking; the implementation makes the two
