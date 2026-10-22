@@ -1,0 +1,824 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "runs": [
+    {
+      "first": "production",
+      "second": "metadata",
+      "rank": 0,
+      "fresh": false,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/metadata-rank0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/selection.json",
+        "0bc8812a075b7c82e3fd6817cd21e02dd6de72a10774fab81d61a0376ebaa31a"
+      ],
+      "wall_seconds": 2.727507820003666,
+      "memory": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 28144229620,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28819894072,
+        "planned_free_bytes": 6098068236,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 0,
+        "reset_extents_verified": 5545,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 14,
+        "initial_capture": "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+        "view_captures": [
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "d1f347c7a1b1d330ae5803877fddc328150eaa0042008408b2ae8a677dea494a",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "d1f347c7a1b1d330ae5803877fddc328150eaa0042008408b2ae8a677dea494a",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246"
+        ]
+      },
+      "s1_coverage": {
+        "rank": 0,
+        "commands": 533,
+        "converted": {
+          "attention": 24,
+          "gdn.qkv": 17,
+          "gdn.z": 17,
+          "qsa.qgate": 6,
+          "router": 23
+        },
+        "converted_total": 87,
+        "pairs": [
+          [
+            "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+            "p183::SegKernel<2560u, 1u>"
+          ],
+          [
+            "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+            "p183::AttnKernel"
+          ],
+          [
+            "p49dvirtual::SmallKernel<4u>",
+            "p183::SmallKernel<4u>"
+          ]
+        ],
+        "draft": null
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-4c41ff5560dd9235061689fd56d672e9b9123ccb1ecad2f663826b51fec0cef1.tar.gz",
+        "sha256": "4c41ff5560dd9235061689fd56d672e9b9123ccb1ecad2f663826b51fec0cef1",
+        "members": 78,
+        "original_bytes": 23865022,
+        "archive_bytes": 1222779,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "first": "metadata",
+      "second": "production",
+      "rank": 0,
+      "fresh": true,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/selection.json",
+        "0bc8812a075b7c82e3fd6817cd21e02dd6de72a10774fab81d61a0376ebaa31a",
+        "0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/metadata-rank0-fresh",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99"
+      ],
+      "wall_seconds": 2.7027041409746744,
+      "memory": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 28144229620,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28819894072,
+        "planned_free_bytes": 6098068236,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 0,
+        "reset_extents_verified": 5545,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 14,
+        "initial_capture": "d1f347c7a1b1d330ae5803877fddc328150eaa0042008408b2ae8a677dea494a",
+        "view_captures": [
+          "d1f347c7a1b1d330ae5803877fddc328150eaa0042008408b2ae8a677dea494a",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "d1f347c7a1b1d330ae5803877fddc328150eaa0042008408b2ae8a677dea494a",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "d1f347c7a1b1d330ae5803877fddc328150eaa0042008408b2ae8a677dea494a"
+        ]
+      },
+      "s1_coverage": {
+        "rank": 0,
+        "commands": 533,
+        "converted": {
+          "attention": 24,
+          "gdn.qkv": 17,
+          "gdn.z": 17,
+          "qsa.qgate": 6,
+          "router": 23
+        },
+        "converted_total": 87,
+        "pairs": [
+          [
+            "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+            "p183::SegKernel<2560u, 1u>"
+          ],
+          [
+            "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+            "p183::AttnKernel"
+          ],
+          [
+            "p49dvirtual::SmallKernel<4u>",
+            "p183::SmallKernel<4u>"
+          ]
+        ],
+        "draft": null
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-b304e34f2746ab014aed1ce16f78d374073b7910fbd4a38d5080756aaddae06f.tar.gz",
+        "sha256": "b304e34f2746ab014aed1ce16f78d374073b7910fbd4a38d5080756aaddae06f",
+        "members": 78,
+        "original_bytes": 23756676,
+        "archive_bytes": 1211288,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "first": "production",
+      "second": "metadata",
+      "rank": 1,
+      "fresh": false,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/metadata-rank1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/selection.json",
+        "0bc8812a075b7c82e3fd6817cd21e02dd6de72a10774fab81d61a0376ebaa31a"
+      ],
+      "wall_seconds": 1.5987537119654007,
+      "memory": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31425985242,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 32056359642,
+        "planned_free_bytes": 2816312614,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 1,
+        "reset_extents_verified": 5450,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 14,
+        "initial_capture": "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+        "view_captures": [
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "51f50b9bf55803f68c2fac242d1bed241b9a74e219d74b6da61703d482cd0c2d96a0b84f39d233dea1dcf66f76d708b3d14d2872783bbd250c6c0022f1438897",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "51f50b9bf55803f68c2fac242d1bed241b9a74e219d74b6da61703d482cd0c2d96a0b84f39d233dea1dcf66f76d708b3d14d2872783bbd250c6c0022f1438897",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980"
+        ]
+      },
+      "s1_coverage": {
+        "rank": 1,
+        "commands": 526,
+        "converted": {
+          "attention": 24,
+          "gdn.qkv": 18,
+          "gdn.z": 18,
+          "logits": 1,
+          "qsa.qgate": 6,
+          "router": 24
+        },
+        "converted_total": 91,
+        "pairs": [
+          [
+            "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+            "p183::SegKernel<2560u, 1u>"
+          ],
+          [
+            "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+            "p183::AttnKernel"
+          ],
+          [
+            "p49dvirtual::SmallKernel<4u>",
+            "p183::SmallKernel<4u>"
+          ]
+        ],
+        "draft": {
+          "commands": 59,
+          "converted": 1,
+          "pairs": [
+            [
+              "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+              "p183::SegKernel<2560u, 1u>"
+            ]
+          ]
+        }
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-a33581f3cdfd95a811b1da17ac5b5aa9e0e80b62c71f8e6b9520ce4484672a2d.tar.gz",
+        "sha256": "a33581f3cdfd95a811b1da17ac5b5aa9e0e80b62c71f8e6b9520ce4484672a2d",
+        "members": 82,
+        "original_bytes": 10243033,
+        "archive_bytes": 690923,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "first": "metadata",
+      "second": "production",
+      "rank": 1,
+      "fresh": true,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/selection.json",
+        "0bc8812a075b7c82e3fd6817cd21e02dd6de72a10774fab81d61a0376ebaa31a",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/metadata-rank1-fresh",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99"
+      ],
+      "wall_seconds": 1.5454561510123312,
+      "memory": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31425985242,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 32056359642,
+        "planned_free_bytes": 2816312614,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 1,
+        "reset_extents_verified": 5450,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 14,
+        "initial_capture": "51f50b9bf55803f68c2fac242d1bed241b9a74e219d74b6da61703d482cd0c2d96a0b84f39d233dea1dcf66f76d708b3d14d2872783bbd250c6c0022f1438897",
+        "view_captures": [
+          "51f50b9bf55803f68c2fac242d1bed241b9a74e219d74b6da61703d482cd0c2d96a0b84f39d233dea1dcf66f76d708b3d14d2872783bbd250c6c0022f1438897",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "51f50b9bf55803f68c2fac242d1bed241b9a74e219d74b6da61703d482cd0c2d96a0b84f39d233dea1dcf66f76d708b3d14d2872783bbd250c6c0022f1438897",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "51f50b9bf55803f68c2fac242d1bed241b9a74e219d74b6da61703d482cd0c2d96a0b84f39d233dea1dcf66f76d708b3d14d2872783bbd250c6c0022f1438897"
+        ]
+      },
+      "s1_coverage": {
+        "rank": 1,
+        "commands": 526,
+        "converted": {
+          "attention": 24,
+          "gdn.qkv": 18,
+          "gdn.z": 18,
+          "logits": 1,
+          "qsa.qgate": 6,
+          "router": 24
+        },
+        "converted_total": 91,
+        "pairs": [
+          [
+            "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+            "p183::SegKernel<2560u, 1u>"
+          ],
+          [
+            "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+            "p183::AttnKernel"
+          ],
+          [
+            "p49dvirtual::SmallKernel<4u>",
+            "p183::SmallKernel<4u>"
+          ]
+        ],
+        "draft": {
+          "commands": 59,
+          "converted": 1,
+          "pairs": [
+            [
+              "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+              "p183::SegKernel<2560u, 1u>"
+            ]
+          ]
+        }
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-0bfb5c4d93fd0f97b63597ce9ddec7160a1c773d3ed18b78a3e683f4a84ae32b.tar.gz",
+        "sha256": "0bfb5c4d93fd0f97b63597ce9ddec7160a1c773d3ed18b78a3e683f4a84ae32b",
+        "members": 82,
+        "original_bytes": 10214132,
+        "archive_bytes": 685083,
+        "all_original_bytes_verified": true
+      }
+    }
+  ],
+  "startup_runs": [
+    {
+      "selection": "production",
+      "rank": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "0",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/selection.json",
+        "--selection-sha256",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/startup-production-rank0"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-386bc71fe12311e6ca9be86589bca625b32440d58a8ab68122626c37d43e3499.tar.gz",
+        "sha256": "386bc71fe12311e6ca9be86589bca625b32440d58a8ab68122626c37d43e3499",
+        "members": 9,
+        "original_bytes": 832772,
+        "archive_bytes": 57902,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "production",
+      "rank": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "1",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/selection.json",
+        "--selection-sha256",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/production/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/startup-production-rank1",
+        "--draft-mtp"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-2417f6084009c5bc883548ef353698fc7a05219eae823aff0c59abc155b98738.tar.gz",
+        "sha256": "2417f6084009c5bc883548ef353698fc7a05219eae823aff0c59abc155b98738",
+        "members": 13,
+        "original_bytes": 538515,
+        "archive_bytes": 36636,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "metadata",
+      "rank": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "0",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/selection.json",
+        "--selection-sha256",
+        "0bc8812a075b7c82e3fd6817cd21e02dd6de72a10774fab81d61a0376ebaa31a",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/startup-metadata-rank0"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-e59992a667cc2d467087541c3088983c401c8ba2ede9b723005911fb858f1435.tar.gz",
+        "sha256": "e59992a667cc2d467087541c3088983c401c8ba2ede9b723005911fb858f1435",
+        "members": 9,
+        "original_bytes": 832772,
+        "archive_bytes": 57900,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "metadata",
+      "rank": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "1",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/selection.json",
+        "--selection-sha256",
+        "0bc8812a075b7c82e3fd6817cd21e02dd6de72a10774fab81d61a0376ebaa31a",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/lineage/metadata/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/startup-metadata-rank1",
+        "--draft-mtp"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/shape-34ed60bab6fd4256dafc07ea9f5e2b5595d13424e4bedce87bca70490599ca85.tar.gz",
+        "sha256": "34ed60bab6fd4256dafc07ea9f5e2b5595d13424e4bedce87bca70490599ca85",
+        "members": 13,
+        "original_bytes": 538515,
+        "archive_bytes": 36632,
+        "all_original_bytes_verified": true
+      }
+    }
+  ],
+  "binary_sha256": "27783b509bd7f8af9942c257cc860b15a6e9eee8223e23d18d4a234d407731f0",
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/entry.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/entry.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-p60.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-p60.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-parser.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-dispatch.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-s1.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-s1.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-dispatch.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-s1.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/4b1882c19a58-p49d_expert_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/e853e11e211b-2da2af621a95-85d35223e1cb-95a634abb866-65f127d435c4-p49c_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/a5430df4c5c0-15deb6a28fe1-44725e3bef69-beef754eeb2f-f379f48c08fc-a68494e2e4c0-4cddb8a717fb-6cd25906942c-48e0912b2bff-e7f6725ff84c-p49b_expert_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/addbb9eb84a2-b64a29125484-87ad21abc5d9-d00b11f53590-a3742032ed9a-f345eb3f3024-6cb5f4cc4056-fd1c0349608a-4827a8cdbf45-dd3fe83164f7-p49_qsa_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/4ac6344b9386-ac32151bb352-835b26dccf1e-d05472ede328-e8968671e5d7-e0ea41f70509-4b6ae833ee22-87e707a47556-720e35b289b9-adf2b5a8f3ec-p39_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/e653ca3eb887-c48e68a0be9c-35f0dab87698-6b10ee64460c-c122e49e15d4-59bc2dba898a-b0110af3c37a-41d3226df94e-649ecdb83388-a8b76a5aaefb-p39_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/036a4e3a393f-7dbaca72f5c9-d96ae8b72f2c-b76b5e603ef9-47c5860d12b8-14d684459c4b-a943e3b493fd-9836c7c776b1-a787c281735b-66b9acec72b5-route42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/d9d385af7d9f-ef8c80aa1132-5cbc8d783f6b-db54394cf6db-9cfc73e45e28-0cc26f81fd96-749fce04a85a-31758dd066a2-351ca077111d-b096fb3deb15-p42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/940da8cc2514-33518be76194-297901bafd80-a72e71523c23-f34e0651f285-cdb28d227ab1-ba28681e1125-5918cd95ab06-78d17e6ffba1-a887e2f17924-p30_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/ae3894d7506a-7f5954279018-71a1cff6c190-5e90c72adb80-74b23c90431d-9a5119b5252d-5f0435142c81-5b2198890f19-7f445c54ca41-7fe00edacb14-mtp_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/fe8746ed24ca-a907ae341d19-7abdd1e47b63-b3b5b364052c-29c06f745bff-fa3d727f09ba-a665f57c4bfb-041777358bf1-f398d6bf103e-1bf31e00af83-p33_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/b4f54d8689b9-1b963e614bf7-95d45d65d758-88dd092c4ac9-b6df9c549afe-a78fb9597cb9-42304aa2d058-ce0256371cd4-d1df9ba61a4b-fadc41d19a64-p33r2.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/23c3737f6878-bf0b1a8455d2-22ec62ddae27-693b39561366-932c8dade0f6-7bdb7da0eb10-f0b55e298146-1597daf59a69-1baa01931d50-05f62427b363-submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/115df1a2f69a-441535b1ecb7-8d22bc3cac9c-7470793bdabe-76c1f5cc6a93-a853d1b80369-904dfc899fff-41c3704d5d32-4da274ebc82d-80c5be9f8e62-expert_down.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/01ac3722e6c5-67872a5eb05d-f29aa697be5c-b65fbcb0f497-ac9e0bc238c9-1fd214a63a82-6f906662dec8-f9bea326a1f2-56363b721e23-223383c5fd57-round2_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/2b544d597d2c-16ef4594f6a3-b2270f8711cc-8690e14d583d-40f2243ba055-1d7ad6dff140-2ee63ec39c04-01a4704fdf1f-a1753931e596-84461f568174-small_gemv.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/c2c99f0e26bf-a1dfa246320d-d7f2c2875e3f-9fa243b0f070-c155e09c5450-0f3d227e7289-15a5b80c43cf-f4f921be6036-640df8460433-3e4f50a8c71c-small_gemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/976ac70a1ae8-3dee407055bc-94f8fd08074d-bd0541f93576-445f5f1d29a8-12ab76812132-49788aef79dc-8f920220a636-bae5aee863a6-1d87bbff48f0-p25_bridge.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/8871602bbd3c-87cacc5a80f0-1f90412ecacf-74640c8c1dcf-8649468c9b21-e8ccd8a7a042-564cc4d239ed-8e840f7c116f-40727737505b-33e04660e9b8-gemv_timing.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/ae7dd077ae92-a1b5e21829d4-175bd37f001a-1f61722d0f9e-b6f920769952-1518629f79d8-418ffd9aae66-b74e2ce2e3f6-eb3f20934fcf-5af6922e74be-adapter_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/6a25292858ea-4e379386cec8-95566332736a-d4fe8f606e5c-ecfa061e2395-bbec72fc1a30-a200ff83d1a3-59405fbdc454-f93770bfac06-53937d4d075a-performance.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/09beb7f436c1-b0cb75e599d5-0ced092cc3ae-299e19fa71eb-0719ad38c087-f94248d6c910-cb486a1dd5a8-0da6b9a243bc-2f59e733d4ff-a0a95539031a-adapter.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/d55d84d77df7-61a114e5523e-3f231205b58b-d697c81eb684-dd0e536caf97-b715c102884d-bcf1c7d0fe04-35e778110a5e-c545afc7abed-504e2f6b4fea-specialised_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/e7cf3f7c5b11-e9743c4c7cae-441a629bd522-aec1ae8d60fa-106105cb53fa-0de4a1cc27ba-6aa37d275eb5-9ba03e6dd860-5d60edc0f9e4-333c9a3673dd-runtime_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/1af5e34a8ea5-ee670e7938fd-b304d4cc1e87-764eeb3ddeb9-678f78508314-e297e9148922-ab655ee0da37-71f33ba80296-e1b4d7f94b48-c54cf2dec7dc-owner.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/621635c9b4b9-b398819ae50a-ff83379e311a-46da7a9ef952-owner_retire.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/7e76b59a6253-8f6325199078-5867b182815f-a982ef5bada4-d7e8810f9bb8-fd24fc7c3daf-cfb5817ad892-c8498c60aa60-bf7aefab963e-ba99d9e2967c-gguf.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/entry.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/50716f2ba8b1-0ce057c4ab88-fae88a10b728-f776945e8e3b-e6c29c7f2797-9cc58382bf12-9c0144b06f0d-b4558c6fc734-cc25ca237a56-a1788b72f6f9-entry-nongemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/f28b737052c5-8f4c9da3bd39-71202298bb50-61934330e5e1-f4ccc78582fb-cfcba76ca8ef-936a2e7aa4a0-9ec06cf0cc62-1c1e23a41e1f-b7851df5e164-entry-k2_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-p60.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/5eb4f7b945f1-9a6f3a807dbf-bc6146f0263b-e673a54be165-f4ef6437d0d1-p74_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/6abb616b473c-3efaa7f633d9-p93_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/p105_submit.o",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/fixture",
+      "-Wl,-rpath,/usr/lib/x86_64-linux-gnu",
+      "/usr/lib/x86_64-linux-gnu/libcrypto.so",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/inherited/0c610cab9549-c65155282bca-9f13b6fadbb6-07ffe95e124f-3d83b39c69a1-af51bd323cc4-eb1bfd31f503-417ab0b9139f-host_wait_mode.o"
+    ]
+  ],
+  "s1_coverage": {
+    "rank0": {
+      "rank": 0,
+      "commands": 533,
+      "converted": {
+        "attention": 24,
+        "gdn.qkv": 17,
+        "gdn.z": 17,
+        "qsa.qgate": 6,
+        "router": 23
+      },
+      "converted_total": 87,
+      "pairs": [
+        [
+          "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+          "p183::SegKernel<2560u, 1u>"
+        ],
+        [
+          "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+          "p183::AttnKernel"
+        ],
+        [
+          "p49dvirtual::SmallKernel<4u>",
+          "p183::SmallKernel<4u>"
+        ]
+      ],
+      "draft": null
+    },
+    "rank1": {
+      "rank": 1,
+      "commands": 526,
+      "converted": {
+        "attention": 24,
+        "gdn.qkv": 18,
+        "gdn.z": 18,
+        "logits": 1,
+        "qsa.qgate": 6,
+        "router": 24
+      },
+      "converted_total": 91,
+      "pairs": [
+        [
+          "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+          "p183::SegKernel<2560u, 1u>"
+        ],
+        [
+          "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+          "p183::AttnKernel"
+        ],
+        [
+          "p49dvirtual::SmallKernel<4u>",
+          "p183::SmallKernel<4u>"
+        ]
+      ],
+      "draft": {
+        "commands": 59,
+        "converted": 1,
+        "pairs": [
+          [
+            "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+            "p183::SegKernel<2560u, 1u>"
+          ]
+        ]
+      }
+    }
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/p183_v5_full_shape.py": "ccac5a764bc7825d322f49ea85ecdd62851deedda4172b7a55c4f3ccb3169e0a",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/p183_shape_mock.py": "d0006b2bfca2ea9c83dc697689104594a194053494ee722bfa0e115228b061c5",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/native/full_shape_entry.cpp": "4396e8e6788eabbf85c590d456c9635fbc1d8a83fa688d0b9350916e0b8397c2",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/native/audit_s1.hpp": "4df991f64987b0265983114cec6d788b38e3dda7353dabcfb420d984d8d656b4",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_kernels.hpp": "381b553ba753f2d4c3ec05ecc201e63c71a632b1e7b951fc6204f30f66188b80",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-s1.cpp": "bae62400cbaebaccc4ed0925703602d0345c4d1d9471a9a99282e84bc863b2c1",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-parser.cpp": "62543f5d515ae3920fca57518eb5755111dee07b63738842c5cc844f0825baa6",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/entry.cpp": "08b881793ebc0da3fba3c2da6f79456d93c4144e846183be827d26741f9d6b15",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/main.cpp": "9b015e42ef97694d7f0c98201945baf5efa66a0750bc0897f2549c0e476b2db7",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/audit-p60.cpp": "96850a06c9149df9844dbaee5e05457375cd5bc42805fa6e0ea3fc9da0af3a0c",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/rank.hpp": "2c9437dc75b27e1fd4707d3ffef72714a84e2b64dd06f0f2cbdc4052ffa9bc57",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/mtp.hpp": "9c2261521042bd76e41a083a2a7e30cb5f0395e6e2e2359e0f6f44da8e24f498",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/request_reset.hpp": "f216aba84b4f1880508401aea0662da24a99725a16f054b08188b52deb90a969",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/full-shape/p109_fusion.hpp": "b7052fc7d178e4d252cb9280740b8caa48e2002320375ea2bd6586f969ce046a"
+  },
+  "payload_mocks": [
+    "numerical device addresses",
+    "weight upload elision",
+    "scalar readback",
+    "state-dump payload elision"
+  ],
+  "real_paths": [
+    "initialize",
+    "banks",
+    "SpeculativeImage",
+    "DraftRuntime",
+    "bracket_select",
+    "request_reset",
+    "bracket_boundary",
+    "memory admission",
+    "p183 dispatch at prepare time"
+  ]
+}

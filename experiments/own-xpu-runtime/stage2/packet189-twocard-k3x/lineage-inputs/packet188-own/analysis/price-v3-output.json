@@ -1,0 +1,96 @@
+{
+ "base": 60.65951991975228,
+ "hits": 932,
+ "misses": 256,
+ "pooled_mean_interval_ms": 16.571191414094745,
+ "metric_equivalent_ms": 16.485458528569307,
+ "thresholds_for_2pct": {
+  "B_only_ms_per_half": 0.3494093431711756,
+  "B_only_saturation_gain_pct": 2.2953042457757533,
+  "B_only_curve_pct": {
+   "0.05": 0.304,
+   "0.1": 0.61,
+   "0.177": 1.083,
+   "0.2": 1.224,
+   "0.3": 1.809,
+   "0.356": 2.017,
+   "0.384": 2.078,
+   "0.463": 2.173,
+   "0.6": 2.247
+  },
+  "D_only_ms_per_hit": 0.41027134909120483,
+  "D_only_saturation_gain_pct": 2.7951862197518773,
+  "C_only_ms_per_miss": 1.523865010910041,
+  "A_only_gain_pct_at_1ms": 0.0,
+  "symmetric_ms_per_half_A_B_C": 0.26667637690923224,
+  "miss_rescue_fraction": 0.13268274507085182
+ },
+ "rank0_budget_per_hit_ms": {
+  "race_slack_mean": 0.35610356677399524,
+  "draft_window_mean": 0.5768069562995847,
+  "total_idle_mean": 0.9329105230735799,
+  "rank1_busy": 14.021891861746303,
+  "rank0_busy": 13.089322685633782
+ },
+ "ideal_rebalance_ceiling_pct": 2.1992379684328656,
+ "k3_24_26_grid": {
+  "s1=0.43 c0=0.483": 1.496,
+  "s1=0.43 c0=0.513": 1.456,
+  "s1=0.43 c0=0.55": 1.402,
+  "s1=0.463 c0=0.483": 1.528,
+  "s1=0.463 c0=0.513": 1.488,
+  "s1=0.463 c0=0.55": 1.434,
+  "s1=0.49 c0=0.483": 1.551,
+  "s1=0.49 c0=0.513": 1.511,
+  "s1=0.49 c0=0.55": 1.457
+ },
+ "k3_central": 1.4880688713059698,
+ "k3_hit_saving_ms": 0.3450435794742513,
+ "k3_miss_change_ms": 0.06739683601306762,
+ "k3_rank0_binds_fraction": 0.8819742489270386,
+ "k3_ready_bound_by_boundary_fraction": 0.006437768240343348,
+ "k3_plus_rank0_A_cut_for_2pct_ms": 0.10541135683581526,
+ "k3_plus_rank0_A_cut_curve": {
+  "0.05": 1.75,
+  "0.1": 1.979,
+  "0.15": 2.133,
+  "0.2": 2.175,
+  "0.3": 2.194
+ },
+ "k4_24_27_if_it_were_gdn": -1.2104307281803672,
+ "split_23_25": {
+  "a23=0.45 b23=0.5": -0.064,
+  "a23=0.5 b23=0.55": -0.069,
+  "a23=0.55 b23=0.65": -0.517
+ },
+ "k1_25_only": -2.1032635388613885,
+ "drafthead_to_rank0": {
+  "dh=0.472 xfer=0.05": 1.312,
+  "dh=0.472 xfer=0.1": 1.071,
+  "dh=0.400 xfer=0.05": 1.336,
+  "dh=0.520 xfer=0.05": 1.278
+ },
+ "drafthead_plus_k3": -0.965317103590202,
+ "head_transpose": {
+  "measured lane-B engine transfer 0.177 ms": 1.082985810384951,
+  "microbench 100% 0.384 ms (1.417 -> 1.033)": 2.0783111579617985,
+  "lane-A measured (record cards 0+1)": "loss -2.369% / -2.8171% vs stronger control (packet93x, review15)"
+ },
+ "draft_gaps": {
+  "100% (0.48 ms/hit)": 2.3478956452532174,
+  "20% (0.096 ms/hit)": 0.46092155812338387,
+  "host batching ceiling +0.9% (packet158) re-priced: 0.19 ms/hit": 0.9163763671147018
+ },
+ "kernel_io_v3": {
+  "central (D2 B3 Bd1 C2 A1)": 0.5723541695243695,
+  "generous (D3 B5 Bd2 C4 A2)": 0.9519571318246323
+ },
+ "miss_path": {
+  "remove all restore R (upper bound)": 0.39438440009060827,
+  "rank-1 B on misses = B on hits (warming upper bound, 0.223 ms)": 0.28767497182826673,
+  "boundary overlapped with C (impossible: Bd needs layer 23 of C) upper bound": 1.3457266640771959,
+  "fuse C+Bd into one command (-0.02 ms dispatch, assumed)": 0.025740981022503995,
+  "free rescue of the 20 out-of-prefix misses (packet144 upper bound)": 1.1680155130406433
+ },
+ "static_snapshot": "bundled (snapshot_host=static in packet187 selection); no further gain to price"
+}

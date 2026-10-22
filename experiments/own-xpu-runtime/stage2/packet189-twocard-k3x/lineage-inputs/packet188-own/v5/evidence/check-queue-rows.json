@@ -1,0 +1,48 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "steps": [
+  {
+   "step": "entry",
+   "seconds": 101.0,
+   "receipt": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/evidence/entry-gate.json",
+   "receipt_sha256": "c26e742c61b7d1b85e90e1581eeac34998b9e003744e73f9f7dd2bc81229f86a"
+  },
+  {
+   "step": "launch-limits",
+   "seconds": 61.6,
+   "receipt": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/evidence/launch-limits.json",
+   "receipt_sha256": "ad73b0e4557a5bade2ab57eda5e524715d22a38e11eec0aad1014767854a8692"
+  },
+  {
+   "step": "worker",
+   "seconds": 35.2,
+   "receipt": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/evidence/worker-gate.json",
+   "receipt_sha256": "21f308fb807f20e6c39f9efe3397c340cb7e12e8ccd0213f85daa8f7ff573eef"
+  },
+  {
+   "step": "report",
+   "seconds": 18.5,
+   "receipt": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/evidence/report-gate.json",
+   "receipt_sha256": "27f7211bc6ac0cc4b1d769d0580114d2922d76f56296f96f0c4bb0316f38ca76"
+  },
+  {
+   "step": "queue-plan",
+   "seconds": 18.7,
+   "receipt": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/evidence/queue-plan.json",
+   "receipt_sha256": "42015926adaf12851835d0e140460306be0d3e5f6f16d5d312d9ebae90ce7b7f"
+  },
+  {
+   "step": "pin-guard",
+   "seconds": 1.5,
+   "receipt": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/evidence/pin-guard.json",
+   "receipt_sha256": "4ad8d23c43ae5a00cc984cd64cfca74a5e83f415b42ec773bcc2930c58cc9c6e"
+  }
+ ],
+ "private_plan_lines": [
+  "{\"name\": \"packet188-row0-smoke-k3trims-B\", \"plan\": \"passed\", \"seal\": \"checked by packet plan/wrapper\", \"storage_admission\": {\"planned_write_bytes\": 240000000, \"reservation_source\": \"packet plan\", \"root_free_bytes\": 29984210944, \"required_free_bytes\": 25240000000, \"free_floor_bytes\": 25000000000, \"passed\": true}, \"host_required_available_bytes\": 108797048558}",
+  "{\"name\": \"packet188-row1-control-v3-B\", \"plan\": \"passed\", \"seal\": \"checked by packet plan/wrapper\", \"storage_admission\": {\"planned_write_bytes\": 240000000, \"reservation_source\": \"packet plan\", \"root_free_bytes\": 29984206848, \"required_free_bytes\": 25240000000, \"free_floor_bytes\": 25000000000, \"passed\": true}, \"host_required_available_bytes\": 107667817956}",
+  "{\"name\": \"packet188-row2-bracket-v3k-k3trims-B\", \"plan\": \"passed\", \"seal\": \"checked by packet plan/wrapper\", \"storage_admission\": {\"planned_write_bytes\": 1200000000, \"reservation_source\": \"packet plan\", \"root_free_bytes\": 29984206848, \"required_free_bytes\": 26200000000, \"free_floor_bytes\": 25000000000, \"passed\": true}, \"host_required_available_bytes\": 108797048558}"
+ ]
+}
