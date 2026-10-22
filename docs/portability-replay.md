@@ -77,8 +77,13 @@ Missing receipt fields are marked `unknown`, never guessed — same rule as
 
 1. **qwen38-flash-next-iq3xxs-ownrt-tp1/tp2** — portable bundle exists and
    is hash-pinned end to end; supported-host device qualification rides
-   packet178 (device window); clean-host replay follows on the second B70
-   host. This is the template execution for this standard.
+   packet178 (device window); clean-host replay follows on a second B70
+   host **with at least 128 GiB of RAM**: the sealed admission requires
+   98,990,252,032 bytes of available host memory because the experts live
+   in host memory (the three target shards are 82 GB). The two-card lab
+   host (15 GiB) cannot be this clean host; recorded 2026-10-21, see
+   `tools/ctxkeeper/CHECKPOINT-INTEGRATION.md`. This is the template
+   execution for this standard.
 2. **qwen38-27b-fp8-vllm-tp1 / tp2** — container+docker lanes with the
    largest user base; platform-install + container replay.
 3. **qwen35 family + qwen38-27b-autoround-int4** — `clean-host replay` items

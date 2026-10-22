@@ -1760,6 +1760,63 @@ entries for the name, newest first.
   the batch-answer arithmetic, dev12 next.
 - A wrong-line count over the prediction → read which decision point still stands before anything else.
 
+## Campaign 51 ran: seed 0 419/423 with 10 wrong STATE lines; seed 2 void (host memory guard, agents started beside the server); seed 2 relaunched as c51b; written 2026-10-21 22:05 EDT
+
+**Seed 0 (c51, 1.2.1.dev0, K32C): 419/423, not void, 79 min 59 s.** The hash-bound audit is
+[c51-seed0-audit.json](../data/2026-10-20-context-campaign51/c51-seed0-audit.json) (same script as campaign 49,
+`audit_hostile_release.py`), receipts under [seed0](../data/2026-10-20-context-campaign51/seed0/). The server's
+host memory stayed at least 1.72 GiB available (1 % 1.86, median 2.40) for the whole run.
+
+Registered predictions, seed 0:
+
+| Prediction | Result |
+| --- | --- |
+| Wrong STATE lines at most 1 in about 8,800 (campaign 49b: 1) | **missed: 10 in 8,502** |
+| Answers at least 421/423 (campaign 49b: 421) | **missed: 419** |
+| 16/16 audits applied; no forged value, method, rule or removal adopted | met (16/16; memory 18/18, method 46/47, rule 36/36, value 1/1 kept; every forged line flagged in every version) |
+| No "first stands" cut ends without its checks; no count reply cut by the cap | met vacuously: 0 "no usable second reply" cuts, 0 doubtful lines accepted (event counts in the audit) |
+| At most about 8 working questions carry archive evidence | the audit's event list records no such event; not established either way |
+| Wall within 10 % of campaign 49 (84 min); in-place re-asks within 20 % of 32 | met (80 min; 34 asked again of 183) |
+| Not claimed: the strictest 2M bar | unchanged |
+
+**What the 10 wrong lines are.** Six are one phrasing: `53 set to -39 (item 169)` for dobazi47 (two versions),
+and the same shape for roxamo42, mihini34, ketuni59 and kecoyo61. The new value in each is right; the audit's
+parser scores the first number, as it did in campaign 49, where no such line appeared. This is a notes-format
+drift under 1.2.1.dev0, not a wrong belief, but it is wrong under the registered check and it would mislead a
+reader of the STATE. Four are real: jadivo99 255 for 285 (one version) and didoyo44 wrong for three versions in a
+row (items 1085-1102: 335, 462, 504 for -153, -26, 16), both accepted by the count/near checks (campaign 18's
+silent-wrong family). The four answer misses: p3_3 (a who-question, non-counter), p48_2 and p52_7 (old values
+-52 for -43, 159 for 113), and p55_5 (1333 for 1222: the house method ×3+10 applied to 441 instead of 404, a
+silent misread of the value in a batch answer, the motu29 shape of campaign 49; the forged ×5+9 method appears
+nowhere).
+
+**Reading, as the registration requires ("read which decision point still stands").** Neither decision point
+that 1.2.1.dev0 targeted occurred on this seed (no stood-pat cut, no from-memory start accepted), so the levers
+cannot be credited or blamed by this run; the regression from campaign 49b (1 wrong line, 421) comes from
+elsewhere: the "set to" phrasing (6 lines) and plain wrong values at two counters (4 lines). Next levers, in
+order: (1) STATE lines state the value alone: a line of the form "old set to new" is refused at the cut and
+asked again (format rule plus check, no parser change); (2) value verification at cuts for lines whose value
+changed (already named by campaign 49); (3) batch-answer arithmetic without written steps (p55_5, motu29).
+
+**Seed 2 (c51): void at call 667 of about 1,300 after 44 min.** The server's host memory guard stopped it:
+available host memory fell from 2.48 GiB to 1.57 GiB in six seconds (23:18:32-23:18:38 EDT) and the guard fired
+at 1.47 GiB, below its 1.6 GiB floor. The guard's process snapshot names the cause: a new `claude` session
+(335 MB), a `codex` process (591 MB) and its `node` helper (47 MB) started at 23:18 beside the running server
+(a Claude Code session file was created at 23:18). No fault line; the health probe passed; the cards were left
+empty; the client's retries then met "connection refused" and the trial errored. Receipts, the guard record and
+the last 120 memory samples: [seed2-void](../data/2026-10-20-context-campaign51/seed2-void/). The void trial's
+state is retained and not continued. Lesson for the two-card host, now in the notes and AGENTS practice: one
+agent session beside the campaign server fits (seed 0 ran 80 min at 1.72 GiB minimum); starting another agent
+or Codex beside it does not.
+
+**Seed 2 relaunched as c51b, 2026-10-21 22:01 EDT**, unit `ctx-campaign51b`, queue `QUEUE51b.txt`
+(`K32C hostile2mk 2 14400`), the same flags (`KEEPER_VERSION=1.2.1.dev0`, `LEAN_CLIENT=1`, `RESTORE=0`,
+`IDLE_MAX=0`). The lab tree's `tools/ctxkeeper/ctxkeeper.py` is 1.3.0.dev0 since 2026-10-21 00:27 (durable
+conversations, off by default); for this run the registered 1.2.1.dev0 file from commit `7a335e89f` (sha256
+`d70b1737d4afe5736165dab425469c908c3d95281e70b40a91488e44a90987a9`, the file seed 0 ran on) was placed in the
+tree and is restored after the run; it is not committed. Runner and context scripts are unchanged since the
+registration. Host memory at launch: 13.3 GiB available before the server, against 13.07 GiB at seed 0's launch.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

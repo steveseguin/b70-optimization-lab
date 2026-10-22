@@ -1,0 +1,38 @@
+Traceback (most recent call last):
+  File "/mnt/fast-ai/venvs/clm/lib/python3.12/site-packages/harbor/trial/trial.py", line 345, in run
+    await self._run()
+  File "/mnt/fast-ai/venvs/clm/lib/python3.12/site-packages/harbor/trial/single_step.py", line 35, in _run
+    await self._run_agent()
+  File "/mnt/fast-ai/venvs/clm/lib/python3.12/site-packages/harbor/trial/single_step.py", line 71, in _run_agent
+    await self._run_agent_phase(
+  File "/mnt/fast-ai/venvs/clm/lib/python3.12/site-packages/harbor/trial/trial.py", line 434, in _run_agent_phase
+    await asyncio.wait_for(
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/clm_baselines.py", line 329, in run
+    await super().run(instruction, environment, context)
+  File "/mnt/fast-ai/src/context-language-models/clm/clm_harness/clm_agent/harness.py", line 564, in run
+    response = await self._query_with_retry(model, messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/clm_baselines.py", line 318, in _query_with_retry
+    r = await super()._query_with_retry(model, messages)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/src/context-language-models/clm/clm_harness/clm_agent/harness.py", line 788, in _query_with_retry
+    return await asyncio.wait_for(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/lean_litellm/litellm/__init__.py", line 221, in completion
+    return _response(_post(url, payload, timeout, model))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/lean_litellm/litellm/__init__.py", line 186, in _post
+    raise _error(resp.status, text, model)
+litellm.exceptions.BadGatewayError: litellm.BadGatewayError: OpenAIException - {"error": {"message": "ctxkeeper: URLError: <urlopen error [Errno 111] Connection refused>"}}

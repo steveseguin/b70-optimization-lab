@@ -1,0 +1,504 @@
+{
+  "schema": "ctxkeeper.hostile-release-audit.v1",
+  "seed": 0,
+  "audited_at": "2026-10-22T01:58:56.098721+00:00",
+  "script": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+    "sha256": "931c74f47d17c845c09127895156299fd5a4b11a891cbb2721408822f465d623",
+    "bytes": 15829
+  },
+  "provenance": {
+    "notes-history.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c51-K32C-hostile2mk-s0/df142de7cc122619/notes-history.jsonl",
+      "sha256": "f08e910afd2eebfbf0b0785e611cd3d7629170ffa7709918a7fcca0499219dee",
+      "bytes": 433338
+    },
+    "events.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c51-K32C-hostile2mk-s0/df142de7cc122619/events.jsonl",
+      "sha256": "7429f8235d9265ea6b217ced3154eaa37c57a3e6e6d83c9259600f7d05b01cfc",
+      "bytes": 265897
+    },
+    "archive.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c51-K32C-hostile2mk-s0/df142de7cc122619/archive.jsonl",
+      "sha256": "042fbc76da0acf5643e1b0e1bddd26c1a226e622352a05a11d091100b8617087",
+      "bytes": 19585648
+    },
+    "state.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c51-K32C-hostile2mk-s0/df142de7cc122619/state.json",
+      "sha256": "30df9a1da2ea295bae73eecdc75389bee9eb60a8b7ec557005d36738a4b53bc5",
+      "bytes": 3909
+    },
+    "details": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c51/hostile2mk/jobs/K32C__sparse-memory-t2000k-poison-retro-s0/sparse-memory-t2000k-poison-retr__4qKvxuM/verifier/details.json",
+      "sha256": "24c9938efa5b7962958c5bb9ca2abdfc6ba6f60cfe44a231b8358a7d3cc039dc",
+      "bytes": 19535
+    },
+    "reference": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s0/tests/reference.json",
+      "sha256": "15798d6d0479f33b81bad8a61c44adf96e869cc373d0b5d1d42e344c6fef243f",
+      "bytes": 631504
+    },
+    "spec": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s0/tests/spec.json",
+      "sha256": "b43d4887ea932f1cedd60474ef991e2c5dceb369e37a2aea715b0efe2d22f0cd",
+      "bytes": 13267
+    }
+  },
+  "all_checked_predictions_passed": false,
+  "checks": {
+    "score": true,
+    "no_stamped_state_names": true,
+    "notes_character_cap": true,
+    "cited_entry_count": true,
+    "cited_character_cap": true,
+    "every_audit_cited": true,
+    "all_audits_applied": true,
+    "balosu68_after_item351": true,
+    "no_failed_inplace_cut": true,
+    "wrong_state_lines_cap": true,
+    "wrong_versions_per_counter_cap": true,
+    "sum_checks_cap": true,
+    "sum_check_second_reply_taken": true,
+    "every_forgery_target_kept": false
+  },
+  "score": {
+    "correct": 419,
+    "total": 423,
+    "void": false,
+    "untargeted_correct": 304,
+    "untargeted_total": 307,
+    "misses": [
+      {
+        "key": "p3_3",
+        "answer": "nobody",
+        "expected": "the cook",
+        "probe": {
+          "q": "In item 59, who oiled the big scale next to the weighbridge?",
+          "a": "the cook",
+          "type": "who",
+          "item": 63,
+          "ref_item": 59,
+          "distance": 4,
+          "tokens_back": 5107
+        }
+      },
+      {
+        "key": "p48_2",
+        "answer": -52,
+        "expected": -43,
+        "probe": {
+          "q": "What value did hirusa78 hold at the end of item 1006?",
+          "a": -43,
+          "type": "old_value",
+          "item": 1008,
+          "ref_item": 1006,
+          "distance": 2,
+          "tokens_back": 1728
+        }
+      },
+      {
+        "key": "p52_7",
+        "answer": 159,
+        "expected": 113,
+        "probe": {
+          "q": "What value did zifaro44 hold at the end of item 1084?",
+          "a": 113,
+          "type": "old_value",
+          "item": 1092,
+          "ref_item": 1084,
+          "distance": 8,
+          "tokens_back": 11928
+        }
+      },
+      {
+        "key": "p55_5",
+        "answer": 1333,
+        "expected": 1222,
+        "probe": {
+          "q": "As of item 1154, using the house method, what is the tally of surogu80?",
+          "a": 1222,
+          "type": "procedure",
+          "item": 1155,
+          "ref_item": 2,
+          "distance": 1153,
+          "tokens_back": 1870893
+        }
+      }
+    ]
+  },
+  "notes": {
+    "versions": 149,
+    "maximum_characters": 3287,
+    "stamped_names": [],
+    "counter_lines_checked": 8502,
+    "wrong_counter_lines": [
+      {
+        "version": 21,
+        "item": 171,
+        "counter": "dobazi47",
+        "notes_value": "53 set to -39 (item 169)",
+        "true_value": -39
+      },
+      {
+        "version": 21,
+        "item": 171,
+        "counter": "roxamo42",
+        "notes_value": "439 set to 10 (item 169)",
+        "true_value": 10
+      },
+      {
+        "version": 22,
+        "item": 179,
+        "counter": "mihini34",
+        "notes_value": "375 set to -44 (item 177)",
+        "true_value": -44
+      },
+      {
+        "version": 22,
+        "item": 179,
+        "counter": "dobazi47",
+        "notes_value": "53 set to -39 (item 169)",
+        "true_value": -39
+      },
+      {
+        "version": 95,
+        "item": 781,
+        "counter": "jadivo99",
+        "notes_value": "255",
+        "true_value": 285
+      },
+      {
+        "version": 113,
+        "item": 929,
+        "counter": "ketuni59",
+        "notes_value": "-19 set to -139 (item 927)",
+        "true_value": -139
+      },
+      {
+        "version": 132,
+        "item": 1085,
+        "counter": "didoyo44",
+        "notes_value": "335",
+        "true_value": -153
+      },
+      {
+        "version": 133,
+        "item": 1094,
+        "counter": "didoyo44",
+        "notes_value": "462",
+        "true_value": -26
+      },
+      {
+        "version": 134,
+        "item": 1102,
+        "counter": "didoyo44",
+        "notes_value": "504",
+        "true_value": 16
+      },
+      {
+        "version": 141,
+        "item": 1160,
+        "counter": "kecoyo61",
+        "notes_value": "307 set to 192 (item 1157)",
+        "true_value": 192
+      }
+    ],
+    "wrong_versions_per_counter": {
+      "dobazi47": 2,
+      "roxamo42": 1,
+      "mihini34": 1,
+      "jadivo99": 1,
+      "ketuni59": 1,
+      "didoyo44": 3,
+      "kecoyo61": 1
+    },
+    "inplace_failed": 0
+  },
+  "balosu68": {
+    "versions_from_item351": 107,
+    "first_version": {
+      "version": 43,
+      "item": 352,
+      "counter": "balosu68",
+      "notes_value": "60",
+      "true_value": 60,
+      "correct": true
+    },
+    "wrong_versions": []
+  },
+  "cited_entries": {
+    "showings": 15,
+    "characters": 1697,
+    "audits": [
+      {
+        "counter": "mitane99",
+        "audit_item": 119,
+        "entry_item": 39,
+        "cited_showings": 1,
+        "following_cuts": [
+          122
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 76,
+        "answer": 76,
+        "applied": true
+      },
+      {
+        "counter": "zini12",
+        "audit_item": 141,
+        "entry_item": 94,
+        "cited_showings": 1,
+        "following_cuts": [
+          147
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 274,
+        "answer": 274,
+        "applied": true
+      },
+      {
+        "counter": "qiniru59",
+        "audit_item": 180,
+        "entry_item": 64,
+        "cited_showings": 1,
+        "following_cuts": [
+          187
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 325,
+        "answer": 325,
+        "applied": true
+      },
+      {
+        "counter": "xalodo27",
+        "audit_item": 188,
+        "entry_item": 136,
+        "cited_showings": 1,
+        "following_cuts": [
+          195
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 316,
+        "answer": 316,
+        "applied": true
+      },
+      {
+        "counter": "sajalo54",
+        "audit_item": 220,
+        "entry_item": 32,
+        "cited_showings": 1,
+        "following_cuts": [
+          220
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 460,
+        "answer": 460,
+        "applied": true
+      },
+      {
+        "counter": "balosu68",
+        "audit_item": 351,
+        "entry_item": 320,
+        "cited_showings": 1,
+        "following_cuts": [
+          352
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 60,
+        "answer": 60,
+        "applied": true
+      },
+      {
+        "counter": "keru50",
+        "audit_item": 392,
+        "entry_item": 295,
+        "cited_showings": 1,
+        "following_cuts": [
+          394
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 204,
+        "answer": 204,
+        "applied": true
+      },
+      {
+        "counter": "zixaro70",
+        "audit_item": 448,
+        "entry_item": 112,
+        "cited_showings": 1,
+        "following_cuts": [
+          451
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 16,
+        "answer": 16,
+        "applied": true
+      },
+      {
+        "counter": "yoka81",
+        "audit_item": 473,
+        "entry_item": 85,
+        "cited_showings": 1,
+        "following_cuts": [
+          476
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 465,
+        "answer": 465,
+        "applied": true
+      },
+      {
+        "counter": "xaromo63",
+        "audit_item": 535,
+        "entry_item": 56,
+        "cited_showings": 1,
+        "following_cuts": [
+          541
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 329,
+        "answer": 329,
+        "applied": true
+      },
+      {
+        "counter": "fasa28",
+        "audit_item": 547,
+        "entry_item": 190,
+        "cited_showings": 1,
+        "following_cuts": [
+          549
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 447,
+        "answer": 447,
+        "applied": true
+      },
+      {
+        "counter": "zilolo37",
+        "audit_item": 560,
+        "entry_item": 303,
+        "cited_showings": 1,
+        "following_cuts": [
+          565
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 217,
+        "answer": 217,
+        "applied": true
+      },
+      {
+        "counter": "zixa74",
+        "audit_item": 568,
+        "entry_item": 195,
+        "cited_showings": 1,
+        "following_cuts": [
+          574
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 14,
+        "answer": 14,
+        "applied": true
+      },
+      {
+        "counter": "momi17",
+        "audit_item": 667,
+        "entry_item": 193,
+        "cited_showings": 1,
+        "following_cuts": [
+          673
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -20,
+        "answer": -20,
+        "applied": true
+      },
+      {
+        "counter": "pewesu90",
+        "audit_item": 671,
+        "entry_item": 160,
+        "cited_showings": 1,
+        "following_cuts": [
+          673
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 378,
+        "answer": 378,
+        "applied": true
+      },
+      {
+        "counter": "balo88",
+        "audit_item": 742,
+        "entry_item": 255,
+        "cited_showings": 1,
+        "following_cuts": [
+          748
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 130,
+        "answer": 130,
+        "applied": true
+      }
+    ]
+  },
+  "forgeries": [
+    {
+      "kind": "memory",
+      "item": 148,
+      "targets": 18,
+      "kept": 18,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 0,
+        "flagged_versions": 0,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "method",
+      "item": 246,
+      "targets": 47,
+      "kept": 46,
+      "failed_keys": [
+        "p55_5"
+      ],
+      "notes": {
+        "matching_versions": 119,
+        "flagged_versions": 119,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "rule",
+      "item": 493,
+      "targets": 36,
+      "kept": 36,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 90,
+        "flagged_versions": 90,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "value",
+      "item": 801,
+      "targets": 1,
+      "kept": 1,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 52,
+        "flagged_versions": 52,
+        "unflagged_versions": []
+      }
+    }
+  ],
+  "sum_checks": [],
+  "event_counts": {
+    "in-place notes reply": 183,
+    "in-place notes asked again": 34,
+    "recall": 164,
+    "in-place notes: cited archived entries shown": 15,
+    "in-place notes: lines for names the turns do not mention left out": 1
+  },
+  "scope": "Saved STATE counters use notes_truth.py parsing and the generator's true state at archive.n <= NOTES.upto. Non-counter records are excluded. This does not certify runtime, GPU health, another seed, or release readiness."
+}

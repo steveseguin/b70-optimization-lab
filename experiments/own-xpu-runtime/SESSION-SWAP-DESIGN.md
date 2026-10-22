@@ -5,6 +5,17 @@ experimental everywhere (interface, manifests, pages) until the
 restart-and-continue exactness test in §7 passes on a supported host.
 This document is the contract the ctxkeeper integration builds against.
 
+**v1.2 (2026-10-21, reconciliation with the packet179 implementation at
+`4250d39dc4c1`, from the integrator's source review
+[CHECKPOINT-INTEGRATION.md](../../tools/ctxkeeper/CHECKPOINT-INTEGRATION.md)).**
+The operation the engine implements today is **same-generation
+save/restart/resume**: restore takes the original prompt only and continues
+the interrupted generation from the saved pending token. Appending a new turn
+to a restored prefix, restoring and then saving again, a cheap metadata-only
+inspect, and a shared save/restore/delete lock are follow-ups (§10, item 0).
+Where this document described those as present, the text below now says what
+is implemented and what is pending; the gates in §7 are unchanged.
+
 ## 1. Scope
 
 v1 is deliberately the smallest honest thing:
@@ -86,33 +97,54 @@ delete(checkpoint_id, dir)             -> ok | in_use
   engine binary sha256, geometry, dtypes, token count, position, created
   time, per-blob sizes/hashes, and the `experimental` label. This is how the
   integrator enumerates parked sessions and pre-checks restorability.
+  *Implemented transport (v1.2):* `--checkpoint-inspect DIR` is a native
+  process operation, not an HTTP endpoint. It writes the manifest, then one
+  JSON line per blob after reading and hashing that blob, then a final
+  status line; a caller reads JSON lines and checks the exit status and the
+  final line, never the manifest alone. A metadata-only mode that does not
+  read every blob is pending.
 - **restore** runs every compatibility check (§4), uploads blobs into the
-  freshly allocated plan buffers at the per-request hook (in place of
-  `p58_reset_request`, `main.cpp:1975`), sets `position`/`token_history`/
+  freshly allocated plan buffers at the per-request hook (after
+  `p58_reset_request`, see §2), sets `position`/`token_history`/
   `history0/history1`, calls `admit_position` so prepared launch extents
   match, then returns a session positioned exactly where save blocked.
-  `prompt` must extend the recorded prefix exactly (§5) or restore refuses.
+  *Implemented (v1.2):* `prompt` must equal the recorded original prompt,
+  token for token and in length (`checkpoint.hpp`, check `prefix`); the
+  engine then steps the saved `next_token` and continues the same
+  generation. A `prompt` that extends the prefix with new input is refused:
+  the append operation of §5 is pending (§10, item 0).
 - **delete** removes the directory; an in-flight restore holds a lockfile
-  and delete reports `in_use`.
+  and delete reports `in_use`. *Implemented (v1.2):* restore creates
+  `restore.lock` only after it has read the manifest and every blob, and
+  delete checks for that file and then removes the directory, so the two
+  are not atomic against each other; `--checkpoint-delete` also accepts any
+  directory without validating it as a checkpoint. An integrator must not
+  expose delete as written; a shared lock protocol outside the directory is
+  pending (§10, item 0).
 
 All primitives needed already exist (`Engine::upload`/`readback`/`put`/
 `admit_position`, `main.cpp:887-926,1572-1578`). No new device machinery.
 
 ## 4. Compatibility checks (restore refuses unless ALL pass)
 
-1. **Model identity** — checkpoint manifest's weight hashes == the running
-   model's sealed hashes.
+1. **Model identity** — the manifest's `identity_tsv_sha256` (the packet's
+   `identity.tsv` stat pins, §2) == the running engine's; weight content is
+   not hashed (v1.1). These pins are host-local: the same model files moved
+   or reinstalled elsewhere do not match.
 2. **Engine identity** — checkpoint's `binary_sha256` == running binary's
    (v1 exact-match; a qualified-upgrade mechanism can later admit binaries
    whose qualification record covers the same arithmetic profile).
 3. **Geometry** — 48-layer layout (12 QSA @ blk 3,7,…,47; 36 GDN), head
    counts/dims, context allocation ≥ recorded position.
 4. **Dtypes** — BF16 KV, BF16 GDN state (certified inter-row layout),
-   PLE dtypes.
+   PLE dtypes. *v1.2:* not a separate named check in the implementation;
+   dtypes are fixed by the engine binary, so check 2 covers them.
 5. **Token state** — recorded token array length == recorded position;
    length ≤ context allocation.
 6. **Host/device** — B70 device family; oneAPI/Level-Zero versions inside
-   the qualification record's tested set.
+   the qualification record's tested set. *v1.2:* not a separate named check
+   in the implementation; the engine's own startup admission and check 2
+   stand in for it until a named check exists.
 
 Any failure names the failed check; there are no silent fallbacks and no
 approximate restores.
@@ -130,6 +162,8 @@ approximate restores.
 - Integration consequence: note edits land in the appended delta (the new
   view), or the session re-prefills. `restore()` takes the continue-prompt's
   prefix hash and refuses unless it extends the recorded prefix exactly.
+  *v1.2:* until the append operation exists, every new turn re-prefills;
+  a v1 checkpoint can only resume the generation it interrupted.
 
 ## 6. Checkpoint manifest (sketch)
 
@@ -157,7 +191,8 @@ approximate restores.
 Reusing the packet165 harness disciplines (`measurement.py` stream checks,
 fresh-process repeat equality):
 
-1. **Restart-and-continue (correctness):** run a request to token K (natural
+1. **Restart-and-continue (correctness), labeled "same-generation
+   save/restart/resume" in receipts:** run a request to token K (natural
    exit at `--max-new K`, full receipts and drain proof — stronger evidence
    than a kill), save, start a fresh process, restore, decode M more tokens.
    The merged K+M stream must equal, bit-for-bit, an uninterrupted
@@ -198,6 +233,17 @@ requirements, integrated with ctxkeeper's parking policy.
 
 ## 10. Follow-ups (post-v1, in order)
 
+0. Integration gaps from the packet179 source review (v1.2), in the
+   integrator's order: an append operation (exact saved prefix plus new
+   input, with pending-token semantics and a tokenizer/template identity);
+   restore-then-save (repeated parking; the implementation makes the two
+   modes exclusive); one authoritative parsed manifest (the TSV `history0/
+   history1` and the JSON `token_history` are not cross-checked today) with
+   a negative test that alters only a TSV host-state value; a shared atomic
+   lock for restore and delete, and a validated delete target; a
+   metadata-only inspect and a documented JSON-lines contract. Fixes that
+   change the sealed binary need a new qualified packet, not edits to one
+   under test.
 1. TP2 checkpoints: MTP draft state (`mtp36::DraftRuntime` buffers) and
    rank0 `state_spares` banks; two-card atomicity (both ranks or none).
 2. Selective prefix-truncation reuse (drop a suffix, keep earlier state) —

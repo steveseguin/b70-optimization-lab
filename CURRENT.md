@@ -16,6 +16,22 @@ Endpoints restored as `*-20261021-restore4`. Incident, repairs and receipts:
 `notes/2026-10-21-own-runtime-window-pin-guard-refusal.md`. Rule: a window is running only when
 `events-A.jsonl` shows START; run the live `lanequeue.py plan` before stopping any endpoint.
 
+**October 21, 22:05 EDT — campaign 51: seed 0 done and audited, seed 2 lost to the host memory guard and
+relaunched as c51b.** Seed 0 (ctxkeeper 1.2.1.dev0, arm K32C) answered 419 of 423 in 80 min with 16/16 audits
+applied and every forged line flagged, but with 10 wrong STATE lines (campaign 49b: 1) and two fewer answers than
+registered. Six of the ten are a new "old set to new (item N)" phrasing with the right new value; four are plain
+wrong values at two counters. Seed 2 died at call 667: a Claude session and a Codex process started on this host
+at 23:18 beside the campaign server and took its last gigabyte of headroom; the guard stopped the server cleanly,
+no fault, health probe passed. One agent session beside the server fits; a second does not. Seed 2 is running
+again as `ctx-campaign51b` (started 22:01, about 90 min) on the registered keeper file; cards are released after
+it. Audit, receipts and the full read: `experiments/qwen38-27b-b70/data/2026-10-20-context-campaign51/` and the
+campaign-51 sections of `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`. Also today:
+the session-swap contract was reconciled with the packet179 engine (v1.2 notes in
+`experiments/own-xpu-runtime/SESSION-SWAP-DESIGN.md`) and the portability standard now records the host-RAM
+requirement that keeps the ownrt replay off this host. Late evening: the four-card host's window ran after
+its repair and the checkpoint restart-and-continue gate passed on device (receipts `8bf76113f`); the contract and
+the integration review carry the result, scoped to same-generation resume.
+
 **October 21 — packet179 integration review (source-only).** The committed
 engine resumes an unfinished generation from its original prompt; general new
 conversation turns and restore-then-save are not implemented yet. Metadata
