@@ -5,6 +5,13 @@
 > clean-host certification is still pending. The open items are listed under
 > this guide's `missing` entry in [`repro/guide-catalog.json`](../guide-catalog.json).
 
+**New to this? Start with the [package guide](../../packages/gemma4-26b-a4b-q8-b70/README.md#before-you-start):**
+prerequisites, a seven-step [quick start](../../packages/gemma4-26b-a4b-q8-b70/README.md#quick-start)
+(download, runtime, start, ready, first request, status, stop) and
+[fixes for common errors](../../packages/gemma4-26b-a4b-q8-b70/README.md#if-it-fails).
+This package runs a benchmark gate; it has no packaged command that keeps a
+server running for chat.
+
 This is the standalone promoted reproduction packet for the current Gemma 4
 26B A4B Q8/INT8-quality short-decode record on one Intel Arc Pro B70.
 
@@ -14,13 +21,12 @@ This is the standalone promoted reproduction packet for the current Gemma 4
 > source-verified reconstruction candidate, not yet a clean-host beginner
 > install or a byte-identical historical replay.
 
-Use the active script packet for day-to-day reruns:
+The scripts and records this packet uses:
 
-- `../gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh`
-- realistic suite:
-  `../gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`
-- full result packet:
-  `../../results/gemma4-26b-a4b-q8-b70/README.md`
+- [record gate runner](../gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh)
+  (`run.sh` below calls it);
+- [realistic suite](../gemma4-26b-a4b-q8-b70/realistic-suite-v1.json);
+- [full result packet](../../results/gemma4-26b-a4b-q8-b70/README.md);
 - detailed reproduction notes:
   `../../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 - [canonical aggregate patch and verification receipt](../../patches/gemma4-26b-a4b-q8-b70/README.md);
@@ -42,7 +48,7 @@ Use the active script packet for day-to-day reruns:
 - Canary: `512/512` chat canary rows passed.
 - LocalMaxxing ID: `cmr1u77na01k2ld01kalwzs1e`.
 - Evidence:
-  `../../data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`.
+  [`summary.json`](../../data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json).
 
 Record metrics from the evidence JSON:
 
@@ -125,6 +131,10 @@ decode path, not in the draft. Speculation is worth about `1.47x` on this lane
 and is not what costs it reproducibility.
 
 ## Runtime Identity
+
+This is the lab's historical record identity. The checkout, build and model
+paths below existed only on the lab's record host; they are kept as evidence.
+Do not create them. The quick start uses your own paths.
 
 - Host: one Intel Arc Pro B70 32 GB replica per run; the lab has four B70s and
   used them for parallel same-window A/B screens and cross-over checks.
@@ -261,37 +271,12 @@ the shim stops the container. Use the printed paths as `LLAMA_QUANTIZE` for
 
 ### Beginner recovery flow (clean Ubuntu 24.04 host, one B70)
 
-Written 2026-09-06 from the container path above; it has not yet been
-exercised end-to-end on a freshly installed host, so treat it as the intended
-order of operations rather than a tested transcript.
-
-1. Host packages: Intel's GPU kernel driver comes with Ubuntu 24.04's HWE kernel
-   (`xe`; check `ls /dev/dri/renderD*` shows one node per card and that your
-   user is in the `render` and `video` groups). Install Docker
-   (`apt-get install docker.io`, add your user to `docker`) and
-   `git`, `jq`, `aria2`. Install any oneAPI base toolkit for the harness's
-   `setvars.sh` (the container carries the pinned 2026.0 compiler; the host
-   copy only needs to exist).
-2. Clone this repository and build the image with the `docker build` command in
-   the previous section (about 2 GB of Intel packages plus a 10-minute SYCL AOT
-   compile; on a 16 GB host pass `--build-arg BUILD_JOBS=4`).
-3. Download the two pinned GGUFs with a resumable, multi-connection tool, for
-   example `aria2c -c -x 8 -s 8 -o gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf <url>`
-   for the 27.6 GB target and the same for the 0.86 GB F16 MTP file into an
-   `MTP/` subdirectory next to it, keeping the exact filenames. Check the sizes
-   and SHA-256 values against `model-manifest.json`.
-4. `docker/install-container-build-dir.sh /path/to/gemma4-record-container`
-   prints the `LLAMA_SERVER` and `LLAMA_QUANTIZE` paths to use next.
-5. Quantize the draft with `prepare-draft.sh` (previous section); keep the
-   printed `DRAFT_SHA256`. A match with `1f6706e4…` is expected but not
-   required.
-6. Run `run.sh` with `GPU_INDEX` set to the card you want, `PORT=19350`, and
-   the environment shown under "Reproduce". `preflight.sh` runs first and
-   refuses to start if any hash, receipt, or `setvars.sh` check fails, so a
-   failure there is a setup problem, not a measurement.
-7. Read `data/<LABEL>/summary.json`: promote nothing unless
-   `realistic_final_gate.passed`, `fresh_response_validity.valid`, and all
-   `cached_tokens` values are zero.
+The step-by-step flow for this container path now lives in one place: the
+package's [quick start](../../packages/gemma4-26b-a4b-q8-b70/README.md#quick-start)
+and [fixes for common errors](../../packages/gemma4-26b-a4b-q8-b70/README.md#if-it-fails).
+It was written on 2026-09-06 and has not yet been exercised end to end on a
+freshly installed host, so treat it as the intended order of operations rather
+than a tested transcript.
 
 Status (2026-09-06, verified on the lab host): the image built from this
 Dockerfile (id `e22b500d1672…`, 11.6 GB) reports `version: 1 (c926ad0)`,
@@ -348,7 +333,10 @@ The run writes:
 - `data/<LABEL>/summary.json`
 - `data/<LABEL>/realistic-suite.json`
 - `data/<LABEL>/chat-canary.json`
-- server log under `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/`
+- the server log under `SERVER_OUT_DIR`. The harness default is the lab's
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/`, and the server
+  launcher also creates `OUT_DIR` with the same default, so on any other
+  machine set both to a folder you can write.
 
 Only promote or submit results when `realistic_final_gate.passed=true`,
 `fresh_response_validity.valid=true`, and all `cached_tokens` values are zero.

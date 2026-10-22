@@ -10,60 +10,82 @@ Status: **model verified, one-card operating point validated, and lab decode
 patch promoted** (2026-08-23). Lane: enthusiast MoE; the measured stock
 two-card comparison was slower than one card for single-stream decode.
 
-**Current directly measured target-only conventional serving mean:
-`131.460231 tok/s`** (fresh-suite 99-interval medians `130.451371` and
-`132.469090`, one B70, cache-zero). The corresponding legacy 100-event
-compatibility pair, `131.769061` and `133.807162`, remains retained but is not
-the preferred headline.
+Ornith 1.5 35B-A3B in Q4_K_M on one Intel Arc Pro B70, for one user. It runs a
+patched native llama.cpp SYCL build that you compile from source; it is not a
+container. About 3B of its 35B parameters are active per token, which is why it
+writes much faster than a dense 27B model.
 
-**Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
-128/100 window, cache-zero verified): `105.782 tok/s` median /
-`105.284` p10.** This is the historical stock intake point; the optimized
-serving result and matched controls are below.
+## Before you start
 
-## Identity
-
-| Field | Value |
+| Need | Tested with / required |
 | --- | --- |
-| Model | Ornith 1.5 35B-A3B, arch `qwen35moe` (256 experts / 8 used, 41 layers, GQA 16/2, embed 2048, native ctx 262144) |
-| File | `Ornith-1.5-35B-Q4_K_M.gguf` (21,713,462,848 bytes) |
-| SHA-256 | `ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f` |
-| Source | `ornith-ai/Ornith-1.5-35B-A3B-GGUF` @ `fbbaed45c2f0e200276ffa51701a24d45dc7f57e` |
-| Store | `/mnt/usb-models/llm-models/ornith-1.5-35b-a3b-q4km/` (catalog id `ornith-15-35b-a3b-q4km`) |
-| Base | upstream llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`, SYCL AOT bmg-g31, IntelLLVM 2026.0.0 |
-| Device | 1x Intel Arc Pro B70 (32 GiB); stock 2x comparison documented below |
+| OS | Linux. Distribution and kernel version: not recorded. No fresh-install test yet. |
+| Driver stack | Intel GPU kernel driver, Level Zero runtime and Intel oneAPI at `/opt/intel/oneapi` (`setvars.sh` must exist). Driver and runtime versions: not recorded. |
+| Runtime / build | Native build from source: upstream [llama.cpp](https://github.com/ggml-org/llama.cpp) at `9fee29e9435f865ec0b811a783a6471a136d9317` plus one lab patch (SHA-256 `7b9204f8…`), SYCL AOT for `bmg_g31`. The identity table records IntelLLVM 2026.0.0, while the build line below points at the oneAPI 2026.1 compiler; which one built the measured binary is not recorded. |
+| Tools | `git`, `cmake`, `ninja`, `curl`, `python3`, `huggingface-cli` and `sha256sum`. Python version: not recorded. |
+| Disk | `Ornith-1.5-35B-Q4_K_M.gguf` is 21,713,462,848 bytes (21.7 GB). Keep it on a local SSD (see step 1). Source and build size: not recorded. |
+| Host RAM | 32 GiB (package manifest). |
+| GPU | One B70 with no other model running. Card 0 by default (`ONEAPI_DEVICE_SELECTOR=level_zero:0`); change the `0` to use another card. |
+| Card memory | The run receipts do not record the card's ECC setting. With ECC on, a B70 shows about 28 GB instead of 32 GB, and this recipe was not tested that way. See [B70 ECC and usable VRAM](https://neural.download/learn/b70-ecc-and-vram.html). |
 
-Question this packet answers: provide a reproducible, independently validated
-one-B70 recipe for this model. The model, runtime, patch, and local evidence in
-this repository define the recipe.
+Background reading: [models](https://neural.download/learn/models.html) (dense
+versus mixture-of-experts), [runtimes](https://neural.download/learn/runtimes.html)
+and [context length](https://neural.download/learn/context-length.html).
 
-## Storage requirement
+## Quick start
+
+Clone this repository and run every command below from its root. Replace every
+`/path/to/...` with your own absolute directories.
+
+```bash
+git clone https://github.com/steveseguin/b70-optimization-lab.git
+cd b70-optimization-lab
+
+export MODEL_DIR=/path/to/ornith-1.5-35b-a3b-q4km
+export LLAMA_SRC=/path/to/llama.cpp-ornith15
+export BUILD_DIR="$LLAMA_SRC/build-sycl-aot-bmg-g31"
+```
+
+### 1. Download and verify the model
+
+```bash
+huggingface-cli download ornith-ai/Ornith-1.5-35B-A3B-GGUF \
+  Ornith-1.5-35B-Q4_K_M.gguf \
+  --revision fbbaed45c2f0e200276ffa51701a24d45dc7f57e \
+  --local-dir "$MODEL_DIR"
+
+python3 scripts/verify-neural-download-model.py \
+  repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json "$MODEL_DIR"
+```
+
+The verifier reads the file twice, once bypassing the page cache and once
+normally. Both SHA-256 digests must equal
+`ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f`; it prints
+`OK` and exits 0 when they do.
 
 Stage the GGUF on a local NVMe/SATA SSD or a sufficiently fast direct-attached
 USB SSD before serving or benchmarking. On the audit host, first-token setup
 also rereads the approximately 20.0 GB of routed expert tensors while creating
 the optimized device layout. A 100 Mb/s NFS mmap therefore made a cold attempt
-require two slow passes and was rejected as performance evidence. Verify the
-local copy against the pinned SHA-256 before launch.
+require two slow passes and was rejected as performance evidence.
 
-## Restore, patch, and build
+### 2. Get the runtime
 
 Use a clean source tree at the pinned revision. Do not apply the patch to an
 arbitrary newer checkout.
 
 ```bash
-git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
-cd llama.cpp-ornith15
-git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
+git clone https://github.com/ggml-org/llama.cpp.git "$LLAMA_SRC"
+git -C "$LLAMA_SRC" checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch
+PATCH="$PWD/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch"
 echo "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d  $PATCH" | sha256sum -c -
-git apply --check "$PATCH"
-git apply "$PATCH"
-git diff --check
+git -C "$LLAMA_SRC" apply --check "$PATCH"
+git -C "$LLAMA_SRC" apply "$PATCH"
+git -C "$LLAMA_SRC" diff --check
 
 source /opt/intel/oneapi/setvars.sh --force
-cmake -G Ninja -S . -B build-sycl-aot-bmg-g31 \
+cmake -G Ninja -S "$LLAMA_SRC" -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER=/opt/intel/oneapi/compiler/2026.1/bin/icx \
   -DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.1/bin/icpx \
@@ -79,25 +101,22 @@ cmake -G Ninja -S . -B build-sycl-aot-bmg-g31 \
   -DGGML_SYCL_HOST_MEM_FALLBACK=ON \
   -DGGML_SYCL_SUPPORT_LEVEL_ZERO_API=ON \
   -DGGML_SYCL_MAX_PARALLEL_LINK_JOBS=8
-cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
+cmake --build "$BUILD_DIR" --target llama-server llama-bench -j2
 ```
 
-The validated compute library SHA-256 was
+The [patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md) explains
+what the patch changes. The validated compute library SHA-256 was
 `21b9196911c9254f06756317a7cac85942517dbd4495e41694ec7f22c80db868`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
+Build time: not recorded.
 
-## Launch
+### 3. Start the server
 
-First verify the model with the repository preflight, then enable the
-default-off lab patch:
+In terminal 1 (the server stays in the foreground). The exports turn on the
+lab patch, which is off by default:
 
 ```bash
-export MODEL_DIR=/models/ornith-1.5-35b-a3b-q4km
-python3 /path/to/b70-optimization-lab/scripts/verify-neural-download-model.py \
-  /path/to/b70-optimization-lab/repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json \
-  "$MODEL_DIR"
-
 source /opt/intel/oneapi/setvars.sh --force
 export ONEAPI_DEVICE_SELECTOR=level_zero:0
 export UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1
@@ -115,7 +134,7 @@ export GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1
 export GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1
 export GGML_SYCL_FUSED_ORNITH_MOE_GATE_RESIDUAL_RMS=1
 
-build-sycl-aot-bmg-g31/bin/llama-server \
+"$BUILD_DIR/bin/llama-server" \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
   --alias ornith35b --reasoning off --ctx-size 8192 \
   --cache-type-k f16 --cache-type-v f16 --device SYCL0 \
@@ -124,13 +143,138 @@ build-sycl-aot-bmg-g31/bin/llama-server \
   --host 127.0.0.1 --port 18100
 ```
 
+This is one slot, 8,192 tokens of context, F16 KV, reasoning off, port 18100.
 Do not enable SYCL command graphs for this model on the pinned stack; the
 matched model-level experiment regressed decode by 52%.
 Keep `UR_L0_USE_IMMEDIATE_COMMANDLISTS` unset: its independent matched server
 screen regressed serving. The copy-offload setting above is validated only for
 this exact one-B70 recipe and is not a global default for other models.
 
-## Current twelve-feature context-depth profile (llama-bench, FA on, 5 reps)
+### 4. Wait until it is ready
+
+In terminal 2:
+
+```bash
+until curl -fsS http://127.0.0.1:18100/health; do sleep 10; done
+```
+
+It answers once the model is loaded. Startup time: not recorded. Setup before
+the first token also rereads about 20 GB of routed expert weights from disk to
+build the optimized device layout (step 1), so slow storage shows up here.
+
+### 5. Send a first request
+
+```bash
+curl -s http://127.0.0.1:18100/v1/chat/completions -H 'Content-Type: application/json' \
+  -d '{"model":"ornith35b","messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":64}'
+```
+
+From Python, with any OpenAI-compatible client (`pip install openai`):
+
+```bash
+python3 -c 'from openai import OpenAI; r = OpenAI(base_url="http://127.0.0.1:18100/v1", api_key="unused").chat.completions.create(model="ornith35b", messages=[{"role": "user", "content": "Say hello in five words."}], max_tokens=64); print(r.choices[0].message.content)'
+```
+
+Any other OpenAI-compatible app works the same way: base URL
+`http://127.0.0.1:18100/v1`, model `ornith35b`, any API key. The server holds
+one model, so the name is only a label (the launch sets it with `--alias`).
+The package benchmark sends plain completions (`--api-mode completions`), not chat
+requests.
+
+### 6. Check status
+
+```bash
+curl -fsS http://127.0.0.1:18100/health
+pgrep -ax llama-server
+```
+
+There is no separate status script. The package's benchmark command (fixed
+12-prompt suite, 512-token answers, cache off) is:
+
+```bash
+python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith35b \
+  --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json \
+  --max-tokens 512 --metric-tokens 100 --seed 1 \
+  --request-extra-json '{"cache_prompt":false,"seed":42,"temperature":0}' --out bench.json
+```
+
+### 7. Stop
+
+Press `Ctrl-C` once in terminal 1 and wait for the server to exit. The
+package's stop command is `pkill -x llama-server`; it stops **every**
+`llama-server` on the machine, so use it only if this is the only one. Then
+`pgrep -x llama-server` must print nothing.
+
+## What you get
+
+- **Speed:** strict headline pending (see the box at the top). The current
+  directly measured target-only conventional serving mean is
+  **`131.460231 tok/s`** (fresh-suite 99-interval medians `130.451371` and
+  `132.469090`, one B70, cache-zero). The corresponding legacy 100-event
+  compatibility pair, `131.769061` and `133.807162`, remains retained but is
+  not the preferred headline. The historical stock intake point (1x B70, 8K
+  ctx, f16 KV, target-only, 128/100 window, cache-zero verified) was
+  `105.782 tok/s` median / `105.284` p10.
+- **Quality:** each patch step produced byte-identical forced output against
+  the same binary with the patch switched off, and the arithmetic, exact-copy
+  and JSON-schema canaries pass. Fresh stock servers matched 0/12 complete
+  answers across processes, so the same prompt can give a different answer
+  after a restart.
+- **Context:** the launch serves 8,192 tokens. Raw-engine decode and prefill
+  were measured at depths up to 32,768 tokens
+  ([table](#current-twelve-feature-context-depth-profile-llama-bench-fa-on-5-reps));
+  those are `llama-bench` rates, not server rates.
+- **Many users:** only a raw-engine batching curve exists
+  ([table](#aggregate-decode-over-concurrent-sequences)); it is not an HTTP
+  users-per-second measurement.
+- **One card:** the stock two-card layer split was 2.6% slower for one user.
+- **Not measured yet:** tested clean-host platform installation; beginner
+  recovery flow; a 512-token prompt-reading (prefill) measurement through the
+  server; HTTP multi-user serving.
+
+## If it fails
+
+- **The verifier prints `BAD` or exits 1:** the file is missing or its bytes
+  differ from the pinned SHA-256. Delete it, download it again and re-run the
+  verifier. Never start the server on unverified files.
+- **The verifier exits 2 (`cannot bypass page cache`):** it could not read the
+  file while bypassing the page cache, so it refuses to certify the bytes. Put
+  the model on a local filesystem that allows direct reads.
+- **`sha256sum -c` or `git apply --check` fails in step 2:** the patch file or
+  the llama.cpp checkout is not the pinned one. Start again from a clean clone
+  at `9fee29e9435f865ec0b811a783a6471a136d9317`.
+- **The first request or a cold run is very slow:** the GGUF is probably on
+  slow or network storage. A 100 Mb/s NFS mount was rejected for this reason;
+  copy the file to a local SSD.
+- **Writing speed is far below the numbers above:** check that
+  `GGML_SYCL_ENABLE_GRAPH=0` is set and `UR_L0_USE_IMMEDIATE_COMMANDLISTS` is
+  not; both were measured to slow this model down. Keep
+  `GGML_SYCL_FUSED_ORNITH_MULTIROW` unset for this one-user launch.
+- **The same prompt gives a different answer after a restart:** this is a
+  recorded property of this runtime (0/12 matches across fresh servers), not a
+  broken install.
+- Keep the server's terminal output and any benchmark JSON when you report a
+  problem.
+
+## Details
+
+### Identity
+
+| Field | Value |
+| --- | --- |
+| Model | Ornith 1.5 35B-A3B, arch `qwen35moe` (256 experts / 8 used, 41 layers, GQA 16/2, embed 2048, native ctx 262144) |
+| File | `Ornith-1.5-35B-Q4_K_M.gguf` (21,713,462,848 bytes) |
+| SHA-256 | `ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f` |
+| Source | `ornith-ai/Ornith-1.5-35B-A3B-GGUF` @ `fbbaed45c2f0e200276ffa51701a24d45dc7f57e` |
+| Lab storage | `/mnt/usb-models/llm-models/ornith-1.5-35b-a3b-q4km/` on the lab host (catalog id `ornith-15-35b-a3b-q4km`); use any local directory |
+| Base | upstream llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`, SYCL AOT bmg-g31, IntelLLVM 2026.0.0 |
+| Device | 1x Intel Arc Pro B70 (32 GiB); stock 2x comparison documented below |
+
+Question this packet answers: provide a reproducible, independently validated
+one-B70 recipe for this model. The model, runtime, patch, and local evidence in
+this repository define the recipe.
+
+### Current twelve-feature context-depth profile (llama-bench, FA on, 5 reps)
 
 ![optimized depth sweep](optimized-depth-sweep-twelve-feature.svg)
 
@@ -148,13 +292,14 @@ These are directly measured raw engine rates from the exact twelve-feature
 source stack and accepted copy-offload setting, with command graphs off, F16
 KV, and five samples at every displayed depth. The points are not inferred
 from the 8K server result; no missing depth is interpolated or extrapolated.
-Raw engine rates exclude HTTP and sampling overhead, so use the current
-fresh-server suite mean above as the serving headline. Evidence:
+Raw engine rates exclude HTTP and sampling overhead, so use the fresh-server
+suite mean under [What you get](#what-you-get) as the serving expectation (the
+strict headline is still pending). Evidence:
 `ornith-15-35b-a3b-q4km-twelve-feature.sweep.json` plus
 `ornith-15-35b-a3b-q4km-twelve-feature.meta.json` (model, benchmark, patch,
 library, environment, and activation hashes/counts inside).
 
-## Aggregate decode over concurrent sequences
+### Aggregate decode over concurrent sequences
 
 The accepted stack was also measured with raw-engine continuous batching. This
 is `llama-batched-bench` aggregate decode, not HTTP users/sec: it excludes
@@ -177,21 +322,22 @@ No point is interpolated or extrapolated.
 For multi-sequence deployments only, an optional research patch extends the
 one-row MoE-reduction and residual/RMS fusions to 2--32 rows. It improved a
 focused four-sequence C/B/B/C comparison by **+2.21%** and was neutral at one
-sequence. Apply it after the required twelve-feature patch:
+sequence. Apply it after the required twelve-feature patch, from the repository root with the
+variables from the quick start:
 
 ```bash
-MULTIROW_PATCH=/path/to/b70-optimization-lab/experiments/ornith-15-b70/patches/llamacpp-ornith15-multirow-aggregate-fusions-candidate-20260823.patch
+MULTIROW_PATCH="$PWD/experiments/ornith-15-b70/patches/llamacpp-ornith15-multirow-aggregate-fusions-candidate-20260823.patch"
 echo "61135a790d749b66ca6fd63a045a5b675ec7c2e868d913e8234adff7cabbbe6e  $MULTIROW_PATCH" | sha256sum -c -
-git apply --check "$MULTIROW_PATCH"
-git apply "$MULTIROW_PATCH"
-cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-batched-bench -j2
+git -C "$LLAMA_SRC" apply --check "$MULTIROW_PATCH"
+git -C "$LLAMA_SRC" apply "$MULTIROW_PATCH"
+cmake --build "$BUILD_DIR" --target llama-server llama-batched-bench -j2
 export GGML_SYCL_FUSED_ORNITH_MULTIROW=1
 ```
 
 Keep this flag unset for the package's documented `--parallel 1` launch. The
 candidate is default off and has not been promoted into the required patch.
 
-## Historical stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
+### Historical stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
 
 ![depth sweep](depth-sweep.svg)
 
@@ -211,7 +357,7 @@ rates also run above server-suite medians by design (no HTTP/sampling). Evidence
 `ornith-15-35b-a3b-q4km.sweep.json` +
 `ornith-15-35b-a3b-q4km.meta.json` (model/bench SHAs inside).
 
-## Published operating point: optimized standard (8K, F16 KV, target-only)
+### Published operating point: optimized standard (8K, F16 KV, target-only)
 
 The promoted ordered-add patch removes 240 launch boundaries per token. In a
 matched two-control/two-candidate screen:
@@ -387,7 +533,7 @@ mean improved +1.69%, and 12/12 prompt-paired averages won. The legacy
 128-token transcript was byte-identical across 5,080 candidate hits. Evidence:
 [`2026-08-23-ornith35b-shared-gate-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-shared-gate-residual-rms-positive.md).
 
-## Stock two-card comparison (patch off; layer split, GPUs 0+1)
+### Stock two-card comparison (patch off; layer split, GPUs 0+1)
 
 Using the earlier stock serving protocol, `--split-mode layer` measured
 **`102.011447 tok/s`** and **`102.200045 tok/s`** (canaries 5/5), about 2.6%

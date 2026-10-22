@@ -8,65 +8,168 @@ which is what makes 32K of context fit on the card. Since September 18 it also c
 the draft's five guesses in one pass over the cache instead of five separate passes,
 which is worth 10-17% more writing speed after a long prompt and changes no output.
 
+> **Status: candidate.** Accepted on the lab host on October 4. A fresh machine without Intel drivers, Docker
+> or the model in place has not been tested. The [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md) is
+> the technical source of truth.
+
+## Before you start
+
+| Need | Tested with / required |
+| --- | --- |
+| OS | Linux. The October 4 acceptance host ran kernel `7.0.0-38`; its distribution, Intel driver package versions and Docker version were not recorded. No fresh-install test yet. |
+| Driver stack | The Intel GPU kernel driver with a `/dev/dri/renderD*` node for the card. vLLM, PyTorch and the oneAPI runtime are inside the pinned container. |
+| Docker | Docker, usable by your user without `sudo`; `serve.py` calls `docker` directly. |
+| Tools | Python 3 (standard library only), `curl`, `fuser` (package `psmisc`) and permission to read the kernel log with `journalctl -k`. `serve.py start` checks the last two and refuses without them. `aria2c` is optional and speeds up the download. |
+| Disk | About 60 GiB: 30.9 GB of model files plus the container image. |
+| Host RAM | 16 GiB per the package manifest (20 GiB counting swap); the lab host that measured it has 15 GiB. The container is capped at 12 GiB with no swap. |
+| GPU | One B70 that nothing else is using. Card 0 by default; `--gpu N` picks another. |
+| Card memory | Measured on the lab's two-card host, which reported ECC off (32,656 MiB per card) when checked on 2026-08-30; the run receipts themselves do not record ECC state. With ECC on, a B70 shows about 28 GB instead of 32 GB, and this recipe was not tested that way. See [B70 ECC and usable VRAM](https://neural.download/learn/b70-ecc-and-vram.html). |
+
+Background reading: [runtimes](https://neural.download/learn/runtimes.html) (why this one uses vLLM) and
+[the MTP ladder](https://neural.download/learn/mtp-ladder.html) (what the draft depth does).
+
+## Quick start
+
+Clone this repository and run every command below from its root. Replace every `/path/...` with your own
+absolute directories.
+
+```bash
+git clone https://github.com/steveseguin/b70-optimization-lab.git
+cd b70-optimization-lab
+```
+
+### 1. Download and verify the model
+
+```bash
+MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/download-model.sh
+MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/verify.sh
+```
+
+This fetches `Qwen/Qwen3.8-27B-FP8` at revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a` (30.9 GB). Re-running
+the download skips files that are already complete. The verify step checks the pinned revision, every file size
+and every SHA-256, so a pass means the exact bytes these measurements used.
+
+### 2. Get the runtime
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a
+```
+
+The image name says INT4 because packages share a runtime; it serves the FP8 model.
+
+### 3. Start the server
+
+```bash
+python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-one-card-session
+```
+
+`--state-dir` must not exist yet: `serve.py` creates it, keeps the logs there, and refuses a directory that is
+already there. Use a new one for every start. Add `--profile max-context` for 40,960 tokens (it uses 0.983 of the
+card's memory instead of 0.975, so it has less headroom), `--profile no-quantization` for the full-precision draft
+head, `--gpu 1` to use the second card, or `--port N` for another port (default 18130).
+
+### 4. Wait until it is ready
+
+The start command stays in the foreground. It loads the model, sends one warm-up request, then prints
+`Ready: http://127.0.0.1:18130/v1`. On the lab host that took 132-149 seconds for every profile (October 3-4
+receipts). It gives up after 30 minutes (`--startup-timeout`, in seconds). Leave this terminal open and use a second
+one for the next steps.
+
+### 5. Send a first request
+
+```bash
+curl -s http://127.0.0.1:18130/v1/chat/completions -H 'Content-Type: application/json' \
+  -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":64,"chat_template_kwargs":{"enable_thinking":false}}'
+```
+
+From Python, after `pip install openai`:
+
+```bash
+python3 -c "from openai import OpenAI; c=OpenAI(base_url='http://127.0.0.1:18130/v1', api_key='none'); print(c.chat.completions.create(model='qwen38-27b-fp8', messages=[{'role':'user','content':'Say hello in five words.'}], max_tokens=64, extra_body={'chat_template_kwargs':{'enable_thinking':False}}).choices[0].message.content)"
+```
+
+Any other OpenAI-compatible app works the same way: base URL `http://127.0.0.1:18130/v1`, model `qwen38-27b-fp8`,
+any API key.
+
+### 6. Check status
+
+```bash
+python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py status --state-dir /path/fp8-one-card-session
+```
+
+It prints the state (`ready` while serving), whether the container runs, and whether the API answers.
+
+### 7. Stop
+
+```bash
+python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py stop --state-dir /path/fp8-one-card-session
+```
+
+Ctrl+C in the start terminal does the same. The logs stay in the state directory; the next start needs a new
+`--state-dir`.
+
+## What you get
+
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
 | `recommended` | 32,768 tokens | **54.0 tok/s** | 2,031 / 2,023 / 1,939 tok/s |
 | `max-context` (0.983 of GPU memory) | 40,960 tokens | 54.0 tok/s | 2,028 / 2,018 / 1,936 tok/s |
 | `no-quantization` (full-precision draft head) | 28,672 tokens | 52.2 tok/s | 2,019 / 2,014 / 1,932 tok/s |
 
-Every row was measured through this launcher on the pinned image on October 4, with the chunked-upload overlay the
-package now ships ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/); the
-October 3-4 run without it is within 0.1 % on every row:
-[receipts](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/); the
-first acceptance on this image, September 18, is within 0.7 % on every row:
-[receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
+- **Speed:** every row was measured through this launcher on the pinned image on October 4, with the chunked-upload
+  overlay the package now ships ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/);
+  the October 3-4 run without it is within 0.1 % on every row:
+  [receipts](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/); the
+  first acceptance on this image, September 18, is within 0.7 % on every row:
+  [receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
+  Graphs and every measured point are on the
+  [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html).
+- **Quality:** answers are identical to the same model without MTP on every gate the receipts list (strict suite,
+  64-prompt test, long prompts, chat quality). How it was built and tested:
+  [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md).
+- **Use:** one request at a time. The context limit covers the prompt, chat history and the answer.
+- **Not measured yet:** a machine without Intel drivers, Docker or the pinned model already present; multiple
+  simultaneous users; contexts above 40,960 tokens on one card; prompt reading at a 512-token prompt on this profile.
 
-Graphs and every measured point are on the
-[details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html). LocalMaxxing:
-[`cmu6ytqyr0827lq01b76whp6d`](https://www.localmaxxing.com/runs/cmu6ytqyr0827lq01b76whp6d) (54.22 tok/s, approved
-September 18 on this image; it supersedes the R311b record
-[`cmu5wc2e50804lq01r0br2i5p`](https://www.localmaxxing.com/runs/cmu5wc2e50804lq01r0br2i5p), 54.33 tok/s, and the
-24,576-token recipe's [`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr),
-53.43 tok/s, both of which stand as history). The same payload was posted a second time by mistake and approved as
-`cmu6ytvxr082alq015dpjgiz4`; that record is an accidental duplicate, not a second measurement, and is withheld in
-[`results/localmaxxing-submissions.md`](../../results/localmaxxing-submissions.md) pending withdrawal.
-How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md).
+## If it fails
 
-## What you need
+`serve.py` never restarts or retries anything by itself. It prints `ERROR: ...` and stops.
 
-- Linux with working Intel GPU drivers, Docker and Python 3
-- One B70 not used by anything else, 16 GiB host RAM, about 60 GiB of disk
-- The model: `Qwen/Qwen3.8-27B-FP8` at revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`
+- **`[Errno 17] File exists`**: the `--state-dir` is already there. Pick a new path.
+- **`[Errno 98] Address already in use`**: something already listens on port 18130, often a server that is still
+  running. Stop it (step 7) or pass `--port`.
+- **`GPU index N is not available`**: `--gpu` names a card that is not there. Count the `renderD*` nodes in
+  `/dev/dri`.
+- **`The selected GPU is in use or ownership could not be checked`**: another process has the card open, or
+  `fuser` is not installed. Stop the other GPU work first.
+- **`Cannot read the kernel journal for fault monitoring`**: your user cannot run `journalctl -k`. Give it read
+  access to the kernel log, then start again.
+- **`Pull the pinned runtime first`** or **`The local image is not the pinned runtime`**: run step 2.
+- **`Model directory does not exist`** or **`Model and serving state must be separate directories`**: check the
+  two paths in step 3.
+- **`New GPU fault detected. Halting this server`**: the kernel logged a GPU fault and `serve.py` stopped the
+  server. Keep `kernel.log` and `server.log` from the state directory. The fault the lab saw at model load, and the
+  overlay that avoids it (on by default), are described in
+  [this note](../../experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
+- **`Server exited (N); see server.log`** or **`Startup deadline reached`**: read `server.log` in the state
+  directory. If the card ran out of memory, make sure nothing else uses it and check the card-memory row under
+  [Before you start](#before-you-start); `max-context` leaves the least headroom.
+- **`Container identity is not yet recorded; use Ctrl+C in the start terminal`**: `stop` ran before the container
+  existed. Use Ctrl+C in the start terminal.
+- **`verify.sh` reports a mismatch**: delete that file, download it again and re-run `verify.sh`. Do not start the
+  server on unverified files.
 
-## Start
+## Details
 
-```bash
-MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/download-model.sh
-MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/verify.sh
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a
-python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-one-card-session
-```
+### Good to know
 
-The download and verify steps check the pinned revision, every file size and
-every SHA-256, so a pass means the exact bytes these measurements used.
-
-Add `--profile max-context` for 40,960 tokens (it uses 0.983 of the card's memory instead of 0.975, so it has
-less headroom), `--profile no-quantization` for the full-precision draft head, or `--gpu 1` to use the second card. Startup takes several minutes; wait for `Ready`.
-
-## Use and stop
-
-```bash
-curl -s http://127.0.0.1:18130/v1/chat/completions -H 'Content-Type: application/json' \
-  -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":64,"chat_template_kwargs":{"enable_thinking":false}}'
-python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py status --state-dir /path/fp8-one-card-session
-python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py stop --state-dir /path/fp8-one-card-session
-```
-
-Send one request at a time. The context limit covers the prompt, chat history
-and the answer.
-
-## Good to know
-
+- **LocalMaxxing records.** [`cmu6ytqyr0827lq01b76whp6d`](https://www.localmaxxing.com/runs/cmu6ytqyr0827lq01b76whp6d) (54.22 tok/s, approved
+  September 18 on this image; it supersedes the R311b record
+  [`cmu5wc2e50804lq01r0br2i5p`](https://www.localmaxxing.com/runs/cmu5wc2e50804lq01r0br2i5p), 54.33 tok/s, and the
+  24,576-token recipe's [`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr),
+  53.43 tok/s, both of which stand as history). The same payload was posted a second time by mistake and approved as
+  `cmu6ytvxr082alq015dpjgiz4`; that record is an accidental duplicate, not a second measurement, and is withheld in
+  [`results/localmaxxing-submissions.md`](../../results/localmaxxing-submissions.md) pending withdrawal.
 - **Faster after a long prompt (September 18, R312d-c image):** checking the draft's guesses used to issue one
   attention call per guessed position, each re-reading the whole cache; the new kernel reads the cache once and
   computes all the rows together ([overlay](overlays/b70_fa_multiq.py)). Every row is still computed with exactly the
@@ -151,6 +254,5 @@ and the answer.
   (54.05 / 54.03 tok/s), `max-context` 12/12 at 54.02, `no-quantization` 12/12 at 52.19, every other gate exact, no
   GPU fault ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/)).
   `B70_CHUNKED_UPLOAD=0` turns the overlay off.
-- Not yet tested: a machine without Intel drivers, Docker or the model already
-  in place, and more than one user at a time. The image itself is public: it was pushed on September 18 as
-  `r312d-fp8-tp1-20260918`, so the `docker pull` above works anywhere.
+- The image is public: it was pushed on September 18 as `r312d-fp8-tp1-20260918`, so the `docker pull` in step 2
+  works anywhere. What is still untested is listed under [What you get](#what-you-get).

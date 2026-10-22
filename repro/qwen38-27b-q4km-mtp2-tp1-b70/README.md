@@ -1,8 +1,14 @@
 # Qwen3.8 27B Q4_K_M + Q4_0 MTP2 on one Arc Pro B70
+
 > **Candidate portable reproduction.** The strict one-user headline is
 > `42.636988 tok/s`, from two fresh full-suite servers. It is 55.75% faster
 > than the identical-build MTP0 control and matches all 12 complete target
 > token arrays. Clean-host Intel/oneAPI installation remains unverified.
+
+**New to this? Start with the [package guide](../../packages/qwen38-27b-q4km-mtp2-tp1-b70/README.md#before-you-start):**
+prerequisites, a seven-step [quick start](../../packages/qwen38-27b-q4km-mtp2-tp1-b70/README.md#quick-start)
+(download, runtime, start, ready, first request, status, stop) and
+[fixes for common errors](../../packages/qwen38-27b-q4km-mtp2-tp1-b70/README.md#if-it-fails).
 
 This is a separate deployment from the target-only Q4 package. It requires
 both the 18.97 GB target and a 1.37 GB external MTP draft.

@@ -7,11 +7,14 @@
 > A machine without Intel drivers, Docker or the model in place is untested.
 > Public container availability does not certify a clean source rebuild.
 
-Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp1-b70/README.md).
+**New to this? Start with the [package guide](../../packages/qwen38-27b-fp8-tp1-b70/README.md#before-you-start):**
+prerequisites, a seven-step [quick start](../../packages/qwen38-27b-fp8-tp1-b70/README.md#quick-start)
+(download, runtime, start, ready, first request, status, stop) and
+[fixes for common errors](../../packages/qwen38-27b-fp8-tp1-b70/README.md#if-it-fails).
 
 ## Current recipe (reviewed October 10, 2026)
 
-Use the [package quickstart](../../packages/qwen38-27b-fp8-tp1-b70/README.md#start)
+Use the [package quick start](../../packages/qwen38-27b-fp8-tp1-b70/README.md#quick-start)
 for acquisition, hash verification, launch, health and graceful stop. It runs the
 27B dense model on **one** B70. Flash-Next's 46.854250 tok/s record is a different
 125B-A6B model on **four** B70s; the 875 tok/s result is the 27B model on **two**

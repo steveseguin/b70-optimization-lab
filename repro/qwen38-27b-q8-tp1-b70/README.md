@@ -5,6 +5,11 @@
 > identities are closed. Intel driver/oneAPI installation and a clean-host
 > replay are still pending.
 
+**New to this? Start with the [package guide](../../packages/qwen38-27b-q8-tp1-b70/README.md#before-you-start):**
+prerequisites, a seven-step [quick start](../../packages/qwen38-27b-q8-tp1-b70/README.md#quick-start)
+(download, runtime, start, ready, first request, status, stop) and
+[fixes for common errors](../../packages/qwen38-27b-q8-tp1-b70/README.md#if-it-fails).
+
 This is the repository's quality-conservative one-card Qwen3.8 GGUF lane. It
 uses Q8_0 weights, F16 KV, one server slot, and no draft model or speculative
 decoding. The raw-engine tg128 curve measured `19.662501 tok/s` at depth zero

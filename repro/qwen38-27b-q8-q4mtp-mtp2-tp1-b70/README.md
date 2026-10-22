@@ -5,6 +5,11 @@
 > oracle, and fresh-server repeat are closed. A clean-host Intel/oneAPI replay
 > and beginner recovery flow are still pending.
 
+**New to this? Start with the [package guide](../../packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/README.md#before-you-start):**
+prerequisites, a seven-step [quick start](../../packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/README.md#quick-start)
+(download, runtime, start, ready, first request, status, stop) and
+[fixes for common errors](../../packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/README.md#if-it-fails).
+
 This deployment uses Q8_0 target weights and a separate Q4_0 MTP draft at
 depth 2. The strict fixed-suite headline is **37.062028 tok/s**, the median of
 two fresh servers (`36.848184`, `37.275873`). A matched 1,024-context MTP0
@@ -65,9 +70,18 @@ BUILD_DIR=/path/to/new/llama.cpp-qwen38-q8-mtp2/build-sycl-aot-bmg-g31 \
   repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/run-server.sh
 ```
 
-The measured server uses one B70, one slot, 1,024 configured context tokens,
-F16 target and draft KV, graph off, MTP depth 2, prompt cache off, and raw
-native completions. Check it from another terminal:
+`preflight.sh`, which `run-server.sh` also runs first, accepts only the
+measured `llama-server` SHA-256
+`35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545` and
+`libggml-sycl.so` SHA-256
+`0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154`; a build
+with other bytes stops there with `llama-server hash mismatch.` or
+`SYCL backend hash mismatch.`
+
+The measured server uses one B70 (card 0, fixed in the launcher), one slot,
+1,024 configured context tokens, F16 target and draft KV, graph off, MTP
+depth 2, prompt cache off, and raw native completions. Check it from another
+terminal:
 
 ```bash
 curl -fsS http://127.0.0.1:18141/health

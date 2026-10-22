@@ -5,6 +5,11 @@
 > identities. It has not yet been replayed from a clean Ubuntu installation,
 > so it does not install or alter the Intel driver or oneAPI toolchain.
 
+**New to this? Start with the [package guide](../../packages/qwen38-27b-q4km-tp1-b70/README.md#before-you-start):**
+prerequisites, a seven-step [quick start](../../packages/qwen38-27b-q4km-tp1-b70/README.md#quick-start)
+(download, runtime, start, ready, first request, status, stop) and
+[fixes for common errors](../../packages/qwen38-27b-q4km-tp1-b70/README.md#if-it-fails).
+
 This is the repository's current one-card Qwen3.8 path. It runs the target
 model directly in llama.cpp/SYCL with no draft model, MTP, response reuse, or
 speculative decoding. The final lab captures reached `27.813629` and
@@ -175,45 +180,16 @@ reproduces the exact cache-off profile.
 
 ## Beginner recovery checklist
 
-This checklist is safe to use on an existing installation; it does not claim
-that the Intel stack has been clean-host certified yet.
+The checklist now lives in the package guide's
+[If it fails](../../packages/qwen38-27b-q4km-tp1-b70/README.md#if-it-fails)
+section, next to every message the preflight, build, launch, verify and
+benchmark scripts print. It is safe to use on an existing installation; it
+does not claim that the Intel stack has been clean-host certified yet.
 
 For an actual fresh installation, follow the fail-closed
 [clean-host certification runbook](CLEAN-HOST.md). It links Intel's current
 primary driver/oneAPI instructions and defines the platform, build, model,
 endpoint, and repeat receipts required before the badge may change.
-
-1. **The compiler or IntelSYCL package is missing.** Confirm that
-   `/opt/intel/oneapi/setvars.sh` exists, then start a new shell and run
-   `source /opt/intel/oneapi/setvars.sh --force`. Check `command -v icpx` and
-   `icpx --version` before rebuilding. Do not mix objects from two compiler
-   versions; use a new `SOURCE_DIR` for an override.
-2. **No SYCL GPU appears.** Run `sycl-ls`, `ls -l /dev/dri`, `id`, and
-   `xpu-smi discovery`. The user must have access to the render device (often
-   via the `render` group). Log out and back in after a group change. Do not
-   work around permissions with world-writable device nodes.
-3. **Model verification fails.** Stop. Re-run
-   `verify-model-direct.sh /path/to/Qwen3.8-27B-Q4_K_M.gguf`. A cached read is
-   not enough: both direct and ordinary SHA-256 checks must equal the identity
-   in `model-direct.json`. Delete and download only the bad file; never patch
-   around a checksum failure.
-4. **The build tries to download a Web UI or runs out of memory.** Use only
-   `restore-and-build.sh`; this revision disables those unused paths and
-   defaults to two jobs. Start from a new source directory after a failed or
-   manually modified build. Lower `BUILD_JOBS=1` on a small host.
-5. **The server cannot allocate the model or KV cache.** Ensure no other model
-   process is active with `pgrep -af 'llama-(server|bench)|vllm'`. Start with
-   the supplied one-slot 8K launcher. Do not copy the research 64-slot flags;
-   that profile nearly filled the card and failed output-stability gates.
-6. **Health works but validation fails.** Preserve the JSON and server log.
-   A nonzero cache count, stale response, or output-hash mismatch invalidates
-   the speed. Stop the server, verify the exact binary/model identities, and
-   repeat once from a fresh process; do not average a failed attempt into a
-   passing one.
-
-For a useful issue report, attach the preflight output, `icpx --version`,
-`sycl-ls`, `xpu-smi discovery`, the exact failing command, the server log,
-and the benchmark JSON. Remove usernames and unrelated environment secrets.
 
 ## Evidence and remaining gates
 
