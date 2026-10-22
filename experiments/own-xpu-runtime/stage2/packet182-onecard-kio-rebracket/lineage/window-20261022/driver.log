@@ -1,0 +1,29 @@
+2026-10-22T09:32:49.386773+00:00 window start
+2026-10-22T09:32:49.387139+00:00 queue-A.txt rewritten with 1 rows from regenerated proposals
+2026-10-22T09:32:50.253621+00:00 live plan passed for all 1 rows
+2026-10-22T09:32:50.269785+00:00 stopping endpoints: ['qwen38-27b-vision', 'qwen38-27b-fp8-tp1-test', 'qwen38-27b-fp8']
+2026-10-22T09:32:58.008295+00:00 stop rc=0 
+2026-10-22T09:33:08.023840+00:00 endpoints stopped; MemAvailable=120645734400 required=100063993856
+2026-10-22T09:33:08.976262+00:00 PAUSE-A archived and removed for the approved window (PAUSE-B untouched)
+2026-10-22T09:33:09.008822+00:00 waiter launch rc=0  Running as unit: p182-win.service; invocation ID: 02a2454d497d4d68bb71154592f6da0e
+2026-10-22T09:33:14.014732+00:00 waiter state=active log_tail='2026-10-22T09:33:09Z p182-win armed: waiting for packet182-one-card-v5-A'
+2026-10-22T09:33:14.035797+00:00 runner launch rc=0  Running as unit: lanequeue-A37.service; invocation ID: 305d9d7f1edb4843adc32e514f865619
+2026-10-22T09:33:14.040542+00:00 watching: started=[] done=[] unit=active
+2026-10-22T09:33:19.040881+00:00 EVENT {"event": "START", "lane": "A", "name": "packet182-one-card-v5-A", "utc": "2026-10-22T09:33:17.096524Z"}
+2026-10-22T09:43:14.680180+00:00 watching: started=['packet182-one-card-v5-A'] done=[] unit=active
+2026-10-22T09:46:34.877628+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "A", "name": "packet182-one-card-v5-A", "rc": 0, "utc": "2026-10-22T09:46:30.616593Z"}
+2026-10-22T09:46:34.877844+00:00 watch result: {"done": ["packet182-one-card-v5-A"], "terminal": null}
+2026-10-22T09:46:34.883277+00:00 waiting for p182-win (chain path): '2026-10-22T09:33:09Z p182-win armed: waiting for packet182-one-card-v5-A'
+2026-10-22T09:51:34.989167+00:00 waiting for p182-win (chain path): '2026-10-22T09:47:31Z p182-chain[packet182c-chain] systemd-run rc=0'
+2026-10-22T09:56:35.101824+00:00 waiting for p182-win (chain path): '2026-10-22T09:47:31Z p182-chain[packet182c-chain] systemd-run rc=0'
+2026-10-22T10:01:35.239246+00:00 waiting for p182-win (chain path): '2026-10-22T09:47:31Z p182-chain[packet182c-chain] systemd-run rc=0'
+2026-10-22T10:06:35.349808+00:00 waiting for p182-win (chain path): '2026-10-22T09:47:31Z p182-chain[packet182c-chain] systemd-run rc=0'
+2026-10-22T10:11:35.456196+00:00 waiting for p182-win (chain path): '2026-10-22T09:47:31Z p182-chain[packet182c-chain] systemd-run rc=0'
+2026-10-22T10:16:35.563250+00:00 waiting for p182-win (chain path): '2026-10-22T09:47:31Z p182-chain[packet182c-chain] systemd-run rc=0'
+2026-10-22T10:21:35.677237+00:00 waiter log tail: 2026-10-22T10:20:52Z p182-chain[packet182c-chain] packet58-onecard-182-a ended: inactive | 2026-10-22T10:21:22Z p182-chain[packet182c-chain] codex thawed | 2026-10-22T10:21:22Z p182-chain[packet182c-chain] PAUSE files restored or kept (never deleted) | 2026-10-22T10:21:22Z p182-chain[packet182c-chain] clean; chain finished; coordinator reads WS128 (submit only if exact and > the live ledger threshold) | 2026-10-22T10:21:22Z p182-win chain exited rc=1; QUIET cleared
+2026-10-22T10:21:35.690951+00:00 waiter final state: failed
+2026-10-22T10:21:35.696345+00:00 STOP-A written; waiting for the runner to exit at its boundary
+2026-10-22T10:21:40.712767+00:00 runner unit state: inactive; STOP-A removed; PAUSE-A re-armed
+2026-10-22T10:21:40.738592+00:00 restoring endpoints: /usr/bin/python3 -u /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/restore-endpoints-20261021.py 20261022-restore7
+2026-10-22T10:30:53.897821+00:00 restore rc=0
+2026-10-22T10:30:53.898104+00:00 window end

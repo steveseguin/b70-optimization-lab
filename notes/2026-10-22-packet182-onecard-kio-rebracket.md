@@ -100,3 +100,21 @@ items 2-5 are 0.05-0.3 ms each; packet170 MTP closed; fill pacing above). Once f
 what remains is the cost of the misses themselves, to be priced from routed IDs against published
 pointers (packet58ai: never infer miss counts from fills), through publication lag or capacity, not
 fill timing.
+
+## Device window result (2026-10-22 09:33–10:31 UTC; driver unit window-p182-driver, runner lanequeue-A37, waiter p182-win, chain unit packet58-onecard-182-a)
+
+Pre-flight: live `lanequeue.py plan --lane A` passed; endpoints stopped 09:32:50Z (idle since the 08:37Z
+restore6 validation; MemAvailable 120.6 GB ≥ 100.1 GB); PAUSE-A archived, PAUSE-B kept; the waiter was armed
+as its own unit before the runner and reported `armed`. No GPU fault lines during the window (count 2 → 2).
+
+| step | outcome | result |
+|---|---|---|
+| `packet182-one-card-v5-A` (09:33:17–09:46:30Z, 793 s) | DONE | one-load A/B/A/B/A 34.579 / 35.951 / 34.590 / 35.955 / 34.584 tok/s; minimum gain +3.93 %, control drift 0.018 %, every view exact; chain rule met (`chain/chain_gate.py`) |
+| waiter derive + checks (09:46–09:47Z) | passed | `stage2/packet182c-chain` + `ops/packet182c-orchestration` derived; script-argv, `--predevice-check`, `--closure-check` passed; fault review passed; codex units frozen for the chain |
+| chain `packet58-onecard-182-a` (09:47:31–10:20:52Z) | all 7 windows passed | K1a, K1b, KD, W2m, WS, WS128x (35.909 class-balanced), **WS128 35.927 tok/s class-balanced**, exact oracle, `timing_claim_eligible` true; live ledger threshold 34.573038 (packet58as) |
+| close | done | STOP-A, PAUSE-A re-armed 10:21:40Z; endpoints restored as `*-20261022-restore7`, three validations true at 10:30:53Z |
+
+Note: `p182-win.sh` exited 1 after its own "clean; chain finished" line (unit `p182-win` shows `failed`); the
+chain unit itself ended clean and the PAUSE files were restored. Check that script's final exit path before
+reusing it. Bulky `run/` trees of the chain are git-ignored; summaries, windows, queue and logs are committed.
+Submission bundle and LocalMaxxing submission: see the ledger `results/localmaxxing-submissions.md`.

@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 22, 06:35 EDT — one-card own-runtime record chain passed: WS128 35.927 tok/s class-balanced (live ledger 34.573).**
+packet182 re-bracketed the packet176 kernel I/O lever (never chained before: `ops/onecard_chain_derive.py` emitted its
+flags after the `__main__` guard, and the 10-19 cleanup deleted the chain evidence) as a one-load v5: 34.58/35.95/
+34.59/35.95/34.58, +3.93 %, drift 0.018 %, all exact. Its guarded waiter derived `packet182c-chain` and ran the
+7-window chain in the same window (09:47–10:21 UTC): all passed, WS128 exact and timing-claim eligible. Fill
+pacing/deferral (resume item b) priced at ≤ +1.4 % and closed. Endpoints were idle, stopped only after the live
+plan, and are back as `*-20261022-restore7` (validations true); PAUSE-A re-armed. Submission bundle in preparation;
+the ledger entry and `--update-record` follow the LocalMaxxing submission. Packets:
+`stage2/packet182-onecard-kio-rebracket/` (note `notes/2026-10-22-packet182-onecard-kio-rebracket.md`),
+`stage2/packet182c-chain/`, `ops/packet182c-orchestration/`.
+
 **October 22, 06:18 EDT — the cause of every bad seed-2 cut found: the model loops. ctxkeeper 1.3.0.dev3 rejects loops; campaign 54 registered and starting.**
 Scanning all 1,820 notes replies of the seven audited 2M runs: 19 replies repeat one line 67 to 438 times, all on
 seed 2, and every reply that ever hit the cap is one of them; no other reply repeats a line more than twice. One
