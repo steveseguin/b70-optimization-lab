@@ -2008,6 +2008,47 @@ runs on this host during the campaign.
 **Decision:** both seeds at or over → the cap-cut decision point is closed; next levers are the `(no change)`-per-item
 reply shape and a removal stated for a name without lines. A seed under → read the cut before anything else.
 
+## Campaign 53 ran: seed 0 423/423 again (token for token); seed 2 415/423 with 114 wrong lines from the same cut; written 2026-10-22 06:13 EDT
+
+**Seed 0 (c53, 1.3.0.dev2, K32V): 423/423, 0 wrong STATE lines in 8,745, 91 min 4 s**, audit
+[c53-seed0-audit.json](../data/2026-10-22-context-campaign53/c53-seed0-audit.json) PASS, receipts under
+[seed0](../data/2026-10-22-context-campaign53/seed0/). The run is campaign 52's seed 0 token for token: the same
+1,298 calls, the same 14,577,349 prompt and 112,632 completion tokens, and all 153 NOTES versions identical in text and extent (only timestamps differ). At temperature 0 the whole
+2M run replays exactly, which says the cut-off lever changed nothing on this seed (its one cap-cut reply held no
+complete lines, as before) and adds no evidence of its own. Predictions (423 or at least 421; at most 3 wrong lines;
+set check 1-5 asks on real omissions; cap cuts 0-3 with lines kept where any exist; no forgery adopted, every forged
+line flagged; wall within 10 % of 91 min): all met.
+
+**Seed 2 (c53, 1.3.0.dev2, K32V): 415/423, 114 wrong STATE lines in 8,562, 96 min 3 s**, 1,299 calls, 31 in-place
+re-asks, 45 bare-number asks, host memory at least 1.98 GiB. Audit
+[c53-seed2-audit.json](../data/2026-10-22-context-campaign53/c53-seed2-audit.json) (FAIL: wrong-line cap,
+per-counter cap, 15/16 audits, method target 42/47), receipts under [seed2](../data/2026-10-22-context-campaign53/seed2/).
+Registered: at most 10 wrong lines, no counter wrong over 5 versions, at least 419 — **all missed**; set check 4 asks,
+cap cuts 1 first reply + 4 retries with 5 kept-lines events, forgeries flagged, wall 96 min (within 10 % of 92) — met.
+
+**The same cut, a different path to the same loss.** Version 76 (items 613-620): the first reply ran to 297 lines, 288
+of them `(no change)` written once per item, and hit the cap; it held no saru45 line, and neither did any of the four
+retries (446, 449 cut off, 178 cut off, 13 lines). The mention check and the working check each asked once; the
+kept lines of the cut-off retries were not used because an accepted earlier reply already stood (the dev2 lever
+merges a cut-off *first* reply only), and in any case none of them held saru45. saru45 then held 145 for 120 through
+77 versions again (the same seven misses and the same failed audit as campaign 52), vonedi62 ran wrong 34 versions
+(an early `53 + 84 = 137` for 142 at version 10-12, from a cut whose retry was an 813-line cut-off reply of
+`(no change)` lines, then 340 after its removal), neneba47, sagudo54 and pefaka34 one each. Replaying the dev2
+lever extended to cut-off retries (merge over the first reply): campaign 52's cut 75 goes 6 -> 5 wrong lines, this
+run's cuts 9, 11 and 75 are unchanged; no help here.
+
+**What the cap hits are.** Over the seven audited sessions, no seed-0 run ever hit the cap with a reply that held
+lines; every cap-hit reply is a seed-2 reply of 200-840 lines, in cuts where one counter (vone42 around items
+586-620, vonedi62 around 84-100) is mentioned in nearly every item, and the count question's one-line-per-mention
+rule makes the reply list `(no change)` once per item: 97 % of the lines of campaign 52's cap-hit replies, 39 % of
+this run's. Measured per cut over five sessions, the cap-hit cuts are not larger than the others: 20-36 mentions
+of names in 7-8 items with a top name mentioned 2-9 times, against a median of 24 mentions and a top name of 5-6
+elsewhere (max 40 and 26, never a cap hit). So the cut's size is not the cause; the reply's shape is (one line per
+item per name, or a re-listing of a counter's whole history), and that is where the next lever goes: a reply that
+writes more lines than the turns have mentions is asked for a shorter one before anything else is checked, and the
+request says once that an unchanged name gets one `(no change)` line. Seed 0's exact replay shows the rest of the
+pipeline is deterministic and sound.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

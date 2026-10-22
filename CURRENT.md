@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 22, 06:13 EDT — campaign 53 done: seed 0 perfect again, token for token; seed 2 415/423, the same cut.** The cut-off
+lever (1.3.0.dev2) could not help seed 2: at the cut that broke campaign 52 the model never wrote the missing line in any
+of five attempts, each a 180-to-450-line reply padded with one "(no change)" line per item, and the retries hit the cap
+again. Across seven audited runs every cap hit is a seed-2 reply of 200-840 lines in a cut where one counter is mentioned
+in nearly every item; seed 0 has never hit the cap with a reply that held lines. Measured, those cuts are not bigger than
+others (ordinary mention counts), so the next lever is the shape of the reply, not the cut or the retry. Seed 0 reproduced campaign 52 exactly (same calls, same tokens, all 153 notes versions identical in text),
+so the keeper is deterministic at temperature 0. Cards empty. Receipts: `experiments/qwen38-27b-b70/data/2026-10-22-context-campaign53/`;
+the read: the campaign-53 section of `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`.
+
 **October 22, 04:30 EDT — packet181 session-swap v3 qualified on device: the saved-state label is now `qualified-one-card`.**
 Relink-only child of packet180 (binary `0bf0a17a…`): manifests carry `label: "qualified-one-card"`, `contract:
 "v1.2+p181"` and a `qualified_by` record (packet179 same-generation resume, packet180 append + restore-then-save;
