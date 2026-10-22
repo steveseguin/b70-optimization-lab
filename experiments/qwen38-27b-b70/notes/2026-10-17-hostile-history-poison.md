@@ -2120,6 +2120,11 @@ asks on real omissions, 1 reply that stood for want of a usable second, and the 
 (saru45 120, both removals). Two void runs of campaign 54 (disk, then host memory) have now both passed the cut
 that broke campaigns 52 and 53. Rerun as c54c at 08:52; the registration's predictions stand.
 
+**c54c (08:52) never started a server:** the launcher refuses while `server/FAULT.json` exists (the latch the
+engine reset wrote), and the runner recorded "server unit ended before ready". Latch review (09:24): the reset
+followed the guard's cgroup kill by one second, the probe passed, the kernel log stayed clean; the latch is
+archived as `server/FAULT-20261022-c54b.json` with the review inside it, and seed 2 runs again as **c54d**.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
