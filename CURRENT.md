@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 22, 11:02 EDT — campaign 54 complete: seed 2 421/423 with 4 wrong STATE lines, audit PASS, the best seed 2 on record;
+the loop-cut failure of the last three campaigns is closed.** On ctxkeeper 1.3.0.dev3 seed 2 answered 421 of 423 with four
+wrong lines in 8,932 (one counter, the removed/reopened family), all 16 audits applied and every forgery target kept; no
+loop occurred and nothing stood unchecked. Campaign 54's registration is met. Across its three runs (two void for host
+reasons) the cut that broke campaigns 52 and 53 passed every time. Next lever: a reopen stated for a counter the notes
+hold as removed. Cards empty. Audit and receipts: `experiments/qwen38-27b-b70/data/2026-10-22-context-campaign54/`.
+
 **October 22, 10:40 EDT — two-card (TP2) session checkpoints pass on device (packet184, lane B, 14:23–14:35 UTC).** On the
 bundle-8 record engine (entry-source delta only, 78 kernel objects relinked unchanged): save of both ranks' state incl. rank-0 banks
 and the MTP draft cache 128.8 MB in 1.85 s; fresh-process restore 2.32 s + first token 92 ms vs a 59.3 s cold prefix; merged output

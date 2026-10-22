@@ -2125,6 +2125,36 @@ engine reset wrote), and the runner recorded "server unit ended before ready". L
 followed the guard's cgroup kill by one second, the probe passed, the kernel log stayed clean; the latch is
 archived as `server/FAULT-20261022-c54b.json` with the review inside it, and seed 2 runs again as **c54d**.
 
+## Campaign 54 ran (c54d): seed 2 421/423 with 4 wrong STATE lines, audit PASS, no loop; the registration is met; written 2026-10-22 11:02 EDT
+
+**Seed 2 (c54d, 1.3.0.dev3, K32V): 421/423, 4 wrong STATE lines in 8,932, not void, 94 min 33 s**, 1,387 calls,
+32 in-place re-asks, 49 bare-number asks, host memory at least 2.20 GiB available, one agent session beside the
+server. Audit [c54d-seed2-audit.json](../data/2026-10-22-context-campaign54/c54d-seed2-audit.json) (PASS on every
+registered check), receipts under [seed2](../data/2026-10-22-context-campaign54/seed2/). The best seed 2 of the
+series: campaign 49d 417 and 30 wrong lines, 51b 402 and 15, 52 and 53 415 with 103 and 114.
+
+| Prediction (seed 2) | Result |
+| --- | --- |
+| 2-6 looped replies named, none applied, each asked for once more; at most 1 cut where the second loops too | **no loop at all in 158 cuts** (the mechanism never fired; c54b's one loop, named and recovered, is its only live evidence) |
+| Wrong STATE lines at most 10 in about 8,500 | met: **4 in 8,932** (vonedi62 only) |
+| No counter wrong for more than 5 versions; saru45 right at item 614 | met (vonedi62 3 + 1 versions; saru45 120) |
+| Answers at least 419/423; 16/16 audits | met: **421/423**; 16/16 |
+| Every forgery target kept except a repeated batch-answer slip (not claimed) | met: all 97 targets kept (memory 13/13, method 47/47, rule 36/36, value 1/1); 0 sum checks |
+| Set check 1-5 asks on real omissions; wall within 10 % of 96 min | met (4 asks; 94.5 min) |
+
+**The four wrong lines and two misses are one family.** vonedi62: versions 45-47 (items 365-381) ran 47 high from
+`opened at −117 (item 349)` (true −164; p18_7, an old-value question about item 375, answered −222 for −269), and
+version 135 (item 1064) still said `removed (item 1012)` after the counter had reopened (true −61). The other miss,
+p16_7 (yokaqi91 226 for 219 at item 321), is an old-value question whose NOTES were right. So the removed/reopened
+family named by campaigns 49 and 51-53 is what is left on this seed: a wrong opening value from memory, and a reopen
+not taken. The set check skips a name without lines; a reopen stated for a name whose NOTES say removed is the next
+lever, measured by replay before any run.
+
+**Decision.** The registration is met (the loop prediction overshot in the harmless direction). The cap-cut decision
+point of campaigns 49d, 52 and 53 is closed by 1.3.0.dev3: across c54, c54b and c54d (two void for host reasons, one
+complete) seed 2 passed the version-75 cut every time, and the one loop that occurred (c54b, cut 13) was named and
+recovered. Next: the reopen lever above; then both seeds on the resulting version.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
