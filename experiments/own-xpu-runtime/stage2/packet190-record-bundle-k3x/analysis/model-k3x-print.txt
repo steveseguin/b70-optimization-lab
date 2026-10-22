@@ -1,0 +1,118 @@
+record replay 62.345281905 (stored 62.345281904743764); model identity ok; chain bar 63.592 screen bar 62.657
+hit {'elapsed_ms': 13.509, 'D': 0.427, 'draft_wall': 1.5309, 'idle': 0.0569, 'Bd': 1.4831, 'body': 1.4056, 'export': 0.0579, 'B': 11.9019, 'A': 11.927, 'spec_start_offset_ms': -0.0004, 'R': 0.0, 'C': 0.0, 'Greal': 0.0384, 'ready_real': 1.5311, 'race_real': 11.9395, 'snapshot': 0.2499, 'token_prep': 0.0512, 'A_half_completion': 11.6603, 'A_prepare': 0.0511, 'A_retire': 0.0978, 'B_half_completion': 11.8562, 'B_retire': 0.0399}
+miss {'elapsed_ms': 25.5108, 'D': 0.426, 'draft_wall': 1.5319, 'idle': 0.0551, 'Bd': 1.4829, 'body': 1.4049, 'export': 0.0586, 'B': 12.0516, 'A': 11.9257, 'spec_start_offset_ms': 0.0006, 'R': 0.2895, 'C': 11.6664, 'Greal': 0.0164, 'ready_real': 13.4389, 'race_real': 12.0556, 'snapshot': 0.248, 'token_prep': 0.0526, 'A_half_completion': 11.6603, 'A_prepare': 0.0518, 'A_retire': 0.0971, 'B_half_completion': 11.9834, 'B_retire': 0.0391}
+hit_draft_minus_boundary {'mean': 0.0479, 'min': -0.1295, 'p5': 0.0263, 'p50': 0.045, 'p95': 0.0797, 'max': 0.1437, 'n': 932}
+hit_draft_binds_ready_fraction 0.9989
+hit_A_minus_B {'mean': 0.0247, 'min': -0.3256, 'p5': -0.0661, 'p50': 0.0279, 'p95': 0.119, 'max': 0.2218, 'n': 932}
+hit_A_binds_race_fraction 0.6942
+hit_slack_if_only_A_cut {'mean': 0.0376, 'min': 0.0, 'p5': 0.0, 'p50': 0.0279, 'p95': 0.119, 'max': 0.2218, 'n': 932}
+hit_slack_if_only_B_cut {'mean': 0.013, 'min': 0.0, 'p5': 0.0, 'p50': 0.0, 'p95': 0.0661, 'max': 0.3256, 'n': 932}
+hit_slack_if_only_D_cut {'mean': 0.048, 'min': 0.0, 'p5': 0.0263, 'p50': 0.045, 'p95': 0.0797, 'max': 0.1437, 'n': 932}
+hit_slack_if_only_Bd_cut {'mean': 0.0001, 'min': 0.0, 'p5': 0.0, 'p50': 0.0, 'p95': 0.0, 'max': 0.1295, 'n': 932}
+miss_serial_minus_draft {'mean': 11.9069, 'min': 11.7855, 'p5': 11.8297, 'p50': 11.9003, 'p95': 12.0463, 'max': 12.1453, 'n': 256}
+miss_B_minus_A {'mean': 0.1253, 'min': -0.2503, 'p5': -0.0254, 'p50': 0.1319, 'p95': 0.337, 'max': 0.4226, 'n': 256}
+miss_B_binds_race_fraction 0.8984
+miss_rank1_idle_ms 11.9069
+hit_rank0_busy 13.4101
+hit_rank1_busy 13.4328
+miss_rank0_busy 25.3646
+miss_rank1_busy 13.5835
+G {'hit': {'mean': 0.03835436212832395, 'min': -0.03539513363277891, 'p5': 0.005590580339121853, 'p50': 0.03750552591687395, 'p95': 0.07403943876261962, 'max': 0.14913998456931132, 'n': 932}, 'miss': {'mean': 0.016414559922850458, 'min': 0.012424192391335964, 'p5': 0.013563543325290084, 'p50': 0.014822522643953562, 'p95': 0.021431525237858295, 'max': 0.03368197940289974, 'n': 256}}
+time_share {'hits': 0.6585, 'misses': 0.3415}
+critical_path_share {'ready: D (draft)': 0.0745, 'race: A (rank 0 speculative half)': 0.42, 'G': 0.0021, 'race: B (rank 1 half)': 0.3233, 'ready: R': 0.0039, 'ready: C': 0.1562, 'ready: Bd (miss, serial)': 0.0199, 'ready: Bd (boundary)': 0.0001}
+per_layer {'rank0_half_completion_hit': 11.6603, 'rank0_A_envelope': 0.2667, 'rank1_half_completion_hit': 11.8562, 'rank1_B_envelope': 0.0457, 'rank0_ms_per_layer': 0.4858, 'boundary_body_per_gdn_layer': 0.4685, 'rank1_layers_ms': 10.4009, 'rank1_ms_per_layer': 0.4953}
+
+prices (gain vs 62.345282):
+   +0.00%  62.345  hit 13.509 miss 25.511  identity
+   +0.66%  62.758  hit 13.424 miss 25.330  per-GDN-layer kernel saving 0.005 ms on every GDN layer (A -18d, C -18d, Bd -3d, B -15d)
+   +1.32%  63.170  hit 13.341 miss 25.149  per-GDN-layer kernel saving 0.01 ms on every GDN layer (A -18d, C -18d, Bd -3d, B -15d)
+   +2.17%  63.699  hit 13.237 miss 24.918  per-GDN-layer kernel saving 0.0164 ms on every GDN layer (A -18d, C -18d, Bd -3d, B -15d)
+   +2.65%  63.997  hit 13.180 miss 24.788  per-GDN-layer kernel saving 0.02 ms on every GDN layer (A -18d, C -18d, Bd -3d, B -15d)
+   +6.68%  66.507  hit 12.722 miss 23.707  per-GDN-layer kernel saving 0.05 ms on every GDN layer (A -18d, C -18d, Bd -3d, B -15d)
+  +14.06%  71.110  hit 11.971 miss 21.907  per-GDN-layer kernel saving 0.1 ms on every GDN layer (A -18d, C -18d, Bd -3d, B -15d)
+   +0.46%  62.629  hit 13.449 miss 25.391  per-QSA-layer kernel saving 0.01 ms (A -6d, C -6d, B -6d)
+   +0.92%  62.916  hit 13.389 miss 25.271  per-QSA-layer kernel saving 0.02 ms (A -6d, C -6d, B -6d)
+   +2.32%  63.791  hit 13.209 miss 24.911  per-QSA-layer kernel saving 0.05 ms (A -6d, C -6d, B -6d)
+   +4.75%  65.306  hit 12.909 miss 24.311  per-QSA-layer kernel saving 0.1 ms (A -6d, C -6d, B -6d)
+   +1.79%  63.462  hit 13.281 miss 25.029  per-layer saving 0.01 ms on all 48 layers
+   +3.61%  64.598  hit 13.060 miss 24.548  per-layer saving 0.02 ms on all 48 layers
+   +9.32%  68.155  hit 12.422 miss 23.107  per-layer saving 0.05 ms on all 48 layers
+  +20.28%  74.988  hit 11.371 miss 20.707  per-layer saving 0.1 ms on all 48 layers
+   +0.99%  62.964  hit 13.381 miss 25.242  class cut: experts gate/up+down 5% (5.6 us/layer)
+   +2.00%  63.589  hit 13.256 miss 24.975  class cut: experts gate/up+down 10% (11.1 us/layer)
+   +3.01%  64.220  hit 13.132 miss 24.707  class cut: experts 15% (16.7 us/layer)
+   +0.33%  62.553  hit 13.466 miss 25.420  class cut: route 10% (1.9 us/layer)
+   +1.68%  63.391  hit 13.295 miss 25.059  class cut: route 50% (9.4 us/layer)
+   +0.32%  62.543  hit 13.468 miss 25.424  class cut: recurrence 10% (2.4 us/layer)
+   +0.79%  62.839  hit 13.408 miss 25.294  class cut: recurrence 25% (6.0 us/layer)
+   +1.50%  63.280  hit 13.318 miss 25.107  class cut: HC gates+norms+low 10% (8.4 us/layer)
+   +2.79%  64.083  hit 13.159 miss 24.765  class cut: dense qkv+z+attention 10% (15.5 us/layer)
+   +0.10%  62.407  hit 13.489 miss 25.511  draft -0.02 ms (D only)
+   +0.21%  62.476  hit 13.466 miss 25.511  draft -0.05 ms (D only)
+   +0.23%  62.488  hit 13.461 miss 25.511  draft -0.1 ms (D only)
+   +0.23%  62.488  hit 13.461 miss 25.511  draft -0.2 ms (D only)
+   +0.23%  62.488  hit 13.461 miss 25.511  draft -0.42 ms (D only)
+   +0.23%  62.488  hit 13.461 miss 25.511  draft -0.5 ms (D only)
+   +0.07%  62.386  hit 13.509 miss 25.461  boundary -0.05 ms (Bd only)
+   +0.13%  62.428  hit 13.509 miss 25.411  boundary -0.1 ms (Bd only)
+   +0.26%  62.510  hit 13.509 miss 25.311  boundary -0.2 ms (Bd only)
+   +0.61%  62.726  hit 13.509 miss 25.051  boundary -0.46 ms (Bd only)
+   +0.08%  62.395  hit 13.494 miss 25.509  rank-0 A -0.025 ms only
+   +0.14%  62.432  hit 13.483 miss 25.508  rank-0 A -0.05 ms only
+   +0.18%  62.460  hit 13.474 miss 25.507  rank-0 A -0.1 ms only
+   +0.20%  62.470  hit 13.471 miss 25.507  rank-0 A -0.25 ms only
+   +0.20%  62.470  hit 13.471 miss 25.507  rank-0 A -0.3 ms only
+   +0.08%  62.396  hit 13.501 miss 25.474  rank-1 B -0.05 ms only (e.g. head)
+   +0.12%  62.418  hit 13.499 miss 25.446  rank-1 B -0.1 ms only (e.g. head)
+   +0.19%  62.464  hit 13.496 miss 25.382  rank-1 B -0.38 ms only (e.g. head)
+   +0.31%  62.540  hit 13.459 miss 25.461  A and B both -0.05 ms
+   +0.38%  62.582  hit 13.459 miss 25.411  A, B and C all -0.05 ms
+   +0.59%  62.713  hit 13.416 miss 25.411  A, B, C and D all -0.05 ms
+   +0.63%  62.736  hit 13.409 miss 25.411  A and B both -0.1 ms
+   +0.76%  62.820  hit 13.409 miss 25.311  A, B and C all -0.1 ms
+   +0.99%  62.965  hit 13.361 miss 25.311  A, B, C and D all -0.1 ms
+   +1.26%  63.133  hit 13.309 miss 25.311  A and B both -0.2 ms
+   +1.53%  63.302  hit 13.309 miss 25.111  A, B and C all -0.2 ms
+   +1.77%  63.449  hit 13.261 miss 25.111  A, B, C and D all -0.2 ms
+   +0.52%  62.671  hit 13.416 miss 25.461  draft -0.05 + A -0.05 + B -0.05 (balanced trims)
+   +0.77%  62.827  hit 13.384 miss 25.399  draft -0.05 + A -0.10 + B -0.06 + C -0.05 (every host envelope item at its measured size)
+   +0.38%  62.585  hit 13.509 miss 25.221  miss: all restore R removed (upper bound)
+   +0.10%  62.405  hit 13.509 miss 25.421  miss: rank-1 warm-after-idle removed (B_miss -> B_hit, 0.150)
+   +2.00%  63.591  hit 13.509 miss 24.028  miss: boundary free on misses (impossible: Bd needs C)
+   +1.34%  63.180  hit 13.509 miss 24.511  miss: C -1.0 ms
+   +0.75%  62.814  acceptance +1 point(s)
+   +1.52%  63.290  acceptance +2 point(s)
+   +2.29%  63.773  acceptance +3 point(s)
+   +3.88%  64.762  acceptance +5 point(s)
+   +0.95%  62.938  width-2 at depth 1: second candidate row costs A +0.0 ms every interval, rescues 15/256 misses (+1.26 pts)
+   -1.95%  61.128  width-2 at depth 1: second candidate row costs A +0.5 ms every interval, rescues 15/256 misses (+1.26 pts)
+   -4.86%  59.315  width-2 at depth 1: second candidate row costs A +1.0 ms every interval, rescues 15/256 misses (+1.26 pts)
+   -9.95%  56.144  width-2 at depth 1: second candidate row costs A +1.952 ms every interval, rescues 15/256 misses (+1.26 pts)
+  -36.02%  39.889  width-2 at depth 1: second candidate row costs A +9.21 ms every interval, rescues 15/256 misses (+1.26 pts)
+
+thresholds: {
+ "chain +2%": {
+  "per_gdn_layer_ms": 0.015102305388237803,
+  "per_layer_all48_ms": 0.011155002484564518,
+  "symmetric_ABC_ms": 0.2595017922429302,
+  "symmetric_ABCD_ms": 0.22932830206475166,
+  "draft_only_ms": null,
+  "A_only_ms": null,
+  "B_only_ms": null,
+  "C_only_ms": 1.4846377856236306,
+  "acceptance_points": 2.6269379637835772
+ },
+ "screen +0.5%": {
+  "per_gdn_layer_ms": 0.0037809876569305056,
+  "per_layer_all48_ms": 0.0028099128161874023,
+  "symmetric_ABC_ms": 0.0658437386628359,
+  "symmetric_ABCD_ms": 0.041002487803257104,
+  "draft_only_ms": null,
+  "A_only_ms": null,
+  "B_only_ms": null,
+  "C_only_ms": 0.37671696677974165,
+  "acceptance_points": 0.6665381742994639
+ }
+}
+ceilings: {'draft_only': 0.229, 'A_only': 0.2, 'B_only': 0.191, 'Bd_only': 2.021, 'C_only_1ms': 1.338}
+p189 rates {'00-control': 60.615, '01-candidate': 62.242, '02-control': 60.444, '03-candidate': 62.225, '04-control': 60.498} k3x view spread max |pct| 0.113 p190 chain vs p189 best k3x view 0.166

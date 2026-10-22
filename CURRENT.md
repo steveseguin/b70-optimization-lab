@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 22, 19:35 EDT — lever synthesis 4 (after the 62.345 record): the two-card line is at a structural ceiling for single mechanisms.**
+Critical-path model on the record intervals (reproduces 62.345282 to 1e-9): hit = max(draft 1.531, boundary 1.483) + max(A 11.927, B 11.902) + 0.038 =
+13.51 ms; both ranks are 99.3 % busy per hit, so the hit cycle is half the total work; single-side ceilings are +0.2 % each. Misses are 48 serial
+layer bodies (25.51 ms). No open lever reaches +2 % (1.02 × 62.345 = 63.59) and none reaches +0.5 % alone: every kernel class is at its measured
+ledger floor, every draft item is closed (packet158 family), +1 acceptance point is worth +0.75 % with no lossless lever open, width-2 drafts lose.
+The one family that can still reach +2 % is per-layer kernel cost on both ranks (+1.32 % per 0.01 ms per GDN layer; +2 % needs 15 µs of the 469 µs
+layer). Next: packet191 (per-class site attribution on the k3x record line, lane B ≈ 14 min, measurement only) to open or close that family
+with numbers; in parallel a one-card ledger re-synthesis (35.93 tok/s record vs the owner's Strata target). Synthesis archived in packet190
+`analysis/lever-synthesis-4-20261022.md`. Cards idle; endpoints serving (restore14); PAUSE-A/B armed.
+
 **October 22, 19:00 EDT — NEW TWO-CARD RECORD: 62.345282 tok/s class-balanced (packet190 k3x chain, LocalMaxxing `cmvk51wfn001gng01fpbfy89q`, APPROVED, +2.78 % over 60.659520).**
 The record bundle (packet187's V3 line + packet189's k3x selection: GDN layer 26 on the rank-0 verified-token boundary, kernel token I/O on both ranks,
 async rank-0 prepare, handoff export on the copy engine; packet189's engine `87eec645…` bound byte for byte) ran its 11-window chain on cards 0+1

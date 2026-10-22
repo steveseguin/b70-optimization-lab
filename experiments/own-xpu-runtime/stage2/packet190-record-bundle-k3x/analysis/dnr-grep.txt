@@ -1,0 +1,284 @@
+## grep of all 261 DO-NOT-REPEAT.md (own-xpu-runtime) for the mechanisms touched by lever synthesis 4
+
+=== /BCS/
+151:  before submitting the prefix head. BCS must be a dedicated copy-only queue;
+173:  before submitting the prefix head. BCS must be a dedicated copy-only queue;
+1669:  - The slow token follows the fill-submission token. It is fill-traffic contention, not BCS queue ordering.
+1957:| 2026-10-19 | Port the one-card wait / copy-engine fixes to two cards | Nothing to port. Waits are already pure spin, there are no fills, and every copy is on the in-order CCS queue. All copy stalls are < 0.1 ms/token (+0.6% if remove
+2156:  < 0.1 ms/token (+0.6% if removed). | Two-card fills or a BCS queue are introduced." Not touched here.
+2365:    ms/token (+0.6% if removed). | Two-card fills or a BCS queue are introduced."
+3775:| packet125 miss transfer | [Actual result](../../../../notes/2026-10-18-own-runtime-packet125-micro-result.md): tile16 187.0/185.8 µs beats BCS pipeline3 192.2/194.9; no arm met 1.5×. Its README/DNR still say device pending. Real ro
+3778:| packet58ae / packet58af census preparation | [58ae note](../../../../notes/2026-10-18-own-runtime-packet58ae.md), [58af note](../../../../notes/2026-10-18-own-runtime-packet58af.md): mixed event service cannot isolate memory stalls; 
+3787:- Do not issue compute on BCS or assume a second CCS. A copy queue is not
+3820:- One candidate only: `bcs-demand-retained32x2`, full packet58ah chain-b composition plus packet58aj exact resident lookup copies.
+3852:| 2026-10-19 | Post-router demand transfer `bcs-demand-retained32x2` on the packet58aj resident record line (packet147 rank 4; census gate superseded by this direct screen, disclosed) | One-load v5 `packet58ame-demand-v5-A` (06:35–06
+4331:| Seal post-router BCS speed from perfect overlap | Missing router wait, split dispatch, sparse-miss and overlap costs | Matched one-card stage trace and unchanged output gates |
+5303:| 2026-10-18 | Create R/D overlap by moving rank0 restore to BCS | Cross-card overlap already exists: 0.569325 ms of 0.569390 ms R. Revisit transport only with isolated copy timings and an end-to-end saving, not the same overlap argume
+
+=== /copy engine/
+1928:  uploads issued right after the fill submission on the same copy engine
+2055:  uploads issued right after the fill submission on the same copy engine
+2423:| 2026-10-22 | k3 + trims on the V3 record line: GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks) + `rank0_prepare=async` (rank 0 
+2439:# Packet189 negative-result index (k3x: packet188's k3 + trims with the boundary export on the copy engine)
+2454:packet189 re-measures k3 + trims with the export on the copy engine (k3x), and reads D from the draft's observed wall time."
+2459:  `boundary_export`, `handoff_export`, "boundary export", "export path", "copy engine": no row closes a copy-engine export
+2498:| 2026-10-22 | **packet188: k3 + trims as built (the kio-export composite).** GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks, INC
+2514:  2.6 ns/byte on the copy engine. The `≤ 64 KiB` rule of `kio_sync` is the wrong bound for readbacks; the `boundary_export`
+3788:  another physical copy engine. Direct pinned-host loads remain CCS work.
+
+=== /copy-engine/
+1957:| 2026-10-19 | Port the one-card wait / copy-engine fixes to two cards | Nothing to port. Waits are already pure spin, there are no fills, and every copy is on the in-order CCS queue. All copy stalls are < 0.1 ms/token (+0.6% if remove
+2155:* **packet177 row 3:** "Port the one-card wait / copy-engine fixes to two cards | Nothing to port ... All copy stalls are
+2364:  * The row: "Port the one-card wait / copy-engine fixes to two cards | Nothing to port. ... All copy stalls are < 0.1
+2423:| 2026-10-22 | k3 + trims on the V3 record line: GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks) + `rank0_prepare=async` (rank 0 
+2453:per byte into pinned host memory, 28.9 ns/byte) instead of the copy-engine readback (2.6 ns/byte). The k=3 ruling stands;
+2459:  `boundary_export`, `handoff_export`, "boundary export", "export path", "copy engine": no row closes a copy-engine export
+2473:* **packet177 row 3.** "Port the one-card wait / copy-engine fixes to two cards | Nothing to port. ... All copy stalls are
+2478:  to the copy-engine readback the record already uses (the one large readback the ≤ 64 KiB rule let into the kernel path).
+2504:| 2026-10-22 | **k3x on the V3 record line:** packet188's k3 + trims with the boundary export back on the copy-engine readback (`boundary_export=copy`; `rank0_layers 0-26`, `boundary rank0-k3`, `kernel_io kernel`, `rank0_prepare async`
+
+=== /snapshot/
+10:| Reseal parent orchestration after this preparation | Not required or authorized here | Snapshot controls locally; keep frozen driver/seals |
+36:| Seal packet97's mutable selection or orchestration evidence as a live dependency | Its selection changed after the original A control, refusing A grid-1. Fresh seals keep only allowed parent build inputs, snapshot the build identity re
+128:| Reuse packet104's old baseline as packet97's selected composition | Refused: old baseline omitted route-fast, rec-both-plus and E1. Packet104b snapshots packet97's actual selection locally and adds down-tile16. |
+148:- Do not snapshot suffix scratch. The first census found 1,572,128 unwanted bytes;
+170:- Do not snapshot suffix scratch. The first census found 1,572,128 unwanted bytes;
+205:- Pin immutable inputs and local source snapshots, never parent orchestration
+221:- Pin immutable inputs and local source snapshots, never parent orchestration
+601:- Keep external-target snapshots for the screen sealer separate from the real
+649:| Start A[p+2] while A[p+1] is unresolved in the current controller | One pending candidate/snapshot; a second unresolved target half needs a separate state design. |
+684:- Snapshot capture on hits is not rollback. Preserve separate labels.
+695:- SnapshotFlat and multi-item SnapshotBatch are compute kernels, even though their work copies bytes.
+757:=================== experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/DO-NOT-REPEAT.md
+766:  the flat snapshot.
+809:- Keep external-target snapshots for the screen sealer separate from the real
+
+=== /capture/
+1:=================== experiments/own-xpu-runtime/stage2/packet100b-route-capture/DO-NOT-REPEAT.md
+6:| Recover packet77/86 routes from hashes | A hash is not route bytes; no reconstruction or synthetic substitute | New normal-engine capture with exact output receipts |
+7:| Promote CPU/mock route tests | Forbidden; synthetic unit fixtures only | Proposed device capture must match both oracle outputs |
+8:| Capture rejected speculation or stale final-layer state | Refused; require all 64 accepted target steps on both ranks | Complete capture metadata and shape/hash verification |
+9:| Lower the packet100 15% gate | Not allowed; reuse original analyzer unchanged | Every captured micro stratum and both order halves must qualify |
+242:- Packet100b captured target routes. Draft replay is a proxy diagnostic.
+263:| Omit audit serializer for inherited p60 object | Full-shape capture cannot hash its prepared state | Replace the hashed-filename p60 object in the CPU audit link; retain first failure log |
+333:| Crop the target or allocate another head | Full-shape gates preserve target captures and loaded arenas; resident rank1 shares its complete head. |
+334:| Reuse old draft proposals as the KD reference | Both views execute their own prefix-selected draft host path; target captures and oracle stay unchanged. |
+352:| Direct queue submission during prepared capture | Would violate the existing runtime capture protocol | Retain packet103's prepared-submit overlay across the DSO boundary |
+493:| Reverse capture descriptor table | Implemented, CPU checks in progress; device effect unknown. | The sealed smoke, then the conditional bracket. No geometry sweep. |
+504:- Do not call cyclic capture replay a natural 4K prompt or a model speed test.
+519:| Treat cyclic captured-input cache fill as a natural 4K prompt | Explicitly diagnostic; v5 supplies cold real-prompt model checks after the micro. |
+684:- Snapshot capture on hits is not rollback. Preserve separate labels.
+
+=== /retirement/
+647:| B minus A is available head wait | B includes remote suffix service and retirement. Require position-bound readiness/service/merge timestamps. |
+1106:  load-time copies use bounded 32 MiB chunks with waits and event retirement.
+2370:  * The row: "Exact input precomputation / prepared-buffer reuse / event-retirement batching ... p137 two-card projection
+2644:| Checker tested only for RAW | Independent review found event-retirement, poison-copy and lifetime holes. [33 tests](review-sanitizer.md). | Add negative tests for new access contracts; retain all unfenced readers. |
+2888:| Clear eager events before completion or erase captured owner IDs early | [Lifetime review](review-lifetime.md) | Prove idle and preserve synthetic IDs until owner retirement. |
+3167:- 2026-10-15 SPEED3: do not profile the same draft events before publication and again at drain. The engine drain is the single accounting/retirement owner. Do not admit 24/24 with rank-0 draft at 32K: it is 65,889,102 bytes below the 
+3783:| packet58ag ports | [Boundaries](../packet58ag-onecard-ports/DO-NOT-REPEAT.md): HC-wide, p109, exact half table and ordered foreground retirement already adopted. | Retain all four dimensions and separate foreground/maintenance owners
+3904:| 2026-10-19 / another accepted target-kernel port behind packet58am | No build: p60, HC-wide, wide64, adapted E1, p109 fast-route/fusion, ordered retirement and tile16 are already present. Rec-both-plus alone remains unselected, with 
+5147:| Call ordered retirement a winner from CPU checks | Not measured; coordinator runs the pinned A grid and only its exact improving B winner. |
+5363:| Count packet76's 666 us as current savings | Invalid: predates ordered retirement and contains work this candidate retains. New timer buckets and matched screens required. |
+5366:| Move profiling, result readback or retirement in this candidate | Outside this mechanism. Keep synchronization, sticky errors and profiling safety checks before reply. |
+
+=== /draft issue/
+
+=== /nonblocking/
+2498:| 2026-10-22 | **packet188: k3 + trims as built (the kio-export composite).** GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks, INC
+2517:  nonblocking host issue (0.43 ms); the draft's completion is `draft_rows.draft_wall_ms` (1.54 ms). `s189_decision` uses
+
+=== /enqueue_loop/
+2775:| pretending CPU mock time is native submission time | [Host issue benchmark](host-issue-benchmark.json) | W2 enqueue_loop_ms is the required device-window evidence. |
+2914:| Benchmark a real plan with no-op replacement kernels | Not an admitted device issue benchmark. W2 measures actual enqueue_loop_ms; W2c adds profiling family times. `WINDOW.md`. | No revisit under this packet's contract. |
+
+=== /host envelope/
+
+=== /prepare_ms/
+
+=== /token_prep/
+
+=== /width/
+388:  it measured DRAM bandwidth or infer that conversion dominates every cycle.
+426:  matched baseline and its estimated bandwidth gap is not measured traffic.
+634:  A bandwidth result is not a packet49 model-oracle pass or model speed claim.
+1013:| October 18: unchanged next-layer router on current router input or one of four raw output streams; widths 10/12/16; submit predicted misses through the single asynchronous-copy transaction into the 18 GB global LRU | Exact capture/re
+1021:  expose a partially filled slot, or double-spend bandwidth with 58v cache fills.
+1435:| Make rank 1's draft faster (packet157 device decomposition → packet159 build of the top group) | The packet158 roofline (`ROOFLINE.md`, packet122 cyclic replay, two processes) puts the draft's kernel time at ≈ 1.38 ms. Positive g
+1829:selected DOWN bytes during bandwidth-bound gate/up (1.079x, closed); packet95/100
+2735:| Infer new-kernel fixture coverage from copied snapshot tests | Closed. A separate actual-kernel gate compares all72 inherited cases plus20 odd-width cases against Core and v1. | Every new body must appear in the executed fixture path
+2975:| Omit draft functor members from argument audit | Serialize dense A pointer, merge width and small-family metadata. |
+3034:| Omit draft functor members from argument audit | Serialize dense A pointer, merge width and small-family metadata. |
+3189:| Infer bandwidth saturation or speed from CPU compilation | Device E1/E2 and both timing owners are pending | Coordinator receipts, unchanged byte gates, registered bar and matched control timings |
+3392:- Dense QKV/attention are already near their measured bandwidth limit.
+4480:| GPU/zero-copy time is zero, or can be recovered from bandwidth | Profiling is disabled; placeholders and fixture-derived estimates are not model measurements. |
+4777:  retain the separate production-width operator gates.
+
+=== /second candidate/
+
+=== /two-candidate/
+877:=================== experiments/own-xpu-runtime/stage2/packet132-two-candidate/DO-NOT-REPEAT.md
+882:| 2026-10-18 | Confidence-gated two-candidate sibling half, packet114 independent text, packet49 target and packet31 CPU draft | 120 positions; second choice rescues 13/56 misses. Primary best 0.00% (never); every active gate loses. Exp
+1260:| 2026-10-19 | Reopen packet132 (confidence-gated two-candidate sibling half) by measuring the discarded second rank-0 row (alternate token `(token+1) % vocab`; partial M=2: dense/expert batched, HC/small tuples/shared-down/non-matrix 
+
+=== /sibling/
+882:| 2026-10-18 | Confidence-gated two-candidate sibling half, packet114 independent text, packet49 target and packet31 CPU draft | 120 positions; second choice rescues 13/56 misses. Primary best 0.00% (never); every active gate loses. Exp
+1247:=================== experiments/own-xpu-runtime/stage2/packet151-sibling-cost/DO-NOT-REPEAT.md
+1250:No measured cost yet. Packet132 remains closed pending the upper-bound sibling cost measurement. Cost ≤ 1.952 ms reopens packet132 on packet114 independent text only; higher cost is inconclusive and requires full M=2. Never calibrate
+1253:  sibling operation, and never enable sibling work for prefill (`fixture=0`).
+1260:| 2026-10-19 | Reopen packet132 (confidence-gated two-candidate sibling half) by measuring the discarded second rank-0 row (alternate token `(token+1) % vocab`; partial M=2: dense/expert batched, HC/small tuples/shared-down/non-matrix 
+1534:packet68c's independent-state sibling micro do not answer this causal full-layer
+1872:  No source import from a mutable sibling. Keep source and binary restore paths.
+1999:  No source import from a mutable sibling. Keep source and binary restore paths.
+2679:| Early overwrite of a sibling input | Descriptor admission rejects it; output/input spans are checked across the bundle. | Separate stable input storage plus fresh exactness/alias gates. |
+2788:| Move sibling GEMVs before their input exists, across a data writer, or across card ownership | `main.cpp`, `review-small-gemv.md` | Exact tuple plus dependency/ownership guards; active/error metadata is not the dense input vector. |
+3153:| Packet44 four-owner gate rejected the merged p39 owner; mocked fixture gates hid it | [Sequential-owner repair](SEQUENTIAL-OWNER-CLOSEOUT.md), [complete sibling audit](SIBLING-AUDIT.md), 27 real coordinator CPU windows | Require the 
+3479:- No mutable sibling sources in the sealed closure; oracle binding is preserved.
+3737:  No source import from a mutable sibling. Keep source and binary restore paths.
+3963:- No GPU, service, settings, sudo, live queue edit or mutable sibling import in
+
+=== /depth2|depth-2|depth 2/
+1143:| 2026-10-18 | Next exact draft during C; reuse whole wrong-token layers | Available draft already overlaps C. Further draft inputs are unavailable; no token-independent corrected layer is proved. Packet121/88/79/126 remain binding. | 
+1405:| [66](../packet66-mtp-depth2-probe/DO-NOT-REPEAT.md) | No probe submission/drain inside poll_result; restore exact prior attention extent; transaction-owned scratch; M=2 operator support does not prove a batched verifier. No depth2 pr
+4938:=================== experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/DO-NOT-REPEAT.md
+5019:=================== experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/DO-NOT-REPEAT.md
+5041:=================== experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/DO-NOT-REPEAT.md
+5072:=================== experiments/own-xpu-runtime/stage2/packet71-depth2-engine/DO-NOT-REPEAT.md
+
+=== /draft on rank 0|rank0 draft|draft-rank0/
+521:| Reopen draft load8, split prefix/rank0 draft or tune prefix N from benchmark outputs | Those arms remain closed; fixed 80,128 follows packet114's non-benchmark rule. |
+1406:| [79](../packet79-draft-rank0/DO-NOT-REPEAT.md) | Rank0 draft placements lost2.3%/1.3%, reverse-hidden dependency and misses hurt. Draft stays rank1; no head duplication, rank relocation or topology workaround. |
+1451:| Rank0 draft-wait idle time can serve B-layer experts for free | During B it executes A/suffix; perfect equal-cost balancing gives only1.889% before exchange | Measured much lower peer marginal service cost under actual concurrent A |
+3158:| Early rank0 draft submission was followed by hit acceptance that drained it | [review-draft-rank0.md](review-draft-rank0.md) | Accept the pending hit before issuing the next draft |
+4759:- Do not attribute a screen difference solely to INT8: rank0 draft placement
+4909:| 2026-10-17 | Rank0 draft, thirdbank, overlap | Outside this packet. Parser permits only production/draft-HC and control/batch, draft rank1. No reopening from a default switch. |
+5177:=================== experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md
+5185:| Synchronous rank0 draft | Do not introduce it; the existing native wait callback progresses asynchronous completion. |
+5193:| 2026-10-17 | packet79 MTP draft on rank 0 (placements 0-split23, 0) | -2.3% / -1.3% on lane A, exact; misses +2.1 ms | draft depends on rank-1 final state; packet45 already measured rank-0 draft as a loss | do not repeat |
+
+=== /packed/
+20:| Packet65 occupancy, packet73 all-span, packet81 packed-input load count | Remain closed; neither p100 arm changes those mechanisms | New distinct evidence |
+51:four-stream HC geometry, all-span expert sweeps or packed activation reads.
+276:| Head is F16 and 1.27 GB | Census: Q6_K, 521,472,000 packed bytes | New authenticated checkpoint |
+279:| 119 tok/s is expanded-layout ceiling | Old 4.951 GB packed payload | Recompute byte floor for the actual candidate |
+281:| Runtime-type dequant tests cover a specialized exceptional-scale GEMV | IQ3_S CPU row 23 flips NaN sign; [repair](exactness-repair.json) | Require specialized GEMV against packed/materialized bits, then a fresh device gate |
+1192:| 2026-10-18 / correction-only moving layer boundary | Layer23 requires 1,128,881,622 bytes of weights/KV/workspace versus 786,269,478 margin. Its packed experts alone exceed margin. Moving serial layers does not remove C; earlier A al
+1621:| Expanded routed experts on two cards | Packet10 analysis says it does not fit. Packet16 keeps experts packed. | New topology/storage evidence and exact gates. |
+1850:- Copy every row of both original packed tensors at load. No selected-row copy,
+1977:- Copy every row of both original packed tensors at load. No selected-row copy,
+2101:* **packet74** packed Q6_K/Q8 dense + head: -0.8/-2.4/-2.9%, the per-weight 6-bit unpack cost
+2720:| packed metadata containing std::array pointers | Rejected: UBSan found misaligned array member calls. Use natural alignment and explicit initialized padding; Spec/Bound/ChainItem sizes are asserted. | Never pack pointer arrays to nor
+2751:| R6 SLM pair / packed pipeline | 2.34 / 2.60 ms versus 0.298 ms; 5–9× slower | New evidence, not instruction-count forecasts; neither is implemented here |
+2802:| scale or exceptional test per weight | Expanded scale-byte reconstruction repeats per weight; IQ packed scaled-NaN test repeats per weight. Dense Q6/Q8 had no IQ exception test. Hoist invariant work safely | A tile actually crosses a
+2881:| Allocate packed dense bytes for an expanded R5 dispatch | Initial `census/failure.json` in CPU evidence archive; `Fixture::setup` | Use packet29's exact row expansion and account its real bytes. |
+
+=== /Q4 draft|draft bytes|smaller prefix|80,128/
+332:| Retune N after observing any benchmark result | Preregistration `e2254071a`, selection `8d6cc3b10`; exactly 80,128 rows. The bracket accepts or rejects this N only. |
+335:| Require equal acceptance between different prefix arms | A smaller prefix can change proposals. Compare exact target tokens; require deterministic counts within each arm and report A/B counts separately. |
+405:- N=80,128 is fixed by packet114's non-benchmark preregistration. No retuning.
+462:  the exact same packet118 bundle7 selection and fixed 80,128 draft prefix.
+521:| Reopen draft load8, split prefix/rank0 draft or tune prefix N from benchmark outputs | Those arms remain closed; fixed 80,128 follows packet114's non-benchmark rule. |
+542:- BASE is exactly bundle7; one sealed composition. Never retune N=80,128.
+569:- BASE is exactly bundle7; one sealed composition. Never retune N=80,128.
+607:- BASE is exactly bundle7; one sealed composition. Never retune N=80,128.
+665:  suite tokens, acceptance or outputs. Keep draft prefix80,128 and 24/24.
+777:- BASE is exactly bundle7; one sealed composition. Never retune N=80,128.
+842:- BASE is exactly bundle7; one sealed composition. Never retune N=80,128.
+896:- The 80,128-row prefix was preregistered using non-benchmark text; never retune from timing or benchmark output.
+921:- BASE is exactly bundle7; one sealed composition. Never retune N=80,128.
+960:  the preregistered 80,128-row prefix are fixed. No suffix-interleave arm.
+
+=== /load count|load-count/
+20:| Packet65 occupancy, packet73 all-span, packet81 packed-input load count | Remain closed; neither p100 arm changes those mechanisms | New distinct evidence |
+1799:* **packet81.** Halving the static load counts was engine-neutral. This is negative
+4336:in the input snapshots. Static host expert identity tuning, MTP and load-count
+5334:  packed input load-count, or packet83 draft bytes are reopened.
+
+=== /miss-path|miss path/
+1132:=================== experiments/own-xpu-runtime/stage2/packet144-miss-path/DO-NOT-REPEAT.md
+1133:# Packet144 — miss-path decision index
+2498:| 2026-10-22 | **packet188: k3 + trims as built (the kio-export composite).** GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks, INC
+4371:  to select the miss path for each layout; never hard-code zero-copy.
+4404:  host-oracle consumer for every model window and both miss paths.
+4465:  host-oracle consumer for every model window and both miss paths.
+4858:=================== experiments/own-xpu-runtime/stage2/packet62-miss-path/DO-NOT-REPEAT.md
+5298:=================== experiments/own-xpu-runtime/stage2/packet88-miss-path/DO-NOT-REPEAT.md
+
+=== /roofline/
+284:=================== experiments/own-xpu-runtime/stage2/packet110-class-roofline/DO-NOT-REPEAT.md
+289:- No performance promotion from synthetic fixtures or the copy roofline.
+387:- The useful-byte roofline includes software sigmoid and mixing. Do not call
+681:- Never use sampled packet77 or representative-layer roofline costs as this budget.
+1435:| Make rank 1's draft faster (packet157 device decomposition → packet159 build of the top group) | The packet158 roofline (`ROOFLINE.md`, packet122 cyclic replay, two processes) puts the draft's kernel time at ≈ 1.38 ms. Positive g
+4956:=================== experiments/own-xpu-runtime/stage2/packet67-roofline/DO-NOT-REPEAT.md
+4963:| Treating mixed-stage label medians as whole-call time | Attention, route, moe and QSA attention labels have multiple kernels. [Audit](ROOFLINE.md). | Sum events per invocation before taking medians. |
+4968:| 2026-10-17 | packet67 HC four-stream geometry (hc-a/hc-f), recurrence shared-head (rec-head), combined | all slower in engine (-6% to -22%) on lane B, 13/13 exact | roofline-excess selection without in-engine bandwidth evidence; HC s
+4998:| Prefix roofline from GGUF bytes alone | Wrong read-byte basis; expanded Q6_K reads 3,200 code/scale bytes per row, with a 3,380-byte storage stride. |
+5089:| Packet67 HC/recurrence geometry | Prior laneB losses retained; not reopened | New mechanism and evidence beyond useful-byte roofline |
+5333:- No packet67 four-stream/roofline geometry, packet74 packed dense, packet81
+
+=== /dense_scales|S1 |S2 /
+2090:# Packet183 negative-result index (S1 dense-scales, two-card one-load bracket)
+2097:* **No row closes S1.** Packet177 (2026-10-19) left S1 open as its recommended build.
+2102:  more than the bytes. S1 keeps the int8 codes; no unpack.
+2111:| 2026-10-22 | S1 metadata scales, two-card one-load bracket (expanded/metadata x5, lane B, unit lanequeue-B32, 12:03-12:11 UTC) | **Closed: loss -6.2%.** Controls 58.617/58.587/58.630, S1 54.987/54.985 tok/s; every view 13/13 exact, i
+2170:* **packet183 (2026-10-22):** "S1 metadata scales ... Closed: loss -6.2%". Packet185 reuses packet183's engine with
+2171:  `dense_scales: expanded` only (its controls 58.617/58.587/58.630 = bundle 8); no S1 view.
+2211:    `dense_scales: metadata` switches (`full-shape.json`, 19 refusals per dual run).
+2214:  * The pricing keeps s1 and c0 as stated inputs with the coordinator's corners. c0 is anchored on the measured
+2216:  * The bracket measures s1 directly: `measured.s1_rank1_saving_per_moved_layer_ms`.
+2234:* **packet183:** "S1 ... Closed: loss -6.2%." `dense_scales` is fixed to `expanded`, and the bracket domain refuses
+2411:* **packet183.** "S1 ... Closed: loss -6.2%." `dense_scales` stays `expanded`, and the domain refuses `metadata`.
+2489:  head un-split); the placement change is explicit; the draft stays on rank 1; `dense_scales` stays `expanded`; the device
+5197:- Packed dense and experts2 variants are not registered: the brief fixes dense
+
+=== /class layout|order600|kernel order/
+1099:- Packet104/104b gate/up tile16 lost. Do not rerun that arm. `expert-gate-up-order600`
+1114:  experiments. A null result cannot close whole-class layout work.
+1162:- Packet142 attention-order600 mixes gdn.z with other projections under one
+1831:order600 layout null; packet141 cold/warm ratios are streaming cost. D2 differs:
+
+=== /kio_read_many|KioCopy|boundary_export/
+2378:  * `p188::KioCopy` is a compute kernel through pinned host staging (one work-item per byte), not a queue memcpy.
+2423:| 2026-10-22 | k3 + trims on the V3 record line: GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks) + `rank0_prepare=async` (rank 0 
+2452:0.540 ms for the same 20,480 bytes because v3_boundary.hpp routed the export through kio_read_many (KioCopy, one work-item
+2459:  `boundary_export`, `handoff_export`, "boundary export", "export path", "copy engine": no row closes a copy-engine export
+2483:  `rank0_prepare` and `boundary_export` to the projection. "Keep the bracket evidence map in the gate receipt. READY
+2486:  `boundary`, `kernel_io`, `rank0_prepare` and `boundary_export` (execution keys); `rank0_layers`/`head` refuse in-load.
+2498:| 2026-10-22 | **packet188: k3 + trims as built (the kio-export composite).** GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks, INC
+2504:| 2026-10-22 | **k3x on the V3 record line:** packet188's k3 + trims with the boundary export back on the copy-engine readback (`boundary_export=copy`; `rank0_layers 0-26`, `boundary rank0-k3`, `kernel_io kernel`, `rank0_prepare async`
+2512:* **Do not route a device→host readback of more than a few hundred bytes through the KioCopy kernel.** It is one
+2514:  2.6 ns/byte on the copy engine. The `≤ 64 KiB` rule of `kio_sync` is the wrong bound for readbacks; the `boundary_export`
+2551:  `kernel_io`/`rank0_prepare`/`boundary_export` outside `rank0_layers=0-26` ("packet188 trims require the k3
+
+=== /QSA layer 23|QSA layer 27|QSA/position/
+2354:* **Layer 26 is GDN, as 24-25 are.** QSA layers are 23 and 27. So the island rule ("no QSA/position/lookup operator") holds.
+2429:* **Do not add QSA layer 23 or 27 to the boundary.** The island holds no QSA, KV, position or lookup operator, and both
+2464:  * "Do not add QSA layer 23 or 27 to the boundary." Not added (synthesis 3: 23-25 −0.66%, 24-27 illegal).
+2510:* **Do not add QSA layer 23 or 27 to the boundary.** The island holds no QSA, KV, position or lookup operator, and both
+
+=== /replay|graph/
+99:| Call target-route replay a native draft-route measurement | Incorrect. The supplied packet100b target IDs are replayed through draft, as an operator diagnostic. Actual model screens decide transfer. |
+124:| draft-gate-tile16 | 1.261494 | Closed: slower target-route replay diagnostic. |
+125:| draft-down-tile16 | 1.346788 | Closed: slower target-route replay diagnostic. |
+242:- Packet100b captured target routes. Draft replay is a proxy diagnostic.
+488:| Move draft to rank0 | Closed by packet79; misses gained work and overall speed lost. | A different dependency graph with matched evidence, not this table patch. |
+504:- Do not call cyclic capture replay a natural 4K prompt or a model speed test.
+563:  control, the strict three-key tests and the full retained K2 timing replay.
+590:  control, the strict three-key tests and the full retained K2 timing replay.
+727:| One end-of-layer 10 KiB exchange supplies both attention and MoE dependencies | Packet3's HC/attention/router dependency chain | A proven equivalent graph, including all casts |
+798:  control, the strict three-key tests and the full retained K2 timing replay.
+863:  control, the strict three-key tests and the full retained K2 timing replay.
+893:- All eleven actual Python window paths and the actual queue loop are required, including six oracle subprocesses, twelve preflights, negative receipts and retained K2 replay.
+942:  control, the strict three-key tests and the full retained K2 timing replay.
+994:  control, the strict three-key tests and the full retained K2 timing replay.
+
+=== /merged|merge2|merged2/
+2806:=================== experiments/own-xpu-runtime/stage2/packet29-merged/DO-NOT-REPEAT.md
+2937:=================== experiments/own-xpu-runtime/stage2/packet37-merged2/DO-NOT-REPEAT.md
+3139:=================== experiments/own-xpu-runtime/stage2/packet45-merged3/DO-NOT-REPEAT.md
+3152:| Packet38 3 GB aggregate cap rejected merged retention; 64 MB rehearsal substitution hid the failure; model-window state reservation omitted context growth | [Storage closeout](STORAGE-ADMISSION-CLOSEOUT.md), [admission audit](ADMISSI
+3153:| Packet44 four-owner gate rejected the merged p39 owner; mocked fixture gates hid it | [Sequential-owner repair](SEQUENTIAL-OWNER-CLOSEOUT.md), [complete sibling audit](SIBLING-AUDIT.md), 27 real coordinator CPU windows | Require the 
+3159:| Snapshot after context admission left terminal rollback launch metadata changed | [ROLLBACK.md](ROLLBACK.md), boundary cases in cpu-merged-gates.json | Snapshot first; restore both banks and QSA prepared commands |
+3160:| Counting all passing rows made an interrupted partial campaign look complete | merged-campaign-completion-gates.json | Explicit completed flag plus required final case matrix |
+3161:| Changing fixture source during pipeline qualification invalidates whole-closure provenance | cpu-merged-interrupted-source-change.json | Freeze the compiled closure, then rerun final gates |
