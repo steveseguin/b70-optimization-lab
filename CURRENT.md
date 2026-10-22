@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 22, 08:52 EDT — campaign 54b void (host memory guard when a second agent started beside the server; the kill logged an
+engine reset; health probe passed), seed 2 running again as c54c.** The partial run again handled its one loop and got the
+critical cut right. Two reminders for anyone on this host: a research run leaves about 2 GiB of host memory free, so
+starting Codex or another Claude session beside it trips the guard, and the guard's kill now costs an engine reset as
+well. Cards were probed and are in use by c54c.
+
 **October 22, 08:25 EDT — packet183 two-card S1 dense-scales bracket: loss, -6.2 %; S1 and S2 closed.** The S1 lever (dense
 Q6_K kernels read the 18 retained scale bytes per 256 weights instead of the 64-byte FP32 words, -14.4 % dense bytes, exact by
 construction, priced +4.4 % floor) ran as a one-load v5 bracket on lane B (11:56-12:21 UTC, `lanequeue-B32`): controls

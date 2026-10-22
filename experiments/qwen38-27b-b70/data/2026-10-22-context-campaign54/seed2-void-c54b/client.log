@@ -1,0 +1,30 @@
+Retry 1/5 after BadGatewayError: litellm.BadGatewayError: OpenAIException - {"error": {"message": "ctxkeeper: ConnectionResetError: [Errno 104] Connection reset by peer"}} (waiting 2s)
+Retry 2/5 after BadGatewayError: litellm.BadGatewayError: OpenAIException - {"error": {"message": "ctxkeeper: URLError: <urlopen error [Errno 111] Connection refused>"}} (waiting 0s)
+Retry 3/5 after BadGatewayError: litellm.BadGatewayError: OpenAIException - {"error": {"message": "ctxkeeper: URLError: <urlopen error [Errno 111] Connection refused>"}} (waiting 1s)
+Retry 4/5 after BadGatewayError: litellm.BadGatewayError: OpenAIException - {"error": {"message": "ctxkeeper: URLError: <urlopen error [Errno 111] Connection refused>"}} (waiting 10s)
+Max retries reached: BadGatewayError: litellm.BadGatewayError: OpenAIException - {"error": {"message": "ctxkeeper: URLError: <urlopen error [Errno 111] Connection refused>"}}
+  1/1 Mean: 0.000 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1:06:15 0:00:00
+adhoc • plain-baseline • qwen38-27b-fp8
+┏━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━┓
+┃ Trials ┃ Exceptions ┃  Mean ┃
+┡━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━┩
+│      0 │          1 │ 0.000 │
+└────────┴────────────┴───────┘
+
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Exception       ┃ Count ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ BadGatewayError │     1 │
+└─────────────────┴───────┘
+
+Job Info
+Total runtime: 1h 6m 15s
+Results written to 
+/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c54b/hostile2mk/jobs/K3
+2V__sparse-memory-t2000k-poison-retro-s2/result.json
+Inspect results by running `harbor view 
+/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c54b/hostile2mk/jobs`
+Share results by running `harbor upload 
+/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c54b/hostile2mk/jobs/K3
+2V__sparse-memory-t2000k-poison-retro-s2`
+

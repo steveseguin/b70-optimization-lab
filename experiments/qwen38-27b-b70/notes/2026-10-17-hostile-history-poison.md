@@ -2102,6 +2102,24 @@ Disk: the snapshot folders of the completed campaigns (c3x-c53, about 100 GB) mo
 verify, then remove, as on 2026-09-19); they are no input to any audit (the audits read the proxy state and the
 verifier's details). Campaign 54's own snapshots stay for now.
 
+## Campaign 54b void: the host memory guard fired at call 1,013 when a second agent started beside the server; the guard's kill logged an engine reset; health probe passed; rerun as c54c; written 2026-10-22 08:52 EDT
+
+Seed 2 on 1.3.0.dev3 ran 66 min to call 1,013 (item 946) and the server's guard stopped it at 1.57 GiB available:
+the server's host memory had drifted to about 1.65 GiB over the run (median 2.35, the container's unaccounted
+growth about 1.0 GiB), and a Codex process of about 500 MB with its helper started in the owner's login session
+minutes before (the guard's snapshot lists them; both were gone by 08:55). One second after the cgroup kill the
+kernel logged `Engine reset: engine_class=ccs` on 0000:03:00.0, the fault that hard-killing a busy GPU process
+produces on this driver (AGENTS.md rule 3); the runner latched. The bounded health probe
+(`scripts/check-qwen36-xpu-xccl-health.sh`) passed on both ranks and the kernel log stayed clean afterwards, so the
+work continues without a reboot. Evidence: [seed2-void-c54b](../data/2026-10-22-context-campaign54/seed2-void-c54b/)
+(guard record, last 120 memory samples, kernel lines, summary). The trial does not count.
+
+Before the stop: **1 loop in 115 cuts, named and recovered** (cut 13: the count retry looped `vone42: (no change)`
+807 times; the keeper asked once more without thinking and the third reply, 26 lines, was taken), 2 set-check
+asks on real omissions, 1 reply that stood for want of a usable second, and the version-75 cut right again
+(saru45 120, both removals). Two void runs of campaign 54 (disk, then host memory) have now both passed the cut
+that broke campaigns 52 and 53. Rerun as c54c at 08:52; the registration's predictions stand.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
