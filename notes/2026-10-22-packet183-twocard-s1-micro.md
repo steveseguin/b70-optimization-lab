@@ -62,3 +62,30 @@ The drain-fix scan reports two unfixed copies; both are vendored history that no
 Owner window: stop the three endpoints, keep PAUSE-A, run the two rows on lane B (or lane A),
 arm the waiter as written. On a win, build the bundle-8 + S1 record bundle; on a loss, close
 S1 with a DO-NOT-REPEAT row from the summary.
+
+## Device result (2026-10-22, lane B window 11:56-12:21 UTC, unit lanequeue-B32)
+
+**S1 is a loss: -6.2%.** One load, five views, every view 13/13 exact with identical draft
+proposals, control drift 0.072%:
+
+| View | Selection | tok/s |
+| --- | --- | --- |
+| 0 | expanded (control) | 58.617 |
+| 1 | metadata (S1) | 54.987 |
+| 2 | expanded | 58.587 |
+| 3 | metadata (S1) | 54.985 |
+| 4 | expanded | 58.630 |
+
+Decision (`v5/evidence/device-metadata-v5-B-p183/bracket-summary.json`, `s1_decision`): min gain
+-6.216%, screen_winner false, chain rule not met; the waiter logged the decision and exited 0
+without a confirmation (`v5/evidence/waiter-decision.json`). The smoke row passed first (12 x 64
+exact, one load). No kernel faults in the window; endpoints were stopped only after the live plan
+passed and are back as `*-20261022-restore8` (validations true); PAUSE-B re-armed, PAUSE-A untouched
+throughout. Window receipts: `lineage/window-20261022/`.
+
+**Reading.** The byte saving did not buy anything: reading 46 fewer bytes per 256 weights and
+recomputing `half(d) * sc` per group cost 6.2%, the same size as packet175b D1's 6.7% loss for a
+different scale-path change in the same kernels. Two independent scale-path changes with opposite
+byte deltas losing the same amount says these dense GEMV lanes are not paying for the scale
+bytes; they pay for per-group work in the inner loop. S1 is closed with a DO-NOT-REPEAT row, and
+per packet177's rule S2 (B/A would have to be <= 0.90; it is 0.938) is closed with it.

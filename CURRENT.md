@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 22, 08:25 EDT — packet183 two-card S1 dense-scales bracket: loss, -6.2 %; S1 and S2 closed.** The S1 lever (dense
+Q6_K kernels read the 18 retained scale bytes per 256 weights instead of the 64-byte FP32 words, -14.4 % dense bytes, exact by
+construction, priced +4.4 % floor) ran as a one-load v5 bracket on lane B (11:56-12:21 UTC, `lanequeue-B32`): controls
+58.617/58.587/58.630, S1 54.987/54.985 tok/s, all 13/13 exact, drift 0.072 %. Same-size loss as packet175b D1 (6.7 %) for the
+opposite byte change: these GEMV lanes pay for per-group inner-loop work, not scale bytes. The guarded waiter logged the decision
+and ran no confirmation. Endpoints idle (last requests 10:30 UTC), stopped after the live plan, back as `*-20261022-restore8`
+(validations true); PAUSE-A untouched, PAUSE-B re-armed. Packet `stage2/packet183-twocard-s1-micro/` (note
+`notes/2026-10-22-packet183-twocard-s1-micro.md`, DO-NOT-REPEAT row added). Two-card record stays 58.798109 (packet136).
+Next on two cards: the TP2 checkpoint packet (session-swap contract §10 item 1) is being prepared CPU-only; the next speed lever
+comes from a ledger re-synthesis (S1/S2 closed, fill pacing closed).
+
 **October 22, 07:33 EDT — campaign 54 void: the campaign disk filled.** Seed 2 on the loop-rejecting keeper ran 69 minutes
 with no loop at all and got the cut that broke the last two runs right, then the 916 GB campaign disk hit 100 % and the
 run died at call 1,155. Each 2M run writes 6.4 GB of per-turn snapshots; the completed runs' snapshots (about 100 GB,

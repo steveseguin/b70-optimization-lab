@@ -1,0 +1,25 @@
+2026-10-22T11:55:57.921447+00:00 window start
+2026-10-22T11:55:57.921912+00:00 queue-B.txt rewritten with 2 rows from proposed-p183-two-card-B.txt
+2026-10-22T11:56:02.620708+00:00 live plan passed for all 2 rows
+2026-10-22T11:56:02.636244+00:00 stopping endpoints: ['qwen38-27b-vision', 'qwen38-27b-fp8-tp1-test', 'qwen38-27b-fp8']
+2026-10-22T11:56:10.956389+00:00 stop rc=0 
+2026-10-22T11:56:20.972113+00:00 endpoints stopped; MemAvailable=120692027392 required=106484989952
+2026-10-22T11:56:21.872027+00:00 PAUSE-B archived and removed for the approved window (PAUSE-A untouched)
+2026-10-22T11:56:21.905752+00:00 waiter launch rc=0  Running as unit: p183-win.service; invocation ID: a5565885347f41eaabc16e6108264626
+2026-10-22T11:56:26.911757+00:00 waiter state=active log_tail='2026-10-22T11:56:21Z p183-win armed: waiting for packet183-s1-bracket-B'
+2026-10-22T11:56:26.932005+00:00 runner launch rc=0  Running as unit: lanequeue-B32.service; invocation ID: 7b82dbf80b494dadb807bcd315d959f3
+2026-10-22T11:56:26.937251+00:00 watching: started=[] done=[] unit=active
+2026-10-22T11:56:31.937637+00:00 EVENT {"event": "START", "lane": "B", "name": "packet183-s1-smoke-B", "utc": "2026-10-22T11:56:31.539880Z"}
+2026-10-22T12:01:37.251508+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet183-s1-smoke-B", "rc": 0, "utc": "2026-10-22T12:01:34.244299Z"}
+2026-10-22T12:03:12.356678+00:00 EVENT {"event": "START", "lane": "B", "name": "packet183-s1-bracket-B", "utc": "2026-10-22T12:03:08.966181Z"}
+2026-10-22T12:06:27.558221+00:00 watching: started=['packet183-s1-bracket-B', 'packet183-s1-smoke-B'] done=['packet183-s1-smoke-B'] unit=active
+2026-10-22T12:11:17.843629+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet183-s1-bracket-B", "rc": 0, "utc": "2026-10-22T12:11:14.011423Z"}
+2026-10-22T12:11:17.843840+00:00 watch result: {"done": ["packet183-s1-bracket-B", "packet183-s1-smoke-B"], "terminal": null}
+2026-10-22T12:11:17.849064+00:00 waiting for p183-win (confirmation path): '2026-10-22T11:56:21Z p183-win armed: waiting for packet183-s1-bracket-B'
+2026-10-22T12:12:02.865112+00:00 waiter log tail: 2026-10-22T11:56:21Z p183-win armed: waiting for packet183-s1-bracket-B | 2026-10-22T12:11:52Z p183-win lane-B decision: min gain -6.216% slower metadata 54.985 best control 58.630 drift 0.072% screen_winner=False chain_rule_met=False | 2026-10-22T12:11:52Z p183-win no confirmation (chain rule not met); the bracket summary is the readout
+2026-10-22T12:12:02.870902+00:00 waiter final state: inactive
+2026-10-22T12:12:02.875884+00:00 STOP-B written; waiting for the runner to exit at its boundary
+2026-10-22T12:12:07.891398+00:00 runner unit state: inactive; STOP-B removed; PAUSE-B re-armed
+2026-10-22T12:12:07.924305+00:00 restoring endpoints: /usr/bin/python3 -u /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/restore-endpoints-20261021.py 20261022-restore8
+2026-10-22T12:21:41.941571+00:00 restore rc=0
+2026-10-22T12:21:41.941886+00:00 window end
