@@ -78,3 +78,24 @@ The windows take 1,872 s, plus 10 × 90 s of gaps, for about **46-47 min**.
    3. `--server-dry-run`;
    4. the real submit;
    5. `--update-record`.
+
+## Device result and submission (2026-10-22)
+
+Chain `device-cards01-p187-a` on cards 0+1 (unit `packet187-chain-a`, launched 17:32:03 UTC by
+`launch_chain.sh` after its dry run; the window driver stopped the idle endpoints first and archived PAUSE-A,
+PAUSE-B untouched): K0 17:33, K1a 17:36, K1b 17:39, K2 17:47, W0p 17:48, KD 17:53, W2m 17:58, WS 18:04,
+WSs 18:09, WS128x 18:14, WS128 18:19 UTC; `queue-all-complete.json` passed; no kernel faults.
+
+**WS128: 60.659520 tok/s class-balanced** (median of prompt-class medians; all-prompt median 60.660, mean
+60.41, p10 58.52), 12/12 exact against `iq3-p49-split32-v1`, `timing_claim_eligible` true, `qualifying` true;
+hit cycle 14.07 ms, miss 25.78 ms, acceptance 0.783; WS128x 14.27 / 26.00 ms. +3.17 % over the packet136
+record (58.798109).
+
+Submission: `prepare_submission.py --chain` (prepared-a), `submission.py --dry-run` (rc 0),
+`--server-dry-run` HTTP 200 `{"valid": true}`, real submit **HTTP 201, run `cmvjvabyv040jrf01dricuz8s`,
+status APPROVED**; `--update-record` appended the threshold row (60.65951991975228). Receipt (no key):
+`data/localmaxxing-responses/2026-10-22-packet187-record-bundle-v3-ws128.txt`. Chain receipts (window.json,
+summaries, kernel logs, lane admissions) are tracked under `evidence/device-cards01-p187-a/`; the full
+`build/device-cards01-p187-a` tree stays out of Git. The prepared bundle's `ledger-entry.md` and
+`result-packet.md` were written before the submission and still say "pending"; the submission ID lives
+here, in `results/localmaxxing-submissions.md`, CURRENT.md and the threshold file.

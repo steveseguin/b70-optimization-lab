@@ -9,6 +9,17 @@ arithmetic lever has no evidence left (every method target kept in four campaign
 through the registered release gate (upload is the owner's), and the unanswered old-value questions. Cards empty.
 Audits and receipts: `experiments/qwen38-27b-b70/data/2026-10-22-context-campaign55/`.
 
+**October 22, 14:30 EDT — NEW TWO-CARD RECORD: 60.659520 tok/s class-balanced (packet187 V3 chain, LocalMaxxing `cmvjvabyv040jrf01dricuz8s`, APPROVED).**
+The record bundle (bundle 8 + V3 + packet153 static snapshot; packet186's binary `693cc194…` reused byte for byte) ran its 11-window chain on
+cards 0+1 (unit `packet187-chain-a`, 17:32–18:19 UTC): K0, K1a, K1b, K2, W0p, KD, W2m, WS, WSs, WS128x, WS128 all passed, no faults. WS128:
+60.659520 tok/s class-balanced (all-prompt median the same, p10 58.52), 12/12 exact, timing-claim eligible, hit/miss cycle 14.07/25.78 ms,
+acceptance 0.783; +3.17 % over 58.798109 (packet136). Submitted 18:2x UTC after a local dry run and a server dry run (HTTP 200 valid):
+HTTP 201, APPROVED; `scripts/packet49_record_threshold.json` updated; receipt `data/localmaxxing-responses/2026-10-22-packet187-record-bundle-v3-ws128.txt`.
+Endpoints were idle (last requests 16:44 UTC), stopped after the launcher's dry run, and are back as `*-20261022-restore11`; PAUSE-A re-armed,
+PAUSE-B untouched. Packet `stage2/packet187-record-bundle-v3/` (chain receipts under `evidence/device-cards01-p187-a/`, bundle under
+`submission/prepared-a/`), `ops/packet187-orchestration/`, note `notes/2026-10-22-packet187-record-bundle-v3.md`. Both records are now from
+today: one card 35.926720 (packet182c), two cards 60.659520 (packet187). Next two-card lever: rank 1 now binds every hit (A 12.09 < B 12.43 ms).
+
 **October 22, 12:40 EDT — V3 wins on two cards: +3.3 % over the record line, chain rule met (packet186, lane B, 16:09–16:34 UTC).**
 V3 = full target head back on rank 1 plus layers 24–25 run on rank 0 for the verified token (boundary command, never banked, never
 in the speculative image) plus packet153's static snapshot. One-load bracket U/V3/U/V3/U = 57.83/60.57/57.80/60.53/57.84, fresh
