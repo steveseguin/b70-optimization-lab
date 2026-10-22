@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 22, 15:34 EDT — public results page updated for the 1.3.0 release candidate.** skindeep.ai/ctxkeeper-results.html
+now shows campaign 55's two-seed result (423/423 and 420/423) with the 1.2.0 figure and the prerelease caveat under the
+table, and links the campaign-55 audits and the release-gate receipts; the download stays 1.2.0 until the owner promotes
+1.3.0. Site link checker passed; desktop and phone renders inspected. The SEO checker's assertion on ctxkeeper.html's
+share-card image is pre-existing and unchanged.
+
 **October 22, 15:31 EDT — session-swap integration, step 1: a checkpoint's exact token prefix reproduced on this host from text.**
 The pinned oracle tokenizer, fed with this host's Qwen3.8 tokenizer file, encodes all 12 sealed suite prompts to exactly
 the recorded token ids (receipt under `experiments/own-xpu-runtime/integration/receipts/`). Step 2 (messages to that text)
