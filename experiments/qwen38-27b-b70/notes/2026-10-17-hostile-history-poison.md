@@ -2049,6 +2049,37 @@ writes more lines than the turns have mentions is asked for a shorter one before
 request says once that an unchanged name gets one `(no change)` line. Seed 0's exact replay shows the rest of the
 pipeline is deterministic and sound.
 
+## Lever from campaign 53's read: a repetition loop is never applied and is asked for once more (1.3.0.dev3); written 2026-10-22 06:18 EDT
+
+The reply shape behind every cap hit is a loop, not padding: of the 1,820 in-place replies of the seven audited
+sessions (campaigns 49b, 49d, 51, 51b, 52, 53 and the void runs), 19 repeat one line 67-438 times and every one
+of them is a seed-2 reply (`vone42: (no change)`, `vonedi62: (no change)`, `vone42: -137`, a stray `</parameter>`);
+16 were cut off by the cap, 3 stopped inside it, and one of those was applied (campaign 53, version 76:
+434 lines of `vone42: -137`). No reply that is not a loop repeats a line more than twice. `looped` (6 repeats or
+more) rejects such a reply before anything is kept or applied and asks once more without thinking (`LOOP_RETRY`
+names the line and the count); a second loop counts as an empty reply. The cut-off lever of dev2 stays for a
+reply that is cut off without looping (none seen yet). Gate: the 19 loops and nothing else; scripted test added;
+146 tests pass.
+
+## Campaign 54: seed 2 on ctxkeeper 1.3.0.dev3, arm K32V, registered 2026-10-22 06:18 EDT (before any run)
+
+Seed 2 only: campaign 53 showed seed 0 replays campaign 52 token for token at temperature 0, and the loop lever
+never fires on seed 0 (no loop in any seed-0 reply), so a seed-0 run would be a third byte-identical copy;
+campaign 53's seed-0 receipts stand for dev3. Queue `QUEUE54.txt` (`K32V hostile2mk 2 14400`), unit
+`ctx-campaign54`, `KEEPER_VERSION=1.3.0.dev3`, the other flags as campaign 52. Nothing else runs on this host.
+
+**Predictions (seed 2):**
+- **Loops:** 2-6 looped replies, each named (event "in-place notes reply looped"), none applied, each asked for
+  once more; at most 1 cut where the second reply loops too.
+- **Wrong STATE lines at most 10 in about 8,500** (campaigns 52 and 53: 103 and 114; without the loop cuts, 2 and
+  under 10); no counter wrong for more than 5 versions; saru45 right at item 614 (`145 − 25 = 120`).
+- **Answers at least 419/423** (52 and 53: 415; 49d: 417); 16/16 audits; every forgery target kept except where a
+  batch-answer slip repeats (not claimed).
+- **Set check** 1-5 asks on real omissions; wall within 10 % of 96 min.
+
+**Decision:** at or over → the loop decision point is closed and the removed/reopened family (vonedi62 340 after a
+removal, three runs in a row: the set check skips a name without lines) is next; under → read the cut first.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

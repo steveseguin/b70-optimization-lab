@@ -1,5 +1,24 @@
 # ctxkeeper: how it got here
 
+## 2026-10-22 — development 1.3.0.dev3: a repetition loop is never applied and is asked for once more
+
+Campaign 53 (1.3.0.dev2) replayed campaign 52's seed 0 token for token (423/423,
+0 wrong lines, all 153 NOTES versions identical in text) and lost seed 2 at the
+same cut as before (415/423, 114 wrong lines), where no reply of five held the
+missing line. Measured per cut, those cuts are not larger than others (20-36
+mentions against a median of 24). What they are is loops: every one of the 19
+replies the cap cut off across seven 2M sessions, and three replies the cap did
+not reach, repeat one line 67 to 438 times (`vone42: (no change)` 295 times,
+`vone42: -137` 434 times, a stray `</parameter>` 415 times), while no other
+reply repeats a line more than twice. One of the accepted loops was applied
+(434 lines of `vone42: -137`). `looped` names a reply whose most repeated line
+appears 6 times or more; such a reply is never applied and never kept
+(`complete_lines` is not consulted), and is asked for once more without thinking
+(`LOOP_RETRY`); a second loop counts as an empty reply, so the earlier reply
+stands as before. Gate: 1,820 replies of the seven sessions scanned, 19 loops
+found, none in any seed-0 run, no reply that was not a loop flagged. Scripted
+test `test_a_looping_reply_is_asked_for_once_more_and_never_applied`.
+
 ## 2026-10-22 — development 1.3.0.dev2: a reply cut off by the cap keeps its complete lines
 
 Campaign 52 (1.3.0.dev1, arm K32V) seed 0 answered 423/423 with no wrong STATE

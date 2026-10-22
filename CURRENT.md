@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 22, 06:18 EDT — the cause of every bad seed-2 cut found: the model loops. ctxkeeper 1.3.0.dev3 rejects loops; campaign 54 registered and starting.**
+Scanning all 1,820 notes replies of the seven audited 2M runs: 19 replies repeat one line 67 to 438 times, all on
+seed 2, and every reply that ever hit the cap is one of them; no other reply repeats a line more than twice. One
+such loop was applied last night. The keeper now names a loop (a line six times or more), never applies or keeps it,
+and asks once more without thinking. Campaign 54 runs seed 2 alone on this version (seed 0 is a byte-identical replay
+at temperature 0 and never loops), registered with predictions in the hostile note. Cards empty between runs.
+
 **October 22, 06:13 EDT — campaign 53 done: seed 0 perfect again, token for token; seed 2 415/423, the same cut.** The cut-off
 lever (1.3.0.dev2) could not help seed 2: at the cut that broke campaign 52 the model never wrote the missing line in any
 of five attempts, each a 180-to-450-line reply padded with one "(no change)" line per item, and the retries hit the cap

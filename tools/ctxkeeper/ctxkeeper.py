@@ -55,7 +55,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.3.0.dev2"
+__version__ = "1.3.0.dev3"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -1443,6 +1443,7 @@ class Keeper:
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
         bare_again = False                           # an empty asked-for reply asked once more without thinking
         cut_off: dict | None = None                  # the complete lines of a reply the token cap cut off (see below)
+        asked_loop = False                           # a reply that repeats one line is asked for once more
         spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info, near = "no reply", "", {}, None
         delta: dict | None = None
@@ -1488,6 +1489,21 @@ class Keeper:
             counts["notes_cached_tokens"] += cached_of(resp)
             counts["notes_written_tokens"] += usage.get("completion_tokens") or 0
             delta = nd.parse_delta(text) if finish != "length" else None
+            loop = nd.looped(text)
+            if loop:
+                # A repetition loop (one line 6+ times): never applied, never kept, and asked for once more without
+                # thinking (LOOP_RETRY); a second loop counts as an empty reply. Campaigns 49d, 52 and 53 (seed 2):
+                # every reply the cap cut off was such a loop, and three loops that stopped inside the cap were applied.
+                delta = None
+                log({"event": "in-place notes reply looped", "attempt": attempt, "finish_reason": finish, "line": loop[0][:80],
+                     "count": loop[1], "reply_start": text[:400]})
+                if not asked_loop:
+                    asked_loop = True
+                    counts["inplace_reasks"] += 1
+                    req = req + [{"role": "user", "content": nd.LOOP_RETRY.format(count=loop[1], line=loop[0][:60])}]
+                    thinking = False
+                    continue
+                text, finish = "", "stop"
             if finish == "length" and delta is None:
                 # A reply cut off by the cap keeps its complete lines: later replies of this cut merge over them (a
                 # name the retry writes is the retry's; one it leaves out keeps the cut-off line). Campaign 52 seed 2,

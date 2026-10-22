@@ -1092,6 +1092,25 @@ def complete_lines(reply: str) -> dict | None:
     d = parse_delta(text + "\nOPEN\n", need_changes=True)
     return dict(d, open=None) if d else None
 
+def looped(reply: str) -> tuple[str, int] | None:
+    """(line, count) when one line of the reply, headings aside, is written 6 times or more: a repetition loop. Over
+    seven 2M sessions no reply that was not a loop wrote a line more than twice, while every reply the cap cut off and
+    three that the cap did not reach repeated one line 70 to 438 times (`vone42: (no change)`, `vone42: -137`,
+    `</parameter>`); campaigns 49d, 52 and 53 (seed 2) lost 30-114 wrong STATE lines to the cuts where that happened."""
+    lines = [ln.strip() for ln in reply.splitlines() if ln.strip() and delta_section_of(ln) == "" and not _is_none(ln)]
+    if not lines:
+        return None
+    counts: dict[str, int] = {}
+    for ln in lines:
+        counts[ln] = counts.get(ln, 0) + 1
+    line, n = max(counts.items(), key=lambda x: x[1])
+    return (line, n) if n >= 6 else None
+
+
+LOOP_RETRY = ("Your reply repeated one line {count} times (`{line}`) and was not used. Reply again in the same layout "
+              "(NEW RULES, then CHANGES), each line once: one line per change, and for a name the turns mention without "
+              "changing one `name: (no change)` line in all. Do not re-list changes the NOTES already hold.")
+
 def merge_replies(first: dict | None, second: dict) -> dict:
     """What to apply when a reply was asked for again: the second reply's lines for every name it mentions (also
     `name: (no change)`, which withdraws the first reply's lines for that name), and the first reply's lines for

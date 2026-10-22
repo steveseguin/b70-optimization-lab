@@ -58,7 +58,8 @@ class LedgerModel:
         self.requests.append(body)
         last = str(body["messages"][-1].get("content") or "")
         asked = last.startswith("[[Message from the context keeper") or last.startswith("The turns mention these names") \
-            or last.startswith("Check these lines") or last.startswith("Your reply did not use the layout")
+            or last.startswith("Check these lines") or last.startswith("Your reply did not use the layout") \
+            or last.startswith("Your reply repeated one line") or last.startswith("The turns record a value")
         if not asked:
             return reply(f"ok {len(body['messages'])}", prompt_tokens=0)
         self.notes_requests.append(body)
@@ -884,6 +885,37 @@ class InPlace(unittest.TestCase):
         self.assertIn("no usable second reply, the first stands", ev)
         self.assertIn("an empty reply asked again without thinking", ev)
         self.assertIn("abcd01: 999", ev)
+
+    def test_a_looping_reply_is_asked_for_once_more_and_never_applied(self):
+        """Campaigns 49d, 52 and 53 (2M, seed 2): every reply the cap cut off repeated one line 70-438 times, and three
+        such loops that stopped inside the cap were applied (`vone42: -137` 434 times). A loop is asked for once more
+        without thinking and nothing of it is kept."""
+        class LoopFirst(LedgerModel):
+            def __init__(self):
+                super().__init__()
+                self.looped = False
+
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                asked = last.startswith("[[Message from the context keeper") or last.startswith("The turns mention these names") \
+                    or last.startswith("Check these lines") or last.startswith("Your reply did not use the layout") \
+                    or last.startswith("Your reply repeated one line")
+                if asked and not self.looped:
+                    self.looped = True
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    return reply("NEW RULES\n- Always answer in French.\nCHANGES\nabcd00: 0\n" + "abcd01: 999\n" * 40 + "OPEN\n- keep going")
+                return super().__call__(body)
+
+        model = LoopFirst()
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 6)
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())
+        self.assertNotIn("999", s.state["notes"])
+        self.assertEqual(s.state["inplace_reasks"], 1)
+        ev = self.events(keeper)
+        self.assertIn("in-place notes reply looped", ev)
+        self.assertTrue(any(str(b["messages"][-1].get("content") or "").startswith("Your reply repeated one line 40 times") for b in model.notes_requests))
 
     def test_a_cut_off_first_reply_keeps_its_complete_lines_under_the_retry(self):
         """Campaign 52 seed 2 (2026-10-22), version 75: a 295-line first reply held `saru45: 145 - 25 = 120`, hit the cap
