@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 22, 20:05 EDT — one-card lever synthesis 1: nothing open reaches +2 %; the line is bound by 48 serial layer bodies.**
+Premise corrections: the one-card record (35.927, packet182c) runs NO draft (decode_mode plain; one-card MTP closed three times: 58h/58aa/170),
+and its layer body is 0.48 ms, at parity with two cards (0.47–0.50); the dispatch tables of 182c and the k3x record are byte-identical. Per-token
+model on the 1,188 record intervals (reproduces 35.926720 exactly): 27.75 ms = 48 bodies 23.3 + head 1.40 + expert-cache miss reads 1.0–1.5 +
+fill traffic 0.51 + boundary gap 0.54; the 2.06 ms LRU plan is hidden under the wait. Prices: cache +1.5 GB (23.05 GB) +0.58–0.84 % (the only
+open lever above the +0.5 % screen bar; the +2 % bar would need a 32 % byte cut, impossible on 32 GB; all-resident ceiling +6–7.5 % needs 48.6 GB);
+prefetch/demand copy closed (packet125/138/58am); host path +0.4–1.3 % inside drift; kernel classes at their floors. Structural ceiling 40.5 tok/s
+(48 bodies + head) without M=2 (closed at 9.21 ms/half row) or a new per-layer kernel floor; the Strata target is not reachable on this line.
+Next: `packet58-onecard-cache23` capacity screen on card 0 (~14 min; satisfies packet58x's revisit condition with the 182c lifetime receipts),
+prepared CPU-only. Synthesis archived in `stage2/packet182c-chain/analysis/onecard-synthesis-1-20261022.md`.
+
 **October 22, 19:35 EDT — lever synthesis 4 (after the 62.345 record): the two-card line is at a structural ceiling for single mechanisms.**
 Critical-path model on the record intervals (reproduces 62.345282 to 1e-9): hit = max(draft 1.531, boundary 1.483) + max(A 11.927, B 11.902) + 0.038 =
 13.51 ms; both ranks are 99.3 % busy per hit, so the hit cycle is half the total work; single-side ceilings are +0.2 % each. Misses are 48 serial

@@ -1,0 +1,237 @@
+{
+ "accounting_ms_per_token": {
+  "interval": 27.7483015899744,
+  "device_span_lower_bound": 25.92025485690236,
+  "host_exclusive_gap": 1.7930346212121222,
+  "plan_ms_per_transaction": 2.064441208053691,
+  "plan_hidden_under_wait": true,
+  "base_device_idle_gap": 0.537,
+  "fill_submit_host_per_filled_token": 0.32135836148648533,
+  "fill_contention_wait_per_filled_token": 0.6975937429711605,
+  "filled_fraction": 0.4983164983164983,
+  "fill_related_per_token": 0.5077606446455608,
+  "publication_host": 0.2426565656565656,
+  "transfer": 0.011848553872053871,
+  "prepare": 0.050341896464646464,
+  "head": 1.404,
+  "layer_bodies_at_two_card_rate": 23.328,
+  "miss_cost_regression": 1.0340745924241952,
+  "miss_cost_k1_fill_bytes": 1.4374714151987042,
+  "miss_cost_k1_p58y_ratio": 3.113103626182836,
+  "miss_cost_parity_triangulation": 1.1882548569023612,
+  "miss_cost_parity_range": [
+   0.7562548569023626,
+   2.00425485690236
+  ],
+  "model_sum": 26.97676064464556,
+  "residual_vs_interval": 0.7715409453288409
+ },
+ "thresholds": {
+  "chain_tok_s": 36.645254507142496,
+  "screen_tok_s": 36.10635370556687,
+  "flat_ms_for_chain": 0.5454836266702596,
+  "flat_ms_for_screen": 0.13840734560176138,
+  "per_layer_us_for_chain": 11.364242222297076,
+  "per_layer_us_for_screen": 2.883486366703362
+ },
+ "memory_headroom_bytes": {
+  "device_owned_bound": 29963128848,
+  "census_live_peak": 27841904372,
+  "drm_vram_peak": 28440621056,
+  "driver_overhead_measured": 598716684,
+  "driver_allowance": 536870912,
+  "unallocated_allowance_inside_bound": 2121224476,
+  "physical_room_under_floor_and_reserve": 2059378944,
+  "workspace_live": 295612132,
+  "workspace_plus_control_transaction_bound": 2147221504
+ },
+ "levers": {
+  "cache +1.0 GB (22.55 GB)": {
+   "capacity_pct": 4.639783538137091,
+   "miss_byte_cut_fraction": [
+    0.06217309941103702,
+    0.09047577899367328
+   ],
+   "saved_ms_central": [
+    0.10617677232980512,
+    0.15451097465904476
+   ],
+   "saved_ms_wide": [
+    0.0937421524475977,
+    0.18165370835714673
+   ],
+   "gain_pct_central": [
+    0.38311993828379354,
+    0.5584998354504211
+   ],
+   "gain_pct_wide": [
+    0.33810005451999636,
+    0.6572559159840452
+   ],
+   "fits": true
+  },
+  "cache +1.5 GB (23.05 GB)": {
+   "capacity_pct": 6.959675307205636,
+   "miss_byte_cut_fraction": [
+    0.09325964911655552,
+    0.1357136684905099
+   ],
+   "saved_ms_central": [
+    0.15926515849470765,
+    0.23176646198856712
+   ],
+   "saved_ms_wide": [
+    0.14061322867139653,
+    0.27248056253572006
+   ],
+   "gain_pct_central": [
+    0.5757834426525887,
+    0.8400969292496674
+   ],
+   "gain_pct_wide": [
+    0.5080093108166484,
+    0.9891361269961596
+   ],
+   "fits": true
+  },
+  "cache +2.0 GB (23.55 GB)": {
+   "capacity_pct": 9.279567076274182,
+   "miss_byte_cut_fraction": [
+    0.12434619882207404,
+    0.18095155798734655
+   ],
+   "saved_ms_central": [
+    0.21235354465961023,
+    0.3090219493180895
+   ],
+   "saved_ms_wide": [
+    0.1874843048951954,
+    0.36330741671429345
+   ],
+   "gain_pct_central": [
+    0.7691883017477474,
+    1.1232764018511254
+   ],
+   "gain_pct_wide": [
+    0.6784952769553376,
+    1.3232132254966666
+   ],
+   "fits": true
+  },
+  "all experts resident (impossible: 48.6 GB)": {
+   "saved_ms": [
+    1.5418352370697561,
+    1.945232059844265,
+    3.6208642708283967
+   ],
+   "gain_pct": [
+    5.867559101232156,
+    7.518195494844049,
+    14.964116641155222
+   ]
+  },
+  "capacity needed for chain bar": {
+   "miss_byte_cut_needed": 0.31941456689527625,
+   "capacity_pct_needed": [
+    16.38023419975776,
+    23.836907977259422
+   ],
+   "extra_gb_needed": [
+    3.530387584920513,
+    5.137504321339552
+   ]
+  },
+  "capacity needed for screen bar": {
+   "miss_byte_cut_needed": 0.08104610329071454,
+   "capacity_pct_needed": [
+    4.156210425164848,
+    6.048216663486159
+   ],
+   "extra_gb_needed": [
+    0.89577679454279,
+    1.303555783103314
+   ]
+  },
+  "prefetch next layer experts (copy engine)": {
+   "open": false,
+   "exposed_fraction_of_miss_reads": 1.0,
+   "closed_by": [
+    "packet125 DNR",
+    "packet138 DNR",
+    "packet58am -52.6%"
+   ],
+   "gain_pct": 0.0
+  },
+  "expert placement keyed by draft routes": {
+   "open": false,
+   "reason": "decode_mode plain; MTP closed by packet58h/58aa/170; packet138 router-predicted prefetch closed",
+   "gain_pct": 0.0
+  },
+  "one-card MTP draft (M=2)": {
+   "open": false,
+   "cycle_ms_favorable": 48.14930158997441,
+   "ms_per_token_favorable": 26.94420905986257,
+   "tok_s_favorable": 36.99887654517692,
+   "cycle_ms_p170_sensitivity": 63.613909,
+   "tok_s_p170": 28.004411193532444,
+   "closed_by": [
+    "packet58h",
+    "packet58aa",
+    "packet170"
+   ],
+   "note": "favorable case charges only the measured two-card M=2 row cost, draft wall and a 25% miss increase; packet170 charged feedback/state/head/pollution"
+  },
+  "unported two-card kernel wins": {
+   "open": false,
+   "dispatch_tables_identical": true,
+   "one_card_ms_per_layer_net": 0.4785131747011973,
+   "two_card_ms_per_layer": [
+    0.469,
+    0.486,
+    0.495
+   ],
+   "gain_pct": 0.0
+  },
+  "host issue path trims": {
+   "base_device_idle_gap_ms": 0.537,
+   "items": {
+    "publication_construct_upload_scatter": 0.19899999999999998,
+    "publication_drain_under_spin": 0.018,
+    "nonblocking_token_input_assumed": [
+     0.05,
+     0.3
+    ],
+    "spin_tail_assumed": [
+     0.05,
+     0.08
+    ],
+    "timing_row": 0.035
+   },
+   "realistic_saved_ms": [
+    0.1,
+    0.35
+   ],
+   "gain_pct": [
+    0.36075171280025575,
+    1.274128012470066
+   ],
+   "ceiling_if_gap_zero_pct": 1.9682824709048141
+  },
+  "fill contention + submission (bytes set the cost)": {
+   "per_token_ms": 0.5077606446455608,
+   "ceiling_pct": 1.8591170707057625,
+   "open": false,
+   "closed_by": [
+    "packet174",
+    "packet182 (pacing/deferral 0 to +0.3%)"
+   ],
+   "note": "packet182 DNR revisit condition (>= 1.1 ms per filled token outside transfer) is numerically met (1.115 B0 / 1.213 chain) but no mechanism moves fewer bytes"
+  },
+  "per-layer kernel saving": {
+   "us_per_layer_for_chain": 11.364242222297076,
+   "us_per_layer_for_screen": 2.883486366703362,
+   "pct_of_layer_for_chain": 2.338321444917094,
+   "best_open_item": "packet104b gate/up tile16 + half-cache <= +1.16% at 100% transfer (packet190 synthesis)"
+  }
+ }
+}
