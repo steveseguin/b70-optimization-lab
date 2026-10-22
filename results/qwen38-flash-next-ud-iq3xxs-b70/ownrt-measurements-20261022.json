@@ -1,0 +1,373 @@
+{
+  "schema": "neural.download.ownrt-observations.v1",
+  "window": {
+    "lane": "A",
+    "scope": "whole-host",
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "runner_unit": "lanequeue-A34",
+    "utc": "2026-10-22 02:13–02:55",
+    "kernel_fault_count": {
+      "before": 2,
+      "after": 2
+    },
+    "source_note": "notes/2026-10-21-own-runtime-window-pin-guard-refusal.md",
+    "cross_checks": "every row receipt lies inside the noted window, passed with no stop reason, and recorded zero new kernel journal lines; the four admission fault reviews agree with the noted starting count",
+    "admission_fault_reviews": {
+      "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/lanequeue-review-347111dad0fb4bc78d14aa94d476f0a4.json": {
+        "sha256": "13588a0dba22603d7687767e84456ed426e62025758676724b1527e11a27d709",
+        "fault_count": 2,
+        "through": "2026-10-22T02:13:23.154528Z"
+      },
+      "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/lanequeue-review-e117cf5802bf47a79fe539c4590f8f26.json": {
+        "sha256": "d8a66084728c698c1a9fdf570fe86b4bb571ebb2cf9bf6e62832cbd1e209ca31",
+        "fault_count": 2,
+        "through": "2026-10-22T02:13:23.154528Z"
+      },
+      "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/lanequeue-review-3592211b3c8d4b53b64a18feaaed1181.json": {
+        "sha256": "79c6259e4e4f53a0c213a09cbc576da1bab2ca5fdf070de18796c36bd8446d16",
+        "fault_count": 2,
+        "through": "2026-10-22T02:13:23.154528Z"
+      },
+      "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/lanequeue-review-3a7d9b82bbad4df18981afd5f9674c08.json": {
+        "sha256": "5b1ea4f8548c25b51c125e97e27ccbc0fa97d10a6633c981a345e695e6543b6d",
+        "fault_count": 2,
+        "through": "2026-10-22T02:13:23.154528Z"
+      }
+    },
+    "rows": [
+      {
+        "row": "packet178-one-card-full512-A-a",
+        "screen_unit": "screen-packet178-one-card-full512-A-a.service",
+        "started_utc": "2026-10-22T02:13:38Z",
+        "finished_utc": "2026-10-22T02:21:54Z",
+        "child_elapsed_seconds": 495.29363617597846,
+        "new_kernel_journal_lines": 0,
+        "window_receipt": "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/device-p178-full512-A-a/window.json",
+        "window_receipt_sha256": "4ec5702aa58cc6960fa72860186b42c0d1bdb7cd8019ec700fdf3dcf66b43f08"
+      },
+      {
+        "row": "packet178-one-card-full512-A-b",
+        "screen_unit": "screen-packet178-one-card-full512-A-b.service",
+        "started_utc": "2026-10-22T02:23:28Z",
+        "finished_utc": "2026-10-22T02:31:42Z",
+        "child_elapsed_seconds": 494.1482418010128,
+        "new_kernel_journal_lines": 0,
+        "window_receipt": "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/device-p178-full512-A-b/window.json",
+        "window_receipt_sha256": "1ba5a1b5be8ccf8ffb3b6b297cf104cd343574e97dfd05bc2bbf37bef1273f0a"
+      },
+      {
+        "row": "packet179-one-card-full512-A-a",
+        "screen_unit": "screen-packet179-one-card-full512-A-a.service",
+        "started_utc": "2026-10-22T02:33:16Z",
+        "finished_utc": "2026-10-22T02:41:34Z",
+        "child_elapsed_seconds": 498.13633529498475,
+        "new_kernel_journal_lines": 0,
+        "window_receipt": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-full512-A-a/window.json",
+        "window_receipt_sha256": "c5b04773bff085d6ce74ec8ec7f1ad1b83b8b0ed851a681179de03e0ebbc17b0"
+      },
+      {
+        "row": "packet179-one-card-checkpoint-A-b",
+        "screen_unit": "screen-packet179-one-card-checkpoint-A-b.service",
+        "started_utc": "2026-10-22T02:43:08Z",
+        "finished_utc": "2026-10-22T02:54:46Z",
+        "child_elapsed_seconds": 698.1470759839867,
+        "new_kernel_journal_lines": 0,
+        "window_receipt": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/window.json",
+        "window_receipt_sha256": "f8a5cfa33f87d4dfc3da5cc43ab5d66d00647c3727b73552bc58d4caa9233bed"
+      }
+    ]
+  },
+  "profiles": [
+    {
+      "topology": "one-card",
+      "profile": "packet178 portable source rebuild",
+      "identity": {
+        "parent": "packet58aj-onecard-resident",
+        "gpu_count": 1,
+        "arithmetic": "iq3-p49-split32-v1",
+        "binary_sha256": "6fa840abbf598fcdfa1d7d9d558ba2b41bbbe1129c3a5e50bbb362f26489bf10",
+        "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "context": 4096,
+        "kv_dtype": "BF16",
+        "parent_rate": 31.96682,
+        "oracle_cap": 128,
+        "requested_max_new": 512,
+        "attempts": 2,
+        "model_loads_per_attempt": 1,
+        "parent_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+        "measurement_delta": [
+          "response-cap parser128->512",
+          "pre-device --help",
+          "suite request admission12->13"
+        ],
+        "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
+        "native_binary_unchanged_from_packet163": false,
+        "native_arithmetic_unchanged_from_packet163": true,
+        "native_delta": "portable rebuild from hash-pinned archive native-sources.tar.gz 92a4858e3b4009fb with @SOURCE@ relocated to packet178 one-card/native-portable; no arithmetic, flag or parser edits"
+      },
+      "identity_evidence": "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/identity.json",
+      "identity_sha256": "40eb0e8a6b61bf2d40c8822e99b99428dc91a8e6ca8a84f983440d275a93d97c",
+      "build": {
+        "evidence": "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/build.json",
+        "sha256": "7b221cc6d68c456d57dbbbf00aebd7dc721705147b346ebdca3a0c3794ea3d60",
+        "binary_sha256": "6fa840abbf598fcdfa1d7d9d558ba2b41bbbe1129c3a5e50bbb362f26489bf10",
+        "binary_bytes": 20080304,
+        "source_archive": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/native-sources.tar.gz",
+        "source_archive_sha256": "92a4858e3b4009fb3cc8e0ed4d75c7d49a88e2eaef988086e69a89c33e1a9966",
+        "build_manifest": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/native-build.json",
+        "build_manifest_sha256": "4fe31ce15decc95e3f48650dfa27e98193e5d862dfdb69169ac6f49c30a287ff",
+        "cpu_build_validation": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json",
+        "cpu_build_validation_sha256": "a8b7ff51c90ea418cbb698b95d1171eec151580ec1c49fafb127c8f41f1404f2",
+        "relocated_source_root": "one-card/native-portable",
+        "reused_object_files": false,
+        "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)",
+        "sealed_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+        "binary_bytes_identical_to_sealed": false,
+        "status_at_build": "compiled-not-device-qualified"
+      },
+      "device_qualification": {
+        "fresh_loads": 2,
+        "oracle_128_exact": true,
+        "fresh_load_repeat": {
+          "passed": true,
+          "request_count": 13,
+          "scope": "all emitted tokens, including EOS/cap and prefill response"
+        },
+        "sealed_line_comparison": {
+          "reference_ledger": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+          "reference_ledger_sha256": "14af9c9d4a6095c27d8e32c8946c302c4f5673b126b5394d32cf8c21f790b635",
+          "reference_rows": [
+            "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-a/bracket-summary.json",
+            "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-b/bracket-summary.json"
+          ],
+          "sealed_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+          "responses_compared": 13,
+          "every_emitted_token_identical": true,
+          "scope": "all emitted tokens of the twelve suite requests and of the 512-input reading request, including EOS/cap"
+        },
+        "package_binary": "unchanged: the one-card package still pins and measures the sealed packet165 binary",
+        "two_card_rebuild": "not device-qualified; this window ran one-card rows only"
+      },
+      "measurement_scope": "Twelve cold suite prompts and one distinct 512-input-token prompt per fresh load; one user; context allocation 4096.",
+      "prefill_definition": "512 input tokens / native request TTFT seconds; warm runtime, cold prompt; includes first-token work; not isolated device prefill or HTTP TTFT.",
+      "prefill_oracle_covered": false,
+      "context_length_sweep": "not measured on this identity",
+      "concurrency_sweep": "not measured; controller runs one request at a time",
+      "submission_eligible": false,
+      "rows": [
+        {
+          "evidence": "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/device-p178-full512-A-a/bracket-summary.json",
+          "sha256": "f605d1dcdefb094d939a63c9c9f06071020b8cf2f643a08ab9ea92225ddd2021",
+          "binary_sha256": "6fa840abbf598fcdfa1d7d9d558ba2b41bbbe1129c3a5e50bbb362f26489bf10",
+          "decode_class_balanced_tok_s": 31.827072128438473,
+          "suite_requests": 12,
+          "response_cap": 512,
+          "prefill_tok_s": 32.82267528782482,
+          "prefill_ttft_ms": 15598.972219973803,
+          "prefill_prompt_loop_tok_s": 34.20300169883751,
+          "request_start_boundary": "before native reset (TTFT includes reset)",
+          "full_natural_completion_statistics": {
+            "median": 33.112377622106685,
+            "mean": 33.112377622106685,
+            "p10": 33.112377622106685,
+            "count": 1
+          },
+          "quality": {
+            "oracle_identity": "iq3-p49-split32-v1",
+            "oracle_cap": 128,
+            "all_available_oracle_tokens_exact": true,
+            "full_output_oracle_exact": false,
+            "beyond_128": "pending fresh-load determinism; never oracle-exact",
+            "fresh_process_determinism_checked": false,
+            "no_quality_loss_decision": false
+          },
+          "fresh_load_repeat": null
+        },
+        {
+          "evidence": "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/device-p178-full512-A-b/bracket-summary.json",
+          "sha256": "ac46767561b6c5ffea345071c9bd4d5e5aa2cbf8c985e92f24e2dd58810c2fed",
+          "binary_sha256": "6fa840abbf598fcdfa1d7d9d558ba2b41bbbe1129c3a5e50bbb362f26489bf10",
+          "decode_class_balanced_tok_s": 31.813403593149587,
+          "suite_requests": 12,
+          "response_cap": 512,
+          "prefill_tok_s": 32.88773337217652,
+          "prefill_ttft_ms": 15568.114536989015,
+          "prefill_prompt_loop_tok_s": 34.24444894048197,
+          "request_start_boundary": "before native reset (TTFT includes reset)",
+          "full_natural_completion_statistics": {
+            "median": 33.308187328556784,
+            "mean": 33.308187328556784,
+            "p10": 33.308187328556784,
+            "count": 1
+          },
+          "quality": {
+            "oracle_identity": "iq3-p49-split32-v1",
+            "oracle_cap": 128,
+            "all_available_oracle_tokens_exact": true,
+            "full_output_oracle_exact": false,
+            "beyond_128": "determinism-checked across two fresh loads; not oracle-exact",
+            "fresh_process_determinism_checked": true,
+            "no_quality_loss_decision": false
+          },
+          "fresh_load_repeat": {
+            "passed": true,
+            "request_count": 13,
+            "scope": "all emitted tokens, including EOS/cap and prefill response"
+          }
+        }
+      ]
+    },
+    {
+      "topology": "one-card",
+      "profile": "packet179 checkpoint engine (packet165 relink), full-suite load",
+      "identity": {
+        "parent": "packet58aj-onecard-resident",
+        "gpu_count": 1,
+        "arithmetic": "iq3-p49-split32-v1",
+        "binary_sha256": "8d18538475e00200032846d51dce11e0d38392dc9962778ffd01b03dd75394a7",
+        "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "context": 4096,
+        "kv_dtype": "BF16",
+        "parent_rate": 31.96682,
+        "oracle_cap": 128,
+        "requested_max_new": 512,
+        "attempts": 2,
+        "model_loads_per_attempt": 1,
+        "parent_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+        "measurement_delta": [
+          "response-cap parser128->512",
+          "pre-device --help",
+          "suite request admission12->13"
+        ],
+        "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
+        "native_binary_unchanged_from_packet163": false,
+        "native_arithmetic_unchanged_from_packet163": true,
+        "native_delta": "entry TU only: checkpoint/restore argv, run() save hook and restore-after-reset integration, new checkpoint.hpp (SESSION-SWAP-DESIGN.md v1.1); every kernel object byte-identical to packet165"
+      },
+      "identity_evidence": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/identity.json",
+      "identity_sha256": "e39933f8220940de36f23f43992704cead6f5b29d2f4dba5f1d11e4873413a33",
+      "sealed_line_comparison": {
+        "reference_ledger": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
+        "reference_ledger_sha256": "14af9c9d4a6095c27d8e32c8946c302c4f5673b126b5394d32cf8c21f790b635",
+        "reference_rows": [
+          "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-a/bracket-summary.json",
+          "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/evidence/device-p165c-warm512-A-b/bracket-summary.json"
+        ],
+        "sealed_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf",
+        "responses_compared": 13,
+        "every_emitted_token_identical": true,
+        "scope": "all emitted tokens of the twelve suite requests and of the 512-input reading request, including EOS/cap"
+      },
+      "single_fresh_load": "the packet's second row is the checkpoint gate below, not a second full-suite load",
+      "measurement_scope": "Twelve cold suite prompts and one distinct 512-input-token prompt per fresh load; one user; context allocation 4096.",
+      "prefill_definition": "512 input tokens / native request TTFT seconds; warm runtime, cold prompt; includes first-token work; not isolated device prefill or HTTP TTFT.",
+      "prefill_oracle_covered": false,
+      "context_length_sweep": "not measured on this identity",
+      "concurrency_sweep": "not measured; controller runs one request at a time",
+      "submission_eligible": false,
+      "rows": [
+        {
+          "evidence": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-full512-A-a/bracket-summary.json",
+          "sha256": "f468ee072bf83ed772d6c9925c8a2ee53ab02427d6ceeeca4b9c24b41a449b06",
+          "binary_sha256": "8d18538475e00200032846d51dce11e0d38392dc9962778ffd01b03dd75394a7",
+          "decode_class_balanced_tok_s": 31.85027810342774,
+          "suite_requests": 12,
+          "response_cap": 512,
+          "prefill_tok_s": 32.78397442950614,
+          "prefill_ttft_ms": 15617.386510013603,
+          "prefill_prompt_loop_tok_s": 34.16920159392062,
+          "request_start_boundary": "before native reset (TTFT includes reset)",
+          "full_natural_completion_statistics": {
+            "median": 33.160905266090545,
+            "mean": 33.160905266090545,
+            "p10": 33.160905266090545,
+            "count": 1
+          },
+          "quality": {
+            "oracle_identity": "iq3-p49-split32-v1",
+            "oracle_cap": 128,
+            "all_available_oracle_tokens_exact": true,
+            "full_output_oracle_exact": false,
+            "beyond_128": "pending fresh-load determinism; never oracle-exact",
+            "fresh_process_determinism_checked": false,
+            "no_quality_loss_decision": false
+          },
+          "fresh_load_repeat": null
+        }
+      ]
+    }
+  ],
+  "checkpoint": {
+    "evidence": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/bracket-summary.json",
+    "sha256": "0541e269418df62970938c84597b15f64b88aa8352f978d7efc548f2b00ea70f",
+    "receipt": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/run/checkpoint-receipt.json",
+    "receipt_sha256": "cca406d745347785ab23ccf85a5313f9c4a54d3f7e3f2747bfb36485d958378b",
+    "manifest": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/run/checkpoints/gate/manifest.json",
+    "manifest_sha256": "b9504a2054aa618365a90e7861100d3c261e107f798c56e0029f441538512b08",
+    "manifest_format": "ownrt.session-checkpoint.v1",
+    "label": "experimental",
+    "operation": "same-generation save/restart/resume",
+    "operation_source": "experiments/own-xpu-runtime/SESSION-SWAP-DESIGN.md v1.2",
+    "not_implemented": [
+      "appending a new turn to a restored prefix",
+      "restoring and then saving again"
+    ],
+    "engine_binary_sha256": "8d18538475e00200032846d51dce11e0d38392dc9962778ffd01b03dd75394a7",
+    "engine_native_delta": "entry TU only: checkpoint/restore argv, run() save hook and restore-after-reset integration, new checkpoint.hpp (SESSION-SWAP-DESIGN.md v1.1); every kernel object byte-identical to packet165",
+    "prompt_id": "incident-retrospective",
+    "prompt_tokens": 87,
+    "save": {
+      "result": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/run/run/save/native/result.json",
+      "sha256": "c6001f7fd63a7809ce272d60da4d53c7b6e701e1dfedcd5485ee295be0e5882f",
+      "generated_tokens_before_save": 256,
+      "eos_free": true,
+      "seconds": 1.101782329,
+      "bytes": 68756516,
+      "blob_count": 128,
+      "skipped_buffer_count": 1937,
+      "blob_bytes_sum_equals_save_bytes": true,
+      "blobs_in_git": false,
+      "blob_storage": "blob bytes are not tracked; the tracked manifest records each blob's size and SHA-256"
+    },
+    "fresh_process_restores": [
+      {
+        "leg": "restore1",
+        "result": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/run/run/restore1/native/result.json",
+        "sha256": "41e2fe9073932031ba0e788e755aaf856b73de856cdc7c27cb98359903cf3e8d",
+        "restore_ms": 458.193083,
+        "prompt_recompute_ms": 0,
+        "continuation_tokens": 128,
+        "continuation_wall_ms": 6775.938615028281
+      },
+      {
+        "leg": "restore2",
+        "result": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/run/run/restore2/native/result.json",
+        "sha256": "d841700b6e811c652e2248e6da6b369d26048fbc1e80b105630bd4dfc7b93155",
+        "restore_ms": 437.433966,
+        "prompt_recompute_ms": 0,
+        "continuation_tokens": 128,
+        "continuation_wall_ms": 6595.3226370038465
+      }
+    ],
+    "merged_tokens": 384,
+    "reference_tokens_compared": 384,
+    "merged_equals_uninterrupted_reference": true,
+    "repeat_restores_identical": true,
+    "oracle_128_exact_on_merged_stream": true,
+    "beyond_oracle_status": "pending fresh-load determinism; not oracle-exact",
+    "reference": {
+      "evidence": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-full512-A-a/bracket-summary.json",
+      "result": "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-full512-A-a/run/native/incident-retrospective/result.json",
+      "result_sha256": "1183bffad0faaa796d70a13f916de398d27df02a3d10e33effc96d1569a67c9f"
+    },
+    "cold_prefix_ms": 36753.57695197454,
+    "cold_prefix_definition": "uninterrupted reference request start through its K-th generated token (cold prefill plus decode of the same prefix), same prompt same binary",
+    "gate_scope": "experimental session checkpoint restart-and-continue gate; merged K+M stream versus this packet's uninterrupted full512 row-A reference; oracle cap 128 on the merged stream; not a performance claim",
+    "submission_eligible": false,
+    "experimental": true,
+    "independent_checks": "merged stream, repeat restores, oracle prefix and cold-prefix time recomputed from the per-leg native results, native logs and the reference row"
+  },
+  "scope": "Measured lab observations from one lane-A window, not a promotion attestation. Exact oracle covers the first 128 output tokens only; longer outputs and the reading response are compared token-for-token across fresh loads and against the sealed packet165c rows. The checkpoint gate is an experimental correctness gate, not a performance claim."
+}

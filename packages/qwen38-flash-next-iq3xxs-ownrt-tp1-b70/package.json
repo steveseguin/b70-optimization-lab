@@ -63,7 +63,7 @@
     "engine": "Own Xe runtime (packet58aj / packet165c); arithmetic iq3-p49-split32-v1",
     "source_commit": "ac37d1027b55567c92c4be8e63acfb5691dc87c6",
     "build_entrypoint": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/build-native.py",
-    "compiler": "Intel oneAPI compiler 2026.0; clean-source CPU compile and link passed; rebuilt binary device qualification pending",
+    "compiler": "Intel oneAPI compiler 2026.0; clean-source CPU compile and link passed; one-card portable rebuild from the published source archive device-qualified on 2026-10-22: two fresh loads at 31.83 / 31.81 tok/s, every output token identical to the sealed packet165 line (the binary hash differs); measured rows and commands still use the sealed packet165 binary",
     "kv_cache": "BF16",
     "note": "Measured packet165 identity, context 4096, BF16 KV; retained source/build evidence. Native benchmark only; no HTTP endpoint. Target-only, host-pinned experts and device cache.",
     "build_guide": "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/BUILD.md",
@@ -86,13 +86,18 @@
     "experiments/own-xpu-runtime",
     "experiments/qwen38-flash-next-ud-iq3xxs-b70",
     "results/qwen38-flash-next-ud-iq3xxs-b70",
-    "notes/2026-10-19-own-runtime-packet165-one-card-result.md"
+    "notes/2026-10-19-own-runtime-packet165-one-card-result.md",
+    "notes/2026-10-21-own-runtime-window-pin-guard-refusal.md"
   ],
   "evidence": [
     "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
     "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/identity.json",
     "notes/2026-10-19-own-runtime-packet165-one-card-result.md",
-    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json"
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/manifests/build-validation.json",
+    "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261022.json",
+    "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence",
+    "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence",
+    "notes/2026-10-21-own-runtime-window-pin-guard-refusal.md"
   ],
   "contributors": [
     {
@@ -107,7 +112,7 @@
     }
   ],
   "missing": [
-    "Supported-host device requalification of newly rebuilt binaries; CPU compile alone does not qualify runtime performance",
+    "Device check for each new rebuild: the lab's one-card portable rebuild from the published sources passed on 2026-10-22 (31.83 / 31.81 tok/s over two fresh loads, every output token identical to the sealed line), but this package still pins and measures the sealed packet165 binary",
     "Portable model admission, device mapping and current-boot fault review; frozen lab guards remain in force",
     "Independent full-output oracle and explicit no-quality-loss decision beyond 128 output tokens",
     "Independent oracle for the 512-input-token reading request",

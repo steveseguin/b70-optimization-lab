@@ -20,7 +20,7 @@ in-packet only (`b8fded755`, `064452363`); the endpoints were restored first, th
 under unit `lanequeue-A34` 02:13–02:55 UTC with fault count 2 → 2. packet178 (portable rebuild
 `6fa840ab…`): two fresh loads 31.83 / 31.81 tok/s, oracle-128 exact, all 12 output hashes identical
 between loads and to packet179's reference load. packet179 (checkpoint engine `8d185384…`): reference
-load 31.85 tok/s, oracle exact; save at K=256 (1.10 s, 68.8 MB, 20 blobs) + two fresh-process
+load 31.85 tok/s, oracle exact; save at K=256 (1.10 s, 68.8 MB, 128 blobs) + two fresh-process
 restores with M=128 → merged 384 tokens equal the reference at [0:384), repeat restores identical,
 restore 0.46 s + 6.78 s continuation vs 36.75 s cold prefix. SESSION-SWAP-DESIGN.md §7 gates 1–4 are
 met on device; the manifest label stays `experimental` until an engine revision changes the string.

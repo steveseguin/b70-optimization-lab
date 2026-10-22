@@ -78,7 +78,7 @@ Kernel fault count 2 → 2 across every row.
 | packet178-one-card-full512-A-a | DONE | 496 s | passed, oracle-128 exact, primary 31.83 tok/s |
 | packet178-one-card-full512-A-b | DONE | 495 s | passed, oracle-128 exact, primary 31.81 tok/s; fresh-process determinism checked |
 | packet179-one-card-full512-A-a | DONE | 499 s | passed, oracle-128 exact, primary 31.85 tok/s (reference for row B) |
-| packet179-one-card-checkpoint-A-b | DONE | 699 s | passed: save at K=256 (1.10 s, 68,756,516 B, 20 blobs, EOS-free), two fresh-process restores + M=128; merged 384 tokens == reference [0:384) (384 compared), repeat restores identical, oracle-128 exact; restore 458 ms + continuation 6.78 s vs cold prefix 36.75 s |
+| packet179-one-card-checkpoint-A-b | DONE | 699 s | passed: save at K=256 (1.10 s, 68,756,516 B, 128 blobs, EOS-free), two fresh-process restores + M=128; merged 384 tokens == reference [0:384) (384 compared), repeat restores identical, oracle-128 exact; restore 458 ms + continuation 6.78 s vs cold prefix 36.75 s |
 
 - packet178 A/B: all 12 `output_token_sha256` identical between the two fresh loads; the
   portable rebuild (6fa840ab…) reproduces the packet165 line (parent rate 31.97 tok/s).

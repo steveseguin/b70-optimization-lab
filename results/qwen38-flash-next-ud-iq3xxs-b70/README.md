@@ -1,5 +1,45 @@
 # Qwen3.8 Flash-Next UD-IQ3_XXS — quantized compressed version
 
+## One-card rebuild and checkpoint results, October 22
+
+One lane-A window (runner unit `lanequeue-A34`, 2026-10-22 02:13–02:55 UTC,
+whole host, kernel fault count 2 before and 2 after) ran four one-card rows.
+All four passed.
+
+**Rebuilt binary (packet178).** A portable rebuild from the one-card
+package's published source archive and build manifest produced a new binary
+whose hash differs from the sealed packet165 binary. Two fresh loads of this
+rebuild measured writing at **31.827 / 31.813 tok/s** and reading a 512-token
+prompt at **32.823 / 32.888 tok/s**. All 13 responses, the twelve suite
+prompts plus the reading request, are identical token for token across both
+loads and to the sealed packet165c rows (31.782 / 31.510 tok/s). The first
+128 output tokens remain the only oracle-checked span. The one-card package
+still pins and measures the sealed binary. The two-card rebuild has not been
+tested on device.
+
+**Checkpoint restart-and-continue (packet179, experimental).** The checkpoint
+engine is a packet165 relink with new save/restore entry code; every kernel
+object is unchanged. Its own full-suite load measured 31.850 tok/s, with the
+same 13 responses as the sealed rows and the rebuild. The gate saved one generation after 256 generated tokens
+of an 87-token prompt: 1.10 s and 68,756,516 bytes in 128 state blobs. Two
+separate new processes each restored it, in 0.458 s and 0.437 s, and generated
+128 more tokens. The merged 384 tokens equal the uninterrupted reference
+exactly, both restores match, and the first 128 tokens match the oracle.
+Recomputing the same prompt and 256 tokens from scratch took 36.75 s. This is
+a same-generation save/restart/resume only. Adding a new turn after a
+restore, and saving again after a restore, are not implemented. The
+checkpoint manifest keeps the label `experimental`. The blob bytes are not in
+Git; the tracked manifest records each blob's size and SHA-256. None of these
+rows is a strict headline or submission-eligible.
+
+- [Exact derived values, token comparisons and source hashes](ownrt-measurements-20261022.json).
+- [CPU-only extraction with independent token, oracle and checkpoint checks](extract-ownrt-window-20261022.py).
+- [Packet178 rebuild evidence](../../experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence/build.json), [packet179 checkpoint gate](../../experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/bracket-summary.json), [checkpoint contract](../../experiments/own-xpu-runtime/SESSION-SWAP-DESIGN.md) and [window note](../../notes/2026-10-21-own-runtime-window-pin-guard-refusal.md).
+
+```bash
+python3 -B results/qwen38-flash-next-ud-iq3xxs-b70/extract-ownrt-window-20261022.py
+```
+
 ## Current measured own-runtime profiles, October 19
 
 These are separate from the official FP8 model. The full-512 workload has now
