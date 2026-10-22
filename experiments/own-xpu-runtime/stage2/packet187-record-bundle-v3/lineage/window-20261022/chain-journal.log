@@ -1,0 +1,203 @@
+Started packet187-chain-a.service - /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet187-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a.
+{
+  "schema": "packet187.ready.v1",
+  "ready": true,
+  "ready_for_device": true,
+  "cpu_preparation_ready": true,
+  "device_executed": false,
+  "queued": false,
+  "submitted": false,
+  "unit": "packet187-chain-a",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a",
+  "chain_output": "device-cards01-p187-a",
+  "lane": "A",
+  "cards": [
+    0,
+    1
+  ],
+  "chain_command": "systemd-run --user --unit=packet187-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet187-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a </dev/null",
+  "command": "systemd-run --user --unit=packet187-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet187-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a </dev/null",
+  "bracket": {
+    "passed": true,
+    "chain_rule_met": true,
+    "screen_winner": true,
+    "split_control_rates": [
+      58.59516726664728,
+      58.440641274178176
+    ],
+    "u_rates": [
+      57.832172137081876,
+      57.80218598395255,
+      57.84007353525389
+    ],
+    "v3_rates": [
+      60.57342231630567,
+      60.532554891070376
+    ],
+    "split_drift_percent": 0.2644152923376275,
+    "u_drift_percent": 0.0655469177443635,
+    "min_gain_vs_split_controls_percent": 3.306394903877785,
+    "min_gain_vs_every_control_percent": 3.306394903877785,
+    "slower_v3_rate": 60.532554891070376,
+    "record_bar": 59.974070934365955,
+    "scope": "screen admission only; the fresh chain WS128 must exceed 58.798109 and pass every exactness gate",
+    "all_views_exact": true,
+    "exact_count": 104,
+    "rows": [
+      {
+        "row": 0,
+        "kind": "smoke",
+        "elapsed_seconds": 278.30039124,
+        "views": [
+          [
+            "v3",
+            60.13714932169553
+          ]
+        ]
+      },
+      {
+        "row": 1,
+        "kind": "view",
+        "elapsed_seconds": 209.57787248,
+        "views": [
+          [
+            "production",
+            58.59516726664728
+          ]
+        ]
+      },
+      {
+        "row": 2,
+        "kind": "bracket",
+        "elapsed_seconds": 475.717625565,
+        "views": [
+          [
+            "u",
+            57.832172137081876
+          ],
+          [
+            "v3",
+            60.57342231630567
+          ],
+          [
+            "u",
+            57.80218598395255
+          ],
+          [
+            "v3",
+            60.532554891070376
+          ],
+          [
+            "u",
+            57.84007353525389
+          ]
+        ]
+      },
+      {
+        "row": 3,
+        "kind": "view",
+        "elapsed_seconds": 215.710259537,
+        "views": [
+          [
+            "production",
+            58.440641274178176
+          ]
+        ]
+      }
+    ],
+    "bracket_lane": "B",
+    "chain_lane": "A",
+    "chain_cards": [
+      0,
+      1
+    ],
+    "s186_measured": {
+      "s1_rank1_saving_per_moved_layer_ms": 0.4630479014614197,
+      "boundary_command_ms": 1.02625344480216,
+      "split_hit_D_ms": 1.5997469492402536,
+      "split_hit_A_ms": 12.512000580355744,
+      "split_hit_B_ms": 13.161132304692869,
+      "split_hit_Bd_ms": 0.0,
+      "split_hit_elapsed_ms": 14.780566923329287,
+      "split_miss_D_ms": 1.6016238280371908,
+      "split_miss_A_ms": 12.510309736398995,
+      "split_miss_B_ms": 13.307919431554183,
+      "split_miss_Bd_ms": 0.0,
+      "split_miss_elapsed_ms": 25.714755199715,
+      "u_hit_D_ms": 1.598700928053444,
+      "u_hit_A_ms": 12.496827335382688,
+      "u_hit_B_ms": 13.357337707833844,
+      "u_hit_Bd_ms": 0.0,
+      "u_hit_elapsed_ms": 14.976483873889059,
+      "u_miss_D_ms": 1.5984789544442417,
+      "u_miss_A_ms": 12.492701854019591,
+      "u_miss_B_ms": 13.537945663301798,
+      "u_miss_Bd_ms": 0.0,
+      "u_miss_elapsed_ms": 25.931376032834425,
+      "v3_hit_D_ms": 1.6041789691027877,
+      "v3_hit_A_ms": 12.093209509279124,
+      "v3_hit_B_ms": 12.431241904911005,
+      "v3_hit_Bd_ms": 1.02625344480216,
+      "v3_hit_elapsed_ms": 14.055872579290563,
+      "v3_miss_D_ms": 1.6053658923738112,
+      "v3_miss_A_ms": 12.091271535609849,
+      "v3_miss_B_ms": 12.617967677897468,
+      "v3_miss_Bd_ms": 1.0246114602523448,
+      "v3_miss_elapsed_ms": 25.753181113941537,
+      "v3_hits_where_rank1_binds_fraction": 1.0
+    },
+    "s186_outcome": "V3 CHAIN RULE MET: prepare the record bundle (bundle 8 + V3 + static snapshot), fresh chain on cards 0+1",
+    "evidence_files": 169,
+    "evidence_map_sha256": "91ea61377be84a89a05da254bd4b17bcdbff470ed8d816c6c23e17575736f0ca",
+    "evidence_receipt": "ops/packet187-orchestration/evidence/bracket-gate.json"
+  },
+  "cpu": {
+    "passed": true,
+    "device_executed": false,
+    "receipt_sha256": "06bb7112d747b2ce60c56d57185cbd3f4ed3b0a97433249eb2db6d178adf6056",
+    "seal_sha256": "f6207449118c5ef6edfbdcbc5a74fb5aec7a989ec2936fd894df871a9e1314a4"
+  },
+  "policy_sha256": "503a4c534704e11fe67bf1f879d80adf28f83b3d226ed1f4d38dad4d378d75f9",
+  "storage": {
+    "passed": true,
+    "device_executed": false,
+    "root_free_bytes": 31814963200,
+    "required_free_bytes": 28243828383,
+    "margin_bytes": 3571134817,
+    "build_bytes": 89334416,
+    "build_budget_bytes": 250000000,
+    "retained_build_bytes": 89334416,
+    "retained_build_fits": true,
+    "cpu_build_peak_limit_bytes": 250000000,
+    "free_floor_bytes": 25000000000,
+    "parent_model_reserve_bytes": 0,
+    "parent_model_maximum_reserve_bytes": 0,
+    "oracle_growth_reserve_bytes": 0,
+    "early_retained_limit_bytes": 128000000,
+    "own_chain_peak_bytes": 3083162799,
+    "full_chain_uncompressed_bytes": 3324718708
+  },
+  "scope": {
+    "output_tokens": 128,
+    "strict512": false,
+    "arithmetic": "iq3-p49-split32-v1"
+  },
+  "host": {
+    "required_available_bytes": 107667817956,
+    "queue_start_extra_bytes": 1073741824
+  },
+  "chain_policy": "V3 meets the +2% record-chain rule (packet186 s186_decision); fresh exact WS128 must beat 58.798109. Timing windows require existing whole-host admission."
+}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10558, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10558, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 808, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10562, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 823, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10577, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 838, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10592, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 733, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10562, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 1003, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10606, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 2583, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 11543, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 11312, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 11543, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10380, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 10611, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 11312, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 15}}, "static_files": 11543, "write_path_count": 352, "errors": []}
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/build/device-cards01-p187-a", "windows": {"K0": {"write_paths": 45, "static_files": 729, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 804, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 804, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 729, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 955, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 1598, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 10327, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 11330, "generated_prerequisites": 15}}, "static_files": 11561, "write_path_count": 352, "errors": []}
+packet187-chain-a.service: Consumed 42min 46.617s CPU time.
