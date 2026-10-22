@@ -1,0 +1,73 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "schema": "packet190.k3x-state.v1",
+  "runs": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "cases": 65,
+      "refusals": 68,
+      "negatives": 2,
+      "moved_sites": 72,
+      "stored_sites": 72,
+      "moved_private_buffers": 80,
+      "snapshot_host": "static",
+      "boundary_export": "copy",
+      "export_copy_runs": 149,
+      "export_kernel_runs": 0,
+      "kernel_io": "kernel",
+      "rank0_prepare": "async",
+      "kio_sync_transfers": 65693,
+      "kio_async_copies": 382,
+      "staged_halves": 191,
+      "boundary": "rank0-k3",
+      "rank0_layers": "0-26",
+      "canonical_sha256": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+      "compiler": "GNU",
+      "selection": "k3x"
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "cases": 65,
+      "refusals": 68,
+      "negatives": 2,
+      "moved_sites": 72,
+      "stored_sites": 72,
+      "moved_private_buffers": 80,
+      "snapshot_host": "static",
+      "boundary_export": "copy",
+      "export_copy_runs": 149,
+      "export_kernel_runs": 0,
+      "kernel_io": "kernel",
+      "rank0_prepare": "async",
+      "kio_sync_transfers": 65693,
+      "kio_async_copies": 382,
+      "staged_halves": 191,
+      "boundary": "rank0-k3",
+      "rank0_layers": "0-26",
+      "canonical_sha256": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+      "compiler": "Intel",
+      "selection": "k3x"
+    }
+  ],
+  "fixtures": {
+    "build/cpu/state/engine-GNU": {
+      "sha256": "8d75f020b97f1ed874af889555caa70697ad02cb141396289a178d9091eca558",
+      "origin": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/build/k3-state/engine-GNU"
+    },
+    "build/cpu/state/engine-Intel": {
+      "sha256": "bab823a3aa19a1dab1323a25cc21b853e5fbdabf45c073ee5442ddc70d855b77",
+      "origin": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/build/k3-state/engine-Intel"
+    },
+    "build/cpu/state/k3x.json": {
+      "sha256": "3d9b0a2c3a0473a5e2b5e0481ab9576253b885bde4fd9a0d4354738d8ae37090",
+      "origin": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/build/k3-state/selections/k3x.json"
+    }
+  },
+  "transcripts_equal_packet189": true,
+  "canonical_sha256": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+  "packet189_k3_state_sha256": "7d2103e9063cd6cf3a210816c22924ae3c1b3e1de400630b8c355306160c0b59",
+  "peak_child_rss_kib": 875020
+}

@@ -1,0 +1,134 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "launched": false,
+ "launcher": "experiments/own-xpu-runtime/ops/packet190-orchestration/launch_chain.sh",
+ "launcher_sha256": "147f3b6833033defa5a2941265a4a42c00c32a87796c737b9cfa550ea81e15fb",
+ "cases": [
+  {
+   "case": "positive-dry-run",
+   "returncode": 0,
+   "expected": 0,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 1.2,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch dry run: every check passed; would run: systemd-run --user --unit=packet190-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bas",
+   "passed": true
+  },
+  {
+   "case": "endpoint-active",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: owner endpoint qwen38-27b-vision is active (stop all three endpoints first)",
+   "passed": true
+  },
+  {
+   "case": "pause-a-present",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: PAUSE-A is present: archive it for the chain first (this launcher never touches PAUSE files)",
+   "passed": true
+  },
+  {
+   "case": "pause-b-absent",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: PAUSE-B is absent: it must stay in place for the whole chain",
+   "passed": true
+  },
+  {
+   "case": "lane-unit-busy",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: active lane/window/chain units: lanequeue-A9.service",
+   "passed": true
+  },
+  {
+   "case": "host-memory-low",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: MemAvailable 1024000000 < 109870790382",
+   "passed": true
+  },
+  {
+   "case": "override-without-dry-run",
+   "returncode": 64,
+   "expected": 64,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "rehearsal overrides require --dry-run",
+   "passed": true
+  },
+  {
+   "case": "previous-unit-failed",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: unit packet190-chain-a is failed (a previous attempt exists: inspect it; never reset or retry automatically)",
+   "passed": true
+  },
+  {
+   "case": "lane-marker-present",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: lane marker /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/build/p190-launcher-txuajo50/lane-lane-marker-present/inflight-B.json exists (a lane job is in flight or left its marker; resolve it first)",
+   "passed": true
+  },
+  {
+   "case": "coordination-marker-present",
+   "returncode": 4,
+   "expected": 4,
+   "matched": true,
+   "systemd_run_called": false,
+   "unexpected_systemctl": false,
+   "lane_and_coordination_dirs_unchanged": true,
+   "seconds": 0.0,
+   "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: lane marker /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/build/p190-launcher-txuajo50/coord-coordination-marker-present/active-lane-B.json exists (a lane job is in flight or left its marker; resolve it first)",
+   "passed": true
+  }
+ ],
+ "live_dry_run": {
+  "returncode": 4,
+  "output_tail": "2026-10-22T22:01:07Z p190-launch REFUSED: owner endpoint qwen38-27b-fp8 is active (stop all three endpoints first)",
+  "note": "real systemctl is-active/list-units reads, real lane dir, real meminfo; --dry-run never launches"
+ }
+}

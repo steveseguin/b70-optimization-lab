@@ -1,0 +1,22 @@
+{
+  "schema": "packet190.policy.v1",
+  "arithmetic": "iq3-p49-split32-v1",
+  "bundle": "bundle8 + packet153 snapshot_host=static + packet186 V3 head placement (full target head on rank 1) + packet189 k3x (rank 0 holds layers 0-26 and runs GDN layers 24-26 for the verified token, boundary rank0-k3; rank 1 from QSA layer 27; kernel_io=kernel, rank0_prepare=async, boundary_export=copy); probe=off, dense_scales=expanded",
+  "coordinator_idle_lane_exception_authorized": false,
+  "authorization": "Coordinator ruling 2026-10-22 after packet189: \"Packet189 k3x met the chain rule on 2026-10-22 (lane B, lanequeue-B36, 21:17-21:32 UTC): slower k3x view 62.225 >= 1.02 x every V3 view and >= 61.873. Derive the record bundle from packet187 exactly as packet189's README prescribes and prepare a fresh eleven-window chain on cards 0+1; the chain's WS128 must beat 60.659520 (cmvjvabyv040jrf01dricuz8s) and pass every exactness gate.\" s189_decision: k3x 62.242/62.225 vs V3 60.615/60.444/60.498 in-load + fresh 60.505 (packet188 row 1), +2.657% over the fastest V3 view, drift 0.28%, every view exact, proposals and acceptance identical, no kill rule fired. This admits a chain, never a record claim.",
+  "screen_minimum_gain_percent": 2.0,
+  "screen_maximum_control_drift_percent": 3.0,
+  "record_floor_tok_s": 60.65951991975228,
+  "record_bar_tok_s": 61.87271031814733,
+  "supersedes": "cmvjvabyv040jrf01dricuz8s",
+  "chain_lane": "A",
+  "cards": [0, 1],
+  "output_tokens": 128,
+  "strict512": false,
+  "device_floor_bytes": 25000000000,
+  "cpu_stop_bytes": 27000000000,
+  "host_required_available_bytes": 108797048558,
+  "host_queue_start_extra_bytes": 1073741824,
+  "admission": "all three owner endpoints stopped; PAUSE-B kept for the whole chain; PAUSE-A archived (never deleted) only for the chain",
+  "data_proof": "stream presence, format and exactness only; no elapsed-time proof limit"
+}

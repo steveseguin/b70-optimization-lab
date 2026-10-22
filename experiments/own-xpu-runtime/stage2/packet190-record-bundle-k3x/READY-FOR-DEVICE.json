@@ -1,0 +1,177 @@
+{
+  "schema": "packet190.ready.v1",
+  "ready": true,
+  "ready_for_device": true,
+  "cpu_preparation_ready": true,
+  "device_executed": false,
+  "queued": false,
+  "submitted": false,
+  "unit": "packet190-chain-a",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/build/device-cards01-p190-a",
+  "chain_output": "device-cards01-p190-a",
+  "lane": "A",
+  "cards": [
+    0,
+    1
+  ],
+  "chain_command": "systemd-run --user --unit=packet190-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet190-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/build/device-cards01-p190-a </dev/null",
+  "command": "systemd-run --user --unit=packet190-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet190-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/build/device-cards01-p190-a </dev/null",
+  "bracket": {
+    "passed": true,
+    "chain_rule_met": true,
+    "screen_winner": true,
+    "v3_rates": [
+      60.50488520482965,
+      60.61511915016977,
+      60.44423785613836,
+      60.49835839474562
+    ],
+    "fresh_v3_rate": 60.50488520482965,
+    "inload_v3_rates": [
+      60.61511915016977,
+      60.44423785613836,
+      60.49835839474562
+    ],
+    "k3x_rates": [
+      62.24199434282818,
+      62.22542821257332
+    ],
+    "v3_drift_percent": 0.2827089894625212,
+    "min_gain_vs_every_v3_view_percent": 2.656612879724163,
+    "slower_k3x_rate": 62.22542821257332,
+    "faster_v3_rate": 60.61511915016977,
+    "record": 60.65951991975228,
+    "record_id": "cmvjvabyv040jrf01dricuz8s",
+    "record_bar": 61.87271031814733,
+    "scope": "screen admission only; the fresh chain WS128 must exceed 60.659520 and pass every exactness gate",
+    "all_views_exact": true,
+    "exact_count": 91,
+    "rows": [
+      {
+        "row": 0,
+        "packet": "packet189-twocard-k3x",
+        "kind": "smoke",
+        "elapsed_seconds": 281.521155458,
+        "views": [
+          [
+            "k3x",
+            61.88263112613208
+          ]
+        ]
+      },
+      {
+        "row": 1,
+        "packet": "packet189-twocard-k3x",
+        "kind": "bracket",
+        "elapsed_seconds": 481.506680833,
+        "views": [
+          [
+            "v3k",
+            60.61511915016977
+          ],
+          [
+            "k3x",
+            62.24199434282818
+          ],
+          [
+            "v3k",
+            60.44423785613836
+          ],
+          [
+            "k3x",
+            62.22542821257332
+          ],
+          [
+            "v3k",
+            60.49835839474562
+          ]
+        ]
+      },
+      {
+        "row": 1,
+        "packet": "packet188-twocard-k3-composite",
+        "kind": "view",
+        "elapsed_seconds": 215.987043861,
+        "views": [
+          [
+            "v3",
+            60.50488520482965
+          ]
+        ]
+      }
+    ],
+    "bracket_lane": "B",
+    "chain_lane": "A",
+    "chain_cards": [
+      0,
+      1
+    ],
+    "s189_kill_rules": {
+      "thresholds": {
+        "handoff_export_ms": 0.1,
+        "boundary_total_ms": 1.6,
+        "k3_hit_saving_ms": 0.35,
+        "boundary_over_draft_wall_fraction": 0.1,
+        "trims_A_saving_ms": 0.105
+      },
+      "handoff_export_ms": 0.053412051346801326,
+      "boundary_total_ms": 1.48121471043771,
+      "k3_hit_saving_ms": 0.5303827790453166,
+      "boundary_over_draft_wall_fraction": 0.0,
+      "trims_A_saving_ms": 0.14092131365937988,
+      "fired": []
+    },
+    "s189_outcome": "K3X CHAIN RULE MET: derive the record bundle from packet187 with the k3x selection (README) and run a fresh chain on cards 0+1",
+    "fresh_v3_source": {
+      "source": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/evidence/device-row1-control-v3-B-p188/bracket-summary.json",
+      "sha256": "4ff1ec14a842c5ec652c9cdc0527658929a84edd2baaefecb9de753f12db0aae",
+      "read_in_place": true
+    },
+    "evidence_files": 148,
+    "evidence_map_sha256": "7c311294ea471e677fb1ad0a82c1e69ecd29fba7db37318d9bf056791a291691",
+    "evidence_receipt": "ops/packet190-orchestration/evidence/bracket-gate.json"
+  },
+  "cpu": {
+    "passed": true,
+    "device_executed": false,
+    "receipt_sha256": "46b99ce8d2645f7069286e7c1bf03809cb2b303b26d12e62bc99e26a44924faa",
+    "seal_sha256": "3d7cfa2ad7d5f0058ff55554ebb99f7c8030730adf157a08f0512302d644d204"
+  },
+  "policy_sha256": "45bfa90d64f1561cedd103ffd59f80c6b71d6680e5409dc1b340fa88602983b8",
+  "storage": {
+    "passed": true,
+    "device_executed": false,
+    "root_free_bytes": 28349923328,
+    "required_free_bytes": 28243454778,
+    "margin_bytes": 106468550,
+    "build_bytes": 89708021,
+    "build_budget_bytes": 250000000,
+    "retained_build_bytes": 89708021,
+    "retained_build_fits": true,
+    "cpu_build_peak_limit_bytes": 250000000,
+    "free_floor_bytes": 25000000000,
+    "parent_model_reserve_bytes": 0,
+    "parent_model_maximum_reserve_bytes": 0,
+    "oracle_growth_reserve_bytes": 0,
+    "early_retained_limit_bytes": 128000000,
+    "own_chain_peak_bytes": 3083162799,
+    "full_chain_uncompressed_bytes": 3324718708
+  },
+  "scope": {
+    "output_tokens": 128,
+    "strict512": false,
+    "arithmetic": "iq3-p49-split32-v1"
+  },
+  "host": {
+    "required_available_bytes": 108797048558,
+    "queue_start_extra_bytes": 1073741824
+  },
+  "chain_policy": "k3x meets the +2% record-chain rule (packet189 s189_decision, slower k3x 62.225 >= 1.02 x every V3 view and >= 61.873); fresh exact WS128 must beat 60.659520 (cmvjvabyv040jrf01dricuz8s). Timing windows require existing whole-host admission.",
+  "commit": "6d1680daa7810b8873c882b13808fe1785f2b02f",
+  "created_utc": "2026-10-22T22:01:05.191427+00:00",
+  "final_checks_sha256": "b3ae12ae3aa012321cef3ae75dc7161d271011a034b768b21bc4df49f5dac396",
+  "device_quality_pending": true,
+  "device_performance_pending": true,
+  "record_eligible_after_chain_only": true,
+  "last_packet_write": true
+}

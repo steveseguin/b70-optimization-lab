@@ -1,0 +1,69 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "schema": "packet190.transport-gate.v1",
+  "chain_shared_bytes": 266304,
+  "engine_binary_sha256": "a50588a9e89adacb14cefcc53dd271cbd8054b81fe076dbca81d7b779d99f6c6",
+  "device_binary_sha256": "87eec6453a2a9a9bfe30ed19466c6a70644d9cd168f734be87d2f0a17b776af4",
+  "selections": {
+    "production": "25ff821d5d1572b2a873c8befbcc8099a7a326300348887873c10d0f044c2f87",
+    "k3x": "3d9b0a2c3a0473a5e2b5e0481ab9576253b885bde4fd9a0d4354738d8ae37090"
+  },
+  "rows": {
+    "w0p_canary_k3x": {
+      "passed": true,
+      "device_executed": false,
+      "handovers": 1000,
+      "kernels_per_rank": 1000,
+      "pids": [
+        3152044,
+        3152045
+      ],
+      "both_alive_checks": 1000,
+      "overlapping_host_work_intervals": 2,
+      "overlap_definition": "rank command receive through local drain; device clocks not compared",
+      "metrics": [
+        {
+          "busy_ms": 3.925518999999994,
+          "handover_ms": 96.01573431491852,
+          "calls": 1000,
+          "gpu_ms": 0.0
+        },
+        {
+          "busy_ms": 3.6723439999999883,
+          "handover_ms": 94.09011650085449,
+          "calls": 1000,
+          "gpu_ms": 0.0
+        }
+      ]
+    },
+    "negative_old_shared_size": {
+      "refused": true,
+      "error": "rank receive EOF",
+      "rank_failures": [
+        "shared extent",
+        "shared extent"
+      ],
+      "shared_bytes": 200704
+    },
+    "decode": {
+      "tokens": 24,
+      "fixtures": 120,
+      "stats": {
+        "guesses": 23,
+        "hits": 0,
+        "misses": 23,
+        "no_guess": 0
+      },
+      "k3x_boundaries": 28,
+      "identical": true
+    }
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/ops/packet190-orchestration/transport_gate.py": "5fa5bba7c2a2bd7efdd4e702c1a4b459f2925ad43d49d75bac57fe3d02b37729",
+    "experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/chain_pipeline.py": "3b370db12d846b5da99828c9c63b1fcf7d4ba6be9457fbdf8b216374f23000ae",
+    "experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/pipeline.py": "7259c2988902b3e37c0b3809c57c7089ae981ee535907bcfb3c65722113c3392",
+    "experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/window.py": "2eeaad1e570a75fb3cb06f91a63d8cdc74c165b63b330fe63cbfe88d1abc8531"
+  },
+  "scope": "CPU miniature through the real chain transport and W0p canary code; the device canary/decode run in the chain itself"
+}

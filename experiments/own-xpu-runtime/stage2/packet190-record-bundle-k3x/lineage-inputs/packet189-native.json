@@ -1,0 +1,659 @@
+{
+ "schema": "packet190.native-binding.v1",
+ "engine": "packet189 k3x (bundle 8 + packet153 static snapshot + V3 head placement + k3 boundary rank0-k3 (layers 24-26 on rank 0 for the verified token) + kernel_io=kernel + rank0_prepare=async + boundary_export=copy)",
+ "reused_byte_for_byte": true,
+ "relinked": false,
+ "compiler_runs": 0,
+ "binaries": {
+  "build/device/own-rt-iq3": {
+   "sha256": "87eec6453a2a9a9bfe30ed19466c6a70644d9cd168f734be87d2f0a17b776af4",
+   "origin": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/build/device/own-rt-iq3"
+  },
+  "build/gnu-host/own-rt-iq3": {
+   "sha256": "a50588a9e89adacb14cefcc53dd271cbd8054b81fe076dbca81d7b779d99f6c6",
+   "origin": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/build/gnu-host/own-rt-iq3"
+  }
+ },
+ "fixture_links": {
+  "build/device/jit-smoke": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/jit-smoke",
+   "sha256": "31e561ed5a3768348aec5cbdba21439ac607e61de73fa3ea3ee2522cc83117a2"
+  },
+  "build/device/k2-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/k2-fixtures",
+   "sha256": "f10617ed90b3ef1a1c243b90577bd3c551ca7e20547311e22f5049e403ec9433"
+  },
+  "build/device/nongemv-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/nongemv-fixtures",
+   "sha256": "7351c86ca1754c3e53baacd3b021ce02770b50009cfb0c0006caf4f111a471ff"
+  },
+  "build/device/p33-linked-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p33-linked-fixtures",
+   "sha256": "aa4107353c04902e53ef565eb236f752b1e46fb600a9fcb36ec0ce7f73acb316"
+  },
+  "build/device/p49-qsa-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49-qsa-fixtures",
+   "sha256": "4f41db99fd44d54b72eed259fe1b3f486c39724b5b8c2120dfae637725cbf8d1"
+  },
+  "build/device/p49b-expert-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49b-expert-fixtures",
+   "sha256": "688025ef2ce6ccb895a3aaccc52fbb2d561fbfefeee2e11a6b5d459870292151"
+  },
+  "build/device/p49c-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49c-fixtures",
+   "sha256": "70acbc6e4d2488062ddf47e5c854df84e30f04bf8e38338ba0c5d35e154bb699"
+  },
+  "build/device/p49d-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49d-fixtures",
+   "sha256": "d094e46e9f490aad1e8aa0ff76d94d822ec044448ef28b11b01e03dfb892f09d"
+  },
+  "build/device/p56-head-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p56-head-fixtures",
+   "sha256": "96eaaaca0714aedc20922c38896dd1ffc1c17e3a3d8b4b6057c33fbda38c6ea0"
+  },
+  "build/gnu-host/authority-tests": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/authority-tests",
+   "sha256": "ff7ebb15eb4e26d261d275054fb22b42615f92643c3a652e5b6a6cbd32bf24a4"
+  },
+  "build/gnu-host/chain-tests": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/chain-tests",
+   "sha256": "709aa83950e8c97bf130eb64e9cac4f78831cf952fcfb7a5836b4cbcf05021c9"
+  },
+  "build/gnu-host/k2-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/k2-fixtures",
+   "sha256": "99c0122a09629ff7bdb89b6c97d6850afb45cb9f0ac3cc1b658cd5cd54d19033"
+  },
+  "build/gnu-host/libmath_bridge.so": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/libmath_bridge.so",
+   "sha256": "0549ae1040a3d445ee0a5977798275701a3f4b7d85d46b2d4635b61fb8b12514"
+  },
+  "build/gnu-host/lifetime-tests": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/lifetime-tests",
+   "sha256": "87e57446d7deb26b30a71b81858b82bfc5719db1d2b7b16d87aef46e6d654b45"
+  },
+  "build/gnu-host/nongemv-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/nongemv-fixtures",
+   "sha256": "e120d89d966ec38d99410093e3d09b86140b484f023fa60a9260c407e3f0276d"
+  },
+  "build/gnu-host/owner-retirement-tests": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/owner-retirement-tests",
+   "sha256": "77cb38d56619ab82735c3de96d0331e1cf2779f7248e999963367093943f75b0"
+  },
+  "build/gnu-host/p33-linked-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p33-linked-fixtures",
+   "sha256": "8dfe7d7950c7eee2816547aa76311ea38aae2705766581c380804ea7dba821cc"
+  },
+  "build/gnu-host/p39-merged-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p39-merged-fixtures",
+   "sha256": "08fc9968a27f8ecf18aea39dc7fd22ced1b82ed8f1e0c13da8e579a645023882"
+  },
+  "build/gnu-host/p49-qsa-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49-qsa-fixtures",
+   "sha256": "1ab8188de741958e2ff40982cc7f8a693c4b0599fecd5fefb7084cf2b4de6ec8"
+  },
+  "build/gnu-host/p49b-expert-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49b-expert-fixtures",
+   "sha256": "fa0595061413784c13d62e15bbaf666acf6ccd16d837e88455bc7b741223c7da"
+  },
+  "build/gnu-host/p49c-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49c-fixtures",
+   "sha256": "c038da1b3dbe3546f1dce4b0604100481e4820aa998c9e08269a3dc735bf0325"
+  },
+  "build/gnu-host/p49d-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49d-fixtures",
+   "sha256": "994f19fb165b0d50bb1bf5a2df3ffa3f2fb889dfbf9efbc14d8443b888f201b5"
+  },
+  "build/gnu-host/p56-head-fixtures": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p56-head-fixtures",
+   "sha256": "522372fc54fd293021dfa056250fe100ddcc93aec6d6f53e80552ed144afcc37"
+  },
+  "build/gnu-host/prepared-invalidation-tests": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/prepared-invalidation-tests",
+   "sha256": "d8576bb49eb05d466a1c9cb822ef0e2c5883a5db8700bc9770ef61c7672edd91"
+  },
+  "build/gnu-host/queue-tests": {
+   "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/queue-tests",
+   "sha256": "70b36073b618e7de59555e51a5e91315349bf3f28c0832d5d5ce4e7a7118addf"
+  },
+  "build/fusion-fixtures/cases.txt": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/cases.txt",
+   "sha256": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33"
+  },
+  "build/fusion-fixtures/combine-norm-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/combine-norm-1.fixture",
+   "sha256": "4094421a7f86695142bbc718d50cf4fb0a3508100b5ef3c53ea1a00e323b7ed8"
+  },
+  "build/fusion-fixtures/combine-norm-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/combine-norm-3.fixture",
+   "sha256": "8888d33c7b4e1d1de3726e3177c435f3d9fed45dc630e8f87aed164bb85354f6"
+  },
+  "build/fusion-fixtures/combine-norm-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/combine-norm-87.fixture",
+   "sha256": "c142fafd6bbfefa7dcaa5c2a1bd974b57677d300bc5ab5285e332bd5c4e08905"
+  },
+  "build/fusion-fixtures/conv-10240-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-10240-1.fixture",
+   "sha256": "fee7cc6bd8a37454ae7dd21811088b398a23cee4b7bac6c6e5ba7365c54c48bc"
+  },
+  "build/fusion-fixtures/conv-10240-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-10240-3.fixture",
+   "sha256": "bceff2c637a56ca535600ddccfc4a5af676a513e7861bf912dbf2ceeebd94b61"
+  },
+  "build/fusion-fixtures/conv-10240-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-10240-87.fixture",
+   "sha256": "83b456cbb3337f651bf8b9654e01a79d25d317069a3ea98ff224d18ee86e581d"
+  },
+  "build/fusion-fixtures/conv-17-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-17-1.fixture",
+   "sha256": "f5c37023c5acc967934130207299be19c1043dbdbe110f69424b696c2290a53b"
+  },
+  "build/fusion-fixtures/conv-17-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-17-3.fixture",
+   "sha256": "1759ad4491705cbf932e4a55e57112b0f34322253d291f89f22742c53c08abdb"
+  },
+  "build/fusion-fixtures/conv-17-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-17-87.fixture",
+   "sha256": "0bcae2a34827266763e0f6abff03d18a09ee630a93d0eb41d4c964a2bf1df0e0"
+  },
+  "build/fusion-fixtures/conv-dilation3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-dilation3.fixture",
+   "sha256": "6b6b2fdb4650b32d380f17a4de0bf99432124497c98d118c1d884bfadbdbd24a"
+  },
+  "build/fusion-fixtures/conv-real-f32-weights.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-real-f32-weights.fixture",
+   "sha256": "6892e601a763ab9296b56b2f15e6e220e4a5e4bfb3782270f1f166071d6bc510"
+  },
+  "build/fusion-fixtures/ffn-act-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-act-1.fixture",
+   "sha256": "aaa7ac2666af65df9cf6cf67c2d4375993204fc44bfc87dcc639084e6f2523c6"
+  },
+  "build/fusion-fixtures/ffn-act-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-act-3.fixture",
+   "sha256": "0f8bc9eb2b0e12a4156e0d11b95a5feff67a32ed1b8dbccc012c27aea1518a97"
+  },
+  "build/fusion-fixtures/ffn-act-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-act-87.fixture",
+   "sha256": "f33ed6cc48de269b1d002b8efba1fb750454479770e694610dfd4cc8bac94c2d"
+  },
+  "build/fusion-fixtures/ffn-routed-act-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-routed-act-1.fixture",
+   "sha256": "94ed1051f3b8942eb38355cf878c52a90f8881f0f697ebef5224729bed9084af"
+  },
+  "build/fusion-fixtures/ffn-routed-act-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-routed-act-3.fixture",
+   "sha256": "7aab2944ea0c7512c923ada6adfbee3fd484e317422ce9000fa46b08d3587115"
+  },
+  "build/fusion-fixtures/ffn-routed-act-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-routed-act-87.fixture",
+   "sha256": "b5baa672234d8e51930a822c34b858362b9a2ee83b6e7bd27290ef7fad4ab300"
+  },
+  "build/fusion-fixtures/gdn-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-1.fixture",
+   "sha256": "94f7772bd493e4c27d68e4fb8ac213bdda4937f5153117c74c6e4f4e0cde6087"
+  },
+  "build/fusion-fixtures/gdn-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-3.fixture",
+   "sha256": "5a9157373619d003a831557316fa3d1e3b769a5e9dadca14dc3b8e057b4b45fd"
+  },
+  "build/fusion-fixtures/gdn-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-87.fixture",
+   "sha256": "274a7bc1dc84b6c564acdaea2615ecc28cac41eb20c402b7350a3f2cd688753f"
+  },
+  "build/fusion-fixtures/gdn-gated-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-gated-1.fixture",
+   "sha256": "508d204b2a88deac3044ede7137841c039169fece55d732d1daaa344fa66ecbc"
+  },
+  "build/fusion-fixtures/gdn-gated-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-gated-3.fixture",
+   "sha256": "8f602ba826175eea15b0ad56c5547e7c593c792c7445fe3aa6c58d7ba94d1e4d"
+  },
+  "build/fusion-fixtures/gdn-gated-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-gated-87.fixture",
+   "sha256": "6d7b5c3e74ad205619134dd8e75e4367054dbc5fcdfa28c59a69cbd8e7e97cbb"
+  },
+  "build/fusion-fixtures/gdn-inactive.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-inactive.fixture",
+   "sha256": "c63366c2c8bfd095a126f6a2d72d489162ca5dfca472d2e956315c69850072ce"
+  },
+  "build/fusion-fixtures/gdn-packed-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-packed-1.fixture",
+   "sha256": "570d4dd6c63b9d97e9517bfe2a70e5a27bd30b179ef7d89b967d938fa79c0886"
+  },
+  "build/fusion-fixtures/gdn-packed-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-packed-3.fixture",
+   "sha256": "033dc0e9d920cd5df231be2566a75713805997e3453a7cac3f78a1cff3f7cb07"
+  },
+  "build/fusion-fixtures/gdn-packed-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-packed-87.fixture",
+   "sha256": "404f9eb95a64cfc660995793167679687962e5749e9c04cafb67f89beaff00c2"
+  },
+  "build/fusion-fixtures/gdn-runtime-f32-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-runtime-f32-1.fixture",
+   "sha256": "096b931cd760400480f0c98ab1acbbca1f8873595e18bd839ea73261aee68368"
+  },
+  "build/fusion-fixtures/gdn-runtime-f32-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-runtime-f32-3.fixture",
+   "sha256": "c93ce7110e1ed90f33af7c77e85077bf35334fb588118eb5d308a91184238cce"
+  },
+  "build/fusion-fixtures/gdn-runtime-f32-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-runtime-f32-87.fixture",
+   "sha256": "23382a0e3c4a3f48a88e523d587b93434941e995f26df557b46861a2a33bff66"
+  },
+  "build/fusion-fixtures/gdn-sticky-error.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-sticky-error.fixture",
+   "sha256": "df155877d4082f6a04555053d6406bbd07761d4609906d7c4f95ecc6ab958110"
+  },
+  "build/fusion-fixtures/hc-act-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/hc-act-1.fixture",
+   "sha256": "1dbbdea04dc9e81cdd4be58dd83fb1b4d499d71ebc9963adc3882cab76626d4a"
+  },
+  "build/fusion-fixtures/hc-act-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/hc-act-3.fixture",
+   "sha256": "28875ab1a640b0f5489c59ec4f277fbfe15c793c2bf32ce7fc899d9fcee36a5a"
+  },
+  "build/fusion-fixtures/hc-act-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/hc-act-87.fixture",
+   "sha256": "96bfe4a9c1f4bd70c1c1a564849a7a06ec13d88147d8c8451e3082569d7e5f37"
+  },
+  "build/fusion-fixtures/manifest.json": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/manifest.json",
+   "sha256": "61bc673536ccd710b6eec9522b00df1c6ea24066d5fc65e3434acc2250eae194"
+  },
+  "build/fusion-fixtures/mix-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/mix-1.fixture",
+   "sha256": "cfe7230d29f72705cce48cfec09501c9dea3fcf5e3ddebf72496e74d3472ef03"
+  },
+  "build/fusion-fixtures/mix-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/mix-3.fixture",
+   "sha256": "e14013e1e867bfd05b66ea9bbe9352d435e06bb5a8e97b53a2b0c6cbeaf51d92"
+  },
+  "build/fusion-fixtures/mix-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/mix-87.fixture",
+   "sha256": "689aa8a7b6b2e0fb5b6de175a05cd80f672e4f4d09478ea6ccbdd579b4b60caa"
+  },
+  "build/fusion-fixtures/moe-combine-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/moe-combine-1.fixture",
+   "sha256": "24bb91ec9dabbe7cbc3784b74ecc1b51e522cd984a006e5a0b6d316743be9f79"
+  },
+  "build/fusion-fixtures/moe-combine-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/moe-combine-3.fixture",
+   "sha256": "3c465c7ee768c465929aebd5e1ec3bc62537d739bb03a3e66d6bc0a7fe5a4c24"
+  },
+  "build/fusion-fixtures/moe-combine-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/moe-combine-87.fixture",
+   "sha256": "6e0bb186b2336c5ada2fd240320bc2790b4c325d336d9e45bfb1dad798a60d3d"
+  },
+  "build/fusion-fixtures/norm-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-1.fixture",
+   "sha256": "a64926b4485b43dd20e1f8cc36d1778e96358d55dfc11af7786cce3b12749b90"
+  },
+  "build/fusion-fixtures/norm-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-3.fixture",
+   "sha256": "5898ad37b4edf3b02553243795a6419664b05bb2c09ad5b1362da4ea4c3a5efc"
+  },
+  "build/fusion-fixtures/norm-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-87.fixture",
+   "sha256": "0740dd64e311bcbfdcd172a726301b0d988e95b93ff6ae46d23f358801f9fe78"
+  },
+  "build/fusion-fixtures/norm-odd-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-1.fixture",
+   "sha256": "4b2bb43e2e0d1cea77bf2f7510756ac7b091dd79d3b61ecda72e411ba8f55b08"
+  },
+  "build/fusion-fixtures/norm-odd-17.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-17.fixture",
+   "sha256": "d55142ae6bb1123ed95f14792d717c1852cfb558039beebca10748fddd66b2d5"
+  },
+  "build/fusion-fixtures/norm-odd-255.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-255.fixture",
+   "sha256": "854ff287664fc499c46314fafd012f37d779d5ea615ead58441f8821511796ee"
+  },
+  "build/fusion-fixtures/norm-odd-2560.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-2560.fixture",
+   "sha256": "79dd473c25a6f571bbed69f7c650029bb926c81f8e5b7181bac0c2f6e3789871"
+  },
+  "build/fusion-fixtures/norm-odd-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-3.fixture",
+   "sha256": "faff23de2a34c39973234782f474ff9d60a343ff47d72bcdd88f049f05d17a17"
+  },
+  "build/fusion-fixtures/norm-stored-f32-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-stored-f32-1.fixture",
+   "sha256": "3b15078c1892760ebbe5cd8c4bd4d05d129fe7c46ee2aa7e17bdcbc1e7222f7e"
+  },
+  "build/fusion-fixtures/norm-stored-f32-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-stored-f32-3.fixture",
+   "sha256": "96119bc03117dd5d242092bd340cf3979f833f16d0bfe22d65b0773ed08ac3fe"
+  },
+  "build/fusion-fixtures/norm-stored-f32-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-stored-f32-87.fixture",
+   "sha256": "9004265c5a1cb5b50afea661d0d0432d88a3e1a7ed75a516fe89b0eb3880780b"
+  },
+  "build/fusion-fixtures/pool-existing.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/pool-existing.fixture",
+   "sha256": "d9014c2d2ed4b3d8c3d6f1c26219e54e8a4c1ad88646bb3d1c7e7c45c985960b"
+  },
+  "build/fusion-fixtures/pool-inactive.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/pool-inactive.fixture",
+   "sha256": "8dffa5bf1aa6a0f7c132acd79970358d90b5247edf2d2fd2c233c93166c77dff"
+  },
+  "build/fusion-fixtures/qsa-attention-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-attention-1.fixture",
+   "sha256": "f42f50099d20a6be7de8f27ae913961510b974ca2c2f4d0f030312285de688bd"
+  },
+  "build/fusion-fixtures/qsa-attention-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-attention-3.fixture",
+   "sha256": "77b21cd7d6b8d0198440cf74f2f258c0081fb2166f0f719636708f4fb69ff03d"
+  },
+  "build/fusion-fixtures/qsa-attention-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-attention-87.fixture",
+   "sha256": "a7f62b53ff615c21d6a4371faab64a0426bba45c5bd8cdb21fb228c70c2bcd6e"
+  },
+  "build/fusion-fixtures/qsa-pool-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-pool-1.fixture",
+   "sha256": "7c5a3fca68265d3fd5fc96c754de1bb87149ee53cf962e3c630396ede22d2a56"
+  },
+  "build/fusion-fixtures/qsa-pool-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-pool-3.fixture",
+   "sha256": "26c2f3f34ff8a587701adff2b80d7ca4a320bd59120972ce129cd6096be02ed2"
+  },
+  "build/fusion-fixtures/qsa-pool-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-pool-87.fixture",
+   "sha256": "98d6bc444c918100ca01886572fb5c48236bf119d53a7bac32b535f0e7a9a4d0"
+  },
+  "build/fusion-fixtures/qsa-prepare-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-prepare-1.fixture",
+   "sha256": "209cdd9d47145fde5edde998b653eedeb1baa6274b189a5adc6b07a5f6643137"
+  },
+  "build/fusion-fixtures/qsa-prepare-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-prepare-3.fixture",
+   "sha256": "17592dc2f6acf3e1a3ee551d5bfe4f2972950fea908d71d532e330ecd34e6ea6"
+  },
+  "build/fusion-fixtures/qsa-prepare-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-prepare-87.fixture",
+   "sha256": "657854b7dc2e6100dbd0748f402c979e7f5144cfe9c614fdd411ee5a984fba49"
+  },
+  "build/fusion-fixtures/qsa-select-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-select-1.fixture",
+   "sha256": "c5b771b2a6e3f2268a848c6e118ef30569804fa4501f4289aa86efb9cee6af3f"
+  },
+  "build/fusion-fixtures/qsa-select-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-select-3.fixture",
+   "sha256": "cc79ed3c4580af07fbe28272c367b55bd5abe5dbcec2b83be1fe893bc7cb316f"
+  },
+  "build/fusion-fixtures/qsa-select-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-select-87.fixture",
+   "sha256": "2d00bcadcc975c80fb9c12e45244e70ee354f36dc4e6130b65b8ded489e262b2"
+  },
+  "build/fusion-fixtures/route-gather-1.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-gather-1.fixture",
+   "sha256": "73c953b09d5c0e00a6c095af1357b6c7c8fdcb40cce25bac0beb5d586afd9d46"
+  },
+  "build/fusion-fixtures/route-gather-3.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-gather-3.fixture",
+   "sha256": "31743839920fe6f90224ef32ae1d41413841b3d1bb2059bbae83c5653b941686"
+  },
+  "build/fusion-fixtures/route-gather-87.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-gather-87.fixture",
+   "sha256": "05034a82d771f401744cdc46b7bcaa13e79bb582d6582bdc1820fccda5414545"
+  },
+  "build/fusion-fixtures/route-nan.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-nan.fixture",
+   "sha256": "b261b63b27eac45fe110cae8aa94a6eb2dc8067b210cc038cf9d5ec7343b0435"
+  },
+  "build/fusion-fixtures/route-ties.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-ties.fixture",
+   "sha256": "41670934a58c97c18167bb0f1e999930ec2ab8535536660ac7fa6300e989ad0b"
+  },
+  "build/fusion-fixtures/route-varied.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-varied.fixture",
+   "sha256": "95c490555ae8561d772e691deb20dc93b2302dc81ce1e1c48b943f7bef34f553"
+  },
+  "build/fusion-fixtures/select-pruned-tail.fixture": {
+   "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/select-pruned-tail.fixture",
+   "sha256": "bf28ba2e66a07e3b18c23a7554c2c521afdc41adb381f913ace0eefe99e0343c"
+  }
+ },
+ "sources": {
+  "k3x-native/native-src/entry-main.cpp": "8bf9d77ea962ebe23a895b589049f94d3681daf8e14b52ecf9ad8a6eca826815",
+  "k3x-native/native-src/main.cpp": "4edb208bd6a2f1aea1a83ab3b76b8deb0cb59cd6feef91613fd74888a2dca140",
+  "k3x-native/native-src/mtp.hpp": "dcb3cfe91499f9af2780fff5e83b03f4b5f1747f1cff9661bfbc0466ce53abba",
+  "k3x-native/native-src/rank.hpp": "24c0d3561e6df50965bcecdcfba6436fe49f6775602eb0d54d3aa936f5f1fa1d",
+  "k3x-native/native-src/strict_snapshot.hpp": "33c73d144fa37b79df5a3d70d7edcc7f236a81cd2fdd0dad518310b10eaf7623",
+  "k3x-native/native/audit_s1.hpp": "4df991f64987b0265983114cec6d788b38e3dda7353dabcfb420d984d8d656b4",
+  "k3x-native/native/audit_small.hpp": "1a10b9a20ceec9c8eb8d97c5d1ff7d13721235f45e262fa69331dea21620c31c",
+  "k3x-native/native/bracket_boundary.hpp": "11b38639045253ac74de609b9ad1752ae050d70212ef6f5495f5977c03ff2b8a",
+  "k3x-native/native/controller_probe_test.cpp": "59c46c4526621e4923cb0298c57bcf057fc53254466a13d1909deab922128121",
+  "k3x-native/native/draft_bracket.hpp": "ee0ac3db347d0d73a5bae7b756b2e93f9c5400977a6d4785a25f352c36db55f6",
+  "k3x-native/native/engine_bracket.hpp": "ff4cf863c7bc4b6707d9ff168d4d988bef1450435a7bd52861cbe19a124aeefd",
+  "k3x-native/native/full_shape_entry.cpp": "67af79099d00eb1698ec6a3341389a84a8da3f91f4020c0c739986ac117f7715",
+  "k3x-native/native/kernel_io.hpp": "3116d3ed3499af95cc2a80bc721bebb210b1cc805dd7df44fb32bd915d88cecb",
+  "k3x-native/native/probe_exchange.hpp": "6b6ca2d3a98775501739261c970118b3365f0b7113c523effd20f1c46c3d6a31",
+  "k3x-native/native/reset_bytes.cpp": "e022c662f2369776f0eaa481a7fc617e96e229031335eae3a6f74863105b4b36",
+  "k3x-native/native/split_timing.hpp": "2f194dffb76fba1285950ff96c228dd615bf7f09bbc81589a85a84c08543f559",
+  "k3x-native/native/v3_boundary.hpp": "7f8189e671f4ba8ac307ac325d428b6bb9f1a47845c0d1a8ac5574d98979e200",
+  "k3x-native/native/v3_controller.hpp": "e254a9e47296444e8f6f88eba046363c826e8a7fc2c10f71a6bfaad86638fb4d",
+  "k3x-native/native/v3_controller_test.cpp": "5343869bc1e5a7369139c7e70b6cd422b7604aca5c3f6c06faf754fd456d68be",
+  "k3x-native/native/v3_state.cpp": "1d378481c7e240fe12825584a0ccf9a6d67931b641056185828c7a4667625c78",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "6644636732e10ab79307683aba3a96380b632715148fea38d9dd50489e211d86",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "4f54aeb6aecb7286c988a0df5d4c4c521702965464bd60db023114e9d0ace6d4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "4433e3cd327aa7277499349aba0747ddfa9851ff1938ab5e4b1016deed6672b1",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp": "b170f5e07a489263de653340f748b186ed9201f655fc971b7b088f0f90f92009",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "94949149aa8c805f8a7394e57589693fdb5cf09efa1cbb9fcb111f3031f74cba",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "481e936b93feed6d09f1bc8caeade5210c4f0e5912b72d2d7320bbe753cfb4d2",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/adapter.cpp": "6b57c15707d1bcb8597492686867c051dd7719bd1a77b6454f9c51cfd4749bbd",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/adapter.hpp": "dbfb0bf861fa93ef5428c1b6f67ca2bc3664b99ded290dcb8d5016935873fc59",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/adapter_fixture.cpp": "5f2abccbbc68c61d42233e14fca306a441d8266bd47eb5fde8de149fe81eff74",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/adapter_fixture.hpp": "53702e72b51812f37c4727e729b302ba3778f9f088f126f4fbddf51e8975e260",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/argument_block.hpp": "af8740c4db584e5bd9d2e497337057665e7826d47c14da9eb2e66a46a6bb3a2b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/arithmetic.hpp": "b324d92d7f57a58e398523d19673062b065372f60e7f8d40f8ed7fdeb9ae2d13",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/authority_test.cpp": "f851ea0966dde3c2538c169fee210d9da5e06b1ac5b3f81fca89795e213522f7",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/chain_test.cpp": "c485e7ec9ba8134d8f85b932119eea1a6ff2f02576d2b66c157581907a2ab2d4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/core_v2.hpp": "60c0710f13a647e231f4b3318e3efb7e2c71b6e3aa9bd1938268c5b1a8fb1022",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/detmath.hpp": "ade01e2aaad8fc720f12d533f767d31fbb168dd880154a0869a6e909df7ef43f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/dispatch.hpp": "7e02acdc36d84df802922551e21f2ed3f46b61e1fba9823ec2f0d783a086dc97",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/dispatch_registry.hpp": "cb9a171798f8de0ba8690f9a8b25ccbceb3dd80bec1e1be70343177b1b9983bd",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/engine_fusion.hpp": "7e21b817b771945c1fe0dc28d47f554eaaa1d238a1aa7dacc78e119ed6238353",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/expert_down.cpp": "0229a3494df6343353f02eeff92b349c7695008a1252d123571050fe3d75d859",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/expert_down.hpp": "c19bf92e64136edf8a26765bc8a1ed2ed498782f87405ce714b56ba7441ee4b4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/failure.hpp": "ede020aa29bbbf45bb2aa50552b495c4fb64dff5623a0235e7792886b744ba73",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/fixture_driver.cpp": "d448a58710a59f88a4f06767b4887eec01f8e671bb4c5ed038ac0ad45357ffd1",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/fixture_validation.hpp": "c69d81ae9411d2f8ca6a73cb9011f92f00e3ec1244e317fc71cd1e5119697560",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/gemv_timing.cpp": "7b1ffe6fe612b2eda1d535e6c50615c8f047996b3ca245162e4b157b33c22e92",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/host_spin.hpp": "83c74cabbc36e0e93d4742c7e5bb70277f112ebf4a6c85271484acca966fa834",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/jit_smoke.cpp": "de41d9a8fbb2a6c92b3f7d330f8bea246b22d977336808a2e787d1eddaf4bc47",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/k2_failure.hpp": "0a0c70ca47f00029f77a5a4d586194d240f4b97f3e5fb15af7ebeaa07dd9aa79",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/k2_fixture.cpp": "d1af56cd6f2688ac1783f717c0103aae8cbc743861867e6eeaee9c4f0d87511b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/k2_incumbents.hpp": "2ef5cc69bb06f56a31a2c100a26977b68fb27c4a363cf46bce4e388ce19df691",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/kernels.hpp": "f50b343f36996656d631a015bc99b48ac6ef7166c9759382c6b5ddb9bcd825aa",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/lifetime_mock.hpp": "584c4f59d7e71789c671e27dbb5fca7d1175a0f3b838c26593c8d14fa3f2a46f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/lifetime_test.cpp": "270ba6c93fbafae1c100853cb015ce2532a8b21738644475f5ab5256244bcbac",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/main.cpp": "2f2ccda63f48141a570f621492f6980f814140712f24393d5cffb73a23caf4d6",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/mock_order.hpp": "fcd8d1d21e93b75ab59c84a004266a1f040a2d52ad2a8eb5b793508629b12ccf",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/mtp.hpp": "02330cc520ca5562c5b7c65b825866cc529bf3be4034b9f76208d58d784830a9",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/mtp_kernels.cpp": "898149c7fa68a109389dfda446941c630394a010f2addc5a752ff99fc8967aa4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/mtp_kernels.hpp": "8096d47c1461c0e77bacdd77d37fff23350b5f44052e3a8c1cb61ac362ffe9ca",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/native.cpp": "449dd82d49264af7d3ab33a94125f04d643584db1cd428b5cb8e205fff794cf4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/native.hpp": "429db07cea5034392c5aeffe27302d75f81ca33a5214913ddcd26857e5e41331",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/native_controller.hpp": "b054fa93104ba0f6971b05fb181f58cd357919b1d01744c1e14726088711b1c0",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/nongemv_fixture.cpp": "8efd196f97edb2916b3c1fc0b9bc385fb952b954faca6a3ead96e9210764d700",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/ordered_queue.hpp": "d8a23dfa04187842145ad32aa8cfbeeb647b4ec0c6bc0ba5533c1d5ed4cda93f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/owner.cpp": "6bbb4c5f768da0d29a19e8617a676b55dcba9792b18d9004628be0bf62a064f5",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/owner.hpp": "e3856c4fc500ce2ad13c1988898f5ccb9447479dc6db38439b86e331446ca681",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/owner_api.hpp": "564332876f363a206ab271b9bb40242885702bd7e994c2d068330a2b24b2784c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/owner_retire.cpp": "7d3ed337c7169f1d23eaa930302e8653ba3b006ac476765b435011b84eaf349f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p100_down.hpp": "5cf8205d712ec2bda74ad113677efb5f10aa5d533121a98f66a1956c05eea468",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p105_common.hpp": "ef471a27b15e5bc0b16f1313733ed9cc5e2f645583fe70c5fd1175926873e9ae",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p105_runtime.hpp": "04e8328f1a734d0f8970d42bca0dbecf9c2fa6babb2e28240a75c03922b3a178",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p105_submit.cpp": "124d461637534d7cdceb8a0e2850b4b628abe77430577db65a1b34e261607872",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p105_submit.hpp": "561eb81edda2cecfecdba75aa5243a280d341a1364df886ebddc38ecd17a0583",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p109_fusion.hpp": "a6915daf6bc69198a091d53436c0d67e94ef5f8b2f175cd6bf4f3f7b2258b3ea",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p109_route.hpp": "024e52ac1b8065606b71e860c62654b5dcb22eaa95b3cde35dea6538187b3b3e",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p25_bridge.cpp": "fdf11cf35fa9fd5153482765dec0920030eec959d2f324e2e43b71640fc8e580",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p25_bridge.hpp": "d853ee8b5f19d2e06baf396457f6679fca5afb6acee1bddc35e203e4759a19a9",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p25_candidates.hpp": "6d41e6502900093132dc4d7c9d3a868fcdb8f794010cbf0e97799940d471d868",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p28/dense.hpp": "24ee2accb39595f8443876a35b114242a039208e80d3d9ed8528ff1fd8d0956c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p28/expert.hpp": "189743ceea374062a091a681b6174f3d8fc9cc7ef89424b229bb68374d00d9ac",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p28/registry.hpp": "a751a07f4ffd1792077755b9184f8aa3b274d0c7c54a3ba8fad2b1ab356c15f5",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p28/submit.cpp": "555d92013cb335ffc1c53af0a3c8122042c632962fbf0160783b653622bee7f8",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p28/submit.hpp": "c09b05656f6dbc7284a42585d310aac4e6071e6dcaea65a2b4aa9d8a16f9f6e3",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p30_attention.cpp": "441f9411b4cd95d0d44ea80f3f1a6e97adecfc28a879829e5ac074a579883ee2",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p30_attention.hpp": "acd96a2c001d4ceac8151482c586049a5ce7da33159fef7ca08143b210394d0e",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p30_small.cpp": "655e1802376a3adaa54d1e35d5c5c5608997d9ecb72b387cfd3fe147871f0d51",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p30_small.hpp": "e87e99b0bd92725d3e72122fe99f36feb731f9e711154dc4b3e9e1c767d29b8d",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p30_submit.cpp": "b1f51b9b4f20685707eea6a31e5c5fb267b81f935ae2d50129835b90058fcbac",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p30_submit.hpp": "215e905468aa02ef9324a41f65bf5f9873dd433dc0beacedafeb82e486c7546f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p33_candidates.hpp": "fdc86b97e4f8107f9c47c80b7c15e54f86bc20b75414c01bca9995b0d323e6fe",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p33_linked_fixture.cpp": "85bb99d25448263c1bff8ce5a8b329b8da36976383de4230be501ae7580bd241",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p33_submit.cpp": "440d0632ce7db290beffc1300ffbd0d808be1d6cbb9c2df041dd14f0790ec68b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p33_submit.hpp": "2d98e8cb8431f3910bea160d344ae2d55810a4c60e329d1b6b0652e576e32cce",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p33r2.cpp": "1d062ba2b664c291449e2a1a810cd99fccfdcab697f1ad214c2dd23f8fd25542",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p33r2.hpp": "052a1829dbaf4cba06199549500b5f6b88ef8dd4c8751afba556e971ef31ba55",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p39_fixture.cpp": "90c179e59ee20142c8e47074edbcf168035497d2df12b04ffb4668579cd034b1",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p39_fixture_data.hpp": "3d0b0829e6b065a8d7a9f3451d7ffa2cff36f445e5d21f689e1962dddfed911b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p39_fused.hpp": "5bd9100a2a216d9ad6e64a00a314579b9340d8a30cca83290a4edad70bb586f5",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p39_plan.hpp": "27a66b4920b2995a9ee3fa4005a445d3bc0a0a34523bca17496636bc94869d27",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p39_submit.cpp": "293b46edea0953dc4c1729252f8ce72fe965c1f4a86f9bd0190903b075b4be5c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p39_submit.hpp": "2397c02459b276a00fd2d93227ed70e37820eccc30b52b4cf50758dcc9b86ad0",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p39_sycl.hpp": "d27f481e12d8effbd07539f114b7511799c8db3b04dfd422fe32e6a67f5d2d27",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p42_cooperative.hpp": "499e19e2c5826545b683ec682fe2542eea2fdeb2ec3e380eb6c144f51a08fad3",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p42_expert.hpp": "bdd80d5c1781b609f1c80dfcd486edf6e5f16927acb8a60c507ee35f58218e58",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p42_gdn.hpp": "92af5a886bf222b5316663de11854910baa94b843c0f82e8538add588dce91ff",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p42_gdn.inc": "61de8f299128edc332d76e87ebbadae9bf4708e81d81fc4c7528d9b6397602c1",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p42_submit.cpp": "f4865f080a977b1fdd82c428380fa1c091c4f151e4aad20d7dff2d12310bc8e8",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p42_submit.hpp": "47e85405c4777b9d79667e096999f041b147337d936f0c191c6b287bdc65705d",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p42_tiny.hpp": "b2f7ba2da617d697a5ee9dcda333adb789312e1f7c94fe395136ce1f12df5edf",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49_qsa_fixture.cpp": "2831d4a11a0493b39be79eae9a7da9f7fbc7399ffb52449edb5b9762c19e46f1",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49_qsa_kernel.hpp": "8c853b8d54c98f10960af3f684ee4482c676870a4b4b59f9bb6577ee0e025d5c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49_qsa_reference.hpp": "f96432d750af0091c01f77c2c0ddaf0f28e3fcfbc7f42ff9e7372ea9daaf2dd9",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49_qsa_submit.cpp": "f3a4ae3a1ccbbeb5f528b9b6cdd0544cb54afb3cf0a4490eaaab8b1167fb2acc",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49_qsa_submit.hpp": "c53edae74278d9c37501f166133b1b90197f90beaa547fa28d0b37ce04d0d141",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49b_expert_fixture.cpp": "2c4e4997cc70fe2cc7a8f8c0b90d669e0e80d4d1a7410b012a2c52c13f59181d",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49b_expert_kernel.hpp": "07eefca8de655e25d701a0b16f44f0ad0fda2a98d03d03a186c4914f10957292",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49b_expert_submit.cpp": "0c7cff6b0c1b081070fbb8e30c79e2442f422b0063c91b1ef2df5087977ab0c8",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49b_expert_submit.hpp": "1da684d5ff5a45c427c5357da19d7fc4f78d33006e4631e0610716a08ecd7671",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49b_gemv.hpp": "15272dbd698ca801634589d35e6678366a389058c867612c5e8333bbf09494a2",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49c_fixture.cpp": "914cb39763bd16759c92d37f338fd339f766f7d30fe9b4c03e629defa81e14ac",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49c_kernel.hpp": "1c31244cea5d23e9dc5fd514c2378553498e58b9c6994db363aa135fde06d475",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49c_submit.cpp": "958a74342cb46d8bc1cb478b0652bb6fd90026e43392ea1117c44fb0ddd1db76",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49c_submit.hpp": "4a688271551e15daab804e5c7c4ff33051be61a115b8854c53846d2933564023",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_expert.hpp": "7f12ae0491bb1a5fee95fb55f18be29800500d9b67580f275c4487da74dcc686",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_expert_submit.cpp": "d87f4d64e88f8d1084826046594fc175bea6b56fee21f47f70a2848a2def7eda",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_fixture.cpp": "3685283479a556b2565ffb4b8808a76c2926e1a5b5ea417eb65b7f5af84359d0",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_mix.hpp": "c4e7b5885aa511927e7d4d084fd1739af4713aec5af8109cadf3e10cb66713cf",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_recurrence.hpp": "f27ad66f4fa9a6bc47ba2d403e7e530ddba90ffa3b86bf441c83d4052209bcf1",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_route.hpp": "e81440405feb59e4d06cb828f345085c0c5fde5e1c8aaf648610891bd2696dbb",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_small.hpp": "4214c750e82792b086fd22e46c8bfd3d6cd613fd6769612414c064dddd117c58",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_submit.cpp": "8492a4cadd47dc60c8c836a7f1ef78f42391ffa794786b4f1568d6fdc7836dd4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p49d_submit.hpp": "f693108dfea2035d0d8521d5443b334d3a6aff4fe6a69487c25a2584124c2be0",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p56_config.hpp": "881df0efa32981d8cb7492c9b42fd9554a5f1a23e0ac0abaaf105b5b132a0ea9",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p56_head_fixture.cpp": "e8ba905ab482bfb0feaca0ba4fb6f52bc01bc2a87dcb39ecc6615c9e1fd69bab",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p56_prefix.hpp": "b8469a7aa08bf846a08a2bb9ce8a5dc09d13e405e26f334cb7c5cb84b292f317",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p59_draft.hpp": "d727f7344945d025896090f571f0ce308e830731f0e52b455317f7d42cd1da36",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p59_hc.hpp": "915e9579088df943d93927fb860feaac98012b517b7333e39fd69f7a6d45b4fa",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p59c_select.hpp": "cedd516959ccce57bf35b8860cbb7edbde5df33bcf1450e7684ceb49b31b5b30",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p60_kernels.hpp": "203533a0c8a0927c096477bbee1f493618b1e465e7c6248d809cf051790993a5",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p60_math.hpp": "5a4d808406d5c7c8b11eae298912253c866533e7ce9fd85db5c3a64e6383fd20",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p60_submit.cpp": "de0b30e64fec4c84458711f99c4ab0c5a644f2dec878a9749e57b08ad32f91aa",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p60_submit.hpp": "764df52ed567d8947bcb8d385ad9ad22efa5a6ee64df5b79a6e3893a5bc6e7c1",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p65_attribution.hpp": "136b2ae91c69408646b82a531ca5393d793e0cf5eb9e7e61608c316e7ae1bfa4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p65_expert.hpp": "b8be08b6f14291879c513ec1affdeff00d247712b0933702543070f1ae20a65f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p73_hc.hpp": "38cb3e36568099dfd41963ce6c9145cedce0f46d84eeefff3fdc05958516d529",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p74_packed.hpp": "2a4744b67b1b195e8b6b7df4d8b02dd77682035a561864edaf718011c17d55cc",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p74_submit.cpp": "8eb85557517ea2011f62bd8bfc008d8048cda4553e5a6edcbfb2d445ba70b930",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p74_submit.hpp": "cf2c0b1c954a0efdf19c35c507499a4421a7bd423c11b424852f148834a6c2bd",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p78_norm.hpp": "d1a240083905bc5d83abb515d0a5d19497fdc41581c91a42d088d134c42e28fe",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p78_route.hpp": "0212f1dd6cdf433769ee380bed64ca6c0bcaeb7e2d1d1c528966e73b59f63c11",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p82_recurrence.hpp": "7acd273cc4f459b84e53526a686c8e6c69adc2babb980bb75fc597839d83542b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p82b_recurrence.hpp": "ee2e77429f1a1a558283cdbaea8203ce2d7dfb479c575144d7f5ba9dec527cf2",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p83_head.hpp": "26f79fd5e88280a1f62b017eddc77f1e8f9d005355a0d53697badb5d5b44da37",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p90_expert.hpp": "811f2e18145be35dd748f16bbf62e8281e65ec446ffb03ae5b7e54368fe0f0b6",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p90_hc.hpp": "d98d1e4ea304d6189a61e03c8bfdd415118867c883f69085b92997e46795ba33",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p90_layout.hpp": "ef599ecbfb6713b1aea05012164fe55dbf2bf75b3b40e84889efe0c172fc808b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p93_head.hpp": "b405dd1a4d79c196ed4a515377a3a2418b993c846ee424d5dd5ca5ebda8ab0d9",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p93_kernel.hpp": "b41cbdc171d1f720e3ba6dd8c924b5d5657f529d7d6cc0fa226b9aaa549d4629",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p93_submit.cpp": "7448217bad233defa8ba62965da8296a9c96799694d22ed7ea5069136da1b127",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p93_submit.hpp": "01b817ad654a1d73a2f7da844911547a6ccdabdce1971372eda48f2ed3d9fcdb",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p94_norm.hpp": "3f188354f90925032420e5ef14b332ec308af27c40df432310581495ef2eee3c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p95_expert.hpp": "5178ef08ac451b6ade772017ee44f22749f19b0278b59e307e764ccf8ee6975c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/performance.cpp": "dc1c941e0a28d21deb5f8374b2a7710de7eac8880a981473c3dfae35d625b53c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/performance.hpp": "2cec584a4e8e550c0038a9cb07de69c6edb448dfc4beedcd2a23557bcc594ad5",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/prepared_invalidation_test.cpp": "8e55130aadea12d43d046fa3cb348f2b2bbb272bf1b5deac003774579eba7f89",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/prepared_submission.hpp": "90d6f8f31b8dd52b446f6d82b67c85ea2c8d33aaa5877f34edb4362ee7cf5e11",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/prototype/snapshot/core_v2.hpp": "24bde8a610800277e1ed4d9caea5bde3c8b166e55429f68fa3328613c5c387bd",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/prototype/snapshot/detmath.hpp": "2691bc816129ebcc5d11700dbefca8748663b016bde771f3632b1aad5200a022",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/prototype/snapshot/kernels.hpp": "c5336c94a74190c4ebd3b9298b367a640c4673669e31234637f0aff55c909531",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/prototype/snapshot/reference.hpp": "4af39ade388aa5b313689b3ae3689c82341b1de8a935dec5f704d69c56a73328",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/prototype/snapshot/rope.hpp": "b81a3364220624464aaeda45a184911396bff51a65a7e698e51a9927cfcb9212",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/queue_test.cpp": "970c12072dd73ef6e904c04aa9062d4b5100ed6960dbcaf7844b74006b261db7",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/rank.hpp": "67b710eba9f0cfa0a26efc298be255910df745a33c6bfeaf9843136679199a0d",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/rank_canary.hpp": "50594aae02f45a3fdad0ce9f0c9bafac587a2461a8c1c46293b9fecdca02d1c2",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/reply_first.hpp": "f563085c496cf8478c00092e5c0bed8bddb97ac319f978ae9a16cb58964a416c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/request_reset.hpp": "53bf158464c41b5dc1f91b13ed7bf4c0706ddd55ae07b2f9ffe2fe963ff4cee3",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/request_state_inventory.hpp": "a0417b29a91db443517bcf1db5d61e3644654e8ca83a919d2089bad8d64ce319",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/rope.hpp": "a158d4255afb87745bdb2c66361881b9755eb7737a9259a5c922d5d087be569d",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/round2.hpp": "2484da37649d795dd9b268257895bfecd460db538f5d907cec3bc83ab2448e24",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/round2_submit.cpp": "c1574e8c50e20fca178c9c99dea813285f8c10cdafd03c468d8faa2b3f132302",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/round2_submit.hpp": "7ce39c09c7799a918ed05a8d0b6c987b21733536c3fa0b2103325100d1c1291b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/route42.hpp": "97f28c0aca987fcc188891b4cf1a70e2bb92f6418ad0829c5f2f5ae092b99e15",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/route42_submit.cpp": "377e9a91289709f2d304f40b8b6e82a08ae2e950c403f4c9ba8c748afc96564c",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/runtime_kernels.cpp": "43f6f151e6df2011cc031b8c6f933d0109c735f979f37fb883fc820d11f4ca75",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/runtime_kernels.hpp": "7c35b82be72cb185a576b100ecb4e53eeecc954535c7eeb3703b78440d6ac626",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/s1_kernels.hpp": "f5f09697ab1faa6822f647e5374984c0e36196317e6b8cb559e3c6aeb39ddb80",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/s1_lanes.hpp": "1574cbc0e044360c461f3bdf0dbc890b34d428ff27d59480ea9cbd680eb5e069",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/s1_submit.cpp": "1cd4fe1a59c0aa8b0a3b46c6a23c5a5aa398e1a5c7a6238f17d9f468ca1c718f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/s1_submit.hpp": "6727eefef9f2fd2fcd6c2a56b19fc27782baac67198cad8a40ff8369bbe364a2",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/single_device.cpp": "486a9e6c3d2e87cffd0a27903256ea410e4cc86cee6463b0eebc9904ef0ddba2",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/small_gemv.cpp": "7d9142c3764f69c26c79f086eeabcf809dedcd98320bd9eff5da0eab5d20b4e7",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/small_gemv.hpp": "81b10bac7053af728a7c5a3e838f0d767e591d0010854a53fc4ca7e0280a07f0",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/small_gemv_fixture.cpp": "0084a88738be437ad21dbca5e78ca88ddf6bbcfdc65bf5c3367086068f7c9c8b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/small_gemv_fixture.hpp": "ee560cbd02d8c7b1ad7821e2b00d811edcf988cb1d6770bea3cb441f244227b6",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/specialised.hpp": "a3322e541fa231d70ab01c881a6dbda29b33f9556b21513b3c265c8956e84cfd",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/specialised_submit.cpp": "018879d0c87b34cf2165f9da3e34629dff5e3be99f353a1837dff0ee3bc24b22",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/specialised_submit.hpp": "6683fd775e3ed19d54bc8e5214e5ca3856525a59d1952a57d550f97167ff1fa0",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/strict_snapshot.hpp": "d830faccbdcc0b3adf429cffa2b7f5a649bc6aa7c86e1b3f681384333f1bd064",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/synthetic.hpp": "ea196938790bffcb03f436743f9e4fd5fc0903743d12bb697b6a6828c6e54d5d",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "0f9e2da7adfac0b88e855bd37fa4214838ad26c8b2d0ac6fa70fddee223c6241",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "9e272f49c2f225dd90c0e00b901ff152a67f5c7d7f5aca559361124bda1d56db",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "a90320e325f3d9988b3efa5be716169a926139667549585ab8db72bbe9f4e868",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "2993f800c2bfaa3d5db862c3b3ace763894ce22c3a5d0ed791c6a4787b793eb9",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "8e4a052d460ef1705a8f87449cd8f4e10717b0e8c3b9c5eda18d31a14a81aa06",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "2632485d5bd9cf9dc2209445683fdbe42b87bf2d2c7e7da59d6b8146b00e30c6",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "c884a75712b7df5d2c294df90329da4e769d2c3cc2cf7ea7793a1597f384ac9d",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "5144a3320b3372b721ece6bd5fdcb48b0c7709d7397350797796c493030c65c6",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "0e2bfb8c0d4ad6aee0b3787feed04f8f2c3cc4fe7ce24856031c83f515036901",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet4/owner_test.cpp": "a381fa449623e8c6c03ddf56c8740bb60fd0f3ceb92530c39a955fed09f4ac92",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp": "51906ba5be0b483a9db92dc303dd57ef897214df31040c5c80a1de54ddf74cc8",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "beecaaffe63c959bfd7cc93fd7928244d945711a263f79fa047e50a394e4512e",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "9f1328dca4df73f2d1a7a87222d7a0fc760314e3eadc436b355054728d10b82b",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp": "265883a6c97393691a60cafe1df857c1f01fcbb11d26dd6c6cf9904fcec9ebad",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "e5db772360059f18473ff4b566d4f59910a4e4ee331e8a1c761342cd09bee2fe",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "38247bf8bdb054832dd187a609a6354d8346e7062c5e66a4964a1b98cac38bf5",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "5d5cf1e48e23fa87b0ea6b20bee294a0f890c37fdebb291d1b135e8fdca8c49a",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "52d923206d67e6107b8a7371b374d1e3b667e6888307a10c63edf747d781aa82",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp": "0ba62d03a0bcbe6f4f0c857bbdfb387c25bfa07d222867eefa0692d950f76e22",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "89f66dddb136891ba289b8aeb083dcaf093b5b5f39147473e22b4a50ffb716a4",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "14ec76ae717b6b372daa676a7a53a296a5c59a39ef087c9b7dfd8a52b2ad7d37",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "6c2101d8987f0664d04fc54bd11d73a341d5e8177cbd841df7375b74217128ec",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp": "00838b24060023fa6afa3842008973026bf6b5f2904b98d5073d4dd20f29122f",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "cac1daf7426b83d2b21a0a419ac12a11fca2499c9795ad8d5a011047c7db17c8",
+  "k3x-native/native-base/experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "4b9aa4e7167aac730f64c2468c8cd7163090cb695c73771c69a7d4a92adbad49",
+  "k3x-native/k3x-native.patch": "61eb96c177a359c28e3365472bf32f8e4cf52255d44c11282d5511d28618bd77",
+  "k3x-native/k3-native.patch": "8f1d930d9257cda3da77f36284fb7f44b2cc38543a94617789312e79290696aa",
+  "k3x-native/v3-native.patch": "ad2ef68e2f24fddc9cf83b08e624be70ee84965f2b5276303f5d99cf55b6bdf2",
+  "k3x-native/engine-commands.json": "8236bd4259aa0ab50edf32d04c5a7c0130d2bc006fb25df44893fb6e9ce6cf8f",
+  "k3x-native/immutable-binaries.json": "37aea3fb22ce53dac76fcbe4bc44d250cc7e7b29acfae297cf580e782b949064",
+  "lineage-inputs/packet189-build.json": "82f0c0fcb34f088078ee896c0ab2e48795c4121b9d90293554c9ce3409ec6f31"
+ },
+ "parent_object_pins": 78,
+ "packet189_rows": {
+  "device-row0-smoke-k3x-B-p189": {
+   "identity_sha256": "1760c8620c5a83f423419c8e149a0055144df1959005d944211f0e6c78028337",
+   "binary_sha256": "87eec6453a2a9a9bfe30ed19466c6a70644d9cd168f734be87d2f0a17b776af4"
+  },
+  "device-row1-bracket-v3k-k3x-B-p189": {
+   "identity_sha256": "099bb84f4fa00eb4a0755938b56b23f4f903ea80ee2f2864f767a535c893a8cf",
+   "binary_sha256": "87eec6453a2a9a9bfe30ed19466c6a70644d9cd168f734be87d2f0a17b776af4"
+  }
+ },
+ "packet189_build_compiler_runs": 8,
+ "note": "origin values are provenance of the copied bytes, not runtime dependencies; packet189 compiled the engines (8 runs, 0 warnings), packet190 ran no compiler for them"
+}
