@@ -102,3 +102,29 @@ final_checks `--ready` (READY written last). Root free stayed above 29 GB; the b
 * **Stale lineages from the copy.** packet188's `k3`, `k3kio`, `k3prep` lineage directories and its three row configs came
   with the copy; they were removed before `make_lineages.py` wrote the 19-key selections, so the seal closure holds only
   registered lineages.
+
+## Device result (2026-10-22, lane B window 21:17-21:32 UTC, unit lanequeue-B36): WIN, chain rule met
+
+| Row | Content | Rates (tok/s, class-balanced) | Exact |
+| --- | --- | --- | --- |
+| 0 | k3x smoke, 12 x 64 + incident64 | smoke, no verdict (281 s); boundary 1.48 ms/cycle, export 0.054 ms | 13/13, draft proposals identical, timing-data proof passed |
+| 1 | one load, V3 / k3x / V3 / k3x / V3 (k3 storage) | 60.615 / **62.242** / 60.444 / **62.225** / 60.498 | every view 13/13 exact, draft proposals and acceptance identical |
+
+Fresh V3 reference: packet188 row 1, 60.505 (pinned in place, sha `4ff1ec14…`). `s189_decision`: **screen winner and chain
+rule met**: the slower k3x view is +2.66 % over the fastest V3 view (bar +2 %) and above 61.873 (1.02 x the record); V3 drift
+0.28 %; fresh vs in-load V3 +0.01 %. No kill rule fired: handoff_export 0.053 ms (bar 0.10), boundary_total 1.481 ms (bar 1.60),
+k3 hit saving 0.530 ms (bar 0.35), boundary over the draft wall on 0 % of hits (bar 10 %), A trim 0.141 ms (bar 0.105).
+
+Hit means (ms, V3 -> k3x): A 12.096 -> 11.955, B 12.432 -> 11.923, Bd 1.030 -> 1.481, draft wall D 1.587 -> 1.532, elapsed
+**14.062 -> 13.531**; misses 25.770 -> 25.569. Rank 1 binds 26 % of hits (was 100 %); the boundary trails the draft wall by
+0.05 ms, so the two ranks and the draft are now balanced to within 0.1 ms, as lever synthesis 3 predicted (+2.74 % priced,
++2.66 % measured against the fastest V3 view, +2.9 % against the mean).
+
+The export fix is visible directly: packet188's k3trims boundary was 2.005 ms (export 0.592); k3x's is 1.481 ms (export
+0.053) for the same 20,480 bytes.
+
+Next: packet190 record bundle (packet187's eleven-window chain on cards 0+1 with the k3x selection, packet189's engine,
+the k3 memory plan and host floor), then submission if WS128 beats 60.659520.
+
+Window receipts: `lineage/window-20261022/` in the packet. Endpoints restored as `*-20261022-restore13`; PAUSE-A untouched,
+PAUSE-B re-armed.

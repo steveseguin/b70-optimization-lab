@@ -1,0 +1,912 @@
+{
+  "schema": "packet189.row.v1",
+  "passed": true,
+  "kind": "smoke",
+  "row_index": 0,
+  "variant": "k3x",
+  "model_lifetimes": 1,
+  "target_loads": 1,
+  "draft_loads": 1,
+  "teardown_count": 1,
+  "views": [
+    {
+      "index": 0,
+      "choice": "candidate",
+      "variant": "k3x",
+      "all_13_exact": true,
+      "exact_count": 13,
+      "draft_proposals": {
+        "incident64": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "incident-retrospective": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "code-review": {
+          "rows": 152,
+          "sha256": "b0bcda605afd80d5e34467778e01567da53a42746ad219db6723c9d7dcb2fd4f"
+        },
+        "customer-email": {
+          "rows": 139,
+          "sha256": "993a5f5618b89b82c9d86555ba36963f1bf582f63cf874468f84a0c817f2c3cc"
+        },
+        "sql-debugging": {
+          "rows": 145,
+          "sha256": "f0a77cb21084af671ecaf3623abe25728abf201ffcb62412edceb7363a0c7904"
+        },
+        "release-plan": {
+          "rows": 130,
+          "sha256": "30a4f60cddc1070dfb06e4a1c7fda90cc53208062769d646db98aceea3ae89b6"
+        },
+        "benchmark-analysis": {
+          "rows": 127,
+          "sha256": "77c953f25b95e09f176c112a527896e45221285c22d4ab459c4340ac84c2f53b"
+        },
+        "architecture-tradeoff": {
+          "rows": 129,
+          "sha256": "5d3329e31eb53c662270b86a55871fbd12178ca234e07d472cd80a173d366246"
+        },
+        "bug-report-synthesis": {
+          "rows": 133,
+          "sha256": "cccf5fe4694dc0101715a54e19de228f0f57bd431ce943d14bfd72461431f611"
+        },
+        "technical-guide": {
+          "rows": 131,
+          "sha256": "1ce206d885b931f47a9e034ebd181feb91a2d143edc0569e04bc6dd6498d91ea"
+        },
+        "risk-register": {
+          "rows": 123,
+          "sha256": "3e3cbb0e6e27d3c2d6052e17e6e2563e3d138bc7911ff42488cee9bdcc4503fd"
+        },
+        "performance-hypotheses": {
+          "rows": 126,
+          "sha256": "87c644474a12c7ba89827c627a2c8843b3f801c9f1fd2348ccab193503e90ab2"
+        },
+        "decision-memo": {
+          "rows": 122,
+          "sha256": "15bd415b08e1dc88a382f660b4211d31f572cf70a4f38c1a9854f1a1bfae0e13"
+        }
+      },
+      "lane": "B",
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/evidence/device-row0-smoke-k3x-B-p189/run/views/00-candidate",
+      "started_utc_ns": 1792704014586345095,
+      "finished_utc_ns": 1792704126783285107,
+      "rate": 61.88263112613208,
+      "acceptance": 0.7791005291005291,
+      "acceptance_counts": [
+        {
+          "prompt_id": "incident-retrospective",
+          "hits": 52,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "code-review",
+          "hits": 46,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "customer-email",
+          "hits": 50,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "sql-debugging",
+          "hits": 50,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "release-plan",
+          "hits": 46,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "benchmark-analysis",
+          "hits": 48,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "architecture-tradeoff",
+          "hits": 54,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "bug-report-synthesis",
+          "hits": 39,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "technical-guide",
+          "hits": 53,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "risk-register",
+          "hits": 50,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "performance-hypotheses",
+          "hits": 44,
+          "guesses": 63
+        },
+        {
+          "prompt_id": "decision-memo",
+          "hits": 57,
+          "guesses": 63
+        }
+      ]
+    }
+  ],
+  "all_13_exact": true,
+  "draft_proposals_identical": true,
+  "class_copies": [],
+  "measured_wall_seconds": 281.076423267,
+  "evidence_label": "screen",
+  "diagnostic": true,
+  "qualifying": false,
+  "submission_eligible": false,
+  "speed_evidence_eligible": false,
+  "realistic_final_gate": {
+    "passed": false,
+    "reason": "screen only; full sealed chain required"
+  },
+  "prompt_kv_response_reuse": false,
+  "scheduling_costs": {
+    "definition": "rank0 confirmed HALF host duration, including preparation, waits, exchanges and receipt work; rollback excluded; all generated misses (not only first 100)",
+    "comparison": "candidate mean corrected-half ms minus mean of control-view means; control drift and per-prompt counts retained",
+    "half_busy_definition": "Engine half busy_ms, narrower host interval; no GPU-only claim",
+    "views": [
+      {
+        "index": 0,
+        "choice": "candidate",
+        "probe": "xchg",
+        "miss_count": 167,
+        "corrected_half": {
+          "count": 167,
+          "mean_ms": 11.645103365269462,
+          "median_ms": 11.649251,
+          "total_ms": 1944.732262
+        },
+        "corrected_half_clock": "engine completion before reporting",
+        "native_command": {
+          "count": 167,
+          "mean_ms": 11.661660108815678,
+          "median_ms": 11.664890102110803,
+          "total_ms": 1947.4972381722182
+        },
+        "engine_busy": {
+          "count": 167,
+          "mean_ms": 11.65531419760479,
+          "median_ms": 11.659821,
+          "total_ms": 1946.437471
+        },
+        "exchange_audit": {
+          "covered_misses": 167,
+          "counts": [
+            0
+          ],
+          "send_bytes_per_miss": [
+            0
+          ],
+          "receive_bytes_per_miss": [
+            0
+          ]
+        },
+        "missing_native_trace": [],
+        "status": "measured",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "miss_count": 11,
+            "corrected_half": {
+              "count": 11,
+              "mean_ms": 11.683546006679535,
+              "median_ms": 11.688385042361915,
+              "total_ms": 128.51900607347488
+            }
+          },
+          {
+            "prompt_id": "code-review",
+            "miss_count": 17,
+            "corrected_half": {
+              "count": 17,
+              "mean_ms": 11.683092185515253,
+              "median_ms": 11.685920995660126,
+              "total_ms": 198.6125671537593
+            }
+          },
+          {
+            "prompt_id": "customer-email",
+            "miss_count": 13,
+            "corrected_half": {
+              "count": 13,
+              "mean_ms": 11.667358689010143,
+              "median_ms": 11.660492978990078,
+              "total_ms": 151.67566295713186
+            }
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "miss_count": 13,
+            "corrected_half": {
+              "count": 13,
+              "mean_ms": 11.673281399103312,
+              "median_ms": 11.681211064569652,
+              "total_ms": 151.75265818834305
+            }
+          },
+          {
+            "prompt_id": "release-plan",
+            "miss_count": 17,
+            "corrected_half": {
+              "count": 17,
+              "mean_ms": 11.656250065083013,
+              "median_ms": 11.65453193243593,
+              "total_ms": 198.15625110641122
+            }
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "miss_count": 15,
+            "corrected_half": {
+              "count": 15,
+              "mean_ms": 11.663466249592602,
+              "median_ms": 11.665020952932537,
+              "total_ms": 174.95199374388903
+            }
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "miss_count": 9,
+            "corrected_half": {
+              "count": 9,
+              "mean_ms": 11.654297588393092,
+              "median_ms": 11.65906002279371,
+              "total_ms": 104.88867829553783
+            }
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "miss_count": 24,
+            "corrected_half": {
+              "count": 24,
+              "mean_ms": 11.656976072117686,
+              "median_ms": 11.663048004265875,
+              "total_ms": 279.76742573082447
+            }
+          },
+          {
+            "prompt_id": "technical-guide",
+            "miss_count": 10,
+            "corrected_half": {
+              "count": 10,
+              "mean_ms": 11.657402897253633,
+              "median_ms": 11.650353495497257,
+              "total_ms": 116.57402897253633
+            }
+          },
+          {
+            "prompt_id": "risk-register",
+            "miss_count": 13,
+            "corrected_half": {
+              "count": 13,
+              "mean_ms": 11.634169379249215,
+              "median_ms": 11.622902005910873,
+              "total_ms": 151.2442019302398
+            }
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "miss_count": 19,
+            "corrected_half": {
+              "count": 19,
+              "mean_ms": 11.649288053281213,
+              "median_ms": 11.642568977549672,
+              "total_ms": 221.33647301234305
+            }
+          },
+          {
+            "prompt_id": "decision-memo",
+            "miss_count": 6,
+            "corrected_half": {
+              "count": 6,
+              "mean_ms": 11.669715167954564,
+              "median_ms": 11.672495515085757,
+              "total_ms": 70.01829100772738
+            }
+          }
+        ],
+        "exchange_cost_per_miss_ms": null
+      }
+    ]
+  },
+  "timing_data_proof": {
+    "passed": true,
+    "schema": "packet189.host-boundary.v1",
+    "status": "single-view row: timing data complete",
+    "views": [
+      {
+        "index": 0,
+        "choice": "candidate",
+        "variant": "k3x",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4795520634920636,
+            "first_timestamp": 546790.086526405,
+            "last_timestamp": 546791.070668524,
+            "complete_scopes": 922,
+            "boundary_or_prefill_scopes": 1133,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.05988611111111111,
+              "capture_snapshot": 0.2957182063492063,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.2813915714285714,
+              "draft_wait": 0.0644273650793651,
+              "v3_boundary": 1.4795520634920631
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.814285714285718e-05
+            },
+            "other_outside_ms_per_cycle": 0.05666544444444438,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 14.275181,
+              "rollback": 3.216402,
+              "token_prep": 3.772825,
+              "layer_body": 846.006746,
+              "half_total": 868.742505,
+              "accept": 0.020834000000000002,
+              "boundary_body": 88.577933,
+              "handoff_export": 3.4233729999999998,
+              "boundary_total": 93.21177999999998,
+              "handoff_host": 0.029115,
+              "draft_wait": 4.058924000000001,
+              "draft_zero_wait": 0.0017730000000000022,
+              "snapshot": 15.393010999999998
+            },
+            "cancelled_halves": 0,
+            "hits": 52,
+            "misses": 11
+          },
+          {
+            "prompt_id": "code-review",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4785016349206348,
+            "first_timestamp": 546794.27729428,
+            "last_timestamp": 546795.334321664,
+            "complete_scopes": 946,
+            "boundary_or_prefill_scopes": 1172,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.06526512698412698,
+              "capture_snapshot": 0.322656,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.3042205714285715,
+              "draft_wait": 0.05878369841269842,
+              "v3_boundary": 1.4785016349206348
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.82698412698413e-05
+            },
+            "other_outside_ms_per_cycle": 0.059770015873015815,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 15.724843000000005,
+              "accept": 0.020849999999999997,
+              "boundary_body": 88.53399200000003,
+              "handoff_export": 3.4109059999999993,
+              "boundary_total": 93.145603,
+              "handoff_host": 0.03014700000000001,
+              "draft_wait": 3.7033730000000005,
+              "draft_zero_wait": 0.0017810000000000018,
+              "snapshot": 15.399531000000003,
+              "token_prep": 4.111702999999999,
+              "layer_body": 915.6006799999999,
+              "half_total": 938.8774249999999,
+              "rollback": 4.906947
+            },
+            "cancelled_halves": 0,
+            "hits": 46,
+            "misses": 17
+          },
+          {
+            "prompt_id": "customer-email",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4801399682539682,
+            "first_timestamp": 546798.360830345,
+            "last_timestamp": 546799.367868451,
+            "complete_scopes": 930,
+            "boundary_or_prefill_scopes": 1003,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.061593825396825376,
+              "capture_snapshot": 0.30484255555555556,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.28139988888888884,
+              "draft_wait": 0.06239953968253968,
+              "v3_boundary": 1.4801399682539684
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.8666666666666695e-05
+            },
+            "other_outside_ms_per_cycle": 0.05864652380952374,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 14.241239999999998,
+              "accept": 0.020812999999999995,
+              "boundary_body": 88.59590700000003,
+              "handoff_export": 3.458185000000001,
+              "boundary_total": 93.24881800000001,
+              "handoff_host": 0.02876800000000001,
+              "draft_wait": 3.931171,
+              "draft_zero_wait": 0.0018060000000000018,
+              "snapshot": 15.382093999999999,
+              "token_prep": 3.8804109999999987,
+              "layer_body": 868.173889,
+              "half_total": 891.131125,
+              "rollback": 3.802174
+            },
+            "cancelled_halves": 0,
+            "hits": 50,
+            "misses": 13
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4808012857142858,
+            "first_timestamp": 546802.469223031,
+            "last_timestamp": 546803.477651589,
+            "complete_scopes": 930,
+            "boundary_or_prefill_scopes": 1081,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.06390555555555558,
+              "capture_snapshot": 0.30472507936507937,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.29469530158730156,
+              "draft_wait": 0.06170749206349208,
+              "v3_boundary": 1.4808012857142854
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.8952380952380986e-05
+            },
+            "other_outside_ms_per_cycle": 0.05788596825396827,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 15.083008,
+              "rollback": 3.665044,
+              "token_prep": 4.0260500000000015,
+              "layer_body": 868.6499150000001,
+              "half_total": 891.8339869999995,
+              "accept": 0.02143,
+              "boundary_body": 88.60122499999999,
+              "handoff_export": 3.453621000000001,
+              "boundary_total": 93.29048099999999,
+              "handoff_host": 0.029175000000000003,
+              "draft_wait": 3.8875720000000014,
+              "draft_zero_wait": 0.001824000000000002,
+              "snapshot": 15.511206
+            },
+            "cancelled_halves": 0,
+            "hits": 50,
+            "misses": 13
+          },
+          {
+            "prompt_id": "release-plan",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4941478253968254,
+            "first_timestamp": 546806.389555221,
+            "last_timestamp": 546807.444251999,
+            "complete_scopes": 946,
+            "boundary_or_prefill_scopes": 886,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.06744103174603173,
+              "capture_snapshot": 0.32203847619047615,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.28291276190476194,
+              "draft_wait": 0.05537146031746034,
+              "v3_boundary": 1.494147825396826
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.8746031746031784e-05
+            },
+            "other_outside_ms_per_cycle": 0.06232655555555557,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 14.333890000000004,
+              "accept": 0.020948000000000005,
+              "boundary_body": 89.42705099999999,
+              "handoff_export": 3.452435000000001,
+              "boundary_total": 94.13131300000003,
+              "handoff_host": 0.037179000000000004,
+              "draft_wait": 3.4884020000000016,
+              "draft_zero_wait": 0.0018110000000000023,
+              "snapshot": 15.356008999999998,
+              "token_prep": 4.248784999999999,
+              "layer_body": 913.61775,
+              "half_total": 937.1491170000004,
+              "rollback": 4.911467
+            },
+            "cancelled_halves": 0,
+            "hits": 46,
+            "misses": 17
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4803273333333333,
+            "first_timestamp": 546810.32004383,
+            "last_timestamp": 546811.351330325,
+            "complete_scopes": 938,
+            "boundary_or_prefill_scopes": 847,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.06502698412698413,
+              "capture_snapshot": 0.31227106349206357,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.3051892380952381,
+              "draft_wait": 0.05529138095238097,
+              "v3_boundary": 1.4803273333333338
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.9063492063492098e-05
+            },
+            "other_outside_ms_per_cycle": 0.06208219047619058,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 15.729371000000002,
+              "accept": 0.022132999999999993,
+              "boundary_body": 88.54887400000003,
+              "handoff_export": 3.4683459999999995,
+              "boundary_total": 93.26062200000003,
+              "handoff_host": 0.02920500000000001,
+              "draft_wait": 3.4833570000000007,
+              "draft_zero_wait": 0.0018310000000000021,
+              "snapshot": 15.219069000000006,
+              "token_prep": 4.0967,
+              "layer_body": 890.4682129999998,
+              "half_total": 913.6951600000003,
+              "rollback": 4.431875000000001
+            },
+            "cancelled_halves": 0,
+            "hits": 48,
+            "misses": 15
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.481385015873016,
+            "first_timestamp": 546814.234622094,
+            "last_timestamp": 546815.192954054,
+            "complete_scopes": 914,
+            "boundary_or_prefill_scopes": 873,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.06042723809523809,
+              "capture_snapshot": 0.2863476984126984,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.27281155555555553,
+              "draft_wait": 0.061571523809523826,
+              "v3_boundary": 1.4813850158730157
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.842857142857146e-05
+            },
+            "other_outside_ms_per_cycle": 0.059024222222222374,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 13.691498999999999,
+              "accept": 0.022361000000000006,
+              "boundary_body": 88.60127099999998,
+              "handoff_export": 3.467075,
+              "boundary_total": 93.32725599999999,
+              "handoff_host": 0.028554000000000017,
+              "draft_wait": 3.879006000000001,
+              "draft_zero_wait": 0.001791000000000002,
+              "snapshot": 15.273571,
+              "token_prep": 3.8069159999999997,
+              "layer_body": 821.2105819999999,
+              "half_total": 844.0095949999999,
+              "rollback": 2.743973
+            },
+            "cancelled_halves": 0,
+            "hits": 54,
+            "misses": 9
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.480238873015873,
+            "first_timestamp": 546818.124832788,
+            "last_timestamp": 546819.264336835,
+            "complete_scopes": 974,
+            "boundary_or_prefill_scopes": 925,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.0708905396825397,
+              "capture_snapshot": 0.35633793650793655,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.3211913809523811,
+              "draft_wait": 0.04726066666666669,
+              "v3_boundary": 1.480238873015873
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.780952380952384e-05
+            },
+            "other_outside_ms_per_cycle": 0.0642697936507937,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 16.741093000000006,
+              "accept": 0.02042900000000001,
+              "boundary_body": 88.58148800000004,
+              "handoff_export": 3.464898000000001,
+              "boundary_total": 93.255049,
+              "handoff_host": 0.029066000000000012,
+              "draft_wait": 2.977422000000001,
+              "draft_zero_wait": 0.0017520000000000018,
+              "snapshot": 15.359472000000002,
+              "token_prep": 4.4661040000000005,
+              "layer_body": 994.8954120000002,
+              "half_total": 1018.7699849999997,
+              "rollback": 7.069388999999999
+            },
+            "cancelled_halves": 0,
+            "hits": 39,
+            "misses": 24
+          },
+          {
+            "prompt_id": "technical-guide",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4787430952380953,
+            "first_timestamp": 546822.185837156,
+            "last_timestamp": 546823.156457518,
+            "complete_scopes": 918,
+            "boundary_or_prefill_scopes": 899,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.058975984126984134,
+              "capture_snapshot": 0.2923555396825397,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.2823198412698413,
+              "draft_wait": 0.06335696825396825,
+              "v3_boundary": 1.4787430952380953
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.7507936507936537e-05
+            },
+            "other_outside_ms_per_cycle": 0.05537746031746049,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 14.329439999999998,
+              "accept": 0.020666,
+              "boundary_body": 88.527436,
+              "handoff_export": 3.427811,
+              "boundary_total": 93.160815,
+              "handoff_host": 0.028899000000000005,
+              "draft_wait": 3.991489,
+              "draft_zero_wait": 0.001733000000000002,
+              "snapshot": 15.383163,
+              "token_prep": 3.7154870000000004,
+              "layer_body": 832.88607,
+              "half_total": 855.4735,
+              "rollback": 3.01457
+            },
+            "cancelled_halves": 0,
+            "hits": 53,
+            "misses": 10
+          },
+          {
+            "prompt_id": "risk-register",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.479633380952381,
+            "first_timestamp": 546825.965108306,
+            "last_timestamp": 546826.970269489,
+            "complete_scopes": 930,
+            "boundary_or_prefill_scopes": 795,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.06110296825396827,
+              "capture_snapshot": 0.303439253968254,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.28829031746031747,
+              "draft_wait": 0.057954873015873036,
+              "v3_boundary": 1.4796333809523807
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.877777777777781e-05
+            },
+            "other_outside_ms_per_cycle": 0.054146190476190736,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 14.697557000000002,
+              "accept": 0.020820000000000005,
+              "boundary_body": 88.58401200000002,
+              "handoff_export": 3.433909,
+              "boundary_total": 93.21690299999999,
+              "handoff_host": 0.030824000000000008,
+              "draft_wait": 3.6511570000000013,
+              "draft_zero_wait": 0.0018130000000000021,
+              "snapshot": 15.435646000000002,
+              "token_prep": 3.849487000000001,
+              "layer_body": 866.5768789999998,
+              "half_total": 889.2732220000003,
+              "rollback": 3.6602069999999998
+            },
+            "cancelled_halves": 0,
+            "hits": 50,
+            "misses": 13
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4800808095238096,
+            "first_timestamp": 546829.809897795,
+            "last_timestamp": 546830.886599016,
+            "complete_scopes": 954,
+            "boundary_or_prefill_scopes": 834,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.06603879365079364,
+              "capture_snapshot": 0.32883314285714293,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.2836937936507936,
+              "draft_wait": 0.05171292063492067,
+              "v3_boundary": 1.4800808095238096
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.819047619047622e-05
+            },
+            "other_outside_ms_per_cycle": 0.06048219047619042,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 14.402747999999999,
+              "accept": 0.020399999999999998,
+              "boundary_body": 88.606562,
+              "handoff_export": 3.440705999999999,
+              "boundary_total": 93.245091,
+              "handoff_host": 0.029254999999999993,
+              "draft_wait": 3.257914000000002,
+              "draft_zero_wait": 0.001776000000000002,
+              "snapshot": 15.328633000000004,
+              "token_prep": 4.160443999999999,
+              "layer_body": 936.4422650000005,
+              "half_total": 959.7417199999995,
+              "rollback": 5.3674550000000005
+            },
+            "cancelled_halves": 0,
+            "hits": 44,
+            "misses": 19
+          },
+          {
+            "prompt_id": "decision-memo",
+            "interval_count": 63,
+            "split_head": false,
+            "variant": "k3x",
+            "boundary_ms_per_cycle": 1.4818292857142856,
+            "first_timestamp": 546833.682101238,
+            "last_timestamp": 546834.603554517,
+            "complete_scopes": 902,
+            "boundary_or_prefill_scopes": 782,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.0563307619047619,
+              "capture_snapshot": 0.2739561111111111,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.26246361904761906,
+              "draft_wait": 0.06297331746031748,
+              "v3_boundary": 1.4818292857142852
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0,
+              "merge_handoff_waits": 0.0,
+              "draft_wait": 2.9476190476190505e-05
+            },
+            "other_outside_ms_per_cycle": 0.05647274603174601,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 13.006162999999999,
+              "accept": 0.022927999999999994,
+              "boundary_body": 88.60800399999998,
+              "handoff_export": 3.5011070000000006,
+              "boundary_total": 93.35524499999997,
+              "handoff_host": 0.02793800000000002,
+              "draft_wait": 3.9673190000000016,
+              "draft_zero_wait": 0.0018570000000000019,
+              "snapshot": 15.493384,
+              "token_prep": 3.5488379999999995,
+              "layer_body": 786.115726,
+              "half_total": 808.7157310000001,
+              "rollback": 1.7429230000000002
+            },
+            "cancelled_halves": 0,
+            "hits": 57,
+            "misses": 6
+          }
+        ],
+        "segments_ms_per_cycle": {
+          "token_prep": 0.06274969047619047,
+          "capture_snapshot": 0.30478381746031746,
+          "suffix_head": 0.0,
+          "merge_handoff_waits": 0.28330327777777775,
+          "draft_wait": 0.060177611111111126,
+          "v3_boundary": 1.4801894206349209
+        }
+      }
+    ],
+    "device_evidence": true,
+    "clock": "host scopes; async snapshot copy is not isolated GPU latency",
+    "rate_scope": "first 100 events / 99 intervals"
+  },
+  "smoke_rate_note": "smoke only: 64-token views, no speed verdict",
+  "candidate_qualified": false,
+  "purpose": "packet189 k3x screen (smoke / one-load V3-k3x bracket; packet188 row 1 is the fresh V3 reference); never a record claim",
+  "s189_decision": {
+    "schema": "packet189.s189-decision.v1",
+    "screen_winner": false,
+    "chain_rule_met": false,
+    "outcome": "PENDING: decided by the bracket row 1 (or s189_decision.py over rows 0..1)"
+  }
+}

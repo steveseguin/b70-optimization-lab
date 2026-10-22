@@ -3,7 +3,7 @@
 **Line:** Qwen3.8 Flash-Next UD-IQ3_XXS, own Xe runtime, two B70s. **Record:** 60.659520 tok/s (packet187, LocalMaxxing
 `cmvjvabyv040jrf01dricuz8s`): bundle 8 + packet153 static snapshot + packet186 V3. **Chain bar:** 61.87271031814733 tok/s.
 
-**Status:** prepared CPU-only, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
+**Status:** device-measured 2026-10-22 (lane B, unit lanequeue-B36, 21:17-21:32 UTC): **WIN, chain rule met** (k3x 62.242/62.225 vs V3 60.615/60.444/60.498 + fresh 60.505; `s189_decision` in `v5/evidence/device-row1-bracket-v3k-k3x-B-p189/bracket-summary.json`); record bundle packet190 in preparation. Prepared CPU-only, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
 queued, armed, launched or committed. No GPU, `/dev/dri`, device binary run, systemd unit change, PAUSE/STOP or queue
 file was touched. The only systemd calls were read-only `systemctl --user list-units 'window-*' 'lanequeue-*'` polls before
 the compile batches (no active or activating unit; `v5/evidence/compile-poll.json`). The proposal is

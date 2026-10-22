@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 22, 17:35 EDT — packet189 k3x WINS on two cards: chain rule met, +2.66 % over every V3 view (lane B, 21:17–21:32 UTC).**
+One load V3/k3x/V3/k3x/V3 = 60.615/**62.242**/60.444/**62.225**/60.498 tok/s with packet188's fresh V3 at 60.505; every view 13/13 exact,
+draft proposals and acceptance identical, V3 drift 0.28 %; no kill rule fired (export 0.053 ms, boundary 1.48 ms, k3 hit saving 0.53 ms,
+A trim 0.141 ms). Hit cycle 14.06 → 13.53 ms, misses 25.77 → 25.57; rank 1 now binds 26 % of hits and the boundary trails the draft by
+0.05 ms, so the pipeline is balanced to within 0.1 ms. k3x = packet188's k3 + trims with the handoff export back on the copy engine.
+Record bundle packet190 (packet187's eleven-window chain on cards 0+1 with the k3x selection, packet189 engine `87eec645…`, k3 memory
+plan, host floor 108.8 GB + 1 GiB) is being prepared CPU-only; its chain must beat 60.659520. Endpoints restored as `*-20261022-restore13`;
+PAUSE-A/B armed. Packet `stage2/packet189-twocard-k3x/` (note `notes/2026-10-22-packet189-twocard-k3x.md`).
+
 **October 22, 17:05 EDT — packet188's loss attributed to its own export path; k=3 reopened as packet189 k3x (CPU prep running).**
 Lever synthesis 3 split the +0.97 ms boundary: the GDN layer-26 kernels cost 0.459 ms (equal to the 0.463 ms saved on rank 1) and the
 20,480-byte handoff export grew 0.54 ms only because packet188's `kernel_io=kernel` key sent it through a one-work-item-per-byte kernel
