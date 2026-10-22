@@ -1,0 +1,31 @@
+--- a/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
+@@ -159,6 +159,10 @@
+   fs::path inputs, output, model, plan, auth, oracle, suite_inputs, bracket_inputs;
+ };
+ static Options parse(int argc, char **argv) {
++  // PACKET163_HELP_BEGIN: metadata only; before device or model access.
++  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
++  // PACKET163_HELP_END
++
+   Options a;
+   bool seconds_supplied = false;
+   for (int i = 1; i < argc; ++i) {
+@@ -257,7 +261,7 @@
+   require(a.draft_head=="full","draft shortlist head not qualified; use full");
+   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
+           "card range");
+-  require(a.tokens > 0 && a.tokens <= 128 && a.context >= 8 &&
++  require(a.tokens > 0 && a.tokens <= 512 && a.context >= 8 &&
+               a.context <= 32768 && a.seconds > 0 && a.seconds <= 172800,
+           "bounded generation/context/deadline");
+   require(a.timing=="token" || a.timing=="launch" || a.timing=="class","timing mode");
+@@ -1922,7 +1926,7 @@
+           expected_tokens[id]=std::move(tokens);
+         }
+       }
+-      require(f.eof()&&!requests.empty()&&requests.size()<=12,"bounded suite inputs");
++      require(f.eof()&&!requests.empty()&&requests.size()<=13,"bounded suite inputs");
+       require(a.bracket_inputs.empty()||a.mini||requests.size()==12,"twelve bracket prompts required");
+     }else requests.push_back({"",a.inputs});
+     const auto root_output=output;

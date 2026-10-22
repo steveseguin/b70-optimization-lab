@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "synthetic": true,
+  "launches": 5,
+  "production_shape": {
+    "prompt_tokens": 87,
+    "K": 256,
+    "turn_tokens": 126,
+    "new_input_tokens": 469,
+    "M1": 128,
+    "M2": 64,
+    "manifest_blobs": 128,
+    "manifest_skipped_buffers": 1937
+  },
+  "cases": [
+    "pass: 5 launches, all gates, report written",
+    "append divergence at 37: append == reference [0:M1]",
+    "chain divergence at 5: restore-then-save chain == reference [M1:M1+M2]",
+    "repeat divergence at 100: append repeat identical",
+    "S2b state differs: S2 == S2b saved state (every blob sha256, token state)",
+    "save differs from packet179 at 200: save == packet179 row a [0:K]",
+    "save inside oracle-128 at 7: save oracle-128 prefix",
+    "reference natural stop at 100 (<=M1): restore-then-save chain == reference [M1:M1+M2]",
+    "reference natural stop at 150 (>M1): chain evaluable and passes",
+    "EOS inside the save leg: native legs",
+    "native failure in append-s2: native legs",
+    "host_tool wrapper parses the real C++ inspect/inspect-metadata/delete output (host-only probe binary)"
+  ],
+  "native_transport_mocked": true,
+  "host_tools_mocked_in_arm": true,
+  "scope": "real Python lifecycle orchestration and gates with synthetic streams (real token values) and mocked native/host tools; no arithmetic/performance claim; native CPU sessions in checkpoint_probe.py"
+}

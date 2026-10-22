@@ -1,0 +1,627 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_reads": false,
+  "requests": [
+    "incident-retrospective",
+    "prefill512",
+    "code-review",
+    "customer-email",
+    "sql-debugging",
+    "release-plan",
+    "benchmark-analysis",
+    "architecture-tradeoff",
+    "bug-report-synthesis",
+    "technical-guide",
+    "risk-register",
+    "performance-hypotheses",
+    "decision-memo"
+  ],
+  "target_resets_per_native_owner": 14,
+  "sensor_streams_per_reset": 4,
+  "native_argv_production_geometry": true,
+  "commands": [
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/device/validation",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../../stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../packet2/loader",
+      "-std=gnu++20",
+      "-O2",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-fsycl",
+      "-Werror=deprecated-this-capture",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/fixture.d",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/fixture.o",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/fixture.cpp"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-fsycl",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/307f88ddc5dbf17e-p49d_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/7078ad5db9e102b6-p49d_expert_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/bed7b2496409c6cd-p49c_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/bde57bf265f15f2f-p49b_expert_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/3f3b0f19b03c4be1-p49_qsa_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/7872c11b1e36c45b-p39_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/23619474eec85a3e-p39_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/db74c52bdb4d294b-route42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/6727fbd460e88fdf-p42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/b2086d9aabd76651-p30_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/079ad4209dfbca3e-mtp_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/0fbf72decde08edd-p33_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/79a9e6f8cfb57a54-p33r2.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/758c6ad369d6b587-submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/aca148b5af2d054c-expert_down.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/fa205aed0b13fa05-round2_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/f86f85cabe41dca5-small_gemv.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/7783401967f840fe-small_gemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/420c268a46830c75-p25_bridge.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/8cd810024daaa07b-gemv_timing.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/272a921aa9a1b9d4-adapter_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/ac2cb1aa73057d10-performance.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/2861aad672200ba1-adapter.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/0559c7e8b10210cf-specialised_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/a4eec394f2e599f8-runtime_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/f7c71e9891ed3c78-owner.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/f8f604ad8359f294-owner_retire.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/fde51b5cbec34b89-gguf.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/9c704c943e8e4fed-native.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/ac4f3a9d1a0923dd-device.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/82c9b7ff167af2e4-kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/a2a956972dadf3ed-kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/c6e7fcce50988346-kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/d25970ecb82e5a1c-kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/25818304ce53ea2e-kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/fixture.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/c2f3239ca575bdfe-entry-nongemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/36763189af3213a3-entry-k2_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/e91ea07986343b90-p60_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/objects/c2161ba34100c32e-p58ag_submit.o",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/prepare-probe",
+      "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/bin/../lib:/usr/lib/x86_64-linux-gnu",
+      "/usr/lib/x86_64-linux-gnu/libcrypto.so",
+      "-lze_loader"
+    ]
+  ],
+  "sources_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/native_sequence_helpers.hpp": "b90551e1937458ff41d269b44757e4d78ba9b720178c3cdccd479925a5014693",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/lineage-inputs/preparation163/probe-main.cpp": "61442ae85ac935efd7d0f668b8a6f7b8642eab5fb671c944b011e9b2f45ddc77",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/lineage-inputs/preparation163/fixture.cpp": "26240bbc175f3d5d288125b4cf427cd0260f7d0d6f26600e4a020980ef4d2c06",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/native_sequence_one.inc": "c9ff6a6ac293e0d04ac253eafef54799227662a2db5d36391463f3ac9cc0b0c5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/fixture.cpp": "b03a81b602dd84672392ca4bf96d8e8ed389d087996fc41fcbc245621687edf3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/probe-main.cpp": "32a56f00ed92aab530c39afe0af9e1609a3f47c87d43539766dcaeedeb90ff04",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/resident_lookup.hpp": "ff1a6d99ca1572168966394dd02f8566d2de653c316a1d9cec34780b7b6d26da",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/drm_size.hpp": "ebf13fe1432762469ce323d84d13f4d219986365ebeb37f9c234b5dbbf4977d8",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/async_backend.hpp": "c96597ac48e29d294b492af4545dd4d26d33ebb5087fd628bc0c218329a08e99",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/owner.hpp": "fd1a787eb0e6b830445a56a31e3b857c747863317e1842e83012a40629f2f290",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/owner_api.hpp": "b9616f6db38670c01b5dc43cff086e0513514f5e9c6afc49a48e504f4107a7df",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/argument_block.hpp": "742b518e1b2b0df967063c71032874ca9e3b8067d00fe11699eec9dd5566e8b9",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_protocol.hpp": "0f66d8862c7c1dec7f9346f4c07c7f07a7126a5865de9f071ed449ecd72be813",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_table.hpp": "cb3062c07de59548fbc02f16e65ddd135f0192d780dd8895f286fac7ec4dba88",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/publish.hpp": "0697cf6423a4a96bf44c9531bae6977c960cca445ec20ecce461135ab4104b26",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "659411a0e49282b0a71a235f96a1e8907b1d83c9516d8fc9273597cb4a9e38c9",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/ordered_retirement.hpp": "6a9cccde2061e80536626c67485aa095c37716f32be8438059ec86d2b97153f4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/p60_submit.hpp": "4676441845fbf37e65a4ae15854ad7941dd389eb009d63bdcf6b3775cf040a88",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/performance.hpp": "9111ebd6f8fb14f0386d58b95911c965b2758a14352b0795cc0b382a4499b98a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/runtime_kernels.hpp": "32cc93c8d3d7baebf2e82e7ae2e8479b33ca6bc18b6d2fc562132891890e4267",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "cb909008d5cf1fa5d5ef03c67eeaab1348822486c64008a2c75cd82b33961dce",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "b45d2126c7bdd80bbbfad74f11309e6b80c6f1e1d95f78a96144f104630dd363",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "476a26d9fd0e437b4d7730e68141a62a23c786358c186efa9e254bd03d0fda5f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/core_v2.hpp": "0539d161343d9d80d228589080379050e5bcb8487bfa176d58e5d2dec72dfe31",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/detmath.hpp": "cc3fd5fe67827acecc4bdacd353a8ca81ae0b722238a583302c15e5f7ad4921b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "9357d3955abaaf40c3dd6697de28da27d848f7b1f3c27e32ca6c4661ca29f580",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.hpp": "ac2e8a491656fae1f1cc2189bcd1619d3d0dc668b950128e799fa226677b8514",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "18fdbba2f0962645248112d7b9e9aff6f45891614a28ef2bba22a64b59c7be6f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "873366f4668c582c59f4d00f8996df148ac14288f61ebfcb41203fd96036977d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "e14f82953d0f2460db35a659ad8f7e603bcc296c650170c18361a0267c058e91",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "2d60c59beb86f23edb5b9becbbae5f4739d0b2d84f0b2225c2c990fcc8d137f6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "6bc2545bf029a47fb0bdbf9c6a113df587b1b379c887bd8606f97f2ede8b20c2",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "56068e8a769b4e706b1f5b9940f4dc85399a3728f72b2e98a79b5718dd41ec3a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "ad3cbe01c9557c88dd0bb81834d121ff3fdb916aa06e6d2359564bae8b568164",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "e4436a22a1f71e1911f3a9d35656e3e576b9e487cd636dfca1a8c94765a448ad",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "145efc446b7206c7766a6feaacf543da2f6dd6f82eff744fcdca69b53fd161dc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "806d74464ec649713c89fbe7c9385212c4670e829b2e06c5a446a4078b0a6758",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "f738f4d9bd7a1c7ae151869531e7c3295ed08d65571f5520a4e3ef3f296b75bf",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "debffdfbb71ae4bbc803c8b19c4f330a4dc7e6b35e2b9f6e8f655af3d2ef82fe",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/arithmetic.hpp": "253b4db62f1c50155f66c889dadd387c43547df05a2c11d7e99f966bdea715bc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "b434e98ae9a3d2d5ec7a29738fc20ff5a7e7a97f0c715febfae8e2bc2668b154",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "241f9483af658eedde8c9272d2b03f99a2df86616906e547924cbe5f082ad59f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p30_submit.hpp": "99dda3bdb75bfa3fea43b965be1877927101d58dfd57fc619153c9178de87b40",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/round2_submit.hpp": "a78e5dd530405de55d633ad978f19844ae9cb03649f00546f5a6bfd4e541a42d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/round2.hpp": "ad3c0a586b900ca6d8d0bf8538c52d0af0df34e0fb35dc996c835509f6b8f3e6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/specialised.hpp": "dbb1fbaeb3cd305c7b67e47a2af09704960b5558659fed55a064189a6f4b8ed0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernels.hpp": "697a4f7b9c27cbbcf68bddc833e098eb7777d7bf135a3b2752a81fb9b25bbd66",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/small_gemv.hpp": "3152a0b05a872a06dd4e155053c6050bf8d412afbe08e3edac21372aecdd2b8b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33_submit.hpp": "ce4240efdefe066c9ec0349c72f72f9e3d5a06bfc3564400c194762737c900c1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/submit.hpp": "c7ba8e6b33453ab5e048c8de982e824a0b79c2baf27236c92dfd46e1b136e710",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/registry.hpp": "550aaacd19acf76edecf496f1e0ce8d23b2bf3fae59104b4800a636afef85ee6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p58_pointer.hpp": "8cddb51b4de923faffdcd44cfa37b1d160ef00dc42cd7c9a9a7266ca624df353",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33r2.hpp": "bf1cc540d107a85b99d52cdbd54d847123b1649eb6cb965a14795932ea1d6e43",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "59c1d4348168d3344f4e0bfeb7c577bf337cb628ce5151da1c94981ee6e62748",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/synthetic.hpp": "b53b4d2b7a2412444f2778e1dfdf59ea51518134002267f325566a924b3026b5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "157f2fa586afcff33f478dbdf2b541e6abdbca32363768fed3912fbcb9df3833",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "cd1a45091efa6333af311648006748c04cdfb23b4d25091ad799be8bb1ad58bd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/adapter.hpp": "9e71ae9e010631fe1ac8c032e78db922079c3f3f8f59bf3d4962c2485152c164",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/dispatch.hpp": "5ff76646419a0a4b7fa09b869039edfaf8f97078483d53cd6470c1d839b23b0a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/dispatch_registry.hpp": "e3272ba571b95aef4a34f680c12f6259259b75278f06e47bace987aeac1032a1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_plan.hpp": "78b36cc55a759e77b8ee60af61789352634c60dbf5af58590d031c8bf95b6026",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_submit.hpp": "e115bc9ee0e66abadd87cdf79074bfce961f6d41a7657e1e2dc09931532172e0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_fused.hpp": "d74ac5a1b0680cac3a3460e599b2c3c834153b934cde9d6fd941891411ae6e5b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33_candidates.hpp": "5854f74b12ca5a04504c8bfac249c106e9a80368143d5936d5155e2b005f32da",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/expert.hpp": "cbb9d8e98b637795aa3c31099ff306ce9088c0e6d7f403a040b3513b01e2b263",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/dense.hpp": "fc0c860919e23b23af28c19f5450aa88bf91ace1ce8113894a0d7ce404510187",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_expert_submit.hpp": "6bcad21268cab2257660bea3fd1777bf3687c999c30177cd893ad03a53611a38",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_gemv.hpp": "32e715f8452e719c500340bec37a8fb80465cbb192770e4817e44dd710b3bf67",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p42_expert.hpp": "9f69c12562f74751698348ebf8b34ee8ee889806335e3a7225dc8d166d681586",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p100_down.hpp": "0570f853b1ab52a59c7aaebb59565bd63b51b3f423f0682a00307065a810bdd0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/prepared_submission.hpp": "bb37702832e06d8a3ee19812e71459706c770e1d5235eee838b929e26f8560e3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p65_expert.hpp": "7cf42dec4ca985147632a3cfd1237ed82d726eebb5b655963be62d9f173047c3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_expert.hpp": "6905b5f114b5444fc88201534bb8119408295b58a9ff7aa6330aa8224499385d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_expert_kernel.hpp": "f91c301ef484d56d4c3a00fe6b6609819bf4015c25c382d0b586caa72f3798d6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49c_submit.hpp": "80a219adc0dcc6f2e82f6439665452e6e197685a40b3c0a96802118ea4bdf311",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_submit.hpp": "c1661c70dacdb1e0a47cd962850cc78654948c354bf48110ecfe2c9a2b58cba8",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p25_bridge.hpp": "9cd936ddbded50069322bf6de630ebf0170fa10340b7c770c4ea9256d914f288",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/expert_down.hpp": "4e8802b4fc23c83fe674f1d37d311901357b32f9d29dce717fe686ba6b2cf1e1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/p109_fusion.hpp": "f1682cebc7e779864c7602b7f743a7444be8c7fe1965826c5114d802292ea3bf",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/p109_route.hpp": "82a56a0152f7b2fb29fba59722b8ee5233da9a0321d38d41d6d2bf06c8021e1d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_route.hpp": "5468dc6c7a5b5d45c4241b675c5409ac0fd7ff65de32113329277a5ad0432163",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49c_kernel.hpp": "30a72b69720619813506ee8aac41ec62a15ae1f4bea5b594a891af6d50fb39de",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/route42.hpp": "4c495f878fbdc5d89ed824888e50f9d2b1007d9145bec9c57a4572036faaaaf1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/p58ag_submit.hpp": "94d8e41a1d36209315795de5e79460e654be8ab8f9acb18e49612462050db9f8",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/resident_weights.hpp": "f9a6f15f0294d1808291741404bbcb4d8c4d78c19541417a0df3633279f51cbc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/engine_bracket.hpp": "d7737549f00f28c44ca1f719643d1e0104d6daebab12740c87560bfdf79774fa",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/mtp.hpp": "f89ee3be75ac1c03703014bb2fd59ed9d54aa1bd0d1c4ac44d530cea7b9f57da",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/mtp_kernels.hpp": "a89d643935a1c39cb119e929f1ab66a82c60fe82c0c800ec9f861871beb29f41",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p56_prefix.hpp": "13f47581219855e8b559527cb0b2651f8ba407728c12e106e08be04f1f54b86e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p56_config.hpp": "012f01e1738bfb71de21b884737bca0ecfbc2cc1b8c75b5da8fe29941c509f93",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp": "b60de857d884aca896da2d7b400595f55bc18e9fd4fda01fc1ee2e7600e30204",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/strict_snapshot.hpp": "8e5aa556ccb7d9314c56657e0f6ad8d4eef91595f21c33b1970e05d3a0c07ca1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank_canary.hpp": "a4380787bf3242a04d1eff5596f2092f02de0a50e3287c85f713419267263708",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/request_reset.hpp": "507d3292bb63d548ec718ff54fa0428757f75f5b7b927abc653732ebd2f02b4d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/request_state_inventory.hpp": "072dddf9864ce79b140c0e9f44154e4bd5f3a6dc11a9175779233028b06462c4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/native_controller.hpp": "ba7f79bae27778eaa48e757d6780868341311ae056471984909f67553ebd1052",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/bracket_table.hpp": "73a6f82b5d00d5b71045fe4c517fa7bfea58d604a84ecb292dd039a0a6fa4fd5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/mock_device.hpp": "5f9f1d8df83656c85cdccd1ddc97b77b55cc7b6a8f1f6aa24c62fec04d8a5e16",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/native_sequence_helpers.hpp": "b90551e1937458ff41d269b44757e4d78ba9b720178c3cdccd479925a5014693"
+  },
+  "binary_sha256": "eda5e9575568221b706c6ff71b494ba0440326c898f226662d9ac1d6c2472b23",
+  "script_sha256": "b73641fc638fee59ae0225bc565184d5bb66dfb0c67c544a7b79bb0104d331f1",
+  "landlock": "libraries plus exact metadata and this run scratch; no model or /dev/dri access",
+  "scope": "real target reset and device preparation paths, CPU marker transport; first64 mutable bytes sampled; allocation IDs/pointers/categories preserved; synthetic sensors are not model output or timing evidence",
+  "draft_scope": "two-card: exact extracted draft reset method on real Engine and synthetic facade; constructor, draft kernels, model data and arithmetic not exercised",
+  "synthetic_dump_retention": "generated synthetic .bin/.bf16 dumps removed after reset; JSON state inventories and sensor stream hashes retained",
+  "peak_child_rss_bytes": 1123270656,
+  "results": [
+    {
+      "rank": 0,
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/prepare-probe",
+        "--authorized-device-window",
+        "--card",
+        "0",
+        "--cards",
+        "1",
+        "--context",
+        "4096",
+        "--max-new",
+        "512",
+        "--stage",
+        "decode",
+        "--memory",
+        "resident",
+        "--miss-path",
+        "zero-copy",
+        "--native-nice",
+        "0",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--suite-inputs",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/run-1792651168503585341-rank0/suite-inputs.tsv",
+        "--input",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/inputs/prefill512/tokens.txt",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/inputs/plan.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/inputs/identity.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/selection.json",
+        "--selection-sha256",
+        "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/dispatch.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/preparation163/run-1792388732652608496/native",
+        "--lookups",
+        "resident",
+        "--hc",
+        "p60fusion",
+        "--hc-geometry",
+        "hc-wide",
+        "--experts",
+        "wide64+halfcache",
+        "--other-fusion",
+        "fused",
+        "--retirement",
+        "ordered-foreground",
+        "--wait-seconds",
+        "600",
+        "--seconds",
+        "7200",
+        "--cache-maintenance",
+        "overlap",
+        "--cache-cap",
+        "max",
+        "--cache-bytes",
+        "21552729600"
+      ],
+      "returncode": 0,
+      "peak_rss_bytes": 1123373056,
+      "stdout": "PASS native sequence requests=13 target_resets=14 mutable_samples=28980\n",
+      "stderr": "",
+      "output": "experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/build/native-sequence165/run-1792651168503585341-rank0",
+      "sensor_checks": [
+        {
+          "request_id": "incident-retrospective",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "71ee5985cdc0218d9557497d1c61833d7b54076b5b971959cbc00d2e3134bf1e"
+        },
+        {
+          "request_id": "incident-retrospective",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "d1ddb5065433805847cda16f2088dd3bab129c7993691c8a73c707790d4e4351"
+        },
+        {
+          "request_id": "incident-retrospective",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "e5b3782170000b8c65691615ea785b8d839ecf55f352c03b240198832015f77d"
+        },
+        {
+          "request_id": "incident-retrospective",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "cbb5ed0f05e854ea6b65fba8a34c09f9118b6f5c063657b232dec31348410e16"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "0d6154f1ac245a117072bc8c10ff2d41dde29330b6a61b57ebb88995d2edf00b"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "00c13fab215479aac785b68743437af296d7872cb304927ed17b7cc752611480"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "a9ff6d39ca2e5a33499a8f37f4dd369bfd78e2c9698f5259429301c14d8a7248"
+        },
+        {
+          "request_id": "prefill512",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "d34d776e279b5b5b5c399af77010889b68ad801a1b0e94ed04e14519fc120bd2"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "79116dbf66e9f740341ed840cf8648e3436880fe1519e14b55f06e8289fcc76c"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "87557216af7af815afa71f8393ee352dc9486137aae9dc0c768c75f17e8caaa7"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "6e5b3f71514a9f5492c2a9afe1d2bc13508034c829f3ad10e7b7c59691138fda"
+        },
+        {
+          "request_id": "code-review",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "4b1885b57f3ae884ed4fd22bc4bc01be0b5a0ae2c112a9526446248d94b34065"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "408e87942657f81465815f7c2d10b2ca13e7e8690f9b968b2c00bbefd649dd58"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "22a6d5a171c558e1aa087af2984bb2909696004cfe5dc81ced8fcdc4ef6d60b0"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "c1f1aa93d5c3d5e9be286b99e7042062a971e9b329b5b2d7485f26136c5de959"
+        },
+        {
+          "request_id": "customer-email",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "b277e4a608d6553588d8cdae4be16c5905bec4b21b541d3890d7998638f9fedb"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "737ccfc01a5567e86c3c69dc6b8830347aa161e88cbc4000e6fb4d65448dddfa"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "da722f4b8c1f10172e983a9d26097844eb52df991e9b8bae95dd8cdf635a43ec"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "5ef86a3070a85261f912bb360f64b9f1e2d6a24f30da2ce426280c1d1fec437c"
+        },
+        {
+          "request_id": "sql-debugging",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "9845c2e019588838c569748f52683ae5fe5c0fec9ecc7bc69ea22cca25585d81"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "8619a4687bc4fcd4a11cae815a298585e928e7eef3f9c1b2117a8dbfa9ee16ff"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "2d7f915596c532740b47e41e50283d3c6981304911b40d97e20cd01ba6773e83"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "a446261347ebbb5228e8f2b8a7da03ca405e205862c4f0d7a2e1e135f12cfb0b"
+        },
+        {
+          "request_id": "release-plan",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "7b8d81252677aed8365b4851f490cef9ecc55e4941126b254b940d9e97386d23"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "2beb410c1a27a8373f2f6618c7b882d9197605299edda9c32e3ceb75768d80a8"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "59d2e1a12c0d97c92ae186125ccba8b5af01766703b4c62f4e533b362d3ed00b"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "a8b29e5522f9ec944f324c9a370b139d7dd5d1c3191fc5fbca66d513529a3e35"
+        },
+        {
+          "request_id": "benchmark-analysis",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "591533c06176c5caf546b5b86269d1b848a1227db276a719c2aaaa5c9c74f9a1"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "207fc2472a4b2958137a441c03e1955dd790ac635521354a6282209eaea4f4c1"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "f0d11fd849f1e4fd313f239427e77bb44f0cfb0a42965617ad983a6f2ac4f48e"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "d45b36b36b6abe173214cdfc150aeb6b9160b0573e71d7d55f5337507e07339a"
+        },
+        {
+          "request_id": "architecture-tradeoff",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "8143fe7c9b6596eaf41ecf57252a3dae0fe9639d5a03779441f362e20e681f6a"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "4933517ecb596dfc6268aad5380ee1d6cd00b5b6368109a3f95905057eeee7a4"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "7661b83eb3e6c9000f7ee3b757409e876efe2cc50b2ae4067bec751600b318a3"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "8ecab4123647c5bc660b4ff52c493a93c8396caa8eb806602f9e0fd9e952636d"
+        },
+        {
+          "request_id": "bug-report-synthesis",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "96bef64ac1179cc7888f8129dd11dff252272a1d28e0bd3fa9573684aaf8f6ed"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "990954a7cab1d631c2c537b127f3ef3778c1377bc2ca0012646552ac5f3c4692"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "44b1a972ef1740698d1da2dfc027c25278c05dc01ea4a24c131ea9131ade13c0"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "75b120655cdffee83db8d276eddc420fcc09a00c73d2ea206735f5c5c494e2c8"
+        },
+        {
+          "request_id": "technical-guide",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "4eabfc513849d1c5ff011a0fbb0a2acf24a6ddfe7d64fff058575140ff92016f"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "6e05368655efe03f4d92ff5aab4b4304caba8f884f8eb6e8d8a809358c69795f"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "e60f2b3fc4c3e63f6c307b435818ab69a30cec0c2e07fdc6ddc2002baab9881a"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "349136a4b5aef2073483bfcdc435db81f85a9b1040c04115e9f0aac1459bc41f"
+        },
+        {
+          "request_id": "risk-register",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "3ba39996dea9b4f7bbf27bc54f7ba48b533e902f3980f4a0c2998980e0ea3e3c"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "cbea649b6cb0046339459aa26064e2da28f32ebb215f1964e65db21abd8f834f"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "4c2bff0077d943d152e66e8dbb54b99bc62cc7b2564752430979bcf2c51d882f"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "b9ccb061916a2b2a1d7f7cc527273acae75f3d153cb498d99bbfd911134c225f"
+        },
+        {
+          "request_id": "performance-hypotheses",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "c914c6a19c49b09ab886df5750d35102ba863930115e4cf4707eee4cf52cfe1f"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "ad1d4769c64d9566710ae368282cd29ae40d13d6cce876cde0dd74d8d3b7873f"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "e529fa51818906c5938317b875115d1207da76b72fd18c81dad7672adf4b0f4b"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "6045a9ce3bd14a21c806ae7b4def20360add74ee352c971072da3c0fcbbea31b"
+        },
+        {
+          "request_id": "decision-memo",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "1162aea5160345e2181173fe864168ef2c5941f390af4aaf01b9d47f9a1063a8"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "timings.jsonl",
+          "rows": 1,
+          "sha256": "541ba30fdd9b7c5adb0acf793a8ed962eeb396a41440d8ddc4210f61837925da"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "prefill-timings.jsonl",
+          "rows": 1,
+          "sha256": "9286502b8e9682da36d8049018ffea31766d83bfec5afcdcb4622933080194d9"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "sites.jsonl",
+          "rows": 1,
+          "sha256": "754d79f83d3507530e75907a0b02dd05c3a6a0a7d1fa34d0961e03f14997c2f5"
+        },
+        {
+          "request_id": "after-suite",
+          "stream": "progress.jsonl",
+          "rows": 1,
+          "sha256": "1f0cd355de1edf632119eecc3bf16f2599cdb93abdfd3c8bf68bca8469272222"
+        }
+      ]
+    }
+  ]
+}

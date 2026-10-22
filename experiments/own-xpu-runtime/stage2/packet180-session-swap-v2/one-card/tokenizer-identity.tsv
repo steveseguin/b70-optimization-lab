@@ -1,0 +1,13 @@
+# packet180 tokenizer/template identity. Every value is a pin the harness already holds:
+#   gguf_header_sha256: shard 00001-of-00003 GGUF header bytes (tokenizer.ggml.* vocabulary/merges and
+#     tokenizer.chat_template), pinned by experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/admission-receipt.json
+#     and by every suite input.json (lineage/input-metadata/*/input.json header_sha256);
+#   tokenizer_source_sha256: packet2-cpu-oracle/tokenizer.py, which produced every suite tokens.txt;
+#   vocab_bin_sha256: the decoded vocabulary table written by that tokenizer (suite input bundles).
+# The engine records this file's sha256 and the three hashes at save and refuses a restore whose file differs.
+format	ownrt.tokenizer-identity.v1
+model	unsloth Qwen3.8-Flash-Next-GGUF 766911a6 UD-IQ3_XXS
+gguf_header_sha256	7c1460a95eb2e95377c32b14deb92cf74fe504d4feb5a62a40d48f78e9e0dcb8
+tokenizer_source_sha256	1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7
+vocab_bin_sha256	7a0e612475366f8d368dbfee6a0a01336f1059e71fa98d91300eb62abd996a64
+template	ChatML <|im_start|>/<|im_end|> with an empty <think></think> block, as embedded in the GGUF header (covered by gguf_header_sha256)

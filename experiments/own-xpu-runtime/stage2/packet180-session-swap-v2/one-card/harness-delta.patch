@@ -1,0 +1,561 @@
+--- packet179/budget.json
++++ packet180/budget.json
+@@ -154,7 +154,7 @@
+     "all_bytes_scaled": true,
+     "projected_peak_bytes": 28570626
+   },
+-  "planned_write_bytes": 300000000,
++  "planned_write_bytes": 400000000,
+   "multiplier_over_scaled_measured": 2,
+   "actual_512_write_measurement_pending": true,
+   "device_floor_bytes": 25000000000,
+@@ -165,8 +165,8 @@
+   "minimum_per_operation_wait_multiple": 21.06129167244187,
+   "load_watchdog_seconds": 7200,
+   "expected_seconds": [
+-    1200,
+-    3600
++    450,
++    2400
+   ],
+   "no_wall_clock_data_proof_deadline": true,
+   "scope": "one fresh load; prefill plus12x512. Separate run repeats this reserve; never overlap.",
+@@ -175,7 +175,18 @@
+   "measured_cold_phase_floor_seconds": 60,
+   "native_wait_multiple_over_cold_phase_floor": 10,
+   "measured_parent_driver_cache_bytes": 10598672,
+-  "checkpoint_planned_blob_bytes": 200000000,
+-  "checkpoint_note": "checkpoint blobs ~76-175 MB per save at gate fill plus a third native run; floors unchanged",
+-  "checkpoint_extra_model_loads": 2
++  "lifecycle_planned_blob_bytes": 230000000,
++  "lifecycle_note": "row b writes S1 (~69 MB at N=342), S2 and S2b (~76 MB each at N=596) plus five native output folders; S2b blobs are deleted by the delete-tool gate; 400 MB planned writes cover both rows; floors unchanged",
++  "lifecycle_model_loads": 5,
++  "expected_seconds_by_kind": {
++    "full512": [
++      450,
++      900
++    ],
++    "lifecycle": [
++      1100,
++      2400
++    ]
++  },
++  "expected_seconds_note": "informational estimates from packet179 receipts (row a 499 s; row b legs 218-251 s each, model load ~210 s); no runner enforces them; the enforced bound is the 7200 s screen supervision of the worker child (screen.py)"
+ }
+--- packet179/entry.py
++++ packet180/entry.py
+@@ -5,7 +5,7 @@
+ def main(argv=None):
+  ap=argparse.ArgumentParser(description=__doc__)
+  ap.add_argument('--lane',choices=('A','B'),required=True)
+- ap.add_argument('--kind',choices=('full512','smoke','bracket','checkpoint'),default='full512',help='smoke/bracket accepted only by offline report compatibility tests; checkpoint is the experimental session save/restore gate')
++ ap.add_argument('--kind',choices=('full512','smoke','bracket','lifecycle'),default='full512',help='smoke/bracket accepted only by offline report compatibility tests; lifecycle is the experimental append/restore-then-save gate')
+  ap.add_argument('--output',type=Path,required=True)
+  ap.add_argument('--reference',type=Path)
+  ap.add_argument('--fault-review',type=Path)
+--- packet179/identity.json
++++ packet180/identity.json
+@@ -2,7 +2,7 @@
+   "parent": "packet58aj-onecard-resident",
+   "gpu_count": 1,
+   "arithmetic": "iq3-p49-split32-v1",
+-  "binary_sha256": "8d18538475e00200032846d51dce11e0d38392dc9962778ffd01b03dd75394a7",
++  "binary_sha256": "f68714ce06c6318a6c7e9ea0b3aa39a58da684f872d6c10efe5f93b7ba143814",
+   "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+   "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+   "context": 4096,
+@@ -21,5 +21,5 @@
+   "measurement_protocol": "packet165: first suite prompt once, full reset, prefill512, remaining suite once",
+   "native_binary_unchanged_from_packet163": false,
+   "native_arithmetic_unchanged_from_packet163": true,
+-  "native_delta": "entry TU only: checkpoint/restore argv, run() save hook and restore-after-reset integration, new checkpoint.hpp (SESSION-SWAP-DESIGN.md v1.1); every kernel object byte-identical to packet165"
++  "native_delta": "entry TU only: checkpoint v2 (append, restore-then-save, tokenizer identity, manifest.json single source of truth, shared sibling lock, inspect/inspect-metadata/validated delete) over the packet179 checkpoint delta; every kernel object byte-identical to packet165"
+ }
+--- packet179/inherited-native.json
++++ packet180/inherited-native.json
+@@ -1,8 +1,8 @@
+ {
+   "parent": "experiments/own-xpu-runtime/stage2/packet163-full-gate/one-card",
+-  "binary_sha256": "8d18538475e00200032846d51dce11e0d38392dc9962778ffd01b03dd75394a7",
++  "binary_sha256": "f68714ce06c6318a6c7e9ea0b3aa39a58da684f872d6c10efe5f93b7ba143814",
+   "embedded_readonly_dependencies": {
+-    "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
++    "experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
+   },
+   "native_recompiled": true,
+   "parent_binary_sha256": "1364bb3de0e0742ea3c5419a3f6850cea3646466c19732ad5cf3fe9be2b1b7cf"
+--- packet179/measurement.py
++++ packet180/measurement.py
+@@ -126,3 +126,162 @@
+   cold_prefix_ms=cold_prefix_ms,
+   cold_prefix_definition='uninterrupted reference request start through its K-th generated token (cold prefill plus decode of the same prefix), same prompt same binary',
+   restore_continuation_wall_ms=1000*(restore1['request_end_monotonic']-restore1['request_start_monotonic']))
++
++# ---------------------------------------------------------------- packet180 comparators
++LIFECYCLE_CONTRACT='v1.2+p180'
++LIFECYCLE_OPERATIONS=['same-generation-resume','append','restore-then-save']
++
++def first_divergence(actual,expected):
++ """First index where two token streams differ (a length difference counts), else None."""
++ actual=list(actual);expected=list(expected);n=min(len(actual),len(expected))
++ for i in range(n):
++  if actual[i]!=expected[i]:return dict(index=i,actual=actual[i],expected=expected[i],actual_length=len(actual),expected_length=len(expected))
++ if len(actual)!=len(expected):
++  return dict(index=n,actual=actual[n] if n<len(actual) else None,expected=expected[n] if n<len(expected) else None,
++   actual_length=len(actual),expected_length=len(expected))
++ return None
++
++def compare_streams(label,actual,expected):
++ """Exact equality; the record keeps the first divergent index and BOTH streams."""
++ d=first_divergence(actual,expected)
++ return dict(label=label,passed=d is None,compared=min(len(actual),len(expected)),first_divergence=d,
++  actual_tokens=list(actual),expected_tokens=list(expected))
++
++def lifecycle_turn(spec,here):
++ """The appended turn T: a fixed EOS-free slice of a suite input, re-derived from its source file."""
++ turn=spec['turn'];source=list(map(int,(Path(here)/turn['source']).read_text().split()))
++ tokens=source[turn['start']:turn['stop']]
++ require(tokens==turn['tokens'],'lifecycle turn differs from its recorded source slice')
++ require(len(tokens)>=64 and not any(t in EOS for t in tokens),'lifecycle turn must be at least 64 EOS-free tokens')
++ return tokens
++
++def lifecycle_input(prompt,generated,turn,spec):
++ """NEW = P + gen[0:K] + T: the saved history P + gen[0:K-1], the pending token gen[K-1], then T."""
++ require(len(generated)==spec['K'] and not any(t in EOS for t in generated),'save leg must produce K EOS-free tokens')
++ new=list(prompt)+list(generated)+list(turn)
++ require(len(new)+spec['M1']+spec['M2']<=spec['context'],'lifecycle input plus decode exceeds the context allocation')
++ return new
++
++def manifest_semantics(manifest,tokens,small_blobs=None):
++ """Python mirror of the engine's token-state cross-checks; reads packet179 v1 and packet180 manifests."""
++ import struct
++ ts=manifest['token_state'];N=ts['position'];eos=manifest['geometry']['eos'];problems=[]
++ if ts['length']!=N:problems.append('length != position')
++ if len(tokens)!=N:problems.append('tokens.bin length != position')
++ if not 1<=ts['prompt_length']<=N:problems.append('prompt_length outside the processed prefix')
++ history=[tokens[N-2] if N>=2 else eos,tokens[N-1]] if len(tokens)==N and N>=1 else None
++ if list(ts['token_history'])!=history:problems.append('token_history != last two processed tokens')
++ for name,want in (('position',N),('next_token',ts['next_token']),('token',history[1] if history else None),('error',0)):
++  if small_blobs and name in small_blobs and struct.unpack('<i',small_blobs[name])[0]!=want:problems.append(name+' blob disagrees')
++ if small_blobs and 'token_history' in small_blobs and list(struct.unpack('<2q',small_blobs['token_history']))!=history:
++  problems.append('token_history blob disagrees')
++ if sum(b['bytes'] for b in manifest['blobs'])!=manifest['measurements']['save_bytes']:problems.append('save_bytes != sum of blob bytes')
++ return dict(passed=not problems,problems=problems,position=N,pending_token=ts['next_token'],
++  blobs_checked=sorted(small_blobs) if small_blobs else [])
++
++def p179_identity(observed,reference):
++ """Row a: every request's full output equals packet179 row a's (relinked binary, unchanged arithmetic)."""
++ rows=[];ok=True
++ for pid,ref in reference['prompts'].items():
++  got=observed.get(pid)
++  cmp=compare_streams(pid,got if got is not None else [],ref['tokens'])
++  passed=got is not None and cmp['passed'] and digest(got)==ref['output_token_digest']
++  ok&=passed
++  rows.append(dict(prompt_id=pid,passed=passed,tokens=len(got or []),first_divergence=cmp['first_divergence'],
++   actual_tokens=None if passed else cmp['actual_tokens'],expected_tokens=None if passed else cmp['expected_tokens']))
++ extra=sorted(set(observed)-set(reference['prompts']))
++ return dict(passed=bool(ok and not extra and len(rows)==13),compared_prompts=len(rows),unexpected_prompts=extra,rows=rows,
++  reference_binary_sha256=reference['binary_sha256'],
++  scope='full output streams of all 13 requests (12 suite prompts + prefill512) versus packet179 row a')
++
++def lifecycle_check(results,manifests,tools,spec,prompt,turn,p179_tokens,oracle):
++ """Row b gates. Returns a receipt and never raises on a gate failure, so both streams are kept."""
++ K,M1,M2=spec['K'],spec['M1'],spec['M2'];ids=spec['checkpoint_ids']
++ sv,x,y,r,x2=(results[k] for k in ('save-s1','append-s2','resume-s2','reference','append-s2b'))
++ gates={};problems=[]
++ def gate(name,ok,detail=None):
++  gates[name]=dict(passed=bool(ok),detail=detail)
++  if not ok:problems.append(name)
++ for leg,res in results.items():
++  try:stream_check(res);gate('stream '+leg,True)
++  except (ValueError,KeyError,TypeError) as error:gate('stream '+leg,False,str(error))
++ gate('save K tokens EOS-free',len(sv['tokens'])==K and not any(t in EOS for t in sv['tokens']))
++ save_p179=compare_streams('save-s1 vs packet179 row-a '+spec['prompt_id']+' [0:K]',sv['tokens'],list(p179_tokens)[:K])
++ gate('save == packet179 row a [0:K]',save_p179['passed'],save_p179['first_divergence'])
++ try:
++  oracle_check=stream_check(sv,oracle)
++  gate('save oracle-128 prefix',oracle_check['tokens_compared']==min(len(sv['tokens']),len(oracle)))
++ except (ValueError,KeyError,TypeError) as error:
++  oracle_check=None;gate('save oracle-128 prefix',False,str(error))
++ R=list(r['tokens'])
++ append_cmp=compare_streams('append (2) vs one-shot reference (4) [0:M1]',x['tokens'],R[:M1])
++ gate('append == reference [0:M1]',append_cmp['passed'],append_cmp['first_divergence'])
++ if len(R)>M1:
++  chain_cmp=compare_streams('resume of S2 (3) vs one-shot reference (4) [M1:M1+M2]',y['tokens'],R[M1:M1+M2])
++  gate('restore-then-save chain == reference [M1:M1+M2]',chain_cmp['passed'],chain_cmp['first_divergence'])
++ else:
++  chain_cmp=None
++  gate('restore-then-save chain == reference [M1:M1+M2]',False,'not evaluable: the reference stopped naturally after '+str(len(R))+' <= M1 tokens')
++ repeat_cmp=compare_streams('append repeat (5) vs append (2)',x2['tokens'],x['tokens'])
++ gate('append repeat identical',repeat_cmp['passed'],repeat_cmp['first_divergence'])
++ N1=len(prompt)+K-1;L=len(prompt)+K+len(turn)
++ def rec(res):return res.get('checkpoint') or {}
++ s1=rec(sv).get('save') or {}
++ gate('save record',rec(sv).get('restore') is None and s1.get('checkpoint_id')==ids['S1'] and s1.get('position')==N1
++      and s1.get('pending_token')==sv['tokens'][-1],s1)
++ for leg,res,sid in (('append-s2',x,ids['S2']),('append-s2b',x2,ids['S2b'])):
++  rr=rec(res).get('restore') or {};ss=rec(res).get('save') or {}
++  gate(leg+' restore record',rr.get('operation')=='append' and rr.get('checkpoint_id')==ids['S1'] and rr.get('saved_prefix_length')==N1
++       and rr.get('appended_length')==len(turn) and rr.get('input_length')==L and rr.get('pending_token')==sv['tokens'][-1]
++       and rr.get('manifest_sha256')==manifests[ids['S1']]['sha256']
++       and isinstance(rr.get('restore_ms'),(int,float)) and isinstance(rr.get('append_prefill_ms'),(int,float)),rr)
++  gate(leg+' save record',ss.get('checkpoint_id')==sid and ss.get('parent_checkpoint_id')==ids['S1']
++       and ss.get('position')==L+len(res['tokens'])-1 and ss.get('pending_token')==res['tokens'][-1],ss)
++ ry=rec(y).get('restore') or {}
++ gate('resume restore record',ry.get('operation')=='same-generation-resume' and ry.get('checkpoint_id')==ids['S2']
++      and ry.get('saved_prefix_length')==L+len(x['tokens'])-1 and ry.get('pending_token')==x['tokens'][-1]
++      and ry.get('appended_length')==0 and ry.get('append_prefill_ms') is None and rec(y).get('save') is None,ry)
++ gate('reference is a fresh run',rec(r).get('restore') is None and rec(r).get('save') is None)
++ m1,m2,m2b=(manifests[ids[k]] for k in ('S1','S2','S2b'))
++ for cid,m in ((ids['S1'],m1),(ids['S2'],m2),(ids['S2b'],m2b)):
++  mm=m['manifest']
++  gate('manifest identity '+cid,mm.get('format')=='ownrt.session-checkpoint.v1' and mm.get('label')=='experimental'
++       and mm.get('contract')==LIFECYCLE_CONTRACT and mm.get('operations')==LIFECYCLE_OPERATIONS and mm.get('checkpoint_id')==cid)
++  gate('manifest semantics '+cid,m['semantics']['passed'],m['semantics']['problems'])
++ gate('S1 lineage save',m1['manifest']['lineage']=={'operation':'save','parent':None})
++ gate('S1 position',m1['manifest']['token_state']['position']==N1 and m1['manifest']['token_state']['prompt_length']==len(prompt))
++ for cid,m in ((ids['S2'],m2),(ids['S2b'],m2b)):
++  gate('lineage '+cid,m['manifest']['lineage']=={'operation':'restore-then-save','parent':{'checkpoint_id':ids['S1'],'manifest_sha256':m1['sha256']}})
++ gate('S2 position',m2['manifest']['token_state']['position']==L+len(x['tokens'])-1 and m2['manifest']['token_state']['prompt_length']==L)
++ strip=lambda m:[(b['name'],b['bytes'],b['sha256'],b['slice']) for b in m['manifest']['blobs']]
++ gate('S2 == S2b saved state (every blob sha256, token state)',strip(m2)==strip(m2b) and m2['manifest']['token_state']==m2b['manifest']['token_state'])
++ for cid in (ids['S1'],ids['S2'],ids['S2b']):
++  t=tools.get('metadata-'+cid,{});o=t.get('stdout_object') or {}
++  gate('inspect-metadata '+cid,t.get('returncode')==0 and t.get('stdout_lines')==1 and t.get('stderr_json_lines') and o.get('ok') is True
++       and o.get('mode')=='metadata' and o.get('manifest')==manifests[cid]['manifest'] and o.get('manifest_sha256')==manifests[cid]['sha256']
++       and (o.get('verified') or {}).get('blobs_verified') is None,{k:o.get(k) for k in ('ok','mode','error')})
++ for cid in (ids['S2'],ids['S2b']):
++  t=tools.get('full-'+cid,{});o=t.get('stdout_object') or {};mm=manifests[cid]['manifest'];v=o.get('verified') or {}
++  gate('inspect-full '+cid,t.get('returncode')==0 and t.get('stdout_lines')==1 and t.get('stderr_json_lines') and o.get('ok') is True
++       and o.get('mode')=='full' and v.get('blobs_verified')==len(mm['blobs'])
++       and v.get('blob_bytes_verified')==mm['measurements']['save_bytes']+4*mm['token_state']['position'],{k:o.get(k) for k in ('ok','mode','error','verified')})
++ t=tools.get('delete-'+ids['S2b'],{});o=t.get('stdout_object') or {}
++ gate('delete '+ids['S2b'],t.get('returncode')==0 and o.get('deleted') is True and t.get('directory_removed') is True and t.get('lock_removed') is True,
++      {k:o.get(k) for k in ('ok','deleted','reason','error')})
++ def ms(res,key):return (rec(res).get('restore') or {}).get(key)
++ restore_path=None if ms(x,'restore_ms') is None or ms(x,'append_prefill_ms') is None else ms(x,'restore_ms')+ms(x,'append_prefill_ms')
++ timing=dict(
++  restore_ms={leg:ms(res,'restore_ms') for leg,res in (('append-s2',x),('resume-s2',y),('append-s2b',x2))},
++  append_prefill_ms={leg:ms(res,'append_prefill_ms') for leg,res in (('append-s2',x),('append-s2b',x2))},
++  restored_bytes={leg:ms(res,'restored_bytes') for leg,res in (('append-s2',x),('resume-s2',y),('append-s2b',x2))},
++  save_seconds={cid:m['manifest']['measurements']['save_seconds'] for cid,m in manifests.items()},
++  save_bytes={cid:m['manifest']['measurements']['save_bytes'] for cid,m in manifests.items()},
++  save_leg_prefill_ms=sv.get('prefill_ms'),reference_prefill_ms=r.get('prefill_ms'),
++  request_wall_ms={leg:1000*(res['request_end_monotonic']-res['request_start_monotonic']) for leg,res in results.items()},
++  cold_vs_restore=dict(cold_prefill_ms=r.get('prefill_ms'),restore_plus_append_prefill_ms=restore_path,
++   ratio=(r['prefill_ms']/restore_path) if restore_path and r.get('prefill_ms') else None,input_tokens=L,saved_prefix_tokens=N1,
++   definition='cold: the one-shot reference process steps all L input tokens from a reset state (its prefill_ms, through the first generated token); restore path: the append process restores the N1-token checkpoint and steps the L-N1 remaining input tokens (restore_ms + append_prefill_ms); same binary, same input, each a fresh process with an empty expert cache'))
++ return dict(passed=not problems,device_executed=False,problems=problems,gates=gates,
++  comparisons=dict(save_vs_packet179=save_p179,append_vs_reference=append_cmp,chain_vs_reference=chain_cmp,append_repeat=repeat_cmp),
++  reference_tokens=len(R),reference_natural_stop=len(R)<M1+M2,oracle_check=oracle_check,timing=timing,
++  merged_reference_definition='reference (4) is a fresh process given NEW = P + gen[0:K] + T decoding M1+M2; (2) must equal its [0:M1], (3) its [M1:M1+M2]')
+--- packet179/native-help-flags.json
++++ packet180/native-help-flags.json
+@@ -15,8 +15,10 @@
+   "--checkpoint-delete",
+   "--checkpoint-id",
+   "--checkpoint-inspect",
++  "--checkpoint-inspect-metadata",
+   "--checkpoint-restore",
+   "--checkpoint-save",
++  "--checkpoint-save-id",
+   "--context",
+   "--dispatch",
+   "--draft-capture",
+@@ -63,6 +65,7 @@
+   "--suite-inputs",
+   "--target-split",
+   "--timing",
++  "--tokenizer-identity",
+   "--tokens",
+   "--wait-seconds"
+ ]
+--- packet179/screen.py
++++ packet180/screen.py
+@@ -21,7 +21,7 @@
+ def parser():
+  ap=argparse.ArgumentParser()
+  ap.add_argument('--lane',choices=('A','B'),required=True)
+- ap.add_argument('--kind',choices=('full512','smoke','bracket','checkpoint'),default='full512')
++ ap.add_argument('--kind',choices=('full512','smoke','bracket','lifecycle'),default='full512')
+  ap.add_argument('--output',type=Path,required=True)
+  ap.add_argument('--reference',type=Path)
+  ap.add_argument('--fault-review',type=Path)
+@@ -45,13 +45,13 @@
+  return values
+ 
+ def report_completed(output,record,identity,coordination):
+- if identity.get('bracket',{}).get('kind')=='checkpoint':
+-  receipt=read(output/'run/checkpoint-receipt.json')
+-  require(receipt.get('passed') is True and receipt.get('device_executed') is False,'checkpoint gate receipt incomplete')
++ if identity.get('bracket',{}).get('kind')=='lifecycle':
++  receipt=read(output/'run/lifecycle-receipt.json')
++  require(receipt.get('passed') is True and receipt.get('device_executed') is False,'lifecycle gate receipt incomplete')
+   result=dict(receipt)
+-  result.update(kind='checkpoint',lane=identity['lane'],
++  result.update(kind='lifecycle',lane=identity['lane'],
+    scope=coordination.get('scope','report-rehearsal'),device_executed=bool(record.get('device_executed')),
+-   source_receipt_sha256=sha(output/'run/checkpoint-receipt.json'),report_after_device_release=True,
++   source_receipt_sha256=sha(output/'run/lifecycle-receipt.json'),report_after_device_release=True,
+    strict512=False,submission_eligible=False,experimental_checkpoint=True)
+   save(output/'summary.json',result);save(output/'bracket-summary.json',result)
+   return result
+@@ -63,6 +63,10 @@
+  result.update(kind=identity.get('bracket',{}).get('kind','full512'),lane=identity['lane'],
+   scope=coordination.get('scope','report-rehearsal'),device_executed=bool(record.get('device_executed')),
+   source_report_sha256=sha(output/'run/report-inputs.json'),report_after_device_release=True)
++ if record.get('device_executed'):
++  # Device row a: the worker's packet179 identity gate must have passed before report-inputs.
++  check=read(output/'run/p179-identity.json');require(check.get('passed') is True,'packet179 row-a identity missing or failed')
++  result['packet179_row_a_identity']=dict(passed=True,compared_prompts=check['compared_prompts'],reference_binary_sha256=check['reference_binary_sha256'])
+  # Generic shared rehearsal intentionally supplies64/128 receipts: those stay strict512=false.
+  if result.get('strict512'):
+   require(proof.get('prefill',{}).get('prefill',{}).get('warmup') is not None,'warm prefill proof required')
+@@ -91,13 +95,18 @@
+   expected_seconds=budget['expected_seconds'],watchdog_seconds=7200,per_operation_wait_seconds=budget['wait_seconds'],
+   reservation_scope='whole-host'if args.lane=='A'else'lane-B with other lane required idle',command=command,
+   second_fresh_attempt=bool(args.reference),prefill=dict(users=1,cached_tokens=0,request_index=1,warmup_prompt=measurement.IDS[0],suite_prompt_used_once=True),submission_eligible=False)
+- if args.kind=='checkpoint':
+-  plan.update(model_loads=3,request_count=3,requested_max_new=None,prefill=None,
+-   checkpoint=dict(prompt=measurement.IDS[0],save_max_new=256,restore_max_new=128,restore_launches=2,experimental=True,
+-    gate='save K=256 then two independent restore M=128 continuations; merged stream must equal this packet\'s full512 row-A reference at [0:384); repeat-restore determinism; oracle-128 prefix on the merged stream'))
++ plan['expected_seconds']=budget['expected_seconds_by_kind'][args.kind] if args.kind in budget['expected_seconds_by_kind'] else budget['expected_seconds']
++ if args.kind=='lifecycle':
++  require(args.reference is None,'the lifecycle row is self-contained; it takes no --reference')
++  life=read(HERE/'lifecycle.json')
++  plan.update(model_loads=5,request_count=5,requested_max_new=None,prefill=None,second_fresh_attempt=False,
++   lifecycle=dict(prompt=life['prompt_id'],K=life['K'],M1=life['M1'],M2=life['M2'],turn_tokens=len(life['turn']['tokens']),
++    legs=['save-s1','append-s2','resume-s2','reference','append-s2b'],experimental=True,
++    host_tools=['--checkpoint-inspect-metadata s1,s2,s2b','--checkpoint-inspect s2,s2b','--checkpoint-delete s2b'],
++    gate='append (2) == one-shot reference [0:M1]; resume of the restore-then-saved S2 (3) == reference [M1:M1+M2]; repeat append (5) == (2) and S2b blobs == S2 blobs; save leg == packet179 row a [0:K] and oracle-128; inspect/delete tools; a divergence fails with the first index and both streams'))
+  if args.plan:
+   print(json.dumps(plan));return 0
+- require(args.kind in('full512','checkpoint'),'short synthetic report modes cannot launch devices')
++ require(args.kind in('full512','lifecycle'),'short synthetic report modes cannot launch devices')
+  require(args.authorized_device_window and args.fault_review,'coordinator authorization and fault review required')
+  from readiness import verify_ready
+  verify_ready()
+--- packet179/worker.py
++++ packet180/worker.py
+@@ -1,13 +1,15 @@
+-"""One load; complete resets; in-run validation is stream format and exact prefix only."""
+-import argparse,copy,json,os,signal,subprocess,time
++"""One load; complete resets; in-run validation is stream format and exact prefix only.
++
++packet180: kind lifecycle is the experimental append / restore-then-save gate (row b).
++"""
++import argparse,copy,json,os,signal,struct,subprocess,time
+ from pathlib import Path
+ from common import HERE,D,read,save,require,sha
+ import measurement
+ import exec_limits
+ 
+-CHECKPOINT_PROMPT='incident-retrospective'
+-CHECKPOINT_K=256
+-CHECKPOINT_M=128
++LIFECYCLE=read(HERE/'lifecycle.json')
++INSPECT_TOOL_TIMEOUT_SECONDS=600  # worker-local bound on each device-free host tool (inspect/delete); not a native or window deadline
+ 
+ 
+ def entries():
+@@ -53,18 +55,6 @@
+   ('--identity',HERE/'inputs/identity.tsv'),('--selection',HERE/'selection.json'),('--selection-sha256',sha(HERE/'selection.json')),('--dispatch',HERE/'dispatch.json')]:replace(k,v)
+  return ['/usr/bin/ionice','-c3',*cmd]
+ 
+-def checkpoint_command(output,max_new,mode,ckpt_root):
+- """Single-request native argv for one checkpoint leg (save or restore)."""
+- cmd=read(HERE/'parent-native-argv.json')
+- require(cmd.count('--suite-inputs')==1,'native flag --suite-inputs')
+- at=cmd.index('--suite-inputs');del cmd[at:at+2]
+- def replace(k,v):require(cmd.count(k)==1,'native flag '+k);cmd[cmd.index(k)+1]=str(v)
+- cmd[0]=str(HERE/'build/device/own-rt-iq3')
+- for k,v in [('--max-new',max_new),('--seconds',7200),('--wait-seconds',600),('--output',output),
+-  ('--input',HERE/'inputs'/CHECKPOINT_PROMPT/'tokens.txt'),('--plan',HERE/'inputs/plan.tsv'),
+-  ('--identity',HERE/'inputs/identity.tsv'),('--selection',HERE/'selection.json'),('--selection-sha256',sha(HERE/'selection.json')),('--dispatch',HERE/'dispatch.json')]:replace(k,v)
+- return ['/usr/bin/ionice','-c3',*cmd,mode,str(ckpt_root),'--checkpoint-id','gate']
+-
+ def run_native(cmd,output):
+  """One fresh native process with the same polling/stop discipline as one()."""
+  child=None;stop=[]
+@@ -81,41 +71,123 @@
+  finally:
+   for s,h in handlers.items():signal.signal(s,h)
+ 
+-def checkpoint(output,reference):
+- """Design 7.1/7.2 gate: save K=256, two independent restore M=128 continuations.
+-
+- Reference is this packet's own full512 row-A run of the same prompt and binary.
+- """
+- require(measurement.IDS[0]==CHECKPOINT_PROMPT,'checkpoint gate prompt')
+- prompt=list(map(int,(HERE/'inputs'/CHECKPOINT_PROMPT/'tokens.txt').read_text().split()))
+- oracle=read(HERE/'lineage/oracle128'/(CHECKPOINT_PROMPT+'.json'))['tokens']
+- reference_result=read(Path(reference)/'run/native'/CHECKPOINT_PROMPT/'result.json')
+- root=output/'checkpoints';results={}
+- for leg,max_new,mode in [('save',CHECKPOINT_K,'--checkpoint-save'),('restore1',CHECKPOINT_M,'--checkpoint-restore'),('restore2',CHECKPOINT_M,'--checkpoint-restore')]:
+-  legout=output/'run'/leg;legout.mkdir(parents=True)
+-  dest=legout/'native'
+-  cmd=checkpoint_command(dest,max_new,mode,root);save(legout/'launch.json',dict(argv=cmd))
+-  run_native(cmd,legout)
+-  require((dest/'lookup-request-complete.json').is_file(),'completion marker missing: '+leg)
+-  reset=read(dest/'reset.json')
+-  require(reset.get('passed')is True and reset.get('cached_tokens')==0 and reset.get('allocation_ids_preserved')is True,'cold request reset missing: '+leg)
+-  streams={'timings.jsonl':measurement.check_file_stream(dest/'timings.jsonl')}
+-  if leg=='save':streams['prefill-timings.jsonl']=measurement.check_file_stream(dest/'prefill-timings.jsonl')
+-  save(dest/'stream-proof.json',dict(passed=True,streams=streams,scope='presence/format only; restore legs have an empty prefill stream by construction'))
+-  results[leg]=read(dest/'result.json')
+-  results[leg]['request_reset_sha256']=[sha(dest/'reset.json')]
+- manifest=read(root/'gate/manifest.json')
+- require(manifest.get('format')=='ownrt.session-checkpoint.v1' and manifest.get('label')=='experimental','checkpoint manifest identity')
+- check=measurement.checkpoint_check(results['save'],results['restore1'],results['restore2'],reference_result,oracle,CHECKPOINT_K,CHECKPOINT_M)
+- save(output/'checkpoint-receipt.json',dict(check,
+-  prompt_id=CHECKPOINT_PROMPT,prompt_tokens=len(prompt),save_max_new=CHECKPOINT_K,restore_max_new=CHECKPOINT_M,
+-  save_seconds=manifest['measurements']['save_seconds'],save_bytes=manifest['measurements']['save_bytes'],
+-  restore_ms=results['restore1'].get('checkpoint_restore_ms'),
+-  manifest_sha256=sha(root/'gate/manifest.json'),manifest=manifest,
+-  reference=str(Path(reference)),reference_result_sha256=sha(Path(reference)/'run/native'/CHECKPOINT_PROMPT/'result.json'),
++def native_single_command(output,input_path,max_new,checkpoint_args):
++ """Single-request native argv for one lifecycle leg: the parent argv minus --suite-inputs,
++ plus checkpoint flags; every checkpoint leg carries the packet tokenizer identity."""
++ cmd=read(HERE/'parent-native-argv.json')
++ require(cmd.count('--suite-inputs')==1,'native flag --suite-inputs')
++ at=cmd.index('--suite-inputs');del cmd[at:at+2]
++ def replace(k,v):require(cmd.count(k)==1,'native flag '+k);cmd[cmd.index(k)+1]=str(v)
++ cmd[0]=str(HERE/'build/device/own-rt-iq3')
++ for k,v in [('--max-new',max_new),('--seconds',7200),('--wait-seconds',600),('--output',output),
++  ('--input',input_path),('--plan',HERE/'inputs/plan.tsv'),
++  ('--identity',HERE/'inputs/identity.tsv'),('--selection',HERE/'selection.json'),('--selection-sha256',sha(HERE/'selection.json')),('--dispatch',HERE/'dispatch.json')]:replace(k,v)
++ extra=[str(x) for x in checkpoint_args]
++ if extra:extra+=['--tokenizer-identity',str(HERE/'tokenizer-identity.tsv')]
++ return ['/usr/bin/ionice','-c3',*cmd,*extra]
++
++def lifecycle_legs(root,prompt_path,new_path):
++ L=LIFECYCLE;ids=L['checkpoint_ids']
++ return [
++  dict(leg='save-s1',input=prompt_path,max_new=L['K'],operation='save',
++   args=['--checkpoint-save',root,'--checkpoint-id',ids['S1']]),
++  dict(leg='append-s2',input=new_path,max_new=L['M1'],operation='append + restore-then-save',
++   args=['--checkpoint-restore',root,'--checkpoint-id',ids['S1'],'--checkpoint-save',root,'--checkpoint-save-id',ids['S2']]),
++  dict(leg='resume-s2',input=new_path,max_new=L['M2'],operation='same-generation resume',
++   args=['--checkpoint-restore',root,'--checkpoint-id',ids['S2']]),
++  dict(leg='reference',input=new_path,max_new=L['M1']+L['M2'],operation='fresh one-shot reference',args=[]),
++  dict(leg='append-s2b',input=new_path,max_new=L['M1'],operation='append + restore-then-save (repeat)',
++   args=['--checkpoint-restore',root,'--checkpoint-id',ids['S1'],'--checkpoint-save',root,'--checkpoint-save-id',ids['S2b']]),
++ ]
++
++def host_tool(flag,target,folder):
++ """One device-free checkpoint host tool of this packet's binary; stdout must be ONE JSON object."""
++ cmd=[str(HERE/'build/device/own-rt-iq3'),flag,str(target)]
++ folder.mkdir(parents=True,exist_ok=True);stem=flag.lstrip('-')+'-'+Path(target).name
++ cp=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=INSPECT_TOOL_TIMEOUT_SECONDS)
++ (folder/(stem+'.stdout.json')).write_text(cp.stdout);(folder/(stem+'.stderr.jsonl')).write_text(cp.stderr)
++ row=dict(argv=cmd,returncode=cp.returncode,stdout_object=None,stdout_lines=len(cp.stdout.splitlines()),stderr_json_lines=True)
++ try:
++  value=json.loads(cp.stdout)
++  row['stdout_object']=value if isinstance(value,dict) else None
++ except ValueError as error:row['stdout_parse_error']=str(error)
++ for line in cp.stderr.splitlines():
++  try:json.loads(line)
++  except ValueError:row['stderr_json_lines']=False
++ return row
++
++def lifecycle(output):
++ """Row b: five fresh processes of this binary (save S1; restore S1 + append T + save S2;
++ resume S2; one-shot reference of the same input; repeat append into S2b), then the
++ device-free host tools, then the comparisons. A divergence is a recorded FAILURE with the
++ first divergent index and both streams; it is never tolerated."""
++ L=LIFECYCLE
++ require(measurement.IDS[0]==L['prompt_id'],'lifecycle prompt is the first registered suite prompt')
++ prompt_path=HERE/'inputs'/L['prompt_id']/'tokens.txt'
++ prompt=list(map(int,prompt_path.read_text().split()))
++ turn=measurement.lifecycle_turn(L,HERE)
++ oracle=read(HERE/'lineage/oracle128'/(L['prompt_id']+'.json'))['tokens']
++ p179=read(HERE/'reference-p179-row-a.json')['prompts'][L['prompt_id']]['tokens']
++ root=output/'checkpoints';inputs=output/'inputs';inputs.mkdir(parents=True)
++ new_path=inputs/'new.txt'
++ results={};receipts=[]
++ try:
++  for spec in lifecycle_legs(root,prompt_path,new_path):
++   if spec['leg']=='append-s2':
++    new=measurement.lifecycle_input(prompt,results['save-s1']['tokens'],turn,L)
++    new_path.write_text(' '.join(map(str,new))+'\n')
++    save(inputs/'new.json',dict(tokens=len(new),prompt_tokens=len(prompt),saved_generation=L['K'],turn_tokens=len(turn),
++     construction='P + gen(save-s1)[0:K] + T; gen[K-1] is the saved pending token; T from lifecycle.json'))
++   legout=output/'run'/spec['leg'];legout.mkdir(parents=True);dest=legout/'native'
++   cmd=native_single_command(dest,spec['input'],spec['max_new'],spec['args'])
++   save(legout/'launch.json',dict(argv=cmd,operation=spec['operation']))
++   run_native(cmd,legout)
++   receipts.append(read(dest/'receipt.json'))
++   require((dest/'lookup-request-complete.json').is_file(),'completion marker missing: '+spec['leg'])
++   reset=read(dest/'reset.json')
++   require(reset.get('passed')is True and reset.get('cached_tokens')==0 and reset.get('allocation_ids_preserved')is True,'cold request reset missing: '+spec['leg'])
++   streams={'timings.jsonl':measurement.check_file_stream(dest/'timings.jsonl')}
++   if spec['leg']!='resume-s2':streams['prefill-timings.jsonl']=measurement.check_file_stream(dest/'prefill-timings.jsonl')
++   save(dest/'stream-proof.json',dict(passed=True,streams=streams,scope='presence/format only; the same-generation resume leg has an empty prefill stream by construction'))
++   results[spec['leg']]=read(dest/'result.json');results[spec['leg']]['request_reset_sha256']=[sha(dest/'reset.json')]
++ except BaseException as error:
++  save(output/'lifecycle-receipt.json',dict(passed=False,device_executed=False,stage='native legs',error=str(error),completed_legs=list(results),
++   results={k:dict(tokens=v.get('tokens'),checkpoint=v.get('checkpoint')) for k,v in results.items()}))
++  if receipts:save(output/'teardown-partial.json',dict(receipts=len(receipts),scope='legs completed before the failure'))
++  raise
++ save(output/'teardown.json',prove_drain(receipts))
++ ids=L['checkpoint_ids'];manifests={}
++ for key in ('S1','S2','S2b'):
++  cid=ids[key];folder=root/cid;manifest=read(folder/'manifest.json')
++  tokens=list(struct.unpack('<%di'%(manifest['token_state']['position']),(folder/'tokens.bin').read_bytes()))
++  small={n:(folder/(n+'.bin')).read_bytes() for n in ('position','next_token','token','error','token_history') if (folder/(n+'.bin')).is_file()}
++  manifests[cid]=dict(manifest=manifest,sha256=sha(folder/'manifest.json'),fields_sha256=sha(folder/'fields.tsv'),
++   semantics=measurement.manifest_semantics(manifest,tokens,small))
++ tools={}
++ for key in ('S1','S2','S2b'):tools['metadata-'+ids[key]]=host_tool('--checkpoint-inspect-metadata',root/ids[key],output/'tools')
++ for key in ('S2','S2b'):tools['full-'+ids[key]]=host_tool('--checkpoint-inspect',root/ids[key],output/'tools')
++ keep=output/'s2b-manifest-copy';keep.mkdir()
++ for leaf in ('manifest.json','fields.tsv'):(keep/leaf).write_bytes((root/ids['S2b']/leaf).read_bytes())
++ tools['delete-'+ids['S2b']]=host_tool('--checkpoint-delete',root/ids['S2b'],output/'tools')
++ tools['delete-'+ids['S2b']].update(directory_removed=not (root/ids['S2b']).exists(),lock_removed=not (root/(ids['S2b']+'.lock')).exists())
++ check=measurement.lifecycle_check(results,manifests,tools,L,prompt,turn,p179,oracle)
++ save(output/'lifecycle-receipt.json',dict(check,prompt_id=L['prompt_id'],prompt_tokens=len(prompt),turn_tokens=len(turn),
++  new_input_tokens=len(prompt)+L['K']+len(turn),K=L['K'],M1=L['M1'],M2=L['M2'],
++  manifests={cid:dict(sha256=m['sha256'],fields_sha256=m['fields_sha256'],semantics=m['semantics'],
++   token_state=m['manifest']['token_state'],lineage=m['manifest']['lineage'],measurements=m['manifest']['measurements'],
++   blob_count=len(m['manifest']['blobs'])) for cid,m in manifests.items()},
++  tools={k:{kk:vv for kk,vv in v.items() if kk!='stdout_object'}|dict(ok=(v.get('stdout_object') or {}).get('ok')) for k,v in tools.items()},
+   reset_sha256={leg:results[leg]['request_reset_sha256'] for leg in results},
+-  scope='experimental session checkpoint restart-and-continue gate; merged K+M stream versus this packet\'s uninterrupted full512 row-A reference; oracle cap 128 on the merged stream; not a performance claim'))
+- save(output/'teardown.json',prove_drain([read(output/'run'/leg/'native/receipt.json') for leg in ('save','restore1','restore2')]))
++  s2b_note='S2b blobs are deleted by the delete-tool gate after the full inspect verified them and their sha256 equal S2; its manifest.json and fields.tsv are kept in s2b-manifest-copy/',
++  scope='experimental session checkpoint lifecycle: append, restore-then-save, chain resume and repeat determinism versus a one-shot fresh reference of the same input; oracle cap 128 on the save leg; not a performance claim'))
++ require(check['passed'],'lifecycle gate FAILED: '+', '.join(check['problems'])+' (run/lifecycle-receipt.json holds the first divergent index and both streams)')
++
++def p179_identity_gate(output,observed):
++ """Row a: every request's full output must equal packet179 row a (relinked binary, unchanged arithmetic)."""
++ check=measurement.p179_identity(observed,read(HERE/'reference-p179-row-a.json'))
++ save(output/'p179-identity.json',check)
++ require(check['passed'],'packet180 row a output differs from packet179 row a (run/p179-identity.json)')
++ return check
+ 
+ def prove_drain(receipts):
+  for row in receipts:
+@@ -212,18 +284,19 @@
+ 
+ def main():
+  ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);ap.add_argument('--lane',choices=('A','B'),required=True)
+- ap.add_argument('--kind',choices=('full512','checkpoint'),default='full512');ap.add_argument('--reference',type=Path);a=ap.parse_args()
++ ap.add_argument('--kind',choices=('full512','lifecycle'),default='full512');ap.add_argument('--reference',type=Path);a=ap.parse_args()
+  require((a.output.parent/'window.json').is_file(),'outer admitted window required')
+  identity=read(a.output.parent/'identity.json');require(identity['lane']==a.lane,'lane binding')
+  a.output.mkdir()
+- if a.kind=='checkpoint':
+-  require(a.reference is not None,"--kind checkpoint requires --reference (this packet's full512 row-A output)")
+-  checkpoint(a.output,a.reference);return 0
++ if a.kind=='lifecycle':
++  require(a.reference is None,'the lifecycle row is self-contained; it takes no --reference')
++  lifecycle(a.output);return 0
+  items=entries()
+  observed=one(a.output,items)if read(HERE/'identity.json')['gpu_count']==1 else two(a.output,items)
+  # This process has released every device before doing metric aggregation.
+  rows=[measurement.request(read(observed[e['prompt_id']]['path']),e['tokens'],e['prompt_id'],expected(e))for e in items]
+  by_id={r['prompt_id']:r for r in rows}
++ p179_identity_gate(a.output,{pid:r['tokens'] for pid,r in by_id.items()})
+  save(a.output/'report-inputs.json',dict(passed=True,requests=[by_id[i] for i in measurement.IDS],prefill=by_id['prefill512'],execution_order=[e['prompt_id'] for e in items],device_isolation=dict(passed=True,scope='outer whole-host admission and complete owner drain'),lane=a.lane))
+  return 0
+ if __name__=='__main__':raise SystemExit(main())

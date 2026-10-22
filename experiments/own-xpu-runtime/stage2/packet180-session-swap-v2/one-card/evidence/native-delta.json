@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "entry_tu_only": true,
+  "patched": [
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp",
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/checkpoint.hpp"
+  ],
+  "added": [],
+  "parent_main_sha256": "b0fa053d10814becedba2c104e7bc91618f9422fd476aac371eb6b3cd2da68d1",
+  "packet179_main_sha256": "8b8a090d8c69142d7bba93cd6bdb745237210410b89fab6e7da7207dbe782232",
+  "patched_main_sha256": "9ccc869a17cf32de0b7e8b6512c2031376312247f6348056deb157047046c342",
+  "checkpoint_hpp_sha256": "578e6026747ad70fc55dccac93e5627999c726adb392b33841ef06f64fdab3c5",
+  "packet179_checkpoint_hpp_sha256": "058e3f33d5b2371530b192b0faaafb51b57ca2dd2311af869e7094761c66ccdc",
+  "patch_sha256": "9a2925ed2de1b6a8a8ab84f4336023db7178aa182200dcc008736fc79df92bf2",
+  "incremental_main_patch_sha256": "a340360f26bc0323f19aae454ae203bc9c20f0e6e9c02bbe3c95d4c69e0ba8b3",
+  "incremental_checkpoint_patch_sha256": "94a1886efd4a96f62e6fb798cbc3c3b2c05ed0dcc8c5205c2dffdf3f5d93ad8d",
+  "harness_files": [
+    "worker.py",
+    "measurement.py",
+    "screen.py",
+    "entry.py",
+    "native-help-flags.json",
+    "budget.json"
+  ],
+  "new_files": [
+    "tokenizer-identity.tsv",
+    "lifecycle.json",
+    "reference-p179-row-a.json"
+  ],
+  "kernel_arithmetic": "unchanged by construction: only the entry TU textual closure changed; kernel objects relinked byte-identical from packet165 by build_checkpoint.py",
+  "scope": "experimental session checkpoint v2 (SESSION-SWAP-DESIGN.md v1.2 section 10 item 0): append, restore-then-save, tokenizer identity, one manifest source of truth, shared sibling lock, inspect modes; device qualification pending"
+}
