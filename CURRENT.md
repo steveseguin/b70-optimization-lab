@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 22, 15:31 EDT — session-swap integration, step 1: a checkpoint's exact token prefix reproduced on this host from text.**
+The pinned oracle tokenizer, fed with this host's Qwen3.8 tokenizer file, encodes all 12 sealed suite prompts to exactly
+the recorded token ids (receipt under `experiments/own-xpu-runtime/integration/receipts/`). Step 2 (messages to that text)
+needs the chat template as the GGUF header holds it from the four-card host. No GPU work; cards empty. The 1.3.0 prerelease
+awaits the owner's promotion and PyPI step.
+
 **October 22, 15:29 EDT — session-swap contract brought up to date with packet180/181.** The contract now says what the
 four-card host qualified today: append, restore-then-save, one manifest source, a shared lock, cheap inspect, the
 `qualified-one-card` label, tokenizer identity pins; the five integration gaps of yesterday's review are closed. The

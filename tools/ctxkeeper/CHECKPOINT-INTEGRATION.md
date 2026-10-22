@@ -134,3 +134,20 @@ engine is a bounded native process that takes token ids. Three pieces are needed
    and stays independent of the runtime's compatibility decisions.
 
 Until piece 1 exists, ctxkeeper does not call the checkpoint operations; this review's boundary stands.
+
+## Step 1 of the parity harness done, 15:31 EDT: text to the exact token prefix, 12/12
+
+`experiments/own-xpu-runtime/integration/render_parity.py` loads the pinned oracle tokenizer
+(`packet2-cpu-oracle/tokenizer.py`, sha256 `1c284c06b6a159c3…` = the pin in the packets'
+tokenizer-identity.tsv) with the vocabulary and merges of this host's `qwen3.8-27b-fp8/tokenizer.json`
+(sha256 `0997f410c57a1f4e…`, since the GGUF shards are on the other host), encodes each of the
+12 sealed suite prompts (texts matching their recorded sha256) and compares with the token lists the sealed
+profile recorded against the GGUF header: **12/12 identical**, receipt
+`experiments/own-xpu-runtime/integration/receipts/render-parity-20261022.json`. So the token-prefix side of a
+checkpoint can be reproduced on this host from text. Run it from a Python with the `regex` module (the oracle
+tokenizer imports it); the system Python here has none.
+
+Step 2, messages to that text, needs one input from the runtime owner: the chat template exactly as the GGUF
+header carries it (`tokenizer.chat_template`, inside the pinned header sha256 `7c1460a9…`), or its sha256 so the
+Hugging Face `tokenizer_config.json` template here can be checked against it. Until then the harness covers
+already-rendered text only, and ctxkeeper still does not call the checkpoint operations.
