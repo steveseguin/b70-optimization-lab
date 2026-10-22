@@ -1,11 +1,13 @@
 # Packet190: two-card record bundle, k3x (CPU-prepared, not armed)
 
-**Status: CPU preparation complete.** `READY-FOR-DEVICE.json` is written last by
+**Status (2026-10-22 23:00 UTC): chain run on cards 0+1 (unit `packet190-chain-a`, 22:06-22:53 UTC), all 11 windows passed; WS128 62.345282 tok/s class-balanced, 12/12 exact; submitted and APPROVED as LocalMaxxing `cmvk51wfn001gng01fpbfy89q` (+2.78 % over 60.659520). Chain receipts under `evidence/device-cards01-p190-a/`, bundle under `submission/prepared-a/`, window receipts under `lineage/window-20261022/`. The paragraph below describes the state at the end of CPU preparation.**
+
+**Status at CPU preparation (superseded):** `READY-FOR-DEVICE.json` is written last by
 `ops/packet190-orchestration/final_checks.py --ready`. So far:
 
 - no device work has run, and nothing has been queued, armed or submitted;
 - no compiler or linker ran for the engines (the only compile was the CPU preparation probe);
-- the 60.659520 tok/s record (`cmvjvabyv040jrf01dricuz8s`, packet187) is unchanged.
+- the 60.659520 tok/s record (`cmvjvabyv040jrf01dricuz8s`, packet187) was unchanged at that point (superseded by this packet's `cmvk51wfn001gng01fpbfy89q`).
 
 **Contents.** Packet190 is packet187's record bundle (bundle 8 + packet153 static snapshot + packet186 V3 head
 placement) with packet189's **k3x** selection and engine. The selection is packet189's `v5/lineage/k3x/selection.json`,

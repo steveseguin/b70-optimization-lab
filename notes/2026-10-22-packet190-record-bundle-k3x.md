@@ -72,3 +72,20 @@ WS128 240; 1,872 s plus 10 × 90 s of gaps, about **46-47 min**. k3x decodes ~2.
 3. If WS128 is exact and above 60.659520: `prepare_submission.py --chain … --output …/submission/prepared-a`, `submission.py --payloads
    …/payload-queue.json --dry-run`, `--server-dry-run`, the real submit, `prepare_submission.py --update-record … --submission-id <ID>`;
    receipts to `data/localmaxxing-responses/` with key lines filtered.
+
+## Device result and submission (2026-10-22, chain 22:06-22:53 UTC, unit packet190-chain-a): NEW RECORD 62.345282 tok/s, APPROVED
+
+All eleven windows passed on cards 0+1 (K0, K1a, K1b, K2, W0p, KD, W2m, WS, WSs, WS128x, WS128), no kernel faults. WS128: **62.345282 tok/s**
+class-balanced (median of prompt-class medians; all-prompt median 62.264891, p10 60.21; class medians analysis 62.21, code 61.96, documentation 64.17,
+operations 62.32, prose 62.37, structured-writing 63.29), 12/12 prompts and 1,536 tokens exact vs `iq3-p49-split32-v1`, timing-claim eligible;
+TTFT median 912 ms, wall rate 43.16 tok/s, acceptance 0.787, hit/miss cycle 13.53/25.56 ms (packet187: 14.07/25.78).
+
+`prepare_submission.py --chain … --output submission/prepared-a` (run under `taskset -c 4-15,20-31`; the tool refuses the reserved cores) ->
+`submission.py --dry-run` (passed) -> `--server-dry-run` HTTP 200 `{"valid": true}` -> real submit **HTTP 201, run `cmvk51wfn001gng01fpbfy89q`, APPROVED**
+(+2.78 % over `cmvjvabyv040jrf01dricuz8s` 60.659520) -> `--update-record` (threshold file now 62.345281904743764, result sha `afc68ab5…`). Receipt
+`data/localmaxxing-responses/2026-10-22-packet190-record-bundle-k3x-ws128.txt`. The prepared `ledger-entry.md`/`result-packet.md` say "pending"
+(written before the submission); the submissions ledger and threshold file carry the id.
+
+Host: endpoints idle since the restore13 validations (21:40 UTC); root disk 25 MB above the launcher floor before the chain, so packet97/103 closed
+chain outputs were archived to the USB model disk with sha256 manifests (`stage2/DISK-CLEANUP-20261022.md`), margin 3.28 GB at launch; endpoints
+restored afterwards as `*-20261022-restore14`; PAUSE-A re-armed, PAUSE-B untouched. Window receipts: `lineage/window-20261022/` in the packet.

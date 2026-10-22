@@ -1,5 +1,19 @@
 # Current Workspace State
 
+**October 22, 19:00 EDT — NEW TWO-CARD RECORD: 62.345282 tok/s class-balanced (packet190 k3x chain, LocalMaxxing `cmvk51wfn001gng01fpbfy89q`, APPROVED, +2.78 % over 60.659520).**
+The record bundle (packet187's V3 line + packet189's k3x selection: GDN layer 26 on the rank-0 verified-token boundary, kernel token I/O on both ranks,
+async rank-0 prepare, handoff export on the copy engine; packet189's engine `87eec645…` bound byte for byte) ran its 11-window chain on cards 0+1
+(unit `packet190-chain-a`, 22:06–22:53 UTC): K0, K1a, K1b, K2, W0p, KD, W2m, WS, WSs, WS128x, WS128 all passed, no faults. WS128: 62.345282 tok/s
+class-balanced (all-prompt median 62.265, p10 60.21), 12/12 exact, timing-claim eligible, hit/miss cycle 13.53/25.56 ms, acceptance 0.787. Submitted
+22:58 UTC after a local dry run and a server dry run (HTTP 200 valid): HTTP 201, APPROVED; `scripts/packet49_record_threshold.json` updated; receipt
+`data/localmaxxing-responses/2026-10-22-packet190-record-bundle-k3x-ws128.txt`. Root was 25 MB above the launcher floor before the chain, so packet97's
+and packet103's closed chain outputs (3.0 GB) were archived to `/mnt/usb-models/own-runtime-archives/` with sha256 manifests and removed
+(`stage2/DISK-CLEANUP-20261022.md`). Endpoints were idle (last requests 21:40 UTC), stopped after the launcher's dry run, and are back as
+`*-20261022-restore14`; PAUSE-A re-armed, PAUSE-B untouched. Packet `stage2/packet190-record-bundle-k3x/` (chain receipts under
+`evidence/device-cards01-p190-a/`, bundle under `submission/prepared-a/`), `ops/packet190-orchestration/`, note `notes/2026-10-22-packet190-record-bundle-k3x.md`.
+Day's two-card line: 58.798 → 60.660 (V3) → 62.345 (k3x). The pipeline is now balanced within 0.1 ms (rank 0 A 11.96, rank 1 B 11.92, boundary 1.48 vs
+draft 1.53 ms), so the next lever must cut both ranks or the draft itself.
+
 **October 22, 17:35 EDT — packet189 k3x WINS on two cards: chain rule met, +2.66 % over every V3 view (lane B, 21:17–21:32 UTC).**
 One load V3/k3x/V3/k3x/V3 = 60.615/**62.242**/60.444/**62.225**/60.498 tok/s with packet188's fresh V3 at 60.505; every view 13/13 exact,
 draft proposals and acceptance identical, V3 drift 0.28 %; no kill rule fired (export 0.053 ms, boundary 1.48 ms, k3 hit saving 0.53 ms,
