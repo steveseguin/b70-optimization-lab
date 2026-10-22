@@ -97,6 +97,13 @@
         <td>Same discipline as the two-card lane</td>
       </tr>
       <tr>
+        <td>Flash-Next UD-IQ3_XXS, 2×B70, checkpoint engine TP2 (packet184, 2026-10-22)</td>
+        <td>save at K=256; fresh-process restore + 128 tokens; append a 126-token turn; restore-then-save; resume; repeat append</td>
+        <td class="num">save 128.8 MB in 1.85 s; restore 2.32 s + first token 92 ms vs 59.3 s cold prefix; append 14 ms per token</td>
+        <td class="num">—</td>
+        <td>34/34 gates on two cards: merged output and draft guesses equal the uninterrupted reference; re-saved state byte-identical to a one-shot run on both ranks (216 blobs). Label experimental-two-card.</td>
+      </tr>
+      <tr>
         <td>Flash-Next UD-IQ3_XXS, 1×B70, portable source rebuild (packet178)</td>
         <td>full512, 4,096 ctx, binary rebuilt from the packet's own sources</td>
         <td class="num">31.83 / 31.81 (two fresh loads, 2026-10-22)</td>

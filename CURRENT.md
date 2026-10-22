@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 22, 10:40 EDT — two-card (TP2) session checkpoints pass on device (packet184, lane B, 14:23–14:35 UTC).** On the
+bundle-8 record engine (entry-source delta only, 78 kernel objects relinked unchanged): save of both ranks' state incl. rank-0 banks
+and the MTP draft cache 128.8 MB in 1.85 s; fresh-process restore 2.32 s + first token 92 ms vs a 59.3 s cold prefix; merged output
+and draft guesses equal the uninterrupted reference (11/11 smoke gates). Lifecycle 23/23: append a 126-token turn (1.77 s, 14 ms per
+token vs 6.16 s cold), restore-then-save, resume in a third process, repeat append; the re-saved state is byte-identical to a one-shot
+run on both ranks (216 blobs). Label `experimental-two-card`, contract `v1.2+p184`; the qualified label needs a new packet. Same window
+as packet185 (seven rows, one endpoint stop/restore, `*-20261022-restore9`). Packet `stage2/packet184-twocard-checkpoint/`
+(note `notes/2026-10-22-packet184-twocard-checkpoint.md`). Handoff for the ctxkeeper host: TP2 checkpoints now exist; contract §10
+item 1 is implemented and device-tested (label flip pending), see the packet README for the CLI/manifest.
+
 **October 22, 10:25 EDT — packet185 un-split-head measurement: V3 GO (u = 0.222 ms, decoupled B − A = 0.851 ms).** The lever
 synthesis found no cleanly open two-card lever ≥ +2 %; its one candidate V3 (full target head back on rank 1, layers 24–25 run on
 rank 0 for the verified token while it waits for the draft; +3.1 % central) sits in packet177's closed placement family, whose revisit

@@ -1,0 +1,251 @@
+{
+  "schema": "packet184.lifecycle-report.v1",
+  "kind": "lifecycle",
+  "passed": true,
+  "first_failed_gate": null,
+  "gates": {
+    "tool metadata:s1": {
+      "passed": true,
+      "error": null
+    },
+    "tool metadata:s2": {
+      "passed": true,
+      "error": null
+    },
+    "tool metadata:s2b": {
+      "passed": true,
+      "error": null
+    },
+    "tool metadata:sref": {
+      "passed": true,
+      "error": null
+    },
+    "tool full:s2": {
+      "passed": true,
+      "error": null
+    },
+    "tool full:s2b": {
+      "passed": true,
+      "error": null
+    },
+    "leg drained leg1": {
+      "passed": true
+    },
+    "leg drained leg2": {
+      "passed": true
+    },
+    "leg drained leg3": {
+      "passed": true
+    },
+    "save request complete (K)": {
+      "passed": true
+    },
+    "save request oracle-128": {
+      "passed": true,
+      "applicable": true
+    },
+    "new reference complete (M+R) and one-shot (M)": {
+      "passed": true
+    },
+    "one-shot == new reference[0:M]": {
+      "passed": true
+    },
+    "append == one-shot new reference[0:M]": {
+      "passed": true,
+      "first_divergence": null
+    },
+    "append + resume(S2) == one-shot new reference": {
+      "passed": true
+    },
+    "warm-process repeat append == append": {
+      "passed": true
+    },
+    "append draft guesses == one-shot": {
+      "passed": true,
+      "window": [
+        341,
+        254
+      ]
+    },
+    "resume(S2) draft guesses == one-shot": {
+      "passed": true,
+      "window": [
+        595,
+        64
+      ]
+    },
+    "restore records": {
+      "passed": true
+    },
+    "state: resumed chain S2 == one-shot SREF (all blobs, both ranks)": {
+      "passed": true,
+      "blobs": 216,
+      "differing": [],
+      "token_state_equal": true
+    },
+    "state: repeat S2b == S2 (all blobs, both ranks)": {
+      "passed": true,
+      "blobs": 216,
+      "differing": [],
+      "token_state_equal": true
+    },
+    "lineage": {
+      "passed": true
+    },
+    "delete s2b": {
+      "passed": true
+    }
+  },
+  "reported": {
+    "saves": {
+      "s1": {
+        "bytes": 128767564,
+        "seconds": 1.8476603149902076,
+        "stage": [
+          {
+            "rank": 0,
+            "bytes": 93663780,
+            "blobs": 141,
+            "stage_seconds": 1.333792047
+          },
+          {
+            "rank": 1,
+            "bytes": 35103784,
+            "blobs": 75,
+            "stage_seconds": 0.841651494
+          }
+        ]
+      },
+      "sref": {
+        "bytes": 136588108,
+        "seconds": 1.860180929012131,
+        "stage": [
+          {
+            "rank": 0,
+            "bytes": 97273380,
+            "blobs": 141,
+            "stage_seconds": 1.332821406
+          },
+          {
+            "rank": 1,
+            "bytes": 39314728,
+            "blobs": 75,
+            "stage_seconds": 0.839319216
+          }
+        ]
+      },
+      "s2": {
+        "bytes": 136588108,
+        "seconds": 1.9044541720068082,
+        "stage": [
+          {
+            "rank": 0,
+            "bytes": 97273380,
+            "blobs": 141,
+            "stage_seconds": 1.336618345
+          },
+          {
+            "rank": 1,
+            "bytes": 39314728,
+            "blobs": 75,
+            "stage_seconds": 0.839989041
+          }
+        ]
+      },
+      "s2b": {
+        "bytes": 136588108,
+        "seconds": 1.8594826349872164,
+        "stage": [
+          {
+            "rank": 0,
+            "bytes": 97273380,
+            "blobs": 141,
+            "stage_seconds": 1.322019644
+          },
+          {
+            "rank": 1,
+            "bytes": 39314728,
+            "blobs": 75,
+            "stage_seconds": 0.843128412
+          }
+        ]
+      }
+    },
+    "restores": {
+      "s1-append": {
+        "operation": "append",
+        "restore_seconds": 2.3432224040152505,
+        "precheck_seconds": 0.25346040399745107,
+        "restored_bytes": 128767564,
+        "appended_length": 126
+      },
+      "s2-resume": {
+        "operation": "same-generation-resume",
+        "restore_seconds": 2.352678996976465,
+        "precheck_seconds": 0.2638309790054336,
+        "restored_bytes": 136588108,
+        "appended_length": 0
+      },
+      "s1-append-warm": {
+        "operation": "append",
+        "restore_seconds": 2.3304919580114074,
+        "precheck_seconds": 0.252942583989352,
+        "restored_bytes": 128767564,
+        "appended_length": 126
+      }
+    },
+    "cold_new_prompt_ms": 6161.466268997174,
+    "append_prompt_ms": 1774.0890510031022,
+    "append_prompt_ms_per_token": 13.96920512600868,
+    "tp1_saved_history_sha256": "9548ca5055a5eefd604a01e8ae48c90a7b1cf19ff9d714ef557892857b32b451",
+    "tp1_pending_token": 37574,
+    "tp2_saved_tokens_sha256": "9548ca5055a5eefd604a01e8ae48c90a7b1cf19ff9d714ef557892857b32b451",
+    "tp2_pending_token": 37574,
+    "tp1_tp2_saved_history_agree": true
+  },
+  "device_executed": true,
+  "label": "experimental-two-card",
+  "contract": "v1.2+p184",
+  "not_claimed": "no speed claim; restore/save timings are observations of this window",
+  "lane": "B",
+  "conditions": {
+    "card": 2,
+    "cards": [
+      2,
+      3
+    ],
+    "pci": [
+      "0000:43:00.0",
+      "0000:47:00.0"
+    ],
+    "cores": [
+      4,
+      5,
+      6,
+      7,
+      20,
+      21,
+      22,
+      23
+    ],
+    "affinity": "4-7,20-23",
+    "nice": 0,
+    "native_card": 0,
+    "native_cards": [
+      0,
+      1
+    ]
+  },
+  "binary_sha256": "ebbc9b151f8f9a0f1cba162abab76872471293fbe9f7e686fb30f800b212c7c5",
+  "lane_coordination": "own-runtime.screen-lane.v4",
+  "evidence_label": "screen",
+  "diagnostic": true,
+  "qualifying": false,
+  "submission_eligible": false,
+  "speed_evidence_eligible": false,
+  "realistic_final_gate": {
+    "passed": false,
+    "reason": "screen only; full sealed chain required"
+  },
+  "prompt_kv_response_reuse": false
+}

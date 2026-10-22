@@ -1,0 +1,151 @@
+{
+  "schema": "packet184.lifecycle-report.v1",
+  "kind": "smoke",
+  "passed": true,
+  "first_failed_gate": null,
+  "gates": {
+    "tool metadata:s1": {
+      "passed": true,
+      "error": null
+    },
+    "tool full:s1": {
+      "passed": true,
+      "error": null
+    },
+    "leg drained leg1": {
+      "passed": true
+    },
+    "leg drained leg2": {
+      "passed": true
+    },
+    "reference complete (K+M, no early stop)": {
+      "passed": true,
+      "tokens": 384
+    },
+    "reference oracle-128": {
+      "passed": true,
+      "applicable": true,
+      "first_mismatch": null
+    },
+    "save request == reference[0:K]": {
+      "passed": true
+    },
+    "merged K+M == uninterrupted reference": {
+      "passed": true,
+      "first_divergence": null,
+      "merged": 384
+    },
+    "merged draft guesses == reference": {
+      "passed": true,
+      "rows": [
+        341,
+        128,
+        469
+      ]
+    },
+    "restore record": {
+      "passed": true,
+      "record": {
+        "operation": "same-generation-resume",
+        "position": 342,
+        "pending_token": 37574,
+        "pending_is_stop": false
+      }
+    },
+    "checkpoint identity s1": {
+      "passed": true
+    }
+  },
+  "reported": {
+    "save": {
+      "bytes": 128767564,
+      "seconds": 1.8520544289494865,
+      "stage": [
+        {
+          "rank": 0,
+          "bytes": 93663780,
+          "blobs": 141,
+          "stage_seconds": 1.335241848
+        },
+        {
+          "rank": 1,
+          "bytes": 35103784,
+          "blobs": 75,
+          "stage_seconds": 0.837992841
+        }
+      ],
+      "commit_seconds": 0.403589763
+    },
+    "restore": {
+      "restore_seconds": 2.3167762579978444,
+      "precheck_seconds": 0.24874519900185987,
+      "restored_bytes": 128767564,
+      "ranks": [
+        {
+          "rank": 0,
+          "verify_seconds": 0.359979605,
+          "bytes_read": 93665148,
+          "apply_seconds": 0.014530843,
+          "uploaded_bytes": 93663780
+        },
+        {
+          "rank": 1,
+          "verify_seconds": 0.183821527,
+          "bytes_read": 35105152,
+          "apply_seconds": 0.008933464,
+          "uploaded_bytes": 35103784
+        }
+      ]
+    },
+    "cold_prefix_ttft_ms": 59348.744496994186,
+    "resume_first_token_ttft_ms": 92.34090195968747,
+    "reference_decode_tok_s": 59.57035691135666,
+    "resume_decode_tok_s": 56.40703107861099,
+    "restore_plus_first_token_ms": 2409.117159957532
+  },
+  "device_executed": true,
+  "label": "experimental-two-card",
+  "contract": "v1.2+p184",
+  "not_claimed": "no speed claim; restore/save timings are observations of this window",
+  "lane": "B",
+  "conditions": {
+    "card": 2,
+    "cards": [
+      2,
+      3
+    ],
+    "pci": [
+      "0000:43:00.0",
+      "0000:47:00.0"
+    ],
+    "cores": [
+      4,
+      5,
+      6,
+      7,
+      20,
+      21,
+      22,
+      23
+    ],
+    "affinity": "4-7,20-23",
+    "nice": 0,
+    "native_card": 0,
+    "native_cards": [
+      0,
+      1
+    ]
+  },
+  "binary_sha256": "ebbc9b151f8f9a0f1cba162abab76872471293fbe9f7e686fb30f800b212c7c5",
+  "lane_coordination": "own-runtime.screen-lane.v4",
+  "evidence_label": "screen",
+  "diagnostic": true,
+  "qualifying": false,
+  "submission_eligible": false,
+  "speed_evidence_eligible": false,
+  "realistic_final_gate": {
+    "passed": false,
+    "reason": "screen only; full sealed chain required"
+  },
+  "prompt_kv_response_reuse": false
+}

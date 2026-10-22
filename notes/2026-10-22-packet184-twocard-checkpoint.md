@@ -69,3 +69,23 @@ Admission: endpoints on the lane stopped, MemAvailable ≥ 105,411,248,128 B + 1
 No device result. The device binary was never executed. The small CPU model always outputs the same
 token, so the CPU proof rests on byte equality of the saved state, not on the words. Only the record
 card layout is supported, only same-binary restores, no ctxkeeper adapter yet.
+
+## Device result (2026-10-22, lane B window, unit lanequeue-B33, rows 14:23-14:35 UTC): both rows passed
+
+**Smoke** (`v5/evidence/device-smoke-B-p184/summary.json`, 11/11 gates): uninterrupted 384-token reference
+(oracle-128 exact); save at K=256 (position 342): 128.8 MB in 1.85 s (rank 0 93.7 MB / 141 blobs, rank 1
+35.1 MB / 75 blobs, commit 0.40 s); a fresh process pair restored it in 2.32 s (precheck 0.25, verify
+0.36 + 0.18, apply 0.015 + 0.009) and produced the first token 92 ms later (2.41 s restore-plus-first-token
+against a 59.3 s cold prefix); merged K+M == the uninterrupted reference, draft guesses equal. Decode after
+the resume 56.4 tok/s vs 59.6 in the reference process (cold expert cache of a fresh process, as on one card).
+
+**Lifecycle** (`v5/evidence/device-lifecycle-B-p184/summary.json`, 23/23 gates): append of the 126-token
+turn to the restored S1 (1.77 s, 14.0 ms per appended token, vs 6.16 s for the cold new prompt), append ==
+one-shot new reference [0:M]; save S2 after the append (136.6 MB, 1.90 s); resume S2 in a third process pair
+== the one-shot reference; warm-process repeat append == append; draft guesses equal in both windows;
+**S2 state == one-shot SREF state on both ranks (216 blobs, none differing, token state equal)** and the
+repeat save S2b == S2 byte for byte; lineage, delete and the TP1/TP2 saved-history agreement
+(`9548ca50…`, pending token 37574) all passed. Label stays `experimental-two-card`, contract `v1.2+p184`;
+the qualified label is a new packet (as packet181 did for one card). No faults in the window; endpoints
+restored afterwards as `*-20261022-restore9`.
+Window receipts (shared with packet185): `experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lineage/window-20261022/`.
