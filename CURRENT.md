@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 22, 07:33 EDT — campaign 54 void: the campaign disk filled.** Seed 2 on the loop-rejecting keeper ran 69 minutes
+with no loop at all and got the cut that broke the last two runs right, then the 916 GB campaign disk hit 100 % and the
+run died at call 1,155. Each 2M run writes 6.4 GB of per-turn snapshots; the completed runs' snapshots (about 100 GB,
+not used by any audit) are moving to the external SSD, the runner now refuses to start under 40 GB free, and seed 2
+reruns as c54b. Cards empty.
+
 **October 22, 06:35 EDT — one-card own-runtime record chain passed: WS128 35.927 tok/s class-balanced (live ledger 34.573).**
 packet182 re-bracketed the packet176 kernel I/O lever (never chained before: `ops/onecard_chain_derive.py` emitted its
 flags after the `__main__` guard, and the 10-19 cleanup deleted the chain evidence) as a one-load v5: 34.58/35.95/

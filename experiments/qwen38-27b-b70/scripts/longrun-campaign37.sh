@@ -92,6 +92,11 @@ Q=${QUEUE:-$O/QUEUE28.txt}
 PORT=18196
 PPORT=18200
 export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
+# DISK_FLOOR_GB (2026-10-22, campaign 54): the campaign filesystem must have this much free before a run and before each
+# arm; each 2M run writes about 7 GB (6.4 GB of per-turn context snapshots). Campaign 54 died at call 1,155 with
+# "No space left on device" and a proxy state file cut mid-line.
+DISK_FLOOR_GB=${DISK_FLOOR_GB:-40}
+disk_free_gb() { df -BG --output=avail "$O" | tail -1 | tr -dc '0-9'; }
 GEMMA_RECIPE=${GEMMA_RECIPE:-throughput}
 IDLE_MAX=${IDLE_MAX:-600}
 ODR=/mnt/fast-ai/bench-results/context-longrun-20261010/client-rules
@@ -330,6 +335,7 @@ run_line() {  # arm kind seed cap
 }
 PY=/mnt/fast-ai/venvs/clm/bin/python
 
+(( $(disk_free_gb) >= DISK_FLOOR_GB )) || { say "ABORT: $(disk_free_gb) GB free under $O, floor $DISK_FLOOR_GB GB"; exit 2; }
 say "campaign 37 runner ($RUN, per-arm servers $PER_ARM, trajectory export $TRAJ, lean client ${LEAN_CLIENT:-0}, keeper $KV, depth $MTP, piece $PIECE, one launch $ONE_LAUNCH, tail $TAIL) start; queue $Q ($(grep -cvE '^\s*(#|$)' "$Q" 2>/dev/null || echo 0) lines); MemAvailable $(avail) MiB"
 [[ -s $Q ]] || { say "ABORT: the queue file is missing or empty"; exit 2; }
 [[ -e $SRVB || -e $SRVB-a1 ]] && { say "ABORT: $SRVB already exists"; exit 2; }

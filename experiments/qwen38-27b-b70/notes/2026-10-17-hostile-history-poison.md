@@ -2080,6 +2080,28 @@ campaign 53's seed-0 receipts stand for dev3. Queue `QUEUE54.txt` (`K32V hostile
 **Decision:** at or over → the loop decision point is closed and the removed/reopened family (vonedi62 340 after a
 removal, three runs in a row: the set check skips a name without lines) is next; under → read the cut first.
 
+## Campaign 54 void: the campaign disk filled at call 1,155 (item 977); the cut that broke 52 and 53 went right; written 2026-10-22 07:33 EDT
+
+Seed 2 on 1.3.0.dev3 ran 69 min and ended with the client's exception: the keeper answered "No space left on
+device", its archive file ended mid-line (2,052 lines, the last unparseable; 123 NOTES versions intact), and every
+later request failed to parse. `/mnt/fast-ai` was at 100 %: each 2M run writes about 6.4 GB of per-turn context
+snapshots under the harbor job (`agent/context_snapshots/`, about 1,300 files of 5 MB), 13 GB per two-seed
+campaign, 169 GB under this campaign series alone. Not a keeper fault, not a model fault, not a GPU fault (kernel
+log clean, cards released; the server's stop logged a SIGKILL of a process that had already exited). The trial
+does not count; it is rerun as c54b once the disk is freed, with the runner now refusing to start under
+`DISK_FLOOR_GB` (40) free.
+
+What the 1,155 calls showed before the disk filled: **no loop in 150 cuts** (campaign 53 had five by then), the
+version-75 cut (items 613-620) stored `saru45: 120`, `vonedi62: removed (item 615)` and `vone42: removed (item
+615)` (the three facts campaigns 52 and 53 lost there), two set-check asks on real omissions, no reply that stood
+for want of a usable second. Partial state is kept under `proxy-state/c54-K32V-hostile2mk-s2/`; no audit, since
+the verifier never ran.
+
+Disk: the snapshot folders of the completed campaigns (c3x-c53, about 100 GB) move to the external SSD at
+`/media/steve/extended-ssd/model-cold-storage/b70-host-20260919/bench-results-context-snapshots/` (rsync,
+verify, then remove, as on 2026-09-19); they are no input to any audit (the audits read the proxy state and the
+verifier's details). Campaign 54's own snapshots stay for now.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
