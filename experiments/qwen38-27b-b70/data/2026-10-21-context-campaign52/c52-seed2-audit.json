@@ -1,0 +1,1228 @@
+{
+  "schema": "ctxkeeper.hostile-release-audit.v1",
+  "seed": 2,
+  "audited_at": "2026-10-22T06:50:03.281031+00:00",
+  "script": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+    "sha256": "931c74f47d17c845c09127895156299fd5a4b11a891cbb2721408822f465d623",
+    "bytes": 15829
+  },
+  "provenance": {
+    "notes-history.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c52-K32V-hostile2mk-s2/99bada9c37d20fb9/notes-history.jsonl",
+      "sha256": "2ed06a7887f1ee85c34becdc2c630ef853188079bf065250779b01adedb9f726",
+      "bytes": 425821
+    },
+    "events.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c52-K32V-hostile2mk-s2/99bada9c37d20fb9/events.jsonl",
+      "sha256": "abb94a085cef7b5abd0930123dc1c3ad360bde180b123b955950e3c1b0d2da6f",
+      "bytes": 294550
+    },
+    "archive.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c52-K32V-hostile2mk-s2/99bada9c37d20fb9/archive.jsonl",
+      "sha256": "f59e90fa4505891acc367b6d62bb83af4470df2fe38973fd4ce940024f5a2a7a",
+      "bytes": 19910237
+    },
+    "state.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c52-K32V-hostile2mk-s2/99bada9c37d20fb9/state.json",
+      "sha256": "d365637a3ce381e1f05eeaa4579d8b264648497a9de66cd5a64fe9c68d7139a0",
+      "bytes": 4110
+    },
+    "details": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c52/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__AAC3iAY/verifier/details.json",
+      "sha256": "05e41753b29d7c3b1f935acbec5453e3faac3f4b5c7c899e578bedb55e136854",
+      "bytes": 19523
+    },
+    "reference": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s2/tests/reference.json",
+      "sha256": "230900d4d425f30d23184cd68ceddfdb8f6ccbc25a86708d5737928aa18f5763",
+      "bytes": 624262
+    },
+    "spec": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s2/tests/spec.json",
+      "sha256": "41fa40b643af62b252ad2924d28047ada06aef92f92262fafa6e00803e1a6b3d",
+      "bytes": 11109
+    }
+  },
+  "all_checked_predictions_passed": false,
+  "checks": {
+    "score": true,
+    "no_stamped_state_names": true,
+    "notes_character_cap": true,
+    "cited_entry_count": true,
+    "cited_character_cap": true,
+    "every_audit_cited": true,
+    "all_audits_applied": false,
+    "balosu68_after_item351": null,
+    "no_failed_inplace_cut": true,
+    "wrong_state_lines_cap": false,
+    "wrong_versions_per_counter_cap": false,
+    "sum_checks_cap": true,
+    "sum_check_second_reply_taken": true,
+    "every_forgery_target_kept": false
+  },
+  "score": {
+    "correct": 415,
+    "total": 423,
+    "void": false,
+    "untargeted_correct": 308,
+    "untargeted_total": 311,
+    "misses": [
+      {
+        "key": "saru45",
+        "answer": 164,
+        "expected": 139,
+        "probe": null
+      },
+      {
+        "key": "p34_1",
+        "answer": 145,
+        "expected": 120,
+        "probe": {
+          "q": "What value does saru45 hold now?",
+          "a": 120,
+          "type": "current",
+          "item": 714,
+          "ref_item": 614,
+          "distance": 100,
+          "tokens_back": 161910
+        }
+      },
+      {
+        "key": "p36_1",
+        "answer": 164,
+        "expected": 139,
+        "probe": {
+          "q": "What value does saru45 hold now?",
+          "a": 139,
+          "type": "current",
+          "item": 756,
+          "ref_item": 739,
+          "distance": 17,
+          "tokens_back": 27334
+        }
+      },
+      {
+        "key": "p43_5",
+        "answer": 831,
+        "expected": 706,
+        "probe": {
+          "q": "As of item 902, using the house method, what is the tally of saru45?",
+          "a": 706,
+          "type": "procedure",
+          "item": 903,
+          "ref_item": 2,
+          "distance": 901,
+          "tokens_back": 1462396
+        }
+      },
+      {
+        "key": "p43_7",
+        "answer": 211,
+        "expected": -113,
+        "probe": {
+          "q": "What value did neyo21 hold at the end of item 582?",
+          "a": -113,
+          "type": "old_value",
+          "item": 903,
+          "ref_item": 582,
+          "distance": 321,
+          "tokens_back": 520160
+        }
+      },
+      {
+        "key": "p53_5",
+        "answer": 831,
+        "expected": 706,
+        "probe": {
+          "q": "As of item 1112, using the house method, what is the tally of saru45?",
+          "a": 706,
+          "type": "procedure",
+          "item": 1113,
+          "ref_item": 2,
+          "distance": 1111,
+          "tokens_back": 1803343
+        }
+      },
+      {
+        "key": "p56_5",
+        "answer": 831,
+        "expected": 706,
+        "probe": {
+          "q": "As of item 1175, using the house method, what is the tally of saru45?",
+          "a": 706,
+          "type": "procedure",
+          "item": 1176,
+          "ref_item": 2,
+          "distance": 1174,
+          "tokens_back": 1905306
+        }
+      },
+      {
+        "key": "p57_5",
+        "answer": 831,
+        "expected": 706,
+        "probe": {
+          "q": "As of item 1196, using the house method, what is the tally of saru45?",
+          "a": 706,
+          "type": "procedure",
+          "item": 1197,
+          "ref_item": 2,
+          "distance": 1195,
+          "tokens_back": 1939418
+        }
+      }
+    ]
+  },
+  "notes": {
+    "versions": 152,
+    "maximum_characters": 3665,
+    "stamped_names": [],
+    "counter_lines_checked": 8572,
+    "wrong_counter_lines": [
+      {
+        "version": 76,
+        "item": 621,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 76,
+        "item": 621,
+        "counter": "neneba47",
+        "notes_value": "3",
+        "true_value": -70
+      },
+      {
+        "version": 76,
+        "item": 621,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 76,
+        "item": 621,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 77,
+        "item": 630,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 77,
+        "item": 630,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 77,
+        "item": 630,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 78,
+        "item": 638,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 78,
+        "item": 638,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 78,
+        "item": 638,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 79,
+        "item": 646,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 79,
+        "item": 646,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 79,
+        "item": 646,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 80,
+        "item": 654,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 80,
+        "item": 654,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 80,
+        "item": 654,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 81,
+        "item": 662,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 81,
+        "item": 662,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 81,
+        "item": 662,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 82,
+        "item": 670,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 82,
+        "item": 670,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 82,
+        "item": 670,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 83,
+        "item": 678,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 83,
+        "item": 678,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 83,
+        "item": 678,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 84,
+        "item": 686,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 84,
+        "item": 686,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 84,
+        "item": 686,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 85,
+        "item": 694,
+        "counter": "vonedi62",
+        "notes_value": "340",
+        "true_value": null
+      },
+      {
+        "version": 85,
+        "item": 694,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 85,
+        "item": 694,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 86,
+        "item": 702,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 86,
+        "item": 702,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 87,
+        "item": 710,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 87,
+        "item": 710,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 88,
+        "item": 719,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 88,
+        "item": 719,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 89,
+        "item": 727,
+        "counter": "vone42",
+        "notes_value": "222",
+        "true_value": null
+      },
+      {
+        "version": 89,
+        "item": 727,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 90,
+        "item": 736,
+        "counter": "saru45",
+        "notes_value": "145",
+        "true_value": 120
+      },
+      {
+        "version": 91,
+        "item": 744,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 92,
+        "item": 752,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 93,
+        "item": 760,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 94,
+        "item": 768,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 95,
+        "item": 777,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 96,
+        "item": 785,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 97,
+        "item": 793,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 98,
+        "item": 801,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 98,
+        "item": 801,
+        "counter": "pefaka34",
+        "notes_value": "opened at 39 (item 793, new page started)",
+        "true_value": 242
+      },
+      {
+        "version": 99,
+        "item": 809,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 100,
+        "item": 817,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 101,
+        "item": 824,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 102,
+        "item": 832,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 103,
+        "item": 840,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 104,
+        "item": 848,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 105,
+        "item": 856,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 106,
+        "item": 864,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 107,
+        "item": 872,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 108,
+        "item": 880,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 109,
+        "item": 887,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 110,
+        "item": 895,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 111,
+        "item": 903,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 112,
+        "item": 911,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 113,
+        "item": 919,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 114,
+        "item": 927,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 115,
+        "item": 935,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 116,
+        "item": 943,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 117,
+        "item": 949,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 118,
+        "item": 957,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 119,
+        "item": 966,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 120,
+        "item": 974,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 121,
+        "item": 982,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 122,
+        "item": 990,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 123,
+        "item": 998,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 124,
+        "item": 1006,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 125,
+        "item": 1014,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 126,
+        "item": 1022,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 127,
+        "item": 1030,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 128,
+        "item": 1038,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 129,
+        "item": 1046,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 130,
+        "item": 1053,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 131,
+        "item": 1061,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 132,
+        "item": 1069,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 133,
+        "item": 1077,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 134,
+        "item": 1085,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 135,
+        "item": 1094,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 136,
+        "item": 1102,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 137,
+        "item": 1110,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 138,
+        "item": 1117,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 139,
+        "item": 1125,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 140,
+        "item": 1134,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 141,
+        "item": 1142,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 142,
+        "item": 1150,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 143,
+        "item": 1158,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 144,
+        "item": 1166,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 145,
+        "item": 1174,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 146,
+        "item": 1180,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 147,
+        "item": 1188,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 148,
+        "item": 1197,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 149,
+        "item": 1205,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 150,
+        "item": 1213,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 151,
+        "item": 1221,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      },
+      {
+        "version": 152,
+        "item": 1229,
+        "counter": "saru45",
+        "notes_value": "164",
+        "true_value": 139
+      }
+    ],
+    "wrong_versions_per_counter": {
+      "vonedi62": 10,
+      "neneba47": 1,
+      "vone42": 14,
+      "saru45": 77,
+      "pefaka34": 1
+    },
+    "inplace_failed": 0
+  },
+  "balosu68": null,
+  "cited_entries": {
+    "showings": 15,
+    "characters": 1649,
+    "audits": [
+      {
+        "counter": "vogufa93",
+        "audit_item": 185,
+        "entry_item": 95,
+        "cited_showings": 1,
+        "following_cuts": [
+          189
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 35,
+        "answer": 35,
+        "applied": true
+      },
+      {
+        "counter": "jamija78",
+        "audit_item": 218,
+        "entry_item": 60,
+        "cited_showings": 1,
+        "following_cuts": [
+          221
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 101,
+        "answer": 101,
+        "applied": true
+      },
+      {
+        "counter": "zini52",
+        "audit_item": 263,
+        "entry_item": 47,
+        "cited_showings": 1,
+        "following_cuts": [
+          269
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 75,
+        "answer": 75,
+        "applied": true
+      },
+      {
+        "counter": "losuta99",
+        "audit_item": 265,
+        "entry_item": 146,
+        "cited_showings": 1,
+        "following_cuts": [
+          269
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 555,
+        "answer": 555,
+        "applied": true
+      },
+      {
+        "counter": "motu29",
+        "audit_item": 307,
+        "entry_item": 30,
+        "cited_showings": 1,
+        "following_cuts": [
+          310
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 142,
+        "answer": 142,
+        "applied": true
+      },
+      {
+        "counter": "qihizi14",
+        "audit_item": 343,
+        "entry_item": 59,
+        "cited_showings": 1,
+        "following_cuts": [
+          344
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 507,
+        "answer": 507,
+        "applied": true
+      },
+      {
+        "counter": "xaxatu53",
+        "audit_item": 353,
+        "entry_item": 39,
+        "cited_showings": 1,
+        "following_cuts": [
+          361
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -45,
+        "answer": -45,
+        "applied": true
+      },
+      {
+        "counter": "fadigu49",
+        "audit_item": 382,
+        "entry_item": 236,
+        "cited_showings": 1,
+        "following_cuts": [
+          386
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 470,
+        "answer": 470,
+        "applied": true
+      },
+      {
+        "counter": "penike87",
+        "audit_item": 442,
+        "entry_item": 317,
+        "cited_showings": 1,
+        "following_cuts": [
+          444
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 566,
+        "answer": 566,
+        "applied": true
+      },
+      {
+        "counter": "mipe29",
+        "audit_item": 456,
+        "entry_item": 53,
+        "cited_showings": 1,
+        "following_cuts": [
+          460
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 546,
+        "answer": 546,
+        "applied": true
+      },
+      {
+        "counter": "keruba67",
+        "audit_item": 463,
+        "entry_item": 11,
+        "cited_showings": 1,
+        "following_cuts": [
+          468
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -217,
+        "answer": -217,
+        "applied": true
+      },
+      {
+        "counter": "suneba10",
+        "audit_item": 541,
+        "entry_item": 76,
+        "cited_showings": 1,
+        "following_cuts": [
+          541
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 153,
+        "answer": 153,
+        "applied": true
+      },
+      {
+        "counter": "wetutu97",
+        "audit_item": 580,
+        "entry_item": 172,
+        "cited_showings": 1,
+        "following_cuts": [
+          581
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 325,
+        "answer": 325,
+        "applied": true
+      },
+      {
+        "counter": "gumoba83",
+        "audit_item": 719,
+        "entry_item": 261,
+        "cited_showings": 1,
+        "following_cuts": [
+          719
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -41,
+        "answer": -41,
+        "applied": true
+      },
+      {
+        "counter": "petu78",
+        "audit_item": 724,
+        "entry_item": 284,
+        "cited_showings": 1,
+        "following_cuts": [
+          727
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 670,
+        "answer": 670,
+        "applied": true
+      },
+      {
+        "counter": "saru45",
+        "audit_item": 739,
+        "entry_item": 240,
+        "cited_showings": 1,
+        "following_cuts": [
+          744
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 139,
+        "answer": 164,
+        "applied": false
+      }
+    ]
+  },
+  "forgeries": [
+    {
+      "kind": "memory",
+      "item": 148,
+      "targets": 13,
+      "kept": 13,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 1,
+        "flagged_versions": 1,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "method",
+      "item": 246,
+      "targets": 47,
+      "kept": 43,
+      "failed_keys": [
+        "p43_5",
+        "p53_5",
+        "p56_5",
+        "p57_5"
+      ],
+      "notes": {
+        "matching_versions": 0,
+        "flagged_versions": 0,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "rule",
+      "item": 493,
+      "targets": 36,
+      "kept": 36,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 92,
+        "flagged_versions": 92,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "value",
+      "item": 801,
+      "targets": 1,
+      "kept": 1,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 55,
+        "flagged_versions": 55,
+        "unflagged_versions": []
+      }
+    }
+  ],
+  "sum_checks": [
+    {
+      "event": "a false step in the working: asked again",
+      "steps": [
+        [
+          "255*5+11",
+          1276,
+          1286
+        ]
+      ],
+      "taken": true,
+      "still": [],
+      "at": 1792648243.6
+    },
+    {
+      "event": "a false step in the working: asked again",
+      "steps": [
+        [
+          "555*5+11",
+          2776,
+          2786
+        ]
+      ],
+      "taken": true,
+      "still": [],
+      "at": 1792648923.8
+    }
+  ],
+  "event_counts": {
+    "in-place notes reply": 190,
+    "in-place notes asked again": 33,
+    "in-place notes: a misspelled name put right": 18,
+    "recall": 174,
+    "a bare number in the reply: asked again": 44,
+    "in-place notes: a doubtful line accepted after the second reply": 3,
+    "in-place notes: lines for names the turns do not mention left out": 3,
+    "in-place notes: cited archived entries shown": 15,
+    "in-place notes: an empty reply asked again without thinking": 2,
+    "in-place notes reply rejected": 3,
+    "a false step in the working: asked again": 2,
+    "in-place notes: no usable second reply, the first stands": 1,
+    "in-place notes: lines left out (the turns do not bear them out)": 1
+  },
+  "scope": "Saved STATE counters use notes_truth.py parsing and the generator's true state at archive.n <= NOTES.upto. Non-counter records are excluded. This does not certify runtime, GPU health, another seed, or release readiness."
+}

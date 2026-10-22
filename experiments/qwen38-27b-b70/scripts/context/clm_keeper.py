@@ -1079,6 +1079,19 @@ def without_doubtful(notes: str, delta: dict, seen: set[int] | None, strict: boo
     return dict(delta, changes=changes), dropped
 
 
+def complete_lines(reply: str) -> dict | None:
+    """The complete CHANGES lines of a reply cut off by the token cap, as a delta without OPEN (the old OPEN stays):
+    the last line is dropped unless the text ends with a newline, since it may stop mid-way. None when the reply has
+    no NEW RULES / CHANGES layout yet. Campaign 52 seed 2 (2026-10-22): a 295-line first reply was cut off and thrown
+    away whole; the right `saru45: 145 − 25 = 120` was in it, the retries left saru45 out, and the NOTES held 145
+    for 77 versions (seven answers lost). Campaign 49d's version 44 is the same shape."""
+    lines = reply.rstrip("\n").split("\n")
+    if not reply.endswith("\n"):
+        lines = lines[:-1]
+    text = "\n".join(lines)
+    d = parse_delta(text + "\nOPEN\n", need_changes=True)
+    return dict(d, open=None) if d else None
+
 def merge_replies(first: dict | None, second: dict) -> dict:
     """What to apply when a reply was asked for again: the second reply's lines for every name it mentions (also
     `name: (no change)`, which withdraws the first reply's lines for that name), and the first reply's lines for

@@ -1,5 +1,27 @@
 # ctxkeeper: how it got here
 
+## 2026-10-22 — development 1.3.0.dev2: a reply cut off by the cap keeps its complete lines
+
+Campaign 52 (1.3.0.dev1, arm K32V) seed 0 answered 423/423 with no wrong STATE
+line in 8,745 and every forgery target kept; seed 2 answered 415/423 with 103
+wrong lines, 101 of them from one cut. There the first reply held the right
+lines (`saru45: 145 − 25 = 120`, vone42's removal) inside 295 lines, most of
+them `(no change)` written once per item, hit the 8,192-token reply cap and was
+rejected whole; the shorter retries left three counters out, each check asked
+its one question, the fourth reply came back empty and the third stood. saru45
+then held 145 for 120 through 77 versions (seven answers lost, its audit
+applied to the wrong base). Campaign 49d's version 44 was the same shape.
+A reply cut off by the cap now keeps its complete lines (`complete_lines`: the
+last line is dropped unless the text ends with a newline) and later replies of
+the cut merge over them, the retry's line winning for every name it writes.
+Replayed over the five cap-cut cuts of campaigns 49d and 52 through the real
+merge and checks: that cut goes from 6 to 4 wrong lines (saru45 and vone42
+right), the other four are unchanged. The `--set-check` of dev1 asked five
+times across the two seeds, every question on a real omission; four were
+answered with the set lines. The arm also carried the bare-number working check
+of the 1.2.2 review (46 and 44 asks per seed, a value changed in 3 and 6): three
+changes were in play, not the two the registration named.
+
 ## 2026-10-21 — development 1.3.0.dev1: a set written after the old value is stored as the set
 
 Campaign 51 seed 0 (1.2.1.dev0, the 2M hostile stream) stored six STATE lines of

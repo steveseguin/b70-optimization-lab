@@ -1913,6 +1913,101 @@ written as 256); campaign 49d's version-44 cluster has the same shape (roru25). 
 - A wrong-line count over the prediction → read which decision point still stands before anything else; a set-check
   question answered wrongly → read the sentence and the reply before changing the check.
 
+## Campaign 52 ran: seed 0 423/423 with 0 wrong STATE lines; seed 2 415/423 with 103 wrong lines, 101 of them from one cut; written 2026-10-22 02:54 EDT
+
+**Seed 0 (c52, 1.3.0.dev1, K32V): 423/423, 0 wrong STATE lines in 8,745, not void, 91 min 27 s.** Audit
+[c52-seed0-audit.json](../data/2026-10-21-context-campaign52/c52-seed0-audit.json) (PASS on every registered check),
+receipts under [seed0](../data/2026-10-21-context-campaign52/seed0/). 1,298 calls; 20 in-place re-asks (campaign 51:
+34); every forgery target kept (memory 18/18, method 47/47, rule 36/36, value 1/1); 16/16 audits applied; host memory
+at least 2.09 GiB available, one agent session beside the server.
+
+| Prediction (seed 0) | Result |
+| --- | --- |
+| Wrong STATE lines at most 3 in about 8,500 (campaign 51: 10) | met: **0 in 8,745** |
+| No `old set to new` STATE line | met (0) |
+| No counter wrong for more than 5 versions | met (none wrong at all) |
+| Answers at least 421/423 (campaign 51: 419) | met: **423/423** |
+| Set check asks at 1-5 cuts, each answered with a set line, no named counter wrong after | met: 1 ask (zifaro44, three stated sets and a removal the first reply skipped; the second reply wrote `reopened at 494`, `set to 355`, `set to −193`, `removed`) |
+| 16/16 audits; no forgery adopted; every forged line flagged | met |
+| Wall within 10 % of 80 min plus 3 min (91.0) | **missed by 27 s: 91.45 min** |
+| In-place re-asks within 20 % of 34 plus set-check questions | met (20 + 1) |
+
+**Attribution, stated plainly.** The registration named two keeper changes; the arm carries three. 1.3.0.dev1
+also holds the bare-number working check of the 1.2.2.dev0 development review (under `--sum-check`, which K32C and
+K32V both pass): a tool-call answer block with three or more large integers that the managed view does not state is
+asked for its working once. Campaign 51 (1.2.1.dev0) had none of these asks; this seed had 46, naming 98 numbers; the second reply was taken each time and a number changed on being worked out in 3 of them.
+That check is lever 3's territory (the batch-answer arithmetic: p55_5, motu29) and it was on without being named in
+the registration. So this seed's result is the three changes together; the wall-time miss is their 46 extra model
+calls. The registration's omission is recorded here, not repaired after the fact.
+
+**Seed 2 (c52, 1.3.0.dev1, K32V): 415/423, not void, 92 min 17 s**, 1,296 calls, 33 in-place re-asks (campaign 51b: 42),
+44 bare-number asks (a number changed in 6), host memory at least 2.12 GiB available. Audit
+[c52-seed2-audit.json](../data/2026-10-21-context-campaign52/c52-seed2-audit.json), receipts under
+[seed2](../data/2026-10-21-context-campaign52/seed2/).
+
+| Prediction (seed 2) | Result |
+| --- | --- |
+| Wrong STATE lines at most 5 in about 8,400 (campaign 51b: 15) | **missed: 103 in 8,572** (saru45 77, vone42 14, vonedi62 10, neneba47 1, pefaka34 1) |
+| No `old set to new` STATE line | met (0) |
+| No counter wrong for more than 5 versions | **missed** (saru45 77, vone42 14, vonedi62 10) |
+| Answers at least 419/423 (campaign 51b: 402) | **missed: 415** (7 of the 8 misses are saru45 held 25 high: two current values, four tallies, one audit; one old-value miss, neyo21) |
+| Set check asks at 1-5 cuts, each answered with a set line | asked 4 times; 3 answered with the set lines (neyota49, como20, vone42 at item 599); the 4th, at the cut below, got an empty reply and the earlier reply stood |
+| 16/16 audits; no forgery adopted; every forged line flagged | **missed: 15/16 audits** (saru45's audit at item 739 applied to the 25-high value), method target 43/47 (the four saru45 tallies); every forged line flagged, no forged value, method or rule adopted |
+| Wall within 10 % of 85 min plus 3 min (96.5) | met (92 min) |
+
+**One cut explains 101 of the 103 wrong lines and 7 of the 8 misses.** Version 75 (items 613-621): the first reply
+held the right lines (`saru45: 145 − 25 = 120 (item 614)`, `vone42: ... then removed (item 615)`) inside 295 lines,
+most of them `vone42: (no change)` written once per item, and hit the 8,192-token reply cap, so it was rejected
+whole. The shorter second reply left saru45, vonedi62's removal and vone42's set out; the mention check asked once
+and the set check asked once (both landed on the right names), the fourth reply came back empty, the fifth was asked
+without thinking and came back unusable, and the third reply stood. saru45 then held 145 for 120 through 77 versions
+(every later answer about it 25 high, its audit applied to the wrong base, the four house-method tallies 831 for
+706), vone42 held 222 after its removal for 14 versions and vonedi62 340 after its removal for 10, as in campaign
+51b. This is the campaign-49d version-44 decision point (a reply cut by the cap, the earlier reply stands), not the
+levers of this campaign: both did what they were registered to do (0 `old set to new` lines on either seed; the set
+check's four questions all named real omissions, and three were answered). Campaign 49b, 49d, 51, 51b and 52
+together: a reply cut off by the cap happened at 0, 1, 0, 0, 1 and 2 cuts; the two times it met an unusable retry
+(49d v44, 52 s2 v75) cost 30 and 101 wrong lines.
+
+**Decision.** Seed 0 met every registered line but the wall time (27 s over). Seed 2 missed the registration, and the
+read names one decision point to close before anything else: a reply cut off by the cap must not lose its complete
+lines, and the reply that stands after an unusable retry must not be one the checks found short. The lever and its
+replay are the next section.
+
+## Lever from campaign 52's read: a reply cut off by the cap keeps its complete lines (1.3.0.dev2); written 2026-10-22 02:56 EDT
+
+`complete_lines` parses the complete CHANGES lines of a reply the token cap cut off (the last line dropped unless the
+text ends with a newline); the keeper keeps them and every later reply of the cut merges over them, the retry's line
+winning for each name it writes and the cut-off line standing for a name it leaves out (misspellings of the cut put
+right in both). Replayed through the real merge and checks over the five cap-cut cuts of campaigns 49d (cuts 11 and
+43) and 52 (seed 0 cut 124; seed 2 cuts 75 and 132): the version-75 cut goes from 6 wrong lines to 4 (saru45 120,
+vone42 removed), the other four cuts are unchanged; no new question. One scripted test
+(`test_a_cut_off_first_reply_keeps_its_complete_lines_under_the_retry`). Not addressed: why the reply ran to 295
+lines (one `(no change)` line per item for a name mentioned in every item; the count question's wording invites it),
+and vonedi62's removal, which no reply of that cut wrote as a line (the "Removed so far:" prose does not count) and
+which the set check skips for a name without lines. Both are the next levers if campaign 53 shows them again.
+
+## Campaign 53: both 2M seeds on ctxkeeper 1.3.0.dev2, arm K32V, registered 2026-10-22 02:56 EDT (before any run)
+
+Campaign 52's arm and queue (`K32V hostile2mk 0 14400`, then seed 2), unit `ctx-campaign53`, `KEEPER_VERSION=1.3.0.dev2`,
+`LEAN_CLIENT=1`, `RESTORE=0`, `IDLE_MAX=0`, queue `QUEUE53.txt`; the only change is the cut-off lever above. Nothing else
+runs on this host during the campaign.
+
+**Predictions:**
+- **Seed 0:** 423/423 again, or at least 421; wrong STATE lines at most 3 (campaign 52: 0).
+- **Seed 2:** wrong STATE lines at most 10 in about 8,500 (campaign 52: 103; without the version-75 cut: 2); no
+  counter wrong for more than 5 versions; answers at least 419/423 (campaign 52: 415; 49d: 417); 16/16 audits.
+- **Cap cuts:** a reply cut off by the cap at 0-3 cuts per seed; at every such cut its complete lines are kept
+  (event "a cut-off reply's complete lines kept") and no counter named in them is wrong in the version after unless
+  a retry overwrote it.
+- **Set check:** asks at 1-5 cuts per seed, each on a real omission.
+- **No forged value, method, rule or removal adopted; every forged line flagged;** wall within 10 % of campaign 52's
+  (91 and 92 min).
+- **Not claimed:** the strictest 2M bar; the batch-answer arithmetic lever stays open.
+
+**Decision:** both seeds at or over → the cap-cut decision point is closed; next levers are the `(no change)`-per-item
+reply shape and a removal stated for a name without lines. A seed under → read the cut before anything else.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

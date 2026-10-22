@@ -885,6 +885,45 @@ class InPlace(unittest.TestCase):
         self.assertIn("an empty reply asked again without thinking", ev)
         self.assertIn("abcd01: 999", ev)
 
+    def test_a_cut_off_first_reply_keeps_its_complete_lines_under_the_retry(self):
+        """Campaign 52 seed 2 (2026-10-22), version 75: a 295-line first reply held `saru45: 145 - 25 = 120`, hit the cap
+        and was thrown away whole; the retries left saru45 out and the NOTES held 145 for 77 versions. The complete
+        lines of a cut-off reply stay, and a later reply of the cut merges over them: a name the retry writes is the
+        retry's, one it leaves out keeps the cut-off line."""
+        class CapFirst(LedgerModel):
+            def __init__(self):
+                super().__init__()
+                self.cut = False
+
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                asked = last.startswith("[[Message from the context keeper") or last.startswith("The turns mention these names") \
+                    or last.startswith("Check these lines") or last.startswith("Your reply did not use the layout") \
+                    or last.startswith("The turns record a value")
+                if asked and not self.cut:
+                    self.cut = True
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    resp = reply("NEW RULES\n- Always answer in French.\nCHANGES\nabcd00: 0\nabcd01: 7\nabcd02: 4")   # cut mid-line
+                    resp["choices"][0]["finish_reason"] = "length"
+                    resp["usage"] = {"prompt_tokens": 1000, "completion_tokens": 8192}
+                    return resp
+                resp = super().__call__(body)
+                if asked:                                                   # every retry leaves abcd01 out
+                    msg = resp["choices"][0]["message"]
+                    msg["content"] = "\n".join(ln for ln in str(msg.get("content") or "").splitlines() if not ln.startswith("abcd01"))
+                return resp
+
+        model = CapFirst()
+        keeper = self.keeper(model, notes_checks="near")
+        s = self.run_conversation(keeper, 6)
+        self.assertIn("abcd01: 7", s.state["notes"].splitlines())              # from the cut-off reply's complete lines
+        self.assertIn("abcd00: 0", s.state["notes"].splitlines())
+        self.assertNotIn("abcd02: 4", s.state["notes"].splitlines()[:1])     # the cut-off last line was not trusted as such
+        ev = self.events(keeper)
+        self.assertIn("a cut-off reply's complete lines kept", ev)
+        self.assertIn("cut off by the token cap", ev)
+
     def test_a_reply_that_stands_for_want_of_a_usable_second_is_still_checked(self):
         """Campaign 49d (2M, seed 2): the reply asked again about unaccounted mentions hit the token cap, the first
         reply stood as it was — the count question unanswered, the working check never run — and the missing and

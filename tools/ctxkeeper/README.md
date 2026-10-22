@@ -336,6 +336,7 @@ PyPI 1.2.0 is unchanged.
 Development 1.3.0.dev1 (2026-10-21): a STATE change written as `old set to new` is stored as the new value with its
 remarks, the value the keeper already read; campaign 51 seed 0 had six such lines scored wrong as written ([history](HISTORY.md)).
 `--set-check` (off by default) asks once about a set or a removal the turns state for a name that none of its CHANGES lines takes.
+Development 1.3.0.dev2 (2026-10-22): a notes reply cut off by the reply cap keeps its complete lines, and the retry merges over them ([history](HISTORY.md)).
 
 Development (1.2.2.dev0, not a stable release): `--sum-check` first asks once for working on tool-call blocks
 containing at least three integer assignments whose absolute values are 100 or more, when a value is absent from

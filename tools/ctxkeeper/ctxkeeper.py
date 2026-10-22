@@ -55,7 +55,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.3.0.dev1"
+__version__ = "1.3.0.dev2"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -1442,6 +1442,7 @@ class Keeper:
         rules_seen: list[str] = []
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
         bare_again = False                           # an empty asked-for reply asked once more without thinking
+        cut_off: dict | None = None                  # the complete lines of a reply the token cap cut off (see below)
         spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info, near = "no reply", "", {}, None
         delta: dict | None = None
@@ -1487,6 +1488,16 @@ class Keeper:
             counts["notes_cached_tokens"] += cached_of(resp)
             counts["notes_written_tokens"] += usage.get("completion_tokens") or 0
             delta = nd.parse_delta(text) if finish != "length" else None
+            if finish == "length" and delta is None:
+                # A reply cut off by the cap keeps its complete lines: later replies of this cut merge over them (a
+                # name the retry writes is the retry's; one it leaves out keeps the cut-off line). Campaign 52 seed 2,
+                # version 75: a 295-line first reply held `saru45: 145 − 25 = 120` and was thrown away whole; the
+                # retries left saru45 out and the NOTES held 145 for 77 versions. Replayed over the five cap-cut cuts
+                # of campaigns 49d and 52: that cut 6 -> 4 wrong lines, the other four unchanged.
+                part = nd.complete_lines(text)
+                if part and part["changes"]:
+                    cut_off = nd.merge_replies(cut_off, part) if cut_off else part
+                    log({"event": "in-place notes: a cut-off reply's complete lines kept", "attempt": attempt, "n": len(part["changes"])})
             log({"event": "in-place notes reply", "attempt": attempt, "finish_reason": finish, "thinking": thinking,
                  "written": usage.get("completion_tokens"), "reply": text[:6000]})
             if delta is None:
@@ -1549,6 +1560,10 @@ class Keeper:
                 if more:
                     spelt.update(more)
                     log({"event": "in-place notes: a misspelled name put right", "names": more})
+            if cut_off is not None and earlier is None:
+                # the kept lines, under this reply, with the cut's misspellings put right in them too
+                earlier = dict(cut_off, changes=[(spelt.get(k, k), v) for k, v in cut_off["changes"]], rules=[])
+                cut_off = None
             delta = earlier = nd.merge_replies(earlier, delta)
             delta["rules"] = list(rules_seen)
             # a line for a name that none of these turns mentions is not a change these turns made (see OVERLAP_NOTE)

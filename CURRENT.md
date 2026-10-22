@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 22, 02:54 EDT — campaign 52 done: seed 0 perfect (423/423, zero wrong STATE lines, every forgery kept), seed 2 415/423
+with one bad cut.** On the new keeper (1.3.0.dev1 with `--set-check`; it also carries the earlier bare-number working check),
+seed 0 of the 2M hostile stream is the first clean seed: every answer right, no wrong line in 8,745, all 16 audits, all
+102 forgery targets kept. Seed 2 lost 101 of its 103 wrong lines and 7 of its 8 misses to a single cut where the model's
+first reply ran past the reply cap (295 lines, mostly repeated "no change" lines), was thrown away whole, and the
+shorter retries left three counters out; one of them then stayed 25 high for 77 versions. That is the same failure
+campaign 49 had once, and the next lever is to keep a cut-off reply's complete lines. Both registered levers did what
+they were meant to on both seeds. Cards empty. Audits and receipts: `experiments/qwen38-27b-b70/data/2026-10-21-context-campaign52/`;
+the read: the campaign-52 section of `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`.
+
 **October 21, 23:34 EDT — campaign 51 complete and read; ctxkeeper 1.3.0.dev1 carries two levers; campaign 52 registered.**
 Seed 2 (rerun c51b) answered 402 of 423 in 85 min: 16 answers were lost when the model overwrote its own answers
 file at the third probe batch (a client slip, not the keeper's), and the notes held a struck-off counter at its old
