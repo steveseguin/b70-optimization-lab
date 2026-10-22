@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "written_after_ready": true,
+  "ready_sha256": "4815681833a3d8d66768c20859183570c9d9afbaa3a9dda8ec1f3b8a016b9ed0",
+  "pin_census": {
+    "pin_guard": {
+      "passed": true,
+      "packet": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket",
+      "pins": 1224,
+      "manifests": 54,
+      "model_hashes_deferred": []
+    },
+    "pins": 1224,
+    "manifests": 54,
+    "by_reason": {
+      "packet's own coordinator proposal (hash still checked)": 1,
+      "packet-local": 1216,
+      "oracle-binding.json target": 7
+    },
+    "cross_packet_mutable_pins": 0,
+    "mutable": [],
+    "ready_in_closure": true
+  },
+  "private_lanequeue_plan": {
+    "returncode": 0,
+    "rows": [
+      {
+        "name": "packet182-one-card-v5-A",
+        "plan": "passed",
+        "seal": "checked by packet plan/wrapper",
+        "storage_admission": {
+          "planned_write_bytes": 80341246,
+          "reservation_source": "proposal",
+          "root_free_bytes": 36414242816,
+          "required_free_bytes": 25080341246,
+          "free_floor_bytes": 25000000000,
+          "passed": true
+        },
+        "host_required_available_bytes": 98990252032
+      }
+    ],
+    "stderr_tail": ""
+  }
+}

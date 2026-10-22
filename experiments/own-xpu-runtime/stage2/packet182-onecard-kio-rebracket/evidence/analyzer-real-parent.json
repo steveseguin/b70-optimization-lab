@@ -1,0 +1,528 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "records": [
+    {
+      "name": "packet171b",
+      "exact_requests": 60,
+      "timing_rows": 11930,
+      "new_identity_refused": true,
+      "spin_views": [
+        "A0",
+        "B0",
+        "A1",
+        "B1",
+        "A2"
+      ],
+      "measured_rates": [
+        34.548097090599754,
+        34.74038637619328,
+        34.56348805645695,
+        34.761156480788,
+        34.60209340221594
+      ],
+      "mechanism_readout": {
+        "schema": "packet176.mechanism.v1",
+        "definitions": {
+          "slow_readback_ms": 1.0,
+          "tokens": "generated_index >= 2",
+          "transfer": "transfer_wall_ms = head (token id + lookup rows) + tail (error/next_token) foreground transfer time",
+          "fill_bytes": "same-position delta of cache.jsonl fill_bytes_total (submitted at that position start)",
+          "carrier_rule": "head when head slope >= 0.6 x transfer slope, tail when <= 0.4 x, else both"
+        },
+        "views": {
+          "A0": {
+            "tokens": 1524,
+            "foreground_io": "copy",
+            "engine": "copy engine: BCS foreground immediate list (copy-only ordinal, index 0, same engine as the maintenance fill list)",
+            "copy_engine_commands_per_decode_token": 53,
+            "wall_ms": 28.8217,
+            "wait_ms": 20.6538,
+            "transfer_wall_ms": 1.1828,
+            "median_transfer_wall_ms": 0.1678,
+            "head_transfer_ms": null,
+            "tail_transfer_ms": null,
+            "route_log_ms": null,
+            "slow_readback_fraction": 0.4016,
+            "slow_head_fraction": null,
+            "slow_tail_fraction": null,
+            "fill_tokens": 760,
+            "fill_mb_per_token": 30.63,
+            "p_slow_readback_on_fill_token": 0.8053,
+            "p_slow_readback_on_unfilled_token": 0.0,
+            "readback_ms_per_fill_mb": 0.03478,
+            "readback_intercept_ms": 0.1244,
+            "head_ms_per_fill_mb": null,
+            "head_intercept_ms": null,
+            "tail_ms_per_fill_mb": null,
+            "tail_intercept_ms": null,
+            "route_log_ms_per_fill_mb": null,
+            "head_share_of_fill_slope": null,
+            "fill_wait_carrier": "unsplit (stream predates packet176 fields)",
+            "wall_ms_per_fill_mb": 0.0665,
+            "wall_intercept_ms": 26.1291,
+            "wait_ms_per_fill_mb": 0.02568,
+            "wait_intercept_ms": 20.2047,
+            "next_token_transfer_ms_per_previous_fill_mb": -1e-05,
+            "end_of_position_states": {
+              "1": 764,
+              "2": 760
+            },
+            "fill_split": {
+              "available": true,
+              "filled_tokens": 760,
+              "unfilled_tokens": 764,
+              "filled_fraction": 0.4987,
+              "fill_mb_per_filled_token": 61.42,
+              "means": {
+                "wall_ms": {
+                  "filled": 30.2136,
+                  "unfilled": 27.4371,
+                  "filled_minus_unfilled": 2.7765
+                },
+                "transfer_wall_ms": {
+                  "filled": 2.2608,
+                  "unfilled": 0.1105,
+                  "filled_minus_unfilled": 2.1503
+                },
+                "wall_outside_transfer_ms": {
+                  "filled": 27.9528,
+                  "unfilled": 27.3267,
+                  "filled_minus_unfilled": 0.6261
+                },
+                "wait_ms": {
+                  "filled": 21.782,
+                  "unfilled": 19.5316,
+                  "filled_minus_unfilled": 2.2504
+                },
+                "enqueue_loop_ms": {
+                  "filled": 5.0057,
+                  "unfilled": 4.9825,
+                  "filled_minus_unfilled": 0.0232
+                }
+              },
+              "outside_transfer_ms_per_fill_mb_filled_tokens": 0.03172,
+              "control_unfilled_outside_transfer_ms_per_next_fill_mb": 0.03218,
+              "fill_attributable_outside_transfer_ms_per_filled_token": 0.6261,
+              "fill_attributable_outside_transfer_ms_per_token": 0.3122,
+              "fill_attributable_fraction_of_wall": 0.01083
+            }
+          },
+          "B0": {
+            "tokens": 1524,
+            "foreground_io": "copy",
+            "engine": "copy engine: BCS foreground immediate list (copy-only ordinal, index 0, same engine as the maintenance fill list)",
+            "copy_engine_commands_per_decode_token": 53,
+            "wall_ms": 28.6582,
+            "wait_ms": 20.6241,
+            "transfer_wall_ms": 1.1691,
+            "median_transfer_wall_ms": 0.1333,
+            "head_transfer_ms": null,
+            "tail_transfer_ms": null,
+            "route_log_ms": null,
+            "slow_readback_fraction": 0.4029,
+            "slow_head_fraction": null,
+            "slow_tail_fraction": null,
+            "fill_tokens": 760,
+            "fill_mb_per_token": 30.63,
+            "p_slow_readback_on_fill_token": 0.8079,
+            "p_slow_readback_on_unfilled_token": 0.0,
+            "readback_ms_per_fill_mb": 0.03485,
+            "readback_intercept_ms": 0.1052,
+            "head_ms_per_fill_mb": null,
+            "head_intercept_ms": null,
+            "tail_ms_per_fill_mb": null,
+            "tail_intercept_ms": null,
+            "route_log_ms_per_fill_mb": null,
+            "head_share_of_fill_slope": null,
+            "fill_wait_carrier": "unsplit (stream predates packet176 fields)",
+            "wall_ms_per_fill_mb": 0.06659,
+            "wall_intercept_ms": 25.9608,
+            "wait_ms_per_fill_mb": 0.02615,
+            "wait_intercept_ms": 20.1502,
+            "next_token_transfer_ms_per_previous_fill_mb": 1e-05,
+            "end_of_position_states": {
+              "1": 764,
+              "2": 760
+            },
+            "fill_split": {
+              "available": true,
+              "filled_tokens": 760,
+              "unfilled_tokens": 764,
+              "filled_fraction": 0.4987,
+              "fill_mb_per_filled_token": 61.42,
+              "means": {
+                "wall_ms": {
+                  "filled": 30.051,
+                  "unfilled": 27.2728,
+                  "filled_minus_unfilled": 2.7782
+                },
+                "transfer_wall_ms": {
+                  "filled": 2.2458,
+                  "unfilled": 0.098,
+                  "filled_minus_unfilled": 2.1478
+                },
+                "wall_outside_transfer_ms": {
+                  "filled": 27.8051,
+                  "unfilled": 27.1748,
+                  "filled_minus_unfilled": 0.6303
+                },
+                "wait_ms": {
+                  "filled": 21.7565,
+                  "unfilled": 19.4976,
+                  "filled_minus_unfilled": 2.2589
+                },
+                "enqueue_loop_ms": {
+                  "filled": 5.0552,
+                  "unfilled": 5.0255,
+                  "filled_minus_unfilled": 0.0297
+                }
+              },
+              "outside_transfer_ms_per_fill_mb_filled_tokens": 0.03174,
+              "control_unfilled_outside_transfer_ms_per_next_fill_mb": 0.0322,
+              "fill_attributable_outside_transfer_ms_per_filled_token": 0.6303,
+              "fill_attributable_outside_transfer_ms_per_token": 0.3143,
+              "fill_attributable_fraction_of_wall": 0.01097
+            }
+          },
+          "A1": {
+            "tokens": 1524,
+            "foreground_io": "copy",
+            "engine": "copy engine: BCS foreground immediate list (copy-only ordinal, index 0, same engine as the maintenance fill list)",
+            "copy_engine_commands_per_decode_token": 53,
+            "wall_ms": 28.8086,
+            "wait_ms": 20.6927,
+            "transfer_wall_ms": 1.1823,
+            "median_transfer_wall_ms": 0.1665,
+            "head_transfer_ms": null,
+            "tail_transfer_ms": null,
+            "route_log_ms": null,
+            "slow_readback_fraction": 0.4009,
+            "slow_head_fraction": null,
+            "slow_tail_fraction": null,
+            "fill_tokens": 760,
+            "fill_mb_per_token": 30.63,
+            "p_slow_readback_on_fill_token": 0.8039,
+            "p_slow_readback_on_unfilled_token": 0.0,
+            "readback_ms_per_fill_mb": 0.03488,
+            "readback_intercept_ms": 0.1194,
+            "head_ms_per_fill_mb": null,
+            "head_intercept_ms": null,
+            "tail_ms_per_fill_mb": null,
+            "tail_intercept_ms": null,
+            "route_log_ms_per_fill_mb": null,
+            "head_share_of_fill_slope": null,
+            "fill_wait_carrier": "unsplit (stream predates packet176 fields)",
+            "wall_ms_per_fill_mb": 0.06656,
+            "wall_intercept_ms": 26.1167,
+            "wait_ms_per_fill_mb": 0.02577,
+            "wait_intercept_ms": 20.2551,
+            "next_token_transfer_ms_per_previous_fill_mb": 0.0,
+            "end_of_position_states": {
+              "1": 764,
+              "2": 760
+            },
+            "fill_split": {
+              "available": true,
+              "filled_tokens": 760,
+              "unfilled_tokens": 764,
+              "filled_fraction": 0.4987,
+              "fill_mb_per_filled_token": 61.42,
+              "means": {
+                "wall_ms": {
+                  "filled": 30.2047,
+                  "unfilled": 27.4198,
+                  "filled_minus_unfilled": 2.7849
+                },
+                "transfer_wall_ms": {
+                  "filled": 2.2615,
+                  "unfilled": 0.1088,
+                  "filled_minus_unfilled": 2.1527
+                },
+                "wall_outside_transfer_ms": {
+                  "filled": 27.9431,
+                  "unfilled": 27.311,
+                  "filled_minus_unfilled": 0.6321
+                },
+                "wait_ms": {
+                  "filled": 21.8379,
+                  "unfilled": 19.5535,
+                  "filled_minus_unfilled": 2.2844
+                },
+                "enqueue_loop_ms": {
+                  "filled": 4.95,
+                  "unfilled": 4.9612,
+                  "filled_minus_unfilled": -0.0112
+                }
+              },
+              "outside_transfer_ms_per_fill_mb_filled_tokens": 0.03168,
+              "control_unfilled_outside_transfer_ms_per_next_fill_mb": 0.03206,
+              "fill_attributable_outside_transfer_ms_per_filled_token": 0.6321,
+              "fill_attributable_outside_transfer_ms_per_token": 0.3152,
+              "fill_attributable_fraction_of_wall": 0.01094
+            }
+          },
+          "B1": {
+            "tokens": 1524,
+            "foreground_io": "copy",
+            "engine": "copy engine: BCS foreground immediate list (copy-only ordinal, index 0, same engine as the maintenance fill list)",
+            "copy_engine_commands_per_decode_token": 53,
+            "wall_ms": 28.637,
+            "wait_ms": 20.7603,
+            "transfer_wall_ms": 1.1688,
+            "median_transfer_wall_ms": 0.1406,
+            "head_transfer_ms": null,
+            "tail_transfer_ms": null,
+            "route_log_ms": null,
+            "slow_readback_fraction": 0.4035,
+            "slow_head_fraction": null,
+            "slow_tail_fraction": null,
+            "fill_tokens": 760,
+            "fill_mb_per_token": 30.63,
+            "p_slow_readback_on_fill_token": 0.8092,
+            "p_slow_readback_on_unfilled_token": 0.0,
+            "readback_ms_per_fill_mb": 0.03483,
+            "readback_intercept_ms": 0.1119,
+            "head_ms_per_fill_mb": null,
+            "head_intercept_ms": null,
+            "tail_ms_per_fill_mb": null,
+            "tail_intercept_ms": null,
+            "route_log_ms_per_fill_mb": null,
+            "head_share_of_fill_slope": null,
+            "fill_wait_carrier": "unsplit (stream predates packet176 fields)",
+            "wall_ms_per_fill_mb": 0.06647,
+            "wall_intercept_ms": 25.9496,
+            "wait_ms_per_fill_mb": 0.0254,
+            "wait_intercept_ms": 20.3382,
+            "next_token_transfer_ms_per_previous_fill_mb": 0.0,
+            "end_of_position_states": {
+              "1": 764,
+              "2": 760
+            },
+            "fill_split": {
+              "available": true,
+              "filled_tokens": 760,
+              "unfilled_tokens": 764,
+              "filled_fraction": 0.4987,
+              "fill_mb_per_filled_token": 61.42,
+              "means": {
+                "wall_ms": {
+                  "filled": 30.0325,
+                  "unfilled": 27.2488,
+                  "filled_minus_unfilled": 2.7837
+                },
+                "transfer_wall_ms": {
+                  "filled": 2.2509,
+                  "unfilled": 0.0925,
+                  "filled_minus_unfilled": 2.1584
+                },
+                "wall_outside_transfer_ms": {
+                  "filled": 27.7816,
+                  "unfilled": 27.1563,
+                  "filled_minus_unfilled": 0.6253
+                },
+                "wait_ms": {
+                  "filled": 21.8982,
+                  "unfilled": 19.6284,
+                  "filled_minus_unfilled": 2.2698
+                },
+                "enqueue_loop_ms": {
+                  "filled": 4.9132,
+                  "unfilled": 4.9308,
+                  "filled_minus_unfilled": -0.0176
+                }
+              },
+              "outside_transfer_ms_per_fill_mb_filled_tokens": 0.03165,
+              "control_unfilled_outside_transfer_ms_per_next_fill_mb": 0.03222,
+              "fill_attributable_outside_transfer_ms_per_filled_token": 0.6253,
+              "fill_attributable_outside_transfer_ms_per_token": 0.3118,
+              "fill_attributable_fraction_of_wall": 0.01089
+            }
+          },
+          "A2": {
+            "tokens": 1524,
+            "foreground_io": "copy",
+            "engine": "copy engine: BCS foreground immediate list (copy-only ordinal, index 0, same engine as the maintenance fill list)",
+            "copy_engine_commands_per_decode_token": 53,
+            "wall_ms": 28.7917,
+            "wait_ms": 20.7518,
+            "transfer_wall_ms": 1.1812,
+            "median_transfer_wall_ms": 0.1687,
+            "head_transfer_ms": null,
+            "tail_transfer_ms": null,
+            "route_log_ms": null,
+            "slow_readback_fraction": 0.4042,
+            "slow_head_fraction": null,
+            "slow_tail_fraction": null,
+            "fill_tokens": 760,
+            "fill_mb_per_token": 30.63,
+            "p_slow_readback_on_fill_token": 0.8105,
+            "p_slow_readback_on_unfilled_token": 0.0,
+            "readback_ms_per_fill_mb": 0.03486,
+            "readback_intercept_ms": 0.1221,
+            "head_ms_per_fill_mb": null,
+            "head_intercept_ms": null,
+            "tail_ms_per_fill_mb": null,
+            "tail_intercept_ms": null,
+            "route_log_ms_per_fill_mb": null,
+            "head_share_of_fill_slope": null,
+            "fill_wait_carrier": "unsplit (stream predates packet176 fields)",
+            "wall_ms_per_fill_mb": 0.06653,
+            "wall_intercept_ms": 26.1007,
+            "wait_ms_per_fill_mb": 0.02507,
+            "wait_intercept_ms": 20.3165,
+            "next_token_transfer_ms_per_previous_fill_mb": 1e-05,
+            "end_of_position_states": {
+              "1": 764,
+              "2": 760
+            },
+            "fill_split": {
+              "available": true,
+              "filled_tokens": 760,
+              "unfilled_tokens": 764,
+              "filled_fraction": 0.4987,
+              "fill_mb_per_filled_token": 61.42,
+              "means": {
+                "wall_ms": {
+                  "filled": 30.1869,
+                  "unfilled": 27.4039,
+                  "filled_minus_unfilled": 2.783
+                },
+                "transfer_wall_ms": {
+                  "filled": 2.2634,
+                  "unfilled": 0.1047,
+                  "filled_minus_unfilled": 2.1587
+                },
+                "wall_outside_transfer_ms": {
+                  "filled": 27.9235,
+                  "unfilled": 27.2992,
+                  "filled_minus_unfilled": 0.6243
+                },
+                "wait_ms": {
+                  "filled": 21.8566,
+                  "unfilled": 19.6527,
+                  "filled_minus_unfilled": 2.2039
+                },
+                "enqueue_loop_ms": {
+                  "filled": 4.9305,
+                  "unfilled": 4.8938,
+                  "filled_minus_unfilled": 0.0367
+                }
+              },
+              "outside_transfer_ms_per_fill_mb_filled_tokens": 0.03166,
+              "control_unfilled_outside_transfer_ms_per_next_fill_mb": 0.03216,
+              "fill_attributable_outside_transfer_ms_per_filled_token": 0.6243,
+              "fill_attributable_outside_transfer_ms_per_token": 0.3113,
+              "fill_attributable_fraction_of_wall": 0.01081
+            }
+          }
+        },
+        "slow_mode_collapsed": false,
+        "fill_cost_moved": true,
+        "control_fill_wait_carrier": [
+          "unsplit (stream predates packet176 fields)"
+        ],
+        "fill_lever_price": {
+          "rule": "(filled minus unfilled wall outside the transfer window) x filled fraction; ceiling for any fill pacing/deferral, not a projection",
+          "views": {
+            "A0": {
+              "ceiling_ms_per_token": 0.3122,
+              "ceiling_fraction_of_wall": 0.01083,
+              "filled_minus_unfilled_outside_transfer_ms": 0.6261,
+              "filled_slope_vs_unfilled_control": [
+                0.03172,
+                0.03218
+              ]
+            },
+            "B0": {
+              "ceiling_ms_per_token": 0.3143,
+              "ceiling_fraction_of_wall": 0.01097,
+              "filled_minus_unfilled_outside_transfer_ms": 0.6303,
+              "filled_slope_vs_unfilled_control": [
+                0.03174,
+                0.0322
+              ]
+            },
+            "A1": {
+              "ceiling_ms_per_token": 0.3152,
+              "ceiling_fraction_of_wall": 0.01094,
+              "filled_minus_unfilled_outside_transfer_ms": 0.6321,
+              "filled_slope_vs_unfilled_control": [
+                0.03168,
+                0.03206
+              ]
+            },
+            "B1": {
+              "ceiling_ms_per_token": 0.3118,
+              "ceiling_fraction_of_wall": 0.01089,
+              "filled_minus_unfilled_outside_transfer_ms": 0.6253,
+              "filled_slope_vs_unfilled_control": [
+                0.03165,
+                0.03222
+              ]
+            },
+            "A2": {
+              "ceiling_ms_per_token": 0.3113,
+              "ceiling_fraction_of_wall": 0.01081,
+              "filled_minus_unfilled_outside_transfer_ms": 0.6243,
+              "filled_slope_vs_unfilled_control": [
+                0.03166,
+                0.03216
+              ]
+            }
+          }
+        },
+        "collapse_rule": "max B slow fraction <= 0.5 x min warm A slow fraction AND every B transfer slope <= 0.5 x every warm A slope",
+        "moved_rule": "every B wall slope per same-token fill MB > 0.5 x every warm A wall slope",
+        "candidate_wins": false,
+        "verdict": "close: kernel I/O did not remove the fill coupling of the foreground transfers"
+      },
+      "slow_readback_only_on_fill_tokens": true,
+      "readback_linear_in_same_token_fill_bytes": true
+    }
+  ],
+  "synthetic_head_tail_attribution": true,
+  "provenance": [
+    {
+      "name": "packet171b:run/cache.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/screen/evidence/card0-171b-v5-a/resident/WSCREEN/run/run/cache.jsonl",
+      "parent_digest": "d857f6e8b52bc273294eeb6a64ee1765d91a832ef5a4424885113a48d056ea13"
+    },
+    {
+      "name": "packet171b:suite-inputs.tsv",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/screen/evidence/card0-171b-v5-a/resident/WSCREEN/run/suite-inputs.tsv",
+      "parent_digest": "8242503a06635b5d1a0b1ad418630576708d1a137944218123bfbe07335e7ef2"
+    },
+    {
+      "name": "packet171b:run/receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/screen/evidence/card0-171b-v5-a/resident/WSCREEN/run/run/receipt.json",
+      "parent_digest": "3f6a8baea203215b6cbf137ebc2bc69a1079876674c7d07c5f4ee46589b65fa9"
+    }
+  ],
+  "maximum_measured_cold_phase_seconds": 29.503,
+  "per_operation_wait_seconds": 600,
+  "wait_at_least_four_times_cold": true,
+  "synthetic_threshold_fixture": true,
+  "unavailable_real_runs": [
+    {
+      "name": "packet58as",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/evidence/card0-58as-v5-a/resident/WSCREEN/run",
+      "present": false,
+      "reason": "untracked run tree removed 2026-10-19 21:42 EDT"
+    },
+    {
+      "name": "packet174",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet174-onecard-fillkick/screen/evidence/card0-174-v5-a/resident/WSCREEN/run",
+      "present": false,
+      "reason": "untracked run tree removed 2026-10-19 21:42 EDT"
+    },
+    {
+      "name": "packet176",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/screen/evidence/card0-176-v5-a/resident/WSCREEN/run",
+      "present": false,
+      "reason": "untracked run tree removed 2026-10-19 21:42 EDT"
+    }
+  ],
+  "packet176_fields_identical_to_committed_packet176_readout": true,
+  "fill_split_checked": true
+}

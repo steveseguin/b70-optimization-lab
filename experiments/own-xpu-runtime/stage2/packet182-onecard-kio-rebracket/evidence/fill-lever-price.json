@@ -1,0 +1,98 @@
+{
+  "schema": "packet182.fill-lever-price.v1",
+  "passed": true,
+  "device_executed": false,
+  "item": "CURRENT.md 2026-10-19 OWNER PAUSE resume queue (b): fill pacing/deferral on the packet176c line",
+  "premise": {
+    "text": "p176 readout shows ~1.0 ms/token of wall outside the transfer window (fill cost moved)",
+    "arithmetic": "(wall slope 0.06656 - transfer slope 0.03488) ms/MB x 30.63 MB/token = 0.970 ms/token",
+    "origin": "pre-device packet176 README pricing on packet58as/171b/174 spin streams; the device readout printed at 12:00Z carried no B-view slope; the resume-queue line was written 5 minutes later from the pre-device number",
+    "why_not_a_fill_cost": "the slopes are fitted over FILLED tokens only; unfilled tokens show the same outside-transfer slope against the NEXT token's fill bytes (0.03206 vs 0.03168 ms/MB on packet171b A1): fill bytes track miss intensity (fills are planned from the previous positions' misses, misses are autocorrelated), and that slope prices the misses themselves, not the fills. packet176's moved_rule fires on packet171b too, where nothing moved."
+  },
+  "a_line": {
+    "source": "packet171b real spin streams (A1/A2 = packet58as spin/copy configuration)",
+    "filled_minus_unfilled_outside_transfer_ms_per_filled_token": 0.6282,
+    "filled_fraction": 0.4987,
+    "fill_mb_per_filled_token": 61.42,
+    "ceiling_ms_per_token": 0.3133
+  },
+  "packet176_bracket": {
+    "rates_tok_s": [
+      34.20898070237056,
+      35.98180647418397,
+      34.62115621015788,
+      35.98079731582723,
+      34.64021031336306
+    ],
+    "minimum_gain": 0.03870031360482287,
+    "exact_requests": 60,
+    "views": {
+      "A0": [
+        29.0907,
+        1.19,
+        0.4055
+      ],
+      "B0": [
+        27.6569,
+        0.0119,
+        0.0
+      ],
+      "A1": [
+        28.754,
+        1.1806,
+        0.4003
+      ],
+      "B1": [
+        27.6569,
+        0.0119,
+        0.0
+      ],
+      "A2": [
+        28.7488,
+        1.1801,
+        0.4009
+      ]
+    },
+    "view_fields": [
+      "wall_ms",
+      "transfer_wall_ms",
+      "slow_readback_fraction"
+    ],
+    "source": "coordinator session transcript 9743941a-5875-4449-b2f0-62a6e15d94f5, tool result at 2026-10-19T12:00:13.424Z (mechanism_readout views of card0-176-v5-a WSCREEN summary.json, digest ad74c8efd7b4984bddffadc36e8c88f54357381ae4ffadd3920f7998458ce9e3)",
+    "warm_a_wall_ms": 28.7514,
+    "b_wall_ms": 27.6569,
+    "transfer_removed_ms": 1.1684,
+    "wall_gained_ms": 1.0945,
+    "not_recovered_ms": 0.0739
+  },
+  "b_line": {
+    "ceiling_ms_per_token": 0.3872,
+    "ceiling_fraction_of_wall": 0.014,
+    "ceiling_speed_gain": 0.0142,
+    "meaning": "if fills became completely free on the kernel-I/O line (impossible: ~61 MB per filled token still crosses PCIe)"
+  },
+  "realistic": {
+    "range_speed_gain": [
+      0.0,
+      0.003
+    ],
+    "why": [
+      "pacing/deferral moves the same bytes; packet174: total bytes, not their placement, set the cost (fill kick -0.02%)",
+      "on the B line 94% of the removed transfer wait already became wall gain: fills overlap compute",
+      "the remaining filled-token excess may be publication staleness (more misses on the stale-table position), which pacing cannot touch"
+    ]
+  },
+  "do_not_repeat": [
+    "packet174: do not pace or re-time fills inside the token while they show zero absorption (total bytes set the cost)",
+    "packet171b: reopen foreground-copy moves only together with a change to fill scheduling or volume",
+    "packet174: tune admission only once fills overlap compute (now true on the B line, but fills ~free => only prefetch helps)"
+  ],
+  "decision": {
+    "build": false,
+    "rule": "brief rule 8: a chain only at >= +2% expected gain",
+    "ceiling_below_rule": true,
+    "next": "packet182: re-bracket packet176 kernel I/O (+3.87% measured, never chained correctly; evidence lost) with a repaired win-path chain"
+  },
+  "record_threshold_tok_s": 34.57303759192858,
+  "packet176_b_rate_vs_record": 0.04072
+}

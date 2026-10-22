@@ -1,0 +1,88 @@
+{
+  "schema": "packet182.inherited-binary-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "rule": "binary-level gates are carried only for byte-identical binaries; the rebuilt K1 wrapper has its own receipt",
+  "binaries": [
+    {
+      "binary": "build/device/own-rt-iq3",
+      "sha256": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+      "equals": "packet176 screen/build-receipt.json artifacts"
+    },
+    {
+      "binary": "build/device/p58-cache-fixtures-core",
+      "sha256": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35",
+      "equals": "packet176 screen/build-receipt.json artifacts"
+    },
+    {
+      "binary": "build/gnu-host/own-rt-iq3",
+      "sha256": "33ce60ad891a42199c76b573aa89933280025ce4dad128335ec08b4527fd4d7d",
+      "equals": "packet176 cpu-exactness record"
+    },
+    {
+      "binary": "build/intel-host/own-rt-iq3",
+      "sha256": "7e46aef6d9e5ee770fd285c3687806f0643e4cda4c4a6994337d5d5733dd327b",
+      "equals": "packet176 cpu-exactness record"
+    },
+    {
+      "binary": "build/preparation/prepare-probe",
+      "sha256": "ee838fce60cef6350f03a5f208a1989e0dfe7be48462417c7983777daa919750",
+      "equals": "packet176 preparation receipt"
+    }
+  ],
+  "rebuilt": {
+    "binary": "build/device/p58-cache-fixtures",
+    "receipt": "evidence/k1-wrapper.json",
+    "sha256": "1b9ef8eb352c11b878d3efc1a5ffb132c99dd297761b3fe23ae9c7694a6bb411"
+  },
+  "carried_gates": [
+    "kernel-io",
+    "cpu-exactness",
+    "wait-tests",
+    "flags",
+    "kernelio-delta-test",
+    "build",
+    "preparation"
+  ],
+  "provenance": [
+    {
+      "name": "kernel-io.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/evidence/kernel-io.json",
+      "parent_digest": "c4af0c653c130f67c4bc1b86e85faca928f621783d5d03beac6a8126ab95d86d"
+    },
+    {
+      "name": "cpu-exactness.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/evidence/cpu-exactness.json",
+      "parent_digest": "77ca11c9a16087555760a46b7ec1e65e6e4bd083b8764a7c4f2afbdc27b76e6d"
+    },
+    {
+      "name": "wait-tests.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/evidence/wait-tests.json",
+      "parent_digest": "68bd0ae16422bbc9993651250c56b8d063370ecb6f94cc4dee7fc69faf5d854a"
+    },
+    {
+      "name": "flags.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/evidence/flags.json",
+      "parent_digest": "2989ee0ddd2a3201d9a92432033ff0a49dd95fe2486d3b43fae21bcf33073bae"
+    },
+    {
+      "name": "kernelio-delta-test.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/evidence/kernelio-delta-test.json",
+      "parent_digest": "3eb46e71ecf9181f24259a77be769c3258dafce6115d66cd602c839c4e7cee90"
+    },
+    {
+      "name": "build.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/evidence/build.json",
+      "parent_digest": "c95b397b3690b05b3f8a76fb06ba5e06c447ae007d871a2b1c793e1c8ba93f6a"
+    },
+    {
+      "name": "preparation.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio/evidence/preparation.json",
+      "parent_digest": "cb7c2114c665b3a2e780fe8937459bb5a251fb0a1b2729bebf23a6467649faf6"
+    }
+  ],
+  "native_sources_unchanged": {
+    "main_cpp_sha256": "5d0af4cd7088b6623fa84c136b215320fb59971038f350ae583daf753d62f473"
+  },
+  "not_rerun": "kernel-io, cpu-exactness, wait-tests, flags and the source-delta test exercise the binaries/sources above; identical bytes give identical results, so they were not re-run (lean CPU gates)"
+}

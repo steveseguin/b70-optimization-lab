@@ -1,0 +1,117 @@
+{
+  "schema": "own-runtime.packet182.ready.v1",
+  "ready_for_device": true,
+  "passed": true,
+  "device_executed": false,
+  "packet": "packet182-onecard-kio-rebracket",
+  "job": "packet182-one-card-v5-A",
+  "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p182-one-card-A.txt",
+  "proposal_sha256": "daf0045a19f34f90ce2dc66a49569bff7015435125fdb99b7d712b49d0a4e72b",
+  "lane": "A",
+  "scope": "whole-host",
+  "gpu_count": 1,
+  "card": 0,
+  "model_loads": 1,
+  "windows": [
+    "K1a",
+    "K1b",
+    "WSCREEN"
+  ],
+  "separate_smoke_required": false,
+  "opening_contract": "No separate smoke: bracket opens with K1a/K1b and exact A0 control.",
+  "arm_order": [
+    "spin",
+    "spin-kio",
+    "spin",
+    "spin-kio",
+    "spin"
+  ],
+  "labels": [
+    "A0",
+    "B0",
+    "A1",
+    "B1",
+    "A2"
+  ],
+  "arms": {
+    "A": "packet58as spin record line (--foreground-io copy)",
+    "B": "spin + compute-kernel head load / tail store (--foreground-io kernel, no copy engine)"
+  },
+  "engine_sha256": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+  "engine_rebuilt": false,
+  "engine_identity": "byte copy of packet176 build/device/own-rt-iq3 (its B arm measured +3.87% on 2026-10-19)",
+  "warmup": "A0 exact, excluded only from speed and drift",
+  "prompts_per_view": 12,
+  "max_new": 128,
+  "required_exact_requests": 60,
+  "oracle": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "resident_lookups_all_views": true,
+  "winner_minimum_gain_over_every_warm_control": 0.005,
+  "maximum_control_drift_fraction": 0.03,
+  "chain_rule": {
+    "minimum_gain": 0.02,
+    "slower_b_over_record": 1.02,
+    "tool": "chain/chain_gate.py"
+  },
+  "win_path_chain": {
+    "waiter": "chain/p182-win.sh",
+    "armed": false,
+    "arming": "chain/ARMING.md",
+    "launcher": "chain/p182-chain.sh",
+    "derive": "chain/derive_chain.py",
+    "unit": "packet58-onecard-182-a",
+    "derived_packet": "packet182c-chain"
+  },
+  "expected": {
+    "v5_seconds": [
+      700,
+      1200
+    ],
+    "chain_seconds": 2100,
+    "gain_vs_record": "+3.9 to +4.1% (packet176 slower B 35.981 / 34.573038)"
+  },
+  "fill_lever": {
+    "built": false,
+    "ceiling_speed_gain": 0.0142,
+    "evidence": "evidence/fill-lever-price.json"
+  },
+  "host_required_available_bytes": 98990252032,
+  "device_disk_floor_bytes": 25000000000,
+  "cpu_disk_stop_bytes": 27000000000,
+  "build_receipt_sha256": "8972ab74d3de60dc05251973a1cc78ddc051c55986cf3991092b8f39354da3b6",
+  "checks": {
+    "evidence/k1-wrapper.json": "897cde930f3acb3b061a7cfc67c7cecf6a8f751877bf07c4e0d224d7430d95f3",
+    "evidence/inherited-binary-gates.json": "607a50195cfd67012b8eeb77c6b1a25d57484874e951eeff887806a88b71d3dd",
+    "evidence/preparation.json": "18769c774565fbfcbb0f8e25ff14db439ae04e9ece5a93c4ba5b8218bbcfaad0",
+    "evidence/analyzer-real-parent.json": "e8975e73e2ff660d9d37f2f7fe603df1e9e4487109548d078304fd7673a0c5bb",
+    "evidence/fill-lever-price.json": "7abfc0f341a77bdeeadcef3c8d5e9138a2de0063ae9b4af7b0de935472c5f84d",
+    "evidence/python-cpu-gates.json": "61c5841b468b7650cf6da862a9f6b0b274d6981ca1a028c58dbfe669ac23524c",
+    "evidence/drain-fix.json": "1589bcaf379e17004c82b3d5a9d3f30f0c4080dcceca8ef8a796eb2de1f76fc9",
+    "evidence/chain-rehearsal.json": "b0331f5c92c760f78d2138561ae1c0a11b645f60ad5cd67a3380919eeb79c556",
+    "evidence/waiter-rehearsal.json": "a497b1cdd1732cdcd3c0d5a97cb23b7a08a84725cd42e94474ca2e9c39224898",
+    "evidence/package-rows.json": "16e6c36501260403f92b67b904f0bac2552d9354cad26bc10aa37ab95b007f0c",
+    "evidence/entry-imports.json": "5056d37c925ce6c59c7acdb7df3149e8c978fdf1ca4d24364945bc3b6417700a",
+    "evidence/queue-plans.json": "5c1d136c780b1d97b048806cc862f5f56aad4d3e1173e13abb9dc7eb78089761",
+    "evidence/shared-entry-report-final.json": "2bb9d6f5dd83af65e49f35f207e458698097840bb418a322697e039f1f4e1253",
+    "evidence/pin-guard.json": "1f61132d99d5df7cb900f3992542c8ad0c5d4b8382ac491fb1613741f6b788e0"
+  },
+  "argument_gate": {
+    "path": "screen/evidence/argument-gate.json",
+    "sha256": "01657f36d4efe93523211b4530b7c12e037aca41459f831129a6b06e738da188",
+    "memavailable_substituted_for": "WSCREEN (owner endpoints running during CPU preparation)"
+  },
+  "device_exactness": "pending",
+  "device_speed": "pending",
+  "fresh_process_repeat": false,
+  "strict512": false,
+  "submission_eligible": false,
+  "coordinator_requirements": "Whole-host lane A; PAUSE-B kept through v5 and chain; endpoints stopped by the window procedure; arm chain/p182-win.sh before START; no retry; graceful drain; commit the v5 summaries at once",
+  "parent": {
+    "name": "packet176-onecard-kernelio",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet176-onecard-kernelio",
+    "parent_commit": "d5dd41189706fdbb954f305b2f7e2ce10b33199b"
+  },
+  "prepared_utc": "2026-10-22T09:26:42.087483+00:00",
+  "preparation_head_commit": "fb2b0255933f42934976e89245a6533d28d19458"
+}

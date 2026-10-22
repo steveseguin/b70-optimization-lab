@@ -1,0 +1,341 @@
+{
+  "schema": "packet182.chain-rehearsal.v1",
+  "device_executed": false,
+  "flags": {
+    "--wait-policy": "spin",
+    "--foreground-io": "kernel"
+  },
+  "stand_in_bracket": {
+    "summary_bytes_from": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/evidence/card0-58as-v5-a/resident/WSCREEN/summary.json",
+    "placed_at": "<R>/experiments/own-xpu-runtime/stage2/packet182zz-standin/screen/evidence/card0-standin-v5-a/resident/WSCREEN",
+    "window_receipt": "synthetic, scratch only (original removed 2026-10-19 21:42 EDT)"
+  },
+  "scratch_root": "<R> (removed)",
+  "production_names": {
+    "packet": "packet182c-chain",
+    "out": "packet182c-orchestration",
+    "unit": "packet58-onecard-182-a",
+    "output": "evidence/card0-182-a"
+  },
+  "packet176c_script_mode": {
+    "run": {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/script_argv_check.py",
+        "<R>/experiments/own-xpu-runtime/stage2/packet176c-chain",
+        "--flags",
+        "{\"--wait-policy\": \"spin\", \"--foreground-io\": \"kernel\"}",
+        "--json",
+        "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p182-chain-rehearsal-uukhpxgi/old.json"
+      ],
+      "returncode": 3,
+      "seconds": 0.4,
+      "stdout_tail": "{\"passed\": false, \"failures\": [\"KD: native argv lacks --wait-policy spin, --foreground-io kernel\", \"W2m: native argv lacks --wait-policy spin, --foreground-io kernel\", \"WS: native argv lacks --wait-policy spin, --foreground-io kernel\", \"WS128x: native argv lacks --wait-policy spin, --foreground-io kernel\", \"WS128: native argv lacks --wait-policy spin, --foreground-io kernel\"]}\n",
+      "stderr_tail": ""
+    },
+    "expected": "refuse",
+    "refused": true,
+    "failures": [
+      "KD: native argv lacks --wait-policy spin, --foreground-io kernel",
+      "W2m: native argv lacks --wait-policy spin, --foreground-io kernel",
+      "WS: native argv lacks --wait-policy spin, --foreground-io kernel",
+      "WS128x: native argv lacks --wait-policy spin, --foreground-io kernel",
+      "WS128: native argv lacks --wait-policy spin, --foreground-io kernel"
+    ],
+    "argv_example": [
+      "--seconds",
+      "3600",
+      "--cache-maintenance",
+      "overlap",
+      "--cache-cap",
+      "max",
+      "--cache-bytes",
+      "21552729600"
+    ]
+  },
+  "derive": {
+    "run": {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/derive_chain.py",
+        "--parent-orch",
+        "<R>/experiments/own-xpu-runtime/ops/packet58aj-orchestration",
+        "--packet",
+        "<R>/experiments/own-xpu-runtime/stage2/packet182c-chain",
+        "--out",
+        "<R>/experiments/own-xpu-runtime/ops/packet182c-orchestration",
+        "--unit",
+        "packet58-onecard-182-a",
+        "--output",
+        "evidence/card0-182-a",
+        "--binary",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/build/device/own-rt-iq3",
+        "--host-binary",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/build/gnu-host/own-rt-iq3",
+        "--bracket-summary",
+        "<R>/experiments/own-xpu-runtime/stage2/packet182zz-standin/screen/evidence/card0-standin-v5-a/resident/WSCREEN/summary.json",
+        "--threshold-file",
+        "<R>/scripts/packet58_onecard_record_threshold.json",
+        "--cpu-rehearsal",
+        "--flag",
+        "wait-policy=spin",
+        "--flag",
+        "foreground-io=kernel"
+      ],
+      "returncode": 0,
+      "seconds": 5.5,
+      "stdout_tail": "{\"passed\": true, \"ready\": \"<R>/experiments/own-xpu-runtime/ops/packet182c-orchestration/READY-FOR-DEVICE.json\", \"flags\": {\"--wait-policy\": \"spin\", \"--foreground-io\": \"kernel\"}, \"digest\": \"bb2c63e3e5ea004cf1ddd91e1b08d45079e91753ab375a8de164e1f13783e705\"}\n",
+      "stderr_tail": ""
+    },
+    "passed": true
+  },
+  "derived": {
+    "ready_for_device_chain": true,
+    "chain_binary_sha256": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+    "chain_flags": {
+      "--wait-policy": "spin",
+      "--foreground-io": "kernel"
+    },
+    "pin_audit": {
+      "passed": true,
+      "manifests": 41,
+      "relocated": 275,
+      "parent_pins": 0,
+      "lanequeue_plan": "passed (temporary queue dir)"
+    },
+    "predevice_rehearsal": {
+      "passed": true,
+      "windows": [
+        "K1a",
+        "K1b",
+        "KD",
+        "W2m",
+        "WS",
+        "WS128x",
+        "WS128"
+      ],
+      "boundaries": {
+        "K1a": "output directory creation",
+        "K1b": "output directory creation",
+        "KD": "previous-window prerequisite K1",
+        "W2m": "previous-window prerequisite KD",
+        "WS": "previous-window prerequisite W2m",
+        "WS128x": "previous-window prerequisite WS",
+        "WS128": "previous-window prerequisite WS128x"
+      },
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    },
+    "runtime_closure_check": {
+      "passed": true,
+      "checked": 84,
+      "copied_dirs": [
+        "selections",
+        "frozen-inputs",
+        "host-admission",
+        "native",
+        "lineage",
+        "screen-reader"
+      ]
+    },
+    "postnative_rehearsal": {
+      "passed": true,
+      "evidence": "experiments/own-xpu-runtime/ops/packet176c-orchestration/postnative-rehearsal.json",
+      "windows": [
+        "K1a",
+        "K1b",
+        "KD",
+        "W2m",
+        "WS",
+        "WS128x",
+        "WS128"
+      ]
+    },
+    "postnative_carried": {
+      "reason": "no completed one-card chain evidence on this host (untracked chain trees removed 2026-10-19 21:42 EDT)",
+      "from_packet": "packet176c-chain",
+      "rehearsal": {
+        "name": "postnative-rehearsal.json",
+        "parent_relpath": "experiments/own-xpu-runtime/ops/packet176c-orchestration/postnative-rehearsal.json",
+        "parent_digest": "cbd60e6baa2a28f55c35c9cc34113f5748ead443c73cb335af5dd7916db445d9"
+      },
+      "original_evidence": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a",
+      "identical_files_checked": 543
+    },
+    "confirmation_run": false,
+    "confirmation_note": "stand-in bracket packet is scratch-only (not the ledger record packet) and the binary differs from packet58as: not a confirmation, as on the device day",
+    "flag_block_before_entry": true,
+    "chain_command_unit_ok": true
+  },
+  "derived_script_mode": {
+    "run": {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/script_argv_check.py",
+        "<R>/experiments/own-xpu-runtime/stage2/packet182c-chain",
+        "--json",
+        "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p182-chain-rehearsal-uukhpxgi/new.json"
+      ],
+      "returncode": 0,
+      "seconds": 0.4,
+      "stdout_tail": "{\"passed\": true, \"failures\": []}\n",
+      "stderr_tail": ""
+    },
+    "expected": "pass",
+    "passed": true,
+    "windows": [
+      {
+        "window": "KD",
+        "flags_present": true,
+        "argv_tail": [
+          "--cache-bytes",
+          "21552729600",
+          "--wait-policy",
+          "spin",
+          "--foreground-io",
+          "kernel"
+        ]
+      },
+      {
+        "window": "W2m",
+        "flags_present": true,
+        "argv_tail": [
+          "--cache-bytes",
+          "21552729600",
+          "--wait-policy",
+          "spin",
+          "--foreground-io",
+          "kernel"
+        ]
+      },
+      {
+        "window": "WS",
+        "flags_present": true,
+        "argv_tail": [
+          "--cache-bytes",
+          "21552729600",
+          "--wait-policy",
+          "spin",
+          "--foreground-io",
+          "kernel"
+        ]
+      },
+      {
+        "window": "WS128x",
+        "flags_present": true,
+        "argv_tail": [
+          "--cache-bytes",
+          "21552729600",
+          "--wait-policy",
+          "spin",
+          "--foreground-io",
+          "kernel"
+        ]
+      },
+      {
+        "window": "WS128",
+        "flags_present": true,
+        "argv_tail": [
+          "--cache-bytes",
+          "21552729600",
+          "--wait-policy",
+          "spin",
+          "--foreground-io",
+          "kernel"
+        ]
+      }
+    ]
+  },
+  "generator_checks": {
+    "predevice": {
+      "passed": true,
+      "run": {
+        "argv": [
+          "/usr/bin/python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/onecard_chain_derive.py",
+          "--predevice-check",
+          "<R>/experiments/own-xpu-runtime/stage2/packet182c-chain"
+        ],
+        "returncode": 0,
+        "seconds": 1.7,
+        "stdout_tail": "{\"passed\": true, \"windows\": [\"K1a\", \"K1b\", \"KD\", \"W2m\", \"WS\", \"WS128x\", \"WS128\"], \"boundaries\": {\"K1a\": \"output directory creation\", \"K1b\": \"output directory creation\", \"KD\": \"previous-window prerequisite K1\", \"W2m\": \"previous-window prerequisite KD\", \"WS\": \"previous-window prerequisite W2m\", \"WS128x\": \"previous-window prerequisite WS\", \"WS128\": \"previous-window prerequisite WS128x\"}}\n",
+        "stderr_tail": ""
+      }
+    },
+    "closure": {
+      "passed": true,
+      "run": {
+        "argv": [
+          "/usr/bin/python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/onecard_chain_derive.py",
+          "--closure-check",
+          "<R>/experiments/own-xpu-runtime/stage2/packet182c-chain"
+        ],
+        "returncode": 0,
+        "seconds": 0.3,
+        "stdout_tail": "{\"passed\": true, \"checked\": 84}\n",
+        "stderr_tail": ""
+      }
+    },
+    "postnative": {
+      "passed": false,
+      "run": {
+        "argv": [
+          "/usr/bin/python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/onecard_chain_derive.py",
+          "--postnative-check",
+          "<R>/experiments/own-xpu-runtime/stage2/packet182c-chain"
+        ],
+        "returncode": 2,
+        "seconds": 0.0,
+        "stdout_tail": "",
+        "stderr_tail": "onecard_chain_derive: no completed chain device evidence for the post-native rehearsal\n"
+      },
+      "expected": "refuse without completed one-card chain evidence on this host; derive_chain carries packet176c instead"
+    }
+  },
+  "passed": true,
+  "tools": [
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/derive_chain.py",
+      "digest": "cc955b97362ceccd13203e23872c4a4acef60fcee73f2eb2029a7010f813dd34"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/script_argv_check.py",
+      "digest": "6f3361168b1c5bac67fa2a1312fc330f1e99651498f41f093f67bce0bac2ab95"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/rehearse_chain.py",
+      "digest": "3c7178cb9dd8305f514c3856f3d78b17ce335d13a848dd2a66ca8c8b08d3b0ef"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/ops/onecard_chain_derive.py",
+      "digest": "19d528a62cd5362d45e3947f69170bbbc42b348055dcf85d0a570da832895c7e"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/ops/lane-queue/pin_guard.py",
+      "digest": "25da194ff510450233b99bfbcd29ce117fc3e72c862b0b48623c695437437c2a"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+      "digest": "010d83445665cf93641901c845e28ccc36ef41909d2171ccc2f877509eaffe25"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/build/device/own-rt-iq3",
+      "digest": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/build/gnu-host/own-rt-iq3",
+      "digest": "33ce60ad891a42199c76b573aa89933280025ce4dad128335ec08b4527fd4d7d"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "schema": "packet182.waiter-rehearsal.v1",
+  "passed": true,
+  "device_executed": false,
+  "dry_run": true,
+  "launched": false,
+  "lock_or_quiet_touched": false,
+  "pause_files_touched": false,
+  "cases": [
+    {
+      "case": "win",
+      "returncode": 0,
+      "seconds": 38.1,
+      "derived_packet": true,
+      "script_argv_check": true,
+      "quiet_or_lock_touched": false,
+      "log": [
+        "p182-win armed: waiting for packet182-one-card-v5-A",
+        "p182-win bracket: CHAIN rates=[34.20898070237056, 35.98180647418397, 34.62115621015788, 35.98079731582723, 34.64021031336306] min_gain=0.03870031360482287 record=34.57303759192858 all chain rules pass",
+        "p182-win --postnative-check: no completed one-card chain evidence on this host (expected); carried packet176c rehearsal in ops/packet182c-orchestration/postnative-rehearsal.json",
+        "p182-chain[packet182c-chain] derived: unit=packet58-onecard-182-a output=experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a fault_review=experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/fault-review-182-a.json",
+        "p182-win dry run: derive, checks and chain --check passed; would take onecard-hold.lock, set QUIET and run p182-chain.sh"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "case": "below",
+      "returncode": 0,
+      "seconds": 30.0,
+      "derived_packet": false,
+      "script_argv_check": null,
+      "quiet_or_lock_touched": false,
+      "log": [
+        "p182-win armed: waiting for packet182-one-card-v5-A",
+        "p182-win bracket: NOCHAIN rates=[34.2, 35.3, 34.62, 35.31, 34.64] min_gain=0.0193 record=34.57303759192858 minimum gain 0.0193 below +2%",
+        "p182-win no chain (chain rule not met); bracket evidence kept for the readout"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "case": "failed",
+      "returncode": 2,
+      "seconds": 0.0,
+      "derived_packet": false,
+      "script_argv_check": null,
+      "quiet_or_lock_touched": false,
+      "log": [
+        "p182-win armed: waiting for packet182-one-card-v5-A",
+        "p182-win packet182-one-card-v5-A did not end DONE; no chain"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "case": "endpoints",
+      "returncode": 5,
+      "seconds": 30.1,
+      "derived_packet": false,
+      "script_argv_check": null,
+      "quiet_or_lock_touched": false,
+      "log": [
+        "p182-win armed: waiting for packet182-one-card-v5-A",
+        "p182-win bracket: CHAIN rates=[34.20898070237056, 35.98180647418397, 34.62115621015788, 35.98079731582723, 34.64021031336306] min_gain=0.03870031360482287 record=34.57303759192858 all chain rules pass",
+        "p182-win ALERT endpoint qwen38-27b-fp8 is active; no chain (driver must wait for p182-win before restoring endpoints)"
+      ],
+      "stderr_tail": ""
+    }
+  ],
+  "tools": [
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/p182-win.sh",
+      "digest": "af1d05343170484d006b8b0a072b9ab383a05b56283af0d32d4c54b980daf1e3"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/p182-chain.sh",
+      "digest": "745a0158ecac648cdfb2d71b0b1f0da764934359abf56b744b04b406d53c4f86"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/chain_gate.py",
+      "digest": "8c2d9ad22e30940a2efc533f793211896277057978686a66fa955fc820ebdfd4"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/derive_chain.py",
+      "digest": "cc955b97362ceccd13203e23872c4a4acef60fcee73f2eb2029a7010f813dd34"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/script_argv_check.py",
+      "digest": "6f3361168b1c5bac67fa2a1312fc330f1e99651498f41f093f67bce0bac2ab95"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/chain/rehearse_waiter.py",
+      "digest": "3c344b7d7f6f199044d41f6dcc0593ceff1bed346274edc0d1d7ebc0c436bf40"
+    },
+    {
+      "relpath": "experiments/own-xpu-runtime/ops/onecard_chain_derive.py",
+      "digest": "19d528a62cd5362d45e3947f69170bbbc42b348055dcf85d0a570da832895c7e"
+    }
+  ]
+}
