@@ -1,11 +1,182 @@
-# Qwen3.8 27B AutoRound INT4 — fixed-K batch-invariant two-B70 package (candidate)
+# Run Qwen3.8 27B AutoRound INT4 on two B70s
 
-devan-carlin's AutoRound INT4 tensors of Qwen3.8-27B, served by vLLM XPU on two Intel Arc Pro B70 32 GiB cards through
-the plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library, on the FP8 lane's whole-graph deterministic stack.
+devan-carlin's AutoRound INT4 copy of Qwen3.8-27B, served by vLLM XPU in Docker on **two Intel Arc Pro B70 (32 GiB)**
+cards. The model's own MTP draft guesses four tokens ahead and the full model checks every guess. On the lab's fixed
+12-prompt test the answers were identical to running without drafting. This is a 4-bit quantized model, not the
+official FP8 release.
 
-**Current results (September 13):** the best qualified two-card MTP4 shortlist record is **117.528 tok/s** (R299 on R294b, strict pair 117.46/117.59; approved LocalMaxxing `cmtyqbeu40aqgps011wl4mljo`). The current R304 / vLLM v0.29.0 recipe revalidates at **117.24/116.95** on two cards and **81.17/81.16** on one card, G1/G2/G3 12/12 throughout. The one-card pair center is 81.163 tok/s.
+> **Status: candidate.** The model, image, launcher and evidence are pinned. The recipe remains a candidate with
+> clean-host replay pending.
 
-Concurrency has separate gates: on R304, TP1 MTP4 is exact through eight users in both passes (272.7 tok/s warm); TP1 MTP0 is exact through 64 users, with its best measured aggregate at 32 (513.2 tok/s warm). TP2 MTP4 has mismatches at some rungs; TP2 MTP0 is exact through 32 in both passes. The historical R299 shortlist profile was exact through 16 with MTP4. See the exact two-pass profiles in the [model page](../../models/qwen38-27b-autoround-int4-b70.html#profiles). A strict single-user pass does not imply arbitrary concurrent equality.
+## Before you start
+
+| Need | Tested with / required |
+| --- | --- |
+| Cards | Two Intel Arc Pro B70 32 GiB with nothing else running on them. The launcher uses cards 0 and 1 (`XPU_DEVICE_MASK=0,1`; inside the container that becomes `ZE_AFFINITY_MASK=0,1` and `ONEAPI_DEVICE_SELECTOR=level_zero:0,1`). It does not check whether another program is using the cards. |
+| OS and kernel | Linux. The exact OS, kernel and driver versions of the R304 runs are not recorded in this package's evidence. |
+| GPU driver stack | An Intel GPU kernel driver (`xe` or `i915`) exposing `/dev/dri` render nodes; versions not recorded. The container brings its own user-space runtime (vLLM 0.29.0). |
+| Runtime | Docker image `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2` (R304). |
+| Python | `python3` on the host for the download, relabel and verify scripts (standard library only); version not recorded. |
+| Host RAM | At least 15 GiB (16,106,127,360 bytes) and 20 GiB of RAM plus swap (package manifest). The launcher caps the container at 12 GiB of memory and 16 GiB of memory plus swap. |
+| Disk | 19,016,930,167 bytes (about 19 GB) for the model. The relabel folder is hard links, so it adds almost nothing. Image and compile-cache sizes: not recorded. |
+| Network / oneCCL | Internet access to Hugging Face and GitHub Container Registry for steps 1 and 2 (`HF_TOKEN` is used if set). Between the cards the launcher sets oneCCL over loopback TCP inside the container (`CCL_ATL_TRANSPORT=ofi`, `FI_PROVIDER=tcp`, `FI_TCP_IFACE=lo`, `CCL_ZE_IPC_EXCHANGE=pidfd`, `CCL_TOPO_P2P_ACCESS=1`). |
+| Other tools | Docker that your user can run, and `curl`. `aria2c` is used for large downloads when installed. |
+
+This package does not install host drivers or Docker, and their installation has not been replayed on a clean host.
+To check the machine first, run `PROFILE=two-gpu packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/preflight.sh`
+(GPUs, driver, RAM, storage, image). That check also requires the Docker Compose plugin.
+
+## Quick start
+
+Run every command from the repository root after
+`git clone https://github.com/steveseguin/b70-optimization-lab && cd b70-optimization-lab`. Replace every
+`/path/to/...` with your own absolute directories.
+
+### 1. Download and verify the model
+
+```bash
+packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/download-model.sh \
+  /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel
+MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/verify.sh
+```
+
+The first command downloads `devan-carlin/Qwen3.8-27B-int4-AutoRound` at revision
+`bce40cacab0a4535b92fb3d57615c2bea9adf3d1`. It then builds the **relabel** folder: the same tensor files as hard
+links, with `config.json` and `quantization_config.json` rewritten so vLLM uses the oneDNN INT4 kernel path this
+recipe was measured on (see [What makes it exact](#what-makes-it-exact)). Hard links need both folders on the same
+filesystem. The second command checks the revision, every file size and every SHA-256. Serve the relabel folder, not
+the download folder.
+
+### 2. Get the runtime
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
+docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 \
+  neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 \
+EXPECTED_XPU_EXTENSION_SHA256=bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932 \
+EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 \
+EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn \
+  neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+```
+
+The launcher looks for the local tag, so the `docker tag` line is required. The contract check prints
+`IMAGE CONTRACT PASS` when the installed files match the published image. These lines are the package's `preflight`
+command without its last part, the relabel, which step 1 already ran (re-running it is safe).
+
+### 3. Start the server
+
+```bash
+PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 \
+DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt \
+MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache \
+  repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh
+```
+
+The server runs in the foreground; leave this terminal open. Before it starts, the launcher checks the model files
+again and the image identity. The container is named `qwen38-int4-fixed-k-mtp4` and serves the model name
+`qwen38-int4-fixed-k-mtp4` (both follow `MTP_DEPTH`).
+
+Context: with no `MAX_MODEL_LEN` set, the shared launcher allows **256 tokens per request** (prompt plus answer) and
+up to 128 requests at once. The single-user record ran with `MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1`; put those in front
+of the command to match it. Long inputs up to 32,768 tokens were measured with one request at a time
+(`MAX_MODEL_LEN=33024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=4096`) on the earlier R256 image (R260b, below).
+
+### 4. Wait until it is ready
+
+```bash
+until curl -fsS http://127.0.0.1:18134/health; do sleep 10; done; echo ready
+```
+
+Startup loads the weights, compiles and captures XPU graphs. Its duration is not recorded for this profile.
+
+### 5. Send a first request
+
+```bash
+curl -s http://127.0.0.1:18134/v1/chat/completions -H 'Content-Type: application/json' \
+  -d '{"model":"qwen38-int4-fixed-k-mtp4","messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":64,"chat_template_kwargs":{"enable_thinking":false}}'
+```
+
+With the OpenAI Python client (`pip install openai`):
+
+```bash
+python3 -c 'from openai import OpenAI; r = OpenAI(base_url="http://127.0.0.1:18134/v1", api_key="unused").chat.completions.create(model="qwen38-int4-fixed-k-mtp4", messages=[{"role": "user", "content": "Say hello in five words."}], max_tokens=64, extra_body={"chat_template_kwargs": {"enable_thinking": False}}); print(r.choices[0].message.content)'
+```
+
+Any OpenAI-compatible client works with base URL `http://127.0.0.1:18134/v1` and model `qwen38-int4-fixed-k-mtp4`.
+
+### 6. Check status
+
+```bash
+curl -fsS http://127.0.0.1:18134/health && echo healthy
+docker ps --filter name=qwen38-int4-fixed-k-mtp4
+```
+
+### 7. Stop
+
+```bash
+docker stop -t 30 qwen38-int4-fixed-k-mtp4
+```
+
+Run it from another terminal. The container was started with `--rm`, so Docker removes it after it stops. The
+compile cache in `VLLM_CACHE_DIR` stays.
+
+## What you get
+
+- **Speed, one user, two cards:** the best qualified two-card MTP4 shortlist record is **117.528 tok/s** (R299 on
+  R294b, strict pair 117.46/117.59; approved LocalMaxxing
+  [`cmtyqbeu40aqgps011wl4mljo`](https://www.localmaxxing.com/runs/cmtyqbeu40aqgps011wl4mljo)). The current R304 /
+  vLLM v0.29.0 recipe revalidates at **117.24/116.95** on two cards, G1/G2/G3 12/12. These are class-balanced
+  writing speeds on the fixed 12-prompt, six-class suite with a 512-token answer cap and zero cached tokens
+  ([evidence](../../experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json)).
+- **Reading a prompt, two cards:** a September 13 diagnostic screen on the R304 image (TP2, MTP4, one user, 1,024-token
+  capacity, average of two control arms) measured **2,198 input tokens/s** server prefill at 512 input tokens and
+  247.81 ms HTTP time to first token. It is not a promoted measurement; see the [short-prefill note](../../experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md).
+- **Long inputs:** context depth (R260b, 2026-09-06, R256 image): exact real-content active context 2K-32K, one slot:
+  MTP0 50.0 -> 42.8 tok/s, MTP depth 4 120.6 -> 100.3 tok/s (medians of three content classes), every MTP4 array
+  equal to the MTP0 oracle (18/18)
+  ([evidence](../../experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json)).
+- **Many users:** concurrency has separate gates: on R304, TP1 MTP4 is exact through eight users in both passes
+  (272.7 tok/s warm); TP1 MTP0 is exact through 64 users, with its best measured aggregate at 32 (513.2 tok/s warm).
+  TP2 MTP4 has mismatches at some rungs; TP2 MTP0 is exact through 32 in both passes. The historical R299 shortlist
+  profile was exact through 16 with MTP4. See the exact two-pass profiles in the
+  [model page](https://neural.download/models/qwen38-27b-autoround-int4-b70.html#profiles). A strict single-user
+  pass does not imply arbitrary concurrent equality.
+- **One card:** the same image measures **81.17/81.16** tok/s on one card, G1/G2/G3 12/12; the one-card pair center
+  is 81.163 tok/s (`TENSOR_PARALLEL_SIZE=1 XPU_DEVICE_MASK=0 GPU_MEMORY_UTILIZATION=0.96`).
+- **Not measured yet:** clean-host replay.
+
+## If it fails
+
+- **`image is missing: neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304`:** run step 2. The launcher
+  needs the local tag, not only the pulled digest.
+- **`image identity mismatch` or `image does not contain the required mixed-batch XPU kernel`:** the local tag points
+  at a different image. Pull by digest and tag it again (step 2).
+- **`container already exists: qwen38-int4-fixed-k-mtp4`:** an older server with that name is still present. Stop it
+  (step 7) before starting a new one.
+- **`IDENTITY MISMATCH on N file(s)`** from the model check: a file differs from the pinned revision. Re-run step 1
+  and point `MODEL_DIR` at the relabel folder, not the download folder.
+- **`CANNOT VERIFY`** from the model check: the verifier must read the files while bypassing the page cache and
+  refuses to continue when the filesystem does not allow that (it was added after a fuseblk/NTFS-3G mount served
+  corrupted cached bytes on 2026-08-20). Keep the model on a filesystem that supports direct reads.
+- **Everything works but single-user speed is low:** vLLM 0.29.0 defaults to its V2 model runner, which skips the
+  INT4 draft head (on the Qwen3.5 4B lane this gave 128 instead of 172 tok/s). The launcher pins
+  `VLLM_USE_V2_MODEL_RUNNER=0`; do not override it
+  ([R304 section](../../repro/qwen38-27b-autoround-int4-b70/README.md#rebased-onto-stock-vllm-xpu-v0290-with-three-upstream-fixes-r304-2026-09-13-11704--11709)).
+- **The server refuses to boot with `VLLM_BATCH_INVARIANT=1`:** vLLM rejects that switch for the GDN attention
+  backend. Leave it at `0`, as the launcher sets it.
+- **The first two-request batch is slow:** it pays about 1.05 s of one-time recompilation. Send one two-user warm-up
+  request after boot before measuring.
+- **A GPU fault while the weights load** (`xe ... Fault response` or a device coredump in the kernel log, and a server
+  that never becomes healthy): the lab saw weight-load faults and one copy-engine reset on this lane. It recorded them
+  and rebooted before starting more servers. Do not restart in a loop
+  ([R294 section](../../repro/qwen38-27b-autoround-int4-b70/README.md#the-draft-head-scores-a-shortlist-r294-r299r300-2026-09-12)).
+- **Low host memory:** do not swap in the stock `intel/llm-scaler-vllm:0.21.0-b3.1` image. On a 16 GB host a 9 GiB
+  container limit killed a worker during warmup and triggered a copy-engine reset
+  ([historical open items](../../repro/qwen38-27b-autoround-int4-b70/README.md#open-items-from-the-august-2026-lane-historical)).
+
+## All measured configurations
 
 The matrix below preserves earlier configurations. The recipe remains a candidate with clean-host replay pending.
 
@@ -67,9 +238,6 @@ Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04
 
 <!-- replication-matrix:end -->
 
-**Context depth (R260b, 2026-09-06):** on the headline configuration, exact real-content active context 2K-32K, one slot: MTP0 50.0 -> 42.8 tok/s, MTP depth 4 120.6 -> 100.3 tok/s (medians of three content classes), every MTP4 array equal to the MTP0 oracle (18/18). Table and per-class values in the recipe; evidence `experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json`.
-
-
 **LocalMaxxing:** the depth-4 headline is approved as `cmtq3mx7e03gen701xxpwu67z` (112.344 tok/s, center of the R257 pair; ledger `results/localmaxxing-submissions.md`, attestation `experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r257-graph-drafthead-depth4-strict-result.json`).
 
 ## What makes it exact
@@ -86,48 +254,78 @@ Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04
 The last known composition dependence is the GDN kernel (launch grouping does not restore single-request
 arithmetic); it accounts for the c32/c64 near-tie flips with speculation.
 
-## Container packet
+## Run the strict benchmark
 
-A level-2 packet: a digest-pinned image (R304, the runtime rebased onto stock vLLM XPU v0.29.0), explicit GPU device
-mapping, read-only model and persistent cache volumes, and one- and two-card profiles (depth 4 with the INT4 draft head
-scoring the 67k shortlist: 117 tok/s on two cards, 81 on one).
+The package's `benchmark` command runs the fixed 12-prompt suite with a 512-token answer cap. It needs a server
+started with the record's shape, `MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1` in front of the step 3 command (the default
+256-token context is too small for it), and it reads the server address from `BASE_URL`:
+
+```bash
+BASE_URL=http://127.0.0.1:18134 OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-int4-fixed-k-mtp4 \
+PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+`OUT_DIR` must be a new directory. One run is measurement evidence, not a qualification: the published pairs compare
+two fresh servers with each other and with a fresh MTP0 pair (`MTP_DEPTH=0`).
+
+Other launcher settings: `MTP_DEPTH=0..4` selects the speculative depth (the served model and container names follow
+it); `TENSOR_PARALLEL_SIZE=1 XPU_DEVICE_MASK=0 GPU_MEMORY_UTILIZATION=0.96` runs one card; `CLASSPAD=1` is the
+many-user FP16 linear (R293); `DRAFT_SHORTLIST=` (empty) scores every draft row (R294). The launcher verifies the
+image contract, the rebuilt extension digest and the relabelled model manifest before serving.
+
+## Docker Compose packet (alternative start)
+
+A level-2 packet: the same digest-pinned R304 image (the runtime rebased onto stock vLLM XPU v0.29.0), explicit GPU
+device mapping, read-only model and persistent cache volumes, and one- and two-card profiles (depth 4 with the INT4
+draft head scoring the 67k shortlist: 117 tok/s on two cards, 81 on one). It differs from the quick start in operator
+settings only: it serves the model name `qwen38-27b-int4`, uses port 18131 unless `PORT` is set (`env/two-gpu.env`
+sets 18134), and allows 8,192 tokens with 16 requests at once. Those are packet defaults, not the strict-suite values.
+Its `memswap_limit` is 20g, while the launcher uses 16g.
 
 ```bash
 cd packages/qwen38-27b-int4-fixed-k-tp2-b70
 # the model is the R212 plain-GPTQ relabel of devan-carlin/Qwen3.8-27B-int4-AutoRound; download builds it:
-./scripts/download-model.sh /models/Qwen3.8-27B-int4-AutoRound /models/qwen3.8-27b-int4-autoround-gptq-relabel
-export MODEL_DIR=/models/qwen3.8-27b-int4-autoround-gptq-relabel
+./scripts/download-model.sh /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel
+export MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel
 
 PROFILE=two-gpu ./scripts/preflight.sh     # GPUs, driver, RAM, storage, image
 ./scripts/verify.sh                        # revision, sizes, every SHA-256 (relabelled config included)
 PROFILE=two-gpu ./scripts/smoke-test.sh    # start, health, and a repeat-identity gate
 ```
 
+`smoke-test.sh` starts the service with `docker compose`, waits for health, sends one greedy request twice and
+requires identical answers, then stops the service (`KEEP_UP=1` leaves it running).
+
 `compose.yaml` is **generated, not hand-written**: `scripts/render-compose.sh` runs the real recipe launcher behind a
 docker shim that captures the `docker run` argv, so the packet carries the measured container's environment and serve
 command verbatim. The operator scripts are thin wrappers over `tools/container-packet/`, shared with the other packets.
 `tools/check-container-packet.py` runs in CI and fails the build if the committed file stops matching the launcher, if
 the image is not pinned by digest, if the model mount is not read-only, or if a port leaves loopback. Both profiles
-passed the packet smoke test on 2026-09-13 (health plus repeat-identity gate) on this host.
+passed the packet smoke test on 2026-09-13 (health plus repeat-identity gate) on the lab host.
 
 Regenerate after any launcher change:
 
 ```bash
-MODEL_DIR=/models/qwen3.8-27b-int4-autoround-gptq-relabel ./scripts/render-compose.sh
+MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel ./scripts/render-compose.sh
 ```
 
 Source of truth: [`repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh`](../../repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh).
 
-## R294: the draft head scores a shortlist (2026-09-12)
+## History
 
-The served image is now R294b (R293 plus a draft-only lm_head that scores a 67,248-row token shortlist; the target
+<details>
+<summary>R294 and R293 (September 11-12, 2026), before the R304 rebase</summary>
+
+### R294: the draft head scores a shortlist (2026-09-12)
+
+The served image became R294b (R293 plus a draft-only lm_head that scores a 67,248-row token shortlist; the target
 verifies every draft, so outputs cannot change). Single request, TP2, depth 4: **117.46 / 117.59 tok/s** against
 112.74 on the same image scoring every row and the 112.90 / 113.00 headline above, G1/G2/G3 12/12 (R299/R300).
 `DRAFT_SHORTLIST=` (empty) on the launcher restores the full head. LocalMaxxing `cmtyqbeu40aqgps011wl4mljo` at `117.528 tok/s` (approved 2026-09-12; the prior approved headline `cmtq3mx7e03gen701xxpwu67z` at 112.344 stands as the full-head figure). Rows R299 in the matrix; recipe README, R294 section.
 
-## R293: class-consistent FP16 linears (2026-09-11)
+### R293: class-consistent FP16 linears (2026-09-11)
 
-The served image is now R293 (R276 + `experiments/qwen38-27b-b70/docker/r290..r293-*.py`; with `CLASSPAD=0`, the
+The served image became R293 (R276 + `experiments/qwen38-27b-b70/docker/r290..r293-*.py`; with `CLASSPAD=0`, the
 default, it runs R276's code path unchanged and reproduces the headline above). `CLASSPAD=1` removes the 32-row
 re-read of the vocabulary projection: on this lane depth 4 gains 3-8% from eight users up (c16 611 / c32 683 / c64 628
 tok/s against 579 / 635 / 589), MTP0 3-6% from 64 users up (1019 at c64, 1080 at c256), at a 1% single-user cost
@@ -137,12 +335,11 @@ over ten passes of 64 users (640/640, harness-certified) at 1014 tok/s. Rows R29
 recipe README's R293 section. The 4B and 9B Qwen3.5 lanes, where the projection is a larger share of the step, gain
 25-56% from the same switch.
 
-## Commands
+</details>
 
-See `package.json` (`preflight`, `launch`, `health`, `benchmark`, `stop`). `MTP_DEPTH=0..4` selects the speculative
-depth; `TENSOR_PARALLEL_SIZE=1 XPU_DEVICE_MASK=0 GPU_MEMORY_UTILIZATION=0.96` runs one card. The image is
-`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b0...` (image id equals the digest); the launcher verifies
-the image contract, the rebuilt extension digest and the relabelled model manifest before serving.
+The 2026-09-05 package named the R228 image
+(`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b0...`). The current launcher and every step above use
+R304.
 
 Evidence and rationale: [`repro/qwen38-27b-autoround-int4-b70/README.md`](../../repro/qwen38-27b-autoround-int4-b70/README.md)
 (fixed-K profile section) and the notes under `experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-*`.

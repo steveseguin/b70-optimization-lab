@@ -7,12 +7,24 @@
 > These used configured lab hosts. A clean Intel-driver/Docker installation,
 > independent-host replay and prolonged serving remain untested.
 
-Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp2-b70/README.md).
+## Start here
+
+To install and run this model, use the package guide. It has
+[what you need before you start](../../packages/qwen38-27b-fp8-tp2-b70/README.md#before-you-start), a
+[seven-step quick start](../../packages/qwen38-27b-fp8-tp2-b70/README.md#quick-start) (download and verify, get the
+runtime, start, wait for ready, first request, status, stop), [what you get](../../packages/qwen38-27b-fp8-tp2-b70/README.md#what-you-get)
+and [what to do if it fails](../../packages/qwen38-27b-fp8-tp2-b70/README.md#if-it-fails). Its `serve.py` launcher is
+the only tested start, status and stop path for the `recommended`, `depth-1` and `multi-user` profiles.
+
+The historical turin pair measured 90.3 tok/s; the October 19 acceptance of today's launcher on `steve-b70s`
+measured 46.013 tok/s on one server. These host results are not pooled and do not establish a matched speed
+regression or improvement. This guide is the technical record behind the package: the current profiles first, then
+the build and measurement history.
 
 ## Choose the current profile (reviewed October 19, 2026)
 
 This is the **27B dense model on two B70s**, not Flash-Next 125B-A6B.
-Use [`recommended`](../../packages/qwen38-27b-fp8-tp2-b70/README.md#start)
+Use [`recommended`](../../packages/qwen38-27b-fp8-tp2-b70/README.md#quick-start)
 for one request at a time with target-verified MTP5. The earlier launcher with
 chunked weight upload measured **90.318721 tok/s** in the
 [October 4 acceptance](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/summary.json),
@@ -40,14 +52,14 @@ proof of fresh-server speed repeatability. The parent summary's top-level
 `configuration` describes the earlier one-user acceptance; the nested
 `multi_user` block and archived launch state identify this separate MTP0 run.
 
-Follow the [package acquisition and launch steps](../../packages/qwen38-27b-fp8-tp2-b70/README.md#start)
+Follow the [package acquisition and launch steps](../../packages/qwen38-27b-fp8-tp2-b70/README.md#quick-start)
 first. They verify the model revision, all file hashes, image digest and runtime
 contract. The exact public image is:
 
 ```bash
 docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile multi-user --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/new-multi-user-session
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /path/new-multi-user-session
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile multi-user --model-dir /path/to/qwen3.8-27b-fp8 --state-dir /path/to/new-multi-user-session
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /path/to/new-multi-user-session
 ```
 
 Run the fixed short-prompt client once (it creates its own sequential oracle
@@ -57,8 +69,8 @@ before the two concurrent passes):
 python3 scripts/bench-openai-concurrency-oracle.py --base-url http://127.0.0.1:18124 --model qwen38-27b-fp8 \
   --api-mode completions --suite experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json \
   --concurrency 16,32,64 --repeats 2 --max-tokens 128 --seed 42 --return-token-ids \
-  --require-output-identity --out /path/new-short-ladder.json
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /path/new-multi-user-session
+  --require-output-identity --out /path/to/new-short-ladder.json
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /path/to/new-multi-user-session
 ```
 
 This client proves equality to its own solo oracle. Reproducing the historical
@@ -72,11 +84,11 @@ replay against those historical arrays:
 
 ```bash
 printf '%s\n' '3b8b867f8919d75e2d416631bb9483113ff1128531ce7065ee7aa29f7ce1cdc4  experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/evidence.tar.gz' | sha256sum -c -
-mkdir /path/new-reference-copy
+mkdir /path/to/new-reference-copy
 tar -xzf experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/evidence.tar.gz \
-  -C /path/new-reference-copy reference/multi-user/short-ladder.json
+  -C /path/to/new-reference-copy reference/multi-user/short-ladder.json
 python3 experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py \
-  /path/new-short-ladder.json /path/new-reference-copy/reference/multi-user/short-ladder.json
+  /path/to/new-short-ladder.json /path/to/new-reference-copy/reference/multi-user/short-ladder.json
 ```
 
 Require every comparison to pass and inspect the client's cache-zero gates.
@@ -162,13 +174,19 @@ The [manifest](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-laun
 reference outputs, runtime identity, launch and stop receipts. Historical
 acceptance packets remain unchanged.
 
-## Historical September one-user measurements
+## Build and measurement history
+
+Everything below this point records earlier images, profiles and measurements. It is kept for audit and
+re-measurement. Words such as "current", "now", "selected" and "recommended" in these sections describe the date of
+each section, not today. Several sections launch older images that the package no longer uses. For a new install,
+use the [package quick start](../../packages/qwen38-27b-fp8-tp2-b70/README.md#quick-start).
+
+### Historical September one-user measurements: MTP depth 5 on the R310 runtime
 
 The following table preserves the September measurements. Reading rates on its
 ring-allreduce and no-MTP rows do not fill a missing reading measurement on the
-current allgather/MTP5 profile.
-
-## Recommended: MTP depth 5 on the R310 runtime (September 2026)
+current allgather/MTP5 profile. Since October 19 the `recommended` profile also runs the one-launch verifier
+overlay; see [Current package acceptance and context measurements](#current-package-acceptance-and-context-measurements).
 
 Two B70s, official FP8 weights, FP16 activations and KV cache, one user, prompt caching off, 33,024-token context.
 Writing speed is the lab's strict 12-prompt suite. Prefill is server-side prompt reading. All measured in one
@@ -200,16 +218,17 @@ On R310 the no-MTP two-card server matches the frozen R304 control 12/12, and de
 above. The runtime image is the one-card package's R310 image; build it from public sources with the steps in the
 [one-card recipe](../qwen38-27b-fp8-vllm-tp1-b70/README.md#build-the-runtime-image-yourself).
 
-Launch and measure:
+Launch and measure (the `serve.py start` line starts today's `recommended` profile, which has gained the
+allgather, chunked-upload and one-launch overlays since September 16):
 
 ```bash
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/session
-OUT_DIR=/path/strict BASE_URL=http://127.0.0.1:18124 MODEL_NAME=qwen38-27b-fp8 \
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /path/to/qwen3.8-27b-fp8 --state-dir /path/to/fp8-session
+OUT_DIR=/path/to/strict BASE_URL=http://127.0.0.1:18124 MODEL_NAME=qwen38-27b-fp8 \
   bash repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
 python3 scripts/bench-openai-concurrency-oracle.py --base-url http://127.0.0.1:18124 --model qwen38-27b-fp8 \
   --api-mode completions --suite experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json \
-  --concurrency 64 --repeats 2 --max-tokens 128 --seed 42 --return-token-ids --out /path/ladder.json
-python3 experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py /path/ladder.json /path/no-mtp-ladder.json
+  --concurrency 64 --repeats 2 --max-tokens 128 --seed 42 --return-token-ids --out /path/to/ladder.json
+python3 experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py /path/to/ladder.json /path/to/no-mtp-ladder.json
 ```
 
 ## Historical: the September 14 depth-1 recipe and older records
@@ -1109,8 +1128,8 @@ and fell further to `806.950345 tok/s` at c64; see the
 
 ## Optimized block-W8A16 profile
 
-The lab's default-off block-W8A16 overlay is now the fastest quality-qualified
-official-FP8 profile in this guide. It uses the FP8 weights unchanged while
+When it was measured on August 26, 2026, the lab's default-off block-W8A16 overlay was the fastest
+quality-qualified official-FP8 profile in this guide. It uses the FP8 weights unchanged while
 keeping activations in FP16 for the existing XPU W8A16 GEMM primitive.
 
 | Measured profile | Default-off | W8A16 overlay | Patch-only change |
@@ -1186,8 +1205,8 @@ remains `3.32%` faster at its separate c128 optimum, so these are two
 deployment modes, not values to splice into one unnamed profile. The old
 single-response 61.699580 tok/s observation is intentionally omitted here: it
 is not the varied-prompt strict headline. The historical 51.918757 tok/s R32
-result remains historical; the current independently qualified strict headline
-is 54.424603 tok/s from R62/R119. This concurrency profile has a 256-token service limit and
+result remains historical; the independently qualified strict headline at that time
+was 54.424603 tok/s from R62/R119. This concurrency profile has a 256-token service limit and
 no measured 32K point.
 
 The old kernel aborts when continuous batching mixes MTP decode with new
@@ -1242,6 +1261,11 @@ concurrency. The exact positive and negative boundaries are in the
 [MTP2-reuse result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
 
 ## Captured result
+
+_The sections from here to the end start with the original August 16, 2026 baseline (the stock
+`vllm/vllm-openai-xpu@sha256:f01e24f6…` image with no project patches, 4,096-token context), followed by the August
+and September research profiles built on it. They are history. The package's current runtime, launcher and steps
+are in the [package quick start](../../packages/qwen38-27b-fp8-tp2-b70/README.md#quick-start)._
 
 - median decode after TTFT: **`21.708532 tok/s`**
 - median wall rate: `19.624649 tok/s`
@@ -1371,6 +1395,10 @@ are all in this repository. No point is interpolated or extrapolated.
 
 ## Dependency closure
 
+_This table describes the August baseline image. For the current package, the host requirements are in
+[Before you start](../../packages/qwen38-27b-fp8-tp2-b70/README.md#before-you-start) and the patches and files in its
+[`package.json`](../../packages/qwen38-27b-fp8-tp2-b70/package.json) (`project_patches`, `dependencies`)._
+
 | Component | Status and exact dependency |
 | --- | --- |
 | Host platform | **Incomplete.** Observed on Ubuntu 24.04.4, kernel `7.0.0-28-generic`, Docker `29.1.3`, `intel-opencl-icd 26.22.38646.7-1~24.04~ppa1`, and `libze1 1.28.6-1~24.04~ppa1`. This records the working host; it is not yet a tested clean-host installer. |
@@ -1396,6 +1424,9 @@ evidence for prerequisites and model identity only; it does not claim that the
 container was relaunched or that clean-host certification passed.
 
 ## Download and verify
+
+_August baseline steps. The package's `download-model.sh` and `verify.sh` fetch and check the same model
+revision; see [step 1 of the quick start](../../packages/qwen38-27b-fp8-tp2-b70/README.md#1-download-and-verify-the-model)._
 
 Download the exact Hugging Face revision into one directory. For example,
 with a recent `huggingface-cli`:
@@ -1432,6 +1463,8 @@ older [`verify-model.sh`](verify-model.sh) aggregate check remains for
 diagnostics, but the launcher now requires direct verification.
 
 ## Start and benchmark
+
+_August baseline and research launchers. These start older images; the package launcher does not use them._
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \

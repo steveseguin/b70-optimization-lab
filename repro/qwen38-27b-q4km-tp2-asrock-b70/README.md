@@ -9,6 +9,18 @@ This recipe reproduces the 2026-08-15 two-card ASRock Arc Pro B70 result. It
 uses Q4_K_M target weights with no MTP, DFlash, draft model, prompt reuse, or
 other speculation.
 
+## Start here
+
+The [package guide](../../packages/qwen38-27b-q4km-tp2-asrock-b70/README.md#quick-start)
+has the seven-step quick start (download, build, start, wait, first request,
+status, stop), the [prerequisites](../../packages/qwen38-27b-q4km-tp2-asrock-b70/README.md#before-you-start)
+and the [known failure messages](../../packages/qwen38-27b-q4km-tp2-asrock-b70/README.md#if-it-fails).
+Measured for one user: **`49.717503 tok/s`** conventional decode, `173.574 ms`
+TTFT, 12/12 exact output hashes, cache zero. Not yet done: tested platform
+installation; self-contained model download helper; clean-host replay;
+beginner recovery flow; active-context prefill and power profiles plus a full
+memory curve.
+
 ## Promoted result
 
 - Conventional 99-interval median: **`49.717503 tok/s`**
@@ -39,6 +51,10 @@ stack transferred to Qwen3.8's unchanged Qwen3.5-family tensor shapes.
 - SHA-256:
   `31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34`
 
+There is no download helper in this recipe yet. The package quick start gives
+the [download and direct-read verification commands](../../packages/qwen38-27b-q4km-tp2-asrock-b70/README.md#1-download-and-verify-the-model)
+and the [restore, patch and build commands](../../packages/qwen38-27b-q4km-tp2-asrock-b70/README.md#2-get-the-runtime).
+
 Restore the accepted source using
 [`patches/qwen36-27b-q8-tp2-asrock-b70/README.md`](../../patches/qwen36-27b-q8-tp2-asrock-b70/README.md).
 The required base remains mndodd commit
@@ -59,9 +75,9 @@ and model hash before launching:
 
 ```bash
 cd /path/to/b70-optimization-lab
-QWEN38_SOURCE_DIR=/path/to/patched/llama.cpp \
-QWEN38_BUILD_DIR=/path/to/patched/llama.cpp/build-sycl-aot-bmg-g31-oneapi-2026.1.1 \
-QWEN38_MODEL=/path/to/Qwen3.8-27B-Q4_K_M.gguf \
+QWEN38_SOURCE_DIR=/path/to/llama.cpp-qwen38-q4km-tp2 \
+QWEN38_BUILD_DIR=/path/to/llama.cpp-qwen38-q4km-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1 \
+QWEN38_MODEL=/path/to/qwen3.8-27b-q4km/Qwen3.8-27B-Q4_K_M.gguf \
 repro/qwen38-27b-q4km-tp2-asrock-b70/preflight.sh
 ```
 
@@ -74,9 +90,9 @@ Start the endpoint:
 
 ```bash
 cd /path/to/b70-optimization-lab
-QWEN38_SOURCE_DIR=/path/to/patched/llama.cpp \
-QWEN38_BUILD_DIR=/path/to/patched/llama.cpp/build-sycl-aot-bmg-g31-oneapi-2026.1.1 \
-QWEN38_MODEL=/path/to/Qwen3.8-27B-Q4_K_M.gguf \
+QWEN38_SOURCE_DIR=/path/to/llama.cpp-qwen38-q4km-tp2 \
+QWEN38_BUILD_DIR=/path/to/llama.cpp-qwen38-q4km-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1 \
+QWEN38_MODEL=/path/to/qwen3.8-27b-q4km/Qwen3.8-27B-Q4_K_M.gguf \
 repro/qwen38-27b-q4km-tp2-asrock-b70/run-server.sh
 ```
 
@@ -87,10 +103,14 @@ OUT=/path/to/result.json \
 repro/qwen38-27b-q4km-tp2-asrock-b70/bench.sh
 ```
 
+To stop, press Ctrl-C once in the server terminal and wait. Then
+`pgrep -af llama-server` must print nothing.
+
 The reference host maps its two B70s as `level_zero:1,0` and addresses them as
 `SYCL0,SYCL1`. Confirm enumeration before changing the selector. The launcher
-uses equal TP2, F16 KV, FlashAttention, batch 1024, ubatch 256, one slot, cache
-RAM zero, context checkpoints zero, and a bounded 8/10 GiB host-memory scope.
+uses equal TP2, F16 KV, FlashAttention, batch 1024, ubatch 256, one slot, an
+8,192-token context, cache RAM zero, context checkpoints zero, and a bounded
+8/10 GiB host-memory scope.
 
 For prefill-heavy service work, Matthew Dodd's current settings compose with
 this build and improved a p64 probe by `20.68%`, while reducing decode by
@@ -141,7 +161,10 @@ and [structured result](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-
 
 The original 1→64 curve above remains a single, internally consistent profile.
 A later default-off, exact-arithmetic cache improved its c64 endpoint without
-changing the one-user route. Two fresh candidate servers measured
+changing the one-user route. The first setting below, one-family `ffn_down`,
+is historical: the two-family `ffn_down,ffn_gate` setting further down
+replaced it as the c64 record. Both remain documented. With the one-family
+setting, two fresh candidate servers measured
 `168.344562` and `167.933317 tok/s`; their **`168.138940 tok/s`** center was
 `+4.45%` above same-binary controls centered at `160.981046 tok/s` and `+1.66%`
 above the earlier public c64 result. Each candidate matched the frozen

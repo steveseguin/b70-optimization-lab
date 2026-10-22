@@ -5,24 +5,202 @@ draft at depth 5. Every draft token is checked by the full FP8 model, and output
 MTP. The context is 33,024 tokens: a 32,768-token input plus 256 tokens for the answer, or shorter inputs with longer
 answers.
 
+This is the **27B dense model**, distinct from [Flash-Next 125B-A6B on four cards](../qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
+
+> **Status: candidate, not a beginner install guide.** The exact model, container, configuration, commands, and
+> evidence are present. A clean source rebuild and strict replay now pass on the lab host. Installation of the Intel
+> driver and Docker prerequisites has not yet been replayed on an independent host, so this package does not install
+> or modify host drivers.
+
+How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
+[review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md). Graphs and every measured
+point are on the [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html).
+
+## Before you start
+
+| Need | Tested with / required |
+| --- | --- |
+| Cards | Two Intel Arc Pro B70 32 GiB cards that nothing else is using. The container sees `/dev/dri` and uses Level Zero devices 0 and 1 (`ZE_AFFINITY_MASK=0,1`). The launcher expects exactly two render devices; on a host with more, see [If it fails](#if-it-fails). |
+| OS and kernel | x86-64 Ubuntu 24.04. Recorded passing hosts: Ubuntu 24.04.4 with kernel `7.0.0-28-generic` (August baseline) and kernel `7.0.0-38` (October 3 re-acceptance). The kernel of the October 19 acceptance is not recorded in its packet. |
+| GPU driver stack | A working Intel `xe` kernel driver with Level Zero devices. Observed on the August host: `intel-opencl-icd 26.22.38646.7-1~24.04~ppa1` and `libze1 1.28.6-1~24.04~ppa1`. Later host versions are not recorded. |
+| Runtime | Docker, usable by your user (Docker `29.1.3` was observed on the August host). The pinned image `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04` (vLLM 0.29 XPU with the lab's fixes, called R310) carries everything else. |
+| Python | Python 3 on the host, for the launcher and the download helper. Version not recorded. |
+| Host RAM | At least 15 GiB of RAM, and at least 20 GiB of RAM plus swap (the manifest minimums). The launcher caps the container at 12 GiB with no container swap. |
+| Disk | About 31 GB for the model (66 weight files, 30,866,866,928 bytes), plus room for the runtime image and the compile cache in the state directory. Those two sizes are not recorded. |
+| Network / oneCCL | Internet access to Hugging Face and the GitHub Container Registry for the first download. The two cards talk through oneCCL inside the container, with settings fixed by the launcher; nothing is installed on the host for it. |
+| Other tools | `curl` (download), `fuser` from the `psmisc` package (the launcher checks that no other process holds the cards), and a kernel journal your user can read with `journalctl -k` (the launcher watches it for GPU faults). `aria2c` is optional; the download helper uses it for large files when present. |
+
+The image does not install the Intel GPU driver. For a new host, Intel's
+[Client GPU Linux installation guide](https://dgpu-docs.intel.com/driver/client/overview.html) and the
+[oneAPI 2026.1 system requirements](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-toolkit/2026.html)
+are the upstream references. This package has not been tested on a freshly installed host.
+
+## Quick start
+
+Run every command from the repository root:
+
+```bash
+git clone https://github.com/steveseguin/b70-optimization-lab && cd b70-optimization-lab
+```
+
+Replace `/path/to/qwen3.8-27b-fp8` (the model files) and `/path/to/fp8-session` (logs, cache and receipts for one
+server run) with your own absolute paths. Use a new session directory for every start.
+
+### 1. Download and verify the model
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/download-model.sh
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/verify.sh
+```
+
+The download fetches `Qwen/Qwen3.8-27B-FP8` at revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a` from the publisher.
+Running it again skips files that already have the right size. The verify step checks the pinned revision, every file
+size and every SHA-256, reading each file both directly from disk and through the normal cache. A pass ends with
+`model revision and all recorded file identities verified` and means you have the exact bytes these measurements used.
+
+### 2. Get the runtime
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
+```
+
+The image name says INT4 because two packages share one runtime; this package serves the official **FP8** weights.
+
+### 3. Start the server
+
+In terminal 1:
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /path/to/qwen3.8-27b-fp8 --state-dir /path/to/fp8-session
+```
+
+This starts the `recommended` profile (MTP depth 5, one user). Add `--profile depth-1` for the previous recipe, or
+`--profile multi-user` to serve several people at once (see [Many users at once](#many-users-at-once)). The launcher
+checks the pinned model and runtime, fixes the qualified settings, preserves logs, refuses competing GPU work, and
+never restarts the server on its own. `--state-dir` must not exist yet; the launcher creates it.
+
+### 4. Wait until it is ready
+
+Leave terminal 1 open. When the server has loaded, compiled and answered one warm-up request, it prints:
+
+```text
+Ready: http://127.0.0.1:18124/v1
+Model: qwen38-27b-fp8
+Leave this terminal open. Ctrl+C stops this owned server.
+```
+
+In the October 19 acceptance this took about four minutes: 227.8 seconds from start to ready, with the model files and
+Docker layers already in place (`run/session/state.json` in its
+[evidence archive](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/evidence.tar.gz)).
+The launcher gives up after 30 minutes (`--startup-timeout 1800`).
+
+### 5. Send a first request
+
+In terminal 2:
+
+```bash
+curl -s http://127.0.0.1:18124/v1/chat/completions -H 'Content-Type: application/json' \
+  -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":64,"chat_template_kwargs":{"enable_thinking":false}}'
+```
+
+Any OpenAI-compatible client works with base URL `http://127.0.0.1:18124/v1` and model `qwen38-27b-fp8`. With the
+OpenAI Python package (`pip install openai`):
+
+```bash
+python3 -c 'from openai import OpenAI; r = OpenAI(base_url="http://127.0.0.1:18124/v1", api_key="unused").chat.completions.create(model="qwen38-27b-fp8", messages=[{"role": "user", "content": "Say hello in five words."}], max_tokens=64, extra_body={"chat_template_kwargs": {"enable_thinking": False}}); print(r.choices[0].message.content)'
+```
+
+Send one request at a time with `recommended` or `depth-1`; use `multi-user` for simultaneous requests. The context
+limit covers the prompt, the chat history and the answer.
+
+### 6. Check status
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /path/to/fp8-session
+```
+
+A healthy server reports `"status": "ready"` and `"api_healthy": true`, with its endpoint, model name and profile.
+
+### 7. Stop
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /path/to/fp8-session
+```
+
+Ctrl+C in terminal 1 does the same. Stop verifies the recorded container identity before acting and stops only that
+container. Terminal 1 then prints `Stopped. Logs and receipts preserved in /path/to/fp8-session`. A GPU fault ends the
+session and is recorded; nothing is retried. Use a new `--state-dir` for the next start.
+
+## What you get
+
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` (MTP depth 5, draft shortlist, allgather allreduce) | 33,024 tokens | **90.3 tok/s historical turin pair; 46.0 latest acceptance on steve-b70s** | See current measurements below |
+| `recommended` (MTP depth 5, draft shortlist, allgather allreduce) | 33,024 tokens | **90.3 tok/s historical turin pair; 46.0 latest acceptance on steve-b70s** | See [measurements in detail](#measurements-in-detail) |
 | `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | Not measured on this exact profile |
+| `multi-user` (no drafting, up to 64 users) | 33,024 tokens | **875 tok/s** all users together at 64 users, short prompts ([details](#many-users-at-once)) | Not measured on this exact profile |
 
-Graphs and every measured point are on the
-[details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html). LocalMaxxing:
-[`cmu5qk0kz07zglq01eh1opkhx`](https://www.localmaxxing.com/runs/cmu5qk0kz07zglq01eh1opkhx) (90.48 tok/s, approved September 17, measured on the earlier launcher that still allowed the container 4 GiB of swap; the
-October 3 re-acceptance of the no-swap launcher measured 90.01; the earlier chunked-upload launcher measured 90.3187 on October 4;
-the ring-allreduce recipe's [`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17), 88.41 tok/s, stands as history).
-How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
-[review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
+- **Writing speed, one user.** LocalMaxxing:
+  [`cmu5qk0kz07zglq01eh1opkhx`](https://www.localmaxxing.com/runs/cmu5qk0kz07zglq01eh1opkhx) (90.48 tok/s, approved
+  September 17, measured on the earlier launcher that still allowed the container 4 GiB of swap; the October 3
+  re-acceptance of the no-swap launcher measured 90.01; the earlier chunked-upload launcher measured 90.3187 on
+  October 4; the ring-allreduce recipe's
+  [`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17), 88.41 tok/s, stands as
+  history). The [October 19 public-source acceptance](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-launch-acceptance/summary.json)
+  of today's launcher measured **46.013 tok/s** on one server on `steve-b70s`, the four-card lab host. These host
+  results are not pooled and do not establish a matched speed regression or improvement.
+- **Prompt reading.** The [October 20 512-token screen](../../data/2026-10-20-fp8-one-launch-prefill/summary.json)
+  measured **2,164.081 input tokens/s** on `steve-b70s` with the current recommended overlay. It is a scoped screen,
+  not a headline; see [measurements in detail](#measurements-in-detail).
+- **Context.** 33,024 tokens in total. Writing and reading speeds at 2K to 32K inputs are in the
+  [context table](#measurements-in-detail).
+- **Quality.** Every measured answer from the drafted profiles matched the no-MTP server. The `multi-user` profile
+  returned each user's solo answer at 16, 32 and 64 users.
+- **Not measured yet:** tested clean-host Intel driver and Docker installation; independent host-driver/Docker
+  installation and strict endpoint replay; independent beginner installation and broader failure-recovery coverage;
+  MTP1 output identity above 16 concurrent users (MTP0 is exact through 64; the MTP1 residual is not in any censused
+  kernel).
 
 The earlier [single-user receipt](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/summary.json) is one acceptance run. The catalog retains its separately identified two-server September pair (90.309841 tok/s). The older 3,642 / 3,436 / 3,282 prompt-reading rates used ring allreduce; the 3,763 / 3,535 / 3,384 rates used no MTP. Neither is a measurement of today's recommended overlay. See the recipe for the separate measured reading profiles.
 
-This is the **27B dense model**, distinct from [Flash-Next 125B-A6B on four cards](../qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
+## If it fails
 
-## Current package acceptance and context measurements
+The launcher stops on the first problem and prints `ERROR: ...`. It never retries. Logs stay in the state directory
+(`server.log`, `kernel.log`, `state.json`).
+
+- **`Pull the pinned runtime first`** or **`The local image is not the pinned runtime`**: run step 2 again.
+- **`This profile requires exactly two exposed render devices`**: the host has more than two render devices. Set
+  `B70_FP8_RENDER_NODES` to the two render nodes the container's Level Zero devices 0 and 1 select, in PCI order, and
+  start again. The four-card replay used:
+
+  ```bash
+  B70_FP8_RENDER_NODES=renderD130,renderD131 python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /path/to/qwen3.8-27b-fp8 --state-dir /path/to/fp8-session
+  ```
+
+  This is a host preflight selection, not GPU remapping: it must match the pair selected by the fixed container device
+  configuration. Check the PCI mapping first; see the
+  [device-selection plan](../../experiments/qwen38-27b-b70/notes/2026-09-17-clean-host-replay-plan.md).
+- **`A render device is in use or ownership could not be checked`** or **`Another running container has GPU access`**:
+  another program or container is using the cards. Stop that work first; the launcher does not share cards. The check
+  needs `fuser` (package `psmisc`).
+- **`Cannot read the kernel journal for fault monitoring`**: make `journalctl -k` readable by your user, then start
+  again.
+- **`Model and serving state must be separate directories`**, or a "File exists" error for the state directory: give
+  `--state-dir` a new path outside the model directory. The launcher creates the state directory when it launches and
+  refuses one that already exists, so earlier logs are never overwritten.
+- **`verify.sh` reports `IDENTITY MISMATCH`**: a model file differs from the pinned bytes. The download skips any file
+  that already has the right size, so delete the named files first, then run the download and verify again.
+- **`verify.sh` reports `CANNOT VERIFY ... cannot bypass page cache`**: the model's filesystem does not allow direct
+  reads. The check fails closed by design; keep the model on a filesystem that supports `O_DIRECT`.
+- **`New GPU fault detected. Halting this server`**: the kernel logged a GPU fault and the launcher stopped the server.
+  Keep the state directory and do not start again in a loop. A known start-up fault came from the card's copy engine
+  during the weight upload; since October 4 the package uploads the largest weights in 128 MiB pieces, which avoids it
+  ([what it is](../../experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md)). Leave
+  `B70_CHUNKED_UPLOAD` and the container memory settings as shipped; the earlier container swap allowance was linked to
+  the same faults ([memory note](../../experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md)).
+- **`Server exited (...)`** or **`Startup deadline reached`**: read `server.log` in the state directory. Do not
+  interrupt the server while it loads or compiles.
+
+## Measurements in detail
 
 The recommended profile uses `b70_fa_verify_rows` 0.2.0 with
 `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1`: it checks the six drafted rows in one
@@ -94,33 +272,6 @@ The [manifest](../../experiments/qwen38-27b-b70/data/2026-10-19-fp8-tp2-one-laun
 reference outputs, runtime identity, launch and stop receipts. Historical
 acceptance packets remain unchanged.
 
-## What you need
-
-- Linux with working Intel GPU drivers, Docker and Python 3
-- Two B70s not used by anything else, 16 GiB host RAM, about 60 GiB of disk
-- The model: `Qwen/Qwen3.8-27B-FP8` at revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`
-
-## Start
-
-```bash
-MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/download-model.sh
-MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/verify.sh
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-session
-```
-
-The download and verify steps check the pinned revision, every file size and every SHA-256, so a pass means the
-exact bytes these measurements used. The image name says INT4 because two packages share one runtime; this command
-serves the official **FP8** weights. Add `--profile depth-1` for the previous recipe. Startup takes several minutes;
-wait for `Ready`. The launcher checks the pinned model and runtime, fixes the qualified settings, preserves logs,
-refuses competing GPU work, and never restarts the server on its own.
-
-On a host exposing more than two render devices, `B70_FP8_RENDER_NODES` can name
-the two nodes checked for ownership (the replay used `renderD130,renderD131`).
-This is a host preflight selection, not GPU remapping: it must match the pair
-selected by the fixed container device configuration. Check the PCI mapping
-before using it; see the [device-selection plan](../../experiments/qwen38-27b-b70/notes/2026-09-17-clean-host-replay-plan.md).
-
 ## Many users at once
 
 The `multi-user` profile serves up to 64 people at the same time on the same two cards, image and 33,024-token
@@ -138,10 +289,10 @@ and long prompts, and matched the frozen single-user reference, twice each.
 These are combined HTTP batch rates: generated tokens divided by batch wall time, including prompt processing. The 64-user short batches each generated 8,192 tokens (128 per request) in 9.359 / 9.362 seconds, or 875.31 / 875.05 tok/s. Both passes used the same server, with zero cached tokens. This is an output-exact capacity test, not the cold 512-token realistic headline or a fresh-server speed comparison. The long-prompt pair measured 66.32 / 65.43 tok/s; use that separate result when choosing for longer inputs. [Exact rows and gates](../../experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json).
 
 One person waits a little longer per answer than on `recommended` (no drafting), so use it when several people or
-programs share the server.
+programs share the server. Start it in step 3 with:
 
 ```bash
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile multi-user --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-session
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile multi-user --model-dir /path/to/qwen3.8-27b-fp8 --state-dir /path/to/fp8-session
 ```
 
 Accepted October 7, 2026 through this launcher from a public download of the repository: at 16, 32 and 64 users,
@@ -151,21 +302,13 @@ passes each ([evidence packet](../../experiments/qwen38-27b-b70/data/2026-10-07-
 research measurements of October 4 are in the
 [pin note](../../experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md).
 
-## Use and stop
-
-```bash
-curl -s http://127.0.0.1:18124/v1/chat/completions -H 'Content-Type: application/json' \
-  -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":64,"chat_template_kwargs":{"enable_thinking":false}}'
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /path/fp8-session
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /path/fp8-session
-```
-
-Use one request at a time with `recommended` or `depth-1`; use `multi-user` for simultaneous requests. The context limit covers the prompt, chat history and the answer. Stop verifies the
-recorded container identity before acting; logs and status stay in the state directory. A GPU fault ends the
-session and is recorded; nothing is retried.
+## Docker Compose (optional)
 
 [Compose](compose.yaml) is a generated view of the same `recommended` settings for `docker compose` users; the
-launcher above owns the tested start, status and stop path.
+launcher above owns the tested start, status and stop path. `scripts/render-compose.sh` writes it from
+`serve.py render --profile recommended`, so it cannot drift from the launcher, and `tools/check-container-packet.py`
+checks it in CI. The older shared packet scripts (`scripts/preflight.sh`, `scripts/smoke-test.sh`) remain as advanced
+paths; the preflight additionally requires the `docker compose` plugin.
 
 ## Good to know
 
@@ -300,12 +443,6 @@ is preserved under `experiments/` for mechanism research, but its selected
 fixture must not be used as a public speed claim. See the corrected
 [screening note](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
 
-> **Status: candidate, not a beginner install guide.** The exact model,
-> container, configuration, commands, and evidence are present. A clean source
-> rebuild and strict replay now pass on the lab host. Installation of the Intel
-> driver and Docker prerequisites has not yet been replayed on an independent
-> host, so this package does not install or modify host drivers.
-
 The technical source of truth is the
 [`reproduction guide`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md).
 The machine-readable front door is [`package.json`](package.json).
@@ -367,7 +504,11 @@ share a scheduler step. The old kernel aborts this workload; the integrated
 fix reaches `1,091.64 tok/s` at c64. See the
 [MTP1 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md).
 
-## Container packet
+## Container packet (September 13 version)
+
+This describes the packet as it was on September 13, generated from the R187 launcher chain. Today's `compose.yaml`
+is rendered from `serve.py` instead; see [Docker Compose (optional)](#docker-compose-optional). The regenerate command
+below is the September form and no longer matches `scripts/render-compose.sh`.
 
 A level-2 packet: a digest-pinned image (R304, the runtime rebased onto stock vLLM XPU v0.29.0, on which this lane's
 R187 profile measures 54.8 tok/s at depth 1), explicit GPU device mapping, read-only model and persistent cache volumes.
@@ -400,27 +541,7 @@ EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad ./scripts/render-c
 
 Source of truth: [`experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh`](../../experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh).
 
-## What you need
-
-- x86-64 Ubuntu 24.04;
-- two accessible Intel Arc Pro B70 render devices;
-- at least 15 GiB host RAM and 20 GiB RAM plus swap;
-- Docker access for the current user;
-- about 31 GB for model weights plus working space for the vLLM cache.
-
-The currently observed working host versions are recorded in the reproduction
-guide. They are evidence, not yet a general compatibility promise.
-
-For a clean host, use Intel's current
-[Client GPU Linux installation guide](https://dgpu-docs.intel.com/driver/client/overview.html)
-and check the [oneAPI 2026.1 system requirements](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-toolkit/2026.html)
-for the supported Ubuntu/client-GPU boundary. The container supplies the pinned
-vLLM/Torch userspace, but the host must still expose working Xe/Level Zero
-devices. We intentionally do not embed an untested `sudo apt` recipe here:
-driver packages change independently, and this package has not yet completed a
-clean-host installation replay.
-
-## 1. Download the exact model
+## Historical build route 1: download the exact model
 
 Choose paths appropriate for your machine; `/path/to/...` is deliberately not
 a hidden lab default.
@@ -435,7 +556,7 @@ Weights remain distributed by the model publisher. This repository stores the
 immutable revision and all 66 publisher LFS identities, not a copy of the
 weights.
 
-## 2. Acquire the pinned runtime
+## Historical build route 2: acquire the pinned runtime
 
 ```bash
 docker pull vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
@@ -561,7 +682,7 @@ pinned official image. It requires `curl`, not GitHub CLI authentication. The
 original upstream run and artifact identity remain documented in
 [`kernel-wheel-build-info.txt`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/kernel-wheel-build-info.txt).
 
-## 3. Preflight
+## Historical build route 3: preflight
 
 From the repository root:
 
@@ -578,10 +699,10 @@ the OS boundary, memory, Docker, user groups, two render devices, and exact
 container contents. The final profile is verified by the installed file hashes
 and kernel commit, not by a machine-local Docker image ID.
 
-## 4. Launch, check, and benchmark
+## Historical build route 4: launch, check, and benchmark
 
 To reproduce the qualified R139 MTP1 service (`54.627 tok/s`), launch the
-R139 wrapper with the R139 image ID printed in step 2, then benchmark it with
+R139 wrapper with the R139 image ID printed in historical route 2, then benchmark it with
 the served model name the wrapper registers:
 
 ```bash
@@ -630,7 +751,7 @@ PROFILE_LABEL=mtp1-draft-int4-r62 \
 
 The previous `51.808087 tok/s` profile is the same image chain without the R62
 overlay; launch it with `run-w8a16-mtp1-strict-server.sh` and
-`IMAGE=<FINAL_IMAGE from step 2>` and benchmark with the default model name:
+`IMAGE=<FINAL_IMAGE from historical route 2>` and benchmark with the default model name:
 
 ```bash
 IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
@@ -810,7 +931,7 @@ aggregate throughput is `774.394144 tok/s` with median and p95 TTFT of
 [qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md)
 and [structured evidence](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json).
 
-## 5. Stop and recover
+## Historical build route 5: stop and recover
 
 ```bash
 docker stop -t 20 qwen38-fp8-tp2

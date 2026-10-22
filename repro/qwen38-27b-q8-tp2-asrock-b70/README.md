@@ -9,6 +9,17 @@ This is the primary quality-conservative Qwen3.8 27B service snapshot for two
 ASRock Intel Arc Pro B70 32 GiB cards. It uses Q8_0 target weights, F16 KV,
 and no MTP, DFlash, draft model, response reuse, or speculation.
 
+## Start here
+
+The [package README](../../packages/qwen38-27b-q8-tp2-b70/README.md#quick-start)
+holds the seven-step quick start: download and verify the model, build the
+runtime, start, wait, send a first request, check status, and stop. Read its
+[Before you start](../../packages/qwen38-27b-q8-tp2-b70/README.md#before-you-start)
+table first, and use [If it fails](../../packages/qwen38-27b-q8-tp2-b70/README.md#if-it-fails)
+for the documented problems. The exact packaged `--reasoning off` launcher
+qualified at **`36.726447 tok/s`** for one user (below). This page keeps the
+exact identities, build record, and evidence.
+
 ## Strict packaged headline
 
 The exact packaged `--reasoning off` launcher qualified at **`36.726447
@@ -140,7 +151,14 @@ BMG-G31 AOT build with `GGML_SYCL=ON`, `GGML_SYCL_TARGET=INTEL`,
 `GGML_SYCL_DEVICE_ARCH=bmg_g31`, `GGML_SYCL_F16=ON`, graph and DNN off,
 host-memory fallback off, and Level Zero API support on. Build
 `llama-bench llama-cli llama-server` with `-j2` inside a 6/8 GiB cgroup. Do
-not overlap the build with a model workload on a 16 GiB-class host.
+not overlap the build with a model workload on a 16 GiB-class host. The
+package [quick start](../../packages/qwen38-27b-q8-tp2-b70/README.md#2-get-the-runtime)
+writes these flags out as commands; the lab's complete original configure
+line is not recorded.
+
+The current build is the **accepted DP4A2×SG24 build** (the last hash list
+below); the strict replay script checks its `llama-server` and SYCL library
+hashes. The earlier lists are history.
 
 The validated pre-DP4A2 source snapshot originally produced:
 
@@ -193,10 +211,20 @@ SG24 patch chain matched all 20 tested modified source files byte-for-byte.
 
 ## Run and verify
 
+Before launch, check the patch packet and bypass the page cache to verify the
+model bytes against the pinned manifest:
+
+```bash
+repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh
+repro/qwen38-27b-q8-tp2-asrock-b70/verify-model-direct.sh /path/to/qwen3.8-27b-q8
+```
+
+Launch in the foreground:
+
 ```bash
 QWEN38_SOURCE_DIR=/path/to/llama.cpp-qwen38-q8-tp2 \
 QWEN38_BUILD_DIR=/path/to/llama.cpp-qwen38-q8-tp2/build-sycl-aot-bmg-g31 \
-QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf \
+QWEN38_MODEL=/path/to/qwen3.8-27b-q8/Qwen3.8-27B-Q8_0.gguf \
   repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh
 ```
 
@@ -204,22 +232,24 @@ Wait for `/health` before benchmarking or stopping the endpoint. In another
 terminal:
 
 ```bash
+curl -fsS http://127.0.0.1:18088/health
 OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh
-repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh
 ```
 
 The command above is a convenient service smoke. To replay the strict public
-headline, run the create-only campaign twice with distinct output directories:
+headline, run the create-only campaign twice with distinct output directories.
+`BUILD_DIR` must hold the accepted DP4A2×SG24 binaries: the script refuses a
+`llama-server` or `libggml-sycl.so` whose hash differs.
 
 ```bash
 ATTEMPT=my-q8-tp2-a \
-MODEL_DIR=/path/to/directory-containing-Qwen3.8-27B-Q8_0.gguf \
+MODEL_DIR=/path/to/qwen3.8-27b-q8 \
 BUILD_DIR=/path/to/accepted-build \
 OUT_DIR=/path/to/new-attempt-a \
   experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp2-strict-attempt.sh
 
 ATTEMPT=my-q8-tp2-b \
-MODEL_DIR=/path/to/directory-containing-Qwen3.8-27B-Q8_0.gguf \
+MODEL_DIR=/path/to/qwen3.8-27b-q8 \
 BUILD_DIR=/path/to/accepted-build \
 OUT_DIR=/path/to/new-attempt-b \
   experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp2-strict-attempt.sh
@@ -232,20 +262,12 @@ python3 scripts/compare-strict-attempt-outputs.py \
 The comparator must exit zero. A fast attempt with a failed workload, cache,
 canary, or complete-token-array gate is not a headline.
 
-Before launch, bypass the page cache and verify the model bytes against the
-pinned manifest:
-
-```bash
-repro/qwen38-27b-q8-tp2-asrock-b70/verify-model-direct.sh \
-  /path/to/directory-containing-Qwen3.8-27B-Q8_0.gguf
-```
-
 For the directly qualified multi-user identity, use the dedicated launcher:
 
 ```bash
 QWEN38_SOURCE_DIR=/path/to/llama.cpp-qwen38-q8-tp2 \
 QWEN38_BUILD_DIR=/path/to/llama.cpp-qwen38-q8-tp2/build-sycl-aot-bmg-g31 \
-QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf \
+QWEN38_MODEL=/path/to/qwen3.8-27b-q8/Qwen3.8-27B-Q8_0.gguf \
   repro/qwen38-27b-q8-tp2-asrock-b70/run-throughput-server.sh
 ```
 
