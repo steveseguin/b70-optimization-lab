@@ -87,3 +87,24 @@ In the owner window, stop the three endpoints, keep PAUSE-A, and run the five ro
 
 * **GO:** build V3 on the measured u and B − A, bundling packet153's static snapshot.
 * **CLOSED:** append the attribution to packet177's placement row.
+
+## Device result (2026-10-22, lane B window 13:55-, unit lanequeue-B33): V3 GO
+
+Five fresh loads, C/U/C/U/C, every view 13/13 exact, draft proposals and acceptance identical:
+
+| View | Head | tok/s | hit B (ms) | hit D (ms) |
+| --- | --- | --- | --- | --- |
+| 0 | split (bundle 8) | 58.601 | 13.144 | 1.593 |
+| 1 | full on rank 1 | 57.737 | 13.371 | 1.599 |
+| 2 | split | 58.536 | 13.171 | 1.605 |
+| 3 | full on rank 1 | 57.756 | 13.378 | 1.602 |
+| 4 | split | 58.621 | 13.142 | 1.598 |
+
+`s185_decision` (`v5/evidence/device-view4-production-B-p185/bracket-summary.json`): **u = 0.222 ms**
+(D-corrected 0.206; control B spread 0.029 ms, so u is resolved), **decoupled B - A = 0.851 ms**
+(per view 0.846 / 0.856; p10 0.793 / 0.807), control drift 0.145%, sigma (rank-0 suffix-head service on
+the split views) = 0.403 ms per cycle (suffix head 0.311, import 0.025, export 0.026). Hit cycles
+14.77 -> 15.01 ms, miss 25.76 -> 26.03 ms with the full head on rank 1. Both V3 kill thresholds
+(u <= 0.39, B - A >= 0.60) are met by measurement; packet177's literal revisit condition (rank-0 slack
+>= 1 ms) is not (0.852 ms/hit), which is why this measurement, not the price, is the authority.
+**Decision: build V3** (packet186: full head on rank 1, layers 24-25 on rank 0 for the verified token).

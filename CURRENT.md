@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 22, 10:25 EDT — packet185 un-split-head measurement: V3 GO (u = 0.222 ms, decoupled B − A = 0.851 ms).** The lever
+synthesis found no cleanly open two-card lever ≥ +2 %; its one candidate V3 (full target head back on rank 1, layers 24–25 run on
+rank 0 for the verified token while it waits for the draft; +3.1 % central) sits in packet177's closed placement family, whose revisit
+condition asks for a measured rank-0 slack attribution. packet185 measured it on lane B (13:55–14:22 UTC, five fresh loads C/U/C/U/C,
+all 13/13 exact, drift 0.145 %): un-split cost on rank 1 0.222 ms (kill threshold 0.39), decoupled B − A 0.851 ms (threshold 0.60),
+rank-0 suffix-head service σ 0.403 ms/cycle, controls 58.60/58.54/58.62 vs un-split 57.74/57.76. Ruling: build V3 as packet186
+(CPU prep running). The packet184 TP2-checkpoint rows run in the same window after it. Packets `stage2/packet185-twocard-unsplit-head/`
+(synthesis under `analysis/`), `stage2/packet184-twocard-checkpoint/`.
+
 **October 22, 08:52 EDT — campaign 54b void (host memory guard when a second agent started beside the server; the kill logged an
 engine reset; health probe passed), seed 2 running again as c54c.** The partial run again handled its one loop and got the
 critical cut right. Two reminders for anyone on this host: a research run leaves about 2 GiB of host memory free, so

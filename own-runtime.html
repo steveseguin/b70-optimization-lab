@@ -132,6 +132,13 @@
         <td>Loss; every view exact, drift 0.072 %. Reading 46 fewer scale bytes per 256 weights cost as much as the opposite change in packet175b: these lanes pay per-group inner-loop work, not bytes. S1 and S2 closed.</td>
       </tr>
       <tr>
+        <td>Flash-Next UD-IQ3_XXS, 2×B70, un-split target head measurement (packet185, 2026-10-22)</td>
+        <td>five fresh loads, split/full/split/full/split head, 12×128 + incident64 each</td>
+        <td class="num">split 58.601/58.536/58.621; full head on rank 1 57.737/57.756 (−1.5 %)</td>
+        <td class="num">—</td>
+        <td>Every view exact, drift 0.145 %. Measured: un-split cost on rank 1 0.222 ms, decoupled rank gap 0.851 ms, rank-0 suffix-head service 0.403 ms per cycle. Decision: build V3 (full head on rank 1 plus two layers moved to rank 0; packet186).</td>
+      </tr>
+      <tr>
         <td>Qwen3.8 27B, GGUF-comparable lane (packet44)</td>
         <td>128-token 12-prompt suite</td>
         <td class="num">37.59 / 37.77 @ 4,096 ctx · 37.71 / 37.70 @ 32,768 ctx (llama.cpp reference on the same suite: 28.49)</td>

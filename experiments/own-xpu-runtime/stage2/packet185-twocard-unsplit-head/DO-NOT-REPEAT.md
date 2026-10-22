@@ -33,7 +33,7 @@ No device result exists yet; this preparation closes nothing. After the window, 
 
 | Date | Arm | Outcome | Revisit only when |
 | --- | --- | --- | --- |
-| 2026-10-22 | Un-split target head (target_head=production, full 248,320-row head on rank 1, no rank-0 suffix service) vs bundle 8 split head; five fresh loads C/U/C/U/C on lane B; decision `s185_decision` | **PENDING (CPU-prepared, not queued).** Rule: V3 GO iff u ≤ 0.39 ms AND decoupled B − A ≥ 0.60 ms AND every view 13/13 exact with identical draft proposals AND control drift ≤ 3%; else V3 closed and packet177(b) keeps its closure with this attribution appended. | — |
+| 2026-10-22 | Un-split target head (target_head=production, full 248,320-row head on rank 1, no rank-0 suffix service) vs bundle 8 split head; five fresh loads C/U/C/U/C on lane B; decision `s185_decision` | **Measured 2026-10-22 (lane B, lanequeue-B33, 13:55-14:22 UTC): V3 GO.** Split 58.601/58.536/58.621, full head 57.737/57.756 tok/s (-1.5%); every view 13/13 exact, identical draft proposals, drift 0.145%. u = 0.222 ms (D-corrected 0.206, control B spread 0.029), decoupled B-A = 0.851 ms, sigma = 0.403 ms/cycle, rank-0 slack outside the draft dependency 0.852 ms/hit (`v5/evidence/device-view4-production-B-p185/bracket-summary.json`, `s185_decision`). Un-split ALONE is a loss and stays closed; V3 (full head on rank 1 + layers 24-25 on rank 0) is open and built as packet186 | — |
 
 ## Boundaries (do not)
 
