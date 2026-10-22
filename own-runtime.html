@@ -32,7 +32,7 @@
 <meta name="twitter:image" content="https://neural.download/og-image.png">
 <meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"The own runtime: a custom Xe engine for Qwen3.8 Flash-Next","description":"What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.","url":"https://neural.download/own-runtime.html","dateModified":"2026-10-21","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","custom inference engine","Qwen3.8 Flash-Next"]}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"The own runtime: a custom Xe engine for Qwen3.8 Flash-Next","description":"What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.","url":"https://neural.download/own-runtime.html","dateModified":"2026-10-22","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","custom inference engine","Qwen3.8 Flash-Next"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"The own runtime","item":"https://neural.download/own-runtime.html"}]}
@@ -68,7 +68,8 @@
       <li><strong>It is a research engine, not a product.</strong> There is nothing to download and install today; the reproducible artifacts are the lab's recipes and evidence, linked below.</li>
       <li><strong>It is fast where measured:</strong> 58.557–58.632 tok/s decode on two B70s and 31.510–31.782 tok/s on one, with prompt reading at 75.884–75.973 and 32.595–32.752 tok/s respectively — every figure from sealed, receipted runs.</li>
       <li><strong>Exactness is a gate, not a hope.</strong> A run that cannot prove itself byte-identical does not publish.</li>
-      <li><strong>The gaps are declared, not hidden:</strong> 128-token oracle caps, a pending rebuilt-binary qualification, no sampler, no multi-user controller, no context curve beyond 4,096 tokens.</li>
+      <li><strong>Checkpoint/restore works, and is still labeled experimental:</strong> on 2026-10-22 a one-card session was saved at 256 tokens, restored in a fresh process and continued; the merged output matched an uninterrupted run byte for byte, twice. Restore took 0.46 s where re-reading the prompt took 36.75 s. Only the same generation can be resumed today; new turns cannot be appended yet.</li>
+      <li><strong>The gaps are declared, not hidden:</strong> 128-token oracle caps, a two-card rebuilt-binary qualification still pending (the one-card rebuild passed on 2026-10-22), no sampler, no multi-user controller, no context curve beyond 4,096 tokens.</li>
     </ul>
   </div>
 
@@ -96,6 +97,20 @@
         <td>Same discipline as the two-card lane</td>
       </tr>
       <tr>
+        <td>Flash-Next UD-IQ3_XXS, 1×B70, portable source rebuild (packet178)</td>
+        <td>full512, 4,096 ctx, binary rebuilt from the packet's own sources</td>
+        <td class="num">31.83 / 31.81 (two fresh loads, 2026-10-22)</td>
+        <td class="num">not re-measured on this row</td>
+        <td>Oracle-128 exact; all 12 outputs identical across the two loads and identical to the sealed packet165 line, so the rebuild reproduces the published one-card line</td>
+      </tr>
+      <tr>
+        <td>Flash-Next UD-IQ3_XXS, 1×B70, checkpoint engine (packet179)</td>
+        <td>save at token 256, fresh-process restore, 128 more tokens</td>
+        <td class="num">restore 0.46 s + 6.78 s to finish, vs 36.75 s cold prompt re-read; reference load 31.85</td>
+        <td class="num">—</td>
+        <td>Merged 384 tokens equal the uninterrupted reference at [0:384); two independent restores identical; oracle-128 exact. Same-generation resume only; label stays experimental</td>
+      </tr>
+      <tr>
         <td>Flash-Next records (packet58as, approved on LocalMaxxing)</td>
         <td>128-token capped suites</td>
         <td class="num">58.798109 two-card · 34.573038 one-card</td>
@@ -113,20 +128,23 @@
   </table></div>
   <div class="callout warn">
     <span class="tag">Pending, on purpose</span>
-    <p>Strict quality promotion for the full512 profiles is <strong>pending</strong> and labeled as such on the packages. Oracle coverage beyond 128 tokens is an explicit, declared gap. Separately, the portable source rebuild (CPU-compile-validated, 42 translation units) produces a binary with a different hash than the sealed historical one; the engine binary is seal-pinned, so qualification of the rebuild means a new sealed packet. Until then, published device results belong to the historical binary — and the packages say so.</p>
+    <p>Strict quality promotion for the full512 profiles is <strong>pending</strong> and labeled as such on the packages. Oracle coverage beyond 128 tokens is an explicit, declared gap. The portable source rebuild (42 translation units) produces a binary with a different hash than the sealed historical one, so it needed its own device qualification: the <strong>one-card</strong> rebuild passed on 2026-10-22 (31.83 / 31.81 tok/s, outputs identical to the sealed line; <a href="notes/2026-10-21-own-runtime-window-pin-guard-refusal.md">window record</a>). The <strong>two-card</strong> rebuild has not been run on device yet, so the two-card package's published numbers still belong to the sealed historical binary — and the package says so.</p>
   </div>
 
   <h2>Exactness is the gate</h2>
-  <p>The campaign's discipline: sealed sources, admission-checked device windows, fresh-process determinism, oracle prefixes, and fail-closed comparisons. An output that cannot be shown byte-identical to its oracle — or to an independent repeat run — does not get published as a result. That is why the table can carry a requalification at all: on 2026-10-20 the sealed full512 profiles were re-measured fresh — 58.724 / 58.676 tok/s two-card and 31.766 / 31.774 one-card — with outputs identical to the original sealed qualification.</p>
+  <p>The campaign's discipline: sealed sources, admission-checked device windows, fresh-process determinism, oracle prefixes, and fail-closed comparisons. An output that cannot be shown byte-identical to its oracle — or to an independent repeat run — does not get published as a result. That is why the table can carry a requalification at all: on 2026-10-20 the sealed full512 profiles were re-measured fresh — 58.724 / 58.676 tok/s two-card and 31.766 / 31.774 one-card — with outputs identical to the original sealed qualification. On 2026-10-22 the same gate was applied to two new binaries on one card: the portable rebuild (packet178) and the checkpoint engine (packet179, a relink of the sealed sources). Both produced all 12 suite outputs identical to each other and to the sealed line, at 31.83 / 31.81 and 31.85 tok/s.</p>
 
   <h2>Session checkpoint/restore <span class="badge spec">Experimental</span></h2>
-  <p>One capability the custom stack unlocks is whole-session checkpoint/restore: save a computed session, stop the engine, restart, restore, and keep decoding. The contract — save/inspect/restore/delete, compatibility checks, prefix-plus-delta rules, and the exactness gates — is written down in the <a href="experiments/own-xpu-runtime/SESSION-SWAP-DESIGN.md">session-swap design</a>. It is labeled <strong>experimental</strong> everywhere until its restart-and-continue exactness test passes on a supported host. No completed save/restore benchmark exists yet, so this page claims none.</p>
+  <p>One capability the custom stack unlocks is whole-session checkpoint/restore: save a computed session, stop the engine, restart, restore, and keep decoding. The contract — save/inspect/restore/delete, compatibility checks, prefix-plus-delta rules, and the exactness gates — is written down in the <a href="experiments/own-xpu-runtime/SESSION-SWAP-DESIGN.md">session-swap design</a> (v1.2).</p>
+  <p><strong>What passed on 2026-10-22 (one card, same-generation resume):</strong> a request ran to token 256 and was saved (1.10 s, 68.8 MB in 20 files). Two separate fresh processes each restored it and decoded 128 more tokens. Both merged 384-token outputs equal the uninterrupted reference run at [0:384), the two restores are identical to each other, and the first 128 tokens match the oracle. Restore took 0.46 s; re-reading the same 256-token prefix from cold took 36.75 s. That is the design's gates 1–4 (restart-and-continue, repeat determinism, cold-start comparison, admission discipline). Receipts: <a href="experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence/device-p179-checkpoint-A-b/">packet179 checkpoint row</a>.</p>
+  <p><strong>Why it is still labeled experimental:</strong> the engine can only resume the <em>same generation</em> it was interrupted in, from its original prompt. Appending a new conversation turn to a restored prefix, restoring and then saving again, and a metadata-only inspect are not implemented; they are the next engine work (design §10). The checkpoint manifest keeps the string <code>label: "experimental"</code> until an engine revision changes it. Until the new-turn operation exists and passes the same byte-identity gate, this page does not call session swap finished.</p>
 
   <h2>Honest non-goals today</h2>
   <ul>
     <li><strong>No sampler.</strong> Greedy argmax only — there is no RNG state, temperature, or top-k/p anywhere in the engine.</li>
     <li><strong>No multi-user controller.</strong> The packet165 controller is sequential; concurrency curves exist only for the vLLM FP8 packages on this site.</li>
     <li><strong>No context curve for the own-runtime full512 profiles.</strong> Measured at 4,096 tokens; other capacities are unmeasured, not claimed.</li>
+    <li><strong>No new-turn resume yet.</strong> Checkpoint/restore resumes an interrupted generation from its original prompt; it cannot yet take a saved conversation and add the next question to it, or re-save after a restore.</li>
     <li><strong>No shipped product.</strong> The runtime is a lab engine under active qualification. What you can take away today are the recipes and evidence below — not a download.</li>
   </ul>
 
