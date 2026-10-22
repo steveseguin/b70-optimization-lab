@@ -1,0 +1,26 @@
+2026-10-22T16:09:02.368636+00:00 window start
+2026-10-22T16:09:02.369251+00:00 queue-B.txt rewritten with 4 rows from ['proposed-p186-two-card-B.txt']
+2026-10-22T16:09:11.957658+00:00 live plan passed for all 4 rows
+2026-10-22T16:09:11.973156+00:00 stopping endpoints: ['qwen38-27b-vision', 'qwen38-27b-fp8-tp1-test', 'qwen38-27b-fp8']
+2026-10-22T16:09:18.744789+00:00 stop rc=0 
+2026-10-22T16:09:28.760305+00:00 endpoints stopped; MemAvailable=120754102272 required=108741559780
+2026-10-22T16:09:29.698895+00:00 PAUSE-B archived and removed for the approved window (PAUSE-A untouched)
+2026-10-22T16:09:29.703968+00:00 no waiter (packet186 runs no chain; a chain-rule win derives its record bundle as a new packet)
+2026-10-22T16:09:29.729837+00:00 runner launch rc=0  Running as unit: lanequeue-B34.service; invocation ID: 60f29c74405248c897abc98a7acf029b
+2026-10-22T16:09:29.734732+00:00 watching: started=[] done=[] unit=active
+2026-10-22T16:09:34.734977+00:00 EVENT {"event": "START", "lane": "B", "name": "packet186-row0-smoke-v3-B", "utc": "2026-10-22T16:09:34.482385Z"}
+2026-10-22T16:14:20.026148+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet186-row0-smoke-v3-B", "rc": 0, "utc": "2026-10-22T16:14:16.371804Z"}
+2026-10-22T16:15:55.130564+00:00 EVENT {"event": "START", "lane": "B", "name": "packet186-row1-control-production-B", "utc": "2026-10-22T16:15:51.076799Z"}
+2026-10-22T16:19:30.349659+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet186-row1-control-production-B", "rc": 0, "utc": "2026-10-22T16:19:27.325306Z"}
+2026-10-22T16:19:30.354917+00:00 watching: started=['packet186-row0-smoke-v3-B', 'packet186-row1-control-production-B'] done=['packet186-row0-smoke-v3-B', 'packet186-row1-control-production-B'] unit=active
+2026-10-22T16:21:05.453457+00:00 EVENT {"event": "START", "lane": "B", "name": "packet186-row2-bracket-u-v3-B", "utc": "2026-10-22T16:21:02.031052Z"}
+2026-10-22T16:29:05.947167+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet186-row2-bracket-u-v3-B", "rc": 0, "utc": "2026-10-22T16:29:04.648852Z"}
+2026-10-22T16:29:30.980451+00:00 watching: started=['packet186-row0-smoke-v3-B', 'packet186-row1-control-production-B', 'packet186-row2-bracket-u-v3-B'] done=['packet186-row0-smoke-v3-B', 'packet186-row1-control-production-B', 'packet186-row2-bracket-u-v3-B'] unit=active
+2026-10-22T16:30:41.052601+00:00 EVENT {"event": "START", "lane": "B", "name": "packet186-row3-control-production-B", "utc": "2026-10-22T16:30:39.352801Z"}
+2026-10-22T16:34:26.282573+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet186-row3-control-production-B", "rc": 0, "utc": "2026-10-22T16:34:22.239870Z"}
+2026-10-22T16:34:26.282710+00:00 watch result: {"done": ["packet186-row0-smoke-v3-B", "packet186-row1-control-production-B", "packet186-row2-bracket-u-v3-B", "packet186-row3-control-production-B"], "terminal": null}
+2026-10-22T16:34:26.287974+00:00 STOP-B written; waiting for the runner to exit at its boundary
+2026-10-22T16:34:31.304577+00:00 runner unit state: inactive; STOP-B removed; PAUSE-B re-armed
+2026-10-22T16:34:31.339696+00:00 restoring endpoints: /usr/bin/python3 -u /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/restore-endpoints-20261021.py 20261022-restore10
+2026-10-22T16:44:40.825696+00:00 restore rc=0
+2026-10-22T16:44:40.825991+00:00 window end

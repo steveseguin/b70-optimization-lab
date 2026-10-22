@@ -1,0 +1,88 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "cpu_seal_sha256": "6784bc602cf42941871151bdcbf2734a790352830427e04e1e4a49542c22f6e2",
+ "binary_sha256": "693cc194bb577cd20f95e63f06bf6e463074944e2d1193f8c3ed1a8a4528d739",
+ "receipts": {
+  "build": "b374d6d8c5ed9cd5e88a881c404e4a6ff32066772a7a8acf72ee023a39e0ad7e",
+  "full-shape": "d9854401cf2a25ee0e66fdf73021cb70c1bebd1a7aadad3a2d25623c8f12ec62",
+  "v3-state": "a9cfc57d16ff718f5b6d71b548d538e424cfb661d6bd6a51097f2165b1e9ff3f",
+  "admission": "203a5cadf756acbd9f79d01d797a8af191485055b94869024d10828e0c48e53e",
+  "analysis": "50450eb0d0f22057d5728469a86db7108a78a1c9cca7a14761c8d4e964d872b6",
+  "controller": "f71b4fa4454df415cb679b7219ced0baf31bdae0cbf011d8deb44252de02b960",
+  "safety": "e79491a53efc247fe1eb589ecdb67b5cbaba3dfb37a31c4e6aa72588276c1766",
+  "exec-limits": "bff7b57f94233e31c9a45ca2add9a3f6de36c95f52336659400db9b1b33c1bda",
+  "loader": "aa44f83d5829a882d09dcf8d24e795b1abb7d1686899ee108d1f85f33171d63d",
+  "entry-gate": "eb19461d7ce51af82d87951e2ddfa882c1fd8036f1af9deefb7b32690fb3c295",
+  "launch-limits": "be54be5d704a97b3e61271ec124f462e2af1432d4704ea37272b1605d7123ffe",
+  "worker-gate": "e9379495697afa34d573c99ecfd764360442750837a63fde3a3173ca9859285d",
+  "report-gate": "99b504c84171f3e016caeb2fbd72acf76e96d862a6fb32f75fc50101cf8bc31f",
+  "queue-plan": "a6a7ed7f5fb3f8d4db5483d7a155af22c2f22f95b139037a76f3e1bb4c280dc7",
+  "pin-guard": "72a21ad4718aaca702af9b894c260b89ec81014122b42e3c2fadeb9a3ceca3fa",
+  "package-rows": "c3270186eb7c33f753b413d7b95f7e5974faac0729f03598fba88291fc546faf",
+  "check-queue-rows": "80ae9f7a55aac73866d4373293e2566014148807523bbce267f032ec6fb66451"
+ },
+ "drain": {
+  "scan_rc": 1,
+  "fixed": [
+   "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/drain_gate.py:51",
+   "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/lineage-inputs/queue/lanequeue.py:901",
+   "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/v5/conditions.py:89",
+   "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/v5/p186_v5_drain_gate.py:51"
+  ],
+  "unfixed_vendored_historical": [
+   "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/screen/v4-lanes/conditions.py:89",
+   "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/screen/v4-lanes/drain_gate.py:51"
+  ],
+  "entry_plan_import_trace": {
+   "rc": 0,
+   "drain_and_condition_modules": [
+    "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/v5/conditions.py",
+    "experiments/own-xpu-runtime/stage2/packet186-twocard-v3/v5/p186_v5_drain_gate.py"
+   ]
+  }
+ },
+ "rebuilt": true,
+ "census_delta_bytes_per_rank": [
+  2100819444,
+  155750384
+ ],
+ "launches": {
+  "rank0_production_commands": 533,
+  "rank0_dual_commands": 573,
+  "rank0_moved_commands": 40,
+  "rank1_commands": 526,
+  "rank1_identical_non_head": 523,
+  "moved_kernels": [
+   "p100::Kernel<2u>",
+   "p109::SharedDown",
+   "p109route::Kernel",
+   "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+   "p42::Kernel<(ng::Op)8, 0, 0>",
+   "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+   "p49dvirtual::SmallKernel<4u>",
+   "p60::Kernel<0, false, false, false, false>",
+   "p60::Kernel<1, false, false, false, false>",
+   "p60::Kernel<2, true, false, false, false>",
+   "p82brec::Kernel<true>",
+   "p90exp::Kernel<(iq3::Type)22, 2560u, 64u, false, true, 0u>",
+   "packet18::(anonymous namespace)::NgHost",
+   "packet18::(anonymous namespace)::SimpleNew<(integrated::Op)4, 0, 0, 0>",
+   "packet27::small::(anonymous namespace)::Tuple<packet27::small::(anonymous namespace)::Member<(iq3::Type)0, 48u, 2560u, 4u>, packet27::small::(anonymous namespace)::Member<(iq3::Type)0, 48u, 2560u, 4u>, packet27::small::(anonymous namespace)::Empty, packet27::small::(anonymous namespace)::Empty>"
+  ]
+ },
+ "lane_state_observed": {
+  "pause_files": [
+   "PAUSE-A",
+   "PAUSE-B"
+  ],
+  "queue_files": [
+   "queue-A.txt",
+   "queue-B.txt"
+  ],
+  "note": "observed only; never written by preparation"
+ },
+ "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p186-two-card-B.txt",
+ "proposal_sha256": "1a222858bd14ce36f5eca52d37c06227a7ecb3c3a660c732ba2d30dc08d5b524"
+}

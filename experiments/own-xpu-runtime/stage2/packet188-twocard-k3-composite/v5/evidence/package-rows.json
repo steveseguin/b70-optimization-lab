@@ -1,0 +1,53 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "live_queue_modified": false,
+ "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p188-two-card-B.txt",
+ "proposal_sha256": "9b90e73db94210ca34390400739f993a9991b65f738b53c77e3680d438d31ecd",
+ "mirror": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/proposals/proposed-p188-two-card-B.txt",
+ "cpu_seal": "experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/cpu-seal.json",
+ "cpu_seal_sha256": "a3f32c4a1d2e93230f3c6c8dd34c330f53a4906348f8983137848d862d4e10f7",
+ "rows": [
+  {
+   "job": "packet188-row0-smoke-k3trims-B",
+   "lane": "B",
+   "depends_on": [],
+   "expected_seconds": [
+    270,
+    420
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 108797048558,
+   "planned_writes": 240000000
+  },
+  {
+   "job": "packet188-row1-control-v3-B",
+   "lane": "B",
+   "depends_on": [
+    "packet188-row0-smoke-k3trims-B"
+   ],
+   "expected_seconds": [
+    200,
+    330
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 107667817956,
+   "planned_writes": 240000000
+  },
+  {
+   "job": "packet188-row2-bracket-v3k-k3trims-B",
+   "lane": "B",
+   "depends_on": [
+    "packet188-row1-control-v3-B"
+   ],
+   "expected_seconds": [
+    460,
+    900
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 108797048558,
+   "planned_writes": 1200000000
+  }
+ ]
+}

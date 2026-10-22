@@ -1,0 +1,741 @@
+# packet186 V3 native delta against packet185's sources (packet185 paths rewritten to packet186; generated 2026-10-22T15:48:48Z)
+--- a/v5/native-src/main.cpp
++++ b/v5/native-src/main.cpp
+@@ -791,6 +791,7 @@
+       group.name=name;small_groups.emplace(&first,group);
+       for(size_t i=1;i<group.members.size();++i)require(small_followers.emplace(group.members[i],&first).second,"overlapping small GEMV groups");
+     }
++    refresh_v3(); // packet186: V3 layout/execution flags and the rank-0 island proof (engine_bracket.hpp)
+   }
+ 
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/native/engine_bracket.hpp"
+--- a/v5/native-src/rank.hpp
++++ b/v5/native-src/rank.hpp
+@@ -1,7 +1,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/kernel_guard.hpp"
+ #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/rank.hpp"
+ #pragma once
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/build/checked/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/strict_snapshot.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/native-src/strict_snapshot.hpp"
+ #include <poll.h>
+ #include <functional>
+ #include <sys/mman.h>
+@@ -37,14 +37,17 @@
+   require(count>0,"short/closed channel");done+=size_t(count);
+  }
+ }
+-static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1,int target_split=0) {
++static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1,int target_split=0,bool rank0_extended=false) {
+  require(target_split==0||target_split==23||target_split==24,"unsupported target split");
++ require(!rank0_extended||(target_split==0&&draft_rank==1),"packet186 V3 layout requires the 24/24 base split and the rank-1 draft");
+  const int boundary=mini?2:(target_split?target_split:(draft_rank==0?22:24));
++ // packet186: rank 0 also holds the GDN layers 24-25 (mini: 2); rank 1 keeps 24-47 (dual layout).
++ const int rank0_end=rank0_extended?boundary+(mini?1:2):boundary;
+  std::vector<flash::Launch> launches;
+  for(auto l:p.launches) {
+   if(l.op=="handoff"||l.op=="handoff_result")throw std::logic_error("split requires flattened local plan");
+   bool keep=l.op=="begin"||l.op=="commit";
+-  if(l.label.starts_with("blk."))keep=(std::stoi(l.label.substr(4))<boundary)==(rank==0);
++  if(l.label.starts_with("blk.")){const int layer=std::stoi(l.label.substr(4));keep=rank==0?layer<rank0_end:layer>=boundary;}
+   else if(l.op!="begin"&&l.op!="commit")keep=(l.label=="embedding"||l.label=="streams")?(rank==0):(rank==1);
+   if(keep){l.card=0;l.source_card=-1;launches.push_back(std::move(l));}
+  }
+@@ -68,6 +71,7 @@
+ // Discover bankable temporal state from the executed plan, not name suffixes.
+ static void banks(Engine& e) {
+  for(const auto& l:e.p.launches)if(l.op=="gdn"||l.op=="conv") {
++  if(e.v3_skip_half.at(size_t(&l-e.p.launches.data())))continue; // packet186: layers 24-25 state lives outside the banks and the image
+   require(l.outputs.size()==2,"temporal output count");auto name=l.outputs[1];
+   require(std::find(l.inputs.begin(),l.inputs.end(),name)!=l.inputs.end(),"temporal input absent");
+   auto slot=e.buffers[0].at(name);require(!e.state_spares.count(name),"multiple state writers");
+@@ -157,6 +161,7 @@
+  // event. Record each actual submission so drain still covers its whole prefix.
+  e.dev(0).after_compute=[&](ownrt::Event event){e.tail=event;++issued;};
+  try {for(auto& l:e.p.launches) {
++  if(e.v3_skip_half[size_t(&l-e.p.launches.data())])continue; // packet186: moved layers run in the boundary (rank 0) or not at all (rank 1, V3)
+   if(cancel_at_boundary()){candidate.cancelled=true;break;}
+   const auto* ready=e.prepared_path?&e.issue_sites[size_t(&l-e.p.launches.data())]:nullptr;
+   if(request.fixture==0&&(ready?ready->prefill_skip:(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")))continue;
+@@ -186,7 +191,7 @@
+  if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*4*e.p.g.h*2);for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=4*e.p.g.h*2;candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}
+  if(captured_count){std::vector<uint8_t> zero(48*4*e.p.g.h*2,0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
+  int token=-1;size_t bytes=0;
+- if(e.a.rank==0){p150::measure("handoff_export",request.position,false,[&]{bytes=4*e.p.g.h*2;auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});}
++ if(e.a.rank==0){if(!e.v3_active)p150::measure("handoff_export",request.position,false,[&]{bytes=4*e.p.g.h*2;auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});}
+  else if(request.fixture>0){token=e.integer(0,"next_token");auto& confirmed=verification(shared);confirmed.token=token;__atomic_store_n(&confirmed.position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);}
+  if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
+  if(e.a.rank==1)e.reply_report.begin(request.sequence,request.fixture,request.position);
+@@ -247,6 +252,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/build/checked/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/rank_canary.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/build/checked/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/request_reset.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/build/checked/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/native_controller.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/native/v3_boundary.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/native/bracket_boundary.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/native/probe_exchange.hpp"
+ static int run_rank(const Options& a) {
+@@ -260,7 +266,7 @@
+   fd=::open(a.shared.c_str(),O_RDWR|O_NOFOLLOW);require(fd>=0,"shared open");struct stat st{};
+   require(!fstat(fd,&st)&&st.st_size==shared_bytes,"shared extent");mapping=mmap(nullptr,shared_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);require(mapping!=MAP_FAILED,"shared mmap");
+   if(a.pipeline_canary){int rc=run_pipe_canary(a,static_cast<uint8_t*>(mapping));munmap(mapping,shared_bytes);::close(fd);return rc;}
+-  weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank,a.target_split);
++  weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
+   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
+   engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
+   if(engine->split_head())head_runtime=std::make_unique<p105::Runtime>(*engine);
+@@ -272,7 +278,9 @@
+    engine->head_publish=[&](){head_runtime->publish_hidden(head_box);};
+    engine->head_merge=[&](int seq,int pos,int fixture){head_runtime->merge_target(head_box,uint32_t(seq),pos,fixture,pipeline_cancel_check);};
+   }
+-  p149::Exchange probe(*engine,static_cast<uint8_t*>(mapping));
++  // packet186: the p149 probe (selection probe=xchg, never bundle 8) needs full geometry; the miniature
++  // two-rank V3 state gate runs without it. Full-shape construction order is unchanged.
++  std::optional<p149::Exchange> probe;if(!a.mini)probe.emplace(*engine,static_cast<uint8_t*>(mapping));
+   SpeculativeImage image(*engine);
+ #ifndef OWN_RT_HOST_ONLY
+   if(a.rank==0)weights->warm_lookups();
+@@ -285,7 +293,7 @@
+   engine->bracket_weights_locked=true;
+   save(a.output/"loaded-arena-descriptors.txt",engine->bracket_arena_descriptors());
+   Reply ready{};ready.rank=a.rank;transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+-  Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;
++  Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;V3Boundary v3state;
+   auto execute=[&](const Request& r)->Reply {
+    if(a.rank==1)engine->reply_report.before(r.op);
+    auto received=std::chrono::steady_clock::now();
+@@ -315,32 +323,34 @@
+    }
+    else if(r.op==half){
+     require(!head_runtime||native_active,"p105 head split requires native controller");
++    v3_before_half(*engine,v3state,r);
+     bool prepared_inputs=async_half_ready;
+     if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
+     engine->correction_exchange_calls=engine->correction_send_bytes=engine->correction_receive_bytes=0;
+     if(completing_redo&&engine->sealed_selection.choices.at("probe")=="xchg")
+-      engine->correction_exchange=[&](const flash::Launch& l){probe.exchange(l);};
++      engine->correction_exchange=[&](const flash::Launch& l){require(bool(probe),"p149 probe absent");probe->exchange(l);};
+     try {response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),image,prepared_inputs,completing_redo);}
+     catch(...){engine->correction_exchange={};throw;}
+     engine->correction_exchange={};
+     require(engine->correction_exchange_calls==((completing_redo&&engine->sealed_selection.choices.at("probe")=="xchg")?96:0),"p149 corrected-half exchange census");
+     if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
+    }
+-   else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;c={};}
++   else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;v3_accepted(*engine,v3state,c);c={};}
++   else if(r.op==v3::boundary_op){response=v3_boundary_step(*engine,v3state,r,static_cast<uint8_t*>(mapping),c);}
+    else if(r.op==rollback){
+     bool redo=r.speculative==1;require(r.speculative==0||redo,"rollback mode");
+     if(redo){auto& v=verification(static_cast<uint8_t*>(mapping));
+      require(c.pending&&c.speculative&&r.position==c.position&&r.fixture==c.fixture&&r.token>=0&&r.token<engine->p.g.vocab,"redo identity");
+-     require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,"redo requires verified target token");}
++     require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,"redo requires verified target token (verified "+std::to_string(v.position_plus_one)+"/"+std::to_string(v.token)+", redo "+std::to_string(r.position)+"/"+std::to_string(r.token)+")");}
+     undo(*engine,c,image,redo,r.position,r.token);
+    }
+    else if(r.op==14){
+     require(a.rank==1&&native_active&&!c.pending&&engine->sealed_selection.choices.at("probe")=="xchg","p149 miss responder ownership");
+-    probe.serve_correction([&]{if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();});
++    require(bool(probe),"p149 probe absent");probe->serve_correction([&]{if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();});
+    }
+    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
+-   else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+-   else if(r.op==13){require(!async_half_ready,"pending half");bracket_boundary(*engine,c,provider.get(),image,a.output/("bracket-"+std::to_string(r.sequence)+".txt"),accepted);async_half_position=async_half_token=-1;}
++   else if(r.op==11){image.boundary();v3state.reset();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
++   else if(r.op==13){require(!async_half_ready,"pending half");v3state.reset();bracket_boundary(*engine,c,provider.get(),image,a.output/("bracket-"+std::to_string(r.sequence)+".txt"),accepted);async_half_position=async_half_token=-1;}
+    #ifdef OWN_RT_HOST_ONLY
+    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
+ #endif
+@@ -354,7 +364,7 @@
+    return response;
+   };
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+-   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
++   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
+    Reply response{};
+    if(r.op==10){
+     require(!c.pending,"native entry unresolved candidate");
+@@ -370,7 +380,7 @@
+       backend.split_replay=engine->sealed_selection.choices.at("probe")=="split";
+       backend.correction_probe=engine->sealed_selection.choices.at("probe")=="xchg";
+       if(head_runtime)backend.before_remote_wait=[&](const Request& req){if(req.op==half&&req.fixture>0)head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,[&]{cancel();require(!native38::load(mailbox.abort),"p105 native peer failed");});};
+-      auto result=native38::run(backend,cfg);
++      auto result=engine->v3_active?native38::run_v3(backend,cfg):native38::run(backend,cfg); // packet186
+       save(a.shared.parent_path()/"native-result.json",native38::json(result,backend,cfg));
+      }
+      p150::flush(engine->timings,a.rank);engine->timings.flush();native_active=false;
+--- a/v5/native/engine_bracket.hpp
++++ b/v5/native/engine_bracket.hpp
+@@ -26,7 +26,10 @@
+     require(next.choices.size()==sealed_selection.choices.size(),"bracket choice shape differs");
+     for(const auto& [key,value]:sealed_selection.choices) {
+       require(next.choices.contains(key),"bracket missing choice");
+-      if(key!="dense_scales") // packet183-s1
++      // packet186: only a V3-layout load (rank0_layers present) may switch the V3 execution
++      // (boundary) and the packet153 snapshot host mode; every other key is storage or closed.
++      const bool switchable=sealed_selection.choices.contains("rank0_layers")&&(key=="boundary"||key=="snapshot_host");
++      if(!switchable)
+         require(next.choices.at(key)==value,"bracket storage/unsupported choice differs: reload required: "+key);
+     }
+     // Narrow, explicit domains; parser registration alone does not qualify a switch.
+@@ -40,8 +43,13 @@
+       domain(selection->choices,"recurrence",{"rows4-shared","rec-parallel","rec-both-plus"});
+       domain(selection->choices,"hc_gate",{"wide"});
+       domain(selection->choices,"probe",{"off"});
+-      domain(selection->choices,"snapshot_host",{"production"}); // packet183-s1
+-      domain(selection->choices,"dense_scales",{"expanded","metadata"});
++      domain(selection->choices,"snapshot_host",{"production","static"}); // packet153 receipts; packet186 bundles static with V3
++      domain(selection->choices,"dense_scales",{"expanded"}); // packet183 metadata closed (-6.2%)
++      if(selection->choices.contains("rank0_layers")){
++        domain(selection->choices,"rank0_layers",{"0-25"});
++        domain(selection->choices,"boundary",{"none","rank0"});
++        domain(selection->choices,"head",{"production"}); // V3: full target head on rank 1, no merge
++      }
+       domain(selection->draft,"qsa_attention",{"production","packet59"});
+     }
+     require(resident&&prepared_path,"bracket requires resident prepared path");
+@@ -56,7 +64,7 @@
+       bank_parity=0;bank_cache_ready=false;
+       for(auto& cache:bank_cache)cache=BankCache{};
+     }else if(bank_parity)swap_state_banks();
+-    sealed_selection=std::move(next);a.selection=selection;a.selection_sha256=digest;
++    sealed_selection=std::move(next);a.selection=selection;a.selection_sha256=digest;refresh_v3();
+     prepared.clear();alternate_prepared.clear();issue_sites.clear();alternate_issue_sites.clear();matrices.clear();
+     context_extent=alternate_context_extent=32;capacity_reprepares=0;
+     prepare_plan();prepare_commands();
+@@ -68,3 +76,50 @@
+     require(bank_parity==0&&before==bracket_arena_hash(),"bracket changed loaded arena descriptors");
+     verify_configuration();
+   }
++
++  // ---- packet186 V3: verified-boundary rebalance -------------------------------------------
++  // Storage flag (rank0_layers, fixed per load: rank 0 also holds layers 24-25) and execution
++  // flag (boundary: rank 0 runs 24-25 for the verified token; switchable only at a quiescent
++  // bracket boundary). Precomputed so the half loop pays one byte test per launch.
++  bool v3_extended=false,v3_active=false;int v3_first=24,v3_end=26;
++  std::vector<uint8_t> v3_skip_half;std::vector<size_t> v3_sites;std::set<std::string> v3_private;
++  void refresh_v3(){
++    auto pick=[&](const char* key,const char* fallback){auto i=sealed_selection.choices.find(key);return i==sealed_selection.choices.end()?std::string(fallback):i->second;};
++    const auto layers=pick("rank0_layers","0-23"),mode=pick("boundary","none");
++    require(layers=="0-23"||layers=="0-25","packet186 rank0_layers domain");require(mode=="none"||mode=="rank0","packet186 boundary domain");
++    v3_extended=layers=="0-25";v3_active=mode=="rank0";
++    require(!v3_active||v3_extended,"V3 boundary requires rank0_layers 0-25");
++    if(v3_extended)require(resident&&!a.legacy&&a.draft_rank==1&&a.target_split==0&&head_choice()=="production",
++      "V3 layout requires the resident prepared path, the rank-1 draft, the 24/24 base split and the full target head on rank 1");
++    v3_first=a.mini?2:24;v3_end=a.mini?3:26;
++    v3_skip_half.assign(p.launches.size(),0);v3_sites.clear();
++    for(size_t i=0;i<p.launches.size();++i){const auto& l=p.launches[i];if(!l.label.starts_with("blk."))continue;
++      const int layer=std::stoi(l.label.substr(4));const bool moved=layer>=v3_first&&layer<v3_end;
++      if(a.rank==0&&moved){require(v3_extended,"rank 0 holds a moved layer without the V3 layout");v3_skip_half[i]=1;v3_sites.push_back(i);}
++      if(a.rank==1&&moved&&v3_active)v3_skip_half[i]=1;
++    }
++    if(a.rank==0&&v3_extended)v3_check_plan();
++    if(a.rank==0&&!v3_extended)require(v3_sites.empty()&&v3_private.empty(),"production layout holds no moved layer");
++  }
++  // Load-time proof that the moved layers are a closed island on rank 0: they read only their own
++  // buffers plus the residual stream and the shared controls, contain no position-dependent
++  // (QSA) operator, and no other rank-0 launch touches their buffers. Their state can therefore
++  // only change when the boundary command issues them.
++  void v3_check_plan(){
++    require(!v3_sites.empty(),"V3 layout without moved layers on rank 0");
++    std::set<int> layers;std::set<std::string> ops;std::set<std::string> priv;
++    const std::set<std::string> shared{"streams","active","error"};
++    for(size_t i:v3_sites){const auto& l=p.launches[i];layers.insert(std::stoi(l.label.substr(4)));ops.insert(l.op);
++      require(!l.op.starts_with("qsa")&&l.op!="lookup"&&l.op!="begin"&&l.op!="commit"&&l.op!="handoff"&&l.op!="handoff_result","V3 moved layer must be position-free GDN");
++      for(const auto& x:l.outputs)if(x!="streams"&&x!="error")priv.insert(x);}
++    std::set<int> expected;for(int k=v3_first;k<v3_end;++k)expected.insert(k);
++    require(layers==expected&&ops.count("gdn")&&ops.count("conv"),"V3 moved layers must be exactly the GDN layers 24-25 (mini: 2)");
++    for(size_t i:v3_sites){const auto& l=p.launches[i];
++      for(const auto& x:l.inputs)require(priv.count(x)||shared.count(x),"V3 moved layer reads a buffer outside its island: "+x);}
++    for(size_t i=0;i<p.launches.size();++i){if(std::find(v3_sites.begin(),v3_sites.end(),i)!=v3_sites.end())continue;const auto& l=p.launches[i];
++      for(const auto& x:l.inputs)require(!priv.count(x),"rank-0 half reads a V3 private buffer: "+x);
++      for(const auto& x:l.outputs)require(!priv.count(x),"rank-0 half writes a V3 private buffer: "+x);}
++    const auto& last=p.launches[v3_sites.back()];
++    require(last.label=="blk."+std::to_string(v3_end-1)+".ffn.combine"&&std::find(last.outputs.begin(),last.outputs.end(),"streams")!=last.outputs.end(),"V3 boundary must end with the layer-25 residual stream");
++    require(v3_private.empty()||v3_private==priv,"V3 private set is a load-time constant");v3_private=std::move(priv);
++  }
+--- a/v5/native/full_shape_entry.cpp
++++ b/v5/native/full_shape_entry.cpp
+@@ -54,7 +54,7 @@
+ static int startup109(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::DraftRuntime> draft;try{
+  Options a=parse(argc,argv);fs::create_directories(a.output);
+  if(a.pipeline_canary){require(a.mini&&a.pipeline_mini&&a.rank>=0,"canary startup flags");save(a.output/"result.json","{\"passed\":true,\"canary_pre_engine\":true}");return 0;}
+- packet26::dispatch.load(a.dispatch.string());Weights w(a);auto p=pipeline::split(plan(w,a),a.rank,false,a.draft_rank,a.target_split);
++ packet26::dispatch.load(a.dispatch.string());Weights w(a);auto p=pipeline::split(plan(w,a),a.rank,false,a.draft_rank,a.target_split,pipeline::v3::rank0_extended(a)); /* packet186 layout */
+  require(p.g.h==2560&&p.g.context==4096&&p.g.vocab==248320,"real production dimensions");
+  e=std::make_unique<Engine>(w,a,p);e->initialize();std::unique_ptr<p105::Runtime> head_runtime;if(e->split_head())head_runtime=std::make_unique<p105::Runtime>(*e);
+  if(!a.draft_capture.empty()){e->prepare_plan();draft=std::make_unique<mtp36::DraftRuntime>(*e);}
+@@ -72,14 +72,19 @@
+  fs::create_directories(a.output);const auto parent=fs::path(P98_PARENT_PATH);
+  a.plan=parent/"lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv";a.draft_manifest=parent/"mtp-manifest.tsv";
+  packet26::dispatch.load(std::string(P185_DISPATCH_PATH));Weights w(a); // packet185: sealed lineage dispatch (identical for both selections)
+- e=std::make_unique<Engine>(w,a,pipeline::split(plan(w,a),a.rank,false,1,0));e->initialize();std::unique_ptr<p105::Runtime> head_runtime;if(e->split_head())head_runtime=std::make_unique<p105::Runtime>(*e);
++ e=std::make_unique<Engine>(w,a,pipeline::split(plan(w,a),a.rank,false,1,0,pipeline::v3::rank0_extended(a)));e->initialize(); /* packet186: sealed layout */std::unique_ptr<p105::Runtime> head_runtime;if(e->split_head())head_runtime=std::make_unique<p105::Runtime>(*e);
+  if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}
+  {pipeline::SpeculativeImage image(*e);if(a.rank==1)draft=std::make_unique<mtp36::DraftRuntime>(*e);
++ if(a.rank==0)image.census131(a.output/"image-census.json",0); // packet186: speculative image sources at real shape
++ {std::ofstream f(a.output/"v3-load.json");f<<"{\"rank0_extended\":"<<(e->v3_extended?"true":"false")<<",\"moved_sites\":"<<e->v3_sites.size()<<",\"private_buffers\":[";
++  bool first=true;for(const auto& n:e->v3_private){f<<(first?"":",")<<ownrt::quote(n);first=false;}f<<"],\"banked_state\":[";
++  first=true;for(const auto& [n,id]:e->state_spares){f<<(first?"":",")<<ownrt::quote(n);first=false;}f<<"]}\n";}
+  e->bracket_weights_locked=true;const auto initial=e->bracket_arena_hash();
+  auto capture=[&]{return capture_digest(*e)+(draft?draft->bracket_test_digest():"");};
+  const auto control_capture=capture();size_t total=0;std::vector<std::string> captures;
+- require(!e->dense_metadata(),"packet185: dense_scales must stay expanded"); // packet185: one selection per load
+- const auto startup_head=e->head_choice();
++ require(!e->dense_metadata(),"packet186: dense_scales must stay expanded");
++ const auto startup_head=e->head_choice();const bool startup_extended=e->v3_extended;
++ std::string skips="[";
+  census(*e,a.output/"launches-initial.json");
+  for(int view=0;view<5;++view){
+   const auto selection=std::string(argv[view%2?5:1]),digest=std::string(argv[view%2?6:2]);
+@@ -106,9 +111,11 @@
+   }
+   const auto& choices=e->sealed_selection.choices;
+   require(choices.at("experts")=="exp-halfcache+down-tile16","expert physical layout changed");
+-  // packet183: dense_scales is the only switched choice; weights never move.
+-  // packet185: a fresh load per view on device; every bracket reset re-selects the SAME selection.
+-  require(choices.at("dense_scales")=="expanded"&&choices.at("snapshot_host")=="production"&&e->head_choice()==startup_head,"packet185 view selection");
++  // packet186: a V3-layout load switches only boundary/snapshot_host (U <-> V3); storage never moves.
++  require(choices.at("dense_scales")=="expanded"&&e->head_choice()==startup_head&&e->v3_extended==startup_extended,"packet186 view selection");
++  require(startup_extended?choices.at("boundary")==(e->v3_active?"rank0":"none"):!choices.contains("boundary"),"V3 execution flag");
++  {size_t skipped=0;for(auto x:e->v3_skip_half)skipped+=x;const size_t expected=a.rank==0?e->v3_sites.size():(e->v3_active?size_t(std::count_if(e->p.launches.begin(),e->p.launches.end(),[](const auto& l){return l.label.starts_with("blk.24.")||l.label.starts_with("blk.25.");})):0);
++   require(skipped==expected,"half skip census");skips+=(view?",":"")+std::to_string(skipped);}
+   require(!e->dense_metadata(),"packet185 dense scale source");
+   census(*e,a.output/("launches-view"+std::to_string(view)+".json"));
+   if(draft){std::ofstream k(a.output/("draft-kernels-view"+std::to_string(view)+".txt"));for(const auto& n:draft->bracket_test_kernels())k<<n<<'\n';}
+@@ -116,6 +123,7 @@
+   require(captures.back()==control_capture,"packet185: re-selected capture differs from fresh startup");
+   if(view>=2)require(captures.back()==captures[view-2],"same selection must recapture identically");
+  }
++ skips+="]";
+  // Unsupported layouts and malformed selections must refuse before mutation.
+  auto before=e->bracket_arena_hash();auto original=e->sealed_selection.observed_sha256;
+  auto text=[&](){std::ifstream f(argv[1]);return std::string((std::istreambuf_iterator<char>(f)),{});}();
+@@ -124,7 +132,8 @@
+    {"packed_dense","head-packed"},{"experts","exp-halfcache"},{"head","head-transpose"},
+    {"hc_gate","hc-weightcache"},{"hc_norm","consumer"},{"host_retire","reply-first"},
+    {"head_format","q4-g32"},{"head_prefix","coverage985"},{"route","production"},
+-   {"qsa_attention","unknown"},{"dense_scales","unknown"},{"snapshot_host","static"},
++   {"qsa_attention","unknown"},{"dense_scales","unknown"},{"dense_scales","metadata"},
++   {"snapshot_host",startup_extended?"unknown":"static"},
+    // packet185: the target-head split is a storage/allocation choice; an in-load switch must refuse.
+    {"head",startup_head=="production"?"head-split-compute":"production"}}){
+   auto bad=text;auto marker=ownrt::quote(key)+": ";auto at=bad.find(marker);require(at!=std::string::npos,"negative fixture field");
+@@ -134,6 +143,14 @@
+   try{e->bracket_select(path,hash(std::vector<uint8_t>(bad.begin(),bad.end())));}catch(const std::exception&){refused=true;}
+   require(refused&&e->bracket_arena_hash()==before&&e->sealed_selection.observed_sha256==original,"layout refusal must not mutate owner");++refusals;
+  }
++ // packet186: V3 storage (rank0_layers) never switches in-load; malformed V3 values refuse.
++ if(startup_extended)for(const auto& [key,value]:std::vector<std::pair<std::string,std::string>>{{"rank0_layers","0-23"},{"boundary","unknown"},{"rank0_layers","0-27"}}){
++  auto bad=text;auto marker=ownrt::quote(key)+": ";auto at=bad.find(marker);require(at!=std::string::npos,"negative V3 fixture field");
++  at+=marker.size();auto end=bad.find('"',at+1);bad.replace(at,end-at+1,ownrt::quote(value));
++  auto path=a.output/"bad-layout.json";save(path,bad);bool refused=false;
++  try{e->bracket_select(path,hash(std::vector<uint8_t>(bad.begin(),bad.end())));}catch(const std::exception&){refused=true;}
++  require(refused&&e->bracket_arena_hash()==before&&e->sealed_selection.observed_sha256==original,"V3 layout refusal must not mutate owner");++refusals;
++ }
+  bool bad_hash=false;try{e->bracket_select(argv[1],std::string(64,'0'));}catch(const std::exception&){bad_hash=true;}
+  require(bad_hash&&e->sealed_selection.observed_sha256==original,"bad hash changed selection");++refusals;
+  pipeline::Candidate pending;pending.pending=true;int accepted=0;bool pending_refused=false;
+@@ -141,7 +158,7 @@
+  require(pending_refused&&e->bracket_arena_hash()==before&&e->sealed_selection.observed_sha256==original,"pending work switch not refused");++refusals;
+  save(a.output/"census.json",e->dev(0).arena.census());
+  std::string capture_json="[";for(size_t i=0;i<captures.size();++i)capture_json+=(i?",":"")+ownrt::quote(captures[i]);capture_json+="]";
+- save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"views\":5,\"target_loads\":1,\"draft_loads\":"+std::to_string(a.rank==1?1:0)+",\"reset_extents_verified\":"+std::to_string(total)+",\"fresh_start_capture_identity\":true,\"layout_refused\":true,\"native_refusals\":"+std::to_string(refusals)+",\"initial_capture\":"+ownrt::quote(control_capture)+",\"view_captures\":"+capture_json+"}");
++ save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"views\":5,\"target_loads\":1,\"draft_loads\":"+std::to_string(a.rank==1?1:0)+",\"reset_extents_verified\":"+std::to_string(total)+",\"fresh_start_capture_identity\":true,\"layout_refused\":true,\"native_refusals\":"+std::to_string(refusals)+",\"half_skips_per_view\":"+skips+",\"rank0_extended\":"+(startup_extended?"true":"false")+",\"initial_capture\":"+ownrt::quote(control_capture)+",\"view_captures\":"+capture_json+"}");
+  draft.reset();}
+  e->shutdown();e.reset();return 0;
+  }catch(const std::exception&x){std::cerr<<x.what()<<'\n';draft.reset();if(e){try{e->shutdown();}catch(...){}e.reset();}return 1;}
+--- a/native-base/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/p49d_submit.cpp
++++ b/native-base/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/p49d_submit.cpp
+@@ -60,6 +60,8 @@
+ Submit resolve(std::string_view cls,std::string_view choice){
+  if(cls=="snapshot_host"&&(choice=="production"||choice=="static"))return production;
+  if(cls=="dense_scales"&&(choice=="expanded"||choice=="metadata"))return production; // packet183-s1
++ if(cls=="rank0_layers"&&(choice=="0-23"||choice=="0-25"))return production; // packet186-v3: storage (rank 0 also holds layers 24-25)
++ if(cls=="boundary"&&(choice=="none"||choice=="rank0"))return production; // packet186-v3: rank 0 runs layers 24-25 for the verified token
+  if(cls=="probe"&&(choice=="off"||choice=="split"))return production;
+  if(cls=="other_fusion"&&(choice=="production"||choice=="fused"))return production;
+  if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
+@@ -109,9 +111,9 @@
+    }
+   }else throw std::invalid_argument("p49d unknown selection field");
+  }while(more());take('}');ws();
+- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=14||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||!(values.size()==14||(values.size()==16&&values.contains("rank0_layers")&&values.contains("boundary")))||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
+  p59c::validate(draft_values);
+- auto target_values=values;target_values.erase("snapshot_host");target_values.erase("dense_scales");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
++ auto target_values=values;target_values.erase("rank0_layers");target_values.erase("boundary");target_values.erase("snapshot_host");target_values.erase("dense_scales");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
+  if(target_values.at("recurrence")=="rec-both"||target_values.at("recurrence")=="rec-both-plus"||target_values.at("recurrence")=="rec-gates"||target_values.at("recurrence")=="rec-parallel")target_values["recurrence"]="rows4-shared";
+  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
+  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;
+--- a/v5/native-src/strict_snapshot.hpp
++++ b/v5/native-src/strict_snapshot.hpp
+@@ -359,7 +359,11 @@
+   for(const auto& site:e.p.launches){outputs.insert(site.outputs.begin(),site.outputs.end());if(site.op=="qsa_append_pool")kv.insert(site.outputs.begin(),site.outputs.end());}
+   for(const auto& [name,slot]:e.buffers[0]) {
+    represented.insert(slot.id);
+-   if(!outputs.count(name))continue;
++   // packet186 V3: a buffer whose only readers/writers are the moved layers 24-25 is written
++   // exclusively by the boundary command, which runs only for an accepted, verified token and
++   // never while a speculation is outstanding (Engine::v3_check_plan proves the plan side at
++   // load; rank.hpp enforces the command order). It is never captured or restored.
++   if(!outputs.count(name)||e.v3_private.count(name))continue;
+    Source row{name,0,slot.n*flash::scalar_bytes(slot.type),e.state_spares.count(name)!=0,kv.count(name)!=0,ends(name,".pooled")};
+    row.write_bytes=row.bytes;row.kv=row.kv&&SnapshotWriteSet::single_row(e.p,name,true);
+    row.single_row=row.kv&&e.a.nongemv=="parallel";
+--- /dev/null
++++ b/v5/native/v3_boundary.hpp
+@@ -0,0 +1,79 @@
++// Packet186 V3: verified-boundary rebalance (included by rank.hpp after native_controller.hpp).
++//
++// Placement (storage, fixed per load; selection key rank0_layers=0-25): rank 0 also holds the GDN
++// layers 24-25; rank 1 keeps 24-47 and the full 248,320-row target head (head=production).
++// Execution (selection key boundary=rank0, switchable at a quiescent bracket boundary):
++//   * a rank-0 half runs embedding + layers 0-23 exactly as bundle 8 and no longer exports;
++//   * after every rank-0 accept that a rank-1 half will consume, the controller sends ONE boundary
++//     command: rank 0 issues layers 24-25 for that accepted position/token, drains, exports the
++//     layer-25 residual stream to the shared slot; rank 1 starts at layer 26;
++//   * the draft is unchanged (rank 1, MTP).
++// State of layers 24-25 on rank 0 (why it never sees a guessed token):
++//   1. not banked (banks() skips them) and not in the speculative image (v3_private): no
++//      speculative command ever issues them, so rollback has nothing of theirs to restore;
++//   2. the boundary refuses unless the previous rank-0 command was the ACCEPT of a completed half
++//      for exactly this (position, token) and no candidate is pending (a speculative half is only
++//      accepted on a hit; a miss is rolled back, corrected with the verified token, then accepted);
++//   3. for every decode position (fixture >= 2) the token must also equal rank 1's own published
++//      verification for that position (the same check a redo uses);
++//   4. no rank-0 half may start while an accepted position still waits for its boundary, so the
++//      layer-23 stream the boundary consumes is the accepted one;
++//   5. request reset / bracket boundary clear the pending flag; reset zeroes all state bytes.
++#pragma once
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/v5/native/v3_controller.hpp"
++namespace pipeline {
++namespace v3 {
++inline bool rank0_extended(const Options& a){
++ if(a.selection.empty())return false;
++ p49d::Selection s;s.load(a.selection.string(),a.selection_sha256);
++ auto i=s.choices.find("rank0_layers");return i!=s.choices.end()&&i->second=="0-25";
++}
++}
++struct V3Boundary {
++ bool ready=false;int position=-1,token=-1,fixture=0;
++ int half_position=-1,half_token=-1;uint64_t runs=0;
++ void reset(){ready=false;position=token=half_position=half_token=-1;fixture=0;}
++};
++static void v3_before_half(Engine& e,V3Boundary& v,const Request& r){
++ if(e.a.rank!=0||!e.v3_active)return;
++ require(!v.ready,"V3: a rank-0 half cannot start before the previous accepted position's boundary");
++ v.half_position=r.position;v.half_token=r.token;
++}
++static void v3_accepted(Engine& e,V3Boundary& v,const Candidate& c){
++ if(e.a.rank!=0||!e.v3_active)return;
++ require(!v.ready&&c.pending&&!c.cancelled&&c.position==v.half_position&&v.half_token>=0,"V3: accept does not match the last completed half");
++ v.ready=true;v.position=c.position;v.token=v.half_token;v.fixture=c.fixture;
++}
++static Reply v3_boundary_step(Engine& e,V3Boundary& v,const Request& r,uint8_t* shared,const Candidate& c){
++ const auto begin=std::chrono::steady_clock::now();
++ require(e.a.rank==0&&e.v3_active&&!e.v3_sites.empty(),"V3 boundary ownership");
++ require(!c.pending,"V3 boundary with an unresolved candidate");
++ require(v.ready&&r.position==v.position&&r.token==v.token&&r.fixture==v.fixture,"V3 boundary requires the accepted half's (position, token)");
++ if(r.fixture>=2){auto& confirmed=verification(shared);
++  require(__atomic_load_n(&confirmed.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&confirmed.token==r.token,"V3 boundary token differs from rank 1's verification");}
++ e.verify_configuration();e.guard();
++ const double gpu=e.gemv_ms+e.nongemv_ms;
++ Candidate fixtures;fixtures.fixture=r.fixture;std::array<int,4> captured{};size_t captured_count=0;
++ const auto body=std::chrono::steady_clock::now();
++ for(size_t index:e.v3_sites){
++  const auto& l=e.p.launches[index];
++  e.enqueue(l,e.logical);
++  if(e.issue_sites.at(index).layer_end){
++   const int layer=e.issue_sites[index].layer;
++   if(e.a.retain_steps.contains(r.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*4*e.p.g.h*2,e.buffers[0].at("streams").id,0,4*e.p.g.h*2,{});captured.at(captured_count++)=layer;}
++  }
++ }
++ e.drain();p150::record("boundary_body",r.position,false,body);
++ require(!e.integer(0,"error"),"sticky rank error in the V3 boundary (never rolled back)");
++ if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*4*e.p.g.h*2);const size_t n=4*e.p.g.h*2;
++  for(size_t i=0;i<captured_count;++i){int layer=captured[i];fixtures.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}
++  std::vector<uint8_t> zero(48*4*e.p.g.h*2,0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
++ publish(e,fixtures); // non-speculative: the boundary only ever runs on an accepted, verified token
++ size_t bytes=4*e.p.g.h*2;require(bytes<=slot_bytes,"V3 export extent");
++ p150::measure("handoff_export",r.position,false,[&]{auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});
++ v.ready=false;++v.runs;
++ p150::record("boundary_total",r.position,false,begin);
++ return {0,-1,0,int32_t(bytes),r.sequence,e.a.rank,{0,int32_t(e.v3_sites.size())},Engine::ms(begin),e.gemv_ms+e.nongemv_ms-gpu,0,0};
++}
++} // namespace pipeline
++
+--- /dev/null
++++ b/v5/native/v3_controller.hpp
+@@ -0,0 +1,49 @@
++// Packet186 V3 controller (included by v3_boundary.hpp; also compiled alone by the mock gate).
++#pragma once
++namespace pipeline::v3 {constexpr int32_t boundary_op=15;}
++namespace pipeline::native38 {
++// native38::run() with one rank-0 boundary command after every rank-0 accept that a rank-1 half
++// will consume. Command order on rank 0 per cycle: [rollback, corrected half on a miss] -> accept
++// (host-only, measured 0.3 us/cycle) -> boundary (layers 24-25 + export, inside rank 1's draft
++// window) -> wait draft -> speculative half. The accept never waits on GPU work and the boundary
++// never waits on a capture: the speculative image is captured at the start of the NEXT half.
++inline Result run_v3(Backend& b,const Config& c){
++ require(c.draft_rank==1,"V3 controller requires the rank-1 draft");
++ Result out;out.start=clock_now();std::vector<int> history;bool draft_pending=false;double issued_draft_at=0;uint32_t pending_draft_sequence=0;size_t script_index=0;int length=int(c.prompt.size());
++ auto fixture=[&](int p){return std::max(0,p-length+2);};
++ auto half_start=[&](int rank,int token,int p,bool spec=false){b.start(rank,half,token,p,fixture(p),spec);};
++ auto boundary=[&](int token,int p){b.stream_bytes=0;Reply r=b.call(0,v3::boundary_op,token,p,fixture(p));require(r.bytes>0&&size_t(r.bytes)<=slot_bytes,"V3 boundary export");b.stream_bytes=size_t(r.bytes);};
++ half_start(0,c.prompt[0],0);b.wait(0);b.call(0,accept);boundary(c.prompt[0],0);
++ for(int p=0;p<length+c.count-1;++p){
++  double cycle=clock_now();int token=p<length?c.prompt[p]:out.tokens.back();history.push_back(token);int draft_guess=-1;
++  uint32_t expected_draft=0;double draft_started=0;
++  if(draft_pending){expected_draft=pending_draft_sequence;draft_started=issued_draft_at;if(b.pending[1])b.wait(1);draft_pending=false;}
++  p150::measure("handoff_host",p,false,[&]{b.handover();});half_start(1,token,p);double half_started=clock_now();
++  if(expected_draft){double waiting=clock_now();uint32_t seen=load(b.m.draft_sequence);p150::measure("draft_wait",p,false,[&]{if(seen!=expected_draft)wait_change(b.m.draft_sequence,seen,b.m,b.seconds,b.cancel);});p150::measure("draft_zero_wait",p,true,[&]{if(b.split_replay)require(load(b.m.draft_sequence)==expected_draft,"p150 satisfied draft wait");});
++   require(load(b.m.draft_sequence)==expected_draft,"native draft publication sequence");
++   struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};Publication v{};std::memcpy(&v,b.shared+2*slot_bytes,sizeof v);
++   if(v.valid==1&&v.position==p+1&&!v.error&&v.sequence==int32_t(expected_draft)&&v.token>=0&&v.token<c.vocab)draft_guess=v.token;
++   out.draft_rows.push_back({v.position,v.sequence,draft_guess,v.error,-1,-1,v.elapsed_ns/1e6,v.gpu_ms,(clock_now()-waiting)*1000,draft_started,half_started});
++  }
++  bool more=p+1<length+c.count-1,known=more&&p+1<length,pending=false;int guess=-1;
++  if(known&&c.overlap){half_start(0,c.prompt[p+1],p+1);pending=true;}
++  else if(more&&!known){
++   if(c.mode==1)guess=ngram(history);else if(c.mode==2){if(script_index<c.script.size())guess=c.script[script_index];++script_index;}else if(c.mode==3)guess=draft_guess;
++   out.guess_sequence.push_back(guess);if(guess<0)++out.no_guess;else{++out.guesses_count;half_start(0,guess,p+1,true);pending=true;}
++  }
++  Reply result=b.wait(1);double stamp=clock_now();b.call(1,accept);
++  if(c.mode==3&&!out.draft_rows.empty()){auto& dr=out.draft_rows.back();dr.actual=fixture(p)>0?result.token:c.prompt[p+1];dr.hit=guess>=0&&fixture(p)>0?int(guess==result.token):-1;dr.completed=stamp;if(out.draft_rows.size()>1&&!out.rows.empty()){auto& prev=out.draft_rows[out.draft_rows.size()-2];prev.cycle_ms=(stamp-prev.completed)*1000;}}
++  if(fixture(p)>0){out.tokens.push_back(result.token);out.rows.push_back({result.token,stamp});if(out.rows.size()==1)out.prompt_ms=(stamp-out.start)*1000;
++   if(std::find(c.eos.begin(),c.eos.end(),result.token)!=c.eos.end()){if(pending){b.wait(0);b.call(0,rollback);}break;}
++  }
++  if(!more)break;
++  if(c.mode==3){int confirmed=known?c.prompt[p+1]:out.tokens.back();
++   b.start(c.draft_rank,draft,confirmed,p+1,int(p+2>=length),1);pending_draft_sequence=b.seq;issued_draft_at=b.sent[c.draft_rank];draft_pending=true;}
++  if(known){if(!pending)half_start(0,c.prompt[p+1],p+1);if(b.pending[0])b.wait(0);b.call(0,accept);boundary(c.prompt[p+1],p+1);}
++  else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;b.call(0,accept);}else{++out.misses;double redo=clock_now();if(b.correction_probe){if(b.pending[1])b.wait(1);b.start(1,14,actual,p+1,fixture(p+1));}b.call(0,rollback,actual,p+1,fixture(p+1),1);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);if(b.correction_probe)b.wait(1);out.redo_ms+=(clock_now()-redo)*1000;}boundary(actual,p+1);out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
++   else{half_start(0,actual,p+1);b.wait(0);b.call(0,accept);boundary(actual,p+1);}}
++  if(c.dumps)b.call(0,dump,0,p+1);
++ }
++ require(!draft_pending,"native unresolved draft");out.end=clock_now();b.call(1,0);return out;
++}
++} // namespace pipeline::native38
+--- /dev/null
++++ b/v5/native/v3_state.cpp
+@@ -0,0 +1,120 @@
++// Packet186: state correctness of the moved layers (mini GDN layer 2 = full-model layers 24-25)
++// on the actual rank-0 miniature engine, host backend (packet153 state_bytes.cpp pattern).
++//
++// One rank-0 Engine in the V3 dual layout (rank0_layers=0-25, boundary=rank0; argv selects the
++// snapshot host mode). Every step compares the canonical bytes of ALL rank-0 allocations
++// (including the moved layer's recurrent state and the exported shared slot) against a direct,
++// never-speculative sequence:
++//   * hits (speculative half accepted, then boundary);
++//   * misses at every cancellation cut (rollback with redo, corrected half, accept, boundary);
++//   * abandoned redos (fallback restore), no-guess steps;
++// Guards that must refuse (each leaves the owner unchanged): boundary with a pending candidate,
++// boundary for a different token or position, boundary without an accept, boundary for a decode
++// position whose token differs from rank 1's verification, a rank-0 half before the pending
++// boundary, a second boundary for the same position.
++// Negative control (proves the comparison would see a leak): issuing the moved layer while a
++// speculation is outstanding and then rolling back leaves different bytes, because the moved
++// layers are deliberately outside the speculative image.
++#define main p186_unused_model_entry
++#include "../native-src/main.cpp"
++#undef main
++static std::string canonical(Engine& e,const std::vector<uint8_t>& shared,std::string* detail=nullptr) {
++ std::ostringstream out;std::set<Allocation> represented;
++ for(const auto& [name,slot]:e.buffers[0]){represented.insert(slot.id);out<<"buffer:"<<name<<':'<<hash(e.readback(0,slot.id,slot.n*flash::scalar_bytes(slot.type)))<<'\n';}
++ for(const auto& [name,id]:e.state_spares){represented.insert(id);out<<"spare:"<<name<<':'<<hash(e.readback(0,id,e.dev(0).arena.row(id).bytes))<<'\n';}
++ for(const auto& [name,id]:e.state_reserves)represented.insert(id);
++ for(const auto&[id,owner]:e.allocations){const auto&r=e.dev(owner.first).arena.row(id);
++  if(!r.live||r.category==Category::weights||r.category==Category::pinned_slab||represented.count(id))continue;
++  if(e.immutable_snapshot_tables.contains(id))continue;
++  if(r.label=="card0:speculative-private-image"||r.label=="card0:speculative-copy-table")continue;
++  out<<r.label<<':'<<hash(e.readback(owner.first,id,r.bytes))<<'\n';
++ }
++ out<<e.history0<<':'<<e.history1<<':'<<e.bank_parity<<':'<<e.context_extent<<':'<<e.alternate_context_extent<<'\n';
++ for(auto&[name,value]:e.lookup_ids)out<<name<<':'<<hash(value)<<'\n';
++ out<<hash(std::vector<uint8_t>(shared.begin(),shared.begin()+pipeline::slot_bytes));auto s=out.str();if(detail)*detail=s;return hash(std::vector<uint8_t>(s.begin(),s.end()));
++}
++static std::string moved_state(Engine& e){
++ std::ostringstream out;for(const auto& name:e.v3_private){auto& slot=e.buffers[0].at(name);out<<name<<':'<<hash(e.readback(0,slot.id,slot.n*flash::scalar_bytes(slot.type)))<<'\n';}
++ auto s=out.str();return hash(std::vector<uint8_t>(s.begin(),s.end()));
++}
++int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
++ require(argc==4,"selection hash output");Options a;
++ a.mini=true;a.pipeline_mini=true;a.context=320;a.cards=1;a.card=0;a.rank=0;a.draft_rank=1;
++ a.memory="resident";a.gemv="r5";a.nongemv="parallel";a.selection=argv[1];a.selection_sha256=argv[2];a.output=argv[3];
++ fs::create_directories(a.output);Weights w(a);
++ e=std::make_unique<Engine>(w,a,pipeline::split(plan(w,a),0,true,1,0,pipeline::v3::rank0_extended(a)));e->initialize();pipeline::banks(*e);
++ require(e->v3_extended&&e->v3_active&&!e->v3_sites.empty()&&!e->v3_private.empty(),"V3 dual layout with boundary=rank0 required");
++ for(const auto& name:e->v3_private)require(!e->state_spares.count(name),"moved-layer state must not be banked");
++ unsigned cases=0,refusals=0,negatives=0;std::ostringstream evidence;
++ {pipeline::SpeculativeImage image(*e);std::vector<uint8_t> shared(pipeline::shared_bytes,0);pipeline::Candidate c;pipeline::V3Boundary v;int accepted=0;
++ auto verify_none=[&]{pipeline::verification(shared.data()).position_plus_one=UINT32_MAX;pipeline::verification(shared.data()).token=-1;};
++ auto reset=[&](int position){image.boundary();c={};v.reset();
++  auto meta=a.output/"reset.txt";save(meta,a.output.string()+"\n\n");pipeline::request_reset(*e,c,nullptr,meta,accepted);
++  e->admit_position(0);e->swap_state_banks();e->admit_position(0);e->swap_state_banks();
++  std::fill(shared.begin(),shared.end(),0);verify_none();e->put(0,"position",&position,4);e->a.cancel_launch=-1;};
++ auto half=[&](int token,int position,bool spec,int fixture=0){pipeline::Request r{pipeline::half,token,position,fixture,int(spec),1,{0,0}};pipeline::v3_before_half(*e,v,r);return pipeline::half_step(*e,c,r,shared.data(),image);};
++ auto accept=[&]{pipeline::publish(*e,c);if(c.speculative)image.accept();pipeline::v3_accepted(*e,v,c);c={};};
++ auto boundary=[&](int token,int position,int fixture=0){pipeline::Request r{pipeline::v3::boundary_op,token,position,fixture,0,1,{0,0}};return pipeline::v3_boundary_step(*e,v,r,shared.data(),c);};
++ auto refuse=[&](const char* what,auto fn){const auto before=canonical(*e,shared);const bool was_ready=v.ready;bool refused=false;
++  try{fn();}catch(const std::exception&){refused=true;}
++  require(refused,std::string("guard did not refuse: ")+what);require(canonical(*e,shared)==before&&v.ready==was_ready,std::string("refusal mutated the owner: ")+what);
++  evidence<<"refused:"<<what<<'\n';++refusals;};
++ // 1. Direct, never-speculative reference sequence (half -> accept -> boundary).
++ std::vector<std::string> direct,moved,details;reset(0);
++ for(int p=0;p<64;++p){half(5,p,false);accept();boundary(5,p);std::string d;direct.push_back(canonical(*e,shared,&d));details.push_back(d);moved.push_back(moved_state(*e));}
++ require(std::set<std::string>(moved.begin(),moved.end()).size()>8,"moved-layer state must evolve with position");
++ // 2. Mixed hits / misses (every live cancellation cut) / abandoned redos / no-guess, compared per step.
++ std::vector<int> cuts;size_t command_count=0;
++ for(size_t i=0;i<e->p.launches.size();++i){if(e->v3_skip_half[i])continue;command_count+=e->issue_sites[i].commands.size();const auto& op=e->p.launches[i].op;
++  if(op=="conv"||op=="gdn"||op=="qsa_append_pool")cuts.push_back(int(command_count));}
++ require(!cuts.empty(),"cancellation coverage");cuts.push_back(int(command_count-1));cuts.push_back(-1);
++ reset(0);
++ for(int p=0;p<64;++p){
++  const int kind=p%5;
++  if(kind==0){half(5,p,true);accept();boundary(5,p);}                       // hit
++  else if(kind==4){half(5,p,false);accept();boundary(5,p);}                 // no guess
++  else {e->a.cancel_launch=cuts[(p/5)%cuts.size()];half(7,p,true);          // miss at a cut
++   if(kind==3){ // the moved layer cannot be advanced with the guessed candidate pending
++    refuse("boundary-with-pending-guess",[&]{boundary(7,p);});
++    refuse("half-before-resolving",[&]{half(5,p,false);});}
++   pipeline::undo(*e,c,image,kind!=2,p,5);e->a.cancel_launch=-1;
++   if(kind==2)require(!image.before_command(false,-1,-1),"abandoned redo fallback");
++   else require(image.before_command(true,p,5),"matching redo");
++   half(5,p,false);if(kind!=2)image.finish_redo();accept();
++   if(kind==1){refuse("boundary-wrong-token",[&]{boundary(7,p);});refuse("boundary-wrong-position",[&]{boundary(5,p+1);});
++    refuse("half-before-boundary",[&]{half(5,p+1,true);});}
++   boundary(5,p);}
++  if(p==9)refuse("second-boundary",[&]{boundary(5,p);});
++  std::string d;const auto actual=canonical(*e,shared,&d);
++  if(actual!=direct[p]){save(a.output/"expected-state.txt",details[p]);save(a.output/"actual-state.txt",d);throw std::runtime_error("V3 state differs from the direct sequence at position "+std::to_string(p));}
++  require(moved_state(*e)==moved[p],"moved-layer state differs at position "+std::to_string(p));
++  evidence<<"sequence:"<<p<<':'<<kind<<':'<<actual<<'\n';++cases;
++ }
++ refuse("boundary-without-accept",[&]{boundary(5,64);});
++ // 3. Decode positions: the boundary token must equal rank 1's published verification.
++ reset(0);for(int p=0;p<4;++p){half(5,p,false);accept();boundary(5,p);}
++ {half(5,4,false,2);accept();
++  pipeline::verification(shared.data()).position_plus_one=4;pipeline::verification(shared.data()).token=6;
++  refuse("boundary-token-differs-from-rank1-verification",[&]{boundary(5,4,2);});
++  pipeline::verification(shared.data()).token=5;boundary(5,4,2);verify_none();
++  require(canonical(*e,shared)==direct[4],"verified decode boundary differs");++cases;}
++ // 4. Negative control: advancing the moved layer on a GUESSED token while speculating, then
++ //    rolling back, must leave a detectable difference (the moved layer is outside the image).
++ for(int which=0;which<2;++which){
++  reset(0);for(int p=0;p<8;++p){half(5,p,false);accept();boundary(5,p);}
++  const auto before=canonical(*e,shared),moved_before=moved_state(*e);
++  half(7,8,true);
++  for(size_t index:e->v3_sites)e->enqueue(e->p.launches[index],e->logical);e->drain(); // illegal: guessed token
++  pipeline::undo(*e,c,image,which==1,8,5);if(which==1){require(image.before_command(true,8,5),"negative redo");half(5,8,false);image.finish_redo();c={};}
++  else require(canonical(*e,shared)!=before,"a moved-layer advance on a guessed token was hidden by rollback");
++  require(moved_state(*e)!=moved_before,"negative control did not reach the moved layer");
++  evidence<<"negative:"<<which<<":detected\n";++negatives;
++ }
++ reset(0);
++ auto raw=evidence.str();save(a.output/"cases.txt",raw);
++ save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"cases\":"+std::to_string(cases)+",\"refusals\":"+std::to_string(refusals)+",\"negatives\":"+std::to_string(negatives)+
++   ",\"moved_sites\":"+std::to_string(e->v3_sites.size())+",\"moved_private_buffers\":"+std::to_string(e->v3_private.size())+",\"snapshot_host\":"+ownrt::quote(e->sealed_selection.choices.at("snapshot_host"))+
++   ",\"canonical_sha256\":"+ownrt::quote(hash(std::vector<uint8_t>(raw.begin(),raw.end())))+"}");
++ }
++ e->shutdown();e.reset();return 0;
++ }catch(const std::exception&x){std::cerr<<x.what()<<'\n';if(e){try{e->shutdown();}catch(...){}e.reset();}return 1;}}
+--- /dev/null
++++ b/v5/native/v3_controller_test.cpp
+@@ -0,0 +1,99 @@
++// Packet186: native controller run_v3() against run() on a two-rank mailbox mock (GNU and Intel).
++// The mock carries three recurrences: rank 0's layers 0-23, the moved layers 24-25 and rank 1's
++// layers 26-47. Under run() (U semantics) rank 1 applies the moved layers to rank 0's exported
++// stream; under run_v3() rank 0 applies them in the boundary command to its ACCEPTED half output
++// and exports the result. The mock enforces the V3 guards (the boundary only after the accept of
++// the matching half, no rank-0 half while a boundary is pending, no boundary on a pending guess).
++// Tokens, acceptance, guess sequences and all three final states must match for all-hit, all-miss,
++// mixed and no-guess scripts, the native rank-1 draft, prompt overlap on/off and an EOS stop.
++#include <algorithm>
++#include <chrono>
++#include <cstring>
++#include <cstdint>
++#include <filesystem>
++#include <fstream>
++#include <iostream>
++#include <sstream>
++#include <stdexcept>
++#include <string>
++#include <thread>
++#include <vector>
++#include <unistd.h>
++namespace fs=std::filesystem;
++void require(bool ok,const std::string& why){if(!ok)throw std::runtime_error(why);}
++namespace pipeline {
++constexpr size_t slot_bytes=65536;
++enum {half=1,accept=2,rollback=3,dump=4,draft=9};
++struct Request {int32_t op,token,position,fixture,speculative,sequence,reserved[2];};
++struct Reply {int32_t status,token,error,bytes,sequence,rank,reserved[2];double busy_ms,gpu_ms,redo_ms,reserved_ms;};
++}
++#include <iomanip>
++#include "split_timing.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/native-base/experiments/own-xpu-runtime/stage2/packet188-twocard-k3-composite/native_controller.hpp"
++#include "v3_controller.hpp"
++using namespace pipeline;
++namespace p56x {const bool sleep20=false;}
++struct State{std::vector<int> history;int recurrence;};
++struct Mock{
++ bool v3=false;State s0{{},7},saved{},s1{{},11};int moved0=3,moved1=3; // moved layers' state on rank 0 (V3) / rank 1 (U)
++ bool pending0=false,ready=false;Request candidate{};int ready_position=-1,ready_output=0,boundaries=0,accepts=0;
++ uint8_t* shared;native38::Mailbox* mailbox;
++ static int mix(int state,int input){return int((int64_t(state)*17+input)%104729);}
++ Reply execute(int rank,const Request& r){double begin=native38::clock_now();int token=-1,bytes=0;
++  if(rank==0&&r.op==half){require(!pending0&&int(s0.history.size())==r.position,"mock rank0 position");require(!v3||!ready,"V3: rank-0 half before the pending boundary");
++   saved=s0;s0.history.push_back(r.token);s0.recurrence=int((int64_t(s0.recurrence)*13+r.token+r.position)%104729);pending0=true;candidate=r;
++   if(!v3){std::memcpy(shared,&s0.recurrence,4);bytes=4;}}
++  else if(rank==0&&r.op==accept){require(pending0,"mock accept");pending0=false;++accepts;
++   if(v3){require(!ready,"V3: double accept");ready=true;ready_position=candidate.position;ready_output=s0.recurrence;}}
++  else if(rank==0&&r.op==rollback){require(pending0&&candidate.speculative,"mock rollback");s0=saved;pending0=false;}
++  else if(rank==0&&r.op==v3::boundary_op){require(v3&&ready&&!pending0&&r.position==ready_position,"V3 boundary guard");
++   moved0=mix(moved0,ready_output);std::memcpy(shared,&moved0,4);bytes=4;ready=false;++boundaries;}
++  else if(rank==1&&r.op==half){int incoming=0;std::memcpy(&incoming,shared+slot_bytes,4);
++   int x=incoming;if(!v3){moved1=mix(moved1,incoming);x=moved1;}
++   s1.history.push_back(r.token);s1.recurrence=int((int64_t(s1.recurrence)*13+x+r.position)%104729);token=s1.recurrence%31;}
++  else if(rank==1&&r.op==accept){}
++  else if(rank==1&&r.op==draft){
++   struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};
++   Publication v{1,r.position+1,(r.token*7+3)%31,0,1000,r.sequence,0,0};
++   std::memcpy(shared+2*slot_bytes,&v,sizeof v);native38::publish(mailbox->draft_sequence,uint32_t(r.sequence));}
++  else if(r.op==dump)require(!pending0&&!ready,"mock dump");
++  else throw std::runtime_error("mock opcode");
++  double end=native38::clock_now();return {0,token,0,bytes,0,rank,{0,0},(end-begin)*1000,0,begin,end};
++ }
++};
++struct Outcome{native38::Result result;Mock mock;};
++Outcome run_case(native38::Config c,bool v3){
++ std::vector<uint8_t> shared(3*slot_bytes+4096);native38::Mailbox box;Mock mock;mock.v3=v3;mock.shared=shared.data();mock.mailbox=&box;std::exception_ptr error;
++ std::thread worker([&](){try{native38::worker(box,5,[&](const Request&r){return mock.execute(1,r);},[]{});}catch(...){error=std::current_exception();native38::abort(box);}});
++ native38::Backend backend(box,shared.data(),5,[&](const Request&r){return mock.execute(0,r);},[]{});
++ native38::Result result;
++ try{result=v3?native38::run_v3(backend,c):native38::run(backend,c);}catch(...){native38::abort(box);worker.join();throw;}
++ worker.join();if(error)std::rethrow_exception(error);
++ require(!mock.ready&&!mock.pending0,"controller left rank 0 unresolved");
++ return {result,mock};
++}
++int main(){try{
++ unsigned cases=0,boundaries=0,misses=0,hits=0,no_guess=0;
++ for(int count:{8,64,128})for(int overlap:{0,1}){
++  native38::Config c;c.mode=0;c.count=count;c.overlap=overlap;c.prompt={1,2,3,4,5};
++  auto reference=run_case(c,false);
++  for(int arm=0;arm<6;++arm){
++   c.mode=arm==4?3:arm==5?0:2;c.script=reference.result.tokens;c.eos.clear();
++   for(size_t i=0;i<c.script.size();++i){if(arm==1||(arm==2&&i%3==1))c.script[i]=(c.script[i]+1)%31;if(arm==3)c.script[i]=i%4==3?-1:(i%4==2?(c.script[i]+5)%31:c.script[i]);}
++   for(int eos:{0,1}){
++    if(eos){if(reference.result.tokens.size()<4)continue;c.eos={reference.result.tokens[reference.result.tokens.size()/2]};}
++    auto u=run_case(c,false),x=run_case(c,true);
++    require(u.result.tokens==x.result.tokens,"V3 target tokens differ");
++    if(!eos)require(u.result.tokens==reference.result.tokens,"U tokens differ from the reference");
++    require(u.result.guess_sequence==x.result.guess_sequence&&u.result.hits==x.result.hits&&u.result.misses==x.result.misses&&u.result.no_guess==x.result.no_guess,"proposals/acceptance changed");
++    require(u.mock.s0.history==x.mock.s0.history&&u.mock.s0.recurrence==x.mock.s0.recurrence,"rank-0 state changed");
++    require(u.mock.s1.history==x.mock.s1.history&&u.mock.s1.recurrence==x.mock.s1.recurrence,"rank-1 state changed");
++    require(u.mock.moved1==x.mock.moved0&&x.mock.moved1==3&&u.mock.moved0==3,"moved-layer state changed or moved owner");
++    require(x.mock.boundaries==x.mock.accepts&&u.mock.boundaries==0,"boundary count must equal rank-0 accepts");
++    boundaries+=x.mock.boundaries;misses+=x.result.misses;hits+=x.result.hits;no_guess+=x.result.no_guess;++cases;
++   }
++  }
++ }
++ require(hits&&misses&&no_guess,"case mix");
++ std::cout<<"{\"passed\":true,\"cases\":"<<cases<<",\"boundaries\":"<<boundaries<<",\"hits\":"<<hits<<",\"misses\":"<<misses<<",\"no_guess\":"<<no_guess<<",\"device_executed\":false}\n";
++}catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}}
