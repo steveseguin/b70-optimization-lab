@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>B70 LLM Optimization Timeline</title>
-<meta name="description" content="The B70 optimization timeline: measured changes on the lab&#x27;s Qwen and MiniMax lanes through August 2026, with the result, the gain, and a link to the raw artifact behind each row.">
+<meta name="description" content="The B70 optimization timeline: measured changes on the lab&#x27;s Qwen and MiniMax lanes from May to August 2026 (newer results are in the model catalog), with the result, the gain, and a link to the raw artifact behind each row.">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://neural.download/optimization-timeline.html">
 <meta property="og:title" content="B70 LLM Optimization Timeline">
-<meta property="og:description" content="The B70 optimization timeline: measured changes on the lab&#x27;s Qwen and MiniMax lanes through August 2026, with the result, the gain, and a link to the raw artifact behind each row.">
+<meta property="og:description" content="The B70 optimization timeline: measured changes on the lab&#x27;s Qwen and MiniMax lanes from May to August 2026 (newer results are in the model catalog), with the result, the gain, and a link to the raw artifact behind each row.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta property="og:image:secure_url" content="https://neural.download/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -28,10 +28,10 @@
 <meta name="twitter:creator" content="@xyster">
 <meta name="twitter:url" content="https://neural.download/optimization-timeline.html">
 <meta name="twitter:title" content="B70 LLM Optimization Timeline">
-<meta name="twitter:description" content="The B70 optimization timeline: measured changes on the lab&#x27;s Qwen and MiniMax lanes through August 2026, with the result, the gain, and a link to the raw artifact behind each row.">
+<meta name="twitter:description" content="The B70 optimization timeline: measured changes on the lab&#x27;s Qwen and MiniMax lanes from May to August 2026 (newer results are in the model catalog), with the result, the gain, and a link to the raw artifact behind each row.">
 <meta name="twitter:image" content="https://neural.download/og-image.png">
 <meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "name": "B70 LLM Optimization Timeline", "headline": "B70 LLM Optimization Timeline", "description": "The B70 optimization timeline: measured changes on the lab's Qwen and MiniMax lanes through August 2026, with the result, the gain, and a link to the raw artifact behind each row.", "url": "https://neural.download/optimization-timeline.html", "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download lab", "url": "https://neural.download/"}, "isAccessibleForFree": true, "dateModified": "2026-08-27"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "name": "B70 LLM Optimization Timeline", "headline": "B70 LLM Optimization Timeline", "description": "The B70 optimization timeline: measured changes on the lab's Qwen and MiniMax lanes from May to August 2026 (newer results are in the model catalog), with the result, the gain, and a link to the raw artifact behind each row.", "url": "https://neural.download/optimization-timeline.html", "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download lab", "url": "https://neural.download/"}, "isAccessibleForFree": true, "dateModified": "2026-08-27"}</script>
 <style>
     :root {
       --grid: #c9ced6;
@@ -178,6 +178,7 @@
 </nav>
 
   <h1>B70 LLM Optimization Timeline</h1>
+  <p style="max-width:1100px;padding:8px 10px;border:1px solid #c9ced6;background:#fff8e6;"><strong>Superseded &mdash; see the catalog.</strong> This history stops at the end of August 2026. Later, faster and better-checked results replaced many rows below; for current speeds use <a href="index.html#t0">All models and setups</a>.</p>
   <p>
     Spreadsheet view. Each row is a change/action that either improved speed or unlocked the
     next measurable result. Percent gains are relative to the closest comparable prior run
@@ -353,7 +354,7 @@
           <td><span class="action">Use flat fused beta/alpha GGUF, root-residual off.</span></td>
           <td class="num">50.130 tok/s</td>
           <td class="num">+1.16%</td>
-          <td>Current quality-cleared Q4 high-water mark.</td>
+          <td>Quality-cleared Q4 high-water mark as of May 7.</td>
           <td><a href="data/qwen36-q4-fused-beta-alpha-20260507.json">data</a> / <a href="patches/llama-cpp-qwen35-fused-beta-alpha-experimental-20260507.patch.gz.b64">patch</a></td>
         </tr>
 
@@ -449,9 +450,9 @@
           <td>Qwen dense</td>
           <td class="num">Aug 27</td>
           <td><span class="action">Audit dynamic-MTP promotion after the harness accepted a short output cap.</span></td>
-          <td class="num">No promoted single-user headline</td>
+          <td class="num">No promoted single-user headline as of Aug 27</td>
           <td>Corrected / pending</td>
-          <td>The 58.391 varied-prompt result used a 128-token cap and the 146.814 result used a selected high-acceptance fixture. Both were demoted to diagnostic evidence; the LocalMaxxing row is marked for withdrawal. Target-only aggregate/context results remain separately scoped.</td>
+          <td>The 58.391 varied-prompt result used a 128-token cap and the 146.814 result used a selected high-acceptance fixture. Both were demoted to diagnostic evidence; the LocalMaxxing row is marked for withdrawal. Target-only aggregate/context results remain separately scoped. Later qualified headlines: 90.31 tok/s on two cards (September 17) and 54.04 tok/s on one card (October 4); see the catalog.</td>
           <td><a href="experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md">audit</a></td>
         </tr>
 
@@ -509,7 +510,7 @@
           <td><span class="action">Allow fused RMSNorm and keep ubatch 64.</span></td>
           <td class="num">17.698 tok/s</td>
           <td class="num">+0.86%</td>
-          <td>Current GGUF/RPC MiniMax baseline; deterministic smoke matched prior output.</td>
+          <td>GGUF/RPC MiniMax baseline as of May 8; deterministic smoke matched prior output.</td>
           <td><a href="data/minimax-m27-fused-rmsnorm-sycl-20260508.json">data</a> / <a href="notes/2026-05-08-minimax-fused-rmsnorm-sycl.md">note</a></td>
         </tr>
         <tr class="minimax">
@@ -572,7 +573,7 @@
           <td><span class="action">Validate longer decode window with same best stack.</span></td>
           <td class="num">37.136 tok/s</td>
           <td>Validation</td>
-          <td>Current MiniMax high-water mark; longer output shows setup/prompt overhead was diluting short runs.</td>
+          <td>MiniMax high-water mark as of May 9; longer output shows setup/prompt overhead was diluting short runs.</td>
           <td><a href="data/minimax-m27-autoround-u4-decode-20260509.json">data</a> / <a href="data/localmaxxing-minimax-m27-autoround-u4-decode-default-ipc-p512n512-20260509.payload.json">payload</a></td>
         </tr>
 
@@ -590,7 +591,7 @@
   </div>
 
   <p class="tight">
-    Short share version: Qwen taught the B70 playbook: split carefully, keep data local,
+    Short share version (as of August 2026): Qwen taught the B70 playbook: split carefully, keep data local,
     fuse repeated work, and verify clean runtime. Qwen Q4 went from 24.2 to 50.1 tok/s;
     the broader dense-Qwen lab program went from a 15.55 tok/s one-card Q8 baseline to
     an honest 101.17 tok/s two-card AutoRound/MTP research anchor. The later

@@ -32,7 +32,7 @@
 <meta name="twitter:image" content="https://neural.download/og-image.png">
 <meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"DFlash vs MTP vs no speculation vs draft-model","description":"A plain comparison of decode acceleration methods: no speculation, MTP/nextn, DFlash, separate draft-model speculation, and ReplaySSM \u2014 what each buys and what it can cost in determinism.","url":"https://neural.download/learn/speculative-methods.html","dateModified":"2026-08-23","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"DFlash vs MTP vs no speculation vs draft-model","description":"A plain comparison of decode acceleration methods: no speculation, MTP/nextn, DFlash, separate draft-model speculation, and ReplaySSM \u2014 what each buys and what it can cost in determinism.","url":"https://neural.download/learn/speculative-methods.html","dateModified":"2026-10-22","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"DFlash vs MTP vs no speculation vs draft-model","item":"https://neural.download/learn/speculative-methods.html"}]}
@@ -57,7 +57,7 @@
   <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 06b</p>
   <p class="eyebrow">Tune for speed</p>
   <h1>DFlash vs MTP vs no speculation</h1>
-  <p>Speculative decoding has set several of this lab's per-lane records — though the current overall #1 (Ornith 1.5 35B-A3B, 131.46 tok/s on one card) uses none at all. "Speculation" is a family of methods, not one switch. This is the map: what each one is, when it wins, and the determinism cost you must watch.</p>
+  <p>Speculative decoding has set several of this lab's per-lane records. "Speculation" is a family of methods, not one switch. This is the map: what each one is, when it wins, and the determinism cost you must watch.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose">
@@ -127,16 +127,18 @@
       <tr><td>Poolside Laguna S 2.1 INT4</td><td>DFlash (depth 11)</td><td class="num">4× B70</td><td class="num">125.46</td></tr>
       <tr><td>Muse-Glimmer-30B Q8/WOQ (weight-only quantization)</td><td>pretrained DFlash</td><td class="num">4× B70</td><td class="num">100.37</td></tr>
       <tr><td>DeepSeek-V4-Flash</td><td>DSpark7 (flash draft)</td><td class="num">4× B70</td><td class="num">80.8 <span class="muted">(record-suite high; 78.3 three-suite center, research)</span></td></tr>
-      <tr><td>Qwen3.8-27B AutoRound INT4</td><td>MTP 5</td><td class="num">2× B70</td><td class="num">101.2 <span class="muted">(research)</span></td></tr>
-      <tr><td>Ornith 1.5 35B-A3B Q4_K_M</td><td>none (target-only)</td><td class="num">1× B70</td><td class="num best">131.46</td></tr>
-      <tr><td>Gemma-4-26B UD-Q8_K_XL</td><td>MTP 3</td><td class="num">1× B70</td><td class="num">123.73</td></tr>
+      <tr><td>Qwen3.8-27B AutoRound INT4</td><td>MTP 4</td><td class="num">2× B70</td><td class="num">117.53</td></tr>
+      <tr><td>Qwen3.8-27B AutoRound INT4</td><td>MTP 4</td><td class="num">1× B70</td><td class="num">81.16</td></tr>
+      <tr><td>Qwen3.8-27B official FP8</td><td>MTP 5</td><td class="num">1× B70</td><td class="num">54.04</td></tr>
+      <tr><td>Ornith 1.5 35B-A3B Q4_K_M</td><td>none (target-only)</td><td class="num">1× B70</td><td class="num">— <span class="muted">(withheld: complete answers differed between fresh servers)</span></td></tr>
+      <tr><td>Gemma-4-26B UD-Q8_K_XL</td><td>MTP 3</td><td class="num">1× B70</td><td class="num">122.16</td></tr>
     </tbody>
   </table></div>
-  <p>The pattern that <em>does</em> transfer: speculation wins <em>within a lane</em> — same model, same cards, draft on vs off — and the biggest per-lane jumps here came from a tuned <strong>DFlash</strong> draft. It does not decide the overall board: the current #1 is a target-only single-card run whose speed came from kernel work, not drafting. Speculation's ceiling also comes with the most setup and the most careful verification.</p>
+  <p>The pattern that <em>does</em> transfer: speculation wins <em>within a lane</em> — same model, same cards, draft on vs off — and the biggest per-lane jumps here came from a tuned <strong>DFlash</strong> draft. Speculation's ceiling also comes with the most setup and the most careful verification.</p>
 
   <div class="callout key">
     <span class="tag">Lossless — if you check</span>
-    <p>A correct speculative method returns exactly what plain decoding would. That's the whole appeal: speed with no quality tax. The risk is subtle — a mismatched margin, an off-by-one draft, or a runtime bug can make speculation quietly change the output. Our own highest Qwen3.8 speculative number sits in the <em>research</em> lane precisely because its run-to-run token parity isn't yet nailed down. Treat "lossless" as a claim you verify, not one you assume.</p>
+    <p>A correct speculative method returns exactly what plain decoding would. That's the whole appeal: speed with no quality tax. The risk is subtle — a mismatched margin, an off-by-one draft, or a runtime bug can make speculation quietly change the output. Our Qwen3.8 MTP numbers above count only because every test answer matched plain decoding; earlier results that could not show this stayed in the <em>research</em> lane. Treat "lossless" as a claim you verify, not one you assume.</p>
   </div>
 
   <div class="callout warn">

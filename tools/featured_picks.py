@@ -22,6 +22,11 @@ def measurement(path, keys, label='One person', scope='', digits=1, scale=250):
     value = read(path)
     for key in keys:
         value = value[key]
+    if isinstance(value, list):
+        # A fresh-server pair is shown as its center, never as the higher run.
+        if len(value) != 2 or not all(isinstance(v, (int, float)) for v in value):
+            raise ValueError(f'Expected a two-run pair: {path} {keys}')
+        value = sum(value) / 2
     if not isinstance(value, (int, float)) or value <= 0:
         raise ValueError(f'Unmeasured featured value: {path} {keys}')
     return dict(value=value, evidence=path, label=label, scope=scope,
@@ -82,10 +87,26 @@ def groups(catalog):
         'and passed two of three answer checks. Quality work remains.', research=True),
         'nemotron-35-lightning-30b-a3b-nd9fee29e-16k-p4')
     int4 = use_profile(pick('qwen38-27b-autoround-int4-b70', 'Qwen3.8 27B AutoRound INT4',
-        'Qualified package · one-card speed check',
+        'Qualified package · one or two cards',
         'A dense 27B chat and coding option. The package has exact-output gates; this one-card '
         'October test also repeated identically alone and with four users.'),
         'qwen38-27b-int4-fixed-k-one-gpu-p4')
+    # The package manifest records two cards, and its guide also measures one card
+    # (R304 TP1) on the same 12-prompt suite. Show both qualified numbers; keep the
+    # October one-card check only for the many-user and prompt-reading bars.
+    int4_path = 'experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json'
+    int4_record = pkgs['qwen38-27b-autoround-int4-b70']['library']['featured_metric']
+    assert int4_record['evidence'] == int4_path
+    int4['cards_label'] = '1–2 cards'
+    int4['metrics'] = [
+        measurement(int4_path, ['R304_tp1_depth4_v0290_rebase_full', 'rates'],
+                    label='One person · 1 card', scope='qualified; two runs 81.17 / 81.16', digits=2),
+        dict(value=int4_record['value'], evidence=int4_path, label='One person · 2 cards',
+             scope='qualified package record; MTP depth 4', digits=2, scale=250, unit='tok/s'),
+    ] + [dict(m, label=m['label'] + ' · 1 card') for m in int4['metrics'] if m['label'] != 'One person']
+    int4['note'] = ('One-person bars: fixed 12-prompt suite, 512-token cap; every answer matched plain decoding. '
+                    'The 4-people and prompt-reading bars come from a separate October 10 one-card check '
+                    '(300-token prompt, 256 output tokens). Clean-host replay pending.')
     fp8 = use_profile(pick('qwen38-27b-fp8-vllm-tp1-b70', 'Qwen3.8 27B FP8',
         'Qualified lossless package · one-card speed check',
         'Choose this 27B setup for official FP8 weights and full 16-bit KV. Target-verified drafting '
@@ -129,6 +150,11 @@ def groups(catalog):
         'The Q8 weights alone exceed one B70’s memory. This measured four-card setup uses '
         'a BF16 DFlash assistant; it is not a one-card recipe.')
     muse['note'] = 'Mean across two fresh three-prompt runs, 256 output tokens; not the full varied-suite median. Clean-host certification pending.'
+    lfm24 = pick('lfm25-24b-a2b-q8-b70', 'LFM2.5 24B-A2B Q8',
+        'Exact-output package · one card',
+        'Liquid AI’s 24B mixture-of-experts model, with about 2B parameters active per token, in 8-bit form. '
+        'Every answer matched llama.cpp’s plain SYCL path on both fresh servers.')
+    lfm24['note'] = 'Median of two fresh servers, 12-prompt suite, 512-token cap; one user, F16 KV. Clean-host replay pending.'
     deepseek = dict(id='deepseek-v4-research', name='DeepSeek V4 Flash · 180B research', cards=4,
         detail='models/deepseek-v4.html', guide='repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md',
         setup='Community-trimmed FP8 / FP4 experts · FP8 KV · vLLM XPU',
@@ -182,16 +208,17 @@ def groups(catalog):
                   'The 2× comparison uses an 800.8 s/clip ledger-recorded baseline, raw receipts not retained. '
                   'Measured on turin: two B70 cards, 15 GiB RAM. Baseline raw receipts, clean runtime build, independent full-suite repeat, portable path/stop qualification and public release evidence remain incomplete.')
     # One editorial role per featured setup; scores never clear quality gates.
-    featured = [int4, gemma, fp8, laguna, shared, flash, video, h3]
-    roles = ['Everyday assistant', 'Fast single-user replies on one card',
-             'Longer documents with official FP8 weights', 'Dedicated coding setup',
-             'Many people at once', 'Larger model for demanding tasks',
-             'Continuing video with audio', 'Independent video clips with audio on two cards']
+    # Owner rule (B70 audience): one-card picks first, then multi-card flagships, then video.
+    featured = [int4, fp8, gemma, flash, laguna, shared, h3, video]
+    roles = ['Everyday assistant', 'Longer documents with official FP8 weights',
+             'Fast single-user replies on one card', 'Larger model for demanding tasks',
+             'Dedicated coding setup', 'Many people at once',
+             'Independent video clips with audio on two cards', 'Continuing video with audio']
     for p, role in zip(featured, roles):
         p['role'] = role
-    int4['why'] = ('Start here for everyday chat and code on one card. A recent dense 27B model '
+    int4['why'] = ('Start here for everyday chat and code, on one card or two. A recent dense 27B model '
                    'from the widely used Qwen family, with an optimized INT4 recipe. '
-                   'The one-card speed check repeated identically alone and with four users.')
+                   'On both card counts every test answer matched plain decoding.')
     gemma['why'] = ('Our fast one-card pick among the larger, quality-gated packages: '
                    '26B total parameters, about 4B active, and 8-bit weights. '
                    'Its cold-suite record uses target-verified drafting; the table below uses a different, no-draft setup.')
@@ -208,7 +235,7 @@ def groups(catalog):
                     'its capability standing comes from publisher evaluations, not our speed test.')
     return [('task-picks', 'Pick the job you want to do', featured),
             ('other-picks', 'Other models and research options',
-             [minimax, muse, ornith, nemotron, deepseek] + small[:3]),
+             [minimax, muse, lfm24, ornith, nemotron, deepseek] + small[:3]),
             ('small-quick', 'Small and quick · under 9B', small[3:])]
 
 
@@ -227,14 +254,14 @@ def render_pick(pick, rank):
     if pick.get('observation'):
         label, evidence = pick['observation']
         metrics.append(f'<p class="pick-note"><a href="{GITHUB}{esc(evidence)}">{esc(label)}</a></p>')
-    if not any(m['label'] == 'Reads a prompt' for m in pick['metrics']) and pick['id'] not in {'ltx25-continuation-stream-b70-145f-20261010', 'minimax-h3-pruned-bf16-tp2-b70-20261004'}:
+    if not any(m['label'].startswith('Reads a prompt') for m in pick['metrics']) and pick['id'] not in {'ltx25-continuation-stream-b70-145f-20261010', 'minimax-h3-pruned-bf16-tp2-b70-20261004'}:
         metrics.append('<p class="pick-note">Prompt reading: not measured for this exact result.</p>')
     metrics.append(f'<p class="pick-note">{esc(pick["note"])}</p>')
     return f'''      <li class="pick-row{research}" data-pick-id="{esc(pick['id'])}">
         <div class="pick-head"><span class="pick-rank">{rank}</span><div>
           <p class="eyebrow">{esc(pick.get('role', 'Alternative setup'))}</p>
           <p class="eyebrow{research}">{esc(pick['status'])}</p>
-          <h3><a href="{esc(pick['detail'])}">{esc(pick['name'])}</a> <span class="card-chip">{pick['cards']} card{'s' if pick['cards'] != 1 else ''}</span><small>{esc(pick['setup'])}</small></h3>
+          <h3><a href="{esc(pick['detail'])}">{esc(pick['name'])}</a> <span class="card-chip">{esc(pick.get('cards_label') or str(pick['cards']) + (' cards' if pick['cards'] != 1 else ' card'))}</span><small>{esc(pick['setup'])}</small></h3>
           <p class="pick-why">{esc(pick['why'])}</p>
         </div></div>
         <div class="pick-bars">{''.join(metrics)}</div>
@@ -242,12 +269,22 @@ def render_pick(pick, rank):
       </li>'''
 
 
+def host_ram_gib(catalog, package_id):
+    """Host RAM floor from the package manifest, in GiB (no rounding up or down)."""
+    package = next(p for p in catalog['packages'] if p['id'] == package_id)
+    value = package['hardware']['host_ram_min_bytes'] / 2**30
+    if value != int(value):
+        raise ValueError(f'Host RAM floor is not a whole GiB: {package_id}')
+    return int(value)
+
+
 def render(catalog):
+    ram = host_ram_gib(catalog, 'qwen38-flash-next-iq3xxs-ownrt-tp2-b70')
     out = [START, '''<section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
-    <p class="research-links native-result-link"><span class="status research">Lab result</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next on two B70s: 58.56–58.63 tok/s</a><span>Full-output quality checks pending.</span></p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B INT4 for everyday work, Qwen 27B FP8 for longer documents, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Flash-Next for demanding tasks, Laguna for code, LTX for video.</p>
+    <p class="research-links native-result-link"><span class="status research">Lab result</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next on two B70s: 58.56–58.63 tok/s</a><span>Needs ''' + str(ram) + ''' GiB host RAM. Full-output quality checks pending.</span></p>
     <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>''']
     for group_id, title, picks in groups(catalog):

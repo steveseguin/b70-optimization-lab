@@ -94,6 +94,8 @@
   .metric { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding: 11px 12px; border: 2px solid var(--ink); }
   .metric strong { font: 900 24px/1.15 var(--display); }
   .metric span { color: var(--muted); font-size: 11px; }
+  .metric.pending { grid-template-columns: 1fr; gap: 4px; }
+  .metric.pending strong { font-size: 17px; }
   .performance { margin-top: 12px; padding: 0; border: 1px solid var(--ink); background: var(--surface); }
   .performance summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; list-style-position: inside; }
   .performance summary span { color: var(--muted); font-weight: 400; text-transform: none; }
@@ -178,7 +180,7 @@
 
 <main id="main"><div class="wrap">
   <div class="library-intro">
-    <div><h2>Recipes</h2><p class="sub">Each card is a different setup. Speeds apply to that setup's tests, not every task. Recipes marked “Needs testing” are not yet fully validated.</p></div>
+    <div><h2>Recipes</h2><p class="sub">Each card is a different setup. Speeds apply to that setup's tests, not every task. Recipes marked “Expert recipe” work in the lab but have not yet been tested on a fresh PC; follow each guide carefully.</p></div>
     <div class="summary" id="catalog-summary">Loading catalog…</div>
   </div>
 
@@ -188,7 +190,7 @@
     <label>Quantization<select id="quant" name="quant"><option value="">Any</option></select></label>
     <label>Operating system<select id="os" name="os"><option value="">Any</option></select></label>
     <label>Delivery<select id="delivery" name="delivery"><option value="">Any</option></select></label>
-    <label>Status<select id="status" name="status"><option value="">Any</option><option value="starter">Starter</option><option value="candidate">Needs testing</option><option value="preview">Preview</option></select></label>
+    <label>Status<select id="status" name="status"><option value="">Any</option><option value="candidate">Expert recipe</option></select></label>
     <label>Sort<select id="sort" name="sort"><option value="newest">Newest</option><option value="name">Model name</option><option value="speed">Measured rate</option><option value="cards">Fewest cards</option></select></label>
   </form>
   <div class="filter-footer"><span id="result-count" aria-live="polite">Loading packages…</span><button class="reset" type="button" id="reset">Clear filters</button></div>
@@ -267,7 +269,10 @@
     const size = lib.variant.match(/\b\d+(?:\.\d+)?B(?:[- ]A\d+(?:\.\d+)?B)?\b/i)?.[0];
     const uses = {general: "Everyday chat", chat: "Everyday chat", coding: "Coding", "long-context": "Long documents", vision: "Images", "structured-output": "Structured writing"};
     const summary = [...new Set(lib.use_cases.map(value => uses[value]).filter(Boolean))].slice(0, 3).join(" · ");
-    const statusLabel = {starter: "Starter", candidate: "Needs testing", preview: "Preview"}[item.status] || item.status;
+    const statusLabel = {starter: "Starter", candidate: "Expert recipe", preview: "Preview"}[item.status] || item.status;
+    const statusTip = item.status === "candidate"
+      ? (item.clean_host_tested ? "Expert recipe: tested on a fresh PC. Follow the guide carefully." : "Expert recipe: works in the lab, not yet tested on a fresh PC. Follow the guide carefully.")
+      : statusLabel;
     const people = item.contributors.map(person => `<a href="${escapeHtml(person.profile)}"><strong>${escapeHtml(person.name)}</strong></a> · ${escapeHtml(person.contribution)}`).join("<br>");
     const facts = [
       `${item.hardware.cards}× B70`, lib.quantization, lib.runtime_label,
@@ -278,12 +283,12 @@
     const readme = packageReadme(item);
     const title = `[result] ${lib.model_family} ${lib.variant} ${lib.quantization} ${item.hardware.cards}xB70`;
     return `<article class="package" data-id="${escapeHtml(item.id)}">
-      <div class="package-head"><div><h3>${escapeHtml(lib.model_family)}</h3><p class="variant">${escapeHtml([size, lib.publisher].filter(Boolean).join(" · "))}</p></div><span class="status ${escapeHtml(item.status)}">${escapeHtml(statusLabel)}</span></div>
+      <div class="package-head"><div><h3>${escapeHtml(lib.model_family)}</h3><p class="variant">${escapeHtml([size, lib.publisher].filter(Boolean).join(" · "))}</p></div><span class="status ${escapeHtml(item.status)}" title="${escapeHtml(statusTip)}">${escapeHtml(statusLabel)}</span></div>
       <div class="package-body">${summary ? `<p class="package-summary">${escapeHtml(summary)}</p>` : ""}
       <div class="facts">${facts.map(value => `<span class="fact">${escapeHtml(value)}</span>`).join("")}</div>
-      <div class="metric">${metric
+      <div class="metric${metric ? "" : " pending"}">${metric
         ? `<strong>${escapeHtml(Number(metric.value).toFixed(metric.value >= 100 ? 2 : 3))} ${escapeHtml(metric.unit)}</strong><span>Measured generation speed. Test conditions below.</span>`
-        : `<strong>Benchmark pending</strong><span>No qualified speed published yet.</span>`}</div>
+        : `<strong>No headline speed yet</strong><span>${escapeHtml(lib.benchmark_status || "No qualified speed published yet.")}</span>`}</div>
       ${item.missing.length ? `<p class="testing-note">${item.missing.length} validation check${item.missing.length === 1 ? "" : "s"} still open. See limitations below.</p>` : ""}
       ${performanceBlock(item)}
       <details class="technical"><summary>Test details, limitations &amp; credits</summary>

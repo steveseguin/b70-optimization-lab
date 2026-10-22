@@ -37,7 +37,15 @@ class HumanPages(unittest.TestCase):
         self.assertEqual(len(featured), 8)
         self.assertEqual(len({p['role'] for p in featured}), 8)
         self.assertIn('27B AutoRound', featured[0]['name'])
-        self.assertEqual([p['cards'] for p in featured], [1, 1, 1, 4, 2, 4, 4, 2])
+        # One-card picks first, then multi-card flagships, then video (owner rule).
+        self.assertEqual([p['cards'] for p in featured], [1, 1, 1, 4, 4, 2, 2, 4])
+        int4 = featured[0]
+        self.assertEqual(int4['cards_label'], '1–2 cards')
+        self.assertEqual([m['label'] for m in int4['metrics'][:2]],
+                         ['One person · 1 card', 'One person · 2 cards'])
+        self.assertAlmostEqual(int4['metrics'][0]['value'], (81.16573518803 + 81.160391328031) / 2)
+        self.assertAlmostEqual(int4['metrics'][1]['value'], 117.5280834152335)
+        self.assertIn('lfm25-24b-a2b-q8-b70', [p['id'] for p in sections[1][2]])
         flash = next(p for p in featured if 'Flash-Next' in p['name'])
         shared = next(p for p in featured if 'shared chat' in p['name'])
         self.assertAlmostEqual(flash['metrics'][0]['value'], 46.85424994838007)
@@ -53,6 +61,8 @@ class HumanPages(unittest.TestCase):
         self.assertIn('Neither proves sustained 24/7 uptime', output)
         self.assertIn('0.875 seconds elapsed per second of video', output)
         self.assertIn('LFM2.5 2.6B', output)
+        self.assertIn('Needs 128 GiB host RAM.', output)
+        self.assertIn('<span class="card-chip">1–2 cards</span>', output)
         self.assertIn('396.6 seconds per clip (eight-clip batch average)', output)
         self.assertIn('ledger-recorded baseline, raw receipts not retained', output)
         h3 = next(p for p in featured if p['id'].startswith('minimax-h3-'))

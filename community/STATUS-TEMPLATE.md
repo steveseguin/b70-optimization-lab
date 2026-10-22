@@ -31,7 +31,7 @@ it. Do not restate it as a lab finding.
 
 Fill from the submission. Missing entries are what to ask for first; the
 required list is in
-[`docs/contribution-verification.md`](../../docs/contribution-verification.md).
+[`docs/contribution-verification.md`](https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/contribution-verification.md).
 
 | Field | Value |
 | --- | --- |

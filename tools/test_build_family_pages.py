@@ -1994,7 +1994,8 @@ class FamilyCoverageTest(unittest.TestCase):
             ]
         )
         self.assertEqual(len(control["points"]), 7)
-        self.assertEqual(family["primary_packet_id"], "qwen38-27b-256k-vision-mtp-b70")
+        # The family button opens the featured INT4 package the page leads with.
+        self.assertEqual(family["primary_packet_id"], "qwen38-27b-autoround-int4-b70")
 
         result = json.loads(
             (

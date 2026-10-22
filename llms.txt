@@ -2,7 +2,7 @@
 
 > Community lab notebook for fast, reproducible local LLM inference on Intel Arc Pro B-series GPUs (B50/B60/B65/B70). Exact software pins, kernel patches, speculative-decoding lanes, and benchmark evidence. Every performance claim carries an evidence label: B70-verified (reproduced in the reference lab), B70-tested (patch validated on B70), or community-reported (contributor hardware). Source of truth for all claims is the GitHub repository, not this summary.
 
-The human landing page is https://neural.download/ (index.html), and the searchable deployment library is https://neural.download/guides.html. Markdown, JSON, and text assets are also served directly and are safe to fetch programmatically. Model weights, secrets, and raw benchmark trees are deliberately NOT published.
+The human landing page is https://neural.download/ (index.html), and the searchable deployment library is https://neural.download/guides.html. Markdown, JSON, and text assets are also served directly and are safe to fetch programmatically. Model weights, secrets, and the full raw benchmark trees are deliberately NOT published; the linked evidence files behind each published number (for example under experiments/ and data/) are published.
 
 ## Start Here (agents)
 
@@ -35,7 +35,7 @@ The human landing page is https://neural.download/ (index.html), and the searcha
 - [Results index](https://neural.download/results/README.md): promoted model packets and promotion criteria
 - [Optimization timeline](https://neural.download/optimization-timeline.html): HTML table of how each lane got fast
 - [Own runtime](https://neural.download/own-runtime.html): the lab's custom SYCL/Xe engine for Qwen3.8 Flash-Next — measured state with caps labeled, exactness discipline, honest non-goals
-- [Qwen3.8 FP8 two-B70 candidate package](https://neural.download/packages/qwen38-27b-fp8-tp2-b70/README.md): strict varied-prompt single-user headline pending after the 128-cap/selected-fixture audit; digest-pinned container, exact patches, direct verification, and separately scoped target-only aggregate/context evidence
+- [Qwen3.8 FP8 two-B70 candidate package](https://neural.download/packages/qwen38-27b-fp8-tp2-b70/README.md): single-user headline 90.31 tok/s since the September 17 record (median of two fresh servers, MTP depth 5, 12/12 outputs identical to no-MTP decoding; a later public-source replay on another lab host measured 46.0 tok/s); 875 tok/s combined for 64 users in the multi-user profile; digest-pinned container, exact patches, direct verification
 - [Qwen3.8 Q4_K_M one-B70 candidate package](https://neural.download/packages/qwen38-27b-q4km-tp1-b70/README.md): our exact patched llama.cpp/SYCL stack, direct-verified model, and exact-output validation gate
 - [Qwen3.8 Q4_K_M two-B70 candidate package](https://neural.download/packages/qwen38-27b-q4km-tp2-asrock-b70/README.md): exact 49.717503 tok/s lab replay, TTFT, direct model verification, and explicit remaining clean-host gates
 - [Qwen3.8 Q8_0 two-B70 candidate package](https://neural.download/packages/qwen38-27b-q8-tp2-b70/README.md): quality-conservative target-only TP2 service, scoped contributor credit, and exact project patch chain
@@ -66,6 +66,17 @@ The human landing page is https://neural.download/ (index.html), and the searcha
 - [Learn index](https://neural.download/learn.html)
 - [Models](https://neural.download/learn/models.html) · [Quantization and speed](https://neural.download/learn/quantization-and-speed.html) · [KV cache precision](https://neural.download/learn/kv-cache-precision.html) · [Context length](https://neural.download/learn/context-length.html) · [Prefill vs clock rate](https://neural.download/learn/prefill-vs-clockrate.html) · [MTP ladder](https://neural.download/learn/mtp-ladder.html) · [Speculative methods](https://neural.download/learn/speculative-methods.html) · [Runtimes](https://neural.download/learn/runtimes.html) · [Hardware](https://neural.download/learn/hardware.html) · [B70 ECC and usable VRAM](https://neural.download/learn/b70-ecc-and-vram.html) · [Host tuning](https://neural.download/learn/host-tuning.html) · [Host stability](https://neural.download/learn/host-stability.html)
 
+## Featured picks (what to run on 32 GB B70 cards, in site order)
+
+- [Qwen3.8 27B AutoRound INT4 on one or two B70s](https://neural.download/models/qwen38-27b-autoround-int4-b70.html): everyday assistant; qualified 81.16 tok/s on one card and 117.53 tok/s on two (one user, 12-prompt suite, outputs identical to plain decoding)
+- [Qwen3.8 27B official FP8 on one B70](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html): longer documents; 54.04 tok/s with full 16-bit KV, outputs identical to no-MTP decoding
+- [Gemma 4 26B A4B Q8 on one B70](https://neural.download/models/gemma4-26b-a4b-q8-b70-125tps-20260701.html): fast single-user replies; 122.16 tok/s with a target-verified MTP draft
+- [Qwen3.8 Flash-Next FP8 on four B70s](https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html): larger model for demanding tasks; certified lossless 46.85 tok/s, target-verified MTP1, BF16 KV
+- [Laguna S 2.1 INT4 on four B70s](https://neural.download/models/laguna-s-2.1-int4-b70-125tps-20260731.html): dedicated coding; 125.46 tok/s record with a target-verified DFlash draft
+- [Qwen3.8 27B official FP8 on two B70s](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html): many people at once; 875 tok/s combined for 64 users with answers identical to the one-user answers
+- [MiniMax-H3 video with audio on two B70s](https://neural.download/models/minimax-h3-pruned-bf16-tp2-b70-20261004.html): independent video clips; 396.6 seconds per clip in one eight-clip batch, Comfy-Org pruned BF16 denoiser (owner-approved)
+- [LTX 2.5 continuous video on four B70s](https://neural.download/models/ltx25-continuation-stream-b70-145f-20261010.html): continuing video stream; scoped timing only, sustained speed and seam/audio acceptance pending
+
 ## Model family coverage and deployment pages
 
 - [Models index](https://neural.download/models/): family-first coverage plus individual deployment packets; measured speed, proof, exact pins/patches, and labeled projections stay distinct.
@@ -78,9 +89,17 @@ The human landing page is https://neural.download/ (index.html), and the searcha
 - [Ornith 1.5 family coverage](https://neural.download/models/ornith-1-5.html) · [manifest](https://neural.download/families/ornith-1-5.json)
 - [Qwen 27B family coverage](https://neural.download/models/qwen-27b.html): Qwen3.6 and Qwen3.8 lineage, TP/MTP decisions, context curves, decode/prefill/TTFT, recipes, closures, and explicit gaps.
 - [Qwen 27B family manifest](https://neural.download/families/qwen-27b.json): machine-readable revisions, variants, measured slices, coverage states, and evidence links.
+- [Qwen3.8 Flash-Next family coverage](https://neural.download/models/qwen-flash-next.html) · [manifest](https://neural.download/families/qwen-flash-next.json)
+- [LTX 2.5 family coverage](https://neural.download/models/ltx-25.html) · [manifest](https://neural.download/families/ltx-25.json)
+- [MiniMax-H3 family coverage](https://neural.download/models/minimax-h3.html) · [manifest](https://neural.download/families/minimax-h3.json)
+- [LFM2.5 24B A2B family coverage](https://neural.download/models/lfm-2-5-24b-a2b.html) · [manifest](https://neural.download/families/lfm-2-5-24b-a2b.json)
+- [DeepSeek V4 family coverage](https://neural.download/models/deepseek-v4.html) · [manifest](https://neural.download/families/deepseek-v4.json)
+- [Qwen3.5 9B family coverage](https://neural.download/models/qwen-9b.html) · [manifest](https://neural.download/families/qwen-9b.json)
+- [Qwen3.5 4B family coverage](https://neural.download/models/qwen-4b.html) · [manifest](https://neural.download/families/qwen-4b.json)
 - [Gemma 4 26B A4B UD-Q8_K_XL on one Intel Arc Pro B70](https://neural.download/models/gemma4-26b-a4b-q8-b70-125tps-20260701.html)
 - [Laguna S 2.1 INT4 with DFlash on four Intel Arc Pro B70 cards](https://neural.download/models/laguna-s-2.1-int4-b70-125tps-20260731.html)
 - [LFM2.5 2.6B Q8_0 on one Intel Arc Pro B70](https://neural.download/models/lfm25-26b-q8-b70.html)
+- [LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70](https://neural.download/models/lfm25-24b-a2b-q8-b70.html): 137.62 tok/s, every token identical to llama.cpp's plain SYCL path
 - [MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards](https://neural.download/models/minimax-m27-b70-89tps-20260520.html)
 - [Muse-Glimmer 30B Q8/WOQ with DFlash on four Intel Arc Pro B70 cards](https://neural.download/models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html)
 - [Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M on one Intel Arc Pro B70](https://neural.download/models/nemotron-35-lightning-30b-a3b-b70.html)
@@ -91,6 +110,8 @@ The human landing page is https://neural.download/ (index.html), and the searcha
 - [Qwen3.8 27B Q4_K_M on one Intel Arc Pro B70](https://neural.download/models/qwen38-27b-q4km-tp1-b70.html)
 - [Qwen3.8 27B Q4_K_M on two Intel Arc Pro B70 cards](https://neural.download/models/qwen38-27b-q4km-tp2-asrock-b70.html)
 - [Qwen3.8 27B Q8_0 target-only on two Intel Arc Pro B70 cards](https://neural.download/models/qwen38-27b-q8-tp2-asrock-b70.html)
+- [Qwen3.8 Flash-Next UD-IQ3_XXS, own runtime, one B70](https://neural.download/models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html): lab result 31.51–31.78 tok/s, target-only; needs 128 GiB host RAM; full-output quality pending
+- [Qwen3.8 Flash-Next UD-IQ3_XXS, own runtime, two B70s](https://neural.download/models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html): lab result 58.56–58.63 tok/s, target-verified MTP; needs 128 GiB host RAM; full-output quality pending
 
 ## Projections vs measurements
 

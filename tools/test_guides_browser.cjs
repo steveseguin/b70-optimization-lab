@@ -69,7 +69,9 @@ test('null and absent metrics show escaped pending status, not fabricated speeds
   const page = await load(data);
   assert.equal(page.errors.length, 0);
   assert.equal(ids(page).length, 2);
-  assert.equal((page.elements['package-grid'].innerHTML.match(/Benchmark pending/g) || []).length, 2);
+  assert.equal((page.elements['package-grid'].innerHTML.match(/No headline speed yet/g) || []).length, 2);
+  // The pending slot carries the package's own testing status, escaped.
+  assert.match(page.elements['package-grid'].innerHTML, /<div class="metric pending"><strong>No headline speed yet<\/strong><span>&lt;script&gt;bad/);
   assert.match(page.elements['package-grid'].innerHTML, /&lt;script&gt;bad&lt;\/script&gt;/);
   page.elements.sort.value = 'speed';
   assert.doesNotThrow(() => page.elements.sort.events.change());
@@ -99,7 +101,9 @@ test('cards keep evidence intact but collapsed, with short everyday summaries', 
     for (const limitation of item.missing) assert.ok(card.includes(escape(limitation)));
     assert.ok(visible.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').length < 700, item.id);
     assert.match(visible, /View setup/);
-    if (item.status === 'candidate') assert.match(visible, /Needs testing/);
+    if (item.status === 'candidate') assert.match(visible, /Expert recipe/);
+    if (!item.library.featured_metric && item.library.benchmark_status)
+      assert.ok(visible.includes(escape(item.library.benchmark_status)), item.id);
   }
 });
 

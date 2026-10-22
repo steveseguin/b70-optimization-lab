@@ -324,6 +324,9 @@ Style genome (duotone-hixffp):
   details.all-models[open] > summary h2::before { content: "\2212"; }
   details.all-models > summary .all-hint { display: block; color: var(--muted); font-size: 13px; }
   details.all-models[open] > summary { margin-bottom: 14px; }
+  details.small-models { margin-top: 18px; }
+  details.small-models > summary { cursor: pointer; padding: 10px 0; font-weight: 700; }
+  details.small-models > summary .all-hint { display: block; color: var(--muted); font-size: 13px; font-weight: 400; }
   @media (max-width: 1020px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 720px) { .feat-grid { grid-template-columns: 1fr; } }
 
@@ -520,8 +523,8 @@ Style genome (duotone-hixffp):
 <section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> Qwen 27B for everyday work, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Laguna for code, Flash-Next for demanding tasks, LTX for video.</p>
-    <p class="research-links native-result-link"><span class="status research">Lab result</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next on two B70s: 58.56–58.63 tok/s</a><span>Full-output quality checks pending.</span></p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B INT4 for everyday work, Qwen 27B FP8 for longer documents, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Flash-Next for demanding tasks, Laguna for code, LTX for video.</p>
+    <p class="research-links native-result-link"><span class="status research">Lab result</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next on two B70s: 58.56–58.63 tok/s</a><span>Needs 128 GiB host RAM. Full-output quality checks pending.</span></p>
     <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>
 <h3 id="task-picks">Pick the job you want to do</h3>
@@ -529,25 +532,15 @@ Style genome (duotone-hixffp):
       <li class="pick-row" data-pick-id="qwen38-27b-autoround-int4-b70">
         <div class="pick-head"><span class="pick-rank">1</span><div>
           <p class="eyebrow">Everyday assistant</p>
-          <p class="eyebrow">Qualified package · one-card speed check</p>
-          <h3><a href="models/qwen38-27b-autoround-int4-b70.html">Qwen3.8 27B AutoRound INT4</a> <span class="card-chip">1 card</span><small>AutoRound INT4 W4A16 (group 128, symmetric) · vLLM XPU</small></h3>
-          <p class="pick-why">Start here for everyday chat and code on one card. A recent dense 27B model from the widely used Qwen family, with an optimized INT4 recipe. The one-card speed check repeated identically alone and with four users.</p>
+          <p class="eyebrow">Qualified package · one or two cards</p>
+          <h3><a href="models/qwen38-27b-autoround-int4-b70.html">Qwen3.8 27B AutoRound INT4</a> <span class="card-chip">1–2 cards</span><small>AutoRound INT4 W4A16 (group 128, symmetric) · vLLM XPU</small></h3>
+          <p class="pick-why">Start here for everyday chat and code, on one card or two. A recent dense 27B model from the widely used Qwen family, with an optimized INT4 recipe. On both card counts every test answer matched plain decoding.</p>
         </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:36.88%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">92.2 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">4 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:20.20%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">283 tok/s</a><small>combined, October 10</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:27.74%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">1,165 tok/s</a><small>2,094 input tokens / first-token wait</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person · 1 card</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:32.47%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json">81.16 tok/s</a><small>qualified; two runs 81.17 / 81.16</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">One person · 2 cards</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:47.01%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json">117.53 tok/s</a><small>qualified package record; MTP depth 4</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">4 people · 1 card</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:20.20%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">283 tok/s</a><small>combined, October 10</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt · 1 card</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:27.74%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-int4-fixed-k-one-gpu-p4.json">1,165 tok/s</a><small>2,094 input tokens / first-token wait</small></span></div><p class="pick-note">One-person bars: fixed 12-prompt suite, 512-token cap; every answer matched plain decoding. The 4-people and prompt-reading bars come from a separate October 10 one-card check (300-token prompt, 256 output tokens). Clean-host replay pending.</p></div>
         <div class="pick-links"><a class="button" href="models/qwen38-27b-autoround-int4-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">Setup guide and quality status</a></div>
       </li>
-      <li class="pick-row" data-pick-id="gemma4-26b-a4b-q8-b70-125tps-20260701">
-        <div class="pick-head"><span class="pick-rank">2</span><div>
-          <p class="eyebrow">Fast single-user replies on one card</p>
-          <p class="eyebrow">Lab record · target-verified draft</p>
-          <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B-A4B Q8</a> <span class="card-chip">1 card</span><small>UD-Q8_K_XL + Q4_0 MTP · llama.cpp SYCL</small></h3>
-          <p class="pick-why">Our fast one-card pick among the larger, quality-gated packages: 26B total parameters, about 4B active, and 8-bit weights. Its cold-suite record uses target-verified drafting; the table below uses a different, no-draft setup.</p>
-        </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:48.86%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json">122.16 tok/s</a><small>decode (MTP-assisted)</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Cold 12-prompt record, 512-token cap, MTP depth 3. Historical binary/draft pins and clean-host replay remain incomplete.</p></div>
-        <div class="pick-links"><a class="button" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md">Setup guide and quality status</a></div>
-      </li>
       <li class="pick-row" data-pick-id="qwen38-27b-fp8-vllm-tp1-b70">
-        <div class="pick-head"><span class="pick-rank">3</span><div>
+        <div class="pick-head"><span class="pick-rank">2</span><div>
           <p class="eyebrow">Longer documents with official FP8 weights</p>
           <p class="eyebrow">Qualified lossless package · one-card speed check</p>
           <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8 27B FP8</a> <span class="card-chip">1 card</span><small>FP8 · vLLM XPU</small></h3>
@@ -556,8 +549,28 @@ Style genome (duotone-hixffp):
         <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:21.84%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-fp8-tp1-b70-recommended-p1.json">54.6 tok/s</a><small>October 10 speed check</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:44.55%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/profiles/2026-10-10/qwen38-27b-fp8-tp1-b70-recommended-p1.json">1,871 tok/s</a><small>2,094 input tokens / first-token wait</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">After a long prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:24.93%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-context-summary.json">62.33 tok/s</a><small>16,384 input tokens; separate context test</small></span></div><p class="pick-note">October 10 speed check: 300-token prompt, 256 output tokens; reading speed is input tokens divided by time to first token. Separate from package certification; clean-host replay pending.</p></div>
         <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-fp8-vllm-tp1-b70/README.md">Setup guide and quality status</a></div>
       </li>
-      <li class="pick-row" data-pick-id="laguna-s-2.1-int4-b70-125tps-20260731">
+      <li class="pick-row" data-pick-id="gemma4-26b-a4b-q8-b70-125tps-20260701">
+        <div class="pick-head"><span class="pick-rank">3</span><div>
+          <p class="eyebrow">Fast single-user replies on one card</p>
+          <p class="eyebrow">Lab record · target-verified draft</p>
+          <h3><a href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Gemma 4 26B-A4B Q8</a> <span class="card-chip">1 card</span><small>UD-Q8_K_XL + Q4_0 MTP · llama.cpp SYCL</small></h3>
+          <p class="pick-why">Our fast one-card pick among the larger, quality-gated packages: 26B total parameters, about 4B active, and 8-bit weights. Its cold-suite record uses target-verified drafting; the table below uses a different, no-draft setup.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:48.86%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json">122.16 tok/s</a><small>decode (MTP-assisted)</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Cold 12-prompt record, 512-token cap, MTP depth 3. Historical binary/draft pins and clean-host replay remain incomplete.</p></div>
+        <div class="pick-links"><a class="button" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row" data-pick-id="qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913">
         <div class="pick-head"><span class="pick-rank">4</span><div>
+          <p class="eyebrow">Larger model for demanding tasks</p>
+          <p class="eyebrow">Certified lossless result · four cards</p>
+          <h3><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Qwen3.8 Flash-Next 125B-A6B</a> <span class="card-chip">4 cards</span><small>FP8 block-128 weights / BF16 KV · vLLM XPU</small></h3>
+          <p class="pick-why">For four-card owners who want a larger model for demanding reasoning and agent tasks. The recent 125B-A6B Qwen has a certified lossless result here; its capability standing comes from publisher evaluations, not our speed test.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:18.74%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json">46.854250 tok/s</a><small>class-balanced decode median</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Cold realistic suite; one user, full BF16 KV. Certified result; expert lab replay, portable installer still incomplete.</p></div>
+        <div class="pick-links"><a class="button" href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row" data-pick-id="laguna-s-2.1-int4-b70-125tps-20260731">
+        <div class="pick-head"><span class="pick-rank">5</span><div>
           <p class="eyebrow">Dedicated coding setup</p>
           <p class="eyebrow">Quality-checked lab record · four cards</p>
           <h3><a href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Laguna S 2.1 INT4</a> <span class="card-chip">4 cards</span><small>INT4 / BF16 KV · vLLM XPU</small></h3>
@@ -567,7 +580,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="qwen38-27b-fp8-vllm-tp2-asrock-b70">
-        <div class="pick-head"><span class="pick-rank">5</span><div>
+        <div class="pick-head"><span class="pick-rank">6</span><div>
           <p class="eyebrow">Many people at once</p>
           <p class="eyebrow">Exact tested outputs · multi-user speed not certified</p>
           <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8 · shared chat</a> <span class="card-chip">2 cards</span><small>FP8 · vLLM XPU</small></h3>
@@ -576,28 +589,8 @@ Style genome (duotone-hixffp):
         <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:36.10%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">90.25 tok/s</a><small>single-user MTP5</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">64 people</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:62.52%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">875 tok/s</a><small>combined; short prompts, MTP0</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">64-user passes: 875.31 and 875.05 tok/s, 128 output tokens per user, same server. No fresh-server speed certification; not long input for every user.</p></div>
         <div class="pick-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md">Setup guide and quality status</a></div>
       </li>
-      <li class="pick-row" data-pick-id="qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913">
-        <div class="pick-head"><span class="pick-rank">6</span><div>
-          <p class="eyebrow">Larger model for demanding tasks</p>
-          <p class="eyebrow">Certified lossless result · four cards</p>
-          <h3><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Qwen3.8 Flash-Next 125B-A6B</a> <span class="card-chip">4 cards</span><small>FP8 block-128 weights / BF16 KV · vLLM XPU</small></h3>
-          <p class="pick-why">For four-card owners who want a larger model for demanding reasoning and agent tasks. The recent 125B-A6B Qwen has a certified lossless result here; its capability standing comes from publisher evaluations, not our speed test.</p>
-        </div></div>
-        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:18.74%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json">46.854250 tok/s</a><small>class-balanced decode median</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Cold realistic suite; one user, full BF16 KV. Certified result; expert lab replay, portable installer still incomplete.</p></div>
-        <div class="pick-links"><a class="button" href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md">Setup guide and quality status</a></div>
-      </li>
-      <li class="pick-row research" data-pick-id="ltx25-continuation-stream-b70-145f-20261010">
-        <div class="pick-head"><span class="pick-rank">7</span><div>
-          <p class="eyebrow">Continuing video with audio</p>
-          <p class="eyebrow research">Byte-exact compared chunks · sustained speed pending</p>
-          <h3><a href="models/ltx25-continuation-stream-b70-145f-20261010.html">LTX 2.5 · continuing video stream</a> <span class="card-chip">4 cards</span><small>BF16 distilled weights; F32 output checks · ComfyUI / PyTorch XPU</small></h3>
-          <p class="pick-why">A stream of generated video on four cards, designed to keep continuing around the clock. Compared frames, latents and audio match the reference bytes. Seam and audio acceptance remain open.</p>
-        </div></div>
-        <div class="pick-bars"><p class="pick-note"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">0.875 seconds elapsed per second of video</a></p><p class="pick-note">Recorded delivery cadence: 5.248 seconds per six new video seconds over 111 periods, including pacing. Early unthrottled window: 5.2415 seconds over 52 periods. Neither proves sustained 24/7 uptime. Lab replay; public runtime rebuild incomplete.</p></div>
-        <div class="pick-links"><a class="button" href="models/ltx25-continuation-stream-b70-145f-20261010.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/README.md">Setup guide and quality status</a></div>
-      </li>
       <li class="pick-row research" data-pick-id="minimax-h3-pruned-bf16-tp2-b70-20261004">
-        <div class="pick-head"><span class="pick-rank">8</span><div>
+        <div class="pick-head"><span class="pick-rank">7</span><div>
           <p class="eyebrow">Independent video clips with audio on two cards</p>
           <p class="eyebrow research">Owner-approved Comfy-Org denoiser · exact scheduling</p>
           <h3><a href="models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">MiniMax-H3 · video with audio on two cards</a> <span class="card-chip">2 cards</span><small>Comfy-Org pruned BF16 denoiser + INT8 ConvRot encoder · Native diffusers / PyTorch XPU</small></h3>
@@ -605,6 +598,16 @@ Style genome (duotone-hixffp):
         </div></div>
         <div class="pick-bars"><p class="pick-note"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/featured-observation.json">396.6 seconds per clip (eight-clip batch average)</a></p><p class="pick-note">124 frames at 960×544 per clip; 24 fps is playback speed. 32 MATCH / 0 DIFFERS, 8 repeat passes against its own reference. The 2× comparison uses an 800.8 s/clip ledger-recorded baseline, raw receipts not retained. Measured on turin: two B70 cards, 15 GiB RAM. Baseline raw receipts, clean runtime build, independent full-suite repeat, portable path/stop qualification and public release evidence remain incomplete.</p></div>
         <div class="pick-links"><a class="button" href="models/minimax-h3-pruned-bf16-tp2-b70-20261004.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row research" data-pick-id="ltx25-continuation-stream-b70-145f-20261010">
+        <div class="pick-head"><span class="pick-rank">8</span><div>
+          <p class="eyebrow">Continuing video with audio</p>
+          <p class="eyebrow research">Byte-exact compared chunks · sustained speed pending</p>
+          <h3><a href="models/ltx25-continuation-stream-b70-145f-20261010.html">LTX 2.5 · continuing video stream</a> <span class="card-chip">4 cards</span><small>BF16 distilled weights; F32 output checks · ComfyUI / PyTorch XPU</small></h3>
+          <p class="pick-why">A stream of generated video on four cards, designed to keep continuing around the clock. Compared frames, latents and audio match the reference bytes. Seam and audio acceptance remain open.</p>
+        </div></div>
+        <div class="pick-bars"><p class="pick-note"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/evidence/pacing-snapshot.json">0.875 seconds elapsed per second of video</a></p><p class="pick-note">Recorded delivery cadence: 5.248 seconds per six new video seconds over 111 periods, including pacing. Early unthrottled window: 5.2415 seconds over 52 periods. Neither proves sustained 24/7 uptime. Lab replay; public runtime rebuild incomplete.</p></div>
+        <div class="pick-links"><a class="button" href="models/ltx25-continuation-stream-b70-145f-20261010.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ltx25-continuation-stream-b70-145f-20261010/README.md">Setup guide and quality status</a></div>
       </li>
 </ol>
 <details id="other-picks"><summary>Other models and research options</summary>
@@ -629,8 +632,18 @@ Style genome (duotone-hixffp):
         <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:40.15%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json">100.37 tok/s</a><small>pooled canonical mean</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Mean across two fresh three-prompt runs, 256 output tokens; not the full varied-suite median. Clean-host certification pending.</p></div>
         <div class="pick-links"><a class="button" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">Setup guide and quality status</a></div>
       </li>
-      <li class="pick-row research" data-pick-id="ornith-15-35b-a3b-q4km-b70">
+      <li class="pick-row" data-pick-id="lfm25-24b-a2b-q8-b70">
         <div class="pick-head"><span class="pick-rank">3</span><div>
+          <p class="eyebrow">Alternative setup</p>
+          <p class="eyebrow">Exact-output package · one card</p>
+          <h3><a href="models/lfm25-24b-a2b-q8-b70.html">LFM2.5 24B-A2B Q8</a> <span class="card-chip">1 card</span><small>Q8_0 · llama.cpp SYCL + lab patch</small></h3>
+          <p class="pick-why">Liquid AI’s 24B mixture-of-experts model, with about 2B parameters active per token, in 8-bit form. Every answer matched llama.cpp’s plain SYCL path on both fresh servers.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:55.05%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/2026-10-15-lfm25-24b-a2b-package-check-sliced/summary.json">137.62 tok/s</a><small>strict class-balanced decode</small></span></div><p class="pick-note">Prompt reading: not measured for this exact result.</p><p class="pick-note">Median of two fresh servers, 12-prompt suite, 512-token cap; one user, F16 KV. Clean-host replay pending.</p></div>
+        <div class="pick-links"><a class="button" href="models/lfm25-24b-a2b-q8-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row research" data-pick-id="ornith-15-35b-a3b-q4km-b70">
+        <div class="pick-head"><span class="pick-rank">4</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow research">Candidate · strict headline pending</p>
           <h3><a href="models/ornith-15-35b-a3b-q4km-b70.html">Ornith 1.5 35B-A3B Q4_K_M</a> <span class="card-chip">1 card</span><small>Q4_K_M · llama.cpp SYCL</small></h3>
@@ -640,7 +653,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/ornith-15-35b-a3b-q4km-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row research" data-pick-id="nemotron-35-lightning-30b-a3b-b70">
-        <div class="pick-head"><span class="pick-rank">4</span><div>
+        <div class="pick-head"><span class="pick-rank">5</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow research">Candidate · strict headline pending</p>
           <h3><a href="models/nemotron-35-lightning-30b-a3b-b70.html">Nemotron 3.5 Lightning 30B-A3B</a> <span class="card-chip">1 card</span><small>UD-Q4_K_M · llama.cpp SYCL</small></h3>
@@ -650,7 +663,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/nemotron-35-lightning-30b-a3b-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row research" data-pick-id="deepseek-v4-research">
-        <div class="pick-head"><span class="pick-rank">5</span><div>
+        <div class="pick-head"><span class="pick-rank">6</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow research">Experimental, lossy checkpoint · not a lossless recommendation</p>
           <h3><a href="models/deepseek-v4.html">DeepSeek V4 Flash · 180B research</a> <span class="card-chip">4 cards</span><small>Community-trimmed FP8 / FP4 experts · FP8 KV · vLLM XPU</small></h3>
@@ -660,7 +673,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/deepseek-v4.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="qwen35-9b-w4a16-b70">
-        <div class="pick-head"><span class="pick-rank">6</span><div>
+        <div class="pick-head"><span class="pick-rank">7</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · October speed check</p>
           <h3><a href="models/qwen35-9b-w4a16-b70.html">Qwen3.5 9B INT4</a> <span class="card-chip">1 card</span><small>W4A16 (compressed-tensors INT4 weights, FP16 activations) · vLLM XPU</small></h3>
@@ -670,7 +683,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/qwen35-9b-w4a16-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-w4a16-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="qwen35-9b-fp8-b70">
-        <div class="pick-head"><span class="pick-rank">7</span><div>
+        <div class="pick-head"><span class="pick-rank">8</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · October speed check</p>
           <h3><a href="models/qwen35-9b-fp8-b70.html">Qwen3.5 9B FP8</a> <span class="card-chip">1 card</span><small>FP8-dynamic (compressed-tensors, per-channel FP8 weights, dynamic activations) · vLLM XPU</small></h3>
@@ -680,7 +693,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/qwen35-9b-fp8-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-fp8-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="ornith-15-9b-q8-b70">
-        <div class="pick-head"><span class="pick-rank">8</span><div>
+        <div class="pick-head"><span class="pick-rank">9</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Strict headline withheld</p>
           <h3><a href="models/ornith-15-9b-q8-b70.html">Ornith 1.5 9B Q8</a> <span class="card-chip">1 card</span><small>Q8_0 · llama.cpp SYCL</small></h3>
@@ -859,164 +872,6 @@ Style genome (duotone-hixffp):
         <tr><th scope="col">Model and deployment</th><th scope="col">Best for</th><th scope="col" class="r">1 user</th><th scope="col" class="r">32K input</th><th scope="col" class="r">Many users</th><th scope="col" class="r">Prefill</th><th scope="col">Actions</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <th scope="row" class="model"><a href="models/lfm-2-5.html">LFM2.5 2.6B</a> <small>1&times; B70 &middot; Q8_0 &middot; no MTP &middot; Liquid AI</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">Lightweight</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">132.14</td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">89.94&dagger;</td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/lfm25-26b-q8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/lfm25-26b-q8-b70/README.md" aria-label="Copy LFM2.5 one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/lfm-2-5-24b-a2b.html">LFM2.5 24B A2B</a> <small>1&times; B70 &middot; Q8_0 &middot; no MTP &middot; exact fusions &middot; Liquid AI</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user: median of two fresh servers (October 15), every token identical to llama.cpp's plain SYCL path. See the details page for the tested setup."><a href="models/lfm25-24b-a2b-q8-b70.html#measured">137.62</a></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details."><a href="models/lfm25-24b-a2b-q8-b70.html#profiles">90.74&dagger;</a></td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/lfm25-24b-a2b-q8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/lfm25-24b-a2b-q8-b70/README.md" aria-label="Copy LFM2.5 one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/ornith-1-5.html">Ornith 1.5 35B-A3B</a> <small>1&times; B70 &middot; Q4_K_M &middot; no MTP &middot; Ornith AI</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed mut" data-label="1 user" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">withheld after consistency failure</span></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">99.61&dagger;</td>
-          <td class="num r model-agg" data-label="Many users" title="Engine-only test: total writing speed across parallel sequences. See the details page."><a href="models/ornith-15-35b-a3b-q4km-b70.html#profiles">216.5&dagger;</a></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/ornith-15-35b-a3b-q4km-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/laguna-s.html">Laguna-S-2.1</a> <small>4&times; B70 &middot; INT4 &middot; DFlash depth 11 &middot; Poolside</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">Coding</span></td>
-          <td class="num r model-speed" data-label="1 user">125.46</td>
-          <td class="num r model-32k mut" data-label="32K input" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">withheld after quality failure</span></td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/laguna-s-2.1-int4-b70-125tps/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/laguna-s-2.1-int4-b70-125tps/README.md" aria-label="Copy Laguna-S-2.1 record replay package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/gemma-4.html">Gemma-4-26B</a> <small>1&times; B70 &middot; Q8 &middot; MTP depth 3 &middot; Google</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">122.16</td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">114.85&dagger;</td>
-          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 8 users on one card with speculation off (the shared-server shape). Throughput measurement; repeats are identical but the answers were not checked exact against the one-user answers."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-09-gemma4-26b-two-b70-16k-lan-service.md">270</a><small>no MTP &middot; 8 users &middot; throughput, not exact</small></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup. An 8,000-token prompt reads at about 1,470 tok/s on one card (see the server notes).">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/qwen-9b.html">Qwen3.5-9B</a> <small>1&times; B70 &middot; FP8 &middot; MTP depth 3 &middot; Alibaba</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">98.14</td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">86.8&dagger;</td>
-          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 8 simultaneous users. Tested answers matched the one-user answers."><a href="models/qwen35-9b-fp8-b70.html#multi-user">564.7</a></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-9b-fp8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-fp8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/qwen35-9b-fp8-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/qwen-9b.html">Qwen3.5-9B</a> <small>1&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist &middot; Alibaba</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json">124.08</a></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">89.5&dagger;</td>
-          <td class="num r model-agg" data-label="Many users" title="Total writing speed across all users. See details for the user count. Different settings from the one-user test."><a href="models/qwen35-9b-w4a16-b70.html#profiles">1,955.3&dagger;</a><small>no MTP · 128 users</small></td>
-          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="9b" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for setup and timing details."><a href="models/qwen35-9b-w4a16-b70.html#prefill">2,467</a>&dagger;</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-9b-w4a16-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-w4a16-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/qwen35-9b-w4a16-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr><th scope="row" class="model"><a href="models/qwen-9b.html">Qwen3.5-9B</a> <small>2&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist</small></th>
-          <td class="model-use" data-label="Best for"></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-12-rebase-v0290-r301-results.json">177.28</a></td>
-          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td><td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;</td>
-          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="9b-tp2" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen35-9b-w4a16-b70.html#prefill">4,419</a>&dagger;</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-9b-w4a16-b70.html">Details page</a></div></td></tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/qwen-4b.html">Qwen3.5-4B</a> <small>1&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist &middot; Alibaba</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json">191.73</a></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">149.9&dagger;</td>
-          <td class="num r model-agg" data-label="Many users" title="Total writing speed across all users. See details for the user count. Different settings from the one-user test."><a href="models/qwen35-4b-w4a16-b70.html#profiles">2,520.0&dagger;</a><small>no MTP · 128 users</small></td>
-          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="4b" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for setup and timing details."><a href="models/qwen35-4b-w4a16-b70.html#prefill">3,942</a>&dagger;</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-4b-w4a16-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-4b-w4a16-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/qwen35-4b-w4a16-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr><th scope="row" class="model"><a href="models/qwen-4b.html">Qwen3.5-4B</a> <small>2&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist</small></th>
-          <td class="model-use" data-label="Best for"></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-12-rebase-v0290-r301-results.json">245.83</a></td>
-          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td><td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;</td>
-          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="4b-tp2" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen35-4b-w4a16-b70.html#prefill">7,367</a>&dagger;</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-4b-w4a16-b70.html">Details page</a></div></td></tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>4&times; B70 &middot; Q8/WOQ &middot; DFlash draft n=15 &middot; Meta</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">Vision</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">100.37</td>
-          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/muse-glimmer-30b-q8-woq-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/muse-glimmer-30b-q8-woq-b70/README.md" aria-label="Copy Muse-Glimmer-30B candidate package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        </tbody>
-      <tbody>
-        <tr class="model-group-row">
-          <th scope="rowgroup" colspan="7"><a href="models/qwen-35b.html">Qwen3.6-35B-A3B</a> <small>Alibaba &middot; uses ~3B of 35B per word</small> <span class="use-chip">Long context</span></th>
-        </tr>
-        <tr class="variant-row">
-          <th scope="row" class="model"><small class="variant-label">4&times; B70 &middot; Quark W8A8 INT8 &middot; no MTP</small></th>
-          <td class="model-use" data-label="Best for"></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">93.55</td>
-          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen-35b.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="results/qwen36-35b-quark-int8-b70/README.md" aria-label="Copy Qwen3.6-35B lab report Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr class="variant-row">
-          <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; AutoRound INT4 &middot; no MTP &middot; experimental</small></th>
-          <td class="model-use" data-label="Best for"></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">90.91</td>
-          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 64 simultaneous users."><a href="learn/multi-user.html">1,039</a></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen-35b.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/qwen36-35b-aggregate-throughput-evidence.md" title="Evidence guide on GitHub" aria-label="Evidence guide on GitHub"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">Evidence guide on GitHub</span></a></div></td>
-        </tr>
-        </tbody>
-      <tbody>
-        <tr>
-          <th scope="row" class="model"><a href="models/minimax-m2-7.html">MiniMax-M2.7</a> <small>4&times; B70 &middot; AutoRound INT4 &middot; no MTP &middot; MiniMax</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">Long context</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">89.31</td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens."><a href="models/minimax-m2-7.html#measured">63.91&dagger;</a></td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/minimax-m2-7.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/minimax-m27-b70-89tps-20260520/README.md" aria-label="Copy MiniMax-M2.7 report Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/deepseek-v4.html">DeepSeek-V4-Flash-180B</a> <small>4&times; B70 &middot; FP8 + FP4 experts &middot; DSpark depth 7 &middot; community trim &middot; experimental</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">Research</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Best measured run; typical result across three tests: 78.29 tok/s. See the test details.">80.82</td>
-          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/deepseek-v4.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md" title="Full rankings on GitHub" aria-label="Full rankings on GitHub"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">Full rankings on GitHub</span></a></div></td>
-        </tr>
-        </tbody>
-      <tbody>
-        <tr>
-          <th scope="row" class="model"><a href="models/nemotron-3-5.html">Nemotron 3.5 Lightning 30B-A3B</a> <small>1&times; B70 &middot; UD-Q4_K_M &middot; no MTP &middot; NVIDIA</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed mut" data-label="1 user" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">strict headline pending</span></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">64.62&dagger;</td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/nemotron-35-lightning-30b-a3b-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/nemotron-35-lightning-30b-a3b-b70/README.md" aria-label="Copy Nemotron 3.5 one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/ornith-1-5.html">Ornith 1.5 9B</a> <small>1&times; B70 &middot; Q8_0 &middot; no MTP &middot; Ornith AI</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">Beginner</span></td>
-          <td class="num r model-speed mut" data-label="1 user" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">strict headline withheld after output-gate failure</span></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">39.84&dagger;</td>
-          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/ornith-15-9b-q8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-9b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-9b-q8-b70/README.md" aria-label="Copy Ornith 1.5 9B one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        </tbody>
-      <tbody>
         <tr class="model-group-row">
           <th scope="rowgroup" colspan="7"><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>Alibaba &middot; newest all-rounder &middot; reads pictures</small> <span class="use-chip">General</span></th>
         </tr>
@@ -1113,7 +968,7 @@ Style genome (duotone-hixffp):
         <tr class="variant-row">
           <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; Q4_K_M + Q4_0 draft &middot; MTP depth 2</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">Fast interactive</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70.html#benchmark">64.24</a></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70.html#measured">64.24</a></td>
           <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
@@ -1167,11 +1022,49 @@ Style genome (duotone-hixffp):
 
       </tbody>
       <tbody>
+        <tr>
+          <th scope="row" class="model"><a href="models/gemma-4.html">Gemma-4-26B</a> <small>1&times; B70 &middot; Q8 &middot; MTP depth 3 &middot; Google</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">122.16</td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">114.85&dagger;</td>
+          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 8 users on one card with speculation off (the shared-server shape). Throughput measurement; repeats are identical but the answers were not checked exact against the one-user answers."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-09-gemma4-26b-two-b70-16k-lan-service.md">270</a><small>no MTP &middot; 8 users &middot; throughput, not exact</small></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup. An 8,000-token prompt reads at about 1,470 tok/s on one card (see the server notes).">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/lfm-2-5-24b-a2b.html">LFM2.5 24B A2B</a> <small>1&times; B70 &middot; Q8_0 &middot; no MTP &middot; exact fusions &middot; Liquid AI</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user: median of two fresh servers (October 15), every token identical to llama.cpp's plain SYCL path. See the details page for the tested setup."><a href="models/lfm25-24b-a2b-q8-b70.html#measured">137.62</a></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details."><a href="models/lfm25-24b-a2b-q8-b70.html#profiles">90.74&dagger;</a></td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/lfm25-24b-a2b-q8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/lfm25-24b-a2b-q8-b70/README.md" aria-label="Copy LFM2.5 one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/ornith-1-5.html">Ornith 1.5 35B-A3B</a> <small>1&times; B70 &middot; Q4_K_M &middot; no MTP &middot; Ornith AI</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed mut" data-label="1 user" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">withheld after consistency failure</span></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">99.61&dagger;</td>
+          <td class="num r model-agg" data-label="Many users" title="Engine-only test: total writing speed across parallel sequences. See the details page."><a href="models/ornith-15-35b-a3b-q4km-b70.html#profiles">216.5&dagger;</a></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/ornith-15-35b-a3b-q4km-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/nemotron-3-5.html">Nemotron 3.5 Lightning 30B-A3B</a> <small>1&times; B70 &middot; UD-Q4_K_M &middot; no MTP &middot; NVIDIA</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed mut" data-label="1 user" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">strict headline pending</span></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">64.62&dagger;</td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/nemotron-35-lightning-30b-a3b-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/nemotron-35-lightning-30b-a3b-b70/README.md" aria-label="Copy Nemotron 3.5 one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+      </tbody>
+      <tbody>
         <tr class="model-group-row">
           <th scope="rowgroup" colspan="7"><a href="models/qwen-flash-next.html">Qwen3.8 Flash-Next 125B-A6B</a> <small>Alibaba &middot; one-, two- and four-card setups &middot; experienced users</small></th>
         </tr>
         <tr class="variant-row native-observation" id="flash-next-ownrt-1-card">
-          <th scope="row" class="model"><span class="native-title"><span class="card-chip">1 card</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html">IQ3_XXS &middot; own runtime</a></span><small>MTP &middot; BF16 KV</small></th>
+          <th scope="row" class="model"><span class="native-title"><span class="card-chip">1 card</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html">IQ3_XXS &middot; own runtime</a></span><small>target-only &middot; BF16 KV &middot; needs 128 GiB host RAM</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">Lab result</span><small>Full-output quality pending</small></td>
           <td class="num r model-speed" data-speed-range data-label="1 user" title="Two fresh loads of the 512-output-cap suite. First-100-token writing rate; independent oracle checks only the first 128 output tokens. Lab observations, not a certified headline."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">31.51&ndash;31.78</a></td>
           <td class="num r model-32k mut" data-label="32K input">&mdash;<span class="visually-hidden">not measured</span></td>
@@ -1180,7 +1073,7 @@ Style genome (duotone-hixffp):
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">Results and recipe</a></div></td>
         </tr>
         <tr class="variant-row native-observation" id="flash-next-ownrt-2-card">
-          <th scope="row" class="model"><span class="native-title"><span class="card-chip two">2 cards</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html">IQ3_XXS &middot; own runtime</a></span><small>MTP &middot; BF16 KV</small></th>
+          <th scope="row" class="model"><span class="native-title"><span class="card-chip two">2 cards</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html">IQ3_XXS &middot; own runtime</a></span><small>MTP &middot; BF16 KV &middot; needs 128 GiB host RAM</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">Lab result</span><small>Full-output quality pending</small></td>
           <td class="num r model-speed" data-speed-range data-label="1 user" title="Two fresh loads of the 512-output-cap suite. First-100-token writing rate; independent oracle checks only the first 128 output tokens. Lab observations, not a certified headline."><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">58.56&ndash;58.63</a></td>
           <td class="num r model-32k mut" data-label="32K input">&mdash;<span class="visually-hidden">not measured</span></td>
@@ -1207,8 +1100,142 @@ Style genome (duotone-hixffp):
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Details page</a></div></td>
         </tr>
       </tbody>
+      <tbody>
+        <tr>
+          <th scope="row" class="model"><a href="models/laguna-s.html">Laguna-S-2.1</a> <small>4&times; B70 &middot; INT4 &middot; DFlash depth 11 &middot; Poolside</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Coding</span></td>
+          <td class="num r model-speed" data-label="1 user">125.46</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">withheld after quality failure</span></td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/laguna-s-2.1-int4-b70-125tps/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/laguna-s-2.1-int4-b70-125tps/README.md" aria-label="Copy Laguna-S-2.1 record replay package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/minimax-m2-7.html">MiniMax-M2.7</a> <small>4&times; B70 &middot; AutoRound INT4 &middot; no MTP &middot; MiniMax</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Long context</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">89.31</td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens."><a href="models/minimax-m2-7.html#measured">63.91&dagger;</a></td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/minimax-m2-7.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/minimax-m27-b70-89tps-20260520/README.md" aria-label="Copy MiniMax-M2.7 report Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>4&times; B70 &middot; Q8/WOQ &middot; DFlash draft n=15 &middot; Meta</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Vision</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">100.37</td>
+          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/muse-glimmer-30b-q8-woq-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/muse-glimmer-30b-q8-woq-b70/README.md" aria-label="Copy Muse-Glimmer-30B candidate package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+      </tbody>
+      <tbody>
+        <tr class="model-group-row">
+          <th scope="rowgroup" colspan="7"><a href="models/qwen-35b.html">Qwen3.6-35B-A3B</a> <small>Alibaba &middot; uses ~3B of 35B per word</small> <span class="use-chip">Long context</span></th>
+        </tr>
+        <tr class="variant-row">
+          <th scope="row" class="model"><small class="variant-label">4&times; B70 &middot; Quark W8A8 INT8 &middot; no MTP</small></th>
+          <td class="model-use" data-label="Best for"></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">93.55</td>
+          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen-35b.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="results/qwen36-35b-quark-int8-b70/README.md" aria-label="Copy Qwen3.6-35B lab report Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr class="variant-row">
+          <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; AutoRound INT4 &middot; no MTP &middot; experimental</small></th>
+          <td class="model-use" data-label="Best for"></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">90.91</td>
+          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 64 simultaneous users."><a href="learn/multi-user.html">1,039</a></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen-35b.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/qwen36-35b-aggregate-throughput-evidence.md" title="Evidence guide on GitHub" aria-label="Evidence guide on GitHub"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">Evidence guide on GitHub</span></a></div></td>
+        </tr>
+        </tbody>
+      <tbody>
+        <tr>
+          <th scope="row" class="model"><a href="models/deepseek-v4.html">DeepSeek-V4-Flash-180B</a> <small>4&times; B70 &middot; FP8 + FP4 experts &middot; DSpark depth 7 &middot; community trim &middot; experimental</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Research</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Best measured run; typical result across three tests: 78.29 tok/s. See the test details.">80.82</td>
+          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/deepseek-v4.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md" title="Full rankings on GitHub" aria-label="Full rankings on GitHub"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">Full rankings on GitHub</span></a></div></td>
+        </tr>
+      </tbody>
+      <tbody>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen-9b.html">Qwen3.5-9B</a> <small>1&times; B70 &middot; FP8 &middot; MTP depth 3 &middot; Alibaba</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">98.14</td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">86.8&dagger;</td>
+          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 8 simultaneous users. Tested answers matched the one-user answers."><a href="models/qwen35-9b-fp8-b70.html#multi-user">564.7</a></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-9b-fp8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-fp8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/qwen35-9b-fp8-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen-9b.html">Qwen3.5-9B</a> <small>1&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist &middot; Alibaba</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json">124.08</a></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">89.5&dagger;</td>
+          <td class="num r model-agg" data-label="Many users" title="Total writing speed across all users. See details for the user count. Different settings from the one-user test."><a href="models/qwen35-9b-w4a16-b70.html#profiles">1,955.3&dagger;</a><small>no MTP · 128 users</small></td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="9b" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for setup and timing details."><a href="models/qwen35-9b-w4a16-b70.html#prefill">2,467</a>&dagger;</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-9b-w4a16-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-w4a16-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/qwen35-9b-w4a16-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr><th scope="row" class="model"><a href="models/qwen-9b.html">Qwen3.5-9B</a> <small>2&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist</small></th>
+          <td class="model-use" data-label="Best for"></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-12-rebase-v0290-r301-results.json">177.28</a></td>
+          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td><td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;</td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="9b-tp2" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen35-9b-w4a16-b70.html#prefill">4,419</a>&dagger;</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-9b-w4a16-b70.html">Details page</a></div></td></tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/ornith-1-5.html">Ornith 1.5 9B</a> <small>1&times; B70 &middot; Q8_0 &middot; no MTP &middot; Ornith AI</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Beginner</span></td>
+          <td class="num r model-speed mut" data-label="1 user" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">strict headline withheld after output-gate failure</span></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">39.84&dagger;</td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/ornith-15-9b-q8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-9b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-9b-q8-b70/README.md" aria-label="Copy Ornith 1.5 9B one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+      </tbody>
     </table>
     </div>
+    <details class="small-models" id="small-models">
+    <summary>Small models under 9B <span class="all-hint">LFM2.5 2.6B and Qwen3.5-4B. Fast, but they leave most of a 32 GB card unused.</span></summary>
+    <div class="scroller model-scroller">
+<table class="model-picker" aria-label="Small models under 9B">
+      <thead>
+        <tr><th scope="col">Model and deployment</th><th scope="col">Best for</th><th scope="col" class="r">1 user</th><th scope="col" class="r">32K input</th><th scope="col" class="r">Many users</th><th scope="col" class="r">Prefill</th><th scope="col">Actions</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row" class="model"><a href="models/lfm-2-5.html">LFM2.5 2.6B</a> <small>1&times; B70 &middot; Q8_0 &middot; no MTP &middot; Liquid AI</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Lightweight</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">132.14</td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">89.94&dagger;</td>
+          <td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/lfm25-26b-q8-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/lfm25-26b-q8-b70/README.md" aria-label="Copy LFM2.5 one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen-4b.html">Qwen3.5-4B</a> <small>1&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist &middot; Alibaba</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json">191.73</a></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens.">149.9&dagger;</td>
+          <td class="num r model-agg" data-label="Many users" title="Total writing speed across all users. See details for the user count. Different settings from the one-user test."><a href="models/qwen35-4b-w4a16-b70.html#profiles">2,520.0&dagger;</a><small>no MTP · 128 users</small></td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="4b" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for setup and timing details."><a href="models/qwen35-4b-w4a16-b70.html#prefill">3,942</a>&dagger;</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-4b-w4a16-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-4b-w4a16-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/qwen35-4b-w4a16-b70/README.md" aria-label="Copy the setup guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr><th scope="row" class="model"><a href="models/qwen-4b.html">Qwen3.5-4B</a> <small>2&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist</small></th>
+          <td class="model-use" data-label="Best for"></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-12-rebase-v0290-r301-results.json">245.83</a></td>
+          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td><td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;</td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="4b-tp2" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen35-4b-w4a16-b70.html#prefill">7,367</a>&dagger;</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-4b-w4a16-b70.html">Details page</a></div></td></tr>
+      </tbody>
+    </table>
+    </div>
+    </details>
     <p class="icon-key mut">Reviewed October 7, 2026. &mdash; No qualified measurement for that setup. &dagger; Separate test settings; speeds in a row may come from different tests. Prefill uses server processing time, not the full wait over the network. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md">Prefill test details</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md">Additional prefill tests</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md">27B FP8 longer-prompt test</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md">27B FP8 transfer tests and 16K reading speed</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md">27B FP8 follow-up: no new speedup</a> &middot; <a href="learn.html">Model names and speed labels explained &rarr;</a></p>
     </details>
   </div>
@@ -1221,14 +1248,15 @@ Style genome (duotone-hixffp):
     <div class="start-grid">
       <article class="start-card">
         <p class="eyebrow">I have one B70</p>
-        <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Start with Qwen FP8</a></h3>
-        <p>Qwen3.8 27B FP8 runs on one B70 at about 54 tok/s, with the same answers as running it without drafting on every test. Smaller Q4 and Q8 versions are in the full list.</p>
-        <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Open one-card package</a>
+        <h3><a href="models/qwen38-27b-autoround-int4-b70.html">Start with Qwen 27B INT4</a></h3>
+        <p>Our everyday pick: Qwen3.8 27B INT4 writes about 81 tok/s on one B70 (81.16 measured), with every test answer matching plain decoding. Want official FP8 weights for longer documents? Qwen3.8 27B FP8 writes 54.04 tok/s on one card. More choices are in <a href="#t-featured">What should I run?</a></p>
+        <a class="button" href="models/qwen38-27b-autoround-int4-b70.html">Open the INT4 setup</a>
       </article>
       <article class="start-card">
         <p class="eyebrow">I have two to four B70s</p>
         <h3>Put your extra cards to work</h3>
-        <p>Run official Qwen3.8 27B FP8 on two B70s: one user, MTP depth 5, about 90 tok/s, and room for a 32K prompt. The public-source replay passed 12 reference-output checks and six practical requests. Follow the quickstart for start, status, and stop commands.</p>
+        <p><strong>Two cards:</strong> official Qwen3.8 27B FP8 for shared chat. It served 64 people at once at 875 tok/s combined; one person got 90.31 tok/s in the September record (median of two fresh servers). A later replay on another lab machine measured 46.0 tok/s.</p>
+        <p><strong>Four cards:</strong> Laguna S 2.1 for code (125.46 tok/s), or Qwen3.8 Flash-Next for demanding tasks (46.85 tok/s, certified lossless).</p>
         <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Open two-card package</a>
       </article>
       <article class="start-card">
@@ -1239,7 +1267,7 @@ Style genome (duotone-hixffp):
       </article>
     </div>
     <p class="research-links"><a href="worker/">Try the local coding worker</a>: the 27B FP8 model edits a source copy and runs tests. Readable tool output passed the five original issues; two new issues remain unsolved.</p>
-    <p class="research-links">These setups are still being tested for installation on a fresh PC. Check each guide&rsquo;s requirements before starting. <a href="guides.html">Browse all recipes</a> &middot; <a href="optimization-timeline.html">See recent improvements</a></p>
+    <p class="research-links">These setups are still being tested for installation on a fresh PC. Check each guide&rsquo;s requirements before starting. <a href="guides.html">Browse all recipes</a> &middot; <a href="optimization-timeline.html">Optimization history (May–Aug 2026)</a></p>
   </div>
 </section>
 
@@ -1266,7 +1294,15 @@ Style genome (duotone-hixffp):
         </tr>
       </thead>
       <tbody>
-<tr><th scope="row" class="model"><a href="models/qwen35-4b-w4a16-b70.html">Qwen3.5-4B</a></th><td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16</td><td class="mut">MTP3 · 67k shortlist</td><td class="num r">1&times;</td><td class="num r">191.73<div class="ratebar" style="width:100.0%" aria-hidden="true"></div></td><td class="more-cards hide-s"><span title="R304 TP2 strict pair 247.45/244.21, all gates 12/12">2&times; 245.83</span></td><td class="mut hide-s">class-balanced strict suite</td><td class="lnk"><a href="models/qwen35-4b-w4a16-b70.html">test report</a></td></tr>
+<tr><th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/qwen35-4b-w4a16-b70.html">Qwen3.5-4B</a></th><td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16</td><td class="mut">MTP3 · 67k shortlist</td><td class="num r">1&times;</td><td class="num r">191.73<div class="ratebar" style="width:100.0%" aria-hidden="true"></div></td><td class="more-cards hide-s"><span title="R304 TP2 strict pair 247.45/244.21, all gates 12/12">2&times; 245.83</span></td><td class="mut hide-s">class-balanced strict suite</td><td class="lnk"><a href="models/qwen35-4b-w4a16-b70.html">test report</a></td></tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/lfm-2-5-24b-a2b.html">LFM2.5 24B-A2B</a> <small>Liquid AI &middot; uses ~2B of 24B per word</small></th>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">Q8_0</td><td class="mut">no MTP</td><td class="num r">1&times;</td>
+          <td class="num r" title="Median of two fresh servers' class-balanced medians on the 12-prompt suite (October 15); every token identical to llama.cpp's plain SYCL path on both servers">137.62<div class="ratebar" style="width:71.8%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">class-balanced strict suite</td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md">test report</a></td>
+        </tr>
         <tr data-ml-model="laguna_s_2.1" data-ml-quant="AutoRound INT4" data-ml-quant-label="INT4 W4A16" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:11" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/laguna-s.html">Laguna-S-2.1</a> <small>coding assistant &middot; Jul 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16</td><td class="mut">DFlash &middot; depth 11</td><td class="num r">4&times;<small class="cards-note" title="Fit and speed at one or two cards are not lab-tested yet">fewer untested</small></td>
@@ -1336,11 +1372,11 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M</td><td class="mut">no MTP</td><td class="num r">1&times;</td>
           <td class="num r" title="Class-balanced median of input-class medians on the fixed cold 12-prompt suite; cache-zero, no speculation; all-prompt median 27.824790">27.83<div class="ratebar" style="width:14.5%" aria-hidden="true"></div></td>
-          <td class="more-cards hide-s"><span title="Official FP8, MTP depth 5 with the allgather allreduce; median of two fresh servers 90.31 tok/s, 12/12 identical to no MTP.">&times;2 FP8+W8A16+MTP5 <a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.19</a></span> &middot; <span title="AutoRound INT4 + MTP4 shortlist record; strict G1/G2/G3 12/12.">&times;2 INT4+MTP4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">117.53</a></span></td>
+          <td class="more-cards hide-s"><span title="Official FP8, MTP depth 5 with the allgather allreduce; median of two fresh servers 90.31 tok/s, 12/12 identical to no MTP.">&times;2 FP8+W8A16+MTP5 <a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.31</a></span> &middot; <span title="AutoRound INT4 + MTP4 shortlist record; strict G1/G2/G3 12/12.">&times;2 INT4+MTP4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">117.53</a></span></td>
           <td class="mut hide-s">typical of the 1-card Q4 package</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q4km-tp1-b70/README.md">candidate guide</a></td>
         </tr>
-      <tr><th scope="row" class="model"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Qwen3.8 Flash-Next</a></th><td class="mut">vLLM XPU</td><td class="mut">FP8</td><td class="mut">MTP1 · exact serial GDN</td><td class="num r">4&times;</td><td class="num r">46.85<div class="ratebar" style="width:24.4%" aria-hidden="true"></div></td><td class="more-cards hide-s">&mdash;</td><td class="mut hide-s">class-balanced strict suite</td><td class="lnk"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">test report</a></td></tr>
+      <tr><th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Qwen3.8 Flash-Next</a></th><td class="mut">vLLM XPU</td><td class="mut">FP8</td><td class="mut">MTP1 · exact serial GDN</td><td class="num r">4&times;</td><td class="num r">46.85<div class="ratebar" style="width:24.4%" aria-hidden="true"></div></td><td class="more-cards hide-s">&mdash;</td><td class="mut hide-s">class-balanced strict suite</td><td class="lnk"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">test report</a></td></tr>
 </tbody>
     </table>
     </div>
@@ -1351,7 +1387,7 @@ Style genome (duotone-hixffp):
 <section id="flash-next-record">
   <div class="wrap">
     <h2>Flash-Next on one, two or four cards</h2>
-    <p><strong>Two-card own-runtime result:</strong> the IQ3_XXS version writes <strong>58.56&ndash;58.63 tok/s</strong> and reads a 512-token prompt at <strong>75.88&ndash;75.97 tok/s</strong> across two fresh loads. Full-output quality and portable replay checks remain pending. These are lab measurements using different weights and software from the four-card FP8 result below.</p>
+    <p><strong>Two-card own-runtime result:</strong> the IQ3_XXS version writes <strong>58.56&ndash;58.63 tok/s</strong> and reads a 512-token prompt at <strong>75.88&ndash;75.97 tok/s</strong> across two fresh loads. Full-output quality and portable replay checks remain pending. These are lab measurements using different weights and software from the four-card FP8 result below. Both the one- and two-card own-runtime setups need a computer with <strong>128 GiB of host RAM</strong> (system memory), not only the graphics cards.</p>
     <div class="section-actions"><a class="button" href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Two-card results and recipe</a><a class="button secondary" href="models/qwen38-flash-next-iq3xxs-ownrt-tp1-b70.html#text-observations">One-card results</a><a class="button secondary" href="own-runtime.html">How the own runtime works</a></div>
     <h3>Four-card FP8 result</h3>
     <p>Qwen3.8 Flash-Next is a 125B model with about 6B parameters active per token. Its certified single-user FP8 result is <strong>46.854250 tok/s</strong> on four B70s, with one target-verified draft token and full BF16 KV. Lossless here means matching the registered target outputs; the inherited code-task miss remains in the quality report.</p>
@@ -1399,7 +1435,7 @@ Style genome (duotone-hixffp):
     <p><strong>Works with the agents people use.</strong> Twelve open-source coding agents were run through it on the same 40-bug task, among them Cline, Goose, OpenHands, OpenCode, Qwen Code, Kimi Code, Mistral Vibe, Hermes Agent and mini-swe-agent: eleven of the twelve fixed 39 or 40 of the 40 bugs, in 14 to 38 minutes (<a href="https://skindeep.ai/context-use.html#agents">every agent's result</a>).</p>
     <p><strong>Fits on one card.</strong> On a single B70 with a 26K view, the same model fixed all 40 bugs, kept every rule and answered 7/7 in 21 minutes.</p>
     <p>Public domain, Python standard library only; install with pip or Docker. One model on one machine so far: other models should work if they call tools reliably, but have not been measured.</p>
-    <p><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.1.0">Download ctxkeeper 1.1.0</a> <a class="button secondary" href="https://skindeep.ai/context-use.html">Download and setup guide</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/tools/ctxkeeper/README.md">Full instructions</a></p>
+    <p><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.2.0">Download ctxkeeper 1.2.0</a> <a class="button secondary" href="https://skindeep.ai/context-use.html">Download and setup guide</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/tools/ctxkeeper/README.md">Full instructions</a></p>
   </div>
 </section>
 
@@ -1569,13 +1605,17 @@ Style genome (duotone-hixffp):
 <script>
   // Draw bars for scalar one-user speeds; scoped ranges are not ranked on this scale.
   (function () {
+    var speed = function (td) {
+      var t = (td.textContent || '').replace(/[^0-9.]/g, '');
+      return td.classList.contains('mut') ? NaN : parseFloat(t);
+    };
+    // One scale for every picker table, so the collapsed small-model rows stay comparable.
+    var max = Math.max.apply(null, Array.prototype.map.call(
+      document.querySelectorAll('table.model-picker td.model-speed:not([data-speed-range])'), speed
+    ).filter(function (v) { return !isNaN(v); }));
     document.querySelectorAll('table.model-picker').forEach(function (table) {
       var cells = Array.prototype.slice.call(table.querySelectorAll('td.model-speed:not([data-speed-range])'));
-      var vals = cells.map(function (td) {
-        var t = (td.textContent || '').replace(/[^0-9.]/g, '');
-        return td.classList.contains('mut') ? NaN : parseFloat(t);
-      });
-      var max = Math.max.apply(null, vals.filter(function (v) { return !isNaN(v); }));
+      var vals = cells.map(speed);
       if (!isFinite(max) || max <= 0) return;
       table.querySelectorAll('th.model small').forEach(function (sm) {
         var m = sm.innerHTML.match(/^(\d+)(?:&times;|\u00d7) B70 (?:&middot;|\u00b7) /);

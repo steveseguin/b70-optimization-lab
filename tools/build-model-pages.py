@@ -149,6 +149,21 @@ def gb(value):
         return "—"
 
 
+def host_ram(hardware):
+    """Plain-words host-memory floor from the package manifest; empty when not declared."""
+    minimum = hardware.get("host_ram_min_bytes")
+    if not isinstance(minimum, (int, float)) or minimum <= 0:
+        return ""
+    text = f"at least {minimum / 2**30:g} GiB"
+    with_swap = hardware.get("host_ram_plus_swap_min_bytes")
+    if isinstance(with_swap, (int, float)) and with_swap > minimum:
+        text += f"; RAM plus swap at least {with_swap / 2**30:g} GiB"
+    free = re.search(r"(\d+) bytes host memory available required", hardware.get("note") or "")
+    if free:
+        text += f"; about {int(free.group(1)) / 2**30:.1f} GiB must be free at launch"
+    return text
+
+
 def public_profile_label(profile):
     """Keep experiment identifiers in evidence, while naming the measured task."""
     if profile.get("public_label"):
@@ -424,6 +439,7 @@ def page(pkg, all_pkgs, family=None):
         ("Compression", lib.get("quantization", "")),
         ("Software", lib.get("runtime_label", "")),
         ("Cards", f"{hw.get('cards', 1)}× {hw.get('accelerator', 'Intel Arc Pro B70')}"),
+        *([("Host RAM", host_ram(hw))] if host_ram(hw) else []),
         ("Model download", gb(hw.get("model_weight_bytes") or hw.get("target_model_bytes"))),
         ("Operating systems", ", ".join(lib.get("operating_systems", []))),
         ("Delivery", ", ".join("Docker / container" if v == "container" else v for v in lib.get("delivery", []))),

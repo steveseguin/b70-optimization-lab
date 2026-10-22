@@ -32,7 +32,7 @@
 <meta name="twitter:image" content="https://neural.download/og-image.png">
 <meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"Models: which one to run and why","description":"Dense vs mixture-of-experts, active vs total parameters, VRAM math, and how to pick a local LLM for your Intel Arc card and your job \u2014 with the lab's measured model board.","url":"https://neural.download/learn/models.html","dateModified":"2026-08-23","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Models: which one to run and why","description":"Dense vs mixture-of-experts, active vs total parameters, VRAM math, and how to pick a local LLM for your Intel Arc card and your job \u2014 with the lab's measured model board.","url":"https://neural.download/learn/models.html","dateModified":"2026-10-22","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"Models: which one to run and why","item":"https://neural.download/learn/models.html"}]}
@@ -100,10 +100,12 @@
   <div class="scroller"><table class="data">
     <thead><tr><th>Model</th><th>Design</th><th class="num">Cards</th><th class="num">Decode tok/s</th><th>Note</th></tr></thead>
     <tbody>
-      <tr><td><a href="../models/gemma-4.html">Gemma-4-26B A4B</a></td><td>MoE (~4B active)</td><td class="num">1</td><td class="num">124.98</td><td>Runs on one card; measured</td></tr>
-      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>hybrid, Q4_K_M</td><td class="num">1</td><td class="num">27.82</td><td>Quality-checked; speed measured out to 32K</td></tr>
-      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>Q8_0</td><td class="num">2</td><td class="num">36.77</td><td>8-bit: slower, more conservative</td></tr>
-      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>INT4 + MTP 5</td><td class="num">2</td><td class="num">101.2</td><td>Research result (not yet repeatable run to run)</td></tr>
+      <tr><td><a href="../models/qwen38-27b-autoround-int4-b70.html">Qwen3.8-27B</a></td><td>hybrid, AutoRound INT4 + MTP 4</td><td class="num">1</td><td class="num">81.16</td><td>Qualified package; every test answer matched plain decoding</td></tr>
+      <tr><td><a href="../models/qwen38-27b-autoround-int4-b70.html">Qwen3.8-27B</a></td><td>AutoRound INT4 + MTP 4</td><td class="num">2</td><td class="num">117.53</td><td>Qualified package record; every test answer matched plain decoding</td></tr>
+      <tr><td><a href="../models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8-27B</a></td><td>official FP8 + MTP 5</td><td class="num">1</td><td class="num">54.04</td><td>Official weights; every test answer matched plain decoding</td></tr>
+      <tr><td><a href="../models/gemma-4.html">Gemma-4-26B A4B</a></td><td>MoE (~4B active), Q8 + MTP 3</td><td class="num">1</td><td class="num">122.16</td><td>Runs on one card; middle value across prompt types</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>Q4_K_M</td><td class="num">1</td><td class="num">27.83</td><td>Quality-checked; speed measured out to 32K</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>Q8_0</td><td class="num">2</td><td class="num">36.73</td><td>8-bit: slower, more conservative</td></tr>
       <tr><td><a href="../models/laguna-s.html">Laguna S 2.1</a></td><td>INT4 + DFlash</td><td class="num">4</td><td class="num">125.46</td><td>Lab record run</td></tr>
       <tr><td><a href="../models/muse-glimmer.html">Muse-Glimmer-30B</a></td><td>Q8/WOQ + DFlash</td><td class="num">4</td><td class="num">100.37</td><td>Average across repeat runs</td></tr>
     </tbody>
@@ -112,9 +114,9 @@
 
   <h2>How to choose</h2>
   <ol>
-    <li><strong>Match to your cards.</strong> One B70? A fast MoE (Gemma-4-26B) or a Q4 27B. More cards unlock bigger models and speculative records.</li>
+    <li><strong>Match to your cards.</strong> One B70 runs a 27B model or a fast MoE such as Gemma-4-26B. More cards unlock bigger models and faster records.</li>
     <li><strong>Match to your job.</strong> Coding and agents need tool behavior and responsiveness; document work needs long <a href="context-length.html">context</a>; image tasks need a vision-enabled packet such as the Qwen3.8 Q5_K_S flagship.</li>
-    <li><strong>Then optimize.</strong> Once the model fits and runs, the other nine guides are how you make it faster.</li>
+    <li><strong>Then optimize.</strong> Once the model fits and runs, the six guides under “Tune for speed” on the <a href="../learn.html">Learn page</a> show how to make it faster.</li>
   </ol>
 
   <div class="callout warn">
@@ -124,7 +126,7 @@
 
   <div class="callout good">
     <span class="tag">Recommendation</span>
-    <p>For most people on a single B70: start with <strong>Gemma-4-26B</strong> for a fast multimodal lane, <strong>Qwen3.8-27B Q4_K_M</strong> for the validated text package and measured 32K curve, or the separate <strong>Q5_K_S 256K + vision</strong> packet when those capabilities matter more than decode. Get one exact packet running, then tune.</p>
+    <p>Start with the setup we pick for your number of cards in <a href="../index.html#t-featured">What should I run?</a> on the home page. It names the current choice for each job, with its measured speed and setup guide. Get that one exact setup running, then tune.</p>
   </div>
 
   <div class="related">
