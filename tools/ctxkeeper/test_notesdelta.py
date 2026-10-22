@@ -120,6 +120,16 @@ class Delta(unittest.TestCase):
                          ['didoyo44: -14 ("The clerk recorded didoyo44 at minus fourteen.")',
                           'roru25: 445 ("roru25 was set to four hundred and forty-five.")'])
         self.assertEqual(nd.sets_not_taken([("didoyo44", "set to -14 (item 1079), then -14 - 14 = -28")], st, notes), [])
+        # a name the NOTES hold as removed, reopened by the turns, with no line at all (campaign 54d: vonedi62)
+        texts3 = ["ITEM 349/1233 (UPDATE)\nA new page was started for vonedi62, at minus one hundred and seventeen. como20 gained four."]
+        notes3 = "RULES\n(none)\nSTATE\nvonedi62: removed (item 340)\ncomo20: 108\nOPEN"
+        st3 = nd.sets_stated(["vonedi62", "como20"], texts3); rm3 = nd.removals_stated(["vonedi62", "como20"], texts3)
+        self.assertEqual(nd.sets_not_taken([("como20", "104 + 4 = 108")], st3, notes3), [])                 # without the removals map: as before
+        self.assertEqual(nd.sets_not_taken([("como20", "104 + 4 = 108")], st3, notes3, rm3),
+                         ['vonedi62: -117 ("A new page was started for vonedi62, at minus one hundred and seventeen.")'])
+        texts4 = ["ITEM 460/1233 (UPDATE)\nvonedi62 was opened at -57. Later that day vonedi62 was struck off the books."]
+        st4 = nd.sets_stated(["vonedi62"], texts4); rm4 = nd.removals_stated(["vonedi62"], texts4)
+        self.assertEqual(nd.sets_not_taken([], st4, "RULES\n(none)\nSTATE\nvonedi62: removed (item 389)\nOPEN", rm4), [])   # reopened and removed again: moot
         texts2 = ["ITEM 615/1233 (UPDATE)\nvonedi62 was struck off the books. Four went into como20."]
         notes2 = "RULES\n(none)\nSTATE\nvonedi62: 340\ncomo20: 108\nOPEN"
         self.assertEqual(nd.removals_not_taken([("vonedi62", "336 + 4 = 340 (item 610)"), ("como20", "104 + 4 = 108")], ["vonedi62", "como20"], texts2, notes2),

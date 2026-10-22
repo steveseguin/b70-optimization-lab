@@ -55,7 +55,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.3.0.dev3"
+__version__ = "1.3.0.dev4"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -1606,7 +1606,7 @@ class Keeper:
                 req = req + [{"role": "assistant", "content": text},
                              {"role": "user", "content": nd.COUNT_RETRY.format(names=", ".join(missing[:30]))}]
                 continue
-            untaken = [] if asked_sets else (nd.sets_not_taken(delta["changes"], nd.sets_stated(known, texts), new)
+            untaken = [] if asked_sets else (nd.sets_not_taken(delta["changes"], nd.sets_stated(known, texts), new, nd.removals_stated(known, texts))
                                        + nd.removals_not_taken(delta["changes"], known, texts, new))
             if untaken:                              # asked once: a set or removal the turns state that no line of the name takes
                 asked_sets = True

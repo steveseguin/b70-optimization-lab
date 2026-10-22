@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 22, 11:06 EDT — ctxkeeper 1.3.0.dev4: the set check now also catches a counter the reply left out; campaign 55 (both
+seeds) registered and starting.** The four wrong lines left on seed 2 were one counter the notes held as removed while
+the turns reopened it with no line in the reply. Replaying eight audited runs, the extension asks at 8 to 11 cuts per
+seed-2 run and every question lands on a wrong value; it never fires on seed 0. Campaign 55 runs both seeds on it,
+registered with predictions. Cards in use by the campaign until about 14:40.
+
 **October 22, 11:02 EDT — campaign 54 complete: seed 2 421/423 with 4 wrong STATE lines, audit PASS, the best seed 2 on record;
 the loop-cut failure of the last three campaigns is closed.** On ctxkeeper 1.3.0.dev3 seed 2 answered 421 of 423 with four
 wrong lines in 8,932 (one counter, the removed/reopened family), all 16 audits applied and every forgery target kept; no

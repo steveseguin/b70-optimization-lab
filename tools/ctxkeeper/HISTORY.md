@@ -1,5 +1,24 @@
 # ctxkeeper: how it got here
 
+## 2026-10-22 — development 1.3.0.dev4: a stated set for a name the reply left out is asked about too
+
+Campaign 54 (1.3.0.dev3, seed 2) answered 421/423 with four wrong STATE lines,
+all vonedi62: a counter the NOTES held as `removed`, reopened by the turns
+("A new page was started for vonedi62, at minus one hundred and seventeen")
+with no line at all in the reply, stayed removed; the same family cost
+campaigns 49d, 51b, 52 and 53 their vonedi62 lines. The `--set-check` of dev1
+skipped a name without lines on purpose (the mention check's business), but
+the mention check asks once and the second reply often leaves the name out
+again. `sets_not_taken` now also names a stated set for a name the NOTES hold
+that no line of the reply mentions, given `removals_stated`; a name reopened
+and removed again in the same turns is moot and not asked about. Replayed over
+eight sessions: on seed 0 no ask at all; on the seed-2 sessions of campaigns
+49d, 51b, 52, 53 and 54 the extension asks at 8-11 of about 150 cuts, every
+question on a stored value that was wrong (12, 12, 21, 14 and 8), none on a
+right one; the whole set/removal check through the real functions asks at 11
+and 12 cuts on 54d and 49d, with 10 and 14 questions on wrong values and 1 on a
+right one each. Test extended; 146 tests pass.
+
 ## 2026-10-22 — development 1.3.0.dev3: a repetition loop is never applied and is asked for once more
 
 Campaign 53 (1.3.0.dev2) replayed campaign 52's seed 0 token for token (423/423,

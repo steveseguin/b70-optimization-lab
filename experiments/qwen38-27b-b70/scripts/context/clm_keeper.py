@@ -1279,9 +1279,13 @@ def sets_stated(names: list[str], texts: list[str]) -> dict[str, dict[int, str]]
     return out
 
 
-def sets_not_taken(changes: list[tuple[str, str]], stated: dict[str, dict[int, str]], notes: str) -> list[str]:
+def sets_not_taken(changes: list[tuple[str, str]], stated: dict[str, dict[int, str]], notes: str,
+                   removed: dict[str, str] | None = None) -> list[str]:
     """`name: value ("sentence")` for each set the turns state for a name that has changes, which no line of the name
-    writes as a number (with its sign) and which is not the value the NOTES hold after the changes."""
+    writes as a number (with its sign) and which is not the value the NOTES hold after the changes. With `removed`
+    (removals_stated), also for a name the NOTES hold that the reply left out entirely (campaigns 51-54, seed 2:
+    vonedi62's reopenings, `A new page was started for vonedi62, at minus one hundred and seventeen`, with no line
+    at all, left it `removed` for versions); a name reopened and removed again in the same turns is not asked about."""
     written: dict[str, set[int]] = {}
     lines: dict[str, list[str]] = {}
     for k, v in changes:
@@ -1295,12 +1299,13 @@ def sets_not_taken(changes: list[tuple[str, str]], stated: dict[str, dict[int, s
             now[k] = number_of(v)
     out = []
     for name, vals in stated.items():
-        if name not in written:
-            continue
-        if now.get(name) is None and any(re.search(r"removed|struck|deleted|closed|gone", x.lower()) for x in lines.get(name, ())):
+        if name not in written and (name not in now or removed is None):
+            continue                                 # a name the NOTES do not hold and no line names: the mention check's business
+        if now.get(name) is None and (any(re.search(r"removed|struck|deleted|closed|gone", x.lower()) for x in lines.get(name, ()))
+                                      or (removed is not None and name in removed)):
             continue                                 # set and then removed in these turns: the set is moot
         for sv, sent in vals.items():
-            if sv not in written[name] and sv != now.get(name):
+            if sv not in written.get(name, ()) and sv != now.get(name):
                 out.append(f'{name}: {sv} ("{sent}")')
     return out
 
@@ -1310,6 +1315,17 @@ def sets_not_taken(changes: list[tuple[str, str]], stated: dict[str, dict[int, s
 # struck it off; campaign 49d's como20 and 49b's didoyo44 are the same shape, each let through by every other check.
 REMOVAL_STATED = re.compile(r"\b(?:struck off|removed from|taken off the (?:books|ledger)|closed out|deleted from)\b", re.I)
 
+
+def removals_stated(names: list[str], texts: list[str]) -> dict[str, str]:
+    """{name: sentence} for each name a sentence of the turns removes (REMOVAL_STATED), questions aside."""
+    want, out = set(_checked(names)), {}
+    for t in texts:
+        for sent in _sentences(t):
+            here = want & set(re.findall(r"[a-z0-9_]+", sent.lower()))
+            if here and "?" not in sent and REMOVAL_STATED.search(sent):
+                for n in here:
+                    out.setdefault(n, " ".join(sent.split())[:160])
+    return out
 
 def removals_not_taken(changes: list[tuple[str, str]], names: list[str], texts: list[str], notes: str) -> list[str]:
     """`name: removed ("sentence")` for each name with changes that a sentence of the turns removes, when no line of

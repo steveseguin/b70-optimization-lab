@@ -2155,6 +2155,39 @@ point of campaigns 49d, 52 and 53 is closed by 1.3.0.dev3: across c54, c54b and 
 complete) seed 2 passed the version-75 cut every time, and the one loop that occurred (c54b, cut 13) was named and
 recovered. Next: the reopen lever above; then both seeds on the resulting version.
 
+## Lever from campaign 54's read: a stated set for a name the reply left out is asked about (1.3.0.dev4); written 2026-10-22 11:06 EDT
+
+The set check of dev1 skipped a name without lines ("the mention check's business"); campaign 54d's four wrong lines,
+and the vonedi62 lines of 49d, 51b, 52 and 53, are exactly that case: the turns reopen a counter the NOTES hold as
+removed and the reply has no line for it, the mention check asks once, the second reply leaves it out again, and
+the line stays `removed` for versions. `sets_not_taken` now takes the stated removals too and names a stated set
+for any name the NOTES hold that no line mentions; a counter reopened and removed again in the same turns is moot.
+Replay over the eight audited sessions (`scratchpad sets_nolines_measure.py`): seed 0 never asks; seed 2 asks at 10,
+9, 11, 9 and 8 of about 150 cuts (49d, 51b, 52, 53, 54d), every question on a stored value that was wrong (12, 12,
+21, 14, 8 values), none on a right one. The whole set/removal check through the real functions: 54d 11 asks (10 on
+wrong values, 1 on a right one), 49d 12 asks (14 and 1), 52 seed 0 none. Test extended; 146 tests pass.
+
+## Campaign 55: both 2M seeds on ctxkeeper 1.3.0.dev4, arm K32V, registered 2026-10-22 11:06 EDT (before any run)
+
+Both seeds this time: campaign 52's seed 0 took one set-check ask live (on a retry, zifaro44), so the extension can
+change seed 0's path; a byte-identical replay is not assumed. Queue `QUEUE55.txt` (`K32V hostile2mk 0 14400`, then
+seed 2), unit `ctx-campaign55`, `KEEPER_VERSION=1.3.0.dev4`, the other flags as campaign 52; about 3 h 10 min.
+Nothing else runs on this host; the campaign disk has 148 GB free; the latch is archived.
+
+**Predictions:**
+- **Seed 0:** 423/423 again, or at least 421; wrong STATE lines at most 3 (campaigns 52 and 53: 0); set check asks
+  at 1-3 cuts.
+- **Seed 2:** wrong STATE lines at most 3 in about 8,900 (campaign 54: 4, all vonedi62); vonedi62 right at its
+  reopenings (items 349 and 1063); answers at least 421/423 (campaign 54: 421); 16/16 audits; every forgery target
+  kept; set check asks at 8-14 cuts, at most 2 of its questions on a value that was right.
+- **Loops:** 0-2 per seed, named and recovered, none applied.
+- **Cost:** wall within 10 % of campaigns 53/54 (91 and 95 min); nothing else runs on this host.
+- **Not claimed:** the batch-answer arithmetic lever; the strictest 2M bar (which this would meet on both seeds if
+  the lines above hold: every forgery target kept, 16/16 audits, no wrong line standing).
+
+**Decision:** both seeds at or over → the removed/reopened family is closed; then the batch-answer arithmetic lever
+(the only named lever left) and a release candidate. A seed under → read the cut first.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
