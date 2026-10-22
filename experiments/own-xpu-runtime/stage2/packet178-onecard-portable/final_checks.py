@@ -1,5 +1,11 @@
-"""Verify every CPU gate and current seal; READY is the final file mutation."""
-import argparse,json,subprocess,time
+"""Verify every CPU gate and current seal; READY is the final file mutation.
+
+Order: CPU gates -> package_rows (seal + proposal) -> check_queue_rows (plan +
+rehearse) -> final_checks --ready. The lane-queue pin guard reaches the evidence
+receipts only through READY, so --ready re-admits the proposal rows through the
+guard after writing READY (read-only) and withdraws READY if it refuses.
+"""
+import argparse,json,subprocess,sys,time
 from pathlib import Path
 from build_engine import P,ROOT,sha,save,limits
 ap=argparse.ArgumentParser();ap.add_argument('--ready',action='store_true');args=ap.parse_args();limits()
@@ -56,15 +62,22 @@ for name,lanes in [('one-card','A')]:
         proposal_sha256=sha(proposal))))
     print(name,'final checks PASS',flush=True)
 proposals=ROOT/'experiments/own-xpu-runtime/ops/lane-queue'
-proposal_rows=[]
+proposal_rows=[];admit=[]
 for name,lane in [('one-card','A')]:
     f=proposals/f'proposed-p178-{name}-{lane}.txt';proposal_rows.append(dict(path=str(f.relative_to(ROOT)),sha256=sha(f)))
     jobs=[json.loads(s) for s in f.read_text().splitlines() if s and not s.startswith('#')]
-    assert len(jobs)==2 and all(j['name'].startswith('packet178-') for j in jobs)
+    assert len(jobs)==2 and all(j['name'].startswith('packet178-') for j in jobs);admit+=jobs
 if args.ready:
     for p,value in ready:save(p/'READY-FOR-DEVICE.json',value)
     save(P/'READY-FOR-DEVICE.json',dict(ready=True,device_executed=False,queued=False,created_utc_ns=time.time_ns(),
         packets={str((p/'READY-FOR-DEVICE.json').relative_to(P)):sha(p/'READY-FOR-DEVICE.json') for p,_ in ready},proposals=proposal_rows,checks=root_checks,
         portable_rebuild=True,device_qualification_pending=True,full_output_oracle_exact=False,
         scope='CPU preparation of the portable-rebuilt one-card packet only; one-card lane A whole-host; device qualification pending; no queue action'))
+    sys.path.insert(0,str(ROOT/'experiments/own-xpu-runtime/ops/lane-queue'));import pin_guard
+    try:
+        for job in admit:pin_guard.check_job(job)
+    except pin_guard.PinRefusal:
+        for f in [P/'READY-FOR-DEVICE.json',*(p/'READY-FOR-DEVICE.json' for p,_ in ready)]:f.unlink()
+        raise
+    print('pin guard admits',len(admit),'proposal rows against the READY closure')
     print('READY written last; no GPU run or queue action')

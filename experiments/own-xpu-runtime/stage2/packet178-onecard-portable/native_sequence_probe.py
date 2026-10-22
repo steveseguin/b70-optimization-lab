@@ -3,6 +3,11 @@
 Run each topology in a fresh constrained Python process. The unchanged native
 reset functions and preparation paths execute; this is not model inference.
 The full worker sequence is separately exercised by the Python arm gate.
+
+one-card is packet-private: packet163's frozen preparation inputs are vendored
+once into one-card/lineage-inputs/preparation163, and their packet163
+native-source paths are relocated to this packet's own native-portable copy of
+that tree. Every compiler dependency must stay inside this packet.
 """
 import argparse
 import hashlib
@@ -12,6 +17,7 @@ import os
 from pathlib import Path
 import resource
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -19,6 +25,7 @@ import time
 from build_engine import P, ROOT, limits, turn
 
 OLD = P.parent / 'packet163-full-gate'
+NATIVE = 'native-portable/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/native-source'
 
 
 def sha(path):
@@ -38,12 +45,40 @@ def main(name):
     build = p / 'build/native-sequence165'
     build.mkdir(parents=True, exist_ok=True)
     old_build = old / 'build/preparation163'
+    moves = [(str(old_build), str(build))]
+    native = None
+    if name == 'one-card':
+        # One-time private copy; the parent is otherwise read only for the
+        # informational tree-equivalence fields of the receipt.
+        frozen = p / 'lineage-inputs/preparation163'
+        frozen.mkdir(parents=True, exist_ok=True)
+        for source in [*(old_build / f for f in ('fixture.cpp', 'probe-main.cpp', 'mock_device.hpp', 'preparation_backend.hpp')),
+                       old / 'evidence/preparation-build.json', old / 'evidence/preparation-probe.json']:
+            if not (frozen / source.name).is_file() and source.is_file():
+                shutil.copy2(source, frozen / source.name)
+        native = p / NATIVE
+        moves.append((str(old / 'native-source'), str(native)))
+        old_build = evidence = frozen
+    else:
+        evidence = old / 'evidence'
+
+    def relocate(text):
+        for a, b in moves:
+            text = text.replace(a, b)
+        return text
+
+    def relocate_arg(arg):
+        # Parent engine objects map by translation-unit id to this packet's portable rebuild.
+        if native is not None and arg.endswith('.o') and Path(arg).parent == old / 'build/objects':
+            arg = str(p / 'build/portable/objects' / (Path(arg).name.split('-', 1)[0] + '.o'))
+            assert Path(arg).is_file(), arg
+        return relocate(arg)
     # All included production code is still the frozen packet163 preparation
     # source; no arithmetic, device executable or existing source is changed.
     for filename in ('probe-main.cpp', 'mock_device.hpp', 'preparation_backend.hpp'):
         if not (old_build / filename).is_file():
             continue
-        (build / filename).write_bytes((old_build / filename).read_bytes())
+        (build / filename).write_text(relocate((old_build / filename).read_text()))
     (build / 'native_sequence_helpers.hpp').write_bytes((P / 'native_sequence_helpers.hpp').read_bytes())
     sources = {str(P / 'native_sequence_helpers.hpp'): sha(P / 'native_sequence_helpers.hpp'),
                str(old_build / 'probe-main.cpp'): sha(old_build / 'probe-main.cpp')}
@@ -57,7 +92,7 @@ def main(name):
         (build / 'draft_reset.inc').write_text(text[start:end])
         sources[str(mtp)] = sha(mtp)
     else:
-        text = (old_build / 'fixture.cpp').read_text().split('int main(int argc,char**argv) {')[0]
+        text = relocate((old_build / 'fixture.cpp').read_text()).split('int main(int argc,char**argv) {')[0]
         text = text.replace('public ownrt::ForegroundPrefix {', 'public ownrt::ForegroundPrefix, public p58v::AsyncBackend {')
         text = text.replace('  bool foreground_prefix_complete() override', '''  ownrt::Event fill(void* d,const void* s,size_t n) override {return copy(d,s,n,{});}
   bool fill_complete(ownrt::Event) override {return true;}
@@ -75,8 +110,9 @@ def main(name):
         (build / 'fixture.cpp').write_text(text)
         sources[str(old_build / 'fixture.cpp')] = sha(old_build / 'fixture.cpp')
         sources[str(P / 'native_sequence_one.inc')] = sha(P / 'native_sequence_one.inc')
-    commands = json.loads((old / 'evidence/preparation-build.json').read_text())['commands']
-    commands = [[arg.replace(str(old_build), str(build)) for arg in command] for command in commands]
+    commands = json.loads((evidence / 'preparation-build.json').read_text())['commands']
+    commands = [[relocate_arg(arg) for arg in command] for command in commands]
+    assert native is None or str(OLD) not in json.dumps(commands), 'build command escapes packet'
     build_receipt = build / 'compiled-inputs.json'
     previous = json.loads(build_receipt.read_text()) if build_receipt.is_file() else {}
     reuse = (previous.get('commands') == commands
@@ -93,6 +129,8 @@ def main(name):
     for filename in shlex.split(dependency):
         file = Path(filename).resolve()
         if file.is_relative_to(ROOT):
+            if native is not None and not file.is_relative_to(P):
+                raise RuntimeError('compiler dependency escaped the packet: ' + str(file))
             sources[str(file)] = sha(file)
     save(build_receipt, dict(commands=commands, sources_sha256=sources,
                             binary_sha256=sha(build / 'prepare-probe')))
@@ -109,13 +147,15 @@ def main(name):
     assert len(ids) == 13 and ids[:2] == ['incident-retrospective', 'prefill512']
     sequence.write_text('\n'.join(ids) + '\n')
     metadata = [file for file in (p / 'inputs').rglob('*') if file.is_file()]
-    # Frozen probe-main references frozen small rotary metadata and plan paths.
-    metadata += [file for file in (old / 'inputs').rglob('*') if file.is_file()]
-    metadata += [p / 'selection.json', p / 'dispatch.json', p / 'memory-plan.json',
-                 old / 'selection.json', old / 'dispatch.json', old / 'memory-plan.json', sequence]
-    metadata += list((old / 'native-source').rglob('*.bf16'))
-    metadata += list((old / 'native-source').rglob('*manifest*.json'))
-    probes = json.loads((old / 'evidence/preparation-probe.json').read_text())['probes']
+    metadata += [p / 'selection.json', p / 'dispatch.json', p / 'memory-plan.json', sequence]
+    # Frozen probe-main references small rotary metadata and plan paths.
+    tree = native or old / 'native-source'
+    if native is None:
+        metadata += [file for file in (old / 'inputs').rglob('*') if file.is_file()]
+        metadata += [old / 'selection.json', old / 'dispatch.json', old / 'memory-plan.json']
+    metadata += list(tree.rglob('*.bf16'))
+    metadata += list(tree.rglob('*manifest*.json'))
+    probes = json.loads((evidence / 'preparation-probe.json').read_text())['probes']
     results = []
     for number, probe in enumerate(probes):
         output = build / ('run-' + str(time.time_ns()) + '-rank' + str(number))
@@ -179,7 +219,16 @@ def main(name):
                 row = json.loads((output / ('draft-' + id) / 'draft-rows.jsonl').read_text())
                 assert row['cpu_sequence_sensor'] and row['request_id'] == id
         result['sensor_checks'] = checks
-    receipt = dict(passed=True, device_executed=False, model_reads=False, requests=ids,
+    private = {}
+    if native is not None:
+        private = dict(preparation_inputs=str(old_build.relative_to(p)), native_source_root=str(native.relative_to(p)),
+                       preparation_origin=str((old / 'build/preparation163').relative_to(ROOT)),
+                       link_objects='build/portable/objects: this packet\'s portable rebuild, matched by translation-unit id')
+        parent = [f for f in (old / 'native-source').rglob('*') if f.is_file()]
+        private.update(parent_native_tree_files=len(parent), parent_native_tree_identical_after_relocation=bool(parent) and all(
+            (native / f.relative_to(old / 'native-source')).is_file() and relocate(f.read_bytes().decode('latin-1'))
+            == (native / f.relative_to(old / 'native-source')).read_bytes().decode('latin-1') for f in parent))
+    receipt = dict(passed=True, device_executed=False, model_reads=False, requests=ids, **private,
         target_resets_per_native_owner=14, sensor_streams_per_reset=4,
         native_argv_production_geometry=True, commands=commands, sources_sha256=sources,
         binary_sha256=sha(binary), script_sha256=sha(__file__),

@@ -1,4 +1,8 @@
-"""Create proposal, never edit/submit a live queue. READY is a separate last step."""
+"""Create proposal, never edit/submit a live queue. READY is a separate last step.
+
+Order: CPU gates -> package_rows (seal + proposal) -> check_queue_rows (plan +
+rehearse against this seal) -> final_checks --ready.
+"""
 import hashlib,json,sys
 from pathlib import Path
 P=Path(__file__).resolve().parent;ROOT=P.parents[3];OPS=ROOT/'experiments/own-xpu-runtime/ops/lane-queue'

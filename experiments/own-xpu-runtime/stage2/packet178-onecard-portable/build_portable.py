@@ -7,6 +7,11 @@ rewritten to the packet-private one-card/native-portable tree, then runs the
 manifest's 42 one-card translation units plus link_command under the shared
 compiler turn. No inherited object files; arithmetic/flags unchanged. The
 resulting binary is never device-executed here.
+
+The receipt pins relocated_source_sha256 by packet-relative relocated path
+(one-card/native-portable/<archive member>); each archive member is its
+original_root-relative path, listed in lineage/portable/native-build.json.
+A resume re-hashes the retained tree against the progress receipt.
 """
 import hashlib,json,os,re,resource,shutil,subprocess,sys,tarfile,time
 from pathlib import Path
@@ -51,7 +56,7 @@ def main():
     validation=json.loads((lineage/'build-validation.json').read_text())
     save(p/'evidence/portable-inputs.json',dict(passed=True,device_executed=False,
         origin=str((REPRO/'manifests').relative_to(ROOT)),
-        files={name:sha(lineage/name) for name in VENDORED},
+        files={str((lineage/name).relative_to(P)):sha(lineage/name) for name in VENDORED},
         archive_sha256=manifest['archive']['sha256'],
         source_file_count=len(manifest['source_files']),
         build_validation_passed=validation.get('passed'),
@@ -59,9 +64,14 @@ def main():
     plan=manifest['plans']['one-card']
     source=p/'native-portable';build=p/'build/portable'
     progress=build/'progress.json'
+    prefix=str(source.relative_to(P))+'/'
     if source.exists():
         assert progress.is_file(),'existing tree without progress receipt; refusing to guess'
-        receipt=json.loads(progress.read_text());relocated=receipt['relocated_source_sha256']
+        receipt=json.loads(progress.read_text())
+        # Legacy receipts keyed archive members directly; both forms map to members.
+        relocated={k.removeprefix(prefix):h for k,h in receipt['relocated_source_sha256'].items()}
+        if set(relocated)!=set(manifest['source_files']) or any(digest((source/n).read_bytes())!=h for n,h in relocated.items()):
+            raise ValueError('retained relocated tree differs from its progress receipt')
     else:
         source.mkdir();(build/'objects').mkdir(parents=True);(build/'logs').mkdir();(build/'tmp').mkdir()
         relocated=unpack(manifest,lineage/'native-sources.tar.gz',source)
@@ -74,8 +84,9 @@ def main():
             schema='neural.download.ownrt.source-build-result.v1',cards=1,
             manifest_sha256=sha(lineage/'native-build.json'),archive_sha256=manifest['archive']['sha256'],
             build_validation_sha256=sha(lineage/'build-validation.json'),
-            historical_binary_sha256=plan['historical_binary_sha256'],
-            relocated_source_sha256=relocated,commands=[],compiler_versions={})
+            historical_binary_sha256=plan['historical_binary_sha256'],commands=[],compiler_versions={})
+    # In-packet pins only: cross-packet keys are refused by the lane-queue pin guard.
+    receipt.update(relocated_source_root=prefix[:-1],relocated_source_sha256={prefix+n:h for n,h in relocated.items()})
     for exe in sorted({cmd[0] for _,cmd in commands}):
         if exe not in ('/opt/intel/oneapi/compiler/2026.0/bin/icpx','/usr/bin/g++','g++'):
             raise SystemExit(f'unexpected compiler: {exe}')
@@ -131,7 +142,8 @@ def main():
         save(p/'evidence/build.json',receipt)
         raise
     finally:
-        receipt['peak_child_rss_bytes']=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024
+        # A resume keeps the earlier compile peak instead of reporting only its own children.
+        receipt['peak_child_rss_bytes']=max(receipt.get('peak_child_rss_bytes',0),resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024)
         save(progress,receipt)
     assert receipt['peak_child_rss_bytes']<4*1024**3
     save(p/'evidence/build.json',receipt)
