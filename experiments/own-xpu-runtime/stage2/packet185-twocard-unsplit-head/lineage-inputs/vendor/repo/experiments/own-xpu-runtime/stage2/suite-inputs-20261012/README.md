@@ -1,0 +1,93 @@
+# Arithmetic-v2 twelve-prompt CPU suite
+
+Verified prompts: 12/12. Complete: True.
+The unchanged sealed CPU binary generates greedy tokens for the fixed rendered suite.
+Model: Unsloth Qwen3.8-Flash-Next UD-IQ3_XXS, a **quantized compressed version**,
+revision `766911a6b7369840a91dbcd95f9f997acaab6cd6`. No binary rebuild was needed.
+Identity: `iq3-p17-detmath-v2`; 192-token context; maximum 64 generated tokens.
+EOS (248044) or 248046 is saved and then stops generation. No padding or forced continuation.
+The runtime uses the same stop rule. llama.cpp's immediate code-review EOG is information only.
+Two OpenMP threads per oracle, at most two CPU oracles, nice 19, idle I/O;
+inherited CPU affinity, no device execution. The parent alone validates and commits.
+Each worker has a 5 GB anonymous-memory stop guard (10 GB combined).
+
+| Prompt | Prompt tokens | Generated | First 8 token IDs | Early end | Seconds/position |
+| --- | ---: | ---: | --- | --- | ---: |
+| incident-retrospective | 87 | 64 | 332, 37947, 1653, 10082, 3508, 8812, 25, 23288 | False | 20.4372 |
+| code-review | 90 | 64 | 1919, 369, 264, 4927, 41052, 6206, 494, 63723 | False | 18.0845 |
+| customer-email | 77 | 64 | 12646, 25, 5376, 383, 21503, 19389, 16870, 25 | False | 14.9021 |
+| sql-debugging | 83 | 64 | 2, 10768, 3072, 264, 36885, 45132, 11033, 303 | False | 17.0479 |
+| release-plan | 68 | 64 | 2, 16107, 16870, 9392, 25, 7134, 21753, 343 | False | 16.2171 |
+| benchmark-analysis | 65 | 64 | 1919, 369, 264, 11088, 46931, 314, 2972, 66 | False | 14.6825 |
+| architecture-tradeoff | 67 | 64 | 1919, 369, 264, 11088, 41052, 6355, 12105, 303 | False | 17.9477 |
+| bug-report-synthesis | 71 | 64 | 2, 29505, 8001, 25, 769, 1519, 5764, 25375 | False | 18.1272 |
+| technical-guide | 69 | 64 | 2, 25816, 12347, 25, 29381, 264, 1478, 59542 | False | 16.1593 |
+| risk-register | 61 | 64 | 2, 30260, 8191, 25, 23288, 733, 2133, 45693 | False | 15.7737 |
+| performance-hypotheses | 64 | 64 | 1206, 28476, 264, 21966, 42903, 9705, 1332, 380 | False | 15.9933 |
+| decision-memo | 60 | 64 | 332, 30918, 842, 3843, 2705, 332, 271, 332 | False | 15.8853 |
+
+Total numerical-process wall time: 27273.259 seconds.
+Actual process CPU time (user + system): 13.069217 CPU hours.
+CPU accounting complete: True.
+Totals cover completed oracle attempts. The interrupted SQL prefill and validation overhead
+are excluded; the interrupted attempt's process CPU time was not retained.
+Position timings include bounded weight reads and CPU work; these are oracle costs, not serving speeds.
+Every prompt retains `positions.jsonl`; means above include prefill and decode positions.
+
+Incident equality: 64/64 token IDs, 64 logit hashes/top-five records, 384/384 raw BF16 fixtures and 8/8 layer hash ledgers exactly equal; see incident-retrospective/equality-proof.json in the oracle directory.
+Timing and process metadata naturally differ. Input bundles are made by packet29 `prepare.py`;
+`validation.json` proves `tokens.txt`, `input.json`, the oracle copy and consumed positions agree.
+
+Retain raw 20,480-byte layer files for steps 1–8 (or through early EOS), tokens/text,
+receipts and all timing evidence. Progress/timing site logs use deterministic gzip (mtime=0),
+verified against original SHA256 before deleting raw copies. Keep teardown JSON uncompressed,
+as in the sealed run. Files above 1 MiB are these same retained logs/teardown and each bundle's
+2.84 MB `vocab.bin`, required by the runtime to decode tokens. No models or executables are committed.
+Each compressed log's original hash/size is in its receipt. Restore with gzip and verify that hash.
+
+Run from the repository root (Python environment needs the existing `regex` dependency):
+
+```sh
+nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_run.py --all --jobs 2 --publish
+nice -n 19 ionice -c 3 python3 -B experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261012-suite/suite_check.py RUNTIME_OUTPUTS
+```
+
+The checker accepts `RUNTIME_OUTPUTS/<prompt>/` or `<prompt>/run/`, reads runtime
+`receipt.json` tokens, and compares raw step fixtures without tolerance. Using the oracle
+suite directory itself tests the retained oracle files. It prints all twelve rows and fails
+if any prompt is missing or incomplete. Unit tests include altered tokens, missing bytes,
+corruption with a rewritten ledger, manifest tampering, early EOS and runtime nesting.
+`checker-tests.json` pins the test/checker source and records the test result.
+
+For packet29 `window.py`, pass `--input` the bundle directory and `--oracle` the matching
+oracle directory from `suite-manifest.json`. The native program's `--input` takes that
+bundle's `tokens.txt` instead. The frozen window gate assumes the requested token count;
+an early-EOS oracle must not be padded to satisfy that assumption.
+
+`status.json` is updated after each completed position. Each prompt runs in a private
+`.partial-*` directory; after validation it is renamed to its final prompt ID. A restart
+verifies completed prompt hashes and skips their computation; completed native partials
+are recovered without rerunning. An interrupted unfinished prompt starts a new attempt,
+retaining old partial evidence. A surviving oracle blocks duplicate launches. No automatic
+retry occurs after native failure or packet31 disagreement. Completed prompts are committed
+with explicit paths. If remote main moves, fetch and merge it before pushing; no stash or branches.
+Root free space is checked with df before large writes and every ten seconds while running;
+less than 8 GB stops the CPU child cooperatively. No task build tree is needed.
+The resume audit rechecks the previously completed prompts, all model payloads, sources,
+compressed logs and fixture hashes; interrupted SQL prefill is retained separately and restarted.
+The incident repeat's original launcher is retained under `runner-snapshots/` by hash;
+subsequent launcher revisions preserve the same numerical binary and arithmetic.
+
+This is oracle coverage, not a runtime speed result or the 512-token final performance gate.
+Only incident-retrospective is a new full fresh-process repeat; other prompts have one new oracle run.
+The reference screen uses two repeats; runtime qualification still requires its own repeats.
+
+Final checks are recorded in `suite-final-check.json` in the oracle directory; it binds
+this suite manifest, the complete read-only checker result, and the final audit/tests.
+`resume-audit.json` checks all model payloads and headers, binary/arithmetic sources,
+input bundles, consumed tokens, retained fixtures, checkpoints and compressed-log JSON.
+The original sealed receipt also lists historical helper sources that were not compiled
+into or used by this suite; their differing hashes are explicitly recorded in that audit.
+The executed binary and every arithmetic dependency match the sealed identities.
+`resume-cleanup.json` records the truncated SQL trace tails and removed empty scratch file.
+The interrupted SQL attempt was not reused; its replacement reached 64 tokens and passed.

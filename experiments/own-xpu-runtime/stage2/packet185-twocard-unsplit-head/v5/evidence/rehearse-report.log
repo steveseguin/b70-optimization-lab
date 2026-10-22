@@ -1,0 +1,1415 @@
+{
+  "passed": false,
+  "jobs": [
+    {
+      "job": "packet185-view0-production-B",
+      "unit": "screen-packet185-view0-production-B",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 178,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 221,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 54,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_queue_plan.py",
+            "line": 96,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 78,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 76,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 343,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 193,
+        "message": "0 identity refusals; 30 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "smoke",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          },
+          {
+            "passed": false,
+            "kind": "bracket",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    },
+    {
+      "job": "packet185-view1-unsplit-B",
+      "unit": "screen-packet185-view1-unsplit-B",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 178,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 221,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 54,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_queue_plan.py",
+            "line": 96,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 78,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 76,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 343,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 193,
+        "message": "0 identity refusals; 30 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "smoke",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          },
+          {
+            "passed": false,
+            "kind": "bracket",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    },
+    {
+      "job": "packet185-view2-production-B",
+      "unit": "screen-packet185-view2-production-B",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 178,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 221,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 54,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_queue_plan.py",
+            "line": 96,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 78,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 76,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 343,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 193,
+        "message": "0 identity refusals; 30 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "smoke",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          },
+          {
+            "passed": false,
+            "kind": "bracket",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    },
+    {
+      "job": "packet185-view3-unsplit-B",
+      "unit": "screen-packet185-view3-unsplit-B",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 178,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 221,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 54,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_queue_plan.py",
+            "line": 96,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 78,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 76,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 343,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 193,
+        "message": "0 identity refusals; 30 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "smoke",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          },
+          {
+            "passed": false,
+            "kind": "bracket",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    },
+    {
+      "job": "packet185-view4-production-B",
+      "unit": "screen-packet185-view4-production-B",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 178,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 221,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 54,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_queue_plan.py",
+            "line": 96,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 78,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 76,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/screen.py",
+            "line": 343,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 193,
+        "message": "0 identity refusals; 30 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "smoke",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          },
+          {
+            "passed": false,
+            "kind": "bracket",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1517
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1473
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    }
+  ]
+}
+WARN screen-packet185-view0-production-B: preparation_path: no preparation-path probe declared
+WARN screen-packet185-view0-production-B: gate_identity: 0 identity refusals; 30 unclassified uses
+WARN screen-packet185-view1-unsplit-B: preparation_path: no preparation-path probe declared
+WARN screen-packet185-view1-unsplit-B: gate_identity: 0 identity refusals; 30 unclassified uses
+WARN screen-packet185-view2-production-B: preparation_path: no preparation-path probe declared
+WARN screen-packet185-view2-production-B: gate_identity: 0 identity refusals; 30 unclassified uses
+WARN screen-packet185-view3-unsplit-B: preparation_path: no preparation-path probe declared
+WARN screen-packet185-view3-unsplit-B: gate_identity: 0 identity refusals; 30 unclassified uses
+WARN screen-packet185-view4-production-B: preparation_path: no preparation-path probe declared
+WARN screen-packet185-view4-production-B: gate_identity: 0 identity refusals; 30 unclassified uses

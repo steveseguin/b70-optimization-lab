@@ -1,0 +1,466 @@
+# packet183 S1 native delta against packet153 (after the packet183 identity rewrite of paths).
+# Inherited packet136 parent objects are linked unchanged; S1 kernels are new names in a new TU.
+--- packet153/v5/native-src/main.cpp
++++ packet183/v5/native-src/main.cpp
+@@ -23,6 +23,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p93_submit.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p93_head.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p105_submit.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.hpp" // packet183-s1
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p49d_submit.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p25_bridge.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p28/submit.hpp"
+@@ -878,6 +879,10 @@
+   }
+   std::string head_choice()const {auto i=sealed_selection.choices.find("head");return i==sealed_selection.choices.end()?"production":i->second;}
+   bool split_head()const {return head_choice()=="head-split-compute"||head_choice()=="head-split-bcs";}
++  // packet183-s1: process-wide dense scale source of the sealed/bracket selection.
++  bool dense_metadata()const {auto i=sealed_selection.choices.find("dense_scales");return i!=sealed_selection.choices.end()&&i->second=="metadata";}
++  p183::Census dense_census;size_t dense_census_tensors=0;
++  void write_dense_census(){save(a.output/"dense-scales-census.json","{\"schema\":\"packet183.dense-scales-census.v1\",\"passed\":"+std::string(dense_census.nonfinite||dense_census.mismatch?"false":"true")+",\"rank\":"+std::to_string(a.rank)+",\"tensors\":"+std::to_string(dense_census_tensors)+",\"rows\":"+std::to_string(dense_census.rows)+",\"blocks\":"+std::to_string(dense_census.blocks)+",\"groups\":"+std::to_string(dense_census.groups)+",\"nonfinite_d\":"+std::to_string(dense_census.nonfinite)+",\"word_mismatches\":"+std::to_string(dense_census.mismatch)+"}");}
+   bool packed_weight(const std::string& name)const {
+     if(name=="output.weight"&&head_choice()=="head-transpose")return true;
+     if(a.mini||a.memory!="resident")return false;
+@@ -956,8 +961,11 @@
+       for(size_t row=0;row<load_rows;row+=rows_per){
+         auto nr=std::min(rows_per,load_rows-row);auto raw=w.read(name,(first_row+row)*rb,nr*rb);
+         auto expanded=hccache?p90::hc_repack(raw.data(),raw.size()):iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
++        if(type==iq3::Type::Q6_K&&!hccache){auto census=p183::census_q6(expanded.data(),nr,t.shape[1]);p183::census_add(dense_census,census); // packet183-s1
++          if(census.nonfinite||census.mismatch){write_dense_census();require(false,"p183 dense-scales census refused: "+name);}}
+         upload(c,id,row*er,expanded.data(),expanded.size());
+       }
++      if(type==iq3::Type::Q6_K&&!hccache){++dense_census_tensors;write_dense_census();} // packet183-s1
+       return;
+     }
+     for (size_t off = 0; off < t.bytes; off += 4 * 1024 * 1024) {
+@@ -1224,7 +1232,7 @@
+       }
+       if(class_timing)set_class(grouped->second.name);
+       auto name=grouped->second.name;auto key=name.starts_with("small.ffn")?"small.ffn":name;
+-      finish(c,!a.mini&&a.memory=="resident"&&name=="small.ffn.q6"?p49d::small(dev(c),name,members,variants):!a.mini&&packet26::dispatch.fusion_choice(key)=="p30.small.rows4"?p30integrated::small(dev(c),name,members,variants):packet27::small::submit(dev(c),name,members,variants),true);return;
++      finish(c,!a.mini&&a.memory=="resident"&&name=="small.ffn.q6"?(dense_metadata()?p183::small(dev(c),name,members,variants):p49d::small(dev(c),name,members,variants)):!a.mini&&packet26::dispatch.fusion_choice(key)=="p30.small.rows4"?p30integrated::small(dev(c),name,members,variants):packet27::small::submit(dev(c),name,members,variants),true);return;
+     }
+     auto it=matrices.find(&l);
+     if(a.memory=="resident" && it==matrices.end()) {
+@@ -1247,7 +1255,7 @@
+       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+       // Same engine call for ordinary decode and each serial M=2 row.
+       const bool round2=!a.mini&&a.memory=="resident"&&((kind==p39::Kind::silu_div4&&(cls=="hc.a.low"||cls=="hc.f.low"))||kind==p39::Kind::attention_combine);
+-      finish(c,packed_weight(l.weights[0])?p74::submit(dev(c),m,variant(l),kind,b):round2?p49c::dense_submit(dev(c),m,kind,b):p49b_site(w,a,l)?p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production"):p39::submit(dev(c),selected,kind,b),true);return;
++      finish(c,packed_weight(l.weights[0])?p74::submit(dev(c),m,variant(l),kind,b):round2?((dense_metadata()&&kind==p39::Kind::attention_combine&&m.type==iq3::Type::Q6_K&&m.columns==6144)?p183::attention(dev(c),m,b):p49c::dense_submit(dev(c),m,kind,b)):p49b_site(w,a,l)?p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production"):p39::submit(dev(c),selected,kind,b),true);return;
+     }
+     const auto cls=packet26::Dispatch::class_name(l.label);
+     if(!a.mini&&a.memory=="resident"&&(cls=="hc.a.gate"||cls=="hc.f.gate")){
+@@ -1262,6 +1270,9 @@
+       std::array<unsigned,1> variants{variant(l)};
+       auto cls=packet26::Dispatch::class_name(l.label);
+       finish(c,p30integrated::small(dev(c),cls.ends_with(".gate")?"hc.gate":"shexpdown",selected,variants),true);return;
++    }
++    if(candidate=="p33.dense.segment"&&!a.mini&&l.op=="gemv"&&m.type==iq3::Type::Q6_K&&dense_metadata()&&arithmetic::is_expanded(variant(l))){ // packet183-s1
++      finish(c,p183::segment(dev(c),{m},false,variant(l)),true);return;
+     }
+     if((candidate.starts_with("p28.")||candidate.starts_with("p29.")||candidate.starts_with("p33.")||candidate.starts_with("p42."))&&!a.mini){
+       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+--- packet153/v5/native-src/mtp.hpp
++++ packet183/v5/native-src/mtp.hpp
+@@ -108,6 +108,7 @@
+    p56::restrict_matrix(m,prefix_rows());
+    if((head_candidate.starts_with("p25.")||head_candidate.starts_with("p27."))&&!e.a.mini){Allocation prepared_input=0;if(head_candidate=="p27.fp32_input"){e.finish(0,packet26::p25bridge::prepare_input(e.dev(0),m.x,head_fp32,m.columns),true);prepared_input=head_fp32;}e.finish(0,packet26::p25bridge::submit(e.dev(0),{m},head_candidate,false,head_variant,prepared_input),true);return;}
+    if(!e.a.mini && (head_candidate.starts_with("p33.")||head_candidate.starts_with("p29."))){
++    if(head_candidate=="p33.dense.segment"&&m.type==iq3::Type::Q6_K&&e.dense_metadata()&&arithmetic::is_expanded(head_variant)&&e.weights[0].count("output.weight")&&w.id==e.weights[0].at("output.weight")){e.finish(0,p183::segment(e.dev(0),{m},false,head_variant),true);return;} // packet183-s1
+     e.finish(0,head_candidate.starts_with("p33.")?p33::submit(e.dev(0),{m},head_candidate,false,head_variant):p29::submit(e.dev(0),{m},head_candidate,false,head_variant),true);return;
+    }
+    e.finish(0,(head_candidate.starts_with("p28.")&&!e.a.mini)?p28::submit(e.dev(0),{m},head_candidate,false,head_variant):integrated::dense(e.dev(0),m,head_variant),true);return;}
+--- packet153/v5/native/engine_bracket.hpp
++++ packet183/v5/native/engine_bracket.hpp
+@@ -26,7 +26,7 @@
+     require(next.choices.size()==sealed_selection.choices.size(),"bracket choice shape differs");
+     for(const auto& [key,value]:sealed_selection.choices) {
+       require(next.choices.contains(key),"bracket missing choice");
+-      if(key!="snapshot_host")
++      if(key!="dense_scales") // packet183-s1
+         require(next.choices.at(key)==value,"bracket storage/unsupported choice differs: reload required: "+key);
+     }
+     // Narrow, explicit domains; parser registration alone does not qualify a switch.
+@@ -40,7 +40,8 @@
+       domain(selection->choices,"recurrence",{"rows4-shared","rec-parallel","rec-both-plus"});
+       domain(selection->choices,"hc_gate",{"wide"});
+       domain(selection->choices,"probe",{"off"});
+-      domain(selection->choices,"snapshot_host",{"production","static"});
++      domain(selection->choices,"snapshot_host",{"production"}); // packet183-s1
++      domain(selection->choices,"dense_scales",{"expanded","metadata"});
+       domain(selection->draft,"qsa_attention",{"production","packet59"});
+     }
+     require(resident&&prepared_path,"bracket requires resident prepared path");
+--- packet153/native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p49d_submit.cpp
++++ packet183/native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p49d_submit.cpp
+@@ -59,6 +59,7 @@
+ }
+ Submit resolve(std::string_view cls,std::string_view choice){
+  if(cls=="snapshot_host"&&(choice=="production"||choice=="static"))return production;
++ if(cls=="dense_scales"&&(choice=="expanded"||choice=="metadata"))return production; // packet183-s1
+  if(cls=="probe"&&(choice=="off"||choice=="split"))return production;
+  if(cls=="other_fusion"&&(choice=="production"||choice=="fused"))return production;
+  if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
+@@ -108,9 +109,9 @@
+    }
+   }else throw std::invalid_argument("p49d unknown selection field");
+  }while(more());take('}');ws();
+- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=13||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=14||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
+  p59c::validate(draft_values);
+- auto target_values=values;target_values.erase("snapshot_host");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
++ auto target_values=values;target_values.erase("snapshot_host");target_values.erase("dense_scales");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
+  if(target_values.at("recurrence")=="rec-both"||target_values.at("recurrence")=="rec-both-plus"||target_values.at("recurrence")=="rec-gates"||target_values.at("recurrence")=="rec-parallel")target_values["recurrence"]="rows4-shared";
+  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
+  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;
+--- /dev/null
++++ packet183/native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_lanes.hpp
+@@ -0,0 +1,146 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/kernel_guard.hpp"
++#pragma once
++// Packet183 S1 (packet177 PLAN section 5, "metadata-scale dense lane").
++//
++// Every expanded Q6_K row is: K int8 codes | K/16 FP32 scale words | per 256
++// weights the retained original 18 bytes (fp16 d, then 16 int8 sub-scales)
++// (packet10-kopt5 expanded.hpp, row_bytes = K + 4K/16 + 18K/256). The loader
++// wrote each scale word as the single FP32 product half(d)*float(signed8(sc)).
++// The production lanes read the 64 bytes of scale words per 256 weights; these
++// lanes read the 18 retained bytes and recompute that same product.
++//
++// Exactness: iq3::half is the loader's own integer-only conversion; an 11-bit
++// significand times an integer of magnitude <= 128 is exactly representable in
++// FP32 (no rounding, no subnormal result for a nonzero product, signed zero by
++// sign rule), and there is no add to contract. So the recomputed word equals the
++// stored word bit for bit for every finite d. A non-finite d could differ in NaN
++// sign/payload between host and device, so census_q6() counts them and the
++// engine refuses to start on any non-finite d or any word mismatch.
++//
++// Everything else is the unchanged production expression of each lane family:
++// code loads, input loads, products, add order, lane schedule, split bounds and
++// reduction trees. Existing headers are not modified; these are new names, so
++// inherited objects keep their exact production definitions (no ODR overlap).
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p33_candidates.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p49d_small.hpp"
++#include <array>
++#include <bit>
++#include <cstdint>
++#include <stdexcept>
++namespace p183 {
++using iq3::Type;
++template<unsigned K> inline constexpr unsigned meta_offset=K+4*(K/16);
++// Scale word of the 16-weight group that contains k (k%8==0, k%16 in {0,8}).
++template<unsigned K> inline float q6_scale(const uint8_t* __restrict w,unsigned k){
++ static_assert(K%256==0 && K>0 && K<=17408);
++ const uint8_t* m=w+meta_offset<K>+18*(k/256);
++#if defined(__SYCL_DEVICE_ONLY__)
++ // Row strides (3380/8112/13520), meta_offset and 18*(k/256) are even.
++ const uint32_t d=*reinterpret_cast<const uint16_t*>(m);
++#else
++ const uint32_t d=iq3::u16(m);
++#endif
++ return iq3::half(d)*float(iq3::signed8(m[2+(k%256)/16]));
++}
++// p33::dense_lane<Q6_K,K> with the metadata scale. Odd (non-256) begins keep
++// packet28's production segmentation, exactly as p33 does.
++template<unsigned K>
++inline float p33_lane(const uint8_t* __restrict w,const uint16_t* __restrict x,
++ unsigned begin,unsigned end,unsigned lane) {
++ if(begin%256)return p28::dense_lane<Type::Q6_K,K>(w,x,begin,end,lane);
++ float sum=0;
++ for(unsigned tile=begin+lane*8;tile<end;tile+=256){
++  const float scale=q6_scale<K>(w,tile);
++  #pragma unroll
++  for(unsigned j=0;j<8;++j)if(tile+j<end){
++   float value=scale*float(iq3::signed8(w[tile+j]));
++   float input=iq3::bits_float(uint32_t(x[tile+j])<<16);
++   float product=value*input;sum=sum+product;
++  }
++ }
++ return sum;
++}
++// p49c::dense_lane<Q6_K,K> with the metadata scale.
++template<unsigned K>
++inline float p49c_lane(const uint8_t* w,const uint16_t* x,unsigned begin,unsigned end,unsigned lane){
++ float sum=0;
++ for(unsigned k=begin+lane*8;k<end;k+=256){
++#if defined(__SYCL_DEVICE_ONLY__)
++  sycl::vec<uint16_t,8> inputs;inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));
++#endif
++  const float scale=q6_scale<K>(w,k);const uint32_t lo=p49c::load32(w+k),hi=p49c::load32(w+k+4);
++  #pragma unroll
++  for(unsigned j=0;j<8;++j){
++   float value=scale*float(iq3::signed8(uint8_t(((j<4?lo:hi)>>(8*(j%4)))&255)));
++#if defined(__SYCL_DEVICE_ONLY__)
++   uint16_t bits=inputs[j];
++#else
++   uint16_t bits=x[k+j];
++#endif
++   float product=value*iq3::bits_float(uint32_t(bits)<<16);sum=sum+product;
++  }
++ }
++ return sum;
++}
++// p49dvirtual::dense_chains<Q6_K,K,V> with the metadata scale.
++template<unsigned K,unsigned V>
++inline std::array<float,V> small_chains(const uint8_t*w,const uint16_t*x,unsigned begin,unsigned end,unsigned physical){
++ std::array<float,V> sums{};
++ for(unsigned step=begin;step<end;step+=256){
++  #pragma unroll
++  for(unsigned c=0;c<V;++c){unsigned k=step+8*(physical*V+c);if(k>=end)continue;
++   const float scale=q6_scale<K>(w,k);const uint32_t lo=p49bgemv::load32(w+k),hi=p49bgemv::load32(w+k+4);
++#if defined(__SYCL_DEVICE_ONLY__)
++   sycl::vec<uint16_t,8> inputs;inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));
++#endif
++   #pragma unroll
++   for(unsigned j=0;j<8;++j){float value=scale*float(iq3::signed8(uint8_t(((j<4?lo:hi)>>(8*(j%4)))&255)));
++#if defined(__SYCL_DEVICE_ONLY__)
++    uint16_t bits=inputs[j];
++#else
++    uint16_t bits=x[k+j];
++#endif
++    float product=value*iq3::bits_float(uint32_t(bits)<<16);sums[c]=sums[c]+product;
++   }
++  }
++ }
++ return sums;
++}
++// p49dvirtual::dense_host<Q6_K,K,Split,V> with the metadata chains.
++template<unsigned K,unsigned Split,unsigned V>inline uint16_t small_host(const uint8_t*w,const uint16_t*x){
++ float partial[Split]{};
++ for(unsigned part=0;part<Split;++part){auto bounds=iq3::kopt2::bounds(K,part,Split);float lanes[32/V];
++  for(unsigned p=0;p<32/V;++p)lanes[p]=p49dvirtual::local_tree<V>(small_chains<K,V>(w,x,bounds.first,bounds.second,p));
++  for(unsigned width=1;width<32/V;width*=2)for(unsigned p=0;p<32/V;p+=2*width)lanes[p]=lanes[p]+lanes[p+width];partial[part]=lanes[0];}
++ return iq3::bf16_bits(Split==1?partial[0]:(partial[0]+partial[1])+(partial[2]+partial[3]));
++}
++#ifndef OWN_RT_HOST_ONLY
++// p49dvirtual::dense_device<Q6_K,K,Split,V,E> with the metadata chains.
++template<unsigned K,unsigned Split,unsigned V,p39::Kind E>
++inline void small_device(p39::Bound b,unsigned group,sycl::nd_item<1>it,float* scratch){
++ constexpr unsigned P=32/V;auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32;
++ unsigned within=lane/P,physical=lane%P,part=Split==4?sub:0;
++ unsigned row=Split==4?group*V+within:(group*4+sub)*V+within;
++ float value=0;auto bounds=iq3::kopt2::bounds(K,part,Split);
++ if(row<b.rows)value=p49dvirtual::local_tree<V>(small_chains<K,V>(b.w+size_t(row)*b.rb,b.x,bounds.first,bounds.second,physical));
++ for(unsigned width=1;width<P;width*=2){float rhs=sycl::select_from_group(sg,value,(lane+width)%32);if(physical%(2*width)==0)value=value+rhs;}
++ if constexpr(Split==4){if(!physical)scratch[within*4+part]=value;it.barrier(sycl::access::fence_space::local_space);if(!part&&!physical){auto s=scratch+within*4;value=(s[0]+s[1])+(s[2]+s[3]);}}
++ if(row<b.rows&&!physical&&!part){auto y=iq3::bf16_bits(value);b.y[row]=y;p49c::dense_tail_device<E>(b,row,y);}
++}
++#endif
++// Host census of expanded Q6_K rows: every 16-weight group's stored FP32 word
++// must equal the recomputed metadata product; every d must be finite.
++struct Census { uint64_t rows=0,blocks=0,groups=0,nonfinite=0,mismatch=0; };
++inline Census census_q6(const uint8_t* base,size_t rows,size_t K){
++ if(!K||K%256||iq3::expanded::row_bytes(Type::Q6_K,K)!=K+4*(K/16)+18*(K/256))throw std::invalid_argument("p183 Q6 expanded geometry");
++ const size_t rb=iq3::expanded::row_bytes(Type::Q6_K,K);Census c;
++ for(size_t r=0;r<rows;++r){const uint8_t* w=base+r*rb;const uint8_t* meta=w+K+4*(K/16);
++  for(size_t b=0;b<K/256;++b){const uint32_t d=iq3::u16(meta+18*b);if(((d>>10)&31)==31)++c.nonfinite;
++   for(unsigned g=0;g<16;++g){const float s=iq3::half(d)*float(iq3::signed8(meta[18*b+2+g]));
++    if(std::bit_cast<uint32_t>(s)!=iq3::u32(w+K+4*(b*16+g)))++c.mismatch;++c.groups;}
++   ++c.blocks;}
++  ++c.rows;}
++ return c;
++}
++inline void census_add(Census& total,const Census& c){total.rows+=c.rows;total.blocks+=c.blocks;total.groups+=c.groups;total.nonfinite+=c.nonfinite;total.mismatch+=c.mismatch;}
++} // namespace p183
+--- /dev/null
++++ packet183/native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_kernels.hpp
+@@ -0,0 +1,118 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/kernel_guard.hpp"
++#pragma once
++#ifndef OWN_RT_HOST_ONLY
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/prepared_submission.hpp"
++#endif
++// Packet183 S1 kernel structs (s1_submit.cpp issues them). Bodies are copies of p33::Kernel (Mode 0, Q6_K),
++// p49c::DenseKernel (Q6_K K6144 attention_combine, stage 0) and
++// p49dvirtual::SmallKernel with only the Q6_K lane call replaced by the
++// metadata-scale lane of s1_lanes.hpp. Grids, bindings, validations, partial
++// scratch layout, finishes and epilogues are the production ones.
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_lanes.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/small_gemv.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp"
++#endif
++namespace p183 {
++// ---- p33.dense.segment, Q6_K ------------------------------------------------
++template<unsigned K,unsigned Split> struct SegKernel final:
++#ifdef OWN_RT_HOST_ONLY
++ integrated::HostOperation
++#else
++ ownrt::SyclOperation
++#endif
++{
++ p28::Bound b{};
++ p28::Bound bind(std::span<void*const> p)const {auto d=b;d.w=static_cast<const uint8_t*>(p[0]);d.peer=static_cast<const uint8_t*>(p[1]);d.x=static_cast<const uint16_t*>(p[2]);d.y=static_cast<uint16_t*>(p[3]);d.py=static_cast<uint16_t*>(p[4]);d.routes=b.has_routes?static_cast<const iq3::Route*>(p[5]):nullptr;d.status=static_cast<uint32_t*>(p[6]);d.ps=static_cast<uint32_t*>(p[7]);d.scratch=static_cast<float*>(p[8]);return d;}
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const> p)const override {
++  auto d=bind(p);
++  for(unsigned slot=0;slot<d.count;++slot){
++   auto r=d.routes?d.routes[slot]:iq3::Route{0,0,d.rows};
++   bool ok=iq3::valid_route(r,d.experts,d.rows,d.rows);
++   if(d.routes)d.status[slot]=!ok;
++   #pragma omp parallel for num_threads(2) schedule(static) if(d.rows>=64)
++   for(unsigned row=0;row<d.rows;++row){
++    bool valid=ok&&row<r.row_count;float parts[4]{};
++    for(unsigned part=0;part<Split;++part){
++     float sums[32]{};auto range=iq3::kopt2::bounds(K,part,Split);
++     if(valid)for(unsigned lane=0;lane<32;++lane){
++      const unsigned source=(r.expert_id*d.rows+r.row_begin+row)*unsigned(d.rb);
++      sums[lane]=p33_lane<K>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
++     }
++     parts[part]=iq3::tree32(sums);
++    }
++    float v=Split==1?parts[0]:(parts[0]+parts[1])+(parts[2]+parts[3]);d.y[slot*d.rows+row]=iq3::bf16_bits(valid?v:iq3::bits_float(0x7fc00000));
++   }
++  }
++ }
++#else
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  auto d=bind(p);
++  const size_t groups=size_t(d.rows)*d.count*Split;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(groups*32,32)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++   auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),item=unsigned(it.get_group_linear_id()),logical=item/Split,part=item%Split;
++   const unsigned row=logical%d.rows,slot=logical/d.rows;
++   iq3::Route r{0,0,d.rows};if(d.routes)r=d.routes[slot];const bool ok=iq3::valid_route(r,d.experts,d.rows,d.rows),valid=ok&&row<r.row_count;
++   float sum=0;
++   if(valid){const unsigned source=(r.expert_id*d.rows+r.row_begin+row)*unsigned(d.rb);auto range=iq3::kopt2::bounds(K,part,Split);
++    sum=p33_lane<K>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
++   }
++   for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
++   if(lane==0){float v=valid?sum:iq3::bits_float(0x7fc00000);if constexpr(Split==1)d.y[logical]=iq3::bf16_bits(v);else d.scratch[(logical*2)*4+part]=v;}
++   if(lane==0&&row==0&&part==0&&d.routes)d.status[slot]=!ok;
++  })));});
++ }
++#endif
++};
++#ifndef OWN_RT_HOST_ONLY
++// p33 Finish, unchanged body: (v0+v1)+(v2+v3) of the split4 partials.
++struct SegFinish final:ownrt::SyclOperation {unsigned n;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{auto s=static_cast<const float*>(p[0]);auto y=static_cast<uint16_t*>(p[1]);unsigned count=n;return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(count)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked([=](sycl::id<1> id){auto v=s+id[0]*8;y[id[0]]=iq3::bf16_bits((v[0]+v[1])+(v[2]+v[3]));})));});}
++};
++#endif
++// ---- p49c attention_combine projection, Q6_K K6144 Split4, stage 0 ----------
++struct AttnKernel final:p49c::Base {
++ static constexpr unsigned K=6144,Split=4;static constexpr p39::Kind E=p39::Kind::attention_combine;
++ p39::Bound shape;
++ p39::Bound bind(std::span<void*const>p)const{return p49c::bind_dense(shape,p);}
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override {
++  auto b=bind(p);for(unsigned row=0;row<b.rows;++row){float partial[4]{};for(unsigned part=0;part<Split;++part){auto bounds=iq3::kopt2::bounds(K,part,Split);float lanes[32];for(unsigned lane=0;lane<32;++lane)lanes[lane]=p49c_lane<K>(b.w+size_t(row)*b.rb,b.x,bounds.first,bounds.second,lane);partial[part]=iq3::tree32(lanes);}auto y=iq3::bf16_bits((partial[0]+partial[1])+(partial[2]+partial[3]));b.y[row]=y;p49c::dense_tail_host<E>(b,row,y);}
++ }
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override {
++  auto b=bind(p);
++  return ownrt::prepared_submit(q,[=,p35_range2=sycl::nd_range<1>(((size_t(b.rows)*Split*32+256-1)/256)*256,256)](sycl::handler& h){
++   h.parallel_for(p35_range2,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++    unsigned logical=it.get_global_linear_id()/32,row=logical/Split,part=logical%Split;if(row>=b.rows)return;auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id();auto bounds=iq3::kopt2::bounds(K,part,Split);float value=p49c_lane<K>(b.w+size_t(row)*b.rb,b.x,bounds.first,bounds.second,lane);
++    for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,value,(lane+width)%32);if(lane%(2*width)==0)value=value+rhs;}
++    if(!lane)b.scratch[row*8+part]=value;
++   }));
++  });
++ }
++#endif
++};
++// ---- p49d small.ffn.q6 tuple ------------------------------------------------
++template<unsigned V>struct SmallKernel final:p49b::Base {
++ std::array<p39::Bound,4> shapes;
++ static constexpr unsigned groups(unsigned rows){return (rows+V-1)/V;}
++ std::array<p39::Bound,4> bind(std::span<void*const>p)const{auto b=shapes;for(unsigned j=0;j<4;++j){b[j].w=static_cast<const uint8_t*>(p[j*3]);b[j].x=static_cast<const uint16_t*>(p[j*3+1]);b[j].y=static_cast<uint16_t*>(p[j*3+2]);}return b;}
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override{auto bs=bind(p);for(unsigned j=0;j<4;++j){auto b=bs[j];for(unsigned row=0;row<b.rows;++row)b.y[row]=(j==0||j==3)?p49dvirtual::dense_host<Type::F32,2560,4,V>(b.w+size_t(row)*b.rb,b.x):small_host<2560,4,V>(b.w+size_t(row)*b.rb,b.x);}}
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  auto b=bind(p);unsigned g0=groups(b[0].rows),g1=groups(b[1].rows),g2=groups(b[2].rows),total=g0+g1+g2+groups(b[3].rows);
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(total)*128,128)](sycl::handler& h){sycl::local_accessor<float,1>scratch(4*V,h);
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++    unsigned group=it.get_group_linear_id();auto s=scratch.template get_multi_ptr<sycl::access::decorated::no>().get();
++    if(group<g0)p49dvirtual::dense_device<Type::F32,2560,4,V,p39::Kind::expert_checks>(b[0],group,it,s);
++    else if(group<g0+g1)small_device<2560,4,V,p39::Kind::expert_checks>(b[1],group-g0,it,s);
++    else if(group<g0+g1+g2)small_device<2560,4,V,p39::Kind::expert_checks>(b[2],group-g0-g1,it,s);
++    else p49dvirtual::dense_device<Type::F32,2560,4,V,p39::Kind::expert_checks>(b[3],group-g0-g1-g2,it,s);
++   }));});
++ }
++#endif
++};
++} // namespace p183
+--- /dev/null
++++ packet183/native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.hpp
+@@ -0,0 +1,20 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/kernel_guard.hpp"
++#pragma once
++// Packet183 S1 submissions. Each mirrors one production submission exactly,
++// except that its Q6_K lanes read the retained metadata scales (s1_lanes.hpp).
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p33_submit.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p49c_submit.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p49d_submit.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_lanes.hpp"
++#include <span>
++#include <string_view>
++#include <vector>
++namespace p183 {
++// p33::submit(..., "p33.dense.segment", shared, variant) for expanded Q6_K.
++integrated::Launch segment(ownrt::Device&,const std::vector<integrated::Matrix>&,bool shared,unsigned variant);
++// p49c::dense_submit(..., Kind::attention_combine, ...) for Q6_K K6144.
++integrated::Launch attention(ownrt::Device&,const integrated::Matrix&,const p39::Bindings&);
++// p49d::small(..., "small.ffn.q6", ...): F32 router/shared router unchanged,
++// Q6_K shared gate/up on the metadata scales.
++integrated::Launch small(ownrt::Device&,std::string_view,std::span<const integrated::Matrix>,std::span<const unsigned>);
++} // namespace p183
+--- /dev/null
++++ packet183/native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.cpp
+@@ -0,0 +1,54 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/kernel_guard.hpp"
++// Packet183 S1 submissions: production validations and bindings, S1 kernel structs.
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_kernels.hpp"
++namespace p183 {
++template<unsigned K,unsigned Split> integrated::Launch seg_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& ms){
++ const auto& m=ms[0];const auto& peer=ms.size()==2?ms[1]:m;SegKernel<K,Split> k;
++ k.b.rb=integrated::arithmetic::row_bytes(Type::Q6_K,K,Split==4?7:6);k.b.rows=m.rows;k.b.count=m.count;k.b.experts=m.experts;k.b.has_routes=bool(m.routes);
++ if(uint64_t(m.experts)*m.rows*k.b.rb>UINT32_MAX)throw std::invalid_argument("p183 32-bit row offset overflow");
++ std::array<ownrt::Allocation,9> ids{m.w,peer.w,m.x,m.y,peer.y,m.routes?m.routes:m.x,m.status?m.status:m.y,peer.status?peer.status:peer.y,m.workspace};auto e=d.compute(k,ids,{});integrated::Launch r{e,e,1};
++#ifndef OWN_RT_HOST_ONLY
++ if constexpr(Split==4){SegFinish f;f.n=m.rows*m.count;std::array a{m.workspace,m.y};std::array after{e};r.last=d.compute(f,a,after);r.passes=2;}
++#endif
++ return r;
++}
++integrated::Launch segment(ownrt::Device& d,const std::vector<integrated::Matrix>& m,bool shared,unsigned variant){
++ p28::validate(d,m,"p28.dense.wg32",shared,variant);
++ if(m.size()!=1||m[0].type!=Type::Q6_K||!integrated::arithmetic::is_expanded(variant))throw std::invalid_argument("p183 segment requires one expanded Q6_K matrix");
++ const bool split4=variant==7;
++ switch(m[0].columns){
++ case 2560:return split4?seg_issue<2560,4>(d,m):seg_issue<2560,1>(d,m);
++ case 6144:return split4?seg_issue<6144,4>(d,m):seg_issue<6144,1>(d,m);
++ case 10240:return split4?seg_issue<10240,4>(d,m):seg_issue<10240,1>(d,m);
++ }
++ throw std::invalid_argument("p183 segment uncompiled shape");
++}
++integrated::Launch attention(ownrt::Device&d,const integrated::Matrix&m,const p39::Bindings&b){
++ constexpr Type T=Type::Q6_K;constexpr unsigned K=6144,Split=4;constexpr p39::Kind E=p39::Kind::attention_combine;
++ if(m.type!=T||m.columns!=K)throw std::invalid_argument("p183 attention requires Q6_K K6144");
++ p28::validate(d,{m},"p28.dense.wg32",false,7);
++ std::array<ownrt::Allocation,19> ids{m.w,m.w,m.x,m.y,m.y,m.x,m.y,m.y,m.workspace,m.x,b.out?b.out:m.y,b.streams?b.streams:m.y,b.inject?b.inject:m.x,m.x,m.x,m.x,b.error,b.active,b.position};
++ AttnKernel op;op.shape.rows=m.rows;op.shape.count=m.count;op.shape.experts=m.experts;op.shape.capacity=b.capacity;op.shape.rb=integrated::arithmetic::row_bytes(T,K,7);
++ std::array<void*,19> pointers;
++ for(size_t i=0;i<ids.size();++i){const auto&r=d.arena.row(ids[i]);if(!r.live||r.memory!=ownrt::Memory::device)throw std::invalid_argument("p183 attention dead/nondevice binding");pointers[i]=r.pointer;}
++ auto bound=op.bind(pointers);
++ auto extent=[&](ownrt::Allocation id,size_t bytes){if(d.arena.row(id).bytes<bytes)throw std::invalid_argument("p183 attention allocation extent");};
++ extent(b.error,4);extent(b.active,4);extent(b.position,4);
++ p39::validate<T,K,E,Split>(bound);
++ extent(b.streams,size_t(m.rows)*8);extent(b.inject,8);
++ auto first=d.compute(op,ids,{});integrated::Launch result{first,first,1};
++#ifndef OWN_RT_HOST_ONLY
++ // Stage 1 reads only the partial scratch: production p49c finish, unchanged.
++ {p49c::DenseKernel<T,K,Split,E,1> finish;finish.shape=op.shape;std::array after{first};result.last=d.compute(finish,ids,after);result.passes=2;}
++#endif
++ return result;
++}
++integrated::Launch small(ownrt::Device&d,std::string_view name,std::span<const integrated::Matrix>ms,std::span<const unsigned>variants){
++ if(name!="small.ffn.q6")throw std::invalid_argument("p183 only banked small.ffn.q6 tuple");packet27::small::validate(d,name,ms,variants);
++ if(ms.size()!=4||variants.size()!=4)throw std::invalid_argument("p183 small tuple size");
++ for(unsigned i:{1u,2u})if(ms[i].type!=Type::Q6_K||ms[i].columns!=2560||!integrated::arithmetic::is_expanded(variants[i]))throw std::invalid_argument("p183 small tuple requires expanded Q6_K shared gate/up");
++ SmallKernel<4>k;std::array<ownrt::Allocation,12>ids{};
++ for(unsigned i=0;i<4;++i){const auto&m=ms[i];k.shapes[i].rows=m.rows;k.shapes[i].rb=integrated::arithmetic::row_bytes(m.type,m.columns,variants[i]);ids[3*i]=m.w;ids[3*i+1]=m.x;ids[3*i+2]=m.y;}
++ auto e=d.compute(k,ids,{});return {e,e,1};
++}
++} // namespace p183

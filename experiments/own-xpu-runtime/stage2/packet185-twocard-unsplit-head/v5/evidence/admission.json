@@ -1,0 +1,105 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "full_shape_read": false,
+  "driver_residency_unmeasured": true,
+  "rows": [
+    {
+      "mode": "production",
+      "rank": 0,
+      "planned_device_bytes": 28773393524,
+      "planned_arena_headroom_bytes": 3438861196,
+      "planned_free_bytes": 5422403784,
+      "census_device_bytes": 28144229620,
+      "census_arena_headroom_bytes": 4068025100,
+      "census_physical_free_bytes": 6098068236,
+      "minimum_free_bytes": 1500000000
+    },
+    {
+      "mode": "production",
+      "rank": 1,
+      "planned_device_bytes": 32055130842,
+      "planned_arena_headroom_bytes": 157123878,
+      "planned_free_bytes": 2185938214,
+      "census_device_bytes": 31425985242,
+      "census_arena_headroom_bytes": 786269478,
+      "census_physical_free_bytes": 2816312614,
+      "minimum_free_bytes": 1500000000
+    },
+    {
+      "mode": "unsplit",
+      "rank": 0,
+      "planned_device_bytes": 28616071252,
+      "planned_arena_headroom_bytes": 3596183468,
+      "planned_free_bytes": 5579726056,
+      "census_device_bytes": 27986907348,
+      "census_arena_headroom_bytes": 4225347372,
+      "census_physical_free_bytes": 6255390508,
+      "minimum_free_bytes": 1500000000
+    },
+    {
+      "mode": "unsplit",
+      "rank": 1,
+      "planned_device_bytes": 32210881226,
+      "planned_arena_headroom_bytes": 1373494,
+      "planned_free_bytes": 2030187830,
+      "census_device_bytes": 31581735626,
+      "census_arena_headroom_bytes": 630519094,
+      "census_physical_free_bytes": 2660562230,
+      "minimum_free_bytes": 1500000000
+    }
+  ],
+  "census_delta_bytes_per_rank": [
+    -157322272,
+    155750384
+  ],
+  "host_required_available_bytes": 105411248128,
+  "host_queue_start_extra_bytes": 1073741824,
+  "host_shadow_delta_bytes": -1571888,
+  "production_ledger_inherited_rows": [
+    {
+      "mode": "production",
+      "rank": 0,
+      "modeled_device_bytes": 28773393524,
+      "arena_headroom_bytes": 3438861196,
+      "physical_free_bytes": 5422403784,
+      "minimum_free_bytes": 1500000000,
+      "s1_additional_bytes": 0
+    },
+    {
+      "mode": "production",
+      "rank": 1,
+      "modeled_device_bytes": 32055130842,
+      "arena_headroom_bytes": 157123878,
+      "physical_free_bytes": 2185938214,
+      "minimum_free_bytes": 1500000000,
+      "s1_additional_bytes": 0
+    },
+    {
+      "mode": "metadata",
+      "rank": 0,
+      "modeled_device_bytes": 28773393524,
+      "arena_headroom_bytes": 3438861196,
+      "physical_free_bytes": 5422403784,
+      "minimum_free_bytes": 1500000000,
+      "s1_additional_bytes": 0
+    },
+    {
+      "mode": "metadata",
+      "rank": 1,
+      "modeled_device_bytes": 32055130842,
+      "arena_headroom_bytes": 157123878,
+      "physical_free_bytes": 2185938214,
+      "minimum_free_bytes": 1500000000,
+      "s1_additional_bytes": 0
+    }
+  ],
+  "note": "unsplit rank-1 PLAN headroom is 1,373,494 B under the 30 GiB arena because the inherited plan keeps the unused 629,145,600 B class-layout reserve; the measured census leaves 630,519,094 B arena headroom and 2.66 GB physical free on rank 1",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/admission_gate.py": "a628e172b3c023e0fbb699d07471a4841e6d010c426af0f030fd33659715040e",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/memory-plan.json": "2dfd6abb075a0e05d1d407b1a81943af102db1651d0e2d0e24d77acdae34aeb2",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/memory-plan.json": "3f918e6ef8c18cc086ea18816a72a179f0afd0a2d515c92721b6b5da04ab804d",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/full-shape.json": "da7e730eed59857e6e9a944289fda1af8ea025ec19d26a8709f7b894617e3ea2",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lineage-inputs/packet183-own/v5/evidence/admission.json": "151e9df4335c53766adbaca179a0458ba89865a38b6d654aebaf05d9ac74b24e"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "schema": "packet103.exact-layout-memory.v1",
+  "capacity_bytes": 34242297856,
+  "minimum_free_bytes": 1500000000,
+  "arena_limit_bytes": 32212254720,
+  "placements": {
+    "1": {
+      "draft_rank": 1,
+      "layer_boundary": 24,
+      "capacities": {
+        "4096": {
+          "context_capacity": 4096,
+          "ranks": [
+            {
+              "rank": 0,
+              "draft_rank": 1,
+              "target_layers": 24,
+              "target_modeled_allocations_bytes": 28616071252,
+              "allocation_reserve_bytes": 46500548,
+              "draft_total_bytes": 0,
+              "draft_duplicate_head_bytes": 0,
+              "target_total_bytes": 28662571800,
+              "total_with_mtp_bytes": 28662571800,
+              "free_with_mtp_bytes": 5579726056,
+              "allocation_margin_passed": true,
+              "arena_device_bytes": 28616071252,
+              "arena_headroom_bytes": 3596183468,
+              "arena_margin_passed": true
+            },
+            {
+              "rank": 1,
+              "draft_rank": 1,
+              "target_layers": 24,
+              "target_modeled_allocations_bytes": 28856517012,
+              "allocation_reserve_bytes": 1228800,
+              "draft_total_bytes": 3354364214,
+              "draft_duplicate_head_bytes": 0,
+              "target_total_bytes": 28857745812,
+              "total_with_mtp_bytes": 32212110026,
+              "free_with_mtp_bytes": 2030187830,
+              "allocation_margin_passed": true,
+              "arena_device_bytes": 32210881226,
+              "arena_headroom_bytes": 1373494,
+              "arena_margin_passed": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "scope": "packet185: packet183/153 production ledger plus the measured production-shape census delta of the full target head (rank 1 loads all 248,320 head rows; rank 0 loads no suffix rows and no p105 auxiliary buffers); physical driver residency unmeasured",
+  "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--production--80128--banks",
+  "extra_weight_bytes_per_rank": [
+    458787872,
+    158822416
+  ],
+  "down_layout": "tile16",
+  "down_row_bytes": 360,
+  "down_transpose_extra_device_bytes": 0,
+  "class_layout_max_extra_per_rank": 629145600,
+  "packet153_static_table_reserve_bytes_rank0": 65536,
+  "packet185_census_delta_bytes_per_rank": [
+    -157322272,
+    155750384
+  ]
+}

@@ -1,0 +1,546 @@
+--- packet153/v5/bracket.py
++++ packet183/v5/bracket.py
+@@ -4,7 +4,7 @@
+ from common import D, compare_tokens, label, read, require, save, sha
+ 
+ SWITCH_RESET = 13
+-DOMAINS = {'snapshot_host': ('production','static')}
++DOMAINS = {'dense_scales': ('expanded','metadata')}
+ def compatible(selections):
+     require(bool(selections),'missing selections')
+     base=selections[0]
+@@ -33,7 +33,7 @@
+         require(sha(selection) == view['selection_sha256'], 'view selection changed')
+     compatible([read(v['selection']) for v in views])
+     if config['kind']=='smoke':
+-        require(views[0].get('max_new')==64 and read(views[0]['selection'])['choices']['snapshot_host']=='static','candidate 12x64 smoke required')
++        require(views[0].get('max_new')==64 and read(views[0]['selection'])['choices']['dense_scales']=='metadata','candidate 12x64 smoke required')
+     else:
+         require(len({v['selection_sha256'] for v in views[::2]})==1 and len({v['selection_sha256'] for v in views[1::2]})==1,'alternating selections must be identical')
+         require(all(v.get('max_new')==128 for v in views),'bracket response cap changed')
+--- packet153/v5/bracket_config.py
++++ packet183/v5/bracket_config.py
+@@ -1,6 +1,6 @@
+-"""Fixed banked bundle8 plus one exact class-layout dimension."""
++"""Fixed banked bundle8 plus one exact kernel-only dimension: dense_scales (packet183 S1)."""
+ from common import HERE,ROOT,P56,read,require,sha,module
+-VALUES=('static',)
++VALUES=('metadata',)
+ def sealed_identity(args):
+  from cpu_seal import verify
+  row=verify();line=args.lineage.resolve()
+@@ -9,5 +9,5 @@
+  binary=HERE/'build/device/own-rt-iq3';dispatch=line/'dispatch-speed6.json';seal=line/'screen-seal.json'
+  for value,path in ((args.binary,binary),(args.dispatch,dispatch),(args.seal,seal)):require(value is None or value.resolve()==path,'sealed input differs')
+  gate=module('p150_memory',P56/'memory_gate.py');configuration=gate.configuration(read(line/'memory-plan.json'),4096,1,0)
+- placement=dict(name='1',draft_rank=1,target_split=0,layer_boundary=24,target_layers=[24,24],context=4096,memory_admitted=True,supported=True,reason='packet136 budget plus inherited probe scratch and 64 KiB immutable descriptor reserve on rank0',configuration=configuration,memory_gate=str(P56/'memory_gate.py'),memory_gate_sha256=sha(P56/'memory_gate.py'))
++ placement=dict(name='1',draft_rank=1,target_split=0,layer_boundary=24,target_layers=[24,24],context=4096,memory_admitted=True,supported=True,reason='packet136 budget plus inherited packet153 probe scratch and 64 KiB reserve (unused by S1: no new allocation)',configuration=configuration,memory_gate=str(P56/'memory_gate.py'),memory_gate_sha256=sha(P56/'memory_gate.py'))
+  return dict(placement=placement,timing='token',timing_modes=['token'],lineage=str(line),seal=str(seal),seal_sha256=sha(seal),binary=str(binary),binary_sha256=sha(binary),dispatch=str(dispatch),dispatch_sha256=sha(dispatch),profile='tp2',selection_sha256=sha(line/'selection.json'),memory_plan_sha256=sha(line/'memory-plan.json'))
+--- packet153/v5/argument_gate.py
++++ packet183/v5/argument_gate.py
+@@ -12,7 +12,7 @@
+ class Forbidden(BaseException):pass
+ class LimitRefusal(BaseException):pass
+ 
+-def identity(kind,variant="static",lane="A"):
++def identity(kind,variant="metadata",lane="A"):
+  from common import sealed
+  from bracket import load_config
+  line=P/'lineage'/variant;config=P/'configs'/(variant+'-'+kind+'.json')
+@@ -20,7 +20,7 @@
+  row.update(lane=lane,bracket=load_config(config),bracket_config=str(config),bracket_config_sha256=sha(config))
+  return row
+ 
+-def probe(kind,check_limits=False,variant="static",lane="A"):
++def probe(kind,check_limits=False,variant="metadata",lane="A"):
+  import p183_v5_exec_limits as exec_limits
+  inherited=exec_limits.snapshot();row=identity(kind,variant,lane)
+  oracle_command=['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(P.parent/'shared_oracle.py'),'--require-complete']
+--- packet153/v5/worker_gate.py
++++ packet183/v5/worker_gate.py
+@@ -6,7 +6,7 @@
+ from argument_gate import identity
+ class Forbidden(BaseException):pass
+ 
+-def probe(kind,variant="static"):
++def probe(kind,variant="metadata"):
+  row=identity(kind,variant)
+  oracle_command=['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(P.parent/'shared_oracle.py'),'--require-complete'];oracle_calls=[]
+  import tp2_worker as worker,bracket,analyze
+@@ -63,7 +63,7 @@
+    assert len(oracle_calls)>=2
+    return dict(passed=True,device_executed=False,kind=kind,positive_trace=positive,negative_trace=trace,requests=n*13,all_view_requests=True,real_oracle_commands=oracle_calls,native_execution_forbidden=True,synthetic_device_receipts_retained=False)
+ 
+-def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['snapshot_host']
++def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['dense_scales']
+ 
+ def main():
+  limits();rows=[]
+--- packet153/v5/entry_gate.py
++++ packet183/v5/entry_gate.py
+@@ -18,9 +18,9 @@
+  from launch_env import apply
+  verify();D.oracle_inputs()
+  baseline=exec_limits.snapshot();seen=[];envs=[];units=[];reservations=[];oracle=[];result={}
+- unit='screen-packet153-'+variant+'-'+kind+'-'+lane+'.service'
++ unit='screen-packet183-'+variant+'-'+kind+'-'+lane+'.service'
+  group='0::/user.slice/user-1000.slice/user@1000.service/app.slice/'+unit+'\n'
+- if negative=='unit':group=group.replace('screen-packet153','wrong-packet153')
++ if negative=='unit':group=group.replace('screen-packet183','wrong-packet183')
+  original_read=Path.read_text;original_open=Path.open;original_run=subprocess.run
+  props=dict(Restart='no',SendSIGKILL='no',KillMode='process',ExitType='cgroup',TimeoutStopUSec='infinity')
+  with tempfile.TemporaryDirectory(prefix='entry142-',dir=P/'evidence') as d:
+--- packet153/v5/switch_gate.py
++++ packet183/v5/switch_gate.py
+@@ -5,7 +5,7 @@
+ def main():
+  limits();out=B/'switch';out.mkdir(exist_ok=True);prior=json.loads((P/'engine-commands.json').read_text())
+  args=list(next(r['command'] for r in prior if r['name']=='gnu-host-entry-main'));args=args[1:args.index('-o')];i=args.index('-c');del args[i:i+2]
+- for mode in ('production','static'):
++ for mode in ('production','metadata'):
+   row=json.loads((P/'lineage'/mode/'selection.json').read_text());row['choices'].update(head='production',experts='production');save(out/(mode+'.json'),row)
+  rows=[]
+  for compiler,cxx in [('GNU','/usr/bin/g++'),('Intel','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
+@@ -13,9 +13,9 @@
+   run([cxx,*args,'-c',P/'native/switch_bytes.cpp','-o',obj],'switch-'+compiler+'-compile')
+   link=list(next(r['command'] for r in prior if r['name']=='gnu-host-link'));link=[str(obj) if x.endswith('/entry-main.o') else x for x in link if not x.endswith('own-rt-iq3-entry.cpp.o')];link[0]=cxx;link[link.index('-o')+1]=str(binary);link+=['-no-pie','-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib'];run(link,'switch-'+compiler+'-link')
+   for repeat in (1,2):
+-   a=out/'production.json';b=out/'static.json';dest=out/f'{compiler}-{repeat}';env=dict(os.environ,OMP_NUM_THREADS='2',LD_LIBRARY_PATH='/opt/intel/oneapi/compiler/2026.0/lib')
++   a=out/'production.json';b=out/'metadata.json';dest=out/f'{compiler}-{repeat}';env=dict(os.environ,OMP_NUM_THREADS='2',LD_LIBRARY_PATH='/opt/intel/oneapi/compiler/2026.0/lib')
+    cp=subprocess.run([str(binary),str(a),sha(a),str(dest),'switch',str(b),sha(b)],env=env,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120);assert cp.returncode==0,cp.stderr
+    rows.append(dict(json.loads(cp.stdout),compiler=compiler,repeat=repeat))
+- save(P/'evidence/switch.json',dict(passed=True,device_executed=False,model_read=False,full_shape_read=False,sequence=['production','static','production','static','production'],runs=rows,sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'switch_gate.py',P/'native/switch_bytes.cpp',P/'native/engine_bracket.hpp',CHECKED/'strict_snapshot.hpp',CHECKED/'request_reset.hpp')}))
++ save(P/'evidence/switch.json',dict(passed=True,device_executed=False,model_read=False,full_shape_read=False,sequence=['production','metadata','production','metadata','production'],runs=rows,sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'switch_gate.py',P/'native/switch_bytes.cpp',P/'native/engine_bracket.hpp',CHECKED/'strict_snapshot.hpp',CHECKED/'request_reset.hpp')}))
+  print('Real Engine five-view switch/reset table and state bytes GNU/Intel PASS')
+ if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+--- packet153/v5/p183_v5_compare.py
++++ packet183/v5/p183_v5_compare.py
+@@ -104,14 +104,21 @@
+         require(all(v['status']=='measured' for v in result['scheduling_costs']['views']),'missing real correction trace')
+     for row,timing in zip(result['views'],result['scheduling_costs']['views']):
+         row.update(corrected_half=timing['corrected_half'],miss_count=timing['miss_count'],
+-                   replay_correction_delta_ms=timing['exchange_cost_per_miss_ms'],mode='production' if row['choice']=='control' else 'static')
++                   replay_correction_delta_ms=timing['exchange_cost_per_miss_ms'],mode='expanded' if row['choice']=='control' else 'metadata')
+     for timing in result['scheduling_costs']['views']:
+-        timing['mode']='production' if timing['choice']=='control' else 'static'
++        timing['mode']='expanded' if timing['choice']=='control' else 'metadata'
+         timing['replay_correction_delta_ms']=timing.pop('exchange_cost_per_miss_ms')
+         timing.pop('probe')
+     result['candidate_qualified']=False
+-    result['purpose']='one-load snapshot-host screen; fresh-load confirmation and full chain still required'
++    result['purpose']='one-load S1 dense-scales screen (packet183); fresh-process record chain still required'
+     result['candidate_qualified']=drift<=3.0 and all(r['rate']>=1.02*max(controls) for r in rows if r['choice']=='candidate')
++    cand=[r['rate'] for r in rows if r['choice']=='candidate']
++    if cand:
++        gain=min(cand)/max(controls)-1;bar=1.02*58.798108759182306
++        result['s1_decision']=dict(min_gain_percent=100*gain,best_control_rate=max(controls),slower_candidate_rate=min(cand),
++            screen_winner=bool(drift<=3.0 and gain>=0.005),record_rate=58.798108759182306,record_bar_rate=bar,
++            chain_rule_met=bool(result['candidate_qualified'] and min(cand)>=bar),
++            rule='screen winner: both candidates >= +0.5% over every control, drift <= 3%; chain: both >= +2% over every control AND >= 1.02 x 58.798109 (record); every view 13/13 exact and draft proposals identical (enforced above)')
+     from analyze import analyze
+     result['rank0_split']=analyze(views, synthetic=isolation.get('synthetic_cpu_fixture',False))
+     save(output / 'bracket-summary.json', result)
+--- packet153/v5/screen.py
++++ packet183/v5/screen.py
+@@ -135,7 +135,7 @@
+                               planned_write_bytes=planned_writes,
+                               host_required_available_bytes=97*M.GIB+1200*1024**2,
+                               expected_seconds=[240,360] if identity.get('bracket',{}).get('kind')=='smoke' else [480,900],
+-                              conditional_on='Exact packet153 smoke and its first-request data proof must pass before bracket',
++                              conditional_on='Exact packet183 metadata smoke and its first-request data proof must pass before bracket',
+                               host_memory_admission=dict(required_bytes=97*M.GIB+1200*1024**2,class_bank_max_bytes=1200*1024**2,checked_at_launch=True),
+                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
+                               device_mask=mask_for(args.lane), timing=args.timing,
+@@ -149,8 +149,8 @@
+     verify()
+     if identity.get('bracket',{}).get('kind')=='bracket':
+         from p183_v5_compare import load
+-        smoke=load(HERE/'evidence/device-static-smoke-B-p153b')
+-        require(smoke['kind']=='smoke' and smoke['passed'] and smoke['timing_data_proof']['passed'], 'packet153 smoke/data proof required')
++        smoke=load(HERE/'evidence/device-metadata-smoke-B-p183')
++        require(smoke['kind']=='smoke' and smoke['passed'] and smoke['timing_data_proof']['passed'], 'packet183 smoke/data proof required')
+     screen_teardown_admit(args.lane)
+     cgroup = Path('/proc/self/cgroup').read_text()
+     unit_gate(cgroup)
+--- packet153/v5/readiness.py
++++ packet183/v5/readiness.py
+@@ -6,7 +6,7 @@
+ def verify_ready(preplan=False,variant=None,kind=None,lane=None):
+  row=verify()
+  if preplan:return row
+- assert lane=='B' and variant=='static','registered lane-B probe only'
++ assert lane=='B' and variant=='metadata','registered lane-B probe only'
+  marker=json.loads((P.parent/'READY-FOR-DEVICE.json').read_text())
+  assert marker['passed'] and marker['ready_for_device'] and marker['queued'] is False
+  for path,digest in marker['proposal_sha256s'].items():assert sha(ROOT/path)==digest,'proposal changed'
+--- packet153/v5/analyze.py
++++ packet183/v5/analyze.py
+@@ -144,7 +144,7 @@
+             candidate_ms_per_cycle=[r['segments_ms_per_cycle'][segment] for r in candidates],
+             saved_ms_per_cycle=[statistics.median(values)-r['segments_ms_per_cycle'][segment] for r in candidates],
+             control_range_ms=max(values)-min(values)))
+-    return dict(passed=True,schema='packet153.snapshot-host.v1',views=rows,decisions=decisions,
++    return dict(passed=True,schema='packet183.host-boundary.v1',views=rows,decisions=decisions,
+         device_evidence=True,clock='host scopes; async snapshot copy is not isolated GPU latency',
+         rate_scope='first 100 events / 99 intervals for 128-token views; smoke 64/63',speed_evidence_eligible=False)
+ 
+--- packet153/v5/submission_rehearsal.py
++++ packet183/v5/submission_rehearsal.py
+@@ -11,7 +11,7 @@
+  copied=LOCAL/'lineage-inputs/submission136-evidence.json.gz'
+  shutil.copy2(source,copied);assert sha(source)==sha(copied)
+  evidence=S.Evidence(json.loads(gzip.decompress(copied.read_bytes()))['members'])
+- with tempfile.TemporaryDirectory(prefix='p153-submission-',dir=P/'evidence') as scratch:
++ with tempfile.TemporaryDirectory(prefix='p183-submission-',dir=P/'evidence') as scratch:
+   repo=Path(scratch)
+   for path,name in ((S.THRESHOLD_FILE,'record-threshold.json'),(S.PINS_FILE,'submission-pins.json')):
+    f=repo/path;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(evidence.raw(name))
+@@ -23,9 +23,9 @@
+    # New packet has no full-chain promotion identity; historical evidence cannot qualify it.
+    try:S.prepare_submission(evidence,'packet183-twocard-s1-micro',out.with_name('forbidden'),repo=repo)
+    except (ValueError,KeyError) as e:refusal=str(e)
+-   else:raise AssertionError('historical chain accepted as packet153')
++   else:raise AssertionError('historical chain accepted as packet183')
+   assert not (out.with_name('forbidden')).exists()
+  sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'submission_rehearsal.py',LOCAL/'packet56_submission.py',LOCAL/'bundle_selection.py',LOCAL/'kd_projection_replay.py',LOCAL/'receipt_replay.py',copied,*list((LOCAL/'lineage-inputs/submission-vendor').glob('*.py')),*list((LOCAL/'lineage-inputs/submission-templates').glob('*'))]}
+- save(P/'evidence/submission-rehearsal.json',dict(passed=True,device_executed=False,method='packet153 packet56_submission.prepare_submission',historical_packet='packet136-record-bundle',historical_rate=58.798108759182306,source_evidence_digest=sha(source),copied_evidence_digest=sha(copied),packet153_evidence_refused=refusal,original_evidence_unchanged=True,network_used=False,payload_retained=False,private_repo_uses_historical_pins=True,sources=sources))
+- print('Own prepare_submission: historical136 replay PASS;153 refuses historical promotion')
++ save(P/'evidence/submission-rehearsal.json',dict(passed=True,device_executed=False,method='packet183 packet56_submission.prepare_submission',historical_packet='packet136-record-bundle',historical_rate=58.798108759182306,source_evidence_digest=sha(source),copied_evidence_digest=sha(copied),packet183_evidence_refused=refusal,original_evidence_unchanged=True,network_used=False,payload_retained=False,private_repo_uses_historical_pins=True,sources=sources))
++ print('Own prepare_submission: historical136 replay PASS;183 refuses historical promotion')
+ if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+--- packet153/v5/cpu_seal.py
++++ packet183/v5/cpu_seal.py
+@@ -2,7 +2,7 @@
+ import argparse,json,subprocess,sys
+ from pathlib import Path
+ from p183_v5_build_engine import P,LOCAL,ROOT,sha,save
+-GATES=('build','state','real-shape','admission','analysis','submission-rehearsal','controller','safety','exec-limits','loader','switch')
++GATES=('build','s1-bytes','real-census','full-shape','admission','analysis','submission-rehearsal','controller','safety','exec-limits','loader','switch','expected-gain')
+ def check_sources(rows):
+  for name,digest in rows.items():
+   assert (ROOT/name).is_file() and sha(ROOT/name)==digest,'source changed: '+name
+@@ -14,7 +14,7 @@
+   if 'sources' in row:check_sources(row['sources'])
+  check_sources(rows['build']['artifacts'])
+  paths=set(P.glob('*.py'))|set(P.glob('native/*'))|set(P.glob('native-src/*'))|set(P.glob('configs/*.json'))|set((LOCAL/'proposals').glob('*.txt'))
+- paths.update(P/'lineage'/mode/n for mode in ('production','static') for n in ('selection.json','dispatch-speed6.json','memory-plan.json'))
++ paths.update(P/'lineage'/mode/n for mode in ('production','metadata') for n in ('selection.json','dispatch-speed6.json','memory-plan.json'))
+  paths.update(LOCAL/n for n in ('shared_oracle.py','oracle-binding.json','storage.py','kernel_guard.hpp','chain-registration.json','packet56_submission.py','selection-template.json','bundle_selection.py','kd_reference.py','kd_projection_replay.py','receipt_replay.py','build_engine.py'))
+  for folder in ('submission-vendor','submission-templates','timing-fixture'):
+   paths.update((LOCAL/'lineage-inputs'/folder).glob('*'))
+@@ -26,9 +26,9 @@
+  for gate in rows.values():sources.update(gate.get('sources',{}))
+  sources.update(rows['build']['sources']);sources.update(rows['build']['artifacts'])
+  subprocess.run([sys.executable,'-B',str(LOCAL/'shared_oracle.py'),'--require-complete'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,check=True,timeout=180)
+- row=dict(schema='packet153.cpu-composition.v1',passed=True,device_executed=False,device_quality_pending=True,arithmetic='iq3-p49-split32-v1',sources=sources,variants=['production','static'],gates=list(GATES),binary_sha256=sha(P/'build/device/own-rt-iq3'))
++ row=dict(schema='packet183.cpu-composition.v1',passed=True,device_executed=False,device_quality_pending=True,arithmetic='iq3-p49-split32-v1',sources=sources,variants=['production','metadata'],gates=list(GATES),binary_sha256=sha(P/'build/device/own-rt-iq3'))
+  save(P/'cpu-seal.json',row)
+- for mode in ('production','static'):save(P/'lineage'/mode/'screen-seal.json',row)
++ for mode in ('production','metadata'):save(P/'lineage'/mode/'screen-seal.json',row)
+  save(P/'placement-validation/wrapper-seal.json',row)
+  return verify()
+ def verify():
+--- packet153/v5/state_gate.py
++++ /dev/null
+@@ -1,41 +0,0 @@
+-"""GNU and Intel host Engine byte equality; serial, synthetic miniature weights."""
+-import gzip,json,resource,subprocess,os,sys
+-from concurrent.futures import ThreadPoolExecutor
+-from p183_v5_build_engine import P,LOCAL,ROOT,B,CHECKED,sha,save,limits,run
+-
+-def main():
+- limits();prior=json.loads((P/'engine-commands.json').read_text());out=B/'state';out.mkdir(exist_ok=True)
+- args=list(next(r['command'] for r in prior if r['name']=='gnu-host-entry-main'));args=args[1:args.index('-o')];i=args.index('-c');del args[i:i+2]
+- rows=[];jobs=[]
+- for mode in ('production','static'):
+-  row=json.loads((P/'lineage'/mode/'selection.json').read_text())
+-  for key in ('route','recurrence','hc','experts','hc_gate','hc_norm','head','other_fusion'):row['choices'][key]='production'
+-  row['choices'].update(route='route-exp32-rank4',recurrence='rows4-shared')
+-  save(out/(mode+'.json'),row)
+- for compiler,cxx in [('GNU','/usr/bin/g++'),('Intel','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
+-  obj=out/(compiler+'.o');binary=out/('fixture-'+compiler)
+-  run([cxx,*args,'-c',P/'native/state_bytes.cpp','-o',obj],'state-'+compiler+'-compile')
+-  link=list(next(r['command'] for r in prior if r['name']=='gnu-host-link'))
+-  link=[str(obj) if x.endswith('/entry-main.o') else x for x in link if not x.endswith('own-rt-iq3-entry.cpp.o')]
+-  link[0]=cxx;link[link.index('-o')+1]=str(binary);link+=['-no-pie','-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib']
+-  run(link,'state-'+compiler+'-link')
+-  jobs.extend((compiler,repeat,mode,binary) for repeat in (1,2) for mode in ('production','static'))
+- def execute(job):
+-  compiler,repeat,mode,binary=job
+-  selection=out/(mode+'.json');dest=out/f'{compiler}-{repeat}-{mode}';
+-  if dest.exists():dest.rename(dest.with_name(dest.name+'-interrupted-'+str(__import__('time').time_ns())))
+-  dest.mkdir(exist_ok=False)
+-  env=dict(os.environ,OMP_NUM_THREADS='2',LD_LIBRARY_PATH='/opt/intel/oneapi/compiler/2026.0/lib')
+-  log=P/'evidence'/f'state-{compiler}-{repeat}-{mode}.log'
+-  with log.open('w') as stream:r=subprocess.run([sys.executable,'-B',str(P/'state_gate.py'),'--worker',str(binary),str(selection),sha(selection),str(dest),mode,'sequence-only'],env=env,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=900)
+-  assert r.returncode==0,log.read_text()[-6000:]
+-  result=json.loads((dest/'result.json').read_text());raw=dest/'cases.txt';archive=P/'evidence'/f'state-{compiler}-{repeat}-{mode}.txt.gz';archive.write_bytes(gzip.compress(raw.read_bytes(),mtime=0))
+-  result.update(compiler=compiler,repeat=repeat,mode=mode,transcript_sha256=sha(archive),snapshot=json.loads((dest/'speculative-snapshot.json').read_text()))
+-  print(compiler,repeat,mode,'PASS',flush=True);return result
+- with ThreadPoolExecutor(max_workers=2) as pool:rows=list(pool.map(execute,jobs))
+- assert len({r['canonical_sha256'] for r in rows})==1,'compiler/repeat/mode state bytes differ'
+- save(P/'evidence/state.json',dict(passed=True,device_executed=False,model_read=False,full_shape_read=False,runs=rows,scope='98-step mixed sequence plus three corruption negatives; real extents separately checked',six_rotation_states=True,immutable_table_reset_checked=True,workers=2,worker_limit_bytes=1280*1024**2,peak_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'state_gate.py',P/'native/state_bytes.cpp',CHECKED/'strict_snapshot.hpp',CHECKED/'request_reset.hpp',P/'native-src/main.cpp')}))
+-if __name__=='__main__':
+- if '--worker' in sys.argv:
+-  resource.setrlimit(resource.RLIMIT_AS,(1280*1024**2,1280*1024**2));os.execv(sys.argv[2],sys.argv[2:])
+- else:resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+--- packet153/v5/real_shape_gate.py
++++ /dev/null
+@@ -1,45 +0,0 @@
+-"""Production extent sizes with synthetic bytes, exact actual flat/static tile bodies."""
+-import csv,json,resource,subprocess
+-from p183_v5_build_engine import P,LOCAL,ROOT,B,CHECKED,sha,save,run,limits
+-
+-def main():
+- limits();out=B/'real-shape';out.mkdir(exist_ok=True)
+- header=(CHECKED/'strict_snapshot.hpp').read_text();start=header.index('#ifdef OWN_RT_HOST_ONLY\nstruct SnapshotFlat');end=header.index('// SPEED2_WRITE_SET_BEGIN')
+- rows=[r for r in csv.DictReader((LOCAL/'lineage-inputs/capture-extents.csv').open()) if int(r['candidate_copy_bytes'])]
+- specs=[]
+- for r in rows:
+-  n=int(r['candidate_copy_bytes']);stride=n if r['QSA_row']=='True' else 0;divisor=4 if r['source'].endswith('.pooled') else 1
+-  # Full extent allocation for QSA; other rows need precisely the admitted writer.
+-  size=int(r['allocation_bytes']) if stride else n
+-  specs.append('{'+','.join(map(str,(size,n,stride,divisor)))+'}')
+- code='''#include <algorithm>\n#include <cstdint>\n#include <cstring>\n#include <cstddef>\n#include <span>\n#include <vector>\n#include <iostream>\n#include <stdexcept>\n#define OWN_RT_HOST_ONLY\nnamespace integrated {struct HostOperation{virtual void run(std::span<void*const>)const=0;virtual ~HostOperation()=default;};}\n'''+header[start:end]+'''
+-struct Spec{size_t size,bytes,stride,divisor;};
+-int main(){try{
+- std::vector<Spec> specs={'''+','.join(specs)+'''};
+- size_t total=0,tiles=0;for(auto r:specs)total+=r.bytes;
+- std::vector<std::vector<uint8_t>> source;for(size_t i=0;i<specs.size();++i){source.emplace_back(specs[i].size+32);for(size_t j=0;j<source.back().size();++j)source.back()[j]=uint8_t((j*17+i*31)%251);}
+- std::vector<uint8_t> image(total+32,0xa5),expected(image),restored;std::vector<SnapshotStatic::Item> table;
+- size_t off=0;for(size_t i=0;i<specs.size();++i){auto r=specs[i];tiles+=(r.bytes+4095)/4096;table.push_back({image.data()+off,source[i].data()+16,r.bytes,tiles,r.stride,r.divisor});off+=r.bytes;}
+- unsigned cases=0;
+- for(int position:{0,1,3,4,31,32,63,64,4095}){
+-  off=0;for(size_t i=0;i<specs.size();++i){auto r=specs[i];size_t shift=size_t(position)/r.divisor*r.stride;std::memcpy(expected.data()+off,source[i].data()+16+shift,r.bytes);off+=r.bytes;}
+-  for(size_t tile=0;tile<tiles;++tile)for(size_t lane=0;lane<256;++lane)SnapshotStatic::copy_lane(table.data(),table.size(),tile,lane,position,false);
+-  if(image!=expected)throw std::runtime_error("capture bytes/redzone differ");
+-  std::vector<std::vector<uint8_t>> before=source;
+-  for(size_t i=0;i<specs.size();++i){auto r=specs[i];size_t shift=size_t(position)/r.divisor*r.stride;std::memset(source[i].data()+16+shift,0x19,r.bytes);}
+-  for(size_t tile=0;tile<tiles;++tile)for(size_t lane=0;lane<256;++lane)SnapshotStatic::copy_lane(table.data(),table.size(),tile,lane,position,true);
+-  if(source!=before)throw std::runtime_error("restore bytes, old QSA rows or redzones differ");
+-  ++cases;
+- }
+- std::cout<<"{\\\"passed\\\":true,\\\"positions\\\":"<<cases<<",\\\"extents\\\":"<<specs.size()<<",\\\"copy_bytes\\\":"<<total<<",\\\"table_bytes\\\":"<<table.size()*sizeof(SnapshotStatic::Item)<<"}"<<std::endl;
+-}catch(const std::exception& e){std::cerr<<e.what()<<std::endl;return 1;}}
+-'''
+- source=out/'transport.cpp';source.write_text(code);results=[]
+- for name,cxx in [('GNU','g++'),('Intel','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
+-  binary=out/('fixture-'+name);run([cxx,'-std=c++20','-O2',source,'-o',binary],'transport-'+name)
+-  for repeat in (1,2):
+-   cp=subprocess.run([str(binary)],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120);assert cp.returncode==0,cp.stderr
+-   result=json.loads(cp.stdout);assert result['extents']==984 and result['copy_bytes']==19025640;results.append(dict(result,compiler=name,repeat=repeat))
+- save(P/'evidence/real-shape.json',dict(passed=True,device_executed=False,model_read=False,synthetic_payload=True,actual_production_extent_sizes=True,runs=results,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'real_shape_gate.py',CHECKED/'strict_snapshot.hpp',LOCAL/'lineage-inputs/capture-extents.csv']}))
+- print('Production extent bytes/offsets/redzones GNU+Intel PASS')
+-if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+--- packet153/v5/split_cpu.py
++++ /dev/null
+@@ -1,34 +0,0 @@
+-"""Actual tiny engine replay/restore and analyzer negatives; no model payload."""
+-import json,resource,subprocess,sys
+-from p183_v5_build_engine import P,LOCAL,ROOT,B,CHECKED,sha,save,limits,run
+-
+-def main():
+- limits();prior=json.loads((P/'engine-commands.json').read_text());out=B/'split-cpu';out.mkdir(exist_ok=True)
+- args=list(next(r['command'] for r in prior if r['name']=='gnu-host-entry-main'));args=args[:args.index('-o')];i=args.index('-c');del args[i:i+2]
+- compile_cmd=[*args,'-c',str(P/'native/split_bytes.cpp'),'-o',str(out/'entry.o')]
+- run(compile_cmd,'split-cpu-compile')
+- link=list(next(r['command'] for r in prior if r['name']=='gnu-host-link'));link=[str(out/'entry.o') if x.endswith('/entry-main.o') else x for x in link if not x.endswith('own-rt-iq3-entry.cpp.o')];link[link.index('-o')+1]=str(out/'fixture')
+- run(link,'split-cpu-link');rows=[]
+- for mode in ('off','split'):
+-  row=json.loads((P/'lineage'/mode/'selection.json').read_text());row['choices'].update(head='production',experts='production')
+-  selection=out/(mode+'.json');save(selection,row)
+-  for repeat in (1,2):
+-   dest=out/(mode+str(repeat));cmd=[str(out/'fixture'),str(selection),sha(selection),str(dest),mode]
+-   cp=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=90)
+-   log=P/'evidence'/('split-bytes-'+mode+str(repeat)+'.log');log.write_text(cp.stdout+cp.stderr);assert cp.returncode==0,log.read_text()[-6000:]
+-   rows.append(dict(mode=mode,repeat=repeat,result=json.loads(cp.stdout),log_sha256=sha(log)))
+- tests=[]
+- for name in ('test_analyze.py','test_timing_report.py'):
+-  cp=subprocess.run([sys.executable,'-B',str(P/name)],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=90)
+-  log=P/'evidence'/('split-'+name+'.log');log.write_text(cp.stdout+cp.stderr);assert cp.returncode==0,log.read_text();tests.append(name)
+- from bracket import compatible,load_config
+- off=json.loads((P/'lineage/off/selection.json').read_text());on=json.loads((P/'lineage/split/selection.json').read_text())
+- assert compatible([off,on,off,on,off]) and len(load_config(P/'configs/split-bracket.json')['views'])==5
+- on['choices']['probe']='xchg'
+- try:compatible([off,on])
+- except ValueError:pass
+- else:raise AssertionError('unregistered exchange mode admitted')
+- sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'split_cpu.py',P/'native/split_bytes.cpp',P/'native/split_timing.hpp',P/'analyze.py',P/'test_analyze.py',P/'test_timing_report.py',P/'bracket.py']}
+- save(P/'evidence/split-cpu.json',dict(passed=True,device_executed=False,model_payload_read=False,full_shape_read=False,runs=rows,tests=tests,sources=sources,suffix_device_equality_pending=True,peak_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
+- print('Actual miniature token replay and snapshot poison/restore PASS')
+-if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+--- packet153/v5/native/state_bytes.cpp
++++ /dev/null
+@@ -1,120 +0,0 @@
+-// Actual miniature target, snapshot, rollback and redo on the host backend.
+-#define main p121_unused_model_entry
+-#include "../native-src/main.cpp"
+-#undef main
+-static std::string canonical(Engine& e,const std::vector<uint8_t>& shared,std::string* detail=nullptr) {
+- std::ostringstream out;
+- std::set<Allocation> represented;
+- for(const auto& [name,slot]:e.buffers[0]){represented.insert(slot.id);out<<"buffer:"<<name<<':'<<hash(e.readback(0,slot.id,slot.n*flash::scalar_bytes(slot.type)))<<'\n';}
+- for(const auto& [name,id]:e.state_spares){represented.insert(id);out<<"spare:"<<name<<':'<<hash(e.readback(0,id,e.dev(0).arena.row(id).bytes))<<'\n';}
+- for(const auto& [name,id]:e.state_reserves)represented.insert(id);
+- for(const auto&[id,owner]:e.allocations){const auto&r=e.dev(owner.first).arena.row(id);
+-  if(!r.live||r.category==Category::weights||r.category==Category::pinned_slab||represented.count(id))continue;
+-  if(e.immutable_snapshot_tables.contains(id))continue;
+-  if(r.label=="card0:speculative-private-image"||r.label=="card0:speculative-copy-table")continue;
+-  out<<r.label<<':'<<hash(e.readback(owner.first,id,r.bytes))<<'\n';
+- }
+- out<<e.history0<<':'<<e.history1<<':'<<e.bank_parity<<':'<<e.context_extent<<':'<<e.alternate_context_extent<<'\n';
+- for(auto&[name,value]:e.lookup_ids)out<<name<<':'<<hash(value)<<'\n';
+- for(auto v:e.fp32_sources)out<<(v?e.dev(0).arena.row(v).label:"null")<<':';for(auto v:e.fp32_extents)out<<v<<':';
+- for(auto&v:e.selected)for(auto x:v)out<<x<<':';for(auto x:e.loaded_layer)out<<x<<':';
+- out<<hash(shared);auto s=out.str();if(detail)*detail=s;return hash(std::vector<uint8_t>(s.begin(),s.end()));
+-}
+-int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
+- require(argc==5||(argc==6&&std::string(argv[5])=="sequence-only"),"selection hash output mode [sequence-only]");Options a;
+- a.mini=true;a.pipeline_mini=true;a.context=320;a.cards=1;a.card=0;a.rank=0;a.draft_rank=1;
+- a.memory="resident";a.gemv="r5";a.nongemv="parallel";a.selection=argv[1];a.selection_sha256=argv[2];a.output=argv[3];
+- fs::create_directories(a.output);Weights w(a);
+- e=std::make_unique<Engine>(w,a,pipeline::split(plan(w,a),0,true,1,0));e->initialize();pipeline::banks(*e);
+- unsigned cases=0,position_classes=0,negative=0;std::ostringstream evidence;
+- {pipeline::SpeculativeImage image(*e);std::vector<uint8_t> shared(pipeline::shared_bytes,0);pipeline::Candidate c;int accepted=0;
+- std::map<Allocation,std::string> table_hash;
+- for(auto id:e->immutable_snapshot_tables)table_hash[id]=hash(e->readback(0,id,e->dev(0).arena.row(id).bytes));
+- require(table_hash.size()==1,"one immutable rotation-independent table");
+- std::set<std::pair<unsigned,unsigned>> roles;
+- auto reset=[&](int position){image.boundary();c={};
+-  auto meta=a.output/"reset.txt";save(meta,a.output.string()+"\n\n");pipeline::request_reset(*e,c,nullptr,meta,accepted);
+-  for(auto [id,digest]:table_hash)require(hash(e->readback(0,id,e->dev(0).arena.row(id).bytes))==digest,"reset rewrote immutable descriptors");
+-  // Request reset preserves compiled launch extents. Give reference and
+-  // candidate exactly the same initial prepared banks, retaining both extents
+-  // in the canonical comparison rather than hiding this non-byte state.
+-  e->admit_position(0);e->swap_state_banks();e->admit_position(0);e->swap_state_banks();
+-  std::fill(shared.begin(),shared.end(),0);
+-  // Position zero is a fixture-only edge: a zeroed publication means "none"
+-  // in production, which never speculates before the initial target token.
+-  pipeline::verification(shared.data()).position_plus_one=UINT32_MAX;
+-  e->put(0,"position",&position,4);e->a.cancel_launch=-1;
+- };
+- auto half=[&](int token,int position,bool spec){roles.insert({e->active_bank,e->spare_bank});pipeline::Request r{pipeline::half,token,position,0,int(spec),1,{0,0}};return pipeline::half_step(*e,c,r,shared.data(),image);};
+- auto accept=[&]{pipeline::publish(*e,c);if(c.speculative)image.accept();c={};};
+- std::vector<int> positions{0,1,2,3,4,31,32,63,64,127,128,319};
+- for(int p:positions){if(argc==6)break;++position_classes;
+-  reset(p);half(5,p,false);accept();const auto expected=canonical(*e,shared);
+-  std::vector<int> cuts{-1};if(p==3||p==4||p==31||p==32||p==63||p==64||p==127||p==128||p==319)cuts={-1,0,1,17};
+-  for(int cut:cuts){
+-   reset(p);e->a.cancel_launch=cut;auto stopped=half(7,p,true);
+-   require(c.cancelled==(cut>=0)&&(cut<0||stopped.reserved[1]==cut),"forced miss cancellation cut not reached");
+-   pipeline::undo(*e,c,image,true,p,5);e->a.cancel_launch=-1;
+-   require(image.before_command(true,p,5),"matching redo not recognized");half(5,p,false);
+-   require(!c.cancelled&&c.swapped,"redo incomplete");image.finish_redo();accept();
+-   const auto actual=canonical(*e,shared);require(actual==expected,"redo differs from direct corrected target in canonical bytes");evidence<<p<<':'<<cut<<":redo:"<<actual<<'\n';++cases;
+-   for(int abandon=0;abandon<4;++abandon){
+-    reset(p);const auto before=canonical(*e,shared);e->a.cancel_launch=cut;auto stopped=half(7,p,true);
+-    require(c.cancelled==(cut>=0)&&(cut<0||stopped.reserved[1]==cut),"forced fallback cancellation cut not reached");
+-    pipeline::undo(*e,c,image,abandon!=0,p,5);
+-    if(abandon==1)require(!image.before_command(false,-1,-1),"dump/end fallback");
+-    if(abandon==2)require(!image.before_command(true,p,6),"wrong token fallback");
+-    if(abandon==3)require(!image.before_command(true,p+1,5),"wrong position fallback");
+-    const auto after=canonical(*e,shared);require(after==before,"terminal/abandoned redo changed canonical bytes");
+-    image.boundary();require(canonical(*e,shared)==before,"terminal boundary changed committed bytes");
+-    for(const auto&[name,id]:e->state_reserves){auto raw=e->readback(0,id,e->dev(0).arena.row(id).bytes);require(std::all_of(raw.begin(),raw.end(),[](auto x){return x==0;}),"cancelled reserve not retired");}
+-    evidence<<p<<':'<<cut<<":fallback"<<abandon<<':'<<after<<'\n';++cases;
+-   }
+-  }
+-  reset(p);half(5,p,true);accept();require(canonical(*e,shared)==expected,"accepted hit differs from direct target");++cases;
+-  std::cerr<<"position "<<p<<" PASS\n";
+- }
+- // Two bank parities, live committed histories/KV, and repeated table rebuilds
+- // across 31->32 and 63->64. Compare each step to a direct-target sequence.
+- std::vector<std::string> direct,details;reset(0);
+- std::vector<int> live_cuts;size_t command_count=0;
+- for(size_t i=0;i<e->p.launches.size();++i){
+-  command_count+=e->issue_sites[i].commands.size();const auto& op=e->p.launches[i].op;
+-  if(op=="conv"||op=="gdn"||op=="qsa_append_pool")live_cuts.push_back(int(command_count));
+- }
+- require(!live_cuts.empty()&&command_count>0,"live cancellation coverage missing");live_cuts.push_back(int(command_count-1));
+- for(int p=0;p<98;++p){half(5,p,false);accept();std::string detail;direct.push_back(canonical(*e,shared,&detail));details.push_back(detail);}
+- reset(0);
+- for(int p=0;p<98;++p){
+-  if(p%3==0){half(5,p,true);accept();}
+-  else {
+-   e->a.cancel_launch=live_cuts[(p/3)%live_cuts.size()];auto stopped=half(7,p,true);
+-   require(c.cancelled&&stopped.reserved[1]==e->a.cancel_launch,"live cancellation cut not reached");
+-   pipeline::undo(*e,c,image,true,p,5);e->a.cancel_launch=-1;
+-   if(p%3==2)require(!image.before_command(false,-1,-1),"consecutive fallback");
+-   else require(image.before_command(true,p,5),"consecutive redo");
+-   half(5,p,false);if(p%3==1)image.finish_redo();accept();
+-  }
+-  std::string detail;const auto actual=canonical(*e,shared,&detail);
+-  if(actual!=direct[p]){save(a.output/"expected-state.txt",details[p]);save(a.output/"actual-state.txt",detail);throw std::runtime_error("consecutive target state differs at position "+std::to_string(p));}
+-  evidence<<"sequence:"<<p<<':'<<actual<<'\n';++cases;
+- }
+- for(int which=0;which<3;++which){
+-  reset(32);const auto before=canonical(*e,shared);half(7,32,true);
+-  image.corrupt_protected_for_gate(which);pipeline::undo(*e,c,image);
+-  require(canonical(*e,shared)!=before,"corrupted protected/omitted bytes hidden");
+-  evidence<<"negative:"<<which<<":detected\n";++negative;
+- }
+- reset(0);
+- // The private reserve can hold stale uncommitted bytes, but every byte
+- // must be retired before a reset/dump boundary, without changing logical state.
+- auto before_boundary=canonical(*e,shared);image.boundary();
+- require(canonical(*e,shared)==before_boundary,"boundary changed committed state");
+- for(const auto&[name,id]:e->state_reserves){auto raw=e->readback(0,id,e->dev(0).arena.row(id).bytes);require(std::all_of(raw.begin(),raw.end(),[](auto x){return x==0;}),"private reserve retirement");}
+- require(roles.size()==6,"all six rotation states must be exercised");
+- for(auto [id,digest]:table_hash)require(hash(e->readback(0,id,e->dev(0).arena.row(id).bytes))==digest,"cycles rewrote immutable descriptors");
+- auto raw=evidence.str();save(a.output/"cases.txt",raw);
+- save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"cases\":"+std::to_string(cases)+",\"position_classes\":"+std::to_string(position_classes)+",\"canonical_sha256\":"+ownrt::quote(hash(std::vector<uint8_t>(raw.begin(),raw.end())))+"}");
+- }
+- e->shutdown();e.reset();return 0;
+- }catch(const std::exception&x){std::cerr<<x.what()<<'\n';if(e){try{e->shutdown();}catch(...){}e.reset();}return 1;}}
+--- packet153/v5/native/split_bytes.cpp
++++ /dev/null
+@@ -1,49 +0,0 @@
+-// Actual miniature engine, synthetic weights only. No full-shape/model reads.
+-#define main p150_unexecuted_entry
+-#include "../native-src/main.cpp"
+-#undef main
+-static std::map<Allocation,std::string> mutable_bytes(Engine& e){
+- std::map<Allocation,std::string> result;
+- for(const auto& [name,row]:e.buffers[0])
+-  result[row.id]=hash(e.readback(0,row.id,row.n*flash::scalar_bytes(row.type)));
+- for(const auto& [name,id]:e.state_spares)
+-  result[id]=hash(e.readback(0,id,e.dev(0).arena.row(id).bytes));
+- return result;
+-}
+-int main(int argc,char** argv){
+- std::unique_ptr<Engine> e;
+- try{
+-  require(argc==5,"selection digest output replay");Options a;
+-  a.mini=true;a.pipeline_mini=true;a.context=64;a.cards=1;a.card=0;a.rank=0;a.draft_rank=1;
+-  a.memory="resident";a.gemv="r5";a.nongemv="parallel";a.selection=argv[1];
+-  a.selection_sha256=argv[2];a.output=argv[3];fs::create_directories(a.output);
+-  Weights w(a);e=std::make_unique<Engine>(w,a,pipeline::split(plan(w,a),0,true));
+-  e->initialize();pipeline::banks(*e);
+-  {
+-   pipeline::SpeculativeImage image(*e);std::array<uint8_t,65536> shared{};
+-   for(int token=1;token<=7;++token){
+-    const auto h0=e->history0,h1=e->history1;
+-    e->prepare_token(token);e->drain();
+-    const auto expected=mutable_bytes(*e);const auto lookups=e->lookup_ids;
+-    const auto post0=e->history0,post1=e->history1;
+-    // Identical current production function and its exact saved host inputs.
+-    e->history0=h0;e->history1=h1;e->prepare_token(token);e->drain();
+-    require(mutable_bytes(*e)==expected&&e->lookup_ids==lookups&&
+-            e->history0==post0&&e->history1==post1,"token duplicate changed bytes/history");
+-    auto before=mutable_bytes(*e);
+-    image.begin(shared.data());e->drain();
+-    // Source streams/history may change; private copy must restore them exactly.
+-    std::vector<uint8_t> poison(4*e->p.g.h*2,0x19);
+-    e->put(0,"streams",poison.data(),poison.size());
+-    int64_t history[2]={51,52};e->put(0,"token_history",history,16);shared.fill(77);
+-    image.restore();e->drain();
+-    require(mutable_bytes(*e)==before,"snapshot replay/restore changed model bytes");
+-    require(e->history0==post0&&e->history1==post1&&e->lookup_ids==lookups,"snapshot host restore changed");
+-    require(std::all_of(shared.begin(),shared.end(),[](auto x){return x==0;}),"shared restore changed");
+-   }
+-  }
+-  e->shutdown();e.reset();
+-  std::cout<<"{\"passed\":true,\"device_executed\":false,\"tokens\":7,\"all_model_bytes_equal\":true,\"poison_restore\":true}"<<std::endl;
+-  return 0;
+- }catch(const std::exception& error){std::cerr<<error.what()<<std::endl;if(e){try{e->shutdown();}catch(...){}e.reset();}return 1;}
+-}

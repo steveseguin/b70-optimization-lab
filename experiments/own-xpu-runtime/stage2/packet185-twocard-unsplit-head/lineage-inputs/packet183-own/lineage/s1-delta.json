@@ -1,0 +1,49 @@
+{
+ "schema": "packet183.s1-delta.v1",
+ "device_executed": false,
+ "base": "packet153-snapshot-host sources after the packet183 identity rewrite",
+ "changed": [
+  {
+   "name": "v5/native-src/main.cpp",
+   "kind": "edited",
+   "after_digest": "65aea203ef5f7bb3e05f126d68494f87328083a5ddff098e2b74c261a377b010"
+  },
+  {
+   "name": "v5/native-src/mtp.hpp",
+   "kind": "edited",
+   "after_digest": "3f2d881038aa321de491b69e1b5692b5decbafce9119c03bc029ea0d44f826ab"
+  },
+  {
+   "name": "v5/native/engine_bracket.hpp",
+   "kind": "edited",
+   "after_digest": "5f6c7989a76340bf21d1b664876ee2abbb9510e37ffb9b3b1afb2d60d86aa8fc"
+  },
+  {
+   "name": "native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/p49d_submit.cpp",
+   "kind": "edited",
+   "after_digest": "b6d7bac819e3ed6fc4baec55f5469bcc17ed5ce59304e98bf18b369744e17aee"
+  },
+  {
+   "name": "native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_lanes.hpp",
+   "kind": "new",
+   "after_digest": "ad19ae44400318c3b5a6ca1f1bd3eadcc6897a70074fed3eb544677b25531228"
+  },
+  {
+   "name": "native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_kernels.hpp",
+   "kind": "new",
+   "after_digest": "381b553ba753f2d4c3ec05ecc201e63c71a632b1e7b951fc6204f30f66188b80"
+  },
+  {
+   "name": "native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.hpp",
+   "kind": "new",
+   "after_digest": "f940cd213898a0e3e8f15445d220934d4fc91e893d155ba6787e46279cb3be6d"
+  },
+  {
+   "name": "native-base/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.cpp",
+   "kind": "new",
+   "after_digest": "3d3172f0eb96803b85688958c2a6b9eab93242c86fb50019ebbe341ef36592a4"
+  }
+ ],
+ "unchanged_inherited_objects": "every packet136 parent object linked by packet153 is linked unchanged; S1 kernels are new names in a new TU",
+ "note": "regenerated after s1_submit.cpp was split into s1_kernels.hpp (kernel structs) + s1_submit.cpp (issue functions) so the full-shape fixture can audit the S1 small tuple"
+}
