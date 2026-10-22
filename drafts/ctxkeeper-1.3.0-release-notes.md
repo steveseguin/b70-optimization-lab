@@ -37,8 +37,14 @@ The bare-number working check under `--sum-check` (1.2.2 development) ships as i
 benchmark speed claim. GPU-state checkpoints are the own runtime's experimental contract, not this
 package. Both seeds met every registered line except seed 2's answer count, missed by one.
 
-## Release gate (to run as registered for 1.2.0, campaign 50 G1-G4)
+## Release gate (campaign 56, 2026-10-22, passed on these public prerelease assets)
 
-Repair 40/40 fixed, at least 38 clean, at least 6/7 audit, under 45 min through the public wheel;
-Docker long-chat 300K 4/4 from the public source archive; SDK plain/tool/stream; Gemma 100K smoke
-(reported, no quality gate). Prerelease first; stable promotion and the PyPI upload are the owner's.
+| Gate | Result |
+| --- | --- |
+| G1 freeagent + `ctxkeeper --recipe qwen`, 40 repair tickets, through the public wheel | 40/40 fixed, 40/40 clean, 7/7 audit, 14 min 45 s (bar: 40/40, at least 38, at least 6, under 45 min) |
+| G2 300,000-token chat through the Docker image built from the public source archive | 4/4 |
+| G3 the README's OpenAI SDK snippet: plain, tool call, stream | all three |
+| G4 Gemma 4 26B Q8, 100,000-token smoke (reported, no quality gate) | 4/4 |
+
+Kernel log clean; cards left empty. Receipts: `experiments/qwen38-27b-b70/data/2026-10-22-ctxkeeper-1.3.0-release-gate/`.
+Stable promotion and the PyPI upload are the owner's.

@@ -1,0 +1,107 @@
+{
+  "format": "ctxkeeper.release-gate.v1",
+  "version": "1.3.0",
+  "status": "passed",
+  "started_at": "2026-10-22T18:26:48.103871+00:00",
+  "venv": "/mnt/fast-ai/bench-results/context-longrun-20261012/c56-prep/venv",
+  "image": "ctxkeeper:1.3.0-pub",
+  "source_archive": "/mnt/fast-ai/bench-results/context-longrun-20261012/c56-prep/public/ctxkeeper-1.3.0.tar.gz",
+  "archive_sha256": "ae07202af35d6ffad091a9696572015df95a5d40ef44b1a7ad1300483fe1d0f2",
+  "demo_sha256": "1b0e9b2e3d060a0e3e62f7a0205fb9172ead907fd5bd1a1fe57deab86cc21c69",
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "updated_at": "2026-10-22T18:44:13.642542+00:00",
+      "checks": {
+        "not_void": true,
+        "fixed_40_of_40": true,
+        "clean_at_least_38": true,
+        "audit_at_least_6": true,
+        "within_45_minutes": true,
+        "no_client_errors": true,
+        "not_step_capped": true
+      },
+      "elapsed_seconds": 885.0,
+      "fixed": 40,
+      "clean": 40,
+      "audit": {
+        "asked": 7,
+        "right": 7,
+        "lines": 7,
+        "other_tickets": 0
+      },
+      "rules": {
+        "R1": {
+          "applies": 38,
+          "kept": 38
+        },
+        "R2": {
+          "applies": 33,
+          "kept": 33
+        },
+        "R3": {
+          "applies": 27,
+          "kept": 27
+        }
+      },
+      "details": "/mnt/fast-ai/bench-results/context-longrun-20261012/c56/G1/trial/verifier/details.json",
+      "readme_recite_when_required": false,
+      "proxy": {
+        "sessions": 1,
+        "cuts": 7,
+        "requests": 310,
+        "inplace_cuts": 7,
+        "inplace_failed": 0,
+        "notes_failed": 0,
+        "recalls": 0,
+        "receipt": "/mnt/fast-ai/bench-results/context-longrun-20261012/c56/G1-proxy-status.json"
+      }
+    },
+    "G2": {
+      "status": "passed",
+      "updated_at": "2026-10-22T18:47:45.960018+00:00",
+      "returncode": 0,
+      "passed": 4,
+      "total": 4,
+      "history_approx_tokens": 304552,
+      "quality_expected_4_of_4": true,
+      "quality_required": true,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261012/c56/G2-long_chat.out",
+      "proxy": {
+        "sessions": 1,
+        "cuts": 24,
+        "requests": 154,
+        "inplace_cuts": 24,
+        "inplace_failed": 0,
+        "notes_failed": 0,
+        "recalls": 0,
+        "receipt": "/mnt/fast-ai/bench-results/context-longrun-20261012/c56/G2-proxy-status.json"
+      }
+    },
+    "G3": {
+      "status": "passed",
+      "updated_at": "2026-10-22T18:47:53.668947+00:00",
+      "message": "all three SDK response contracts passed; G3-sdk.json retains responses"
+    },
+    "G4": {
+      "status": "passed",
+      "updated_at": "2026-10-22T18:58:24.876907+00:00",
+      "returncode": 0,
+      "passed": 4,
+      "total": 4,
+      "history_approx_tokens": 101671,
+      "quality_expected_4_of_4": true,
+      "quality_required": false,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261012/c56/G4-long_chat.out"
+    },
+    "preflight": {
+      "status": "passed",
+      "updated_at": "2026-10-22T18:26:49.564092+00:00",
+      "message": "fresh versions and inputs present; no builds or resident services changed"
+    }
+  },
+  "updated_at": "2026-10-22T18:58:24.876916+00:00",
+  "exit_code": 0,
+  "cleanup_ok": true,
+  "finished_at": "2026-10-22T18:58:27.973331+00:00"
+}

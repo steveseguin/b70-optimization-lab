@@ -1,0 +1,65 @@
+[
+    {
+        "Architecture": "amd64",
+        "Config": {
+            "Cmd": [
+                "--recipe",
+                "agent"
+            ],
+            "Entrypoint": [
+                "python3",
+                "/app/ctxkeeper.py",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "18200",
+                "--state-dir",
+                "/state"
+            ],
+            "Env": [
+                "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+                "PYTHON_VERSION=3.12.15",
+                "PYTHON_SHA256=c2c4321961fab0fb999d66e0cecf521c2ab3994c7992873ea99e306c1094fd5a"
+            ],
+            "ExposedPorts": {
+                "18200/tcp": {}
+            },
+            "Volumes": {
+                "/state": {}
+            },
+            "WorkingDir": "/app"
+        },
+        "Created": "2026-10-22T14:26:18.320098961-04:00",
+        "Descriptor": {
+            "digest": "sha256:cf210a4b08edecf2290e010693a38d0de7810ffe849ef2700a914773c74d8280",
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "size": 1618
+        },
+        "Id": "sha256:cf210a4b08edecf2290e010693a38d0de7810ffe849ef2700a914773c74d8280",
+        "Metadata": {
+            "LastTagTime": "2026-10-22T18:26:18.449438406Z"
+        },
+        "Os": "linux",
+        "Parent": "sha256:e6fcb2812e74473424512bf92f345ce40535886bf2176fca3fcaa802dcffdb30",
+        "RepoDigests": [
+            "ctxkeeper@sha256:cf210a4b08edecf2290e010693a38d0de7810ffe849ef2700a914773c74d8280"
+        ],
+        "RepoTags": [
+            "ctxkeeper:1.3.0-pub"
+        ],
+        "RootFS": {
+            "Layers": [
+                "sha256:a6dc765193a52cbaede3c93a9ff48b9540948dd0774bbe7031fcb5847606f9ac",
+                "sha256:ec5ef3f1cbefdce6c6ac6574e6609310d57e2baab89df410bf30228f5f567273",
+                "sha256:5b57eb74119f41ab33783352993c069e1f4ac4136e711d205e136808aad526b6",
+                "sha256:d88e62f9bbff6447c00667778988589b711cebf26b8046fdf54eebc0a543c204",
+                "sha256:d0bc1038af8b63385735fa9608a5e44fc33a5783397a76e1099983f321050c3f",
+                "sha256:1e6affc3f7f8342c4bb6adfc4836455acba1679d95aad454940a3b45e5016917"
+            ],
+            "Type": "layers"
+        },
+        "Size": 46300971
+    }
+]

@@ -3359,3 +3359,23 @@ Docker image, 300,000 tokens, 4/4; **G3** the README's SDK snippet: plain reply,
 Q8 100K smoke (reported, no quality gate), after the FP8 server is down. Cards empty before and after; nothing else runs
 on this host. Pass → stable promotion and the PyPI upload are the owner's; a failed check stops the sequence and is
 read before anything is rerun.
+
+## Campaign 56 passed: the 1.3.0 prerelease assets pass G1-G4 as registered; written 2026-10-22 14:59 EDT
+
+Run 14:26:48-14:58:27 EDT (31 min 39 s), unit `ctx-campaign56`, kernel log clean, cards left empty, no resident
+service changed. Inputs: the public prerelease assets of `ctxkeeper-v1.3.0` (SHA256SUMS verified byte for byte
+against the built set; archive sha256 `ae07202af35d6ffad091a9696572015df95a5d40ef44b1a7ad1300483fe1d0f2`), a fresh venv from the public wheel URL plus
+the OpenAI SDK, the Docker image built from the public source-archive URL (reports 1.3.0).
+
+| Gate | Bar | Result |
+| --- | --- | --- |
+| G1 freeagent + `ctxkeeper --recipe qwen` on `repair-n40-s2x` | 40/40 fixed, at least 38 clean, at least 6/7 audit, under 45 min | **40/40 fixed, 40/40 clean, 7/7 audit, R1 38/38, R2 33/33, R3 27/27, 14 min 45 s** (campaign 50 on 1.2.0: 40/40, 40/40, 7/7, 12 min 18 s) |
+| G2 `long_chat.py` through the Docker image, 300,000 tokens | 4/4 | **4/4** (history about 304,552 tokens; 24 in-place cuts, 0 failed, 0 full rewrites failed) |
+| G3 the README's SDK snippet | plain reply, tool call, stream | **all three contracts** (responses retained in G3-sdk.json) |
+| G4 Gemma 4 26B Q8 100K smoke, after the FP8 server is down | reported, no quality gate | **4/4** (history about 101,671 tokens) |
+
+Receipts and hashes: [2026-10-22-ctxkeeper-1.3.0-release-gate](../data/2026-10-22-ctxkeeper-1.3.0-release-gate/)
+(status, per-gate proxy status, SDK responses, image and source hashes, output tails). Stable promotion of the
+GitHub prerelease and the PyPI upload through `skindeepai/ctxkeeper` are the owner's; the flat package files
+for that repository are staged under `/mnt/fast-ai/bench-results/context-longrun-20261012/c56-prep/publish/`
+with the commands in its README.

@@ -1,0 +1,128 @@
+{
+  "plain": {
+    "id": "chatcmpl-8215ecf88bf5dea8",
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": "Hello, how are you?",
+          "refusal": null,
+          "role": "assistant",
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": null,
+          "reasoning": null
+        },
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "created": 1792694869,
+    "model": "qwen38-27b-fp8",
+    "object": "chat.completion",
+    "metadata": null,
+    "moderation": null,
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.29.0-tp2-7a89df75",
+    "usage": {
+      "completion_tokens": 7,
+      "prompt_tokens": 580,
+      "total_tokens": 587,
+      "completion_tokens_details": {
+        "accepted_prediction_tokens": null,
+        "audio_tokens": null,
+        "reasoning_tokens": 0,
+        "rejected_prediction_tokens": null,
+        "text_tokens": null
+      },
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null,
+        "created_cache_tokens": 0,
+        "multimodal_tokens": null
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  },
+  "tool": {
+    "id": "chatcmpl-b98202d5c2070644",
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": null,
+          "refusal": null,
+          "role": "assistant",
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": [
+            {
+              "id": "chatcmpl-tool-87d15af43ef8bd50",
+              "function": {
+                "arguments": "{\"command\": \"echo ok\"}",
+                "name": "shell"
+              },
+              "type": "function"
+            }
+          ],
+          "reasoning": null
+        },
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "created": 1792694869,
+    "model": "qwen38-27b-fp8",
+    "object": "chat.completion",
+    "metadata": null,
+    "moderation": null,
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.29.0-tp2-7a89df75",
+    "usage": {
+      "completion_tokens": 27,
+      "prompt_tokens": 638,
+      "total_tokens": 665,
+      "completion_tokens_details": {
+        "accepted_prediction_tokens": null,
+        "audio_tokens": null,
+        "reasoning_tokens": 0,
+        "rejected_prediction_tokens": null,
+        "text_tokens": null
+      },
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null,
+        "created_cache_tokens": 0,
+        "multimodal_tokens": null
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  },
+  "stream_text": "One, two, three, four, five.",
+  "chunks": 2,
+  "passed": true
+}

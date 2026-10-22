@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 22, 14:59 EDT — ctxkeeper 1.3.0 passed the release gate (campaign 56) on its public prerelease assets.** G1 40/40
+fixed, 40/40 clean, 7/7 audit in 15 min; G2 300K chat 4/4 through the Docker image; G3 all three SDK contracts; G4 Gemma
+100K smoke 4/4. Kernel clean, cards empty. The prerelease is ready for stable promotion and the PyPI upload, both the
+owner's; the files for the publishing repository are staged with the commands. Receipts:
+`experiments/qwen38-27b-b70/data/2026-10-22-ctxkeeper-1.3.0-release-gate/`.
+
 **October 22, 14:24 EDT — ctxkeeper 1.3.0 release candidate: package aligned, built and fresh-installed; prerelease and the
 registered release gate (campaign 56) next.** The four keeper fixes of campaigns 51-55 plus the opt-in conversation
 journal are 1.3.0; the README carries campaign 55's two-seed result. Wheel, source archive and the standalone files
