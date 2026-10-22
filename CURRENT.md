@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 22, 17:05 EDT — packet188's loss attributed to its own export path; k=3 reopened as packet189 k3x (CPU prep running).**
+Lever synthesis 3 split the +0.97 ms boundary: the GDN layer-26 kernels cost 0.459 ms (equal to the 0.463 ms saved on rank 1) and the
+20,480-byte handoff export grew 0.54 ms only because packet188's `kernel_io=kernel` key sent it through a one-work-item-per-byte kernel
+(28.9 ns/byte) instead of the copy engine (2.6 ns/byte). The decision's D reading (0.43 ms) was a model artifact; the observed draft wall was
+1.537 ms. Replay on packet187's record intervals: k3 + trims with the export on the copy engine **+2.74 %** (62.3 tok/s; range +2.3 to +3.0),
+the only open lever above the +2 % chain bar. Packet189 adds a `boundary_export=copy` key, reads D from the draft wall, and proposes two
+lane-B rows (k3x smoke, one-load V3/k3x/V3/k3x/V3; packet188 row 1 is the fresh V3 reference). Synthesis archived in packet188's
+`analysis/`. Ledger wording for packet188 corrected (loss as built, not "k=3 closed"). Cards idle; endpoints serving (restore12).
+
 **October 22, 16:20 EDT — packet188 k3 + trims loses on two cards (lane B, 19:55–20:16 UTC); k=3 closed.** One-load bracket
 V3/k3+trims/V3/k3+trims/V3 = 60.526/60.564/60.536/60.382/60.540 tok/s with a fresh V3 control at 60.505; every view 13/13 exact,
 draft proposals identical, drift 0.058 %. The slower k3+trims view is 0.26 % below the fastest V3 view. Kill rules fired: the

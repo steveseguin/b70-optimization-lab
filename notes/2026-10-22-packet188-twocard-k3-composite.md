@@ -129,3 +129,9 @@ export that follows the GDN layer. Hits broke even; misses lost. The composite i
 
 Window receipts: `lineage/window-20261022/` in the packet (driver log, live plan, archived PAUSE-B, runner journal,
 restore output). Endpoints restored as `*-20261022-restore12`; PAUSE-A untouched, PAUSE-B re-armed.
+
+## Attribution (lever synthesis 3, 21:00 UTC): the loss is the export path, not the layer
+
+**Attribution (lever synthesis 3, `analysis/lever-synthesis-3-20261022.md`):** the rank-0 scopes split the +0.974 ms boundary into `boundary_body` +0.459 ms (the GDN layer-26 kernels, equal to the 0.463 ms saved on rank 1) and `handoff_export` +0.540 ms for the SAME 20,480 bytes, because the `kernel_io=kernel` key routed the export through `kio_read_many` (KioCopy, one work-item per byte into pinned host memory, 28.9 ns/byte) instead of the copy-engine readback (2.6 ns/byte). D 1.61 -> 0.43 was a model artifact (op-9 command duration under a non-blocking draft); the observed draft wall was 1.586 -> 1.537 ms. Closed: this kio-export composite. Open (ruling 2026-10-22): k3 + trims with the export on the copy engine, priced +2.74 % on the record replay (packet189 k3x).
+
+Ranking on the V3 line from the replay: k3x (k3 + both trims + copy-engine export) **+2.74 %** (62.32; range +2.3 to +3.0), k3 alone with a copy export +1.56 %, kernel I/O both ranks with the export fixed +0.79 %, rank-1 kernel I/O alone +0.66 %, rank-0 trims alone +0.13 %, removing the export entirely <= +0.07 % (it sits inside the draft window on hits); no QSA layer is admissible in the boundary (23-25 -0.66 %, 24-27 illegal). Only k3x reaches the +2 % chain bar. Packet189 (`stage2/packet189-twocard-k3x/`) re-measures it with a `boundary_export=copy` key and D read from the draft wall.

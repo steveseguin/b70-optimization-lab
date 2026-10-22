@@ -136,7 +136,7 @@
         <td>fresh V3 control, then one load, V3/k3+trims/V3/k3+trims/V3, 12×128 + incident64 per view</td>
         <td class="num">fresh V3 60.505; V3 60.526/60.536/60.540; k3+trims 60.564/60.382 (−0.26 %)</td>
         <td class="num">—</td>
-        <td>Loss; every view exact, drift 0.058 %. A third boundary layer (GDN 26) on rank 0 costs 0.97 ms per hit, mostly in the export, against 0.54 ms saved on rank 1: hits break even and misses lose. The rank-0 trims remove 0.142 ms but rank 1 binds every V3 hit. k=3 closed.</td>
+        <td>Loss as built; every view exact, drift 0.058 %. The third boundary layer (GDN 26) costs 0.459 ms per hit on rank 0, equal to what it saves on rank 1, and the 20,480-byte handoff export grew 0.54 ms because the kernel-I/O key sent it through a per-byte kernel instead of the copy engine. With the export back on the copy engine the composite prices +2.7 % (packet189 k3x in preparation).</td>
       </tr>
       <tr>
         <td>Flash-Next UD-IQ3_XXS, 2×B70, S1 dense-scales screen (packet183, 2026-10-22)</td>
