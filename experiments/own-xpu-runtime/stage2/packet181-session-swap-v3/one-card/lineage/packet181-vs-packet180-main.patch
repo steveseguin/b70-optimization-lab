@@ -1,0 +1,18 @@
+--- packet180/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
++++ packet181/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
+@@ -2188,7 +2188,14 @@
+       if(restoring){parent.checkpoint_id=restored.checkpoint_id;parent.manifest_sha256=restored.manifest_sha256;parent.present=true;}
+       saved=pipeline::checkpoint_save(*e,a.checkpoint_save,restoring?a.checkpoint_save_id:a.checkpoint_id,input,processed,generated.back(),a.tokenizer_identity,parent);
+     }
+-    const std::string checkpoint_json=pipeline::checkpoint_result_json(restoring?&restored:nullptr,checkpoint_restore_ms,append_prefill_ms,saving?&saved:nullptr);
++    // packet181: record the prompt positions this process stepped and how. This engine has one
++    // prompt mechanism ("incremental": one position per step through the prompt step above), used
++    // identically for a fresh prompt [0, len) and for appended tokens [N, len) after a restore;
++    // a same-generation resume steps no prompt position.
++    const size_t prefill_first=restoring?size_t(restored.position):0;
++    const size_t prefill_tokens=restoring?(appending?input.size()-prefill_first:0):input.size();
++    const std::string checkpoint_json=pipeline::checkpoint_result_json(restoring?&restored:nullptr,checkpoint_restore_ms,append_prefill_ms,saving?&saved:nullptr,
++      prefill_ms,prefill_first,prefill_tokens);
+     e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::ostringstream rr;rr.precision(17);
+     rr<<"{\"schema\":\"own-runtime.iq3.packet26.run.v1\",\"passed\":true,\"arithmetic\":"<<ownrt::quote(arithmetic::version)

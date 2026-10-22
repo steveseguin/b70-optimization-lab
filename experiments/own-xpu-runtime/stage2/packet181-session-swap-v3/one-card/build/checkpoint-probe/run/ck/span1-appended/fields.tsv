@@ -1,0 +1,238 @@
+format	ownrt.session-checkpoint.v1
+label	qualified-one-card
+contract	v1.2+p181
+qualified_scope	one card (tp1-full512 profile) only; TP2 checkpoints not implemented; no ctxkeeper adapter yet
+qualified_by	packet179-session-swap@2026-10-22:same-generation-resume;packet180-session-swap-v2@2026-10-22:append,restore-then-save
+checkpoint_id	span1-appended
+created	2026-10-22T07:54:01Z
+operation	restore-then-save
+parent_checkpoint_id	gate
+parent_manifest_sha256	03ee59acf17ce0555f6e04c8d0dc423dfed459a43d3b3393c641629a88e24a5f
+position	17
+prompt_length	14
+length	17
+next_token	0
+tokens_sha256	852b7234bae929bb443ca643bec1113a1e289aea4c38224f2024a5839c2e0863
+history0	0
+history1	0
+identity_tsv_sha256	
+binary_sha256	b01ed4b39b37e2399f9e1683b822538c50ff63a90d3bdf6a0dff545b8ac2fba5
+tokenizer_identity_sha256	edb394045237da3945100d2086375b7c2246fe9ead8d1b5184693576c67edbbb
+kvh	1
+ad	4
+ih	4
+id	4
+kh	1
+vh	3
+d	4
+qh	4
+context	64
+vocab	16
+eos	15
+layers	4
+qsa_layers	1,3
+gdn_layers	0,2
+save_seconds	0.16892648800000001
+save_bytes	2628
+manifest_sha256	ce41cb27315f0ea3ff711b4d50467b7928f707c31de4ba7cc070a1b01404c958
+blob	active	4	67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450	-1
+blob	blk.0.gdn.history	120	3f3b8d07b4355b8329f3ce4d55fe30895b74f11f265cae93d79adb193a00e8a0	-1
+blob	blk.0.gdn.state	96	9a60b4a5db3ea68c59ddff931a231d6cd369c43dbd487e01a349db708445938e	-1
+blob	blk.1.ple.history	1152	126e5d60fa9f3963e31cb0c148aab3240473824b79f4d0a1628afe7629cb7385	-1
+blob	blk.1.qsa.keys	136	71137d20cb366a2b54eff9b424104d0fffb301f21bc3babb2936bb0976c1901a	17
+blob	blk.1.qsa.pooled	32	176283dc5e833f0bab1c1c0f7557448c77a7bc81eebf38f14de91b30b7d2babd	4
+blob	blk.1.qsa.raw	136	c87c6785fd7cd3b435b16e238bef435364e6c9071c46ed7fe4c0926f4bfa0f8f	17
+blob	blk.1.qsa.values	136	bd6b9c0c6f1d46a08dfdff923a334646ab80e7cc21e7f457b0781633fb7a8155	17
+blob	blk.2.gdn.history	120	92cfc99b842f83df23b32dc05a6be7d476427dfda131859a780cc37f21d6d7f4	-1
+blob	blk.2.gdn.state	96	c77aed8260a512bb34dc9246d09b957a13f8767ed03d2ef9a8e18805d2136102	-1
+blob	blk.3.qsa.keys	136	74430e71a0abf9eacb301fa5906f4caf26b76445c3d952de98c66a63ee8bd867	17
+blob	blk.3.qsa.pooled	32	50f456f681a780855a8d90849e16476ef0fa5493c630b9214a608e09f52ab56a	4
+blob	blk.3.qsa.raw	136	b7a6b137dfc70c7f60f39b638a4a97d90b77764a8a913dcf329f0e09dde7277f	17
+blob	blk.3.qsa.values	136	002a593e2f4382b776637bd99f17562154cfdfa121afdceb7a2c9f17343e46e6	17
+blob	error	4	df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119	-1
+blob	next_token	4	df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119	-1
+blob	position	4	84fc05949dc1e486652a4ed316afb6434e9437eb30b714594a1d0b4205776602	-1
+blob	streams	128	6bfb15a1f58e97eb9ebe8a699a84c8e9fe42e3f3b8d07f10876b79e1384b65b9	-1
+blob	token	4	df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119	-1
+blob	token_history	16	374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb	-1
+skip	blk.0.attention	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expert_input	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expsact	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expsdown	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expsdown.status	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expsgate	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expsgate.status	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expsup	skip: plan intermediate fully rewritten every token step
+skip	blk.0.expsup.status	skip: plan intermediate fully rewritten every token step
+skip	blk.0.gdn.a	skip: plan intermediate fully rewritten every token step
+skip	blk.0.gdn.b	skip: plan intermediate fully rewritten every token step
+skip	blk.0.gdn.conv	skip: plan intermediate fully rewritten every token step
+skip	blk.0.gdn.gated	skip: plan intermediate fully rewritten every token step
+skip	blk.0.gdn.qkv	skip: plan intermediate fully rewritten every token step
+skip	blk.0.gdn.y	skip: plan intermediate fully rewritten every token step
+skip	blk.0.gdn.z	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.a.act	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.a.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.a.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.a.low	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.a.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.a.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.f.act	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.f.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.f.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.f.low	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.f.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.0.hc.f.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.0.ids	skip: plan intermediate fully rewritten every token step
+skip	blk.0.moe	skip: plan intermediate fully rewritten every token step
+skip	blk.0.prob	skip: plan intermediate fully rewritten every token step
+skip	blk.0.router	skip: plan intermediate fully rewritten every token step
+skip	blk.0.routes	skip: plan intermediate fully rewritten every token step
+skip	blk.0.routes.down	skip: plan intermediate fully rewritten every token step
+skip	blk.0.shared_gate	skip: plan intermediate fully rewritten every token step
+skip	blk.0.shexpact	skip: plan intermediate fully rewritten every token step
+skip	blk.0.shexpdown	skip: plan intermediate fully rewritten every token step
+skip	blk.0.shexpgate	skip: plan intermediate fully rewritten every token step
+skip	blk.0.shexpup	skip: plan intermediate fully rewritten every token step
+skip	blk.1.attention	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expert_input	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expsact	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expsdown	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expsdown.status	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expsgate	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expsgate.status	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expsup	skip: plan intermediate fully rewritten every token step
+skip	blk.1.expsup.status	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.a.act	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.a.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.a.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.a.low	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.a.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.a.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.f.act	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.f.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.f.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.f.low	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.f.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.1.hc.f.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ids	skip: plan intermediate fully rewritten every token step
+skip	blk.1.moe	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.cn	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.conv	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.gated	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.ids	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.key	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.kn	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.lookup	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.qn	skip: plan intermediate fully rewritten every token step
+skip	blk.1.ple.value	skip: plan intermediate fully rewritten every token step
+skip	blk.1.prob	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.ids	skip: qsa ids scratch, recomputed per token by qsa_select
+skip	blk.1.qsa.ik	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.iq	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.iqn	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.k	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.kn	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.q	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.qgate	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.v	skip: plan intermediate fully rewritten every token step
+skip	blk.1.qsa.y	skip: plan intermediate fully rewritten every token step
+skip	blk.1.router	skip: plan intermediate fully rewritten every token step
+skip	blk.1.routes	skip: plan intermediate fully rewritten every token step
+skip	blk.1.routes.down	skip: plan intermediate fully rewritten every token step
+skip	blk.1.shared_gate	skip: plan intermediate fully rewritten every token step
+skip	blk.1.shexpact	skip: plan intermediate fully rewritten every token step
+skip	blk.1.shexpdown	skip: plan intermediate fully rewritten every token step
+skip	blk.1.shexpgate	skip: plan intermediate fully rewritten every token step
+skip	blk.1.shexpup	skip: plan intermediate fully rewritten every token step
+skip	blk.2.attention	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expert_input	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expsact	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expsdown	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expsdown.status	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expsgate	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expsgate.status	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expsup	skip: plan intermediate fully rewritten every token step
+skip	blk.2.expsup.status	skip: plan intermediate fully rewritten every token step
+skip	blk.2.gdn.a	skip: plan intermediate fully rewritten every token step
+skip	blk.2.gdn.b	skip: plan intermediate fully rewritten every token step
+skip	blk.2.gdn.conv	skip: plan intermediate fully rewritten every token step
+skip	blk.2.gdn.gated	skip: plan intermediate fully rewritten every token step
+skip	blk.2.gdn.qkv	skip: plan intermediate fully rewritten every token step
+skip	blk.2.gdn.y	skip: plan intermediate fully rewritten every token step
+skip	blk.2.gdn.z	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.a.act	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.a.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.a.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.a.low	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.a.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.a.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.f.act	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.f.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.f.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.f.low	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.f.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.2.hc.f.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.2.ids	skip: plan intermediate fully rewritten every token step
+skip	blk.2.moe	skip: plan intermediate fully rewritten every token step
+skip	blk.2.prob	skip: plan intermediate fully rewritten every token step
+skip	blk.2.router	skip: plan intermediate fully rewritten every token step
+skip	blk.2.routes	skip: plan intermediate fully rewritten every token step
+skip	blk.2.routes.down	skip: plan intermediate fully rewritten every token step
+skip	blk.2.shared_gate	skip: plan intermediate fully rewritten every token step
+skip	blk.2.shexpact	skip: plan intermediate fully rewritten every token step
+skip	blk.2.shexpdown	skip: plan intermediate fully rewritten every token step
+skip	blk.2.shexpgate	skip: plan intermediate fully rewritten every token step
+skip	blk.2.shexpup	skip: plan intermediate fully rewritten every token step
+skip	blk.3.attention	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expert_input	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expsact	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expsdown	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expsdown.status	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expsgate	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expsgate.status	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expsup	skip: plan intermediate fully rewritten every token step
+skip	blk.3.expsup.status	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.a.act	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.a.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.a.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.a.low	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.a.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.a.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.f.act	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.f.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.f.inject	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.f.low	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.f.mix	skip: plan intermediate fully rewritten every token step
+skip	blk.3.hc.f.norm	skip: plan intermediate fully rewritten every token step
+skip	blk.3.ids	skip: plan intermediate fully rewritten every token step
+skip	blk.3.moe	skip: plan intermediate fully rewritten every token step
+skip	blk.3.prob	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.gate	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.ids	skip: qsa ids scratch, recomputed per token by qsa_select
+skip	blk.3.qsa.ik	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.iq	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.iqn	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.k	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.kn	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.q	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.qgate	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.v	skip: plan intermediate fully rewritten every token step
+skip	blk.3.qsa.y	skip: plan intermediate fully rewritten every token step
+skip	blk.3.router	skip: plan intermediate fully rewritten every token step
+skip	blk.3.routes	skip: plan intermediate fully rewritten every token step
+skip	blk.3.routes.down	skip: plan intermediate fully rewritten every token step
+skip	blk.3.shared_gate	skip: plan intermediate fully rewritten every token step
+skip	blk.3.shexpact	skip: plan intermediate fully rewritten every token step
+skip	blk.3.shexpdown	skip: plan intermediate fully rewritten every token step
+skip	blk.3.shexpgate	skip: plan intermediate fully rewritten every token step
+skip	blk.3.shexpup	skip: plan intermediate fully rewritten every token step
+skip	embedding	skip: plan intermediate fully rewritten every token step
+skip	final.act	skip: plan intermediate fully rewritten every token step
+skip	final.gate	skip: plan intermediate fully rewritten every token step
+skip	final.low	skip: plan intermediate fully rewritten every token step
+skip	final.mix	skip: plan intermediate fully rewritten every token step
+skip	final.norm	skip: plan intermediate fully rewritten every token step
+skip	logits	skip: plan intermediate fully rewritten every token step
+skip	ple_metadata	skip: static GGUF-derived, re-put by request reset; covered by model identity

@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "parent": "packet180-session-swap-v2/one-card",
+  "copied_parent_files_checked": 546,
+  "frozen_parent_unchanged": true,
+  "semantic_harness_changes": [
+    "budget.json",
+    "entry.py",
+    "harness-delta.patch",
+    "identity.json",
+    "inherited-native.json",
+    "measurement.py",
+    "screen.py",
+    "worker.py"
+  ],
+  "native_semantic_changes": [
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp",
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/checkpoint.hpp"
+  ],
+  "new_profile_files": [
+    "lineage/packet181-native-delta.patch",
+    "lineage/packet181-vs-packet180-main.patch",
+    "lineage/packet181-vs-packet180-checkpoint.patch",
+    "lineage/packet181-build.json",
+    "lineage/packet180-receipts/COPY-MANIFEST.json"
+  ],
+  "packet_new_files": [
+    "scaffold.py",
+    "adapt_native.py",
+    "checkpoint.hpp",
+    "build_checkpoint.py",
+    "checkpoint_probe.py",
+    "test_lifecycle.py",
+    "test_p180_receipts.py"
+  ],
+  "unchanged_profile_files": [
+    "selection.json",
+    "dispatch.json",
+    "inputs/plan.tsv",
+    "inputs/identity.tsv",
+    "parent-native-argv.json",
+    "oracle-binding.json",
+    "lifecycle.json",
+    "reference-p179-row-a.json",
+    "tokenizer-identity.tsv",
+    "native-help-flags.json"
+  ],
+  "native_delta_patches": [
+    "lineage/packet181-native-delta.patch (vs packet165)",
+    "lineage/packet181-vs-packet180-main.patch",
+    "lineage/packet181-vs-packet180-checkpoint.patch"
+  ],
+  "packet180_analyzers_exact_prefix_of_measurement": true,
+  "all_prompt_tokens_unchanged": true,
+  "selection_dispatch_plan_identity_unchanged": true,
+  "cli_flags_unchanged": true,
+  "budget_floors_unchanged": true,
+  "harness_patch_sha256": "715d282fb5375b8c6639b8f899f3a88ffd1b7957fefd0d7ca816886259fe2ab2",
+  "binary_not_inherited": "entry TU recompiled; kernel objects relinked byte-identical from packet165; see evidence/build.json"
+}

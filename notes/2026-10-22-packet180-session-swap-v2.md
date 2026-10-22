@@ -94,9 +94,12 @@ No GPU fault lines in the kernel journal during the window.
 | packet180-one-card-full512-A-a | DONE | 500 s | passed, oracle-128 exact, class-balanced 31.78 tok/s (reference load for the relinked binary `f68714ce…`); all 12 outputs identical to packet179 row a (`packet179_row_a_identity.passed`) |
 | packet180-one-card-lifecycle-A-b | DONE | 1167 s | passed, 36/36 gates: save S1 at K=256 (1.06 s, 68,756,516 B, 128 blobs); append of a 126-token turn after restore decoded 128 tokens == fresh one-shot reference [0:128]; restore-then-save into S2 (76.0 MB) then resume S2 + 64 tokens == reference [128:192]; repeated append (S2b) identical and S2b blobs == S2 blobs sha-for-sha; inspect-metadata/inspect-full/delete tools passed; restore 0.41–0.46 s; append prefill of the 127 remaining input tokens 5.59 s vs 16.0 s cold prefill of all 469 tokens (2.66×) |
 
-Observed, not a gate: the append prefill ran the 127 appended tokens at ~22.7 tok/s through the
-incremental path, below the chunked cold-prefill rate (~29 tok/s on this binary); batching the
-appended tokens through the prefill path is the next lever for the append cost.
+Observed, not a gate: the 127 appended tokens took 5.59 s (~22.7 tok/s) against ~29 tok/s for the
+whole 469-token cold prefill. Correction from the packet181 source read: this engine steps every
+prompt position one at a time (there is no chunked prefill; batched prefill was closed by packet166),
+so the append path is the same mechanism as a fresh prefill. The gap is the empty expert cache of a
+fresh process: the reference's first 126 positions took 5.68 s, the append's 126 took 5.55 s. In a
+long-running server the append runs at the warm per-position rate (27–33 ms).
 Checkpoint blobs (`one-card/evidence/device-p180-lifecycle-A-b/run/checkpoints/**/*.bin`, 145 MB)
 stay outside Git; manifest sha256s are in `summary.json` (`gates.*record`).
 Contract: SESSION-SWAP-DESIGN.md §7 gates 1–4 now hold for same-generation resume (packet179) AND

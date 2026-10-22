@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "entry_tu_only": true,
+  "patched": [
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp",
+    "native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/checkpoint.hpp"
+  ],
+  "added": [],
+  "parent_main_sha256": "b0fa053d10814becedba2c104e7bc91618f9422fd476aac371eb6b3cd2da68d1",
+  "packet180_main_sha256": "9ccc869a17cf32de0b7e8b6512c2031376312247f6348056deb157047046c342",
+  "patched_main_sha256": "a150acd65f125fb4e6455029d9ee4ce36d120248a8b2283398ddb9e6f1762942",
+  "checkpoint_hpp_sha256": "d7d86d4d672d0757373643de41bcef0146b31b143818b60185a2a9d59f392bf1",
+  "packet180_checkpoint_hpp_sha256": "578e6026747ad70fc55dccac93e5627999c726adb392b33841ef06f64fdab3c5",
+  "patch_sha256": "2c4161948beba13452c1774f3ef57705516484e5c66da95be7480e0ba7f91885",
+  "incremental_main_patch_sha256": "cb94407db25f151e458f6d9fffca72f96750d161290dd0c51726157de5dc889b",
+  "incremental_checkpoint_patch_sha256": "9835d18c9262f7b9343148d97f4a3461cc43047238f589fc1577fb834a403213",
+  "harness_files": [
+    "worker.py",
+    "measurement.py",
+    "screen.py",
+    "entry.py",
+    "budget.json"
+  ],
+  "new_files": [],
+  "kernel_arithmetic": "unchanged by construction: only the entry TU textual closure changed; kernel objects relinked byte-identical from packet165 by build_checkpoint.py",
+  "prefill_mechanism": "unchanged: no chunked/batched prefill exists in this engine; fresh prompts and appended tokens use the same per-position prompt step (recorded as incremental)",
+  "scope": "session checkpoint v3: manifest label qualified-one-card + qualified_by (contract v1.2+p181), read compatibility with packet180 v1.2+p180 experimental manifests, prefill/append path record in result.json; device qualification of this binary pending"
+}

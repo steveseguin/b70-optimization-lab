@@ -1,0 +1,106 @@
+--- packet165/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
++++ packet179/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
+@@ -157,10 +157,11 @@
+   std::string memory = "layer-streaming";
+   bool resident_lookups=false;
+   fs::path inputs, output, model, plan, auth, oracle, suite_inputs, bracket_inputs;
++  fs::path checkpoint_save, checkpoint_restore; std::string checkpoint_id;
+ };
+ static Options parse(int argc, char **argv) {
+   // PACKET163_HELP_BEGIN: metadata only; before device or model access.
+-  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
++  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --checkpoint-delete --checkpoint-id --checkpoint-inspect --checkpoint-restore --checkpoint-save --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
+   // PACKET163_HELP_END
+ 
+   Options a;
+@@ -234,6 +235,9 @@
+     else if (k == "--lookups") {auto v=value();require(v=="mapped"||v=="resident","lookup dimension");a.resident_lookups=v=="resident";}
+     else if (k == "--bracket-inputs") a.bracket_inputs=value();
+     else if (k == "--suite-inputs") a.suite_inputs=value();
++    else if (k == "--checkpoint-save") a.checkpoint_save=value();
++    else if (k == "--checkpoint-restore") a.checkpoint_restore=value();
++    else if (k == "--checkpoint-id") a.checkpoint_id=value();
+     else if (k == "--input" || k == "--prompt-tokens")
+       a.inputs = value();
+     else if (k == "--output")
+@@ -284,6 +288,13 @@
+ #else
+   require(a.authorized || a.record, "--authorized-device-window required");
+ #endif
++  require(a.checkpoint_save.empty()||a.checkpoint_restore.empty(),"checkpoint save and restore are exclusive");
++  require((a.checkpoint_save.empty()&&a.checkpoint_restore.empty())||a.suite_inputs.empty(),"checkpoint modes are single-request only");
++  require(a.checkpoint_id.empty()||(!a.checkpoint_save.empty()||!a.checkpoint_restore.empty()),"--checkpoint-id requires a checkpoint mode");
++  if(!a.checkpoint_save.empty()||!a.checkpoint_restore.empty())
++    require(!a.checkpoint_id.empty()&&a.checkpoint_id.size()<=64&&
++            a.checkpoint_id.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")==std::string::npos,
++            "checkpoint id must be nonempty and filename-safe");
+   require(a.native_nice>=0 && a.native_nice<=19 && getpriority(PRIO_PROCESS, 0) == a.native_nice, "native priority differs from declared --native-nice");
+   require(getenv("OMP_NUM_THREADS") &&
+               std::string(getenv("OMP_NUM_THREADS")) == "2",
+@@ -1764,6 +1775,7 @@
+      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp"
++#include "checkpoint.hpp"
+ 
+ // SPEED6_SCRATCH_POLICY_BEGIN
+ // Scope the footprint reduction to the previously refused split23/dr1 arm.
+@@ -1865,6 +1877,11 @@
+     catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
+   }
+ #endif
++  // Device-free checkpoint maintenance; parse() would require device authorization.
++  if(argc==3&&(std::string(argv[1])=="--checkpoint-inspect"||std::string(argv[1])=="--checkpoint-delete")) {
++    try{return pipeline::checkpoint_host_tool(argv[1]+2,argv[2]);}
++    catch(const std::exception& error){std::cerr<<"checkpoint "<<(argv[1]+2)<<" failed: "<<error.what()<<"\n";return 1;}
++  }
+   std::unique_ptr<Engine> e;
+   std::unique_ptr<Weights> w;
+   fs::path output;
+@@ -2092,11 +2109,26 @@
+       e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
+     };
+     int next=-1;auto prefill_start=std::chrono::steady_clock::now();
+-    for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
+-    prefill_ms=Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    // Restore runs AFTER p58_reset_request (its zeroing makes sliced-KV byte-exact
++    // and its reset.json receipt stays a hard gate); the prefill loop is skipped and
++    // token_index starts at N so step()/admit_position match the uninterrupted run.
++    pipeline::RestoredCheckpoint restored;const bool restoring=!a.checkpoint_restore.empty();double checkpoint_restore_ms=0;
++    if(restoring){auto restore_start=std::chrono::steady_clock::now();
++      restored=pipeline::checkpoint_restore(*e,a.checkpoint_restore,a.checkpoint_id,input);
++      checkpoint_restore_ms=Engine::ms(restore_start);next=restored.next_token;token_index=size_t(restored.position);}
++    else for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
++    prefill_ms=restoring?0:Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    std::ostringstream restore_ms_row;restore_ms_row.precision(17);restore_ms_row<<checkpoint_restore_ms;
++    const std::string restore_ms_json=restoring?restore_ms_row.str():"null";
+     for(auto& v:e->class_ms)v=0;for(auto& v:e->class_launches)v=0;for(auto& v:e->class_groups)v=0;
+     auto decode_start=std::chrono::steady_clock::now();
+-    if(!a.first)for(int i=0;i<a.tokens;++i){
++    if(!a.first&&restoring)for(int i=0;i<a.tokens;++i){
++      next=step(next,i+2);
++      generated.push_back(next);
++      std::cout<<"token_id "<<next<<'\n';
++      if(next==p.g.eos || (!a.mini && next==248046))break;
++    }
++    else if(!a.first)for(int i=0;i<a.tokens;++i){
+       if(!a.bracket_inputs.empty()) {
+         const auto& expected=expected_tokens.at(request_id);
+         require(generated.size()<expected.size()&&next==expected[generated.size()],"packet49 oracle token mismatch: "+view.label+"/"+request_id+" token "+std::to_string(generated.size()));
+@@ -2107,6 +2139,7 @@
+       if(i+1<a.tokens)next=step(next,i+2);
+     }
+     require(a.bracket_inputs.empty()||generated==expected_tokens.at(request_id),"packet49 completion length mismatch");
++    if(!a.checkpoint_save.empty())pipeline::checkpoint_save(*e,a.checkpoint_save,a.checkpoint_id,input,generated);
+     decode_ms=Engine::ms(decode_start);
+     e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::ostringstream rr;rr.precision(17);
+@@ -2114,7 +2147,7 @@
+       <<",\"cached_tokens\":0,\"gpu_count\":1,\"decode_mode\":\"plain\",\"context\":"<<a.context
+       <<",\"request_start_monotonic\":"<<request_start_seconds<<",\"request_end_monotonic\":"<<monotonic()
+       <<",\"prompt_tokens\":"<<input.size()<<",\"requested_max_new\":"<<a.tokens
+-      <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
++      <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms<<",\"checkpoint_restore_ms\":"<<restore_ms_json
+       <<",\"tokens\":[";
+     for(size_t i=0;i<generated.size();++i)rr<<(i?",":"")<<generated[i];
+     rr<<"],\"timing_rows\":[";

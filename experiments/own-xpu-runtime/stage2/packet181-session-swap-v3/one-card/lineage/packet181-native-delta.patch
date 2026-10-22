@@ -1,0 +1,169 @@
+--- packet165/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
++++ packet181/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/main.cpp
+@@ -157,10 +157,11 @@
+   std::string memory = "layer-streaming";
+   bool resident_lookups=false;
+   fs::path inputs, output, model, plan, auth, oracle, suite_inputs, bracket_inputs;
++  fs::path checkpoint_save, checkpoint_restore, tokenizer_identity; std::string checkpoint_id, checkpoint_save_id;
+ };
+ static Options parse(int argc, char **argv) {
+   // PACKET163_HELP_BEGIN: metadata only; before device or model access.
+-  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
++  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --checkpoint-delete --checkpoint-id --checkpoint-inspect --checkpoint-inspect-metadata --checkpoint-restore --checkpoint-save --checkpoint-save-id --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokenizer-identity --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
+   // PACKET163_HELP_END
+ 
+   Options a;
+@@ -234,6 +235,11 @@
+     else if (k == "--lookups") {auto v=value();require(v=="mapped"||v=="resident","lookup dimension");a.resident_lookups=v=="resident";}
+     else if (k == "--bracket-inputs") a.bracket_inputs=value();
+     else if (k == "--suite-inputs") a.suite_inputs=value();
++    else if (k == "--checkpoint-save") a.checkpoint_save=value();
++    else if (k == "--checkpoint-restore") a.checkpoint_restore=value();
++    else if (k == "--checkpoint-id") a.checkpoint_id=value();
++    else if (k == "--checkpoint-save-id") a.checkpoint_save_id=value();
++    else if (k == "--tokenizer-identity") a.tokenizer_identity=value();
+     else if (k == "--input" || k == "--prompt-tokens")
+       a.inputs = value();
+     else if (k == "--output")
+@@ -284,6 +290,29 @@
+ #else
+   require(a.authorized || a.record, "--authorized-device-window required");
+ #endif
++  {
++    // packet180: save and restore combine (restore-then-save writes a NEW id and never
++    // overwrites); every checkpoint operation carries the tokenizer/template identity.
++    const bool ckpt_save=!a.checkpoint_save.empty(),ckpt_restore=!a.checkpoint_restore.empty();
++    auto valid_id=[](const std::string& id){
++      auto alnum=[](char c){return (c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9');};
++      return !id.empty()&&id.size()<=64&&alnum(id[0])&&!id.ends_with(".lock")&&
++             id.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")==std::string::npos;};
++    require((!ckpt_save&&!ckpt_restore)||a.suite_inputs.empty(),"checkpoint modes are single-request only");
++    require((!ckpt_save&&!ckpt_restore)||(!a.first&&a.bracket_inputs.empty()),"checkpoint modes require a plain decode request");
++    require(a.checkpoint_id.empty()||ckpt_save||ckpt_restore,"--checkpoint-id requires a checkpoint mode");
++    require(a.checkpoint_save_id.empty()||(ckpt_save&&ckpt_restore),"--checkpoint-save-id names the new checkpoint of restore-then-save; it requires --checkpoint-restore and --checkpoint-save");
++    require(a.tokenizer_identity.empty()||ckpt_save||ckpt_restore,"--tokenizer-identity requires a checkpoint mode");
++    if(ckpt_save||ckpt_restore) {
++      require(valid_id(a.checkpoint_id),"checkpoint id must be 1..64 filename-safe characters starting with a letter or digit, not ending in .lock");
++      require(!a.tokenizer_identity.empty(),"--tokenizer-identity FILE is required for every checkpoint operation");
++    }
++    if(ckpt_save&&ckpt_restore) {
++      require(valid_id(a.checkpoint_save_id),"restore-then-save requires --checkpoint-save-id ID2 (1..64 filename-safe characters starting with a letter or digit)");
++      require(fs::weakly_canonical(a.checkpoint_save)/a.checkpoint_save_id!=fs::weakly_canonical(a.checkpoint_restore)/a.checkpoint_id,
++              "restore-then-save must write a new checkpoint; it never overwrites the restored one");
++    }
++  }
+   require(a.native_nice>=0 && a.native_nice<=19 && getpriority(PRIO_PROCESS, 0) == a.native_nice, "native priority differs from declared --native-nice");
+   require(getenv("OMP_NUM_THREADS") &&
+               std::string(getenv("OMP_NUM_THREADS")) == "2",
+@@ -1764,6 +1793,7 @@
+      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp"
++#include "checkpoint.hpp"
+ 
+ // SPEED6_SCRATCH_POLICY_BEGIN
+ // Scope the footprint reduction to the previously refused split23/dr1 arm.
+@@ -1865,6 +1895,11 @@
+     catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
+   }
+ #endif
++  // Device-free checkpoint maintenance; parse() would require device authorization.
++  if(argc==3&&(std::string(argv[1])=="--checkpoint-inspect"||std::string(argv[1])=="--checkpoint-inspect-metadata"||std::string(argv[1])=="--checkpoint-delete")) {
++    try{return pipeline::checkpoint_host_tool(argv[1]+2,argv[2]);}
++    catch(const std::exception& error){std::cerr<<"checkpoint "<<(argv[1]+2)<<" failed: "<<error.what()<<"\n";return 1;}
++  }
+   std::unique_ptr<Engine> e;
+   std::unique_ptr<Weights> w;
+   fs::path output;
+@@ -1883,6 +1918,13 @@
+   {cpu_set_t cpus;CPU_ZERO(&cpus);if(sched_getaffinity(0,sizeof cpus,&cpus)==0){std::ostringstream o;o<<'[';bool comma=false;for(int i=0;i<CPU_SETSIZE;++i)if(CPU_ISSET(i,&cpus)){o<<(comma?",":"")<<i;comma=true;}o<<']';affinity_json=o.str();}}
+   try {
+     a = parse(argc, argv);
++    if(!a.checkpoint_save.empty()){const auto sid=a.checkpoint_restore.empty()?a.checkpoint_id:a.checkpoint_save_id;
++      require(!fs::exists(fs::symlink_status(a.checkpoint_save/sid)),"checkpoint save refused: never overwrite: "+(a.checkpoint_save/sid).string()+" already exists");}
++    // Before any model load: tokenizer identity for every checkpoint mode; for a restore, the same
++    // manifest/tokens/tokenizer/--input classification checks restore repeats under its lock.
++    if(!a.checkpoint_save.empty()&&a.checkpoint_restore.empty())pipeline::checkpoint_tokenizer_identity(a.tokenizer_identity,"save");
++    if(!a.checkpoint_restore.empty())
++      pipeline::checkpoint_precheck(a.checkpoint_restore,a.checkpoint_id,a.inputs,a.tokens,!a.checkpoint_save.empty(),a.tokenizer_identity,a.mini);
+     if(a.priority_probe){
+ #ifdef OWN_RT_HOST_ONLY
+       require(!fs::exists(a.output), "priority output exists");fs::create_directories(a.output);
+@@ -2092,11 +2134,34 @@
+       e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
+     };
+     int next=-1;auto prefill_start=std::chrono::steady_clock::now();
+-    for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
+-    prefill_ms=Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    // packet180: restore runs AFTER p58_reset_request (its zeroing keeps sliced-KV restore
++    // byte-exact and reset.json stays a hard gate) and token_index starts at the saved
++    // position N. Same-generation resume steps the saved pending token as the first decode
++    // step. Append steps input[N..] (the pending token first, then the delta) through the
++    // unchanged prefill path, exactly as a fresh run of the same --input does at those
++    // positions; the last input token's argmax is the first generated token.
++    pipeline::RestoredCheckpoint restored;const bool restoring=!a.checkpoint_restore.empty();bool appending=false;
++    double checkpoint_restore_ms=0,append_prefill_ms=0;
++    if(restoring){auto restore_start=std::chrono::steady_clock::now();
++      restored=pipeline::checkpoint_restore(*e,a.checkpoint_restore,a.checkpoint_id,input,a.tokenizer_identity,a.tokens,!a.checkpoint_save.empty());
++      checkpoint_restore_ms=Engine::ms(restore_start);token_index=size_t(restored.position);appending=restored.operation=="append";
++      if(appending){auto append_start=std::chrono::steady_clock::now();
++        for(size_t i=size_t(restored.position);i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
++        append_prefill_ms=Engine::ms(append_start);}
++      else next=restored.next_token;}
++    else for(size_t i=0;i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
++    prefill_ms=restoring?append_prefill_ms:Engine::ms(prefill_start);first_token_ms=first_generated_ms;
++    std::ostringstream restore_ms_row;restore_ms_row.precision(17);restore_ms_row<<checkpoint_restore_ms;
++    const std::string restore_ms_json=restoring?restore_ms_row.str():"null";
+     for(auto& v:e->class_ms)v=0;for(auto& v:e->class_launches)v=0;for(auto& v:e->class_groups)v=0;
+     auto decode_start=std::chrono::steady_clock::now();
+-    if(!a.first)for(int i=0;i<a.tokens;++i){
++    if(!a.first&&restoring&&!appending)for(int i=0;i<a.tokens;++i){
++      {auto resume_step=std::chrono::steady_clock::now();next=step(next,i+2);if(i==0)first_token_ms=Engine::ms(resume_step);}
++      generated.push_back(next);
++      std::cout<<"token_id "<<next<<'\n';
++      if(next==p.g.eos || (!a.mini && next==248046))break;
++    }
++    else if(!a.first)for(int i=0;i<a.tokens;++i){
+       if(!a.bracket_inputs.empty()) {
+         const auto& expected=expected_tokens.at(request_id);
+         require(generated.size()<expected.size()&&next==expected[generated.size()],"packet49 oracle token mismatch: "+view.label+"/"+request_id+" token "+std::to_string(generated.size()));
+@@ -2107,14 +2172,37 @@
+       if(i+1<a.tokens)next=step(next,i+2);
+     }
+     require(a.bracket_inputs.empty()||generated==expected_tokens.at(request_id),"packet49 completion length mismatch");
+-    decode_ms=Engine::ms(decode_start);
++    decode_ms=Engine::ms(decode_start);  // packet180: measured before the checkpoint save I/O
++    pipeline::SavedCheckpoint saved;const bool saving=!a.checkpoint_save.empty();
++    if(saving){
++      // packet180: the saved history is every token the model processed in this session.
++      // Same-generation resume continues the restored history (its pending token was
++      // stepped first); fresh runs and appends processed exactly --input. The last
++      // generated token is the new pending token.
++      require(!generated.empty(),"checkpoint save requires at least one generated token");
++      std::vector<int> processed;
++      if(restoring&&!appending){processed=restored.tokens;processed.push_back(restored.next_token);}
++      else processed=input;
++      processed.insert(processed.end(),generated.begin(),generated.end()-1);
++      pipeline::CheckpointParent parent;
++      if(restoring){parent.checkpoint_id=restored.checkpoint_id;parent.manifest_sha256=restored.manifest_sha256;parent.present=true;}
++      saved=pipeline::checkpoint_save(*e,a.checkpoint_save,restoring?a.checkpoint_save_id:a.checkpoint_id,input,processed,generated.back(),a.tokenizer_identity,parent);
++    }
++    // packet181: record the prompt positions this process stepped and how. This engine has one
++    // prompt mechanism ("incremental": one position per step through the prompt step above), used
++    // identically for a fresh prompt [0, len) and for appended tokens [N, len) after a restore;
++    // a same-generation resume steps no prompt position.
++    const size_t prefill_first=restoring?size_t(restored.position):0;
++    const size_t prefill_tokens=restoring?(appending?input.size()-prefill_first:0):input.size();
++    const std::string checkpoint_json=pipeline::checkpoint_result_json(restoring?&restored:nullptr,checkpoint_restore_ms,append_prefill_ms,saving?&saved:nullptr,
++      prefill_ms,prefill_first,prefill_tokens);
+     e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::ostringstream rr;rr.precision(17);
+     rr<<"{\"schema\":\"own-runtime.iq3.packet26.run.v1\",\"passed\":true,\"arithmetic\":"<<ownrt::quote(arithmetic::version)
+       <<",\"cached_tokens\":0,\"gpu_count\":1,\"decode_mode\":\"plain\",\"context\":"<<a.context
+       <<",\"request_start_monotonic\":"<<request_start_seconds<<",\"request_end_monotonic\":"<<monotonic()
+       <<",\"prompt_tokens\":"<<input.size()<<",\"requested_max_new\":"<<a.tokens
+-      <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms
++      <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms<<",\"checkpoint_restore_ms\":"<<restore_ms_json<<",\"checkpoint\":"<<checkpoint_json
+       <<",\"tokens\":[";
+     for(size_t i=0;i<generated.size();++i)rr<<(i?",":"")<<generated[i];
+     rr<<"],\"timing_rows\":[";

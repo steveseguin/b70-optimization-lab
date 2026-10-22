@@ -1,0 +1,289 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "source_is_real_device_evidence": true,
+  "new_measurement": false,
+  "copies_verified": 136,
+  "checks": {
+    "packet180_lifecycle_check_reproduces_device_receipt": {
+      "passed": true,
+      "gates": 36,
+      "all_gates_passed": true,
+      "comparisons_identical": true,
+      "timing_identical": true,
+      "append_prefill_ms": {
+        "append-s2": 5594.092459,
+        "append-s2b": 5585.077625
+      },
+      "cold_vs_restore_ratio": 2.6615144908835644,
+      "s2b_inputs": "S2b manifest copy + S2 tokens.bin/control blobs (sha-equal to S2b manifest entries)"
+    },
+    "packet181_v3_on_packet180_receipts": {
+      "passed": true,
+      "expect": "v1.2+p180",
+      "gates": 38,
+      "prefill_paths": {
+        "reference": {
+          "path": "incremental",
+          "source": "legacy: field absent (packet180 receipt), read as incremental"
+        },
+        "append-s2": {
+          "path": "incremental",
+          "source": "legacy: field absent (packet180 receipt), read as incremental"
+        },
+        "append-s2b": {
+          "path": "incremental",
+          "source": "legacy: field absent (packet180 receipt), read as incremental"
+        }
+      },
+      "observation": {
+        "cold_ms_per_token": 34.146073908315564,
+        "append": {
+          "append-s2": {
+            "ms_per_token": 44.04797211811024,
+            "ratio_to_cold_per_token": 1.2899864340592102,
+            "within_bound": false,
+            "matched_warmth_ratio": 0.9763225295040752,
+            "matched_warmth_append_ms": 5549.2547,
+            "matched_warmth_reference_ms": 5683.8335,
+            "same_positions_ratio": 1.4454565127707737,
+            "same_positions_reference_ms": 3839.1018
+          },
+          "append-s2b": {
+            "ms_per_token": 43.97698917322835,
+            "ratio_to_cold_per_token": 1.2879076315276958,
+            "within_bound": false,
+            "matched_warmth_ratio": 0.9747418181760602,
+            "matched_warmth_append_ms": 5540.2702,
+            "matched_warmth_reference_ms": 5683.8335,
+            "same_positions_ratio": 1.4431162518274456,
+            "same_positions_reference_ms": 3839.1018
+          }
+        }
+      }
+    },
+    "v3_gates_live_on_real_data": {
+      "passed": true,
+      "expect_p181_on_p180_receipts": "fails the 3 manifest identity gates (label experimental, contract v1.2+p180, no qualified_by) and the 5 record gates (fields absent)",
+      "append_path_chunked": "fails append prefill path append-s2",
+      "reference_path_differs": "fails both append path gates",
+      "repeat_divergence": "fails append repeat identical at index 64"
+    },
+    "row_a_real": {
+      "passed": true,
+      "class_balanced_median": 31.77923280429657,
+      "strict512": true,
+      "packet180_outputs_equal_packet179_reference": true,
+      "compared_prompts": 13,
+      "report_reproduced": true,
+      "note": "row a of this packet compares with reference-p179-row-a.json (inherited unchanged); packet180 row a equals it on all 13 outputs, so equality with it is equality with packet180 row a"
+    },
+    "streams_and_drain": {
+      "passed": true,
+      "rows": {
+        "save-s1 timings": 256,
+        "save-s1 prefill": 86,
+        "append-s2 timings": 128,
+        "append-s2 prefill": 126,
+        "resume-s2 timings": 64,
+        "reference timings": 192,
+        "reference prefill": 468,
+        "append-s2b timings": 128,
+        "append-s2b prefill": 126
+      },
+      "row_b_owners": 5,
+      "row_a_owners": 1
+    },
+    "prompt_mechanism_evidence": {
+      "passed": true,
+      "reference_cold_process": {
+        "rows": 468,
+        "sum_ms": 15962.9437,
+        "buckets": [
+          {
+            "first_row": 0,
+            "first_position": 0,
+            "rows": 64,
+            "mean_ms": 52.0645171875,
+            "median_ms": 46.522149999999996
+          },
+          {
+            "first_row": 64,
+            "first_position": 64,
+            "rows": 64,
+            "mean_ms": 37.7723953125,
+            "median_ms": 35.00635
+          },
+          {
+            "first_row": 128,
+            "first_position": 128,
+            "rows": 64,
+            "mean_ms": 31.7254328125,
+            "median_ms": 31.067050000000002
+          },
+          {
+            "first_row": 192,
+            "first_position": 192,
+            "rows": 64,
+            "mean_ms": 29.2419546875,
+            "median_ms": 29.1965
+          },
+          {
+            "first_row": 256,
+            "first_position": 256,
+            "rows": 64,
+            "mean_ms": 28.5880390625,
+            "median_ms": 28.25005
+          },
+          {
+            "first_row": 320,
+            "first_position": 320,
+            "rows": 64,
+            "mean_ms": 31.2557984375,
+            "median_ms": 30.48955
+          },
+          {
+            "first_row": 384,
+            "first_position": 384,
+            "rows": 64,
+            "mean_ms": 29.6232640625,
+            "median_ms": 29.2432
+          },
+          {
+            "first_row": 448,
+            "first_position": 448,
+            "rows": 20,
+            "mean_ms": 29.2787,
+            "median_ms": 28.994500000000002
+          }
+        ]
+      },
+      "append_s2_fresh_process": {
+        "rows": 126,
+        "sum_ms": 5549.2547,
+        "buckets": [
+          {
+            "first_row": 0,
+            "first_position": 342,
+            "rows": 64,
+            "mean_ms": 53.9478375,
+            "median_ms": 47.2551
+          },
+          {
+            "first_row": 64,
+            "first_position": 406,
+            "rows": 62,
+            "mean_ms": 33.81601774193548,
+            "median_ms": 32.970349999999996
+          }
+        ]
+      },
+      "append_s2b_fresh_process": {
+        "rows": 126,
+        "sum_ms": 5540.2702,
+        "buckets": [
+          {
+            "first_row": 0,
+            "first_position": 342,
+            "rows": 64,
+            "mean_ms": 53.943496875,
+            "median_ms": 47.476200000000006
+          },
+          {
+            "first_row": 64,
+            "first_position": 406,
+            "rows": 62,
+            "mean_ms": 33.675587096774194,
+            "median_ms": 32.340050000000005
+          }
+        ]
+      },
+      "row_a_prefill512_warm_process": {
+        "rows": 511,
+        "sum_ms": 14892.3528,
+        "buckets": [
+          {
+            "first_row": 0,
+            "first_position": 0,
+            "rows": 64,
+            "mean_ms": 32.87809375,
+            "median_ms": 30.241799999999998
+          },
+          {
+            "first_row": 64,
+            "first_position": 64,
+            "rows": 64,
+            "mean_ms": 27.9427984375,
+            "median_ms": 27.636499999999998
+          },
+          {
+            "first_row": 128,
+            "first_position": 128,
+            "rows": 64,
+            "mean_ms": 27.0710390625,
+            "median_ms": 27.1415
+          },
+          {
+            "first_row": 192,
+            "first_position": 192,
+            "rows": 64,
+            "mean_ms": 33.09775625,
+            "median_ms": 30.9162
+          },
+          {
+            "first_row": 256,
+            "first_position": 256,
+            "rows": 64,
+            "mean_ms": 27.7635,
+            "median_ms": 27.3564
+          },
+          {
+            "first_row": 320,
+            "first_position": 320,
+            "rows": 64,
+            "mean_ms": 28.109628125,
+            "median_ms": 27.833
+          },
+          {
+            "first_row": 384,
+            "first_position": 384,
+            "rows": 64,
+            "mean_ms": 27.653428125,
+            "median_ms": 27.340600000000002
+          },
+          {
+            "first_row": 448,
+            "first_position": 448,
+            "rows": 63,
+            "mean_ms": 28.624019047619047,
+            "median_ms": 28.3837
+          }
+        ],
+        "note": "second request of row a: the process already served incident-retrospective, so the expert cache is warm"
+      },
+      "row_a_first_request": {
+        "rows": 86,
+        "sum_ms": 27800.1617,
+        "buckets": [
+          {
+            "first_row": 0,
+            "first_position": 0,
+            "rows": 64,
+            "mean_ms": 419.6368359375,
+            "median_ms": 47.63505
+          },
+          {
+            "first_row": 64,
+            "first_position": 64,
+            "rows": 22,
+            "mean_ms": 42.882009090909094,
+            "median_ms": 39.144099999999995
+          }
+        ],
+        "note": "first request of a fresh process: the first prompt positions pay the empty expert cache (and first-use costs)"
+      },
+      "reading": "fresh prompts and appended tokens are stepped by the same per-position prompt step; per-position cost depends on how warm the expert cache is: ~52-54 ms over the first 64 positions of a fresh process (reference and append alike), ~28-34 ms once warm; the append process pays the cold positions over its whole 127-token span, the cold reference amortizes them over 469"
+    }
+  },
+  "scope": "packet180 analyzers (kept unchanged) and the packet181 v3 analyzer replayed on packet180 real device receipts (byte copies in lineage/packet180-receipts); no device"
+}

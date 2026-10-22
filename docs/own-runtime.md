@@ -69,10 +69,11 @@ declared gap.
    outranks new hardware claims. The TP1 portability replay needs about
    92 GiB of host RAM (the two-card host has 15 GiB), so it waits for a
    suitable host.
-3. **Session swap, next engine revision**: flip the manifest label string;
-   batch appended tokens through the chunked prefill path (the append
-   prefill ran at ~22.7 tok/s against ~29 tok/s cold); then TP2 checkpoints
-   (contract §10 item 1). Done on device 2026-10-22: same-generation resume
+3. **Session swap, next engine revision**: flip the manifest label string
+   (packet181, built); then TP2 checkpoints (contract §10 item 1) and the
+   ctxkeeper adapter. The append's 5.59 s on device is the cold expert cache
+   of a fresh process (the reference's first 126 positions took 5.68 s), not
+   a slower path; this engine steps every prompt position one at a time. Done on device 2026-10-22: same-generation resume
    (packet179) and append + restore-then-save + lock/manifest/inspect
    (packet180).
 

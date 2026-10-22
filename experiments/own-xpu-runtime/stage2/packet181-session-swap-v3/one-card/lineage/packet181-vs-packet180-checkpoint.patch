@@ -1,0 +1,168 @@
+--- packet180/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/checkpoint.hpp
++++ packet181/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/native/checkpoint.hpp
+@@ -1,6 +1,20 @@
+-// packet180 session checkpoint/restore v2 -- EXPERIMENTAL (SESSION-SWAP-DESIGN.md v1.2 + packet180
+-// README "Operation semantics"). Entry-TU-only native delta: included solely by main.cpp via a
+-// relative quote include; no kernel arithmetic. TP1 (one-card) only.
++// packet181 session checkpoint/restore v3 -- label "qualified-one-card" (SESSION-SWAP-DESIGN.md v1.2 +
++// packet181 README "Operation semantics"). Entry-TU-only native delta: included solely by main.cpp via
++// a relative quote include; no kernel arithmetic. TP1 (one-card) only.
++//
++// packet181 over packet180 (v1.2+p180 -> v1.2+p181):
++//   * manifests carry label "qualified-one-card" and a qualified_by object naming the device gates
++//     the operations passed (packet179 same-generation resume, packet180 append and
++//     restore-then-save, both 2026-10-22, one card) and the scope (one card only; TP2 checkpoints
++//     not implemented; no ctxkeeper adapter yet);
++//   * the reader also accepts packet180's v1.2+p180 manifests (label "experimental", no
++//     qualified_by). Label and contract must pair; whether a checkpoint can be restored is decided
++//     by the identity and semantic checks below (binary, geometry, model, tokenizer, token state,
++//     blobs), never by the label;
++//   * every result.json records how its prompt positions were stepped. This engine has exactly one
++//     prompt mechanism, "incremental": one position per step through the prompt step (final
++//     norm/logits/argmax skipped except on the last input position), used identically for a fresh
++//     prompt and for appended tokens after a restore. There is no chunked/batched prefill here.
+ //
+ // Operations (exact CLI and JSON schemas in the packet README):
+ //   save                    --checkpoint-save ROOT --checkpoint-id ID --tokenizer-identity FILE
+@@ -37,9 +51,19 @@
+ namespace pipeline {
+ 
+ static const char* const CHECKPOINT_FORMAT="ownrt.session-checkpoint.v1";
+-static const char* const CHECKPOINT_LABEL="experimental";
+-static const char* const CHECKPOINT_CONTRACT="v1.2+p180";
+-static const char* const CHECKPOINT_PACKET="packet180-session-swap-v2";
++static const char* const CHECKPOINT_LABEL="qualified-one-card";
++static const char* const CHECKPOINT_CONTRACT="v1.2+p181";
++static const char* const CHECKPOINT_PACKET="packet181-session-swap-v3";
++// packet180 manifests stay readable (inspect, delete, and restore when every identity check passes).
++static const char* const CHECKPOINT_LEGACY_LABEL="experimental";
++static const char* const CHECKPOINT_LEGACY_CONTRACT="v1.2+p180";
++// Written verbatim into every v1.2+p181 manifest and required byte-structurally equal on read.
++static const char* const CHECKPOINT_QUALIFIED_BY=
++  "{\"scope\":\"one card (tp1-full512 profile) only; TP2 checkpoints not implemented; no ctxkeeper adapter yet\","
++  "\"device_gates\":[{\"packet\":\"packet179-session-swap\",\"date\":\"2026-10-22\",\"operations\":[\"same-generation-resume\"]},"
++  "{\"packet\":\"packet180-session-swap-v2\",\"date\":\"2026-10-22\",\"operations\":[\"append\",\"restore-then-save\"]}]}";
++// The only prompt mechanism of this engine (see the header comment); recorded in result.json.
++static const char* const CHECKPOINT_PREFILL_PATH="incremental";
+ static const char* const TOKENIZER_IDENTITY_FORMAT="ownrt.tokenizer-identity.v1";
+ static const std::vector<std::string> CHECKPOINT_OPERATIONS{"same-generation-resume","append","restore-then-save"};
+ 
+@@ -178,6 +202,12 @@
+   if(o.keys.size()!=keys.size())throw std::runtime_error("unexpected key set in "+what);
+   for(const char* k:keys)if(!o.find(k))throw std::runtime_error("field missing: "+what+"."+k);
+ }
++// Structural equality (kind, literal text, key order, items); used for the qualified_by record.
++static bool cj_equal(const CJson& a,const CJson& b) {
++  if(a.kind!=b.kind||a.boolean!=b.boolean||a.text!=b.text||a.keys!=b.keys||a.items.size()!=b.items.size())return false;
++  for(size_t i=0;i<a.items.size();++i)if(!cj_equal(a.items[i],b.items[i]))return false;
++  return true;
++}
+ 
+ // ---------------------------------------------------------------- shared helpers (packet179)
+ static bool checkpoint_suffix(const std::string& s,const std::string& suffix) {
+@@ -284,6 +314,8 @@
+ struct CheckpointManifest {
+   std::string text,sha256;                        // exact manifest.json bytes and their sha256
+   std::string format,label,contract,checkpoint_id,created,operation,parent_id,parent_sha;
++  bool legacy=false;                              // packet180 v1.2+p180 manifest (label experimental)
++  std::string qualified_scope,qualified_gates;    // v1.2+p181 qualified_by, rendered for fields.tsv
+   std::string identity_sha,binary_sha,engine_packet,engine_profile;
+   TokenizerIdentity tokenizer;
+   int64_t layers=0,kvh=0,ad=0,ih=0,g_id=0,qh=0,kh=0,vh=0,d=0,context=0,vocab=0,eos=0;
+@@ -301,13 +333,39 @@
+ // Parse manifest.json once into the authoritative model; every structural rule is checked here.
+ static void checkpoint_manifest_fill(CheckpointManifest& m) {
+   const CJson root=checkpoint_parse_json(m.text);
+-  cj_keys(root,{"format","label","contract","operations","checkpoint_id","created","lineage","model","engine","geometry",
+-                "dtypes","tokenizer_identity","token_state","sampler","blobs","skipped_buffers","measurements"},"manifest");
++  // packet181: two manifest contracts are read. v1.2+p181 (this engine) carries label
++  // "qualified-one-card" and exactly this engine's qualified_by record; v1.2+p180 (packet180)
++  // carries label "experimental" and no qualified_by. A label that does not pair with its
++  // contract, or any other contract, is refused as a malformed manifest.
++  if(root.kind!=CJson::Object)throw std::runtime_error("not an object: manifest");
++  m.contract=cj_str(cj_at(root,"contract"),"contract");
++  m.legacy=m.contract==CHECKPOINT_LEGACY_CONTRACT;
++  if(m.contract!=CHECKPOINT_CONTRACT&&!m.legacy)
++    throw std::runtime_error("contract "+m.contract+" (this engine reads v1.2+p181 and v1.2+p180 checkpoints)");
++  if(m.legacy)
++    cj_keys(root,{"format","label","contract","operations","checkpoint_id","created","lineage","model","engine","geometry",
++                  "dtypes","tokenizer_identity","token_state","sampler","blobs","skipped_buffers","measurements"},"manifest");
++  else
++    cj_keys(root,{"format","label","contract","qualified_by","operations","checkpoint_id","created","lineage","model","engine","geometry",
++                  "dtypes","tokenizer_identity","token_state","sampler","blobs","skipped_buffers","measurements"},"manifest");
+   m.format=cj_str(cj_at(root,"format"),"format");m.label=cj_str(cj_at(root,"label"),"label");
+-  m.contract=cj_str(cj_at(root,"contract"),"contract");
+   if(m.format!=CHECKPOINT_FORMAT)throw std::runtime_error("format "+m.format);
+-  if(m.label!=CHECKPOINT_LABEL)throw std::runtime_error("label "+m.label+" (this engine reads only experimental checkpoints)");
+-  if(m.contract!=CHECKPOINT_CONTRACT)throw std::runtime_error("contract "+m.contract);
++  const std::string want_label=m.legacy?CHECKPOINT_LEGACY_LABEL:CHECKPOINT_LABEL;
++  if(m.label!=want_label)throw std::runtime_error("label "+m.label+" does not pair with contract "+m.contract+" (expected "+want_label+")");
++  if(!m.legacy) {
++    const auto& q=cj_at(root,"qualified_by");
++    if(!cj_equal(q,checkpoint_parse_json(CHECKPOINT_QUALIFIED_BY)))
++      throw std::runtime_error("qualified_by differs from this engine's qualification record");
++    m.qualified_scope=cj_str(cj_at(q,"scope"),"qualified_by.scope");
++    std::ostringstream gates;
++    for(size_t i=0;i<cj_at(q,"device_gates").items.size();++i) {
++      const auto& g=cj_at(q,"device_gates").items[i];
++      gates<<(i?";":"")<<cj_str(cj_at(g,"packet"),"packet")<<'@'<<cj_str(cj_at(g,"date"),"date")<<':';
++      const auto& ops=cj_at(g,"operations").items;
++      for(size_t j=0;j<ops.size();++j)gates<<(j?",":"")<<cj_str(ops[j],"operation");
++    }
++    m.qualified_gates=gates.str();
++  }
+   const auto& ops=cj_at(root,"operations");
+   if(ops.kind!=CJson::Array||ops.items.size()!=CHECKPOINT_OPERATIONS.size())throw std::runtime_error("operations");
+   for(size_t i=0;i<ops.items.size();++i)if(cj_str(ops.items[i],"operations")!=CHECKPOINT_OPERATIONS[i])throw std::runtime_error("operations");
+@@ -409,7 +467,9 @@
+   std::ostringstream f;
+   auto row=[&](const char* k,const std::string& v){f<<k<<'\t'<<v<<'\n';};
+   auto num=[&](const char* k,int64_t v){row(k,std::to_string(v));};
+-  row("format",m.format);row("label",m.label);row("contract",m.contract);row("checkpoint_id",m.checkpoint_id);
++  row("format",m.format);row("label",m.label);row("contract",m.contract);
++  if(!m.legacy){row("qualified_scope",m.qualified_scope);row("qualified_by",m.qualified_gates);}  // v1.2+p180 rendering unchanged
++  row("checkpoint_id",m.checkpoint_id);
+   row("created",m.created);row("operation",m.operation);row("parent_checkpoint_id",m.parent_id);
+   row("parent_manifest_sha256",m.parent_sha);
+   num("position",m.position);num("prompt_length",m.prompt_length);num("length",m.length);num("next_token",m.next_token);
+@@ -675,7 +735,7 @@
+   const double seconds=std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count();
+   std::ostringstream m;m.precision(17);
+   m<<"{\"format\":"<<ownrt::quote(CHECKPOINT_FORMAT)<<",\"label\":"<<ownrt::quote(CHECKPOINT_LABEL)
+-   <<",\"contract\":"<<ownrt::quote(CHECKPOINT_CONTRACT)<<",\"operations\":[";
++   <<",\"contract\":"<<ownrt::quote(CHECKPOINT_CONTRACT)<<",\"qualified_by\":"<<CHECKPOINT_QUALIFIED_BY<<",\"operations\":[";
+   for(size_t i=0;i<CHECKPOINT_OPERATIONS.size();++i)m<<(i?",":"")<<ownrt::quote(CHECKPOINT_OPERATIONS[i]);
+   m<<"],\"checkpoint_id\":"<<ownrt::quote(id)<<",\"created\":"<<ownrt::quote(iso)
+    <<",\"lineage\":{\"operation\":"<<ownrt::quote(parent.present?"restore-then-save":"save")<<",\"parent\":";
+@@ -804,12 +864,20 @@
+ }
+ 
+ // ---------------------------------------------------------------- result.json "checkpoint" object
+-static std::string checkpoint_result_json(const RestoredCheckpoint* r,double restore_ms,double append_prefill_ms,const SavedCheckpoint* s) {
++// packet181: "prefill" records, for every request, the prompt positions this process stepped and
++// the mechanism: fresh run [0, len(input)), append [N, len(input)), same-generation resume none
++// (path null). ms is the request's prefill_ms (the append prefill for an append). The restore
++// object adds append_prefill_tokens and append_prefill_path beside packet180's append_prefill_ms.
++static std::string checkpoint_result_json(const RestoredCheckpoint* r,double restore_ms,double append_prefill_ms,const SavedCheckpoint* s,
++                                          double prefill_ms,size_t prefill_first,size_t prefill_tokens) {
+   std::ostringstream o;o.precision(17);
+   std::vector<std::string> ops;if(r)ops.push_back(r->operation);if(s)ops.push_back("save");
+   o<<"{\"contract\":"<<ownrt::quote(CHECKPOINT_CONTRACT)<<",\"label\":"<<ownrt::quote(CHECKPOINT_LABEL)<<",\"operations\":[";
+   for(size_t i=0;i<ops.size();++i)o<<(i?",":"")<<ownrt::quote(ops[i]);
+-  o<<"],\"restore\":";
++  o<<"],\"prefill\":{\"path\":";
++  if(prefill_tokens)o<<ownrt::quote(CHECKPOINT_PREFILL_PATH);else o<<"null";
++  o<<",\"first_position\":"<<prefill_first<<",\"tokens\":"<<prefill_tokens<<",\"ms\":"<<prefill_ms<<"}";
++  o<<",\"restore\":";
+   if(r) {
+     const bool append=r->operation=="append";
+     o<<"{\"checkpoint_id\":"<<ownrt::quote(r->checkpoint_id)<<",\"manifest_sha256\":"<<ownrt::quote(r->manifest_sha256)
+@@ -820,6 +888,8 @@
+                           :"stepped as the first decode step at position saved_prefix_length; the output continues the interrupted generation")
+      <<",\"restore_ms\":"<<restore_ms<<",\"append_prefill_ms\":";
+     if(append)o<<append_prefill_ms;else o<<"null";
++    o<<",\"append_prefill_tokens\":"<<(append?r->input_length-size_t(r->position):size_t(0))<<",\"append_prefill_path\":";
++    if(append)o<<ownrt::quote(CHECKPOINT_PREFILL_PATH);else o<<"null";
+     o<<",\"restored_bytes\":"<<r->bytes_read<<"}";
+   } else o<<"null";
+   o<<",\"save\":";

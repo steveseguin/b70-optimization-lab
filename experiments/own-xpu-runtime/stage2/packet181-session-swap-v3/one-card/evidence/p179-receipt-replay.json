@@ -1,0 +1,70 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "source_is_real_device_evidence": true,
+  "new_measurement": false,
+  "copies_verified": 78,
+  "checks": {
+    "packet179_checkpoint_check_replay": {
+      "passed": true,
+      "merged_tokens": 384,
+      "cold_prefix_ms": 36753.57695197454,
+      "restore_continuation_wall_ms": 6775.938615028281,
+      "mutated_restore_refused": true
+    },
+    "streams_and_drain": {
+      "passed": true,
+      "rows": {
+        "save": 256,
+        "restore1": 128,
+        "restore2": 128,
+        "row-a incident timings": 512,
+        "row-a incident prefill": 86
+      },
+      "drain": {
+        "drained": true,
+        "owner_count": 3,
+        "safe_to_exit": true
+      }
+    },
+    "manifest_semantics_real_gate": {
+      "passed": true,
+      "position": 342,
+      "pending_token": 37574,
+      "blobs_checked": [
+        "error",
+        "next_token",
+        "position",
+        "token",
+        "token_history"
+      ],
+      "tampered_history_refused": true,
+      "position_blob_refused": true,
+      "pending_blob_refused": true
+    },
+    "p179_identity_real_row_a": {
+      "passed": true,
+      "compared_prompts": 13,
+      "independent_summary_cross_check": true,
+      "mutation_first_divergence": 300,
+      "short_stream_refused": true,
+      "missing_prompt_refused": true
+    },
+    "aggregate_and_report_real_row_a": {
+      "passed": true,
+      "class_balanced_median": 31.85027810342774,
+      "strict512": true,
+      "report_requires_passed_identity_on_device": true
+    },
+    "comparator_edges": {
+      "passed": true,
+      "cases": [
+        "equal",
+        "length",
+        "first token",
+        "empty"
+      ]
+    }
+  },
+  "scope": "packet181 (inherited packet180) analyzers and the retained packet179 analyzer replayed on packet179 real device receipts (byte copies in lineage/packet179-receipts); no device"
+}

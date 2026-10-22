@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "wrapper_help": "usage: entry.py [-h] --lane {A,B} [--kind {full512,smoke,bracket,lifecycle}]\n                --output OUTPUT [--reference REFERENCE]\n                [--fault-review FAULT_REVIEW] [--authorized-device-window]\n                [--plan]\n\nOne fresh model load: 512-input prefill, then every fixed realistic prompt.\n\noptions:\n  -h, --help            show this help message and exit\n  --lane {A,B}\n  --kind {full512,smoke,bracket,lifecycle}\n                        smoke/bracket accepted only by offline report\n                        compatibility tests; lifecycle is the append/restore-\n                        then-save gate (packet181: label qualified-one-card)\n  --output OUTPUT\n  --reference REFERENCE\n  --fault-review FAULT_REVIEW\n  --authorized-device-window\n  --plan\n",
+  "rows": [
+    {
+      "name": "packet181-one-card-full512-A-a",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window"
+      ]
+    },
+    {
+      "name": "packet181-one-card-lifecycle-A-b",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window"
+      ]
+    }
+  ],
+  "internal_help": {
+    "worker.py": "usage: worker.py [-h] --output OUTPUT --lane {A,B}\n                 [--kind {full512,lifecycle}] [--reference REFERENCE]\n\noptions:\n  -h, --help            show this help message and exit\n  --output OUTPUT\n  --lane {A,B}\n  --kind {full512,lifecycle}\n  --reference REFERENCE\n",
+    "screen.py": "usage: screen.py [-h] --lane {A,B} [--kind {full512,smoke,bracket,lifecycle}]\n                 --output OUTPUT [--reference REFERENCE]\n                 [--fault-review FAULT_REVIEW] [--authorized-device-window]\n                 [--plan]\n\noptions:\n  -h, --help            show this help message and exit\n  --lane {A,B}\n  --kind {full512,smoke,bracket,lifecycle}\n  --output OUTPUT\n  --reference REFERENCE\n  --fault-review FAULT_REVIEW\n  --authorized-device-window\n  --plan\n"
+  },
+  "internal_pipeline_flags": [],
+  "native_probe_sha256": "b0a05cb5c90abf23be1499278aa3a58ef6d07a0b70895c798bd47051e4a5726f",
+  "native_flag_source": "actual one-card native_command and checkpoint_command; built executable --help"
+}

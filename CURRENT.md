@@ -20,8 +20,9 @@ all 12 outputs identical to packet179 row a. Row b (36/36 gates): save at K=256 
 + a 126-token appended turn + 128 decoded tokens == the one-shot reference [0:128]; restore-then-save into
 S2, resume S2 + 64 == reference [128:192]; repeat append identical and S2b blobs == S2 blobs; restore
 0.41–0.46 s; append prefill of 127 tokens 5.59 s vs 16.0 s cold prefill of 469 (2.66×); inspect/delete
-tools passed. Label still the string `experimental` (string change goes in the next relink). Next lever:
-batch appended tokens through the chunked prefill path (append ran at ~22.7 tok/s vs ~29 cold).
+tools passed. Label still the string `experimental` (string change goes in the next relink, packet181). The append's
+5.59 s is the cold expert cache of a fresh process, not a slower path: the reference's first 126 positions
+took 5.68 s; this engine has no chunked prefill (closed by packet166).
 Packet: `experiments/own-xpu-runtime/stage2/packet180-session-swap-v2/`; note
 `notes/2026-10-22-packet180-session-swap-v2.md`. Earlier today (same host): neural.download and skindeep.ai
 cleanups, every one- and two-card recipe rewritten to one seven-step quick start, package manifests fixed
