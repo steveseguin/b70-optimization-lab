@@ -1,5 +1,11 @@
-"""Verify every CPU gate and current seal; READY is the final file mutation."""
-import argparse,json,subprocess,time
+"""Verify every CPU gate and current seal; READY is the final file mutation.
+
+Order: CPU gates -> package_rows.py (seal + proposal) -> check_queue_rows.py
+(plan + rehearse) -> final_checks.py -> final_checks.py --ready. The pin guard
+follows READY's hash links into the evidence receipts, so --ready pin-guards
+the proposal rows after writing READY and withdraws READY on refusal.
+"""
+import argparse,json,subprocess,sys,time
 from pathlib import Path
 from build_engine import P,ROOT,sha,save,limits
 ap=argparse.ArgumentParser();ap.add_argument('--ready',action='store_true');args=ap.parse_args();limits()
@@ -76,4 +82,12 @@ if args.ready:
         packets={str((p/'READY-FOR-DEVICE.json').relative_to(P)):sha(p/'READY-FOR-DEVICE.json') for p,_ in ready},proposals=proposal_rows,checks=root_checks,
         experimental_checkpoint=True,device_qualification_pending=True,full_output_oracle_exact=False,
         scope='CPU preparation of the session-checkpoint one-card packet only; one-card lane A whole-host; device qualification pending; no queue action'))
-    print('READY written last; no GPU run or queue action')
+    sys.path.insert(0,str(ROOT/'experiments/own-xpu-runtime/ops/lane-queue'));import pin_guard
+    try:
+        for row in proposal_rows:
+            for s in (ROOT/row['path']).read_text().splitlines():
+                if s and not s.startswith('#'):pin_guard.check_job(json.loads(s),ROOT,pin_guard.STAGE)
+    except pin_guard.PinRefusal:
+        for f in (P/'READY-FOR-DEVICE.json',*(p/'READY-FOR-DEVICE.json' for p,_ in ready)):f.unlink()
+        raise
+    print('READY written last and pin guard passed; no GPU run or queue action')

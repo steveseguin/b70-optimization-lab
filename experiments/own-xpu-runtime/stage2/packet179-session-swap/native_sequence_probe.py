@@ -40,13 +40,32 @@ def main(name):
     old_build = old / 'build/preparation163'
     # All included production code is still the frozen packet163 preparation
     # source; no arithmetic, device executable or existing source is changed.
-    for filename in ('probe-main.cpp', 'mock_device.hpp', 'preparation_backend.hpp'):
+    # pinfix-20261021: compile from this packet's byte-identical copies of those
+    # sources (lineage-inputs/preparation163) with absolute include roots and
+    # link objects redirected to this packet's native-source mirror and
+    # build/objects, so every pinned input lies inside the packet. Both are
+    # asserted equal to packet163's bytes (mirror: modulo that path rewrite).
+    private = p / 'lineage-inputs/preparation163'
+    private.mkdir(parents=True, exist_ok=True)
+    redirect = [(str(old / 'native-source'), str(p / 'native-source')),
+                (str(old / 'build/objects'), str(p / 'build/objects'))]
+    def local(text):
+        for before, after in redirect:
+            if isinstance(text, bytes):
+                before, after = before.encode(), after.encode()
+            text = text.replace(before, after)
+        return text
+    for filename in ('probe-main.cpp', 'mock_device.hpp', 'preparation_backend.hpp', 'fixture.cpp'):
         if not (old_build / filename).is_file():
             continue
-        (build / filename).write_bytes((old_build / filename).read_bytes())
+        if not (private / filename).is_file():
+            (private / filename).write_bytes((old_build / filename).read_bytes())
+        assert sha(private / filename) == sha(old_build / filename), filename
+        if filename != 'fixture.cpp':
+            (build / filename).write_bytes(local((private / filename).read_bytes()))
     (build / 'native_sequence_helpers.hpp').write_bytes((P / 'native_sequence_helpers.hpp').read_bytes())
     sources = {str(P / 'native_sequence_helpers.hpp'): sha(P / 'native_sequence_helpers.hpp'),
-               str(old_build / 'probe-main.cpp'): sha(old_build / 'probe-main.cpp')}
+               str(private / 'probe-main.cpp'): sha(private / 'probe-main.cpp')}
     if name == 'two-card':
         (build / 'fixture.cpp').write_bytes((P / 'native_sequence_two.cpp').read_bytes())
         sources[str(P / 'native_sequence_two.cpp')] = sha(P / 'native_sequence_two.cpp')
@@ -57,7 +76,7 @@ def main(name):
         (build / 'draft_reset.inc').write_text(text[start:end])
         sources[str(mtp)] = sha(mtp)
     else:
-        text = (old_build / 'fixture.cpp').read_text().split('int main(int argc,char**argv) {')[0]
+        text = (private / 'fixture.cpp').read_text().split('int main(int argc,char**argv) {')[0]
         text = text.replace('public ownrt::ForegroundPrefix {', 'public ownrt::ForegroundPrefix, public p58v::AsyncBackend {')
         text = text.replace('  bool foreground_prefix_complete() override', '''  ownrt::Event fill(void* d,const void* s,size_t n) override {return copy(d,s,n,{});}
   bool fill_complete(ownrt::Event) override {return true;}
@@ -73,10 +92,14 @@ def main(name):
     const auto clipped=std::min(n,std::min(available(d),available(s)));if(clipped)std::memcpy(d,s,clipped);''')
         text += (P / 'native_sequence_one.inc').read_text()
         (build / 'fixture.cpp').write_text(text)
-        sources[str(old_build / 'fixture.cpp')] = sha(old_build / 'fixture.cpp')
+        sources[str(private / 'fixture.cpp')] = sha(private / 'fixture.cpp')
         sources[str(P / 'native_sequence_one.inc')] = sha(P / 'native_sequence_one.inc')
     commands = json.loads((old / 'evidence/preparation-build.json').read_text())['commands']
-    commands = [[arg.replace(str(old_build), str(build)) for arg in command] for command in commands]
+    commands = [[local(arg.replace(str(old_build), str(build))) for arg in command] for command in commands]
+    for arg in (arg for command in commands for arg in command):
+        assert str(OLD) not in arg, arg
+        if arg.startswith(str(p / 'build/objects')):
+            assert sha(arg) == sha(arg.replace(str(p), str(old))), arg
     build_receipt = build / 'compiled-inputs.json'
     previous = json.loads(build_receipt.read_text()) if build_receipt.is_file() else {}
     reuse = (previous.get('commands') == commands
@@ -92,6 +115,10 @@ def main(name):
     dependency = (build / 'fixture.d').read_text().replace('\\\n', ' ').split(':', 1)[1]
     for filename in shlex.split(dependency):
         file = Path(filename).resolve()
+        assert not file.is_relative_to(OLD), file
+        if file.is_relative_to(p / 'native-source'):
+            twin = old / 'native-source' / file.relative_to(p / 'native-source')
+            assert file.read_bytes() == twin.read_bytes().replace(OLD.name.encode(), P.name.encode()), file
         if file.is_relative_to(ROOT):
             sources[str(file)] = sha(file)
     save(build_receipt, dict(commands=commands, sources_sha256=sources,
@@ -109,12 +136,11 @@ def main(name):
     assert len(ids) == 13 and ids[:2] == ['incident-retrospective', 'prefill512']
     sequence.write_text('\n'.join(ids) + '\n')
     metadata = [file for file in (p / 'inputs').rglob('*') if file.is_file()]
-    # Frozen probe-main references frozen small rotary metadata and plan paths.
-    metadata += [file for file in (old / 'inputs').rglob('*') if file.is_file()]
-    metadata += [p / 'selection.json', p / 'dispatch.json', p / 'memory-plan.json',
-                 old / 'selection.json', old / 'dispatch.json', old / 'memory-plan.json', sequence]
-    metadata += list((old / 'native-source').rglob('*.bf16'))
-    metadata += list((old / 'native-source').rglob('*manifest*.json'))
+    # probe-main references small rotary metadata beside its (now redirected)
+    # __FILE__; argv metadata paths move to this packet. No packet163 grant.
+    metadata += [p / 'selection.json', p / 'dispatch.json', p / 'memory-plan.json', sequence]
+    metadata += list((p / 'native-source').rglob('*.bf16'))
+    metadata += list((p / 'native-source').rglob('*manifest*.json'))
     probes = json.loads((old / 'evidence/preparation-probe.json').read_text())['probes']
     results = []
     for number, probe in enumerate(probes):

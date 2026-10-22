@@ -2,7 +2,7 @@
 
 Compiles the packet179 patched entry TU (native-source .../build/native/main.cpp +
 checkpoint.hpp via entry-main.cpp) with -DOWN_RT_HOST_ONLY and relinks packet58aj's
-qualified gnu-host host-only object set: an entry-TU-only delta over the ancestor
+qualified gnu-host host-only object set (sha-asserted in-packet copies): an entry-TU-only delta over the ancestor
 composition, mirroring the packet's device relink discipline. The ancestor gnu-host
 binary is re-pinned by sha256 before its object set is trusted. Runs a
 --mini --pipeline-mini synthetic save -> restore round trip on the real CPU arithmetic
@@ -48,6 +48,16 @@ def main():
     ancestor_entry=str(aj/'build/gnu-host/entry-main.o')
     link_cmd[link_cmd.index(ancestor_entry)]=str(build/'entry-main.o')
     link_cmd[link_cmd.index('-o')+1]=str(probe)
+    # pinfix-20261021: link dereferenced in-packet copies (build/gnu-host-ancestor),
+    # each asserted equal to packet58aj's build-receipt pin; most ancestor paths
+    # are symlinks resolving outside their build dir. Same objects, same order.
+    pins=json.loads((aj/'build-receipt.json').read_text())['sources']
+    for i,a in enumerate(link_cmd):
+        if a.endswith('.o') and a!=str(build/'entry-main.o'):
+            copy=p/'build/gnu-host-ancestor'/Path(a).relative_to(aj)
+            if not copy.is_file():copy.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(a,copy)
+            assert sha(a)==sha(copy)==pins[str(Path(a).relative_to(ROOT))],('ancestor object differs from packet58aj build-receipt',a)
+            link_cmd[i]=str(copy)
     ancestor_objects={a:sha(a) for a in link_cmd if a.endswith('.o') and a!=str(build/'entry-main.o')}
     previous=json.loads((build/'compiled-inputs.json').read_text()) if (build/'compiled-inputs.json').is_file() else {}
     reuse=(probe.is_file() and previous.get('binary_sha256')==sha(probe)
