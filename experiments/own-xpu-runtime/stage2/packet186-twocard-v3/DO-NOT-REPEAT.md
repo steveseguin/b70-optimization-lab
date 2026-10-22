@@ -50,7 +50,7 @@ No device result exists yet, and this preparation closes nothing. After the wind
 
 | Date | Arm | Outcome | Revisit only when |
 | --- | --- | --- | --- |
-| 2026-10-22 | V3: full target head on rank 1 + GDN layers 24-25 on rank 0 for the verified token (boundary command after every rank-0 accept, rank 1 from layer 26), bundled with packet153 static snapshot; rows: V3 smoke, fresh bundle-8 control, one-load U/V3/U/V3/U, fresh bundle-8 control (lane B); decision `s186_decision` | PENDING device window. Priced on packet185's measured intervals: +2.64 % central (V3 60.17 tok/s), +2.95 % anchored + static; corners c0 0.73 → +2.17 %, s1 0.39 → +1.70 %, both → +1.24 % | — |
+| 2026-10-22 | V3: full target head on rank 1 + GDN layers 24-25 on rank 0 for the verified token (boundary command after every rank-0 accept, rank 1 from layer 26), bundled with packet153 static snapshot; rows: V3 smoke, fresh bundle-8 control, one-load U/V3/U/V3/U, fresh bundle-8 control (lane B); decision `s186_decision` | **Measured 2026-10-22 (lane B, lanequeue-B34, 16:09-16:34 UTC): WIN, chain rule met.** One-load U/V3/U/V3/U 57.832/60.573/57.802/60.533/57.840, fresh split-head controls 58.595/58.441; every view 13/13 exact, draft proposals and acceptance identical, drift 0.26%; +3.31% over every control, both V3 views >= 59.974. Rank-1 saving 0.463 ms per moved layer, boundary 1.026 ms, hit cycle 14.78 -> 14.06 ms, rank 1 binds 100% of hits (`v5/evidence/device-row3-control-production-B-p186/bracket-summary.json`, `s186_decision`). Record bundle = packet187 | — |
 
 ## Boundaries (do not)
 

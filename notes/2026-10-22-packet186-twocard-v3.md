@@ -96,3 +96,21 @@ The rule was tested on packet185's and packet183's real summaries.
 
 If the chain rule is met, build the record bundle (bundle 8 + V3 + static): a fresh chain on cards 0+1, as in
 packets 136/143. See the packet README for the exact recipe.
+
+## Device result (2026-10-22, lane B window 16:09-16:34 UTC, unit lanequeue-B34): chain rule met
+
+| Row | Content | Rates (tok/s, class-balanced) | Exact |
+| --- | --- | --- | --- |
+| 0 | V3 smoke, 12 x 64 + incident64 | 60.137 (smoke, no verdict) | 13/13, draft proposals identical |
+| 1 | fresh bundle-8 control (split head) | 58.595 | 13/13 |
+| 2 | one load, U / V3 / U / V3 / U | 57.832 / **60.573** / 57.802 / **60.533** / 57.840 | every view 13/13, draft proposals and acceptance identical |
+| 3 | fresh bundle-8 control (split head) | 58.441 | 13/13 |
+
+`s186_decision` (`v5/evidence/device-row3-control-production-B-p186/bracket-summary.json`): screen winner and
+**chain rule met**: min gain vs every control +3.31% (vs the un-split views +4.66%), slower V3 view 60.533 >=
+1.02 x 58.798109 = 59.974; split-control drift 0.26%, U drift 0.07%. Measured mechanism: rank-1 saving per
+moved layer 0.463 ms (threshold 0.39), boundary command on rank 0 1.026 ms for the two layers (0.513 per layer,
+threshold 0.73); hit cycle 14.78 -> 14.06 ms (A 12.51 -> 12.09, B 13.16 -> 12.43), miss 25.71 -> 25.75 ms;
+rank 1 binds the emission on 100% of V3 hits. No kernel faults; endpoints restored afterwards as
+`*-20261022-restore10`. **Next: the record bundle** (bundle 8 + V3 + packet153 static snapshot, fresh chain
+on cards 0+1) as packet187; nothing in this packet certifies a record.

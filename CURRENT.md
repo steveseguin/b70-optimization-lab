@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 22, 12:40 EDT — V3 wins on two cards: +3.3 % over the record line, chain rule met (packet186, lane B, 16:09–16:34 UTC).**
+V3 = full target head back on rank 1 plus layers 24–25 run on rank 0 for the verified token (boundary command, never banked, never
+in the speculative image) plus packet153's static snapshot. One-load bracket U/V3/U/V3/U = 57.83/60.57/57.80/60.53/57.84, fresh
+split-head bundle-8 controls 58.60 and 58.44 tok/s; every view 13/13 exact, draft proposals and acceptance identical; drift 0.26 %.
+Measured: rank-1 saving 0.463 ms per moved layer, rank-0 boundary 1.03 ms for both layers, hit cycle 14.78 → 14.06 ms; rank 1 now
+binds every hit. Both V3 views clear 1.02 × 58.798109 = 59.974. The record bundle (bundle 8 + V3 + static, fresh chain on cards 0+1,
+LocalMaxxing submission path) is being prepared CPU-only as packet187. Packet `stage2/packet186-twocard-v3/` (note
+`notes/2026-10-22-packet186-twocard-v3.md`). Lineage today: packet183 S1 loss → synthesis (σ attribution) → packet185 measurement →
+packet186 V3.
+
 **October 22, 11:06 EDT — ctxkeeper 1.3.0.dev4: the set check now also catches a counter the reply left out; campaign 55 (both
 seeds) registered and starting.** The four wrong lines left on seed 2 were one counter the notes held as removed while
 the turns reopened it with no line in the reply. Replaying eight audited runs, the extension asks at 8 to 11 cuts per
