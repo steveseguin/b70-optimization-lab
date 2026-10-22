@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 21 — packet179 integration review (source-only).** The committed
+engine resumes an unfinished generation from its original prompt; general new
+conversation turns and restore-then-save are not implemented yet. Metadata
+consistency, deletion locking and inspect transport also need reconciliation
+before a ctxkeeper adapter. [Review with source references](tools/ctxkeeper/CHECKPOINT-INTEGRATION.md).
+No sealed packet, queue or GPU process was changed. TURIND8 cannot run the
+published ownrt TP1 portability replay: 15 GiB total RAM versus about 92 GiB
+required available RAM. Keep that replay open for a suitable host.
+
 **October 21 — ctxkeeper durable conversations implemented in development 1.3.0.dev0.**
 The two-card host's work is the text-storage side of the session-swap effort.
 Opt-in `--save-conversations` retains complete requests, returned replies and

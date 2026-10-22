@@ -117,6 +117,11 @@ The other host owns the [runtime checkpoint contract](../../experiments/own-xpu-
 Its save/inspect/restore/delete operations remain experimental. This journal
 neither calls those operations nor stores GPU tensors.
 
+The [packet179 interface review](CHECKPOINT-INTEGRATION.md) records the concrete
+CLI and gaps found in the first implementation. Its current restore path resumes
+the same unfinished generation; general appended conversation turns still need
+an engine operation and qualification.
+
 The integration will need a runtime-issued checkpoint identity and the exact
 rendered token prefix. A JSON message hash is **not** a token-prefix hash: chat
 templates, tools, model identity and tokenization affect the actual prompt.
