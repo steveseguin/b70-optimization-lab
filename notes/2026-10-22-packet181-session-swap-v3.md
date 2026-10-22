@@ -96,3 +96,18 @@ Commit note: 21 sealed `.bin` copies (14 under `one-card/lineage/packet180-recei
 No device result for this binary. One card only; TP2 checkpoints not implemented; no ctxkeeper
 adapter yet; no chunked prefill; the append timing is an observation of fresh processes, not a
 performance claim.
+
+## Device window result (2026-10-22 07:59–08:28 UTC rows, runner unit lanequeue-A36, driver unit window-p181-driver)
+
+Pre-flight: live `lanequeue.py plan --lane A` passed both rows; endpoints stopped at 07:59:06Z (idle since
+the 07:23Z restore validation; MemAvailable 120.6 GB ≥ 100.1 GB); PAUSE-A archived and re-armed; endpoints
+restored afterwards as `*-20261022-restore6`. No GPU fault lines in the kernel journal during the window.
+
+| row | outcome | duration | result |
+|---|---|---|---|
+| packet181-one-card-full512-A-a | DONE | 497 s | passed, oracle-128 exact, class-balanced 31.83 tok/s; all 12 outputs identical to packet179 row a (binary `0bf0a17a…`) |
+| packet181-one-card-lifecycle-A-b | DONE | 1159 s | passed, 43/43 gates: same structure as packet180 row b (S1 save K=256; restore + 126-token appended turn + 128 == one-shot reference [0:128]; restore-then-save S2; resume S2 + 64 == reference [128:192]; repeat append identical; S2b blobs == S2 blobs); every device-written manifest carries `label: "qualified-one-card"`, `contract: "v1.2+p181"` and the `qualified_by` record (packet179 same-generation resume, packet180 append + restore-then-save, scope one card only / TP2 not implemented / no ctxkeeper adapter); append path recorded as `incremental` for both the append and the reference (the engine's only prefill mechanism); restore 0.44–0.47 s; append prefill 5.58–5.59 s vs 16.0 s cold prefill of 469 tokens (2.65×); save 1.07–1.08 s |
+
+Checkpoint blobs stay outside Git; manifest sha256s are in `summary.json`. With this row the saved-state
+label is no longer the string `experimental` for one-card checkpoints written by this engine; packet180's
+`experimental` files are still accepted on restore (host probe, not a device row).

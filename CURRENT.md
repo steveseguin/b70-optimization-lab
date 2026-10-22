@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**October 22, 04:30 EDT — packet181 session-swap v3 qualified on device: the saved-state label is now `qualified-one-card`.**
+Relink-only child of packet180 (binary `0bf0a17a…`): manifests carry `label: "qualified-one-card"`, `contract:
+"v1.2+p181"` and a `qualified_by` record (packet179 same-generation resume, packet180 append + restore-then-save;
+scope one card only, TP2 not implemented, no ctxkeeper adapter); packet180's `experimental` files still restore.
+Window 07:59–08:28 UTC rows (driver `window-p181-driver`, runner `lanequeue-A36`, endpoints idle since the 07:23Z
+validation, restored as `*-20261022-restore6`, no fault lines): row a 31.83 tok/s, all 12 outputs identical to
+packet179 row a; lifecycle row 43/43 gates (append == one-shot reference, restore-then-save chain == reference,
+repeat identical, re-saved state byte-identical, label/contract/qualified_by on every device-written manifest);
+restore 0.44–0.47 s. The packet181 source read corrected packet180's note: this engine has no chunked prefill
+(closed by packet166); the append's 5.6 s is the fresh process's cold expert cache. Packet:
+`experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/`; note `notes/2026-10-22-packet181-session-swap-v3.md`.
+Next engine items: TP2 checkpoints (contract §10 item 1) and the ctxkeeper adapter (two-card host).
+
 **October 22, 02:54 EDT — campaign 52 done: seed 0 perfect (423/423, zero wrong STATE lines, every forgery kept), seed 2 415/423
 with one bad cut.** On the new keeper (1.3.0.dev1 with `--set-check`; it also carries the earlier bare-number working check),
 seed 0 of the 2M hostile stream is the first clean seed: every answer right, no wrong line in 8,745, all 16 audits, all
