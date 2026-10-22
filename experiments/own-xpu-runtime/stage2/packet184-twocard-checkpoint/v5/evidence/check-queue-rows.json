@@ -1,0 +1,43 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "cpu_seal_sha256": "b1554db75e73f2bf7483bb32aaf903d4adce947caa11fb3e71219ee7ad22a30a",
+ "binary_sha256": "ebbc9b151f8f9a0f1cba162abab76872471293fbe9f7e686fb30f800b212c7c5",
+ "steps": [
+  {
+   "step": "private-copy lanequeue.py plan --lane B",
+   "passed": true,
+   "rows": [
+    [
+     "packet184-tp2-smoke-B",
+     "passed"
+    ],
+    [
+     "packet184-tp2-lifecycle-B",
+     "passed"
+    ]
+   ]
+  },
+  {
+   "step": "ops/rehearse_entry.py --report",
+   "passed": true,
+   "returncode": 0,
+   "receipt": "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/evidence/rehearse.json"
+  },
+  {
+   "step": "pin_guard.check_job",
+   "passed": true,
+   "pins": [
+    1060,
+    1060
+   ]
+  }
+ ],
+ "receipts": {
+  "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/evidence/plan-B.log": "78e132771c6598bcccef0cbf7cdf539dd4bfdc42e23d8e0fb240cb2f737ce781",
+  "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/evidence/queue-plan.json": "dae5d04c8d2a90686895dc60be2cc6b3512a0c6266b8050a511eab3cc3da6c0b",
+  "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/evidence/rehearse.json": "daa745f2cd9c8d62a482ab5d718184f86ed84f34475281a7790a022b0111d9ad",
+  "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/evidence/pin-guard.json": "6dd500f786e949623de3e0c84e8e144316bc2a3315e1c65b6a7401ed5a8d3000"
+ }
+}

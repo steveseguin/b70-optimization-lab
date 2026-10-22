@@ -1,0 +1,43 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "live_queue_modified": false,
+ "queued": false,
+ "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p184-two-card-B.txt",
+ "sha256": "13a41ab78d016401dd4a7066fdb292a2a27ff907bf9ea6ec5ee3a2bb76ac2c34",
+ "log": "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/evidence/plan-B.log",
+ "log_sha256": "78e132771c6598bcccef0cbf7cdf539dd4bfdc42e23d8e0fb240cb2f737ce781",
+ "rows": [
+  {
+   "name": "packet184-tp2-smoke-B",
+   "plan": "passed",
+   "seal": "checked by packet plan/wrapper",
+   "storage_admission": {
+    "planned_write_bytes": 1000000000,
+    "reservation_source": "proposal.plan",
+    "root_free_bytes": 34475069440,
+    "required_free_bytes": 26000000000,
+    "free_floor_bytes": 25000000000,
+    "passed": true
+   },
+   "host_required_available_bytes": 105411248128
+  },
+  {
+   "name": "packet184-tp2-lifecycle-B",
+   "plan": "passed",
+   "seal": "checked by packet plan/wrapper",
+   "storage_admission": {
+    "planned_write_bytes": 1500000000,
+    "reservation_source": "proposal.plan",
+    "root_free_bytes": 34475065344,
+    "required_free_bytes": 26500000000,
+    "free_floor_bytes": 25000000000,
+    "passed": true
+   },
+   "host_required_available_bytes": 105411248128
+  }
+ ],
+ "seconds": 4.5,
+ "planner": "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+ "planner_digest": "010d83445665cf93641901c845e28ccc36ef41909d2171ccc2f877509eaffe25"
+}

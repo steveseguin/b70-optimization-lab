@@ -1,0 +1,104 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scope": "CPU mini geometry, real two-rank host engine, the device rows' own leg functions; not a device result",
+  "seconds": 18.3,
+  "smoke": {
+    "legs": 2,
+    "gates": 11,
+    "gate_names": [
+      "checkpoint identity s1",
+      "leg drained leg1",
+      "leg drained leg2",
+      "merged K+M == uninterrupted reference",
+      "merged draft guesses == reference",
+      "reference complete (K+M, no early stop)",
+      "reference oracle-128",
+      "restore record",
+      "save request == reference[0:K]",
+      "tool full:s1",
+      "tool metadata:s1"
+    ],
+    "oracle_gates": "not applicable on CPU (mini vocabulary)"
+  },
+  "lifecycle": {
+    "legs": 3,
+    "gates": 23,
+    "gate_names": [
+      "append + resume(S2) == one-shot new reference",
+      "append == one-shot new reference[0:M]",
+      "append draft guesses == one-shot",
+      "delete s2b",
+      "leg drained leg1",
+      "leg drained leg2",
+      "leg drained leg3",
+      "lineage",
+      "new reference complete (M+R) and one-shot (M)",
+      "one-shot == new reference[0:M]",
+      "restore records",
+      "resume(S2) draft guesses == one-shot",
+      "save request complete (K)",
+      "save request oracle-128",
+      "state: repeat S2b == S2 (all blobs, both ranks)",
+      "state: resumed chain S2 == one-shot SREF (all blobs, both ranks)",
+      "tool full:s2",
+      "tool full:s2b",
+      "tool metadata:s1",
+      "tool metadata:s2",
+      "tool metadata:s2b",
+      "tool metadata:sref",
+      "warm-process repeat append == append"
+    ]
+  },
+  "negatives": [
+    {
+      "kind": "smoke",
+      "mutation": "merged token",
+      "first_failed_gate": "merged K+M == uninterrupted reference"
+    },
+    {
+      "kind": "smoke",
+      "mutation": "draft guess",
+      "first_failed_gate": "merged draft guesses == reference"
+    },
+    {
+      "kind": "lifecycle",
+      "mutation": "append token",
+      "first_failed_gate": "append == one-shot new reference[0:M]"
+    },
+    {
+      "kind": "lifecycle",
+      "mutation": "sref blob hash",
+      "first_failed_gate": "state: resumed chain S2 == one-shot SREF (all blobs, both ranks)"
+    },
+    {
+      "kind": "lifecycle",
+      "mutation": "s2b blob hash",
+      "first_failed_gate": "state: repeat S2b == S2 (all blobs, both ranks)"
+    },
+    {
+      "kind": "lifecycle",
+      "mutation": "leg teardown missing",
+      "first_failed_gate": "leg drained leg2"
+    }
+  ],
+  "real_device_request": {
+    "tokens": 128,
+    "draft_rows": 213,
+    "ttft_ms": 1135.9095770167187,
+    "decode_tok_s": 60.05238014681075,
+    "prompt_wall_ms": 1135.9095770167187,
+    "origin": "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/device-metadata-v5-B-p183/run/report-inputs.json",
+    "origin_digest": "f0fe188c3fa1c2301d487c7f87d3311d3f716bf33f313d6985f70c21a3f6bd18"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/lifecycle_rehearsal.py": "a2d31dacff871025274f912b949db0cd47d2f7a82a045af39e27c1835c4cdbcd",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/tp2_lifecycle.py": "0808823e9417bc383039084eacb322a615ab406c074e83241225078640585a51",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/lifecycle_report.py": "444c9db152ab46799b8b7ac3d86803873c7c479aca7f43c0bbee6d83632a1b9d",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/tp2_checkpoint.py": "2421db0d1654e43bfb10cb355da9f7f6f7fe0bc4dc0af9ad1e3c1ae5830b980b",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/lineage/parent-device-request.json": "7d8f05760418f3dca0770fdd15835ac75d898d727033fce9130317a1b48f89c9",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/lineage/append-delta.json": "d3d693dfdd23db1a32b985c3650bb38b32616bb974a4964bfca3fa794ed8b9e5"
+  },
+  "engine_sha256": "8446c8295c65dcdc406021b8bd6052d0e8f4c6eaebd7e3df75c32a8a6c4ad503",
+  "tool_sha256": "2226a29665ef7d655dc91d3385b7555fb2a06b53f1144db156769b8f44031780"
+}

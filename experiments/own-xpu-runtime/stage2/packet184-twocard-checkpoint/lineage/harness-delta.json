@@ -1,0 +1,62 @@
+{
+ "schema": "packet184.harness-delta.v1",
+ "device_executed": false,
+ "modified_harness_files": [
+  "DO-NOT-REPEAT.md",
+  "README.md",
+  "v5/bracket_config.py",
+  "v5/cpu_seal.py"
+ ],
+ "native_delta_files": [
+  "native-base/experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/native_controller.hpp",
+  "v5/native-src/main.cpp",
+  "v5/native-src/mtp.hpp",
+  "v5/native-src/rank.hpp"
+ ],
+ "regenerated_outputs": [
+  "v5/cpu-seal.json",
+  "v5/engine-commands.json",
+  "v5/lineage/production/screen-seal.json",
+  "v5/placement-validation/wrapper-seal.json"
+ ],
+ "new_files": [
+  "check_queue_rows.py",
+  "copy_packet184.py",
+  "final_checks.py",
+  "lineage/packet184-copy-amendments.json",
+  "lineage/packet184-copy.json",
+  "package_rows.py",
+  "record_harness_delta.py",
+  "v5/checkpoint_cpu_gate.py",
+  "v5/checkpoint_job.py",
+  "v5/checkpoint_ready.py",
+  "v5/checkpoint_screen.py",
+  "v5/lifecycle_rehearsal.py",
+  "v5/lifecycle_report.py",
+  "v5/lineage/append-delta.json",
+  "v5/lineage/mini/README.md",
+  "v5/lineage/mini/selection.json",
+  "v5/lineage/parent-device-request.json",
+  "v5/lineage/parent-src/PARENT-SOURCES.json",
+  "v5/lineage/parent-src/main.cpp",
+  "v5/lineage/parent-src/mtp.hpp",
+  "v5/lineage/parent-src/native_controller.hpp",
+  "v5/lineage/parent-src/rank.hpp",
+  "v5/native/checkpoint_format.hpp",
+  "v5/native/checkpoint_shape_entry.cpp",
+  "v5/native/checkpoint_tool.cpp",
+  "v5/native/checkpoint_tp2.hpp",
+  "v5/p184_build_checkpoint.py",
+  "v5/p184_checkpoint_shape.py",
+  "v5/p184_shape_mock.py",
+  "v5/report-contract.json",
+  "v5/report_fixture.py",
+  "v5/report_fixture_data.py",
+  "v5/tokenizer-identity.tsv",
+  "v5/tp2_checkpoint.py",
+  "v5/tp2_lifecycle.py"
+ ],
+ "patch": "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/lineage/harness-delta.patch",
+ "patch_sha256": "8b802c74bf3edba22b6c3ef07e47ad7b9add88fa33af86719995ab751f3a2731",
+ "note": "modified harness files are diffed against packet153 with the copy rewrites; native delta is lineage/checkpoint-delta.patch"
+}

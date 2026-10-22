@@ -1,0 +1,41 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "live_queue_modified": false,
+ "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p184-two-card-B.txt",
+ "proposal_sha256": "13a41ab78d016401dd4a7066fdb292a2a27ff907bf9ea6ec5ee3a2bb76ac2c34",
+ "mirror": "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/proposals/proposed-p184-two-card-B.txt",
+ "cpu_seal": "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/cpu-seal.json",
+ "cpu_seal_sha256": "b1554db75e73f2bf7483bb32aaf903d4adce947caa11fb3e71219ee7ad22a30a",
+ "rows": [
+  {
+   "job": "packet184-tp2-smoke-B",
+   "lane": "B",
+   "depends_on": [],
+   "expected_seconds": [
+    240,
+    480
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 105411248128,
+   "planned_writes": 1000000000,
+   "legs": 2
+  },
+  {
+   "job": "packet184-tp2-lifecycle-B",
+   "lane": "B",
+   "depends_on": [
+    "packet184-tp2-smoke-B"
+   ],
+   "expected_seconds": [
+    360,
+    780
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 105411248128,
+   "planned_writes": 1500000000,
+   "legs": 3
+  }
+ ]
+}

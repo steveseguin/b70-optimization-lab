@@ -1,0 +1,381 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_weights_read": false,
+  "scope": "CPU mini geometry, real two-rank host engine; not a device result",
+  "engine_sha256": "8446c8295c65dcdc406021b8bd6052d0e8f4c6eaebd7e3df75c32a8a6c4ad503",
+  "tool_sha256": "2226a29665ef7d655dc91d3385b7555fb2a06b53f1144db156769b8f44031780",
+  "selection": "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/lineage/mini/selection.json",
+  "selection_sha256": "96fd5b352e7f8329c984e8f1d55bef9fb75eff82d117a51732dad7a0ce338c54",
+  "tokenizer_identity_sha256": "5e88b69b8c30b6f79807bbbad23126e3262c5fd9be87e338b25e48bf7d15d32b",
+  "rank_pairs_launched": 56,
+  "seconds": 78.7,
+  "cases": [
+    {
+      "case": "lifecycle 8-6",
+      "N": 12,
+      "blobs": 40,
+      "merged_tokens": 14
+    },
+    {
+      "case": "lifecycle 27-9",
+      "N": 31,
+      "blobs": 40,
+      "merged_tokens": 36
+    },
+    {
+      "case": "lifecycle 28-9",
+      "N": 32,
+      "blobs": 40,
+      "merged_tokens": 37
+    },
+    {
+      "case": "lifecycle 30-12",
+      "N": 34,
+      "blobs": 40,
+      "merged_tokens": 42
+    },
+    {
+      "case": "append delta7",
+      "N": 12,
+      "new_length": 20
+    },
+    {
+      "case": "append delta25",
+      "N": 12,
+      "new_length": 38
+    },
+    {
+      "case": "append empty-delta == resume"
+    },
+    {
+      "case": "coverage == inventory (both ranks)",
+      "ranks": [
+        {
+          "rank": 0,
+          "labels": 123,
+          "saved": 19,
+          "skipped": 104,
+          "host_fields": 14,
+          "blobs_byte_compared": 19
+        },
+        {
+          "rank": 1,
+          "labels": 179,
+          "saved": 21,
+          "skipped": 158,
+          "host_fields": 14,
+          "blobs_byte_compared": 21
+        }
+      ]
+    },
+    {
+      "case": "draft state is saved, not rebuilt",
+      "zeroed": [
+        "draft.blk.0.qsa.keys",
+        "draft.blk.0.qsa.pooled",
+        "draft.blk.0.qsa.raw",
+        "draft.blk.0.qsa.values"
+      ],
+      "draft_blobs_differing_after_resume": [
+        "draft.blk.0.qsa.keys",
+        "draft.blk.0.qsa.pooled",
+        "draft.blk.0.qsa.raw",
+        "draft.blk.0.qsa.values"
+      ],
+      "target_blobs_equal": true,
+      "merged_tokens_equal": true,
+      "guesses_equal": true
+    },
+    {
+      "case": "locks and save atomicity",
+      "cases": 6
+    }
+  ],
+  "lifecycle": [
+    {
+      "K": 8,
+      "M": 6,
+      "N": 12,
+      "tokens": 14,
+      "guesses": 17,
+      "blobs": 40,
+      "saved_bytes": 5892,
+      "restore_seconds": 0.9790445090038702,
+      "restored_bytes": 5428,
+      "save_seconds": 0.3500934750190936
+    },
+    {
+      "K": 27,
+      "M": 9,
+      "N": 31,
+      "tokens": 36,
+      "guesses": 39,
+      "blobs": 40,
+      "saved_bytes": 7612,
+      "restore_seconds": 0.9962408650317229,
+      "restored_bytes": 6900,
+      "save_seconds": 0.35062409105012193
+    },
+    {
+      "K": 28,
+      "M": 9,
+      "N": 32,
+      "tokens": 37,
+      "guesses": 40,
+      "blobs": 40,
+      "saved_bytes": 7692,
+      "restore_seconds": 0.9781868410063908,
+      "restored_bytes": 6988,
+      "save_seconds": 0.35097164200851694
+    },
+    {
+      "K": 30,
+      "M": 12,
+      "N": 34,
+      "tokens": 42,
+      "guesses": 45,
+      "blobs": 40,
+      "saved_bytes": 8076,
+      "restore_seconds": 0.9824849999858998,
+      "restored_bytes": 7140,
+      "save_seconds": 0.34638079901924357
+    }
+  ],
+  "append": [
+    {
+      "delta": 7,
+      "N": 12,
+      "new_length": 20,
+      "blobs": 40,
+      "chain_position": 25
+    },
+    {
+      "delta": 25,
+      "N": 12,
+      "new_length": 38,
+      "blobs": 40,
+      "chain_position": 43
+    }
+  ],
+  "coverage": [
+    {
+      "rank": 0,
+      "labels": 123,
+      "saved": 19,
+      "skipped": 104,
+      "host_fields": 14,
+      "blobs_byte_compared": 19
+    },
+    {
+      "rank": 1,
+      "labels": 179,
+      "saved": 21,
+      "skipped": 158,
+      "host_fields": 14,
+      "blobs_byte_compared": 21
+    }
+  ],
+  "draft": {
+    "zeroed": [
+      "draft.blk.0.qsa.keys",
+      "draft.blk.0.qsa.pooled",
+      "draft.blk.0.qsa.raw",
+      "draft.blk.0.qsa.values"
+    ],
+    "draft_blobs_differing_after_resume": [
+      "draft.blk.0.qsa.keys",
+      "draft.blk.0.qsa.pooled",
+      "draft.blk.0.qsa.raw",
+      "draft.blk.0.qsa.values"
+    ],
+    "target_blobs_equal": true,
+    "merged_tokens_equal": true,
+    "guesses_equal": true,
+    "conclusion": "continuing from the saved target state does not regenerate draft KV rows [0, N-1); the draft cache must be saved"
+  },
+  "refusals": [
+    {
+      "case": "rank0 blob byte (precheck)",
+      "refused_by": "blob sha256",
+      "rank": null,
+      "where": "precheck",
+      "detail": "rank 0 blk.1.qsa.keys",
+      "uploads": 0
+    },
+    {
+      "case": "rank0 blob byte (rank verify)",
+      "refused_by": "blob sha256",
+      "rank": 0,
+      "where": "rank 0 verify",
+      "detail": "rank 0 blk.1.qsa.keys",
+      "uploads": 0
+    },
+    {
+      "case": "rank1 draft blob byte (rank verify)",
+      "refused_by": "blob sha256",
+      "rank": 1,
+      "where": "rank 1 verify",
+      "detail": "rank 1 draft.blk.0.qsa.keys",
+      "uploads": 0
+    },
+    {
+      "case": "rank0 spare bank byte (rank verify)",
+      "refused_by": "blob sha256",
+      "rank": 0,
+      "where": "rank 0 verify",
+      "detail": "rank 0 spare.blk.0.gdn.state",
+      "uploads": 0
+    },
+    {
+      "case": "rank1 set missing",
+      "refused_by": "file set",
+      "rank": null,
+      "where": "precheck",
+      "detail": "rank blob set missing: rank1",
+      "uploads": 0
+    },
+    {
+      "case": "rank1 set missing (rank verify)",
+      "refused_by": "file set",
+      "rank": 0,
+      "where": "rank verify",
+      "detail": "rank blob set missing: rank1",
+      "uploads": 0
+    },
+    {
+      "case": "rank sets swapped",
+      "refused_by": "file set",
+      "rank": null,
+      "where": "precheck",
+      "detail": "rank 0: unexpected entry draft.active.bin",
+      "uploads": 0
+    },
+    {
+      "case": "extra file in rank0",
+      "refused_by": "file set",
+      "rank": null,
+      "where": "precheck",
+      "detail": "rank 0: unexpected entry junk.bin",
+      "uploads": 0
+    },
+    {
+      "case": "fields.tsv host value (history0)",
+      "refused_by": "manifest cross-check",
+      "rank": null,
+      "where": "precheck",
+      "detail": "fields.tsv line 14 (history0) differs from the rendering of manifest.json; manifest.json is the only source of truth",
+      "uploads": 0
+    },
+    {
+      "case": "manifest field edited, unsealed (created)",
+      "refused_by": "manifest sha256",
+      "rank": null,
+      "where": "precheck",
+      "detail": "manifest.json differs from the sha256 sealed at save",
+      "uploads": 0
+    },
+    {
+      "case": "manifest host value, unsealed (token_history)",
+      "refused_by": "manifest",
+      "rank": null,
+      "where": "precheck",
+      "detail": "rank 0 host token history differs from token_state",
+      "uploads": 0
+    },
+    {
+      "case": "host value resealed consistently (token_history vs tokens.bin)",
+      "refused_by": "token state",
+      "rank": null,
+      "where": "precheck",
+      "detail": "manifest token_history disagrees with the last processed tokens in tokens.bin",
+      "uploads": 0
+    },
+    {
+      "case": "rank1 draft position, resealed",
+      "refused_by": "manifest",
+      "rank": null,
+      "where": "precheck",
+      "detail": "rank 1 draft host state differs from the manifest draft record",
+      "uploads": 0
+    },
+    {
+      "case": "tokens.bin altered",
+      "refused_by": "token state",
+      "rank": null,
+      "where": "precheck",
+      "detail": "tokens.bin sha256",
+      "uploads": 0
+    },
+    {
+      "case": "engine binary, resealed",
+      "refused_by": "engine identity",
+      "rank": 0,
+      "where": "rank verify",
+      "detail": "binary_sha256 differs from /proc/self/exe",
+      "uploads": 0
+    },
+    {
+      "case": "contract, resealed",
+      "refused_by": "manifest",
+      "rank": null,
+      "where": "precheck",
+      "detail": "contract v1.2+p181 (this engine reads v1.2+p184 two-card checkpoints only)",
+      "uploads": 0
+    },
+    {
+      "case": "label, resealed",
+      "refused_by": "manifest",
+      "rank": null,
+      "where": "precheck",
+      "detail": "label does not pair with contract v1.2+p184 (expected experimental-two-card)",
+      "uploads": 0
+    },
+    {
+      "case": "append with a wrong pending token",
+      "refused_by": "prefix",
+      "rank": 0,
+      "where": "rank verify",
+      "detail": "append: --input[12] must be the saved pending token 1 (given 2)",
+      "uploads": 0
+    },
+    {
+      "case": "resume beyond the context",
+      "refused_by": "context",
+      "rank": 0,
+      "where": "rank verify",
+      "detail": "same-generation resume of 12 saved positions plus the pending token plus --max-new 256 exceeds the context allocation 256",
+      "uploads": 0
+    },
+    {
+      "case": "tokenizer identity differs",
+      "refused_by": "tokenizer identity",
+      "rank": 0,
+      "where": "rank verify",
+      "detail": "--tokenizer-identity c67633ed8656978d139cc6d632342bf3389d92e627146dbeb4b65562f9922667 differs from the identity recorded at save 5e88b69b8c30b6f79807bbbad23126e",
+      "uploads": 0
+    },
+    {
+      "case": "coordinator lock not held (rank lock proof)",
+      "refused_by": "lock",
+      "rank": 0,
+      "where": "rank verify",
+      "detail": "the coordinator does not hold /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/build/cpu-gate/ckpt/r-21.lock",
+      "uploads": 0
+    }
+  ],
+  "locks": [
+    "delete during restore -> in_use; inspect concurrent with restore -> ok",
+    "inspect and restore during save/delete -> refused (never wait)",
+    "delete of a non-checkpoint -> not_a_checkpoint, no lock file created",
+    "delete -> directory and lock removed",
+    "save into an existing id -> never overwrite",
+    "rank 1 stage failure -> no directory left (manifest never written)"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/checkpoint_cpu_gate.py": "4c61a261b8fdc443173d730c4c5889fd55c20eed94fb141a685ab0995bb44bd3",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/tp2_checkpoint.py": "2421db0d1654e43bfb10cb355da9f7f6f7fe0bc4dc0af9ad1e3c1ae5830b980b",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/lineage/mini/selection.json": "96fd5b352e7f8329c984e8f1d55bef9fb75eff82d117a51732dad7a0ce338c54",
+    "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/v5/tokenizer-identity.tsv": "5e88b69b8c30b6f79807bbbad23126e3262c5fd9be87e338b25e48bf7d15d32b"
+  }
+}

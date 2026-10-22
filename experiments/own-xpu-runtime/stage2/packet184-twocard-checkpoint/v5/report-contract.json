@@ -1,0 +1,13 @@
+{
+ "schema": "own-runtime.report-contract.v1",
+ "analyzer": "lifecycle_report:analyze",
+ "fixture_generator": "report_fixture:generate",
+ "samples": {"path": "run/lifecycle-samples.jsonl", "format": "jsonl", "required": {"leg": "str", "request": "str", "tokens": "int", "draft_rows": "int"}},
+ "analysis": {"path": "run/summary.json", "format": "json", "required": {"passed": "bool", "kind": "str", "gates": "dict", "label": "str", "contract": "str"}},
+ "cases": [
+  {"name": "smoke-pass", "fixture": {"kind": "smoke"}, "expected": {"passed": true, "kind": "smoke"}},
+  {"name": "lifecycle-pass", "fixture": {"kind": "lifecycle"}, "expected": {"passed": true, "kind": "lifecycle"}},
+  {"name": "smoke-merged-token", "fixture": {"kind": "smoke", "mutation": "merged-token"}, "expected": {"passed": false, "first_failed_gate": "merged K+M == uninterrupted reference"}},
+  {"name": "lifecycle-sref-blob", "fixture": {"kind": "lifecycle", "mutation": "sref-blob"}, "expected": {"passed": false, "first_failed_gate": "state: resumed chain S2 == one-shot SREF (all blobs, both ranks)"}}
+ ]
+}

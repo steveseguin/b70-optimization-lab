@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "entry_tu_only": true,
+  "delta_files": [
+    "native-base/experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/native_controller.hpp",
+    "v5/native-src/main.cpp",
+    "v5/native-src/mtp.hpp",
+    "v5/native-src/rank.hpp"
+  ],
+  "new_files": [
+    "v5/native/checkpoint_format.hpp",
+    "v5/native/checkpoint_shape_entry.cpp",
+    "v5/native/checkpoint_tool.cpp",
+    "v5/native/checkpoint_tp2.hpp"
+  ],
+  "unchanged_native_files": 212,
+  "patch": "experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/lineage/checkpoint-delta.patch",
+  "patch_sha256": "22a8a86a90113e689fcb31c8c0f90390fe25be75670c0e0c5d0e5bc33cfd9c46",
+  "patch_lines": 1527,
+  "delta_sha256": {
+    "native-base/experiments/own-xpu-runtime/stage2/packet184-twocard-checkpoint/native_controller.hpp": "08b674b42d48ade687adc3f1a2bd0e586be414bd72399bdb2a80b4ed7715e63b",
+    "v5/native-src/main.cpp": "f9ce6612d57e1bb8e4ce4a1593f00b595b130058827f676594884a20fe8f34db",
+    "v5/native-src/mtp.hpp": "4d1f99477dac61ecfe24b0c0ab5d0a442f16216ee41dfaaf59fde504a5768f8e",
+    "v5/native-src/rank.hpp": "d761abc18c9bc69bc090993fe2b3275b25386a1feccf97ec48e324f63f8dc352",
+    "v5/native/checkpoint_format.hpp": "8272adfac081f052bfa258ad30c4ce56264ef915cf8315ea4adf634e69e98665",
+    "v5/native/checkpoint_shape_entry.cpp": "308fc250a3fa1e391423a4d5c9794b838ea0190a2c5756697f0c8077294c5f85",
+    "v5/native/checkpoint_tool.cpp": "aa14492909e6204686161ff097c7b94162e03598e20b8f35aa9828e7df119a54",
+    "v5/native/checkpoint_tp2.hpp": "a4789106ed93272998d386916e555803ee64f17ce1313897cd57a7a4d826eedf"
+  },
+  "kernel_objects_unchanged": true,
+  "scope": "main.cpp: device-free host-tool hook; rank.hpp: op 15 stage/verify/apply, op 10 resume start, p149 probe at production geometry only; mtp.hpp: DraftRuntime checkpoint view/host restore; native_controller.hpp: run(b,c,start=0) resume preamble; checkpoint_tp2.hpp: the checkpoint itself. No kernel source changed."
+}
