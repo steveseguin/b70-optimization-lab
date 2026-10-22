@@ -147,6 +147,24 @@ class RepositoryHygieneTests(unittest.TestCase):
         self.assertEqual(1, len(self.check()["closeouts_checked"]))
         self.assertTrue(self.check()["errors"])
 
+    def test_provenance_copy_of_tracked_closeout_is_retained_history(self):
+        original = "# Original frozen note\n"
+        self.write("stage2/packet1/CPU-PREPARATION-CLOSEOUT.md", original)
+        self.git("add", "stage2/packet1/CPU-PREPARATION-CLOSEOUT.md")
+        self.git("commit", "-qm", "packet1 closeout")
+        # Byte-identical copies under lineage/lineage-inputs keep the historical format.
+        self.write("stage2/packet2/lineage-inputs/packet1-CPU-PREPARATION-CLOSEOUT.md", original)
+        self.write("stage2/packet2/lineage/packet1-history/CPU-PREPARATION-CLOSEOUT.md", original)
+        self.git("add", "stage2/packet2")
+        self.assertFalse(self.check()["errors"])
+        self.assertEqual([], self.check()["closeouts_checked"])
+        # An edited copy, or a copy outside a provenance directory, is a new closeout.
+        self.write("stage2/packet2/lineage-inputs/edited-closeout.md", original + "\nAmended.\n")
+        self.write("stage2/packet2/copies/packet1-CPU-PREPARATION-CLOSEOUT.md", original)
+        self.git("add", "stage2/packet2")
+        errors = self.check()["errors"]
+        self.assertEqual(2, sum("missing sections" in e["reason"] for e in errors))
+
     def test_reference_style_links_are_evidence_but_unused_definitions_are_not(self):
         for link in ("[source][artifact]", "[Artifact][]", "[ARTIFACT]"):
             with self.subTest(link=link):

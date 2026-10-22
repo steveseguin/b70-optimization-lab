@@ -3,7 +3,10 @@
 
 New/changed blobs of at least 1 MiB produce review warnings. Tracked generated
 caches fail. New Markdown campaign closeouts must preserve a minimum useful
-record and link repository evidence. Historical blobs are not reformatted.
+record and link repository evidence. Historical blobs are not reformatted:
+a move keeps its format, and so does a byte-identical copy of a blob the base
+tree still tracks when it is filed under a packet's lineage/lineage-inputs
+provenance directory (hash-pinned by the packet's copy receipt).
 The Git index is the candidate tree; use --base HEAD before committing.
 CI chooses the push before-SHA or PR merge base from --event-json.
 """
@@ -22,6 +25,7 @@ import urllib.parse
 
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 CACHE_DIRS = {"__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
+PROVENANCE_DIRS = {"lineage", "lineage-inputs"}
 CLOSEOUT_NAME = re.compile(r"(?:^|[-_])(closeout|closure)(?:[-_.]|$)", re.I)
 SECTIONS = (
     "Question and identity", "Outcome", "What worked",
@@ -125,6 +129,7 @@ def check(root, base, large_bytes=1024**2):
     previous, candidate = trees(root, base)
     # Each removed old path can exempt one byte-identical move, not new copies.
     moved_blobs = Counter(v["oid"] for p, v in previous.items() if p not in candidate)
+    retained_blobs = {v["oid"] for v in previous.values()}
     changed = {p: v for p, v in candidate.items()
                if p not in previous or previous[p]["oid"] != v["oid"]
                or previous[p]["mode"] != v["mode"]}
@@ -152,6 +157,11 @@ def check(root, base, large_bytes=1024**2):
         # Existing source blobs can move without imposing a new format on frozen evidence.
         if path not in previous and moved_blobs[item["oid"]] > 0:
             moved_blobs[item["oid"]] -= 1
+            continue
+        # A byte-identical copy of a blob the base tree still tracks, filed under a packet's
+        # provenance directory, is retained history carried by its copy receipt, not a new closeout.
+        if (path not in previous and item["oid"] in retained_blobs
+                and PROVENANCE_DIRS.intersection(PurePosixPath(path).parts)):
             continue
         text = git(root, "cat-file", "blob", item["oid"]).decode("utf-8", errors="replace")
         marked = "<!-- campaign-closeout -->" in text
