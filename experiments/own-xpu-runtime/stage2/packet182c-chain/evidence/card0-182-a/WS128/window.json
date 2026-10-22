@@ -1,0 +1,921 @@
+{
+  "schema": "own-runtime.packet58.window.v1",
+  "window": "WS128",
+  "passed": true,
+  "qualifying": true,
+  "device_executed": true,
+  "child_still_running": false,
+  "card": 0,
+  "pci_bdf": "0000:23:00.0",
+  "native_visible_card": 0,
+  "context": 4096,
+  "gpu_count": 1,
+  "decode_mode": "plain",
+  "view": "down-tile16",
+  "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "build_receipt_sha256": "968318305259fb1393a8169db426c915c680361fc49f95dca170ee6b346c047d",
+  "artifacts_sha256": {
+    "build/device/own-rt-iq3": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+    "build/device/p58-cache-fixtures": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35",
+    "build/gnu-host/own-rt-iq3": "33ce60ad891a42199c76b573aa89933280025ce4dad128335ec08b4527fd4d7d"
+  },
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "coordinator_fault_review": "2026-10-22T09:32:54.752501Z",
+  "started_utc_ns": 1792664129623097302,
+  "expected_seconds": 1200,
+  "watchdog_seconds": 3600,
+  "memory_admission": {
+    "passed": true,
+    "available_bytes": 120821522432,
+    "required_bytes": 98990252032,
+    "margin_bytes": 21831270400,
+    "baseline_gpuactive_bytes": 114688,
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120821522432,
+      "SwapTotal": 0,
+      "SwapFree": 0,
+      "GPUActive": 114688
+    },
+    "plan": {
+      "admission_mode": "measured-peak-whole-host",
+      "admitted": false,
+      "allocation_inventory": {
+        "kv_index_bytes": 116391936,
+        "recurrent_bytes": 59019280,
+        "sources": {
+          "experiments/own-xpu-runtime/stage2/packet182c-chain/lineage/owned-inputs/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r0/census.json": "4e1074519846cc27084e574c32f2ec923153237b1cd522d15196fac017344d49",
+          "experiments/own-xpu-runtime/stage2/packet182c-chain/lineage/owned-inputs/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r1/census.json": "29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0"
+        },
+        "target_nonexpert_bytes": 5815529984
+      },
+      "arena_limit_bytes": 32212254720,
+      "card_capacity_floor_bytes": 32000000000,
+      "caveat": "One maximum allocation in every view; 18GB limits use, never admission. Live census, driver occupancy and host stops required.",
+      "census": {
+        "file_backed_nonexpert_bytes": 33323087360,
+        "layers": [
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 0,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 1,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 2329600,
+            "experts": 512,
+            "layer": 2,
+            "layer_bytes": 1192755200
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 3,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 4,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 5,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 6,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 7,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 8,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 9,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 10,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 11,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 12,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 13,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 14,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 15,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 16,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 17,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 18,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 19,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 20,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 21,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 22,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 23,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 24,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 25,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 26,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 27,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 28,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 29,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 30,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 31,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 32,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 33,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 34,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 35,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 36,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 37,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 38,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 39,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 40,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 41,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 42,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 43,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 44,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 45,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 46,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 47,
+            "layer_bytes": 1009254400
+          }
+        ],
+        "pinned_expert_bytes": 48627712000,
+        "source_path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/host-admission/tensor-census.json",
+        "source_sha256": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+      },
+      "context": 4096,
+      "decode_mode": "plain",
+      "device_categories": {
+        "control_transaction_bound": 1073741824,
+        "expert_cache_arena": 21552729600,
+        "expert_pointer_generation_tables": 2359296,
+        "target_4k_bf16_kv_index": 116391936,
+        "target_nonexpert": 5815529984,
+        "target_recurrent": 59019280,
+        "transfer_bound": 268435456,
+        "workspace_bound": 1073479680,
+        "async_publication_staging": 1179648,
+        "exact_half_decode_table": 262144
+      },
+      "device_executed": false,
+      "device_margin_bytes": 240,
+      "device_owned_bound_bytes": 29963128848,
+      "device_reserve_bytes": 1500000000,
+      "file_backed_expert_duplicate_allowed": false,
+      "gpu_count": 1,
+      "host_categories": {
+        "pinned_packed_experts": 48627712000,
+        "file_backed_nonexpert_and_lookup_bound": 4001477120,
+        "resident_lookup_bytes": 29321610240,
+        "measured_process_overhead_allowance": 565325824,
+        "gpuactive_shadow_bound": 4294967296,
+        "capacity_backing_metadata_staging": 3587987968,
+        "new_observed_peak_increment": 1236992
+      },
+      "host_required_available_bytes": 98990252032,
+      "host_reserve_bytes": 8589934592,
+      "kv_dtype": "BF16",
+      "large_pinning_cpu_test_allowed": false,
+      "schema": "own-runtime.packet58u.memory.v1",
+      "memory_view": "tile16-resident",
+      "window": "WS128",
+      "whole_host_required": true,
+      "host_bound_bytes": 90400317440,
+      "derivation": {
+        "design_increment_to_core_bytes": 29321610240,
+        "empirical_core_peak_bytes": 49193037824,
+        "extra_margin_bytes": 4294967296,
+        "file_allowance_bytes": 4001477120,
+        "full_model_windows": 0,
+        "host_bound_bytes": 86811092480,
+        "host_required_available_bytes": 95401027072,
+        "measured_normalized_peak_bytes": 82516125184,
+        "measured_view": "tile16",
+        "replaced_lookup_file_allowance_bytes": 29321610240,
+        "resident_device_measured": false,
+        "resident_lookup_bytes": 29321610240,
+        "shadow_bound_bytes": 4294967296
+      },
+      "source_seal_sha256": "ae74083f056a5dfec12940a9ec6ee3219257f75418c4e432f7e3f520a5340d29",
+      "driver_allowance_bytes": 536870912,
+      "async_device_staging_bytes": 1179648
+    }
+  },
+  "storage_admission": {
+    "free_bytes": 36355170304,
+    "planned_write_bytes": 33686762,
+    "min_free_bytes": 8000000000
+  },
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet58-onecard-182-a.service\n",
+  "previous": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/window.json",
+    "sha256": "307e6f1e40dfdbe66338b5cd2ab179afa5d9a20de3b0abab11dc1c4a911ed07b"
+  },
+  "cache_maintenance": "overlap",
+  "hc": "p60fusion",
+  "hc_geometry": "hc-wide",
+  "experts": "wide64+halfcache",
+  "other_fusion": "fused",
+  "retirement": "ordered-foreground",
+  "miss_path": "zero-copy",
+  "k1_refs": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/K1a/window.json",
+      "sha256": "99067bbcc0b30ef2f6af6a562d7a8e83d37e4341db1788c8261ad66621ab4ea3",
+      "native_k1_sha256": "99465cdef56a5a4d7ceca329a152136d9d84558d5b75d5ae6ab1cd545f0cedae"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/K1b/window.json",
+      "sha256": "167000544ae66799fc957cbd3429436a221e91cad2454d298fd15aa89e022bdb",
+      "native_k1_sha256": "fdb57381a478f9ebf7b57c4073fff7157ed06d61ec5487adbf973e42a5c849b5"
+    }
+  ],
+  "device_topology": {
+    "mask": {
+      "NEOReadDebugKeys": "1",
+      "FilterBdfPath": "0000:23:00.0",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+      "ZE_AFFINITY_MASK": "0",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+    },
+    "native_indices": [
+      0
+    ],
+    "nodes": [
+      {
+        "pci": "0000:23:00.0",
+        "node": "/dev/dri/renderD130",
+        "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "native_environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/native-home"
+  },
+  "stop_reasons": [],
+  "lane_admission": {
+    "passed": true,
+    "scope": "whole-host",
+    "card": 0,
+    "timing_claim_eligible": true,
+    "reservation": {
+      "schema": "own-runtime.chain-lanes.v1",
+      "token": "a605e47b666046ddbfa453229a8bcff7",
+      "lane": "A",
+      "window": "WS128",
+      "scope": "whole-host",
+      "pid": 2935729,
+      "start_ticks": 50683713,
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "started_monotonic": 506837.564231074
+    },
+    "owners": {
+      "2935748": {
+        "start_ticks": 50683822,
+        "seen": false,
+        "fds": []
+      },
+      "2935750": {
+        "start_ticks": 50683829,
+        "seen": true,
+        "fds": [
+          {
+            "pid": 2935750,
+            "fd": "10",
+            "driver": "xe",
+            "pci": "0000:23:00.0",
+            "client_id": "19863"
+          }
+        ]
+      }
+    },
+    "clients": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 498,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "clients_latest": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 510,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "clients_after_drain": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 505,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "devices_drained": true
+  },
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "clients": {
+    "selected": [],
+    "other": [],
+    "inaccessible_entries": 498,
+    "hidden_clients_require_coordinator_ownership": true
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x0000745dcf780000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x0000745dcf200000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x0000745dcf07b000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x0000745dcec00000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x0000745dcef92000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x0000745dcf748000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x0000745dce800000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x0000745dce400000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000745dcf782000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x0000745dcf72f000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x0000745dcd600000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x0000745dcf728000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x0000745dcf723000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x0000745dcd000000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x0000745dcef76000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x0000745dcb800000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x0000745dce707000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x0000745dcef13000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/suite_driver.py",
+    "--window",
+    "WS128",
+    "--view",
+    "down-tile16",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run",
+    "--miss-mode",
+    "zerocopy",
+    "--authorized-device-window"
+  ],
+  "exec_limits": {
+    "0": [
+      -1,
+      -1
+    ],
+    "1": [
+      -1,
+      -1
+    ],
+    "2": [
+      -1,
+      -1
+    ],
+    "3": [
+      8388608,
+      -1
+    ],
+    "4": [
+      0,
+      -1
+    ],
+    "5": [
+      -1,
+      -1
+    ],
+    "6": [
+      477915,
+      477915
+    ],
+    "7": [
+      1024,
+      1048576
+    ],
+    "8": [
+      16864567296,
+      16864567296
+    ],
+    "9": [
+      -1,
+      -1
+    ],
+    "11": [
+      477915,
+      477915
+    ],
+    "12": [
+      819200,
+      819200
+    ],
+    "13": [
+      0,
+      0
+    ],
+    "14": [
+      0,
+      0
+    ],
+    "15": [
+      -1,
+      -1
+    ]
+  },
+  "pid": 2935748,
+  "process_start_ticks": 50683822,
+  "anonymous_peak_bytes": 29681528832,
+  "anonymous_limit_bytes": 52922679296,
+  "anonymous_stop_bytes": 52654243840,
+  "memory_last_sample": {
+    "anonymous_bytes": 335708160,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 2935748,
+        "rss_anon_bytes": 10096640
+      },
+      {
+        "pid": 2935750,
+        "rss_anon_bytes": 325611520
+      }
+    ],
+    "sample_utc_ns": 1792664433921097842,
+    "host": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120369917952,
+      "SwapTotal": 0,
+      "SwapFree": 0,
+      "GPUActive": 35430400
+    },
+    "gpuactive_growth_bytes": 35315712,
+    "pinned_expert_bytes": 48627712000,
+    "gpuactive_pinned_credit_bytes": 35315712,
+    "gpuactive_shadow_bytes": 0,
+    "gpuactive_shadow_bound_bytes": 4294967296,
+    "host_accounted_bytes": 52964897280,
+    "host_accounted_bound_bytes": 90400317440
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 308.9371735730092,
+  "teardown_confirmed_before_reporting": {
+    "passed": true,
+    "helper": "own-runtime.teardown-on-error.v1",
+    "experiment_passed": false
+  },
+  "memory_samples_sha256": "fd0888d1fee8ee0497171e2a0cab1e219fe4da796152cdf6a326e4a218823d3d",
+  "postload_memory": {
+    "peak_shadow_bytes": 659013632,
+    "complete_postload": true,
+    "after_load_shadow_bytes": 206028800,
+    "observed_supervisor_peak_bytes": 659013632,
+    "full_cache_bytes": 21552729600,
+    "kv_bytes": 116391936,
+    "pinned_expert_bytes": 48627712000,
+    "exact_half_decode_table_bytes": 262144,
+    "source": "successful same-chain native after_load plus complete allocation census",
+    "sources": {
+      "run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+      "run/run/host-memory.jsonl": "cd4f33e85452df431dbee07e0f2a0b46e6dcf0875a94e6ab12cd53f59b2a4bbb",
+      "host-memory.jsonl": "fd0888d1fee8ee0497171e2a0cab1e219fe4da796152cdf6a326e4a218823d3d"
+    },
+    "attribution": "host-global GPUActive; other-lane activity may inflate or mask delta; full census backing bound remains reserved independently"
+  },
+  "native_files": {
+    "run/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+    "run/summary.json": "53e2a215e2940931f911e2e06ce2469358f8a97e859c7a3f6f576791d9a3ee76",
+    "run/native.log": "ae69949dd5f4061f0dbfbf3f2ec82e22293b436970190367d2fa5ff7d52a728e",
+    "run/receipt.json": "f98d4d4bbacca834c95529a6361b8730940f7eb0f1d82595f4f8b770d20e6f88",
+    "run/suite-inputs.tsv": "7c9757d4663fe604ac7585e7414fe1fc9c475419094d8f9f4b3bc590620a6cbd",
+    "run/run/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/progress.jsonl": "6e04a0d043e93a94308bee45908ee0b12b276f5a0efbdcc3f7069209381e86d3",
+    "run/run/host-memory.jsonl": "cd4f33e85452df431dbee07e0f2a0b46e6dcf0875a94e6ab12cd53f59b2a4bbb",
+    "run/run/device-contact.json": "5f853e7b47fe52e5c26be0edb45a975e466d7a080c35da91267d11e7f7156cff",
+    "run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "run/run/cold-start.json": "87a5dc3bedcd238b18884c3746f65cc3b9d7df1c88b2c652f531894a878399de",
+    "run/run/drm-memory-before_load.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/drm-memory-end.txt": "d1eec9cbd6236edc5f6bb4d11e9e23344244a382e15fae8a48458abdd6ff5246",
+    "run/run/plan.json": "3ae15bc39f60970165119c00dffa9151e554e875b1ab9700670359f9f81089e9",
+    "run/run/host-status-after_load.txt": "e905f8bf4b671188358015ad90e56fe88a70c0e96a8b5470f3f6831d0e50b1cb",
+    "run/run/memory.json": "4c82bc6cfac407b7dfeb84de851ccd442afc3e14a1f5c28e0ff9f413205453f5",
+    "run/run/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/drm-memory-after_load.txt": "c8912c9c85019cd41f7dedbbeafc896621c795689e172b180b94d0bc7ac66665",
+    "run/run/receipt.json": "57b63726785c7dbd912762ac6adea79bcf4052689d6b1604c75a644f9853e68e",
+    "run/run/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/host-status-end.txt": "8df2ec904a018262a106eae1e4a69d3e8fa65df22ae896dad0ec06724338df24",
+    "run/run/prepared-arguments-parity0.jsonl": "8e753cba885d7f20a76c3c229f85dc626295b9da0c0d938a01d4a9af414f5974",
+    "run/run/cache.jsonl": "8c2b5062ca2843e1d67648449e19b581de66233e66432dc1e56f4d8c1fef6720",
+    "run/run/host-status-before_load.txt": "88835b968f97dc326aff173bd3293f12985a056414430730d31e05c86f8a3177",
+    "run/run/decision-memo/timings.jsonl": "21e63a70a438bebb7bacfb949110d5fbd120a843ebabd34049268832c4473b11",
+    "run/run/decision-memo/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/decision-memo/cache-stats.json": "fda7a5874d3766166608946e1be2b7286e427299826aecebca49fae2eaed51bf",
+    "run/run/decision-memo/host-memory.jsonl": "d4b48d8ec5d1577cd6cd03f2f15327f0a74c2fbaf0807a3f88fb41aa50740bca",
+    "run/run/decision-memo/host-status-before_reset.txt": "bcc5b005d7a10c02bd2bc77a55a05fb7757c811b4ee3b56e78b9291bcd20d84f",
+    "run/run/decision-memo/drm-memory-before_reset.txt": "e6112fa4f5ec1f7101c117328eebba848a60f241b917e5010abde84a1406cda1",
+    "run/run/decision-memo/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/decision-memo/drm-memory-after_reset.txt": "8d81e66204e481391a9df83bc4273bd8d1c9d0aa45daeedf736f2d82932136be",
+    "run/run/decision-memo/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/decision-memo/owner-cpu.json": "9d59dddbfe7bc32203fda661811c986b36dfcc83de1c6dbb5c9420a6050f8c6b",
+    "run/run/decision-memo/result.json": "0df5602b1480b0708da2013a3ca4828dc160cef82d2fa197c64784e9e12af203",
+    "run/run/decision-memo/receipt.json": "0df5602b1480b0708da2013a3ca4828dc160cef82d2fa197c64784e9e12af203",
+    "run/run/decision-memo/prefill-timings.jsonl": "1dbca57de9b9f1e1ba9d8bdc1fea982364dd262589800594203df82c148dcdbe",
+    "run/run/decision-memo/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/decision-memo/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/decision-memo/host-status-after_reset.txt": "10a83ef7bc219cc9dc74b4c7ea8792ccf5d72d5b44df2e2a8b4f09aa2ebeef63",
+    "run/run/risk-register/timings.jsonl": "ef0cc3ac20120d09878892ebcc50afcf67e31d9ca1c7017ecd1d388dff122a2e",
+    "run/run/risk-register/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/risk-register/cache-stats.json": "fdb5af545023018b7d477d255c3c76cffeaaf98a3b5646659065ff1a9dbba9f0",
+    "run/run/risk-register/host-memory.jsonl": "7227fc882ade75b208678f59e1e7e22f4e6d38cdbb8f6ea9558876e4e567e7e5",
+    "run/run/risk-register/host-status-before_reset.txt": "42fd07c4f49832a0569b6c027fa8c2843cb102e4f53dc3fa8a56a02253da71c8",
+    "run/run/risk-register/drm-memory-before_reset.txt": "db9e599fc17abcbe928f4ce54798b586415406cfa116bfc4662690fdd53652b6",
+    "run/run/risk-register/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/risk-register/drm-memory-after_reset.txt": "397cb80930ad478eebad5b2a7f49e2902c9e052b16cff7540d20358be1100aa1",
+    "run/run/risk-register/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/risk-register/owner-cpu.json": "07270c78fb096190eb78bc6ae17e493fb2b84f2ab898f94c6bb7b461fe49f45f",
+    "run/run/risk-register/result.json": "d0f6728774c989b7558494120fe1137da3adbf1010260e17b86fdec9291d4be1",
+    "run/run/risk-register/receipt.json": "d0f6728774c989b7558494120fe1137da3adbf1010260e17b86fdec9291d4be1",
+    "run/run/risk-register/prefill-timings.jsonl": "cc6cf63fe7b93f64dd94c337be41cc39cdb252d64eaccb91c67431464b7e8854",
+    "run/run/risk-register/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/risk-register/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/risk-register/host-status-after_reset.txt": "dea6c483f60a88771cf392c8966ae95270a90d071b08db3e7b728e25e8c4a4d2",
+    "run/run/technical-guide/timings.jsonl": "2c11f7873df147187792250ae67da6e6e118bc6306fede63aec625a03d328095",
+    "run/run/technical-guide/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/technical-guide/cache-stats.json": "95bfb178d0e61dab8acf365f064a7cdbbe58cfc2b0ff40d28e5236e92201d62c",
+    "run/run/technical-guide/host-memory.jsonl": "e9834b5632f25ed60a2fc16b0a4ea70004267864b4d3f092b971ac709e6c53c4",
+    "run/run/technical-guide/host-status-before_reset.txt": "9a381c81e8294b6858aa5400252dae3db28f01f22025abb1485445bd9ef42519",
+    "run/run/technical-guide/drm-memory-before_reset.txt": "b94b0aadb8213c3c905bbafe5fed301f82e012d21ec76a9678a7ba90755c8042",
+    "run/run/technical-guide/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/technical-guide/drm-memory-after_reset.txt": "7c9c9cd6cc8de082b2e47308ca14ef8420d1ea324c6cd4cd09ecaa7fa728d7bd",
+    "run/run/technical-guide/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/technical-guide/owner-cpu.json": "57825d319cfbf6311cfb2c7f658791b79cb493cd5504135dd2655200ab594ad8",
+    "run/run/technical-guide/result.json": "5b62cafbf77dfec1c2eb7f1d686afc5167e2a51c2f80fccd305a8c49ea12c997",
+    "run/run/technical-guide/receipt.json": "5b62cafbf77dfec1c2eb7f1d686afc5167e2a51c2f80fccd305a8c49ea12c997",
+    "run/run/technical-guide/prefill-timings.jsonl": "56cd61b9fd23d3dd18649be2849a2548fa088bb7b1e9f836612add04acd03c07",
+    "run/run/technical-guide/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/technical-guide/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/technical-guide/host-status-after_reset.txt": "1ddb78e4c7a0ec3a7302d5677f15dbf34a59c0e4acff634e4569d6fe901faeea",
+    "run/run/performance-hypotheses/timings.jsonl": "a9382a186898ee184862bb7998ed26fa0e130c139304922224e307b11a4192a0",
+    "run/run/performance-hypotheses/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/performance-hypotheses/cache-stats.json": "2fcd8ac83778462176250833ff15b0b147ed92e80111b3968d418605dad44d1d",
+    "run/run/performance-hypotheses/host-memory.jsonl": "3f410672b3978b0dda181c3efcf056ed276cd2a05c4b57942e6de91d1499da9a",
+    "run/run/performance-hypotheses/host-status-before_reset.txt": "3421e9731247539d2788a9e4d9bf4381006cc806a18fcf3adb482be345f52344",
+    "run/run/performance-hypotheses/drm-memory-before_reset.txt": "d4b8cb0033d6237ae1df0c41218758c7e28a2d9e1514f9841aba21b79784e00d",
+    "run/run/performance-hypotheses/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/performance-hypotheses/drm-memory-after_reset.txt": "6aa7bb07b5e718124c169d311c256d255a36965bf0d3da54e2b3e73e738cf14f",
+    "run/run/performance-hypotheses/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/performance-hypotheses/owner-cpu.json": "ec31d478d8b1799c58242ca53b7bf9d23ae9877d43aec44a17dcf5d4171f5fd8",
+    "run/run/performance-hypotheses/result.json": "fca0f2fe981e0e907f88ab9691c4fab5ba0b76a515f508994bf61ff4efa4d2ec",
+    "run/run/performance-hypotheses/receipt.json": "fca0f2fe981e0e907f88ab9691c4fab5ba0b76a515f508994bf61ff4efa4d2ec",
+    "run/run/performance-hypotheses/prefill-timings.jsonl": "eadec1155ba90141d0ba7f61166793db8b154036921796d8ec5a8714aea1d990",
+    "run/run/performance-hypotheses/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/performance-hypotheses/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/performance-hypotheses/host-status-after_reset.txt": "e3564298c6e8c5403f855ddf939f5213953b8201a2d2e2121ff70e57ccee6369",
+    "run/run/architecture-tradeoff/timings.jsonl": "321d314bdf52cd8269dc5dd4dbe57e49ea2209c6e48bbf1cf496a183f8a87fe7",
+    "run/run/architecture-tradeoff/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/architecture-tradeoff/cache-stats.json": "1d80d67b51310c11793d66a31ed43218c0ab03b5b35d160a2ed520590e3c07e7",
+    "run/run/architecture-tradeoff/host-memory.jsonl": "01d625ae0cd82fa20f3b791f235897e9c73936697085afddb00adffa10a6f893",
+    "run/run/architecture-tradeoff/host-status-before_reset.txt": "ad7f2bcae5a0bc76b11100484bf0847bfdccaca11a720149bd96c16683dd3c76",
+    "run/run/architecture-tradeoff/drm-memory-before_reset.txt": "10feec3c25e1fa2f10bd202d5399016bef729d4c8ded727b2377fe1362360cf2",
+    "run/run/architecture-tradeoff/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/architecture-tradeoff/drm-memory-after_reset.txt": "abdf6dd67011a197bf286a6c6f75332497c5a2cc916627233bba0fe139f6ee64",
+    "run/run/architecture-tradeoff/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/architecture-tradeoff/owner-cpu.json": "094f22966f696e708131125bfe275a71d8987e29885c3c58eb744d4cdd230dad",
+    "run/run/architecture-tradeoff/result.json": "b2e95bb50d75fdfb76ed96501a28a7392475fcc9248d011049610a83f09183ed",
+    "run/run/architecture-tradeoff/receipt.json": "b2e95bb50d75fdfb76ed96501a28a7392475fcc9248d011049610a83f09183ed",
+    "run/run/architecture-tradeoff/prefill-timings.jsonl": "16e94af16b2d11ccb6d022c4a9552d6580cc38941e369d70dac6920d397b3ef0",
+    "run/run/architecture-tradeoff/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/architecture-tradeoff/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/architecture-tradeoff/host-status-after_reset.txt": "ca8c77473bc77419ac09730746075ed7697163e4f8e6599618d498987c2cfc21",
+    "run/run/code-review/timings.jsonl": "5ec77855c64fb2a7faf55e379c0dd087909bd181ebc9c6f34ba06c43dbbeedf9",
+    "run/run/code-review/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/code-review/cache-stats.json": "522f6de7469bd016c5e96483eebc6890d540a11dc8a1e89b8cb190996a6f288b",
+    "run/run/code-review/host-memory.jsonl": "ba9fc0bc35dad8d646fa9c87177b4b7c8cf8621a08ad3425df39b3504b79007a",
+    "run/run/code-review/host-status-before_reset.txt": "310ab9e24fc50c86ca4303fd146ecd401ca6a50b5ff1729530408596b1562c06",
+    "run/run/code-review/drm-memory-before_reset.txt": "386b7b88b7ab0027a3383d3421a8617f377d131dafb042846840a285bde3398a",
+    "run/run/code-review/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/code-review/drm-memory-after_reset.txt": "e948c28b56e95e3eb27b7b401d77c3739beba1ed11ee03b68bfd474aa4262f54",
+    "run/run/code-review/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/code-review/owner-cpu.json": "b0c53cdd2acf373b241080e621a96160db60bd15640b25bd3946eb3122431bf3",
+    "run/run/code-review/result.json": "30fd8ef4e7ac6747c2c2e68312b8d2e5e0d568cc1b5f569117694e35d41f0282",
+    "run/run/code-review/receipt.json": "30fd8ef4e7ac6747c2c2e68312b8d2e5e0d568cc1b5f569117694e35d41f0282",
+    "run/run/code-review/prefill-timings.jsonl": "7a68aeb09ebaecbaeaa292fa7ee2ae080471cf53397f94e4aaa4e4628eb583a9",
+    "run/run/code-review/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/code-review/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/code-review/host-status-after_reset.txt": "165b137944a8c0a56ea217d55aec64faa4e666711c1981736cf3cf3ebfb30b1f",
+    "run/run/customer-email/timings.jsonl": "3cd0f4f0513b9ed239045a70799357695d9229f1841997c2d4741ca22cc66f7a",
+    "run/run/customer-email/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/customer-email/cache-stats.json": "6d1ddb2ff4d5a61020006d4a50a9e3613f553a780a80cc37e6b47946c5035cdc",
+    "run/run/customer-email/host-memory.jsonl": "77e782c003c875c9cc024739143563b0ff7a053c3d31877605d8184c9e072ffe",
+    "run/run/customer-email/host-status-before_reset.txt": "d72d7090c95d0caee0247d655ae4cfc7e596acefd41da687a4f5c2a123fa39c4",
+    "run/run/customer-email/drm-memory-before_reset.txt": "f2a75eafe64d82eca817aab379c5db0a5931379cfb72e8a1069b9a9e0a8f4ecc",
+    "run/run/customer-email/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/customer-email/drm-memory-after_reset.txt": "1e021b7438d0205a40be9e0067b40672fc09d916760f83feb20ce0afb08917dd",
+    "run/run/customer-email/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/customer-email/owner-cpu.json": "2e280304f008cc3ebff91304b9cf3bcc74ee18054ecb43c8fd8f7b555fbdeca5",
+    "run/run/customer-email/result.json": "cccf9d3c77a26e728543ed28c8876cf4fc12a209851a2e16b6dfe491f5e012b4",
+    "run/run/customer-email/receipt.json": "cccf9d3c77a26e728543ed28c8876cf4fc12a209851a2e16b6dfe491f5e012b4",
+    "run/run/customer-email/prefill-timings.jsonl": "94482e2252f315af498bc7f188ece2d0fadf57e08dff3bba56d982d8768d04d1",
+    "run/run/customer-email/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/customer-email/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/customer-email/host-status-after_reset.txt": "e42d100d3fc04b92963171fb22501d947da7887a72d7c239bdc0be381491a9a2",
+    "run/run/incident-retrospective/timings.jsonl": "b2392b1c8a74dd09538548ac3e7da48c35e876ef66ea6d7b2f578bf538672342",
+    "run/run/incident-retrospective/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/incident-retrospective/cache-stats.json": "21c0aff8a2e3289c8856bb2e69d27c703d9f2d63b4e06c4b53403d2731322273",
+    "run/run/incident-retrospective/host-memory.jsonl": "c8a083c7f489416f882ed731a5a9854443a95a36d5241733eb54cd38fa4e5f0d",
+    "run/run/incident-retrospective/host-status-before_reset.txt": "1515c789cf5be244b7224f2041d9863db466e95b9b0ce2e328f4867a94f2a60d",
+    "run/run/incident-retrospective/drm-memory-before_reset.txt": "ef70ab3a670c2679de6e5a866d0cf9d0e36d747cedd9199e94620a350f711eda",
+    "run/run/incident-retrospective/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/incident-retrospective/drm-memory-after_reset.txt": "6d73f6b049fae5a042e0dd6817efa2aa049744eb2ad94c5882d23b5616d284f1",
+    "run/run/incident-retrospective/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/incident-retrospective/owner-cpu.json": "32fb70530e45d5f864d081f0a6251c411f54b2e2412bd08ce732078f97cec2d5",
+    "run/run/incident-retrospective/result.json": "63443a9eac6a70082cc73957fdaa1204fff4e5a7468ec91e59743556ada17333",
+    "run/run/incident-retrospective/receipt.json": "63443a9eac6a70082cc73957fdaa1204fff4e5a7468ec91e59743556ada17333",
+    "run/run/incident-retrospective/prefill-timings.jsonl": "a7b2a1a7973538524d11b178e1c50472238cb2899569366a7e2698073e07da93",
+    "run/run/incident-retrospective/first-prefill-progress.jsonl": "f54b1047ba6b8aa459f3a2278106e178c753d4db31e48abdd5c972de33b54288",
+    "run/run/incident-retrospective/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/incident-retrospective/host-status-after_reset.txt": "84a6e8e85a2ddabfdaf9aa53dd38d3f5fb6064d5424ad0a93066a7b8affe4265",
+    "run/run/benchmark-analysis/timings.jsonl": "676bc426e986f6c16a35a09276fa3644c8ac8bc4e86bdf40ccb08d84380a35c2",
+    "run/run/benchmark-analysis/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/benchmark-analysis/cache-stats.json": "834006a438855b07d565d787d877aa1347c16c6ed6fcbf54552dded1bc18603f",
+    "run/run/benchmark-analysis/host-memory.jsonl": "72ce11cd85301514b7821d89e92885e8bd7bf1dcf6c217338e2e9b163d159f04",
+    "run/run/benchmark-analysis/host-status-before_reset.txt": "c7336c6816e1e5bfdb8a6190e178f43b5d3ae691e8c06d342f37c2f2204bcdf0",
+    "run/run/benchmark-analysis/drm-memory-before_reset.txt": "680fa30ab7460e6068bc3796bb220a3477c69a517a5e119bc588ca0fa23ad16a",
+    "run/run/benchmark-analysis/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/benchmark-analysis/drm-memory-after_reset.txt": "c9ee84b7c329313f560f19ac0e6efa9b319b2caf2dca94ccd32eefe88e531308",
+    "run/run/benchmark-analysis/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/benchmark-analysis/owner-cpu.json": "0bfc976c78abd2ddf24c2d0a3c0c2126e488e9914fd881f7b3176ebc1dcc0534",
+    "run/run/benchmark-analysis/result.json": "4d012eda3c2308232fa78f8a109123ba7656f8bb7afd569a499a327909c38086",
+    "run/run/benchmark-analysis/receipt.json": "4d012eda3c2308232fa78f8a109123ba7656f8bb7afd569a499a327909c38086",
+    "run/run/benchmark-analysis/prefill-timings.jsonl": "9992cb5b6729916f9b20dc10c513b0deeb878c2419e9cbd5332abbd7c0ca3ab6",
+    "run/run/benchmark-analysis/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/benchmark-analysis/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/benchmark-analysis/host-status-after_reset.txt": "2af83de055a0be381b26dd6a6b1217f303e27efcfbee884228568edf4c1f475c",
+    "run/run/release-plan/timings.jsonl": "de90e9d9464e47dade5bf77124a4038646077d979c47f1ce3d13c495163360db",
+    "run/run/release-plan/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/release-plan/cache-stats.json": "76c9dab8b7d0fcedd1391c9737e2c1c80bebf56103e9a9ee3984922bdf4ef12e",
+    "run/run/release-plan/host-memory.jsonl": "b31cd806157cde11b6f68dfc3697c4cc4d5e0f0e6323de17ade748ad52a68ee3",
+    "run/run/release-plan/host-status-before_reset.txt": "10742f625659441de9671135e7e3cf0c5872455c3591277971d9742b243a2484",
+    "run/run/release-plan/drm-memory-before_reset.txt": "b24eb6e88ea6366afd17b95272c2f01cba3cd340776d4c090022731602c742ee",
+    "run/run/release-plan/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/release-plan/drm-memory-after_reset.txt": "88d44b7faf52ad0d6bc9892d419a2f8fd39a944f7615b70928bf12a72377fb97",
+    "run/run/release-plan/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/release-plan/owner-cpu.json": "bbb034dea1ba82dd69719f4eaab945234fa1ce67d1ead5410f89f6053b65d028",
+    "run/run/release-plan/result.json": "f2208908c7e6d8759077d285754b6909cdd4ca95f3cad272b1d9b90cce2fbd28",
+    "run/run/release-plan/receipt.json": "f2208908c7e6d8759077d285754b6909cdd4ca95f3cad272b1d9b90cce2fbd28",
+    "run/run/release-plan/prefill-timings.jsonl": "33c5dedd173637b01edf081dce0ff691c833c7170e2270cd5cc5b9ff2d53abb8",
+    "run/run/release-plan/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/release-plan/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/release-plan/host-status-after_reset.txt": "1d20df25d3a07a0a85d8e4b80a8f409c83231000c2e4a8ee1ab2a5ef9dd39c7a",
+    "run/run/sql-debugging/timings.jsonl": "c1befe5f706c02e2e32494ba06b4cc85262a74e25c24c59a6eb911f1bf393788",
+    "run/run/sql-debugging/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/sql-debugging/cache-stats.json": "378465fdf211922f3de6433d0f62a3caf836f53b5ea8807b01be5153a5c7cae8",
+    "run/run/sql-debugging/host-memory.jsonl": "3dcfba0552bb69285cffa01fc10882b7b50bd4740e2a75e4041d70dd5b056966",
+    "run/run/sql-debugging/host-status-before_reset.txt": "a8d99712e5b458e6ff6e4b849a0844109685c85164c479bdd27cc1aacb9aa73e",
+    "run/run/sql-debugging/drm-memory-before_reset.txt": "979fad994a5b4f4ec904bec8b27cc50a5f86bf7fdb0a78017e621c154e67cb36",
+    "run/run/sql-debugging/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/sql-debugging/drm-memory-after_reset.txt": "7299a04d4949169f12b8f10fdd0c61fca5f37d95216abed9672148a373d27e9a",
+    "run/run/sql-debugging/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/sql-debugging/owner-cpu.json": "0be908d166ee2b658c4f095b156d01ece2370f517cab9a40cdba5da9e2968f3e",
+    "run/run/sql-debugging/result.json": "ca3694c4180a5391528709ac25df83913f49f4c8f28725ce2e5453a5d503d82a",
+    "run/run/sql-debugging/receipt.json": "ca3694c4180a5391528709ac25df83913f49f4c8f28725ce2e5453a5d503d82a",
+    "run/run/sql-debugging/prefill-timings.jsonl": "732cd17cb837b0ab47d984b20168ce35ac650219a34ae48f62001a2230dead5c",
+    "run/run/sql-debugging/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/sql-debugging/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/sql-debugging/host-status-after_reset.txt": "8085253082bc804cb8fe0a0bcab3c8d0bfa50736f48d438136368b0b6a071eb5",
+    "run/run/bug-report-synthesis/timings.jsonl": "a1ad25c83c24b0e2107dfb99bd768d8cd51669000e04a54c7033732ad3f4e63b",
+    "run/run/bug-report-synthesis/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/bug-report-synthesis/cache-stats.json": "87f8c67351406b5f9116f55fe23289ad5879ce09c1eebf4cdfb5b4d259aff130",
+    "run/run/bug-report-synthesis/host-memory.jsonl": "1479ec53d89cd8ae2beef83cb801d41c5b1ad7b7a5e42d8771082088ee046034",
+    "run/run/bug-report-synthesis/host-status-before_reset.txt": "22835c5437669c6dedee35abc069953fd16c023c8ee764c1f6954ee2d065d6e6",
+    "run/run/bug-report-synthesis/drm-memory-before_reset.txt": "b045529631e19616e8955e861a7fbde5fca5861346e7d84799fffa06e7a74cc1",
+    "run/run/bug-report-synthesis/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/bug-report-synthesis/drm-memory-after_reset.txt": "696694a6289790e13b2a2b2a7a27eab6d4bd3363de6ca7f1e9ea519f912f82f8",
+    "run/run/bug-report-synthesis/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/bug-report-synthesis/owner-cpu.json": "ce09886c14f4528b802eed9b9a585d45616ccfdde32f28babd1dd409061ca804",
+    "run/run/bug-report-synthesis/result.json": "be2b75eee4cebc599962521de53e16cbaf284cf530ba17d18c51c62fffe38030",
+    "run/run/bug-report-synthesis/receipt.json": "be2b75eee4cebc599962521de53e16cbaf284cf530ba17d18c51c62fffe38030",
+    "run/run/bug-report-synthesis/prefill-timings.jsonl": "8f204980be4ca17e1762700eb910a2b29478d5e698a6ce15940f403b80f916b3",
+    "run/run/bug-report-synthesis/first-prefill-progress.jsonl": "4409d6ccb403fb0465216e9e67e8a118e405effcba0d63868479ed3ce1cfc5e4",
+    "run/run/bug-report-synthesis/lookup-request-complete.json": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc",
+    "run/run/bug-report-synthesis/host-status-after_reset.txt": "cf6e975c6b84d707a9964e44e756da24e0e24a8c2b4f08315ace2ccab2703494",
+    "summary.json": "53e2a215e2940931f911e2e06ce2469358f8a97e859c7a3f6f576791d9a3ee76",
+    "kernel-before.jsonl": "f09c346e900d53043f7ccbfddb6ddb602778960c5811cb51be5019c8f4c67361",
+    "kernel-window.jsonl": "b6d6fbabf1db4604e1fbb522b9240bd4c101a75f266e25d07050630e66221f19"
+  },
+  "finished_utc_ns": 1792664439488851171
+}

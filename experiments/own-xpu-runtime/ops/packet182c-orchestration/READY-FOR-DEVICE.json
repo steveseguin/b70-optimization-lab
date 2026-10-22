@@ -1,0 +1,215 @@
+{
+  "schema": "packet182c-chain.ready-for-device.v1",
+  "packet": "packet182c-chain",
+  "revision": "derived:packet182c-chain",
+  "prepared_utc": "2026-10-22T09:47:14.543952+00:00",
+  "generator": "ops/onecard_chain_derive.py",
+  "preparation_passed": true,
+  "passed": true,
+  "ready_for_device": true,
+  "ready_for_device_chain": true,
+  "ready_for_coordinator_check": true,
+  "reason": "Derived from packet58aj-orchestration: parent chain harness and gates unchanged except --wait-policy spin --foreground-io kernel on every model window and the chain binary.",
+  "chain_binary_sha256": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+  "parent_chain_binary_sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c",
+  "coordinator_unit": "packet58-onecard-182-a",
+  "chain_unit": "packet58-onecard-182-a",
+  "chain_output": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a",
+  "fault_review": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/fault-review-182-a.json",
+  "chain_command": "systemd-run --user --unit=packet58-onecard-182-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2 /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/fault-review-182-a.json < /dev/null",
+  "chain_command_digest_sha256": "bb2c63e3e5ea004cf1ddd91e1b08d45079e91753ab375a8de164e1f13783e705",
+  "command_hash_encoding": "UTF-8, no trailing newline",
+  "windows": [
+    "K1a",
+    "K1b",
+    "KD",
+    "W2m",
+    "WS",
+    "WS128x",
+    "WS128"
+  ],
+  "gap_seconds": 90,
+  "wait_seconds": 300,
+  "lane": "A",
+  "card": 0,
+  "scope": "whole-host",
+  "configuration": {
+    "view": "down-tile16",
+    "cache_maintenance": "overlap",
+    "miss_path": "zero-copy",
+    "cache_cap": "max",
+    "cache_allocation_bytes": 21552729600,
+    "cache_bytes": 21552729600,
+    "kv_dtype": "BF16",
+    "context": 4096,
+    "hc": "p60fusion",
+    "hc_geometry": "hc-wide",
+    "experts": "wide64+halfcache",
+    "other_fusion": "fused",
+    "retirement": "ordered-foreground",
+    "lookups": "resident",
+    "chain_flags": {
+      "--wait-policy": "spin",
+      "--foreground-io": "kernel"
+    },
+    "wait_policy": "spin",
+    "foreground_io": "kernel"
+  },
+  "chain_flags": {
+    "--wait-policy": "spin",
+    "--foreground-io": "kernel"
+  },
+  "whole_host_hold_required_through_gaps": true,
+  "both_lanes_pause_and_drain_required": true,
+  "codex_frozen_from": "WS",
+  "codex_frozen_through": "WS128 completion",
+  "bracket_rates_tok_s": [
+    34.57910623805567,
+    35.95076365169899,
+    34.58970601556338,
+    35.95451222823236,
+    34.583575727764426
+  ],
+  "control_drift_fraction": 0.00017726009153045663,
+  "minimum_gain": 0.03934863266901466,
+  "candidate_beats_all_controls": true,
+  "bracket_exact_requests": 60,
+  "pinned_predecessor": {
+    "reference_submission": "cmvf31py400furf01tv54rxo7",
+    "threshold_tok_s": 34.57303759192858
+  },
+  "submission_scope_tokens": 128,
+  "strict512_claim": false,
+  "fresh_timing_repeat_passed": false,
+  "chain_native_interface_passed": true,
+  "bracket_boot_check": "current-boot",
+  "preparation_ram_budget_bytes": 2000000000,
+  "files_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/build-receipt.json": "968318305259fb1393a8169db426c915c680361fc49f95dca170ee6b346c047d",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/submission-pins.json": "94b0ad6a129fa4687f445d2eebda5748fa16983a5cf89aeab9e3eb0d0c0edad5",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/ready.json": "e3bac292c7446c298daf86d6c118e8b654d2eb9805f33c933c9b2edfadf01c48",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/WINDOW.md": "cffa6e2c10ebdcfb16c281256071a142fcee9f4ca42598c87899a2a999038a3e",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/runtime-selection.json": "e11fa9f8f221af7fbe73d9b1215df0af113ba40b4c2ba98dee9ff291cbdbd421",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/submission-policy.json": "f6f8fa372a7cdc3df6caeda75bc4b4ec4cc6fbfcc81cd5b4eb758dc34b53e492",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/record-threshold.snapshot": "6000b7a273179a39c7a9ab55f6772b59d0dba8597f181ab36899a1565ae631cd",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/derived-chain.json": "e8a0ea9c66d5e5712290f1257b5e9ef02657f033f56bf4d2bc3f1f2182a1bb45",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/seal.py": "9f8b7cdf602c202be3f72cb59f57fc8b999a6c44026ed2bfe7df17fc7ebcace9",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/verify_ready.py": "7d36ff3228e3b70903cb9b909c36b490cb4887d8cdef663239d134dddd942cb9",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/fault_review.py": "1c131cf0230787ad68dd82dc9a0247589e4c44b960f3aa81244efff0cec0dded",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/chain-flags.json": "f77f82ba71158745f6e19bc9f7cb527ed3cdf948546fb20d65203667245e1d3c"
+  },
+  "orchestration_provenance": [
+    {
+      "name": "entry-proposal.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet182c-orchestration/entry-proposal.jsonl",
+      "parent_digest": "218bd21ad18942e8aa227a1ca3b4b9449d84ddc6bf32eb87bda958400856c25c"
+    },
+    {
+      "name": "queue-plan.log",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet182c-orchestration/queue-plan.log",
+      "parent_digest": "eb3b17885c8613888dab6e491bd5f9796fc65184e22c6cda885b05a7578fc2fc"
+    },
+    {
+      "name": "help.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet182c-orchestration/help.json",
+      "parent_digest": "3abebc0dab3205af67769214adadbf460335171e3cc2b6e6184f96348d6795ee"
+    },
+    {
+      "name": "predevice-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet182c-orchestration/predevice-rehearsal.json",
+      "parent_digest": "cc1e30a2ae8819daef9cea575bdb87c9d9c49ab59e6c9713a5db875852686e21"
+    },
+    {
+      "name": "postnative-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet182c-orchestration/postnative-rehearsal.json",
+      "parent_digest": "70ec72430f04a9bab10821e50bfaeaf1e8932f46340c58bedd81c7eb4ee36f38"
+    },
+    {
+      "name": "onecard_chain_derive.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet182c-orchestration/onecard_chain_derive.py",
+      "parent_digest": "19d528a62cd5362d45e3947f69170bbbc42b348055dcf85d0a570da832895c7e"
+    }
+  ],
+  "parent_provenance": [
+    {
+      "name": "READY-FOR-DEVICE.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58aj-orchestration/READY-FOR-DEVICE.json",
+      "parent_digest": "c28edd6173f9c10e4ef272d9d5626f5aa7d75f3049fe718896eaca7331d017df"
+    },
+    {
+      "name": "build-receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build-receipt.json",
+      "parent_digest": "f50f72ef2fb6df76ffa1fd70ae3c437180fe65feb8728b1ce829cc3706090723"
+    }
+  ],
+  "pin_audit": {
+    "passed": true,
+    "manifests": 41,
+    "relocated": 275,
+    "parent_pins": 0,
+    "lanequeue_plan": "passed (temporary queue dir)"
+  },
+  "confirmation_run": false,
+  "confirmation": null,
+  "predevice_rehearsal": {
+    "passed": true,
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ],
+    "boundaries": {
+      "K1a": "output directory creation",
+      "K1b": "output directory creation",
+      "KD": "previous-window prerequisite K1",
+      "W2m": "previous-window prerequisite KD",
+      "WS": "previous-window prerequisite W2m",
+      "WS128x": "previous-window prerequisite WS",
+      "WS128": "previous-window prerequisite WS128x"
+    },
+    "simulated": [
+      "priority",
+      "affinity",
+      "user_unit_gate"
+    ]
+  },
+  "runtime_closure_check": {
+    "passed": true,
+    "checked": 84,
+    "copied_dirs": [
+      "selections",
+      "frozen-inputs",
+      "host-admission",
+      "native",
+      "lineage",
+      "screen-reader"
+    ]
+  },
+  "postnative_rehearsal": {
+    "passed": true,
+    "evidence": "experiments/own-xpu-runtime/ops/packet176c-orchestration/postnative-rehearsal.json",
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ]
+  },
+  "chain_quality_pending": true,
+  "chain_performance_pending": true,
+  "no_retry": true,
+  "queued": false,
+  "device_executed": false,
+  "services_started": false,
+  "model_payload_reads": false,
+  "live_queue_changed": false,
+  "submission_performed": false,
+  "final_content_write": true
+}
