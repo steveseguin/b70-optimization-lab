@@ -114,9 +114,9 @@
   },
   "commands": {
     "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 EXPECTED_XPU_EXTENSION_SHA256=bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932 EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-    "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+    "launch": "MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
     "health": "curl -fsS http://127.0.0.1:18134/health",
-    "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+    "benchmark": "BASE_URL=http://127.0.0.1:18134 OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
     "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
   },
   "dependencies": [
@@ -222,7 +222,16 @@
     "experiments/qwen38-27b-b70/scripts/test_summarize_prefill_followup.py",
     "experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
     "experiments/qwen38-27b-b70/data/2026-09-13-prefill-followup-corpus.json",
-    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-trace-analysis.json"
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-trace-analysis.json",
+    "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
+    "tools/container-packet/download-model.sh",
+    "tools/container-packet/preflight.sh",
+    "tools/container-packet/smoke-test.sh",
+    "tools/container-packet/verify.sh",
+    "tools/render-container-packet.sh",
+    "tools/render-container-compose.py"
   ],
   "performance_profiles": [
     {

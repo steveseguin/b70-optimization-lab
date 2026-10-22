@@ -884,7 +884,8 @@
         "data/profiles/2026-10-10/gemma-sweep/single-16k-draft2.json",
         "data/profiles/2026-10-10/gemma-sweep/single-16k-draft4.json",
         "data/profiles/2026-10-10/gemma-sweep/single-16k-draft5.json",
-        "tools/gemma4-26b-sweep-to-package.py"
+        "tools/gemma4-26b-sweep-to-package.py",
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/docker"
       ],
       "evidence": [
         "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
@@ -5391,7 +5392,8 @@
         "docs/neural-download-packet-standard.md",
         "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json",
         "scripts/bench-openai-realistic-suite.py",
-        "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json"
+        "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+        "data/qwen38-27b-256k-package-operating-points-20260822.json"
       ],
       "missing": [
         "tested clean-host platform installation",
@@ -5516,9 +5518,9 @@
       },
       "commands": {
         "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 EXPECTED_XPU_EXTENSION_SHA256=bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932 EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-        "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+        "launch": "MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
         "health": "curl -fsS http://127.0.0.1:18134/health",
-        "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "benchmark": "BASE_URL=http://127.0.0.1:18134 OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
         "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
       },
       "dependencies": [
@@ -5624,7 +5626,16 @@
         "experiments/qwen38-27b-b70/scripts/test_summarize_prefill_followup.py",
         "experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
         "experiments/qwen38-27b-b70/data/2026-09-13-prefill-followup-corpus.json",
-        "experiments/qwen38-27b-b70/data/2026-09-14-prefill-trace-analysis.json"
+        "experiments/qwen38-27b-b70/data/2026-09-14-prefill-trace-analysis.json",
+        "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
+        "tools/container-packet/download-model.sh",
+        "tools/container-packet/preflight.sh",
+        "tools/container-packet/smoke-test.sh",
+        "tools/container-packet/verify.sh",
+        "tools/render-container-packet.sh",
+        "tools/render-container-compose.py"
       ],
       "performance_profiles": [
         {
@@ -6906,7 +6917,13 @@
         "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_chunked_upload.py",
         "experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
-        "repro/qwen38-27b-autoround-int4-b70/publication-manifest.json"
+        "repro/qwen38-27b-autoround-int4-b70/publication-manifest.json",
+        "tools/container-packet/download-model.sh",
+        "tools/container-packet/verify.sh",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+        "experiments/qwen38-27b-b70/scripts/bench-prefill-followup.py",
+        "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py",
+        "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/corpus.json"
       ],
       "performance_profiles": [
         {
@@ -7903,7 +7920,12 @@
         "data/2026-10-20-fp8-one-launch-prefill/evidence.tar.gz",
         "tools/extract-fp8-one-launch-prefill.py",
         "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/source-drift.json",
-        "tools/source_drift_proofs.py"
+        "tools/source_drift_proofs.py",
+        "tools/container-packet/download-model.sh",
+        "tools/container-packet/preflight.sh",
+        "tools/container-packet/smoke-test.sh",
+        "tools/container-packet/verify.sh",
+        "tools/render-container-compose.py"
       ],
       "performance_profiles": [
         {
@@ -9689,7 +9711,9 @@
         "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64",
         "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64",
         "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64",
-        "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64"
+        "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/restore-and-build.sh",
+        "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh"
       ],
       "known_limitations": [
         "The 64.237301 tok/s headline is short-context, one-user evidence with 8K configured context. Target-only TP2 and one-card MTP2 context or concurrency values do not transfer.",
@@ -11016,7 +11040,12 @@
         "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64",
         "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64",
         "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64",
-        "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64"
+        "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64",
+        "scripts/compare-strict-attempt-outputs.py",
+        "scripts/bench-openai-realistic-suite.py",
+        "scripts/neural-download-canaries.py",
+        "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+        "scripts/qwen38-text-quality-suite.py"
       ],
       "missing": [
         "tested clean-host Intel driver and oneAPI installation",
