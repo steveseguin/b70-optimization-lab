@@ -1,0 +1,21 @@
+{
+  "schema": "packet187.policy.v1",
+  "arithmetic": "iq3-p49-split32-v1",
+  "bundle": "bundle8 + packet153 snapshot_host=static + packet186 V3 (full target head on rank 1; rank 0 runs GDN layers 24-25 for the verified token; rank 1 from layer 26); probe=off, dense_scales=expanded",
+  "coordinator_idle_lane_exception_authorized": false,
+  "authorization": "Coordinator ruling 2026-10-22 after packet186: V3 meets the normal +2% record-chain rule (s186_decision chain_rule_met: V3 60.533/60.573 vs split-head controls 58.595/58.441, +3.31%; >= 59.974). Treat the chain rule as met unless the second control exceeded 59.37 (it measured 58.441). This admits a chain, never a record claim.",
+  "screen_minimum_gain_percent": 2.0,
+  "screen_maximum_control_drift_percent": 3.0,
+  "record_floor_tok_s": 58.798109,
+  "supersedes": "cmve4dtir007wrf01k57sdf23",
+  "chain_lane": "A",
+  "cards": [0, 1],
+  "output_tokens": 128,
+  "strict512": false,
+  "device_floor_bytes": 25000000000,
+  "cpu_stop_bytes": 27000000000,
+  "host_required_available_bytes": 107667817956,
+  "host_queue_start_extra_bytes": 1073741824,
+  "admission": "all three owner endpoints stopped; PAUSE-B kept for the whole chain; PAUSE-A archived (never deleted) only for the chain",
+  "data_proof": "stream presence, format and exactness only; no elapsed-time proof limit"
+}

@@ -1,0 +1,198 @@
+--- a/window.py
++++ b/window.py
+@@ -3,6 +3,8 @@
+ import argparse,gzip,hashlib,json,math,os,re,signal,subprocess,time
+ from pathlib import Path
+ import pipeline as pp
++from chain_devices import mask_native, private_home
++from window_adapter import run_window, verify_receipt
+ from pipeline import P,save,sha,require,Transport,CANARY,SLOT
+ from window_safety import environment_gate,memory_snapshot
+ from fixture_support import journal,ldd_preflight,oracle_gate,fixture_receipt_gate,k1_gate,sequential_teardown
+@@ -25,39 +27,14 @@
+     require(max(300,math.ceil(4*(expected+17)))<=seconds<=172800,'watchdog below four times estimate/300s or above 172800s')
+     return seconds
+ 
+-def foreign_engines(proc=Path('/proc')):
+-    """Read-only fdinfo samples, no DRM device opens/discovery.
+-
+-    Conservatively reserve the whole host: any visible foreign engine growth
+-    blocks admission, even outside the chosen adjacent pair. Record unreadable
+-    process counts; this cannot inspect private clients of another UID.
+-    """
+-    def sample():
+-        values={};unreadable=0
+-        for pid in proc.iterdir():
+-            if not pid.name.isdigit():continue
+-            try:paths=list((pid/'fdinfo').iterdir())
+-            except (PermissionError,FileNotFoundError):unreadable+=1;continue
+-            for f in paths:
+-                try:text=f.read_text()
+-                except (PermissionError,FileNotFoundError,ProcessLookupError):continue
+-                lines=dict(line.split(':',1) for line in text.splitlines() if ':' in line)
+-                pci=lines.get('drm-pdev','').strip();client=lines.get('drm-client-id',f.name).strip()
+-                for key,value in lines.items():
+-                    if key.startswith('drm-engine-') and not key.startswith(('drm-engine-capacity','drm-engine-cycles')):
+-                        try:values[(pid.name,pci,client,key)]=int(value.split()[0])
+-                        except (ValueError,IndexError):raise ValueError('unparsed DRM engine counter')
+-        return values,unreadable
+-    before,u0=sample();time.sleep(.25);after,u1=sample()
+-    active=[dict(pid=k[0],pci=k[1],engine=k[3],delta_ns=v-before.get(k,0)) for k,v in after.items() if v>before.get(k,0)]
+-    require(not active,'foreign engine activity: '+str(active))
+-    return dict(active=active,scope='whole-host conservative',unreadable_processes=max(u0,u1),sample_seconds=.25)
+ class Watch:
+-    def __init__(self,out,boot,seconds):
++    def __init__(self,out,boot,seconds,admission=None):
++        self.admission=admission
+         self.out=out;self.boot=boot;self.end=time.monotonic()+seconds;self.last=0.;self.cancelled=[];self.launched=[];self.cpu_children=[];self.new_gpu_fault=False
+         text,self.cursor=journal();(out/'kernel-preflight.txt').write_text(text)
+     def mark_launched(self,pid):
+         self.launched.append(int(pid))
++        if self.admission:self.admission.register(int(pid))
+     def mark_cpu_child(self,child):
+         # Keep the actual process handle: poll distinguishes exit from PID reuse.
+         # CPU ownership never counts as device contact for the fault latch.
+@@ -93,6 +70,7 @@
+         if fault:raise ValueError('GPU fault signature')
+     def check(self):
+         self.poll_kernel()
++        if self.admission:self.admission.check()
+         require(not self.cancelled,'coordinator stop requested')
+         require(time.monotonic()<self.end,'window watchdog')
+     def postflight(self):
+@@ -202,6 +180,7 @@
+ def prerequisites(path,name,identity,*,cpu_rehearsal=False):
+     require(path is not None,'missing prerequisite '+name)
+     row=json.loads(path.read_text());require(row.get('device_executed') is True or (cpu_rehearsal and row.get('cpu_rehearsal') is True),'CPU rehearsal cannot authorize device work');require(row.get('passed') is True and row.get('window')==name,'failed prerequisite '+name)
++    if not cpu_rehearsal:verify_receipt(row)
+     diagnostic=bool(identity.get('diagnostic_unsealed'))
+     require(bool(row.get('diagnostic_unsealed'))==diagnostic,'diagnostic prerequisite mode differs')
+     require(row.get('qualifying') is False if diagnostic else row.get('qualifying') is not False,'prerequisite qualification mode differs')
+@@ -399,7 +378,7 @@
+         require(a.suite_manifest is not None and a.suite_manifest.resolve()==(P/'oracle/results/suite-manifest.json').resolve(),'packet49 completed suite authority required')
+     return binding
+ 
+-def main(*,cpu_rehearsal=False):
++def main(*,cpu_rehearsal=False,admission=None):
+     # Internal test seam only: no CLI switch can authorize or select this path.
+     from functools import partial
+     prerequisite=partial(prerequisites,cpu_rehearsal=cpu_rehearsal)
+@@ -408,6 +387,7 @@
+     p.add_argument('--max-new',type=int);p.add_argument('--retain-steps');p.add_argument('--exactness-window',type=Path)
+     for name in ('output','input','oracle','dispatch','k0','k1a','k1b','k2','w0p','kd'):p.add_argument('--'+name,type=Path,required=name=='output')
+     a=p.parse_args();a.cpu_rehearsal=cpu_rehearsal
++    require(cpu_rehearsal or admission is not None,'device entry requires lane admission')
+     require(not a.diagnostic_unsealed,'packet49 requires its scoped CPU/build seal');require(a.card==0 and a.context==4096 and a.draft_rank==1 and a.target_split==23,'packet49 sealed scope is cards01 context4096 dr1 split23')
+     oracle_binding = admit_oracle(a,cpu_rehearsal=cpu_rehearsal)
+     from memory_gate import configuration
+@@ -428,6 +408,7 @@
+     if a.window in ('W2m-exact','WS64x'):require(set(pp.retention_steps('1-8',a.max_new))<=set(retained_steps),'exactness needs available steps1-8')
+     if a.window=='WS128x':require(set(pp.retention_steps('1-8,97-104',a.max_new))<=set(retained_steps),'exactness needs available steps1-8,97-104')
+     environment=environment_gate();require(environment['native']['OMP_NUM_THREADS']=='2','OMP_NUM_THREADS=2')
++    if admission:environment['native']=mask_native(environment['native'])
+     nice=0 if a.window.startswith('W') and not cpu_rehearsal else 19;require(os.getpriority(os.PRIO_PROCESS,0)==nice,'W windows need a nice-0 parent; K windows nice19')
+     scale=a.repeat if a.window in SUITE_WINDOWS else 1
+     expected=(estimated_seconds(a.context) if a.window=='K2' else CONFIG[a.window][0])*scale+17
+@@ -507,19 +488,24 @@
+     if a.dispatch:validate(json.loads(a.dispatch.read_text()))
+     request_count=(1+len(manifest.get('requests',manifest.get('prompts',[])))*a.repeat) if a.window in SUITE_WINDOWS else 1
+     record['storage_admission']=admit_output(out,projected_write_bytes(a.window,request_count,a.context,len(retained_steps)))
+-    record['foreign_engine_admission']=foreign_engines();out.mkdir(parents=True)
++    if admission:admission.check()
++    record['foreign_engine_admission']=admission.record['clients'] if admission else {'scope':'cpu-rehearsal'}
++    record['timing_claim_eligible']=bool(admission and admission.scope=='whole-host')
++    out.mkdir(parents=True)
++    native_env=private_home(environment['native'],out/'driver-home') if admission else environment['native']
++    record['execution_environment']=native_env
+     if a.diagnostic_unsealed:
+         record.update(MARKERS,diagnostic=True,diagnostic_for_speed=True)
+         save(out/'DIAGNOSTIC-UNSEALED.json',dict(MARKERS,reason='Unsealed diagnostic; never submission, publication or promotion evidence',artifacts_sha256=artifacts))
+     save(out/'window.json',record)
+-    watch=Watch(out,boot,seconds);old={s:signal.signal(s,lambda n,f:watch.cancelled.append(n)) for s in (signal.SIGTERM,signal.SIGINT)}
++    watch=Watch(out,boot,seconds,admission);old={s:signal.signal(s,lambda n,f:watch.cancelled.append(n)) for s in (signal.SIGTERM,signal.SIGINT)}
+     try:
+         save(out/'window.json',record)
+         if a.window=='KD':
+             from draft_window import run as run_draft
+-            record['receipts'],record['pids']=run_draft(a,out,environment['native'],watch,build,cpu_rehearsal=cpu_rehearsal)
++            record['receipts'],record['pids']=run_draft(a,out,native_env,watch,build,cpu_rehearsal=cpu_rehearsal)
+         elif a.window.startswith('K'):
+-            record['receipts']=run_fixtures(a,out,environment['native'],watch)
++            record['receipts']=run_fixtures(a,out,native_env,watch)
+             record['pids']=json.loads((out/'children.json').read_text())['pids']
+             if a.window=='K0':
+                 for rank in (0,1):
+@@ -557,21 +543,22 @@
+                     record['rank_dispatches'][str(rank)]=dict(path='run0/'+name,sha256=sha(path),measurement_card=a.card,rank_card=a.card+rank,scope='SPEED6 pinned non-QSA dispatch with fresh one-card K2 exactness; target QSA overridden by split32')
+         else:
+             args=pp.parser().parse_args(['--output',str(out/'run')]);args.binary=B/('gnu-host' if cpu_rehearsal else 'device')/'own-rt-iq3';args.device=not cpu_rehearsal;args.native_nice=19 if cpu_rehearsal else 0;args.mini=cpu_rehearsal
++            args.lane_ready=admission.ready if admission else None
+             args.selection_sha256=build['selection']['selection_sha256']
+             args.controller=a.controller;args.prompt_overlap=a.prompt_overlap;args.card=a.card;args.seconds=seconds;args.wait_seconds=600;args.context=a.context;args.draft_rank=a.draft_rank;args.target_split=a.target_split;args.tokens=a.max_new;args.retain_steps=a.retain_steps;args.input=a.input;args.oracle=None if cpu_rehearsal else a.oracle;args.dispatch=a.dispatch;args.timing='class' if a.window in ('W2c','W2mc') else 'token'
+             record['ldd_preflight']=ldd_preflight(args.binary)
+-            if a.window=='W0p':concurrency_canary(args,out,environment['native'],watch)
++            if a.window=='W0p':concurrency_canary(args,out,native_env,watch)
+             elif a.window in SUITE_WINDOWS:
+                 args.suite_manifest=a.suite_manifest;args.repeat=a.repeat;args.draft='mtp' if a.window in MTP_WINDOWS else 'none'
+                 args.controller=a.controller
+-                r=pp.run(args,environment['native'],watch.check,watch.latch,watch.mark_launched)
++                r=pp.run(args,native_env,watch.check,watch.latch,watch.mark_launched)
+                 record.update(summary=r,decode_tok_s=r['decode_median_tok_s'],submission_tok_s=r['class_balanced_tok_s_1_100_intervals_after_ttft']['median'])
+                 require(r['passed'],'one or more suite requests failed exactness')
+             else:
+                 args.draft={'W2s':'none','W2n':'ngram','W2d':'script','W2x':'script','W2c':'ngram','W2m':'mtp','W2mc':'mtp','W2m-speed':'mtp','W2m-exact':'mtp'}[a.window]
+                 if a.window in ('W2d','W2x'):
+                     args.script=out/'DIAGNOSTIC-oracle-guesses.txt';args.script.write_text(' '.join(map(str,expected[:63] if a.window=='W2d' else [(token+1)%248320 for token in expected[:63]])))
+-                r=pp.run(args,environment['native'],watch.check,watch.latch,watch.mark_launched);require(r['tokens']==expected,'every-token oracle mismatch')
++                r=pp.run(args,native_env,watch.check,watch.latch,watch.mark_launched);require(r['tokens']==expected,'every-token oracle mismatch')
+                 if a.window in ('W2d','W2x'):
+                     require(r['stats']['guesses']==len(r['tokens'])-1 and r['stats']['hits']==(len(r['tokens'])-1 if a.window=='W2d' else 0),'diagnostic all-hit/all-miss pattern mismatch')
+                 observed={}
+@@ -598,4 +585,13 @@
+         except Exception as error:record.update(retention_error=str(error),raw_evidence_retained=True)
+     if a.diagnostic_unsealed:record.update(MARKERS,diagnostic=True,diagnostic_for_speed=True)
+     save(out/'window.json',record);return 0 if record['passed'] else 1
+-if __name__=='__main__':raise SystemExit(main())
++def coordinated_main():
++    # Capture a fresh boundary before waiting for the current B screen.
++    _,cursor=journal()
++    def wait_check():
++        nonlocal cursor
++        text,cursor=journal(cursor)
++        require(not FAULT.search(text),'fresh GPU fault during admission wait')
++    return run_window(main,wait_check=wait_check)
++
++if __name__=='__main__':raise SystemExit(coordinated_main())
+--- a/pipeline.py
++++ b/pipeline.py
+@@ -290,7 +290,7 @@
+             require("LD_LIBRARY_PATH" not in env or env["LD_LIBRARY_PATH"]==os.environ["LD_LIBRARY_PATH"],"coordinator LD_LIBRARY_PATH changed")
+             env["LD_LIBRARY_PATH"]=os.environ["LD_LIBRARY_PATH"]
+         for rank in range(2):
+-            rank_home=P/"build"/"driver-cache"/("rank"+str(rank));rank_home.mkdir(parents=True,exist_ok=True)
++            rank_home=out/"driver-cache"/("rank"+str(rank));rank_home.mkdir(parents=True,exist_ok=False)
+             cache_warm=any(f.is_file() for f in rank_home.rglob("*"))
+             env["HOME"]=str(rank_home)
+             parent,child=socket.socketpair();parent.setblocking(False);self.sockets.append(parent)
+@@ -319,6 +319,7 @@
+             if launch_hook:launch_hook(proc.pid)
+             save(out/f"rank{rank}-launch.json",dict(argv=cmd,pid=proc.pid,environment=env,device_executed=self.device,cpu_affinity=sorted(os.sched_getaffinity(0)),native_nice=args.native_nice,driver_cache_home=str(rank_home),driver_cache_files_present_before=cache_warm,driver_cache_hit="unobservable; files present is not proof of a hit"))
+         for rank in range(2):self.receive(rank,args.seconds,ready=True)
++        if self.device and getattr(args,"lane_ready",None):args.lane_ready([p.pid for p in self.children])
+         if self.device and not args.mini and not getattr(args,"canary",False):
+             from memory_gate import check as admit, snapshot
+             ledger=json.loads((P/"memory-plan.json").read_text())
+--- a/queue_runner.py
++++ b/queue_runner.py
+@@ -103,9 +103,11 @@
+ 
+ 
+ def validate_success(name, out, rc):
++    from window_adapter import verify_receipt
+     if rc:
+         raise RuntimeError(f'{name} exited {rc}; no retry')
+     row = json.loads((out / name / 'window.json').read_text())
++    verify_receipt(row)
+     expected = {'window': name, 'passed': True, 'device_executed': True,
+                 'qualifying': True, 'card': 0, 'context': 4096, 'draft_rank': 1, 'target_split': 23}
+     if any(type(row.get(key)) is not type(value) or row.get(key) != value for key, value in expected.items()):

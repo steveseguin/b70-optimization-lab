@@ -1,0 +1,92 @@
+{
+ "schema": "packet187.final-checks.v1",
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "submitted": false,
+ "binary_sha256": "693cc194bb577cd20f95e63f06bf6e463074944e2d1193f8c3ed1a8a4528d739",
+ "reused_byte_for_byte": true,
+ "relinked": false,
+ "compiler_runs": 0,
+ "cpu": {
+  "passed": true,
+  "device_executed": false,
+  "receipt_sha256": "06bb7112d747b2ce60c56d57185cbd3f4ed3b0a97433249eb2db6d178adf6056",
+  "seal_sha256": "f6207449118c5ef6edfbdcbc5a74fb5aec7a989ec2936fd894df871a9e1314a4"
+ },
+ "census_bytes_per_rank": [
+  30245049064,
+  31581735626
+ ],
+ "w0p_handovers": 1000,
+ "entry_windows": 11,
+ "bracket": {
+  "slower_v3_rate": 60.532554891070376,
+  "gain_vs_split_percent": 3.306394903877785,
+  "gain_vs_all_percent": 3.306394903877785,
+  "record_bar": 59.974070934365955,
+  "evidence_files": 169
+ },
+ "notes_chars": 1171,
+ "pin_guard_before_ready": {
+  "check_job": [
+   {
+    "job": "packet187-chain-A",
+    "passed": true,
+    "pins": 917,
+    "manifests": 37
+   }
+  ],
+  "collected_pins": 917,
+  "manifests": 37,
+  "ready_in_closure": [],
+  "classes": {
+   "hash-pinned parent binary": 78,
+   "packet-private": 805,
+   "oracle-binding.json target": 7,
+   "frozen v4 wrappers": 27
+  },
+  "cross_packet_mutable_pins": 0,
+  "cross_examples": []
+ },
+ "private_plan": {
+  "returncode": 0,
+  "rows": [
+   {
+    "name": "packet187-chain-A",
+    "plan": "unsupported; static argv/environment checks only",
+    "storage_admission": {
+     "planned_write_bytes": 3324718708,
+     "reservation_source": "proposal",
+     "root_free_bytes": 31510331392,
+     "required_free_bytes": 28324718708,
+     "free_floor_bytes": 25000000000,
+     "passed": true
+    },
+    "host_required_available_bytes": 107667817956
+   }
+  ],
+  "live_queue_modified": false,
+  "lanequeue": "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+  "lanequeue_sha256": "010d83445665cf93641901c845e28ccc36ef41909d2171ccc2f877509eaffe25",
+  "applicability": "informative only: the chain is launched by launch_chain.sh (systemd unit packet187-chain-a), never appended to queue-A"
+ },
+ "guard_layout_receipt": "experiments/own-xpu-runtime/stage2/packet187-record-bundle-v3/lineage/packet187-guard-layout.json",
+ "guard_layout_moves": [
+  "calibration",
+  "parent-snapshot",
+  "prefix-calibration"
+ ],
+ "lane_state_observed": {
+  "pause_files": [
+   "PAUSE-A",
+   "PAUSE-B"
+  ],
+  "queue_files": [
+   "queue-A.txt",
+   "queue-B.txt"
+  ],
+  "note": "observed only; never written by preparation"
+ },
+ "root_free_bytes": 31510343680
+}
