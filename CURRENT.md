@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 21, 23:34 EDT — campaign 51 complete and read; ctxkeeper 1.3.0.dev1 carries two levers; campaign 52 registered.**
+Seed 2 (rerun c51b) answered 402 of 423 in 85 min: 16 answers were lost when the model overwrote its own answers
+file at the third probe batch (a client slip, not the keeper's), and the notes held a struck-off counter at its old
+value for ten versions. Campaign 51 did not meet its registration on either seed. Its read gives two keeper levers,
+both measured by replaying the four audited 2M sessions before any run: a STATE change written as "old set to new"
+is now stored as the new value (six of seed 0's ten wrong lines), and a new asked-once check (`--set-check`) names a
+set or removal the turns state for a counter that none of its lines takes (the other four of seed 0, one of campaign
+49's, and seed 2's ten-version line). Both are in 1.3.0.dev1 with tests (144 pass). Campaign 52, both seeds on arm
+K32V, is registered in the hostile note with predictions and starts next; nothing else runs on this host while it
+does. The cards are empty between runs. Records: `experiments/qwen38-27b-b70/data/2026-10-20-context-campaign51/`
+and the campaign-51/52 sections of `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`.
+
 **October 21, late evening EDT — one-card device window ran: packet178 portable rebuild and packet179 checkpoint both qualified on device.**
 The window approved at ~15:40 had not actually run (PAUSE-A latch + a session-bound runner; the
 daily endpoints were down 6 h for nothing) and both packets were refused by the lane queue's pin

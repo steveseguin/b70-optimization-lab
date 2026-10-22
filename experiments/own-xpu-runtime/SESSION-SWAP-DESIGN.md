@@ -15,6 +15,14 @@ to a restored prefix, restoring and then saving again, a cheap metadata-only
 inspect, and a shared save/restore/delete lock are follow-ups (§10, item 0).
 Where this document described those as present, the text below now says what
 is implemented and what is pending; the gates in §7 are unchanged.
+**Device result (2026-10-22 UTC, four-card host, lane A unit lanequeue-A34):**
+§7 gates 1-4 passed for the same-generation operation on the pin-closed packet179
+engine (`064452363`): save at K=256 (1.10 s, 68.8 MB, 20 blobs), two fresh-process
+restores each decoding M=128, merged 384 tokens == the uninterrupted reference at
+[0:384), repeat restores identical, oracle-128 exact; restore 0.46 s against a
+36.75 s cold prefix. Receipts at `8bf76113f`. The manifest keeps
+`label: "experimental"` until an engine revision changes the string; the
+integration gaps in §10 item 0 are unchanged by this result.
 
 ## 1. Scope
 
@@ -192,7 +200,8 @@ Reusing the packet165 harness disciplines (`measurement.py` stream checks,
 fresh-process repeat equality):
 
 1. **Restart-and-continue (correctness), labeled "same-generation
-   save/restart/resume" in receipts:** run a request to token K (natural
+   save/restart/resume" in receipts; passed on device 2026-10-22 (`8bf76113f`):**
+   run a request to token K (natural
    exit at `--max-new K`, full receipts and drain proof — stronger evidence
    than a kill), save, start a fresh process, restore, decode M more tokens.
    The merged K+M stream must equal, bit-for-bit, an uninterrupted

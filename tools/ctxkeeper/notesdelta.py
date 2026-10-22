@@ -739,6 +739,16 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                                             + (f" from the value the NOTES hold, {held}" if held is not None else ""))
                 else:
                     used.setdefault(name, set()).add(now)
+            if now is not None and now != held and len(info["mismatch"]) == asked and not several:
+                # `53 set to -39 (item 169)`: the keeper reads the last number (number_of) and stores the line as that
+                # value with its remarks. Stored as written, a reader of the STATE (and the release audit, which takes
+                # the first number) sees the old value: campaign 51 seed 0 (2026-10-20) stored six such lines, each
+                # scored wrong although the right value ended each of them. Working (`=`) and arrows are other paths.
+                bare_set = ITEM_NUMBERS.sub(" ", re.sub(r"\([^()]*\)", " ", value))      # brackets of every kind set aside
+                if "=" not in bare_set and len(re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", bare_set)) > 1:
+                    remarks = " ".join(re.findall(r"\([^()]*\)", value))
+                    info["restated_sets"] = info.get("restated_sets", 0) + 1
+                    value = f"{now} {remarks}".strip()
         if said_set and len(info["mismatch"]) == asked:
             info["mismatch"].append(set_question)
         if several and strict and near is not None and len(info["mismatch"]) == asked:
@@ -905,6 +915,98 @@ COUNT_RETRY = ("The turns mention these names more often than your CHANGES accou
                "wrote for every other name stand; do not repeat them. (A full re-listing of every line runs long and has "
                "been cut off by the token cap: campaign 49d, 2M, seed 2, where the names this question named then kept "
                "stale values for six to ten NOTES versions.)")
+
+# A sentence of the turns that states a set for a name: `The clerk recorded didoyo44 at minus fourteen.`, `abcd12 was
+# set to 445.`, `A new page was started for sahi47, at five hundred and eighty.`; never a question. The value is the one
+# number after `at`/`to`, up to the next comma, semicolon or `then`.
+SET_STATED = re.compile(r"\b(?:set|reset|recorded|opened|reopened|stands|stand|started|came onto the books|new page)\b.*?\b(?:at|to)\b\s*(.*)$", re.I)
+
+
+def sets_stated(names: list[str], texts: list[str]) -> dict[str, dict[int, str]]:
+    """For each name: {set value: the sentence that states it}, from a sentence that names it, or the one right after
+    when that one begins with `It` and names nothing. Campaign 51 seed 0 (2026-10-20): "The clerk recorded didoyo44 at
+    minus fourteen" was booked as a loss of 14 and the counter ran three versions wrong; campaign 49d seed 2: "roru25
+    was set to four hundred and forty-five" was skipped and 349 stood (the version-44 cluster)."""
+    want, out = set(_checked(names)), {}
+    for t in texts:
+        sents = _sentences(t)
+        for i, sent in enumerate(sents):
+            here = want & set(re.findall(r"[a-z0-9_]+", sent.lower()))
+            if not here:
+                continue
+            cands = [sent]
+            if (i + 1 < len(sents) and re.match(r"\s*Its?\b", sents[i + 1])
+                    and not want & set(re.findall(r"[a-z0-9_]+", sents[i + 1].lower()))):
+                cands.append(sents[i + 1])
+            for c in cands:
+                if "?" in c or c.lstrip().startswith(("ASK", "QUERY", "GET", "PROBE")):
+                    continue
+                m = SET_STATED.search(c)
+                if not m:
+                    continue
+                nums = numbers_in(re.split(r",|;|\bthen\b", m.group(1), 1)[0], True)
+                if len(nums) == 1:
+                    for n in here:
+                        out.setdefault(n, {}).setdefault(next(iter(nums)), " ".join(c.split())[:160])
+    return out
+
+
+def sets_not_taken(changes: list[tuple[str, str]], stated: dict[str, dict[int, str]], notes: str) -> list[str]:
+    """`name: value ("sentence")` for each set the turns state for a name that has changes, which no line of the name
+    writes as a number (with its sign) and which is not the value the NOTES hold after the changes."""
+    written: dict[str, set[int]] = {}
+    lines: dict[str, list[str]] = {}
+    for k, v in changes:
+        lines.setdefault(k, []).append(v)
+        written.setdefault(k, set()).update(int(x) for x in re.findall(r"(?<![\w.])-?\d+(?![\d.]*\d)", v.replace("\u2212", "-")) if len(x) <= 24)
+    now: dict[str, int | None] = {}
+    body = notes.split("STATE\n", 1)[1].split("\nOPEN")[0] if "STATE\n" in notes else ""
+    for ln in body.splitlines():
+        if ln.strip():
+            k, v = fact_of(ln)
+            now[k] = number_of(v)
+    out = []
+    for name, vals in stated.items():
+        if name not in written:
+            continue
+        if now.get(name) is None and any(re.search(r"removed|struck|deleted|closed|gone", x.lower()) for x in lines.get(name, ())):
+            continue                                 # set and then removed in these turns: the set is moot
+        for sv, sent in vals.items():
+            if sv not in written[name] and sv != now.get(name):
+                out.append(f'{name}: {sv} ("{sent}")')
+    return out
+
+
+# A sentence of the turns that removes a name from the books (`vonedi62 was struck off the books.`, `como20 was removed
+# from the ledger.`). Campaign 51b seed 2 (2026-10-21): the notes held vonedi62 at 340 for ten versions after item 615
+# struck it off; campaign 49d's como20 and 49b's didoyo44 are the same shape, each let through by every other check.
+REMOVAL_STATED = re.compile(r"\b(?:struck off|removed from|taken off the (?:books|ledger)|closed out|deleted from)\b", re.I)
+
+
+def removals_not_taken(changes: list[tuple[str, str]], names: list[str], texts: list[str], notes: str) -> list[str]:
+    """`name: removed ("sentence")` for each name with changes that a sentence of the turns removes, when no line of
+    the name says so and the NOTES still hold a number for it after the changes."""
+    lines: dict[str, list[str]] = {}
+    for k, v in changes:
+        lines.setdefault(k, []).append(v)
+    want, said = set(_checked(names)), {}
+    for t in texts:
+        for sent in _sentences(t):
+            here = want & set(re.findall(r"[a-z0-9_]+", sent.lower()))
+            if here and "?" not in sent and REMOVAL_STATED.search(sent):
+                for n in here:
+                    said.setdefault(n, " ".join(sent.split())[:160])
+    body = notes.split("STATE\n", 1)[1].split("\nOPEN")[0] if "STATE\n" in notes else ""
+    now = {fact_of(ln)[0]: number_of(fact_of(ln)[1]) for ln in body.splitlines() if ln.strip()}
+    out = []
+    for name, sent in said.items():
+        if name in lines and now.get(name) is not None and not any(re.search(r"removed|struck|deleted|closed|gone", x.lower()) for x in lines[name]):
+            out.append(f'{name}: removed ("{sent}")')
+    return out
+
+SETS_RETRY = ("The turns record a value for these names that your CHANGES do not write: {lines}. Each is a set, not a "
+              "change: write it on a line of its own (`name: set to N (item K)`), then the changes after it in the order "
+              "the turns give them, and send the CHANGES again in full.")
 
 
 def under_accounted(mentions: dict[str, int], steps: dict[str, int]) -> list[str]:

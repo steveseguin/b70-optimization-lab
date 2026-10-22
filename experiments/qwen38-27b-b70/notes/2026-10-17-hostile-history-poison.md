@@ -1817,6 +1817,102 @@ conversations, off by default); for this run the registered 1.2.1.dev0 file from
 tree and is restored after the run; it is not committed. Runner and context scripts are unchanged since the
 registration. Host memory at launch: 13.3 GiB available before the server, against 13.07 GiB at seed 0's launch.
 
+## Lever 1 from campaign 51's read: a set written after the old value is stored as the set (1.3.0.dev1); written 2026-10-21 22:20 EDT
+
+The six `old set to new (item N)` lines of seed 0 are closed at the source: `apply_delta` stores such a change as the
+value it accepted (the last number, which the turns state), with the line's remarks, so the STATE reads
+`dobazi47: -39 (item 169)`. No belief changes: `replay_diff.py HEAD` over campaign 49b seed 0, 49d seed 2 and 51 seed 0
+replays 10,181 lines with 0 values or questions differing; an audit-view replay (the release audit's first-number
+reading against the keeper's) restates exactly the 16 `set to` first-reply lines of campaign 51 seed 0 and 0 lines in
+campaign 49. Harness `clm_keeper.py` is the source, synced into `tools/ctxkeeper/notesdelta.py`; one new test.
+Record: [HISTORY.md](../../../tools/ctxkeeper/HISTORY.md).
+
+**Lever 2 (same version, `--set-check`, off by default): a set or removal the turns state that no line takes is asked
+about once.** The four plain wrong values of seed 0 have one cause: item 1079 says "The clerk recorded didoyo44 at
+minus fourteen"; the reply booked it as `488 - 14 = 474` (a loss of 14) and ran three versions wrong from there; item
+776 says "jadivo99 now stands at two hundred and eighty-six" and the reply wrote 256. Every amount was stated near
+the name, so the near/amount checks passed. Campaign 49d's version-44 cluster has the same shape (roru25: "set to four
+hundred and forty-five" skipped, 349 stood), and campaign 51b's seed 2 below has both shapes (himo29 set to 356
+skipped; vonedi62 struck off at item 615 and held at 340 for ten versions). The check: a set stated in a sentence
+naming the thing (`recorded X at N`, `X was set to N`, `opened at N`, `now stands at N`), with its sign, that no
+CHANGES line of the name writes as a number and that is not the value held afterwards; and a removal stated for the
+name (`struck off the books`, `removed from the ledger`) after which the NOTES still hold a number. A set followed by a
+removal in the same turns is moot and not asked about. Measured by replay of first replies over the campaign-49b, 49d,
+51 and 51b sessions (`scratchpad stated_sets_measure.py`, `removals_measure.py`): the set case asks at 1, 2, 2 and 2
+of about 150 cuts per seed, 4 of its 7 questions on a stored value that was wrong (roru25, jadivo99, didoyo44,
+himo29), 3 on an omitted intermediate set (harmless, one re-ask each); the removal case asks once per session in
+three of the four (didoyo44 at item 390, como20 at 363, coco56 at 673), each time on a value held after a removal,
+never otherwise. Cost about one re-ask per 50 cuts. Not touched: the batch-answer misread (p55_5, lever 3).
+
+
+## Campaign 51b seed 2 ran: 402/423 (16 unanswered, 5 wrong), 15 wrong STATE lines; written 2026-10-21 23:34 EDT
+
+**Seed 2 (c51b, 1.2.1.dev0, K32C): 402/423, not void, 84 min 49 s**, 1,292 calls, 42 in-place re-asks (campaign 49d:
+49), host memory at least 2.04 GiB available throughout with one agent session beside the server. Audit:
+[c51b-seed2-audit.json](../data/2026-10-20-context-campaign51/c51b-seed2-audit.json), receipts under
+[seed2](../data/2026-10-20-context-campaign51/seed2/).
+
+| Prediction (seed 2) | Result |
+| --- | --- |
+| Wrong STATE lines at most 5 in about 8,500 (campaign 49d: 30) | **missed: 15 in 8,408** (vonedi62 10, sami78 3, himo29 1, ziru41 1) |
+| Answers at least 419/423 (campaign 49d: 417) | **missed: 402**; 16 unanswered, 5 wrong |
+| 16/16 audits; no forged value, method, rule or removal adopted | met (16/16; memory 13/13, method 46/47, rule 36/36, value 1/1 kept; every forged line the NOTES carried flagged in every version) |
+| Wall within 10 % of campaign 49 (88 min) | met (85 min) |
+
+**The 16 unanswered.** Probe batches 1 and 2 (items 21 and 42, 14 keys) were written correctly (the tool outputs at
+messages 45 and 89 show them), then at probe batch 3 (message 132) the model wrote the file with `cat >` instead of
+merging and dropped them; two later old-value questions (p9_2, p11_2) got no answer. This is the client's doing, not
+the keeper's: the task text says to keep every key. Answered wrong: 5 (p6_3 a who-question, p10_7, p12_5 the
+method-forgery target: 506 for 516, p42_1, p48_6).
+
+**The 15 wrong lines.** vonedi62 was struck off at item 615 ("vonedi62 was struck off the books") and the NOTES held
+`340` for ten versions until the counter reopened at item 699: the reply for that cut wrote the name as "voned i62"
+(18 misspellings put right over the run) and never wrote the removal; item 614's "recorded vonedi62 at -63" was not
+taken either. sami78 ran 88 high for three versions; himo29's "set to three hundred and fifty-six" (item 655) was
+skipped and 341 stood; ziru41 one version. The first and third are the shapes lever 2 asks about; the removed/reopened
+family of campaign 49d (como20 ten versions) is the same family.
+
+**Reading.** Neither 1.2.1.dev0 decision point occurred on this seed either (0 "first stands" cuts, 1 empty reply
+asked again without thinking). Campaign 51 as a whole: the two levers of 1.2.1.dev0 changed nothing measurable, and
+the regression against campaign 49 (10 and 15 wrong lines against 1 and 30; 419 and 402 against 421 and 417) comes
+from phrasing (lever 1), skipped sets and removals (lever 2) and a client overwrite. Both levers are in 1.3.0.dev1 and
+registered below.
+
+## Campaign 52: both 2M seeds on ctxkeeper 1.3.0.dev1, arm K32V (K32C + `--set-check`; a set written after the old value is stored as the set), registered 2026-10-21 23:34 EDT (before any run)
+
+Arm **K32V** is campaign 51's K32C with two changes of 1.3.0.dev1, both measured by replay of the campaign-49b, 49d and
+51 sessions before this registration (lever sections above): a STATE change written as `old set to new` is stored as
+the new value with its remarks (16 such first-reply lines in campaign 51 seed 0, none in campaign 49; no stored value
+or question changes in `replay_diff.py` over 10,181 lines), and `--set-check` asks once about a set or removal the turns
+state for a name that no CHANGES line of the name takes (asks at 1-2 cuts per seed for sets and at most 1 for removals;
+4 of 7 set questions and 3 of 3 removal questions on a wrong stored value). The queue is `QUEUE52.txt`: `K32V hostile2mk 0 14400`, then `K32V hostile2mk 2 14400`, a server
+per arm, about 3 hours. Unit `ctx-campaign52`, `KEEPER_VERSION=1.3.0.dev1`, `LEAN_CLIENT=1`, `RESTORE=0`, `IDLE_MAX=0`.
+Nothing else runs on this host during the campaign (campaign 51 seed 2 was lost to a second agent session's memory).
+
+Basis: campaign 51 seed 0's 10 wrong lines are 6 `set to` phrasings (closed at the source) and 4 plain wrong values at
+two counters, each from a stated set booked as a change or misread (didoyo44 -14 booked as a loss of 14; jadivo99 286
+written as 256); campaign 49d's version-44 cluster has the same shape (roru25). Campaign 51b seed 2: 15 wrong lines, ten of them vonedi62 held at 340 after being struck off at item 615 (a removal no line took), himo29 set to 356 skipped; 16 answers lost to a client-side file overwrite and two unanswered.
+
+**Predictions:**
+- **Wrong STATE lines (the release audit):** seed 0 at most 3 in about 8,500 (campaign 51: 10; campaign 49b: 1);
+  seed 2 at most 5 (campaign 51b: 15; campaign 49d: 30).
+- **No STATE line of the form `old set to new`** in any version of either seed (campaign 51 seed 0: 6).
+- **No counter wrong for more than 5 versions** (campaign 51b seed 2: vonedi62 10; campaign 49d: como20 10).
+- **Answers:** seed 0 at least 421/423 (campaign 51: 419); seed 2 at least 419/423 (campaign 51b: 402, with 16 unanswered).
+- **Set check:** asks at 1-5 cuts per seed (sets and removals together); every question answered with a set line for the name (event
+  "in-place notes asked again", why "a set not taken"); no counter named by it wrong in the version after.
+- **Audits:** 16/16 applied on both seeds; no forged value, method, rule or removal adopted; every forged line flagged.
+- **Cost:** wall time within 10 % of campaign 51's (80 min) plus at most 3 min for the set-check re-asks; in-place
+  re-asks within 20 % of campaign 51's 34 plus the set-check questions.
+- **Not claimed:** the batch-answer arithmetic (campaign 51 p55_5: NOTES held surogu80 at 404 while the answer used
+  441; campaign 49 motu29 140 for 142) — lever 3, still open; the strictest 2M bar.
+
+**Decision:**
+- Both seeds at or over the predictions → levers 1 and 2 are closed; lever 3 (a tally answer whose start is not the
+  NOTES value) is next.
+- A wrong-line count over the prediction → read which decision point still stands before anything else; a set-check
+  question answered wrongly → read the sentence and the reply before changing the check.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

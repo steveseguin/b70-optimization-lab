@@ -93,3 +93,15 @@ The proposed ownrt TP1 clean-host replay cannot run on TURIND8 at the published
 configuration: its [reproduction guide](../../repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md)
 requires 98,990,252,032 bytes available host RAM, while TURIND8 has 15 GiB total.
 Keep that portability item open pending suitable hardware; do not weaken admission.
+
+## Update 2026-10-22: the device gate passed
+
+The four-card host ran packet179 row B on device (lane A, `lanequeue-A34`, engine
+`064452363` after an in-packet pin-closure repair): save at K=256, two
+fresh-process restores decoding M=128 each, merged stream equal to the
+uninterrupted reference at [0:384), repeat restores identical, oracle-128 exact;
+save 1.10 s / 68.8 MB, restore 0.46 s against a 36.75 s cold prefix. Receipts
+at `8bf76113f`. This qualifies **same-generation save/restart/resume** only; the
+five gaps above (appended turns, restore-then-save, one manifest source of truth,
+shared locking, inspect modes) are the next engine work and ctxkeeper still does
+not call the checkpoint operations. The manifest label stays `experimental`.

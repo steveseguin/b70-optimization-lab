@@ -333,6 +333,10 @@ for setup, continuation, backup and failure semantics. This is text-based recove
 restoration; runtime checkpoint integration and performance qualification remain pending. Stable
 PyPI 1.2.0 is unchanged.
 
+Development 1.3.0.dev1 (2026-10-21): a STATE change written as `old set to new` is stored as the new value with its
+remarks, the value the keeper already read; campaign 51 seed 0 had six such lines scored wrong as written ([history](HISTORY.md)).
+`--set-check` (off by default) asks once about a set or a removal the turns state for a name that none of its CHANGES lines takes.
+
 Development (1.2.2.dev0, not a stable release): `--sum-check` first asks once for working on tool-call blocks
 containing at least three integer assignments whose absolute values are 100 or more, when a value is absent from
 the managed view and has no written arithmetic equality. It then checks multiplication in the reply that stands,

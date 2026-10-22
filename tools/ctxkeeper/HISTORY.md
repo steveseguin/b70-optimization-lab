@@ -1,5 +1,42 @@
 # ctxkeeper: how it got here
 
+## 2026-10-21 — development 1.3.0.dev1: a set written after the old value is stored as the set
+
+Campaign 51 seed 0 (1.2.1.dev0, the 2M hostile stream) stored six STATE lines of
+the shape `dobazi47: 53 set to -39 (item 169)`. The keeper had read each of them
+correctly (`number_of` takes the last number, -39) and the turns stated the set,
+so no check fired and the line was kept as written. A plain reader of the STATE,
+and the release audit (`notes_truth.py`, first number), take 53: all six were
+scored wrong, 6 of that seed's 10 wrong lines (campaign 49b had 1 in all).
+`apply_delta` now stores such a line as the value it accepted, with the line's
+remarks (`dobazi47: -39 (item 169)`), as it already stores working as its result
+and follows `439 -> 10` as a set. The rule is narrow: no `=` (working is another
+path), no arrow or separator (those go through `chain_of`), and two or more
+numbers once every bracket and item reference is set aside; `opened at 88 (816)`
+stays as written. Gates before any run: `replay_diff.py` over campaign 49b seed 0,
+49d seed 2 and 51 seed 0 (10,181 lines, 0 values or questions differ), and an
+audit-view replay that restates exactly the 16 `set to` lines of campaign 51
+seed 0 and none in campaign 49. Changed in the harness `clm_keeper.py` and synced
+into `notesdelta.py`; test `test_a_set_written_after_the_old_value_is_stored_as_the_set`.
+The same version adds `--set-check` (off by default), for the other four wrong
+lines of that seed, one of campaign 49d's and the worst of campaign 51b's: a set
+the turns state for a name ("The clerk recorded didoyo44 at minus fourteen";
+"roru25 was set to four hundred and forty-five") that no CHANGES line of the
+name writes as a number, and that is not the value held after the changes, and
+a removal the turns state ("vonedi62 was struck off the books") after which the
+NOTES still hold a number, are asked about once (`SETS_RETRY`). The model had
+booked the first as a loss of 14, skipped the second, and held the third at 340
+for ten versions; every amount it used was stated near the name, so no earlier
+check could see it. Replayed over campaigns 49b seed 0, 49d seed 2, 51 seed 0
+and 51b seed 2 (`sets_stated`, `sets_not_taken`, `removals_not_taken`): the set
+case asks at 1, 2, 2 and 2 of about 150 cuts per seed, four of its seven
+questions on a stored value that was wrong (roru25 349 for 445, jadivo99 255
+for 285, didoyo44 335 for -153, himo29 341 for 296) and three on an omitted
+intermediate set; the removal case asks once per session in three of the four,
+each on a value held after a removal, never otherwise. A set followed by a
+removal in the same turns is not asked about. The silent batch-answer
+arithmetic (p55_5) is still open.
+
 ## 2026-10-21 — development 1.3.0.dev0: full conversation recovery
 
 The archive previously held cut turns, while current notes lived in state.json;

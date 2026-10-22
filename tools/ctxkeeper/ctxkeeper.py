@@ -55,7 +55,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.3.0.dev0"
+__version__ = "1.3.0.dev1"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -973,7 +973,7 @@ class Keeper:
                  inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
                  lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False,
                  notes_upto: bool = False, sum_check: bool = False, cited_entries: bool = False,
-                 save_conversations: bool = False) -> None:
+                 set_check: bool = False, save_conversations: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         self.conversations = Conversations(self.root, create=True) if save_conversations else None
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
@@ -1078,6 +1078,10 @@ class Keeper:
         # states a number no view states and no working produces (BARE_NOTE) is asked to show the working once, and
         # the sum check then checks that working. Each check asks at most once; the sum-check retry is final.
         self.sum_check = bool(sum_check)
+        # set_check (campaign 52, 2026-10-21): a set the turns state for a name (`recorded didoyo44 at minus fourteen`)
+        # that no CHANGES line of the name writes, and that is not the value held after the changes, is asked about
+        # once (SETS_RETRY). Across campaigns 49b, 49d and 51 seed 0 this asks at 2-3 of ~150 cuts per seed.
+        self.set_check = bool(set_check)
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -1434,6 +1438,7 @@ class Keeper:
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
         asked_lookup, looked = False, []             # --lookups: asked once; the archived entries shown (evidence)
         asked_rules = self.rule_scan is None         # --rule-scan: asked once
+        asked_sets = not self.set_check              # --set-check: asked once
         rules_seen: list[str] = []
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
         bare_again = False                           # an empty asked-for reply asked once more without thinking
@@ -1569,6 +1574,16 @@ class Keeper:
                 log({"event": "in-place notes asked again", "why": "mentions not accounted for", "names": missing[:30]})
                 req = req + [{"role": "assistant", "content": text},
                              {"role": "user", "content": nd.COUNT_RETRY.format(names=", ".join(missing[:30]))}]
+                continue
+            untaken = [] if asked_sets else (nd.sets_not_taken(delta["changes"], nd.sets_stated(known, texts), new)
+                                       + nd.removals_not_taken(delta["changes"], known, texts, new))
+            if untaken:                              # asked once: a set or removal the turns state that no line of the name takes
+                asked_sets = True
+                counts["inplace_reasks"] += 1
+                log({"event": "in-place notes asked again", "why": "a set not taken", "lines": untaken[:12]})
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": nd.SETS_RETRY.format(lines="; ".join(untaken[:12]))}]
+                thinking = True if self.notes_thinking is not None else None
                 continue
             wait = self.waiting(s, delta["changes"], texts, set(info.get("mismatch_at", []))) if self.lookups and not asked_lookup else []
             if wait:
@@ -2287,6 +2302,9 @@ def main() -> None:
     ap.add_argument("--sum-check", action="store_true",
                     help="ask once for working on tool-call blocks with at least three large integer assignments "
                          "when values have no source or working; then ask once about false multiplication steps")
+    ap.add_argument("--set-check", action="store_true",
+                    help="with --notes-mode inplace: a set the turns state for a name ('recorded abcd12 at minus fourteen') "
+                         "that no CHANGES line of the name writes is asked about once")
     ap.add_argument("--hold-open", action="store_true",
                     help="with --recite-when and --think-until: while a question is open (from the message that asks it "
                          "until one matching --think-until), every request gets the RULES recital and the archive "
@@ -2426,7 +2444,7 @@ def main() -> None:
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
                     lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open,
                     notes_upto=a.notes_upto, sum_check=a.sum_check, cited_entries=a.cited_entries,
-                    save_conversations=a.save_conversations)
+                    set_check=a.set_check, save_conversations=a.save_conversations)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

@@ -92,6 +92,40 @@ class Delta(unittest.TestCase):
         self.assertEqual(nd.under_accounted(nd.mention_counts(names, texts), steps),
                          ["efgh34 (mentioned 2 times, 1 changes written)", "wxyz56 (mentioned 1 times, 0 changes written)"])
 
+    def test_a_set_written_after_the_old_value_is_stored_as_the_set(self):
+        """Campaign 51 seed 0 (2026-10-21): `dobazi47: 53 set to -39 (item 169)` was stored as written. The keeper reads
+        the last number (-39); the release audit and a plain reader take the first (53). The line is stored as the
+        value the keeper accepted, with its remarks. `439 -> 10` was already followed as a set by chain_of; a bare
+        item reference in brackets (`opened at 88 (816)`) is one number and stays as written."""
+        texts = ["ITEM 169/300 (UPDATE)\ndobazi47 was set to minus thirty-nine. roxamo42 now stands at 10. mihini34 was opened at 7."]
+        notes = "RULES\n(none)\nSTATE\ndobazi47: 53\nroxamo42: 439\nOPEN"
+        names = ["dobazi47", "roxamo42", "mihini34"]
+        near, seen = nd.numbers_near(names, texts), nd.numbers_in(texts[0])
+        new, info = nd.apply_delta(notes, {"changes": [("dobazi47", "53 set to -39 (item 169)"), ("roxamo42", "439 -> 10"),
+                                                       ("mihini34", "opened at 7 (169)")]}, seen, strict=True, near=near)
+        self.assertEqual(new.splitlines()[3:6], ["dobazi47: -39 (item 169)", "roxamo42: 10", "mihini34: opened at 7 (169)"])
+        self.assertEqual((info["mismatch"], info["restated_sets"]), ([], 1))
+
+    def test_a_set_the_turns_state_that_no_line_takes_is_named(self):
+        """Campaign 51 seed 0 / 49d seed 2 (2026-10-21): a stated set booked as a change, or skipped, with every amount
+        stated near the name, passed every check. The set the turns state must appear in the name's lines or be the
+        value held."""
+        texts = ["ITEM 1079/1233 (UPDATE)\nThe clerk recorded didoyo44 at minus fourteen. Fourteen were taken from didoyo44. "
+                 "roru25 was set to four hundred and forty-five. Next on the list was coco56. It was opened at 523. "
+                 "What value does qq11 hold now?"]
+        st = nd.sets_stated(["didoyo44", "roru25", "coco56", "qq11"], texts)
+        self.assertEqual({k: sorted(v) for k, v in st.items()}, {"didoyo44": [-14], "roru25": [445], "coco56": [523]})
+        notes = "RULES\n(none)\nSTATE\ndidoyo44: 474\nroru25: 349\ncoco56: 523\nOPEN"
+        self.assertEqual(nd.sets_not_taken([("didoyo44", "488 - 14 = 474"), ("roru25", "263 + 86 = 349"), ("coco56", "opened at 523")], st, notes),
+                         ['didoyo44: -14 ("The clerk recorded didoyo44 at minus fourteen.")',
+                          'roru25: 445 ("roru25 was set to four hundred and forty-five.")'])
+        self.assertEqual(nd.sets_not_taken([("didoyo44", "set to -14 (item 1079), then -14 - 14 = -28")], st, notes), [])
+        texts2 = ["ITEM 615/1233 (UPDATE)\nvonedi62 was struck off the books. Four went into como20."]
+        notes2 = "RULES\n(none)\nSTATE\nvonedi62: 340\ncomo20: 108\nOPEN"
+        self.assertEqual(nd.removals_not_taken([("vonedi62", "336 + 4 = 340 (item 610)"), ("como20", "104 + 4 = 108")], ["vonedi62", "como20"], texts2, notes2),
+                         ['vonedi62: removed ("vonedi62 was struck off the books.")'])
+        self.assertEqual(nd.removals_not_taken([("vonedi62", "removed (item 615, struck off the books)")], ["vonedi62"], texts2, "RULES\n(none)\nSTATE\nvonedi62: removed\nOPEN"), [])
+
     def test_neighbours_are_taken_in_the_text_as_written(self):
         """Review, 2026-10-12: a question between two statements stays between them; a shell status line is not text."""
         texts = ["abcd12 opened at 5. What is next? efgh34 opened at 999.\n\n(exit_code=0)"]
