@@ -1,0 +1,114 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_read": true,
+  "model_payload_read": "Q6_K tensors only (expanded set), once, page cache dropped per chunk",
+  "model_dir": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+  "model_shards": [
+    {
+      "name": "Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf",
+      "bytes": 10946624
+    },
+    {
+      "name": "Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+      "bytes": 49567921344
+    },
+    {
+      "name": "Qwen3.8-Flash-Next-UD-IQ3_XXS-00003-of-00003.gguf",
+      "bytes": 32382955968
+    }
+  ],
+  "tensor_count": 249,
+  "excluded": [
+    "token_embd.weight (bounded-row lookup, never expanded)"
+  ],
+  "census": {
+    "rows": 1164544,
+    "blocks": 13365760,
+    "groups": 213852160,
+    "nonfinite_d": 0,
+    "word_mismatches": 0,
+    "packed_bytes_read": 2806809600,
+    "sampled_rows": 1245,
+    "lane_checks": 1118400
+  },
+  "by_class": {
+    "attn_gate.weight": {
+      "route": "gdn.z p33.dense.segment",
+      "tensors": 35,
+      "rows": 215040,
+      "groups": 34406400
+    },
+    "attn_qkv.weight": {
+      "route": "gdn.qkv p33.dense.segment",
+      "tensors": 35,
+      "rows": 358400,
+      "groups": 57344000
+    },
+    "ffn_gate_shexp.weight": {
+      "route": "small.ffn.q6 p49d",
+      "tensors": 47,
+      "rows": 30080,
+      "groups": 4812800
+    },
+    "ffn_up_shexp.weight": {
+      "route": "small.ffn.q6 p49d",
+      "tensors": 47,
+      "rows": 30080,
+      "groups": 4812800
+    },
+    "ssm_out.weight": {
+      "route": "attention p49c attention_combine",
+      "tensors": 36,
+      "rows": 92160,
+      "groups": 35389440
+    },
+    "attn_k.weight": {
+      "route": "qsa.k p28.dense.rows4 (not S1)",
+      "tensors": 12,
+      "rows": 6144,
+      "groups": 983040
+    },
+    "attn_output.weight": {
+      "route": "attention p49c attention_combine",
+      "tensors": 12,
+      "rows": 30720,
+      "groups": 11796480
+    },
+    "attn_q.weight": {
+      "route": "qsa.qgate p33.dense.segment",
+      "tensors": 12,
+      "rows": 147456,
+      "groups": 23592960
+    },
+    "attn_v.weight": {
+      "route": "qsa.v p28.dense.rows4 (not S1)",
+      "tensors": 12,
+      "rows": 6144,
+      "groups": 983040
+    },
+    "output.weight": {
+      "route": "logits p33.dense.segment (rank1 prefix 202240 rows + draft prefix); rank0 suffix stays expanded",
+      "tensors": 1,
+      "rows": 248320,
+      "groups": 39731200
+    }
+  },
+  "binary_sha256": "f860a22d2bf3bae37f4d1363c0137cc6e171ec0fc6ac57b0f95cda1519140906",
+  "table_sha256": "5d541e9f2ae5a9c28d80c793768ce7c3524d2a83537a3f8c2d00770708457433",
+  "per_tensor_count": 249,
+  "provenance": [
+    {
+      "name": "gguf_headers.py",
+      "parent_relpath": "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py",
+      "parent_digest": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+      "copy_equal": true
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/real_census_gate.py": "28778c87ac138b6e3e58a37776feaf547b545b4e9f7d0a651d4fd1a63c179d81",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/native/real_census.cpp": "c0b4370acc3dc35ff20a42309ab6a3e7f245852ea0ed9de9b27d7b5a65d1274e",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/gguf_headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_lanes.hpp": "ad19ae44400318c3b5a6ca1f1bd3eadcc6897a70074fed3eb544677b25531228"
+  }
+}

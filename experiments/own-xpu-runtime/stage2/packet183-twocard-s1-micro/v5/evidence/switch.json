@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_read": false,
+  "full_shape_read": false,
+  "sequence": [
+    "production",
+    "metadata",
+    "production",
+    "metadata",
+    "production"
+  ],
+  "runs": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "GNU",
+      "repeat": 1
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "GNU",
+      "repeat": 2
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "Intel",
+      "repeat": 1
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "tokens": 5,
+      "all_model_bytes_equal": true,
+      "poison_restore": true,
+      "compiler": "Intel",
+      "repeat": 2
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/switch_gate.py": "cd7a4a26ecbee2f2f13f73c51cf45518140e21f0ca816375092a5141a67b85f8",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/native/switch_bytes.cpp": "1e50f6416c283a314998c940fa9799189462fbf8e1d60238d08a315277105f98",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/native/engine_bracket.hpp": "5f6c7989a76340bf21d1b664876ee2abbb9510e37ffb9b3b1afb2d60d86aa8fc",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/strict_snapshot.hpp": "96153b9cb9b9806d926352b71178537ae7003e8bb89d0abb2815597f4d7e3a73",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/request_reset.hpp": "50e1666d4ca27a246bbff4a4c7a102455b4a106ca690b14419d844b995b8682f"
+  }
+}

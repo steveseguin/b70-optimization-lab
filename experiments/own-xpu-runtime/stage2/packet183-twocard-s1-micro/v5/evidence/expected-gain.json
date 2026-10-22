@@ -1,0 +1,162 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "diagnostic_only": true,
+  "note": "planning numbers from recorded measurements; not a speed. The v5 bracket is the measurement.",
+  "byte_cut": 0.14375000000000004,
+  "read_ceiling_GBs": 590.0,
+  "head_efficiency": 0.63,
+  "base_pooled_ms": 17.05518558922559,
+  "record_tok_s": 58.798108759,
+  "per_rank": {
+    "0": {
+      "floor_ms": 0.4125591864406781,
+      "proportional_ms": 0.5367710609186749,
+      "classes": [
+        {
+          "cls": "attention",
+          "sites": 24,
+          "q6_bytes_per_site": 19660800,
+          "floor_ms_per_site": 0.004790237288135595,
+          "proportional_ms_per_site": 0.006708309375000002
+        },
+        {
+          "cls": "gdn.qkv",
+          "sites": 17,
+          "q6_bytes_per_site": 32768000,
+          "floor_ms_per_site": 0.007983728813559325,
+          "proportional_ms_per_site": 0.009867862500000003
+        },
+        {
+          "cls": "gdn.z",
+          "sites": 17,
+          "q6_bytes_per_site": 19660800,
+          "floor_ms_per_site": 0.004790237288135595,
+          "proportional_ms_per_site": 0.005690128125000002
+        },
+        {
+          "cls": "qsa.qgate",
+          "sites": 6,
+          "q6_bytes_per_site": 39321600,
+          "floor_ms_per_site": 0.00958047457627119,
+          "proportional_ms_per_site": 0.013970667187500004
+        },
+        {
+          "cls": "router",
+          "sites": 23,
+          "q6_bytes_per_site": 4096000,
+          "floor_ms_per_site": 0.0009979661016949156,
+          "proportional_ms_per_site": 0.001193990963855422
+        }
+      ]
+    },
+    "1": {
+      "floor_ms": 0.5840097627118646,
+      "proportional_ms": 0.803806604519906,
+      "classes": [
+        {
+          "cls": "attention",
+          "sites": 24,
+          "q6_bytes_per_site": 19660800,
+          "floor_ms_per_site": 0.004790237288135595,
+          "proportional_ms_per_site": 0.006708309375000002
+        },
+        {
+          "cls": "gdn.qkv",
+          "sites": 18,
+          "q6_bytes_per_site": 32768000,
+          "floor_ms_per_site": 0.007983728813559325,
+          "proportional_ms_per_site": 0.009867862500000003
+        },
+        {
+          "cls": "gdn.z",
+          "sites": 18,
+          "q6_bytes_per_site": 19660800,
+          "floor_ms_per_site": 0.004790237288135595,
+          "proportional_ms_per_site": 0.005690128125000002
+        },
+        {
+          "cls": "logits",
+          "sites": 1,
+          "q6_bytes_per_site": 647168000,
+          "floor_ms_per_site": 0.15767864406779666,
+          "proportional_ms_per_site": 0.25028356201237567
+        },
+        {
+          "cls": "qsa.qgate",
+          "sites": 6,
+          "q6_bytes_per_site": 39321600,
+          "floor_ms_per_site": 0.00958047457627119,
+          "proportional_ms_per_site": 0.013970667187500004
+        },
+        {
+          "cls": "router",
+          "sites": 24,
+          "q6_bytes_per_site": 4096000,
+          "floor_ms_per_site": 0.0009979661016949156,
+          "proportional_ms_per_site": 0.001193990963855422
+        }
+      ]
+    }
+  },
+  "draft_head": {
+    "rows": 80128,
+    "floor_ms": 0.0624726779661017,
+    "proportional_ms": 0.09916298089857414
+  },
+  "scenarios": {
+    "floor": {
+      "rank0_ms": 0.4125591864406781,
+      "rank1_ms": 0.5840097627118646,
+      "draft_ms": 0.0624726779661017,
+      "hit_ms": 14.057941559322032,
+      "miss_ms": 24.61685805084746,
+      "pooled_ms": 16.333263631569935,
+      "gain_percent": 4.419949214927765,
+      "projected_tok_s": 61.3969553054858,
+      "rank1_head_part_ms": 0.15767864406779666
+    },
+    "proportional": {
+      "rank0_ms": 0.5367710609186749,
+      "rank1_ms": 0.803806604519906,
+      "draft_ms": 0.09916298089857414,
+      "hit_ms": 13.801454414581519,
+      "miss_ms": 24.27284933456142,
+      "pooled_ms": 16.057916619560352,
+      "gain_percent": 6.210450541575563,
+      "projected_tok_s": 62.449736222859514,
+      "rank1_head_part_ms": 0.25028356201237567
+    }
+  },
+  "break_even_floor_share_for_2pct": 0.46322930084613934,
+  "packet177_reference": {
+    "s1a_dense_lane_only_ceiling_percent": 3.7,
+    "assumption": "f=0.85 of non-HC dense_hc census time (packet168 v3 11.532 ms), HC share 0.29 transferred; head and draft not counted"
+  },
+  "risks": [
+    "packet175b D1: a same-byte scale-path change in the same lane measured dense B/A 1.0665 (-6.65%); extra per-step lane work is not free",
+    "packet74: packed Q6 dense lost -0.8/-2.4/-2.9% because a per-weight 6-bit unpack cost more than its bytes; S1 adds no unpack, one integer half conversion + one multiply per 8 weights",
+    "packet175 D2: L2-warm dense GEMVs were only 15%/5.5% faster (L0/L3), so these kernels are not purely DRAM-bound"
+  ],
+  "provenance": [
+    {
+      "name": "roofline.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/roofline.json",
+      "parent_digest": "93fdf583d045a9ab853cd1a62aa26b6f21654983c8513674c31ea05da0c66a19"
+    },
+    {
+      "name": "options.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet177-twocard-structural/options.json",
+      "parent_digest": "18a55ae6dbcbd9c6e7cfa4bcad855ce9fde338714860d1137bac6ddf29124d50"
+    },
+    {
+      "name": "DO-NOT-REPEAT.md",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/DO-NOT-REPEAT.md",
+      "parent_digest": "e444f3f583d7639f09f762bbca90220d31ccb35488fbf81a66bdc14b9571108e"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/price_s1.py": "8f892002d44f8b06d3e5a7b66383df949d3939349f1b60a44b7cae685c13ad16",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/full-shape.json": "fa716e596640ed74afc1e718f5c2012430401e60490de0d9d5ebf6e681b0190d"
+  }
+}

@@ -1,0 +1,132 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "dry_run": true,
+ "cases": [
+  {
+   "case": "win",
+   "rc": 0,
+   "seconds": 2.8,
+   "log": [
+    "2026-10-22T11:48:09Z p183-win armed: waiting for packet183-s1-bracket-B (dry run)",
+    "2026-10-22T11:48:09Z p183-win lane-B decision: min gain +4.400% slower metadata 61.253 best control 58.671 drift 0.057% screen_winner=True chain_rule_met=True",
+    "2026-10-22T11:48:12Z p183-win confirm job validated: pins=1078 plan=passed host_required=105411248128 storage_free=35568590848",
+    "2026-10-22T11:48:12Z p183-win dry run: would hold PAUSE-A/B, wait for markers/drain/guards/admission/endpoints, run a fresh fault review and launch: /usr/bin/systemd-run --user --wait --unit=screen-packet183-s1-confirm-A ... /usr/bin/python3 -B experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/bracket_job.py --variant metadata --kind bracket --lane A --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/device-metadata-v5-A-p183 --fault-review <fresh-fault-review> --authorized-device-window"
+   ],
+   "stderr": "",
+   "decision": {
+    "lane_B": {
+     "min_gain_percent": 4.400000000000004,
+     "best_control_rate": 58.671235770420225,
+     "slower_candidate_rate": 61.25277014431872,
+     "control_drift_percent": 0.056733259361752,
+     "screen_winner": true,
+     "candidate_qualified": true,
+     "record_rate": 58.798108759182306,
+     "record_bar_rate": 59.974070934365955,
+     "chain_rule_met": true,
+     "rule": "screen winner: both candidates >= +0.5% over every control, drift <= 3%; chain: both >= +2% over every control AND >= 1.02 x 58.798109 (record); every view 13/13 exact and identical draft proposals",
+     "summary": "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p183-waiter-realwin-fjbfl9ej/bracket-summary.json",
+     "summary_sha256_record": "dd7aa7f77989a511488a2608c01c97cfb8915e7588756efb50292a509ac60e20"
+    }
+   },
+   "real_repository": true,
+   "packet_evidence_written": [],
+   "confirm_output_absent": true,
+   "passed": true
+  },
+  {
+   "case": "below",
+   "rc": 0,
+   "seconds": 0.0,
+   "log": [
+    "2026-10-22T11:48:12Z p183-win armed: waiting for packet183-s1-bracket-B (dry run)",
+    "2026-10-22T11:48:12Z p183-win lane-B decision: min gain +1.000% slower metadata 59.258 best control 58.671 drift 0.057% screen_winner=True chain_rule_met=False",
+    "2026-10-22T11:48:12Z p183-win no confirmation (chain rule not met); the bracket summary is the readout"
+   ],
+   "stderr": "",
+   "decision": null,
+   "passed": true
+  },
+  {
+   "case": "failed",
+   "rc": 2,
+   "seconds": 0.0,
+   "log": [
+    "2026-10-22T11:48:12Z p183-win armed: waiting for packet183-s1-bracket-B (dry run)",
+    "2026-10-22T11:48:12Z p183-win packet183-s1-bracket-B ended FAILED; no confirmation"
+   ],
+   "stderr": "",
+   "decision": null,
+   "passed": true
+  },
+  {
+   "case": "skipped",
+   "rc": 2,
+   "seconds": 0.0,
+   "log": [
+    "2026-10-22T11:48:13Z p183-win armed: waiting for packet183-s1-bracket-B (dry run)",
+    "2026-10-22T11:48:13Z p183-win packet183-s1-bracket-B ended SKIPPED-DEPENDENCY; no confirmation"
+   ],
+   "stderr": "",
+   "decision": null,
+   "passed": true
+  },
+  {
+   "case": "exists",
+   "rc": 4,
+   "seconds": 0.0,
+   "log": [
+    "2026-10-22T11:48:13Z p183-win armed: waiting for packet183-s1-bracket-B (dry run)",
+    "2026-10-22T11:48:13Z p183-win lane-B decision: min gain +4.400% slower metadata 61.253 best control 58.671 drift 0.057% screen_winner=True chain_rule_met=True",
+    "2026-10-22T11:48:13Z p183-win ALERT /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p183-waiter-exists-ttg3w_a5/repo/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/evidence/device-metadata-v5-A-p183 already exists; no confirmation (never reuse an output)"
+   ],
+   "stderr": "",
+   "decision": null,
+   "passed": true
+  },
+  {
+   "case": "drift",
+   "rc": 4,
+   "seconds": 0.0,
+   "log": [
+    "2026-10-22T11:48:13Z p183-win armed: waiting for packet183-s1-bracket-B (dry run)",
+    "2026-10-22T11:48:13Z p183-win lane-B decision: min gain +4.400% slower metadata 61.253 best control 58.671 drift 0.057% screen_winner=True chain_rule_met=True",
+    "2026-10-22T11:48:13Z p183-win ALERT live lanequeue.py differs from the packet planning snapshot; re-plan before confirming"
+   ],
+   "stderr": "",
+   "decision": null,
+   "passed": true
+  },
+  {
+   "case": "endpoints",
+   "rc": 5,
+   "seconds": 0.1,
+   "log": [
+    "2026-10-22T11:48:14Z p183-win armed: waiting for packet183-s1-bracket-B (dry run)",
+    "2026-10-22T11:48:14Z p183-win lane-B decision: min gain +4.400% slower metadata 61.253 best control 58.671 drift 0.057% screen_winner=True chain_rule_met=True",
+    "2026-10-22T11:48:14Z p183-win ALERT endpoint(s) active: qwen38-27b-fp8=active qwen38-27b-fp8-tp1-test=active qwen38-27b-vision=active; no confirmation (the driver must wait for p183-win before restoring endpoints)"
+   ],
+   "stderr": "",
+   "decision": null,
+   "passed": true
+  }
+ ],
+ "pause_files": {
+  "passed": true,
+  "existing_pause_restored_byte_for_byte": true,
+  "absent_pause_kept_as_hold": true,
+  "deleted": 0
+ },
+ "endpoint_units_live": [
+  "qwen38-27b-fp8",
+  "qwen38-27b-fp8-tp1-test",
+  "qwen38-27b-vision"
+ ],
+ "sources": {
+  "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/chain/p183_win.py": "7c7b5985d71daba5e815ccd350974126e0ff2ce5f09025f0c77921420610b46b",
+  "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/chain/p183-win.sh": "4fb5812d94dc85a9f9eed52062c5e65c37bb0391db0c20bde95b6e713bcb92ce",
+  "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/chain/rehearse_waiter.py": "d86f1dd50e8119da2d09343d2b4f54ca3121aba4994b53cae024688f951652c9",
+  "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/s1_decision.py": "c57398e3faf3744a40f9beb3c109dace11c86b281e8add548b0a58844e95adf7"
+ }
+}

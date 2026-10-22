@@ -1,0 +1,102 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_read": false,
+  "synthetic_weights": true,
+  "families": [
+    "p33.dense.segment Q6_K K2560/6144/10240 variants 6/7",
+    "p49c attention_combine Q6_K K6144 rows2560 batch1/2",
+    "p49d small.ffn.q6 tuple"
+  ],
+  "mutation_proof": "zeroed FP32 words change production output and not S1; bumped metadata sub-scales change S1 output and not production (segment 12, attention 4, small 2: 18 checks per run)",
+  "d_cover": "random normal fp16 plus 0x0000 0x8000 0x0001 0x8001 0x03ff 0x83ff 0x0400 0x7bff 0xfbff 0x3c00 0xbc00 0x1234 0x2e66; sub-scales incl. -128/127/0/-1/1",
+  "scenarios": "8 per family: ordinary, inactive, error set, position 4096, position 0xffffffff, NaN input, +/-inf input, subnormal input (zero/negative inputs on attention batch rows)",
+  "runs": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "lane_checks": 173056,
+      "submission_checks": 80,
+      "mutation_checks": 18,
+      "census_negatives": {
+        "clean_groups": 640,
+        "nonfinite_detected": 2,
+        "nonfinite_word_mismatches": 0,
+        "flipped_word_mismatches": 1,
+        "bad_geometry_refused": true
+      },
+      "compiler": "GNU",
+      "repeat": 1,
+      "cases_sha256": "99e3fcd345b43598a048b6f30b2586eaad6e5ad07a67b858039056081d1c0f84",
+      "case_count": 80
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "lane_checks": 173056,
+      "submission_checks": 80,
+      "mutation_checks": 18,
+      "census_negatives": {
+        "clean_groups": 640,
+        "nonfinite_detected": 2,
+        "nonfinite_word_mismatches": 0,
+        "flipped_word_mismatches": 1,
+        "bad_geometry_refused": true
+      },
+      "compiler": "GNU",
+      "repeat": 2,
+      "cases_sha256": "99e3fcd345b43598a048b6f30b2586eaad6e5ad07a67b858039056081d1c0f84",
+      "case_count": 80
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "lane_checks": 173056,
+      "submission_checks": 80,
+      "mutation_checks": 18,
+      "census_negatives": {
+        "clean_groups": 640,
+        "nonfinite_detected": 2,
+        "nonfinite_word_mismatches": 0,
+        "flipped_word_mismatches": 1,
+        "bad_geometry_refused": true
+      },
+      "compiler": "Intel",
+      "repeat": 1,
+      "cases_sha256": "99e3fcd345b43598a048b6f30b2586eaad6e5ad07a67b858039056081d1c0f84",
+      "case_count": 80
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "lane_checks": 173056,
+      "submission_checks": 80,
+      "mutation_checks": 18,
+      "census_negatives": {
+        "clean_groups": 640,
+        "nonfinite_detected": 2,
+        "nonfinite_word_mismatches": 0,
+        "flipped_word_mismatches": 1,
+        "bad_geometry_refused": true
+      },
+      "compiler": "Intel",
+      "repeat": 2,
+      "cases_sha256": "99e3fcd345b43598a048b6f30b2586eaad6e5ad07a67b858039056081d1c0f84",
+      "case_count": 80
+    }
+  ],
+  "binaries": {
+    "GNU": "a9a685a4e98bcae519ab54e053507edcb45e7f0db766def550f95f95e4357da9",
+    "Intel": "ed33b05d3127100cbbb8604e956bc3bd83e940f3ddb2f746be40724acc182b68"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/s1_byte_gate.py": "cec5daa73c8fef8ef17eb80185d2f15d69bef978e5ba621cba39c0e8304ec5e4",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/native/s1_bytes.cpp": "11218f9155203a7a69e122c9553dedd4280ee29b6afe48c778b76e1f9d64f83d",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_lanes.hpp": "ad19ae44400318c3b5a6ca1f1bd3eadcc6897a70074fed3eb544677b25531228",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_kernels.hpp": "381b553ba753f2d4c3ec05ecc201e63c71a632b1e7b951fc6204f30f66188b80",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.hpp": "f940cd213898a0e3e8f15445d220934d4fc91e893d155ba6787e46279cb3be6d",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/build/checked/experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/s1_submit.cpp": "3d3172f0eb96803b85688958c2a6b9eab93242c86fb50019ebbe341ef36592a4",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/s1_submit.o": "3915ea6ab1d8ce04e9a34db9a6083e391fd247816b60b0a0ca76a0cf24109118",
+    "experiments/own-xpu-runtime/stage2/packet183-twocard-s1-micro/v5/build/gnu-host/p49d_submit.o": "6291b077d4c6723da3fc2f8597296913ce62356b9933f3dfaa20a4817dd5f212"
+  }
+}
