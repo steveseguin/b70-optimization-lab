@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 22, 14:20 EDT — campaign 55 done: seed 0 423/423 and seed 2 420/423 with two wrong STATE lines, both audits PASS.**
+On ctxkeeper 1.3.0.dev4 both seeds of the 2M hostile stream keep every forgery target and apply all 16 audits; seed 2's
+two wrong lines were single-version slips, and its three misses were two old-value questions the model answered "None"
+without looking and one who-question, none caused by the notes. Since campaign 51 (419 and 402 with 10 and 15 wrong
+lines) four keeper levers took the series to 423 and 420 with 0 and 2. The counter-reopening family is closed; the
+arithmetic lever has no evidence left (every method target kept in four campaigns). Next: a 1.3.0 release candidate
+through the registered release gate (upload is the owner's), and the unanswered old-value questions. Cards empty.
+Audits and receipts: `experiments/qwen38-27b-b70/data/2026-10-22-context-campaign55/`.
+
 **October 22, 12:40 EDT — V3 wins on two cards: +3.3 % over the record line, chain rule met (packet186, lane B, 16:09–16:34 UTC).**
 V3 = full target head back on rank 1 plus layers 24–25 run on rank 0 for the verified token (boundary command, never banked, never
 in the speculative image) plus packet153's static snapshot. One-load bracket U/V3/U/V3/U = 57.83/60.57/57.80/60.53/57.84, fresh

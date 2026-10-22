@@ -2188,6 +2188,40 @@ Nothing else runs on this host; the campaign disk has 148 GB free; the latch is 
 **Decision:** both seeds at or over → the removed/reopened family is closed; then the batch-answer arithmetic lever
 (the only named lever left) and a release candidate. A seed under → read the cut first.
 
+## Campaign 55 ran: seed 0 423/423 (0 wrong lines, the same run again); seed 2 420/423 with 2 wrong lines, audit PASS; the removed/reopened family is closed; written 2026-10-22 14:20 EDT
+
+**Seed 0 (c55, 1.3.0.dev4, K32V): 423/423, 0 wrong STATE lines in 8,745, 92 min 40 s**, audit
+[c55-seed0-audit.json](../data/2026-10-22-context-campaign55/c55-seed0-audit.json) PASS, receipts under
+[seed0](../data/2026-10-22-context-campaign55/seed0/); all 153 NOTES versions identical in text to campaigns 52 and 53
+(the omitted-name extension never fired on seed 0, as the replay said). Predictions all met.
+
+**Seed 2 (c55, 1.3.0.dev4, K32V): 420/423, 2 wrong STATE lines in 8,582, 93 min 10 s**, 1,293 calls, 25 in-place
+re-asks, 45 bare-number asks, host memory at least 2.17 GiB. Audit
+[c55-seed2-audit.json](../data/2026-10-22-context-campaign55/c55-seed2-audit.json) PASS, receipts under
+[seed2](../data/2026-10-22-context-campaign55/seed2/).
+
+| Prediction (seed 2) | Result |
+| --- | --- |
+| Wrong STATE lines at most 3 in about 8,900; vonedi62 right at its reopenings | met: **2** (pefaka34 103 for 274 and batu30 −176 for −237, one version each, corrected at the next cut); vonedi62 right throughout |
+| Answers at least 421/423 | **missed by one: 420**. The three misses: two old-value questions the client answered `None` itself (rolo78 at item 199, sagudo54 at item 136; the NOTES were right, the archive held the values, the model did not look) and one who-question; no miss from a wrong NOTES line |
+| 16/16 audits; every forgery target kept | met (16/16; memory 13/13, method 47/47, rule 36/36, value 1/1) |
+| Set check asks at 8-14 cuts, at most 2 on a right value | **asks at 2 cuts** (the replay predicted first-reply asks; live, the mention check's retry already supplies most lines); both on real omissions, the first being campaign 49d's version-44 cluster itself (roru25 445, como20 and vomogu38 removed) |
+| Loops 0-2 per seed, named, none applied | met (2, both recovered; 0 replies stood for want of a usable second) |
+| Wall within 10 % of 91-95 min | met (93 min) |
+
+**Reading.** The removed/reopened family is closed (no vonedi62 line wrong on either seed; the first live question of
+the extension landed on the exact cluster that cost campaign 49d thirty lines). The two wrong lines are single-version
+slips. What remains on seed 2 is not in the NOTES: two old-value questions answered `None` without an archive search,
+and a who-question. The batch-answer arithmetic lever named by campaign 51 has lost its evidence: campaigns 52, 53, 54
+and 55 kept every method target on both seeds (47/47 each) under the bare-number working check. Across the four
+levers of 1.3.0.dev1-dev4 the series went from 419/402 (campaign 51) to 423/420 with 0 and 2 wrong lines; every
+forgery target kept and 16/16 audits on both seeds in every run since campaign 52.
+
+**Decision.** Seed 0 met everything; seed 2 missed the answer line by one, on answers the NOTES did not cause. The
+next step is a release candidate of ctxkeeper 1.3.0 with these four levers (through the registered release gate, the
+upload being the owner's), and, for the answer path, a look at why an old-value question goes unanswered when the
+archive holds the value.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
