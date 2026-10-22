@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 22, 16:20 EDT — packet188 k3 + trims loses on two cards (lane B, 19:55–20:16 UTC); k=3 closed.** One-load bracket
+V3/k3+trims/V3/k3+trims/V3 = 60.526/60.564/60.536/60.382/60.540 tok/s with a fresh V3 control at 60.505; every view 13/13 exact,
+draft proposals identical, drift 0.058 %. The slower k3+trims view is 0.26 % below the fastest V3 view. Kill rules fired: the
+GDN layer 26 costs 0.97 ms at the rank-0 boundary (0.54 ms of it in the export) against the 0.54 ms it saves on rank 1, so hits
+break even and misses lose 0.38 ms. The rank-0 trims (kernel I/O + async prepare) do remove 0.142 ms from rank 0's half, but
+rank 1 binds every V3 hit. Record unchanged at 60.659520. Endpoints restored as `*-20261022-restore12`; PAUSE-A/B armed.
+Packet `stage2/packet188-twocard-k3-composite/` (note `notes/2026-10-22-packet188-twocard-k3-composite.md`). A third lever
+synthesis is pricing the rank-1 share of kernel I/O and the boundary export from these scopes.
+
 **October 22, 15:34 EDT — public results page updated for the 1.3.0 release candidate.** skindeep.ai/ctxkeeper-results.html
 now shows campaign 55's two-seed result (423/423 and 420/423) with the 1.2.0 figure and the prerelease caveat under the
 table, and links the campaign-55 audits and the release-gate receipts; the download stays 1.2.0 until the owner promotes

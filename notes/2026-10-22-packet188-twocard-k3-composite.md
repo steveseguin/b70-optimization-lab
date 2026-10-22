@@ -100,3 +100,32 @@ All passed:
   in `analysis.json` gave 93 cross-packet mutable pins. The oracle results resolve outside the repository.
   * Fix: move the map into `analysis-real-inputs.json`, outside the guard's walk (packet187's bracket-gate layout). Seal
     its digest, and re-hash it in final_checks.
+
+## Device result (2026-10-22, lane B window 19:55-20:16 UTC, unit lanequeue-B35): LOSS, k3 closed, trims measured
+
+| Row | Content | Rates (tok/s, class-balanced) | Exact |
+| --- | --- | --- | --- |
+| 0 | k3+trims smoke, 12 x 64 + incident64 | smoke, no verdict (313 s) | 13/13, draft proposals identical, timing-data proof passed |
+| 1 | fresh V3 control (packet187 record selection, 0-25 storage) | 60.505 | 13/13 |
+| 2 | one load, V3 / k3+trims / V3 / k3+trims / V3 (k3 storage) | 60.526 / **60.564** / 60.536 / **60.382** / 60.540 | every view 13/13, draft proposals and acceptance identical |
+
+`s188_decision` (row 2 `bracket-summary.json`): **not a screen winner**. The slower k3+trims view is 0.26 % below the
+fastest V3 view; V3 drift across the four views 0.058 %; the fresh V3 load sits 0.05 % under the in-load V3 views, so the
+k3 storage does not change V3. Kill rules: `k3_hit_saving_ms` fired (0.071 ms, bar 0.25) and `boundary_over_draft_fraction`
+fired (1.00, bar 0.05); the trims rule passed (0.142 ms removed from rank 0's A, bar 0.105).
+
+What the host scopes say (hit means, ms, V3 -> k3+trims):
+
+* rank 0 half A 12.112 -> 11.970 (trims: rank-0 half envelope 0.441 -> 0.302, prepare 0.0985 -> 0.0517);
+* rank 1 half B 12.432 -> 11.893 (one layer moved, -0.539);
+* boundary Bd 1.032 -> **2.005** (+0.97 ms for GDN layer 26, against 0.513 ms/layer priced from the QSA layers 24-25;
+  the boundary export grew 0.053 -> 0.592 ms and the boundary envelope 0.081 -> 0.595 ms);
+* draft D 1.608 -> 0.427; hit elapsed 14.060 -> 13.989 (-0.5 %); miss elapsed 25.778 -> **26.154** (+1.5 %).
+
+Reading: the third boundary layer bought 0.54 ms on rank 1 but cost 0.97 ms on rank 0's boundary, almost all of it in the
+export that follows the GDN layer. Hits broke even; misses lost. The composite is closed as measured; the trims are real
+(0.142 ms off A) but rank 1 binds every hit on V3, so they are not a V3 lever by themselves. The next lever synthesis
+(lever-synthesis-3) prices the rank-1 share of `kernel_io` and the boundary export from these scopes.
+
+Window receipts: `lineage/window-20261022/` in the packet (driver log, live plan, archived PAUSE-B, runner journal,
+restore output). Endpoints restored as `*-20261022-restore12`; PAUSE-A untouched, PAUSE-B re-armed.

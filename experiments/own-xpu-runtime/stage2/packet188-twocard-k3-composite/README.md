@@ -3,7 +3,7 @@
 **Line:** Qwen3.8 Flash-Next UD-IQ3_XXS, own Xe runtime, two B70s. **Record:** 60.659520 tok/s (packet187, LocalMaxxing
 `cmvjvabyv040jrf01dricuz8s`): bundle 8 + packet153 static snapshot + packet186 V3.
 
-**Status:** CPU-only preparation, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
+**Status:** device-measured 2026-10-22 (lane B, unit lanequeue-B35, 19:55-20:16 UTC): **LOSS, closed** (see `DO-NOT-REPEAT.md` and the note's device-result section; `s188_decision` in `v5/evidence/device-row2-bracket-v3k-k3trims-B-p188/bracket-summary.json`). Prepared CPU-only, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
 queued, armed, launched or committed. No GPU, `/dev/dri`, device binary run, systemd unit change, PAUSE/STOP or queue
 file was touched. The only systemd calls were read-only `systemctl --user list-units 'window-*'` polls before the compile
 batches (all empty; `v5/evidence/compile-poll.json`). The proposal is `ops/lane-queue/proposed-p188-two-card-B.txt`

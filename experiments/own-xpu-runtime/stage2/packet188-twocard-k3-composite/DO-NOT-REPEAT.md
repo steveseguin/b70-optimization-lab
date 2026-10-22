@@ -84,11 +84,11 @@ The reasoning behind the ruling has four parts:
 * **Lever synthesis 2 rejected splits** (`analysis/lever-synthesis-2-20261022.md`): 23-25 (−0.06 to −0.52%; QSA in the
   island), 24-27 (QSA 27; −1.21% even if GDN) and 25 only (−2.10%). k=2 (the record) and k=3 are the only viable splits.
 
-## Pending
+## Measured (closed)
 
 | Date | Arm | Outcome | Revisit only when |
 | --- | --- | --- | --- |
-| 2026-10-22 | k3 + trims on the V3 record line: GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks) + `rank0_prepare=async` (rank 0 A). Rows: k3+trims smoke, fresh V3 control (packet187 selection), one-load V3/k3+trims/V3/k3+trims/V3 (lane B); decision `s188_decision`; priced +1.49% (k3), +1.88% (+kernel I/O), +2.39% (+prepare off A); chain needs ≥ 0.105 ms off A on top of k3 | **Pending (CPU-prepared, READY 2026-10-22).** Kill rules: k3 hit saving < 0.25 ms; Bd > D on > 5% of hits; trims remove < 0.105 ms of A | — |
+| 2026-10-22 | k3 + trims on the V3 record line: GDN layer 26 joins the verified-token boundary on rank 0 (`rank0_layers 0-26`, `boundary rank0-k3`; rank 1 from QSA 27) + `kernel_io=kernel` (both ranks) + `rank0_prepare=async` (rank 0 A). Rows: k3+trims smoke, fresh V3 control (packet187 selection), one-load V3/k3+trims/V3/k3+trims/V3 (lane B); decision `s188_decision`; priced +1.49% (k3), +1.88% (+kernel I/O), +2.39% (+prepare off A); chain needs ≥ 0.105 ms off A on top of k3 | **Measured 2026-10-22 (lane B, lanequeue-B35, 19:55-20:16 UTC): LOSS, closed.** Fresh V3 60.505; one load V3/k3+trims/V3/k3+trims/V3 = 60.526/60.564/60.536/60.382/60.540 (slower k3+trims view -0.26 % vs the fastest V3 view; every view 13/13 exact, proposals and acceptance identical, V3 drift 0.058 %). Kill rules fired: k3 hit saving 0.071 ms (< 0.25); boundary exceeds draft on 100 % of hits (Bd 1.032 -> 2.005 ms: GDN layer 26 costs 0.97 ms at the boundary, 0.54 of it in the export, vs 0.513 priced). Trims passed (0.142 ms off rank 0 A) but rank 1 binds every V3 hit. Misses +0.38 ms. Evidence `v5/evidence/device-row2-bracket-v3k-k3trims-B-p188/bracket-summary.json` | — |
 
 ## Boundaries (do not)
 
