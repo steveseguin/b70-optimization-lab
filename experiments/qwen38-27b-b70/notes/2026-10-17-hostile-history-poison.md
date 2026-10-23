@@ -2322,7 +2322,7 @@ notes-only effort switch in the proxy (`--effort` today applies to every call), 
 run: the first 20 notes calls of seed 0 against campaign 55's (1,114 tokens written, 9.0 s a call) and campaign
 57's (562, 4.6 s), with the NOTES at those versions compared line by line with campaign 55's, which had none wrong.
 
-**The effort route is closed on the template alone (CPU, 2026-10-23 02:55 EDT, no run).** Rendering the pinned
+**The effort route is closed on the template alone (CPU, 2026-10-23 02:42 EDT, no run).** Rendering the pinned
 Qwen3.8 chat template (`experiments/own-xpu-runtime/integration/chat_template-7c1460a9.jinja`) with
 `reasoning_effort=low` puts "Reasoning effort is set to low. Keep your thinking brief and focused ..." at the top of
 the system message whenever thinking is on, and nothing at `medium` or with thinking off. A notes call at `low`
