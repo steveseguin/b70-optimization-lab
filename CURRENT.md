@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 15:16 EDT — fresh-owner idle provenance passes16 CPU checks and independent review.**
+The optional clock proof now binds a fresh private output to the observed owner, exact command/environment and actual loaded
+clock-symbol providers. Review fixed production environment compatibility and runtime ELF symbol-table coverage. Tests use
+real pinned library metadata with synthetic process observations; no native owner was launched for this work. The preceding
+helper commit has green CI. Packet200's bounded interactive worker and window contract are undergoing CPU shutdown review;
+no operational entry point or new GPU window is enabled. All three restore28 applications remain in place.
+[Provenance proof](experiments/own-xpu-runtime/integration/OWNER-IDLE-PROVENANCE.md).
+
 **October 23, 14:52 EDT — idle timing and bounded diagnostic helpers pass 20 CPU checks.**
 The timing helper safely recovers most model-loading time from initial idle accounting, conditional on proving the fresh
 owner and mapped clock library; absolute deadlines stay unchanged. The pipe collector preserves bounded evidence and keeps

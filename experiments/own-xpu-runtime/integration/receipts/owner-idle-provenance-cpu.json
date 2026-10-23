@@ -1,0 +1,33 @@
+{
+  "schema": "ownrt.owner-idle-provenance-cpu.v1",
+  "passed": true,
+  "device_executed": false,
+  "native_process_executed": false,
+  "tests": 16,
+  "seconds": 0.15681670396588743,
+  "utc": "2026-10-23T19:15:28.310844+00:00",
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/integration",
+    "-p",
+    "test_owner_idle_provenance.py",
+    "-v"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/owner_idle_provenance.py": "9edf5828bc9cf95b0757d4914186ce15476fccd27d7b8ea1ec71c283057adeb0",
+    "experiments/own-xpu-runtime/integration/test_owner_idle_provenance.py": "c58766a7d0c7e3f672566df108c0df5118201472f7aa4cc255f1d0b3c264ccfa"
+  },
+  "log_sha256": "8360e70dfd2808a485766c760180ddfc33717a1e174e6194ea03bcdd25f60c8f",
+  "scope": "Actual pinned ELF metadata and synthetic /proc observations; no real owner proof"
+}
