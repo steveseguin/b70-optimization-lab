@@ -10,6 +10,17 @@ job with the memo off/on writes byte-identical request bodies, trajectory, usage
 (`data/2026-10-23-count-memo/`). Campaign 58 = K32V on 1.3.0, both seeds, unit `ctx-campaign58`, predictions in
 `notes/2026-10-23-harness-count-memo.md` (seed 0 NOTES identical to campaign 55, 423/423; wall 76-82 and 77-84 min against 92.7/93.2).
 
+**October 23, 03:35 EDT — NEW TWO-CARD RECORD: 63.611824 tok/s class-balanced (packet195 diet chain, LocalMaxxing `cmvkniuvp003gng017f0s68rn`, APPROVED, +2.03 % over 62.345282).**
+The record bundle (packet190's k3x line with packet193's bit-identical instruction diet of the IQ2_S expert gate/up kernel; packet194's engine
+`b8482321…` bound byte for byte) ran its 11-window chain on cards 0+1 (unit `packet195-chain-a`, 06:43–07:31 UTC): K0, K1a, K1b, K2, W0p, KD,
+W2m, WS, WSs, WS128x, WS128 all passed, no faults. WS128: 63.611824 tok/s class-balanced (all-prompt median the same, p10 61.44), 12/12 exact,
+hit/miss cycle 13.25/24.99 ms, acceptance 0.787. Submitted 07:34 UTC after a local dry run and a server dry run (HTTP 200 valid): HTTP 201,
+APPROVED; `scripts/packet49_record_threshold.json` updated; receipt `data/localmaxxing-responses/2026-10-23-packet195-record-bundle-diet-ws128.txt`.
+Endpoints were idle (last requests 06:20 UTC), stopped after the launcher's dry run, and are back as `*-20261023-restore22`; PAUSE-A re-armed,
+PAUSE-B untouched. The one-card diet-micro prep held its compiles during the chain. Packet `stage2/packet195-record-bundle-diet/` (chain receipts
+under `evidence/device-cards01-p195-a/`, bundle under `submission/prepared-a/`), `ops/packet195-orchestration/`, note
+`notes/2026-10-23-packet195-record-bundle-diet.md`. Two-card line this session: 58.80 → 60.66 (V3) → 62.35 (k3x) → 63.61 (expert diet).
+
 **October 23, 02:45 EDT — one-card diet port STOPPED at step 1 (packet58-onecard-diet): the one-card gate/up kernel is a different kernel.**
 The one-card record line runs `p58ag_exp::Kernel<IQ2_S,2560,64,false,true,0,Cached>` (820 B rows, 16-bit halves decoded through the 65,536-entry
 halfcache table, indirect expert-cache slots, 20 bindings), not the two-card `p90exp` kernel (840 B rows, FP32 halves, direct pointers) that

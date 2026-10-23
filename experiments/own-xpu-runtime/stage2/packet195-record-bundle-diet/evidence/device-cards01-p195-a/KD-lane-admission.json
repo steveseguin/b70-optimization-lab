@@ -1,0 +1,123 @@
+{
+  "clients": {
+    "blocked": [],
+    "device_nodes_opened": false,
+    "hidden_clients_require_coordinator_ownership": true,
+    "inaccessible_processes": 490,
+    "other": [],
+    "scope": "lane-A"
+  },
+  "clients_after_drain": {
+    "blocked": [],
+    "device_nodes_opened": false,
+    "hidden_clients_require_coordinator_ownership": true,
+    "inaccessible_processes": 489,
+    "other": [],
+    "scope": "lane-A"
+  },
+  "clients_latest": {
+    "blocked": [],
+    "device_nodes_opened": false,
+    "hidden_clients_require_coordinator_ownership": true,
+    "inaccessible_processes": 489,
+    "other": [],
+    "scope": "lane-A"
+  },
+  "coordination": {
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "lane": "A",
+    "pid": 3301923,
+    "schema": "own-runtime.chain-lanes.v1",
+    "scope": "lane-A",
+    "start_ticks": 58160154,
+    "started_monotonic": 581603.13284838,
+    "token": "7bcd8fc715c84cf48fabc5bb2443ce5e",
+    "window": "KD"
+  },
+  "owners": {
+    "3302175": {
+      "exited": true,
+      "fds": [
+        {
+          "client_id": "22664",
+          "driver": "xe",
+          "fd": "12",
+          "pci": "0000:27:00.0",
+          "pid": 3302175
+        },
+        {
+          "client_id": "22665",
+          "driver": "xe",
+          "fd": "13",
+          "pci": "0000:23:00.0",
+          "pid": 3302175
+        }
+      ],
+      "seen": true,
+      "start_ticks": 58166420
+    },
+    "3302434": {
+      "exited": true,
+      "fds": [],
+      "seen": true,
+      "start_ticks": 58172068
+    }
+  },
+  "passed": true,
+  "ready_checks": 0,
+  "schema": "own-runtime.chain-admission.v1",
+  "scope": "lane-A",
+  "shared_drain": {
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "chain_reservation": {
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "lane": "A",
+      "pid": 3301923,
+      "schema": "own-runtime.chain-lanes.v1",
+      "scope": "lane-A",
+      "start_ticks": 58160154,
+      "started_monotonic": 581603.13284838,
+      "token": "7bcd8fc715c84cf48fabc5bb2443ce5e",
+      "window": "KD"
+    },
+    "completed_monotonic": 581761.520656625,
+    "drained": true,
+    "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a/KD-lane-admission.json",
+    "pid": 3301923,
+    "scope": "whole chain window; includes autonomous fixture exits",
+    "started_monotonic": 581603.204050957
+  },
+  "timing_claim_eligible": false,
+  "topology": {
+    "device_nodes_opened": false,
+    "lane": "A",
+    "mask": {
+      "FilterBdfPath": "0000:2",
+      "NEOReadDebugKeys": "1",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1",
+      "ZE_AFFINITY_MASK": "0,1",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1"
+    },
+    "native_indices": [
+      0,
+      1
+    ],
+    "nodes": [
+      {
+        "driver": "xe",
+        "node": "/dev/dri/renderD130",
+        "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+        "pci": "0000:23:00.0"
+      },
+      {
+        "driver": "xe",
+        "node": "/dev/dri/renderD131",
+        "path": "/dev/dri/by-path/pci-0000:27:00.0-render",
+        "pci": "0000:27:00.0"
+      }
+    ]
+  },
+  "window": "KD",
+  "window_output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a/KD",
+  "window_receipt_sha256_without_admission": "e731e8d7a03dd57660b7476774eb7b3a31233abde7cbf85c8e53ed7d5e588906"
+}

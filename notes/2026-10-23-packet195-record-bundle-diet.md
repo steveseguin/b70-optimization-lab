@@ -87,3 +87,13 @@ Packet187's windows (K0 67 s, K1a 89, K1b 87, K2 366, W0p 39, KD 166, W2m 154, W
    …/payload-queue.json --dry-run`, `--server-dry-run`, the real submit, `prepare_submission.py --update-record … --submission-id <ID>`;
    receipts to `data/localmaxxing-responses/` with key lines filtered. On a loss or fault: record the window and the DO-NOT-REPEAT row; the
    record stays at 62.345282.
+
+## Device result and submission (2026-10-23, chain 06:43-07:31 UTC, unit packet195-chain-a): NEW RECORD 63.611824 tok/s, APPROVED
+
+All eleven windows passed on cards 0+1, no kernel faults. WS128: **63.611824 tok/s** class-balanced (all-prompt median the same, p10 61.44), 12/12
+prompts and 1,536 tokens exact vs `iq3-p49-split32-v1`; TTFT median 892 ms, wall rate 44.10 tok/s, acceptance 0.787, hit/miss cycle 13.25/24.99 ms
+(packet190: 13.53/25.56). `prepare_submission.py` (under `taskset -c 4-15,20-31`) -> `--dry-run` passed -> `--server-dry-run` HTTP 200 valid -> real
+submit **HTTP 201, run `cmvkniuvp003gng017f0s68rn`, APPROVED** (+2.03 % over `cmvk51wfn001gng01fpbfy89q` 62.345282) -> `--update-record`. Receipt
+`data/localmaxxing-responses/2026-10-23-packet195-record-bundle-diet-ws128.txt`. The prepared `ledger-entry.md`/`result-packet.md` say "pending"
+(written before the submission). Host: endpoints idle since the restore21 validations; the one-card diet-micro prep held its compiles for the chain;
+restored afterwards as `*-20261023-restore22`. Window receipts: `lineage/window-20261023/`.

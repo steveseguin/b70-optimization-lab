@@ -1,0 +1,81 @@
+{
+  "fixture0.log": {
+    "path": "fixture0.log.gz",
+    "sha256": "b4e29a8df28e435677ae11bc9156a7e87c7b98ab54f13e69654625d4fa6e4af1",
+    "uncompressed_sha256": "0a41d966122717f30daed842b3aaea19b65f36a39cca299871c8f90e3a2f3db8",
+    "uncompressed_bytes": 24
+  },
+  "fixture1.log": {
+    "path": "fixture1.log.gz",
+    "sha256": "f4824bf892f6c74063154a8178489f8198f408753069f21b1df3dc05c44c6185",
+    "uncompressed_sha256": "e9d3cbdfbd5547f1ede43efaf0408ef7c96ece0757c346fb0c296176de67a378",
+    "uncompressed_bytes": 35
+  },
+  "fixture2.log": {
+    "path": "fixture2.log.gz",
+    "sha256": "5b29c63e887716c5ad95638bc343caac9c780eb535c6b09b24be518f92225e06",
+    "uncompressed_sha256": "156c1aefad905da9524d47160e45e88675c2bdd6f8d8155721bd4eba099e55ec",
+    "uncompressed_bytes": 31
+  },
+  "fixture3.log": {
+    "path": "fixture3.log.gz",
+    "sha256": "27ab24930d008cb6ae00cd38ff0ca8cca2045856abaff67f587f45bb566c6ba7",
+    "uncompressed_sha256": "345ddd2f61cf032b2939ee2204179c2d72c8913cbf14b02ced382483517fc02b",
+    "uncompressed_bytes": 35
+  },
+  "fixture4.log": {
+    "path": "fixture4.log.gz",
+    "sha256": "ba87e7da45a528b37f4a29edb6bfcbabde32b7b447695c051925e6148b40345e",
+    "uncompressed_sha256": "9311aa30d332fab0c747a577ce785f89def8a7c03caeb033469e9239e9335c35",
+    "uncompressed_bytes": 35
+  },
+  "fixture5.log": {
+    "path": "fixture5.log.gz",
+    "sha256": "f40ac3bf6901628f8ef4d0eaa3c3f5a71e7537e475608bc0f20f855b736daadf",
+    "uncompressed_sha256": "f4f9ad23b22c65a5a610b94a244a7e358261b1cd692a04c08f6f1c8372dd7529",
+    "uncompressed_bytes": 42
+  },
+  "run0/events.jsonl": {
+    "path": "run0/events.jsonl.gz",
+    "sha256": "9f136a7dcc50609de89925ca9b293b780522f9b1d6b1d6df39dd5e16e5b3a29b",
+    "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "uncompressed_bytes": 0
+  },
+  "run0/output.bin": {
+    "disposition": "sha256-only",
+    "uncompressed_sha256": "1cfee3af6682dd3b601a59a58e17bc7f9ee1d94a184f85a4c7c7baad83af3452",
+    "uncompressed_bytes": 23393176,
+    "native_receipt_path": "run0/receipt.json",
+    "native_receipt_sha256": "5954ecc11f5f5e2ed69a1bd6307a23b9c6c44a5a3efb256e14363121ddbae6bb",
+    "children_path": "children.json",
+    "children_sha256": "c117afea942c6b466b1a10bc7ad440da705eafe82d21690f3ef8a67166f65066",
+    "launch_entry": {
+      "binary": "nongemv-fixtures",
+      "binary_sha256": "7351c86ca1754c3e53baacd3b021ce02770b50009cfb0c0006caf4f111a471ff",
+      "card": 0,
+      "directory": "run0",
+      "pid": 3298966,
+      "argv": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device/nongemv-fixtures",
+        "--authorized-device-window",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a/K1a/run0",
+        "--context",
+        "4096",
+        "--fixtures",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/fusion-fixtures",
+        "--stop-fd",
+        "5",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/dispatch-p45.json"
+      ]
+    },
+    "restoration": "Rerun the sealed fixture binary with children.json argv, a fresh output and newly allocated stop descriptor; same binary, dispatch and inputs. Device execution requires coordinator authorization.",
+    "restoration_dispatch": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/dispatch-p45.json",
+      "sha256": "8d696e7f9cc7853dfdcc1e8774a50ce69b3afd94d1dc7dfa49fa804a125dd1c6"
+    }
+  }
+}

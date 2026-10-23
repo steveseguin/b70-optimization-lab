@@ -66,10 +66,10 @@ after reset. It is not isolated device prefill or HTTP TTFT. Only one suite
 prompt finished naturally in each run; full-natural-completion medians in the
 raw receipts therefore have sample count 1 and are not twelve-prompt medians.
 
-The separately approved capped records are two-card **62.345282 tok/s**
-(packet190 k3x chain: packet187's V3 line + GDN layer 26 on the rank-0 boundary +
-kernel token I/O + async rank-0 prepare, export on the copy engine, October 22,
-`cmvk51wfn001gng01fpbfy89q`; supersedes packet187 60.659520 and packet136 58.798109) and one-card **36.602512
+The separately approved capped records are two-card **63.611824 tok/s**
+(packet195 diet chain: packet190's k3x line + the bit-identical instruction diet of
+the IQ2_S expert gate/up kernel, October 23, `cmvkniuvp003gng017f0s68rn`; supersedes packet190
+62.345282, packet187 60.659520 and packet136 58.798109) and one-card **36.602512
 tok/s** (packet58-onecard-cache23-chain: the packet182c line (packet58as bounded spin +
 packet176 kernel foreground token I/O) with a 23.05 GB admitted device expert cache,
 October 23, `cmvkcqznb002lng01fsrhjn7t`; supersedes packet182c 35.926720 and packet58as 34.573038). They use the older 128-token cap. Those record

@@ -1,5 +1,7 @@
 # Packet195: two-card record bundle, k3x-diet (CPU-prepared, not armed)
 
+**Status (2026-10-23 07:40 UTC): chain run on cards 0+1 (unit `packet195-chain-a`, 06:43-07:31 UTC), all 11 windows passed; WS128 63.611824 tok/s class-balanced, 12/12 exact; submitted and APPROVED as LocalMaxxing `cmvkniuvp003gng017f0s68rn` (+2.03 % over 62.345282). Chain receipts under `evidence/device-cards01-p195-a/`, bundle under `submission/prepared-a/`, window receipts under `lineage/window-20261023/`.**
+
 **Status (2026-10-23 06:40 UTC, CPU preparation):** `READY-FOR-DEVICE.json` is written last by
 `ops/packet195-orchestration/final_checks.py --ready`. So far:
 
