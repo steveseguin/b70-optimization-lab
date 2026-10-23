@@ -2297,9 +2297,11 @@ wrong-versions-per-counter cap; the answer bar was met; every forgery target kep
 | In-place re-asks rise to 25-45 | **over**: 71 (20) | **over**: 72 (25) |
 
 **Where the premise was wrong.** The registration took the notes reply for the ~115-token change and the rest for
-thinking. The in-place reply is the whole NOTES text (median 2,968 characters, about 550 tokens, both campaigns), so
-thinking was about half of what a notes call wrote (some 620 tokens), not nine tenths, and the best case for the
-lever was a 35 % cut of notes time, which is what it got: 605 and 572 s a seed, 10-13 % of the wall.
+thinking. The in-place reply is the CHANGES list with its working (`sarozi45: 259 + 10 = 269 (item 9)`, one line per
+change in the eight turns moved out): a median 1,100 characters but 535 tokens, because Qwen's pre-tokenizer makes
+every digit its own token. So thinking was about half of what a notes call wrote (some 600 tokens), not nine tenths,
+and the best case for the lever was a 35 % cut of notes time, which is what it got: 605 and 572 s a seed, 10-13 % of
+the wall. (The second replies of campaign 57, 35 and 40 a seed, ran with thinking, as the retry paths always do.)
 
 **What thinking was doing.** The wrong lines are arithmetic, and they persist: on seed 0 wepe21 is 72 off for five
 versions in a row (items 117-150), vosu60 keeps a value of −45 for ten versions after its removal, sarozi45 is wrong at
@@ -2319,6 +2321,17 @@ at which Qwen3.8's template adds no instruction; `low` adds "keep your thinking 
 notes-only effort switch in the proxy (`--effort` today applies to every call), and a short pilot before any full
 run: the first 20 notes calls of seed 0 against campaign 55's (1,114 tokens written, 9.0 s a call) and campaign
 57's (562, 4.6 s), with the NOTES at those versions compared line by line with campaign 55's, which had none wrong.
+
+**The effort route is closed on the template alone (CPU, 2026-10-23 02:55 EDT, no run).** Rendering the pinned
+Qwen3.8 chat template (`experiments/own-xpu-runtime/integration/chat_template-7c1460a9.jinja`) with
+`reasoning_effort=low` puts "Reasoning effort is set to low. Keep your thinking brief and focused ..." at the top of
+the system message whenever thinking is on, and nothing at `medium` or with thinking off. A notes call at `low`
+therefore renders a different prefix from every main call (medium, thinking off) and misses the whole prefix cache:
+some 18,000 prompt tokens re-read a call (campaign 57's notes prompts were 94 % cached), which costs more than the
+thinking it would shorten. The same holds for `--effort low` on every call, because the main calls run with thinking
+off and would still render without the line. The only cache-safe form of a "think briefly" instruction is wording in
+the notes request itself, and campaign 57 has just shown the sums need the thinking; that wording is not registered.
+The notes-thinking lever is closed in both forms.
 
 ## Development review: bare-number checks and release separation (2026-10-20)
 
