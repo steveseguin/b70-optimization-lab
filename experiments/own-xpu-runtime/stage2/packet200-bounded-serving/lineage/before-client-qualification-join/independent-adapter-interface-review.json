@@ -1,0 +1,63 @@
+{
+  "schema": "packet200.independent-adapter-interface-review.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T19:40:46.400220+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "host_commands_executed": false,
+  "services_changed": false,
+  "queue_changed": false,
+  "operational_manifest_written": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py": "4bb4159ba7ea0b912f2e2ac7b658b4ac716bd34fbeb7984c94f48b1413756d56",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_run.py": "673a29c42e6c013874832092d3a8ca78ff7b1d6b5dd78c9a5240bb4fe2b2b3b9",
+    "experiments/own-xpu-runtime/ops/packet200-window/driver.py": "b0ca6d671d03ad9a58938ead86cca4cdf6a196e81b89c98c5165359ae034016c",
+    "experiments/own-xpu-runtime/ops/packet200-window/helpers.py": "43b9cbcb80ce903e1de1946250d8623640fff5cf39aa8fc848e30f8822405294",
+    "experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py": "b480634d078291e903ae48762740eb9f034af70cd83b5987a9dbfd7ffc7385f8",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_driver.py": "5462dcf9c329d23a5aa9aa7e5f7e3f3783c1b1fd92885f8f6f34963e3f2cf7bc",
+    "experiments/own-xpu-runtime/ops/packet200-window/DRIVER.md": "fd29dd445fabbcdc3f031d267ad6ebd7aa8dbfb52cfe81b75ad1f226de44978f",
+    "experiments/own-xpu-runtime/ops/packet200-window/window.py": "0c311165ab1626e2438aa8965337a1ee534d1c09a59f40a88de2f1063ef4be7e",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_window.py": "9eb617925046be139e1b6b7ea6f0a5336b571d02e8083131ecec5d28eb4c36cb",
+    "experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json": "efe1e79ace454da133547c5a318ccce4a8c7d8e4c3e7552a5a0e3169ac4b0400",
+    "experiments/own-xpu-runtime/ops/packet200-window/actual-cpu-plan.json": "95ef80738a0283738c31c7bb1d834c56b3ccafe6020142a9019935c46c9f0839",
+    "experiments/own-xpu-runtime/ops/packet200-window/actual-cpu-contract.json": "44414b77ee77525d115fbf81f977c3d38d8f8fb55a83cf1626154bfd5b359cb3",
+    "experiments/own-xpu-runtime/ops/packet200-window/interface-review.json": "cd115b44570555b950608b46d44bdee80a26184c1c6ce57294680e740cfec2d8",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py": "1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_device_worker.py": "2e77102590253aa1f096b9e4780caffd3067758f77c4b052038b683571ad319e"
+  },
+  "tests": {
+    "run_adapter": 10,
+    "driver_restore": 22,
+    "total": 32,
+    "run_seconds": 0.016,
+    "driver_seconds": 0.034
+  },
+  "logs": {
+    "experiments/own-xpu-runtime/ops/packet200-window/independent-run-tests.log": "f708db965f1795ec8d50b5e9e19f02ea838a4d830480b894c085ab46db4f2b60",
+    "experiments/own-xpu-runtime/ops/packet200-window/independent-driver-tests.log": "77101a3858bd1122ce353aeac80718e8bc5758e60e35c240f774df58c21636d0"
+  },
+  "canonical_cpu_plan_sha256": "2c2a705ade948bd3a6ea988cc861133bc5976dc9c9ff897009bc89cfae737834",
+  "author_receipt_sha256": "045d8cbac7a45b9c746aed79cdaed7e053266d0971abcf1321123c4d12bd7717",
+  "reviewed": [
+    "Fixed launch-mode argv uses additive run.py, delegates exactly once to frozen worker, and preserves fixed planned-a/output/checkpoints/fault-review paths.",
+    "Full worker/profile authorization and adapter/client closure are required before host inspection or endpoint stops; child rechecks exact private staging identity.",
+    "Orphan fault-capture sidecar and client output refuse before endpoint shutdown; full768MiB forecast plus1MiB client evidence reserve preserve27GB floor.",
+    "Unique contract/helper/worker module imports and process-local historical window guard alias avoid contract namespace collision; validator child retains manifest hash.",
+    "One endpoint stop cycle and one worker launch use process-only/no-restart/no-hardkill properties; incidents preserve external latches and signal main at most once.",
+    "Both terminal phases, actual inactive-success exit0, and separate physical drain are required. Zero requests remain lifecycle-only; positive counts alone do not qualify serving.",
+    "Direct restoration independently verifies preflight plan, unit exit, both terminal receipts and passive drain, then writes an exclusive one-shot admission marker. Three fixed validator argument tuples are each single-use.",
+    "Per-operation restoration checks exact manifest, pinned sources, faults, STOPs, original PAUSE bytes and empty queues. Cleanup preserves primary runtime errors."
+  ],
+  "resolved_findings": [
+    "Child-side staging inode identity recheck",
+    "Orphan fault sidecar freshness before host shutdown",
+    "Full core seal before endpoint stops",
+    "Independent direct-restoration terminal/unit/drain gate and one-shot markers",
+    "Fixed validation target tuples and original-error preservation"
+  ],
+  "limitations": [
+    "Only CPU mocks/intercepted service operations were executed; no controller --check/--run or native worker execution.",
+    "Root-owned operational manifest, current live admission and serving client qualification remain separate.",
+    "Storage admission remains a monitored forecast, not a hard bound on native/driver writers."
+  ]
+}

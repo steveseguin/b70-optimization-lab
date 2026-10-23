@@ -1,0 +1,76 @@
+{
+  "schema": "packet200.root-execution-preparation.v1",
+  "passed": true,
+  "tests": 57,
+  "device_executed": false,
+  "native_executed": false,
+  "http_requests_executed": false,
+  "utc": "2026-10-23T19:49:09.465069+00:00",
+  "rows": [
+    {
+      "name": "run",
+      "tests": 10,
+      "returncode": 0,
+      "seconds": 0.11391414189711213,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15,24-31",
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving",
+        "-p",
+        "test_run.py",
+        "-v"
+      ],
+      "log": "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/root-run-adapter-tests.log",
+      "log_sha256": "9c2cadb0ab082b1403d14c154ac2222643b34a48d32d17e1f52439ff82b8840b"
+    },
+    {
+      "name": "driver",
+      "tests": 30,
+      "returncode": 0,
+      "seconds": 0.17810620600357652,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15,24-31",
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet200-window",
+        "-p",
+        "test_driver.py",
+        "-v"
+      ],
+      "log": "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/root-driver-adapter-tests.log",
+      "log_sha256": "9bb466c9f26bd07c49918560c2552b4559e70fce894cb1c90ffabbfa66a8771c"
+    }
+  ],
+  "client_receipt_sha256": "7bbbc90d762b240aa29e1e217bd03a3614e21fd862aa67372c5d26f22eb0ee20",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py": "4bb4159ba7ea0b912f2e2ac7b658b4ac716bd34fbeb7984c94f48b1413756d56",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_run.py": "673a29c42e6c013874832092d3a8ca78ff7b1d6b5dd78c9a5240bb4fe2b2b3b9",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client_pilot.py": "43aef6e48b46d81dd69f31b018feea242c353bc46a1c7ea89823bc2013376975",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_client_pilot.py": "5078a1e0f2f1ef13fc562170a1571d907562fd7d87bd8af683344c346796571f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client-vectors.json": "4d7784788a9227d7825450adfe8585de6b0f495e35845ba8ab96866bc9ee8510",
+    "experiments/own-xpu-runtime/ops/packet200-window/driver.py": "4105b247ef995fe8c30cdc748b9d470712483802c320d40948f7367b75b88dee",
+    "experiments/own-xpu-runtime/ops/packet200-window/helpers.py": "43b9cbcb80ce903e1de1946250d8623640fff5cf39aa8fc848e30f8822405294",
+    "experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py": "b68fb7955012feeffe1911b4f6291755d1d2f67c366ad22086fe58ce710c215a",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_driver.py": "b49833ccde4eff653ed975bfc600d5fb8f7c88395b3570ed5c913b3491fe3461",
+    "experiments/own-xpu-runtime/ops/packet200-window/DRIVER.md": "0fbd194018d7cd538fa6800af933db7cb82b7c118a8c50baa0b1765a042cffcd"
+  }
+}

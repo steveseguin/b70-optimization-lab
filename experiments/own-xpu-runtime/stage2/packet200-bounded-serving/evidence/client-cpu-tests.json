@@ -1,0 +1,35 @@
+{
+  "schema": "packet200.client-cpu-tests.v1",
+  "passed": true,
+  "tests": 17,
+  "http_requests_executed": false,
+  "native_executed": false,
+  "device_executed": false,
+  "utc": "2026-10-23T19:45:50.823547+00:00",
+  "seconds": 1.4101776089519262,
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving",
+    "-p",
+    "test_client_pilot.py",
+    "-v"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client_pilot.py": "43aef6e48b46d81dd69f31b018feea242c353bc46a1c7ea89823bc2013376975",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_client_pilot.py": "5078a1e0f2f1ef13fc562170a1571d907562fd7d87bd8af683344c346796571f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client-vectors.json": "4d7784788a9227d7825450adfe8585de6b0f495e35845ba8ab96866bc9ee8510"
+  },
+  "log_sha256": "fd63f8bf2b27a3868d259bc4e621560bf79fc67707e7aa6f1c941d5fb0eb0d4e",
+  "scope": "Actual pinned codec/vectors; all HTTP intercepted, synthetic native artifacts, no model or live endpoint"
+}

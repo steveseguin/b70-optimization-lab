@@ -1,0 +1,84 @@
+{
+  "schema": "packet200.adapter-independent-cpu-review.v1",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "queue_changed": false,
+  "operational_manifest_written": false,
+  "live_admission_ready": false,
+  "tests": {
+    "run_adapter": 10,
+    "driver_restore": 22,
+    "total": 32,
+    "result": "OK",
+    "placement": "nice19; cores8-15,24-31; OMP_NUM_THREADS=2; OPENBLAS_NUM_THREADS=2",
+    "commands": [
+      "/home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving -p test_run.py -v",
+      "/home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet200-window -p test_driver.py -v"
+    ]
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py": "4bb4159ba7ea0b912f2e2ac7b658b4ac716bd34fbeb7984c94f48b1413756d56",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_run.py": "673a29c42e6c013874832092d3a8ca78ff7b1d6b5dd78c9a5240bb4fe2b2b3b9",
+    "experiments/own-xpu-runtime/ops/packet200-window/driver.py": "b0ca6d671d03ad9a58938ead86cca4cdf6a196e81b89c98c5165359ae034016c",
+    "experiments/own-xpu-runtime/ops/packet200-window/helpers.py": "43b9cbcb80ce903e1de1946250d8623640fff5cf39aa8fc848e30f8822405294",
+    "experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py": "b480634d078291e903ae48762740eb9f034af70cd83b5987a9dbfd7ffc7385f8",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_driver.py": "5462dcf9c329d23a5aa9aa7e5f7e3f3783c1b1fd92885f8f6f34963e3f2cf7bc",
+    "experiments/own-xpu-runtime/ops/packet200-window/DRIVER.md": "fd29dd445fabbcdc3f031d267ad6ebd7aa8dbfb52cfe81b75ad1f226de44978f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/adapter-cpu-tests.json": "045d8cbac7a45b9c746aed79cdaed7e053266d0971abcf1321123c4d12bd7717",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py": "1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_device_worker.py": "2e77102590253aa1f096b9e4780caffd3067758f77c4b052038b683571ad319e",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/README.md": "d594fc6e5cb1ec8aedb449e779e04a423f009cc4cfd0bf261efc5e087a1bccfc",
+    "experiments/own-xpu-runtime/ops/packet200-window/window.py": "0c311165ab1626e2438aa8965337a1ee534d1c09a59f40a88de2f1063ef4be7e",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_window.py": "9eb617925046be139e1b6b7ea6f0a5336b571d02e8083131ecec5d28eb4c36cb",
+    "experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json": "efe1e79ace454da133547c5a318ccce4a8c7d8e4c3e7552a5a0e3169ac4b0400",
+    "experiments/own-xpu-runtime/ops/packet196-window/safety.py": "d9c36bed2319e525e354c9e37801ebabdbadc5ba37e751d7b6243863206cf7e7",
+    "experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "experiments/own-xpu-runtime/ops/packet196-window/restore.py": "d5c594eea17186b1eead04d23d7fee2438e96bb3297d1e72c8ad59e67e22f932",
+    "experiments/own-xpu-runtime/ops/packet196-window/validate.py": "378534ebeef8fa6015c16d97413e667173bccaeee6b7f58bafcc996d3e1c2595",
+    "experiments/own-xpu-runtime/ops/packet196-window/window.py": "cdd7aa3e362688dde26b5ebaefbe50c7a6a22886807c0ceea8a4121fa0b84e0b",
+    "experiments/own-xpu-runtime/ops/packet197-window/window.py": "49b73a94cd0457c19033f961c0d3f9a7b13a97b11bd32bd9c87ce1514d492dfc",
+    "experiments/own-xpu-runtime/ops/packet197-window/helpers.py": "0dec35606429b9619eca37a108e3f634b6ed72900a47089a25850bc63d12f3be",
+    "experiments/own-xpu-runtime/ops/packet197-window/helper-pins.json": "c9b53847cf489d41a1442757f9e05c7e3874ef0a55d7bbff370a345bb8bc5366",
+    "experiments/own-xpu-runtime/ops/packet197-window/restore_guard.py": "9c1a507a56b70a95cbf42f3f462cf3debd4d93e7ab25cdf9f60843580072a136",
+    "experiments/own-xpu-runtime/ops/packet197-window/test_window.py": "98d46094d0b0046b55f6503dd1850089673998d9d706d6de6b483814e55556b4",
+    "experiments/own-xpu-runtime/ops/packet198-window/helpers.py": "30633b57a4e1d369ca54ecc997d5ddd3ebc9f57f437821e4e8f2f9467a87f9ba",
+    "experiments/own-xpu-runtime/ops/packet198-window/helper-pins.json": "36f0539356df4d89abf3127b45a049ef5be25f116f8f9c122515f983d1e1ebb2",
+    "experiments/own-xpu-runtime/ops/packet198-window/restore_guard.py": "0894c1638dd73697901f324b3e543408ba99206683ea7b31f3b041d1e786232c",
+    "experiments/own-xpu-runtime/ops/packet198-window/window.py": "900ec60d4c36bc1cb0370809518cc0db4a852bedfd212690918bbba723f7194e",
+    "experiments/own-xpu-runtime/ops/packet198-window/test_window.py": "1aac173df6f2e733ec75fc01cc2874103eb0e2174133a127063ef7fa7a9b4ad9",
+    "experiments/own-xpu-runtime/ops/packet199-window/window.py": "95d10b5142390eeb534506083ffb4b53f6ea8f29df06e7e6605e0abdfbcf0844",
+    "experiments/own-xpu-runtime/ops/packet199-window/helpers.py": "272af0e1669338f677c2424553ba427b2ba4c681fcf2d747bbe4923f73691d32",
+    "experiments/own-xpu-runtime/ops/packet199-window/helper-pins.json": "0a368c89028937374155795773391ea08ce3d09900590159041f3caf42d5c00b",
+    "experiments/own-xpu-runtime/ops/packet199-window/restore_guard.py": "a8c212a218b9d864fb4b8d4966902a9cd05c77db9a392eb51f7672fc3d0c4b5f",
+    "experiments/own-xpu-runtime/ops/packet199-window/test_window.py": "8a2626467b66ebe635684f56c86dd5864262dde5b7fe5cb61cea54843e557c83"
+  },
+  "logs": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/independent-adapter-run-tests.log": "a9685057635bcbcc36a7caaca26f6cd72932d19d54df8d10433a61813b1c17a1",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/independent-adapter-driver-tests.log": "88a759b4bd6bfb7ee148d20f0ddcf4f39e90cb50bdc72520084b52f31cf73d4f"
+  },
+  "findings_resolved": [
+    "Full frozen worker/profile authorization now runs through --verify-admission before host admission or endpoint shutdown; public --plan remains CPU-only.",
+    "Direct restoration independently requires matching preflight plan, inactive successful worker, two-phase terminal proof and passive physical drain; exclusive admission marker prevents replay.",
+    "Restoration validator permits exactly three inherited endpoint argument tuples, with exclusive one-shot markers.",
+    "Restoration final guard and controller journal failures preserve prior exception; final guard failure after SystemExit(0) still refuses success."
+  ],
+  "reviewed": [
+    "Missing root-written fixed manifest refuses all operational entries before commands, locks, latches, capture, owner or inherited restore.",
+    "Required adapter/controller/client source names are mandatory manifest members; every supplied source digest is checked; exact fixed paths and launch activity mode.",
+    "Child-side staging identity, orphan fault-log freshness, 768MiB worker forecast plus1MiB client reserve above27GB before endpoint stop and after drain.",
+    "One graceful stop of three prior idle endpoints, independent passive drain, source/plan/memory/storage/fault rechecks and locked exact PAUSE-A handoff; PAUSE-B retained.",
+    "One safe systemd worker launch; no automatic retry or resume; fault/STOP/external-latch refusal and at most one main-process SIGTERM.",
+    "Terminal acceptance combines successful inactive unit exit0, frozen precompletion/final validator and independent passive drain; zero requests explicitly lifecycle-only.",
+    "Inherited restore/validation imports resolve window.faults_clear to the operational driver in child only; frozen pure contract is uniquely named and unchanged.",
+    "Per-operation restoration checks source/manifest, faults, STOP, original PAUSE bytes and empty queues; no replay on failure.",
+    "Frozen worker, test and README bytes match earlier independently reviewed closure; all20 inherited helper pins independently match."
+  ],
+  "scope_limits": [
+    "All service, queue, fault capture, privilege, native and restore operations mocked or uninvoked; no operational manifest or live admission produced.",
+    "Client payload correctness/serving qualification belongs to the separately reviewed client pilot; this review verifies its mandatory source-closure seam only.",
+    "Monitored forecast is not a certified driver-cache or filesystem quota; no performance or real-model serving claim.",
+    "Original failed adapter candidate and first test failure are retained under lineage/first-adapter-cpu-check; author receipt identifies that evidence."
+  ]
+}

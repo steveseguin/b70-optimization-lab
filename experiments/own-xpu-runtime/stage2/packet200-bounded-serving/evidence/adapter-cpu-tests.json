@@ -1,0 +1,33 @@
+{
+  "schema": "packet200.adapter-cpu-tests.v1",
+  "passed": true,
+  "device_executed": false,
+  "native_executed": false,
+  "operational_manifest_written": false,
+  "tests": {
+    "run_adapter": 10,
+    "driver_restore": 30
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py": "4bb4159ba7ea0b912f2e2ac7b658b4ac716bd34fbeb7984c94f48b1413756d56",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_run.py": "673a29c42e6c013874832092d3a8ca78ff7b1d6b5dd78c9a5240bb4fe2b2b3b9",
+    "experiments/own-xpu-runtime/ops/packet200-window/driver.py": "4105b247ef995fe8c30cdc748b9d470712483802c320d40948f7367b75b88dee",
+    "experiments/own-xpu-runtime/ops/packet200-window/helpers.py": "43b9cbcb80ce903e1de1946250d8623640fff5cf39aa8fc848e30f8822405294",
+    "experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py": "b68fb7955012feeffe1911b4f6291755d1d2f67c366ad22086fe58ce710c215a",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_driver.py": "b49833ccde4eff653ed975bfc600d5fb8f7c88395b3570ed5c913b3491fe3461",
+    "experiments/own-xpu-runtime/ops/packet200-window/DRIVER.md": "0fbd194018d7cd538fa6800af933db7cb82b7c118a8c50baa0b1765a042cffcd"
+  },
+  "logs": {
+    "adapter-run-tests.log": "b23a32c7414d8608c69fb818a7d9c2025724b63e183dc0d22566e3042055e058",
+    "adapter-driver-tests.log": "efdc3e1dc7e069c3f254cae76e81f02028da219d1ae1b15461b55c644e2dd14e"
+  },
+  "first_failure": "lineage/first-adapter-cpu-check/driver-tests.log",
+  "scope": "CPU intercepted operations only; no live admission, host/service/queue action, native or endpoint execution.",
+  "limitations": [
+    "Monitored storage forecast is not a hard bound.",
+    "Real model serving qualification and operational admission remain pending.",
+    "Zero requests prove lifecycle only."
+  ],
+  "prior_passing_batch": "lineage/before-client-qualification-join/preservation.json",
+  "qualification_join": "One CPU client unit after listener; both worker/client unit success and sixteen-turn token/oracle proof before restoration, including direct guard invocation."
+}

@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 15:50 EDT — execution and16-turn qualification adapters pass57 CPU checks.**
+The first bounded serving window now has reviewed execution, client and restoration adapters. Restoration requires both
+worker and client to exit successfully, all16 turns to pass, five retained token oracles, one resumed/fresh comparison and
+independent physical drain. Exact consumed prompts and HTTP/native response mapping are checked. All operations remain
+CPU mocks; no new model owner or device window has started. The preceding coordinator commit has green CI. Storage work is
+preparing a verified archive of closed p199 checkpoints to improve the margin above the27GB floor before live admission.
+[Preparation](experiments/own-xpu-runtime/stage2/packet200-bounded-serving/DEVICE-PREP.md).
+
 **October 23, 15:28 EDT — bounded interactive coordinator passes37 CPU checks.**
 The worker's26 checks and independent review cover one-owner launch interception, real pipe draining, first-error retention
 and durable completion before reservation release. Eleven outer-window checks require matching pre-completion/final receipts,

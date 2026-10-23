@@ -1,0 +1,78 @@
+{
+  "schema": "packet200.client-independent-cpu-review.v1",
+  "passed": true,
+  "http_requests_executed": false,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "operational_manifest_written": false,
+  "tests": {
+    "count": 17,
+    "result": "OK",
+    "command": [
+      "/home/steve/.venvs/vllm-xpu/bin/python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving",
+      "-p",
+      "test_client_pilot.py",
+      "-v"
+    ],
+    "placement": "nice19; cores8-15,24-31; OMP_NUM_THREADS=2; OPENBLAS_NUM_THREADS=2",
+    "scope": "Actual pinned codec/vector rendering; HTTP intercepted and native records synthetic."
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client_pilot.py": "43aef6e48b46d81dd69f31b018feea242c353bc46a1c7ea89823bc2013376975",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_client_pilot.py": "5078a1e0f2f1ef13fc562170a1571d907562fd7d87bd8af683344c346796571f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client-vectors.json": "4d7784788a9227d7825450adfe8585de6b0f495e35845ba8ab96866bc9ee8510",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/client-cpu-tests.json": "7bbbc90d762b240aa29e1e217bd03a3614e21fd862aa67372c5d26f22eb0ee20",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/independent-client-tests.log": "1238af27977be98c61049320e85bb91228e0760eeeedb8720717873a17c3d8a6",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/vectors.json": "278c5ca8150ba3a67b2326a3e6418ee211d6b16455eaec3b666b2bcdf7c8060a",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "experiments/own-xpu-runtime/ops/packet200-window/driver.py": "4105b247ef995fe8c30cdc748b9d470712483802c320d40948f7367b75b88dee",
+    "experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py": "b68fb7955012feeffe1911b4f6291755d1d2f67c366ad22086fe58ce710c215a",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-a/result.json": "fcf2b916fae9aec4937316393bd9da2f6058b514616148f285d512807e391206",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-b/result.json": "acabde54907d1c224e534d0b59dbf9f076cc9097fd1723104c6c98a7dc9676e8"
+  },
+  "independent_vector_checks": {
+    "first_six_messages_and_prompt_tokens_match_p199": true,
+    "full_p198_oracles_exact": [
+      "a-park",
+      "b-park",
+      "b-repeat",
+      "a-final",
+      "b-final"
+    ],
+    "rows": 16,
+    "maximum_output_tokens": 1728,
+    "synthetic_http_calls": 19,
+    "synthetic_gets": 2,
+    "synthetic_expected_refusal": 1
+  },
+  "findings_resolved": [
+    "Exact bounded native input.tokens must equal rendered fixed vector prompt IDs; same-length wrong prompt refuses.",
+    "Post-admission initialization errors enter fixed STOP/incident handling and prevent HTTP intake.",
+    "Original runtime error survives secondary STOP/evidence/writer-close/HTTPConnection-close failures; notes preserve secondary causes.",
+    "Final writer close occurs before execute returns success; provisional passed JSON cannot override failed client unit in controller/direct-restore join."
+  ],
+  "reviewed": [
+    "One literal127.0.0.1 listener, fixed trusted paths, source-bound vectors and manifest; no service/model launch, retry or restoration code.",
+    "Each HTTP request has one attempt; wrong status, ID, native input/output, decode, usage, oracle, resumed/fresh pair or guard failure escapes before subsequent intake.",
+    "Safe native request IDs stay within fixed owner requests root; bounded regular no-follow reads refuse symlink/FIFO/changed artifacts.",
+    "Full visible raw native tokens retained; only final admitted EOS/im_end omitted from displayed content; whitespace not stripped.",
+    "Five full prerecorded output oracles and one resumed/fresh token pair checked; varied/edited rows check transport/native consistency without claiming semantic quality.",
+    "Evidence limited1MiB/40files, separately reserved in controller; STOP is fixed owner output path; original partial evidence retained.",
+    "Controller/direct-restore qualification requires both successful unit exits plus16 requests/controls,16 client requests,5 full oracles,1pair and source/listener provenance."
+  ],
+  "scope_limits": [
+    "No live HTTP, native owner, model or device executed; successful synthetic replay is CPU preparation only.",
+    "A passed client-result.json is provisional until successful client unit exit and independent worker/drain/controller proof.",
+    "No speed/submission eligibility, full OpenAI compatibility, streaming or semantic quality claim.",
+    "768MiB worker forecast plus1MiB client reserve is not a driver/cache hard quota."
+  ],
+  "lineage": "lineage/client-before-transport-close-review retains exact prior16-pass candidate and receipt; earlier fixes remain in their recorded source lineage."
+}

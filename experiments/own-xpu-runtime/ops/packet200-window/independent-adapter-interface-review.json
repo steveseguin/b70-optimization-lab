@@ -1,0 +1,73 @@
+{
+  "schema": "packet200.independent-adapter-interface-review.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T19:45:11.660584+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "host_commands_executed": false,
+  "services_changed": false,
+  "queue_changed": false,
+  "operational_manifest_written": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py": "4bb4159ba7ea0b912f2e2ac7b658b4ac716bd34fbeb7984c94f48b1413756d56",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_run.py": "673a29c42e6c013874832092d3a8ca78ff7b1d6b5dd78c9a5240bb4fe2b2b3b9",
+    "experiments/own-xpu-runtime/ops/packet200-window/driver.py": "4105b247ef995fe8c30cdc748b9d470712483802c320d40948f7367b75b88dee",
+    "experiments/own-xpu-runtime/ops/packet200-window/helpers.py": "43b9cbcb80ce903e1de1946250d8623640fff5cf39aa8fc848e30f8822405294",
+    "experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py": "b68fb7955012feeffe1911b4f6291755d1d2f67c366ad22086fe58ce710c215a",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_driver.py": "b49833ccde4eff653ed975bfc600d5fb8f7c88395b3570ed5c913b3491fe3461",
+    "experiments/own-xpu-runtime/ops/packet200-window/DRIVER.md": "0fbd194018d7cd538fa6800af933db7cb82b7c118a8c50baa0b1765a042cffcd",
+    "experiments/own-xpu-runtime/ops/packet200-window/window.py": "0c311165ab1626e2438aa8965337a1ee534d1c09a59f40a88de2f1063ef4be7e",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_window.py": "9eb617925046be139e1b6b7ea6f0a5336b571d02e8083131ecec5d28eb4c36cb",
+    "experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json": "efe1e79ace454da133547c5a318ccce4a8c7d8e4c3e7552a5a0e3169ac4b0400",
+    "experiments/own-xpu-runtime/ops/packet200-window/actual-cpu-plan.json": "95ef80738a0283738c31c7bb1d834c56b3ccafe6020142a9019935c46c9f0839",
+    "experiments/own-xpu-runtime/ops/packet200-window/actual-cpu-contract.json": "44414b77ee77525d115fbf81f977c3d38d8f8fb55a83cf1626154bfd5b359cb3",
+    "experiments/own-xpu-runtime/ops/packet200-window/interface-review.json": "cd115b44570555b950608b46d44bdee80a26184c1c6ce57294680e740cfec2d8",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py": "1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_device_worker.py": "2e77102590253aa1f096b9e4780caffd3067758f77c4b052038b683571ad319e"
+  },
+  "tests": {
+    "run_adapter": 10,
+    "driver_restore": 30,
+    "total": 40,
+    "run_seconds": 0.017,
+    "driver_seconds": 0.048
+  },
+  "logs": {
+    "experiments/own-xpu-runtime/ops/packet200-window/independent-run-tests.log": "9c2cadb0ab082b1403d14c154ac2222643b34a48d32d17e1f52439ff82b8840b",
+    "experiments/own-xpu-runtime/ops/packet200-window/independent-driver-tests.log": "d1e32233077d9275813675b1524abe668fd11dde69663a1d65fdeca84b6845bc"
+  },
+  "canonical_cpu_plan_sha256": "2c2a705ade948bd3a6ea988cc861133bc5976dc9c9ff897009bc89cfae737834",
+  "author_receipt_sha256": "f039502f163545e9ff4d152328fc93b5a1df514c25764c731dca70785a568a42",
+  "reviewed": [
+    "Fixed launch-mode argv uses additive run.py, delegates exactly once to frozen worker, and preserves fixed planned-a/output/checkpoints/fault-review paths.",
+    "Full worker/profile authorization and adapter/client closure are required before host inspection or endpoint stops; child rechecks exact private staging identity.",
+    "Orphan fault-capture sidecar and client output refuse before endpoint shutdown; full768MiB forecast plus1MiB client evidence reserve preserve27GB floor.",
+    "Unique contract/helper/worker module imports and process-local historical window guard alias avoid contract namespace collision; validator child retains manifest hash.",
+    "One endpoint stop cycle and one worker launch use process-only/no-restart/no-hardkill properties; incidents preserve external latches and signal main at most once.",
+    "Both terminal phases, actual inactive-success exit0, and separate physical drain are required. The frozen contract still describes0..16 lifecycle closure; this adapter now additionally requires sixteen qualified client turns.",
+    "Direct restoration independently verifies preflight plan, unit exit, both terminal receipts and passive drain, then writes an exclusive one-shot admission marker. Three fixed validator argument tuples are each single-use.",
+    "Per-operation restoration checks exact manifest, pinned sources, faults, STOPs, original PAUSE bytes and empty queues. Cleanup preserves primary runtime errors.",
+    "One fixed packet200-client-a helper unit starts from the unique loopback listener; ambiguous launch failure is never retried.",
+    "Controller and direct restoration require client inactive-success exit0 plus passed16 requests,5 recorded output oracles,1 resumed/fresh pair and capped1728 outputs. Client cannot claim worker control proof.",
+    "Client admission manifest/vector/listener byte hashes and address bind its result to the current admitted window.",
+    "Worker exit while client final validation remains active waits without physical-drain acceptance or restoration. Failed client qualification halts intake and prevents restoration."
+  ],
+  "resolved_findings": [
+    "Child-side staging inode identity recheck",
+    "Orphan fault sidecar freshness before host shutdown",
+    "Full core seal before endpoint stops",
+    "Independent direct-restoration terminal/unit/drain gate and one-shot markers",
+    "Fixed validation target tuples and original-error preservation",
+    "Worker-exit versus final-client-oracle race closed in both controller and direct restoration"
+  ],
+  "limitations": [
+    "Only CPU mocks/intercepted service operations were executed; no controller --check/--run or native worker execution.",
+    "Client implementation and full vectors are separately reviewed; this receipt audits the controller/client completion interface. Root operational admission and actual serving result remain pending.",
+    "Storage admission remains a monitored forecast, not a hard bound on native/driver writers."
+  ],
+  "prior_review": "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/lineage/before-client-qualification-join/independent-adapter-interface-review.json",
+  "prior_logs": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/lineage/before-client-qualification-join/independent-interface-run-tests.log": "f708db965f1795ec8d50b5e9e19f02ea838a4d830480b894c085ab46db4f2b60",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/lineage/before-client-qualification-join/independent-interface-driver-tests.log": "77101a3858bd1122ce353aeac80718e8bc5758e60e35c240f774df58c21636d0"
+  }
+}

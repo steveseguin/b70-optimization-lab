@@ -1,0 +1,50 @@
+test_failed_unit_cannot_be_masked_by_good_json (test_driver.DriverTests.test_failed_unit_cannot_be_masked_by_good_json) ... ok
+test_failed_worker_stops_intake_without_restore (test_driver.DriverTests.test_failed_worker_stops_intake_without_restore) ... 2026-10-23T19:35:10.957591+00:00 stopping the three idle prior endpoints once
+2026-10-23T19:35:10.958418+00:00 HALT: original fault
+ok
+test_forecast_rechecked_postdrain_before_capture_or_launch (test_driver.DriverTests.test_forecast_rechecked_postdrain_before_capture_or_launch) ... 2026-10-23T19:35:10.960617+00:00 stopping the three idle prior endpoints once
+2026-10-23T19:35:10.961034+00:00 HALT: storage floor refused
+ok
+test_incident_preserves_external_pause_and_sends_only_one_main_sigterm (test_driver.DriverTests.test_incident_preserves_external_pause_and_sends_only_one_main_sigterm) ... 2026-10-23T19:35:10.962368+00:00 external pause retained during incident: external pause change retained: B
+2026-10-23T19:35:10.962834+00:00 external pause retained during incident: external pause change retained: B
+ok
+test_missing_manifest_before_commands_locks_or_latches_for_both_modes (test_driver.DriverTests.test_missing_manifest_before_commands_locks_or_latches_for_both_modes) ... ok
+test_one_launch_one_restore_and_exact_pause_preservation (test_driver.DriverTests.test_one_launch_one_restore_and_exact_pause_preservation) ... 2026-10-23T19:35:10.965731+00:00 stopping the three idle prior endpoints once
+2026-10-23T19:35:10.967289+00:00 bounded lifecycle and clean worker drain passed; restoring prior endpoints once
+ok
+test_restore_guard_checks_output_stop_and_original_pauses (test_driver.DriverTests.test_restore_guard_checks_output_stop_and_original_pauses) ... ok
+test_restore_missing_manifest_refuses_before_runpy (test_driver.DriverTests.test_restore_missing_manifest_refuses_before_runpy) ... ok
+test_restore_namespace_and_validation_child_keep_manifest_guard (test_driver.DriverTests.test_restore_namespace_and_validation_child_keep_manifest_guard) ... FAIL
+test_safe_stop_refuses_group_kill_mode (test_driver.DriverTests.test_safe_stop_refuses_group_kill_mode) ... ok
+test_terminal_binds_both_receipts_and_separate_drain (test_driver.DriverTests.test_terminal_binds_both_receipts_and_separate_drain) ... ok
+test_unknown_postflight_owner_refuses_restore (test_driver.DriverTests.test_unknown_postflight_owner_refuses_restore) ... 2026-10-23T19:35:10.975309+00:00 stopping the three idle prior endpoints once
+2026-10-23T19:35:10.976190+00:00 HALT: unknown owner
+ok
+test_watch_waits_for_physical_drain_before_validating_receipts (test_driver.DriverTests.test_watch_waits_for_physical_drain_before_validating_receipts) ... ok
+test_zero_requests_explicit_lifecycle_only (test_driver.DriverTests.test_zero_requests_explicit_lifecycle_only) ... ok
+
+======================================================================
+FAIL: test_restore_namespace_and_validation_child_keep_manifest_guard (test_driver.DriverTests.test_restore_namespace_and_validation_child_keep_manifest_guard)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet200-window/test_driver.py", line 156, in test_restore_namespace_and_validation_child_keep_manifest_guard
+    R.main(['--manifest-sha256','hash','20261023-restore29'])
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py", line 36, in main
+    runpy.run_path(str(target),run_name='__main__')
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/unittest/mock.py", line 1204, in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet200-window/test_driver.py", line 153, in inherited
+    self.assertEqual(faults_clear,R.D.restore_clear)
+AssertionError: <function restore_clear at 0x7c026ee587c0> != <MagicMock name='restore_clear' id='136349890537536'>
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.025s
+
+FAILED (failures=1)
