@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 16:05 EDT — the sixteen-turn serving pilot is sealed for live checks.**
+The reviewed configuration binds291 source/evidence files and the unchanged CPU plan. The execution preparation commit has
+green CI. A verified external archive preserved all262 closed p199 checkpoint files; removing only242 matching untracked tensor
+copies recovered147MB. Root now has about28.03GB free, above the27GB floor plus the full769MiB forecast. The three restore28
+applications remain running. Independent admission verification and fresh live checks precede one controlled test window;
+restore29 follows only a successful sixteen-turn client/worker qualification and physical drain.
+[Admission](experiments/own-xpu-runtime/stage2/packet200-bounded-serving/ADMISSION.md).
+
 **October 23, 15:50 EDT — execution and16-turn qualification adapters pass57 CPU checks.**
 The first bounded serving window now has reviewed execution, client and restoration adapters. Restoration requires both
 worker and client to exit successfully, all16 turns to pass, five retained token oracles, one resumed/fresh comparison and

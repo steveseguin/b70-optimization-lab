@@ -1,0 +1,47 @@
+{
+  "schema": "packet200.independent-manifest-cpu-verification.v1",
+  "passed": true,
+  "manifest_sha256": "3f9a18abe109800e8c8023769bd4d5c3d34c9e6e93e36fcb9916951c2f873d6a",
+  "source_files": 291,
+  "external_files": 35,
+  "canonical_plan_sha256": "2c2a705ade948bd3a6ea988cc861133bc5976dc9c9ff897009bc89cfae737834",
+  "actual_cpu_plan_equal": true,
+  "pre_manifest_audit_complete_subset": true,
+  "device_executed": false,
+  "native_executed": false,
+  "http_requests_executed": false,
+  "service_or_fault_checks_executed": false,
+  "command": [
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py",
+    "--verify-admission"
+  ],
+  "placement": "nice19; cores8-15,24-31; OMP_NUM_THREADS=2; OPENBLAS_NUM_THREADS=2",
+  "returncode": 0,
+  "seconds": 0.46192589798010886,
+  "controller": {
+    "restore_suffix": "20261023-restore29",
+    "evidence": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet200-window/evidence/window-a",
+    "staging_identity": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/planned-a",
+      "device": 66306,
+      "inode": 51944557,
+      "uid": 1000,
+      "mode": "0700"
+    },
+    "additional_write_bytes": 1048576,
+    "client_unit": "packet200-client-a",
+    "client_receipt": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/client-a/client-result.json",
+    "qualification_requests": 16
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/READY-FOR-DEVICE.json": "3f9a18abe109800e8c8023769bd4d5c3d34c9e6e93e36fcb9916951c2f873d6a",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py": "4bb4159ba7ea0b912f2e2ac7b658b4ac716bd34fbeb7984c94f48b1413756d56",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/readiness-source-audit.json": "2f8fe651c0134a0c6516bc8e300640857020cdf0ad3dd64848e0daa36fc3346e",
+    "experiments/own-xpu-runtime/ops/packet200-window/actual-cpu-plan.json": "95ef80738a0283738c31c7bb1d834c56b3ccafe6020142a9019935c46c9f0839",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/independent-manifest-verification.stdout.log": "a5f2bdc9c3986bc3b22871960babf04cbaee2042774077acb9916bc8cb3d454d",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/independent-manifest-verification.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Only fixed --verify-admission CPU command executed. Full source/profile/external/binary/path admission checked; no controller --check, host fault capture, service, HTTP, native or device operation. Live outcomes remain unverified."
+}

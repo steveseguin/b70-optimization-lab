@@ -1,0 +1,63 @@
+test_archive_fd_retained_and_replacement_refused (test_archive_p199_checkpoints.ArchiveTests.test_archive_fd_retained_and_replacement_refused) ... ok
+test_copy_refuses_existing_output_before_any_inventory (test_archive_p199_checkpoints.ArchiveTests.test_copy_refuses_existing_output_before_any_inventory) ... ok
+test_corrupt_duplicate_and_foreign_members_refused (test_archive_p199_checkpoints.ArchiveTests.test_corrupt_duplicate_and_foreign_members_refused) ... ok
+test_directory_sync_failure_is_not_ignored (test_archive_p199_checkpoints.ArchiveTests.test_directory_sync_failure_is_not_ignored) ... ok
+test_every_archive_member_verified (test_archive_p199_checkpoints.ArchiveTests.test_every_archive_member_verified) ... ok
+test_final_archive_recheck_failure_never_publishes_passed (test_archive_p199_checkpoints.ArchiveTests.test_final_archive_recheck_failure_never_publishes_passed) ... ERROR
+test_inventory_checks_native_digests_and_closed_file_set (test_archive_p199_checkpoints.ArchiveTests.test_inventory_checks_native_digests_and_closed_file_set) ... ok
+test_json_creation_syncs_file_then_parent_directory (test_archive_p199_checkpoints.ArchiveTests.test_json_creation_syncs_file_then_parent_directory) ... ok
+test_marker_parent_sync_failure_prevents_first_unlink (test_archive_p199_checkpoints.ArchiveTests.test_marker_parent_sync_failure_prevents_first_unlink) ... ok
+test_marker_precedes_first_unlink_and_failure_retains_map (test_archive_p199_checkpoints.ArchiveTests.test_marker_precedes_first_unlink_and_failure_retains_map) ... ERROR
+test_pin_rejects_symlink_and_changed_open (test_archive_p199_checkpoints.ArchiveTests.test_pin_rejects_symlink_and_changed_open) ... ok
+test_prune_requires_verified_copy_before_any_unlink (test_archive_p199_checkpoints.ArchiveTests.test_prune_requires_verified_copy_before_any_unlink) ... ok
+
+======================================================================
+ERROR: test_final_archive_recheck_failure_never_publishes_passed (test_archive_p199_checkpoints.ArchiveTests.test_final_archive_recheck_failure_never_publishes_passed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_archive_p199_checkpoints.py", line 157, in test_final_archive_recheck_failure_never_publishes_passed
+    self._prune_refusal(late=True)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_archive_p199_checkpoints.py", line 147, in _prune_refusal
+    with self.assertRaisesRegex(OSError,'synthetic'):P.prune()
+                                                     ^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/prune_p199_checkpoints.py", line 44, in prune
+    path.unlink();result['removed_files'].append(name);result['removed_bytes']+=entry['stamp']['bytes']
+    ^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1134, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1138, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1199, in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ArchiveTests._prune_refusal.<locals>.refuse() missing 1 required positional argument: 'path'
+
+======================================================================
+ERROR: test_marker_precedes_first_unlink_and_failure_retains_map (test_archive_p199_checkpoints.ArchiveTests.test_marker_precedes_first_unlink_and_failure_retains_map)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_archive_p199_checkpoints.py", line 154, in test_marker_precedes_first_unlink_and_failure_retains_map
+    self._prune_refusal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_archive_p199_checkpoints.py", line 147, in _prune_refusal
+    with self.assertRaisesRegex(OSError,'synthetic'):P.prune()
+                                                     ^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/prune_p199_checkpoints.py", line 44, in prune
+    path.unlink();result['removed_files'].append(name);result['removed_bytes']+=entry['stamp']['bytes']
+    ^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1134, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1138, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1199, in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ArchiveTests._prune_refusal.<locals>.refuse() missing 1 required positional argument: 'path'
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.055s
+
+FAILED (errors=2)

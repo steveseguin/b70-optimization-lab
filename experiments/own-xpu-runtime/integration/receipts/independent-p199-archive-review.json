@@ -1,0 +1,86 @@
+{
+  "schema": "p199-independent-archive-preparation-review.v1",
+  "passed": true,
+  "audited_utc": "2026-10-23T20:04:22.800192+00:00",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/archive_p199_checkpoints.py": "46710ec916aea75a11ee22679f1f18220eecb5d62cd0e300fafddbd93f80aba0",
+    "experiments/own-xpu-runtime/integration/prune_p199_checkpoints.py": "698cbaab3a02372795adfca45cd37fedcc3c4aef3c5e3a48f6e3e163a35b5097",
+    "experiments/own-xpu-runtime/integration/test_archive_p199_checkpoints.py": "b231d40ae1bf0d8055ddaa39cf2c3d3d128271338f3777168ef0180bd61226cb",
+    "experiments/own-xpu-runtime/integration/ARCHIVE-P199.md": "585fadc48a8c69d5ba7cfab42d9279c61198953b3c67727aed106f2eeb8b5987",
+    "experiments/own-xpu-runtime/integration/archive_p184_checkpoints.py": "4d84e566824579c5d8f6ee264d59f4638deddfa2dbbab6e2fea53539c0a8d8f7",
+    "experiments/own-xpu-runtime/integration/receipts/p199-checkpoint-archive-cpu.json": "c360fd5b71383fbcabc4a35286fd15e45e5cf2d03e6642fe885db4507ee58e1f",
+    "experiments/own-xpu-runtime/integration/receipts/p199-checkpoint-archive-plan.json": "f47bbfa41ae1cbb84c892940f70c1238d05880101705efce7f9ed10d6371e397"
+  },
+  "guard_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/independent-device-result.json": "335e914aa0cf3db7ee02ec5bec36248382937e049fe80b3ad6bec133f45a3019",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/independent-restore28-review.json": "211bb2e3a95038873065ce4eb3e0808dab5673e7d649b5e3ef43ba855feb7e75",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/independent-restore28-observations.json": "1c97fd64610cee5e124fda86da28c6e8efe3b3a4e121d4548a808c8fc6fb763e",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/worker.json": "c40defd454c129cb2f95c8ec1817b4c145eee24d3947792d8b981e6c29ac6f04",
+    "experiments/own-xpu-runtime/ops/packet199-window/evidence/window-a/window-result.json": "5d9f7a26a4a48ba1d8b971cc32ecfc1efc0b2fc1d69a666fb272b94da7cc504b",
+    "experiments/own-xpu-runtime/ops/packet199-window/evidence/window-a/postflight-drain.json": "65eaf399486cc3e635b12287d6282c2b88ecb28a78576880e4ec7f169fcfcda0",
+    "experiments/own-xpu-runtime/integration/archive_p199_checkpoints.py": "46710ec916aea75a11ee22679f1f18220eecb5d62cd0e300fafddbd93f80aba0",
+    "experiments/own-xpu-runtime/integration/prune_p199_checkpoints.py": "698cbaab3a02372795adfca45cd37fedcc3c4aef3c5e3a48f6e3e163a35b5097",
+    "experiments/own-xpu-runtime/integration/archive_p184_checkpoints.py": "4d84e566824579c5d8f6ee264d59f4638deddfa2dbbab6e2fea53539c0a8d8f7"
+  },
+  "tests": {
+    "passed": 12,
+    "log": "experiments/own-xpu-runtime/integration/receipts/independent-p199-archive-tests.log",
+    "sha256": "8b471236ba6b3eedb9b0bb109c95d496a7600aee459780a7f8323cacffc34ce5",
+    "scope": "Tiny synthetic files/in-memory tar; host and destructive paths intercepted."
+  },
+  "scope": "Source and CPU fixture review only. Real copy/member readback/native-blob rehash/prune remain root-only actions.",
+  "real_archive_created": false,
+  "real_tensor_pruned": false,
+  "native_or_device_executed": false,
+  "service_actions": false,
+  "inventory": {
+    "files": 262,
+    "binaries": 258,
+    "tensor_candidates": 242,
+    "tensor_bytes": 146964480,
+    "retained_small_binary_files": 16,
+    "retained_metadata_files": 4,
+    "metadata_hashes_independently_rechecked": true,
+    "tensor_hashes_rechecked_this_review": false,
+    "tracked_tensor_candidates": []
+  },
+  "checks": [
+    "Exact passed p199 worker/result/restore28 receipts pinned; original manifests bind129 binary hashes per tree.",
+    "Target mount UUID/device/parent identity and external headroom checked; no broad external scan.",
+    "Existing native lockfiles held exclusively without creation; no active historical owner admitted.",
+    "Copy verifies closed tar member set, all member hashes, whole tar hash and unchanged originals/source guards.",
+    "Separate prune repeats full verification; retains archive FD and native locks with per-unlink identity checks.",
+    "Tracked tensor candidates refused; only242 blk.*.bin names eligible; metadata and16 small binaries retained.",
+    "Durable incomplete marker and archive-to-original reconstruction map precede first unlink.",
+    "Final verification occurs within failure handling before passed receipt publication; no retry after partial output.",
+    "Archive and checksum sidecar data fsync are followed by parent directory fsync before copy success.",
+    "Every JSON write fsyncs file then identity-checked parent directory; unsupported/failing directory fsync propagates.",
+    "Prune receipt and reconstruction marker parent syncs both complete before the first unlink; injected marker-parent refusal performed zero unlinks."
+  ],
+  "storage_observation": {
+    "parent": {
+      "dev": 2050,
+      "ino": 2778419,
+      "uid": 0,
+      "mode": 511
+    },
+    "mount": {
+      "target": "/mnt/usb-models",
+      "source": "/dev/sda2",
+      "fstype": "fuseblk",
+      "uuid": "4E0E66ED0E66CD91"
+    },
+    "free_bytes": 104097738752,
+    "root_free_bytes": 27880558592,
+    "forecast_bytes": 806354944,
+    "disk_floor_bytes": 27000000000,
+    "forecast_margin_before_bytes": 74203648,
+    "forecast_margin_after_expected_bytes": 221168128
+  },
+  "limitations": [
+    "Metadata-only preparation plan does not attest large tensor contents; operational copy and prune must execute all hashes.",
+    "Storage margin is an observation and forecast, not a hard quota.",
+    "After prune local trees are deliberately incomplete; reconstruct from verified archive before native restore or full raw-state audit."
+  ],
+  "prior_review": "experiments/own-xpu-runtime/integration/lineage/p199-archive-before-directory-fsync/independent-p199-archive-review.json"
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "p199.checkpoint-archive-cpu-preparation.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T20:03:46.172772+00:00",
+  "tests": 12,
+  "seconds": 0.055,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "checkpoint_blobs_hashed": false,
+  "archive_created": false,
+  "checkpoint_files_deleted": 0,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/archive_p199_checkpoints.py": "46710ec916aea75a11ee22679f1f18220eecb5d62cd0e300fafddbd93f80aba0",
+    "experiments/own-xpu-runtime/integration/prune_p199_checkpoints.py": "698cbaab3a02372795adfca45cd37fedcc3c4aef3c5e3a48f6e3e163a35b5097",
+    "experiments/own-xpu-runtime/integration/test_archive_p199_checkpoints.py": "b231d40ae1bf0d8055ddaa39cf2c3d3d128271338f3777168ef0180bd61226cb",
+    "experiments/own-xpu-runtime/integration/ARCHIVE-P199.md": "585fadc48a8c69d5ba7cfab42d9279c61198953b3c67727aed106f2eeb8b5987",
+    "experiments/own-xpu-runtime/integration/archive_p184_checkpoints.py": "4d84e566824579c5d8f6ee264d59f4638deddfa2dbbab6e2fea53539c0a8d8f7"
+  },
+  "metadata_plan": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/p199-checkpoint-archive-plan.json",
+    "sha256": "f47bbfa41ae1cbb84c892940f70c1238d05880101705efce7f9ed10d6371e397"
+  },
+  "test_log": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/p199-checkpoint-archive-cpu.log",
+    "sha256": "42bd4060c131f3844590aea357f5e1b5db5a6b27e60aa75f8eeccef5e722c6dd"
+  },
+  "inventory": {
+    "files": 262,
+    "binaries": 258,
+    "manifests": 2,
+    "fields": 2,
+    "bytes": 147737106,
+    "tensor_prune_files": 242,
+    "tensor_prune_bytes": 146964480,
+    "retained_binary_files": 16,
+    "retained_metadata_files": 4,
+    "tracked_tensor_candidates": []
+  },
+  "storage": {
+    "parent": {
+      "dev": 2050,
+      "ino": 2778419,
+      "uid": 0,
+      "mode": 511
+    },
+    "mount": {
+      "target": "/mnt/usb-models",
+      "source": "/dev/sda2",
+      "fstype": "fuseblk",
+      "uuid": "4E0E66ED0E66CD91"
+    },
+    "free_bytes": 104097738752,
+    "root_free_bytes": 27880558592
+  },
+  "limitations": [
+    "Metadata plan records declared native blob hashes, not newly computed tensor digests.",
+    "Root must separately run copy/readback/original-rehash and review verified-copy-only receipt before prune.",
+    "No live unit/PID/lock gate was executed during preparation; these gates precede copy and prune.",
+    "Tiny synthetic fixtures/in-memory tar/mock unlink only; no real archive or checkpoint deletion."
+  ],
+  "directory_durability": "File fsync followed by parent directory fsync for every JSON write, tar creation and SHA sidecar; marker parent sync required before first unlink",
+  "prior_review_lineage": "experiments/own-xpu-runtime/integration/lineage/p199-archive-before-directory-fsync",
+  "mock_fixture_failure_lineage": "experiments/own-xpu-runtime/integration/lineage/p199-directory-fsync-mock-binding-failure"
+}
