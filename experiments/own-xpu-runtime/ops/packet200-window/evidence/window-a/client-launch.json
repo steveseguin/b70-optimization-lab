@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=packet200-client-a",
+    "--working-directory=/home/steve/llm-optimizations",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=KillMode=process",
+    "--property=ExitType=cgroup",
+    "--property=Nice=19",
+    "/usr/bin/taskset",
+    "-c",
+    "8-15,24-31",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client_pilot.py",
+    "--execute"
+  ],
+  "rc": 0,
+  "stdout": "",
+  "stderr": "Running as unit: packet200-client-a.service; invocation ID: 61462238d7b44b0f89b58b119a4de9f9\n"
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "packet200.post-device-unit-observations.v1",
+  "at": "2026-10-23T20:20:50.396699+00:00",
+  "units": {
+    "packet200-bounded-serving-a": {
+      "status": {
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "journal": "Started packet200-bounded-serving-a.service - /usr/bin/taskset -c 0-3,16-19 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py --authorized-device-window --staging-parent /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/planned-a --activity-mode launch --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/fault-review-device-a.json --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/planned-a/output.\npacket200-bounded-serving-a.service: Consumed 3min 40.089s CPU time, 62.1G memory peak, 0B memory swap peak.\n",
+      "journal_stderr": ""
+    },
+    "packet200-client-a": {
+      "status": {
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "journal": "Started packet200-client-a.service - /usr/bin/taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/client_pilot.py --execute.\n{\"passed\": true, \"requests\": 16, \"controls_claimed\": false, \"output_tokens\": 1484, \"maximum_output_tokens\": 1728, \"exact_recorded_requests\": 5, \"resumed_fresh_pairs\": 1, \"native_device_execution_claim\": \"Join with independent worker/native/physical-drain receipts\", \"submission_eligible\": false, \"speed_claim\": false}\npacket200-client-a.service: Consumed 1.435s CPU time, 154.5M memory peak, 0B memory swap peak.\n",
+      "journal_stderr": ""
+    }
+  },
+  "scope": "Read-only after native/client completion during application restoration; collected units are not raw prior exit-status snapshots."
+}

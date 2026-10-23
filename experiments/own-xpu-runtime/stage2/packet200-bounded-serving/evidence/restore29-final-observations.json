@@ -1,0 +1,74 @@
+{
+  "schema": "packet200.restore29-final-observations.v1",
+  "passed": true,
+  "at": "2026-10-23T20:28:03.502425+00:00",
+  "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "root_free_bytes": 27737001984,
+  "fault_count": 2,
+  "fault_review_matches": true,
+  "read_only": true,
+  "endpoint_requests": 0,
+  "endpoints": {
+    "qwen38-27b-vision": {
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/qwen38-27b-vision.service",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "qwen38-27b-fp8-tp1-test": {
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/qwen38-27b-fp8-tp1-test.service",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "qwen38-27b-fp8": {
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/qwen38-27b-fp8.service",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "queues": {
+    "A": {
+      "pause_sha256": "09b02cb8d35c5b7a1dc73879c5d85b557d0aff4bd890e910b22281b0fe3c1a0a",
+      "pause_matches_before": true,
+      "queue_empty": true,
+      "stop_present": false,
+      "inflight_present": false
+    },
+    "B": {
+      "pause_sha256": "54636d9e0b5067e18f3ee5a017191feb59d8fa15ad50298104f9e9d14991cee4",
+      "pause_matches_before": true,
+      "queue_empty": true,
+      "stop_present": false,
+      "inflight_present": false
+    }
+  },
+  "memory_blocks": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "controller_unit": {
+    "Restart": "no",
+    "TimeoutStopUSec": "1min 30s",
+    "MainPID": "0",
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "KillMode": "control-group",
+    "SendSIGKILL": "yes",
+    "LoadState": "not-found",
+    "ActiveState": "inactive"
+  }
+}

@@ -1,0 +1,240 @@
+{
+  "passed": true,
+  "at": "2026-10-23T20:27:14.944158+00:00",
+  "worker": {
+    "worker": {
+      "passed": true,
+      "runtime_passed": true,
+      "evidence_passed": true,
+      "owner_exited": true,
+      "diagnostics_finished": true,
+      "devices_drained": true,
+      "retained": false,
+      "model_loads": 1,
+      "requests": 16,
+      "controls": 16,
+      "storage_admission_mode": "monitored-forecast",
+      "storage_bound_proven": false,
+      "live_profile_ready": false,
+      "incident_sigterm_count": 0,
+      "listener_exposed": true,
+      "native_process_count": 1,
+      "plan_sha256": "2c2a705ade948bd3a6ea988cc861133bc5976dc9c9ff897009bc89cfae737834",
+      "owner_returncode": 0,
+      "store_closed": true,
+      "writers_closed": true,
+      "coordination_completed": true,
+      "precompletion_written": true,
+      "post_completion_evidence_failure": false,
+      "initial_activity": {
+        "mode": "launch",
+        "conservative": true
+      },
+      "address": [
+        "127.0.0.1",
+        56825
+      ],
+      "session": {
+        "schema": "ownrt.bounded-serving-session.v1",
+        "scope": "experimental production composition; caller owns live admission and physical drain",
+        "live_admission_claimed": false,
+        "profile_sha256": "13f0cfc5a24c8019f314290b6cebfc28e0964a1d61c0eb26fa1418e66f565745",
+        "state": "closed",
+        "passed": true,
+        "native_completed": 16,
+        "native_controls": 16,
+        "parking": {
+          "sessions": {
+            "p200-a-final": {
+              "checkpoint": "p200-a-final-1e86f148bada82f7f360fb4d",
+              "tokens": 343,
+              "bytes": 268435456
+            },
+            "p200-b-final": {
+              "checkpoint": "p200-b-final-f5ca03847e1bc3970e4fb8b1",
+              "tokens": 188,
+              "bytes": 268435456
+            }
+          },
+          "bytes": 536870912,
+          "budget": 536870912,
+          "pending_delete": [],
+          "retained_bytes": {}
+        },
+        "lifecycle": {
+          "passed": true,
+          "reason": "request-limit",
+          "native_stopped": {
+            "event": "stopped",
+            "reason": "request-limit",
+            "safe_to_exit": true,
+            "completed_requests": 16,
+            "completed_controls": 16,
+            "discarded_pending": false,
+            "pending_request_id": ""
+          },
+          "completed_requests": 16,
+          "close_calls": 1,
+          "scope": "attached owner lifecycle; physical drain remains outer-coordinator responsibility"
+        }
+      },
+      "stopped": {
+        "event": "stopped",
+        "reason": "request-limit",
+        "safe_to_exit": true,
+        "completed_requests": 16,
+        "completed_controls": 16,
+        "discarded_pending": false,
+        "pending_request_id": ""
+      },
+      "diagnostics": {
+        "started": true,
+        "eof": true,
+        "retained": false,
+        "reader_retained": false,
+        "capture_retained": false,
+        "owned_read_fd_open": false,
+        "reader_startup_uncertain": false,
+        "incident": false,
+        "error_type": null,
+        "capture_error_type": null,
+        "bytes_read": 170,
+        "successful_append_bytes": 170,
+        "successful_append_bytes_scope": "confirmed complete appends only; lower bound after partial writer failure",
+        "definitely_discarded_bytes": 0,
+        "payload_buffer_bound_bytes": 98304,
+        "scope": "routed diagnostics only; driver/native file growth excluded"
+      },
+      "ready_for_coordination_completion": true
+    },
+    "validation": {
+      "passed": true,
+      "completed_requests": 16,
+      "lifecycle_only": false,
+      "restoration_performed": false,
+      "operational_entrypoint_enabled": false
+    },
+    "precompletion": {
+      "passed": false,
+      "runtime_passed": true,
+      "evidence_passed": false,
+      "owner_exited": true,
+      "diagnostics_finished": true,
+      "devices_drained": true,
+      "retained": false,
+      "model_loads": 1,
+      "requests": 16,
+      "controls": 16,
+      "storage_admission_mode": "monitored-forecast",
+      "storage_bound_proven": false,
+      "live_profile_ready": false,
+      "incident_sigterm_count": 0,
+      "listener_exposed": true,
+      "native_process_count": 1,
+      "plan_sha256": "2c2a705ade948bd3a6ea988cc861133bc5976dc9c9ff897009bc89cfae737834",
+      "owner_returncode": 0,
+      "store_closed": true,
+      "writers_closed": false,
+      "coordination_completed": false,
+      "precompletion_written": false,
+      "post_completion_evidence_failure": false,
+      "initial_activity": {
+        "mode": "launch",
+        "conservative": true
+      },
+      "address": [
+        "127.0.0.1",
+        56825
+      ],
+      "session": {
+        "schema": "ownrt.bounded-serving-session.v1",
+        "scope": "experimental production composition; caller owns live admission and physical drain",
+        "live_admission_claimed": false,
+        "profile_sha256": "13f0cfc5a24c8019f314290b6cebfc28e0964a1d61c0eb26fa1418e66f565745",
+        "state": "closed",
+        "passed": true,
+        "native_completed": 16,
+        "native_controls": 16,
+        "parking": {
+          "sessions": {
+            "p200-a-final": {
+              "checkpoint": "p200-a-final-1e86f148bada82f7f360fb4d",
+              "tokens": 343,
+              "bytes": 268435456
+            },
+            "p200-b-final": {
+              "checkpoint": "p200-b-final-f5ca03847e1bc3970e4fb8b1",
+              "tokens": 188,
+              "bytes": 268435456
+            }
+          },
+          "bytes": 536870912,
+          "budget": 536870912,
+          "pending_delete": [],
+          "retained_bytes": {}
+        },
+        "lifecycle": {
+          "passed": true,
+          "reason": "request-limit",
+          "native_stopped": {
+            "event": "stopped",
+            "reason": "request-limit",
+            "safe_to_exit": true,
+            "completed_requests": 16,
+            "completed_controls": 16,
+            "discarded_pending": false,
+            "pending_request_id": ""
+          },
+          "completed_requests": 16,
+          "close_calls": 1,
+          "scope": "attached owner lifecycle; physical drain remains outer-coordinator responsibility"
+        }
+      },
+      "stopped": {
+        "event": "stopped",
+        "reason": "request-limit",
+        "safe_to_exit": true,
+        "completed_requests": 16,
+        "completed_controls": 16,
+        "discarded_pending": false,
+        "pending_request_id": ""
+      },
+      "diagnostics": {
+        "started": true,
+        "eof": true,
+        "retained": false,
+        "reader_retained": false,
+        "capture_retained": false,
+        "owned_read_fd_open": false,
+        "reader_startup_uncertain": false,
+        "incident": false,
+        "error_type": null,
+        "capture_error_type": null,
+        "bytes_read": 170,
+        "successful_append_bytes": 170,
+        "successful_append_bytes_scope": "confirmed complete appends only; lower bound after partial writer failure",
+        "definitely_discarded_bytes": 0,
+        "payload_buffer_bound_bytes": 98304,
+        "scope": "routed diagnostics only; driver/native file growth excluded"
+      },
+      "ready_for_coordination_completion": true
+    },
+    "client": {
+      "passed": true,
+      "requests": 16,
+      "controls_claimed": false,
+      "output_tokens": 1484,
+      "maximum_output_tokens": 1728,
+      "exact_recorded_requests": 5,
+      "resumed_fresh_pairs": 1,
+      "native_device_execution_claim": "Join with independent worker/native/physical-drain receipts",
+      "submission_eligible": false,
+      "speed_claim": false
+    }
+  },
+  "restore_suffix": "20261023-restore29",
+  "lifecycle_only": false,
+  "serving_qualification": true,
+  "submission_eligible": false,
+  "speed_claim": false
+}

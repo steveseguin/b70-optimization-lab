@@ -1,5 +1,26 @@
 # Current Workspace State
 
+**October 23, 16:28 EDT — sixteen-turn native serving passed and all three applications are restored.**
+One owner completed 16 requests and 16 saves, producing 1,484 tokens. Five recorded outputs and the resumed/fresh token pair
+were exact; all 256 retained checkpoint blobs verified. Restore29 validated all three applications by 20:27:14 UTC. Final
+observations show unchanged fault history, preserved pause bytes and empty queues; root has 27.737 GB free. Result and restore
+audits are being committed. Additive CPU work now connects streaming replies to the tested codec and state-disposition path;
+no further GPU window is queued. [Result](experiments/own-xpu-runtime/stage2/packet200-bounded-serving/RESULT.md).
+
+**October 23, 16:18 EDT — the sixteen-turn pilot passed; application restoration is underway.**
+One loaded native owner completed all16 requests and16 state dispositions, producing1,484 output tokens. Five recorded-output
+comparisons and the resumed/fresh pair passed. Both units exited successfully, diagnostics drained and independent physical
+drain passed; restore29 began at20:17:35 UTC. Independent evidence review is underway; restored availability is not yet claimed.
+The next serving feature is streaming replies, with additive CPU-only callback/decoder/transport work separate from this seal.
+[Admission and identity](experiments/own-xpu-runtime/stage2/packet200-bounded-serving/ADMISSION.md).
+
+**October 23, 16:11 EDT — the sixteen-turn serving window has started.**
+The admission commit0f26bbfc5 has all three CI workflows green. Fresh live admission passed; the controller began one
+graceful stop of the three idle restore28 applications at20:10:58 UTC. One native owner will serve the fixed sixteen-turn
+client after passive drain. Restoration as restore29 remains conditional on exact results, successful client/worker exit
+and independent physical drain. No new availability or serving-success claim is made while the window is active.
+[Admission](experiments/own-xpu-runtime/stage2/packet200-bounded-serving/ADMISSION.md).
+
 **October 23, 16:05 EDT — the sixteen-turn serving pilot is sealed for live checks.**
 The reviewed configuration binds291 source/evidence files and the unchanged CPU plan. The execution preparation commit has
 green CI. A verified external archive preserved all262 closed p199 checkpoint files; removing only242 matching untracked tensor

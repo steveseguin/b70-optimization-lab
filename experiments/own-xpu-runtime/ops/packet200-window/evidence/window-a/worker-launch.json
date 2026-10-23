@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=packet200-bounded-serving-a",
+    "--working-directory=/home/steve/llm-optimizations",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=KillMode=process",
+    "--property=ExitType=cgroup",
+    "--property=Nice=0",
+    "/usr/bin/taskset",
+    "-c",
+    "0-3,16-19",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py",
+    "--authorized-device-window",
+    "--staging-parent",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/planned-a",
+    "--activity-mode",
+    "launch",
+    "--fault-review",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/fault-review-device-a.json",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/planned-a/output"
+  ],
+  "rc": 0,
+  "stdout": "",
+  "stderr": "Running as unit: packet200-bounded-serving-a.service; invocation ID: 50e9745d00d84bc29c7253fefe70d97f\n"
+}
