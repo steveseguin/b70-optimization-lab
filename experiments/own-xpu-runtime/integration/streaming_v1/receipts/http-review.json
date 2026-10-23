@@ -1,0 +1,35 @@
+{
+  "schema": "ownrt.streaming-http-cpu-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-23T20:26:44.985859+00:00",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/streaming_v1/http.py": "e163f24fa87460362408f9a474a8e68480403c73487b57ea7d82365c46226dcb",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_http.py": "57f3e874d62885f69519d3da139f28b7a301a9fdb561f8af500d0b93e20cbb12",
+    "experiments/own-xpu-runtime/integration/streaming_v1/delivery.py": "427495f19637c9f0caf5b26cb2a573e42d339366a80f810ca88bd170a46579b6",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/test_chat_http.py": "1186f1ccf4ee7a677b985c6c08cced49e6868b6fa04765b448e4d5a522ab95bb"
+  },
+  "tests": 8,
+  "log_sha256": "936c7a5e04486d1b1d7fee2f77ed5eb476ccf10a8afffa7726f479a8ddf25115",
+  "scope": "Actual loopback HTTP/SSE sockets with intercepted service only; no native owner/model/service-unit/kernel operation.",
+  "checks": [
+    "Pinned parent header/session/content-type/body/JSON bounds preserved; listener admits literal IPv4 loopback only.",
+    "Early role/content SSE chunks are observed while synthetic service remains before disposition.",
+    "Final finish_reason, usage and DONE are offered only after service.stream returns stream_passed true and matching response identity.",
+    "Native/service failure halts intake and emits no false final or DONE; disconnected readers abandon delivery without skipping disposition.",
+    "Observer failure after disposition suppresses successful completion without falsely poisoning native intake.",
+    "Nonstream route remains supported; runtime-halted ChatRequestError produces503+intake_halted rather than recoverable400.",
+    "Delivery is bounded and nonblocking during callbacks; only post-disposition drain may wait up to configured maximum.",
+    "StreamingServer has a distinct exact type and cannot silently satisfy the frozen lifecycle server-type admission."
+  ],
+  "resolved_findings": [
+    "Restored frozen parent distinction between recoverable request refusal and halted runtime failure even when both use ChatRequestError."
+  ],
+  "limitations": [
+    "The intercepted service contract supplies the SAVE/RELEASE completion boundary; integrated real streaming service tests remain separate.",
+    "No live model/SSE serving qualification or production coordinator compatibility is claimed.",
+    "Delivery completion proves only local socket-buffer acceptance, never peer receipt.",
+    "Caller still owns listener, socket and native owner lifecycle; this adapter does not create or recover owners."
+  ]
+}

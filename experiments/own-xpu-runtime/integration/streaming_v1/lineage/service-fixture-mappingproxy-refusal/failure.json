@@ -1,0 +1,7 @@
+{
+  "passed": false,
+  "scope": "CPU synthetic fixture initialization only; zero native calls",
+  "error": "TypeError: cannot pickle mappingproxy object",
+  "cause": "Fixture deepcopy of immutable codec.tokenizer_identity mappingproxy",
+  "fix": "Materialize identity with dict before passing trusted synthetic native identity."
+}

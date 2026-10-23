@@ -1,0 +1,1 @@
+Prior CPU candidate reconstructed by reversing the halted ChatRequestError distinction patch. Seven local socket tests passed, but source review found that runtime errors with this exception type would incorrectly receive400 instead of halted503. The current handler preserves the parent distinction, covered by its eighth test. No native or device run used this candidate.

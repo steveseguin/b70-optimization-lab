@@ -1,0 +1,47 @@
+{
+  "schema": "ownrt.streaming-v1-engine-decoder-cpu.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T20:21:36.804008+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "model_owner_started": false,
+  "services_changed": false,
+  "external_network_used": false,
+  "tests": {
+    "engine": 20,
+    "decoder": 9,
+    "total": 29
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine.py": "522b0cd8d212e5b8d4a9432acb771fa9f67d20b6873fb8fdfdcc587b183a89f5",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder.py": "3b2ea358c86f423a38dbee16f36281c3cfbc27f08c0f65c6e23ad42d76aa35ac",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_engine.py": "3bb2e86e5b953764c8081f361216bc2d58809d09548e85f844881ad62f3ed856",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_decoder.py": "17fc6ef1cae49b1eb0b561a4277924008688a7be260a1d5a497d517a1cb5a67e",
+    "experiments/own-xpu-runtime/integration/streaming_v1/__init__.py": "296dfc17cfc0ad7de8492ecd9a39ff4ee0a89e710846554fd42f0ec3be56e78a",
+    "experiments/own-xpu-runtime/integration/streaming_v1/README.md": "f969ae9f87bf2b0b884b99d66582c76be63cb950510cd76e4c9c42db8f14bb71",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/http-requests.json": "0cd989d1b7c031b0ab4bb91ccb70228b41b43a3a9c72c5f24e3a80f8c3e48540"
+  },
+  "logs": {
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine-tests.log": "c907c64fdd77cad0aad25d879a3aaef06c80fe52a6bcb2fe9a9cae7082245757",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder-tests.log": "1bf24b4cf8e7c28891d31af08d75e305e7d360f06bf0834ca795dd48cf670162"
+  },
+  "scope": [
+    "Canonical13 engine regression tests plus7 observation tests against synthetic native/store fixtures",
+    "Actual canonical codec/tokenizer with all6 retained p199 outputs and exhaustive256single-byte coverage",
+    "Pinned248320-token vocabulary maximum128bytes;512token cap gives65536raw bytes and up to196608UTF8 bytes after replacement",
+    "Observer callback timing during native RUN, exception isolation and unchanged exact SAVE/RELEASE; no network delivery claim"
+  ],
+  "command": "nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/integration/streaming_v1 -p test_{engine,decoder}.py -v (two separate literal-pattern invocations)",
+  "limitations": [
+    "No HTTP/SSE endpoint or owner admission in these files",
+    "A trusted callback must perform bounded nonblocking work; arbitrary callback latency is not isolated",
+    "Observer-call success does not prove wire delivery; final transport success requires separate delivery status",
+    "No new natural-stop device or serving-performance qualification"
+  ],
+  "documentation_scope_update": "Overview now points to64-check assembled CPU stack; original29 engine/decoder test source and results unchanged. Prior documentation and receipt preserved under lineage/initial-engine-decoder-documentation."
+}

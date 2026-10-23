@@ -1,0 +1,48 @@
+{
+  "command": [
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/streaming_v1",
+    "-p",
+    "test_service.py",
+    "-v"
+  ],
+  "cpu_only": true,
+  "device_execution": false,
+  "failed_fixture": "lineage/service-fixture-mappingproxy-refusal/failure.json",
+  "log": "experiments/own-xpu-runtime/integration/streaming_v1/receipts/service-tests.log",
+  "log_sha256": "db29d3975839b9d9944ba286623dd7572a744635cfe111ff365dcf2962d0299b",
+  "native_execution": false,
+  "passed": true,
+  "schema": "streaming_v1.service-cpu.v1",
+  "scope": [
+    "Pinned real codec with synthetic native/store responses",
+    "Six retained p199 token-output/text replays; no model or fresh output correctness claim",
+    "Genuine callback timing under synthetic RUN before normal disposition",
+    "Canonical text, stop behavior and token usage parity",
+    "SAVE and no-save/same-ID RELEASE survive observer failures",
+    "Incremental decode parity errors halt intake after safe disposition",
+    "Native/storage failures remain primary; no retry",
+    "Caller must check separate transport delivery status; no DONE emitted here"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder.py": "3b2ea358c86f423a38dbee16f36281c3cfbc27f08c0f65c6e23ad42d76aa35ac",
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine.py": "522b0cd8d212e5b8d4a9432acb771fa9f67d20b6873fb8fdfdcc587b183a89f5",
+    "experiments/own-xpu-runtime/integration/streaming_v1/service.py": "d03511e9fa83345f3369d071ae2a4f4a496c4e4add3306b8f6291af8dfccc632",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_engine.py": "3bb2e86e5b953764c8081f361216bc2d58809d09548e85f844881ad62f3ed856",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_service.py": "6d3051919a2eec26fab8bf05c9b6b3afc9a9d60c9770a1a1b5179e545b264fd0",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/http-requests.json": "0cd989d1b7c031b0ab4bb91ccb70228b41b43a3a9c72c5f24e3a80f8c3e48540",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+  },
+  "tests": 13,
+  "utc": "2026-10-23T20:28:06.826844+00:00"
+}

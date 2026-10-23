@@ -1,0 +1,62 @@
+{
+  "schema": "ownrt.streaming-service-independent-cpu-review.v1",
+  "passed": true,
+  "tests": 13,
+  "result": "OK",
+  "seconds": 1.243,
+  "native_executed": false,
+  "device_executed": false,
+  "http_requests_executed": false,
+  "service_or_host_operations": false,
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/streaming_v1",
+    "-p",
+    "test_service.py",
+    "-v"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/streaming_v1/service.py": "d03511e9fa83345f3369d071ae2a4f4a496c4e4add3306b8f6291af8dfccc632",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_service.py": "6d3051919a2eec26fab8bf05c9b6b3afc9a9d60c9770a1a1b5179e545b264fd0",
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine.py": "522b0cd8d212e5b8d4a9432acb771fa9f67d20b6873fb8fdfdcc587b183a89f5",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder.py": "3b2ea358c86f423a38dbee16f36281c3cfbc27f08c0f65c6e23ad42d76aa35ac",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_engine.py": "3bb2e86e5b953764c8081f361216bc2d58809d09548e85f844881ad62f3ed856",
+    "experiments/own-xpu-runtime/integration/streaming_v1/receipts/service-cpu.json": "1c267d7543efa973c1b5bcb70c6cb3ddd6316406637d1b0358a0f7f4531de364",
+    "experiments/own-xpu-runtime/integration/streaming_v1/receipts/service-review.log": "a6669c6340aa99aa259e39d52d04eeacc55da514f8fa53539606e7eac25db22e",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/http-requests.json": "0cd989d1b7c031b0ab4bb91ccb70228b41b43a3a9c72c5f24e3a80f8c3e48540"
+  },
+  "reviewed": [
+    "Canonical service/streaming engine/decoder source origins and exact digests checked before construction; exact streaming engine and actual pinned codec required.",
+    "Valid streamed completion is assembled only after normal policy SAVE/RELEASE; successful completion shape, text/whitespace, terminal handling and usage match ordinary completion.",
+    "Trusted token observer failures disable further observation, preserve original error and permit required disposition; stream_passedfalse forbids successful terminal eligibility while owner remains usable.",
+    "Tail-flush delivery failure occurs after disposition and still yields stream_passedfalse; false callback return alone never attests delivery, and HTTP must independently require healthy delivery.",
+    "Decoder/native/storage/stop inconsistency halts service intake and preserves the originating exception; native/save failure takes precedence over earlier observer delivery failure.",
+    "RLock plus explicit stream-active guard refuses reentrant stream or ordinary completion from observer before another RUN.",
+    "All six retained p199 outputs replay through actual incremental codec and match their recorded text; native/store seams are synthetic.",
+    "Service emits no DONE; transport separately requires result.stream_passedtrue and successful delivery before offering its terminal frames."
+  ],
+  "findings": [],
+  "limitations": [
+    "CPU actual-codec/synthetic-front/store evidence only; no native owner or device qualification.",
+    "Observers are trusted bounded nonblocking callbacks; this service does not enforce arbitrary callback execution time.",
+    "SSE peer receipt is not proven by service return; separate HTTP/delivery evidence and future admitted integration remain necessary.",
+    "Existing tiny HOST_ONLY owner is vocab16/EOS15 with synthetic tokenizer identity, incompatible with production service exact codec admission; HOST-ONLY-PLAN.md describes only an explicit fixture facade for that native seam."
+  ]
+}

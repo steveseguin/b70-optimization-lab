@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 16:35 EDT — streaming replies pass 64 CPU and socket checks.**
+The additive service sends stable text while tokens arrive and waits for successful SAVE/RELEASE before its final stream marker.
+Recorded replies match ordinary responses; slow or disconnected readers cannot cancel state disposition. Independent component
+and composed-stack reviews pass. This is Python-stack evidence with an intercepted native front, not live-model streaming.
+The sixteen-turn native pilot and restore29 are committed as75bdeb7a3 with all three CI workflows green. All three applications
+remain running. A tiny host-only protocol proof is being prepared without changing the sealed baseline or queuing GPU work.
+[Streaming result](experiments/own-xpu-runtime/integration/streaming_v1/CPU-CLOSEOUT.md).
+
 **October 23, 16:28 EDT — sixteen-turn native serving passed and all three applications are restored.**
 One owner completed 16 requests and 16 saves, producing 1,484 tokens. Five recorded outputs and the resumed/fresh token pair
 were exact; all 256 retained checkpoint blobs verified. Restore29 validated all three applications by 20:27:14 UTC. Final

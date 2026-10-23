@@ -1,0 +1,129 @@
+{
+  "schema": "ownrt.next-serving-lever-source-analysis.v1",
+  "created_utc": "2026-10-23T20:09:45.250993+00:00",
+  "scope": "CPU source and retained-result audit only; no new native/model/service/device action",
+  "p200_status": "Live qualification pending at assignment; this analysis does not assume its outcome",
+  "recommendation": "Streaming replies on the existing sequential checkpoint owner",
+  "ranking": [
+    {
+      "rank": 1,
+      "lever": "Streaming replies",
+      "user_value": "High immediate responsiveness and common chat-client compatibility",
+      "implementation_cost": "Small-to-medium Python transport/adaptation change; no native kernel or model change",
+      "missing_gate": "Exact incremental text/token parity, bounded slow-client/disconnect handling, completion after disposition, natural-stop synthetic coverage and one later real stream/nonstream equivalence check"
+    },
+    {
+      "rank": 2,
+      "lever": "Prefill acceleration",
+      "user_value": "High real latency benefit, especially fresh and edited history",
+      "implementation_cost": "High if changing numerical kernels; first isolate current prefill mechanism and exactness authority",
+      "missing_gate": "Matched same-identity prompt-length/phase measurements; full-shape deterministic census and output equality before changing arithmetic"
+    },
+    {
+      "rank": 3,
+      "lever": "Longer context",
+      "user_value": "High for useful document and coding conversations beyond4096",
+      "implementation_cost": "Medium-to-high capacity/state-admission and new long-input correctness work",
+      "missing_gate": "One-card capacity census, complete BF16 state/SAVE peak-size proof at candidate context, long-input exactness; old two-card32768 evidence does not qualify this p198 owner"
+    },
+    {
+      "rank": 4,
+      "lever": "Packaging",
+      "user_value": "High distribution value once endpoint contract is usable",
+      "implementation_cost": "Medium dependency/installer/profile work; current serving needs Python around native",
+      "missing_gate": "p200 result, explicit serving profile and cold build/install/launch/health/graceful-stop reproduction; existing published package is packet165 benchmark replay without HTTP"
+    },
+    {
+      "rank": 5,
+      "lever": "Multi-user batching",
+      "user_value": "High shared-load throughput, lower immediate value for the proven single-user path",
+      "implementation_cost": "Largest: new schedule, numerical authority and session isolation",
+      "missing_gate": "Batched arithmetic certified independently, state/parking isolation, fairness/backpressure and cancellation; current serialized exactness cannot certify simultaneous decode"
+    }
+  ],
+  "existing_gap": {
+    "native": "request_front/client_v2.py:NativeFront.request accepts on_token and invokes it synchronously while reading native frames",
+    "engine": "checkpoint_engine.py:generate calls front.request without on_token; run_turn waits for generation then parking/disposition",
+    "service": "chat_service.py refuses stream:true and assembles text after run_turn returns",
+    "http": "chat_http.py calls complete then writes one JSON response",
+    "codec": "chat_codec.py decode delegates to full-sequence UTF-8 decode(errors=replace); decoding each token independently can corrupt split multibyte characters"
+  },
+  "smallest_scope": [
+    "Add a separately versioned optional token-observer path through successor engine/service adapters; keep frozen p197-p200 sources and native arithmetic untouched.",
+    "Add incremental byte-to-UTF8 decoding using pinned token bytes; concatenated SSE content must equal current full decode exactly, including whitespace and split/invalid byte cases. Suppress native terminal ID only from display, retain it in history/usage.",
+    "Provide stream:true on the same serial loopback endpoint with bounded nonblocking delivery handoff. A network sink cannot block or throw through the synchronous native on_token parser.",
+    "Preserve existing disconnect semantics: stop delivery, consume native terminal frames and perform exactly one normal SAVE/RELEASE. No model cancellation/retry/reload in this scope.",
+    "Emit assistant deltas during generation; publish finish_reason, final usage and [DONE] only after full result validation and successful disposition. No false successful terminal chunk after native/control failure.",
+    "Keep one owner/context4096/max512 and existing native stopset{248044,248046}; no context growth, batching, tool parser, LAN exposure or package release in this increment."
+  ],
+  "validation": [
+    "CPU replay exact p199 A/B/append tokens through streamed and nonstreamed facades; compare assembled content, usage, finish_reason and retained visible IDs.",
+    "Socket tests prove first content is observable before synthetic completion, byte-accurate Unicode splits, stop/length handling, slow consumer saturation, disconnect and final SAVE failure. Native-facing callback stays bounded/nonthrowing for delivery-only failures.",
+    "Reuse separate tiny GNU HOST_ONLY fixture for real NativeFront→adapter→SSE→postreply disposition→QUIT, after root review; no new compile required.",
+    "After CPU/host gates, include a minimal streamed/nonstreamed exact comparison and interrupted-client follow-up in one authorized warm-owner qualification; measure HTTP-to-first-SSE-content and disposition-inclusive completion separately."
+  ],
+  "measured_evidence": {
+    "p197": "Eight requests1408 outputs exact; one load210.251s; appended126input prefill4.015/3.395s vs fresh469prompt14.052s",
+    "p198": "Same eight outputs and five states exact; load215.639s; appended prefill3.979/3.373s vs fresh14.082s",
+    "p199": "Six actualHTTP turns896 outputs passed lifecycle/mapping gates; recorded A/B and append-vs-fresh outputs exact, edited A has no prerecorded output oracle. Actualchat append saved343token visible prefix,27new input; all replies cap-ended, no natural-stop device proof.",
+    "p199_native_components": [
+      {
+        "request_id": "hbeeee41147f643b98c817f015f58adc1-0000000000000001",
+        "prefill_ms": 28264.35015,
+        "first_generated_token_ms": 391.622764,
+        "checkpoint_restore_ms": null
+      },
+      {
+        "request_id": "hbeeee41147f643b98c817f015f58adc1-0000000000000002",
+        "prefill_ms": 1905.920524,
+        "first_generated_token_ms": 27.78373,
+        "checkpoint_restore_ms": null
+      },
+      {
+        "request_id": "hbeeee41147f643b98c817f015f58adc1-0000000000000003",
+        "prefill_ms": 867.780517,
+        "first_generated_token_ms": 28.776023,
+        "checkpoint_restore_ms": 347.204113
+      },
+      {
+        "request_id": "hbeeee41147f643b98c817f015f58adc1-0000000000000004",
+        "prefill_ms": 10829.795657,
+        "first_generated_token_ms": 29.212673,
+        "checkpoint_restore_ms": null
+      },
+      {
+        "request_id": "hbeeee41147f643b98c817f015f58adc1-0000000000000005",
+        "prefill_ms": 11773.918785,
+        "first_generated_token_ms": 29.15196,
+        "checkpoint_restore_ms": null
+      },
+      {
+        "request_id": "hbeeee41147f643b98c817f015f58adc1-0000000000000006",
+        "prefill_ms": 1960.153161,
+        "first_generated_token_ms": 29.148233,
+        "checkpoint_restore_ms": null
+      }
+    ],
+    "interpretation": "Ordered component observations only. first_generated_token_ms is one generated step, not HTTP TTFT. Streaming improves delivery timing, not prefill or native throughput. Fresh/edited prefill remains a separately measured bottleneck."
+  },
+  "source_sha256": {
+    "docs/own-xpu-runtime-objective.md": "7a27df0cab08fd2bd7470b2a78a9941ea1c898747f0d06ad9f5ae2dc98439dda",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/RESULT.md": "452b0d7eba64eaf687b63d76a5959178fcd53d6be54a70286ceaa9883f3d51d1",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/RESULT.md": "31f554a76b2a5d9f7e5eefd2f53f75a27c03943b921ca7c51e80375b68e550ed",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/RESULT.md": "b8529239f4a1bc7527882836ba09931b56ffebd7f84f1dd343b0da9968b65ec8",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7",
+    "packages/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/package.json": "1d7181a12f721b5c53986dcbb01ef624706d1138601abe3eb8a4a4bb13f87490",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/requests/hbeeee41147f643b98c817f015f58adc1-0000000000000001/result.json": "a55c943ec3ba368cc1c48ae4cc2b59a63430b3359534f5dd0bd546670b5aff01",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/requests/hbeeee41147f643b98c817f015f58adc1-0000000000000002/result.json": "a03b9cd523094650c6ff3abda7305407670b511d75d60247b5b04088b9379c00",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/requests/hbeeee41147f643b98c817f015f58adc1-0000000000000003/result.json": "30105f92a64698c095f462594d6f645c1c6e25c103e74fdfadc82e643082de7c",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/requests/hbeeee41147f643b98c817f015f58adc1-0000000000000004/result.json": "efd3e242e511db0a7f93425530da331f472d17bd9f47798a342565074c22ab91",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/requests/hbeeee41147f643b98c817f015f58adc1-0000000000000005/result.json": "11bf1ea96437103e941781513e191289dae08273dac46e9f5349623f1367a319",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/requests/hbeeee41147f643b98c817f015f58adc1-0000000000000006/result.json": "674b362d0ad59da64f5810f9a3111513db32f02489b7b16600dab4b42a6c5af1"
+  }
+}

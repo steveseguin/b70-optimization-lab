@@ -1,0 +1,56 @@
+{
+  "schema": "ownrt.streaming-engine-decoder-cpu-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-23T20:23:24.963883+00:00",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine.py": "522b0cd8d212e5b8d4a9432acb771fa9f67d20b6873fb8fdfdcc587b183a89f5",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder.py": "3b2ea358c86f423a38dbee16f36281c3cfbc27f08c0f65c6e23ad42d76aa35ac",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_engine.py": "3bb2e86e5b953764c8081f361216bc2d58809d09548e85f844881ad62f3ed856",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_decoder.py": "17fc6ef1cae49b1eb0b561a4277924008688a7be260a1d5a497d517a1cb5a67e",
+    "experiments/own-xpu-runtime/integration/streaming_v1/README.md": "f969ae9f87bf2b0b884b99d66582c76be63cb950510cd76e4c9c42db8f14bb71",
+    "experiments/own-xpu-runtime/integration/streaming_v1/cpu-seams.json": "039da21ee472d484eea324fdee301a3f35e732f471647914b7fc1b72ec8f24a3",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/http-requests.json": "0cd989d1b7c031b0ab4bb91ccb70228b41b43a3a9c72c5f24e3a80f8c3e48540"
+  },
+  "tests": {
+    "total": 29,
+    "engine": 20,
+    "decoder": 9,
+    "canonical_engine_regressions": 13,
+    "log_sha256": "3fbb85e829740094e18e8cc4a74ea55c6bd1c4bd5c13f43fc32f8e007834902b"
+  },
+  "scope": "Source review, synthetic native/store seams, actual pinned GGUF header codec and retained p199 token replay only.",
+  "model_owner_executed": false,
+  "device_executed": false,
+  "service_or_kernel_operations": false,
+  "checks": [
+    "Streaming generate/run_turn retain canonical context, append-source identity, pending descriptor, policy and final SAVE/RELEASE gates.",
+    "The same front/store objects and parent constructor identity checks are used; no binary/source/admission relaxation is added.",
+    "First observer BaseException disables subsequent callback invocations and retains its original object; native parsing and normal disposition continue.",
+    "Observer failure does not skip SAVE or final/same-ID RELEASE; native/storage/frame mismatches preserve canonical halt/no-auto-release behavior.",
+    "Observation token frames must match native completion exactly; observer error rendering is bounded and guarded.",
+    "Incremental decoder uses pinned tokenizer byte mapping and UTF8 replacement, retaining incomplete suffixes until continuation/final flush.",
+    "Final canonical decode parity checked; terminal token only suppressed from presentation, retained in full token history; subsequent token refuses.",
+    "Real codec tests cover all256 byte pieces, Unicode/subword boundaries, malformed/truncated sequences, nonterminal special tokens and six retained p199 responses.",
+    "Exhaustive pinned-vocabulary census confirms maximum128 raw bytes/token;512-token bound limits raw input65536 bytes, worst-case encoded replacement output196608 bytes."
+  ],
+  "limitations": [
+    "Observers are trusted bounded local callbacks, not an asynchronous scheduler; they must not block or mutate/reenter the native front/store/engine.",
+    "Production identity/admission still belongs to the surrounding coordinator; synthetic engine tests do not qualify native behavior.",
+    "Service must consult both observer and delivery failures before final success/DONE; observer completion counts do not prove wire delivery.",
+    "No real native/model streaming, integrated SSE endpoint or performance result is established."
+  ],
+  "documentation_refresh": {
+    "at": "2026-10-23T20:34:47.452399+00:00",
+    "paths": [
+      "experiments/own-xpu-runtime/integration/streaming_v1/README.md",
+      "experiments/own-xpu-runtime/integration/streaming_v1/cpu-seams.json"
+    ],
+    "scope": "README now describes assembled64-test CPU stack and links current closeout; original29 engine/decoder executable tests/results unchanged. No tests rerun for prose.",
+    "prior": "streaming_v1/lineage/initial-engine-decoder-documentation"
+  }
+}

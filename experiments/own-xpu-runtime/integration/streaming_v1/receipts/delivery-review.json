@@ -1,0 +1,31 @@
+{
+  "schema": "ownrt.streaming-delivery-cpu-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-23T20:19:21.784968+00:00",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/streaming_v1/delivery.py": "427495f19637c9f0caf5b26cb2a573e42d339366a80f810ca88bd170a46579b6",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_delivery.py": "3a9b0c5d0bb851f39e8d5d41e4e6f90283e3c988d12db8b90d0625ed6e92015e"
+  },
+  "tests": 9,
+  "log_sha256": "671d07658f2e141e6ef687f5192d6d7600681d1f57913e14a63aa8098bff0e27",
+  "scope": "Source review and CPU socketpair fixtures only; no model/owner/HTTP/service/kernel operations.",
+  "checks": [
+    "Pending queue and total offered-byte caps are explicit; offer invokes at most four nonblocking send calls.",
+    "Partial writes retain exact order without replay; zero/invalid progress and socket errors abandon output only.",
+    "MSG_DONTWAIT keeps each kernel send nonblocking after sequential blocking-mode changes.",
+    "Positive Python socket timeouts are refused before send, preventing Python readiness waits despite MSG_DONTWAIT.",
+    "Final drain uses monotonic timeout restricted to0..1 seconds; repeated completion cannot resend accepted bytes.",
+    "SSE JSON encoding escapes CR/LF event delimiters and preserves UTF8 text.",
+    "Borrowed socket stays caller-owned and open; no peer-receipt or native lifecycle success is asserted."
+  ],
+  "resolved_findings": [
+    "Per-send MSG_DONTWAIT added after initial mode-change boundedness review.",
+    "Filled-socket positive Python timeout reproduction blocked approximately0.0503s before guard; final regression now refuses a1s socket timeout promptly."
+  ],
+  "limitations": [
+    "Caller must exclusively lend the socket; another thread must not mutate its Python timeout during the loan.",
+    "Caller must invoke final drain only after native SAVE/RELEASE disposition; this module does not enforce native order or semantic success.",
+    "Successful local send does not prove peer receipt; slow or disconnected readers abandon delivery only.",
+    "No integrated SSE endpoint, request-front streaming or real model execution is qualified by these CPU fixtures."
+  ]
+}
