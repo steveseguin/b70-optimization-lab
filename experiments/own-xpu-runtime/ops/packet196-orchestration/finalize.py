@@ -54,7 +54,7 @@ def seal():
 
 def launcher_tests():
  cp=run('launcher-tests',['python3','-B','-m','unittest','discover','-s',O,'-p','test_launcher.py'])
- save(P/'evidence/launcher-tests.json',dict(passed=True,device_executed=False,tests=3,admission_cases=10,systemctl_mocked=True,privilege_used=False,log_sha256=sha(P/'evidence/launcher-tests.log')))
+ save(P/'evidence/launcher-tests.json',dict(passed=True,device_executed=False,tests=3,admission_cases=12,systemctl_mocked=True,privilege_used=False,log_sha256=sha(P/'evidence/launcher-tests.log')))
 
 def prepare():
  launcher_tests();binding();run('diet-admission',['python3','-B',O/'admission_gate.py','--verify'])

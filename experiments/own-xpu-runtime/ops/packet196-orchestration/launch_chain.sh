@@ -42,7 +42,7 @@ refuse(){ log "REFUSED: $*"; exit 4; }
 state(){
   local value rc
   value=$(timeout 30 systemctl --user is-active "$1" 2>/dev/null); rc=$?
-  case "$rc:$value" in 0:active|0:activating|0:reloading|0:deactivating|3:inactive|3:failed|3:unknown|4:unknown) printf '%s' "$value";;
+  case "$rc:$value" in 0:active|0:activating|0:reloading|0:deactivating|3:inactive|4:inactive|3:failed|3:unknown|4:unknown) printf '%s' "$value";;
     *) return 1;; esac
 }
 for u in qwen38-27b-fp8 qwen38-27b-fp8-tp1-test qwen38-27b-vision; do

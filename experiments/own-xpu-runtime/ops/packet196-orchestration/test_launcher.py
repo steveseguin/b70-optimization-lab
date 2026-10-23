@@ -7,6 +7,8 @@ STUB='''#!/usr/bin/python3
 import os,sys
 args=sys.argv[1:];case=os.environ['CASE']
 if 'is-active' in args:
+ if case=='removed-transient':print('inactive');sys.exit(4)
+ if case=='status-4-active':print('active');sys.exit(4)
  if case=='status-timeout':sys.exit(124)
  if case=='status-empty':sys.exit(1)
  if case=='status-mismatch':print('inactive');sys.exit(0)
@@ -22,7 +24,7 @@ sys.exit(99)
 '''
 class Launcher(unittest.TestCase):
  def test_admission(self):
-  cases={'clear':'MemAvailable','status-timeout':'cannot establish endpoint','status-empty':'cannot establish endpoint','status-mismatch':'cannot establish endpoint','endpoint-active':'owner endpoint','STOP-A':'incident latch','STOP-B':'incident latch','list-error':'lane/window discovery failed','codex-list-error':'codex discovery failed','show-error':'freezer state failed'}
+  cases={'removed-transient':'MemAvailable','status-4-active':'cannot establish endpoint','clear':'MemAvailable','status-timeout':'cannot establish endpoint','status-empty':'cannot establish endpoint','status-mismatch':'cannot establish endpoint','endpoint-active':'owner endpoint','STOP-A':'incident latch','STOP-B':'incident latch','list-error':'lane/window discovery failed','codex-list-error':'codex discovery failed','show-error':'freezer state failed'}
   for name,want in cases.items():
    with self.subTest(case=name),tempfile.TemporaryDirectory(prefix='p196-launcher-') as t:
     t=Path(t);(t/'lane').mkdir();(t/'coord').mkdir();(t/'lane/PAUSE-B').touch()

@@ -1,0 +1,11 @@
+{
+  "passed": false,
+  "device_executed": false,
+  "stage": "predevice-launch-admission",
+  "reason": "Coordinator observed systemctl is-active return status4 with stdout inactive for removed transient owner endpoint units after clean stop; launcher accepted inactive only with status3.",
+  "fix": "Accept exactly 4:inactive as well as 3:inactive. Empty, timeout, status/value mismatch, active endpoints, STOP latches and discovery errors remain refusals.",
+  "runtime_changed": false,
+  "chain_output_created": false,
+  "fault_review_created": false,
+  "old_launcher_digest": "a2634600af59fa28c081ea7340b183c37ca3f3b22c3ab5a9ccc9fb726c985e8b"
+}

@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**October 23, 11:20 EDT — one-card diet qualification is running; first two gates passed.**
+The service-state parser fix passed its regression tests and the qualification packet was resealed. The first admission refusal
+was manually reviewed and archived: it launched no benchmark and all cards had drained. The resumed coordinator skipped endpoint
+stops entirely, passed fresh admission and launched the original registered device command once at 15:18 UTC. Both K1 gates passed;
+KD, W2m and the three suite windows follow. The prior applications stay stopped during the test and restore25 remains conditional
+on clean completion. [Coordinator evidence](experiments/own-xpu-runtime/ops/packet196-window/evidence/window-b/preflight.json).
+
+**October 23, 11:13 EDT — one-card qualification stopped before launch on a service-state parser bug; cards idle.**
+The next substantive task is a warm one-card request interface with exact checkpoint continuation. Existing device evidence shows
+0.46 s restore versus 36.75 s cold prefix work, but the engine still takes a fixed request list and cannot serve ctxkeeper.
+The new bridge is being checked against real checkpoint manifests; reuse remains separate from cold record measurements.
+The prior restore24 applications drained gracefully and privileged passive ownership inspection found every card empty.
+The launcher rejected systemd's exit-code-4 `inactive` response for unloaded transient endpoint units. No benchmark process,
+chain output or fault review was created. The coordinator halted, preserving STOP-A and both lane pauses; no restoration
+was attempted. Fixing this admission parser and testing explicit continuation from the already drained state comes next,
+without cycling the applications again. No power, memory or driver settings change.
+[Window](experiments/own-xpu-runtime/ops/packet196-window/README.md).
+
 **October 23, 10:26 EDT — one-card diet record qualification packet is CPU-ready; no second device window launched.**
 Packet196 preserves the max23 record configuration and reuses the exact screen engine with the diet flag. Its final readiness check passes:
 801 sealed packet inputs, 227 exact engine source/build-input/proof files, 12 separately verified orchestration sources, 33 gates, zero mutable cross-packet

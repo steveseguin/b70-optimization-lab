@@ -1,0 +1,14 @@
+{
+  "source_packet": "experiments/own-xpu-runtime/ops/packet58dietengine-window",
+  "files": {
+    "window.py": "d4da2bad1fa4f4c2a97062c2acf7c423b651ce6fffec5afc3956df6a848ea4c2",
+    "restore.py": "d5c594eea17186b1eead04d23d7fee2438e96bb3297d1e72c8ad59e67e22f932",
+    "validate.py": "378534ebeef8fa6015c16d97413e667173bccaeee6b7f58bafcc996d3e1c2595",
+    "passive_device_holders.py": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4"
+  },
+  "notes": [
+    "safety.py copies common read-only admission and privileged passive holder inventory from window.py; no old queue driver path retained",
+    "restoration and per-request validator retain original endpoint settings and guards",
+    "new window.py controls the sealed packet196 launcher once; no sealed packet/orchestration edits"
+  ]
+}
