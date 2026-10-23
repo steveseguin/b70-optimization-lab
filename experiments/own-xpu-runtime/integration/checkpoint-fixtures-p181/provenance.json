@@ -1,0 +1,89 @@
+{
+  "schema": "ownrt.checkpoint-bridge-fixtures.v1",
+  "scope": "Historical packet181 device lifecycle byte copies, no engine execution in fixture extraction",
+  "sources": [
+    {
+      "fixture": "s1.manifest.json",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/checkpoints/s1/manifest.json",
+      "source_sha256": "0974a0e560e815d790ff622b7249038a85a5ddd9ceb088534d99d72a19362d93",
+      "fixture_sha256": "0974a0e560e815d790ff622b7249038a85a5ddd9ceb088534d99d72a19362d93",
+      "encoding": "verbatim"
+    },
+    {
+      "fixture": "s1.inspect.json",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/tools/checkpoint-inspect-metadata-s1.stdout.json",
+      "source_sha256": "a6e4ab8d18c632af2bbb3257d767fee3cf82c0f55ee3867ac6ab342c6773dec5",
+      "fixture_sha256": "a6e4ab8d18c632af2bbb3257d767fee3cf82c0f55ee3867ac6ab342c6773dec5",
+      "encoding": "verbatim"
+    },
+    {
+      "fixture": "s1.small-payloads.json",
+      "field": "tokens.bin",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/checkpoints/s1/tokens.bin",
+      "source_sha256": "9548ca5055a5eefd604a01e8ae48c90a7b1cf19ff9d714ef557892857b32b451",
+      "bytes": 1368,
+      "encoding": "hex of exact source bytes"
+    },
+    {
+      "fixture": "s1.small-payloads.json",
+      "field": "next_token.bin",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/checkpoints/s1/next_token.bin",
+      "source_sha256": "7ebbe438f4c2a8c7cdf49816fd7f8439ca8feab5b0955ac0f41e45afc2bcb450",
+      "bytes": 4,
+      "encoding": "hex of exact source bytes"
+    },
+    {
+      "fixture": "s2.manifest.json",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/checkpoints/s2/manifest.json",
+      "source_sha256": "f61e7a688236748900775ad20388af7af062cff887a78dfcfd86ca04424f070b",
+      "fixture_sha256": "f61e7a688236748900775ad20388af7af062cff887a78dfcfd86ca04424f070b",
+      "encoding": "verbatim"
+    },
+    {
+      "fixture": "s2.inspect.json",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/tools/checkpoint-inspect-s2.stdout.json",
+      "source_sha256": "167111d3bc4c7d998f38b89dc281dd74e5befb35b45b57d54c1d1251172f25e0",
+      "fixture_sha256": "167111d3bc4c7d998f38b89dc281dd74e5befb35b45b57d54c1d1251172f25e0",
+      "encoding": "verbatim"
+    },
+    {
+      "fixture": "s2.small-payloads.json",
+      "field": "tokens.bin",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/checkpoints/s2/tokens.bin",
+      "source_sha256": "b7467c0cb6fd88c079fbe78e85225d22de031c042d8eea069474238b29f40b58",
+      "bytes": 2384,
+      "encoding": "hex of exact source bytes"
+    },
+    {
+      "fixture": "s2.small-payloads.json",
+      "field": "next_token.bin",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/checkpoints/s2/next_token.bin",
+      "source_sha256": "cb30e91817239109ffd0a5870046e128f04619da80c7624d921162fdfe514f76",
+      "bytes": 4,
+      "encoding": "hex of exact source bytes"
+    },
+    {
+      "fixture": "s1.append-input.txt",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/inputs/new.txt",
+      "source_sha256": "03eae0dbe933eead337665e782779efa4ec688fd4b4f6a5fe3f609241c6cc34c",
+      "fixture_sha256": "03eae0dbe933eead337665e782779efa4ec688fd4b4f6a5fe3f609241c6cc34c",
+      "encoding": "verbatim"
+    },
+    {
+      "fixture": "historical-engine-identity.json",
+      "source": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/evidence/device-p181-lifecycle-A-b/run/checkpoints/s1/manifest.json",
+      "source_sha256": "0974a0e560e815d790ff622b7249038a85a5ddd9ceb088534d99d72a19362d93",
+      "encoding": "exact IDENTITY_FIELDS projection; historical fixture, not a running-engine handshake"
+    }
+  ],
+  "files_sha256": {
+    "s2.manifest.json": "f61e7a688236748900775ad20388af7af062cff887a78dfcfd86ca04424f070b",
+    "s1.inspect.json": "a6e4ab8d18c632af2bbb3257d767fee3cf82c0f55ee3867ac6ab342c6773dec5",
+    "historical-engine-identity.json": "5a97ebce9bd45e6e8a0aad2810091e18cb620a344ffbdb2a0557f84c5460db1f",
+    "s1.small-payloads.json": "654add3e9127dc3888623f88cd008475d7d0a7178f197295e96ad7378d136a65",
+    "s1.append-input.txt": "03eae0dbe933eead337665e782779efa4ec688fd4b4f6a5fe3f609241c6cc34c",
+    "s2.inspect.json": "167111d3bc4c7d998f38b89dc281dd74e5befb35b45b57d54c1d1251172f25e0",
+    "s1.manifest.json": "0974a0e560e815d790ff622b7249038a85a5ddd9ceb088534d99d72a19362d93",
+    "s2.small-payloads.json": "9932e38299e172223aafd4f61d987e8ec703cee968496ad0f5f7cded5f2049d4"
+  }
+}

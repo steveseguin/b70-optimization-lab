@@ -1,0 +1,37 @@
+{
+  "schema": "ownrt.checkpoint-bridge-cpu.v1",
+  "recorded_at": "2026-10-23T15:15:35.587308+00:00",
+  "scope": "CPU-only metadata conversion; historical real device fixtures replayed, no engine execution or serving qualification",
+  "device_executed": false,
+  "native_executed": false,
+  "compiled": false,
+  "passed": true,
+  "validation": {
+    "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_checkpoint_bridge.py -v",
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "unittest_reported_seconds": 0.331
+  },
+  "files_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "adf512c84fbda2597b6f7beb575c5bc14ddccf319fb46419a4d3c4e84a61a7c1",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_bridge.py": "98eb87ab5b4d0b39f10dd91b3e31ace7391da5e405f1befe9ee7d574c2bcaadc",
+    "experiments/own-xpu-runtime/integration/CHECKPOINT-BRIDGE.md": "5c0a5e0c86a4db394979462301247d71c46c038f428e2446519fd3a18d65b2b1",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/historical-engine-identity.json": "5a97ebce9bd45e6e8a0aad2810091e18cb620a344ffbdb2a0557f84c5460db1f",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/provenance.json": "34f4ac173d1aabbbfd6cde502b4ffd4892f7004f76cf3e7b176ce3029fc19ad0",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/s1.append-input.txt": "03eae0dbe933eead337665e782779efa4ec688fd4b4f6a5fe3f609241c6cc34c",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/s1.inspect.json": "a6e4ab8d18c632af2bbb3257d767fee3cf82c0f55ee3867ac6ab342c6773dec5",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/s1.manifest.json": "0974a0e560e815d790ff622b7249038a85a5ddd9ceb088534d99d72a19362d93",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/s1.small-payloads.json": "654add3e9127dc3888623f88cd008475d7d0a7178f197295e96ad7378d136a65",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/s2.inspect.json": "167111d3bc4c7d998f38b89dc281dd74e5befb35b45b57d54c1d1251172f25e0",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/s2.manifest.json": "f61e7a688236748900775ad20388af7af062cff887a78dfcfd86ca04424f070b",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p181/s2.small-payloads.json": "9932e38299e172223aafd4f61d987e8ec703cee968496ad0f5f7cded5f2049d4"
+  },
+  "read_only_policy_sha256": "f6de16c64b5b1e6c35a764c79ff8f6a0bdf9a7f4d500a11e8c3f17cbe674b9d4",
+  "limitations": [
+    "No warm process request front or transport exists in this change",
+    "Native full state validation and locking remain mandatory at restore",
+    "Historical engine identity fixtures are not authorization to restore into any successor engine",
+    "Packet197 experimental-warm-front/v1.2+p197 deliberately refused until an explicit tested bridge extension"
+  ]
+}
