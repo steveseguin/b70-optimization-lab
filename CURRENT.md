@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 19:55 EDT — two-row cache ownership passes the real CPU storage proof.**
+Three matched-policy intervals produce identical output bytes and retained routes across serial and
+layer-major schedules, with 24 cache hits and 552 host misses. All 25 fixture checks and 11 independent
+artifact checks pass; ten owners close safely, including intentional partial-update failures. The first
+attempt caught a pinned-allocation lifetime mismatch before comparisons and is preserved. This remains
+synthetic byte-consumer evidence with simulated completion, not production expert arithmetic or speed.
+Next is the actual tiny Engine's expert-consumer and route-retention integration. The native qualification
+target remains occupied; applications are unchanged. The guarded-preparation commit 13b620b6e has all three
+CI workflows green. [Cache proof and limits](experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/README.md).
+
 **October 23, 19:45 EDT — guarded native entry compiles; the proposed idle-card test is not admitted.**
 The vision application's unchanged process holds a device descriptor on the proposed BDF27 target;
 all four cards currently have holders. No qualification manifest was issued and no device process was

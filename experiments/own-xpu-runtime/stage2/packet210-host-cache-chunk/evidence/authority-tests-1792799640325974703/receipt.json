@@ -1,0 +1,51 @@
+{
+  "command": [
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/tests",
+    "-p",
+    "test_cache_authority.py",
+    "-v"
+  ],
+  "cpu_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "log": "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/evidence/authority-tests-1792799640325974703/tests.log",
+  "log_sha256": "9fee22fcce599a3ff8f70a0741c98e17d29360316ff4522b10b4b942209517de",
+  "nice": 19,
+  "passed": true,
+  "returncode": 0,
+  "schema": "packet210.authority-tests.v1",
+  "scope": "Read-only retained CPU artifacts and independent payload/route/residency reconstruction; no native probe rerun, GPU, model or services",
+  "snapshot": "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/evidence/authority-tests-1792799640325974703",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/AUTHORITY.md": "c84c4c74faa1603a9b8141b2434d6e352726e9675af7917d754023afd99ed0de",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/authority-inputs.json": "95f38f87b8f387157cd43b38ff8b05bb889ff0c9caa930d57ac91ec6c5cf3820",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/build_engine.py": "156b99ee7d255ea524eb03841aa5e8646405491969476decbe7078532202c22b",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/cache_probe.cpp": "7294b8d3781c8b6c84a482cc9bb827909320e14f7e96755c2d4e804a86b2cc86",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/evidence/build.json": "f7a88d25b9e6785dd0eb3ff919aea70486a964bd98e47ebb198e0713a36215cd",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/evidence/host-cache.json": "cd66b856eb9884272f5c0a7320437d6bf6d3c77bd6af936f733724558b1ba5de",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/production-binding.json": "6889d338f14f75cbcea3d4bc10ba064f652ee795ad57d0a2821bf998acdee5a4",
+    "experiments/own-xpu-runtime/stage2/packet210-host-cache-chunk/tests/test_cache_authority.py": "2cfb44e1bdf7627d98ea836e8a1bebf9fa1a4b28693c1f9be2641e2717c9f1e2"
+  },
+  "source_unchanged": true
+}

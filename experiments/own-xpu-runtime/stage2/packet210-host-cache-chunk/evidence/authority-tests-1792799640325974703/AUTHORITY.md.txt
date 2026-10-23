@@ -1,0 +1,130 @@
+# Packet210 cache ownership authority
+
+## Question and identity
+
+Can a two-row prompt chunk retain actual pointer-table and route allocations,
+consume the correct immutable expert bytes, and publish the next cache view only
+after its readers finish? This CPU proof uses the frozen packet205 Host backend,
+inherited Device/Arena/PreparedCompute/CopyEngine, `p58::Cache`, and the HOST_ONLY
+branch of `p58v::Publish`. The consumer copies synthetic bytes; it is not an
+expert projection, full Engine prefill, GPU completion proof or speed result.
+
+The intended geometry is 48 layers, four experts per layer, three projections
+per expert and 32 bytes per projection. All 144 table destinations exist. The
+small cache forces eviction; it does not claim production capacity or placement.
+[Input pins](authority-inputs.json) identify the source authorities.
+
+## Outcome
+
+The retained [HOST_ONLY result](evidence/host-cache.json) passes all 25 checks.
+Three frozen intervals each produce 18,432 bytes; both schedules match the
+independent payload formula. Cache hits/misses are 0/192, 12/180 and 12/180.
+The 10 owner receipts show safe teardown with zero remaining work or allocation
+bytes. This is actual CPU byte/capture/cache evidence with simulated completion,
+not device qualification. [Read-only authority tests](tests/test_cache_authority.py)
+independently reconstruct the output bytes, full route-log records and final
+resident sets, and check source/object/binary and failure-evidence hashes.
+
+## What worked
+
+The inherited direct Cache API permits `begin_position`, completion,
+`finish_position`, chronological `prepare`, fill completion, publication
+completion, then `commit`. `finish_position` leaves the cache ready, where
+`observe` is forbidden. This is a deliberately different policy from production
+overlap's observe/prepare double recency touch. Both row-serial and layer-major
+controls must use the same two-row frozen interval and maintenance boundaries.
+
+PreparedCompute copies allocation IDs and resolved pointers, and Host retains
+the concrete HostOperation. Caller maps and destination arrays may be destroyed
+or rebound without changing those captured arguments. Live allocation contents
+remain mutable: a table entry changed in place must affect a subsequent consumer.
+The command does not own an allocation lease. Arena release changes generation
+and invalidates captures; storage must remain owned explicitly through all uses.
+
+`p58v::Publish` retains a raw pinned staging pointer and 144 raw destination
+pointers inside its operation. Its HOST_ONLY body copies staging into the
+publication allocation and then scatters into every table. A hidden raw pointer
+is not automatically an Arena lifetime dependency. The fixture must retain the
+staging owner until publication completion and disclose any added tracked
+allocation argument beyond the existing Engine's publication-device/table IDs.
+
+Host inherits LifetimeMock/MockDevice. CPU reads and memcpy are real; queue,
+event and context completion use the inherited deterministic simulation. Check
+Device wait/complete/in-flight state before release, but do not describe these
+checks as observed GPU fences or asynchronous native queue safety.
+
+## Meaningful gates
+
+1. Independently derive expected payload bytes from expert/layer/projection and
+   row routes. Distinct row and layer data must make omitted rows and aliased
+   route storage observable. Compare each consumer output, both retained route
+   logs and the chronological replay list, not just a final cache digest.
+2. Capture submits no work. Mutate caller allocation maps to decoys after capture
+   and require the original storage to be consumed with decoys unchanged. Change
+   a live table entry or payload in place and require a different output. A
+   release/reallocation must reject stale captures before any consumer writes.
+3. Keep table entries, generations and referenced cache bytes fixed while both
+   rows consume them. Prepare/reset/publication/fill operations must refuse
+   during that interval. A policy guard refusal alone cannot release readers.
+   Pending simulated events must prevent reader completion and publication.
+4. Copy each shared route workspace into its own row/layer retained slice before
+   reuse. Reconstruct row0 layers0–47 followed by row1 layers0–47. Demonstrate
+   that replaying layer-major order or losing row0 changes residency or an
+   independently checked later consumer; different route hashes alone are not
+   enough to show a consequential eviction-order error.
+5. After reads complete, fill the actual allocated arena through CopyEngine.
+   Compare payload bytes to immutable pinned sources and compare all published
+   table words/generations to the Cache plan. Compare inherited Publish against
+   a separate CopyEngine table-publication control under the same policy.
+   Successful equality must include actual fills, cache hits, host misses and
+   evictions rather than only an empty-cache path.
+6. A partial fill may overwrite a victim before a later failure. A partial
+   publication may update some table destinations. Both cases poison the
+   transaction, preserve its first error, prohibit commit/new consumers/retry
+   and make no rollback claim. Only proven completion permits failed teardown;
+   `Cache::close_failed(false)` and normal close during updating must refuse.
+   Keep intentional failure owners/receipts separate from the successful proof.
+
+## What failed or remains uncertain
+
+The [first attempt](evidence/build-1792799516282681432/execution.json) stopped
+with `pinned copy slab lifetime must be transfer` before comparisons. Its exact
+source, compiler inputs and stderr remain beside that receipt. The corrected
+[succeeding attempt](evidence/build-1792799565715335965/execution.json) uses
+transfer lifetime for pinned allocations. No native/model owner was launched.
+
+Intentional partial-fill and publication refusals preserve the exact original
+`copy extent/lifetime` errors. The former changes a populated victim while the
+old table remains published; the latter changes some but not all table bytes.
+The transaction is poisoned and cannot start another chunk. These extent checks
+fail before backend submission, so the owner can still shut down cleanly; its
+zero exit status does not mean the failed cache transaction succeeded.
+
+This fixture cannot qualify production expert arithmetic, a complete Engine
+chunk adapter, device pointer reachability,
+DMA ordering, cross-queue overlap or serving speed. The separately pinned
+[selected-dispatch audit](evidence/selected-dispatch-source-review.json) finds
+no selected p25/p27 prepared-input conversion consumer in the exact P201
+configuration. Alternate dispatches may enable one and need their own proof;
+this is not a missing gate for the current selected dispatch. Synthetic byte-copy output
+does not establish routed expert numerical equivalence. The Cache's completion
+booleans are adapter assertions, not independent evidence of hardware progress.
+
+Production `cache_quiesce` clears `previous_routes`. This proof must name its
+entry state and policy explicitly; it cannot claim that starting a fresh direct
+Cache preserves a pending production overlap transaction or its route history.
+
+## Evidence and patches
+
+Packet204 is the earlier metadata-only protocol authority. Packet205 supplies
+the actual host ownership/capture/backend authority. Both remain unchanged.
+New source, compiler closure, executable hash, comparisons, negative-control
+digests and safe/failed owner receipts belong to this packet. Meaningful failed
+attempts retain exact tested source and logs. The independent Python checks will
+validate recorded artifacts; no duplicate native/model owner run is needed.
+
+## When to revisit
+
+A passing bounded CPU proof supports the cache ownership adapter design. Actual
+Engine integration and GPU qualification still require their own admitted
+experiments; no existing serving or checkpoint identity changes here.
