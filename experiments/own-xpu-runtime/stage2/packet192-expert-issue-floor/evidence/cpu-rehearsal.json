@@ -1,0 +1,132 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "model_reads": false,
+ "production_shape": {
+  "experts": 512,
+  "routes": 384,
+  "gateup": "640x2560 IQ2_S E1 x2 streams",
+  "down": "2560x640 IQ4_NL tile16"
+ },
+ "gnu": {
+  "stream": "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/evidence/cpu-host-gnu.jsonl",
+  "stream_sha256": "4da026937688ef29741895c4672694cad80838ade21276841c115f9c973a2d53",
+  "seconds": 7.1,
+  "exact_rows": 772,
+  "noload_rows": 2,
+  "alias_selftest": {
+   "gateup": true,
+   "down": true
+  },
+  "samples": 776
+ },
+ "intel": {
+  "stream": "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/evidence/cpu-host-intel.jsonl",
+  "stream_sha256": "c10713f6ef37e624602d571329e13bef3c5e9b761f6b4e0cdc6f9d93d1050cae",
+  "seconds": 4.0,
+  "exact_rows": 772,
+  "noload_rows": 2,
+  "alias_selftest": {
+   "gateup": true,
+   "down": true
+  },
+  "samples": 776
+ },
+ "gnu_intel_byte_rows_identical": true,
+ "fixtures_sha256": "29dc93ded5e6c652b1e8c2a49d37a5169e05c0536c2d8771cd8cd84314eb0989",
+ "native_sha256": "1c52fcdd8c7e3dbe1f473f6814c84575a5e019f0dad10b6e044cf1f69f3208b7",
+ "native_command": [
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/micro-device",
+  "--rank",
+  "0",
+  "--routes",
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/lineage-inputs/routes-p100b.json",
+  "--real-rows",
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+  "--fixtures",
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/fixtures",
+  "--mode",
+  "device",
+  "--cold-repeats",
+  "20",
+  "--warm-repeats",
+  "200",
+  "--passes",
+  "2",
+  "--coordinator-admitted-device-window"
+ ],
+ "help_flags_listed": [
+  "--rank",
+  "--routes",
+  "--real-rows",
+  "--fixtures",
+  "--mode",
+  "--cold-repeats",
+  "--warm-repeats",
+  "--passes",
+  "--coordinator-admitted-device-window"
+ ],
+ "preparation_probe_cases": [
+  {
+   "case": "exact real argv (preparation path)",
+   "returncode": 0,
+   "expected_returncode": 0,
+   "passed": true,
+   "prepare_receipt": {
+    "passed": true,
+    "device_executed": false,
+    "routes": 384,
+    "planned_device_peak_bytes": 1108913492,
+    "gate_bank_bytes": 275251200,
+    "down_bank_bytes": 471859200,
+    "scrub_bytes": 536870912,
+    "cold_repeats": 20,
+    "warm_repeats": 200,
+    "passes": 2
+   }
+  },
+  {
+   "case": "no coordinator admission",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "wrong rank",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "unknown option",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "missing argument",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "non-numeric repeats",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "truncated routes file",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  }
+ ],
+ "sandbox": "ops/rehearse_entry.prepare_restrict (Landlock): binary, toolchain, routes json, scratch; no /dev"
+}

@@ -1,0 +1,131 @@
+{
+  "passed": true,
+  "jobs": [
+    {
+      "job": "packet192-expert-issue-floor-micro-B",
+      "unit": "screen-packet192-expert-issue-floor-micro-B",
+      "passed": true,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/micro-device",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 0,
+          "entry_kind": "explicit",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/run_micro.py",
+            "line": 86,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/run_micro.py",
+            "function": "storage_admit",
+            "status": "PASS",
+            "message": "storage helper accepts 25.5 GB plus planned writes"
+          }
+        ]
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "PASS",
+        "passed": true,
+        "executed": true,
+        "returncode": 0,
+        "real_rank_argv": true,
+        "first_decode_required": true,
+        "argv_sha256": "11a50065d41e3786945f1a50624928ef482cace22be2e4cba21c93db2ab1d5ba",
+        "binary_sha256": "1c52fcdd8c7e3dbe1f473f6814c84575a5e019f0dad10b6e044cf1f69f3208b7",
+        "legacy_receipt": null,
+        "preparation_bypassed": false,
+        "message": "preparation-path probe completed"
+      },
+      "gate_identity": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "warnings": [],
+        "files_scanned": 13,
+        "message": "0 identity refusals; 0 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": true,
+        "kinds": [
+          {
+            "passed": true,
+            "kind": "micro",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "device_executed": false,
+            "admission_executed": false,
+            "real_entry_main": false,
+            "entry_execution": "parser-and-report-only",
+            "report_lineage": "standalone-micro",
+            "report_contract": "own-runtime.report-contract.v1",
+            "cases": [
+              {
+                "name": "issue-bound",
+                "samples_sha256": "a18d7557b64acaa17c4e5f487fc9d71040dc1cfccb12a0bd6f2a4390d2a3bbff"
+              },
+              {
+                "name": "latency-exposed",
+                "samples_sha256": "f7881ad9d8fb5d42735756c1fa9e411bd423f2ce32a26865394e8412aef494bd"
+              },
+              {
+                "name": "mixed",
+                "samples_sha256": "0ac3ca34f97e238e41c665f98462435273362e78f488f5fe1135b4019a385359"
+              },
+              {
+                "name": "byte-kill",
+                "samples_sha256": "32248ebec5294ccc42df377ca89b82a7a9fe9fd3b680efe7c78e709251147d0c"
+              },
+              {
+                "name": "drift-kill",
+                "samples_sha256": "625de01b4bce4f846db1f44a9c10202749ee88670703af7aa3b6f896f0284ac7"
+              },
+              {
+                "name": "disturbance-kill",
+                "samples_sha256": "4003bbcb5d9fadd58c28e41abd85dbd820ac27a11c766ad08d0db7505b4d1702"
+              }
+            ]
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    }
+  ]
+}

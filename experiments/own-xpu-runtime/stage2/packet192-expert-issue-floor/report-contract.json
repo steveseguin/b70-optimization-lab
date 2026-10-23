@@ -1,0 +1,22 @@
+{
+  "schema": "own-runtime.report-contract.v1",
+  "analyzer": "s192_report:analyze",
+  "fixture_generator": "s192_report:synthetic_fixture",
+  "data_roots": ["s192_report:P"],
+  "samples": {"path": "samples.jsonl", "format": "jsonl", "required": {"kind": "str"}},
+  "analysis": {"path": "analysis.json", "format": "json", "required": {"schema": "str", "passed": "bool", "diagnostic_only": "bool", "speed_claim": "bool", "verdict": "str", "gateup_verdict": "str", "down_verdict": "str", "kills": "list", "kernels": "dict", "samples_sha256": "str"}},
+  "cases": [
+    {"name": "issue-bound", "fixture": {"cold_repeats": 1, "warm_repeats": 20, "gateup": {"cold": 60400, "warm": 48300, "warm-real-layer0": 48300, "warm-real-layer24": 47900, "noload": 47000}, "down": {"cold": 46000, "warm": 30000, "noload": 29000}},
+     "expected": {"passed": true, "verdict": "measured", "gateup_verdict": "instruction-issue bound: only an instruction diet can move the class", "down_verdict": "instruction-issue bound: only an instruction diet can move the class", "speed_claim": false, "diagnostic_only": true}},
+    {"name": "latency-exposed", "fixture": {"cold_repeats": 1, "warm_repeats": 20, "gateup": {"cold": 60400, "warm": 48300, "warm-real-layer0": 48300, "warm-real-layer24": 47900, "noload": 30000}, "down": {"cold": 46000, "warm": 30000, "noload": 21000}},
+     "expected": {"passed": true, "gateup_verdict": "load-latency exposed: LSC prefetch is the candidate", "down_verdict": "load-latency exposed: LSC prefetch is the candidate"}},
+    {"name": "mixed", "fixture": {"cold_repeats": 1, "warm_repeats": 20, "gateup": {"cold": 60400, "warm": 48300, "warm-real-layer0": 48300, "warm-real-layer24": 47900, "noload": 40000}, "down": {"cold": 46000, "warm": 30000, "noload": 25000}},
+     "expected": {"passed": true, "gateup_verdict": "mixed", "down_verdict": "mixed"}},
+    {"name": "byte-kill", "fixture": {"cold_repeats": 1, "warm_repeats": 20, "gateup": {"cold": 60400, "warm": 48300, "warm-real-layer0": 48300, "warm-real-layer24": 47900, "noload": 47000}, "down": {"cold": 46000, "warm": 30000, "noload": 29000}, "byte_mismatch_routes": [["down", "cold", 17]]},
+     "expected": {"passed": false, "gateup_verdict": "withheld", "down_verdict": "withheld", "verdict": "withheld: byte difference in an exactness stratum"}},
+    {"name": "drift-kill", "fixture": {"cold_repeats": 1, "warm_repeats": 20, "gateup": {"cold": 60400, "warm": 48300, "warm-real-layer0": 48300, "warm-real-layer24": 47900, "noload": 47000}, "down": {"cold": 46000, "warm": 30000, "noload": 29000}, "pass_drift": 0.15},
+     "expected": {"passed": false, "gateup_verdict": "withheld"}},
+    {"name": "disturbance-kill", "fixture": {"cold_repeats": 1, "warm_repeats": 20, "gateup": {"cold": 60400, "warm": 48300, "warm-real-layer0": 48300, "warm-real-layer24": 47900, "noload": 47000}, "down": {"cold": 46000, "warm": 30000, "noload": 29000}, "disturb_stratum": ["gateup", "warm"]},
+     "expected": {"passed": false, "verdict": "withheld: p90/median > 1.5 (host disturbance)"}}
+  ]
+}

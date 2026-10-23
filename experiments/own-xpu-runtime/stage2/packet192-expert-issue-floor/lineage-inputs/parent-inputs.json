@@ -1,0 +1,73 @@
+{
+ "schema": "packet192.parent-inputs.v1",
+ "rule": "cross-packet files are read in place and verified by digest at plan/run time; they are provenance records, never pin-guard pins",
+ "real_rows_dir": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+ "routes_json": "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/lineage-inputs/routes-p100b.json",
+ "routes_json_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+ "parents": [
+  {
+   "name": "packet100b real routes (384 x 10, fixtures 1/16/32/64)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/routes.bin",
+   "parent_digest": "01c8c616990f4dc406f497c9c14da5920aa1b49326ff312a5c2c82a32856c605",
+   "bytes": 46080
+  },
+  {
+   "name": "packet100b route manifest",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/route-inputs.json",
+   "parent_digest": "f91ad7fd56d87eeecfb5f3abf1b01eb6260f72d5513f99e4e6237714fccd2973",
+   "bytes": 2304489
+  },
+  {
+   "name": "packet162b real gate/up rows layer0 (experts 0-9)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer0.bin",
+   "parent_digest": "eeed9d3bab0c8652c344d363174032c1f197944e7314cdf73fe974493ebc6628",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b real gate/up rows layer24 (experts (37i+19)%512)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer24.bin",
+   "parent_digest": "77bdd24006f6f5425b32e78ddfc50e34faa670b5b655070c4c59ed25aa35f52b",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b inputs receipt",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/micro-prep/inputs.json",
+   "parent_digest": "4d8d92220a9f7b3b9ad2bafeb970cff36dbb8c21d1729e49f6b332bb5b7da30d",
+   "bytes": 13817
+  },
+  {
+   "name": "packet100b micro-B real samples (down cold datum: production p65 and down-tile16 with the 512 MiB scrub)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/micro-B/samples.jsonl",
+   "parent_digest": "0d9904d16eb9b5a6587d2b04faa748a7a59dc0a460fa99361aa3f116bc956171",
+   "bytes": 14255645
+  },
+  {
+   "name": "packet100b micro-B window receipt",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/micro-B/window.json",
+   "parent_digest": "aac3b48040d1afe2323d504d18c98a0e273a1959048b9e6cb9a06efa80d8b1a4",
+   "bytes": 10613
+  },
+  {
+   "name": "packet100b micro-B qualification",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/micro-B/qualification.json",
+   "parent_digest": "e8ed5d36af286c6bbc8ec935f02bb21edf3134f947eab123e0706badaf0dcb89",
+   "bytes": 173152
+  },
+  {
+   "name": "packet162b device analysis (gate/up L2-warm datum 48.3 us)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/enum11-diagnostic-B1/analysis.json",
+   "parent_digest": "2ae49eb90a6f52fbeeccc25701419cda7c44d431953face97e7318ddbad8173d",
+   "bytes": 1873
+  },
+  {
+   "name": "packet162b device samples",
+   "missing": true
+  },
+  {
+   "name": "packet110 class roofline (copy floors 20.08 / 17.28 us)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/roofline.json",
+   "parent_digest": "93fdf583d045a9ab853cd1a62aa26b6f21654983c8513674c31ea05da0c66a19",
+   "bytes": 89513
+  }
+ ]
+}

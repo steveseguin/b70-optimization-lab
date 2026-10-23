@@ -1,0 +1,50 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "schema": "packet192.fixtures.v1",
+ "generator": "GNU host twin (OWN_RT_HOST_ONLY run of the same kernels)",
+ "generator_sha256": "8c57531fef7a6415a40037d26e8e6c9acaf70c3adcc11a486e7134212f339636",
+ "verifier_sha256": "5fe67453d7ec676087e1c014f6158942237b93d5a5021f237ad4f897a41d49b1",
+ "routes_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+ "real_rows": [
+  {
+   "name": "packet162b layer0 rows",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer0.bin",
+   "parent_digest": "eeed9d3bab0c8652c344d363174032c1f197944e7314cdf73fe974493ebc6628",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b layer24 rows",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer24.bin",
+   "parent_digest": "77bdd24006f6f5425b32e78ddfc50e34faa670b5b655070c4c59ed25aa35f52b",
+   "bytes": 10496000
+  }
+ ],
+ "files": {
+  "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/fixtures/down-cold.bin": "d2face11b0bdec6a16b9b25d9a2760eef09dda2f88e672150360bd6d26863a67",
+  "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/fixtures/down-warm.bin": "5e5afb9aa8f3999c0cc79ea586ceae8941248fafcd3defe4c5d3e389d0aa4ef1",
+  "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/fixtures/gateup-cold.bin": "f184e56eafa36c5da3935bd2a55fe819ab0dda25c9cf44706c2c339a2ea016fc",
+  "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/fixtures/gateup-real-layer0.bin": "a55d02b60c2c443fc2301f6f3edccebf655bb780f4de25714c64e1c9379a7cea",
+  "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/fixtures/gateup-real-layer24.bin": "ca6f6d99198386967f56daed12ccb3bf3a1d5299763914ae7e9422481a440764",
+  "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/build/fixtures/gateup-warm.bin": "8784e4cc0d3dd46a1de5bdedb4406ab050e5c412d5bd00bc8972fb31b453d238"
+ },
+ "gnu": {
+  "exact_rows": 772,
+  "noload_rows": 2,
+  "alias_selftest": {
+   "gateup": true,
+   "down": true
+  },
+  "samples": 776
+ },
+ "intel": {
+  "exact_rows": 772,
+  "noload_rows": 2,
+  "alias_selftest": {
+   "gateup": true,
+   "down": true
+  },
+  "samples": 776
+ },
+ "gnu_intel_byte_rows_identical": true
+}

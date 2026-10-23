@@ -1,0 +1,83 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "schema": "packet192.admission.v1",
+ "lane": "B",
+ "physical_card": 2,
+ "pci": "0000:43:00.0",
+ "device": {
+  "phase_gateup_bytes": 1108913492,
+  "phase_down_bytes": 1008794412,
+  "peak_bytes": 1108913492,
+  "declared_upper_bound": 1200000000,
+  "model_load": false,
+  "components": {
+   "scrub": 536870912,
+   "gate_bank": 275251200,
+   "up_bank": 275251200,
+   "down_bank_tile16": 471859200,
+   "real_rows_layer0_24": 21504000
+  }
+ },
+ "host": {
+  "required_available_bytes": 10737418240,
+  "reserve_bytes": 8589934592,
+  "anonymous_budget_bytes": 2147483648,
+  "binary_estimate_bytes": 209715200,
+  "note": "whole-host admission applies (the window driver stops the owner endpoints); the micro itself stages 3.4 MB chunks, 30 MB of fixtures and 21 MB of real rows"
+ },
+ "storage": {
+  "minimum_root_free_bytes": 25000000000,
+  "planned_write_bytes": 67108864,
+  "expected_samples_bytes": 7815400
+ },
+ "duration": {
+  "per_cold_cycle_seconds": 0.00092,
+  "parent": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/micro-B/window.json",
+  "strata": {
+   "gateup_cold": {
+    "cycles": 15360,
+    "seconds": 14.2
+   },
+   "down_cold": {
+    "cycles": 15360,
+    "seconds": 14.2
+   },
+   "gateup_warm_real_noload": {
+    "launches": 1640,
+    "seconds": 1.0
+   },
+   "down_warm_noload": {
+    "launches": 820,
+    "seconds": 0.5
+   },
+   "exactness_passes": {
+    "launches": 776,
+    "seconds": 5.0
+   },
+   "bank_generation_and_upload": {
+    "seconds": 20.0,
+    "note": "host-side LCG generation of 1.0 GB of synthetic rows (single thread) + H2D"
+   },
+   "startup_and_jit": {
+    "seconds": 10.0
+   }
+  },
+  "expected_seconds": [
+   30,
+   194
+  ],
+  "estimate_seconds": 64.9,
+  "watchdog_seconds": 1800,
+  "under_ten_minutes": true
+ },
+ "identity": {
+  "route_count": 384,
+  "cold_repeats": 20,
+  "warm_repeats": 200,
+  "passes": 2,
+  "warmups_excluded": 5,
+  "gateup": "p90exp::Kernel<IQ2_S,2560,WG64,Prefetch=false,Wide=true>",
+  "down": "p100::Kernel<2>"
+ }
+}
