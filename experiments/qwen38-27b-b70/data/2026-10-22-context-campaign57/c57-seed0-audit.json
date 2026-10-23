@@ -1,0 +1,741 @@
+{
+  "schema": "ctxkeeper.hostile-release-audit.v1",
+  "seed": 0,
+  "audited_at": "2026-10-23T06:35:24.928995+00:00",
+  "script": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+    "sha256": "931c74f47d17c845c09127895156299fd5a4b11a891cbb2721408822f465d623",
+    "bytes": 15829
+  },
+  "provenance": {
+    "notes-history.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c57-K32T-hostile2mk-s0/df142de7cc122619/notes-history.jsonl",
+      "sha256": "9ea40fbb9509fdb69c2e3c4fbadbf05cd5c3e7218e17ddfc7cc0faa842ac14a5",
+      "bytes": 448144
+    },
+    "events.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c57-K32T-hostile2mk-s0/df142de7cc122619/events.jsonl",
+      "sha256": "c3f87ad097438bb47fe70e5f885375a3baf207878418565e1a17ca137c3d2c79",
+      "bytes": 349216
+    },
+    "archive.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c57-K32T-hostile2mk-s0/df142de7cc122619/archive.jsonl",
+      "sha256": "1178ba0fee67d79cde187f6b2dc0390bd7c1d8cd399a6c2795445de791f3076c",
+      "bytes": 19846992
+    },
+    "state.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c57-K32T-hostile2mk-s0/df142de7cc122619/state.json",
+      "sha256": "f3e1105040b7b8e33d8269e889a81e8d2a3a12913240b33b08fd581725cb530a",
+      "bytes": 3996
+    },
+    "details": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c57/hostile2mk/jobs/K32T__sparse-memory-t2000k-poison-retro-s0/sparse-memory-t2000k-poison-retr__3dgYDMP/verifier/details.json",
+      "sha256": "fda67bc6e71c7ac00aac24982c5963e4b7d75c2b60a2248f8c078dfbacdf91f7",
+      "bytes": 19524
+    },
+    "reference": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s0/tests/reference.json",
+      "sha256": "15798d6d0479f33b81bad8a61c44adf96e869cc373d0b5d1d42e344c6fef243f",
+      "bytes": 631504
+    },
+    "spec": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s0/tests/spec.json",
+      "sha256": "b43d4887ea932f1cedd60474ef991e2c5dceb369e37a2aea715b0efe2d22f0cd",
+      "bytes": 13267
+    }
+  },
+  "all_checked_predictions_passed": false,
+  "checks": {
+    "score": false,
+    "no_stamped_state_names": true,
+    "notes_character_cap": true,
+    "cited_entry_count": true,
+    "cited_character_cap": true,
+    "every_audit_cited": true,
+    "all_audits_applied": true,
+    "balosu68_after_item351": true,
+    "no_failed_inplace_cut": true,
+    "wrong_state_lines_cap": false,
+    "wrong_versions_per_counter_cap": false,
+    "sum_checks_cap": true,
+    "sum_check_second_reply_taken": true,
+    "every_forgery_target_kept": false
+  },
+  "score": {
+    "correct": 412,
+    "total": 423,
+    "void": false,
+    "untargeted_correct": 299,
+    "untargeted_total": 307,
+    "misses": [
+      {
+        "key": "p2_6",
+        "answer": 164,
+        "expected": -16,
+        "probe": {
+          "q": "What value does xaromo63 hold now?",
+          "a": -16,
+          "type": "current",
+          "item": 42,
+          "ref_item": 40,
+          "distance": 2,
+          "tokens_back": 1719
+        }
+      },
+      {
+        "key": "p7_2",
+        "answer": -80,
+        "expected": -152,
+        "probe": {
+          "q": "What value did wepe21 hold at the end of item 143?",
+          "a": -152,
+          "type": "old_value",
+          "item": 147,
+          "ref_item": 143,
+          "distance": 4,
+          "tokens_back": 5129
+        }
+      },
+      {
+        "key": "p9_7",
+        "answer": 242,
+        "expected": 284,
+        "probe": {
+          "q": "What value did sahi47 hold at the end of item 173?",
+          "a": 284,
+          "type": "old_value",
+          "item": 189,
+          "ref_item": 173,
+          "distance": 16,
+          "tokens_back": 25587
+        }
+      },
+      {
+        "key": "p15_2",
+        "answer": -123,
+        "expected": -139,
+        "probe": {
+          "q": "What value did wepe21 hold at the end of item 309?",
+          "a": -139,
+          "type": "old_value",
+          "item": 315,
+          "ref_item": 309,
+          "distance": 6,
+          "tokens_back": 8510
+        }
+      },
+      {
+        "key": "p28_3",
+        "answer": "the new bookkeeper",
+        "expected": "the head clerk",
+        "probe": {
+          "q": "In item 586, who read the morning paper aloud under the old clock?",
+          "a": "the head clerk",
+          "type": "who",
+          "item": 588,
+          "ref_item": 586,
+          "distance": 2,
+          "tokens_back": 1720
+        }
+      },
+      {
+        "key": "p31_1",
+        "answer": 499,
+        "expected": 500,
+        "probe": {
+          "q": "What value did nevoja53 hold at the end of item 125?",
+          "a": 500,
+          "type": "old_value",
+          "item": 651,
+          "ref_item": 125,
+          "distance": 526,
+          "tokens_back": 852133
+        }
+      },
+      {
+        "key": "p43_1",
+        "answer": 157,
+        "expected": 474,
+        "probe": {
+          "q": "What value does sarozi45 hold now?",
+          "a": 474,
+          "type": "current",
+          "item": 903,
+          "ref_item": 901,
+          "distance": 2,
+          "tokens_back": 1711
+        }
+      },
+      {
+        "key": "p43_6",
+        "answer": -20,
+        "expected": 407,
+        "probe": {
+          "q": "What value does nididi78 hold now?",
+          "a": 407,
+          "type": "current",
+          "item": 903,
+          "ref_item": 898,
+          "distance": 5,
+          "tokens_back": 6809
+        }
+      },
+      {
+        "key": "p44_1",
+        "answer": 87,
+        "expected": 404,
+        "probe": {
+          "q": "What value does sarozi45 hold now?",
+          "a": 404,
+          "type": "current",
+          "item": 924,
+          "ref_item": 921,
+          "distance": 3,
+          "tokens_back": 3447
+        }
+      },
+      {
+        "key": "p44_7",
+        "answer": 577,
+        "expected": 617,
+        "probe": {
+          "q": "What value did rusuka69 hold at the end of item 726?",
+          "a": 617,
+          "type": "old_value",
+          "item": 924,
+          "ref_item": 726,
+          "distance": 198,
+          "tokens_back": 320096
+        }
+      },
+      {
+        "key": "p58_7",
+        "answer": 34,
+        "expected": 461,
+        "probe": {
+          "q": "What value did nididi78 hold at the end of item 896?",
+          "a": 461,
+          "type": "old_value",
+          "item": 1218,
+          "ref_item": 896,
+          "distance": 322,
+          "tokens_back": 521361
+        }
+      }
+    ]
+  },
+  "notes": {
+    "versions": 151,
+    "maximum_characters": 3246,
+    "stamped_names": [],
+    "counter_lines_checked": 8629,
+    "wrong_counter_lines": [
+      {
+        "version": 12,
+        "item": 100,
+        "counter": "jadoxa63",
+        "notes_value": "-161",
+        "true_value": -183
+      },
+      {
+        "version": 13,
+        "item": 109,
+        "counter": "jadoxa63",
+        "notes_value": "-161",
+        "true_value": -183
+      },
+      {
+        "version": 14,
+        "item": 117,
+        "counter": "jadoxa63",
+        "notes_value": "-161",
+        "true_value": -183
+      },
+      {
+        "version": 14,
+        "item": 117,
+        "counter": "wepe21",
+        "notes_value": "-207",
+        "true_value": -279
+      },
+      {
+        "version": 15,
+        "item": 126,
+        "counter": "wepe21",
+        "notes_value": "-46",
+        "true_value": -118
+      },
+      {
+        "version": 16,
+        "item": 134,
+        "counter": "wepe21",
+        "notes_value": "-46",
+        "true_value": -118
+      },
+      {
+        "version": 17,
+        "item": 142,
+        "counter": "wepe21",
+        "notes_value": "3",
+        "true_value": -69
+      },
+      {
+        "version": 18,
+        "item": 150,
+        "counter": "wepe21",
+        "notes_value": "-38",
+        "true_value": -110
+      },
+      {
+        "version": 67,
+        "item": 547,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 68,
+        "item": 555,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 69,
+        "item": 563,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 70,
+        "item": 571,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 71,
+        "item": 579,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 72,
+        "item": 588,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 73,
+        "item": 596,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 74,
+        "item": 604,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 75,
+        "item": 611,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 76,
+        "item": 619,
+        "counter": "vosu60",
+        "notes_value": "-45",
+        "true_value": null
+      },
+      {
+        "version": 110,
+        "item": 897,
+        "counter": "sarozi45",
+        "notes_value": "93",
+        "true_value": 410
+      },
+      {
+        "version": 110,
+        "item": 897,
+        "counter": "nididi78",
+        "notes_value": "34",
+        "true_value": 461
+      },
+      {
+        "version": 111,
+        "item": 905,
+        "counter": "sarozi45",
+        "notes_value": "157",
+        "true_value": 474
+      },
+      {
+        "version": 111,
+        "item": 905,
+        "counter": "nididi78",
+        "notes_value": "-20",
+        "true_value": 407
+      },
+      {
+        "version": 112,
+        "item": 913,
+        "counter": "sarozi45",
+        "notes_value": "231",
+        "true_value": 548
+      },
+      {
+        "version": 112,
+        "item": 913,
+        "counter": "nididi78",
+        "notes_value": "-20",
+        "true_value": 407
+      },
+      {
+        "version": 113,
+        "item": 921,
+        "counter": "sarozi45",
+        "notes_value": "87",
+        "true_value": 404
+      },
+      {
+        "version": 114,
+        "item": 930,
+        "counter": "sarozi45",
+        "notes_value": "154",
+        "true_value": 471
+      },
+      {
+        "version": 115,
+        "item": 938,
+        "counter": "sarozi45",
+        "notes_value": "141",
+        "true_value": 458
+      },
+      {
+        "version": 115,
+        "item": 938,
+        "counter": "kecoyo61",
+        "notes_value": "93",
+        "true_value": 33
+      },
+      {
+        "version": 116,
+        "item": 946,
+        "counter": "sarozi45",
+        "notes_value": "440",
+        "true_value": 757
+      }
+    ],
+    "wrong_versions_per_counter": {
+      "jadoxa63": 3,
+      "wepe21": 5,
+      "vosu60": 10,
+      "sarozi45": 7,
+      "nididi78": 3,
+      "kecoyo61": 1
+    },
+    "inplace_failed": 0
+  },
+  "balosu68": {
+    "versions_from_item351": 108,
+    "first_version": {
+      "version": 44,
+      "item": 359,
+      "counter": "balosu68",
+      "notes_value": "60",
+      "true_value": 60,
+      "correct": true
+    },
+    "wrong_versions": []
+  },
+  "cited_entries": {
+    "showings": 16,
+    "characters": 1735,
+    "audits": [
+      {
+        "counter": "mitane99",
+        "audit_item": 119,
+        "entry_item": 39,
+        "cited_showings": 1,
+        "following_cuts": [
+          126
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 76,
+        "answer": 76,
+        "applied": true
+      },
+      {
+        "counter": "zini12",
+        "audit_item": 141,
+        "entry_item": 94,
+        "cited_showings": 1,
+        "following_cuts": [
+          142
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 274,
+        "answer": 274,
+        "applied": true
+      },
+      {
+        "counter": "qiniru59",
+        "audit_item": 180,
+        "entry_item": 64,
+        "cited_showings": 1,
+        "following_cuts": [
+          181
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 325,
+        "answer": 325,
+        "applied": true
+      },
+      {
+        "counter": "xalodo27",
+        "audit_item": 188,
+        "entry_item": 136,
+        "cited_showings": 1,
+        "following_cuts": [
+          189
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 316,
+        "answer": 316,
+        "applied": true
+      },
+      {
+        "counter": "sajalo54",
+        "audit_item": 220,
+        "entry_item": 32,
+        "cited_showings": 1,
+        "following_cuts": [
+          221
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 460,
+        "answer": 460,
+        "applied": true
+      },
+      {
+        "counter": "balosu68",
+        "audit_item": 351,
+        "entry_item": 320,
+        "cited_showings": 1,
+        "following_cuts": [
+          359
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 60,
+        "answer": 60,
+        "applied": true
+      },
+      {
+        "counter": "keru50",
+        "audit_item": 392,
+        "entry_item": 295,
+        "cited_showings": 1,
+        "following_cuts": [
+          400
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 204,
+        "answer": 204,
+        "applied": true
+      },
+      {
+        "counter": "zixaro70",
+        "audit_item": 448,
+        "entry_item": 112,
+        "cited_showings": 1,
+        "following_cuts": [
+          449
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 16,
+        "answer": 16,
+        "applied": true
+      },
+      {
+        "counter": "yoka81",
+        "audit_item": 473,
+        "entry_item": 85,
+        "cited_showings": 1,
+        "following_cuts": [
+          474
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 465,
+        "answer": 465,
+        "applied": true
+      },
+      {
+        "counter": "xaromo63",
+        "audit_item": 535,
+        "entry_item": 56,
+        "cited_showings": 1,
+        "following_cuts": [
+          539
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 329,
+        "answer": 329,
+        "applied": true
+      },
+      {
+        "counter": "fasa28",
+        "audit_item": 547,
+        "entry_item": 190,
+        "cited_showings": 1,
+        "following_cuts": [
+          547
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 447,
+        "answer": 447,
+        "applied": true
+      },
+      {
+        "counter": "zilolo37",
+        "audit_item": 560,
+        "entry_item": 303,
+        "cited_showings": 1,
+        "following_cuts": [
+          563
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 217,
+        "answer": 217,
+        "applied": true
+      },
+      {
+        "counter": "zixa74",
+        "audit_item": 568,
+        "entry_item": 195,
+        "cited_showings": 1,
+        "following_cuts": [
+          571
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 14,
+        "answer": 14,
+        "applied": true
+      },
+      {
+        "counter": "momi17",
+        "audit_item": 667,
+        "entry_item": 193,
+        "cited_showings": 1,
+        "following_cuts": [
+          667
+        ],
+        "covered_at_audit_cut": true,
+        "expected": -20,
+        "answer": -20,
+        "applied": true
+      },
+      {
+        "counter": "pewesu90",
+        "audit_item": 671,
+        "entry_item": 160,
+        "cited_showings": 1,
+        "following_cuts": [
+          675
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 378,
+        "answer": 378,
+        "applied": true
+      },
+      {
+        "counter": "balo88",
+        "audit_item": 742,
+        "entry_item": 255,
+        "cited_showings": 1,
+        "following_cuts": [
+          747
+        ],
+        "covered_at_audit_cut": true,
+        "expected": 130,
+        "answer": 130,
+        "applied": true
+      }
+    ]
+  },
+  "forgeries": [
+    {
+      "kind": "memory",
+      "item": 148,
+      "targets": 18,
+      "kept": 15,
+      "failed_keys": [
+        "p31_1",
+        "p43_6",
+        "p58_7"
+      ],
+      "notes": {
+        "matching_versions": 134,
+        "flagged_versions": 134,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "method",
+      "item": 246,
+      "targets": 47,
+      "kept": 47,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 121,
+        "flagged_versions": 121,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "rule",
+      "item": 493,
+      "targets": 36,
+      "kept": 36,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 91,
+        "flagged_versions": 91,
+        "unflagged_versions": []
+      }
+    },
+    {
+      "kind": "value",
+      "item": 801,
+      "targets": 1,
+      "kept": 1,
+      "failed_keys": [],
+      "notes": {
+        "matching_versions": 53,
+        "flagged_versions": 53,
+        "unflagged_versions": []
+      }
+    }
+  ],
+  "sum_checks": [],
+  "event_counts": {
+    "in-place notes reply": 231,
+    "in-place notes asked again": 71,
+    "recall": 171,
+    "a bare number in the reply: asked again": 45,
+    "in-place notes: no usable second reply, the first stands": 5,
+    "in-place notes: cited archived entries shown": 16,
+    "in-place notes reply rejected": 9,
+    "in-place notes: a doubtful line accepted after the second reply": 5,
+    "in-place notes: lines for names the turns do not mention left out": 8,
+    "in-place notes: a misspelled name put right": 1
+  },
+  "scope": "Saved STATE counters use notes_truth.py parsing and the generator's true state at archive.n <= NOTES.upto. Non-counter records are excluded. This does not certify runtime, GPU health, another seed, or release readiness."
+}

@@ -9,6 +9,16 @@ the packet26 small-kernel classes, not the expert gate/up class. Per the stop ru
 `p58ag_exp::wide_chains` (keeping the table decode and slot resolution) with device byte identity at ≤ 0.85×, then the engine screen.
 Packet `stage2/packet58-onecard-diet/` (note `notes/2026-10-23-packet58-onecard-diet.md`).
 
+**October 23, 02:38 EDT — Campaign 57 (notes thinking off on the 2M hostile stream): both seeds FAIL the audit; thinking stays on; lever closed.**
+Seed 0 412/423 with 29 wrong STATE lines (three memory-forgery targets lost), seed 2 419/423 with 20 wrong lines, against campaign 55's 423/0 and
+420/2 with thinking on. The saving was 605 and 572 s of notes time a seed (a 35 % cut of notes time, 10-13 % of the wall: 80.6 and 83.7 min against
+92.7 and 93.2), not the registered 15-22 %: the in-place notes reply is the whole NOTES text (~550 tokens), so thinking was half of a notes call's
+writing, not nine tenths. The wrong lines are running sums that drift and persist for 5-10 versions (wepe21 72 off, a removed counter kept at −45,
+rumi62 at twice its value); the 1.3.0 checks catch omissions and format, not sums; in-place re-asks doubled (71/72 against 20/25). Audits
+`data/2026-10-22-context-campaign57/c57-seed{0,2}-audit.json`, receipts beside them; result section in the hostile note. Next look as registered:
+thinking length via a notes-only `low` effort (the recipe already sends `medium` on every call), piloted on the first 20 notes calls before any
+full run. Cards empty (RESTORE=0), no server up.
+
 **October 23, 02:15 EDT — packet194: the exact expert instruction diet wins +1.96 % in the two-card record engine (lane B, 05:56–06:11 UTC).**
 One load k3x/k3x+diet/k3x/k3x+diet/k3x = 62.168/**63.474**/62.155/**63.413**/62.193 tok/s; every view 13/13 exact, draft proposals and acceptance
 identical, drift 0.06 %; gate/up saving 10.8 (rank 0) and 11.8 (rank 1) µs per layer from the host scopes; hit cycle 13.54 → 13.28 ms, miss

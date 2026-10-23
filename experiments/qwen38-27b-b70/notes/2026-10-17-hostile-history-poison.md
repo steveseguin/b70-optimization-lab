@@ -2271,6 +2271,55 @@ release is unaffected either way). Either seed under the bar → thinking stays 
 lever is closed with the measured cost, and the next look is at the thinking length rather than its presence
 (`--effort low` for notes calls).
 
+## Campaign 57 ran: thinking off costs answers (seed 0 412/423 with 29 wrong lines, seed 2 419/423 with 20) for a 10-13 % wall cut; both audits FAIL; thinking stays on; written 2026-10-23 02:38 EDT
+
+**Seed 0 (c57, 1.3.0, K32T): 412/423, 29 wrong STATE lines in 8,629, 80 min 36 s**, 1,320 client calls, 71 in-place
+re-asks, 45 bare-number asks, 9 replies rejected, 5 first replies stood for want of a usable second. Audit
+[c57-seed0-audit.json](../data/2026-10-22-context-campaign57/c57-seed0-audit.json) **FAIL** (score, wrong-line cap,
+wrong-versions-per-counter cap, three memory-forgery targets lost: p31_1, p43_6, p58_7), receipts under
+[seed0](../data/2026-10-22-context-campaign57/seed0/).
+
+**Seed 2 (c57, 1.3.0, K32T): 419/423, 20 wrong STATE lines in 8,521, 83 min 40 s**, 1,296 client calls, 72 in-place
+re-asks, 49 bare-number asks, 4 replies rejected, 1 loop (recovered). Audit
+[c57-seed2-audit.json](../data/2026-10-22-context-campaign57/c57-seed2-audit.json) **FAIL** (wrong-line cap,
+wrong-versions-per-counter cap; the answer bar was met; every forgery target kept), receipts under
+[seed2](../data/2026-10-22-context-campaign57/seed2/).
+
+| Prediction | Seed 0 | Seed 2 |
+| --- | --- | --- |
+| Notes calls write 150-350 tokens, 2-4 s | **missed**: 577 tokens a call (campaign 55: 1,197), 4.8 s (9.9) | **missed**: 673 (1,262), 5.6 s (10.2) |
+| Notes time 400-700 s a seed | **missed**: 1,112 s (1,717), a 35 % cut | **missed**: 1,281 s (1,853), a 31 % cut |
+| Wall 72-80 min a seed | 80.6 min (92.7), at the edge, a 13 % cut | **missed**: 83.7 min (93.2), a 10 % cut |
+| Answers: seed 0 at least 421, seed 2 at least 418 | **missed**: 412 | met: 419 |
+| Wrong STATE lines at most 3 a seed | **missed**: 29 (jadoxa63 3 versions, wepe21 5, vosu60 10, sarozi45 7, nididi78 3, kecoyo61 1) | **missed**: 20 (vonedi62 11, rumi62 6, como20 2, roru25 1) |
+| 16/16 audits; every forgery target kept | audits met; **three memory targets lost** (15/18) | met (16/16; 13/13, 47/47, 36/36) |
+| Loops 0-3 a seed, named and recovered | met (0) | met (1) |
+| In-place re-asks rise to 25-45 | **over**: 71 (20) | **over**: 72 (25) |
+
+**Where the premise was wrong.** The registration took the notes reply for the ~115-token change and the rest for
+thinking. The in-place reply is the whole NOTES text (median 2,968 characters, about 550 tokens, both campaigns), so
+thinking was about half of what a notes call wrote (some 620 tokens), not nine tenths, and the best case for the
+lever was a 35 % cut of notes time, which is what it got: 605 and 572 s a seed, 10-13 % of the wall.
+
+**What thinking was doing.** The wrong lines are arithmetic, and they persist: on seed 0 wepe21 is 72 off for five
+versions in a row (items 117-150), vosu60 keeps a value of −45 for ten versions after its removal, sarozi45 is wrong at
+seven versions and both of its current-value questions miss (p43_1 157 for 474, p44_1 87 for 404); on seed 2
+rumi62 stands at about twice its true value for six versions (998 for 455, 1,066 for 523) and como20's wrong line 13
+(for 62) is the p17_1 miss. The checks of 1.3.0 (bare number, set/removal, mention, loop) catch what a reply leaves
+out or formats wrongly; they do not re-add a running sum, and with thinking off the sum is where the reply goes
+wrong. The re-ask count doubled (71 and 72 against 20 and 25) because the first reply without thinking omits more,
+so part of the saved time went back into second replies. Campaign 55's seed 0, the same stream with thinking on,
+had 0 wrong lines in 8,745 and 423/423.
+
+**Decision (the registered rule, either seed under the bar).** Thinking stays on for the hostile stream; the lever
+is closed with its measured cost: a 10-13 % wall cut for 11 and 1 lost answers and 29 and 20 wrong lines. Arm K32T is
+left in the runner as the record. The public 2M wall figure stays as quoted. The next look, as registered, is at
+the thinking length rather than its presence: the hostile recipe already sends `--effort medium` on every call,
+at which Qwen3.8's template adds no instruction; `low` adds "keep your thinking brief and focused". That needs a
+notes-only effort switch in the proxy (`--effort` today applies to every call), and a short pilot before any full
+run: the first 20 notes calls of seed 0 against campaign 55's (1,114 tokens written, 9.0 s a call) and campaign
+57's (562, 4.6 s), with the NOTES at those versions compared line by line with campaign 55's, which had none wrong.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
