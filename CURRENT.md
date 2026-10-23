@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 22, 21:15 EDT — one-card 23 GB expert-cache screen WINS +1.72 % (packet58-onecard-cache23, card 0, 00:57–01:10 UTC).**
+One load max/max23/max/max23/max = 35.892/**36.546**/35.929/**36.569**/35.925 tok/s with K1a/K1b passed; every view 12/12 exact, drift 0.01 %;
+fills per token 15.45 → 13.46 (−12.9 %), fill MB 30.6 → 26.7; no kill rule fired; DRM stayed under the unchanged 30.5 GB guard with the plan
+re-partitioned from packet182c's lifetime receipts (driver allowance 671 MB, transient 785 MB). Chain bar (36.645) missed by 0.2 %, but the lanes
+are idle, so the one-card record chain is being derived from packet182c with the max23 selection (`packet58-onecard-cache23-chain`, CPU-only);
+its WS128 must beat 35.926720. Endpoints restored as `*-20261023-restore16`; PAUSE-A re-armed, PAUSE-B untouched. Packet
+`stage2/packet58-onecard-cache23/` (note `notes/2026-10-22-packet58-onecard-cache23.md`).
+
 **October 22, 20:50 EDT — packet191 per-class attribution on the record line (lane B, 00:32–00:47 UTC): exact, class table withheld.**
 Sites-off views 62.198/62.166/62.184 reproduce the record line (−0.08 % vs packet189, −0.26 % vs the chain; drift 0.05 %); sites-on 58.266/58.238
 (recorder cost 0.937, ~32 µs per layer per half). The completeness kill rule fired: device kernel sums (11.44 ms per half) vs the host `layer_body`

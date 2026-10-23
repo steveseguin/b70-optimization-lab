@@ -1,5 +1,7 @@
 # Packet58-onecard-cache23: one-load expert-cache capacity screen (max vs max23) on the record line
 
+**Status:** device-measured 2026-10-23 (card 0, unit lanequeue-A34, 00:57-01:10 UTC): **screen win** (max23 36.546/36.569 vs max 35.892/35.929/35.925, +1.72 %, fills −12.9 %, every view exact, no kill rule); chain bar missed by 0.2 %, record chain derived as `packet58-onecard-cache23-chain` under the idle-lanes rule. See `DO-NOT-REPEAT.md` and the note.
+
 CPU preparation only (2026-10-22/23). No GPU, /dev/dri, service, setting, PAUSE/STOP/queue file,
 sudo or secret was touched; nothing was queued, launched or committed. Lane A, card 0, Qwen3.8
 Flash-Next 125B-A6B UD-IQ3_XXS (the quantized compressed version), 128-token capped suite, oracle

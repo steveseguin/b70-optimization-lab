@@ -75,3 +75,11 @@ written last, pin census 1,404 pins / 52 manifests / 0 cross-packet mutable, pri
 - intel-host `own-rt-iq3` not built (no gate reads it). Chain tooling not carried (a win feeds a later
   composite). No device result, speed or record; the +0.5-1.0 % is a price.
 - Disk: packet 46 MB tracked + 81 MB ignored build; root free 29.65 GB at the end (floor 27 GB kept).
+
+## Device result (2026-10-23, card 0 window 00:57-01:10 UTC, unit lanequeue-A34): screen win +1.72 %
+
+**Measured 2026-10-23 (card 0, lane A, lanequeue-A34, 00:57-01:10 UTC): SCREEN WIN.** K1a/K1b passed; one load max/max23/max/max23/max = 35.892/**36.546**/35.929/**36.569**/35.925 tok/s (slower max23 view +1.72 % over the fastest warm max view; drift 0.01 %); every view 12/12 exact; fills per token 15.449 → 13.457 (−12.9 %), fill MB per token 30.63 → 26.68; miss-read regression 0.0322 → 0.0329 ms/MB (unchanged), unfilled intercept 25.16 → 25.04 ms; no kill rule fired; DRM guard untouched. Chain bar (36.645, +2 %) not met by 0.2 %; lanes idle, so the record chain is derived (`packet58-onecard-cache23-chain`). Evidence `screen/evidence/card0-58c23-v5-a/resident/WSCREEN/summary.json`.
+
+Reading: +1.5 GB of admitted expert cache removed 12.9 % of the fills and the per-token miss bytes, worth 0.47 ms per token (27.75 → 27.27 ms), above the +0.6-0.8 % price (the fill-traffic and wait-contention terms scale with the bytes, as the synthesis assumed, and the measured elasticity was higher). Headroom: DRM stayed under the 30.5 GB guard with the re-partitioned plan. A second step (max24/max25) would need another re-partition and the 2.06 GB physical margin; price it from this view pair before building.
+
+Window receipts: `lineage/window-20261023/`; endpoints restored as `*-20261023-restore16`; PAUSE-B untouched, PAUSE-A re-armed.
