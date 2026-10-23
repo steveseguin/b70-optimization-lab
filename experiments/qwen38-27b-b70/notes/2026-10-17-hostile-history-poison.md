@@ -2222,6 +2222,25 @@ next step is a release candidate of ctxkeeper 1.3.0 with these four levers (thro
 upload being the owner's), and, for the answer path, a look at why an old-value question goes unanswered when the
 archive holds the value.
 
+## Answer-path look (2026-10-23, CPU only): blank answers are one block in nine runs; the answer-path lever is closed
+
+The decision above asked why an old-value question goes unanswered when the archive holds the value. Campaign 55
+seed 2's two blanks (p10_2 rolo78 at item 199, p10_7 sagudo54 at item 136) were written in one tool-call block at
+item 210 (archive n 439): the client filled the other five keys of the probe and wrote `None` for these two in the
+same block, with no `recall` call in that turn and no reasoning text; the NOTES in view held the current values and
+the archive held both items. So the client took "`""` if you no longer know" at face value instead of searching.
+
+How often that happens, across every answer block the series wrote (`answers.json` tool calls in the proxy-state
+archives of campaigns 52, 53, 54, 54b, 54d and 55, both seeds): 524 blocks, **1 with a blank, 2 blank keys**, the
+two above. Every other miss in the series was a wrong value, not a blank. A blank-answer re-ask ("these keys are
+blank; the archive has the items; search it before leaving an answer blank") would fire once in 524 blocks and
+could recover at most two answers on one seed, and it needs the request path to re-enter the recall round after
+the second reply, which the bare-number and false-step checks do not. Not worth a request-path change on this
+evidence; recorded here so the next blank has a count to add to. The third seed-2 miss (p18_3, a who-question
+about item 373 asked at item 378, 6.9K tokens back and in view) is a reading slip with the text in front of the
+model, not a keeper matter. With the removed/reopened family, the set and removal checks, cut-off lines and loop
+rejection all in, the keeper's levers on this stream are closed at 423/420; what remains on seed 2 is the client.
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
