@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 19:22 EDT — native paired projection compiles; GPU execution remains untested.**
+The SYCL kernel and synthetic comparison fixture compile and link with the selected runtime owner and
+arithmetic objects. Independent offline inspection confirms both Q6 kernel entries, the retained comparison
+function and registered device image. The executable has no enabled execution command; it has not been
+invoked or used to enumerate a device. Source equivalence and compilation establish no speed or native
+exactness result. Next is a separately guarded single synthetic qualification on an admitted idle card,
+preserving the daily applications. No launch or device window is queued. The paired-Engine commit
+c1165ba2a has all three CI workflows green.
+[Native build and remaining gates](experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/README.md).
+
 **October 23, 19:13 EDT — paired GDN projections match the serial Engine on CPU.**
 The new captured operator issues 400 paired projections in place of 800 originals across the fixed tiny
 fixture. All 16 replies, 13 complete saved states and 108 intermediate boundaries match the serial Engine

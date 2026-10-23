@@ -1,0 +1,37 @@
+{
+  "schema": "packet208.offline-authority-tests.v1",
+  "passed": true,
+  "returncode": 0,
+  "command": [
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/tests",
+    "-p",
+    "test_compile_authority.py",
+    "-v"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/tests/test_compile_authority.py": "3c687a4d6ccbd277e539bedeb93d924e11ed3e6231d12f070901c40ebdb0a75b",
+    "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/authority-inputs.json": "4bdcdb33879e3b4cf22ace81e0425222d0d2cbe3f0995e43733028414e149f5e",
+    "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/evidence/build-compile-only.json": "88854c0d69d5bd9ac8174c020f40c4905706004b6780570a10f886852eb78c8e"
+  },
+  "log": "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/evidence/authority-check-1792797699933193106/tests.log",
+  "log_sha256": "657b3999a417e86074b41d19b11996241a7bd214fe8264854ec5cd2e8ed3a1af",
+  "artifact_invoked": false,
+  "device_enumerated": false,
+  "device_executed": false,
+  "scope": "Offline actual artifact/source hashes, ELF/bitcode/symbol/dependency inspection and structural source assertions; no runtime refusal or numerical qualification",
+  "placement": {
+    "nice": 19,
+    "cpu_affinity": "8-15,24-31",
+    "threads": 2
+  },
+  "tests_passed": 6,
+  "final_documentation_sha256": {
+    "AUTHORITY.md": "55941171e55d1b2c7b931461484cd6c929894dab3b85c8de7e21ce0cbe2961ba"
+  }
+}
