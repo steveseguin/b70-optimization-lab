@@ -1,0 +1,486 @@
+=================== packet65-expert-occupancy
+# Packet65 boundaries
+
+| Date | Arm or method | Status / revisit condition |
+| --- | --- | --- |
+| 2026-10-17 | Batch all ten experts into one grid | Already production; not a new optimization |
+| 2026-10-17 | WG64 / WG128 | CPU byte exact; coordinator in-engine comparison pending |
+| 2026-10-17 | Wide raw operands, WG64 | CPU byte exact on GNU and Intel; fewer static loads with no spills; no device speed verdict |
+| 2026-10-17 | Next-k-block raw lookahead, WG64 | CPU exact; earlier loads survive but compiler waits before current decode; larger code, device verdict pending |
+| 2026-10-17 | Naïve gate/up/down fusion | Down needs all rounded activated rows across workgroups. No legal grid barrier supplied; not implemented |
+| 2026-10-17 | Activation-only fusion campaign | About 4.7 µs opportunity cannot reach broad-class 30% bar; skipped |
+| 2026-10-17 | Isolated timing or gate/down-only 30% | Cannot satisfy the approximately 0.192 ms full-class integration bar |
+
+Packet52 free-order, packet53 persistent/SLM, and packet53b V16 gate/up arms
+remain closed; see their retained DO-NOT-REPEAT files. Neither a passing CPU
+fixture nor zero offline spills qualifies an engine speed improvement. Keep the
+packet49 oracle, full BF16 cache, exact model weights and all arithmetic trees.
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md). No performance arm is
+closed here before the coordinator’s device evidence exists.
+=================== packet73-hc-experts2
+# Packet73 negative and bounded choices
+
+| Arm | Outcome and evidence | Revisit condition |
+| --- | --- | --- |
+| HC virtual-four logical chains, separate stream subgroups | Rejected: 51 flag stores / 60 flag loads after linking device libraries. [Source](evidence/rejected-hc-virtual4.hpp), [report](evidence/rejected-hc-virtual4-linked.json). | A new spill-free mechanism with in-engine justification. Do not use packet67's four-stream geometry. |
+| IQ4 all sixteen chains' raw span resident | Rejected: 256-byte GRF spill in the unlinked TU; final smaller eight-chain span is spill-free under linked compilation. [Source](evidence/rejected-iq4-span128.hpp), [report](evidence/rejected-iq4-span128.json). | Lower liveness without losing raw-load sharing. |
+| Unlinked HC offline SPIR-V | Invalid occupancy evidence: unresolved fmaf calls added stack spills. Final inspection links exactly the required SYCL device libraries. | Never use unlinked math calls to rank candidates. |
+| First HC output-pair implementation | Rejected by GNU fixture on scenario 0, byte 2: assumed row pitch 360 instead of expanded 380 including metadata. [Source](evidence/rejected-hc-pair-first.hpp). | Corrected in accepted implementation; keep metadata and assert fixture geometry. |
+| Route epilogue fusion | Deferred within this packet: globally normalized top-k and tie rules need a separate synchronization design. | A bounded independently exact design with enough expected value. |
+| CPU/offline success as speed or full-model quality | Not permitted. | Fresh in-engine screens, all 13 exact checks, before any record qualification. |
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) records the handoff.
+=================== packet81-experts3
+# Packet81 bounded choices
+
+| Choice | Decision | Revisit condition |
+| --- | --- | --- |
+| Per-workgroup or persistent SLM IQ2 grid fill | Deferred: repeats packet52/53 losses; no new amortization mechanism | Distinct measured latency evidence and fill geometry |
+| Packed IQ2 grid lookup | Already production: eight weights from one d32x2 UGM read | A new mechanism beyond packing existing words |
+| Shared gate/up scales | Invalid: independent weight tensors have independent metadata | Layout evidence of genuinely shared bytes |
+| Register IQ4 table | Already production through level_bank | Different measured decode mechanism |
+| SIMD16 geometry-only sweep | Deferred: no established occupancy gain; prior geometry losses | New register/occupancy evidence with identical logical tree |
+| Raw parent header include for offline build | Duplicate owner ABI definitions; retained compile refusal | Use the established checked include mirror |
+| CPU/offline improvement as speed | Forbidden | Exact coordinator A/B screens and fresh final chain |
+
+[Preparation closeout](CPU-PREPARATION-CLOSEOUT.md). The expert lane remains open;
+these decisions close or defer individual mechanisms only.
+
+| 2026-10-17 | packet81 packed activation reads for expert gate/down (loads 51->27, 79->31) | +0.07/+0.13/-0.10% on lane A (neutral), exact | expert limiter is not load issue | no repeat without ALU/latency evidence |
+=================== packet95-expert-dequant
+# Packet95 boundaries
+
+| Design / method | Decision | Revisit condition |
+| --- | --- | --- |
+| E2 full effective-scale cache | Closed: exceeds both actual 30 GiB arenas; [exact arithmetic](E2-CLOSEOUT.md) | More headroom or a smaller exact cache |
+| E2 hottest-K subset | Not implemented: rank1 fits one layer over E1, two over production; existing attribution does not rank all layers | Complete layer census with material bounded opportunity |
+| E5 shared gate/up input scheduling | Deferred within time box; no implementation, seal or queue choice | Separate exact chains/trees and register proof |
+| E3 as packet65 raw lookahead | Incorrect: E3 must issue the dependent table read, not merely weight-code reads | Inspect linked code and measure matched screens |
+| Packet73 all-span / packet81 packed input sweeps | Remain closed under their existing notes | A distinct measured mechanism, not another geometry sweep |
+| CPU byte checks or offline code as performance | Forbidden | Two fresh exact lane brackets, unchanged acceptance, then full qualification |
+
+No FP32 accumulator reassociation, FMA, prompt cache, compressed KV, changed
+quantization or approximate scale. Gate/up metadata is independent. IQ4 down
+stays production. A no-fit design gets no runnable placeholder job.
+
+| E3 implementation refinement | Outcome | Revisit condition |
+| --- | --- | --- |
+| All-next raw grid bank | 15,488-byte linked spills; retained in `evidence/rejected-e3-all-next/` | New liveness mechanism, not more banks |
+| Per-chain next-block current bank | 1,152-byte linked spills; retained in `evidence/rejected-e3-next-block/` | Smaller live state |
+| Two words with scalar metadata | Exact, zero spills, but 69 static loads and an early destination wait; superseded | Distinct advantage over wide metadata |
+| Final two-word wide-metadata pipeline | Exact on CPU, zero spills; actual next-table scheduling confirmed; device result pending | Coordinator screen decides |
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+=================== packet99-iq2-grid
+# Packet99 boundaries
+
+| Arm or method | Decision | Revisit condition |
+| --- | --- | --- |
+| IQ4 byte-pair SLM lookup | Exact on CPU; rejected for 1,664-byte linked spills, 52 scratch messages | Distinct lower-liveness mechanism; [closeout](DOWN-CLOSEOUT.md) |
+| IQ2 separate sign-table optimization | No such table in production IQ2_S; signs are inline | A different format/path with an actual table |
+| Claim compact encoding is new | Packet52 already had the same two-bit magnitude encoding | Credit lab history and isolate changed scheduling/storage |
+| Claim SLM amortizes over more rows | Old and new short workgroups both fill per 16 scalar rows | Actual distinct geometry/evidence |
+| E3 word prefetch, E2 scale cache, H1 HC cache | Closed by supplied packet95/90 verdicts | Not reopened here |
+| CPU/assembly pass as speed | Forbidden | Micro ≤85% kernel time in both orders, then exact B and A brackets |
+
+Records belong on lane A. No candidate may skip micro qualification, mix
+different candidates into one B grid, or use a B improvement as an A verdict.
+Only the seven views exposed by `screen_jobs.py` are sealed for screening.
+Packet97's other composition dimensions are retained in the engine; changing
+one requires new selected-composition gates and seals.
+=================== packet102-iq2-ilp
+# Packet102 boundaries
+
+Read packet65, 67, 73, 81, 90, 95 and 99 before opening these arms.
+Do not reopen table relocation/compaction, E3 word prefetch, E2 scale cache,
+four-stream HC geometry, all-span expert sweeps or packed activation reads.
+This packet batches dependent grid reads and separately shares gate/up inputs.
+Keep packet49 FP32 chains and trees, full half-cache layout and full BF16 KV.
+No speed claim or model screen before the 15% device micro gate.
+V5 expert switching is unavailable in its frozen native engine; use v4.
+
+| Arm | Outcome | Revisit condition |
+| --- | --- | --- |
+| Shared V8 | 2,304–3,072 scratch bytes; rejected | A lower live-state design |
+| Shared V4 duplicate output paths | Flag spills and scratch | Consolidated epilogue is the retained fix |
+| V4 batch2/shared and batch4/shared | Exact, but still scratch spills; no micro/screen | Concrete lower-register composition |
+| Per-kernel 256 GRFs | Offline stack rejects `SPV_INTEL_maximum_registers` | Separately qualified compiler support |
+
+| Batch2 standalone | 1.89% lower micro kernel time; fails 15% gate | Materially different scheduling design |
+| Batch4 standalone | 0.16% higher micro kernel time; fails gate | Materially different scheduling design |
+| Shared input standalone | 3.31% higher micro kernel time; fails gate | Materially lower live state/overhead |
+
+[Combined-arm closeout](COMBINED-CLOSEOUT.md) and
+[coordinator micro closeout](MICRO-CLOSEOUT.md). No candidate reaches screens.
+=================== packet104-tile-transpose
+# Packet104 boundaries
+
+| Arm or assumption | Outcome / condition |
+| --- | --- |
+| Use packet59 draft kernels as packet100's selected baseline | Rejected by selection/dispatch audit. Packet100 selects mtp36 WG128, plus packet33 WG32 shared-down. The first build is retained as superseded preparation. |
+| Infer locality counters from packet100's timing improvement | No DRAM page-hit or L3 counter evidence. These are mechanisms to test, not measured explanations. |
+| Call target-route replay a native draft-route measurement | Incorrect. The supplied packet100b target IDs are replayed through draft, as an operator diagnostic. Actual model screens decide transfer. |
+| Advance on an overall median only | Refused: require <=0.85 overall, in both orders and every route/input stratum. |
+| Run full byte/startup/VRAM/seal work before a measured micro win | Deferred by the user. Prepared integration files and selections are not qualified builds. |
+| Use the model's resident-only target selection for KD's draft-only host path | Refused. The planned host reference retains the selected draft and removes target-only layouts. Every real chain-window startup remains mandatory. |
+| Transpose target shared/router weights by name when a partial plan lacks the full tuple | Rejected in static review. Load and dispatch share complete-tuple coverage; any outside consumer keeps the whole selected bank set in its original layout. Full startup validation remains pending. |
+| Repeat packets 95/99/102 lookup, prefetch or batching variants | Closed. This packet rearranges immutable weight bytes only. |
+
+No performance candidate is closed before device measurements. No full model
+speed, output identity, exact draft acceptance or record eligibility is claimed.
+
+## Packet104b coordinator decision, 2026-10-18
+
+The original <=0.85 micro gate failed for every arm. The coordinator explicitly
+waived that *performance threshold only* for one screen grid of the two TARGET
+gate/up arms. This does not waive byte identity, startup, memory, exact model
+outputs, acceptance counts, or fresh controls. See [override](screening-override.json)
+and [micro closeout](micro-closeout.md).
+
+| Arm | Candidate/control time | Decision |
+| --- | ---: | --- |
+| target-gate-tile16 | 0.898048 | One screen under explicit coordinator override; no micro pass or engine gain claimed. |
+| target-gate-halfcache-tile16 | 0.892953 | Same override; exact FP32 weight-scale cache, never compressed KV. |
+| target-shared-q6-tile16 | 0.950510 | Closed: below 15% improvement; no override. |
+| hc-gate-tile16 | 1.006565 | Closed: slower; no override. |
+| target-router-tile16 | 1.026424 | Closed: slower; no override. |
+| draft-gate-tile16 | 1.261494 | Closed: slower target-route replay diagnostic. |
+| draft-down-tile16 | 1.346788 | Closed: slower target-route replay diagnostic. |
+| shared-gate-up-tile16 | 1.496321 | Closed: slower; no override. |
+| shared-down-tile16 | 2.094842 | Closed: slower; no override. |
+| Reuse packet104's old baseline as packet97's selected composition | Refused: old baseline omitted route-fast, rec-both-plus and E1. Packet104b snapshots packet97's actual selection locally and adds down-tile16. |
+| Claim plain gate-tile16 isolates the transpose against E1 control | Refused: this arm removes E1. The halfcache-tile16 arm retains E1 and isolates transpose. |
+
+Closed arms require a materially new mechanism or explicit coordinator decision,
+not another run of the same layout. Earlier deferred-CPU wording above is
+superseded only for the two named gate/up arms.
+=================== packet100-down-locality
+# Packet100 boundaries
+
+| Mechanism or inference | Decision | Revisit condition |
+| --- | --- | --- |
+| Packet65 occupancy, packet73 all-span, packet81 packed-input load count | Remain closed; neither p100 arm changes those mechanisms | New distinct evidence |
+| E3 grid-word prefetch | Closed at its recorded negative engine result; maximal CPU composition only preserves the packet97 ABI | New dependency mechanism |
+| E4 duplicate-slot coalescing | No production duplicate IDs: top-k ranks a permutation; DOWN activations also differ by slot | A real router with duplicates and an exact reuse proof |
+| IQ2 gate/up grid optimization | Owned by packet99; copied compatibility header only | Separate campaign decision |
+| onecached proves L3 capacity / TLB / DRAM page cause | Unsupported specificity; it proves a repeated-address locality opportunity | Counters or a controlled independent locality experiment |
+| Synthetic routes as packet77/86 routes | Forbidden; archived route hashes do not reconstruct their bytes | Recover all matching raw route files |
+| p100 exactness or speed | CPU/operator preparation only; no device verdict | Real-route micro >=15%, then exact B bracket and A confirmation |
+| Record chain from these seals | Refused explicitly | Later qualified bundle, records on lane A |
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md). Neither locality
+candidate is declared performance-positive or performance-negative.
+=================== packet119-down-warm
+# Packet119 boundaries
+
+- CPU preparation is complete only when the retained byte, ISA, startup and
+  queue-plan receipts pass. It is not a device speed or quality result.
+- Use packet118 E1 + tile16 as control. Packet110's older DOWN timing is not a
+  matched baseline and its estimated bandwidth gap is not measured traffic.
+- Warm selected DOWN bytes only. Do not reopen packet95 next-block prefetch,
+  packet99 table relocation, packet102 lookup batching, packet104 gate tile16,
+  packet115 large GRF, or packet73/81 scheduling sweeps under this name.
+- Keep every one of the 384 predeclared routes and both arm orders in both
+  fresh processes. No rerouting, filtering by speed, or warmed control reuse.
+- If either process or either order exceeds 0.85 for gate/up plus DOWN, do not
+  queue the v5 bracket. Record the failed micro and close this arm.
+- A cache-size property is not measured effective capacity. Preserve the cold/
+  warm probe results and label them diagnostic. No present cache-fit verdict.
+- Do not alter the frozen packet118 tree or live coordinator queues.
+- Native device descendants must not inherit CPU address-space caps. Keep the
+  pre-exec limit guard and nonnegative drain sleep.
+=================== packet162-iq2-lookup
+# Packet162 negative-result index
+
+October 19 follow-up: the owner requested the [packet162b device-speed
+diagnostic](MICRO162B.md) before more NaN work. CPU preparation exists, but
+the shared report check blocks readiness. No device-speed result exists and
+no final speed-based closure is asserted. Rows below preserve the earlier study.
+
+| Date | Arm / inference | Result | Revisit condition |
+| --- | --- | --- | --- |
+| 2026-10-19 | L0: shared Boolean circuit replacing the IQ2 grid, unchanged E1 rows | All 1,024 integer words exact; best of eleven fixed orders still 1,288 nodes. Finite full shapes and native host outputs pass; Intel auxiliary NaN chains differ. CPU ~22–40×, not a GPU timing verdict. Closed before device. | Materially smaller dependency graph, complete strict byte parity and a credible replacement-work budget. |
+| 2026-10-19 | L1: 11-bit enumerative supergrid, 880-byte rows | Integer exact and steady-state arena fit (629,145,600 extra bytes/rank). Native host output/status tests pass, but auxiliary NaN chains/tree differ; full CPU gate false. Finite CPU ~4.1–4.9×. No GPU or model claim. | Shorter decoder, isolated/fixed compiler-context byte failures, real loader peak proof; then the ≤0.85 device micro gate. |
+| 2026-10-19 | Full byte / two-bit / radix-3 / parity-only expansion | Extra 33.97 / 3.77 / 1.89 / 1.26 GB per rank exceeds rank-1 786 MB headroom. Partial uniform coverage is not full-path exposure. No hot-subset arm. | A distinct all-layer encoding within the actual arena or newly measured material subset opportunity and paid preparation cost. |
+| 2026-10-19 | Native final equality erases auxiliary raw-byte differences; or CPU speed substitutes for device gate | Refused. Final native host bytes pass in this packet; the independent strict comparison still fails. Device speed is absent. | All registered byte checks pass and actual matched device evidence. |
+| 2026-10-19 | Recast packet99/95/102/104/104b/53, selected E1 or packet140 N2 as new | Excluded; [source-linked inventory](README.md#existing-closures-carried-forward). | A different mechanism, not renamed scheduling or table placement. |
+
+[Closeout](CLOSEOUT.md). No READY, live queue, device proposal or runtime adoption.
+
+## Packet162b final device decision
+
+| Date | Arm | Result | Revisit |
+| --- | --- | --- | --- |
+| 2026-10-19 | Packet162b 11-bit device decoder | Final closure: at least one complete finite stratum exceeds 0.85× production device time; NaN repair has no qualifying speed case. Evidence: `evidence/enum11-diagnostic-B1/analysis.json` | Do not repeat this decoder. |
+
+| Date | Attempt | Measured outcome | Revisit only when |
+| --- | --- | --- | --- |
+| 2026-10-19 | Exact 11-bit IQ2 grid decoder for the routed-expert gate/up path (packet162 enum11; +629 MB/rank) as the last two-card in-layer pool priced above 3% | Device micro `packet162b-enum11-diagnostic-B` (lane B, card 2, 04:54 UTC): bytes equal on device for finite **and** NaN/invalid fixtures, but the candidate is **4.79–4.83× slower** than production on both real shapes (layer0: 232.6 vs 48.3 µs; layer24 similar). The gate was ≤ 0.85×. | Closed. Only a fundamentally different decoder with a device micro ≤ 0.85× first; no further CPU work on this encoding. |
+=================== packet48b-production
+=================== packet49b-gemv
+# Packet49b decisions and negative-result index
+
+| Finding | Evidence | Revisit condition |
+| --- | --- | --- |
+| SPEED6 is a historical identity, not current packet45 HEAD | Packet49 derives from `34c62b433`; packet49b from `5cda094d2` | New explicitly qualified baseline |
+| Packet48 isolated dense timings are not production evidence | Packet48b production comparison | Fresh matched wrapper/shape evidence |
+| GDN QKV/Z M=1 not worthwhile; M=2 production match absent | [Packet48b evidence](../packet48b-production/evidence-copy/p48b-a-summary.json) | Fresh production-matched M=2 byte and timing gates |
+| Full16-byte expert row padding exceeds existing arena headroom | [Memory and load-alignment proof](INTEGRATION.md) | New separately qualified memory mechanism; never silently raise the cap |
+| Exceptional IQ3 gate gain was about1% and closed for this merge | [Packet48b preregistration](../packet48b-production/PREREGISTRATION.md) | New worthwhile production-matched evidence |
+| Four-row IQ4 down fixture fails the production geometry guard | `p49b-fixture-correction.json`, initial source `122d95fba` | Use2560 output rows, preserving the production guard |
+| Split32 requires its own oracle, but expert arithmetic does not change it | [Shared packet49 binding](oracle-binding.json) | Any arithmetic change requires a separate identity |
+| Ordered QSA alternative slower; packet46 layer launch fusion neutral | Packet49 inherited decisions | New mechanism with worthwhile gain estimate |
+| M=2 bridge support does not mean batched engine scheduling | [Integration](INTEGRATION.md) | Separate scheduling change with rollback/quality gates |
+
+The [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) records this task's
+outcome and remaining gates. Device qualification and further optimization
+remain open.
+=================== packet49d-round3
+# Packet49d retained decisions
+
+- Do not edit49c or run a second oracle: arithmetic identity is unchanged.
+- Do not integrate closed packet54 norm/combine proposals or unbanked 53b arms.
+- Do not select from a single timing owner or from a stored passed boolean.
+- Do not rebuild numerical gates after selection: all choices are precompiled
+  and gated; revalidate bindings and reseal the selected JSON.
+- Do not reserve completed/superseded parent writes or delete their evidence.
+- Do not run device binaries during preparation; coordinator windows own GPUs.
+- Keep [packet49c's inherited negatives](../packet49c-round2/DO-NOT-REPEAT.md).
+
+Preparation findings and remaining device gates are recorded in
+[the closeout](CPU-PREPARATION-CLOSEOUT.md).
+=================== packet53b-virtual
+# Packet53b decisions
+
+Persistent expert arms are closed by [packet53](../packet53-expert-order/DO-NOT-REPEAT.md).
+Never substitute V4 for the production timing baseline. Never combine each
+owner's independently selected winners. Do not remove the per-chain K check:
+K640 and every Split4 K2560 chunk end with unequal lane lengths.
+
+The production adjacent SG32 tree and Split4 tree are part of the identity.
+No free-order sums, FMA contraction, changed precision, cached responses or
+new oracle. A device result is pending until E1/E2 and T1/T2 pass.
+
+## CPU register decisions
+
+- Paired V8/V16 at128 GRFs spill2432/4352 bytes in initial offline screening.
+  Not admitted. Bounded two-chain scheduling and scalar unpack attempts also
+  spill; retained under evidence-cpu.
+- The experimental256-GRF kernel property emits SPV_INTEL_maximum_registers,
+  which installed ocloc refuses. Do not send this unqualified module to a GPU.
+- Separate gate/up subgroups preserve every chain/tree and eliminate the
+  V8/V16 spills in screening. Final report binds the production-pitch build.
+- Do not call packet53's aligned16 expert pitch the packet49c compact pitch.
+  This packet uses packet49c's actual820/360-byte rows for both arms.
+- `dispatch-p45.json` is not the active control map. Packet49c uses the
+  SPEED6 map, byte-identical to packet51's registered baseline map.
+
+## Device closeout — October 17
+
+| Closed arm | Outcome | Revisit condition |
+| --- | --- | --- |
+| Gate/up V16 split-stream | About 52 µs slower in both owners despite spill-free offline compilation | A new mechanism addressing its measured cost; no repeat geometry sweep |
+| HC low/gate virtualization V2/V4/V8 | All slower; V8 loses 7.395 µs in both owners | New mechanism beyond virtual lane count |
+
+[Device closeout](../../../../notes/2026-10-17-own-runtime-packet53b.md#device-results--october-17-09450950-utc):
+23.4385/23.4375 µs misses 35 µs. Gate/up V8, down V16 and small-FFN V4 are
+banked exact candidates for packet49d when combined qualified savings reach
+40 µs in both owners. This does not reopen the closed HC or V16 gate/up arms.
+=================== packet53-expert-order
+# Packet53 preparation findings
+
+Device round closed below its 30 µs bar; preserve negative evidence.
+
+| Finding | Outcome | Revisit condition |
+| --- | --- | --- |
+| Pass a proof's retained lane array to `iq3::tree32(float*)`, then reuse it | First CPU proof failed at check6, V1 adjacent tree; the production helper reduces its input in place | Reduce a private copy; preserve raw lane arrays for all independent comparisons |
+| Treat a passing own-mirror comparison as production equivalence | Rejected in parser negative controls; all candidate hashes must crosslink to the actual same-case production capture | Never waive production-byte equality in this packet |
+| Treat a future scheduled time as a fault-review boundary | Wrapper refuses before launch | Coordinator must pass an actually reviewed past UTC boundary |
+| Repeat packet52's per-short-workgroup SLM table fill | Already slower in packet52; not a candidate here | Persistent64-workgroup fill is a distinct registered hypothesis, with identical-order global control |
+
+[Initial proof refusal](evidence-cpu/initial-proof-refusal/README.md) retains
+the rejected test source and original build receipts. The correction changes
+test scratch ownership, not kernel arithmetic or the expected result.
+
+The next cross-compiler gate found a second fixture bug: two RNG calls in the
+arguments of `ldexp` had no specified evaluation order. Each compiler passed
+all8,432,381 internal checks but tested different adversarial tree values.
+Draw mantissa and exponent in separate statements; never weaken the cross-
+compiler hash gate. Intel also prints the expected one-thread-limit warning
+before JSON; the wrapper now accepts only that exact warning/hint prefix and
+preserves it in native.log. It does not raise the CPU thread limit.
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+## Device closeout (2026-10-17)
+
+| Arm | Outcome in both fresh timing owners | Revisit condition |
+| --- | --- | --- |
+| Persistent gate/up global, 64 workgroups | About 138 µs slower per layer | A different occupancy/scheduling mechanism with a new preregistration |
+| Persistent gate/up SLM | About 215 µs slower | Do not repeat this table staging geometry |
+| Persistent virtual2 gate/up SLM | About 218 µs slower | Different measured mechanism, not another repeat |
+| Persistent virtual2 down | About 26 µs slower | Different scheduling mechanism |
+
+Question: could exact-order expert scheduling save 30 µs per ordinary layer?
+No: the common V4 winners saved 22.083/22.291 µs. Both byte windows passed
+60/60. V4 logical-lane mapping is retained for packet53b; persistent arms
+close here. [Full closeout and uncertainty](../../../../notes/2026-10-17-own-runtime-packet53.md#device-results--october-17-09150919-utc),
+[hash-preserved receipts](evidence-copy/inventory.json). No model speed claim.
+=================== packet54-compute
+# Packet54 bounded decisions
+
+- Launch-gap work is closed by packet34's19.823 ms wall vs19.520 ms GPU sum.
+- Dense QKV/attention are already near their measured bandwidth limit.
+- Packet46's four-workgroup norm fusion slowed19.272 to35.6765 µs; retain
+  the two-stage partial buffer and enough output groups.
+- Single-workgroup route fusion would concentrate262144 comparisons; this
+  round instead changes stage1 distribution and stage2 exact value reuse.
+- Recurrence state is already register-resident; new candidates must share
+  redundant head math, not merely rename that existing property.
+- HC inject stays unchanged: only16 SG32 jobs per side and80 dependent
+  additions per lane; changing the split count changes the oracle tree.
+- Packet53b V16 gate/up and HC virtualization remain closed. Bank only its
+  exact V8 gate/up, V16 down and V4 small-FFN winners.
+
+- FFN `combine-vector4` is closed: finite full-shape bytes passed but actual
+  compiled-production NaN output was `0x7fc0`, candidate `0x7fc1`. A copied
+  scalar/noinline exceptional fallback did not repair it. Preserve
+  `evidence-cpu/full-diagnostic-2/receipt.json`; do not canonicalize or discard
+  payload bits to pass. Revisit only with a proven unchanged production fallback
+  whose overhead can justify the 11.2 µs total class budget.
+
+- Both norm variants are closed before device qualification: the exceptional
+  fixture differs at output byte4098 (production `0x7fc1`, candidate `0x7fc5`).
+  Calling a copied specialised scalar body on nonfinite partials did not
+  preserve the actual compiled kernel's NaN operand selection. See
+  `evidence-cpu/full-diagnostic-3/receipt.json`. Keep production normalization;
+  `mix-vector4` tests mixing alone. Revisit only with an exact production-path
+  solution, never a payload tolerance.
+
+Device conclusions are pending. Add an evidence-linked closeout after the
+coordinator's complete result; do not edit sealed code to chase a speed.
+=================== packet25-gemv
+# Packet 25 negative and pending index
+
+| Direction | Evidence / outcome | Revisit condition |
+| --- | --- | --- |
+| R6 register-grid decoder | 1.45 ms whole expert block versus 0.298 ms control, 6 KiB IQ2 spill | A different mechanism with bounded pressure; not repeated here |
+| R6 SLM pair / packed pipeline | 2.34 / 2.60 ms versus 0.298 ms; 5–9× slower | New evidence, not instruction-count forecasts; neither is implemented here |
+| R2 two rows per work-item with whole-row wide staging | Regressed across shapes | This packet uses independent SG32 rows and direct eight-byte loads, not that design |
+| Expand all experts | Packet10 capacity exceeds two cards | A different measured memory budget; not proposed |
+| Claim scale hoisting is new | R3/R6 already share metadata scales | Half-table arm only removes exact half conversion; measure its extra reads |
+| Treat mathematical equality as NaN bit equality | initial-failures.json records payload/sign changes | Shared current fallback plus CPU/native gates; no canonicalization |
+| Abort the whole GEMV census on host/card NaN encoding | G1-a stopped at IQ2_S element 14 before timing; GCC/icpx reproduce opposite quiet-NaN signs | G1-b accepts host/card NaN class only, preserves exact same-card candidates and all finite/infinity bits; record first eight mismatch rows and finish eligible classes |
+| Scalar dot alone is the universal oracle | Mixed nonfinite operands can differ from the frozen compiler path | Frozen row remains authority; scalar oracle is additionally checked in the finite domain |
+| Pack rows by changing lanes or split4 | Changes the declared reduction | Forbidden in this identity |
+| Time only expanded consumer | Omits per-token scratch decode | Both GPU events plus sequence wall must be counted |
+| Force SiLU cross-compiler NaNs to agree by canonicalization | epilogue-diagnostic.json: GEMV fields agree, added SiLU field does not | Exact nonlinear identity work before fused integration; no canonicalization |
+| Infer model speed from tiled fixture timing | Omits real cache/residency/prologue/dependency behavior | Exact real-model oracle and matched fresh-owner timings |
+
+Source lessons: [R6](../packet11-kopt6/DO-NOT-REPEAT.md), its measured README,
+[R5](../packet10-kopt5/DO-NOT-REPEAT.md), and [R3](../packet8-kopt3/DO-NOT-REPEAT.md).
+=================== packet125-miss-transfer
+# Packet125 boundaries
+
+- Do not call simulated packet100b cache masks observed one-card misses. Packet58
+  retained aggregate misses but no route IDs or isolated device timing.
+- Do not call the 7.1 ms cache-maintenance span DMA time or add overlapping host
+  timers. Do not convert disabled device-time zeros into compute measurements.
+- Do not prefetch next-layer selected experts before that layer's router using
+  unknown routes. Current-layer gate/up and DOWN copies can overlap legally.
+- Do not import regular Level Zero command queues into this UR adapter; retain
+  the packet58b immediate copy-only command-list repair and explicit ownership.
+- Do not compare the full route-to-output effective rate directly to K1's 14 GB/s
+  device-event fixture rate. Retain all cases, reverse order and exact bytes.
+- Do not integrate if either fresh process or the post-initial gate is below1.5×.
+  A bandwidth result is not a packet49 model-oracle pass or model speed claim.
+- Do not edit, reseal or rebuild after either micro output exists. Preserve any
+  failed output; a materially new candidate needs a fresh identity and proposal.
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md). No transfer arm is
+closed on speed evidence yet; device measurements remain pending.
+=================== packet141-transfer-gap
+# Packet141 boundaries
+
+- Do not call this single captured half a model throughput benchmark.
+- Do not sum medians of events, split fused kernel time or omit zero-launch sites
+  from the coverage manifest. Sum durations within each complete sample first.
+- Never replace actual routes with timed easy routes; all 24 layers must match
+  the pinned packet138 capture, and every generated token must match packet49.
+- No device run before the CPU seal/argument/allocation/queue gates pass.
+- No graph-event profiling or external tracing. Prepared native calls here are
+  ordinary queue submissions and event clocks are read after completion.
+- Restoring state is diagnostic replay only. It earns no headline or quality
+  exemption. Pre-touch time is retained, not a free speedup.
+- Do not interpret the kill gate if the forced-cold condition disagrees with
+  natural sequence timing by >10% in a class costing >=0.5 ms/half.
+- Device evidence is pending. This preparation does not close the lane or alter
+  the record, existing packets, services or queues.
+- Original enqueue/finish is required, including the uninstrumented wall control.
+  Withhold a verdict on >10% observer overhead or >=0.5 ms and >10% issue gaps.
+- No-extra-eviction follows restoration; it does not prove engine cache occupancy.
+- Packet141b: do not treat executable `ldd` alone as adapter dependency admission.
+  The first attempt exited before a model step because the dynamically loaded
+  Level Zero adapter could not find `libumf.so.1`. Run `native_entry_gate.py`
+  against the real device binary and recorded argv; retain immediate rank stderr.
+- Packet141c: releasing either diagnostic scratch allocation invalidates all
+  prepared commands owned by that Device, including the five inactive bank
+  pairs. Re-prepare every pair before returning to model work; an in-place
+  request reset cannot refresh prepared generations. The CPU sequence gate
+  must reject the old probe at post-reset enqueue, then pass all arms and all
+  six continuations with unchanged binding bytes. Never weaken the owner guard
+  or merely rewrite a command's generation. This is the second and last repair.
+- The split output head also retains rank0 commands outside the bank caches.
+  Refresh that suffix capture as well, and run its actual service in the CPU
+  gate. A bank-only repair passes its own continuation but leaves a later fault.
+=================== packet142-class-layout
+# Packet142 boundaries
+
+- Packet104/104b gate/up tile16 lost. Do not rerun that arm. `expert-gate-up-order600`
+  retains exact E1 halfcache rows and only changes the allocation/order of copies.
+- Packet136 bundle8 is frozen. This is its copy; existing packet trees and screen
+  wrappers remain untouched. Historical instructions are in `lineage-inputs`.
+- The initial 512 MiB budget could not hold one whole expert gate/up tuple
+  (550,502,400 bytes). It failed CPU admission and was replaced by 600 MiB.
+- CopyEngine has a 128 MiB transfer limit. Whole expert matrices exceed it;
+  load-time copies use bounded 32 MiB chunks with waits and event retirement.
+- Never accept a class switch outside the bank loaded at startup. The Python
+  config gate rejects it before native execution; native class_select also rejects
+  it before rebinding weights. No allocation or weight write at view boundaries.
+  The additional early native refusal remains a deferred patch under
+  lineage-inputs/qualified-v5; it is not part of the qualified binary.
+- Preserve all six rollback bank captures; recapturing only the active pair is unsafe.
+- Allocation order does not imply physical adjacency. These are class-prefix
+  experiments. A null result cannot close whole-class layout work.
+- No rerun of other classes just because one packet141 class is positive.
+- No launch through legacy root helpers. Only the locally sealed v5 entry is current.
+- CPU fixture captures and GNU/Intel synthetic bytes do not establish device quality.
+  Keep 12 x 64 smoke, five exact 12-prompt views, drift gates and later full promotion.
+- No prompt/KV/response reuse, compressed KV, target changes or unchecked speculation.
+- No queue edits or GPU/service launches during preparation. Coordinator selects
+  candidates after packet141's receipt. Native exec retains unlimited address space.
+- Keep the 25 GB root-free floor and 300 MB build cap. Copied objects exceeded
+  the cap once; hash-bound links to allowed frozen parent objects fix the duplication.
+=================== packet145-router-gdnz-layout
+# Packet145 boundaries and novelty
+
+- Packet104/104b router tile16 (1.026424), shared Q6 tile16 (0.950510), and
+  shared gate/up tile16 (1.496321) are closed. This changes allocation/consumer
+  order only, never row transpose, addressing arithmetic, or reduction order.
+- Packet112 altered route probability selection. This keeps selected route-fast
+  unchanged and changes only immutable GEMV weight placement.
+- Packet140 lacked a supported >=0.412758 ms/half standalone lever. Packet141's
+  new cold/in-order versus repeated-kernel attribution supplies this distinct
+  locality hypothesis: router 1.86× and gdn.z 1.30×. Neither is an engine speedup.
+  Combined effects with separately queued attention are unmeasured.
+- Packet142 attention-order600 mixes gdn.z with other projections under one
+  prefix budget. This dedicated gdn.z bank reaches its whole admitted class;
+  router was absent from packet142's candidates. Packet142 is frozen.
+- Require complete fused router tuples. A partial-plan or missing member refuses.
+- Allocation order does not prove physical adjacency or better cache behavior.
+- CPU row/capture proofs are not device output or performance evidence. No model
+  payload or GPU may be read during this preparation. Keep full precision KV.
+- Readiness is scoped by lane and variant. Never use a B smoke to admit A.
+- Do not inherit packet142's recovered-smoke exemption or parent readiness.
+- Keep the 25 GB root-free floor, 300 MB build cap and 4 GiB CPU process cap.

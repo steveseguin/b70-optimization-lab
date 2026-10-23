@@ -11,6 +11,17 @@ Records in `community/bosd-openvino-genai-b70/validation/` (`lab-run.md`, raw lo
 urllib3 2.8.0) pins verified against PyPI hashes. OpenVINO venv at the lab's `builds/ov-genai-repro`, models under the HF cache, llama.cpp build at
 `builds/llama-fresh-20261023` on the fast disk. Cards empty afterwards.
 
+**October 22, 23:25 EDT — expert GEMV kernel-floor study: NO-GO on a +2 % kernel packet; one issue-floor micro remains informative.**
+From the record kernels' source (`p90exp::Kernel<IQ2_S,2560,WG64,wide>` gate/up + `p100::Kernel<2>` down; the routed experts are IQ2_S gate/up and
+IQ4_NL down, not IQ3_XXS): bytes per layer per token 20.06 MB → copy floor 37.4 µs; measured gate/up 60–62 + down ~35 + act 5 (class ~105): excess
+~64 µs/layer. Packet162b's L2-resident run of the production gate/up kernel still took 48.3 µs (2.4× its copy floor) and packet86's no-decode variant
+33.8 µs: the kernel is instruction-issue bound (~16 dynamic instructions per weight; the exact three-op identity plus decode gives an ALU floor of ~27 µs,
+above the 20 µs copy floor). Every bytes-side mechanism is closed by a DO-NOT-REPEAT row or memory-infeasible (pre-expanded streams +3.77 GB/rank vs
+630 MB headroom); the open instruction-level items (SLM gate↔up epilogue 4–5 µs, register-free LSC prefetch ≤ 12, instruction diet 0–12 + 0–7) sum to
+4–36 µs at 100 % transfer against the 15.1 µs (+2 %) bar, with the class's transfer record at 0–47 %. Next: a 5-minute lane-B micro on card 2
+(cold / L2-warm / no-load issue-floor decomposition of the two record kernels on packet100b's 384 real routes) decides whether the instruction diet
+is worth a ≤ 0.85× micro packet; prepared CPU-only as packet192. Study archived in packet190 `analysis/expert-kernel-study-20261023.md`.
+
 **October 22, 22:40 EDT — NEW ONE-CARD RECORD: 36.602512 tok/s class-balanced (packet58-onecard-cache23 chain, LocalMaxxing `cmvkcqznb002lng01fsrhjn7t`, APPROVED, +1.88 % over 35.926720).**
 The chain (packet182c's seven windows on card 0 with `cache_cap max23` = 23.05 GB admitted device expert cache and the plan re-partitioned from 182c's
 lifetime receipts; engine `083e3853…` bound byte for byte) ran 01:55–02:29 UTC (unit `packet58-onecard-cache23-a`): K1a, K1b, KD, W2m, WS, WS128x,
