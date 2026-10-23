@@ -1,0 +1,128 @@
+{
+  "schema": "own-runtime.packet58cache23.ready.v1",
+  "ready_for_device": true,
+  "passed": true,
+  "device_executed": false,
+  "packet": "packet58-onecard-cache23",
+  "job": "packet58cache23-one-card-v5-A",
+  "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58cache23-one-card-A.txt",
+  "proposal_sha256": "0be7c60d51622a66ffb0bff11b1c54471f9759c6345d803fe6440e3f4eecec13",
+  "lane": "A",
+  "scope": "whole-host",
+  "gpu_count": 1,
+  "card": 0,
+  "model_loads": 1,
+  "windows": [
+    "K1a",
+    "K1b",
+    "WSCREEN"
+  ],
+  "separate_smoke_required": false,
+  "opening_contract": "No separate smoke: bracket opens with K1a/K1b and exact A0 control.",
+  "arm_order": [
+    "max",
+    "max23",
+    "max",
+    "max23",
+    "max"
+  ],
+  "labels": [
+    "A0",
+    "B0",
+    "A1",
+    "B1",
+    "A2"
+  ],
+  "arms": {
+    "A": "packet182c record selection, cache_cap max (21,552,729,600 usable inside the 23,049,601,024-byte arena)",
+    "B": "same selection, cache_cap max23 (the whole 23,049,601,024-byte arena)"
+  },
+  "engine_sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+  "engine_rebuilt": true,
+  "parent_engine_sha256": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+  "engine_identity": "packet182c/176 engine text + native-cache23-delta.patch; parent kernel/host/backend objects relinked unchanged (restore-inputs.json)",
+  "warmup": "A0 exact, excluded only from speed and drift",
+  "prompts_per_view": 12,
+  "max_new": 128,
+  "required_exact_requests": 60,
+  "oracle": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "resident_lookups_all_views": true,
+  "foreground_io_all_views": "kernel",
+  "winner_minimum_gain_over_every_warm_control": 0.005,
+  "maximum_control_drift_fraction": 0.03,
+  "chain_rule": {
+    "minimum_gain_over_every_max_view": 0.02,
+    "chain_bar_tok_s": 36.6452544,
+    "record_tok_s": 35.92672,
+    "expected": false,
+    "tool": "screen/compare_bracket.s58c23_decision"
+  },
+  "kill_rules": [
+    "any view not 12/12 exact",
+    "DRM total-vram0 > 30,500,000,000 B (native after-load + supervisor guard, unchanged)",
+    "max23 fills/token not >= 8 % below max -> capacity closed at 23 GB",
+    "warm max < 35.2 tok/s or drift > 3 % -> host disturbed; no automatic rerun"
+  ],
+  "memory": {
+    "cache_allocation_bytes": 23049601024,
+    "usable": {
+      "max": 21552729600,
+      "max23": 23049601024
+    },
+    "device_owned_bound_bytes": 29828911360,
+    "driver_allowance_bytes": 671088640,
+    "device_reserve_bytes": 1500000000,
+    "drm_guard_bytes": 30500000000,
+    "drm_projection_bytes": 29943603712,
+    "drm_guard_margin_bytes": 556396288,
+    "host_required_available_bytes": 100487123456,
+    "plan": "memory-plan.json"
+  },
+  "expected": {
+    "v5_seconds": [
+      700,
+      1200
+    ],
+    "watchdog_seconds": 3600,
+    "gain": "+0.5 to +1.0 % priced (synthesis 1); chain bar not expected"
+  },
+  "device_disk_floor_bytes": 25000000000,
+  "cpu_disk_stop_bytes": 27000000000,
+  "build_receipt_sha256": "4d46cb7a41ffea007b89da7263a38e3b6b94a8448082215791e1bb38a5f17d5c",
+  "checks": {
+    "evidence/build.json": "7563d2713c56b843498b78e120e886bc0779a37c25f8f1fc68535404456a9f7e",
+    "evidence/cache-identity.json": "bd6673cf903045eae6718b6c37c3a326ed888c240dbfdd837e11d16a5e376426",
+    "evidence/preparation.json": "abc6f29876a7545cd2c51d3a8e0cd24cef6debff69c1e0fbc6383fb096b29877",
+    "evidence/loader.json": "678bc042d180df3eb7369606d1fdd1a82dcadd6f5dc92dbe774b2a6fd675269a",
+    "evidence/analyzer-real-parent.json": "ccdd826efa817e38f4aa51632cad3e827cd8d5d2928d633bff20a7aacc02b6cb",
+    "evidence/python-cpu-gates.json": "9e7dbb12c397ae9896a6dcc98f7426dcf9896b3be01c2b0e7234b1ff4339306a",
+    "evidence/drain-fix.json": "c8d7db93883d3ff247915598cf3bfe2f36fe05cd0d769fa6ba63302bd1f7c434",
+    "evidence/package-rows.json": "d6794029e1232de2818ffdf66490bd4df523a7f9babc72bfa40658e2d75a5b64",
+    "evidence/entry-imports.json": "5056d37c925ce6c59c7acdb7df3149e8c978fdf1ca4d24364945bc3b6417700a",
+    "evidence/queue-plans.json": "e6ffe9acb46e894558c5a1dc8abc11453597d5a3955846a2ce08c85f576ac8ec",
+    "evidence/shared-entry-report-final.json": "bd4a7f2c45aaf54da7fba590298e8b46bd66ffd3c31461ccc894fbf53b1c1986",
+    "evidence/pin-guard.json": "e158f2bad9fa1a8d979f2a37b92e7acdb129b3b6b416a8f06381e658f74f5604",
+    "screen/evidence/argument-gate.json": "546d3c9850fcdb212a905a10303b1586578b7026d7f9649a7960734dfe431294",
+    "screen/evidence/startup-cpu.json": "3e3d8edaab755f5decd5bda5a7209e02ada8cdacaf8de07d8423db8556e8befa"
+  },
+  "argument_gate": {
+    "path": "screen/evidence/argument-gate.json",
+    "sha256": "546d3c9850fcdb212a905a10303b1586578b7026d7f9649a7960734dfe431294",
+    "memavailable_substituted_for": "WSCREEN (owner endpoints running during CPU preparation)"
+  },
+  "device_exactness": "pending",
+  "device_speed": "pending",
+  "fresh_process_repeat": false,
+  "strict512": false,
+  "submission_eligible": false,
+  "coordinator_requirements": "Whole-host lane A; PAUSE-B kept; endpoints stopped by the window procedure (MemAvailable >= 100,487,123,456 + 1 GiB at START); no retry; graceful drain; commit summary.json/window.json right after the window; chain only at >= +2 % (a later composite bundle, not this packet)",
+  "parent": {
+    "name": "packet182-onecard-kio-rebracket",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket",
+    "parent_commit": "7c18cd055afc289c41bd9811d5d0a59f345e0776",
+    "record_line": "packet182c-chain (35.926720 tok/s, cmvjejvoi03qcrf0138emu5a6)"
+  },
+  "prepared_utc": "2026-10-23T00:28:54.958095+00:00",
+  "preparation_head_commit": "7b68302ebcc1cf6241c4a171b317c9aa0de66b37"
+}

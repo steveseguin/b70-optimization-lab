@@ -1,0 +1,44 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "schema": "packet58cache23.loader.v1",
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "OMP_NUM_THREADS": "2",
+    "LD_LIBRARY_PATH": "<library-path.json>"
+  },
+  "binaries": {
+    "build/device/own-rt-iq3": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+    "build/device/p58-cache-fixtures": "8fe6c8959774243605dfd1bd430f3de482e77dcc6f203cf4dcc35b9c7e2b066f",
+    "build/device/p58-cache-fixtures-core": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35",
+    "build/gnu-host/own-rt-iq3": "03a2aa12187d02276995a1cba5d0fffc0bdd5e78632144f2529db44103be705b"
+  },
+  "launch_env_stdout": "PASS own-rt-iq3: loader check\nPASS p58-cache-fixtures: loader check\nPASS p58-cache-fixtures-core: loader check\nPASS own-rt-iq3: loader check",
+  "helps": {
+    "build/device/own-rt-iq3": "--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap 18GB|max|max23 (default:max) --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --foreground-io copy|kernel (default:copy) --wait-seconds --p58r-parse-test --help",
+    "build/device/p58-cache-fixtures": "--output --down-layout --card --iterations --authorized-device-window --stop-fd"
+  },
+  "parser_refusals": [
+    {
+      "argv": [
+        "--no-such-flag",
+        "x"
+      ],
+      "returncode": 1,
+      "stderr": "unknown option --no-such-flag"
+    },
+    {
+      "argv": [
+        "--cache-cap",
+        "max24"
+      ],
+      "returncode": 1,
+      "stderr": "cache capacity mode"
+    }
+  ],
+  "exec_limits": "RLIMIT_AS unlimited required at exec; limits unchanged across the check",
+  "native_executed": [
+    "--help",
+    "--p58r-parse-test refusals (host binary)"
+  ]
+}

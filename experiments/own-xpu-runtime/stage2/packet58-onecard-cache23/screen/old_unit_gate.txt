@@ -1,0 +1,4 @@
+def user_unit_gate(cgroup):
+    paths = [line.split(':', 2)[-1] for line in cgroup.splitlines()]
+    require(any('/user@' in p and p.rsplit('/', 1)[-1].startswith(('packet58-', 'screen-packet58r-')) and p.endswith('.service') for p in paths),
+            'coordinator-owned packet58-* systemd user service required')

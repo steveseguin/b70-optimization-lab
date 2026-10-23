@@ -1,0 +1,182 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "schema": "packet58cache23.analyzer.v1",
+  "packet182_bracket": {
+    "exact_requests": 60,
+    "refused_as_candidate": "capacity view order differs",
+    "measured_rates": [
+      34.57910623805567,
+      35.95076365169899,
+      34.58970601556338,
+      35.95451222823236,
+      34.583575727764426
+    ],
+    "packet176_fields_identical_to_committed_summary": true,
+    "readout": {
+      "A0": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03234,
+          "unfilled_intercept_ms": 25.3098,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.03184,
+          "filled_intercept_ms": 25.9636,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      },
+      "B0": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03214,
+          "unfilled_intercept_ms": 25.1292,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.0433,
+          "filled_intercept_ms": 25.5666,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      },
+      "A1": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03221,
+          "unfilled_intercept_ms": 25.2915,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.03192,
+          "filled_intercept_ms": 25.9474,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      },
+      "B1": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03209,
+          "unfilled_intercept_ms": 25.1226,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.04328,
+          "filled_intercept_ms": 25.5598,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      },
+      "A2": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03219,
+          "unfilled_intercept_ms": 25.2986,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.03169,
+          "filled_intercept_ms": 25.9577,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      }
+    }
+  },
+  "packet182c_ws128": {
+    "exact_requests": 12,
+    "record_tok_s": 35.92672010504166,
+    "fills_per_token": 15.449,
+    "fill_mb_per_token": 30.63,
+    "miss_read_regression": {
+      "unfilled_tokens": 763,
+      "unfilled_ms_per_next_fill_mb": 0.03216,
+      "unfilled_intercept_ms": 25.1332,
+      "filled_tokens": 760,
+      "filled_ms_per_fill_mb": 0.04335,
+      "filled_intercept_ms": 25.5793,
+      "mean_fill_mb_per_filled_token": 61.42
+    },
+    "wall_ms": 27.6895
+  },
+  "decision_cases": {
+    "screen_win": {
+      "candidate_beats_all_controls": true,
+      "screen_winner": true,
+      "chain_rule": false,
+      "kills": []
+    },
+    "below_screen_bar": {
+      "candidate_beats_all_controls": false,
+      "screen_winner": false
+    },
+    "chain_rule": {
+      "screen_winner": true,
+      "chain_rule": true,
+      "minimum_gain": 0.021430559421096576
+    },
+    "chain_bar_missed": {
+      "chain_rule": false
+    },
+    "warm_floor": {
+      "kills": [
+        "warm max view below 35.2 tok/s: host disturbed; report, no automatic rerun"
+      ]
+    },
+    "drift": {
+      "kills": [
+        "control drift > 3 %: host disturbed; report, no automatic rerun",
+        "warm max view below 35.2 tok/s: host disturbed; report, no automatic rerun"
+      ],
+      "drift": 0.03247126436781609
+    },
+    "fills_not_reduced": {
+      "kills": [
+        "max23 fills/token not >= 8 % below max: capacity closed at 23 GB regardless of speed"
+      ],
+      "capacity_closed": true
+    }
+  },
+  "synthetic_rates": true,
+  "provenance": [
+    {
+      "name": "packet182:run/cache.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/evidence/card0-182-v5-a/resident/WSCREEN/run/run/cache.jsonl",
+      "parent_digest": "b3e7f28ea8c739271a49b249187dbb0490e0589c87305b98182bce203b47787d"
+    },
+    {
+      "name": "packet182:suite-inputs.tsv",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/evidence/card0-182-v5-a/resident/WSCREEN/run/suite-inputs.tsv",
+      "parent_digest": "1c58ada2b1a4cc9cc576e08bb26cae40b4029c6f3210a9328344ae3a590a3ffe"
+    },
+    {
+      "name": "packet182:run/receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/evidence/card0-182-v5-a/resident/WSCREEN/run/run/receipt.json",
+      "parent_digest": "77388d1d63f3035c3f788313c92edbd806fabf87f7871963af339f895a71e444"
+    },
+    {
+      "name": "packet182:summary.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/evidence/card0-182-v5-a/resident/WSCREEN/run/summary.json",
+      "parent_digest": "680aa42f63e3d4e681020be2daa880906ddba0bbcbbb1daebbb471ac91266a22"
+    },
+    {
+      "name": "packet182c-WS128:run/cache.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/cache.jsonl",
+      "parent_digest": "8c2b5062ca2843e1d67648449e19b581de66233e66432dc1e56f4d8c1fef6720"
+    },
+    {
+      "name": "packet182c-WS128:suite-inputs.tsv",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/suite-inputs.tsv",
+      "parent_digest": "7c9757d4663fe604ac7585e7414fe1fc9c475419094d8f9f4b3bc590620a6cbd"
+    },
+    {
+      "name": "packet182c-WS128:run/receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/receipt.json",
+      "parent_digest": "57b63726785c7dbd912762ac6adea79bcf4052689d6b1604c75a644f9853e68e"
+    },
+    {
+      "name": "packet182c-WS128:summary.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/summary.json",
+      "parent_digest": "53e2a215e2940931f911e2e06ce2469358f8a97e859c7a3f6f576791d9a3ee76"
+    }
+  ],
+  "note": "fills/token are identical on every view of packet182 (same policy at the same capacity); the real readout therefore fails the 8 % rule by construction, which is the expected refusal of a no-capacity-change bracket, not a device result"
+}

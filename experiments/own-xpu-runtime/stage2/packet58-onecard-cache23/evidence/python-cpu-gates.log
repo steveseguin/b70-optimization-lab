@@ -1,0 +1,144 @@
+== packet58-cache23 screen discovery
+.......E....................................................................................................E....
+======================================================================
+ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/test_admission58e.py", line 177, in test_postload_proof_requires_cache_KV_and_after_load
+    rows=json.loads((W.HERE/'evidence/postload-census.json').read_text())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/postload-census.json'
+
+======================================================================
+ERROR: test_new_lookup_gate_refuses_missing_changed_and_wrong_backing (test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/test_resident_report.py", line 21, in test_new_lookup_gate_refuses_missing_changed_and_wrong_backing
+    out=Path(tmp);self.fixture(out,'resident');self.assertTrue(D.verify_lookup_views(out,'resident'))
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/suite_driver.py", line 151, in verify_lookup_views
+    require(backing.get('resident') is True,'lookup path differs')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/suite_driver.py", line 36, in require
+    raise ValueError(message)
+ValueError: lookup path differs
+
+----------------------------------------------------------------------
+Ran 113 tests in 3.861s
+
+FAILED (errors=2)
+
+== policy/decision/unit tests
+..................................
+----------------------------------------------------------------------
+Ran 34 tests in 1.321s
+
+OK
+
+== top-level delta + memory tests
+...........................
+----------------------------------------------------------------------
+Ran 27 tests in 0.065s
+
+OK
+
+== packet182 baseline (scratch git-archive copy) screen discovery
+.......E.......F..F...........F............E.........................................................E.F..
+======================================================================
+ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/test_admission58e.py", line 177, in test_postload_proof_requires_cache_KV_and_after_load
+    rows=json.loads((W.HERE/'evidence/postload-census.json').read_text())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/evidence/postload-census.json'
+
+======================================================================
+ERROR: test_exact_allowlist_hash (test_input_scope.InputScope.test_exact_allowlist_hash)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/test_input_scope.py", line 19, in test_exact_allowlist_hash
+    check_pins(ROOT, {name: digest})
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/input_scope.py", line 16, in check_pins
+    if allowed.get(key)!=h:raise ValueError('external mutable pin refused: '+n)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: external mutable pin refused: experiments/own-xpu-runtime/stage2/packet49-integrate/build-receipt.json
+
+======================================================================
+ERROR: test_new_lookup_gate_refuses_missing_changed_and_wrong_backing (test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/test_resident_report.py", line 21, in test_new_lookup_gate_refuses_missing_changed_and_wrong_backing
+    out=Path(tmp);self.fixture(out,'resident');self.assertTrue(D.verify_lookup_views(out,'resident'))
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/suite_driver.py", line 147, in verify_lookup_views
+    require(boundary.get('hc')=='p60fusion' and boundary.get('lookups')=='resident' and boundary.get('wait_policy')=='spin'
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/suite_driver.py", line 36, in require
+    raise ValueError(message)
+ValueError: lookup/composition boundary differs
+
+======================================================================
+FAIL: test_smoke_and_bracket_dimensions (test_async_policy.AsyncPolicy.test_smoke_and_bracket_dimensions)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/test_async_policy.py", line 29, in test_smoke_and_bracket_dimensions
+    self.assertEqual(V.bracket('smoke'),[('S0','resident')])
+AssertionError: Lists differ: [('S0', 'spin-kio')] != [('S0', 'resident')]
+
+First differing element 0:
+('S0', 'spin-kio')
+('S0', 'resident')
+
+- [('S0', 'spin-kio')]
+?           -  ^^^^
+
++ [('S0', 'resident')]
+?          ++  ++ ^
+
+
+======================================================================
+FAIL: test_all60_actual_oracle_and_metrics (test_bracket.SummaryTests.test_all60_actual_oracle_and_metrics)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/test_bracket.py", line 55, in test_all60_actual_oracle_and_metrics
+    self.assertTrue(row['candidate_beats_all_controls'])
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_fixed_maintenance_and_capacity_rows (test_capacity.Capacity.test_fixed_maintenance_and_capacity_rows)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/test_capacity.py", line 33, in test_fixed_maintenance_and_capacity_rows
+    self.assertEqual([r[5] for r in rows],['mapped','resident','mapped','resident','mapped'])
+AssertionError: Lists differ: ['spin', 'spin-kio', 'spin', 'spin-kio', 'spin'] != ['mapped', 'resident', 'mapped', 'resident', 'mapped']
+
+First differing element 0:
+'spin'
+'mapped'
+
+- ['spin', 'spin-kio', 'spin', 'spin-kio', 'spin']
++ ['mapped', 'resident', 'mapped', 'resident', 'mapped']
+
+======================================================================
+FAIL: test_all60_actual_oracle_and_metrics (test_bracket.SummaryTests.test_all60_actual_oracle_and_metrics)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/p58c23-harness-v0q69q7o/repo/experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/test_bracket.py", line 55, in test_all60_actual_oracle_and_metrics
+    self.assertTrue(row['candidate_beats_all_controls'])
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 106 tests in 3.100s
+
+FAILED (failures=4, errors=3)
