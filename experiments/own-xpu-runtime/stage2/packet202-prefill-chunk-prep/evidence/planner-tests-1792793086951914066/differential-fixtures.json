@@ -1,0 +1,27 @@
+{
+  "schema": "packet202.synthetic-differential-requirements.v1",
+  "scope": "Synthetic CPU operator comparison, not model or device qualification",
+  "cases": [
+    {"name": "distinct_rows", "purpose": "Different activations must preserve independent projection outputs and chronological recurrent updates"},
+    {"name": "identical_rows", "purpose": "Equal projection inputs must still share sequential recurrent state, not independent row copies"},
+    {"name": "swapped_rows", "purpose": "Changing row order must be observable through causal history and state"},
+    {"name": "bf16_rounding", "purpose": "Finite rounding-sensitive activations exercise the actual BF16 store boundaries"},
+    {"name": "nonzero_initial_state", "purpose": "Nonzero history and recurrent state make accidental reset and independent-row execution observable"}
+  ],
+  "required_properties": [
+    "Serial projection uses pinned original p33 per-lane arithmetic independently of paired implementation",
+    "Synthetic expanded Q6_K production layout and dimensions are explicit",
+    "Compare qkv and z projection bytes for both rows",
+    "Compare convolution outputs and history after row0 and after row1",
+    "Compare GDN outputs and BF16 persistent state after row0 and after row1",
+    "Active persistent state changes, so all-zero/inactive execution cannot satisfy the proof vacuously",
+    "An intentionally independent second-row state produces a different result and is rejected",
+    "No model payload, GPU, owner process, service or native device API is used"
+  ],
+  "not_claimed": [
+    "Exact selected GPU execution or full model output parity",
+    "Full-model attention, PLE or expert-cache chunk integration",
+    "A deliberately omitted interrow BF16 rounding negative control, unless separately implemented and observed to discriminate",
+    "Measured serving speedup"
+  ]
+}

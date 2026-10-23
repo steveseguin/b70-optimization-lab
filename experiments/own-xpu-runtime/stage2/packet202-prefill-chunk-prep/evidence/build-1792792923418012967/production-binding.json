@@ -1,0 +1,60 @@
+{
+  "boundaries": [
+    "synthetic full production qkv/z shapes and shared-state conv/GDN branch only",
+    "alpha/beta and convolution parameters synthetic, not their upstream projection kernels",
+    "HC/FFN/output projection/QSA/cache/full layer/device launch excluded"
+  ],
+  "cpu_only": true,
+  "dense": {
+    "K": 2560,
+    "census": [
+      {
+        "bytes": 21504000,
+        "card": 0,
+        "component": "gdn",
+        "name": "blk.0.attn_qkv.weight",
+        "stored_bytes": 34611200,
+        "variant": "expanded_sg32_v1"
+      },
+      {
+        "bytes": 12902400,
+        "card": 0,
+        "component": "gdn",
+        "name": "blk.0.attn_gate.weight",
+        "stored_bytes": 20766720,
+        "variant": "expanded_sg32_v1"
+      }
+    ],
+    "expanded_row_bytes": 3380,
+    "grid": 14,
+    "qkv_rows": 10240,
+    "raw_row_bytes": 2100,
+    "split": 1,
+    "subgroup": 32,
+    "type": "Q6_K",
+    "variant": 6,
+    "variant_name": "expanded_sg32_v1",
+    "z_rows": 6144
+  },
+  "production_reference_sha256": "689bc21edc8f5d626bbba4cf3d13f7a6378bda9f4def9a08bd9079be8c78884f",
+  "recurrence": {
+    "extraction": "recurrence_tree + recurrence_host_rows<4>; added optional row0_snapshot stores only, no arithmetic changes",
+    "flags": 14,
+    "heads": 48,
+    "independent_reference": "pinned round2::gdn_host",
+    "selection": "rows4-shared",
+    "source": "experiments/own-xpu-runtime/stage2/packet49d-round3/p49d_recurrence.hpp",
+    "state_dtype": "BF16",
+    "width": 128
+  },
+  "schema": "packet202.production-binding.v1",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/dispatch.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "861da2583d85f6526434dafde0c06c8e36c8309801a6b3eaa5062fc82b18267b",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33_candidates.hpp": "bd2dab3502394b94e3edfd46143a81ad4c3e407fb040ff5aadb971380f49daf3",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/round2.hpp": "abcb893ebf44efac62bec3075b83418482c8f89c9fb9e1a76f762ff77babc8d6",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/selection.json": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output/owner/plan.json": "3ae15bc39f60970165119c00dffa9151e554e875b1ab9700670359f9f81089e9",
+    "experiments/own-xpu-runtime/stage2/packet49d-round3/p49d_recurrence.hpp": "a46b57c3522917fcc8abb9551c9f210953c8fbff0f334aea4f0b0a573729390e"
+  }
+}

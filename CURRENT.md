@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 18:09 EDT — the first paired-prefill CPU proof passes independent review.**
+Five synthetic cases pass all 50 intermediate byte comparisons, and all 20 planner/authority tests pass.
+An independent rerun reproduces the results. The proof covers paired Q6 projections and causal convolution/GDN
+with full BF16 state; it does not establish a complete layer or device speedup. The next additive patch completes
+gated normalization, output projection and residual-stream updates. All three daily applications remain restored;
+no new device window is queued. The streaming closeout ff03da93e has all three CI workflows green.
+[CPU result and limits](experiments/own-xpu-runtime/stage2/packet202-prefill-chunk-prep/IMPLEMENTATION.md) ·
+[Independent review](experiments/own-xpu-runtime/stage2/packet202-prefill-chunk-prep/evidence/independent-cpu-review.json).
+
 **October 23, 17:49 EDT — streaming and restoration are verified; prefill is the next speed lever.**
 All sixteen replies and1,484 output tokens match prior evidence. Seven streams delivered text before finishing; all256 final
 checkpoint blobs match reference state. Restore30 validated all three daily applications, with unchanged fault history,

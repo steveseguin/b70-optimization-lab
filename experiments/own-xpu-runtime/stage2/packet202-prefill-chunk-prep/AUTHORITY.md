@@ -1,0 +1,151 @@
+# Chunked-prefill exactness authority
+
+## Question and identity
+
+What must a two-row, layer-major prompt executor preserve, and what existing
+evidence can judge it without another model run? This is CPU-only source and
+artifact inspection, not an implemented candidate or a speed result. The
+[authority inventory](authority-inputs.json) pins 60 evidence/source inputs and
+five inherited arithmetic sources. No native/reference executable was started.
+
+The baseline is packet198's unchanged engine used by packet201: arithmetic
+`iq3-p49-split32-v1`, 48 layers, context 4096, full BF16 persistent state,
+greedy argmax, native EOS 248044 plus explicit stop 248046. Its frozen dispatch
+and selection remain authority. A generic CPU fallback with the same tensor
+shapes is not automatically the selected production arithmetic.
+
+## Outcome
+
+The proposed first proof should compare **two serial rows against the same two
+rows through one layer-major chunk**, using the actual production-derived
+Q6_K `p33.dense.segment` layer0 tuple identified in the companion source design.
+Compare every affected output and persistent state byte, not only the argmax.
+This is a future tiny HOST_ONLY differential test, not an existing recorded
+model authority and not GPU qualification. Preserve the final prompt token's
+existing full `step(...,1)` path and ordinary decode initially.
+
+The subsequent executable preparation narrows that first numerical gate to
+production-shaped qkv/z projections plus the causal convolution/GDN branch.
+Alpha/beta and convolution parameters are synthetic; HC, FFN, the output
+projection, QSA and cache integration remain excluded. Passing that branch
+gate would not establish a complete layer0 executor or full-model parity.
+
+## What worked
+
+Existing recorded authorities are useful and complementary:
+
+| Authority | Available evidence | What it can establish |
+| --- | --- | --- |
+| p181 CPU oracle128, A and B | 128 output IDs, per-step top5 IDs/logits and full BF16-logits SHA | Independently calculated final-logit/output expectations; both token prefixes were directly matched to p201 during this inventory |
+| p198 S1–S5 manifests | 128 named state-blob hashes per checkpoint, tokens and scalar/control bytes | Complete saved-state expectations for fresh A, resumed A, appended/repeated/fresh-merged histories |
+| p201 final A and B | All 128 blob files per checkpoint currently present; previous independent audit directly rehashed them | Full completed-request state and output agreement with older authority maps |
+| All 16 p201 consumed prompts and results | Exact inputs, output token IDs, reuse classification and processed-position counts | End-to-end regression vectors, including append, edited history, different prompt lengths and natural stops |
+
+The p198 large tensors have been deliberately pruned locally: only seven
+manifest-listed control/state blobs plus `tokens.bin` remain per checkpoint.
+The pinned archive-reuse/prune receipts identify their verified p197 archive
+mapping. This preparation reads metadata and small retained files; it does not
+restore or rehash that archive. The p201 full tensors were not rehashed again
+in this inventory; their existing independent audit supplies that proof.
+
+The CPU oracle records full-logit **hashes**, not raw logits or hidden-layer
+activations. Existing p198/p201 runs did not capture internal prompt-row layer
+outputs or chunk-boundary states. Final-state equality is strong regression
+evidence but does not localize a wrong first-layer implementation. New tiny
+serial-vs-chunk intermediates are therefore necessary before full integration.
+
+## What failed or remains uncertain
+
+The exactness obligations below are not satisfied by batching dimensions alone.
+The existing multirow CPU helpers are semantic references; selected production
+kernels and reduction trees still require direct equivalence proof.
+
+1. **Row causality and recurrent rounding.** GDN row1 reads the BF16-rounded
+   state written by row0. Keep decay, prediction, delta and output reductions
+   in their original order. Holding recurrent state in FP32 between rows
+   changes arithmetic. Preserve convolution's `3*dilation` history and row
+   shift order; PLE dilation3 rounds its accumulator to BF16 before SiLU.
+   PLE's token-history hash must consume each input token once in chronological
+   order, with immutable row-specific lookup inputs. Compare all 36 GDN states,
+   all 36 convolution histories and the PLE history when testing a full path.
+2. **QSA causality.** Row `r` uses position `start+r`, its original RoPE row,
+   and only keys/values at IDs no greater than that position. Completed pooled
+   groups are `floor((position+1)/4)`; an earlier row must not select a pool
+   containing future rows even if the chunk has already computed it. Preserve
+   four-row pool summation order, BF16 averaging, normalization-before-RoPE
+   rounding, deterministic selection tie breaks and split32 attention
+   arithmetic. Keep valid KV/raw prefixes and pooled extent `floor(N/4)` exact.
+3. **Conversion and reduction boundaries.** BF16 writes use round-to-nearest,
+   ties-to-even (with the original NaN handling). Preserve quantized weight
+   decoding, per-output-row accumulation order, intermediate BF16 conversions,
+   explicit local trees, deterministic math and fused-path conversion points.
+   Expert down rows round to BF16 before weighted accumulation in device route
+   order; the mixture rounds again. A generic GEMM, reassociation or FP32
+   chunk accumulator is not authorized as equivalent.
+4. **Routing and cache side effects.** Route IDs, probabilities, ties and
+   per-row/layer order must remain exact. Cache pointers must remain valid
+   throughout all readers; no victim reuse or table publication may overlap
+   a row still using it. A chunk-frozen table with delayed maintenance is a
+   changed maintenance policy, even if arithmetic stays exact. First compare
+   serial and chunk execution under the same explicit policy; report its
+   counters and residency separately from today's per-position overlap policy.
+   It must not become an undeclared warm-cache comparison.
+5. **Controls, state bindings and failures.** Token, position, active/error,
+   history and prepared argument bindings are currently shared single-row
+   state. They need explicit row ownership or ordered updates; changing a
+   pointer while queued commands still consume it is invalid. Preserve
+   position/extent admission across 32-position boundaries, sticky errors,
+   state-bank identity and reset-before-restore. A row failure stops subsequent
+   work and intake; no retry or success checkpoint may hide it. A bulk position
+   increment is insufficient unless every consumer's row-local position and
+   error/commit behavior are proven equivalent.
+6. **Last prompt, sampler and pending token.** Only non-final known prompt
+   rows skip final norm/logits/argmax. The last prompt token produces the first
+   generated token through the unchanged full step. No new sampling/RNG is
+   introduced. After `P` prompt tokens and `G` generated tokens, fresh/append
+   saved processed history is input plus `generated[:-1]`, with position
+   `P+G-1`; `generated[-1]` is pending and unprocessed. Append at saved position
+   `N` consumes `input[N]` (the saved pending token) before new delta tokens.
+   Same-generation restore has its distinct retained-history construction.
+   SAVE requires full visible-history equality, quiescence and unchanged
+   checkpoint validation; RELEASE and final-request disposition remain intact.
+
+## Evidence and patches
+
+No runtime patch was made. Paths and SHA values are in the inventory, using
+these concise source aliases and physical line numbers:
+
+- p198 generated `build/native/main.cpp`: lines1256–1276 lookup/history;
+  1416–1496 selected site bindings and forced QSA implementation 12;
+  1587–1638 prepared commands and extent admission; 1849–1865 reset;
+  2116–2177 token execution/cache boundary; 2220–2237 fresh/append loops.
+- Inherited `packet58j-onecard-port/kernels.hpp`: lines26–31 BF16 access;
+  105–114 reduction/RoPE; 124–146 recurrent state/convolution; 178–220 QSA
+  pools, per-row causal selection and value conversion. `specialised.hpp`
+  lines117–137 independently exposes the BF16 state write/read between rows.
+- Inherited `packet3/step/plan.hpp`: lines123–180 GDN/QSA state graph;
+  220–240 PLE history; 270–306 layer sequence, final logits and commit.
+- Inherited `packet9-kopt4/reference.hpp`: lines6–10 fixed GEMV tree identity;
+  16–24 expert-down BF16/route-order mixture contract. This does not replace
+  the selected Q6 segment kernel authority for the proposed layer0 patch.
+- p198 generated `checkpoint.hpp`: lines215–237 complete persistent-state
+  classification and valid slices; 615–645 resume/append rules; 669–715
+  save assertions and byte capture. `prepare_overlay.py` retains the exact
+  full-visible-token SAVE check and postreply descriptor construction.
+
+## When to revisit
+
+Before implementation approval, make the tiny differential harness use the
+actual selected layer0 tuple and record both serial and chunk intermediate
+bytes. Proposed later boundary cases include start 0, pooled boundaries 2/3 and
+3/4, extent boundaries 30/31 and31/32, and restored 342/343. Include odd prompt
+tails so the final prompt step is never accidentally batched away. Test
+rounding ties, route ties, poisoned error state, wrong position and out-of-range
+attention IDs as applicable to each changed component.
+
+After that CPU proof, a separately authorized device experiment must establish
+exact outputs and persistent state for the unchanged fresh and append vectors,
+then qualify timing under matched initialization/cache policies. Existing append
+savings and a hypothetical twofold prefill sensitivity do not measure this
+candidate. A layer0 HOST_ONLY pass alone cannot establish full-model correctness
+or performance.

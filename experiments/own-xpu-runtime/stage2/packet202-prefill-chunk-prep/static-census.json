@@ -1,0 +1,191 @@
+{
+  "allocation_inventory": [
+    {
+      "bytes": 116391936,
+      "category": "KV",
+      "memory": "device"
+    },
+    {
+      "bytes": 5379712,
+      "category": "pinned-copy-slab",
+      "memory": "host-pinned"
+    },
+    {
+      "bytes": 59019280,
+      "category": "recurrent-state",
+      "memory": "device"
+    },
+    {
+      "bytes": 27370881024,
+      "category": "weights",
+      "memory": "device"
+    },
+    {
+      "bytes": 48627712000,
+      "category": "weights",
+      "memory": "host-pinned"
+    },
+    {
+      "bytes": 295612132,
+      "category": "workspace",
+      "memory": "device"
+    }
+  ],
+  "cache_trace_fields": [
+    "fill_bytes_total",
+    "fills_total",
+    "mode",
+    "plan_ms",
+    "position",
+    "publication_bytes_total",
+    "publication_host_ms_total",
+    "publication_uploads_total",
+    "state"
+  ],
+  "cache_trace_rows": 2863,
+  "fresh_370_nonfinal_prefill": {
+    "device_to_host_copies_per_position": [
+      50
+    ],
+    "enqueue_family_ms_all_null": true,
+    "gemv_device_ms_all_zero": true,
+    "host_to_device_copies_per_position": [
+      3
+    ],
+    "host_waits_per_position": 6,
+    "kernel_submissions_per_position": 1110,
+    "non_gemv_device_ms_all_zero": true,
+    "positions": 369,
+    "sites_trace_bytes": 0
+  },
+  "layer0_q6_storage": [
+    {
+      "bytes": 21504000,
+      "card": 0,
+      "component": "gdn",
+      "name": "blk.0.attn_qkv.weight",
+      "stored_bytes": 34611200,
+      "variant": "expanded_sg32_v1"
+    },
+    {
+      "bytes": 12902400,
+      "card": 0,
+      "component": "gdn",
+      "name": "blk.0.attn_gate.weight",
+      "stored_bytes": 20766720,
+      "variant": "expanded_sg32_v1"
+    },
+    {
+      "bytes": 12902400,
+      "card": 0,
+      "component": "gdn",
+      "name": "blk.0.ssm_out.weight",
+      "stored_bytes": 20766720,
+      "variant": "expanded_split4_v1"
+    }
+  ],
+  "limitations": [
+    "Tensor storage bytes are not measured bytes read; cache, transaction and reuse effects are unmeasured.",
+    "Launch census is a logical plan; fused selected submission counts come from the actual timing trace.",
+    "Zero device timing fields and empty site traces mean unmeasured, not zero work.",
+    "Aggregate cache counters contain no per-layer route IDs; adjacent-row expert overlap is unknown.",
+    "Current workspace totals do not price the extra row or prove an alias-safe allocation plan.",
+    "No changed runtime, weights, native execution or device work is performed by this script."
+  ],
+  "schema": "packet202.static-prefill-planning-census.v1",
+  "scope": "Closed evidence only; inventory and recorded counters, not traffic, device time or candidate speed.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output/owner/cache.jsonl": "f9eda30cc3e5229d38478e39efe85c6837a6235fcedce638b9affebb7e8c684c",
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output/owner/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output/owner/plan.json": "3ae15bc39f60970165119c00dffa9151e554e875b1ab9700670359f9f81089e9",
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output/owner/requests/he80a7bb9e7c9417c8c4e3dce2ba64229-0000000000000004/prefill-timings.jsonl": "4c9b9afd5733e75d98e5a4ddb072e6cf3434458089a2c7280e16cd627dcbe4da",
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output/owner/requests/he80a7bb9e7c9417c8c4e3dce2ba64229-0000000000000004/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/packet202-prefill-chunk-prep/planning_census.py": "3e6fe28b6bcc0efb2c9f71ed8d32ac9a7955f7845f4f791b0f4c10c2b3eebd12"
+  },
+  "tensor_inventory": [
+    {
+      "card": -1,
+      "component": "embedding",
+      "count": 1,
+      "logical_bytes": 521472000,
+      "stored_bytes": 521472000
+    },
+    {
+      "card": 0,
+      "component": "gdn",
+      "count": 288,
+      "logical_bytes": 1754576384,
+      "stored_bytes": 2776937984
+    },
+    {
+      "card": 0,
+      "component": "hyperconnections",
+      "count": 290,
+      "logical_bytes": 691159040,
+      "stored_bytes": 770621440
+    },
+    {
+      "card": 0,
+      "component": "norms",
+      "count": 181,
+      "logical_bytes": 4028416,
+      "stored_bytes": 4028416
+    },
+    {
+      "card": -1,
+      "component": "ple_lookup",
+      "count": 1,
+      "logical_bytes": 28800138240,
+      "stored_bytes": 28800138240
+    },
+    {
+      "card": 0,
+      "component": "ple_projection",
+      "count": 6,
+      "logical_bytes": 35102720,
+      "stored_bytes": 39198720
+    },
+    {
+      "card": 0,
+      "component": "qsa_attention",
+      "count": 48,
+      "logical_bytes": 490291200,
+      "stored_bytes": 789135360
+    },
+    {
+      "card": 0,
+      "component": "qsa_indexer",
+      "count": 24,
+      "logical_bytes": 39321600,
+      "stored_bytes": 39321600
+    },
+    {
+      "card": 0,
+      "component": "routed_experts",
+      "count": 144,
+      "logical_bytes": 48627712000,
+      "stored_bytes": 48627712000
+    },
+    {
+      "card": 0,
+      "component": "routers",
+      "count": 96,
+      "logical_bytes": 252149760,
+      "stored_bytes": 252149760
+    },
+    {
+      "card": 0,
+      "component": "shared_experts",
+      "count": 144,
+      "logical_bytes": 213376000,
+      "stored_bytes": 300620800
+    },
+    {
+      "card": 0,
+      "component": "target_head",
+      "count": 1,
+      "logical_bytes": 521472000,
+      "stored_bytes": 839321600
+    }
+  ]
+}
