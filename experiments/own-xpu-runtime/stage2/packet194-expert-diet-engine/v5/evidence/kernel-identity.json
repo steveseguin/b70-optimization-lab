@@ -1,0 +1,205 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "pinned_object": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device/p49d_expert_submit.o",
+  "pinned_sha256": "38516444ceff0151865d715f7aab29d623263c78219a6f99f47e623a17e14392",
+  "rebuilt_object": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/device/p49d_expert_submit.o",
+  "rebuilt_sha256": "f570dab3bd98ee2c6eaa9fe625b6ec8dcf6cb969424cbb619eff3e05c77cd5b8",
+  "inherited_kernels": 25,
+  "opcode_identical": 25,
+  "canonical_identical": 25,
+  "added_kernels": [
+    "_ZTSZZNK8p193diet13ActProduction6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS2_5eventESaISA_EEENKUlRNS2_7handlerEE_clESG_EUlNS2_7nd_itemILi1EEEE_",
+    "_ZTSZZNK8p193diet4Down6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS2_5eventESaISA_EEENKUlRNS2_7handlerEE_clESG_EUlNS2_7nd_itemILi1EEEE_",
+    "_ZTSZZNK8p193diet6GateUp6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS2_5eventESaISA_EEENKUlRNS2_7handlerEE_clESG_EUlNS2_7nd_itemILi1EEEE_",
+    "_ZTSZZNK8p193diet9GateUpAct6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS2_5eventESaISA_EEENKUlRNS2_7handlerEE_clESG_EUlNS2_7nd_itemILi1EEEE_"
+  ],
+  "record_kernels": {
+    "gateup": "_ZTSZZNK6p90exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+    "down": "_ZTSZZNK4p1006KernelILj2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_"
+  },
+  "method": "clang-offload-bundler unbundle -> sycl-post-link -split=kernel -O0 -> llvm-spirv --spirv-text; function sections compared by opcode sequence and by canonical form (globals/entry points by name, ids renumbered by first appearance)",
+  "caveat": "whole-object and whole-module bytes differ by the include paths embedded as source metadata; kernels not canonically identical differ only in text-form id/literal renumbering collisions (listed), never in opcode sequence",
+  "kernels": [
+    {
+      "kernel": "_ZTSZZNK11p49dvirtual6KernelILN3iq34TypeE20ELj640ELj3EE10submit_armILj3EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "function_lines": 406,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK11p49dvirtual6KernelILN3iq34TypeE22ELj2560ELj2EE17submit_stream_armILj2EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "function_lines": 498,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj128ELb0ELb0ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 409,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb0ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 409,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb1ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 462,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb1ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 462,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb1ELj2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 506,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb1ELj3EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 490,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb1ELj4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 462,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb1ELj5EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 490,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb1ELb0ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 508,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj128ELb0ELb0ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 498,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb0ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 497,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 566,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 593,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 566,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj3EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 573,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 573,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj5EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 566,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb1ELb0ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 598,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK4p1006KernelILj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "function_lines": 474,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK4p1006KernelILj2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "function_lines": 443,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK6p90exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 459,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK6p95exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 579,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    },
+    {
+      "kernel": "_ZTSZZNK6p95exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "function_lines": 533,
+      "opcode_identical": true,
+      "canonical_identical": true,
+      "first_differences": []
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/kernel_identity.py": "e201a44a626204a3d1f1e68909b90ac8eeae342ee3bfcc856b2adf92693e96ce",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/device/p49d_expert_submit.o": "f570dab3bd98ee2c6eaa9fe625b6ec8dcf6cb969424cbb619eff3e05c77cd5b8",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device/p49d_expert_submit.o": "38516444ceff0151865d715f7aab29d623263c78219a6f99f47e623a17e14392"
+  }
+}

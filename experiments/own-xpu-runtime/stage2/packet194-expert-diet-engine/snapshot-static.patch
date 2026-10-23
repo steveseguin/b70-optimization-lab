@@ -1,0 +1,224 @@
+--- packet136/strict_snapshot.hpp
++++ packet153/native-base/strict_snapshot.hpp
+@@ -1,3 +1,9 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/strict_snapshot.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/build/checked/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/prepared_submission.hpp"
++#endif
++#line 1
+ #pragma once
+ // Exact speculative rollback. Only the private backup is cleared at a request
+ // boundary; no model allocation is canonicalized, hidden or reset before hashing.
+@@ -20,11 +26,11 @@
+ #else
+  sycl::event submit(sycl::queue& q,std::span<void*const>,const std::vector<sycl::event>& deps)const override {
+   auto values=items;auto rows=count;auto columns=(maximum+15)/16;
+-  return q.submit([&](sycl::handler& h){h.depends_on(deps);
+-   h.parallel_for(sycl::range<2>(rows,columns),[=](sycl::id<2> id){
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<2>(rows,columns)](sycl::handler& h){
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::id<2> id){
+     const auto item=values[id[0]];size_t off=id[1]*16;
+     for(size_t j=0;j<16&&off+j<item.bytes;++j)item.dst[off+j]=item.src[off+j];
+-   });
++   }));
+   });
+  }
+ #endif
+@@ -56,15 +62,58 @@
+ #else
+  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+   auto rows=static_cast<const Item*>(p[0]);auto n=count,total=tiles;
+-  return q.submit([&](sycl::handler& h){h.depends_on(deps);
+-   h.parallel_for(sycl::nd_range<1>(total*lanes,lanes),[=](sycl::nd_item<1> id){
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(total*lanes,lanes)](sycl::handler& h){
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> id){
+     copy_lane(rows,n,id.get_group_linear_id(),id.get_local_linear_id());
+-   });
++   }));
+   });
+  }
+ #endif
+ };
+ static_assert(sizeof(SnapshotFlat::Item)==32);
++
++// Packet153: immutable, load-time extent geometry. All bank destinations are
++// omitted by the already-qualified banks-batch policy. Thus all six physical
++// rotation states share this one table. Only QSA row position is a kernel scalar.
++#ifdef OWN_RT_HOST_ONLY
++struct SnapshotStatic final:integrated::HostOperation {
++#else
++struct SnapshotStatic final:ownrt::SyclOperation {
++#endif
++ struct Item {uint8_t* backup;uint8_t* source;size_t bytes,end_tile,stride,divisor;};
++ size_t count=0,tiles=0;int position=0;bool restore=false;
++#ifdef OWN_RT_HOST_ONLY
++ size_t omitted_for_negative=SIZE_MAX;
++#endif
++ static void copy_lane(const Item* rows,size_t n,size_t tile_id,size_t lane,int position,bool restore,size_t omitted=SIZE_MAX){
++  size_t lo=0,hi=n;
++  while(lo<hi){size_t mid=(lo+hi)/2;if(rows[mid].end_tile<=tile_id)lo=mid+1;else hi=mid;}
++  if(lo==omitted)return;
++  const auto row=rows[lo];size_t start=lo?rows[lo-1].end_tile:0;
++  size_t off=(tile_id-start)*SnapshotFlat::tile+lane*16;
++  auto source=row.source+(row.divisor==4?size_t(position>>2):size_t(position))*row.stride;
++  auto dst=restore?source:row.backup;auto src=restore?row.backup:source;
++  for(size_t j=0;j<16&&off+j<row.bytes;++j)dst[off+j]=src[off+j];
++ }
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const> p)const override{
++  const auto rows=static_cast<const Item*>(p[0]);
++  for(size_t t=0;t<tiles;++t)for(size_t lane=0;lane<SnapshotFlat::lanes;++lane)
++   copy_lane(rows,count,t,lane,position,restore,omitted_for_negative);
++ }
++#else
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
++  const auto rows=static_cast<const Item*>(p[0]);auto n=count,total=tiles;auto pos=position;auto reverse=restore;
++  return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(total*SnapshotFlat::lanes,SnapshotFlat::lanes)](sycl::handler& h){
++   h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> id){
++    copy_lane(rows,n,id.get_group_linear_id(),id.get_local_linear_id(),pos,reverse);
++   }));
++  });
++ }
++#endif
++};
++static_assert(sizeof(SnapshotStatic::Item)==48);
++
+ // SPEED2_WRITE_SET_BEGIN
+ // Union of all selectable parallel writers, derived from Launch geometry.
+ // Bounds describe bytes which MAY be written, including every cancelled prefix.
+@@ -145,6 +194,52 @@
+  std::vector<Source> sources;
+  std::vector<Extent> saved;
+  std::vector<std::pair<Allocation,size_t>> protected_active,protected_qsa;
++ Allocation static_table=0;size_t static_count=0,static_tiles=0,static_bytes=0,static_bank_bytes=0;
++ std::vector<Allocation> static_ids;int captured_position=0;
++#ifdef OWN_RT_HOST_ONLY
++ size_t omitted_for_negative=SIZE_MAX;
++#endif
++ bool static_mode()const{return e.sealed_selection.choices.at("snapshot_host")=="static";}
++ void prepare_static(){
++  require(e.miss_banks()&&e.miss_batch()&&e.resident&&e.a.nongemv=="parallel","static snapshot requires resident banked parallel composition");
++  ownrt::CopyEngine engine(e.dev(0));std::vector<SnapshotStatic::Item> rows;
++  std::vector<ownrt::PreparedCompute> checked;std::set<Allocation> distinct;
++  static_ids={0,backup};
++  e.dev(0).begin_capture(checked);
++  try{
++   for(const auto& source:sources){
++    if(source.bank){require(source.redo_overwrite,"static rotation proof");static_bank_bytes+=source.bytes;continue;}
++    Allocation id=source.standalone?source.standalone:e.buffers[0].at(source.name).id;
++    require(distinct.insert(id).second,"overlapping static snapshot allocation");
++    size_t bytes=source.write_bytes,stride=0,divisor=1;
++    if(source.kv){require(source.single_row,"static QSA must be single row");
++     size_t n=source.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);
++     require(source.bytes%n==0,"static QSA geometry");stride=bytes=source.bytes/n;divisor=source.pooled?4:1;
++    }
++    const size_t max_offset=(size_t(e.p.g.context-1)/divisor)*stride;
++    require(bytes<=source.bytes&&max_offset<=source.bytes-bytes,"static snapshot full position range");
++    for(size_t off=0;off<bytes;off+=SnapshotBatch::limit){
++     size_t n=std::min(bytes-off,SnapshotBatch::limit);
++     // The unchanged copy guard checks BOTH directions and BOTH extreme rows.
++     // Fixed lengths and monotone affine offsets prove every intermediate row.
++     for(size_t posoff:{size_t(0),max_offset}){
++      engine.copy(backup,static_bytes+off,id,posoff+off,n,{});
++      engine.copy(id,posoff+off,backup,static_bytes+off,n,{});
++     }
++     const auto& item=checked[checked.size()-4];
++     require(item.ids.size()==2&&item.pointers.size()==2,"static checked descriptor");
++     static_tiles+=(n+SnapshotFlat::tile-1)/SnapshotFlat::tile;
++     rows.push_back({static_cast<uint8_t*>(item.pointers[0]),static_cast<uint8_t*>(item.pointers[1]),n,static_tiles,stride,divisor});
++    }
++    static_ids.push_back(id);static_bytes+=bytes;
++   }
++   e.dev(0).end_capture();
++  }catch(...){e.dev(0).end_capture();throw;}
++  require(static_bytes<=capacity&&!rows.empty(),"static snapshot capacity");static_count=rows.size();
++  static_table=e.allocate(0,"speculative-static-copy-table",rows.size()*sizeof(SnapshotStatic::Item),Category::runtime_overhead,Lifetime::process);
++  static_ids[0]=static_table;e.immutable_snapshot_tables.insert(static_table);
++  e.upload(0,static_table,0,rows.data(),rows.size()*sizeof(SnapshotStatic::Item));e.drain();
++ }
+  Allocation table=0;size_t table_capacity=0;
+  Allocation backup=0;size_t capacity=0;bool valid=false,dirty=false;
+  bool rotated=false;uint64_t bank_capture_bytes_avoided=0;
+@@ -169,6 +264,18 @@
+   dirty=false;
+  }
+  void copy(bool restore,bool for_redo=false,bool deferred_only=false) {
++  if(static_mode()){
++   require(static_table&&captured_position>=0&&captured_position<e.p.g.context,"static snapshot load/position");
++   // Every redo-overwrite bank is already excluded, so deferred-only is empty.
++   if(deferred_only)return;
++   SnapshotStatic op;op.count=static_count;op.tiles=static_tiles;op.position=captured_position;op.restore=restore;
++#ifdef OWN_RT_HOST_ONLY
++   op.omitted_for_negative=omitted_for_negative;
++#endif
++   e.tail=e.dev(0).compute(op,static_ids,{});
++   if(restore){restored_bytes+=static_bytes;++restore_submissions;}else ++capture_submissions;
++   return;
++  }
+   ownrt::CopyEngine engine(e.dev(0));
+   std::vector<ownrt::PreparedCompute> checked;std::vector<size_t> lengths;
+   std::set<Allocation> distinct;
+@@ -262,6 +369,11 @@
+   for(const auto& [name,id]:e.state_spares)represented.insert(id);
+   for(const auto& [name,id]:e.state_reserves)represented.insert(id);
+   for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
++   if(e.probe_auxiliary.contains(id)){
++    require(owner.first==0&&row.label.starts_with("card0:p149:")&&!represented.count(id)&&
++      row.category==Category::runtime_overhead&&row.bytes==65536,"p149 private scratch cannot alias target state");
++    continue; // discarded transport bytes are not speculative target state
++   }
+    if(e.head_auxiliary.contains(id)){
+     require(e.split_head()&&owner.first==0&&row.label.starts_with("card0:p105:")&&!represented.count(id),"p105 auxiliary cannot alias target state");
+     continue; // only the post-half suffix service reads/writes these allocations
+@@ -277,7 +389,7 @@
+    table_capacity=(sources.size()+capacity/SnapshotBatch::limit+1)*sizeof(SnapshotFlat::Item);
+    table=e.allocate(0,"speculative-copy-table",table_capacity,Category::runtime_overhead,Lifetime::process);
+   }
+-  zero_private();
++  zero_private();prepare_static();
+  }
+  void begin(uint8_t* shared) {
+   require(e.a.rank==0&&backup&&!valid&&!redo_pending,"snapshot begin ownership");e.drain();
+@@ -290,6 +402,11 @@
+   launch_extent=e.context_extent;alternate_launch_extent=e.alternate_context_extent;
+   lookup=e.lookup_ids;selected=e.selected;loaded=e.loaded_layer;fp32_sources=e.fp32_sources;fp32_extents=e.fp32_extents;
+   int position=e.integer(0,"position");require(position>=0&&position<e.p.g.context,"snapshot position");
++  captured_position=position;
++  if(static_mode()){
++   valid=true;dirty=true;bank_capture_bytes_avoided+=static_bank_bytes;
++   copy(false);e.rotate_spare_bank();rotated=true;++captures;saved_bytes+=static_bytes;return;
++  }
+   saved.clear();protected_active.clear();protected_qsa.clear();size_t offset=0;
+   for(const auto& source:sources){
+    Allocation id=source.standalone;size_t skip=0,bytes=source.write_bytes;
+@@ -347,6 +464,9 @@
+  void finish_redo(){require(redo_pending&&!valid,"redo completion without pending restore");redo_pending=false;redo_position=redo_token=-1;++completed_redos;}
+  void boundary(){
+   before_command(false,-1,-1);
++#ifdef OWN_RT_HOST_ONLY
++  omitted_for_negative=SIZE_MAX;
++#endif
+   require(!valid&&!redo_pending,"snapshot boundary with unresolved speculation");e.drain();if(dirty)zero_private();
+   lookup.clear();selected.clear();loaded.clear();fp32_sources.clear();fp32_extents.clear();saved.clear();
+   protected_active.clear();protected_qsa.clear();history0=history1=0;parity=0;launch_extent=alternate_launch_extent=32;
+@@ -359,6 +479,19 @@
+  // A subsequent strict final-state comparison MUST detect the corruption.
+  void corrupt_protected_for_gate(int which){
+   require(valid&&(which>=0&&which<=2),"negative control outside speculation");e.drain();
++  if(static_mode()){
++   if(which==2){size_t index=0;
++    for(const auto& source:sources){if(source.bank)continue;
++     if(source.name=="streams"){omitted_for_negative=index;return;}
++     size_t bytes=source.kv?source.bytes/(source.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context)):source.write_bytes;
++     index+=(bytes+SnapshotBatch::limit-1)/SnapshotBatch::limit;
++    }throw std::runtime_error("static negative lacks streams");
++   }
++   for(const auto& source:sources)if(which?source.kv:source.bank){
++    require(!which||captured_position>0,"negative needs old QSA row");
++    auto id=(!which&&e.bank_parity!=parity)?e.state_spares.at(source.name):e.buffers[0].at(source.name).id;auto raw=e.readback(0,id,1);raw[0]^=1;e.upload(0,id,0,raw.data(),1);return;
++   }throw std::runtime_error("static negative lacks protected allocation");
++  }
+   if(which==2){
+    // Deliberately omit a required, overwrite-only output. First-write-before-read
+    // does not make its old bytes dispensable at terminal rollback.

@@ -1,0 +1,33 @@
+# DO-NOT-REPEAT corpus grep, 2026-10-23 (packet194 rows finalised after this search)
+# files: 322
+== term: expert_gateup
+== term: exp-diet
+packet192-expert-issue-floor/DO-NOT-REPEAT.md
+packet193-expert-diet/DO-NOT-REPEAT.md
+== term: instruction diet
+packet192-expert-issue-floor/DO-NOT-REPEAT.md
+packet193-expert-diet/DO-NOT-REPEAT.md
+== term: instruction-diet
+== term: p193diet
+== term: GateUp
+== term: gate/up diet
+== term: sign after
+== term: hoisted exceptional
+== term: exceptional
+packet10-kopt5/DO-NOT-REPEAT.md
+packet116-qsa-schedule/DO-NOT-REPEAT.md
+packet117-hc-gate/DO-NOT-REPEAT.md
+packet122-draft-hc/DO-NOT-REPEAT.md
+packet193-expert-diet/DO-NOT-REPEAT.md
+packet28-dense/DO-NOT-REPEAT.md
+packet42-codegen2/DO-NOT-REPEAT.md
+packet54-compute/DO-NOT-REPEAT.md
+packet67-roofline/DO-NOT-REPEAT.md
+packet8-kopt3/DO-NOT-REPEAT.md
+== packet193 rows (the diet's own ledger)
+20:| 2026-10-23 | **explicit byte-regioned extraction via `std::bit_cast` byte arrays** (brief item ii) | **closed by the ISA gate**: IGC materialises the array (~10 moves per byte); exp-diet 20.5 instr/weight with 4.9 KB spills vs production 15.3; production's shift/mask is already lowered to `:ub` regions (`evidence/isa-rejected/first-pass.md`) | a compiler that does not materialise byte arrays 
+21:| 2026-10-23 | **down-diet hoisted `d*float(level)` products selected by q** (brief's form) | **closed by the ISA gate**: a0 register-indirect moves (258) + 512 B spills at 128 GRF, 1.26x dynamic instructions (`evidence/isa-rejected/down-diet-hoisted-products.asm.gz`); confirms the study's "adds 16 live floats per lane" warning | 256 GRF per kernel qualified separately (packet102/115 rows) |
+32:| exp-diet (gate/up) | 57.92 / 73.85 (both orders) | 35.99–36.15 / 46.77 | 0.784 / 0.769–0.773 | 15.9 / 10.8 | **PASS → packet194 engine screen** |
+33:| exp-act-epilogue (gate/up + SLM activation epilogue) | 62.71 / 76.56–76.67 | 41.88 / 49.27 | 0.818–0.819 / 0.850 | no gain over exp-diet + the separate activation launch | borderline (warm exactly at the bar); dropped in favour of exp-diet |
+34:| down-diet (down) | 45.52 / 47.08 | 32.92 / 34.27–34.38 | 0.967 / 0.958–0.960 | 1.5 / 1.4 | FAIL (bar 0.85); closed |
+42:the epilogue is counted against gate/up + the expsact twin launch.

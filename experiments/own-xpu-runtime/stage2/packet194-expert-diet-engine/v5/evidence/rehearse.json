@@ -1,0 +1,541 @@
+{
+  "passed": true,
+  "jobs": [
+    {
+      "job": "packet194-row0-smoke-k3x-diet-B",
+      "unit": "screen-packet194-row0-smoke-k3x-diet-B",
+      "passed": true,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 186,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 229,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/copy_packet194.py",
+            "line": 35,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/copy_packet194.py",
+            "line": 35,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/entry_gate.py",
+            "line": 57,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_queue_plan.py",
+            "line": 102,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 81,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 79,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 351,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 193,
+        "message": "0 identity refusals; 32 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false
+    },
+    {
+      "job": "packet194-row1-bracket-k3x-diet-B",
+      "unit": "screen-packet194-row1-bracket-k3x-diet-B",
+      "passed": true,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 186,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 229,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/copy_packet194.py",
+            "line": 35,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/copy_packet194.py",
+            "line": 35,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/entry_gate.py",
+            "line": 57,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/p194_v5_queue_plan.py",
+            "line": 102,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 81,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 79,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/screen.py",
+            "line": 351,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 193,
+        "message": "0 identity refusals; 32 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false
+    }
+  ],
+  "shared_report_rehearsal": {
+    "passed": false,
+    "returncode": 1,
+    "kinds": [
+      {
+        "job": "packet194-row0-smoke-k3x-diet-B",
+        "report": [
+          {
+            "kind": "smoke",
+            "passed": false
+          },
+          {
+            "kind": "bracket",
+            "passed": false
+          }
+        ]
+      },
+      {
+        "job": "packet194-row1-bracket-k3x-diet-B",
+        "report": [
+          {
+            "kind": "smoke",
+            "passed": false
+          },
+          {
+            "kind": "bracket",
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "note": "informational: v5/report_gate.py covers the real report path for all three rows on both lanes",
+    "log": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/rehearse-report.log"
+  }
+}

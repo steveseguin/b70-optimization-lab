@@ -1,0 +1,81 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "live_queue_modified": false,
+ "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p185-two-card-B.txt",
+ "proposal_sha256": "0c8b23fe4ab533c3ced1b2b604a34f5d7e7419408b08e82522b64f9cc0896e3c",
+ "mirror": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/proposals/proposed-p185-two-card-B.txt",
+ "cpu_seal": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/cpu-seal.json",
+ "cpu_seal_sha256": "e737e39899195e69910f815ef5f2556bc4dc1454c20a49427d6cd27f16ce7ae5",
+ "rows": [
+  {
+   "job": "packet185-view0-production-B",
+   "lane": "B",
+   "depends_on": [],
+   "expected_seconds": [
+    300,
+    420
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 105411248128,
+   "planned_writes": 240000000
+  },
+  {
+   "job": "packet185-view1-unsplit-B",
+   "lane": "B",
+   "depends_on": [
+    "packet185-view0-production-B"
+   ],
+   "expected_seconds": [
+    200,
+    330
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 105411248128,
+   "planned_writes": 240000000
+  },
+  {
+   "job": "packet185-view2-production-B",
+   "lane": "B",
+   "depends_on": [
+    "packet185-view1-unsplit-B"
+   ],
+   "expected_seconds": [
+    200,
+    330
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 105411248128,
+   "planned_writes": 240000000
+  },
+  {
+   "job": "packet185-view3-unsplit-B",
+   "lane": "B",
+   "depends_on": [
+    "packet185-view2-production-B"
+   ],
+   "expected_seconds": [
+    200,
+    330
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 105411248128,
+   "planned_writes": 240000000
+  },
+  {
+   "job": "packet185-view4-production-B",
+   "lane": "B",
+   "depends_on": [
+    "packet185-view3-unsplit-B"
+   ],
+   "expected_seconds": [
+    200,
+    330
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 105411248128,
+   "planned_writes": 240000000
+  }
+ ]
+}

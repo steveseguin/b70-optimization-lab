@@ -1,0 +1,235 @@
+--- a/v5/native/engine_bracket.hpp
++++ b/v5/native/engine_bracket.hpp
+@@ -31,7 +31,8 @@
+       // packet188: a k3-storage load (rank0_layers 0-26) may also switch the two trims.
+       const bool k3_storage=sealed_selection.choices.contains("rank0_layers")&&sealed_selection.choices.at("rank0_layers")=="0-26";
+       // packet189: a k3-storage load may also switch the boundary export path (boundary_export copy <-> kernel).
+-      const bool switchable=sealed_selection.choices.contains("rank0_layers")&&(key=="boundary"||key=="snapshot_host"||(k3_storage&&(key=="kernel_io"||key=="rank0_prepare"||key=="boundary_export")));
++      // packet194: a k3-storage load may also switch the gate/up kernel of the exp-halfcache layout (expert_gateup production <-> diet).
++      const bool switchable=sealed_selection.choices.contains("rank0_layers")&&(key=="boundary"||key=="snapshot_host"||(k3_storage&&(key=="kernel_io"||key=="rank0_prepare"||key=="boundary_export"||key=="expert_gateup")));
+       if(!switchable)
+         require(next.choices.at(key)==value,"bracket storage/unsupported choice differs: reload required: "+key);
+     }
+@@ -55,9 +56,10 @@
+           domain(selection->choices,"kernel_io",{"copy","kernel"});
+           domain(selection->choices,"rank0_prepare",{"sync","async"});
+           domain(selection->choices,"boundary_export",{"copy","kernel"}); // packet189
++          if(selection->choices.contains("expert_gateup"))domain(selection->choices,"expert_gateup",{"production","diet"}); // packet194 (absent = production, the 19-key record selection)
+         } else {
+           domain(selection->choices,"boundary",{"none","rank0"});
+-          require(!selection->choices.contains("kernel_io")&&!selection->choices.contains("rank0_prepare")&&!selection->choices.contains("boundary_export"),"packet188 trims require the k3 storage");
++          require(!selection->choices.contains("kernel_io")&&!selection->choices.contains("rank0_prepare")&&!selection->choices.contains("boundary_export")&&!selection->choices.contains("expert_gateup"),"packet188 trims require the k3 storage");
+         }
+         domain(selection->choices,"head",{"production"}); // V3: full target head on rank 1, no merge
+       }
+@@ -99,21 +101,27 @@
+   // packet189: boundary_export=copy (default; V3's copy-engine readback of the 20,480-byte export) or kernel
+   // (packet188's folded KioCopy readback). Only meaningful with kernel_io=kernel; counters prove which path ran.
+   bool export_copy=true;uint64_t export_copy_runs=0,export_kernel_runs=0;
++  // packet194: expert_gateup=diet selects packet193's exact gate/up instruction diet (p193diet::GateUp) at every exp-halfcache
++  // gate/up site when commands are prepared; production (default, absent in the 19-key record selection) is the record kernel.
++  // Counters: sites prepared with the diet kernel, and (miniature only, no halfcache layout) sites where the key was inert.
++  bool expert_diet=false;uint64_t expert_diet_sites=0,expert_diet_inert_sites=0;
+   std::vector<uint8_t> v3_skip_half;std::vector<size_t> v3_sites,v3_store_sites;std::set<std::string> v3_private;
+   void refresh_v3(){
+     auto pick=[&](const char* key,const char* fallback){auto i=sealed_selection.choices.find(key);return i==sealed_selection.choices.end()?std::string(fallback):i->second;};
+-    const auto layers=pick("rank0_layers","0-23"),mode=pick("boundary","none"),io=pick("kernel_io","copy"),prep=pick("rank0_prepare","sync"),exp=pick("boundary_export","copy");
++    const auto layers=pick("rank0_layers","0-23"),mode=pick("boundary","none"),io=pick("kernel_io","copy"),prep=pick("rank0_prepare","sync"),exp=pick("boundary_export","copy"),gateup=pick("expert_gateup","production");
+     require(layers=="0-23"||layers=="0-25"||layers=="0-26","packet188 rank0_layers domain");
+     require(mode=="none"||mode=="rank0"||mode=="rank0-k3","packet188 boundary domain");
+     require(io=="copy"||io=="kernel","packet188 kernel_io domain");require(prep=="sync"||prep=="async","packet188 rank0_prepare domain");
+     require(exp=="copy"||exp=="kernel","packet189 boundary_export domain");
++    require(gateup=="production"||gateup=="diet","packet194 expert_gateup domain");
++    require(layers=="0-26"||!sealed_selection.choices.contains("expert_gateup"),"packet194 expert_gateup is a k3-storage key");
+     v3_extended=layers!="0-23";v3_active=mode!="none";
+     require(!v3_active||v3_extended,"V3 boundary requires an extended rank-0 layout");
+     require(mode!="rank0-k3"||layers=="0-26","packet188 k3 boundary requires rank0_layers 0-26");
+     require(layers=="0-26"||(io=="copy"&&prep=="sync"&&exp=="copy"),"packet188 trims require the k3 storage (pinned kernel-io staging)");
+     require(layers!="0-26"||v3_active,"packet188 k3 storage runs a boundary in every view");
+     require(layers!="0-26"||sealed_selection.choices.contains("boundary_export"),"packet189 k3 storage selections name boundary_export explicitly");
+-    kio_active=io=="kernel";prepare_async=prep=="async";export_copy=exp=="copy";
++    kio_active=io=="kernel";prepare_async=prep=="async";export_copy=exp=="copy";expert_diet=gateup=="diet";
+     if(v3_extended)require(resident&&!a.legacy&&a.draft_rank==1&&a.target_split==0&&head_choice()=="production",
+       "V3 layout requires the resident prepared path, the rank-1 draft, the 24/24 base split and the full target head on rank 1");
+     const int mini=a.mini?1:0;
+--- a/v5/native-src/main.cpp
++++ b/v5/native-src/main.cpp
+@@ -1278,7 +1278,8 @@
+       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+       // Same engine call for ordinary decode and each serial M=2 row.
+       const bool round2=!a.mini&&a.memory=="resident"&&((kind==p39::Kind::silu_div4&&(cls=="hc.a.low"||cls=="hc.f.low"))||kind==p39::Kind::attention_combine);
+-      finish(c,packed_weight(l.weights[0])?p74::submit(dev(c),m,variant(l),kind,b):round2?((dense_metadata()&&kind==p39::Kind::attention_combine&&m.type==iq3::Type::Q6_K&&m.columns==6144)?p183::attention(dev(c),m,b):p49c::dense_submit(dev(c),m,kind,b)):p49b_site(w,a,l)?p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production"):p39::submit(dev(c),selected,kind,b),true);return;
++      const char* gateup=expert_gateup_for(l,kind,p49b_site(w,a,l)); // packet194: production unless expert_gateup=diet at an exp-halfcache gate/up site
++      finish(c,packed_weight(l.weights[0])?p74::submit(dev(c),m,variant(l),kind,b):round2?((dense_metadata()&&kind==p39::Kind::attention_combine&&m.type==iq3::Type::Q6_K&&m.columns==6144)?p183::attention(dev(c),m,b):p49c::dense_submit(dev(c),m,kind,b)):p49b_site(w,a,l)?p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production",gateup):p39::submit(dev(c),selected,kind,b),true);return;
+     }
+     const auto cls=packet26::Dispatch::class_name(l.label);
+     if(!a.mini&&a.memory=="resident"&&(cls=="hc.a.gate"||cls=="hc.f.gate")){
+@@ -1297,6 +1298,7 @@
+     if(candidate=="p33.dense.segment"&&!a.mini&&l.op=="gemv"&&m.type==iq3::Type::Q6_K&&dense_metadata()&&arithmetic::is_expanded(variant(l))){ // packet183-s1
+       finish(c,p183::segment(dev(c),{m},false,variant(l)),true);return;
+     }
++    if(expert_diet&&l.op=="expert_gate_up"){require(a.mini,"packet194 expert_gateup=diet requires the exp-halfcache gate/up layout (dispatch-registry expert site)");++expert_diet_inert_sites;} // miniature experts: p28/p33 registry kernels, no halfcache layout; counted, never silent
+     if((candidate.starts_with("p28.")||candidate.starts_with("p29.")||candidate.starts_with("p33.")||candidate.starts_with("p42."))&&!a.mini){
+       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+       finish(c,candidate.starts_with("p28.")?p28::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)):(candidate.starts_with("p33.")||candidate.starts_with("p42."))?p33::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)):p29::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)),true);return;
+@@ -1467,6 +1469,15 @@
+       throw std::logic_error("dispatch changed; construct a new Engine and re-prepare");
+     if(prepared_path&&issue_sites.size()!=p.launches.size())throw std::logic_error("plan changed; rebuild Engine");
+   }
++  // packet194: expert_gateup for one expert site. `diet` only for the exp-halfcache gate/up kernel (the record kernel's layout);
++  // the down kernel keeps `production`. Outside the miniature a diet request on another gate/up layout refuses in p49d::expert.
++  const char* expert_gateup_for(const flash::Launch& l,p39::Kind kind,bool p49d_site){
++    if(!expert_diet||kind!=p39::Kind::expert_checks||l.op!="expert_gate_up")return "production";
++    const bool halfcache=p49d_site&&sealed_selection.choices.contains("experts")&&p100::gate_choice(sealed_selection.choices.at("experts"))=="exp-halfcache";
++    if(halfcache){++expert_diet_sites;return "diet";}
++    require(a.mini,"packet194 expert_gateup=diet requires the exp-halfcache gate/up layout");
++    ++expert_diet_inert_sites;return "production"; // miniature: no halfcache layout (p39 path); counted, never silent at production shape
++  }
+   void prepare_commands() {
+     if(a.memory!="resident" || a.legacy)return;
+     drain();issue_sites.clear();issue_sites.resize(p.launches.size());
+--- a/v5/native/full_shape_entry.cpp
++++ b/v5/native/full_shape_entry.cpp
+@@ -76,14 +76,15 @@
+  if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}
+  {pipeline::SpeculativeImage image(*e);if(a.rank==1)draft=std::make_unique<mtp36::DraftRuntime>(*e);
+  if(a.rank==0)image.census131(a.output/"image-census.json",0); // packet186: speculative image sources at real shape
+- {std::ofstream f(a.output/"v3-load.json");f<<"{\"rank0_extended\":"<<(e->v3_extended?"true":"false")<<",\"moved_sites\":"<<e->v3_sites.size()<<",\"stored_sites\":"<<e->v3_store_sites.size()<<",\"kio_bytes\":"<<e->kio_bytes<<",\"kio_stage_bytes\":"<<e->kio_stage_bytes<<",\"kio_cards\":"<<e->kio.size()<<",\"boundary_export\":"<<ownrt::quote(e->export_copy?"copy":"kernel")<<",\"private_buffers\":[";
++ {std::ofstream f(a.output/"v3-load.json");f<<"{\"rank0_extended\":"<<(e->v3_extended?"true":"false")<<",\"moved_sites\":"<<e->v3_sites.size()<<",\"stored_sites\":"<<e->v3_store_sites.size()<<",\"kio_bytes\":"<<e->kio_bytes<<",\"kio_stage_bytes\":"<<e->kio_stage_bytes<<",\"kio_cards\":"<<e->kio.size()<<",\"boundary_export\":"<<ownrt::quote(e->export_copy?"copy":"kernel")<<",\"expert_gateup\":"<<ownrt::quote(e->expert_diet?"diet":"production")<<",\"expert_diet_sites\":"<<e->expert_diet_sites<<",\"expert_diet_inert_sites\":"<<e->expert_diet_inert_sites<<",\"private_buffers\":[";
+   bool first=true;for(const auto& n:e->v3_private){f<<(first?"":",")<<ownrt::quote(n);first=false;}f<<"],\"banked_state\":[";
+   first=true;for(const auto& [n,id]:e->state_spares){f<<(first?"":",")<<ownrt::quote(n);first=false;}f<<"]}\n";}
+  e->bracket_weights_locked=true;const auto initial=e->bracket_arena_hash();
+  auto capture=[&]{return capture_digest(*e)+(draft?draft->bracket_test_digest():"");};
+  const auto control_capture=capture();size_t total=0;std::vector<std::string> captures;
+  require(!e->dense_metadata(),"packet186: dense_scales must stay expanded");
+- const auto startup_head=e->head_choice();const bool startup_extended=e->v3_extended;
++ const auto startup_head=e->head_choice();const bool startup_extended=e->v3_extended;const bool startup_diet=e->expert_diet;
++ std::string alternate_capture;std::string gateup_views="[";unsigned diet_views=0; // packet194: views whose expert_gateup differs from the startup's capture the other gate/up kernel
+  std::string skips="[";
+  census(*e,a.output/"launches-initial.json");
+  for(int view=0;view<5;++view){
+@@ -118,6 +119,9 @@
+   require(startup_extended?choices.at("boundary")==(e->v3_active?(k3_view?"rank0-k3":"rank0"):"none"):!choices.contains("boundary"),"V3 execution flag");
+   require(e->kio_active==(choices.contains("kernel_io")&&choices.at("kernel_io")=="kernel")&&e->prepare_async==(choices.contains("rank0_prepare")&&choices.at("rank0_prepare")=="async"),"packet188 trim flags");
+   require(e->export_copy==!(choices.contains("boundary_export")&&choices.at("boundary_export")=="kernel"),"packet189 boundary_export flag"); // copy unless the k3-storage selection says kernel
++  require(e->expert_diet==(choices.contains("expert_gateup")&&choices.at("expert_gateup")=="diet"),"packet194 expert_gateup flag"); // production unless the k3-storage selection says diet
++  require(e->expert_diet_inert_sites==0,"packet194: the diet must never be inert at production shape");
++  gateup_views+=std::string(view?",":"")+ownrt::quote(e->expert_diet?"diet":"production");if(e->expert_diet)++diet_views;
+   require(e->v3_end==(k3_view?27:26)||!startup_extended,"packet188 boundary set");
+   {size_t skipped=0;for(auto x:e->v3_skip_half)skipped+=x;
+    auto moved_layer=[&](const auto& l){for(int k=24;k<(k3_view?27:26);++k)if(l.label.starts_with("blk."+std::to_string(k)+"."))return true;return false;};
+@@ -127,7 +131,10 @@
+   census(*e,a.output/("launches-view"+std::to_string(view)+".json"));
+   if(draft){std::ofstream k(a.output/("draft-kernels-view"+std::to_string(view)+".txt"));for(const auto& n:draft->bracket_test_kernels())k<<n<<'\n';}
+   captures.push_back(capture());
+-  require(captures.back()==control_capture,"packet185: re-selected capture differs from fresh startup");
++  if(e->expert_diet==startup_diet)require(captures.back()==control_capture,"packet185: re-selected capture differs from fresh startup");
++  else{ // packet194: the other gate/up kernel is captured at the exp-halfcache gate/up sites (and nowhere else: the Python gate compares the launch census)
++   require(captures.back()!=control_capture,"packet194: an expert_gateup switch must change the captured gate/up kernel");
++   if(alternate_capture.empty())alternate_capture=captures.back();require(captures.back()==alternate_capture,"packet194: switched gate/up views must recapture identically");}
+   if(view>=2)require(captures.back()==captures[view-2],"same selection must recapture identically");
+  }
+  skips+="]";
+@@ -154,7 +161,9 @@
+  if(startup_extended)for(const auto& [key,value]:std::vector<std::pair<std::string,std::string>>{{"rank0_layers","0-23"},{"boundary","unknown"},{"rank0_layers","0-27"},{"rank0_layers",e->v3_store_end==27?"0-25":"0-26"},
+    {"boundary",e->v3_store_end==27?"none":"rank0-k3"},
+    // packet189: the export path key is a k3-storage key with a closed domain; absent in the 0-25 (record) storage, where the rank0_layers cross value covers the refusal.
+-   {e->v3_store_end==27?"boundary_export":"rank0_layers",e->v3_store_end==27?"unknown":"0-27"}}){
++   {e->v3_store_end==27?"boundary_export":"rank0_layers",e->v3_store_end==27?"unknown":"0-27"},
++   // packet194: the gate/up kernel key has a closed domain; when the loaded selection names it (20 keys) an unknown value refuses, otherwise the rank0_layers cross value covers the count.
++   {text.find("\"expert_gateup\": ")!=std::string::npos?"expert_gateup":"rank0_layers",text.find("\"expert_gateup\": ")!=std::string::npos?"unknown":"0-27"}}){
+   auto bad=text;auto marker=ownrt::quote(key)+": ";auto at=bad.find(marker);require(at!=std::string::npos,"negative V3 fixture field");
+   at+=marker.size();auto end=bad.find('"',at+1);bad.replace(at,end-at+1,ownrt::quote(value));
+   auto path=a.output/"bad-layout.json";save(path,bad);bool refused=false;
+@@ -168,7 +177,7 @@
+  require(pending_refused&&e->bracket_arena_hash()==before&&e->sealed_selection.observed_sha256==original,"pending work switch not refused");++refusals;
+  save(a.output/"census.json",e->dev(0).arena.census());
+  std::string capture_json="[";for(size_t i=0;i<captures.size();++i)capture_json+=(i?",":"")+ownrt::quote(captures[i]);capture_json+="]";
+- save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"views\":5,\"target_loads\":1,\"draft_loads\":"+std::to_string(a.rank==1?1:0)+",\"reset_extents_verified\":"+std::to_string(total)+",\"fresh_start_capture_identity\":true,\"layout_refused\":true,\"native_refusals\":"+std::to_string(refusals)+",\"half_skips_per_view\":"+skips+",\"rank0_extended\":"+(startup_extended?"true":"false")+",\"initial_capture\":"+ownrt::quote(control_capture)+",\"view_captures\":"+capture_json+"}");
++ save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"views\":5,\"target_loads\":1,\"draft_loads\":"+std::to_string(a.rank==1?1:0)+",\"reset_extents_verified\":"+std::to_string(total)+",\"fresh_start_capture_identity\":true,\"layout_refused\":true,\"native_refusals\":"+std::to_string(refusals)+",\"half_skips_per_view\":"+skips+",\"rank0_extended\":"+(startup_extended?"true":"false")+",\"initial_capture\":"+ownrt::quote(control_capture)+",\"view_captures\":"+capture_json+",\"startup_expert_gateup\":"+ownrt::quote(startup_diet?"diet":"production")+",\"gateup_views\":"+gateup_views+"]"+",\"diet_views\":"+std::to_string(diet_views)+",\"alternate_capture\":"+ownrt::quote(alternate_capture)+",\"expert_diet_sites\":"+std::to_string(e->expert_diet_sites)+"}");
+  draft.reset();}
+  e->shutdown();e.reset();return 0;
+  }catch(const std::exception&x){std::cerr<<x.what()<<'\n';draft.reset();if(e){try{e->shutdown();}catch(...){}e.reset();}return 1;}
+--- a/v5/native/v3_state.cpp
++++ b/v5/native/v3_state.cpp
+@@ -118,7 +118,7 @@
+  auto raw=evidence.str();save(a.output/"cases.txt",raw);
+  save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"cases\":"+std::to_string(cases)+",\"refusals\":"+std::to_string(refusals)+",\"negatives\":"+std::to_string(negatives)+
+    ",\"moved_sites\":"+std::to_string(e->v3_sites.size())+",\"stored_sites\":"+std::to_string(e->v3_store_sites.size())+",\"moved_private_buffers\":"+std::to_string(e->v3_private.size())+",\"snapshot_host\":"+ownrt::quote(e->sealed_selection.choices.at("snapshot_host"))+
+-   ",\"boundary_export\":"+ownrt::quote(e->export_copy?"copy":"kernel")+",\"export_copy_runs\":"+std::to_string(e->export_copy_runs)+",\"export_kernel_runs\":"+std::to_string(e->export_kernel_runs)+",\"kernel_io\":"+ownrt::quote(e->kio_active?"kernel":"copy")+",\"rank0_prepare\":"+ownrt::quote(e->prepare_async?"async":"sync")+",\"kio_sync_transfers\":"+std::to_string(e->kio_sync_transfers)+",\"kio_async_copies\":"+std::to_string(e->kio_async_copies)+",\"staged_halves\":"+std::to_string(e->staged_halves)+
++   ",\"expert_gateup\":"+ownrt::quote(e->expert_diet?"diet":"production")+",\"expert_diet_sites\":"+std::to_string(e->expert_diet_sites)+",\"expert_diet_inert_sites\":"+std::to_string(e->expert_diet_inert_sites)+",\"boundary_export\":"+ownrt::quote(e->export_copy?"copy":"kernel")+",\"export_copy_runs\":"+std::to_string(e->export_copy_runs)+",\"export_kernel_runs\":"+std::to_string(e->export_kernel_runs)+",\"kernel_io\":"+ownrt::quote(e->kio_active?"kernel":"copy")+",\"rank0_prepare\":"+ownrt::quote(e->prepare_async?"async":"sync")+",\"kio_sync_transfers\":"+std::to_string(e->kio_sync_transfers)+",\"kio_async_copies\":"+std::to_string(e->kio_async_copies)+",\"staged_halves\":"+std::to_string(e->staged_halves)+
+    ",\"boundary\":"+ownrt::quote(e->sealed_selection.choices.at("boundary"))+",\"rank0_layers\":"+ownrt::quote(e->sealed_selection.choices.at("rank0_layers"))+
+    ",\"canonical_sha256\":"+ownrt::quote(hash(std::vector<uint8_t>(raw.begin(),raw.end())))+"}");
+  }
+--- a/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_expert_submit.cpp
++++ b/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_expert_submit.cpp
+@@ -7,6 +7,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/build/checked/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p95_expert.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/build/checked/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/expert_down.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/build/checked/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p100_down.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/build/checked/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p193_diet.hpp" // packet194: packet193's exact gate/up instruction diet (exp-diet), pinned copy aab37609...
+ namespace p49d {
+ using p39::Kind;using p39::Bindings;using iq3::Type;
+ template<Type T,unsigned K,Kind E,unsigned Split,unsigned Arm=0>integrated::Launch issue(ownrt::Device&d,const std::vector<integrated::Matrix>&m,const Bindings&b){
+@@ -14,11 +15,11 @@
+  if constexpr(E==Kind::down_status)p29::validate(d,m,"p29.down.wg32",false,2);else
+  p28::validate(d,m,E==Kind::expert_checks?"p28.paired.wg32":"p28.dense.wg32",E==Kind::expert_checks,(T==Type::Q6_K||T==Type::Q8_0?(Split==4?7:6):2));
+  std::array<ownrt::Allocation,19> ids{a.w,peer.w,a.x,a.y,peer.y,a.routes?a.routes:a.x,a.status?a.status:a.y,peer.status?peer.status:peer.y,a.workspace,b.other?b.other:a.x,b.out?b.out:a.y,b.streams?b.streams:a.y,b.inject?b.inject:a.x,b.mixture?b.mixture:a.x,b.shared_gate?b.shared_gate:a.x,b.one?b.one:a.x,b.error,b.active,b.position};
+- using OldCandidate=std::conditional_t<(Arm==11||Arm==12),p95exp::Kernel<T,K,64,false,true,0,Arm==12>,std::conditional_t<Arm==10,p90exp::Kernel<T,K,64,false,true>,std::conditional_t<Arm==0,p49dvirtual::Kernel<T,K,T==Type::IQ2_S?2:3>,p65::Kernel<T,K,Arm==2?128:64,Arm==3,Arm>=4,Arm>=5?Arm-4:0>>>>;using Candidate=std::conditional_t<(Arm==20||Arm==21),p100::Kernel<Arm-19>,OldCandidate>;Candidate k;k.rows=a.rows;k.count=a.count;k.experts=a.experts;const auto rb=(Arm==10||Arm==12)?p90::expert_stride(K):p49bgemv::layout(T,K).row_bytes;
++ using OldCandidate=std::conditional_t<(Arm==11||Arm==12),p95exp::Kernel<T,K,64,false,true,0,Arm==12>,std::conditional_t<Arm==10,p90exp::Kernel<T,K,64,false,true>,std::conditional_t<Arm==13,p193diet::GateUp,std::conditional_t<Arm==0,p49dvirtual::Kernel<T,K,T==Type::IQ2_S?2:3>,p65::Kernel<T,K,Arm==2?128:64,Arm==3,Arm>=4,Arm>=5?Arm-4:0>>>>>;using Candidate=std::conditional_t<(Arm==20||Arm==21),p100::Kernel<Arm-19>,OldCandidate>;Candidate k;k.rows=a.rows;k.count=a.count;k.experts=a.experts;const auto rb=(Arm==10||Arm==12||Arm==13)?p90::expert_stride(K):p49bgemv::layout(T,K).row_bytes; // packet194: Arm 13 (exp-diet) reads the exp-halfcache (p90) rows
+  // Validate complete live allocations and byte ranges before any compute hook.
+  std::array<void*,19>p;for(size_t j=0;j<ids.size();++j){const auto&r=d.arena.row(ids[j]);if(!r.live||r.memory!=ownrt::Memory::device)throw std::invalid_argument("p39 dead/nondevice binding");p[j]=r.pointer;}
+  if constexpr(Arm==21){if(a.rows%16||uintptr_t(p[0])%16)throw std::invalid_argument("p100 tile extent/alignment");}
+- auto bound=k.bind(p);bound.position=static_cast<const uint32_t*>(p[18]);bound.capacity=b.capacity;if constexpr(Arm==10||Arm==12)p90exp::validate<T,K,E,Split>(bound);else p39::validate<T,K,E,Split>(bound);
++ auto bound=k.bind(p);bound.position=static_cast<const uint32_t*>(p[18]);bound.capacity=b.capacity;if constexpr(Arm==10||Arm==12||Arm==13)p90exp::validate<T,K,E,Split>(bound);else p39::validate<T,K,E,Split>(bound);
+  if(uintptr_t(bound.w)%4||uintptr_t(bound.peer)%4)throw std::invalid_argument("p49b weight alignment");
+  auto extent=[&](ownrt::Allocation id,size_t n){if(d.arena.row(id).bytes<n)throw std::invalid_argument("p39 allocation extent");};
+  size_t n=size_t(a.rows)*a.count;extent(a.w,size_t(a.experts)*a.rows*rb);extent(a.x,size_t(K)*(E==Kind::down_status?a.count:1)*2);extent(a.y,n*2);extent(b.error,4);extent(b.active,4);extent(b.position,4);
+@@ -61,4 +62,14 @@
+  if(choice=="prefetch64")return chosen_expert<3>(d,m,kind,b);
+  throw std::invalid_argument("p65 unregistered expert selection");
+ }
++// packet194: the in-load key expert_gateup=production|diet. `production` is the five-argument dispatch above, byte for byte
++// (the record path). `diet` selects packet193's exact gate/up instruction diet (p193diet::GateUp, Arm 13: the same shapes,
++// WG64 grid, exp-halfcache rows, p90exp::validate and `exceptional` semantics) for the exp-halfcache gate/up kernel only; the
++// down kernel and every other choice are unchanged. A diet request on any other gate/up layout refuses (never silently inert).
++integrated::Launch expert(ownrt::Device&d,const std::vector<integrated::Matrix>&m,p39::Kind kind,const p39::Bindings&b,std::string_view choice,std::string_view gateup){
++ if(gateup!="production"&&gateup!="diet")throw std::invalid_argument("p194 unregistered expert_gateup");
++ if(gateup=="production"||kind==Kind::down_status)return expert(d,m,kind,b,choice);
++ if(p100::gate_choice(choice)!="exp-halfcache")throw std::invalid_argument("p194 expert_gateup=diet requires the exp-halfcache gate/up layout");
++ return chosen_expert<13>(d,m,kind,b);
++}
+ }
+--- a/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_submit.hpp
++++ b/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_submit.hpp
+@@ -18,5 +18,6 @@
+ };
+ integrated::Launch expert(ownrt::Device&,const std::vector<integrated::Matrix>&,p39::Kind,const p39::Bindings&);
+ integrated::Launch expert(ownrt::Device&,const std::vector<integrated::Matrix>&,p39::Kind,const p39::Bindings&,std::string_view);
++integrated::Launch expert(ownrt::Device&,const std::vector<integrated::Matrix>&,p39::Kind,const p39::Bindings&,std::string_view,std::string_view); // packet194: experts choice + expert_gateup (production|diet)
+ integrated::Launch small(ownrt::Device&,std::string_view,std::span<const integrated::Matrix>,std::span<const unsigned>);
+ } // namespace p49d
+--- a/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_submit.cpp
++++ b/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_submit.cpp
+@@ -64,7 +64,8 @@
+  if(cls=="boundary"&&(choice=="none"||choice=="rank0"||choice=="rank0-k3"))return production; // packet186-v3: rank 0 runs layers 24-25 (rank0) / packet188: 24-26 (rank0-k3) for the verified token
+  if(cls=="kernel_io"&&(choice=="copy"||choice=="kernel"))return production; // packet188: per-interval small transfers as compute kernels (no copy engine)
+  if(cls=="rank0_prepare"&&(choice=="sync"||choice=="async"))return production; // packet188: rank-0 half inputs staged without host waits
+- if(cls=="boundary_export"&&(choice=="copy"||choice=="kernel"))return production; // packet189: V3 boundary export on the copy engine (copy, record path) or packet188's folded KioCopy readback (kernel)
++ if(cls=="boundary_export"&&(choice=="copy"||choice=="kernel"))return production;
++ if(cls=="expert_gateup"&&(choice=="production"||choice=="diet"))return production; // packet194: gate/up kernel of the exp-halfcache layout: the record kernel (production) or packet193's exact instruction diet (diet); k3-storage key, absent = production // packet189: V3 boundary export on the copy engine (copy, record path) or packet188's folded KioCopy readback (kernel)
+  if(cls=="probe"&&(choice=="off"||choice=="split"))return production;
+  if(cls=="other_fusion"&&(choice=="production"||choice=="fused"))return production;
+  if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
+@@ -114,9 +115,9 @@
+    }
+   }else throw std::invalid_argument("p49d unknown selection field");
+  }while(more());take('}');ws();
+- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||!(values.size()==14||(values.size()==16&&values.contains("rank0_layers")&&values.contains("boundary"))||(values.size()==19&&values.contains("rank0_layers")&&values.contains("boundary")&&values.contains("kernel_io")&&values.contains("rank0_prepare")&&values.contains("boundary_export")))||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||!(values.size()==14||(values.size()==16&&values.contains("rank0_layers")&&values.contains("boundary"))||(values.size()==19&&values.contains("rank0_layers")&&values.contains("boundary")&&values.contains("kernel_io")&&values.contains("rank0_prepare")&&values.contains("boundary_export"))||(values.size()==20&&values.contains("rank0_layers")&&values.contains("boundary")&&values.contains("kernel_io")&&values.contains("rank0_prepare")&&values.contains("boundary_export")&&values.contains("expert_gateup")))||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
+  p59c::validate(draft_values);
+- auto target_values=values;target_values.erase("rank0_layers");target_values.erase("boundary");target_values.erase("kernel_io");target_values.erase("rank0_prepare");target_values.erase("boundary_export");target_values.erase("snapshot_host");target_values.erase("dense_scales");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
++ auto target_values=values;target_values.erase("rank0_layers");target_values.erase("boundary");target_values.erase("kernel_io");target_values.erase("rank0_prepare");target_values.erase("boundary_export");target_values.erase("expert_gateup");target_values.erase("snapshot_host");target_values.erase("dense_scales");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
+  if(target_values.at("recurrence")=="rec-both"||target_values.at("recurrence")=="rec-both-plus"||target_values.at("recurrence")=="rec-gates"||target_values.at("recurrence")=="rec-parallel")target_values["recurrence"]="rows4-shared";
+  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
+  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;

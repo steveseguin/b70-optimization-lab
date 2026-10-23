@@ -1,0 +1,55 @@
+{
+  "unit": "window-p185-driver.service",
+  "proceeded": "unit not active",
+  "observations": [
+    {
+      "utc": "2026-10-22T15:53:43Z",
+      "state": "inactive"
+    }
+  ],
+  "history": [
+    {
+      "proceeded": "session checks before the first compile (coordinator rule)",
+      "observations": [
+        {
+          "utc": "2026-10-22T14:23:00Z",
+          "state": "active",
+          "source": "session check (systemctl --user is-active)"
+        },
+        {
+          "utc": "2026-10-22T14:34:29Z",
+          "state": "active",
+          "source": "session check; no compiler run while active"
+        },
+        {
+          "utc": "2026-10-22T14:46:51Z",
+          "state": "inactive",
+          "source": "session check"
+        },
+        {
+          "utc": "2026-10-22T14:52:54Z",
+          "state": "inactive",
+          "source": "session check immediately before the first build; the build poll also read inactive and the first compile started"
+        }
+      ]
+    },
+    {
+      "proceeded": "unit not active",
+      "observations": [
+        {
+          "utc": "2026-10-22T15:32:31Z",
+          "state": "inactive"
+        }
+      ]
+    },
+    {
+      "proceeded": "unit not active",
+      "observations": [
+        {
+          "utc": "2026-10-22T15:53:43Z",
+          "state": "inactive"
+        }
+      ]
+    }
+  ]
+}

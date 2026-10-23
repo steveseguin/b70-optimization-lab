@@ -1,0 +1,1066 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_read": false,
+  "full_shape_read": false,
+  "selections": {
+    "production": {
+      "path": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/k3-state/selections/production.json",
+      "sha256": "25ff821d5d1572b2a873c8befbcc8099a7a326300348887873c10d0f044c2f87"
+    },
+    "v3k": {
+      "path": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/k3-state/selections/v3k.json",
+      "sha256": "5c5a0d9287c2c46ecf56badf32fb3c35fa9c1353e009377d65fc5c2b94745587"
+    },
+    "k3x-record": {
+      "path": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/k3-state/selections/k3x-record.json",
+      "sha256": "3d9b0a2c3a0473a5e2b5e0481ab9576253b885bde4fd9a0d4354738d8ae37090"
+    },
+    "k3x": {
+      "path": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/k3-state/selections/k3x.json",
+      "sha256": "594bac10d25b34ea4814cc95924261904593abc16931a8c920ed286354dbd411"
+    },
+    "k3x-diet": {
+      "path": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/k3-state/selections/k3x-diet.json",
+      "sha256": "3d37f5609612e837e6a26bdd7fab1b4254ce9a01be86997ea9606079ffedb583"
+    }
+  },
+  "engine_runs": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "cases": 65,
+      "refusals": 68,
+      "negatives": 2,
+      "moved_sites": 72,
+      "stored_sites": 72,
+      "moved_private_buffers": 80,
+      "snapshot_host": "static",
+      "expert_gateup": "production",
+      "expert_diet_sites": 0,
+      "expert_diet_inert_sites": 0,
+      "boundary_export": "copy",
+      "export_copy_runs": 149,
+      "export_kernel_runs": 0,
+      "kernel_io": "kernel",
+      "rank0_prepare": "async",
+      "kio_sync_transfers": 65693,
+      "kio_async_copies": 382,
+      "staged_halves": 191,
+      "boundary": "rank0-k3",
+      "rank0_layers": "0-26",
+      "canonical_sha256": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+      "compiler": "GNU",
+      "selection": "k3x-record",
+      "binary_sha256": "95494ecabb9d89025cbc557fcada4699745b4b68dc46cf0d6dab1f3e9f303652",
+      "transcript_sha256": "3b9095e2aa374ef966c6ca0419651ea87a9d284eca58c067e33e2dc56dfc4bcd",
+      "snapshot": {
+        "passed": true,
+        "miss_selection": "banks-batch",
+        "bank_capture_bytes_avoided": 73872,
+        "capacity_bytes": 277542820,
+        "captures": 54,
+        "restores": 41,
+        "snapshot_payload_bytes": 491357448,
+        "capture_submissions": 54,
+        "restore_submissions": 41,
+        "restored_bytes": 373067692,
+        "redo_omitted_bytes": 0,
+        "redo_restores": 27,
+        "completed_redos": 27,
+        "redo_fallbacks": 0,
+        "copy_extent_guard_unchanged": true,
+        "private_backup_zeroed": true,
+        "committed_state_scrubbed": false,
+        "private_host_backup_empty": true,
+        "snapshot_valid": false,
+        "counters_are_telemetry": true,
+        "rank0_shared_slot_bytes": 65536,
+        "rank1_shared_regions_untouched": true
+      },
+      "transcript_bytes": 2904
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "cases": 65,
+      "refusals": 68,
+      "negatives": 2,
+      "moved_sites": 72,
+      "stored_sites": 72,
+      "moved_private_buffers": 80,
+      "snapshot_host": "static",
+      "expert_gateup": "production",
+      "expert_diet_sites": 0,
+      "expert_diet_inert_sites": 0,
+      "boundary_export": "copy",
+      "export_copy_runs": 149,
+      "export_kernel_runs": 0,
+      "kernel_io": "kernel",
+      "rank0_prepare": "async",
+      "kio_sync_transfers": 65693,
+      "kio_async_copies": 382,
+      "staged_halves": 191,
+      "boundary": "rank0-k3",
+      "rank0_layers": "0-26",
+      "canonical_sha256": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+      "compiler": "GNU",
+      "selection": "k3x",
+      "binary_sha256": "95494ecabb9d89025cbc557fcada4699745b4b68dc46cf0d6dab1f3e9f303652",
+      "transcript_sha256": "3b9095e2aa374ef966c6ca0419651ea87a9d284eca58c067e33e2dc56dfc4bcd",
+      "snapshot": {
+        "passed": true,
+        "miss_selection": "banks-batch",
+        "bank_capture_bytes_avoided": 73872,
+        "capacity_bytes": 277542820,
+        "captures": 54,
+        "restores": 41,
+        "snapshot_payload_bytes": 491357448,
+        "capture_submissions": 54,
+        "restore_submissions": 41,
+        "restored_bytes": 373067692,
+        "redo_omitted_bytes": 0,
+        "redo_restores": 27,
+        "completed_redos": 27,
+        "redo_fallbacks": 0,
+        "copy_extent_guard_unchanged": true,
+        "private_backup_zeroed": true,
+        "committed_state_scrubbed": false,
+        "private_host_backup_empty": true,
+        "snapshot_valid": false,
+        "counters_are_telemetry": true,
+        "rank0_shared_slot_bytes": 65536,
+        "rank1_shared_regions_untouched": true
+      },
+      "transcript_bytes": 2904
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "cases": 65,
+      "refusals": 68,
+      "negatives": 2,
+      "moved_sites": 72,
+      "stored_sites": 72,
+      "moved_private_buffers": 80,
+      "snapshot_host": "static",
+      "expert_gateup": "diet",
+      "expert_diet_sites": 0,
+      "expert_diet_inert_sites": 4,
+      "boundary_export": "copy",
+      "export_copy_runs": 149,
+      "export_kernel_runs": 0,
+      "kernel_io": "kernel",
+      "rank0_prepare": "async",
+      "kio_sync_transfers": 65693,
+      "kio_async_copies": 382,
+      "staged_halves": 191,
+      "boundary": "rank0-k3",
+      "rank0_layers": "0-26",
+      "canonical_sha256": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+      "compiler": "GNU",
+      "selection": "k3x-diet",
+      "binary_sha256": "95494ecabb9d89025cbc557fcada4699745b4b68dc46cf0d6dab1f3e9f303652",
+      "transcript_sha256": "3b9095e2aa374ef966c6ca0419651ea87a9d284eca58c067e33e2dc56dfc4bcd",
+      "snapshot": {
+        "passed": true,
+        "miss_selection": "banks-batch",
+        "bank_capture_bytes_avoided": 73872,
+        "capacity_bytes": 277542820,
+        "captures": 54,
+        "restores": 41,
+        "snapshot_payload_bytes": 491357448,
+        "capture_submissions": 54,
+        "restore_submissions": 41,
+        "restored_bytes": 373067692,
+        "redo_omitted_bytes": 0,
+        "redo_restores": 27,
+        "completed_redos": 27,
+        "redo_fallbacks": 0,
+        "copy_extent_guard_unchanged": true,
+        "private_backup_zeroed": true,
+        "committed_state_scrubbed": false,
+        "private_host_backup_empty": true,
+        "snapshot_valid": false,
+        "counters_are_telemetry": true,
+        "rank0_shared_slot_bytes": 65536,
+        "rank1_shared_regions_untouched": true
+      },
+      "transcript_bytes": 2904
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "cases": 65,
+      "refusals": 68,
+      "negatives": 2,
+      "moved_sites": 72,
+      "stored_sites": 72,
+      "moved_private_buffers": 80,
+      "snapshot_host": "static",
+      "expert_gateup": "diet",
+      "expert_diet_sites": 0,
+      "expert_diet_inert_sites": 4,
+      "boundary_export": "copy",
+      "export_copy_runs": 149,
+      "export_kernel_runs": 0,
+      "kernel_io": "kernel",
+      "rank0_prepare": "async",
+      "kio_sync_transfers": 65693,
+      "kio_async_copies": 382,
+      "staged_halves": 191,
+      "boundary": "rank0-k3",
+      "rank0_layers": "0-26",
+      "canonical_sha256": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+      "compiler": "Intel",
+      "selection": "k3x-diet",
+      "binary_sha256": "2067347611060ec1985f73a9283ec0088f2f060dc6bd3b286d3cb18e9ef8e89e",
+      "transcript_sha256": "3b9095e2aa374ef966c6ca0419651ea87a9d284eca58c067e33e2dc56dfc4bcd",
+      "snapshot": {
+        "passed": true,
+        "miss_selection": "banks-batch",
+        "bank_capture_bytes_avoided": 73872,
+        "capacity_bytes": 277542820,
+        "captures": 54,
+        "restores": 41,
+        "snapshot_payload_bytes": 491357448,
+        "capture_submissions": 54,
+        "restore_submissions": 41,
+        "restored_bytes": 373067692,
+        "redo_omitted_bytes": 0,
+        "redo_restores": 27,
+        "completed_redos": 27,
+        "redo_fallbacks": 0,
+        "copy_extent_guard_unchanged": true,
+        "private_backup_zeroed": true,
+        "committed_state_scrubbed": false,
+        "private_host_backup_empty": true,
+        "snapshot_valid": false,
+        "counters_are_telemetry": true,
+        "rank0_shared_slot_bytes": 65536,
+        "rank1_shared_regions_untouched": true
+      },
+      "transcript_bytes": 2904
+    }
+  ],
+  "pipeline": {
+    "root": "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/k3-state/pipeline-1792733974062250251",
+    "requests": 44,
+    "hits": 143,
+    "misses": 319,
+    "no_guess": 297,
+    "rows": [
+      {
+        "load": "reference",
+        "view": "production",
+        "index": 0,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 0,
+        "accepts": 28
+      },
+      {
+        "load": "reference",
+        "view": "production",
+        "index": 0,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 0,
+        "accepts": 28
+      },
+      {
+        "load": "reference",
+        "view": "production",
+        "index": 0,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 0,
+        "accepts": 28
+      },
+      {
+        "load": "reference",
+        "view": "production",
+        "index": 0,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 0,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 0,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 0,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 0,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 0,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 1,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 1,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 1,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 1,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 2,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 2,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 2,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 2,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 3,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 3,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 3,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x-diet",
+        "index": 3,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 4,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 4,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 4,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-k3x-first",
+        "view": "k3x",
+        "index": 4,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 0,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 0,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 0,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 0,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 1,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 1,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 1,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 1,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 2,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 2,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 2,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 2,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 3,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 3,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 3,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x",
+        "index": 3,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 4,
+        "scenario": "mtp",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 4,
+        "scenario": "script",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 4,
+        "scenario": "none",
+        "tokens": 24,
+        "fixtures": 120,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        },
+        "boundaries": 28,
+        "accepts": 28
+      },
+      {
+        "load": "bracket-diet-first",
+        "view": "k3x-diet",
+        "index": 4,
+        "scenario": "eos",
+        "tokens": 1,
+        "fixtures": 5,
+        "state_buffers": 232,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        },
+        "boundaries": 5,
+        "accepts": 5
+      }
+    ],
+    "reference_scenarios": {
+      "mtp": {
+        "tokens": 24,
+        "stats": {
+          "guesses": 23,
+          "hits": 0,
+          "misses": 23,
+          "no_guess": 0
+        }
+      },
+      "script": {
+        "tokens": 24,
+        "stats": {
+          "guesses": 19,
+          "hits": 13,
+          "misses": 6,
+          "no_guess": 4
+        }
+      },
+      "none": {
+        "tokens": 24,
+        "stats": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 23
+        }
+      },
+      "eos": {
+        "tokens": 1,
+        "stats": {
+          "guesses": 1,
+          "hits": 0,
+          "misses": 0,
+          "no_guess": 0
+        }
+      }
+    }
+  },
+  "scope": "k3x moved-layer state correctness (GDN layers 24-26 = mini 2-3), export-path byte identity and the expert_gateup key: engine-level direct vs speculative sequences with every cancellation cut, redo/fallback, guard refusals and a detecting negative control for k3x-record (19 keys, GNU), k3x (20 keys, GNU) and k3x-diet (GNU, Intel); identical canonical transcripts (incl. the exported slot) with packet189's retained k3x proof (the record engine); the diet is inert in the miniature (no halfcache layout; counted) - its kernel exactness is diet-fixture.json and full-shape.json; two-rank miniature one-load k3x/k3x-diet brackets in both start orders against a fresh five-layer production-layout reference (tokens, 120 fixtures, proposals, draft and target state)",
+  "key_identity": {
+    "k3x_record_canonical": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+    "k3x_canonical": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+    "k3x_diet_canonical": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+    "packet189_k3x_canonical": "d451302d954ff0e00325508abce4a714110bd16ea34722f546bb3762ad7380dd",
+    "diet_inert_in_miniature": true,
+    "note": "the canonical transcript hashes every rank-0 allocation and the exported shared slot after every step"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/k3_state_gate.py": "b8cd733071af3f69df8895663043aa04be8ac17659f465f1a0373076297d664d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native/v3_state.cpp": "4d0f3ada21e6b6c9dd8f8113fc232fd3c6ca788e0ef08ab3b566f1cad030b3ab",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native/v3_boundary.hpp": "85deade3558290b3006d59a6a4af4f8bf8ce3f21362dae4e3a2dee8be6fa723b",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native/engine_bracket.hpp": "4fa7c4960da5655816246b32cf33a6f3aac10e1f00879bce3d1348e1da3c6d8d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native/kernel_io.hpp": "cda018c918f8c872ed7672f557a44e68af06e2544992f55e9221923e6a9e70ab",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native/bracket_boundary.hpp": "11b38639045253ac74de609b9ad1752ae050d70212ef6f5495f5977c03ff2b8a",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native-src/rank.hpp": "ce0d1e3aacacd3c5b50e61f1f964c08b71f17ba52aae4efaa04c130bdb0db1be",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native-src/main.cpp": "8a712b8ea9fb7cc2f0b68ba58bb2c156812bdef7cecc1f5f064abfde101f2bce",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native-src/mtp.hpp": "e9f983b1e951e5bef2381c12eff33c186af31cf557da6d1e10de9e8d690c614b",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/native-src/strict_snapshot.hpp": "b1e5d54ca8e0f5f3449300a4afffa624686f86294bb011eb549425c6c7b4bded",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/build/checked/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_expert_submit.cpp": "18a57ae4e03da8cf6f9eac0a507350fc1f88b79a657fdc5b058548ed15934874",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/build/checked/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p193_diet.hpp": "aab37609be226ead4a255a44d87c1afb93e6d64d7819457c4aeecd33bcb750d8",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/gnu-host/own-rt-iq3": "5d8f3c057ccbe2214da30bbf98f656f23d63653db328c64102cfdf59425720db",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lineage-inputs/packet189-own/v5/evidence/k3-state.json": "7d2103e9063cd6cf3a210816c22924ae3c1b3e1de400630b8c355306160c0b59"
+  }
+}
