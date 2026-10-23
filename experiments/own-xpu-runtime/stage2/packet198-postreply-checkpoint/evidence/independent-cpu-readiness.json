@@ -1,0 +1,185 @@
+{
+  "schema": "packet198.independent-cpu-readiness.v1",
+  "created_utc": "2026-10-23T16:51:43.468663+00:00",
+  "passed": true,
+  "auditor_native_executed": false,
+  "auditor_device_executed": false,
+  "scope": "Independent read-only compiled-closure and real host-proof audit; excludes future worker/controller readiness and device qualification.",
+  "checks": {
+    "pinned_sources_exact": 128,
+    "parent_p197_ready_files_unchanged": 169,
+    "compiled_targets": {
+      "protocol": {
+        "binary_sha256": "0224564900cbdd546b96fbbd7f54b7336c54b84e6202355e5420da2ab092ead0",
+        "repository_dependencies": 2,
+        "reused_objects": 0
+      },
+      "host": {
+        "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+        "repository_dependencies": 98,
+        "reused_objects": 33
+      },
+      "device": {
+        "binary_sha256": "c9b401089d95eeb152953a8c0d82d0678de2474934941bc6c97abd4b03287875",
+        "repository_dependencies": 96,
+        "reused_objects": 41
+      }
+    },
+    "compiler_depfile_sets_exact": true,
+    "real_host_requests": 8,
+    "real_host_controls": 8,
+    "real_host_saves": 6,
+    "real_host_releases": 2,
+    "parent_p197_all_outputs_exact": true,
+    "parent_p197_first_five_checkpoint_states_exact": true,
+    "append_repeat_fresh_state_exact": true,
+    "final_save_acknowledged_before_request_limit_drain": true,
+    "pending_quit_discard_exact": true,
+    "standalone_cpp_protocol_probe_pass_recorded": true
+  },
+  "checkpoints": {
+    "s1": {
+      "files": 21,
+      "bytes": 2420,
+      "sorted_digest_map_sha256": "0df54c8621dbccf8621e4c56282fd1fafd0fb9bfe715a69f9a820e8f4a6676dd",
+      "processed_tokens": 12,
+      "pending_token": 1
+    },
+    "s2": {
+      "files": 21,
+      "bytes": 2644,
+      "sorted_digest_map_sha256": "bbe8629e47a2621d6df04395a21f1ffbe2c897728901c10b8bd3f98dc7bb4f14",
+      "processed_tokens": 16,
+      "pending_token": 1
+    },
+    "s3": {
+      "files": 21,
+      "bytes": 2972,
+      "sorted_digest_map_sha256": "7823240ad93413cf29470a2deebf7fc0c9e09c442ab19a7e76cc1443524c2f0d",
+      "processed_tokens": 22,
+      "pending_token": 0
+    },
+    "s4": {
+      "files": 21,
+      "bytes": 2972,
+      "sorted_digest_map_sha256": "7823240ad93413cf29470a2deebf7fc0c9e09c442ab19a7e76cc1443524c2f0d",
+      "processed_tokens": 22,
+      "pending_token": 0
+    },
+    "s5": {
+      "files": 21,
+      "bytes": 2972,
+      "sorted_digest_map_sha256": "7823240ad93413cf29470a2deebf7fc0c9e09c442ab19a7e76cc1443524c2f0d",
+      "processed_tokens": 22,
+      "pending_token": 0
+    },
+    "s6": {
+      "files": 21,
+      "bytes": 2128,
+      "sorted_digest_map_sha256": "da7e07edcf07e14386542d833f445c3357c4e93b55deaab2bf08da12001d1a60",
+      "processed_tokens": 7,
+      "pending_token": 0
+    }
+  },
+  "native_refusals": [
+    {
+      "case": "wrong-history",
+      "error": "postreply full visible tokens differ from retained state",
+      "recorded_exit_code": 1,
+      "safe_to_exit": true
+    },
+    {
+      "case": "next-run-pending",
+      "error": "pending request needs SAVE or RELEASE",
+      "recorded_exit_code": 1,
+      "safe_to_exit": true
+    },
+    {
+      "case": "stale-request",
+      "error": "stale or missing pending request",
+      "recorded_exit_code": 1,
+      "safe_to_exit": true
+    },
+    {
+      "case": "existing-checkpoint",
+      "error": "checkpoint save refused: never overwrite: checkpoint s1 already exists in /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/existing-checkpoint/checkpoints",
+      "recorded_exit_code": 1,
+      "safe_to_exit": true
+    },
+    {
+      "case": "duplicate-operation",
+      "error": "duplicate operation id",
+      "recorded_exit_code": 1,
+      "safe_to_exit": true
+    }
+  ],
+  "limitations": [
+    "Tiny synthetic GNU host geometry only; no p198 real-model or device execution is claimed.",
+    "Final SAVE/stop events and child exit codes are retained in the hash-bound host harness receipt; raw result/save/checkpoint/owner artifacts were independently checked.",
+    "Separate live worker/controller gates, runtime fault admission and device lifecycle remain pending.",
+    "Experimental-postreply-front / v1.2+p198 and empty device_gates are preserved; no full serving/parking/OpenAI integration is qualified."
+  ],
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/build-compile-only.json": "c1b3378c6237254a4b6363a8bccd20cfbfb67b186deefa7ea7899b2828e2e962",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/host-probe.json": "a35a03c966536c5421bc335a32a7915f211f470ec7e2c424c8788a1ad03bbc70",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/parent-pins.json": "24cdcf0f68cd729a6bae24f16c8c8693371079b41879c7d31b7088d444fc5199",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/source-overlay.json": "761c3817c05e7ab21fb39004b361b4c03250fc65c031ca6cca1ed5bb86a67fbf",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/host_probe.py": "fbeac0e46447849888c58b012c97ab73e5ccd812dc7b48233de739d363d686ea",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build_engine.py": "e098b8d8636b8a69f1586fd9fa368e5dd7982bdcc3b8943b29f3e3bc67e6f1ff",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/native-postreply.patch": "d7324e1b4aa50b67928cb2b6c92702ad3e4d8a14afdca1e1ff374df96a085f55",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/native/request_front.hpp": "e3a5a90848c88bf7833b6df354115d18e3ef594bbb86eaf3774a8a3281e41dde",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/tests/protocol_probe.cpp": "5836db5b5e79deebe51b5512eaa95710972f67914f09a213d0fa8be1609c1ad3",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/host-probe.json": "a64d026f0bc6031d2d3d7a414bcf3742fac823d61acd4c2a34adbff26eb18f37",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/protocol/protocol-probe.d": "e162ca8d9207c8dc794e2663aa5f0359976c08d9d4742e4464bb2f04b6a5cd76",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host/entry-main.d": "b7d98824b0714e0c3ac6681820f57608715d3b3488e57d36211a1149778cfc69",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/device/entry-main.d": "cc88c343f58255e7b696cfbef606003b27f686b6ebc9a5d6520f3d298f0e82a9",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-a/result.json": "fdcb029417930aaaf7100c5e2e6a14116ff6eff8ce2f1b2bffd942ec4beb8c90",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-a/input.tokens": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-a/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-b/result.json": "b740eb55e135887da742cb5e6b91bc5f12034895f7797828b96607784036a2c9",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-b/input.tokens": "3cb3b5999e8cbbf959807a519f4c256dfe746d4aaf4098c0a18d9cf0f4f5477b",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-b/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/resume-a/result.json": "b1d1eabe5d4683b12bda8cf57a976ef9a1b8e656c026268491421a6ce16c98b0",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/resume-a/input.tokens": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/resume-a/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-a/result.json": "f783a901f10c581b92d3b8dbb7206cc3df4a50f9b4fcdf7b5b5a87a8c9178a75",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-a/input.tokens": "069b3f74b03e863eb36cdfffca09e81ed81325a255afd32d9b4b31771852711f",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-a/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-repeat/result.json": "a09473440964199620d12b5f5f035dc663dd3b1665c1fdc572faddce670820e9",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-repeat/input.tokens": "069b3f74b03e863eb36cdfffca09e81ed81325a255afd32d9b4b31771852711f",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-repeat/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-fresh/result.json": "238c08b411df76ba84db767f7c531a9f418e00131595425d8290dd6b83101253",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-fresh/input.tokens": "069b3f74b03e863eb36cdfffca09e81ed81325a255afd32d9b4b31771852711f",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/append-fresh/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-a-reference/result.json": "7db943f6549d8807b0cfe0f2b2c63cbe5a04df43111865a0a8441d760c27a9b6",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-a-reference/input.tokens": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-a-reference/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-b-repeat/result.json": "70ad0bbd394f68cf56d405fb2248a7ae8e801e51493d6a1490b074a020cac0f7",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-b-repeat/input.tokens": "3cb3b5999e8cbbf959807a519f4c256dfe746d4aaf4098c0a18d9cf0f4f5477b",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/requests/fresh-b-repeat/reset.json": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s1/manifest.json": "e6662298129208a75996dff27957e974665ace9408e714eb036700db7fe98847",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s2/manifest.json": "6a6f5576e0053de5cb4c9104e85d80004a6324c823796b6637d85eb83eb5d5cc",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s3/manifest.json": "5bbfcf3328bc0be82dd5c0d899f2423b63605bfb77056199666d62c0d1cb3f7d",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s4/manifest.json": "0243a8ced481fcca9bb8762b5445d1c03ba46ae56715db10e4a527be79ff6a73",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s5/manifest.json": "5932d35678ac92765b8d24a4e11fa5e724e4c91ba07455e9e73ad19466f0c312",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s6/manifest.json": "2345e32a2ecd3aa86f9a44d4e0296889abde672b83ab138d3f47711cc7e5e612",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/operations/save-a/save.json": "7e554b4efbedfe84551b27b590c1b68e39ae6c1effce8b8d62cafd6c4768b3e1",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/operations/save-resume/save.json": "4ac2528d21c457ffabd3fc8ac9894649d6ca7d3155fd49449a26966971f36f31",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/operations/save-append/save.json": "3749b448c35885e24024cc488b4217bf6c2d776cce2ad480b4485bc01bbbd73b",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/operations/save-repeat/save.json": "5dc661f3951c94fd967f0ba03551465a9cb1a3cc76c35e4f026b5e59a4455980",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/operations/save-fresh/save.json": "ad133a9317c7d0e419717ad2a89501d53384d0bc5a86042cc091e3383c972635",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/operations/save-final-b/save.json": "dee20346a72a01a5b8ac0493e8324a253b567718602121862b8f514ae25479f0",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/owner/receipt.json": "fc78bae794029c99a4bdcd4fed2d7e2ccc6f087c823cea99a26b1efa29032e48",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/wrong-history/owner/receipt.json": "61b30a120fcc555ee7030b7d58913e8c41afc5f24a725aae67c03d4031ba9a4e",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/wrong-history/stderr.log": "bf562cfa54d6dfd463ac0b8988dc47ccbe0b38aa7a96b0efc4a9ead8d734df9d",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/next-run-pending/owner/receipt.json": "8b6ec6c572fd43e9180fbf112e6db3bf61634045487378481441620b9113964a",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/next-run-pending/stderr.log": "3241dad7189b0f045d0788236489ab5694232c18e5c9acb4bb11db3b9f4cae44",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/stale-request/owner/receipt.json": "db6f6fa4bbbc6c9bbb22203c4228ac7e430f3b75c7ec44097487443df29be48e",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/stale-request/stderr.log": "25ebdc91d9b215f591ebb6d5094249e37b8170059c11f1e8449ff175cf860f9f",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/existing-checkpoint/owner/receipt.json": "156b2fd030795e2881289432e83f9bf28ff98082791de0ec0eb11069e094c35c",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/existing-checkpoint/stderr.log": "c14280b52164111f8bbfc19a2b06b1308deed0b6f0835421c977c74bc1bf49f4",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/duplicate-operation/owner/receipt.json": "9cccdfd23b7fb3c804cd8d5c11c48d992b9e1d93e897a1289cff95c8f8663af4",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/duplicate-operation/stderr.log": "48ba703864473e70d0369ec110ad31434977086d92da50039dbea8cd79ea2927",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/pending-quit/owner/receipt.json": "231e57c4bf59cd52a349e60aa0499098dcee44b3ad2ba004a8a21ba5e605bfed"
+  }
+}

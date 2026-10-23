@@ -1,0 +1,275 @@
+--- p197/main.cpp
++++ p198/main.cpp
+@@ -1923,6 +1923,11 @@
+   bool owner_shutdown_attempted=false,owner_shutdown_complete=false;
+   std::unique_ptr<requestfront::Channel> front;
+   Options front_base;
++  struct FrontPending {
++    bool present=false;std::string request_id;
++    std::vector<int> prompt,processed;int next_token=-1;
++    pipeline::CheckpointParent parent;
++  } front_pending;
+   std::vector<int> generated;
+   std::string text;
+   uint64_t read_bytes = 0;
+@@ -1946,7 +1951,7 @@
+     // manifest/tokens/tokenizer/--input classification checks restore repeats under its lock.
+     if(!a.checkpoint_save.empty()&&a.checkpoint_restore.empty())pipeline::checkpoint_tokenizer_identity(a.tokenizer_identity,"save");
+     if(!a.checkpoint_restore.empty())
+-      pipeline::checkpoint_precheck(a.checkpoint_restore,a.checkpoint_id,a.inputs,a.tokens,!a.checkpoint_save.empty(),a.tokenizer_identity,a.mini);
++      pipeline::checkpoint_precheck(a.checkpoint_restore,a.checkpoint_id,a.inputs,a.tokens,a.request_front||!a.checkpoint_save.empty(),a.tokenizer_identity,a.mini);
+     if(a.priority_probe){
+ #ifdef OWN_RT_HOST_ONLY
+       require(!fs::exists(a.output), "priority output exists");fs::create_directories(a.output);
+@@ -2018,7 +2023,7 @@
+       ",\"initial_cache_fill_bytes\":0,\"initial_cache_policy\":\"empty-content-independent\",\"first_prompt_fills_charged_in_request\":true}\n");
+ 
+ 
+-    if(front)front->emit("{\"event\":\"ready\",\"protocol\":\"ownrt.request-front.v1\",\"context\":"+std::to_string(p.g.context)+",\"vocab\":"+std::to_string(p.g.vocab)+",\"max_requests\":"+std::to_string(a.front_max_requests)+",\"model_loads\":1,\"experimental\":true}");
++    if(front)front->emit("{\"event\":\"ready\",\"protocol\":\"ownrt.request-front.v2\",\"context\":"+std::to_string(p.g.context)+",\"vocab\":"+std::to_string(p.g.vocab)+",\"max_requests\":"+std::to_string(a.front_max_requests)+",\"max_control_ops\":"+std::to_string(a.front_max_requests)+",\"model_loads\":1,\"experimental\":true}");
+     e->bracket_weights_locked=!a.bracket_inputs.empty();
+     const auto loaded_arena=e->bracket_arena_hash(),loaded_weights=e->bracket_arena_hash(true);
+     if(!a.bracket_inputs.empty())save(root_output/"loaded-arena-descriptors.txt",e->bracket_arena_descriptors());
+@@ -2042,6 +2047,39 @@
+     if(front){
+       auto request=front->reader.next(p.g.vocab,p.g.context,stopped,e->deadline);
+       if(!request)break;
++      if(request->kind!=requestfront::Kind::run){
++        require(front_pending.present&&front_pending.request_id==request->request_id,"stale postreply descriptor");
++        e->drain();e->cache_quiesce();require(!e->poisoned&&!e->integer(0,"error"),"postreply control boundary failure");
++        const bool final_request=front->reader.final_request();
++        if(request->kind==requestfront::Kind::save){
++          require(request->tokens.size()==front_pending.processed.size()+1&&
++            std::equal(front_pending.processed.begin(),front_pending.processed.end(),request->tokens.begin())&&
++            request->tokens.back()==front_pending.next_token,"postreply full visible tokens differ from retained state");
++          const auto operation_output=root_output/"operations"/request->id;
++          require(!fs::exists(fs::symlink_status(operation_output)),"fresh operation output required");
++          fs::create_directories(operation_output);
++          const auto saved=pipeline::checkpoint_save(*e,front_base.front_checkpoints,request->checkpoint_id,
++            front_pending.prompt,front_pending.processed,front_pending.next_token,front_base.front_tokenizer,front_pending.parent);
++          e->drain();e->cache_quiesce();require(!e->poisoned&&!e->integer(0,"error"),"postreply save boundary failure");
++          std::ostringstream event;
++          event<<"{\"event\":\"checkpoint-saved\",\"operation_id\":"<<ownrt::quote(request->id)
++            <<",\"request_id\":"<<ownrt::quote(request->request_id)<<",\"checkpoint_id\":"<<ownrt::quote(request->checkpoint_id)
++            <<",\"manifest_sha256\":"<<ownrt::quote(saved.manifest_sha256)<<",\"checkpoint_path\":"<<ownrt::quote(request->checkpoint_id)
++            <<",\"path_scope\":\"startup-checkpoint-root\",\"receipt\":"<<ownrt::quote("operations/"+request->id+"/save.json")
++            <<",\"processed_tokens\":"<<front_pending.processed.size()<<",\"visible_tokens\":"<<(front_pending.processed.size()+1)
++            <<",\"pending_token\":"<<front_pending.next_token
++            <<",\"request_disposed\":true,\"request_quiesced\":true,\"final_request\":"<<(final_request?"true":"false")<<"}";
++          save(operation_output/"save.json",event.str()+"\n");
++          front->reader.complete_control(request->request_id);front_pending=FrontPending{};
++          front->emit(event.str());
++        }else{
++          front->reader.complete_control(request->request_id);front_pending=FrontPending{};
++          front->emit("{\"event\":\"request-released\",\"operation_id\":"+ownrt::quote(request->id)+
++            ",\"request_id\":"+ownrt::quote(request->request_id)+
++            ",\"request_disposed\":true,\"request_quiesced\":true,\"final_request\":"+(final_request?"true":"false")+"}");
++        }
++        continue;
++      }
+       a=front_base;request_id=request->id;a.tokens=request->max_new;
+       const auto request_output=root_output/"requests"/request_id;
+       require(!fs::exists(fs::symlink_status(request_output)),"fresh request output required");
+@@ -2052,7 +2090,7 @@
+       if(!request->restore.empty()||!request->save.empty())a.tokenizer_identity=a.front_tokenizer;
+       if(!a.checkpoint_save.empty()){const auto sid=a.checkpoint_restore.empty()?a.checkpoint_id:a.checkpoint_save_id;
+         require(!fs::exists(fs::symlink_status(a.checkpoint_save/sid)),"checkpoint save refused: never overwrite");}
+-      if(!a.checkpoint_restore.empty())pipeline::checkpoint_precheck(a.checkpoint_restore,a.checkpoint_id,a.inputs,a.tokens,!a.checkpoint_save.empty(),a.tokenizer_identity,a.mini);
++      if(!a.checkpoint_restore.empty())pipeline::checkpoint_precheck(a.checkpoint_restore,a.checkpoint_id,a.inputs,a.tokens,a.request_front||!a.checkpoint_save.empty(),a.tokenizer_identity,a.mini);
+       else if(!a.checkpoint_save.empty())pipeline::checkpoint_tokenizer_identity(a.tokenizer_identity,"save");
+       // Quiesce publication without invalidating immutable expert-cache residency.
+       e->drain();e->cache_quiesce();e->a.tokens=a.tokens;
+@@ -2189,7 +2227,7 @@
+     pipeline::RestoredCheckpoint restored;const bool restoring=!a.checkpoint_restore.empty();bool appending=false;
+     double checkpoint_restore_ms=0,append_prefill_ms=0;
+     if(restoring){auto restore_start=std::chrono::steady_clock::now();
+-      restored=pipeline::checkpoint_restore(*e,a.checkpoint_restore,a.checkpoint_id,input,a.tokenizer_identity,a.tokens,!a.checkpoint_save.empty());
++      restored=pipeline::checkpoint_restore(*e,a.checkpoint_restore,a.checkpoint_id,input,a.tokenizer_identity,a.tokens,front||!a.checkpoint_save.empty());
+       checkpoint_restore_ms=Engine::ms(restore_start);token_index=size_t(restored.position);appending=restored.operation=="append";
+       if(appending){auto append_start=std::chrono::steady_clock::now();
+         for(size_t i=size_t(restored.position);i<input.size();++i)next=step(input[i],i+1==input.size()?1:0);
+@@ -2245,7 +2283,7 @@
+     e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::ostringstream rr;rr.precision(17);
+     rr<<"{\"schema\":\"own-runtime.iq3.packet26.run.v1\",\"passed\":true,\"arithmetic\":"<<ownrt::quote(arithmetic::version)
+-      <<",\"cached_tokens\":"<<(front&&restoring?std::to_string(restored.position):"0")<<(front?",\"request_front_scope\":\"experimental-warm-owner-v1\",\"session_reuse\":"+std::string(restoring?"true":"false"):"")<<",\"gpu_count\":1,\"decode_mode\":\"plain\",\"context\":"<<a.context
++      <<",\"cached_tokens\":"<<(front&&restoring?std::to_string(restored.position):"0")<<(front?",\"request_front_scope\":\"experimental-postreply-owner-v2\",\"session_reuse\":"+std::string(restoring?"true":"false"):"")<<",\"gpu_count\":1,\"decode_mode\":\"plain\",\"context\":"<<a.context
+       <<",\"request_start_monotonic\":"<<request_start_seconds<<",\"request_end_monotonic\":"<<monotonic()
+       <<",\"prompt_tokens\":"<<input.size()<<",\"requested_max_new\":"<<a.tokens
+       <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms<<",\"checkpoint_restore_ms\":"<<restore_ms_json<<",\"checkpoint\":"<<checkpoint_json
+@@ -2258,7 +2296,17 @@
+     save(output/"lookup-request-complete.json","{\"passed\":true}\n");
+     if(front){
+       e->drain();e->cache_quiesce();require(!e->poisoned&&!e->integer(0,"error"),"front request boundary failure");
+-      front->emit("{\"event\":\"request-complete\",\"id\":"+ownrt::quote(request_id)+",\"result\":"+ownrt::quote("requests/"+request_id+"/result.json")+",\"generated_tokens\":"+std::to_string(generated.size())+",\"owner_resident\":true,\"request_quiesced\":true}");
++      require(!front_pending.present&&!generated.empty(),"one nonempty postreply descriptor required");
++      front_pending.request_id=request_id;front_pending.prompt=input;
++      if(restoring&&!appending){front_pending.processed=restored.tokens;front_pending.processed.push_back(restored.next_token);}
++      else front_pending.processed=input;
++      front_pending.processed.insert(front_pending.processed.end(),generated.begin(),generated.end()-1);
++      front_pending.next_token=generated.back();
++      if(restoring){front_pending.parent.checkpoint_id=restored.checkpoint_id;
++        front_pending.parent.manifest_sha256=restored.manifest_sha256;front_pending.parent.present=true;}
++      require(!front_pending.processed.empty()&&front_pending.processed.size()<size_t(p.g.context),"postreply descriptor context bound");
++      front_pending.present=true;front->reader.complete_request(request_id);
++      front->emit("{\"event\":\"request-complete\",\"id\":"+ownrt::quote(request_id)+",\"result\":"+ownrt::quote("requests/"+request_id+"/result.json")+",\"generated_tokens\":"+std::to_string(generated.size())+",\"owner_resident\":true,\"request_quiesced\":true,\"save_pending\":true,\"pending_request_id\":"+ownrt::quote(request_id)+",\"processed_tokens\":"+std::to_string(front_pending.processed.size())+",\"visible_tokens\":"+std::to_string(front_pending.processed.size()+1)+",\"pending_token\":"+std::to_string(front_pending.next_token)+"}");
+     }
+     }
+     } // bracket views; weights and owner stay resident
+@@ -2337,7 +2385,7 @@
+   if(front){
+     try {
+       if(error.empty()&&comparison&&owner_shutdown_complete)
+-        front->emit("{\"event\":\"stopped\",\"reason\":"+ownrt::quote(front->reader.reason)+",\"safe_to_exit\":true,\"completed_requests\":"+std::to_string(front->reader.count())+"}");
++        front->emit("{\"event\":\"stopped\",\"reason\":"+ownrt::quote(front->reader.reason)+",\"safe_to_exit\":true,\"completed_requests\":"+std::to_string(front->reader.count())+",\"completed_controls\":"+std::to_string(front->reader.control_count())+",\"discarded_pending\":"+(front_pending.present?"true":"false")+",\"pending_request_id\":"+ownrt::quote(front_pending.present?front_pending.request_id:"")+"}");
+       else front->emit("{\"event\":\"fatal\",\"error\":"+ownrt::quote(error)+",\"safe_to_exit\":"+(owner_shutdown_complete?"true":"false")+"}");
+     }catch(const std::exception& transport_error){std::cerr<<transport_error.what()<<'\n';return 1;}
+   }
+--- p197/checkpoint.hpp
++++ p198/checkpoint.hpp
+@@ -1,9 +1,9 @@
+-// packet181 session checkpoint/restore v3 -- label "experimental-warm-front" (SESSION-SWAP-DESIGN.md v1.2 +
++// packet181 session checkpoint/restore v3 -- label "experimental-postreply-front" (SESSION-SWAP-DESIGN.md v1.2 +
+ // packet181 README "Operation semantics"). Entry-TU-only native delta: included solely by main.cpp via
+ // a relative quote include; no kernel arithmetic. TP1 (one-card) only.
+ //
+ // packet181 over packet180 (v1.2+p180 -> v1.2+p181):
+-//   * manifests carry label "experimental-warm-front" and a qualified_by object naming the device gates
++//   * manifests carry label "experimental-postreply-front" and a qualified_by object naming the device gates
+ //     the operations passed (packet179 same-generation resume, packet180 append and
+ //     restore-then-save, both 2026-10-22, one card) and the scope (one card only; TP2 checkpoints
+ //     not implemented; no ctxkeeper adapter yet);
+@@ -51,15 +51,15 @@
+ namespace pipeline {
+ 
+ static const char* const CHECKPOINT_FORMAT="ownrt.session-checkpoint.v1";
+-static const char* const CHECKPOINT_LABEL="experimental-warm-front";
+-static const char* const CHECKPOINT_CONTRACT="v1.2+p197";
+-static const char* const CHECKPOINT_PACKET="packet197-warm-request-front";
++static const char* const CHECKPOINT_LABEL="experimental-postreply-front";
++static const char* const CHECKPOINT_CONTRACT="v1.2+p198";
++static const char* const CHECKPOINT_PACKET="packet198-postreply-checkpoint";
+ // packet180 manifests stay readable (inspect, delete, and restore when every identity check passes).
+ static const char* const CHECKPOINT_LEGACY_LABEL="experimental";
+ static const char* const CHECKPOINT_LEGACY_CONTRACT="v1.2+p180";
+ // Written verbatim into every v1.2+p181 manifest and required byte-structurally equal on read.
+ // New transport/binary is unqualified; these inherited field names do not assert a device gate.
+-static const char* const CHECKPOINT_QUALIFIED_BY="{\"scope\":\"experimental warm request front; no device qualification\",\"device_gates\":[]}";
++static const char* const CHECKPOINT_QUALIFIED_BY="{\"scope\":\"experimental postreply checkpoint front; no device qualification\",\"device_gates\":[]}";
+ // The only prompt mechanism of this engine (see the header comment); recorded in result.json.
+ static const char* const CHECKPOINT_PREFILL_PATH="incremental";
+ static const char* const TOKENIZER_IDENTITY_FORMAT="ownrt.tokenizer-identity.v1";
+@@ -332,14 +332,14 @@
+ static void checkpoint_manifest_fill(CheckpointManifest& m) {
+   const CJson root=checkpoint_parse_json(m.text);
+   // packet181: two manifest contracts are read. v1.2+p181 (this engine) carries label
+-  // "experimental-warm-front" and exactly this engine's qualified_by record; v1.2+p180 (packet180)
++  // "experimental-postreply-front" and exactly this engine's qualified_by record; v1.2+p180 (packet180)
+   // carries label "experimental" and no qualified_by. A label that does not pair with its
+   // contract, or any other contract, is refused as a malformed manifest.
+   if(root.kind!=CJson::Object)throw std::runtime_error("not an object: manifest");
+   m.contract=cj_str(cj_at(root,"contract"),"contract");
+   m.legacy=m.contract==CHECKPOINT_LEGACY_CONTRACT;
+   if(m.contract!=CHECKPOINT_CONTRACT&&!m.legacy)
+-    throw std::runtime_error("contract "+m.contract+" (this engine reads experimental v1.2+p197 and legacy v1.2+p180 metadata; exact binary identity still required)");
++    throw std::runtime_error("contract "+m.contract+" (this engine reads experimental v1.2+p198 and legacy v1.2+p180 metadata; exact binary identity still required)");
+   if(m.legacy)
+     cj_keys(root,{"format","label","contract","operations","checkpoint_id","created","lineage","model","engine","geometry",
+                   "dtypes","tokenizer_identity","token_state","sampler","blobs","skipped_buffers","measurements"},"manifest");
+--- p197/request_front.hpp
++++ p198/request_front.hpp
+@@ -26,31 +26,61 @@
+  check(!s.empty()&&result.ec==std::errc()&&result.ptr==s.data()+s.size()&&n>=low&&n<=high,"invalid bounded decimal integer");
+  for(char c:s)check(c>='0'&&c<='9',"nondecimal integer");return n;
+ }
+-struct Request {std::string id,restore,save;int max_new=0;std::vector<int> tokens;};
++enum class Kind { run, save, release };
++struct Request {
++ Kind kind=Kind::run;
++ std::string id,request_id,restore,save,checkpoint_id;
++ int max_new=0;
++ std::vector<int> tokens;
++};
++inline std::vector<int> token_list(std::string_view text,int vocab,int context){
++ check(!text.empty(),"empty input tokens");std::vector<int> out;size_t start=0;
++ for(size_t i=0;i<=text.size();++i)if(i==text.size()||text[i]==' '){
++  out.push_back(number(text.substr(start,i-start),0,vocab-1));start=i+1;
++  check(out.size()<=size_t(context),"input context bound");
++ }
++ return out;
++}
+ inline Request parse(std::string_view line,int vocab,int context){
+  check(!line.empty()&&line.size()+1<=frame_limit,"request frame size");
+  std::vector<std::string_view> f;size_t start=0;
+  for(size_t i=0;i<=line.size();++i)if(i==line.size()||line[i]=='\t'){f.push_back(line.substr(start,i-start));start=i+1;}
+- check(f.size()==6&&f[0]=="RUN","expected six-field RUN frame");
+- Request r;r.id=f[1];check(valid_id(r.id),"invalid request id");r.max_new=number(f[2],1,512);
+- r.restore=f[3]=="-"?"":std::string(f[3]);r.save=f[4]=="-"?"":std::string(f[4]);
+- check(r.restore.empty()||valid_id(r.restore),"invalid restore id");check(r.save.empty()||valid_id(r.save),"invalid save id");
+- check(r.restore.empty()||r.save.empty()||r.restore!=r.save,"restore cannot overwrite saved checkpoint");
+- check(!f[5].empty(),"empty input tokens");start=0;
+- for(size_t i=0;i<=f[5].size();++i)if(i==f[5].size()||f[5][i]==' '){
+-  r.tokens.push_back(number(f[5].substr(start,i-start),0,vocab-1));start=i+1;
+-  check(r.tokens.size()<=size_t(context),"input context bound");
+- }
+- check(r.tokens.size()+size_t(r.max_new)<=size_t(context),"input/generation context bound");return r;
++ Request r;
++ if(f.size()==6&&f[0]=="RUN"){
++  r.id=f[1];check(valid_id(r.id),"invalid request id");r.max_new=number(f[2],1,512);
++  r.restore=f[3]=="-"?"":std::string(f[3]);check(r.restore.empty()||valid_id(r.restore),"invalid restore id");
++  check(f[4]=="-","v2 RUN saves only after reply");
++  r.tokens=token_list(f[5],vocab,context);
++  check(r.tokens.size()+size_t(r.max_new)<=size_t(context),"input/generation context bound");
++ }else if(f.size()==5&&f[0]=="SAVE"){
++  r.kind=Kind::save;r.id=f[1];r.request_id=f[2];r.checkpoint_id=f[3];
++  check(valid_id(r.id)&&valid_id(r.request_id)&&valid_id(r.checkpoint_id),"invalid SAVE id");
++  r.tokens=token_list(f[4],vocab,context);
++ }else if(f.size()==3&&f[0]=="RELEASE"){
++  r.kind=Kind::release;r.id=f[1];r.request_id=f[2];
++  check(valid_id(r.id)&&valid_id(r.request_id),"invalid RELEASE id");
++ }else throw std::runtime_error("expected RUN, SAVE or RELEASE frame");
++ return r;
+ }
+ class Reader {
+- int fd_,idle_;size_t maximum_,count_=0;std::set<std::string> ids_;
++ int fd_,idle_;size_t maximum_,count_=0,controls_=0;
++ std::set<std::string> ids_,operation_ids_;
++ std::string active_,pending_;
+ public:
+  std::string reason;
+  Reader(int fd,size_t maximum,int idle):fd_(fd),idle_(idle),maximum_(maximum){check(maximum>=1&&maximum<=1024&&idle>=1&&idle<=3600,"front bounds required");}
+  size_t count()const{return count_;}
++ size_t control_count()const{return controls_;}
++ bool final_request()const{return count_==maximum_;}
++ void complete_request(const std::string& id){
++  check(active_==id&&pending_.empty(),"request completion state");active_.clear();pending_=id;
++ }
++ void complete_control(const std::string& id){
++  check(active_.empty()&&pending_==id&&controls_<maximum_,"control completion state");pending_.clear();++controls_;
++ }
+  std::optional<Request> next(int vocab,int context,const volatile std::sig_atomic_t& stop,std::chrono::steady_clock::time_point deadline){
+-  if(count_==maximum_){reason="request-limit";return {};}
++  check(active_.empty(),"request still running");
++  if(count_==maximum_&&pending_.empty()){reason="request-limit";return {};}
+   auto idle_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(idle_);std::string line;
+   for(;;){
+    if(stop){reason="signal";return {};}
+@@ -65,7 +95,17 @@
+    if(n==0){check(line.empty(),"partial request at EOF");reason="eof";return {};}
+    if(c=='\n'){
+     if(line=="QUIT"){reason="quit";return {};}
+-    auto r=parse(line,vocab,context);check(ids_.insert(r.id).second,"duplicate request id");++count_;return r;
++    auto r=parse(line,vocab,context);
++    if(r.kind==Kind::run){
++     check(pending_.empty(),"pending request needs SAVE or RELEASE");
++     check(count_<maximum_,"request count bound");
++     check(ids_.insert(r.id).second,"duplicate request id");active_=r.id;++count_;
++    }else{
++     check(!pending_.empty()&&r.request_id==pending_,"stale or missing pending request");
++     check(controls_<maximum_,"control count bound");
++     check(operation_ids_.insert(r.id).second,"duplicate operation id");
++    }
++    return r;
+    }
+    check(c!='\0'&&c!='\r'&&line.size()+2<=frame_limit,"invalid or oversized request frame");line.push_back(c);
+   }

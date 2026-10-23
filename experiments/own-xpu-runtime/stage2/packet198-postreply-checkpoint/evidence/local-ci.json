@@ -1,0 +1,476 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "receipts": [
+    {
+      "name": "ordinary-receipt.json",
+      "sha256": "f368c0eacde2375bdd66865a66f6cf123bc90c5d54e72b195628b60d73d1ca24",
+      "result": {
+        "schema": "p58de.local-guides-ci.v1",
+        "started_utc": "2026-10-23T16:55:22.933211+00:00",
+        "workflow_sha256": "230e056d93a800d77b7bb870b7fdafbab95c5eac9c48cab9f0cb193fa2a6b694",
+        "pyyaml_version": "6.0.1",
+        "mode": "ordinary",
+        "rows": [
+          {
+            "step": 1,
+            "command": "python3 tools/validate-repro-guides.py",
+            "returncode": 0,
+            "seconds": 1.247,
+            "log": "/tmp/p198-ci-20261023/01.log",
+            "free_before_bytes": 27857469440,
+            "free_after_bytes": 27857448960
+          },
+          {
+            "step": 2,
+            "command": "node --test tools/test_guides_browser.cjs",
+            "returncode": 0,
+            "seconds": 0.375,
+            "log": "/tmp/p198-ci-20261023/02.log",
+            "free_before_bytes": 27857444864,
+            "free_after_bytes": 27857440768
+          },
+          {
+            "step": 3,
+            "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+            "returncode": 0,
+            "seconds": 1.397,
+            "log": "/tmp/p198-ci-20261023/03.log",
+            "free_before_bytes": 27857440768,
+            "free_after_bytes": 27857387520
+          },
+          {
+            "step": 4,
+            "command": "python3 tools/validate-recipe-publication.py",
+            "returncode": 0,
+            "seconds": 6.148,
+            "log": "/tmp/p198-ci-20261023/04.log",
+            "free_before_bytes": 27857387520,
+            "free_after_bytes": 27857350656
+          },
+          {
+            "step": 5,
+            "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+            "returncode": 0,
+            "seconds": 0.436,
+            "log": "/tmp/p198-ci-20261023/05.log",
+            "free_before_bytes": 27857350656,
+            "free_after_bytes": 27857330176
+          },
+          {
+            "step": 6,
+            "command": "python3 tools/sync-public-result-summary.py --check",
+            "returncode": 0,
+            "seconds": 0.034,
+            "log": "/tmp/p198-ci-20261023/06.log",
+            "free_before_bytes": 27857330176,
+            "free_after_bytes": 27857326080
+          },
+          {
+            "step": 7,
+            "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+            "returncode": 0,
+            "seconds": 0.045,
+            "log": "/tmp/p198-ci-20261023/07.log",
+            "free_before_bytes": 27857326080,
+            "free_after_bytes": 27857321984
+          },
+          {
+            "step": 8,
+            "command": "python3 tools/build-family-pages.py --check",
+            "returncode": 0,
+            "seconds": 0.349,
+            "log": "/tmp/p198-ci-20261023/08.log",
+            "free_before_bytes": 27857321984,
+            "free_after_bytes": 27857317888
+          },
+          {
+            "step": 9,
+            "command": "python3 -m unittest tools/test_build_family_pages.py",
+            "returncode": 0,
+            "seconds": 1.733,
+            "log": "/tmp/p198-ci-20261023/09.log",
+            "free_before_bytes": 27857317888,
+            "free_after_bytes": 27857313792
+          },
+          {
+            "step": 10,
+            "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+            "returncode": 0,
+            "seconds": 0.075,
+            "log": "/tmp/p198-ci-20261023/10.log",
+            "free_before_bytes": 27857313792,
+            "free_after_bytes": 27857309696
+          },
+          {
+            "step": 11,
+            "command": "python3 tools/sync-short-prefill-profiles.py --check",
+            "returncode": 0,
+            "seconds": 0.035,
+            "log": "/tmp/p198-ci-20261023/11.log",
+            "free_before_bytes": 27857309696,
+            "free_after_bytes": 27857305600
+          },
+          {
+            "step": 12,
+            "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+            "returncode": 0,
+            "seconds": 0.51,
+            "log": "/tmp/p198-ci-20261023/12.log",
+            "free_before_bytes": 27857305600,
+            "free_after_bytes": 27857301504
+          },
+          {
+            "step": 13,
+            "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+            "returncode": 0,
+            "seconds": 0.043,
+            "log": "/tmp/p198-ci-20261023/13.log",
+            "free_before_bytes": 27857301504,
+            "free_after_bytes": 27857297408
+          },
+          {
+            "step": 14,
+            "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+            "returncode": 0,
+            "seconds": 1.127,
+            "log": "/tmp/p198-ci-20261023/14.log",
+            "free_before_bytes": 27857293312,
+            "free_after_bytes": 27857289216
+          },
+          {
+            "step": 15,
+            "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+            "returncode": 0,
+            "seconds": 0.376,
+            "log": "/tmp/p198-ci-20261023/15.log",
+            "free_before_bytes": 27857289216,
+            "free_after_bytes": 27857227776
+          },
+          {
+            "step": 16,
+            "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+            "returncode": 0,
+            "seconds": 0.028,
+            "log": "/tmp/p198-ci-20261023/16.log",
+            "free_before_bytes": 27857227776,
+            "free_after_bytes": 27857223680
+          },
+          {
+            "step": 17,
+            "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+            "returncode": 0,
+            "seconds": 0.113,
+            "log": "/tmp/p198-ci-20261023/17.log",
+            "free_before_bytes": 27857223680,
+            "free_after_bytes": 27857219584
+          },
+          {
+            "step": 18,
+            "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+            "returncode": 0,
+            "seconds": 0.066,
+            "log": "/tmp/p198-ci-20261023/18.log",
+            "free_before_bytes": 27857219584,
+            "free_after_bytes": 27857215488
+          },
+          {
+            "step": 19,
+            "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+            "returncode": 0,
+            "seconds": 3.188,
+            "log": "/tmp/p198-ci-20261023/19.log",
+            "free_before_bytes": 27857215488,
+            "free_after_bytes": 27857055744
+          },
+          {
+            "step": 20,
+            "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+            "returncode": 0,
+            "seconds": 0.092,
+            "log": "/tmp/p198-ci-20261023/20.log",
+            "free_before_bytes": 27857055744,
+            "free_after_bytes": 27857051648
+          },
+          {
+            "step": 21,
+            "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+            "returncode": 0,
+            "seconds": 1.887,
+            "log": "/tmp/p198-ci-20261023/21.log",
+            "free_before_bytes": 27857051648,
+            "free_after_bytes": 27857047552
+          },
+          {
+            "step": 22,
+            "command": "python3 -m unittest tools/test_build_model_pages.py",
+            "returncode": 0,
+            "seconds": 0.119,
+            "log": "/tmp/p198-ci-20261023/22.log",
+            "free_before_bytes": 27857047552,
+            "free_after_bytes": 27857043456
+          },
+          {
+            "step": 23,
+            "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+            "returncode": 0,
+            "seconds": 0.283,
+            "log": "/tmp/p198-ci-20261023/23.log",
+            "free_before_bytes": 27857043456,
+            "free_after_bytes": 27857039360
+          },
+          {
+            "step": 24,
+            "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+            "returncode": 0,
+            "seconds": 0.082,
+            "log": "/tmp/p198-ci-20261023/24.log",
+            "free_before_bytes": 27857039360,
+            "free_after_bytes": 27857035264
+          },
+          {
+            "step": 25,
+            "command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+            "returncode": 0,
+            "seconds": 0.044,
+            "log": "/tmp/p198-ci-20261023/25.log",
+            "free_before_bytes": 27857035264,
+            "free_after_bytes": 27857031168
+          },
+          {
+            "step": 26,
+            "command": "python3 tools/extract-fp8-one-launch-prefill.py",
+            "returncode": 0,
+            "seconds": 0.062,
+            "log": "/tmp/p198-ci-20261023/26.log",
+            "free_before_bytes": 27857031168,
+            "free_after_bytes": 27857027072
+          },
+          {
+            "step": 27,
+            "command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+            "returncode": 0,
+            "seconds": 0.102,
+            "log": "/tmp/p198-ci-20261023/27.log",
+            "free_before_bytes": 27857027072,
+            "free_after_bytes": 27857022976
+          },
+          {
+            "step": 28,
+            "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+            "returncode": 0,
+            "seconds": 0.082,
+            "log": "/tmp/p198-ci-20261023/28.log",
+            "free_before_bytes": 27857018880,
+            "free_after_bytes": 27857014784
+          },
+          {
+            "step": 29,
+            "command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+            "returncode": 0,
+            "seconds": 0.054,
+            "log": "/tmp/p198-ci-20261023/29.log",
+            "free_before_bytes": 27857014784,
+            "free_after_bytes": 27857010688
+          },
+          {
+            "step": 30,
+            "command": "python3 tools/build-model-pages.py",
+            "returncode": 0,
+            "seconds": 0.074,
+            "log": "/tmp/p198-ci-20261023/30.log",
+            "free_before_bytes": 27857010688,
+            "free_after_bytes": 27853721600
+          },
+          {
+            "step": 31,
+            "command": "git diff --exit-code -- index.html learn/hardware.html models",
+            "returncode": 0,
+            "seconds": 0.247,
+            "log": "/tmp/p198-ci-20261023/31.log",
+            "free_before_bytes": 27853721600,
+            "free_after_bytes": 27853721600
+          },
+          {
+            "step": 32,
+            "command": "python3 tools/check-doc-links.py",
+            "returncode": 0,
+            "seconds": 0.255,
+            "log": "/tmp/p198-ci-20261023/32.log",
+            "free_before_bytes": 27853721600,
+            "free_after_bytes": 27853717504
+          },
+          {
+            "step": 34,
+            "command": "python3 -m unittest tools/test_check_doc_links.py",
+            "returncode": 0,
+            "seconds": 1.227,
+            "log": "/tmp/p198-ci-20261023/34.log",
+            "free_before_bytes": 27853717504,
+            "free_after_bytes": 27853713408
+          },
+          {
+            "step": 35,
+            "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+            "returncode": 0,
+            "seconds": 0.379,
+            "log": "/tmp/p198-ci-20261023/35.log",
+            "free_before_bytes": 27853713408,
+            "free_after_bytes": 27853709312
+          },
+          {
+            "step": 36,
+            "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+            "returncode": 0,
+            "seconds": 1.652,
+            "log": "/tmp/p198-ci-20261023/36.log",
+            "free_before_bytes": 27853709312,
+            "free_after_bytes": 27853598720
+          },
+          {
+            "step": 37,
+            "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+            "returncode": 0,
+            "seconds": 0.757,
+            "log": "/tmp/p198-ci-20261023/37.log",
+            "free_before_bytes": 27853598720,
+            "free_after_bytes": 27853594624
+          },
+          {
+            "step": 38,
+            "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+            "returncode": 0,
+            "seconds": 0.217,
+            "log": "/tmp/p198-ci-20261023/38.log",
+            "free_before_bytes": 27853594624,
+            "free_after_bytes": 27853590528
+          },
+          {
+            "step": 39,
+            "command": "python3 -B tools/test-restore-source-archives.py",
+            "returncode": 0,
+            "seconds": 0.123,
+            "log": "/tmp/p198-ci-20261023/39.log",
+            "free_before_bytes": 27853590528,
+            "free_after_bytes": 27853586432
+          },
+          {
+            "step": 40,
+            "command": "python3 -m unittest tools/test_xccl_probe.py",
+            "returncode": 0,
+            "seconds": 0.066,
+            "log": "/tmp/p198-ci-20261023/40.log",
+            "free_before_bytes": 27853586432,
+            "free_after_bytes": 27853582336
+          },
+          {
+            "step": 41,
+            "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+            "returncode": 0,
+            "seconds": 0.092,
+            "log": "/tmp/p198-ci-20261023/41.log",
+            "free_before_bytes": 27853582336,
+            "free_after_bytes": 27853578240
+          },
+          {
+            "step": 42,
+            "command": "python3 tools/check-manifest-paths.py",
+            "returncode": 0,
+            "seconds": 0.103,
+            "log": "/tmp/p198-ci-20261023/42.log",
+            "free_before_bytes": 27853578240,
+            "free_after_bytes": 27853574144
+          },
+          {
+            "step": 43,
+            "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+            "returncode": 0,
+            "seconds": 0.545,
+            "log": "/tmp/p198-ci-20261023/43.log",
+            "free_before_bytes": 27853570048,
+            "free_after_bytes": 27853565952
+          },
+          {
+            "step": 44,
+            "command": "pip install --quiet pyyaml",
+            "status": "satisfied-prerequisite",
+            "reason": "PyYAML already installed",
+            "version": "6.0.1"
+          },
+          {
+            "step": 45,
+            "command": "python3 tools/check-container-packet.py",
+            "returncode": 0,
+            "seconds": 0.102,
+            "log": "/tmp/p198-ci-20261023/45.log",
+            "free_before_bytes": 27853565952,
+            "free_after_bytes": 27853561856
+          },
+          {
+            "step": 46,
+            "command": "python3 -m unittest tools/test_check_container_packet.py",
+            "returncode": 0,
+            "seconds": 0.299,
+            "log": "/tmp/p198-ci-20261023/46.log",
+            "free_before_bytes": 27853561856,
+            "free_after_bytes": 27853557760
+          },
+          {
+            "step": 47,
+            "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+            "returncode": 0,
+            "seconds": 0.213,
+            "log": "/tmp/p198-ci-20261023/47.log",
+            "free_before_bytes": 27853557760,
+            "free_after_bytes": 27853553664
+          }
+        ],
+        "safety_review": "CPU-only workflow; restore-source-archives without --destination verifies streams only; extract/collect default to verify; XCCL probe tests mock torch; native builder tests no subprocesses; generators existing pages backed up before execution. No GPU/services/settings/queue mutations.",
+        "generated_backup": "/tmp/p198-ci-20261023/generated-before",
+        "completed_utc": "2026-10-23T16:55:49.450798+00:00",
+        "passed": true
+      }
+    },
+    {
+      "name": "tracked-receipt.json",
+      "sha256": "cc13df5b77ce484ab419cb9445fa26ff054a904c8d07914a21258ee16e2a3908",
+      "result": {
+        "schema": "p58de.local-guides-ci.v1",
+        "started_utc": "2026-10-23T16:56:48.942222+00:00",
+        "workflow_sha256": "230e056d93a800d77b7bb870b7fdafbab95c5eac9c48cab9f0cb193fa2a6b694",
+        "pyyaml_version": "6.0.1",
+        "mode": "tracked",
+        "rows": [
+          {
+            "step": 33,
+            "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+            "returncode": 0,
+            "seconds": 6.739,
+            "log": "/tmp/p198-ci-20261023/33.log",
+            "free_before_bytes": 27853099008,
+            "free_after_bytes": 27852914688
+          }
+        ],
+        "safety_review": "CPU-only workflow; restore-source-archives without --destination verifies streams only; extract/collect default to verify; XCCL probe tests mock torch; native builder tests no subprocesses; generators existing pages backed up before execution. No GPU/services/settings/queue mutations.",
+        "completed_utc": "2026-10-23T16:56:55.681092+00:00",
+        "passed": true
+      }
+    },
+    {
+      "name": "hygiene.json",
+      "sha256": "6c04909febebb47abb5cbb11b3112c09ae3b984427bc6fb1d946494cf8909fc0",
+      "result": {
+        "schema": "lab.repository-hygiene.v1",
+        "base": "HEAD",
+        "candidate": "git-index",
+        "tracked_files": 229697,
+        "changed_files": 38,
+        "large_threshold_bytes": 1048576,
+        "large_artifacts": [],
+        "closeouts_checked": [],
+        "errors": []
+      }
+    }
+  ],
+  "scope": "Repository checks plus separately sealed native/host/worker/controller proofs; no device lifecycle executed by these checks."
+}

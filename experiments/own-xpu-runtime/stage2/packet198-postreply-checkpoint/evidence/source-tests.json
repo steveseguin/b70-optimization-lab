@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "compiled": false,
+  "native_executed": false,
+  "tests": 7,
+  "command": "nice -n19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/tests -p test_source_overlay.py -v",
+  "log_sha256": "7e5db9bc4021efc65161e85c9680ac8c2e863ca20319fe945e7c955a4b4dff0f",
+  "scope": "Python source/dependency assertions only; C++ parser and host lifecycle are prepared, not executed."
+}

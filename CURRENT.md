@@ -6,7 +6,9 @@ preserved exact output and state, including comparison to the earlier qualified 
 with no new fault or retained device owner. Restore26 completed at16:42:06 UTC; all three applications validated. Both lane pauses retain
 their original bytes, queues are empty and STOP latches are absent. Loading took210 seconds once; restore took0.36–0.37 seconds, kept
 separate from cold speed records. The next separate packet adds postreply SAVE/RELEASE so ctxkeeper can choose a checkpoint ID after
-generation. Its Python transport passes nine CPU tests and independent review; native source preparation is underway.
+generation. Its Python transport passes nine CPU tests and independent review; all three native targets compile and the actual
+host-only lifecycle passes eight requests/eight controls, six saves, five invalid-operation refusals and pending-QUIT handling.
+The separately sealed real-model runner is undergoing final admission; no postreply device request has run yet.
 [Result](experiments/own-xpu-runtime/stage2/packet197-warm-request-front/RESULT.md) ·
 [next interface](experiments/own-xpu-runtime/integration/request_front/POSTREPLY-CHECKPOINTS.md).
 

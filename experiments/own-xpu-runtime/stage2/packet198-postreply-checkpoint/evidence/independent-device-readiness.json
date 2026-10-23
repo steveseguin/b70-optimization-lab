@@ -1,0 +1,62 @@
+{
+  "schema": "packet198.independent-device-readiness.v1",
+  "created_utc": "2026-10-23T16:55:11.387878+00:00",
+  "passed": true,
+  "auditor_native_executed": false,
+  "auditor_device_executed": false,
+  "auditor_tests_executed_this_review": false,
+  "scope": "Independent final worker/controller delta review and sealed CPU proof verification; not device execution or live admission.",
+  "checks": {
+    "ready_files_exact": 188,
+    "source_inventory_exact": true,
+    "frozen_worker_parent_pins_exact": 5,
+    "frozen_controller_helper_pins_exact": 10,
+    "retained_host_artifacts_exact": 453,
+    "retained_host_artifact_bytes": 8644635,
+    "recorded_worker_cpu_tests": 11,
+    "recorded_controller_mock_tests": 16,
+    "production_launch_intercepted_pre_exec": true,
+    "actual_host_full_production_argv_refusals": 2,
+    "sealed_plan_contract_exact": true,
+    "requests": 8,
+    "output_tokens": 1408,
+    "save_controls": 5,
+    "release_controls": 3
+  },
+  "reviewed_behavior": [
+    "Unchanged p197 owner launch, namespace admission, unlimited address-space check, serialized bounded journal monitoring, incident SIGTERM-once and retained process/lease/drain failure behavior.",
+    "Each RUN and each SAVE/RELEASE has independent before/after fault/admission guards: 32 operation boundaries across 8 requests and 8 controls.",
+    "Same-generation resume SAVE supplies original prompt plus saved 256 output IDs plus new 128 output IDs; append SAVE supplies full canonical 469-token prompt plus reply.",
+    "SAVE acknowledgement must match operation receipt and manifest hash; checkpoint exists only after completed reply; native transport validates whole visible history.",
+    "Exactly five saves and three releases, fixed control IDs, experimental v1.2+p198 labels and current device binary identity; append/repeat/fresh state equality.",
+    "Final release required before draining, exactly 8 completed controls and requests, no discarded pending state, clean native stop/exit/FD drain.",
+    "Controller independently checks final counts/control order/correctness and reserves 27GB plus800MB planned writes before stopping endpoints.",
+    "Frozen one-stop endpoint window and per-operation guarded restoration retained; external PAUSE bytes preserved on incident; no retries or setting changes."
+  ],
+  "blockers": [],
+  "limitations": [
+    "Actual device lifecycle, runtime fault review and live admission remain coordinator-owned and have not been performed by this audit.",
+    "CPU host proof used six saves/two releases to exercise final SAVE; device pilot intentionally uses five saves/three releases with final RELEASE.",
+    "No throughput record, general serving, HTTP endpoint or parking adapter is qualified."
+  ],
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/READY-FOR-DEVICE.json": "ae105c292f6122165fc9695c59228a08694e79688369de621ad60894a2c75aed",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/device_worker.py": "36e399927de28fb04fcf1f70ed2202a198faa6a52cb968aa9dcd942f2ebb49ea",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/device_gates.py": "ff0c2bd1ecc318dfaea691f851e07bca9ca7ab8b9a0b7db22aadc53a9aff7f99",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/device_fault_review.py": "ff12f2edd74f399b3e2005b9631803b3c33d56855049892da908034bfa99b365",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/worker-parent-pins.json": "c49a66fc124e40f9bf4cf81f3f87e4e230bef752f4c2c2b17137ff47c774d7e0",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/tests/test_device_worker.py": "d50d9064a580cee0ce6e5f7459343ca1140bf00d29548e3e6f8b0383e09dd320",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-cpu-gates.json": "66dc943825571065425fe3f85ab5f8d01758f653d1cbc70cbc8281dd644e21c0",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-worker-tests.log": "c5f1ad4d73e46b19cfc19bfbc7d0ed51c2269d8cbb293f1f3a64b70f5bd1623b",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/host-probe-artifacts.json": "3811ea9b20761648b3cb6ccf260c7169e855803b4e48b828d5475c3f24335108",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/independent-cpu-readiness.json": "b2a36487afe8272d45c8bc61d620c025203181152dc49a25985c64ab1de0f710",
+    "experiments/own-xpu-runtime/ops/packet198-window/window.py": "900ec60d4c36bc1cb0370809518cc0db4a852bedfd212690918bbba723f7194e",
+    "experiments/own-xpu-runtime/ops/packet198-window/helpers.py": "30633b57a4e1d369ca54ecc997d5ddd3ebc9f57f437821e4e8f2f9467a87f9ba",
+    "experiments/own-xpu-runtime/ops/packet198-window/restore_guard.py": "0894c1638dd73697901f324b3e543408ba99206683ea7b31f3b041d1e786232c",
+    "experiments/own-xpu-runtime/ops/packet198-window/helper-pins.json": "36f0539356df4d89abf3127b45a049ef5be25f116f8f9c122515f983d1e1ebb2",
+    "experiments/own-xpu-runtime/ops/packet198-window/test_window.py": "1aac173df6f2e733ec75fc01cc2874103eb0e2174133a127063ef7fa7a9b4ad9",
+    "experiments/own-xpu-runtime/ops/packet198-window/mock-tests.json": "2cd0c58d4ce7857f504e4d63e1b529434f3b4d9dadc02c7bb5e66d893ea3993e",
+    "experiments/own-xpu-runtime/ops/packet198-window/mock-tests.log": "4dd97ec88c086b67c68f69c263693b4a99a8a2bdf68a777dba15f6955cec6d54",
+    "experiments/own-xpu-runtime/ops/packet198-window/plan-contract.json": "1111a7e0b9a1ef42ee1bb37247a26e356d3ab6424e7e57f2e5aefbd8f6976eb4"
+  }
+}
