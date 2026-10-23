@@ -24,7 +24,12 @@ class RepositoryHygieneTests(unittest.TestCase):
         self.git("commit", "-qm", "initial source")
 
     def git(self, *args):
-        return subprocess.check_output(["git", "-C", str(self.root), *args])
+        # Background maintenance (gc --auto) can outlive the test and race the
+        # TemporaryDirectory cleanup ("Directory not empty: '.git'"); keep every
+        # fixture repository synchronous.
+        return subprocess.check_output(
+            ["git", "-C", str(self.root), "-c", "gc.auto=0", "-c", "maintenance.auto=false", *args]
+        )
 
     def write(self, path, text):
         target = self.root / path

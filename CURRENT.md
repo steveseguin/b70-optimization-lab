@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 22, 20:50 EDT — packet191 per-class attribution on the record line (lane B, 00:32–00:47 UTC): exact, class table withheld.**
+Sites-off views 62.198/62.166/62.184 reproduce the record line (−0.08 % vs packet189, −0.26 % vs the chain; drift 0.05 %); sites-on 58.266/58.238
+(recorder cost 0.937, ~32 µs per layer per half). The completeness kill rule fired: device kernel sums (11.44 ms per half) vs the host `layer_body`
+scope sum (16.40 ms) differ by 30 % because host layer scopes overlap while the host runs ahead, so the analyzer withheld the table (the rule's
+reference, not the device, is at fault). Raw per-layer class costs on both ranks (µs): dense 154, experts 105, route+small 76, HC 68, recurrence 30,
+QSA attention 17–20, norms 16; only route+small reads above packet110 (+22) and that class absorbs the recording cost, so no class shows a measured
+excess; `open_mechanisms_remaining` is empty. Closed as a measurement at this overhead. Next on the cards: the one-card cache23 screen (lane A,
+card 0) once the endpoints are restored. Packet `stage2/packet191-k3x-class-attribution/` (note `notes/2026-10-22-packet191-k3x-class-attribution.md`).
+
 **October 22, 20:05 EDT — one-card lever synthesis 1: nothing open reaches +2 %; the line is bound by 48 serial layer bodies.**
 Premise corrections: the one-card record (35.927, packet182c) runs NO draft (decode_mode plain; one-card MTP closed three times: 58h/58aa/170),
 and its layer body is 0.48 ms, at parity with two cards (0.47–0.50); the dispatch tables of 182c and the k3x record are byte-identical. Per-token

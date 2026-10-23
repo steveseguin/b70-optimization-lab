@@ -1,0 +1,21 @@
+2026-10-23T00:32:20.903021+00:00 window start
+2026-10-23T00:32:20.903397+00:00 queue-B.txt rewritten with 2 rows from ['proposed-p191-two-card-B.txt']
+2026-10-23T00:32:25.626119+00:00 live plan passed for all 2 rows
+2026-10-23T00:32:25.641375+00:00 stopping endpoints: ['qwen38-27b-vision', 'qwen38-27b-fp8-tp1-test', 'qwen38-27b-fp8']
+2026-10-23T00:32:33.478344+00:00 stop rc=0 
+2026-10-23T00:32:43.494073+00:00 endpoints stopped; MemAvailable=120645820416 required=109870790382
+2026-10-23T00:32:44.427177+00:00 PAUSE-B archived and removed for the approved window (PAUSE-A untouched)
+2026-10-23T00:32:44.432567+00:00 no waiter (packet191 runs no chain; a chain-rule win derives its record bundle as a new packet)
+2026-10-23T00:32:44.453708+00:00 runner launch rc=0  Running as unit: lanequeue-B37.service; invocation ID: ce421d03fe0345afb9452442ef6c6326
+2026-10-23T00:32:44.458447+00:00 watching: started=[] done=[] unit=active
+2026-10-23T00:32:49.458748+00:00 EVENT {"event": "START", "lane": "B", "name": "packet191-row0-smoke-k3x-on-B", "utc": "2026-10-23T00:32:49.164618Z"}
+2026-10-23T00:37:04.717423+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet191-row0-smoke-k3x-on-B", "rc": 0, "utc": "2026-10-23T00:36:59.944309Z"}
+2026-10-23T00:38:34.817559+00:00 EVENT {"event": "START", "lane": "B", "name": "packet191-row1-bracket-sites-B", "utc": "2026-10-23T00:38:34.612712Z"}
+2026-10-23T00:42:45.069769+00:00 watching: started=['packet191-row0-smoke-k3x-on-B', 'packet191-row1-bracket-sites-B'] done=['packet191-row0-smoke-k3x-on-B'] unit=active
+2026-10-23T00:46:55.317646+00:00 EVENT {"Result": "success", "event": "DONE", "lane": "B", "name": "packet191-row1-bracket-sites-B", "rc": 0, "utc": "2026-10-23T00:46:53.365343Z"}
+2026-10-23T00:46:55.317815+00:00 watch result: {"done": ["packet191-row0-smoke-k3x-on-B", "packet191-row1-bracket-sites-B"], "terminal": null}
+2026-10-23T00:46:55.323452+00:00 STOP-B written; waiting for the runner to exit at its boundary
+2026-10-23T00:47:00.339107+00:00 runner unit state: inactive; STOP-B removed; PAUSE-B re-armed
+2026-10-23T00:47:00.369768+00:00 restoring endpoints: /usr/bin/python3 -u /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/restore-endpoints-20261021.py 20261022-restore15
+2026-10-23T00:56:09.293191+00:00 restore rc=0
+2026-10-23T00:56:09.293671+00:00 window end

@@ -4,7 +4,7 @@
 LocalMaxxing `cmvk51wfn001gng01fpbfy89q`). **This packet is a MEASUREMENT:** priced gain 0 tok/s; no row of it is a speed
 result, a screen winner or a record row. It decides whether any kernel-class brief can honestly be priced at +2 %.
 
-**Status:** prepared CPU-only, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
+**Status:** device-measured 2026-10-23 (lane B, unit lanequeue-B37, 00:32-00:47 UTC): every view exact; sites-off reproduces the record line (62.17-62.20); **the class table is withheld** (kill rule `class_sum_vs_body_pct`: the host `layer_body` reference overlaps and is not comparable to device kernel sums; see `DO-NOT-REPEAT.md` and the note). Prepared CPU-only, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
 queued, armed, launched or committed. No GPU, `/dev/dri`, device binary run, systemd unit change, PAUSE/STOP or queue file
 was touched. The only systemd calls were read-only `systemctl --user list-units 'window-*' 'lanequeue-*' 'packet19*'`
 polls before the compile batches (no active or activating unit; the five `lanequeue-*` units listed are `failed`, not
