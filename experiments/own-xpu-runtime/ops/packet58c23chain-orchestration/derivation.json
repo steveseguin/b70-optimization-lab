@@ -1,0 +1,38 @@
+{
+  "schema": "packet58c23chain.derivation.v1",
+  "passed": true,
+  "device_executed": false,
+  "generator": "ops/onecard_chain_derive.py",
+  "generator_sha256": "19d528a62cd5362d45e3947f69170bbbc42b348055dcf85d0a570da832895c7e",
+  "argv": [
+    "--parent-orch",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet58aj-orchestration",
+    "--packet",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain",
+    "--out",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet58c23chain-orchestration",
+    "--unit",
+    "packet58-onecard-cache23-a",
+    "--output",
+    "evidence/card0-cache23-a",
+    "--binary",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/build/device/own-rt-iq3",
+    "--host-binary",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/build/gnu-host/own-rt-iq3",
+    "--bracket-summary",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/summary.json",
+    "--threshold-file",
+    "/home/steve/llm-optimizations/scripts/packet58_onecard_record_threshold.json",
+    "--flag",
+    "wait-policy=spin",
+    "--flag",
+    "foreground-io=kernel"
+  ],
+  "repairs": [
+    "inject: flag block before the entry guard (packet182 chain/derive_chain.py)",
+    "postnative_gate: real packet182c-chain evidence card0-182-a",
+    "prefix_gate: ops/packet58-* glob must be empty; orchestration dir outside that glob",
+    "parser_gate/relocate_pins: max23 capacity argv + selection literals before the real-parser gate (capacity-patch.json)"
+  ],
+  "wrapper_sha256": "1f97657c54442acd67f7af73f01c9de94df8611ee789bbb048216104a8bee257"
+}

@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "original_evidence_sha256": "5c7bf64e5ff6470b4919c22b4b709da082d9ed04145cd27b717e2150e08d376d",
+  "copied_evidence_sha256": "5c7bf64e5ff6470b4919c22b4b709da082d9ed04145cd27b717e2150e08d376d",
+  "old_chain_rejected_by_production": "bound hash mismatch: seal.json",
+  "actual_58ad_chain_a_replay_tok_s": 30.395630964654867,
+  "composition_and_chain_identity_substitutions_synthetic": true,
+  "private_copy_storage": "memory",
+  "predecessor_ledger_override_fixture_only": true,
+  "new_chain_measurement": false,
+  "original_packet": "packet58ad-onecard-record",
+  "payload_written": false,
+  "temporary_synthetic_payload_removed": true,
+  "network_used": false,
+  "final_location_cli_passed": true,
+  "cli_repo_root": "/home/steve/llm-optimizations",
+  "cli_root_overridden": false,
+  "current_predecessor": {
+    "reference_submission": "cmvjejvoi03qcrf0138emu5a6",
+    "threshold_tok_s": 35.92672010504166
+  },
+  "notes_characters": 1936,
+  "real_bundle_notes_characters": 1937,
+  "fault_counters": {
+    "major": 0,
+    "minor": 26136,
+    "tokens": 1536,
+    "new_gpu_fault_lines": 0
+  },
+  "peak_rss_bytes": 159092736,
+  "schema": "packet58cache23chain.gate.submission.v1",
+  "packet182c_real_bundle": {
+    "name": "evidence.json.gz",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182c-chain/submission/chain-a/evidence.json.gz",
+    "parent_digest": "118d32010b63cc6df3ba81f18b7ba35f3305bd8fae881779f979df64103ccd46",
+    "refused": true,
+    "refusal": "ValueError: bound hash mismatch: seal.json"
+  },
+  "validator_sha256": "47b402f842a45f5891c550dc22f6e3233716cef36a7f4fd79c10f780c10e8c9e",
+  "policy_sha256": "6f4fdb76fecc0e47913ba35c9e8d4f8209fb60fc7aae5e6ce4a450363de7ae0c",
+  "capacity": {
+    "label": "packet58_submission",
+    "old_argv_refused_by_tests": [
+      "--cache-cap max",
+      "--cache-bytes 21552729600",
+      "--cache-cap 18GB",
+      "--cache-bytes 18000000000"
+    ]
+  },
+  "cli": {
+    "prepare": "ops/packet58c23chain-orchestration/prepare_submission.py",
+    "submit": "ops/packet58c23chain-orchestration/submission.py",
+    "server_dry_run": "not run on CPU (needs the key); coordinator step"
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "schema": "packet58cache23chain.gate.launch.v1",
+  "passed": true,
+  "binaries": {
+    "build/device/own-rt-iq3": {
+      "sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+      "ldd": {
+        "passed": true,
+        "returncode": 0,
+        "missing": []
+      }
+    },
+    "build/gnu-host/own-rt-iq3": {
+      "sha256": "03a2aa12187d02276995a1cba5d0fffc0bdd5e78632144f2529db44103be705b",
+      "ldd": {
+        "passed": true,
+        "returncode": 0,
+        "missing": []
+      }
+    },
+    "build/device/p58-cache-fixtures": {
+      "sha256": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35",
+      "ldd": {
+        "passed": true,
+        "returncode": 0,
+        "missing": []
+      }
+    }
+  },
+  "rlimits": {
+    "0": [
+      -1,
+      -1
+    ],
+    "1": [
+      -1,
+      -1
+    ],
+    "2": [
+      -1,
+      -1
+    ],
+    "3": [
+      8388608,
+      -1
+    ],
+    "4": [
+      0,
+      -1
+    ],
+    "5": [
+      -1,
+      -1
+    ],
+    "6": [
+      477915,
+      477915
+    ],
+    "7": [
+      1048576,
+      1048576
+    ],
+    "8": [
+      16864567296,
+      16864567296
+    ],
+    "9": [
+      -1,
+      -1
+    ],
+    "11": [
+      477915,
+      477915
+    ],
+    "12": [
+      819200,
+      819200
+    ],
+    "13": [
+      0,
+      0
+    ],
+    "14": [
+      0,
+      0
+    ],
+    "15": [
+      -1,
+      -1
+    ]
+  },
+  "chain_command_digest_sha256": "354a08c87dce91ed4981b9a681942a5dd616cfa937363af2bb8c7cbbb0607e35",
+  "properties_checked": [
+    "--unit=packet58-onecard-cache23-a",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=0",
+    "--working-directory=/home/steve/llm-optimizations",
+    "/usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a",
+    "--fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/fault-review-cache23-a.json < /dev/null"
+  ],
+  "library_path_equals_recorded": true,
+  "planned_write_bytes": 397492208,
+  "host_floor_bytes": 100487123456,
+  "launcher_host_floor_bytes": 101560865280,
+  "root_free_floor_bytes": 25397492208,
+  "native_executed": "ldd/--help only, inside the entry sandbox",
+  "device_executed": false
+}

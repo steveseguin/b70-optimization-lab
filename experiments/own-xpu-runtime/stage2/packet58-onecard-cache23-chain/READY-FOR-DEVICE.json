@@ -1,0 +1,401 @@
+{
+  "schema": "packet58-onecard-cache23-chain.ready-for-device.v2",
+  "packet": "packet58-onecard-cache23-chain",
+  "revision": "derived:packet58-onecard-cache23-chain",
+  "prepared_utc": "2026-10-23T01:52:34.092874+00:00",
+  "generator": "ops/onecard_chain_derive.py (derive_cache23_chain.py) + apply_cache23_chain_delta.py + reseal.py + final_checks.py",
+  "preparation_passed": true,
+  "passed": true,
+  "ready_for_device": true,
+  "ready_for_device_chain": true,
+  "ready_for_coordinator_check": true,
+  "reason": "packet182c-chain re-derived from packet58aj-orchestration with the packet58-onecard-cache23 engine, the max23 capacity argv/selection, the cache23 device plan (host 100,487,123,456) and the adapted submission validator; chain admitted below the +2 % bar by coordinator ruling (idle lanes).",
+  "chain_binary_sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+  "parent_chain_binary_sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c",
+  "coordinator_unit": "packet58-onecard-cache23-a",
+  "chain_unit": "packet58-onecard-cache23-a",
+  "chain_output": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a",
+  "fault_review": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/fault-review-cache23-a.json",
+  "chain_command": "systemd-run --user --unit=packet58-onecard-cache23-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2 /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/fault-review-cache23-a.json < /dev/null",
+  "chain_command_digest_sha256": "354a08c87dce91ed4981b9a681942a5dd616cfa937363af2bb8c7cbbb0607e35",
+  "command_hash_encoding": "UTF-8, no trailing newline",
+  "windows": [
+    "K1a",
+    "K1b",
+    "KD",
+    "W2m",
+    "WS",
+    "WS128x",
+    "WS128"
+  ],
+  "gap_seconds": 90,
+  "wait_seconds": 300,
+  "lane": "A",
+  "card": 0,
+  "scope": "whole-host",
+  "configuration": {
+    "view": "down-tile16",
+    "cache_maintenance": "overlap",
+    "miss_path": "zero-copy",
+    "cache_cap": "max23",
+    "cache_allocation_bytes": 23049601024,
+    "cache_bytes": 23049601024,
+    "kv_dtype": "BF16",
+    "context": 4096,
+    "hc": "p60fusion",
+    "hc_geometry": "hc-wide",
+    "experts": "wide64+halfcache",
+    "other_fusion": "fused",
+    "retirement": "ordered-foreground",
+    "lookups": "resident",
+    "chain_flags": {
+      "--wait-policy": "spin",
+      "--foreground-io": "kernel"
+    },
+    "wait_policy": "spin",
+    "foreground_io": "kernel"
+  },
+  "chain_flags": {
+    "--wait-policy": "spin",
+    "--foreground-io": "kernel"
+  },
+  "whole_host_hold_required_through_gaps": true,
+  "both_lanes_pause_and_drain_required": true,
+  "codex_frozen_from": "WS",
+  "codex_frozen_through": "WS128 completion",
+  "bracket_rates_tok_s": [
+    35.89239775457983,
+    36.54557450233753,
+    35.928542461824385,
+    36.5693526068784,
+    35.924936571926665
+  ],
+  "control_drift_fraction": 0.00010037289531466569,
+  "minimum_gain": 0.017173867856419948,
+  "candidate_beats_all_controls": true,
+  "bracket_exact_requests": 60,
+  "pinned_predecessor": {
+    "reference_submission": "cmvjejvoi03qcrf0138emu5a6",
+    "threshold_tok_s": 35.92672010504166
+  },
+  "submission_scope_tokens": 128,
+  "strict512_claim": false,
+  "fresh_timing_repeat_passed": false,
+  "chain_native_interface_passed": true,
+  "bracket_boot_check": "current-boot",
+  "preparation_ram_budget_bytes": 2000000000,
+  "files_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/build-receipt.json": "5f9137ab38d5a3cb322daa3689a2d43cd05abd1396b65739add240df1b041efa",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/submission-pins.json": "6969ecdaa79eb790ef9f31c9f1246973265d5d670dcec492ff2ebb86158b0f5b",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/ready.json": "59e5dbdd12f55fa908ec30557f175be23965b09fd0bbf333d1c02c14186ce095",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/WINDOW.md": "6ae5cb83d78e7cee3fc353872b830a575661ec24daf0a3dcc0b91cbff4e144ad",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/runtime-selection.json": "43488e31f6ab3b18e912d1d78e13b5cf4cc356079e8c99003bdac7efe0d836fc",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/submission-policy.json": "6f4fdb76fecc0e47913ba35c9e8d4f8209fb60fc7aae5e6ce4a450363de7ae0c",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/record-threshold.snapshot": "2db5d4a92b70afc7287fcae1349c085532afe0c5866e14c70ae5f981355cbdfe",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/derived-chain.json": "4cc1e52f4156cbd77e0d2bcb4ac276579fbfbeaf58d75b0031d0a3f4a1043440",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/seal.py": "9f8b7cdf602c202be3f72cb59f57fc8b999a6c44026ed2bfe7df17fc7ebcace9",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/verify_ready.py": "7d36ff3228e3b70903cb9b909c36b490cb4887d8cdef663239d134dddd942cb9",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/fault_review.py": "1c131cf0230787ad68dd82dc9a0247589e4c44b960f3aa81244efff0cec0dded",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/queue_runner.py": "cd1b375f388b08104a47013c9c51e466b92200593ae740866363b690f1e6b8c7",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/window.py": "c14a27f4589335c989b794ab578b1ae83daafc9cf71cb80388f2236bfb78a3f2",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/suite_driver.py": "4076148d41642c753ccb5ef059be4ec5c53ee0cdc584bb15b7f46b4e6026f82a",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/views.py": "3e373adbc126f251bd571ca57ec8e9b4ae99766e220698a48bcd452e71ce4d81",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/composition.py": "178cd2bfbcbdef7af22b2e7075e2a1ec5eb6be01276a356a38cb7fa8ddba58e6",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/memory_plan.py": "aefdc394f88eef89e551dd29e7f9f543b5deb13d4d02eaee093ce89434fb5f1e",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/admission.json": "82fbd8d58dc7fc3c23a79385fe6611e3edf50185b9c19c83af4d8d6318c398f7",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/packet58_submission.py": "47b402f842a45f5891c550dc22f6e3233716cef36a7f4fd79c10f780c10e8c9e",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/engine-binding.json": "27ffe154e4e606ac03aef112a6509c0234fe812a550623eae3aa8328d8ffabfb",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/restore-inputs.json": "951a081d5e2998b3667ef99930d4088ebc6d3c46ab668fb3c34b64a563c0cfe5",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/README.md": "56147bfe0653a52ce6680f1f1e806247e33b57ce5e4a33f38a7902c537bf6af2",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/DO-NOT-REPEAT.md": "1f44edbbaba0833f9aa71d313d39058ad2f1ee5d62d9a91bebb49e8aac68fda6",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/RETENTION.md": "da7733eb4a93fced059cc0b45224ee323f6238c86cbf82d098884db469422621",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/CPU-PREPARATION-CLOSEOUT.md": "29381ef4a4bf9a0b1fd4225891f2d470c27316d731b65ee6955727213f033510",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/MEMORY.md": "51902c3a2bd379dc06ec1603e9ca7777c5e4a5fbcc1f7ab8700b2bac30fcf819",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/chain-flags.json": "c4d429a896e6b969b4bc082a18336f54df8904be5586864f214b73a2a6125891",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/cache23-chain-delta.json": "1286d7840241c666264e0b778d44e2f34d6c5baeac5b51305f7d8e9477e23e88",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/admission-gate.json": "705c1570788250c191d31d3646ef33fdb78a22cdd7b1b40113f9cbdb8a8a196f",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/final-checks.json": "64d674da14a313bc16e4bd905e3d9aab9715b31df053c5b85bac72a700a44e9b",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/script-argv-check.json": "f9355239bd63fd8d92ab76ad954c58d77054537a7299886395eeb519d4580c5e",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/help-cache23.json": "625db85dc3368f7fa7c1b3230cc31f36087d2f6364428c3f77c33c0d3d61b2ed",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/predevice-cache23.json": "839f9b93821802f80f00ecf70d8ee42739d5ec3379b895a5173cf409d18e2112",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/closure-cache23.json": "f8c002086bd09aa9227a23bece0f7ba8ef3862f3237c655986867457c455091d",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/postnative-cache23.json": "0b020a007685182daccd84a48c205f14ed4ba0dccb4c12d241dd4c95f0009010",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/drain-fix.json": "d2d4c79077fb5b72abaeb15807286b86794220a2bbdf5c03b4961700e1e3e641",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/launch-limits.json": "905e989523058ef93c0da3a5d037f024a8ff7d7130ae3e3ee310deef8f1f253b",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/python-cpu-gates-cache23.json": "9b7d9fdf0719e5f75378fbc1d231a25d2e304eeb4851471a06ba7622451e03ef",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/engine-binding-check.json": "e4b8d625db155baee5c96c1c7838b588366ae1219cfbf2e4bdc68ff51d647697",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/submission-rehearsal-cache23.json": "b15fe1704b743abf678e3b5921f6dfd6b5d944b64f42ae6dba241635876f1796",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/queue-gate.json": "f16b53e6f93e2fbc30fb850edfd78aa2baf62df3090ff616fd2df9b76c0eada3"
+  },
+  "orchestration_provenance": [
+    {
+      "name": "derive_cache23_chain.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/derive_cache23_chain.py",
+      "parent_digest": "1f97657c54442acd67f7af73f01c9de94df8611ee789bbb048216104a8bee257"
+    },
+    {
+      "name": "apply_cache23_chain_delta.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/apply_cache23_chain_delta.py",
+      "parent_digest": "42c905b4f62e7f06a5756fe184453b59b720c8bc776154d97e323f76aa1a2584"
+    },
+    {
+      "name": "cpu_gates.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/cpu_gates.py",
+      "parent_digest": "68d2976972dee026b7578bbf1085611aee0885f1c008846e01ec2af937353018"
+    },
+    {
+      "name": "reseal.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/reseal.py",
+      "parent_digest": "e8165cc486dfede607ac0b2a6052de3727507c6a5a54d90330c06c0f0d385c43"
+    },
+    {
+      "name": "admission_gate.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/admission_gate.py",
+      "parent_digest": "d423278b335e19b91d0efaa25c5151c81483ab95347cfc9480edd9474324eb5b"
+    },
+    {
+      "name": "script_argv_check.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/script_argv_check.py",
+      "parent_digest": "6f3361168b1c5bac67fa2a1312fc330f1e99651498f41f093f67bce0bac2ab95"
+    },
+    {
+      "name": "launch_chain.sh",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/launch_chain.sh",
+      "parent_digest": "7d386b776c9b4e203f038087b8d96e7bf5341962df565d33e58973cdc5edde78"
+    },
+    {
+      "name": "final_checks.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/final_checks.py",
+      "parent_digest": "2d961d9966957a502e51d464c862baeed539b97f1633c01d30433220a8dee3ae"
+    },
+    {
+      "name": "verify_ready.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/verify_ready.py",
+      "parent_digest": "16b636a7f1c5d5c581ed87e0c6028693cc9e9a4c8d0eacdb6c9520b71ea571f5"
+    },
+    {
+      "name": "prepare_submission.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/prepare_submission.py",
+      "parent_digest": "df2e83733e820bcaa973fedd41b6366447d8a26d1d98f37641a8c4100f4f7c48"
+    },
+    {
+      "name": "submission.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/submission.py",
+      "parent_digest": "634d8f8a4a58189852cf4d187ead25a093754e754f2108c63124d1d0b1bce3eb"
+    },
+    {
+      "name": "entry-proposal.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/entry-proposal.jsonl",
+      "parent_digest": "9edd39782986c37a81b5d66362187be3480cadf772c5967bdeb84964137987c5"
+    },
+    {
+      "name": "queue-plan.log",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/queue-plan.log",
+      "parent_digest": "375002a3d08aa689bae5db67b6517a1dd6551894864faef9fd92057d94b20208"
+    },
+    {
+      "name": "help.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/help.json",
+      "parent_digest": "e7352e0de51c3fc6b25942c5f9c82feb4872b83c69ef29652867885e84b60836"
+    },
+    {
+      "name": "predevice-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/predevice-rehearsal.json",
+      "parent_digest": "48a4358fdf0cc86a7605a4d3bb92f4a27653848be27774b131a7e09cdf372912"
+    },
+    {
+      "name": "postnative-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/postnative-rehearsal.json",
+      "parent_digest": "be8b2944d02213f591898496cd0ccdf5e33d850d267b648d1e41b77f77a905db"
+    },
+    {
+      "name": "onecard_chain_derive.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/onecard_chain_derive.py",
+      "parent_digest": "19d528a62cd5362d45e3947f69170bbbc42b348055dcf85d0a570da832895c7e"
+    },
+    {
+      "name": "derivation.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/derivation.json",
+      "parent_digest": "629b67a3ad73333a9e6049adac8af288d7a927fd7652e2053f52525af0fbb2ac"
+    },
+    {
+      "name": "capacity-patch.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/capacity-patch.json",
+      "parent_digest": "980a3aa1f1774636ac938005dceb52250fa2f279d757c5afd105f5d50b78f0ab"
+    },
+    {
+      "name": "derivation-READY-FOR-DEVICE.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/derivation-READY-FOR-DEVICE.json",
+      "parent_digest": "0131f6a182ddf5961e8a3b7fb9865f59854a93c5b41686fc8799122cdc38b240"
+    },
+    {
+      "name": "reseal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/reseal.json",
+      "parent_digest": "ae6349a5270a49bc1635a565f678bd730380e2267fd730fdcf842ec54229c267"
+    },
+    {
+      "name": "README.md",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/README.md",
+      "parent_digest": "35a89f4b198c0a31e3a3c86790ed4b8537a1d01d816c95080e7a6bd42e08453e"
+    }
+  ],
+  "parent_provenance": [
+    {
+      "name": "READY-FOR-DEVICE.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58aj-orchestration/READY-FOR-DEVICE.json",
+      "parent_digest": "c28edd6173f9c10e4ef272d9d5626f5aa7d75f3049fe718896eaca7331d017df"
+    },
+    {
+      "name": "build-receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build-receipt.json",
+      "parent_digest": "f50f72ef2fb6df76ffa1fd70ae3c437180fe65feb8728b1ce829cc3706090723"
+    }
+  ],
+  "pin_audit": {
+    "check_job": {
+      "job": "packet58-onecard-cache23-chain-chain-A",
+      "passed": true,
+      "pins": 583,
+      "manifests": 55
+    },
+    "collected_pins": 583,
+    "manifests": 55,
+    "ready_in_closure": [
+      "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/ready.json"
+    ],
+    "classes": {
+      "oracle-binding.json target": 7,
+      "packet-private": 576
+    },
+    "cross_packet_mutable_pins": 0,
+    "cross_examples": [],
+    "lanequeue_plan": "passed (temporary queue dir)"
+  },
+  "confirmation_run": false,
+  "confirmation": null,
+  "predevice_rehearsal": {
+    "passed": true,
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ],
+    "boundaries": {
+      "K1a": "output directory creation",
+      "K1b": "output directory creation",
+      "KD": "previous-window prerequisite K1",
+      "W2m": "previous-window prerequisite KD",
+      "WS": "previous-window prerequisite W2m",
+      "WS128x": "previous-window prerequisite WS",
+      "WS128": "previous-window prerequisite WS128x"
+    },
+    "simulated": [
+      "priority",
+      "affinity",
+      "user_unit_gate"
+    ]
+  },
+  "runtime_closure_check": {
+    "passed": true,
+    "checked": 84,
+    "copied_dirs": [
+      "selections",
+      "frozen-inputs",
+      "host-admission",
+      "native",
+      "lineage",
+      "screen-reader"
+    ]
+  },
+  "postnative_rehearsal": {
+    "passed": true,
+    "evidence": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a",
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ]
+  },
+  "chain_quality_pending": true,
+  "chain_performance_pending": true,
+  "no_retry": true,
+  "queued": false,
+  "device_executed": false,
+  "services_started": false,
+  "model_payload_reads": false,
+  "live_queue_changed": false,
+  "submission_performed": false,
+  "final_content_write": true,
+  "record_line_binary_sha256": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+  "capacity": {
+    "cache_cap": "max23",
+    "cache_allocation_bytes": 23049601024,
+    "cache_bytes": 23049601024,
+    "argv": {
+      "--cache-cap": "max23",
+      "--cache-bytes": "23049601024"
+    },
+    "engine_sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+    "memory_plan": "packet58-onecard-cache23 admission.json (apply_cache23_chain_delta.py)",
+    "host_required_available_bytes": 100487123456,
+    "applied_by": "ops/packet58c23chain-orchestration/apply_cache23_chain_delta.py",
+    "delta_log": "evidence/cache23-chain-delta.json"
+  },
+  "host_required_available_bytes": 100487123456,
+  "launcher_host_floor_bytes": 101560865280,
+  "bars": {
+    "record_tok_s": 35.92672010504166,
+    "reference_submission": "cmvjejvoi03qcrf0138emu5a6",
+    "chain_bar_tok_s": 36.6452544,
+    "chain_bar_met": false,
+    "admitted_by": "coordinator ruling 2026-10-23 (idle lanes)"
+  },
+  "admission_gate": {
+    "path": "evidence/admission-gate.json",
+    "sha256": "705c1570788250c191d31d3646ef33fdb78a22cdd7b1b40113f9cbdb8a8a196f",
+    "files_read": 330
+  },
+  "fills_per_token": [
+    15.449,
+    13.457,
+    15.449,
+    13.457,
+    15.449
+  ],
+  "drm_peak_loaded_bytes": 29988990976,
+  "launcher": "ops/packet58c23chain-orchestration/launch_chain.sh (--dry-run first; coordinator by hand; never auto-launched)",
+  "submission": {
+    "prepare": "ops/packet58c23chain-orchestration/prepare_submission.py --chain <output> --output <packet>/submission/prepared-a",
+    "submit": "ops/packet58c23chain-orchestration/submission.py --payloads <prepared-a>/payload-queue.json [--dry-run | --server-dry-run]",
+    "update_record": "prepare_submission.py --update-record <prepared-a>/result.json --submission-id <ID>",
+    "notes_cap": 2000,
+    "scope_tokens": 128
+  },
+  "gates": {
+    "evidence/script-argv-check.json": "f9355239bd63fd8d92ab76ad954c58d77054537a7299886395eeb519d4580c5e",
+    "evidence/chain-flags.json": "c4d429a896e6b969b4bc082a18336f54df8904be5586864f214b73a2a6125891",
+    "evidence/help-cache23.json": "625db85dc3368f7fa7c1b3230cc31f36087d2f6364428c3f77c33c0d3d61b2ed",
+    "evidence/predevice-cache23.json": "839f9b93821802f80f00ecf70d8ee42739d5ec3379b895a5173cf409d18e2112",
+    "evidence/closure-cache23.json": "f8c002086bd09aa9227a23bece0f7ba8ef3862f3237c655986867457c455091d",
+    "evidence/postnative-cache23.json": "0b020a007685182daccd84a48c205f14ed4ba0dccb4c12d241dd4c95f0009010",
+    "evidence/drain-fix.json": "d2d4c79077fb5b72abaeb15807286b86794220a2bbdf5c03b4961700e1e3e641",
+    "evidence/launch-limits.json": "905e989523058ef93c0da3a5d037f024a8ff7d7130ae3e3ee310deef8f1f253b",
+    "evidence/python-cpu-gates-cache23.json": "9b7d9fdf0719e5f75378fbc1d231a25d2e304eeb4851471a06ba7622451e03ef",
+    "evidence/admission-gate.json": "705c1570788250c191d31d3646ef33fdb78a22cdd7b1b40113f9cbdb8a8a196f",
+    "evidence/engine-binding-check.json": "e4b8d625db155baee5c96c1c7838b588366ae1219cfbf2e4bdc68ff51d647697",
+    "evidence/submission-rehearsal-cache23.json": "b15fe1704b743abf678e3b5921f6dfd6b5d944b64f42ae6dba241635876f1796",
+    "evidence/queue-gate.json": "f16b53e6f93e2fbc30fb850edfd78aa2baf62df3090ff616fd2df9b76c0eada3"
+  },
+  "final_checks_sha256": "64d674da14a313bc16e4bd905e3d9aab9715b31df053c5b85bac72a700a44e9b",
+  "commit": "731a67b3244cfb491997ea2e665e7b3f2ed31118",
+  "record_eligible_after_chain_only": true,
+  "last_packet_write": true
+}

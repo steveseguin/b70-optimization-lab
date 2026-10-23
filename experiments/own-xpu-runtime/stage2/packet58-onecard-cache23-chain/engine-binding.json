@@ -1,0 +1,88 @@
+{
+  "schema": "packet58cache23chain.engine-binding.v1",
+  "passed": true,
+  "device_executed": false,
+  "compiled_here": false,
+  "compiler_runs": 0,
+  "relinked": false,
+  "reused_byte_for_byte": true,
+  "engine": {
+    "path": "build/device/own-rt-iq3",
+    "sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+    "source": {
+      "name": "own-rt-iq3",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/build/device/own-rt-iq3",
+      "parent_digest": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a"
+    },
+    "parent_record_line_engine": "1b41fb4da10a3c8c644f44f6288b9b1af0f46300847a06a254420796af921145",
+    "identity": "packet58-onecard-cache23 rebuilt entry TU (native-cache23-delta.patch: one 23,049,601,024-byte arena, --cache-cap 18GB|max|max23, device bound 29,828,911,360) over the packet182c/176 engine text; 79 parent objects relinked unchanged; 0 warnings"
+  },
+  "host_parser": {
+    "path": "build/gnu-host/own-rt-iq3",
+    "sha256": "03a2aa12187d02276995a1cba5d0fffc0bdd5e78632144f2529db44103be705b",
+    "source": {
+      "name": "own-rt-iq3",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/build/gnu-host/own-rt-iq3",
+      "parent_digest": "03a2aa12187d02276995a1cba5d0fffc0bdd5e78632144f2529db44103be705b"
+    },
+    "role": "--p58r-parse-test real-parser gate and the script-mode argv check; never a timing binary"
+  },
+  "k1_fixture": {
+    "path": "build/device/p58-cache-fixtures",
+    "sha256": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35",
+    "source": {
+      "name": "p58-cache-fixtures",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet182c-chain/build/device/p58-cache-fixtures",
+      "parent_digest": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35"
+    },
+    "role": "K1a/K1b inherited fixture (packet58ag/58aj/182c byte-identical); no model flags"
+  },
+  "cache23_provenance": [
+    {
+      "name": "main.cpp",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/native/generated/main.cpp",
+      "parent_digest": "dd887b5c69ac793afb540715a7aa2fcb38a4ee5bea9e8ebf97046b3494446bf4"
+    },
+    {
+      "name": "native-cache23-delta.patch",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/native-cache23-delta.patch",
+      "parent_digest": "7a433a0d5775fb94dc07eedf2838316d8b1e453dee2b5b6079da359693d7efca"
+    },
+    {
+      "name": "build.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/evidence/build.json",
+      "parent_digest": "7563d2713c56b843498b78e120e886bc0779a37c25f8f1fc68535404456a9f7e"
+    },
+    {
+      "name": "cache-identity.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/evidence/cache-identity.json",
+      "parent_digest": "bd6673cf903045eae6718b6c37c3a326ed888c240dbfdd837e11d16a5e376426"
+    },
+    {
+      "name": "preparation.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/evidence/preparation.json",
+      "parent_digest": "abc6f29876a7545cd2c51d3a8e0cd24cef6debff69c1e0fbc6383fb096b29877"
+    },
+    {
+      "name": "loader.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/evidence/loader.json",
+      "parent_digest": "678bc042d180df3eb7369606d1fdd1a82dcadd6f5dc92dbe774b2a6fd675269a"
+    },
+    {
+      "name": "build-receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/build-receipt.json",
+      "parent_digest": "9b7b241dfb3f53879d7379e45021fba9a06a89ec1d21407b2e478fc2a94757b5"
+    },
+    {
+      "name": "memory-plan.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/memory-plan.json",
+      "parent_digest": "395236d812dc76179cc86d075036f5282b36a1812fb7424b02f0d8c1fca84742"
+    },
+    {
+      "name": "READY-FOR-DEVICE.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/READY-FOR-DEVICE.json",
+      "parent_digest": "26d24267a5412eb49737f1fc89241a65bebd498321495db6e5c5022282ec4a37"
+    }
+  ],
+  "inherited_gates_note": "evidence/postload-allocation-cpu.json, fullshape-submit-cpu.json, resident-*-cpu.json and packet58ajb-preparation.json are the parent harness gates copied byte for byte (packet182c did the same for its engine); the cache23 engine's own allocation/full-shape/startup proofs are the provenance records above (read in place)"
+}

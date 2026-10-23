@@ -1,0 +1,417 @@
+{
+  "schema": "packet58cache23chain.delta.v1",
+  "passed": true,
+  "device_executed": false,
+  "edits": [
+    {
+      "file": "memory_plan.py",
+      "action": "copied from packet58-onecard-cache23 root harness",
+      "source": {
+        "name": "memory_plan.py",
+        "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/memory_plan.py",
+        "parent_digest": "aefdc394f88eef89e551dd29e7f9f543b5deb13d4d02eaee093ce89434fb5f1e"
+      },
+      "before_sha256": "6a006615894d8a014b2ece88738709058109116ad49aa2d41723f56711e2a3ab",
+      "after_sha256": "aefdc394f88eef89e551dd29e7f9f543b5deb13d4d02eaee093ce89434fb5f1e",
+      "rewrites": []
+    },
+    {
+      "file": "admission.json",
+      "action": "copied from packet58-onecard-cache23 root harness",
+      "source": {
+        "name": "admission.json",
+        "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/admission.json",
+        "parent_digest": "9d6decf9990cdf775681a0ee463f625f254635541ea26299f1b3b28cde401958"
+      },
+      "before_sha256": "a1a870f7461b3aa0bf85b1768d2bba5709f61c1ad2f725b14f6c3dc6d4386241",
+      "after_sha256": "82fbd8d58dc7fc3c23a79385fe6611e3edf50185b9c19c83af4d8d6318c398f7",
+      "rewrites": [
+        {
+          "old": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/lineage/58ag-admission.json",
+          "new": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/lineage/58ag-admission.json"
+        }
+      ]
+    },
+    {
+      "file": "test_memory_plan.py",
+      "action": "copied from packet58-onecard-cache23 root harness",
+      "source": {
+        "name": "test_memory_plan.py",
+        "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/test_memory_plan.py",
+        "parent_digest": "26c9b67430145e75ab32997c8ca70da64e8deadebfed0ac2454a099f0928ac8c"
+      },
+      "before_sha256": "db35dd4e5a3ad8ff1a0994cd5f3477c03966b337c3562346bce795dc04fc9338",
+      "after_sha256": "26c9b67430145e75ab32997c8ca70da64e8deadebfed0ac2454a099f0928ac8c",
+      "rewrites": []
+    },
+    {
+      "file": "budget_gate.py",
+      "action": "literal",
+      "before_sha256": "0dd50357d671861191e3beeb77fd8bccd8352f4a39b8a03552d96bbdfef17be7",
+      "after_sha256": "b8ab47bfd58885d050b6eb5bea2abe36f447c2b998d258ef063a03f77bff7966",
+      "old": "98990252032",
+      "new": "100487123456",
+      "occurrences": 1
+    },
+    {
+      "file": "test_memory_sensor.py",
+      "action": "literal",
+      "before_sha256": "6aa6c52390e30f049eb813f2fc2bc5b14a9dfb45feffc445631afe8f35ad4be0",
+      "after_sha256": "4615f882f69cbbc31c78ded0b07ad06f6256b271105ab18bc187b73265ff732b",
+      "old": "98990252032",
+      "new": "100487123456",
+      "occurrences": 1
+    },
+    {
+      "file": "test_admission58e.py",
+      "action": "literal",
+      "before_sha256": "089653127967501864a3b5e6f9ca334f9b8d2d82892877670e3e4a3b5ef3ffc9",
+      "after_sha256": "1db8a8b0e776a872e4fea781804f61fb5a7102ca127fd5f03a408904d5cd1f98",
+      "old": "98990252032",
+      "new": "100487123456",
+      "occurrences": 1
+    },
+    {
+      "file": "test_resident.py",
+      "action": "literal",
+      "before_sha256": "27cb82a068a1f22bae79a0b6b9b4bf8c9dbb19f1a0269dca520685e28eee0260",
+      "after_sha256": "be18d80af874c0768ca1004003aec525cee887b09228b34355fd56894a302c8c",
+      "old": "self.assertEqual(b['device_categories']['expert_cache_arena'],21552729600)",
+      "new": "self.assertEqual(b['device_categories']['expert_cache_arena'],23049601024)",
+      "occurrences": 1
+    },
+    {
+      "file": "test_resident.py",
+      "action": "literal",
+      "before_sha256": "be18d80af874c0768ca1004003aec525cee887b09228b34355fd56894a302c8c",
+      "after_sha256": "8e8a00b49c1def523434df1888c94087c489a550a229ae96bdf2ea8c981d0e82",
+      "old": "self.assertEqual(b['host_bound_bytes'],90400317440)",
+      "new": "self.assertEqual(b['host_bound_bytes'],91897188864)",
+      "occurrences": 1
+    },
+    {
+      "file": "test_resident.py",
+      "action": "literal",
+      "before_sha256": "8e8a00b49c1def523434df1888c94087c489a550a229ae96bdf2ea8c981d0e82",
+      "after_sha256": "9fe0b4f1a684f4185dbf82bc1d036303fa1707d60e0036df02d41b1fad36589d",
+      "old": "self.assertEqual(b['host_required_available_bytes'],98990252032)",
+      "new": "self.assertEqual(b['host_required_available_bytes'],100487123456)",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "5f154f61d7c19c6090e862f3acf57628f14cd86ca8f18ea0dc5266844da03883",
+      "after_sha256": "cc6d7e6db807a2a4b7fe36cb635e4b89454d22a7444be52830f7334f209086d3",
+      "old": "and command.count('--cache-bytes')==1 and command[command.index('--cache-bytes')+1]=='21552729600'",
+      "new": "and command.count('--cache-bytes')==1 and command[command.index('--cache-bytes')+1]=='23049601024'",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "cc6d7e6db807a2a4b7fe36cb635e4b89454d22a7444be52830f7334f209086d3",
+      "after_sha256": "902e88f0a3953176c4fc4213766049b82b83ba951447441697ba66164a48545b",
+      "old": "and command.count('--cache-cap')==1 and command[command.index('--cache-cap')+1]=='max'",
+      "new": "and command.count('--cache-cap')==1 and command[command.index('--cache-cap')+1]=='max23'",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "902e88f0a3953176c4fc4213766049b82b83ba951447441697ba66164a48545b",
+      "after_sha256": "ff9690f9ee6e74e03759ad2e05aa2db36c9b47980009df8ad7d8ee9e16ee284a",
+      "old": "memory['full_cache_bytes'] == 21_552_729_600",
+      "new": "memory['full_cache_bytes'] == 23_049_601_024",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "ff9690f9ee6e74e03759ad2e05aa2db36c9b47980009df8ad7d8ee9e16ee284a",
+      "after_sha256": "b862c10b72d4f6c0ba396df4ef376118a6d45d6068532f1a5e89a34f950306f2",
+      "old": "label='qwen38-flash-next-unsloth-iq3xxs-ownrt-tp1-packet58aj-chain-a-realistic-20261019'",
+      "new": "label='qwen38-flash-next-unsloth-iq3xxs-ownrt-tp1-packet58-onecard-cache23-chain-a-realistic-20261023'",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "b862c10b72d4f6c0ba396df4ef376118a6d45d6068532f1a5e89a34f950306f2",
+      "after_sha256": "5a852c402383da1dfd764a33bc4440d50ee70aeae3c3c9f8e3a1811c95005ced",
+      "old": "optimization_identity='packet58aj-resident-tile16-overlap-tp1-plain-lru21.55gb-c4096-'",
+      "new": "optimization_identity='packet58-onecard-cache23-chain-resident-tile16-overlap-tp1-plain-lru23.05gb-max23-c4096-'",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "5a852c402383da1dfd764a33bc4440d50ee70aeae3c3c9f8e3a1811c95005ced",
+      "after_sha256": "470438e69687f3f61a2542f3867b44f94b9b5491f5f3e7b006a8671c481f68b8",
+      "old": "'Target-only greedy; no draft/MTP. 29.3 GB anonymous exact resident lookup copies; 21.55 GB expert cache; zero-copy misses; '",
+      "new": "'Target-only greedy; no draft/MTP. 29.3 GB anonymous exact resident lookup copies; 23.05 GB expert cache (cache_cap max23 = 23,049,601,024 B, '\n          '+1.5 GB over the 21.55 GB record line, the only change; 30.5 GB DRM guard unchanged); zero-copy misses; '",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "470438e69687f3f61a2542f3867b44f94b9b5491f5f3e7b006a8671c481f68b8",
+      "after_sha256": "18f6a5ee9dffbcc05d5f327f2d4054d4cbf1eaf857d3423a96795652074990b6",
+      "old": "immutableExpertWeightCacheBytes=21_552_729_600",
+      "new": "immutableExpertWeightCacheBytes=23_049_601_024",
+      "occurrences": 1
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "18f6a5ee9dffbcc05d5f327f2d4054d4cbf1eaf857d3423a96795652074990b6",
+      "after_sha256": "8f6e1846ff96a8907ae30cc475e91e2d3d33761ff8432cfbb6d0637aa764e018",
+      "old": "'# Packet58aj one-card scoped measurement\\n\\n'",
+      "new": "'# Packet58-onecard-cache23-chain: one-card scoped measurement (128-token capped suite; expert cache 21.55 -> 23.05 GB, max23)\\n\\n'",
+      "occurrences": 1
+    },
+    {
+      "file": "test_submission.py",
+      "action": "literal",
+      "before_sha256": "76a05a9d7efcf35f7b00af5e11941e5c2b0e0bcd8681708cd2998915cfefb3f7",
+      "after_sha256": "487053e8654f42951013ff08900553ac6e16e77025162c47a7d40853b3b93708",
+      "old": "'--cache-cap','max','--cache-bytes','21552729600'",
+      "new": "'--cache-cap','max23','--cache-bytes','23049601024'",
+      "occurrences": 1
+    },
+    {
+      "file": "test_submission.py",
+      "action": "literal",
+      "before_sha256": "487053e8654f42951013ff08900553ac6e16e77025162c47a7d40853b3b93708",
+      "after_sha256": "186a37cf83890ba981cc705aa202735be31b7dd9340fff7871b15c9fa94d3972",
+      "old": "full_cache_bytes=21_552_729_600",
+      "new": "full_cache_bytes=23_049_601_024",
+      "occurrences": 1
+    },
+    {
+      "file": "test_submission.py",
+      "action": "literal",
+      "before_sha256": "186a37cf83890ba981cc705aa202735be31b7dd9340fff7871b15c9fa94d3972",
+      "after_sha256": "841db31eb390dff20502396a29c5a2958230b14c2f6a24343ef6ca9d779f12bf",
+      "old": "for flag,value in [('--cache-cap','18GB'),('--cache-bytes','18000000000')]:",
+      "new": "for flag,value in [('--cache-cap','18GB'),('--cache-bytes','18000000000'),('--cache-cap','max'),('--cache-bytes','21552729600')]:  # the 35.927 record line is refused as this candidate",
+      "occurrences": 1
+    },
+    {
+      "file": "test_submission.py",
+      "action": "literal",
+      "before_sha256": "841db31eb390dff20502396a29c5a2958230b14c2f6a24343ef6ca9d779f12bf",
+      "after_sha256": "a53c720308557dc89646d27778c78de3677976533a90c449fdb2cf8b388163ce",
+      "old": "        self.assertIn('realistic_final_gate.passed=false',notes)\n",
+      "new": "        self.assertIn('realistic_final_gate.passed=false',notes)\n        for text in ('23.05 GB expert cache', 'cache_cap max23', '23,049,601,024', '21.55 GB record line', '128-token owner scope', '30.5 GB DRM guard unchanged'):\n            self.assertIn(text, notes)\n        self.assertEqual(r['label'], 'qwen38-flash-next-unsloth-iq3xxs-ownrt-tp1-packet58-onecard-cache23-chain-a-realistic-20261023')\n        self.assertIn('lru23.05gb-max23', r['promotionIdentity']['optimization_identity'])\n",
+      "occurrences": 1
+    },
+    {
+      "file": "rehearse_submission.py",
+      "action": "literal",
+      "before_sha256": "80ed267d014f5a8d3bd9c70b87b18751854ef2a9638d9709ccae13e0a37c65f3",
+      "after_sha256": "e9057379450f212b9b4f4c40c3377653862468030f923cc024a4225233cc841b",
+      "old": "w['postload_memory']['full_cache_bytes']=21552729600",
+      "new": "w['postload_memory']['full_cache_bytes']=23049601024",
+      "occurrences": 1
+    },
+    {
+      "file": "rehearse_submission.py",
+      "action": "literal",
+      "before_sha256": "e9057379450f212b9b4f4c40c3377653862468030f923cc024a4225233cc841b",
+      "after_sha256": "3682077a260391852d0677e85954cd4e16684dc1df5ac93d204f88c2d8a1872b",
+      "old": "            driver['command']+=['--lookups','resident','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground']\n",
+      "new": "            driver['command']+=['--lookups','resident','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground']\n            # packet58-onecard-cache23-chain: synthetic capacity identity substitution (in memory only), like the composition flags above.\n            for flag,value in (('--cache-cap','max23'),('--cache-bytes','23049601024')):\n                if flag in driver['command']:driver['command'][driver['command'].index(flag)+1]=value\n                else:driver['command']+=[flag,value]\n",
+      "occurrences": 1
+    },
+    {
+      "file": "rehearse_submission.py",
+      "action": "literal",
+      "before_sha256": "3682077a260391852d0677e85954cd4e16684dc1df5ac93d204f88c2d8a1872b",
+      "after_sha256": "a58e778f0dbc96d58b28008015d25afe1aa916daf0f1d51371e32cbc3291faeb",
+      "old": "assert len(notes)<=2000 and '21.55 GB' in notes",
+      "new": "assert len(notes)<=2000 and '23.05 GB expert cache' in notes and 'max23' in notes",
+      "occurrences": 1
+    },
+    {
+      "file": "rehearse_submission.py",
+      "action": "literal",
+      "before_sha256": "a58e778f0dbc96d58b28008015d25afe1aa916daf0f1d51371e32cbc3291faeb",
+      "after_sha256": "bb15154a1795d104f64f9731924744b65086bd322fc0dabf12276675ea9cb8b7",
+      "old": "        for text in ('128-token', 'no strict512', 'anonymous exact resident', 'Post-result',\n                     '26.928/31.959/31.558/32.061/31.525', '60/60 exact', '58ah a:', '58ah quiet-host b'):",
+      "new": "        for text in ('128-token', 'no strict512', 'anonymous exact resident', '23.05 GB expert cache', 'cache_cap max23',\n                     '35.892 / 36.546 / 35.929 / 36.569 / 35.925', '60/60 exact', 'cmvjejvoi03qcrf0138emu5a6', '58ah a:', '58ah quiet-host b'):",
+      "occurrences": 1
+    },
+    {
+      "file": "rehearse_submission.py",
+      "action": "literal",
+      "before_sha256": "bb15154a1795d104f64f9731924744b65086bd322fc0dabf12276675ea9cb8b7",
+      "after_sha256": "72698007383c0bc26ebe48748d83b4165fa62f9c269fdb5dd418f3eca9a66ad9",
+      "old": "(P/'evidence/submission-rehearsal.json')",
+      "new": "(P/'evidence/submission-rehearsal-cache23.json')",
+      "occurrences": 1
+    },
+    {
+      "file": "engine-binding.json",
+      "action": "written",
+      "after_sha256": "27ffe154e4e606ac03aef112a6509c0234fe812a550623eae3aa8328d8ffabfb"
+    },
+    {
+      "file": "restore-inputs.json",
+      "action": "engine records appended",
+      "before_sha256": "135fe8a8772a532b722c8e3920d20803cade3db2b1f71addcdc5d77aa305a4b1",
+      "after_sha256": "951a081d5e2998b3667ef99930d4088ebc6d3c46ab668fb3c34b64a563c0cfe5"
+    },
+    {
+      "file": ".gitignore",
+      "action": "chain output ignore rules appended",
+      "before_sha256": "977807fe6d5de719e8113e17a12156d2330b148c19a462ca2500e9ef07760cad",
+      "after_sha256": "0cfbeaf69f78ac2d95c51c5032e728687f08e1ad48ae2ae91cb74e323804b3e0"
+    },
+    {
+      "file": "MEMORY.md",
+      "action": "rewritten for the cache23 plan",
+      "before_sha256": "4ce7d383f747891e8fbd8904bed5b0ce346083f23bf7098384a40d78a544b7e8",
+      "after_sha256": "51902c3a2bd379dc06ec1603e9ca7777c5e4a5fbcc1f7ab8700b2bac30fcf819"
+    },
+    {
+      "file": "lineage/inherited-58aj-README.md",
+      "action": "inherited packet58aj document moved aside (README/DO-NOT-REPEAT are rewritten for this packet)",
+      "after_sha256": "f352bc854ddf769368f304a5ecd44e083c8f0f0362e55e9438783684f4f063e1"
+    },
+    {
+      "file": "lineage/inherited-58aj-DO-NOT-REPEAT.md",
+      "action": "inherited packet58aj document moved aside (README/DO-NOT-REPEAT are rewritten for this packet)",
+      "after_sha256": "0e2a35967418f7ac68d356653d6453e35bc650fb52dcc9f3455b6e44771c45cb"
+    },
+    {
+      "file": "test_submission.py",
+      "action": "literal",
+      "before_sha256": "a53c720308557dc89646d27778c78de3677976533a90c449fdb2cf8b388163ce",
+      "after_sha256": "074b686363843b0a9465cc1261275cf7bd8fbc9c221d89a5c0a9e9df4e3013ea",
+      "old": "'--cache-cap','max23','--cache-bytes','23049601024']))",
+      "new": "'--cache-cap','max23','--cache-bytes','23049601024','--wait-policy','spin','--foreground-io','kernel']))  # chain flags: composition.FLAGS carries the generated chain flags",
+      "occurrences": 1,
+      "reason": "synthetic driver command must carry the generated chain flags (composition.FLAGS); identical inherited failure class in packet182c-chain (29 tests)"
+    },
+    {
+      "file": "test_ready.py",
+      "action": "skip decorators",
+      "before_sha256": "269e61134c69d1869cb8b1f7d2a5ca6c109b891b5d5e98b871345bd3cfd4f1ed",
+      "after_sha256": "65e24b21949f94064656260ab1476df9fc42e1c90883a7f46b0c5bc511102199",
+      "new": "9 packet58aj bracket-evaluation tests skipUnless verify_ready has evaluate()/METRIC",
+      "reason": "inherited failure class in packet182c-chain (generated verify_ready); the launch-path tests (saved ready cannot bypass, closed embedded environment, old unit refused) still run"
+    },
+    {
+      "file": "evidence/postload-census.json",
+      "action": "test fixture copied byte for byte from the parent harness",
+      "source": {
+        "name": "postload-census.json",
+        "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/postload-census.json",
+        "parent_digest": "7525f0388281343bed73820dd9608abc4f7c058834629a44d2729d1adf63397a"
+      },
+      "after_sha256": "7525f0388281343bed73820dd9608abc4f7c058834629a44d2729d1adf63397a",
+      "reason": "test_admission58e.test_postload_proof_requires_cache_KV_and_after_load reads it (the test rewrites the cache row to M.CACHE_BYTES); inherited FileNotFoundError in packet182c-chain"
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "8f6e1846ff96a8907ae30cc475e91e2d3d33761ff8432cfbb6d0637aa764e018",
+      "after_sha256": "169a97c4579536663e3dc25fc9c9f29b7742ffc22e52537150e81ec87eebe122",
+      "old": "RERUN_DISCLOSURE = ('58ah a: 30.050 tok/s, not submitted, 3,736 major faults vs 124 in WS128x. '\n '58ah quiet-host b final: 31.662719 tok/s, submitted cmvekebvh00a0rf01q3v2c3cz; 24 faults vs 2,079 in WS128x. '\n 'This a/b paging history motivates 58aj resident backing; cause unproven; no third run; arithmetic unchanged.')",
+      "new": "RERUN_DISCLOSURE = ('58ah a: 30.050 tok/s, not submitted (3,736 major faults vs 124 in WS128x); 58ah quiet-host b: 31.662719 tok/s, '\n 'cmvekebvh00a0rf01q3v2c3cz (24 vs 2,079 faults); resident backing since 58aj; cause unproven; no third run; arithmetic unchanged.')",
+      "occurrences": 1,
+      "reason": "notes cap 2,000 chars: the carried 58ah a/b disclosure is compacted (every fact kept: 30.050, not submitted, 3,736 vs 124, quiet-host b 31.662719 + id, 24 vs 2,079, unproven, no third run)"
+    },
+    {
+      "file": "packet58_submission.py",
+      "action": "literal",
+      "before_sha256": "169a97c4579536663e3dc25fc9c9f29b7742ffc22e52537150e81ec87eebe122",
+      "after_sha256": "47b402f842a45f5891c550dc22f6e3233716cef36a7f4fd79c10f780c10e8c9e",
+      "old": "'Target-only greedy; no draft/MTP. 29.3 GB anonymous exact resident lookup copies; 23.05 GB expert cache (cache_cap max23 = 23,049,601,024 B, '\n          '+1.5 GB over the 21.55 GB record line, the only change; 30.5 GB DRM guard unchanged); zero-copy misses; '",
+      "new": "'Target-only greedy; no draft/MTP. 29.3 GB anonymous exact resident lookup copies; 23.05 GB expert cache (cache_cap max23 = 23,049,601,024 B, '\n          '+1.5 GB over the 21.55 GB record line; 30.5 GB DRM guard unchanged); zero-copy misses; '",
+      "occurrences": 1,
+      "reason": "notes cap 2,000 chars: shorter capacity phrase (facts unchanged)"
+    },
+    {
+      "file": "test_submission.py",
+      "action": "literal",
+      "before_sha256": "074b686363843b0a9465cc1261275cf7bd8fbc9c221d89a5c0a9e9df4e3013ea",
+      "after_sha256": "79ca340fbca4f86740c5450bb968b991e963a2413bb4321bd2137505c0882dbb",
+      "old": "digest=changed(self.e,key,lambda r:r.update(command=['--lookups','resident','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--hc','p60fusion','--cache-maintenance','serial','--miss-path','zero-copy']))",
+      "new": "digest=changed(self.e,key,lambda r:r.update(command=['--lookups','resident','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--hc','p60fusion','--cache-maintenance','serial','--miss-path','zero-copy','--wait-policy','spin','--foreground-io','kernel']))",
+      "occurrences": 1,
+      "reason": "the altered command must still carry the generated chain flags so the overlap refusal is reached"
+    },
+    {
+      "file": "evidence/58c-kd/run/progress.jsonl",
+      "action": "test fixture copied byte for byte from the parent harness",
+      "source": {
+        "name": "progress.jsonl",
+        "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/58c-kd/run/progress.jsonl",
+        "parent_digest": "6e04a0d043e93a94308bee45908ee0b12b276f5a0efbdcc3f7069209381e86d3"
+      },
+      "after_sha256": "6e04a0d043e93a94308bee45908ee0b12b276f5a0efbdcc3f7069209381e86d3",
+      "reason": "test_admission58e.test_postload_proof_requires_cache_KV_and_after_load reads it; inherited FileNotFoundError in packet182c-chain"
+    },
+    {
+      "file": "rehearse_submission.py",
+      "action": "literal",
+      "before_sha256": "72698007383c0bc26ebe48748d83b4165fa62f9c269fdb5dd418f3eca9a66ad9",
+      "after_sha256": "9c429c8015459256e7f79ab80d4ab1152a5b3034af4a120c2ec826f17c39216f",
+      "old": "            for flag,value in (('--cache-cap','max23'),('--cache-bytes','23049601024')):\n",
+      "new": "            for flag,value in (('--cache-cap','max23'),('--cache-bytes','23049601024'),('--wait-policy','spin'),('--foreground-io','kernel')):\n",
+      "occurrences": 1,
+      "reason": "the 58ad replay fixture must also carry the generated chain flags (composition.FLAGS) as an in-memory identity substitution"
+    }
+  ],
+  "plan": {
+    "host_required_available_bytes": 100487123456,
+    "device_owned_bound_bytes": 29828911360,
+    "device_categories": {
+      "expert_pointer_generation_tables": 2359296,
+      "target_4k_bf16_kv_index": 116391936,
+      "target_nonexpert": 5815529984,
+      "target_recurrent": 59019280,
+      "async_publication_staging": 1179648,
+      "exact_half_decode_table": 262144,
+      "expert_cache_arena": 23049601024,
+      "transfer_bound": 268435456,
+      "control_transaction_bound": 402653184,
+      "workspace_bound": 113479168
+    },
+    "driver_allowance_bytes": 671088640,
+    "device_margin_bytes": 240,
+    "host_bound_bytes": 91897188864,
+    "memory_plan_source": {
+      "name": "memory-plan.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/memory-plan.json",
+      "parent_digest": "395236d812dc76179cc86d075036f5282b36a1812fb7424b02f0d8c1fca84742"
+    }
+  },
+  "engine": {
+    "device": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+    "host_parser": "03a2aa12187d02276995a1cba5d0fffc0bdd5e78632144f2529db44103be705b",
+    "k1_fixture": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35"
+  },
+  "old_literals_remaining": [
+    {
+      "file": "argument_gate.py",
+      "literal": "21552729600"
+    },
+    {
+      "file": "native_parser_gate.py",
+      "literal": "21552729600"
+    },
+    {
+      "file": "screen_gate.py",
+      "literal": "21552729600"
+    },
+    {
+      "file": "test_submission.py",
+      "literal": "21552729600"
+    }
+  ],
+  "old_literals_note": "remaining occurrences sit in inherited gate scripts whose receipts were copied byte for byte from the parent (argument_gate.py, native_parser_gate.py, screen_gate.py, plan_queue.py proposal text, screen-reader/views.py) and in the validator/tests as the REFUSED old values; none is on the chain launch path, which carries max23/23049601024 (evidence/chain-flags.json, evidence/script-argv-check.json)",
+  "test_adaptation": "test_submission fixture flags, test_ready skip decorators, postload-census fixture"
+}

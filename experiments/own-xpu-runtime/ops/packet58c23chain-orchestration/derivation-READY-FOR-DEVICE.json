@@ -1,0 +1,215 @@
+{
+  "schema": "packet58-onecard-cache23-chain.ready-for-device.v1",
+  "packet": "packet58-onecard-cache23-chain",
+  "revision": "derived:packet58-onecard-cache23-chain",
+  "prepared_utc": "2026-10-23T01:28:17.912192+00:00",
+  "generator": "ops/onecard_chain_derive.py",
+  "preparation_passed": true,
+  "passed": true,
+  "ready_for_device": true,
+  "ready_for_device_chain": true,
+  "ready_for_coordinator_check": true,
+  "reason": "Derived from packet58aj-orchestration: parent chain harness and gates unchanged except --wait-policy spin --foreground-io kernel on every model window and the chain binary.",
+  "chain_binary_sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+  "parent_chain_binary_sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c",
+  "coordinator_unit": "packet58-onecard-cache23-a",
+  "chain_unit": "packet58-onecard-cache23-a",
+  "chain_output": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a",
+  "fault_review": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/fault-review-cache23-a.json",
+  "chain_command": "systemd-run --user --unit=packet58-onecard-cache23-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2 /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/fault-review-cache23-a.json < /dev/null",
+  "chain_command_digest_sha256": "354a08c87dce91ed4981b9a681942a5dd616cfa937363af2bb8c7cbbb0607e35",
+  "command_hash_encoding": "UTF-8, no trailing newline",
+  "windows": [
+    "K1a",
+    "K1b",
+    "KD",
+    "W2m",
+    "WS",
+    "WS128x",
+    "WS128"
+  ],
+  "gap_seconds": 90,
+  "wait_seconds": 300,
+  "lane": "A",
+  "card": 0,
+  "scope": "whole-host",
+  "configuration": {
+    "view": "down-tile16",
+    "cache_maintenance": "overlap",
+    "miss_path": "zero-copy",
+    "cache_cap": "max",
+    "cache_allocation_bytes": 21552729600,
+    "cache_bytes": 21552729600,
+    "kv_dtype": "BF16",
+    "context": 4096,
+    "hc": "p60fusion",
+    "hc_geometry": "hc-wide",
+    "experts": "wide64+halfcache",
+    "other_fusion": "fused",
+    "retirement": "ordered-foreground",
+    "lookups": "resident",
+    "chain_flags": {
+      "--wait-policy": "spin",
+      "--foreground-io": "kernel"
+    },
+    "wait_policy": "spin",
+    "foreground_io": "kernel"
+  },
+  "chain_flags": {
+    "--wait-policy": "spin",
+    "--foreground-io": "kernel"
+  },
+  "whole_host_hold_required_through_gaps": true,
+  "both_lanes_pause_and_drain_required": true,
+  "codex_frozen_from": "WS",
+  "codex_frozen_through": "WS128 completion",
+  "bracket_rates_tok_s": [
+    35.89239775457983,
+    36.54557450233753,
+    35.928542461824385,
+    36.5693526068784,
+    35.924936571926665
+  ],
+  "control_drift_fraction": 0.00010037289531466569,
+  "minimum_gain": 0.017173867856419948,
+  "candidate_beats_all_controls": true,
+  "bracket_exact_requests": 60,
+  "pinned_predecessor": {
+    "reference_submission": "cmvjejvoi03qcrf0138emu5a6",
+    "threshold_tok_s": 35.92672010504166
+  },
+  "submission_scope_tokens": 128,
+  "strict512_claim": false,
+  "fresh_timing_repeat_passed": false,
+  "chain_native_interface_passed": true,
+  "bracket_boot_check": "current-boot",
+  "preparation_ram_budget_bytes": 2000000000,
+  "files_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/build-receipt.json": "0783b9946e11e1a91402d1354d5a565629aadff8db87ba35923696027ff25215",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/submission-pins.json": "fb7ab60b5cd34eddfa5585bdf569a75f12ee6d8c6970ab147a032297e4c239b7",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/ready.json": "dc15ba160bea515c4cac5dc3cd8f61891076f7f9ff04cd18cf9f041a415e60ef",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/WINDOW.md": "607e4a88ca8a1972ecbe34a7e14a1213a1ddf3f284ba29eeb9d18961166a3637",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/runtime-selection.json": "43488e31f6ab3b18e912d1d78e13b5cf4cc356079e8c99003bdac7efe0d836fc",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/submission-policy.json": "6f4fdb76fecc0e47913ba35c9e8d4f8209fb60fc7aae5e6ce4a450363de7ae0c",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/record-threshold.snapshot": "2db5d4a92b70afc7287fcae1349c085532afe0c5866e14c70ae5f981355cbdfe",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/derived-chain.json": "70d824f7d2925a9786a403ce66c8e5f60ccb4fa42998a0dec036d1251cda47e7",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/seal.py": "9f8b7cdf602c202be3f72cb59f57fc8b999a6c44026ed2bfe7df17fc7ebcace9",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/verify_ready.py": "7d36ff3228e3b70903cb9b909c36b490cb4887d8cdef663239d134dddd942cb9",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/fault_review.py": "1c131cf0230787ad68dd82dc9a0247589e4c44b960f3aa81244efff0cec0dded",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/chain-flags.json": "5ef9379077820c3be35653997064b0dc28fb191b0866397ea4fc323c68e8ff13"
+  },
+  "orchestration_provenance": [
+    {
+      "name": "entry-proposal.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/entry-proposal.jsonl",
+      "parent_digest": "94516621a3d764efaf24d352d40360868cf50b634a3e5e8fb664dd51885b60c4"
+    },
+    {
+      "name": "queue-plan.log",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/queue-plan.log",
+      "parent_digest": "32c6bc260926c04eaec27836aac46cb8ebdfe816f116a6cd1ed847333636a8c1"
+    },
+    {
+      "name": "help.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/help.json",
+      "parent_digest": "e7352e0de51c3fc6b25942c5f9c82feb4872b83c69ef29652867885e84b60836"
+    },
+    {
+      "name": "predevice-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/predevice-rehearsal.json",
+      "parent_digest": "48a4358fdf0cc86a7605a4d3bb92f4a27653848be27774b131a7e09cdf372912"
+    },
+    {
+      "name": "postnative-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/postnative-rehearsal.json",
+      "parent_digest": "be8b2944d02213f591898496cd0ccdf5e33d850d267b648d1e41b77f77a905db"
+    },
+    {
+      "name": "onecard_chain_derive.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/onecard_chain_derive.py",
+      "parent_digest": "19d528a62cd5362d45e3947f69170bbbc42b348055dcf85d0a570da832895c7e"
+    }
+  ],
+  "parent_provenance": [
+    {
+      "name": "READY-FOR-DEVICE.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58aj-orchestration/READY-FOR-DEVICE.json",
+      "parent_digest": "c28edd6173f9c10e4ef272d9d5626f5aa7d75f3049fe718896eaca7331d017df"
+    },
+    {
+      "name": "build-receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build-receipt.json",
+      "parent_digest": "f50f72ef2fb6df76ffa1fd70ae3c437180fe65feb8728b1ce829cc3706090723"
+    }
+  ],
+  "pin_audit": {
+    "passed": true,
+    "manifests": 41,
+    "relocated": 275,
+    "parent_pins": 0,
+    "lanequeue_plan": "passed (temporary queue dir)"
+  },
+  "confirmation_run": false,
+  "confirmation": null,
+  "predevice_rehearsal": {
+    "passed": true,
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ],
+    "boundaries": {
+      "K1a": "output directory creation",
+      "K1b": "output directory creation",
+      "KD": "previous-window prerequisite K1",
+      "W2m": "previous-window prerequisite KD",
+      "WS": "previous-window prerequisite W2m",
+      "WS128x": "previous-window prerequisite WS",
+      "WS128": "previous-window prerequisite WS128x"
+    },
+    "simulated": [
+      "priority",
+      "affinity",
+      "user_unit_gate"
+    ]
+  },
+  "runtime_closure_check": {
+    "passed": true,
+    "checked": 84,
+    "copied_dirs": [
+      "selections",
+      "frozen-inputs",
+      "host-admission",
+      "native",
+      "lineage",
+      "screen-reader"
+    ]
+  },
+  "postnative_rehearsal": {
+    "passed": true,
+    "evidence": "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a",
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ]
+  },
+  "chain_quality_pending": true,
+  "chain_performance_pending": true,
+  "no_retry": true,
+  "queued": false,
+  "device_executed": false,
+  "services_started": false,
+  "model_payload_reads": false,
+  "live_queue_changed": false,
+  "submission_performed": false,
+  "final_content_write": true
+}

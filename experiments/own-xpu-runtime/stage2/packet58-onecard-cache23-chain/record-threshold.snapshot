@@ -1,0 +1,125 @@
+{
+  "schema": "lab.packet58.onecard-record-threshold.v1",
+  "gpu_count": 1,
+  "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+  "quantization": "UD-IQ3_XXS (GGUF)",
+  "records": [
+    {
+      "reference_submission": "cmvd8bhou000duj01hxaihg15",
+      "threshold_tok_s": 24.338653323339745,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58s-onecard-submission/submission/card0-58g-a-v3/result.json",
+        "sha256": "d880f272b81214ba84520090ca6fac7ea34e091f51dd80a9add1cf98040f015f"
+      }
+    },
+    {
+      "reference_submission": "cmvdukc200064rf01lqsql9x8",
+      "threshold_tok_s": 26.22859930943809,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/submission/prepared-a/result.json",
+        "sha256": "46511b430d17252310a8de5dac27a60354aa0a0da46247bb65deddf57b5d9e3a"
+      }
+    },
+    {
+      "reference_submission": "cmve789qr008vrf01pm678ee8",
+      "threshold_tok_s": 28.0429892090105,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/submission/prepared-b/result.json",
+        "sha256": "9e2fcd0fa26f9a9db140778cd973a362683277ba3842c9f6e15e647934006647"
+      },
+      "readiness_amendment": "readiness gate amended to exclude the cold-cache first bracket view (58t precedent), before the chain; the record value is the chain's fresh WS128",
+      "chain_attempt": "b",
+      "rerun_disclosure": "Chain a: WS128 25.773 tok/s, not submitted. One preregistered quiet-host rerun: concurrent GGUF-reading CPU gates may have disturbed chain a. Chain b WS128 is final; no third run or choosing between attempts."
+    },
+    {
+      "reference_submission": "cmvebtu5f009frf01gsnfi2eh",
+      "threshold_tok_s": 29.259764156562692,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/submission/prepared-a/result.json",
+        "sha256": "69ea4d606b4c11fb4b13c1eb319f924eaf74d67da4bd177a5940ac9eb1c35ad6"
+      },
+      "readiness_amendment": "58x smoke-d and all five bracket views exact. A0 reported as cold-cache warm-up, excluded only from speed/drift; both max views >=1.005 times each warm 18 GB control; drift <=3%; strict bracket gain applied to 28.043 must be >=2%.",
+      "chain_attempt": "a",
+      "rerun_disclosure": "Fresh packet58z chain a; no selection between attempts."
+    },
+    {
+      "reference_submission": "cmvefq3ep009orf0186k21lba",
+      "threshold_tok_s": 30.395630964654867,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58ad-onecard-record/submission/prepared-a/result.json",
+        "sha256": "5a443d8a8918c7a436b292f8a7cabc94824405e17cf7bc324ddfea766321ea23"
+      },
+      "readiness_amendment": "58ab smoke and five views exact. A0 reported/excluded from speed/drift; both p60fusion views >=1.005 x each warm production control; drift <=3%; strict gain applied to 29.260 >=2%.",
+      "chain_attempt": "a",
+      "rerun_disclosure": "Fresh packet58ad chain a; no selection between attempts."
+    },
+    {
+      "reference_submission": "cmvekebvh00a0rf01q3v2c3cz",
+      "threshold_tok_s": 31.66271941826957,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58ah-onecard-record/submission/prepared-b/result.json",
+        "sha256": "2b0bea48ccf18f275262e050b79bcb69db28b9c64b73282a81077fa126978644"
+      },
+      "readiness_amendment": "58ag smoke and five views exact. A0 reported/excluded from speed/drift; both full compositions >=1.005 x each warm 58ad-line control; drift <=3%; strict gain applied to 30.396 >=2%.",
+      "chain_attempt": "b",
+      "rerun_disclosure": "Chain a: WS128 30.050 tok/s, not submitted; 3,736 major faults vs 124 in WS128x. One preregistered quiet-host rerun: CPU work may have disturbed host paging (unproven). Chain b WS128 is final; no third run or choosing between attempts."
+    },
+    {
+      "reference_submission": "cmveqsmsl00ebrf014yvrsosx",
+      "threshold_tok_s": 31.966819787781944,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/submission/prepared-a/result.json",
+        "sha256": "d80483447751f2fc78101ae4b68d44a4429284f9cd970123068bfc49cef3a10b"
+      },
+      "readiness_amendment": "Post-result coordinator wording amendment: resident >= -0.5% vs every warm mapped control, all exact, drift <=3%; readiness only. 58ajb v5 A0/B0/A1/B1/A2: 26.928/31.959/31.558/32.061/31.525 tok/s; A0 excluded warm-up; 60/60 exact, drift 0.105%, minimum gain +1.27%.",
+      "chain_attempt": "a",
+      "rerun_disclosure": "58ah a: 30.050 tok/s, not submitted, 3,736 major faults vs 124 in WS128x. 58ah quiet-host b final: 31.662719 tok/s, submitted cmvekebvh00a0rf01q3v2c3cz; 24 faults vs 2,079 in WS128x. This a/b paging history motivates 58aj resident backing; cause unproven; no third run; arithmetic unchanged."
+    },
+    {
+      "reference_submission": "cmvf31py400furf01tv54rxo7",
+      "threshold_tok_s": 34.57303759192858,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/submission/chain-a/result.json",
+        "sha256": "4d9d33cee4f8fd95feee7ec3460a777543a508a04e3b96310fbf2d83d2b65ebc"
+      },
+      "readiness_amendment": "58as v5 A0/B0/A1/B1/A2: 31.901/34.577/31.838/34.568/31.807 tok/s; A0 warm-up excluded; 60/60 exact, drift 0.096%, minimum gain +8.58%; readiness only.",
+      "chain_attempt": "a",
+      "rerun_disclosure": "Fresh packet58as chain a; no selection between attempts."
+    },
+    {
+      "reference_submission": "cmvjejvoi03qcrf0138emu5a6",
+      "threshold_tok_s": 35.92672010504166,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet182c-chain/submission/chain-a/result.json",
+        "sha256": "7af74f8321d0da783da0d28443f98b7a3115bb5a8b34f63483c02cac4ec4e8c1"
+      },
+      "readiness_amendment": "v5 A0/B0/A1/B1/A2: 34.579 / 35.951 / 34.590 / 35.955 / 34.584 tok/s; A0 warm-up excluded; 60/60 exact, drift 0.018%, minimum gain +3.93%; chain flags --wait-policy spin --foreground-io kernel on every model window; readiness only. Only fresh WS128 timing above 34.57303759192858 tok/s (cmvf31py400furf01tv54rxo7) and the live ledger may be submitted; otherwise the submission tool refuses.",
+      "chain_attempt": "a",
+      "rerun_disclosure": "58ah a: 30.050 tok/s, not submitted, 3,736 major faults vs 124 in WS128x. 58ah quiet-host b final: 31.662719 tok/s, submitted cmvekebvh00a0rf01q3v2c3cz; 24 faults vs 2,079 in WS128x. This a/b paging history motivates 58aj resident backing; cause unproven; no third run; arithmetic unchanged."
+    }
+  ],
+  "public_record_check": {
+    "checked_utc": "2026-10-18T13:14:03Z",
+    "method": "GET",
+    "endpoint": "https://www.localmaxxing.com/api/speed-tests?modelId=cmtas1yaz000cqq01umzx85mw&limit=100",
+    "http_status": 200,
+    "status": "checked-own-1x-b70-entry-only",
+    "pagination_complete": true,
+    "runs_for_model": 60,
+    "single_gpu_runs_for_model": 17,
+    "matching_public_record": {
+      "reference_submission": "cmvd8bhou000duj01hxaihg15",
+      "tok_s": 24.33865332333975,
+      "owner": "this lab"
+    },
+    "best_tok_s": 24.33865332333975,
+    "best_single_gpu_other_hardware_tok_s": 110.0,
+    "local_ledger_matching_entry": true,
+    "previous_check": {
+      "checked_utc": "2026-10-18T02:50:00Z",
+      "http_status": 200,
+      "status": "checked-no-matching-1x-b70"
+    },
+    "disclosure": "Public list checked 2026-10-18 13:14 UTC (HTTP 200, 60 runs, 17 single-GPU): the only 1x Arc Pro B70 entry is this lab's 24.339 (cmvd8bhou000duj01hxaihg15), which this run supersedes; other single-GPU hardware entries exist (up to 110 tok/s). Change vs that run: down-weight tile16 layout only (lossless; raises zero-copy expert-miss bandwidth ~1.27x). WS128 host state: 0 major page faults per token over 1,536 tokens, median host preparation 0.53 ms. Single timed run."
+  }
+}

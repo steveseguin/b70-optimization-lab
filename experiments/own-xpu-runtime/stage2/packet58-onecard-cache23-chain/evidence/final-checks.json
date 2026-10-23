@@ -1,0 +1,127 @@
+{
+ "schema": "packet58cache23chain.final-checks.v1",
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "submitted": false,
+ "launched": false,
+ "binary_sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+ "reused_byte_for_byte": true,
+ "compiler_runs": 0,
+ "chain_command_digest_sha256": "354a08c87dce91ed4981b9a681942a5dd616cfa937363af2bb8c7cbbb0607e35",
+ "unit": "packet58-onecard-cache23-a",
+ "chain_output": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a",
+ "capacity": {
+  "cache_cap": "max23",
+  "cache_bytes": 23049601024,
+  "arena_old": 21552729600
+ },
+ "host_required_available_bytes": 100487123456,
+ "launcher_floor_bytes": 101560865280,
+ "bracket": {
+  "rates": [
+   35.89239775457983,
+   36.54557450233753,
+   35.928542461824385,
+   36.5693526068784,
+   35.924936571926665
+  ],
+  "minimum_gain": 0.017173867856419948,
+  "drift": 0.00010037289531466569,
+  "fills": [
+   15.449,
+   13.457,
+   15.449,
+   13.457,
+   15.449
+  ],
+  "drm_peak_loaded_bytes": 29988990976,
+  "files_read": 330
+ },
+ "bars": {
+  "record_tok_s": 35.92672010504166,
+  "reference_submission": "cmvjejvoi03qcrf0138emu5a6",
+  "chain_bar_tok_s": 36.6452544,
+  "chain_bar_met": false,
+  "admitted_by": "coordinator ruling 2026-10-23 (idle lanes)"
+ },
+ "gates": {
+  "evidence/script-argv-check.json": "f9355239bd63fd8d92ab76ad954c58d77054537a7299886395eeb519d4580c5e",
+  "evidence/chain-flags.json": "c4d429a896e6b969b4bc082a18336f54df8904be5586864f214b73a2a6125891",
+  "evidence/help-cache23.json": "625db85dc3368f7fa7c1b3230cc31f36087d2f6364428c3f77c33c0d3d61b2ed",
+  "evidence/predevice-cache23.json": "839f9b93821802f80f00ecf70d8ee42739d5ec3379b895a5173cf409d18e2112",
+  "evidence/closure-cache23.json": "f8c002086bd09aa9227a23bece0f7ba8ef3862f3237c655986867457c455091d",
+  "evidence/postnative-cache23.json": "0b020a007685182daccd84a48c205f14ed4ba0dccb4c12d241dd4c95f0009010",
+  "evidence/drain-fix.json": "d2d4c79077fb5b72abaeb15807286b86794220a2bbdf5c03b4961700e1e3e641",
+  "evidence/launch-limits.json": "905e989523058ef93c0da3a5d037f024a8ff7d7130ae3e3ee310deef8f1f253b",
+  "evidence/python-cpu-gates-cache23.json": "9b7d9fdf0719e5f75378fbc1d231a25d2e304eeb4851471a06ba7622451e03ef",
+  "evidence/admission-gate.json": "705c1570788250c191d31d3646ef33fdb78a22cdd7b1b40113f9cbdb8a8a196f",
+  "evidence/engine-binding-check.json": "e4b8d625db155baee5c96c1c7838b588366ae1219cfbf2e4bdc68ff51d647697",
+  "evidence/submission-rehearsal-cache23.json": "b15fe1704b743abf678e3b5921f6dfd6b5d944b64f42ae6dba241635876f1796",
+  "evidence/queue-gate.json": "f16b53e6f93e2fbc30fb850edfd78aa2baf62df3090ff616fd2df9b76c0eada3"
+ },
+ "notes_chars": 1936,
+ "python": {
+  "ran": "Ran 137 tests in 4.694s",
+  "summary": "OK (skipped=9)"
+ },
+ "pin_guard_before_ready": {
+  "check_job": {
+   "job": "packet58-onecard-cache23-chain-chain-A",
+   "passed": true,
+   "pins": 583,
+   "manifests": 55
+  },
+  "collected_pins": 583,
+  "manifests": 55,
+  "ready_in_closure": [
+   "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/ready.json"
+  ],
+  "classes": {
+   "oracle-binding.json target": 7,
+   "packet-private": 576
+  },
+  "cross_packet_mutable_pins": 0,
+  "cross_examples": []
+ },
+ "private_plan": {
+  "returncode": 0,
+  "rows": [
+   {
+    "name": "packet58-onecard-cache23-chain-chain-A",
+    "plan": "passed",
+    "seal": "checked by packet plan/wrapper",
+    "storage_admission": {
+     "planned_write_bytes": 1,
+     "reservation_source": "proposal",
+     "root_free_bytes": 30803632128,
+     "required_free_bytes": 25000000001,
+     "free_floor_bytes": 25000000000,
+     "passed": true
+    },
+    "host_required_available_bytes": 100487123456
+   }
+  ],
+  "live_queue_modified": false,
+  "lanequeue_sha256": "010d83445665cf93641901c845e28ccc36ef41909d2171ccc2f877509eaffe25",
+  "applicability": "informative only: the chain is launched by launch_chain.sh (systemd unit packet58-onecard-cache23-a), never appended to queue-A"
+ },
+ "reseal": {
+  "build_receipt_sha256": "5f9137ab38d5a3cb322daa3689a2d43cd05abd1396b65739add240df1b041efa",
+  "sources": 548,
+  "gates": 26
+ },
+ "lane_state_observed": {
+  "pause_files": [
+   "PAUSE-A",
+   "PAUSE-B"
+  ],
+  "queue_files": [
+   "queue-A.txt",
+   "queue-B.txt"
+  ],
+  "note": "observed only; never written by preparation"
+ },
+ "root_free_bytes": 30803640320,
+ "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f"
+}

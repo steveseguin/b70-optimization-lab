@@ -1,0 +1,46 @@
+{
+  "schema": "packet58c23chain.capacity-patch.v1",
+  "passed": true,
+  "device_executed": false,
+  "arena_old": 21552729600,
+  "arena_new": 23049601024,
+  "edits": [
+    {
+      "file": "suite_driver.py",
+      "before_sha256": "016968e883b145c493bb41456e74a1cc512a22d71106abadd6d0fbac48574479",
+      "after_sha256": "e7e8b4e520116c5a97c06849446e1f763f4c6c5419da7be3a3c723f4567bde9d",
+      "old": "'--cache-cap','max','--cache-bytes','21552729600'",
+      "new": "'--cache-cap','max23','--cache-bytes','23049601024'"
+    },
+    {
+      "file": "suite_driver.py",
+      "before_sha256": "e7e8b4e520116c5a97c06849446e1f763f4c6c5419da7be3a3c723f4567bde9d",
+      "after_sha256": "4076148d41642c753ccb5ef059be4ec5c53ee0cdc584bb15b7f46b4e6026f82a",
+      "old": "cache_cap='max',cache_bytes=21552729600",
+      "new": "cache_cap='max23',cache_bytes=23049601024"
+    },
+    {
+      "file": "views.py",
+      "before_sha256": "7479a55bab9b242ae9f24d27523a751813c29847b2c1d4526edec48a458b8a6b",
+      "after_sha256": "3e373adbc126f251bd571ca57ec8e9b4ae99766e220698a48bcd452e71ce4d81",
+      "old": "cache_cap='max',cache_allocation_bytes=21552729600,cache_bytes=21552729600",
+      "new": "cache_cap='max23',cache_allocation_bytes=23049601024,cache_bytes=23049601024"
+    },
+    {
+      "file": "runtime-selection.json",
+      "before_sha256": "e11fa9f8f221af7fbe73d9b1215df0af113ba40b4c2ba98dee9ff291cbdbd421",
+      "after_sha256": "43488e31f6ab3b18e912d1d78e13b5cf4cc356079e8c99003bdac7efe0d836fc",
+      "old": {
+        "cache_cap": "max",
+        "cache_allocation_bytes": 21552729600,
+        "cache_bytes": 21552729600
+      },
+      "new": {
+        "cache_cap": "max23",
+        "cache_allocation_bytes": 23049601024,
+        "cache_bytes": 23049601024
+      }
+    }
+  ],
+  "note": "phase 1: argv/selection only; memory plan, admission, validator and tests follow in apply_cache23_chain_delta.py"
+}
