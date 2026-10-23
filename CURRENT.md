@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 23, 13:44 EDT — live chat test has local storage headroom; final CPU review is underway.**
+A verified external archive preserves all876 files from four closed two-card checkpoint trees. Removing only796 matching untracked
+tensor copies recovered530.6MB; metadata and small controls remain, with explicit reconstruction receipts. Root now has28.20GB free,
+leaving about528MB above the27GB floor after the full640MiB test forecast. The six-turn chat worker and window controller pass their
+CPU mocks. Independent source and launch review precedes sealing and any live admission. No new device window has started, and the
+restore27 applications remain running. [Archive](experiments/own-xpu-runtime/integration/P184-CHECKPOINT-ARCHIVE.md).
+
 **October 23, 13:35 EDT — local text chat interface passes its CPU and socket tests.**
 All38 chat checks pass, including the exact pinned codec and two retained device replies replayed through the actual HTTP interface.
 The native parking integration is committed and pushed; all four CI workflows are green.

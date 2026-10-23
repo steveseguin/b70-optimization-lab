@@ -8,3 +8,11 @@ Tracked files (sources, notes, committed summaries) are unchanged. Restore from 
 tar -xf /mnt/raid-models/own-xpu-runtime-archive/closed-packets-2026-10-19/packet184-twocard-checkpoint.tar
 sha256sum -c /mnt/raid-models/own-xpu-runtime-archive/closed-packets-2026-10-19/packet184-twocard-checkpoint.sha256
 ```
+
+## October23 checkpoint tensor archive
+
+Four subsequently present closed checkpoint trees now have a separately verified
+[complete archive and reconstruction map](../../integration/P184-CHECKPOINT-ARCHIVE.md).
+Their796 redundant local tensor files were pruned; metadata and small controls
+remain. Use that new receipt for those trees before native full inspection or
+restore. The October19 source/build archive above remains a separate artifact.
