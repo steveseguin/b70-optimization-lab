@@ -25,3 +25,15 @@ Root was back at 27 GB after the packet190/191 chain outputs and evidence. Same 
 | `packet136-record-bundle/build/device-cards01-a` (record 58.798109, 2026-10-18; superseded) | 42,974 | `/mnt/usb-models/own-runtime-archives/packet136-record-bundle-chain-outputs-20261023.tar` (1,221,775,360 B) | `e7a7e0dcf444c0215ca6caf38f5062208d8853bd7b3662a49ff3d55bca00563c` |
 
 Per-file sha256 manifests beside each tar as `<name>.sha256`; tar member counts equal the source counts; `device-cards01-a/K1a/round2/output.bin` extracted from each tar matched its manifest hash. Both packets' tracked `evidence/` and submission receipts are untouched.
+
+## 2026-10-23 addendum 2 (before the packet195 record chain)
+
+Root was at 27 GB after the packet192–194 windows. Same archive-then-verify procedure, exact directories:
+
+| Source | Files | Archive (uncompressed tar) | sha256 |
+| --- | --- | --- | --- |
+| `packet187-record-bundle-v3/build/device-cards01-p187-a` (git-ignored chain output of the 60.659520 record, superseded by packet190 and packet195; per-window receipts tracked under `packet187-record-bundle-v3/evidence/device-cards01-p187-a/`) | 43,054 | `/mnt/usb-models/own-runtime-archives/packet187-record-bundle-v3-raw-outputs-20261023.tar` (1,251,379,200 B) | `739c905ac7e5597948d1e1406b34b57b567c20da35d704698a2e682a530e74d1` |
+| `packet188-twocard-k3-composite/v5/evidence/device-row{0,1,2}-*/run` (untracked raw per-view outputs; the tracked summaries, kernel logs and bracket-summary.json stay) | 2,318 | `…/packet188-twocard-k3-composite-raw-outputs-20261023.tar` (580,188,160 B) | `135d438735137e6cf5dd889af20c85c4092e3fc499841b7ea6f6417fa9cc7d7c` |
+| `packet189-twocard-k3x/v5/evidence/device-row{0,1}-*/run` (untracked raw per-view outputs; tracked summaries stay) | 1,878 | `…/packet189-twocard-k3x-raw-outputs-20261023.tar` (441,856,000 B) | `de8143b6ecac2b9b28a9c5d3c26f8b62e7a72d81f4b407d766a33201a151bb2f` |
+
+Per-file sha256 manifests beside each tar as `<name>.sha256`; member counts equal the source counts; one extracted file per archive matched its manifest hash before deletion. Root free afterwards: 31.0 GB (2.68 GB above the record-chain launcher floor).
