@@ -1,0 +1,290 @@
+{
+  "schema": "packet58cache23.harness-delta.v1",
+  "edits": [
+    {
+      "file": "screen/views.py",
+      "old": "packet182 views (spin/spin-kio arms, MAX_BYTES 21552729600)",
+      "new": "capacity views max/max23, ALLOCATION_BYTES 23049601024, USABLE"
+    },
+    {
+      "file": "screen/suite_driver.py",
+      "old": "from views import VIEWS,selection,digest,bracket,write_table,DEFAULT_MAINTENANCE,MAX_BYTES",
+      "new": "from views import VIEWS,selection,digest,bracket,write_table,DEFAULT_MAINTENANCE,ALLOCATION_BYTES,USABLE,FOREGROUND",
+      "count": 1
+    },
+    {
+      "file": "screen/suite_driver.py",
+      "old": "    for label,view in bracket(candidate):\n        boundary=read(out/'run'/label/'boundary.json')\n        require(boundar",
+      "new": "    for label,cap in bracket(candidate):\n        boundary=read(out/'run'/label/'boundary.json')\n        require(boundary",
+      "count": 1
+    },
+    {
+      "file": "screen/suite_driver.py",
+      "old": "    for label,view in bracket(candidate):\n        boundary=read(out/'run'/label/'boundary.json')\n        require(boundar",
+      "new": "    for label,view in bracket(candidate):\n        boundary=read(out/'run'/label/'boundary.json')\n        require(boundar",
+      "count": 1
+    },
+    {
+      "file": "screen/suite_driver.py",
+      "old": "        # packet176: mechanism readout is kept on every outcome, including a loss.\n        # The foreground-io identity ",
+      "new": "        # packet176: mechanism readout is kept on every outcome, including a loss.\n        # The capacity identity of ev",
+      "count": 1
+    },
+    {
+      "file": "screen/suite_driver.py",
+      "old": "        '--cache-bytes',str(MAX_BYTES),'--cache-cap','max',",
+      "new": "        '--cache-bytes',str(ALLOCATION_BYTES),'--cache-cap','max',",
+      "count": 1
+    },
+    {
+      "file": "screen/compare_bracket.py",
+      "old": "        if v.get('view')!=('spin-kio' if i%2 else 'spin'):\n            raise ValueError('lookup view order differs')",
+      "new": "        if v.get('view')!=('max23' if i%2 else 'max'):\n            raise ValueError('capacity view order differs')",
+      "count": 1
+    },
+    {
+      "file": "screen/compare_bracket.py",
+      "old": "spin_beats_each_warm_control=neutral,",
+      "new": "max23_beats_each_warm_control=neutral,",
+      "count": 1
+    },
+    {
+      "file": "screen/compare_bracket.py",
+      "old": "readiness_policy='packet182 (re-bracket of packet176): both kernel-foreground-io views >=+0.5% over every warm spin-pare",
+      "new": "readiness_policy='packet58-cache23: both max23 views >=+0.5% over every warm max (packet182c record line) control, drift",
+      "count": 1
+    },
+    {
+      "file": "screen/compare_bracket.py",
+      "old": "-",
+      "new": "s58c23_decision appended"
+    },
+    {
+      "file": "screen/mechanism.py",
+      "old": "        r['_fill_mb'] = (c['fill_bytes_total'] - p['fill_bytes_total']) / 1e6 if same_view else None",
+      "new": "        r['_fill_mb'] = (c['fill_bytes_total'] - p['fill_bytes_total']) / 1e6 if same_view else None\n        r['_fills']",
+      "count": 1
+    },
+    {
+      "file": "screen/mechanism.py",
+      "old": "        fill_tokens=len(filled), fill_mb_per_token=round(sum(r['_fill_mb'] or 0 for r in gen) / len(gen), 3),",
+      "new": "        fill_tokens=len(filled), fill_mb_per_token=round(sum(r['_fill_mb'] or 0 for r in gen) / len(gen), 3),\n        fi",
+      "count": 1
+    },
+    {
+      "file": "screen/mechanism.py",
+      "old": "def _copies(r):",
+      "new": "def miss_read_regression(gen):\n    \"\"\"packet58-cache23: the miss-read price. Wall outside the transfer window of UNFILLE",
+      "count": 1
+    },
+    {
+      "file": "screen/argument_gate.py",
+      "old": "                assert cmd[cmd.index('--cache-bytes')+1] == str(V.MAX_BYTES)",
+      "new": "                assert cmd[cmd.index('--cache-bytes')+1] == str(V.ALLOCATION_BYTES)\n                assert cmd[cmd.index",
+      "count": 1
+    },
+    {
+      "file": "screen/argument_gate.py",
+      "old": "                assert [x.split()[4] for x in bt]==['max']*len(V.bracket(candidate))\n                assert [x.split()[5",
+      "new": "                assert [x.split()[4] for x in bt]==[cap for _,cap in V.bracket(candidate)]\n                assert [x.spl",
+      "count": 1
+    },
+    {
+      "file": "screen/argument_gate.py",
+      "old": "    assert tag == 'v5', 'packet182 proposes only the one-load v5 row'",
+      "new": "    assert tag == 'v5', 'packet58-cache23 proposes only the one-load v5 row'",
+      "count": 1
+    },
+    {
+      "file": "screen/argument_gate.py",
+      "old": "            source='endpoint-free MemAvailable measured at the 2026-10-22 packet181 window '",
+      "new": "            source='endpoint-free MemAvailable measured at the 2026-10-22 packet181/182 windows (182c WS128 start: 120,8",
+      "count": 1
+    },
+    {
+      "file": "screen/startup_gate.py",
+      "old": "receipt['cache_allocation_bytes']==21552729600",
+      "new": "receipt['cache_allocation_bytes']==V.ALLOCATION_BYTES",
+      "count": 1
+    },
+    {
+      "file": "screen/startup_gate.py",
+      "old": "from views import P,VIEWS,write_table",
+      "new": "from views import P,VIEWS,write_table\nimport views as V",
+      "count": 1
+    },
+    {
+      "file": "screen/startup_gate.py",
+      "old": "        for view in VIEWS[1:]:",
+      "new": "        for view in VIEWS:",
+      "count": 1
+    },
+    {
+      "file": "screen/queue_runner.py",
+      "old": "planned_arm_seconds=[600,900] if view=='smoke' else [1200,1800], planned_bracket_seconds=[600,900] if view=='smoke' else",
+      "new": "planned_arm_seconds=[600,900] if view=='smoke' else [700,1200], planned_bracket_seconds=[600,900] if view=='smoke' else ",
+      "count": 1
+    },
+    {
+      "file": "screen/window.py",
+      "old": "CONFIG = {'K1': (20, 600), 'WSCREEN': (1560, 7200)}",
+      "new": "CONFIG = {'K1': (20, 600), 'WSCREEN': (1200, 3600)}",
+      "count": 1
+    },
+    {
+      "file": "admission.json",
+      "old": "packet58x admission block",
+      "new": "packet58cache23.admission.v1 (parent kept as parent_admission_packet58x)"
+    },
+    {
+      "file": "memory_plan.py",
+      "old": "        budget['device_margin_bytes']=32_000_000_000-budget['device_owned_bound_bytes']-budget['driver_allowance_bytes']",
+      "new": "        # packet58-cache23: the bound is the exact physical remainder (floor - reserve - driver); the 240-byte\n        #",
+      "count": 1
+    },
+    {
+      "file": "memory_plan.py",
+      "old": "PUBLICATION_DEVICE_BYTES=1179648\nEXTRA_HOST_BYTES=32*1024**2+PUBLICATION_DEVICE_BYTES+ADMISSION['extra_cache_bytes']+524",
+      "new": "PUBLICATION_DEVICE_BYTES=1179648\nEXTRA_HOST_BYTES=32*1024**2+PUBLICATION_DEVICE_BYTES+ADMISSION['extra_cache_bytes']+524",
+      "count": 1
+    },
+    {
+      "file": "memory_plan.py",
+      "old": "        budget['caveat']='One maximum allocation in every view; 18GB limits use, never admission. Live census, driver oc",
+      "new": "        budget['caveat']='One 23,049,601,024-byte allocation in every view; max (21,552,729,600) and max23 limit use, ne",
+      "count": 1
+    },
+    {
+      "file": "test_resident.py",
+      "old": "            self.assertEqual(b['device_categories']['expert_cache_arena'],21552729600)\n            self.assertEqual(b['h",
+      "new": "            self.assertEqual(b['device_categories']['expert_cache_arena'],23049601024)\n            self.assertEqual(b['h",
+      "count": 1
+    },
+    {
+      "file": "test_admission58e.py",
+      "old": "12*1024**3 if name.startswith('K1') else 98990252032",
+      "new": "12*1024**3 if name.startswith('K1') else 100487123456",
+      "count": 1
+    },
+    {
+      "file": "screen/test_admission58e.py",
+      "old": "self.assertEqual(M.window_plan('WS128')['host_required_available_bytes'], 98990252032)",
+      "new": "self.assertEqual(M.window_plan('WS128')['host_required_available_bytes'], 100487123456)",
+      "count": 1
+    },
+    {
+      "file": "screen/test_async_policy.py",
+      "old": "            self.assertEqual(p['host_required_available_bytes'],98990252032)",
+      "new": "            self.assertEqual(p['host_required_available_bytes'],100487123456)",
+      "count": 1
+    },
+    {
+      "file": "screen/test_async_policy.py",
+      "old": "        self.assertEqual(V.bracket('smoke'),[('S0','resident')])\n        self.assertEqual([v for _,v in V.bracket('resid",
+      "new": "        self.assertEqual(V.bracket('smoke'),[('S0','max23')])\n        self.assertEqual([v for _,v in V.bracket('resident",
+      "count": 1
+    },
+    {
+      "file": "screen/test_bracket.py",
+      "old": "            D.save(folder/'boundary.json',dict(passed=True,cache_maintenance=V.DEFAULT_MAINTENANCE,cache_cap=\"max\",hc=\"p",
+      "new": "            D.save(folder/'boundary.json',dict(passed=True,cache_maintenance=V.DEFAULT_MAINTENANCE,cache_cap=view,hc=\"p6",
+      "count": 1
+    },
+    {
+      "file": "screen/test_bracket.py",
+      "old": "            D.save(folder/'lookup-backing.json',dict(resident=view=='resident',copies=dict(enabled=True,bytes=2932161024",
+      "new": "            D.save(folder/'lookup-backing.json',dict(resident=True,copies=dict(enabled=True,bytes=29321610240,tensors=[d",
+      "count": 1
+    },
+    {
+      "file": "screen/test_bracket.py",
+      "old": "                interval=.04\n",
+      "new": "                interval=.04 if view=='max' else .039   # synthetic rates: B faster than A; never device data\n",
+      "count": 1
+    },
+    {
+      "file": "screen/test_bracket.py",
+      "old": "            for key,value in (('selection_sha256','bad'),('selection_sha256','mapped'),('cache_cap','18GB'),",
+      "new": "            for key,value in (('selection_sha256','bad'),('selection_sha256','mapped'),('cache_cap','18GB'),('cache_cap'",
+      "count": 1
+    },
+    {
+      "file": "screen/test_capacity.py",
+      "old": "packet58x/58aj capacity tests (stale mapped/resident rows)",
+      "new": "packet58-cache23 policy tests"
+    },
+    {
+      "file": "runtime-selection.json",
+      "old": "\"cache_allocation_bytes\": 21552729600,\n  \"cache_bytes\": 21552729600,",
+      "new": "\"cache_allocation_bytes\": 23049601024,\n  \"cache_bytes\": 23049601024,",
+      "count": 1
+    },
+    {
+      "file": "views.py",
+      "old": "cache_cap='max',cache_allocation_bytes=21552729600,cache_bytes=21552729600,",
+      "new": "cache_cap='max',cache_allocation_bytes=23049601024,cache_bytes=23049601024,",
+      "count": 1
+    },
+    {
+      "file": "suite_driver.py",
+      "old": "'--cache-bytes','21552729600'",
+      "new": "'--cache-bytes','23049601024'",
+      "count": 1
+    },
+    {
+      "file": "suite_driver.py",
+      "old": "cache_cap='max',cache_bytes=21552729600,",
+      "new": "cache_cap='max',cache_bytes=23049601024,",
+      "count": 1
+    },
+    {
+      "file": "test_memory_sensor.py",
+      "old": "98990252032",
+      "new": "100487123456",
+      "count": 1
+    },
+    {
+      "file": "budget_gate.py",
+      "old": "98990252032",
+      "new": "100487123456",
+      "count": 1
+    },
+    {
+      "file": "screen/memory_plan.py",
+      "old": "identical copy of memory_plan.py (packet182 kept two copies)",
+      "new": "identical copy of the edited memory_plan.py"
+    },
+    {
+      "file": "screen/startup_gate.py",
+      "old": "fullshape_receipt_sha256=sha(P/evidence/fullshape-submit-cpu.json)",
+      "new": "preparation_receipt_sha256=sha(evidence/preparation.json)",
+      "count": 1
+    },
+    {
+      "file": "test_memory_plan.py",
+      "old": "self.assertEqual(p['device_owned_bound_bytes'],sum(p['device_categories'].values()))",
+      "new": "bound == category sum + 240-byte margin"
+    },
+    {
+      "file": "test_resident.py",
+      "old": "plan_queue.documents() (chain-line proposal set; stale on this line)",
+      "new": "plan_queue.document() planned writes = 2 x measured packet182 v5 output"
+    },
+    {
+      "file": "screen/suite_driver.py",
+      "old": "summarize_bracket: cache_cap==view and cache_usable_bytes==USABLE[view]",
+      "new": "summarize_bracket: cache_cap in USABLE; per-view identity stays in verify_lookup_views (runs first on the device path)"
+    },
+    {
+      "file": "screen/test_bracket.py",
+      "old": "summarize mutations ('cache_cap','max'),('cache_usable_bytes',...)",
+      "new": "removed: those are verify_lookup_views refusals (analyzer_gate proves them on real packet182 data)"
+    },
+    {
+      "file": "proposal name",
+      "old": "proposed-p58cache23-one-card-A.txt",
+      "new": "proposed-p58-cache23-one-card-A.txt",
+      "reason": "ops/lane-queue/pin_guard.immutable_reason accepts only proposed-p<packet number>-* as the packet's own proposal; packet number here is 58"
+    }
+  ]
+}

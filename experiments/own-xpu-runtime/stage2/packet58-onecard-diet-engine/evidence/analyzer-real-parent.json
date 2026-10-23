@@ -1,0 +1,220 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "schema": "packet58dietengine.analyzer.v1",
+  "cache23_bracket": {
+    "exact_requests": 60,
+    "refused_as_candidate": "gate-up view order differs",
+    "measured_rates": [
+      35.89239775457983,
+      36.54557450233753,
+      35.928542461824385,
+      36.5693526068784,
+      35.924936571926665
+    ],
+    "null_test": {
+      "relabelled_views": [
+        "max23",
+        "max23+diet"
+      ],
+      "minimum_gain_vs_best_control": 0.017173867856419948,
+      "reproduces_cache23_plus_1_72_pct": true,
+      "diet_decision_on_capacity_data": {
+        "screen_winner": false,
+        "kills": [
+          "warm max23 control below 36.0 tok/s: host disturbed; report, no automatic rerun",
+          "fills/token or fill MB/token differ between the production and diet views: the diet moved bytes; not the same computation; report"
+        ],
+        "layer_body_delta_us_per_layer": 8.588541666666666,
+        "note": "the +1.72 % of cache23 is the capacity effect (fewer fills); as a diet bracket it is refused by the fills-equality rule, which is the expected refusal of a capacity bracket, not a device result"
+      }
+    },
+    "packet176_cache23_fields_identical_to_committed_summary": true,
+    "readout": {
+      "A0": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "layer_body_ms": 27.657,
+        "wall_ms": 27.7188,
+        "wait_ms": 21.0027,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03222,
+          "unfilled_intercept_ms": 25.1619,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.04355,
+          "filled_intercept_ms": 25.5925,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      },
+      "B0": {
+        "fills_per_token": 13.457,
+        "fill_mb_per_token": 26.678,
+        "layer_body_ms": 27.2231,
+        "wall_ms": 27.2853,
+        "wait_ms": 20.8064,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03285,
+          "unfilled_intercept_ms": 25.0422,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.04466,
+          "filled_intercept_ms": 25.3533,
+          "mean_fill_mb_per_filled_token": 53.495
+        }
+      },
+      "A1": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "layer_body_ms": 27.6339,
+        "wall_ms": 27.697,
+        "wait_ms": 21.0685,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03205,
+          "unfilled_intercept_ms": 25.148,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.04323,
+          "filled_intercept_ms": 25.593,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      },
+      "B1": {
+        "fills_per_token": 13.457,
+        "fill_mb_per_token": 26.678,
+        "layer_body_ms": 27.2195,
+        "wall_ms": 27.2816,
+        "wait_ms": 20.8743,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03282,
+          "unfilled_intercept_ms": 25.0391,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.04456,
+          "filled_intercept_ms": 25.3559,
+          "mean_fill_mb_per_filled_token": 53.495
+        }
+      },
+      "A2": {
+        "fills_per_token": 15.449,
+        "fill_mb_per_token": 30.63,
+        "layer_body_ms": 27.6332,
+        "wall_ms": 27.6946,
+        "wait_ms": 21.133,
+        "miss_read_regression": {
+          "unfilled_tokens": 763,
+          "unfilled_ms_per_next_fill_mb": 0.03211,
+          "unfilled_intercept_ms": 25.1437,
+          "filled_tokens": 760,
+          "filled_ms_per_fill_mb": 0.04308,
+          "filled_intercept_ms": 25.5984,
+          "mean_fill_mb_per_filled_token": 61.42
+        }
+      }
+    }
+  },
+  "cache23_chain_ws128": {
+    "exact_requests": 12,
+    "record_tok_s": 36.60251162011413,
+    "fills_per_token": 13.457,
+    "fill_mb_per_token": 26.678,
+    "layer_body_ms": 27.2036,
+    "miss_read_regression": {
+      "unfilled_tokens": 763,
+      "unfilled_ms_per_next_fill_mb": 0.03311,
+      "unfilled_intercept_ms": 25.0109,
+      "filled_tokens": 760,
+      "filled_ms_per_fill_mb": 0.04469,
+      "filled_intercept_ms": 25.3297,
+      "mean_fill_mb_per_filled_token": 53.495
+    },
+    "wall_ms": 27.2657
+  },
+  "decision_cases": {
+    "screen_win": {
+      "candidate_beats_all_controls": true,
+      "screen_winner": true,
+      "chain_rule": false,
+      "kills": [],
+      "saving": 12.5
+    },
+    "below_screen_bar": {
+      "candidate_beats_all_controls": false,
+      "screen_winner": false
+    },
+    "chain_rule": {
+      "screen_winner": true,
+      "chain_rule": true,
+      "minimum_gain": 0.02185792349726776
+    },
+    "chain_bar_missed": {
+      "chain_rule": false
+    },
+    "warm_floor": {
+      "kills": [
+        "warm max23 control below 36.0 tok/s: host disturbed; report, no automatic rerun"
+      ]
+    },
+    "drift": {
+      "kills": [
+        "control drift > 3 %: host disturbed; report, no automatic rerun",
+        "warm max23 control below 36.0 tok/s: host disturbed; report, no automatic rerun"
+      ],
+      "drift": 0.03389830508474576
+    },
+    "saving_floor": {
+      "kills": [
+        "gate/up saving 4.17 us per layer < 5.0 us (host scopes: layer-body delta / 48); report"
+      ],
+      "saving": 4.166666666666667
+    },
+    "fills_differ": {
+      "kills": [
+        "fills/token or fill MB/token differ between the production and diet views: the diet moved bytes; not the same computation; report"
+      ]
+    }
+  },
+  "synthetic_rates": true,
+  "provenance": [
+    {
+      "name": "packet58-onecard-cache23:run/cache.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/cache.jsonl",
+      "parent_digest": "e9e193987ff9f52ba503b5ea20e5da0ad9a80ff8edf20fcca88d4d006848c6e6"
+    },
+    {
+      "name": "packet58-onecard-cache23:suite-inputs.tsv",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/suite-inputs.tsv",
+      "parent_digest": "1014f78a9be55a7255953ae14001739dc1eb03cb589532868da4fb990e1062dd"
+    },
+    {
+      "name": "packet58-onecard-cache23:run/receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/receipt.json",
+      "parent_digest": "7a287bd559cac81a69b84c39825ab0fa02d274cd921576dd64af5adb9f048f75"
+    },
+    {
+      "name": "packet58-onecard-cache23:summary.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/summary.json",
+      "parent_digest": "3ac7f4aba00f75237d77ddff17c5b82af5d7103de7f4313685047b90d15fa7ed"
+    },
+    {
+      "name": "packet58-onecard-cache23-chain-WS128:run/cache.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a/WS128/run/run/cache.jsonl",
+      "parent_digest": "e06e19c707c562b38053349bb43a708643afd5f3d933ef3c8a8669af0e02879e"
+    },
+    {
+      "name": "packet58-onecard-cache23-chain-WS128:suite-inputs.tsv",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a/WS128/run/suite-inputs.tsv",
+      "parent_digest": "7c9757d4663fe604ac7585e7414fe1fc9c475419094d8f9f4b3bc590620a6cbd"
+    },
+    {
+      "name": "packet58-onecard-cache23-chain-WS128:run/receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a/WS128/run/run/receipt.json",
+      "parent_digest": "751689351ee5626c03a92e10aece3e1b199d3539cf110fd58dddeed929079b5b"
+    },
+    {
+      "name": "packet58-onecard-cache23-chain-WS128:summary.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a/WS128/run/summary.json",
+      "parent_digest": "4556d8e7a2f26f97c0d4696644fe52db414a30a7a473d4b06bb1e7b3adbfe086"
+    }
+  ]
+}

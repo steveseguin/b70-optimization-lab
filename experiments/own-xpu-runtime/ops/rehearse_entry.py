@@ -1136,7 +1136,7 @@ def synthetic_onecard(driver, views, output, kind, candidate, maintenance, *, ma
             schema='iq3-runtime-cpu-oracle.v1', status='token-cap',
             arithmetic=driver['ARITHMETIC'], tokens=[1] * max(128, max_new or 128)))
     screen = kind in ('smoke', 'bracket')
-    rows = views.bracket(candidate) if screen else [(None, candidate)]
+    rows = report_adapters.onecard_rows(views, views.bracket(candidate) if screen else [(None, candidate)])
     cap = max_new if max_new is not None else 64 if kind == 'smoke' else 128
     native = dict(passed=True, safe_to_exit=True, device_executed=True, owner_cards=1,
                   cpu_affinity=[0, 1, 2, 3, 16, 17, 18, 19], observed_nice=0, native_nice=0,
@@ -1145,16 +1145,23 @@ def synthetic_onecard(driver, views, output, kind, candidate, maintenance, *, ma
     save(output / 'run/receipt.json', native)
     save(output / 'receipt.json', dict(passed=True, safe_to_exit=True,
                                      window='WSCREEN' if screen else kind))
-    for label, view in rows:
+    for row in rows:
+        label, view = row['label'], row['view']
         dest = output / 'run' if label is None else output / 'run' / label
         # Deliberately slow A0: amended packets must exclude it only from speed,
         # while the older 58v policy correctly returns a negative decision.
         rate = 10 if label == 'A0' else 60 if label in ('B0', 'B1') else 50
-        save(dest / 'boundary.json', dict(passed=True, selection_sha256=views.digest(view),
-            cache_maintenance=maintenance or view, cache_cap=view if view in ('18GB', 'max') else 'max',
+        capacity = row['capacity']
+        boundary = dict(passed=True, selection_sha256=views.digest(row['selection_view']),
+            cache_maintenance=maintenance or view, cache_cap=capacity if capacity in ('18GB', 'max', 'max23') else 'max',
             hc=view, cache_allocation_bytes=getattr(views, 'MAX_BYTES', 18_000_000_000),
             cache_started_empty=True, allocation_ids_preserved=True, weight_uploads_during_switch=0,
-            model_loads=1, context_extent=32, arena_descriptors_sha256='a', weight_descriptors_sha256='w'))
+            model_loads=1, context_extent=32, arena_descriptors_sha256='a', weight_descriptors_sha256='w')
+        if row['gateup'] is not None:
+            boundary['expert_gateup'] = row['gateup']
+        if capacity in getattr(views, 'USABLE', {}):
+            boundary['cache_usable_bytes'] = views.USABLE[capacity]
+        save(dest / 'boundary.json', boundary)
         for prompt in prompts:
             request = dest / prompt['prompt_id']
             save(request / 'reset.json', dict(passed=True, cached_tokens=0, allocation_ids_preserved=True))
@@ -1163,9 +1170,9 @@ def synthetic_onecard(driver, views, output, kind, candidate, maintenance, *, ma
                 requested_max_new=cap, prompt_tokens=4, request_start_monotonic=0.,
                 request_end_monotonic=1 + cap / rate,
                 timing_rows=[dict(completed_monotonic=1 + i / rate) for i in range(cap)]))
-    if kind == 'bracket' and [v for _, v in rows] == [
+    if kind == 'bracket' and [r['view'] for r in rows] == [
             'control', 'no-upload', 'no-scatter', 'drain-only', 'wait-split', 'control']:
-        report_adapters.publication_split_fixture(output, rows, prompts, cap)
+        report_adapters.publication_split_fixture(output, [(r['label'], r['view']) for r in rows], prompts, cap)
     return dict(prompts=prompts)
 
 
@@ -1216,7 +1223,8 @@ def onecard_report_probe(job, kind, scratch, source_root):
     driver = driver['main'].__globals__
     oracle_import_prelude(SimpleNamespace(oracle_inputs=driver['oracle_inputs']))
     actual_views = views.bracket(candidate) if screen else [(None, candidate)]
-    if 'arm_order' in shape and shape['arm_order'] != [v for _, v in actual_views]:
+    normalized_views = report_adapters.onecard_rows(views, actual_views)
+    if 'arm_order' in shape and shape['arm_order'] != [r['view'] for r in normalized_views]:
         raise report_adapters.ContractError('window arm order differs from packet')
     manifest = synthetic_onecard(driver, views, driver_output, kind, candidate, maintenance,
                                  max_new=shape.get('max_new'))

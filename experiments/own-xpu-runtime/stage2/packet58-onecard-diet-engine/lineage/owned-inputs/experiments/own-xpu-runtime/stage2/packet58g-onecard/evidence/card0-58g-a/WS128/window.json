@@ -1,0 +1,724 @@
+{
+  "schema": "own-runtime.packet58.window.v1",
+  "window": "WS128",
+  "passed": true,
+  "qualifying": true,
+  "device_executed": true,
+  "child_still_running": false,
+  "card": 0,
+  "pci_bdf": "0000:23:00.0",
+  "native_visible_card": 0,
+  "context": 4096,
+  "gpu_count": 1,
+  "decode_mode": "plain",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "build_receipt_sha256": "61dd354dcf422774166a631911c939458b1fecf7c6215fdc505b908a689bf61d",
+  "artifacts_sha256": {
+    "build/device/own-rt-iq3": "176cf8c492f82c4e29e9d3f5d38bc9fac539978b444b2bbac1ea49e4cd3db34c",
+    "build/device/p58-cache-fixtures": "eb5e3623be23450788f152058be6ce7b27fc1b52d050b1f756e2f8cecf2edac3",
+    "build/gnu-host/fullshape-submit": "97f62c104e12165d8d3876adc9d7e89e9c4f603d53d2df9ef4e55a7c9003286d",
+    "build/gnu-host/own-rt-iq3": "5d9971627d1bad970e01540a6d72feb853cc41a1eda5b5a5a9f7647c3816346d",
+    "build/gnu-host/p58-cache-fixtures": "615d5d94dcb6d4f4d175cf2a2d6c0bf76098060bae446afe746ba08518b9e57c"
+  },
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "coordinator_fault_review": "2026-10-18T01:00:03Z",
+  "started_utc_ns": 1792291506189884741,
+  "expected_seconds": 1200,
+  "watchdog_seconds": 3600,
+  "memory_admission": {
+    "passed": true,
+    "available_bytes": 120904699904,
+    "required_bytes": 118308908048,
+    "margin_bytes": 2595791856,
+    "baseline_gpuactive_bytes": 114688,
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120904699904,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8214364160,
+      "GPUActive": 114688
+    },
+    "plan": {
+      "schema": "own-runtime.packet58.memory.v1",
+      "device_executed": false,
+      "admitted": false,
+      "context": 4096,
+      "gpu_count": 1,
+      "decode_mode": "plain",
+      "kv_dtype": "BF16",
+      "census": {
+        "pinned_expert_bytes": 48627712000,
+        "layers": [
+          {
+            "layer": 0,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 1,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 2,
+            "experts": 512,
+            "expert_bytes": 2329600,
+            "layer_bytes": 1192755200
+          },
+          {
+            "layer": 3,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 4,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 5,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 6,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 7,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 8,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 9,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 10,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 11,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 12,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 13,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 14,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 15,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 16,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 17,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 18,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 19,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 20,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 21,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 22,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 23,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 24,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 25,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 26,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 27,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 28,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 29,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 30,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 31,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 32,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 33,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 34,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 35,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 36,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 37,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 38,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 39,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 40,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 41,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 42,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 43,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 44,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 45,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 46,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 47,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          }
+        ],
+        "file_backed_nonexpert_bytes": 33323087360,
+        "source_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json",
+        "source_sha256": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+      },
+      "allocation_inventory": {
+        "target_nonexpert_bytes": 5815529984,
+        "recurrent_bytes": 59019280,
+        "kv_index_bytes": 116391936,
+        "sources": {
+          "experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r0/census.json": "4e1074519846cc27084e574c32f2ec923153237b1cd522d15196fac017344d49",
+          "experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r1/census.json": "29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0"
+        }
+      },
+      "device_categories": {
+        "target_nonexpert": 5815529984,
+        "expert_cache_arena": 18000000000,
+        "expert_pointer_generation_tables": 2359296,
+        "target_recurrent": 59019280,
+        "target_4k_bf16_kv_index": 116391936,
+        "workspace_bound": 1073741824,
+        "control_transaction_bound": 1073741824,
+        "transfer_bound": 268435456
+      },
+      "device_owned_bound_bytes": 26409219600,
+      "arena_limit_bytes": 32212254720,
+      "card_capacity_floor_bytes": 32000000000,
+      "device_reserve_bytes": 1500000000,
+      "device_margin_bytes": 4090780400,
+      "host_categories": {
+        "pinned_packed_experts": 48627712000,
+        "gpuactive_shadow_bound": 26409219600,
+        "file_backed_nonexpert_and_lookup_bound": 33323087360,
+        "loader_staging_bound": 268435456,
+        "process_workspace_bound": 1073741824,
+        "cache_metadata_bound": 16777216
+      },
+      "host_reserve_bytes": 8589934592,
+      "host_required_available_bytes": 118308908048,
+      "file_backed_expert_duplicate_allowed": false,
+      "large_pinning_cpu_test_allowed": false,
+      "caveat": "Bounds must be checked against native allocation census; not a measured fit. Single-card contexts normally avoid GPUActive shadow; full shadow is reserved anyway.",
+      "admission_mode": "whole-host-timing"
+    }
+  },
+  "storage_admission": {
+    "free_bytes": 17184436224,
+    "planned_write_bytes": 268435456,
+    "min_free_bytes": 8000000000
+  },
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet58-onecard-58g-a.service\n",
+  "previous": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/evidence/card0-58g-a/WS128x/window.json",
+    "sha256": "d59d9e5b14bff015aad276bad381914046702ce97b1f5cad5dfd11a9236344ef"
+  },
+  "miss_path": "zero-copy",
+  "k1_refs": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/evidence/card0-58g-a/K1a/window.json",
+      "sha256": "10ad833dbdaf1705486642326af4ee80eabb82dbfd2c707946472527ba3e18f4",
+      "native_k1_sha256": "a362a75d10c8800af48b9a8ec66ae3fed7053cfeda44337198d7c786bdaef2de"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/evidence/card0-58g-a/K1b/window.json",
+      "sha256": "8ee1d2fe40d1d1a23c72d657cb6900353814e4f6363baa9b4958d2891f64daed",
+      "native_k1_sha256": "80039feacf071d9910f4879e398a93f7858f7146a082720a5175100c63bfb204"
+    }
+  ],
+  "device_topology": {
+    "mask": {
+      "NEOReadDebugKeys": "1",
+      "FilterBdfPath": "0000:23:00.0",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+      "ZE_AFFINITY_MASK": "0",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+    },
+    "native_indices": [
+      0
+    ],
+    "nodes": [
+      {
+        "pci": "0000:23:00.0",
+        "node": "/dev/dri/renderD130",
+        "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "native_environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/evidence/card0-58g-a/WS128/native-home"
+  },
+  "stop_reasons": [],
+  "lane_admission": {
+    "passed": true,
+    "scope": "whole-host",
+    "card": 0,
+    "timing_claim_eligible": true,
+    "reservation": {
+      "schema": "own-runtime.chain-lanes.v1",
+      "token": "6014c58198b54e4abff039f7b96bfa8e",
+      "lane": "A",
+      "window": "WS128",
+      "scope": "whole-host",
+      "pid": 785312,
+      "start_ticks": 13421388,
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "started_monotonic": 134214.108812147
+    },
+    "owners": {
+      "785334": {
+        "start_ticks": 13421451,
+        "seen": false,
+        "fds": []
+      },
+      "785340": {
+        "start_ticks": 13421459,
+        "seen": true,
+        "fds": [
+          {
+            "pid": 785340,
+            "fd": "10",
+            "driver": "xe",
+            "pci": "0000:23:00.0",
+            "client_id": "10221"
+          }
+        ]
+      }
+    },
+    "clients": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 497,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "clients_latest": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 510,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "clients_after_drain": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 504,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "devices_drained": true
+  },
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "clients": {
+    "selected": [],
+    "other": [],
+    "inaccessible_entries": 497,
+    "hidden_clients_require_coordinator_ownership": true
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007bec1043e000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007bec0fe00000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007bec0fc7b000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007bec0f800000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x00007bec1034d000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007bec1031d000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007bec0f400000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007bec0f000000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007bec10440000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007bec10318000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007bec0e200000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007bec0fc62000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007bec0fc5d000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007bec0dc00000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007bec0fc41000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007bec0c400000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007bec0fb48000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007bec0fae5000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/suite_driver.py",
+    "--window",
+    "WS128",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/evidence/card0-58g-a/WS128/run",
+    "--miss-mode",
+    "zerocopy",
+    "--authorized-device-window"
+  ],
+  "pid": 785334,
+  "process_start_ticks": 13421451,
+  "anonymous_peak_bytes": 360030208,
+  "anonymous_limit_bytes": 52922679296,
+  "anonymous_stop_bytes": 52654243840,
+  "memory_last_sample": {
+    "anonymous_bytes": 360030208,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 785334,
+        "rss_anon_bytes": 10027008
+      },
+      {
+        "pid": 785340,
+        "rss_anon_bytes": 350003200
+      }
+    ],
+    "sample_utc_ns": 1792291693920147839,
+    "host": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 118554177536,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8202739712,
+      "GPUActive": 2055938048
+    },
+    "gpuactive_growth_bytes": 2055823360,
+    "pinned_expert_bytes": 48627712000,
+    "gpuactive_pinned_credit_bytes": 2055823360,
+    "gpuactive_shadow_bytes": 0,
+    "gpuactive_shadow_bound_bytes": 26409219600,
+    "host_accounted_bytes": 82310829568,
+    "host_accounted_bound_bytes": 109718973456
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 192.59617805900052,
+  "memory_samples_sha256": "95c60042be826fcaa0587e22a510d072d938099e266d52ccb19f4ffe6d007aef",
+  "postload_memory": {
+    "peak_shadow_bytes": 657899520,
+    "complete_postload": true,
+    "after_load_shadow_bytes": 204922880,
+    "observed_supervisor_peak_bytes": 657899520,
+    "full_cache_bytes": 18000000000,
+    "kv_bytes": 116391936,
+    "pinned_expert_bytes": 48627712000,
+    "source": "successful same-chain native after_load plus complete allocation census",
+    "sources": {
+      "run/run/census.json": "d1a3c4252facca332b0ebfc3f9379d35991de7a71ed3e22630e94d891f01a3f9",
+      "run/run/host-memory.jsonl": "fd0ecdd4df7cf97dc41485fb3ceacd775becda56556a4ff81c911d2dff96c298",
+      "host-memory.jsonl": "95c60042be826fcaa0587e22a510d072d938099e266d52ccb19f4ffe6d007aef"
+    },
+    "attribution": "host-global GPUActive; other-lane activity may inflate or mask delta; full census backing bound remains reserved independently"
+  },
+  "native_files": {
+    "run/suite-manifest.snapshot.json": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+    "run/summary.json": "0213312bacceadd2f3ae603c6a020cb6d9bbff7b52a3a4d121c3f2009809a14f",
+    "run/native.log": "9ce0fe8c604da734e9fb103be1085b5d47433c4848a9d6ea38c3ace3146cea3c",
+    "run/receipt.json": "24fd92816470766cbe4bc29ff9bbb61fdbf46d1b737bfaac1cf5d3a03fa71272",
+    "run/suite-inputs.tsv": "7c9757d4663fe604ac7585e7414fe1fc9c475419094d8f9f4b3bc590620a6cbd",
+    "run/run/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/progress.jsonl": "6e04a0d043e93a94308bee45908ee0b12b276f5a0efbdcc3f7069209381e86d3",
+    "run/run/host-memory.jsonl": "fd0ecdd4df7cf97dc41485fb3ceacd775becda56556a4ff81c911d2dff96c298",
+    "run/run/device-contact.json": "5f853e7b47fe52e5c26be0edb45a975e466d7a080c35da91267d11e7f7156cff",
+    "run/run/census.json": "d1a3c4252facca332b0ebfc3f9379d35991de7a71ed3e22630e94d891f01a3f9",
+    "run/run/cold-start.json": "a6f61142b089aca4e65c9820803f426128388e4813ab6d7c4a0bb1545a79adbb",
+    "run/run/drm-memory-before_load.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/drm-memory-end.txt": "e5a93daa79beed250604c734f42f5acb75e5913278150ae6536c1fe0f7fca025",
+    "run/run/plan.json": "e6eb192908a6d7148a349383c397cff95923097095171238792911fe2473ea69",
+    "run/run/host-status-after_load.txt": "65d36c7c9bbf970f33f850c62a00af33f5583368241d57863b723488edeb2f1a",
+    "run/run/memory.json": "b10b4451c138d17faceb62bc64fed0e0a4664eb3b4c95296078f1615a2ce3b2d",
+    "run/run/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/drm-memory-after_load.txt": "006be4bd4a53502e06c96adc0bacac60a23d3b0ddd99463d477776edc70645ed",
+    "run/run/receipt.json": "829e08bd58c915570cbda9af1c65c65a2517f31c7e56d43778f3d8a6b7ae5937",
+    "run/run/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/host-status-end.txt": "8819cbcf64f74a6ae18d4222c40d376fbb8915def531849c5d7886e1aa254253",
+    "run/run/prepared-arguments-parity0.jsonl": "6666135090d996e9a046653c80002bac3c30a4ca86c0747f9eb6a792654f798d",
+    "run/run/cache.jsonl": "9f8beaee074969a7d160fa780cd7e1e0ed90767ed820e64b3127419398a337ac",
+    "run/run/host-status-before_load.txt": "07bab4f0daf9a4fa8d80ea348b6ac8ca245757e76b08249d25d640f7d34e0a5a",
+    "run/run/decision-memo/timings.jsonl": "75adda4ea258e9651e5ec69a99a4ad11a2108e75852fc9833c10e8de9d448cac",
+    "run/run/decision-memo/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/decision-memo/cache-stats.json": "a65eba13cb3169a101cc001317f2f8ac3e7a126206b9ae0af7c1b523b63568d6",
+    "run/run/decision-memo/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/decision-memo/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/decision-memo/result.json": "368e4bad40f1bb849e7051fd31321208efe9283b5df2122bca545ce4510b3e36",
+    "run/run/decision-memo/receipt.json": "368e4bad40f1bb849e7051fd31321208efe9283b5df2122bca545ce4510b3e36",
+    "run/run/decision-memo/prefill-timings.jsonl": "5200e981de1f6360fdb631bc461e712383c061f82156e9d73c542fb8a17f3b0a",
+    "run/run/risk-register/timings.jsonl": "fa83dff6c48f9a3c73f1977a4c24f9007ac5ce557ecd738b2c3e881a2a366c3f",
+    "run/run/risk-register/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/risk-register/cache-stats.json": "4d5fc49f47cb4f9a76018b332d1c3720e2eade8667d12d1d4587bd014057bd2c",
+    "run/run/risk-register/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/risk-register/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/risk-register/result.json": "a05acb44c319c8c227dabcdc4faaf025add1e36c55d063bb768e5253e7ff729e",
+    "run/run/risk-register/receipt.json": "a05acb44c319c8c227dabcdc4faaf025add1e36c55d063bb768e5253e7ff729e",
+    "run/run/risk-register/prefill-timings.jsonl": "9198d93e2d543337e7526e18261a92191f54c49917d01e98d05a7b747f75fc16",
+    "run/run/technical-guide/timings.jsonl": "baaa0159a0a7eae96f63e8cb071c891bdf7c6e9aa50bc92a2f21b1bdabf250a5",
+    "run/run/technical-guide/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/technical-guide/cache-stats.json": "b4f8e7ab8c0f0e1f359e361deff67a2ce56342f800be8918249a83a4362c2de8",
+    "run/run/technical-guide/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/technical-guide/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/technical-guide/result.json": "290e4ca5880548a634f7ca21db98d5352f951be64482ecf517d8c87f72f9ab3b",
+    "run/run/technical-guide/receipt.json": "290e4ca5880548a634f7ca21db98d5352f951be64482ecf517d8c87f72f9ab3b",
+    "run/run/technical-guide/prefill-timings.jsonl": "e13b694be9ae619acfc3c6e313cab1ac755338d5084e2d6aea5b8da5f96ca36f",
+    "run/run/performance-hypotheses/timings.jsonl": "bc1489a5b91d5797e2c025849903da54d08167fe0c39704bf726ecf16c5282ad",
+    "run/run/performance-hypotheses/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/performance-hypotheses/cache-stats.json": "40594b4c7b8cdb486a8cc07c56c734b0de14d27258ff2fbf44cf66c153d63102",
+    "run/run/performance-hypotheses/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/performance-hypotheses/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/performance-hypotheses/result.json": "5ace477ee709f0f9d88cb3380d472a0024346d65bad92f3c49bd9ba618c43045",
+    "run/run/performance-hypotheses/receipt.json": "5ace477ee709f0f9d88cb3380d472a0024346d65bad92f3c49bd9ba618c43045",
+    "run/run/performance-hypotheses/prefill-timings.jsonl": "98da15dd02769a2095a0785303365b9e039ffa89b935c8dcde93e1be0c8b1fbf",
+    "run/run/architecture-tradeoff/timings.jsonl": "3353372ad21a045d36812d01f9b5e1c3e8d4ac50229ef01f414de81fca06ee71",
+    "run/run/architecture-tradeoff/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/architecture-tradeoff/cache-stats.json": "408d4013be16b2e2c947c6963c3640bb526a37cf5276082687e1444548faa205",
+    "run/run/architecture-tradeoff/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/architecture-tradeoff/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/architecture-tradeoff/result.json": "3c854a32578bd08c3635ce426f4547e9087bbb6055bb45b3634272af9bae9daf",
+    "run/run/architecture-tradeoff/receipt.json": "3c854a32578bd08c3635ce426f4547e9087bbb6055bb45b3634272af9bae9daf",
+    "run/run/architecture-tradeoff/prefill-timings.jsonl": "2dd1a0351635bdcb586fb6506c5529bedf6b5acd6be213bf96a23985ccec2518",
+    "run/run/code-review/timings.jsonl": "e3497704c6c63ca6d766d4822af27b5ecc085134e29b4183936d74e3bc7765bb",
+    "run/run/code-review/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/code-review/cache-stats.json": "599e06efb2d0dffedb0a5c39df631a7cd1f8ff26301ba82690c4773f568744a8",
+    "run/run/code-review/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/code-review/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/code-review/result.json": "1521b0cea6d42554a386878a180ea3dc6927e9c8e72fb4c64df8dd497ce273b5",
+    "run/run/code-review/receipt.json": "1521b0cea6d42554a386878a180ea3dc6927e9c8e72fb4c64df8dd497ce273b5",
+    "run/run/code-review/prefill-timings.jsonl": "ab7694ae791b823ba5501c1c4d5f5d959b187e48687dc4c9b7d72232150ebb54",
+    "run/run/customer-email/timings.jsonl": "b2c93582f59ab3d01368127f1b18a11e8437cd42cec4c2a8f558fd3cf9b6808f",
+    "run/run/customer-email/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/customer-email/cache-stats.json": "8cd98637bd4f49a3a7595e82f50f9b66c0efb2c6b6d61e197f7f178c910a9b6f",
+    "run/run/customer-email/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/customer-email/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/customer-email/result.json": "c5bb12cccab6c9c0ef4721ad0607e2fd8d9f5939cec7966c046bcab55a86b159",
+    "run/run/customer-email/receipt.json": "c5bb12cccab6c9c0ef4721ad0607e2fd8d9f5939cec7966c046bcab55a86b159",
+    "run/run/customer-email/prefill-timings.jsonl": "137cf15dfdeaaa65e4ec312ccea137d7a9b0e879f03e1b2da560c6ccfc3f78d8",
+    "run/run/incident-retrospective/timings.jsonl": "5bd453cbcc17799b8f77252d64b4814ceea077ad60fc10c05989dd1efa26c39d",
+    "run/run/incident-retrospective/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/incident-retrospective/cache-stats.json": "6c56931bd7546dad88c366cf72b1857e8ce92b3e282bd8ae4752a5c5df7e859e",
+    "run/run/incident-retrospective/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/incident-retrospective/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/incident-retrospective/result.json": "6933bcc51f265750446b41c67274cec8a7a3e9b6d4aef001b5c66e10cff9328e",
+    "run/run/incident-retrospective/receipt.json": "6933bcc51f265750446b41c67274cec8a7a3e9b6d4aef001b5c66e10cff9328e",
+    "run/run/incident-retrospective/prefill-timings.jsonl": "d347c82515b2eeff5e86f6211217885570418410e60fa222c06163a777833d61",
+    "run/run/benchmark-analysis/timings.jsonl": "e22f381974893eafd87b1ba64d005563f93fb49377f0a0b750003bc51d16b237",
+    "run/run/benchmark-analysis/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/benchmark-analysis/cache-stats.json": "e597872394fb9dd6afe53fa488b0b0ec79c395c41fdcc930c05f2ff81a5bcc31",
+    "run/run/benchmark-analysis/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/benchmark-analysis/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/benchmark-analysis/result.json": "92bad10779e1c9d6d755ed68eb18cf77613de6996287a9630b2b32ffbfb893b0",
+    "run/run/benchmark-analysis/receipt.json": "92bad10779e1c9d6d755ed68eb18cf77613de6996287a9630b2b32ffbfb893b0",
+    "run/run/benchmark-analysis/prefill-timings.jsonl": "be4036bdf4c4d78801f8b3f81dc4b32d9eae3bcf3923fc896cb308dd153ea8cc",
+    "run/run/release-plan/timings.jsonl": "500b2cb60508fd4661ddb1b36fe7705750656fb270c23ec8653074a548c82714",
+    "run/run/release-plan/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/release-plan/cache-stats.json": "de542338949a6045d1e5ef60f1c03ab6b3e22193e574b8abf7a6d5fdcc710807",
+    "run/run/release-plan/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/release-plan/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/release-plan/result.json": "ec279ace3e6052a19c74f90464ab243aa798687975ecb9a936242cbe081e57c6",
+    "run/run/release-plan/receipt.json": "ec279ace3e6052a19c74f90464ab243aa798687975ecb9a936242cbe081e57c6",
+    "run/run/release-plan/prefill-timings.jsonl": "5235cc6258b82afbf8fd4268f8181bd511de7b25522f5614b77f3f1c2829ad6d",
+    "run/run/sql-debugging/timings.jsonl": "5886185d1ee878a7d36808035122f173f19427279a27e253cf253edf64b64c28",
+    "run/run/sql-debugging/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/sql-debugging/cache-stats.json": "f82a6dba982c4924ffcb1273a81914cf9ea131b2df6fcceba4918cc9e372d492",
+    "run/run/sql-debugging/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/sql-debugging/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/sql-debugging/result.json": "d638cbe953a3e0b0b12c865c1ef914b0ab569e53496b8cc2aa8bba0b5241d3ea",
+    "run/run/sql-debugging/receipt.json": "d638cbe953a3e0b0b12c865c1ef914b0ab569e53496b8cc2aa8bba0b5241d3ea",
+    "run/run/sql-debugging/prefill-timings.jsonl": "c7b61474388734599b07d93749068723466b784ad550ebbc0a33104c6469097b",
+    "run/run/bug-report-synthesis/timings.jsonl": "95b96846bd9050c60aa0212467c9815ecabce16bf4c51b49e30af66c78c380e6",
+    "run/run/bug-report-synthesis/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/bug-report-synthesis/cache-stats.json": "c71c6da7d4fae1cd262aa68135ce720b2fea719d93823db44074efd9b726b500",
+    "run/run/bug-report-synthesis/reset.json": "b897a0d0a9652a5328992dc8ae5b420cafb9bf9b00d5deb0e43fab983595702d",
+    "run/run/bug-report-synthesis/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/run/bug-report-synthesis/result.json": "d0ba5e8e155de5637179783235fb0e859d060acda99880681bb1f7be9015da4f",
+    "run/run/bug-report-synthesis/receipt.json": "d0ba5e8e155de5637179783235fb0e859d060acda99880681bb1f7be9015da4f",
+    "run/run/bug-report-synthesis/prefill-timings.jsonl": "2bd6399c09c20a6a658c9a81d82c933aa48c260666aca48fa37cbfc58e3bf02e",
+    "summary.json": "0213312bacceadd2f3ae603c6a020cb6d9bbff7b52a3a4d121c3f2009809a14f",
+    "kernel-before.jsonl": "8bad18b006f47477233c27f0233209a6796e1526b65af41b2c9b01caba4cc1ee",
+    "kernel-window.jsonl": "6a73fad72c46c74ab2e925132664af2bed71c548a25888b1c9487f79683f4b7f"
+  },
+  "finished_utc_ns": 1792291699355282930
+}

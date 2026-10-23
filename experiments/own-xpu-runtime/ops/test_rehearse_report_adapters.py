@@ -3,6 +3,7 @@ import copy
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 import launch_env
@@ -19,6 +20,51 @@ CONTRACT = dict(schema='own-runtime.report-contract.v1', analyzer='analysis:eval
 
 
 class ReportContracts(unittest.TestCase):
+    def test_onecard_pair_and_triple_view_identities(self):
+        views = SimpleNamespace(view_name=lambda cap, key: cap if key == 'production' else cap + '+' + key)
+        rows = adapters.onecard_rows(views, [('A0', 'max23', 'production'), ('B0', 'max23', 'diet')])
+        self.assertEqual([r['view'] for r in rows], ['max23', 'max23+diet'])
+        self.assertEqual([r['selection_view'] for r in rows], ['max23', 'max23'])
+        self.assertEqual([r['gateup'] for r in rows], ['production', 'diet'])
+        old = adapters.onecard_rows(SimpleNamespace(), [('A0', 'serial'), (None, 'tile16')])
+        self.assertEqual([r['view'] for r in old], ['serial', 'tile16'])
+        self.assertTrue(all(r['gateup'] is None for r in old))
+
+    def test_onecard_unknown_view_shapes_refuse(self):
+        for rows in ([('A0',)], [('A0', 'max23', 'diet', 'extra')], [('A0', False)], ['AB']):
+            with self.subTest(rows=rows), self.assertRaises(adapters.ContractError):
+                adapters.onecard_rows(SimpleNamespace(), rows)
+        with self.assertRaises(adapters.ContractError):
+            adapters.onecard_rows(SimpleNamespace(), [('B0', 'max23', 'diet')])
+        with self.assertRaises(adapters.ContractError):
+            adapters.onecard_rows(SimpleNamespace(view_name=lambda *args: None), [('B0', 'max23', 'diet')])
+
+    def test_synthetic_gateup_boundaries_keep_capacity_and_kernel(self):
+        rows = [('A0', 'max23', 'production'), ('B0', 'max23', 'diet')]
+        digest_calls = []
+        def digest(view):
+            digest_calls.append(view)
+            self.assertIn(view, ('resident', 'max23'))
+            return 'selection-hash'
+        views = SimpleNamespace(VIEWS=('resident',), MAX_BYTES=23049601024,
+                                USABLE={'max23': 23049601024}, digest=digest,
+                                bracket=lambda candidate: rows,
+                                view_name=lambda cap, key: cap if key == 'production' else cap + '+diet')
+        driver = dict(CHECK=SimpleNamespace(PROMPT_IDS=['fixture']), ARITHMETIC='fixture-only')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = entry.synthetic_onecard(driver, views, root, 'bracket', 'resident', 'overlap')
+            self.assertEqual(len(manifest['prompts']), 1)
+            for label, cap, gateup in rows:
+                boundary = json.loads((root/'run'/label/'boundary.json').read_text())
+                self.assertEqual(boundary['cache_cap'], cap)
+                self.assertEqual(boundary['expert_gateup'], gateup)
+                self.assertEqual(boundary['cache_usable_bytes'], 23049601024)
+                self.assertEqual(boundary['selection_sha256'], 'selection-hash')
+                result = json.loads((root/'run'/label/'fixture/result.json').read_text())
+                self.assertEqual(len(result['tokens']), 128)
+            self.assertEqual(digest_calls, ['resident', 'max23', 'max23'])
+
     def test_packet162_deterministic_receipt_bytes(self):
         path=entry.ROOT/'experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/micro_analyze.py'
         namespace={'__file__':str(path),'__name__':'_legacy_analyzer'}

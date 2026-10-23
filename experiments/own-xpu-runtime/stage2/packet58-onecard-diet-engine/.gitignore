@@ -1,0 +1,19 @@
+/build/
+__pycache__/
+*.pyc
+/queue.lock
+/window.lock
+.cache/
+/screen/window.lock
+/lineage/58ad-chain-a-rehearsal.json.gz
+
+# Compiled object contents are restored by restore_build.py, never tracked.
+*.o
+
+# packet182: bulky device streams of the v5 stay host-local but IGNORED, so a `git clean -fd`
+# (the 2026-10-19 21:42 EDT cleanup that removed packet176's whole v5 tree) cannot delete them.
+# summary.json / window.json / queue.json / *.log of every window stay committable.
+/screen/evidence/card0-58de-v5-a/resident/*/run/
+/screen/evidence/card0-58de-v5-a/resident/*/native-home/
+/screen/evidence/card0-58de-v5-a/resident/*/*.jsonl
+/screen/evidence/lanequeue-review-*.kernel.jsonl.gz

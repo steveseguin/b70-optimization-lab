@@ -1,0 +1,52 @@
+{
+  "schema": "packet58dietengine.python-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "rule": "Packet58-onecard-diet-engine Python gate: the harness tests, differential against packet58-onecard-cache23's committed",
+  "packet58de_screen": {
+    "returncode": 1,
+    "tests": 114,
+    "failing": [
+      "ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)"
+    ]
+  },
+  "parent_receipt": {
+    "path": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/evidence/python-cpu-gates.json",
+    "tests": 113,
+    "failing": [
+      "ERROR: test_new_lookup_gate_refuses_missing_changed_and_wrong_backing (test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing)",
+      "ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)"
+    ]
+  },
+  "new_failures": [],
+  "fixed_vs_parent": [
+    "test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing"
+  ],
+  "failure_signatures": {
+    "test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load": [
+      "ERROR: FileNotFoundError: [Errno 2] No such file or directory: '<packet>/screen/evidence/postload-census.json'"
+    ]
+  },
+  "parent_failure_signatures": {
+    "test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load": [
+      "ERROR: FileNotFoundError: [Errno 2] No such file or directory: '<packet>/screen/evidence/postload-census.json'"
+    ],
+    "test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing": [
+      "ERROR: ValueError: lookup path differs"
+    ]
+  },
+  "changed_failure_reasons": {},
+  "parent_log_sha256": "e5494f5565d157474e83d6431f3fdbe6a1b2c6131525686e962b237e0c94f05d",
+  "policy_decision_unit_tests": {
+    "returncode": 0,
+    "tests": 35,
+    "failing": []
+  },
+  "delta_and_memory_tests": {
+    "returncode": 0,
+    "tests": 28,
+    "failing": []
+  },
+  "inherited_stale_failures": 1,
+  "note": "remaining failures fail identically on the unchanged parent harness (cache23 receipt); they are not device-path gates"
+}

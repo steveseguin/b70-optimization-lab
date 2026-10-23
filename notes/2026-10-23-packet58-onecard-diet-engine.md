@@ -1,0 +1,13 @@
+# October 23: one-card diet engine preparation resumed
+
+The continuation found the device engine built and kernel-identity, arithmetic-fixture and production-size preparation proofs complete, but no final readiness marker. No screen had run. The daily endpoints still served as restore23; no benchmark unit was active. Root free was 29.11 GB. Memory blocks 53–56 were offline and 57 remained online, as in the October 18 observation; no setting was changed.
+
+The candidate applies the qualified one-card instruction diet to the max23 record line (36.602512 tok/s). All 47 parent SPIR-V images are unchanged plus one diet image. The production-size CPU transport records exactly 47 switched halfcache gate/up sites; layer 2 retains its other format. Memory census is unchanged at 29,338,775,796 bytes. Full engine device exactness and speed remain pending.
+
+Independent review found stale cache23 metadata in final readiness/proposal generation, a sealer that omitted four new object artifacts, relocated private admission pins, and CPU test/argument fixtures still assuming two-column views. These were corrected before sealing. The live boundary gate now requires 47 switched sites, not merely a positive count. Initial Python failures are preserved. Existing completed native proofs were verified by hash and were not rebuilt.
+
+The screen runs K1a/K1b then one load with five max23/production-versus-diet views, 12 cold 128-token requests each. Screen bar +0.5% over every warm control, chain bar +2% over every control and 37.33456224 tok/s; exactness, drift, DRM, unchanged fills, and attributed compute-window savings remain independent gates. The micro projection is not a speed claim. [Packet](../experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/README.md).
+
+Final CPU admission: READY has 1,479 pins across 57 manifests, zero cross-packet mutable pins; temporary queue plan and shared report rehearsal pass. All 46 local guides.yml run checks pass (existing PyYAML satisfied the install prerequisite). Independent operational review caught incorrect benign wait-event names, incomplete visibility of privileged device holders, and external STOP ownership handling in the new window driver; these must be corrected and mock-tested before launch. No device run yet.
+
+Window review fixes completed: exact benign WAIT event names; complete privileged passive Intel DRM ownership scan (metadata only, no device opens); foreign/changed STOP blocks restoration and is retained. Nineteen mock safety tests pass. Live read-only preflight passes. Passive serving-owner inventory sees only the two existing vLLM containers and the vision service, four Intel devices, no unreadable process errors.

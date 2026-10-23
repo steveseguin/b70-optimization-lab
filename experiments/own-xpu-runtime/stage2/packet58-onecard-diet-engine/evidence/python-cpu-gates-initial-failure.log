@@ -1,0 +1,788 @@
+== packet58-onecard-diet-engine screen discovery
+.....EEEE.EF..E.E...EE..........E..EEE.........................EEEEEEEEE........................................EE...
+======================================================================
+ERROR: test_full_census_math_and_one_byte_boundary_every_window (test_admission58e.AdmissionTests.test_full_census_math_and_one_byte_boundary_every_window) (window='K1a')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_admission58e.py", line 71, in test_full_census_math_and_one_byte_boundary_every_window
+    p = M.window_plan(name)
+        ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_full_census_math_and_one_byte_boundary_every_window (test_admission58e.AdmissionTests.test_full_census_math_and_one_byte_boundary_every_window) (window='K1b')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_admission58e.py", line 71, in test_full_census_math_and_one_byte_boundary_every_window
+    p = M.window_plan(name)
+        ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_full_census_math_and_one_byte_boundary_every_window (test_admission58e.AdmissionTests.test_full_census_math_and_one_byte_boundary_every_window) (window='WSCREEN')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_admission58e.py", line 71, in test_full_census_math_and_one_byte_boundary_every_window
+    p = M.window_plan(name)
+        ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_full_census_math_and_one_byte_boundary_every_window (test_admission58e.AdmissionTests.test_full_census_math_and_one_byte_boundary_every_window)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_admission58e.py", line 88, in test_full_census_math_and_one_byte_boundary_every_window
+    self.assertEqual(M.window_plan('WS128')['host_required_available_bytes'], 100487123456)
+                     ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_admission58e.py", line 174, in test_postload_proof_requires_cache_KV_and_after_load
+    p=M.window_plan('KD')
+      ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_every_full_window_uses_same_measured_bound (test_async_policy.AsyncPolicy.test_every_full_window_uses_same_measured_bound)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_async_policy.py", line 12, in test_every_full_window_uses_same_measured_bound
+    p=M.window_plan(w)
+      ^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_observations_cannot_shrink_policy (test_async_policy.AsyncPolicy.test_observations_cannot_shrink_policy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_async_policy.py", line 23, in test_observations_cannot_shrink_policy
+    self.assertEqual(M.window_plan('WSCREEN'),M.window_plan('WSCREEN',{'peak_shadow_bytes':0}))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_tampered_budget_rejected (test_async_policy.AsyncPolicy.test_tampered_budget_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_async_policy.py", line 20, in test_tampered_budget_rejected
+    p=M.window_plan('WSCREEN');p['host_required_available_bytes']+=delta
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_gateup_boundary_mutations_refused (test_bracket.GateUpBoundaryTests.test_gateup_boundary_mutations_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_bracket.py", line 96, in test_gateup_boundary_mutations_refused
+    out=Path(tmp);self.fixture(out)
+                  ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_bracket.py", line 86, in fixture
+    SummaryTests.fixture(SummaryTests(),out)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_bracket.py", line 32, in fixture
+    for e in self.manifest['prompts']:
+             ^^^^^^^^^^^^^
+AttributeError: 'SummaryTests' object has no attribute 'manifest'
+
+======================================================================
+ERROR: test_admission_boundary (test_capacity.Capacity.test_admission_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 39, in test_admission_boundary
+    p=M.plan();required=p['host_required_available_bytes']
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_maximum_retains_every_allowance (test_capacity.Capacity.test_maximum_retains_every_allowance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 12, in test_maximum_retains_every_allowance
+    p=M.window_plan('WSCREEN');plan=json.loads((P/'memory-plan.json').read_text()) if (P/'memory-plan.json').exists() else json.loads((P.parent/'memory-plan.json').read_text())
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_measured_live_accounting_bounds (test_capacity.Capacity.test_measured_live_accounting_bounds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 75, in test_measured_live_accounting_bounds
+    p=M.plan();host=p['host_categories'];pinned=host['pinned_packed_experts']
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_reserve_driver_and_guard_never_reduced (test_capacity.Capacity.test_reserve_driver_and_guard_never_reduced)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 32, in test_reserve_driver_and_guard_never_reduced
+    p=M.window_plan('WSCREEN')
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_actual_window_postflight_failure_retains_drain (test_mask58f.FullWindowTests.test_actual_window_postflight_failure_retains_drain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 219, in test_actual_window_postflight_failure_retains_drain
+    def test_actual_window_postflight_failure_retains_drain(self):self.run_window('postflight')
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_actual_window_preflight_failure (test_mask58f.FullWindowTests.test_actual_window_preflight_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 217, in test_actual_window_preflight_failure
+    def test_actual_window_preflight_failure(self):self.run_window('preflight')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_actual_window_refusal_fault_retains (test_mask58f.FullWindowTests.test_actual_window_refusal_fault_retains)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 222, in test_actual_window_refusal_fault_retains
+    def test_actual_window_refusal_fault_retains(self):self.run_window('refusal-fault')
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_actual_window_refusal_live_owner_retains (test_mask58f.FullWindowTests.test_actual_window_refusal_live_owner_retains)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 223, in test_actual_window_refusal_live_owner_retains
+    def test_actual_window_refusal_live_owner_retains(self):self.run_window('refusal-live')
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_actual_window_refusal_releases (test_mask58f.FullWindowTests.test_actual_window_refusal_releases)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 221, in test_actual_window_refusal_releases
+    def test_actual_window_refusal_releases(self):self.run_window('refusal')
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_actual_window_report_failure (test_mask58f.FullWindowTests.test_actual_window_report_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 218, in test_actual_window_report_failure
+    def test_actual_window_report_failure(self):self.run_window('report')
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_actual_window_success (test_mask58f.FullWindowTests.test_actual_window_success)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 220, in test_actual_window_success
+    def test_actual_window_success(self):self.run_window(None)
+                                         ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_k1_memory_hash_failure_after_teardown_releases (test_mask58f.FullWindowTests.test_k1_memory_hash_failure_after_teardown_releases)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 225, in test_k1_memory_hash_failure_after_teardown_releases
+    def test_k1_memory_hash_failure_after_teardown_releases(self):self.run_window('k1-memory-hash')
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_model_memory_hash_failure_after_teardown_releases (test_mask58f.FullWindowTests.test_model_memory_hash_failure_after_teardown_releases)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 224, in test_model_memory_hash_failure_after_teardown_releases
+    def test_model_memory_hash_failure_after_teardown_releases(self):self.run_window('model-memory-hash')
+                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_mask58f.py", line 198, in run_window
+    rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/window.py", line 400, in main
+    budget = M.window_plan(args.window)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_new_lookup_gate_refuses_missing_changed_and_wrong_backing (test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_resident_report.py", line 21, in test_new_lookup_gate_refuses_missing_changed_and_wrong_backing
+    out=Path(tmp);self.fixture(out,'resident');self.assertTrue(D.verify_lookup_views(out,'resident'))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_resident_report.py", line 16, in fixture
+    for label,name in V.bracket(view):D.save(out/'run'/label/'lookup-backing.json',dict(resident=name=='resident',copies=lookup))
+        ^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+======================================================================
+ERROR: test_smoke_analyzes_own_output_before_data_and_as_data_arrives (test_resident_report.ResidentReport.test_smoke_analyzes_own_output_before_data_and_as_data_arrives)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_resident_report.py", line 30, in test_smoke_analyzes_own_output_before_data_and_as_data_arrives
+    out=Path(tmp);f=self.fixture(out)
+                    ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_resident_report.py", line 16, in fixture
+    for label,name in V.bracket(view):D.save(out/'run'/label/'lookup-backing.json',dict(resident=name=='resident',copies=lookup))
+        ^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+======================================================================
+FAIL: test_reserve_crossing_sends_only_cooperative_sigterm (test_admission58e.AdmissionTests.test_reserve_crossing_sends_only_cooperative_sigterm)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_admission58e.py", line 171, in test_reserve_crossing_sends_only_cooperative_sigterm
+    self.assertTrue(any('8 GiB stop floor' in r for r in reasons))
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 114 tests in 3.554s
+
+FAILED (failures=1, errors=24)
+
+== policy/decision/unit tests
+E..EEE...........E..........E.E...E
+======================================================================
+ERROR: test_admission_boundary (test_capacity.Capacity.test_admission_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 39, in test_admission_boundary
+    p=M.plan();required=p['host_required_available_bytes']
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_maximum_retains_every_allowance (test_capacity.Capacity.test_maximum_retains_every_allowance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 12, in test_maximum_retains_every_allowance
+    p=M.window_plan('WSCREEN');plan=json.loads((P/'memory-plan.json').read_text()) if (P/'memory-plan.json').exists() else json.loads((P.parent/'memory-plan.json').read_text())
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_measured_live_accounting_bounds (test_capacity.Capacity.test_measured_live_accounting_bounds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 75, in test_measured_live_accounting_bounds
+    p=M.plan();host=p['host_categories'];pinned=host['pinned_packed_experts']
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_reserve_driver_and_guard_never_reduced (test_capacity.Capacity.test_reserve_driver_and_guard_never_reduced)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_capacity.py", line 32, in test_reserve_driver_and_guard_never_reduced
+    p=M.window_plan('WSCREEN')
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_gateup_boundary_mutations_refused (test_bracket.GateUpBoundaryTests.test_gateup_boundary_mutations_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_bracket.py", line 96, in test_gateup_boundary_mutations_refused
+    out=Path(tmp);self.fixture(out)
+                  ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_bracket.py", line 86, in fixture
+    SummaryTests.fixture(SummaryTests(),out)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_bracket.py", line 32, in fixture
+    for e in self.manifest['prompts']:
+             ^^^^^^^^^^^^^
+AttributeError: 'SummaryTests' object has no attribute 'manifest'
+
+======================================================================
+ERROR: test_every_full_window_uses_same_measured_bound (test_async_policy.AsyncPolicy.test_every_full_window_uses_same_measured_bound)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_async_policy.py", line 12, in test_every_full_window_uses_same_measured_bound
+    p=M.window_plan(w)
+      ^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_observations_cannot_shrink_policy (test_async_policy.AsyncPolicy.test_observations_cannot_shrink_policy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_async_policy.py", line 23, in test_observations_cannot_shrink_policy
+    self.assertEqual(M.window_plan('WSCREEN'),M.window_plan('WSCREEN',{'peak_shadow_bytes':0}))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_tampered_budget_rejected (test_async_policy.AsyncPolicy.test_tampered_budget_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/test_async_policy.py", line 20, in test_tampered_budget_rejected
+    p=M.window_plan('WSCREEN');p['host_required_available_bytes']+=delta
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+----------------------------------------------------------------------
+Ran 35 tests in 1.454s
+
+FAILED (errors=8)
+
+== top-level delta + memory tests
+.F...EEEE..E..E
+======================================================================
+ERROR: test_census_pinned_exact (test_memory_plan.MemoryTests.test_census_pinned_exact)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/test_memory_plan.py", line 9, in test_census_pinned_exact
+    p=M.plan()
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_device_reserve_refuses (test_memory_plan.MemoryTests.test_device_reserve_refuses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/test_memory_plan.py", line 23, in test_device_reserve_refuses
+    p=M.plan();p['device_margin_bytes']=-1
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_exact_boundary (test_memory_plan.MemoryTests.test_exact_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/test_memory_plan.py", line 18, in test_exact_boundary
+    p=M.plan();n=p['host_required_available_bytes']
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_full_shadow_not_subtracted_as_existing_headroom (test_memory_plan.MemoryTests.test_full_shadow_not_subtracted_as_existing_headroom)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/test_memory_plan.py", line 28, in test_full_shadow_not_subtracted_as_existing_headroom
+    p=M.plan();n=p['host_required_available_bytes']
+      ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: test_complete_copy_allocation_charged_once_at_every_stage (test_resident.ResidentTests.test_complete_copy_allocation_charged_once_at_every_stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/test_resident.py", line 20, in test_complete_copy_allocation_charged_once_at_every_stage
+    b=M.window_plan(window);h=b['host_categories'];pins=h['pinned_packed_experts']
+      ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+ERROR: setUpClass (test_memory_sensor.SensorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/test_memory_sensor.py", line 16, in setUpClass
+    cls.budget = M.plan()
+                 ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 42, in plan
+    return window_plan('WSCREEN')
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/memory_plan.py", line 14, in window_plan
+    budget=_measured.window_plan(window,view='tile16-resident')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 99, in window_plan
+    verify_seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 48, in verify_seal
+    require(sha(root / name) == digest, 'admission seal mismatch: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/host-admission/memory_plan.py", line 26, in require
+    raise ValueError(message)
+ValueError: admission seal mismatch: base-plan.json
+
+======================================================================
+FAIL: test_candidate_source (test_dietengine_delta.DietEngineDelta.test_candidate_source)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/test_dietengine_delta.py", line 67, in test_candidate_source
+    self.assertEqual(problems(P / 'native'), [])
+AssertionError: Lists differ: ['record TU dispatch (host only, no diet header)'] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+'record TU dispatch (host only, no diet header)'
+
+- ['record TU dispatch (host only, no diet header)']
++ []
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.032s
+
+FAILED (failures=1, errors=6)

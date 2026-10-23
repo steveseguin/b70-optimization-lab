@@ -1,0 +1,99 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "final_image": {
+    "record_engine": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/build/device/own-rt-iq3",
+    "record_engine_sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+    "new_engine": "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/own-rt-iq3",
+    "new_engine_sha256": "537c080767f241653a8ac13c77289cd59e8f7444cbee2a4fcb35586eb1e743d4",
+    "record_images": 47,
+    "new_images": 48,
+    "byte_identical_images": 47,
+    "differing_images": 0,
+    "missing_images": 0,
+    "added_images": [
+      {
+        "image": "image.44",
+        "kernels": [
+          "_ZTSZZNK10p58ag_diet6GateUp6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS2_5eventESaISA_EEENKUlRNS2_7handlerEE_clESG_EUlNS2_7nd_itemILi1EEEE_"
+        ],
+        "bytes": 27072
+      }
+    ],
+    "record_gateup_image": {
+      "old": "image.43",
+      "new": "image.43",
+      "kernels": [
+        "_ZTSZZNK9p58ag_exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+        "_ZTSZZNK9p58ag_exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_"
+      ],
+      "bytes": 29336
+    },
+    "method": "clang-offload-extract (sycl-spir64 images) -> images matched by EntryPoint kernel-name sets (llvm-spirv --to-text) -> SPIR-V bytes compared",
+    "statement": "the production path device code is byte-for-byte the record engine's; the diet is exactly one added kernel image"
+  },
+  "record_tu_object": {
+    "pinned_object": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/device/p58ag_submit.o",
+    "pinned_sha256": "c2161ba34100c32e58aaf9c45aef41aeca0d0332ad54860610bae764b984e0a3",
+    "rebuilt_object": "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/p58ag_submit.o",
+    "rebuilt_sha256": "805d1ccb621fea8565c93bd01064e93097971288672148fba14e028731b20aba",
+    "inherited_kernels": 3,
+    "opcode_identical": 3,
+    "canonical_identical": 3,
+    "added_kernels": [],
+    "kernels": [
+      {
+        "kernel": "_ZTSZZNK11p49dvirtual6KernelILN3iq34TypeE22ELj2560ELj2EE17submit_stream_armILj2EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+        "function_lines": 473,
+        "rebuilt_function_lines": 473,
+        "opcode_identical": true,
+        "canonical_identical": true,
+        "first_differences": []
+      },
+      {
+        "kernel": "_ZTSZZNK9p58ag_exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+        "function_lines": 567,
+        "rebuilt_function_lines": 567,
+        "opcode_identical": true,
+        "canonical_identical": true,
+        "first_differences": []
+      },
+      {
+        "kernel": "_ZTSZZNK9p58ag_exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+        "function_lines": 567,
+        "rebuilt_function_lines": 567,
+        "opcode_identical": true,
+        "canonical_identical": true,
+        "first_differences": []
+      }
+    ],
+    "record_kernels": {
+      "gateup_halfcache": "_ZTSZZNK9p58ag_exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "gateup_direct_decode": "_ZTSZZNK9p58ag_exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_"
+    },
+    "method": "clang-offload-bundler unbundle -> sycl-post-link -split=kernel -O0 -> llvm-spirv --spirv-text; function sections compared by opcode sequence and by canonical form (globals/entry points by name, ids renumbered by first appearance)"
+  },
+  "diet_tu_object": {
+    "object": "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/p58ag_diet_submit.o",
+    "sha256": "77fbabdf5f2acc1832be42fc81431605dc43d9d15a28e1af685ebc714ec02642",
+    "kernels": [
+      "_ZTSZZNK10p58ag_diet6GateUp6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS2_5eventESaISA_EEENKUlRNS2_7handlerEE_clESG_EUlNS2_7nd_itemILi1EEEE_",
+      "_ZTSZZNK11p49dvirtual6KernelILN3iq34TypeE22ELj2560ELj2EE17submit_stream_armILj2EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "_ZTSZZNK9p58ag_exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_"
+    ],
+    "note": "p58ag_diet::GateUp plus vtable-instantiated copies of production kernels (the pinned header binds through Production::bind); linkonce_odr duplicates resolve to the record TU definitions at the device link (final-image proof A)"
+  },
+  "first_build_diagnostic": "co-compiling the diet inside the record TU changed the shared decode_tile inlining and with it both inherited p58ag_exp kernels (attempt 1, build/kernel-identity-attempt1-cotu*.out); the diet therefore lives in its own TU",
+  "caveat": "whole-object and whole-module bytes differ by the include paths embedded as source metadata; the final SPIR-V images carry none and are compared as bytes",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/kernel_identity.py": "35bcbb46ee1d63e42b1b841318189bc1e8e75747dfd06f09ec039866809c93dc",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/p58ag_submit.o": "805d1ccb621fea8565c93bd01064e93097971288672148fba14e028731b20aba",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/p58ag_diet_submit.o": "77fbabdf5f2acc1832be42fc81431605dc43d9d15a28e1af685ebc714ec02642",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/device/p58ag_submit.o": "c2161ba34100c32e58aaf9c45aef41aeca0d0332ad54860610bae764b984e0a3",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/own-rt-iq3": "537c080767f241653a8ac13c77289cd59e8f7444cbee2a4fcb35586eb1e743d4",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/build/device/own-rt-iq3": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/native/generated/p58ag_submit.cpp": "d204b498853f90504f2cac660c1705e1f8212f80f3e6d892ad2dda2de45ff9fa",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/native/generated/p58ag_diet_submit.cpp": "33ef444bd1165cc00e19ddab6e2524a8882211173fad39cce3695fee2a7fee4b",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/native/generated/p58ag_diet.hpp": "35005ee3b3f3561902b727f9658ea0b08513e58a3a5651aff540fd1fabd66089"
+  }
+}

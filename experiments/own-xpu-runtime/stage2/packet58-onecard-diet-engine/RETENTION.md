@@ -1,0 +1,3 @@
+# Retention
+
+Keep source/config deltas, the pinned qualified diet header, source/object identities, lineage, all CPU proof receipts, proposals, readiness and screen outcomes. Build binaries and object payloads are local ignored artifacts, reconstructed with the pinned restore inputs and build scripts; their exact hashes remain in `evidence/build.json`. Raw device run streams remain at the declared packet-local output, with summaries and checksums committed. Preserve initial CPU failure receipts alongside corrected results. Any later chain is a new packet linked to this screen; it must not overwrite this packet's screen identity.

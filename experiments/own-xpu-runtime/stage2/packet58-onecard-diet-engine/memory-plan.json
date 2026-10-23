@@ -1,0 +1,720 @@
+{
+  "schema": "packet58cache23.memory-plan.v1",
+  "device_executed": false,
+  "ruling": "One-card synthesis 1 (2026-10-22): cache_cap max23 = 23,049,601,024 B; driver allowance -> 671,088,640; bound -> 29,828,911,360; transient bounds 2,415,656,960 -> 784,567,808 (= 2.65x the measured live peak); host backing +1.5 GB",
+  "physical_capacity_floor_bytes": {
+    "value": 32000000000,
+    "source": "unchanged packet58x floor"
+  },
+  "device_reserve_bytes": {
+    "value": 1500000000,
+    "source": "unchanged packet58x reserve (never reduced)"
+  },
+  "drm_guard_bytes": {
+    "value": 30500000000,
+    "source": "unchanged native after-load guard + supervisor (floor - reserve); never lowered"
+  },
+  "driver_overhead_measured_bytes": {
+    "value": 604827916,
+    "source": "max DRM total-vram0 over 81 loaded samples (28446732288) minus the census device total (27841904372); packet182c chain KD/W2m/WS/WS128x/WS128"
+  },
+  "driver_allowance_bytes": {
+    "value": 671088640,
+    "old": 536870912,
+    "margin_over_measured": 66260724,
+    "source": "ruling; >= measured 0.60 GB (old 0.54 GB allowance was below the measurement)"
+  },
+  "device_owned_bound_bytes": {
+    "value": 29828911360,
+    "old": 29963128848,
+    "source": "floor - reserve - driver allowance"
+  },
+  "expert_cache_arena_bytes": {
+    "value": 23049601024,
+    "old": 21552729600,
+    "growth": 1496871424,
+    "aligned_256": true,
+    "growth_fraction": 0.069452,
+    "source": "ruling: 23,049,601,024 (+6.95 %)"
+  },
+  "transient_measured": {
+    "operator_scratch_peak": 268435456,
+    "other_workspace_peak": 27176676,
+    "device_transfer_lifetime_peak": 0,
+    "live_transient_peak": 295612132,
+    "source": "workspace/transaction device rows of every chain census (identical in all five)"
+  },
+  "transient_bounds": {
+    "old": {
+      "control_transaction_bound": 1073741824,
+      "workspace_bound": 1073479680,
+      "transfer_bound": 268435456,
+      "total": 2415656960
+    },
+    "new": {
+      "transfer_bound": 268435456,
+      "control_transaction_bound": 402653184,
+      "workspace_bound": 113479168,
+      "total": 784567808
+    },
+    "ratio_to_live_peak": 2.654,
+    "split_rule": "transfer_bound unchanged (no device transfer-lifetime allocation measured; an allowance is never reduced below a measurement, here 0); control_transaction_bound = 1.5 x the 268,435,456-byte operator-scratch transaction buffer; workspace_bound = remainder, >= 4x the other 1,952 workspace rows (gemv-workspace + controls/scores/snapshots)",
+    "total_rule": "bound - 240 B category margin - fixed categories - arena (the ruling total 784,567,808)"
+  },
+  "fixed_categories": {
+    "expert_pointer_generation_tables": 2359296,
+    "target_4k_bf16_kv_index": 116391936,
+    "target_nonexpert": 5815529984,
+    "target_recurrent": 59019280,
+    "async_publication_staging": 1179648,
+    "exact_half_decode_table": 262144,
+    "source": "unchanged packet58x categories; census WS128 KV/recurrent equal them exactly; non-arena weights 5,818,151,424 <= 5,819,331,072 fixed"
+  },
+  "device_categories": {
+    "expert_pointer_generation_tables": 2359296,
+    "target_4k_bf16_kv_index": 116391936,
+    "target_nonexpert": 5815529984,
+    "target_recurrent": 59019280,
+    "async_publication_staging": 1179648,
+    "exact_half_decode_table": 262144,
+    "expert_cache_arena": 23049601024,
+    "transfer_bound": 268435456,
+    "control_transaction_bound": 402653184,
+    "workspace_bound": 113479168
+  },
+  "device_category_sum_bytes": 29828911120,
+  "device_category_margin_bytes": 240,
+  "physical_margin_bytes": 0,
+  "peaks_after_growth": {
+    "planned_peak_bytes": 29338513652,
+    "planned_source": "WS128 plan.json request_and_workspace 475,217,652 + resident_weights 27,366,424,576 + growth",
+    "allocate_peak_bytes": 29338775796,
+    "allocate_source": "WS128 memory.json peak_device_bytes_per_owner 27,841,904,372 + growth",
+    "bound_margin_bytes": 490135564,
+    "drm_projection_bytes": 29943603712,
+    "drm_source": "lifetime DRM peak 28446732288 + growth",
+    "drm_guard_margin_bytes": 556396288
+  },
+  "host": {
+    "required_available_old": 98990252032,
+    "required_available_new": 100487123456,
+    "growth": 1496871424,
+    "host_bound_new": 91897188864,
+    "source": "WS128 window.json memory_admission.required_bytes (= packet58x admission) + full backing for the arena growth; 8 GiB reserve unchanged; MemAvailable at the 182c WS128 start 120821522432"
+  },
+  "census": {
+    "KD": {
+      "device_total": 27841904372,
+      "weights_process": 27370881024,
+      "arena": 21552729600,
+      "kv_request": 116391936,
+      "recurrent_request": 59019280,
+      "workspace_transaction": 295612132,
+      "operator_scratch": 268435456,
+      "other_workspace": 27176676,
+      "device_transfer_lifetime": 0,
+      "categories": [
+        "KV",
+        "recurrent-state",
+        "weights",
+        "workspace"
+      ]
+    },
+    "W2m": {
+      "device_total": 27841904372,
+      "weights_process": 27370881024,
+      "arena": 21552729600,
+      "kv_request": 116391936,
+      "recurrent_request": 59019280,
+      "workspace_transaction": 295612132,
+      "operator_scratch": 268435456,
+      "other_workspace": 27176676,
+      "device_transfer_lifetime": 0,
+      "categories": [
+        "KV",
+        "recurrent-state",
+        "weights",
+        "workspace"
+      ]
+    },
+    "WS": {
+      "device_total": 27841904372,
+      "weights_process": 27370881024,
+      "arena": 21552729600,
+      "kv_request": 116391936,
+      "recurrent_request": 59019280,
+      "workspace_transaction": 295612132,
+      "operator_scratch": 268435456,
+      "other_workspace": 27176676,
+      "device_transfer_lifetime": 0,
+      "categories": [
+        "KV",
+        "recurrent-state",
+        "weights",
+        "workspace"
+      ]
+    },
+    "WS128x": {
+      "device_total": 27841904372,
+      "weights_process": 27370881024,
+      "arena": 21552729600,
+      "kv_request": 116391936,
+      "recurrent_request": 59019280,
+      "workspace_transaction": 295612132,
+      "operator_scratch": 268435456,
+      "other_workspace": 27176676,
+      "device_transfer_lifetime": 0,
+      "categories": [
+        "KV",
+        "recurrent-state",
+        "weights",
+        "workspace"
+      ]
+    },
+    "WS128": {
+      "device_total": 27841904372,
+      "weights_process": 27370881024,
+      "arena": 21552729600,
+      "kv_request": 116391936,
+      "recurrent_request": 59019280,
+      "workspace_transaction": 295612132,
+      "operator_scratch": 268435456,
+      "other_workspace": 27176676,
+      "device_transfer_lifetime": 0,
+      "categories": [
+        "KV",
+        "recurrent-state",
+        "weights",
+        "workspace"
+      ]
+    }
+  },
+  "drm_samples": [
+    {
+      "window": "KD",
+      "sample": "KD/run/run/drm-memory-after_load.txt",
+      "bytes": 28443398144
+    },
+    {
+      "window": "KD",
+      "sample": "KD/run/run/drm-memory-end.txt",
+      "bytes": 2979262464
+    },
+    {
+      "window": "KD",
+      "sample": "KD/run/run/incident-retrospective/drm-memory-after_reset.txt",
+      "bytes": 28443398144
+    },
+    {
+      "window": "KD",
+      "sample": "KD/run/run/incident-retrospective/drm-memory-before_reset.txt",
+      "bytes": 28443398144
+    },
+    {
+      "window": "W2m",
+      "sample": "W2m/run/run/drm-memory-after_load.txt",
+      "bytes": 28440457216
+    },
+    {
+      "window": "W2m",
+      "sample": "W2m/run/run/drm-memory-end.txt",
+      "bytes": 2979229696
+    },
+    {
+      "window": "W2m",
+      "sample": "W2m/run/run/incident-retrospective/drm-memory-after_reset.txt",
+      "bytes": 28440457216
+    },
+    {
+      "window": "W2m",
+      "sample": "W2m/run/run/incident-retrospective/drm-memory-before_reset.txt",
+      "bytes": 28440457216
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/architecture-tradeoff/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/architecture-tradeoff/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/benchmark-analysis/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/benchmark-analysis/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/bug-report-synthesis/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/bug-report-synthesis/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/code-review/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/code-review/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/customer-email/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/customer-email/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/decision-memo/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/decision-memo/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/drm-memory-after_load.txt",
+      "bytes": 28431998976
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/drm-memory-end.txt",
+      "bytes": 2979274752
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/incident-retrospective/drm-memory-after_reset.txt",
+      "bytes": 28431998976
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/incident-retrospective/drm-memory-before_reset.txt",
+      "bytes": 28431998976
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/performance-hypotheses/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/performance-hypotheses/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/release-plan/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/release-plan/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/risk-register/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/risk-register/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/sql-debugging/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/sql-debugging/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/technical-guide/drm-memory-after_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS",
+      "sample": "WS/run/run/technical-guide/drm-memory-before_reset.txt",
+      "bytes": 28442062848
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/architecture-tradeoff/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/architecture-tradeoff/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/benchmark-analysis/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/benchmark-analysis/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/bug-report-synthesis/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/bug-report-synthesis/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/code-review/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/code-review/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/customer-email/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/customer-email/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/decision-memo/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/decision-memo/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/drm-memory-after_load.txt",
+      "bytes": 28436672512
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/drm-memory-end.txt",
+      "bytes": 2979270656
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/incident-retrospective/drm-memory-after_reset.txt",
+      "bytes": 28436672512
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/incident-retrospective/drm-memory-before_reset.txt",
+      "bytes": 28436672512
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/performance-hypotheses/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/performance-hypotheses/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/release-plan/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/release-plan/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/risk-register/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/risk-register/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/sql-debugging/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/sql-debugging/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/technical-guide/drm-memory-after_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128x",
+      "sample": "WS128x/run/run/technical-guide/drm-memory-before_reset.txt",
+      "bytes": 28446732288
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/architecture-tradeoff/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/architecture-tradeoff/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/benchmark-analysis/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/benchmark-analysis/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/bug-report-synthesis/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/bug-report-synthesis/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/code-review/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/code-review/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/customer-email/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/customer-email/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/decision-memo/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/decision-memo/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/drm-memory-after_load.txt",
+      "bytes": 28430557184
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/drm-memory-end.txt",
+      "bytes": 2979274752
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/incident-retrospective/drm-memory-after_reset.txt",
+      "bytes": 28430557184
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/incident-retrospective/drm-memory-before_reset.txt",
+      "bytes": 28430557184
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/performance-hypotheses/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/performance-hypotheses/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/release-plan/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/release-plan/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/risk-register/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/risk-register/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/sql-debugging/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/sql-debugging/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/technical-guide/drm-memory-after_reset.txt",
+      "bytes": 28440621056
+    },
+    {
+      "window": "WS128",
+      "sample": "WS128/run/run/technical-guide/drm-memory-before_reset.txt",
+      "bytes": 28440621056
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/KD/run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/KD/run/run/drm-memory-after_load.txt": "f9418cb41dd249e1b85b64f1306d4e228b801bae4faffe14095cfc6f071cb13a",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/KD/run/run/drm-memory-end.txt": "87990b11e15b00d9211386811dc2f4b34ac3daa4438203d4cbd2c6504e7f5a24",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/KD/run/run/incident-retrospective/drm-memory-after_reset.txt": "9904d6323f6e1194b5c111fd59a3b381291f560d7e2d7e41e8f033889f725fad",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/KD/run/run/incident-retrospective/drm-memory-before_reset.txt": "2a2e1074eb124c1fa14ef2b713d1719ac545518ccd09e59d580bd16b45081e96",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/W2m/run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/W2m/run/run/drm-memory-after_load.txt": "f0ad182751304cf67e61d9f86e84843d4512dd8d8390cc3f584fb009d7bf129d",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/W2m/run/run/drm-memory-end.txt": "bbb29a2ff5e917dcaa0b07109deb35d63734c807200a95db037936db444be4bb",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/W2m/run/run/incident-retrospective/drm-memory-after_reset.txt": "64e8a906b6c6addd23a1c0b99902f71af4d89e369684151ea3e5cdee42f42ecc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/W2m/run/run/incident-retrospective/drm-memory-before_reset.txt": "6b62f02525bb285b7ea9a39939f00f88bcfe1241d3d5f7fbf55c71ccbec28db1",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/architecture-tradeoff/drm-memory-after_reset.txt": "8aef6c04e3cd7aedd77c27a5e4ac1c6ce3c5c77b613722993176c36526d18ed0",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/architecture-tradeoff/drm-memory-before_reset.txt": "693c79dcf73b0c2379d60fc493b8f8ff2704d3732a2ec436cc3b50d40034b336",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/benchmark-analysis/drm-memory-after_reset.txt": "f8a7a42711e7b82843617543b42f5c4ed3b4b510f5e989e9cb04e0e8771fc7eb",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/benchmark-analysis/drm-memory-before_reset.txt": "0f0ae232a1daf1e47c8a998317f6810fda82fbf1a93e9673323b099cc1534cf8",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/bug-report-synthesis/drm-memory-after_reset.txt": "e5f2c53ce2829e219498989d145e334e3b41cbc4e851f7319d0b2a11ea61aa27",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/bug-report-synthesis/drm-memory-before_reset.txt": "6d1140003ea40987298cac0e4c41af6541980ee0b7a4b454374d4fede3bdd550",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/code-review/drm-memory-after_reset.txt": "c6f3c5050a15139085ee8a5d8108628c38a1d0e6d72fcaa6c1a87e6102241213",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/code-review/drm-memory-before_reset.txt": "2a8b74e68887e3470241dfd462162bf0dfbf709d612943173bdc93d776ca26b2",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/customer-email/drm-memory-after_reset.txt": "96f4a60a6685ba56b1fe63eefd968ac1e6b93b895bfc30d48c19d287f33d1f83",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/customer-email/drm-memory-before_reset.txt": "15b6c174d1b114eb3d49d9538a1e4f087ca99f6592de0dd4a5703c8a5b2c869c",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/decision-memo/drm-memory-after_reset.txt": "dd4d886ec5eeee7239fd0211c91b0c36a87e8f4a0a0073bcc2fbad53a7a1cdc9",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/decision-memo/drm-memory-before_reset.txt": "271223aea00312ea888f1cd3494a77e8620ab78fd2bd8a5e0d7cf66f8c3b4c9c",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/drm-memory-after_load.txt": "2df475cd02551246654ef00edc80f5417a45dfa3c56a3674e9fa42f8baa12329",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/drm-memory-end.txt": "cab0594fa7c2ee4f635be45961a911f0e0f277b5fc3d9179054da0df43dc6b26",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/incident-retrospective/drm-memory-after_reset.txt": "e5b5534fe325da80fb02d6ae702c609105170ba7d61ccfb27508c94168ec730b",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/incident-retrospective/drm-memory-before_reset.txt": "22895d5cfdbd84602ad5427f5bb8433132c5a141ae34bc58d6a9ebe57f5fc6f5",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/performance-hypotheses/drm-memory-after_reset.txt": "9aba06169f8b431d097946b6ed55303b9d3ded248c71a9486b52c02c00efb134",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/performance-hypotheses/drm-memory-before_reset.txt": "f04371417007e51755c9b8e5f39642054f71a563e4415c49faf32cbc28bed7a1",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/release-plan/drm-memory-after_reset.txt": "a471d8295d66cf0367710b7489bf2d1443de8c28b4aed85ce786c910f099ae30",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/release-plan/drm-memory-before_reset.txt": "1edd3b29a2cb1d6cf8480ef1d3d195002caac19122c474f2944d7f53eae6048f",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/risk-register/drm-memory-after_reset.txt": "a320a733c6a4db5110a1d2690fae1e4222555ca7078213aa2789c9705101853d",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/risk-register/drm-memory-before_reset.txt": "037f9309294762ea8a7c3484550d0ee4fbb098a9d1fb55a574f078fecac20dd4",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/sql-debugging/drm-memory-after_reset.txt": "46795065c8c1afbbe843808cc5437b757f4d1c9a4c88147b5d16216a1b68436e",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/sql-debugging/drm-memory-before_reset.txt": "b0c32cfd1d113106851ef36c43491c75d14f4cafab686df67cbe26ea1c5bcc3a",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/technical-guide/drm-memory-after_reset.txt": "a910e3759e6c60ce5a6c36808a366c92648c4727e3a56028ca819a29647a12f7",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS/run/run/technical-guide/drm-memory-before_reset.txt": "f4d1488b09e39dff5144b2cc33433a3a54a0badfd7243aa950d53f627921de79",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/architecture-tradeoff/drm-memory-after_reset.txt": "ab2ef3a191e26ac992b9c28db5c1ef9a63d2992327156d48da2d3504a5821242",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/architecture-tradeoff/drm-memory-before_reset.txt": "28e6ee61f4d0f287a7d5722ba248fc51421deb8b8fa14f85e4ddc3b5684e1799",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/benchmark-analysis/drm-memory-after_reset.txt": "e4fe598e33d7fb3e91744658533f4a14bb9922b4909bf5821db5b1d7581c587f",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/benchmark-analysis/drm-memory-before_reset.txt": "8034e93cc36f036fafde507c192462c5f5751042492bdabd06f136af2ed5b50b",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/bug-report-synthesis/drm-memory-after_reset.txt": "b30a8c8d5533dabec827f852e86290e30011b98ea52cd3d0c15a60322ac4c981",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/bug-report-synthesis/drm-memory-before_reset.txt": "cf9d0294e0153181a43d903c8c82bb46487cc75861b5bfa7e32da188d4aaaae0",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/code-review/drm-memory-after_reset.txt": "883d0a270fdb1fda6de4d9f2d08ad766ed47770fc8cb246ce4ecee497de020fc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/code-review/drm-memory-before_reset.txt": "ad6c1c502f3c2e2efe6613e31b579256fa7e057d7e19f5d68760ec0a1aeaa17b",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/customer-email/drm-memory-after_reset.txt": "9ba2af56c6ff460226215e679d7006b28b8aa84f9965343cb33147a98fbbcee9",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/customer-email/drm-memory-before_reset.txt": "897d84c9aa7c0f30c392294139caf19904dd0df10cb5935be825d29d62853c95",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/decision-memo/drm-memory-after_reset.txt": "a84e579fdd35004981c06941e42a94037c47d79b18fa0b0cfb2609f812e0ffc6",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/decision-memo/drm-memory-before_reset.txt": "7ed8315ea023d765b97deebfdb78f7689fea26cdccba870d88339380521a7e87",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/drm-memory-after_load.txt": "2d121307e697d1f74035f83e4ecdd89f9b15ee56772fcb632c36ab1e5226c8ae",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/drm-memory-end.txt": "7dad542f1a036864d002e1e9412d009060180ae4e5eded3145a37ad26dadf65e",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/incident-retrospective/drm-memory-after_reset.txt": "557f6a094244d18a6e0d87b1d42d51ae707cfb7516c60e863ed59211379fb3cb",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/incident-retrospective/drm-memory-before_reset.txt": "d1b0443376a4d2bd1e1211eeb05162a078c95c190714c100553d8cee426cd444",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/performance-hypotheses/drm-memory-after_reset.txt": "9d1615950ea25cf42e19765144dcf1b97a65bd5061cec82bd9abe3e9217b6776",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/performance-hypotheses/drm-memory-before_reset.txt": "13c05d9dc9262ff65a17fef6c7551315c84a12734f9bfabe5f3805ad05b815fe",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/release-plan/drm-memory-after_reset.txt": "c9a27d12a64851276a9592525587c292e464e3cb954a957e862e62c0d073aea4",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/release-plan/drm-memory-before_reset.txt": "c1af63b5061d5443423dc4be1434c2dc784934afc5c582bd7cf6f5eb01b16596",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/risk-register/drm-memory-after_reset.txt": "756cf4a942edb9ea690fca81d76b77f5b0000edae7f2f0157cb02dc3aeaf3f51",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/risk-register/drm-memory-before_reset.txt": "329c30e3c00fbf26e17308e5ea4c92bf568d85bf728c16d9d9a33ddefbe95781",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/sql-debugging/drm-memory-after_reset.txt": "b4f284130a76329194d8784efd1125c8b3db4be4ec86509067914aeecd2e5c4b",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/sql-debugging/drm-memory-before_reset.txt": "0ba3c7fb633d4c7314d55534f2762ca1bc4f9987dd029b24a8ae6402f78385fa",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/technical-guide/drm-memory-after_reset.txt": "e78b309c84cec628377b43ebbda79c05fbe10ce227758b34c4c614f750358e72",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128x/run/run/technical-guide/drm-memory-before_reset.txt": "9d924617fdff7a838d982e9467469b84dd14bb9ef6e6ff0159fdf577700b6874",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/architecture-tradeoff/drm-memory-after_reset.txt": "abdf6dd67011a197bf286a6c6f75332497c5a2cc916627233bba0fe139f6ee64",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/architecture-tradeoff/drm-memory-before_reset.txt": "10feec3c25e1fa2f10bd202d5399016bef729d4c8ded727b2377fe1362360cf2",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/benchmark-analysis/drm-memory-after_reset.txt": "c9ee84b7c329313f560f19ac0e6efa9b319b2caf2dca94ccd32eefe88e531308",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/benchmark-analysis/drm-memory-before_reset.txt": "680fa30ab7460e6068bc3796bb220a3477c69a517a5e119bc588ca0fa23ad16a",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/bug-report-synthesis/drm-memory-after_reset.txt": "696694a6289790e13b2a2b2a7a27eab6d4bd3363de6ca7f1e9ea519f912f82f8",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/bug-report-synthesis/drm-memory-before_reset.txt": "b045529631e19616e8955e861a7fbde5fca5861346e7d84799fffa06e7a74cc1",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/code-review/drm-memory-after_reset.txt": "e948c28b56e95e3eb27b7b401d77c3739beba1ed11ee03b68bfd474aa4262f54",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/code-review/drm-memory-before_reset.txt": "386b7b88b7ab0027a3383d3421a8617f377d131dafb042846840a285bde3398a",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/customer-email/drm-memory-after_reset.txt": "1e021b7438d0205a40be9e0067b40672fc09d916760f83feb20ce0afb08917dd",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/customer-email/drm-memory-before_reset.txt": "f2a75eafe64d82eca817aab379c5db0a5931379cfb72e8a1069b9a9e0a8f4ecc",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/decision-memo/drm-memory-after_reset.txt": "8d81e66204e481391a9df83bc4273bd8d1c9d0aa45daeedf736f2d82932136be",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/decision-memo/drm-memory-before_reset.txt": "e6112fa4f5ec1f7101c117328eebba848a60f241b917e5010abde84a1406cda1",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/drm-memory-after_load.txt": "c8912c9c85019cd41f7dedbbeafc896621c795689e172b180b94d0bc7ac66665",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/drm-memory-end.txt": "d1eec9cbd6236edc5f6bb4d11e9e23344244a382e15fae8a48458abdd6ff5246",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/incident-retrospective/drm-memory-after_reset.txt": "6d73f6b049fae5a042e0dd6817efa2aa049744eb2ad94c5882d23b5616d284f1",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/incident-retrospective/drm-memory-before_reset.txt": "ef70ab3a670c2679de6e5a866d0cf9d0e36d747cedd9199e94620a350f711eda",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/performance-hypotheses/drm-memory-after_reset.txt": "6aa7bb07b5e718124c169d311c256d255a36965bf0d3da54e2b3e73e738cf14f",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/performance-hypotheses/drm-memory-before_reset.txt": "d4b8cb0033d6237ae1df0c41218758c7e28a2d9e1514f9841aba21b79784e00d",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/release-plan/drm-memory-after_reset.txt": "88d44b7faf52ad0d6bc9892d419a2f8fd39a944f7615b70928bf12a72377fb97",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/release-plan/drm-memory-before_reset.txt": "b24eb6e88ea6366afd17b95272c2f01cba3cd340776d4c090022731602c742ee",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/risk-register/drm-memory-after_reset.txt": "397cb80930ad478eebad5b2a7f49e2902c9e052b16cff7540d20358be1100aa1",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/risk-register/drm-memory-before_reset.txt": "db9e599fc17abcbe928f4ce54798b586415406cfa116bfc4662690fdd53652b6",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/sql-debugging/drm-memory-after_reset.txt": "7299a04d4949169f12b8f10fdd0c61fca5f37d95216abed9672148a373d27e9a",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/sql-debugging/drm-memory-before_reset.txt": "979fad994a5b4f4ec904bec8b27cc50a5f86bf7fdb0a78017e621c154e67cb36",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/technical-guide/drm-memory-after_reset.txt": "7c9c9cd6cc8de082b2e47308ca14ef8420d1ea324c6cd4cd09ecaa7fa728d7bd",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/technical-guide/drm-memory-before_reset.txt": "b94b0aadb8213c3c905bbafe5fed301f82e012d21ec76a9678a7ba90755c8042",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/plan.json": "3ae15bc39f60970165119c00dffa9151e554e875b1ab9700670359f9f81089e9",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/run/run/memory.json": "4c82bc6cfac407b7dfeb84de851ccd442afc3e14a1f5c28e0ff9f413205453f5",
+    "experiments/own-xpu-runtime/stage2/packet182c-chain/evidence/card0-182-a/WS128/window.json": "abfc1a9a63458443db27da285103e38fec5ffcbf1f25e9fa31e6f6bde6e7cd2b"
+  }
+}

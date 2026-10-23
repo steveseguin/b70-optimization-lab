@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "checks": 583,
+  "scaled_arena_bytes": 8192,
+  "scaled_growth_bytes": 1024,
+  "steps": 64,
+  "max_fills": 190,
+  "max_fill_bytes": 48640,
+  "max_resident_peak": 8192,
+  "max23_resident_peak": 9216,
+  "max23_fills": 185,
+  "trace_bytes": 247565,
+  "schema": "packet58cache23.cache-identity.v1",
+  "command": [
+    "/usr/bin/g++",
+    "-std=c++20",
+    "-O2",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/native",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/native/cache23_identity_test.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/cache23-identity-test"
+  ],
+  "source_sha256": "2a4ea282b695209f6fe958493f85f635d255bdf7dad95ec5082ba5b4157d47cf",
+  "cache_table_sha256": "cb3062c07de59548fbc02f16e65ddd135f0192d780dd8895f286fac7ec4dba88",
+  "binary_sha256": "3e95ce14292e8f13f41af0719dfe3f9cb1a3d0296cab053ddeee7e6f34730d51",
+  "proof": "p58::Cache decisions depend only on (base, capacity): the max view inside the 23,049,601,024-byte arena is byte-for-byte packet182c's 21,552,729,600-byte cache; max23 = the whole arena",
+  "scaled": true,
+  "production_literals": {
+    "max": 21552729600,
+    "max23": 23049601024,
+    "growth": 1496871424,
+    "aligned_256": true
+  }
+}

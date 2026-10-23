@@ -1,0 +1,429 @@
+{
+  "old": "stage2/packet176-onecard-kernelio/",
+  "new": "stage2/packet58-onecard-cache23/",
+  "files": {
+    "native/async_backend.hpp": 1,
+    "native/generated/fixture.cpp": 2,
+    "native/generated/fullshape_submit_test.hpp": 3,
+    "native/generated/fusion_cpu.cpp": 4,
+    "native/generated/main.cpp": 41,
+    "native/generated/owner.cpp": 5,
+    "native/generated/owner_retire.cpp": 5,
+    "native/generated/p109_fusion.hpp": 1,
+    "native/generated/p109_route.hpp": 2,
+    "native/generated/p58ag_expert.hpp": 2,
+    "native/generated/p58ag_submit.cpp": 3,
+    "native/generated/p58ag_submit.hpp": 1,
+    "native/generated/p60_kernels.hpp": 3,
+    "native/generated/p60_math.hpp": 2,
+    "native/generated/p60_submit.cpp": 3,
+    "native/generated/p60_submit.hpp": 1,
+    "native/generated/p73_hc.hpp": 2,
+    "native/generated/ports_bytes.cpp": 4,
+    "native/generated/postload_allocation_test.hpp": 2,
+    "native/generated/production_cpu.cpp": 1,
+    "native/generated/single_device.cpp": 8,
+    "native/kernel_io.hpp": 3,
+    "native/publish.hpp": 3
+  },
+  "frozen_inputs": {
+    "note": "the tracked frozen header copies carry absolute includes into packet176 (packet182 inherited them unchanged and never compiled); rewritten here so one header has one path (two paths = two #pragma once identities = redefinition errors); bytes otherwise identical",
+    "files": {
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": {
+        "count": 3,
+        "before_sha256": "41cbd2990e099bf33a66371836f068682228ab506a1ea2da34b67ee8ba8d9f21",
+        "after_sha256": "b96a639ac8c2c92879d81714854014fe394dd3b2e9616859e7aff5aa1b22088b"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": {
+        "count": 3,
+        "before_sha256": "5a51f57f66b0150493ac094b0df6c098af60c42ab8715c9cd2bc67ac16cdd614",
+        "after_sha256": "4cb39c3c0187b02ed0a7ac765c487a29dd57417de05fd7c0d0754e01ed1c0f61"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": {
+        "count": 3,
+        "before_sha256": "56d9a936baab76d35806cc91962faab52ad334568c142075587e521fb15ddbf0",
+        "after_sha256": "616c0ccdff910643149a20f174f901812e31ec08d48759d83e80b35c95ef6fe9"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": {
+        "count": 4,
+        "before_sha256": "54a732857bc94843d6ddf126a59d6a37421cc93863084867f21cd7827ba9bc91",
+        "after_sha256": "798928bf7256963080fdf7fd1e3167aff3a0f1870ca2f6997f78dc0a7a5ed50a"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": {
+        "count": 2,
+        "before_sha256": "016b5d9e418e6d2f38434a7598c2bdae5d4d750fe7269e96544980820411a78e",
+        "after_sha256": "0bdfff37481c972b87014d4d75cc5caf8462b1adf4961dcf0b634b4b60f19339"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": {
+        "count": 4,
+        "before_sha256": "7f2dd52f63574ca013c024a098fc267f5e25967775b82ac9f2423d70a436125f",
+        "after_sha256": "dc826491ee73bf9da31b341ed439ed3d23c5a6520c1ccd1be2fbda0799765f54"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": {
+        "count": 2,
+        "before_sha256": "25561dc54edfef90b6886fe2e50d728661c448cac26ae104e55e4a4ec5feefd6",
+        "after_sha256": "e66e0d50bd96fa64d829831623bce1db6df65d4744665253990b6bd5a200d992"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": {
+        "count": 3,
+        "before_sha256": "3cfbe2a6628bf80ed665a80639f1979cfefe9b804be37478d50d181020a2a5ed",
+        "after_sha256": "cbb637a6c30709fdb89a7a97f9bf8cf21e2367a37fb00b911f1479c79349c3c7"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": {
+        "count": 4,
+        "before_sha256": "c8c1a98a8290ec06b4b36742a095220f77f57c39dfd08ec4966485af1766842d",
+        "after_sha256": "c422473369a486849f6549de5806d88f061e24b76c9c9c719af75bd822f2e915"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": {
+        "count": 3,
+        "before_sha256": "c0625fe897d811c88457fca269a957ee9e1061e8886ed77fe5afc9c916338018",
+        "after_sha256": "59b72a5f5736a4058dd4334cb8b521e45d0e3a02c68fa3f2285da88a187dcd48"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": {
+        "count": 3,
+        "before_sha256": "c91703eb83911bcce86e70e872480ebf916495228fbb21a7e0325c39b81ee1a8",
+        "after_sha256": "a5d428c11ff5db306fb1b494535568adf0aaabdf3a6fce48bc31cce111145988"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": {
+        "count": 3,
+        "before_sha256": "0479b6bd7986666a9e3ba85a385b1f67a46c234d348900e89087fa1f401f2bd2",
+        "after_sha256": "94cfb6433c0fcc0e1f5f42a8925779c38ef5cf64ac2217073a78bf560e154907"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/adapter.hpp": {
+        "count": 3,
+        "before_sha256": "38f37fbb457ece881cecb2e44b51c6e7d85e1315f3b231568f7e2b19829d4337",
+        "after_sha256": "ac2fd1b5586cfa72553daed24d38588ba0975adae9acbb056b12d3cf8c373544"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/argument_block.hpp": {
+        "count": 2,
+        "before_sha256": "cbcf2543dba695b56a5a54d4e9ff83e7d5554912b11a19671fd1abcb3bd08ade",
+        "after_sha256": "30e369f8bb9c31b381382041b06211ce545b9359c0d2d7e87ec3a9e87f9f7e89"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/arithmetic.hpp": {
+        "count": 5,
+        "before_sha256": "c5a2696f1fb6f31e807c847f76b11b60dae1c98ebff21e887839d2c0e9d454e8",
+        "after_sha256": "609475084f9de03dfaf7632c1abd1b96323b58c25d0589f6e8868f9f81c39fac"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/core_v2.hpp": {
+        "count": 5,
+        "before_sha256": "67491d2cdf4a311adebbbf95436031aa144950867c64a25e86f2ae87402a9fc2",
+        "after_sha256": "4787fbc6543b24ab3a8c26f4cc8e1fd760ae44fe6b68f573dfd891ff99e2d84d"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/detmath.hpp": {
+        "count": 3,
+        "before_sha256": "70b2ca62e085471e5751f084efdd18da4dbcf10a4d1392fd7c84adc27a8b4351",
+        "after_sha256": "22ed5d309dce46fde8f82656d0dc6b170c3d281184b1b75d1d9334023656fefe"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/dispatch.hpp": {
+        "count": 4,
+        "before_sha256": "ba40a36242afa9a4cf4b7f520065456bbf7d86b75c337ada43730912d9739fc5",
+        "after_sha256": "1f097597db68c9d861fae87fd3f2417a3c553851417b1d76ca1a0642a3271481"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/dispatch_registry.hpp": {
+        "count": 2,
+        "before_sha256": "e1d8d634bc55429a7f6a16b7bbe0df6737d34abe62022dc932befa39a5f80c30",
+        "after_sha256": "97d47f0ac40991877e58948b60bde77835a36ab05e7f077b7766599e17ffe2ed"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/expert_down.hpp": {
+        "count": 3,
+        "before_sha256": "2774eb4f791591146d7f31d7b4a75bd10b94078c2f38ea47fbbd309c2340e454",
+        "after_sha256": "c32c23d9f549497ee88d089c0ddc5c8b514b5dfe5231e2f03a49e2a71608d2a9"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernels.hpp": {
+        "count": 4,
+        "before_sha256": "78ca2ace05ec3a031713906ba55de7bb9d903f6da0f83cddb6259c81ea8de1fd",
+        "after_sha256": "98eb404ad75f2da75ba8fcb19f8e5d73c6819cf2e0ba99e2eaf5050acf2855bc"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/lifetime_mock.hpp": {
+        "count": 3,
+        "before_sha256": "ed0ee37e8d0126d34c6303101272ea039db0b727d0c28af492a2ac28dfa17eaa",
+        "after_sha256": "f9e39da2f984cb8b6b44a53ee7ce38efca408d851caffdb9edacc8ce3a5e4210"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/mtp.hpp": {
+        "count": 4,
+        "before_sha256": "ff67e874993d796c188489eee2a938c8a1719da640afa6eb492c268e6d5085f3",
+        "after_sha256": "1bcdfa6bd40be5d558b8d4cf0da50a07af4a407ed6450eacbef0fdd38d878efc"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/mtp_kernels.hpp": {
+        "count": 3,
+        "before_sha256": "5777243c036b73743250d85e8128de88a441dfddf8e24e7ef5c17b3eb4543e80",
+        "after_sha256": "a0d36e175a7dc302f58757d37d96318f767ea1578ab75decdeb7351c67303383"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/native_controller.hpp": {
+        "count": 2,
+        "before_sha256": "2a9236c777b9f158a5e250f8bc189113b8fd94b0404517b4e7cbcd9880c4ce6b",
+        "after_sha256": "31f8e6fbe11188be2bd3b6de83fa9a0120fcece37ede0d33fc7c360a7fce1c63"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/owner.hpp": {
+        "count": 3,
+        "before_sha256": "8e155999a3b2c2def499a02a8009d991d334a09950fab40a424af83ebc564e9e",
+        "after_sha256": "5d1608ced25e5233286d423fdbaa4f65305676fd40a04470555a39373a0cbd1f"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/owner_api.hpp": {
+        "count": 3,
+        "before_sha256": "1cb7b1e0ed28b207a2d725d729485e6fe2e0b01043c7db1b69bdecdb88ecb830",
+        "after_sha256": "e2eff9e8b94bc923cf5011f86875d60a625fa8fb3405e51798c01656333f0374"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p100_down.hpp": {
+        "count": 4,
+        "before_sha256": "7a2630ffa7e08a3415b39532c0556e0350473ad89829ccb8ecf59091c61f0208",
+        "after_sha256": "6a2a2a702aff9f6c9cef030fd9f23648ba8afa5dbb1fefa42b1985cc131fa78e"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p25_bridge.hpp": {
+        "count": 3,
+        "before_sha256": "47a2396ff2192b31fbb2c68607b515564967edfbd3cecc505812093b44172b18",
+        "after_sha256": "77494fe1af781ddf5e6a9029f47ece3750b5467e781a0b34e1e91c804f1593b8"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/dense.hpp": {
+        "count": 3,
+        "before_sha256": "16c53bd83e755c42410d8cb615c70c5df2db8224504e0cf9e594ed76a0200c90",
+        "after_sha256": "e81f776d7a0e8c043dd8b014c94dfa3eca10a7dfac6b45df509f446819363103"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/expert.hpp": {
+        "count": 3,
+        "before_sha256": "8a4bb5a5292f9a463349ac6af356a5a8441644f3c2659085e8841a168b97713d",
+        "after_sha256": "bd668c9670abb7022f80e90baf43b1730e54f1253d721439e3810c6339b749aa"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/registry.hpp": {
+        "count": 3,
+        "before_sha256": "43af2663dcabfeed94317062d3601df91d9b843c00330d44f7247df8fb4c8544",
+        "after_sha256": "38ed1e3de50242bd5199acad1530239483a71133801a32da60d3fc2239dacef4"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/submit.hpp": {
+        "count": 4,
+        "before_sha256": "2301a2f5cc7d83da8b2b6cb40737f2c93011ea1aea4275b8e3f6e4e0abb0273e",
+        "after_sha256": "5c24af6172b90566ffa2372d0fbe8a90a82090b75d303d8f472b7abf8eae838a"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p30_submit.hpp": {
+        "count": 4,
+        "before_sha256": "ae300497e123cf30fe4523e7a5aaee6a358b865572c96ddc7d415c11ac606592",
+        "after_sha256": "990812657f480f6544d43e9d91ab26d50a679fd0984426cdf412788348377477"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33_candidates.hpp": {
+        "count": 5,
+        "before_sha256": "6e25b9e9b945e2523f6a85950db25cadf99a6268fb5fa8bf3f9c926629aadaf3",
+        "after_sha256": "633aead0e86319b60167f3ce8b02901eb39f3d3abd95b6fb2fbc33136ed785e0"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33_submit.hpp": {
+        "count": 3,
+        "before_sha256": "d9ee9800e57d1b7cd856e541e8e2a103cb4e8d288689b0c28be306de6e5c950e",
+        "after_sha256": "9cecaf28675de86f740ad8aca71c55f4556390e0429ca9254692ad60380c2c10"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33r2.hpp": {
+        "count": 3,
+        "before_sha256": "0ac6dd83893673b9fd5fc33b1a14f2faac3a8c4edabbf263ef8a75fbb23caa82",
+        "after_sha256": "c208c93225cda6c22e2122ed19f06d49fd1bfb807c7f4d75054ca3fbfc6ab016"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_fused.hpp": {
+        "count": 5,
+        "before_sha256": "5d2bb2a2d940e89d79694886696c74a112aed359d24d47bfab01d5939e2997a6",
+        "after_sha256": "8d1b2432edd2aad3e3fe93e01cf27651927e48ba271e7072cf6f696557122ff8"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_plan.hpp": {
+        "count": 4,
+        "before_sha256": "c4066a710e8b7ad2cfe9f09b1ad44d5693157383cba5cd065790cb9050f26ed9",
+        "after_sha256": "12d389a132cf84d749734d36d5e6d06e06ca12a5ffdc0cbb9bf80bf145c1bf4d"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_submit.hpp": {
+        "count": 5,
+        "before_sha256": "25f97394a7c165683797808ff12adb9ae14ca3c27a45671b75d25463287bfd38",
+        "after_sha256": "ba625acd01eb9308d553f40666b642e6823571488a73e1fee120d4f941c2740f"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p42_expert.hpp": {
+        "count": 3,
+        "before_sha256": "93062c8c2e0d4f4edd3a466915ba523954a0444920b6b289382a19431bff1b1e",
+        "after_sha256": "27e4da9a9e63454c4805c6e9e32b24d8a0670fec0f7242a317ed0f36eac468c8"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_expert_kernel.hpp": {
+        "count": 6,
+        "before_sha256": "29dc9e66270113ce54ff736a0856b14b5c4aeeb60a20de48480e20f9acfa672d",
+        "after_sha256": "0b1c4e8a778cedfec0f6e205a7343394bdd02359f022de8dc2a2a37776c00054"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_expert_submit.hpp": {
+        "count": 4,
+        "before_sha256": "f5e6497bfeef8fe051a60afd47d8b96749d2269df9b08a09c46ff6437c91502e",
+        "after_sha256": "6485c2416bc34baad5b3bd549eea5a19e70fd8012669f4e1d1b82b6eddd812bd"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_gemv.hpp": {
+        "count": 4,
+        "before_sha256": "db6aa34923b0945ce38235eeff8eb7acc2d36275e1f4fd991e759be890328286",
+        "after_sha256": "0bdf36734be3dc8876c1c3897140a765d3d32e6fc424afb3554f81b5656238ea"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49c_kernel.hpp": {
+        "count": 6,
+        "before_sha256": "8eef13b698e92f3da4ce39f4b73dedbe4fb2f33561b1cac3bca0ee150cbfd067",
+        "after_sha256": "218ed7ed2c3ab3d6c23e451a91667692682621dfbacb1b1fc84f693c7b9d14c6"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49c_submit.hpp": {
+        "count": 3,
+        "before_sha256": "8c4d0d6f1f33af43e9528509ddd82dacf1985914054895b78342b81de0a690a1",
+        "after_sha256": "01a2b4725cdbc6418343f4cc8e3eff8a5d6b1df896744cf6a935128abba30ad4"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_expert.hpp": {
+        "count": 5,
+        "before_sha256": "526d8ea3a333f0fdc31198d840f939e5a47898afffb45d0efadafda2209c76f6",
+        "after_sha256": "7ba32286b90f7e268b8e318a6e7c9dd764fd54e33cd6c2d2ec70f5601309c622"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_route.hpp": {
+        "count": 3,
+        "before_sha256": "366957ec3008f163cab7dee3fae780fe51f33adfe769d93320378c25b070c423",
+        "after_sha256": "a25380c9154f83f0e463dc62a5e96f92f98d46044ea4286928f4d996018a7c96"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_submit.hpp": {
+        "count": 4,
+        "before_sha256": "09cd7e22861031a5507a935962d101f969a1fa2a135e5ad56e94a770ce873376",
+        "after_sha256": "589abe33e26ba3fb8dff4cb71ece30359758946089970f0b35533facc0fab93b"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p56_config.hpp": {
+        "count": 2,
+        "before_sha256": "dc1797b698a54418277dda52d094187c940ae9d4c823032be6f4c92c2d404ddc",
+        "after_sha256": "9666cdd6d01ce7d6ee5515c2b964fe35bc7e59e3577a9d576cf85a40bd48758a"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p56_prefix.hpp": {
+        "count": 3,
+        "before_sha256": "a7b41fb972b53b460b9b965bca2f33e0f44fa096ae71eb87196281c7a178a4af",
+        "after_sha256": "6f6cb52f86108d6044bc820d1017aee94a76718968536bab17ba949bf00c791d"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p58_pointer.hpp": {
+        "count": 2,
+        "before_sha256": "96768f66fc95fb6d3c686c08a4e6376eac85cf4a4e0262dcbe04863643d5e067",
+        "after_sha256": "efc83a95c6d95bcaa58e01f06dcb635cd49ac65cd7b2d479faec4cb7189df443"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p65_expert.hpp": {
+        "count": 4,
+        "before_sha256": "eb3a0d146bfffb4c6013f37c55139d47e8a1cad2d3c96baa54b564d373044c15",
+        "after_sha256": "79bd571b48d6f1765fac4f1674d465b7e6ccbefdc237f9cd879ec3dc97ee5684"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/performance.hpp": {
+        "count": 6,
+        "before_sha256": "e473cfd1a89a6894711805c28155a75adb9f6979525dd4f508b73bb02271782b",
+        "after_sha256": "b0e768a89c6aec22b3aedbf5fed51112a0a54fa0088f958c87a227ef403d95c3"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/prepared_submission.hpp": {
+        "count": 3,
+        "before_sha256": "1b2a2f5e87f14c1f6b5484d5fd9a8e880b652f7e2e6fb3c70d2f3e772fb1ef8f",
+        "after_sha256": "3e93d50315cc8db84fae97183f158a4b0310792f8da3f0541fefb9e027fbc108"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp": {
+        "count": 6,
+        "before_sha256": "57b4b4f8ccc6e1dcae7bb924123ce06548fa010775999b0e32f04dac7e8105cf",
+        "after_sha256": "eaf96518a6a9af0f93a18805144dc5e4a18f3e0704b188ed12dd571f50d81619"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank_canary.hpp": {
+        "count": 3,
+        "before_sha256": "a80ca16e63efc732256f205f2e8de309f060a240944c4433f2c084f2604affb0",
+        "after_sha256": "335b1dbd809518b98527d69dac2228728fa049887bca8f23b0b75612de326c12"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/request_reset.hpp": {
+        "count": 3,
+        "before_sha256": "ec7030585e5aea4dcc60334bcde96694c6f26f079bbeb40948f503055721796f",
+        "after_sha256": "9e065181fb095763e1ee22553762c352977965724d61b2838cc80395dd1ed70a"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/request_state_inventory.hpp": {
+        "count": 2,
+        "before_sha256": "b226f4db452604599550f3d9b1e863c03dfefd75a807db1bf888aafce92acab4",
+        "after_sha256": "ab55a4187c745e1345321711abfb7f4a955ab7b8330b4913337ddf265c5464c1"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.hpp": {
+        "count": 2,
+        "before_sha256": "338aa999efa38ae926c3ce325f258ce8e16158aaeb90ce815bfb615721478b7f",
+        "after_sha256": "55d02d5b2a56585b227b26dc135dedec6c64ec2631511788aea41ef3648d1005"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/round2.hpp": {
+        "count": 3,
+        "before_sha256": "9de7e5e56a5b09b3f7d09dc56e737a0c095ee8e95342039f96493caf3064ecd6",
+        "after_sha256": "ad8eff7861e97a850e7679f8c0649bd3db54853d889f63fb35071a570e83c41b"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/round2_submit.hpp": {
+        "count": 4,
+        "before_sha256": "3d076adb61138a463603cbf75ff3bccfcca4d31dbc509ebf24c212326f004d0f",
+        "after_sha256": "8a081d43d36f67dd70aadace4980d2381dc30442c1ea4c13edcfb063597a5108"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/route42.hpp": {
+        "count": 3,
+        "before_sha256": "95f92949ffe428cd3eb153a1b6d556fbb5aaa6743be4138ab97a58c0d3fb5607",
+        "after_sha256": "2b046baba02a87927ef3abfcda30edb17299b6ef746cf6d567a9ab0ad04f16cc"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/runtime_kernels.hpp": {
+        "count": 4,
+        "before_sha256": "c6b43bb2668c54a4e3665b7839c92d6477b51bd75b8207e871123d1c8f7a5be4",
+        "after_sha256": "2f0ce61a9d7633a1b6d015248efc305772175228460cf0ffc14c08527d1791e1"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/small_gemv.hpp": {
+        "count": 3,
+        "before_sha256": "1993089df086eb67d9ddbf8d2ae8bf10ac6350c0adae0191415f637b2aa9a733",
+        "after_sha256": "6861d563451639f149333925e7a06c24aaec2b007f2193a363d87de7d2fd7f4a"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/specialised.hpp": {
+        "count": 3,
+        "before_sha256": "ce714e6712a0a2c3973920b33f9a2bfc1f6faa366d9215ac1a4d4005677eca81",
+        "after_sha256": "7d69ff87e93f15e243214e9428802408fb255bf351ae651606ed1d9048ee2096"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/strict_snapshot.hpp": {
+        "count": 3,
+        "before_sha256": "fd201c3889253dedd6a7a42dfff476d01f442d96e791e6004884fc43c21c0244",
+        "after_sha256": "de7225bc3703867826f945ca7e9d4b183a21cf6bedec20698f10a2109620367e"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/synthetic.hpp": {
+        "count": 2,
+        "before_sha256": "d111aa3573dc43a1020054e0694db61b4a05b5685953a9973560b3698f6ee4a1",
+        "after_sha256": "14042a951c8f19d6b392d40fa4a660d7881fd1fbb84ba42ef5d5d993a83a3491"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": {
+        "count": 3,
+        "before_sha256": "927b8c2dccbc6fe5f2f26520164fe6c633ce4143b00e71fd22ac8ef72694bd4c",
+        "after_sha256": "f50477d1a130b5462b4b62598a74cddf06fc0c231afba02c427cc02a353faf54"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": {
+        "count": 3,
+        "before_sha256": "20c6ba86afc536a3657ba73c141f21384bc0e6ce5a2b77f6ec3a99f4fc25155e",
+        "after_sha256": "a4f801c9b78fe3affb97af4112f0be0a5f2ad163e0d8982408891678ce2c1300"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": {
+        "count": 4,
+        "before_sha256": "4fb9bbb67b544e6f14cd655c7be4132781e03927a4e8b0e4c802cedf44cd869a",
+        "after_sha256": "b10a40af57828c3dd2ef04c6a4ffc869696b3e3b6d1c6af3dfee5e9d467e6fa8"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": {
+        "count": 3,
+        "before_sha256": "5fbbe4ce335816a2af22050212e9c2612e11bda076fb5ef533861449606bc432",
+        "after_sha256": "5f1e325dcec10425cef07280f2d72221995e95fda42920e8a3713a601ff8c71e"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": {
+        "count": 3,
+        "before_sha256": "d00c83c152633a191327332f434a930ab48f1234663f1f31a6539d85cf912c8a",
+        "after_sha256": "7dc89b092bf1fb32e5f983fe09c53b8fe8093f45ec4c773f6efb927fee57c0cf"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": {
+        "count": 2,
+        "before_sha256": "1ff47d40c8a6324624e9c8f2ce7d5dafb1fb6bd50a10744ee05fd2013bc1cbb8",
+        "after_sha256": "150428ab939c4c4294c735c2320c3e35af9544bc584224de74b3d8cf20d5d7be"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": {
+        "count": 5,
+        "before_sha256": "fd8d10523fb6853b68fb40b051d8b8585c2102156d3548d688e1647b256ef2fe",
+        "after_sha256": "3061038aed77507e53803f28c37156ae119b2d30ae56541788feb834a2b0724c"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": {
+        "count": 3,
+        "before_sha256": "a6c0655da911fb4b2f655d3848053d9fd8b7543ba9710292f05ba57506c96453",
+        "after_sha256": "393cda90feeedc1a96401e7c3f8efbedc025d72b34671fc72185aad957805b20"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": {
+        "count": 2,
+        "before_sha256": "ac5e8cd7c60b9bdb1220873f98e3a2e4a44f55c53dbc83928cb9810b8ea83ab1",
+        "after_sha256": "3d4d06e50d9e68eebfc8632aadd2e7f5383ee6814566e9ac4137e69f5e1912b8"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": {
+        "count": 5,
+        "before_sha256": "8c00d2f4c7f6aac90eeddafc84d3e3868b5da7b9a74369cbb7922235301f7f14",
+        "after_sha256": "b6a54560c3b3d439ef16aa4ece8732cb86fe3f11dda65e7fa4d6bc9abd502c32"
+      },
+      "frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": {
+        "count": 3,
+        "before_sha256": "a251649031589c1f01597f490c082c9a064f8c3d542df9fc6db0608a50c4f5e9",
+        "after_sha256": "5ede247ecc2adeb989eac48ec651584e461c38b2bd53250ab2f6ffd8bd66ba8f"
+      }
+    }
+  }
+}

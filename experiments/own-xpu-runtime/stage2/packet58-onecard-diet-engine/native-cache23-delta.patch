@@ -1,0 +1,163 @@
+--- a/native/generated/main.cpp
++++ b/native/generated/main.cpp
+@@ -136,7 +136,7 @@
+ };
+ struct Options {
+   std::string hc="p60fusion",hc_geometry="production",experts="production",other_fusion="production",retirement="production";
+-  uint64_t cache_bytes=21552729600ull;std::string cache_cap="max";std::string miss_path="zero-copy",cache_maintenance="serial";
++  uint64_t cache_bytes=23049601024ull;std::string cache_cap="max";std::string miss_path="zero-copy",cache_maintenance="serial";
+   RetainSteps retain_steps;
+   int cancel_launch=-1;
+   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
+@@ -273,11 +273,11 @@
+   require(a.stage=="first-token" || a.stage=="decode", "stage");
+   require(!a.output.empty(), "--output required");
+   require(a.cards==1 && a.rank==-1 && !a.mtp && (a.memory=="layer-streaming" || a.memory=="resident"), "packet58 target-only single-device process required");
+-  require(a.cache_cap=="18GB"||a.cache_cap=="max","cache capacity mode");
+-  require(a.mini||a.cache_bytes==21552729600ull,"single admitted maximum allocation required");
++  require(a.cache_cap=="18GB"||a.cache_cap=="max"||a.cache_cap=="max23","cache capacity mode");
++  require(a.mini||a.cache_bytes==23049601024ull,"single admitted maximum allocation required");
+   require(a.cache_maintenance=="serial"||a.cache_maintenance=="overlap","cache maintenance mode");
+   require(a.cache_maintenance!="overlap"||a.miss_path=="zero-copy","overlap requires zero-copy misses");
+-  require((a.mini||a.cache_bytes>=24000000ull)&&a.cache_bytes<=21552729600ull && (a.mini||a.memory=="resident"),"packet58 cache bounds/residency");
++  require((a.mini||a.cache_bytes>=24000000ull)&&a.cache_bytes<=23049601024ull && (a.mini||a.memory=="resident"),"packet58 cache bounds/residency");
+   require(a.miss_path=="zero-copy"||a.miss_path=="streamed","unknown miss path");
+   require(a.rank>=-1 && a.rank<=1,"rank range");
+ #ifdef OWN_RT_HOST_ONLY
+@@ -618,14 +618,14 @@
+     require(mode!="overlap"||a.miss_path=="zero-copy","overlap requires zero-copy");
+   }
+   void cache_capacity(const std::string& cap) {
+-    require(cap=="18GB"||cap=="max","cache capacity dimension");
++    require(cap=="18GB"||cap=="max"||cap=="max23","cache capacity dimension");
+     drain();cache_quiesce();
+     require(!maintenance.running&&maintenance.state==p58v::Protocol::State::idle,"capacity boundary has unfinished work");
+     a.cache_cap=cap;
+     if(!expert_cache){require(a.mini,"full model requires cache");return;}
+     const auto& arena=dev(0).arena.row(cache_arena);
+-    require(arena.live&&arena.bytes==21552729600ull,"maximum arena must remain allocated");
+-    expert_cache->reset_capacity(cap=="18GB"?18000000000ull:21552729600ull);
++    require(arena.live&&arena.bytes==23049601024ull,"maximum arena must remain allocated");
++    expert_cache->reset_capacity(cap=="18GB"?18000000000ull:cap=="max23"?23049601024ull:21552729600ull);
+     previous_routes.clear();publish_cache_table(expert_cache->table());drain();
+     require(expert_cache->resident_bytes()==0,"view must start empty");
+   }
+@@ -886,8 +886,8 @@
+   Allocation allocate(int c, std::string name, size_t bytes, Category cat,
+                       Lifetime life, Memory m = Memory::device) {
+     if (m == Memory::device)
+-      require(owned_bytes.at(c) + bytes <= 29963128848ull,
+-              "29,963,128,848-byte admitted device allocation bound");
++      require(owned_bytes.at(c) + bytes <= 29828911360ull,
++              "29,828,911,360-byte admitted packet58-cache23 device allocation bound");
+     auto id=dev(c).arena.allocate("card"+std::to_string(c)+":"+name, bytes, m, cat, life);
+     if(m==Memory::device){owned_bytes[c]+=bytes; allocations[id]={c,bytes};}
+     peak_device_bytes=std::max(peak_device_bytes,owned_bytes[c]);
+@@ -1800,7 +1800,7 @@
+   save(path, o.str());
+   for(int c=0;c<cards;++c){auto peak_bytes=base[c]+(a.memory=="resident"?resident[c]:peak);
+     std::cout<<"card "<<c<<" owned_bytes "<<peak_bytes<<" weights "<<(a.memory=="resident"?resident[c]:peak)<<" dispatch "<<a.gemv<<'\n';
+-    require(peak_bytes<=29963128848ull,"planned card exceeds admitted packet58x device bound");
++    require(peak_bytes<=29828911360ull,"planned card exceeds admitted packet58-cache23 device bound");
+   }
+ }
+ static void record_host_memory(const fs::path& output,const char* phase) {
+@@ -1899,7 +1899,7 @@
+ 
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/native/bracket_table.hpp"
+ int main(int argc, char **argv) {
+-  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --foreground-io copy|kernel (default:copy) --wait-seconds --p58r-parse-test --help\n";return 0;}
++  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap 18GB|max|max23 (default:max) --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --foreground-io copy|kernel (default:copy) --wait-seconds --p58r-parse-test --help\n";return 0;}
+ #ifdef OWN_RT_HOST_ONLY
+   if(argc>2&&std::string(argv[1])=="--p58r-parse-test") {
+     try {
+@@ -2031,7 +2031,7 @@
+         ",\"cache_maintenance\":"+ownrt::quote(view.maintenance)+
+         ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+",\"wait_policy\":"+ownrt::quote(view.hc=="spin-kio"?std::string("spin"):view.hc)+",\"bracket_arm\":"+ownrt::quote(view.hc)+
+         ",\"foreground_io\":"+ownrt::quote(std::string(p176::kernel_io?"kernel":"copy"))+
+-        ",\"cache_cap\":"+ownrt::quote(view.capacity)+",\"cache_allocation_bytes\":21552729600,\"cache_started_empty\":true"+
++        ",\"cache_cap\":"+ownrt::quote(view.capacity)+",\"cache_allocation_bytes\":23049601024,\"cache_usable_bytes\":"+std::to_string(e->expert_cache?e->expert_cache->capacity():0)+",\"cache_started_empty\":true"+
+         ",\"arena_descriptors_sha256\":"+ownrt::quote(loaded_arena)+",\"weight_descriptors_sha256\":"+ownrt::quote(loaded_weights)+
+         ",\"allocation_ids_preserved\":true,\"weight_uploads_during_switch\":0,\"cache_fill_bytes_total\":"+std::to_string(e->cache_fill_bytes)+
+         ",\"context_extent\":32,\"model_loads\":1}\n");
+--- a/native/generated/fullshape_submit_test.hpp
++++ b/native/generated/fullshape_submit_test.hpp
+@@ -31,7 +31,7 @@
+   require(getpriority(PRIO_PROCESS,0)==19,"nice19 required");
+   require(!fs::exists(destination),"fresh fullshape output");fs::create_directories(destination);
+   const auto packet=fs::path(__FILE__).parent_path();
+-  Options a;a.card=0;a.cards=1;a.context=4096;a.stage="decode";a.memory="resident";a.miss_path=miss;a.output=destination;a.cache_bytes=21552729600ull;
++  Options a;a.card=0;a.cards=1;a.context=4096;a.stage="decode";a.memory="resident";a.miss_path=miss;a.output=destination;a.cache_bytes=23049601024ull;
+   a.selection=selection;a.tokens=(window=="KD"||window=="W2m")?8:128;a.retain_steps.parse((window=="KD"||window=="W2m"||window=="WS")?"1-8":"none");
+   {std::ifstream f(a.selection,std::ios::binary);std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(f)),{});a.selection_sha256=hash(bytes);}
+   packet26::dispatch.load(packet/"dispatch-speed6.json");
+@@ -65,7 +65,7 @@
+       std::memset(engine.dev(0).arena.row(engine.slab[0]).pointer,0,4);
+       const std::string profile=name;
+       engine.bracket_select(path,hash(raw),profile=="p60fusion"?"p60fusion":"production",
+-        profile=="hc-wide"?"hc-wide":"",profile=="wide64"?"wide64":profile=="halfcache"?"wide64+halfcache":"",profile=="other-fusion"?"fused":"",profile=="ordered-retirement"?"ordered-foreground":"");engine.cache_mode(mode);engine.cache_capacity("max");require(engine.expert_cache->capacity()==21552729600ull,"fullshape active cache cap");engine.publish_cache_table(engine.expert_cache->table());require(arena==engine.bracket_arena_hash(),"fullshape switch allocations changed");
++        profile=="hc-wide"?"hc-wide":"",profile=="wide64"?"wide64":profile=="halfcache"?"wide64+halfcache":"",profile=="other-fusion"?"fused":"",profile=="ordered-retirement"?"ordered-foreground":"");engine.cache_mode(mode);engine.cache_capacity("max23");require(engine.expert_cache->capacity()==23049601024ull,"fullshape max23 cache cap");engine.cache_capacity("max");require(engine.expert_cache->capacity()==21552729600ull,"fullshape active cache cap");engine.publish_cache_table(engine.expert_cache->table());require(arena==engine.bracket_arena_hash(),"fullshape switch allocations changed");
+       require(engine.a.hc=="p60fusion","HC fusion must remain on in every view");
+       require(engine.a.hc_geometry==((profile=="hc-wide"||profile=="p60fusion")?"hc-wide":"production"),"independent HC dimension");
+       require(engine.a.experts==(profile=="wide64"?"wide64":(profile=="halfcache"||profile=="p60fusion")?"wide64+halfcache":"production"),"independent expert dimension");
+--- a/native/generated/postload_allocation_test.hpp
++++ b/native/generated/postload_allocation_test.hpp
+@@ -43,7 +43,7 @@
+   weights.directory=flash::directory_from_loader(iq3::read_plan(
+       packet.parent_path()/"suite-inputs-20261012/incident-retrospective/plan.tsv"));
+   auto p=plan(weights,a);
+-  require(p.g.experts==512 && p.g.context==4096 && a.cache_bytes==21552729600ull,"KD geometry");
++  require(p.g.experts==512 && p.g.context==4096 && a.cache_bytes==23049601024ull,"KD geometry");
+   Engine engine(weights,a,p);
+   auto mock=std::make_unique<AllocationOnlyMock>();auto* observer=mock.get();
+   engine.devices.push_back(std::make_unique<ownrt::Device>(std::move(mock)));
+@@ -85,7 +85,7 @@
+   require(engine.dev(0).arena.row(engine.halfcache).bytes==262144,"exact half table extent");
+   require(engine.expert_cache && engine.expert_cache->resident_bytes()==0,"initial LRU state");
+   const auto& arena=engine.dev(0).arena;
+-  require(arena.row(engine.cache_arena).bytes==21552729600ull,"cache allocation extent");
++  require(arena.row(engine.cache_arena).bytes==23049601024ull,"cache allocation extent");
+   require(arena.row(engine.table_staging).bytes==1179648 && arena.row(engine.route_log).bytes==5760,"pinned extent");
+   require(arena.row(engine.table_staging).lifetime==Lifetime::transfer &&
+           arena.row(engine.route_log).lifetime==Lifetime::transfer,"transfer lifetime");
+--- a/native/bracket_table.hpp
++++ b/native/bracket_table.hpp
+@@ -12,19 +12,19 @@
+     p49d::Selection selection;selection.load(v.selection.string(),v.digest);Engine::bracket_domain(selection);
+     require(v.digest==a.selection_sha256&&v.selection==a.selection,"immutable tile16 identity");
+     require(v.maintenance==a.cache_maintenance,"maintenance fixed throughout capacity bracket");
+-    require(v.capacity=="max","fixed maximum cache");
+-    require(v.hc=="spin"||v.hc=="spin-kio","foreground io dimension");v.resident=true;
++    require(v.capacity=="max"||v.capacity=="max23","cache capacity dimension");
++    require(v.hc=="spin-kio","kernel foreground io fixed throughout the capacity bracket");v.resident=true;
+     require(!a.wait_policy_supplied||a.wait_policy=="spin","wait policy conflicts with bracket view");
+     require(!a.foreground_io_supplied,"bracket selects foreground io per view");
+     views.push_back(v);
+   }
+   require(f.eof()&&(views.size()==1||views.size()==5),"complete smoke or five-view bracket required");
+   if(views.size()==1) {
+-    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max"&&views[0].hc=="spin-kio","fixed maximum smoke");
++    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max23"&&views[0].hc=="spin-kio","fixed maximum smoke");
+   } else {
+     require(a.mini||a.tokens==128,"128-token bracket required");
+     const char* labels[]={"A0","B0","A1","B1","A2"};
+-    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].hc==(i%2?"spin-kio":"spin"),"production/p60fusion bracket order");
++    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].capacity==(i%2?"max23":"max")&&views[i].hc=="spin-kio","max/max23 capacity bracket order");
+   }
+   return views;
+ }
+--- a/native/preparation_probe.cpp
++++ b/native/preparation_probe.cpp
+@@ -90,10 +90,10 @@
+     }
+     require(resets==60||resets==12,"complete real arm/reset sequence");
+     require(transport->captured>1000&&transport->issued>1000&&sites>1000,"full production preparation coverage");
+-    require(transport->kernel_tail==24&&transport->kernel_head==24,"p176 kernel io in both B views");
++    require(transport->kernel_tail==60&&transport->kernel_head==60,"p176 kernel io in all five views");
+     int token=-1;std::ifstream input(a.inputs);input>>token;
+     a.output=root;
+-    auto result="{\"passed\":true,\"device_executed\":false,\"device_defines\":true,\"model_reads\":false,\"resident\":true,\"first_prompt_token\":"+std::to_string(token)+",\"prepared\":"+std::to_string(transport->captured)+",\"issued\":"+std::to_string(transport->issued)+",\"sites\":"+std::to_string(sites)+",\"backend_bytes\":"+std::to_string(transport->physical)+",\"p176_kernel_tail_stores\":"+std::to_string(transport->kernel_tail)+",\"p176_kernel_head_loads\":"+std::to_string(transport->kernel_head)+",\"synthetic_weights\":true,\"driver_stall_tested\":false}\n";
++    auto result="{\"passed\":true,\"device_executed\":false,\"device_defines\":true,\"model_reads\":false,\"resident\":true,\"first_prompt_token\":"+std::to_string(token)+",\"prepared\":"+std::to_string(transport->captured)+",\"issued\":"+std::to_string(transport->issued)+",\"sites\":"+std::to_string(sites)+",\"backend_bytes\":"+std::to_string(transport->physical)+",\"p176_kernel_tail_stores\":"+std::to_string(transport->kernel_tail)+",\"p176_kernel_head_loads\":"+std::to_string(transport->kernel_head)+",\"synthetic_weights\":true,\"driver_stall_tested\":false,\"peak_device_bytes\":"+std::to_string(engine->peak_device_bytes)+",\"cache_allocation_bytes\":"+std::to_string(a.cache_bytes)+",\"device_owned_bound_bytes\":29828911360}\n";
+     engine->shutdown();engine.reset();
+     save(fs::path(output)/"preparation.json",result);
+     std::cout<<"PASS CPU device-branch resident preparation and first prefill\n";return 0;

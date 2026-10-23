@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 09:41 EDT — one-card diet engine CPU preparation completed; device screen pending.**
+The resumed packet preserves all 47 production device images and adds the qualified diet kernel. Exactly 47 halfcache gate/up sites switch;
+layer 2 keeps its other-layout kernel. Cache capacity and the production-size memory census are unchanged. All required CPU gates pass:
+583 cache checks, 72 historical requests rechecked exact, real parser/argument paths, and shared smoke/bracket report rehearsal. The Python
+comparison retains one unchanged inherited missing-fixture failure, explicitly recorded. Stale capacity metadata and copied test fixtures were
+fixed before readiness. Endpoints still serve as restore23; no device work has run. Next: one controlled card-0 screen after idle/admission checks,
+then exactness and speed assessment. New window driver halts on failure and restores endpoints only after successful clean drain; no retries.
+[Packet](experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/README.md) · [note](notes/2026-10-23-packet58-onecard-diet-engine.md).
+
 **October 23, 09:38 EDT — Campaign 59 is registered and prepared: isolate the counting memo from seed 2's directory timestamp.**
 Two fresh-server seed-2 runs, upstream counts then memo, use a separate fixture that sets only the sandbox
 root directory mtime to campaign 55's observed timestamp before the first model call. No tool output is
@@ -18,6 +27,7 @@ Both seeds kept every forgery target and applied all audits. The remaining betwe
 above the 150 s prediction. `COUNT_MEMO=0` is restored as default and public wall figures stay unchanged.
 Both servers stopped at campaign end (05:46 EDT), cards empty. Preparing a fixed-metadata off/on comparison;
 no new GPU work yet. Evidence: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign58-closeout.md`.
+
 
 **October 23, 03:50 EDT — the one-card expert instruction diet qualifies on device (packet58-onecard-diet-micro, lane B card 2, 07:41 UTC).**
 The diet re-derived for the one-card halfcache gate/up kernel (`p58ag_diet::GateUp`: hoisted exceptional test from the halfcache entry, sign

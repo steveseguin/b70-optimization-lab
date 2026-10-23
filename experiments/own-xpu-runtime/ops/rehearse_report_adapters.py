@@ -132,6 +132,34 @@ def window_shape(job, packet, kind):
     return shape
 
 
+def onecard_rows(views, rows):
+    """Normalize declared views for synthetic data, retaining separate dimensions.
+
+    Historical rows are (label, view). Gate/up screens declare
+    (label, capacity, gateup), with their real view_name defining the report
+    identity. Unknown shapes refuse rather than dropping an extra dimension.
+    """
+    normalized = []
+    for row in rows:
+        if not isinstance(row, (tuple, list)) or len(row) not in (2, 3):
+            raise ContractError('unsupported one-card view row')
+        label, selected = row[:2]
+        if (label is not None and not isinstance(label, str)) or not isinstance(selected, str):
+            raise ContractError('invalid one-card view identity')
+        gateup = None
+        view = selected
+        if len(row) == 3:
+            gateup = row[2]
+            if not isinstance(gateup, str) or not callable(getattr(views, 'view_name', None)):
+                raise ContractError('one-card multidimensional view requires view_name')
+            view = views.view_name(selected, gateup)
+            if not isinstance(view, str) or not view:
+                raise ContractError('invalid one-card view name')
+        normalized.append(dict(label=label, view=view, selection_view=selected,
+                               capacity=selected, gateup=gateup))
+    return normalized
+
+
 def publication_split_fixture(output, rows, prompts, cap):
     """Existing split32 stream schema, from packet58aq's synthetic adapter.
 

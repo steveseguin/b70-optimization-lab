@@ -1,0 +1,94 @@
+{
+  "schema": "packet58dietengine.python-gates.v1",
+  "passed": false,
+  "device_executed": false,
+  "rule": "Packet58-onecard-diet-engine Python gate: the harness tests, differential against packet58-onecard-cache23's committed",
+  "packet58de_screen": {
+    "returncode": 1,
+    "tests": 114,
+    "failing": [
+      "ERROR: test_actual_window_postflight_failure_retains_drain (test_mask58f.FullWindowTests.test_actual_window_postflight_failure_retains_drain)",
+      "ERROR: test_actual_window_preflight_failure (test_mask58f.FullWindowTests.test_actual_window_preflight_failure)",
+      "ERROR: test_actual_window_refusal_fault_retains (test_mask58f.FullWindowTests.test_actual_window_refusal_fault_retains)",
+      "ERROR: test_actual_window_refusal_live_owner_retains (test_mask58f.FullWindowTests.test_actual_window_refusal_live_owner_retains)",
+      "ERROR: test_actual_window_refusal_releases (test_mask58f.FullWindowTests.test_actual_window_refusal_releases)",
+      "ERROR: test_actual_window_report_failure (test_mask58f.FullWindowTests.test_actual_window_report_failure)",
+      "ERROR: test_actual_window_success (test_mask58f.FullWindowTests.test_actual_window_success)",
+      "ERROR: test_admission_boundary (test_capacity.Capacity.test_admission_boundary)",
+      "ERROR: test_every_full_window_uses_same_measured_bound (test_async_policy.AsyncPolicy.test_every_full_window_uses_same_measured_bound)",
+      "ERROR: test_full_census_math_and_one_byte_boundary_every_window (test_admission58e.AdmissionTests.test_full_census_math_and_one_byte_boundary_every_window)",
+      "ERROR: test_gateup_boundary_mutations_refused (test_bracket.GateUpBoundaryTests.test_gateup_boundary_mutations_refused)",
+      "ERROR: test_k1_memory_hash_failure_after_teardown_releases (test_mask58f.FullWindowTests.test_k1_memory_hash_failure_after_teardown_releases)",
+      "ERROR: test_maximum_retains_every_allowance (test_capacity.Capacity.test_maximum_retains_every_allowance)",
+      "ERROR: test_measured_live_accounting_bounds (test_capacity.Capacity.test_measured_live_accounting_bounds)",
+      "ERROR: test_model_memory_hash_failure_after_teardown_releases (test_mask58f.FullWindowTests.test_model_memory_hash_failure_after_teardown_releases)",
+      "ERROR: test_new_lookup_gate_refuses_missing_changed_and_wrong_backing (test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing)",
+      "ERROR: test_observations_cannot_shrink_policy (test_async_policy.AsyncPolicy.test_observations_cannot_shrink_policy)",
+      "ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)",
+      "ERROR: test_reserve_driver_and_guard_never_reduced (test_capacity.Capacity.test_reserve_driver_and_guard_never_reduced)",
+      "ERROR: test_smoke_analyzes_own_output_before_data_and_as_data_arrives (test_resident_report.ResidentReport.test_smoke_analyzes_own_output_before_data_and_as_data_arrives)",
+      "ERROR: test_tampered_budget_rejected (test_async_policy.AsyncPolicy.test_tampered_budget_rejected)",
+      "FAIL: test_reserve_crossing_sends_only_cooperative_sigterm (test_admission58e.AdmissionTests.test_reserve_crossing_sends_only_cooperative_sigterm)"
+    ]
+  },
+  "parent_receipt": {
+    "path": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/evidence/python-cpu-gates.json",
+    "tests": 113,
+    "failing": [
+      "ERROR: test_new_lookup_gate_refuses_missing_changed_and_wrong_backing (test_resident_report.ResidentReport.test_new_lookup_gate_refuses_missing_changed_and_wrong_backing)",
+      "ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)"
+    ]
+  },
+  "new_failures": [
+    "test_admission58e.AdmissionTests.test_full_census_math_and_one_byte_boundary_every_window",
+    "test_admission58e.AdmissionTests.test_reserve_crossing_sends_only_cooperative_sigterm",
+    "test_async_policy.AsyncPolicy.test_every_full_window_uses_same_measured_bound",
+    "test_async_policy.AsyncPolicy.test_observations_cannot_shrink_policy",
+    "test_async_policy.AsyncPolicy.test_tampered_budget_rejected",
+    "test_bracket.GateUpBoundaryTests.test_gateup_boundary_mutations_refused",
+    "test_capacity.Capacity.test_admission_boundary",
+    "test_capacity.Capacity.test_maximum_retains_every_allowance",
+    "test_capacity.Capacity.test_measured_live_accounting_bounds",
+    "test_capacity.Capacity.test_reserve_driver_and_guard_never_reduced",
+    "test_mask58f.FullWindowTests.test_actual_window_postflight_failure_retains_drain",
+    "test_mask58f.FullWindowTests.test_actual_window_preflight_failure",
+    "test_mask58f.FullWindowTests.test_actual_window_refusal_fault_retains",
+    "test_mask58f.FullWindowTests.test_actual_window_refusal_live_owner_retains",
+    "test_mask58f.FullWindowTests.test_actual_window_refusal_releases",
+    "test_mask58f.FullWindowTests.test_actual_window_report_failure",
+    "test_mask58f.FullWindowTests.test_actual_window_success",
+    "test_mask58f.FullWindowTests.test_k1_memory_hash_failure_after_teardown_releases",
+    "test_mask58f.FullWindowTests.test_model_memory_hash_failure_after_teardown_releases",
+    "test_resident_report.ResidentReport.test_smoke_analyzes_own_output_before_data_and_as_data_arrives"
+  ],
+  "fixed_vs_parent": [],
+  "policy_decision_unit_tests": {
+    "returncode": 1,
+    "tests": 35,
+    "failing": [
+      "ERROR: test_admission_boundary (test_capacity.Capacity.test_admission_boundary)",
+      "ERROR: test_every_full_window_uses_same_measured_bound (test_async_policy.AsyncPolicy.test_every_full_window_uses_same_measured_bound)",
+      "ERROR: test_gateup_boundary_mutations_refused (test_bracket.GateUpBoundaryTests.test_gateup_boundary_mutations_refused)",
+      "ERROR: test_maximum_retains_every_allowance (test_capacity.Capacity.test_maximum_retains_every_allowance)",
+      "ERROR: test_measured_live_accounting_bounds (test_capacity.Capacity.test_measured_live_accounting_bounds)",
+      "ERROR: test_observations_cannot_shrink_policy (test_async_policy.AsyncPolicy.test_observations_cannot_shrink_policy)",
+      "ERROR: test_reserve_driver_and_guard_never_reduced (test_capacity.Capacity.test_reserve_driver_and_guard_never_reduced)",
+      "ERROR: test_tampered_budget_rejected (test_async_policy.AsyncPolicy.test_tampered_budget_rejected)"
+    ]
+  },
+  "delta_and_memory_tests": {
+    "returncode": 1,
+    "tests": 14,
+    "failing": [
+      "ERROR: setUpClass (test_memory_sensor.SensorTests)",
+      "ERROR: test_census_pinned_exact (test_memory_plan.MemoryTests.test_census_pinned_exact)",
+      "ERROR: test_complete_copy_allocation_charged_once_at_every_stage (test_resident.ResidentTests.test_complete_copy_allocation_charged_once_at_every_stage)",
+      "ERROR: test_device_reserve_refuses (test_memory_plan.MemoryTests.test_device_reserve_refuses)",
+      "ERROR: test_exact_boundary (test_memory_plan.MemoryTests.test_exact_boundary)",
+      "ERROR: test_full_shadow_not_subtracted_as_existing_headroom (test_memory_plan.MemoryTests.test_full_shadow_not_subtracted_as_existing_headroom)",
+      "FAIL: test_candidate_source (test_dietengine_delta.DietEngineDelta.test_candidate_source)"
+    ]
+  },
+  "inherited_stale_failures": 22,
+  "note": "remaining failures fail identically on the unchanged parent harness (cache23 receipt); they are not device-path gates"
+}
