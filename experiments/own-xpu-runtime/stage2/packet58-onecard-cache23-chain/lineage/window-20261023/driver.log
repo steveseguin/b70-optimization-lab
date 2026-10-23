@@ -1,0 +1,20 @@
+2026-10-23T01:55:27.033061+00:00 window start
+2026-10-23T01:55:27.039823+00:00 preconditions ok (PAUSE-B present, no busy units, no markers, fresh output)
+2026-10-23T01:55:27.054007+00:00 stopping endpoints: ['qwen38-27b-vision', 'qwen38-27b-fp8-tp1-test', 'qwen38-27b-fp8']
+2026-10-23T01:55:34.635044+00:00 stop rc=0 
+2026-10-23T01:55:44.650827+00:00 endpoints stopped; MemAvailable=120685416448 required=101560865280; root free=31235919872 required=25397492208
+2026-10-23T01:55:45.565770+00:00 PAUSE-A archived and removed for the approved chain window (PAUSE-B untouched)
+2026-10-23T01:55:48.256349+00:00 launch_chain.sh --dry-run rc=0 'ile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/fault-review-cache23-a.json < /dev/null'
+2026-10-23T01:55:50.952813+00:00 launch_chain.sh rc=0 'e/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/fault-review-cache23-a.json < /dev/null\n2026-10-23T01:55:50Z p58c23-launch packet58-onecard-cache23-a is active; the chain owns card 0 and the host now (no retry, no PAUSE/endpoint change by this launcher)'
+2026-10-23T01:55:50.957448+00:00 unit packet58-onecard-cache23-a state=active
+2026-10-23T01:55:50.962502+00:00 waiting: unit=active completed=None
+2026-10-23T02:05:51.210275+00:00 waiting: unit=active completed=None
+2026-10-23T02:15:51.457145+00:00 waiting: unit=active completed=None
+2026-10-23T02:25:51.676283+00:00 waiting: unit=active completed=None
+2026-10-23T02:29:21.759299+00:00 unit packet58-onecard-cache23-a state=inactive
+2026-10-23T02:29:21.759561+00:00 queue-all-complete.json present: False
+2026-10-23T02:29:21.810773+00:00 chain result: {"state": "inactive", "all_complete": false, "completed": null}
+2026-10-23T02:29:21.816584+00:00 PAUSE-A re-armed
+2026-10-23T02:29:21.816706+00:00 restoring endpoints: /usr/bin/python3 -u /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/restore-endpoints-20261021.py 20261023-restore17
+2026-10-23T02:38:45.899830+00:00 restore rc=0
+2026-10-23T02:38:45.900170+00:00 window end
