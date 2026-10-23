@@ -1,0 +1,48 @@
+{
+  "base": "http://127.0.0.1:18100",
+  "model": "qwen38-27b-vision",
+  "kind": "llamacpp",
+  "utc": "2026-10-23T21:45:34Z",
+  "checks": {
+    "correctness_arithmetic": {
+      "passed": true,
+      "answer": "391"
+    },
+    "correctness_fact": {
+      "passed": true,
+      "answer": "Canberra"
+    },
+    "determinism_greedy_repeat": {
+      "passed": true,
+      "first": "101, 103, 107, 109, 113"
+    },
+    "prompt_cache_hit": {
+      "passed": true,
+      "cached_tokens": 8603,
+      "prompt_tokens": 8607,
+      "ttft_cold_s": 12.041,
+      "ttft_warm_s": 0.738
+    },
+    "prompt_cache_output_identical": {
+      "passed": true,
+      "answer": "consensus"
+    },
+    "mtp_active": {
+      "passed": true,
+      "drafted": 582,
+      "accepted": 316
+    },
+    "decode_speed_reported": {
+      "passed": true,
+      "completion_tokens": 512,
+      "tok_per_s": 27.08,
+      "wall_s": 20.42
+    },
+    "vision_colors": {
+      "passed": true,
+      "answer": "the main background color is red, and the small square in the top-right corner is blue."
+    }
+  },
+  "decode_tok_per_s": 27.08,
+  "passed": true
+}

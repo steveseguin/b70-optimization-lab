@@ -1,0 +1,23 @@
+{
+  "schema": "packet201.active-unit-properties.v1",
+  "at": "2026-10-23T21:34:08.036141+00:00",
+  "read_only": true,
+  "passed": true,
+  "completion_claim": false,
+  "units": {
+    "packet201-client-a": {
+      "ExitType": "cgroup",
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "MainPID": "3483158",
+      "ExecStart": "{ path=/usr/bin/taskset ; argv[]=/usr/bin/taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/client_pilot.py --execute ; ignore_errors=no ; start_time=[Fri 2026-10-23 17:33:55 EDT] ; stop_time=[n/a] ; pid=3483158 ; code=(null) ; status=0/0 }",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/packet201-client-a.service",
+      "Nice": "19",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  }
+}

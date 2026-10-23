@@ -1,0 +1,37 @@
+{
+  "schema": "packet201.active-unit-properties.v1",
+  "at": "2026-10-23T21:31:07.813293+00:00",
+  "read_only": true,
+  "passed": true,
+  "completion_claim": false,
+  "units": {
+    "window-p201-driver": {
+      "ExitType": "cgroup",
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "MainPID": "3482088",
+      "ExecStart": "{ path=/usr/bin/taskset ; argv[]=/usr/bin/taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet201-window/driver.py --run --restore-suffix 20261023-restore30 --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet201-window/evidence/window-a ; ignore_errors=no ; start_time=[Fri 2026-10-23 17:29:55 EDT] ; stop_time=[n/a] ; pid=3482088 ; code=(null) ; status=0/0 }",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/window-p201-driver.service",
+      "Nice": "19",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "packet201-streaming-serving-a": {
+      "ExitType": "cgroup",
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "MainPID": "3482542",
+      "ExecStart": "{ path=/usr/bin/taskset ; argv[]=/usr/bin/taskset -c 0-3,16-19 /home/steve/.venvs/vllm-xpu/bin/python -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/run.py --authorized-device-window --staging-parent /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a --activity-mode launch --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/fault-review-device-a.json --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output ; ignore_errors=no ; start_time=[Fri 2026-10-23 17:30:13 EDT] ; stop_time=[n/a] ; pid=3482542 ; code=(null) ; status=0/0 }",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/packet201-streaming-serving-a.service",
+      "Nice": "0",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  }
+}

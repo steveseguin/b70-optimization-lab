@@ -1,0 +1,55 @@
+{
+  "schema": "packet201.sealed-input-retention.v1",
+  "at": "2026-10-23T21:51:44.214735+00:00",
+  "sealed_local_inputs": 384,
+  "generated_inputs_retained_locally": {
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/native/checkpoint.hpp": {
+      "sha256": "c647d1b20ad92b43f6a371110b1308ad75deb3b84625e24bdab70b0bc4e417a2",
+      "bytes": 68446
+    },
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/native/entry-main.cpp": {
+      "sha256": "8bf9d77ea962ebe23a895b589049f94d3681daf8e14b52ecf9ad8a6eca826815",
+      "bytes": 66
+    },
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/native/main.cpp": {
+      "sha256": "35de3a27b6489f497f7ca348e12dd546c98b101e0f3180eb0d06d8723d0095e7",
+      "bytes": 150146
+    },
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/native/request_front.hpp": {
+      "sha256": "e1b5833bd83c5fbadc1227c230d2974e098ce402a3602fd995860217e662d764",
+      "bytes": 5408
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/device/own-rt-iq3": {
+      "sha256": "c9b401089d95eeb152953a8c0d82d0678de2474934941bc6c97abd4b03287875",
+      "bytes": 20336264
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host/own-rt-iq3": {
+      "sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+      "bytes": 11477536
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/checkpoint.hpp": {
+      "sha256": "3668ee9f15d460eecd020574ae8f941e2cc2e862440facb30cfe42665d90f02c",
+      "bytes": 68476
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/entry-main.cpp": {
+      "sha256": "8bf9d77ea962ebe23a895b589049f94d3681daf8e14b52ecf9ad8a6eca826815",
+      "bytes": 66
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/main.cpp": {
+      "sha256": "1e7c5f1b6ab19f909fbd03165ead029ea7331a27810b7a6e97961d9f32039581",
+      "bytes": 154627
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/request_front.hpp": {
+      "sha256": "e3a5a90848c88bf7833b6df354115d18e3ef594bbb86eaf3774a8a3281e41dde",
+      "bytes": 6906
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/protocol/protocol-probe": {
+      "sha256": "0224564900cbdd546b96fbbd7f54b7336c54b84e6202355e5420da2ab092ead0",
+      "bytes": 70232
+    }
+  },
+  "reconstruction": "Use tracked packet197/packet198 prepare_overlay.py, parent-pins.json, native patches and build_engine.py compile-only recipes; verify exact admitted digests. No rebuild or native execution performed for this inventory.",
+  "additional_audit_log_retained": "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/independent-run-tests.log",
+  "additional_audit_log_sha256": "16c474381d9d8861d2b2513d4b435cb9df01a678ff043649cd9a392c18a99e4a",
+  "scope": "11 generated source/binary inputs are intentional local build artifacts. One independent adapter test log existed and matched during every local admission but was omitted from the earlier source commit; this result commit adds its exact bytes. Runtime source and manifest are unchanged."
+}

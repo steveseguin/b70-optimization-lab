@@ -1,0 +1,58 @@
+{
+  "schema": "packet201.root-window-invocation.v1",
+  "at": "2026-10-23T21:29:55.144054+00:00",
+  "source_commit": "a788690573a1f4c4bc0562fef61f33dc6a719e3c",
+  "manifest_sha256": "7d0eceb06516995ba6ab0876d9a439aef5ef920c879afe2da7a3ab0f16549383",
+  "ci": [
+    {
+      "conclusion": "success",
+      "databaseId": 40026521536,
+      "name": "guides-and-packages",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40026521565,
+      "name": "publish-site",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40026521555,
+      "name": "repository-hygiene",
+      "status": "completed"
+    }
+  ],
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=window-p201-driver",
+    "--working-directory=/home/steve/llm-optimizations",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=KillMode=process",
+    "--property=ExitType=cgroup",
+    "--property=Nice=19",
+    "--setenv=PYTHONDONTWRITEBYTECODE=1",
+    "--setenv=OMP_NUM_THREADS=2",
+    "--setenv=OPENBLAS_NUM_THREADS=2",
+    "--setenv=MKL_NUM_THREADS=2",
+    "/usr/bin/taskset",
+    "-c",
+    "8-15,24-31",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet201-window/driver.py",
+    "--run",
+    "--restore-suffix",
+    "20261023-restore30",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet201-window/evidence/window-a"
+  ],
+  "attempts": 1,
+  "retry": false,
+  "returncode": 0,
+  "stdout": "",
+  "stderr": "Running as unit: window-p201-driver.service; invocation ID: a8a4cad4283a4ae8bf1e0ad3df60b4b8\n"
+}

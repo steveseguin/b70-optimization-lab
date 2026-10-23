@@ -1,5 +1,21 @@
 # Current Workspace State
 
+**October 23, 17:49 EDT — streaming and restoration are verified; prefill is the next speed lever.**
+All sixteen replies and1,484 output tokens match prior evidence. Seven streams delivered text before finishing; all256 final
+checkpoint blobs match reference state. Restore30 validated all three daily applications, with unchanged fault history,
+original pause bytes, empty queues and28.45GB root free. The attach-only chat CLI is committed asd725a8a8c after17 CPU checks
+and independent review. Native timing attributes70% of the longer fresh-chat request to prompt processing; source and exactness
+work is starting on a bounded prefill/chunk path. No new device window is queued.
+[Verified streaming result](experiments/own-xpu-runtime/stage2/packet201-streaming-serving/RESULT.md) ·
+[Prefill evidence](experiments/own-xpu-runtime/integration/streaming_v1/P201-PREFILL-OBSERVATIONS.md).
+
+**October 23, 17:41 EDT — real-model streaming passed; daily application restoration is underway.**
+All16 replies and1484 output tokens match the prior run. Seven streamed replies delivered text before their finish frames;
+nine ordinary replies also matched. Independent review verified all256 final checkpoint blobs, clean owner exit and physical
+drain. Restore30 began at21:36:41 UTC; the first text endpoint is ready, with the remaining applications still loading.
+The next practical piece is an attach-only chat CLI, now passing17 CPU checks and completing independent review.
+[Admission and test scope](experiments/own-xpu-runtime/stage2/packet201-streaming-serving/ADMISSION.md).
+
 **October 23, 17:23 EDT — storage recovery verified; mixed streaming qualification is sealed.**
 A verified external archive preserved8,766 closed compiler-cache files before their local copies were removed. Independent
 archive hash, recovery-map and file-absence checks passed; the daily applications kept the same PIDs. Root has about28.74GB

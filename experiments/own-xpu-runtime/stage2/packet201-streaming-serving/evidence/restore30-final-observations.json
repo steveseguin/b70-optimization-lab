@@ -1,0 +1,83 @@
+{
+  "schema": "packet201.restore30-final-observations.v1",
+  "passed": true,
+  "at": "2026-10-23T21:46:56.802176+00:00",
+  "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "root_free_bytes": 28451844096,
+  "fault_count": 2,
+  "fault_review_matches": true,
+  "read_only": true,
+  "endpoint_requests": 0,
+  "endpoints": {
+    "qwen38-27b-vision": {
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/qwen38-27b-vision.service",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "3487303",
+      "ExecStart": "{ path=/usr/bin/bash ; argv[]=/usr/bin/bash /home/steve/inference/20261020-restoration/vision.sh ; ignore_errors=no ; start_time=[Fri 2026-10-23 17:43:47 EDT] ; stop_time=[n/a] ; pid=3487303 ; code=(null) ; status=0/0 }",
+      "WorkingDirectory": "/home/steve/inference/qwen38-27b-vision-20261023-restore30"
+    },
+    "qwen38-27b-fp8-tp1-test": {
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/qwen38-27b-fp8-tp1-test.service",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "3485229",
+      "ExecStart": "{ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 /home/steve/inference/20261020-restoration/serve-term-only.py /home/steve/inference/fp8-tp1-pkg/scripts/serve.py 111e6333a9c01899004d8f953c755b66fde0276afd8b1c15ee40e04a279c330e start --model-dir /mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7 --state-dir /home/steve/inference/qwen38-27b-fp8-card3-20261023-restore30 --profile recommended --gpu 0 --port 18131 ; ignore_errors=no ; start_time=[Fri 2026-10-23 17:40:45 EDT] ; stop_time=[n/a] ; pid=3485229 ; code=(null) ; status=0/0 }",
+      "WorkingDirectory": "/home/steve/inference"
+    },
+    "qwen38-27b-fp8": {
+      "Restart": "no",
+      "TimeoutStopUSec": "infinity",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/qwen38-27b-fp8.service",
+      "KillMode": "process",
+      "SendSIGKILL": "no",
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "3483937",
+      "ExecStart": "{ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 /home/steve/inference/20261020-restoration/serve-term-only.py /home/steve/inference/fp8-tp1-card0-pkg/scripts/serve.py 33c24d9efadf06f24949a0ca16638d194f863e4ad96716669132494b2f3f7151 start --model-dir /mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7 --state-dir /home/steve/inference/qwen38-27b-fp8-card0-20261023-restore30 --profile recommended --gpu 0 --port 18130 ; ignore_errors=no ; start_time=[Fri 2026-10-23 17:36:42 EDT] ; stop_time=[n/a] ; pid=3483937 ; code=(null) ; status=0/0 }",
+      "WorkingDirectory": "/home/steve/inference"
+    }
+  },
+  "queues": {
+    "A": {
+      "pause_sha256": "09b02cb8d35c5b7a1dc73879c5d85b557d0aff4bd890e910b22281b0fe3c1a0a",
+      "pause_matches_before": true,
+      "queue_empty": true,
+      "stop_present": false,
+      "inflight_present": false
+    },
+    "B": {
+      "pause_sha256": "54636d9e0b5067e18f3ee5a017191feb59d8fa15ad50298104f9e9d14991cee4",
+      "pause_matches_before": true,
+      "queue_empty": true,
+      "stop_present": false,
+      "inflight_present": false
+    }
+  },
+  "memory_blocks": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "controller_unit": {
+    "Restart": "no",
+    "TimeoutStopUSec": "1min 30s",
+    "MainPID": "0",
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "KillMode": "control-group",
+    "SendSIGKILL": "yes",
+    "LoadState": "not-found",
+    "ActiveState": "inactive"
+  }
+}
