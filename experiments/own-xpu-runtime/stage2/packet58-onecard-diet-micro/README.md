@@ -1,5 +1,7 @@
 # Packet58-onecard-diet-micro: exact instruction-diet micro of the ONE-card record gate/up kernel (lane-B micro, PROPOSAL ONLY)
 
+**Status (2026-10-23 07:45 UTC): device-measured on lane B card 2 (unit lanequeue-B41): p58-diet 0.78× cold / 0.75× warm in both orders, exact on every claimed stratum → QUALIFIED (packet58-onecard-diet-engine integrates it into the one-card record engine). See `DO-NOT-REPEAT.md` and the note.**
+
 **Status (2026-10-23, CPU only): preparation complete; no GPU ran, nothing is queued, no speed or model-output claim
 exists.** One proposed lane-B micro row (`ops/lane-queue/proposed-p58-dietmicro-micro-B.txt`, mirror `proposals/`)
 measures one exact instruction-diet candidate, `p58-diet` (`p58ag_diet::GateUp`), against the one-card record line's

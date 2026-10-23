@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 03:50 EDT — the one-card expert instruction diet qualifies on device (packet58-onecard-diet-micro, lane B card 2, 07:41 UTC).**
+The diet re-derived for the one-card halfcache gate/up kernel (`p58ag_diet::GateUp`: hoisted exceptional test from the halfcache entry, sign
+after the scale multiply from the 16-bit code pair, hoisted effective scales; 12.0 vs 15.7 instructions per weight) runs at 0.78× production
+cold (57.2 vs 73.2 µs) and 0.75× warm (36.9 vs 48.9) in both orders, byte-identical on every claimed stratum on device, controls within 0.1 %
+of a fresh production pass; 12–16 µs saved per layer where 11.4 µs is +2 % on one card. The engine integration (packet58-onecard-diet-engine:
+`expert_gateup=production|diet` on the max23 line, card-0 screen K1a/K1b + one load max23/max23+diet/max23/max23+diet/max23) is being prepared
+CPU-only. Endpoints restored as `*-20261023-restore23`. Packet `stage2/packet58-onecard-diet-micro/` (note `notes/2026-10-23-packet58-onecard-diet-micro.md`).
+
 **October 23, 02:53 EDT — 17 % of a 2M hostile seed's wall is the harness re-counting the whole history four times a step; exact memo built and checked; campaign 58 (campaign 55 again with it) registered and launching.**
 Campaign 57's time budget: model 3,715 s, tool runs 132 s, proxy/client around calls 146 s, and 807 s between steps in the client (898 s in
 campaign 55), growing from 0.2 s a step to 1.2 s as the history reaches 2M tokens: `clm_harness` counts the full retained history with tiktoken

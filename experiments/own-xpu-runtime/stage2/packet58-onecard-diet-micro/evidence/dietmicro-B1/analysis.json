@@ -1,0 +1,474 @@
+{
+  "schema": "packet58dm.diet-report.v1",
+  "diagnostic_only": true,
+  "model_output_claim": false,
+  "speed_claim": false,
+  "passed": true,
+  "kills": [],
+  "warnings": [],
+  "verdict": "measured",
+  "candidates": {
+    "p58-diet": {
+      "kernel": "gateup",
+      "strata": {
+        "cold": {
+          "orders": {
+            "AB": {
+              "production": {
+                "n": 7680,
+                "median_ns": 73125.0,
+                "p10_ns": 72500,
+                "p90_ns": 73750,
+                "mean_ns": 73146.24348958333,
+                "min_ns": 71354,
+                "max_ns": 79167,
+                "median_us": 73.125,
+                "p90_over_median": 1.0085470085470085
+              },
+              "candidate": {
+                "n": 7680,
+                "median_ns": 56979.0,
+                "p10_ns": 56354,
+                "p90_ns": 57709,
+                "mean_ns": 56999.651041666664,
+                "min_ns": 55416,
+                "max_ns": 59688,
+                "median_us": 56.979,
+                "p90_over_median": 1.0128117376577335
+              },
+              "ratio": 0.7792,
+              "passed": true
+            },
+            "BA": {
+              "production": {
+                "n": 7680,
+                "median_ns": 73229.0,
+                "p10_ns": 72605,
+                "p90_ns": 73854,
+                "mean_ns": 73246.19557291667,
+                "min_ns": 70729,
+                "max_ns": 75521,
+                "median_us": 73.229,
+                "p90_over_median": 1.0085348700651382
+              },
+              "candidate": {
+                "n": 7680,
+                "median_ns": 57500.0,
+                "p10_ns": 56771,
+                "p90_ns": 58125,
+                "mean_ns": 57472.99375,
+                "min_ns": 55729,
+                "max_ns": 59688,
+                "median_us": 57.5,
+                "p90_over_median": 1.0108695652173914
+              },
+              "ratio": 0.7852080459927078,
+              "passed": true
+            }
+          },
+          "ratio_AB": 0.7792,
+          "ratio_BA": 0.7852080459927078,
+          "worst_ratio": 0.7852080459927078,
+          "passed": true,
+          "gated": true,
+          "production_median_us": 73.17699999999999,
+          "candidate_median_us": 57.2395,
+          "saved_us": 15.937499999999993,
+          "bar_us": 62.20044999999999
+        },
+        "warm": {
+          "orders": {
+            "AB": {
+              "production": {
+                "n": 200,
+                "median_ns": 48958.0,
+                "p10_ns": 48646,
+                "p90_ns": 49271,
+                "mean_ns": 48966.65,
+                "min_ns": 48333,
+                "max_ns": 49584,
+                "median_us": 48.958,
+                "p90_over_median": 1.0063932350177702
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 36875.0,
+                "p10_ns": 36563,
+                "p90_ns": 37500,
+                "mean_ns": 36970.36,
+                "min_ns": 36146,
+                "max_ns": 39271,
+                "median_us": 36.875,
+                "p90_over_median": 1.0169491525423728
+              },
+              "ratio": 0.7531966175088851,
+              "passed": true
+            },
+            "BA": {
+              "production": {
+                "n": 200,
+                "median_ns": 48854.0,
+                "p10_ns": 48542,
+                "p90_ns": 49167,
+                "mean_ns": 48863.53,
+                "min_ns": 48125,
+                "max_ns": 49584,
+                "median_us": 48.854,
+                "p90_over_median": 1.0064068448847587
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 36875.0,
+                "p10_ns": 36354,
+                "p90_ns": 37396,
+                "mean_ns": 37082.345,
+                "min_ns": 35729,
+                "max_ns": 60313,
+                "median_us": 36.875,
+                "p90_over_median": 1.014128813559322
+              },
+              "ratio": 0.7548000163753223,
+              "passed": true
+            }
+          },
+          "ratio_AB": 0.7531966175088851,
+          "ratio_BA": 0.7548000163753223,
+          "worst_ratio": 0.7548000163753223,
+          "passed": true,
+          "gated": true,
+          "production_median_us": 48.906,
+          "candidate_median_us": 36.875,
+          "saved_us": 12.030999999999999,
+          "bar_us": 41.5701
+        },
+        "warm-direct": {
+          "orders": {
+            "AB": {
+              "production": {
+                "n": 200,
+                "median_ns": 48750.0,
+                "p10_ns": 48437,
+                "p90_ns": 49063,
+                "mean_ns": 48751.55,
+                "min_ns": 48229,
+                "max_ns": 49688,
+                "median_us": 48.75,
+                "p90_over_median": 1.0064205128205128
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 36771.0,
+                "p10_ns": 36458,
+                "p90_ns": 37188,
+                "mean_ns": 36822.4,
+                "min_ns": 36042,
+                "max_ns": 37916,
+                "median_us": 36.771,
+                "p90_over_median": 1.0113404585135024
+              },
+              "ratio": 0.7542769230769231,
+              "passed": true
+            },
+            "BA": {
+              "production": {
+                "n": 200,
+                "median_ns": 48438.0,
+                "p10_ns": 48229,
+                "p90_ns": 48854,
+                "mean_ns": 48783.325,
+                "min_ns": 47917,
+                "max_ns": 68229,
+                "median_us": 48.438,
+                "p90_over_median": 1.008588298443371
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 36354.0,
+                "p10_ns": 35834,
+                "p90_ns": 36875,
+                "mean_ns": 36485.41,
+                "min_ns": 35521,
+                "max_ns": 57916,
+                "median_us": 36.354,
+                "p90_over_median": 1.0143312977939154
+              },
+              "ratio": 0.7505264461786201,
+              "passed": true
+            }
+          },
+          "ratio_AB": 0.7542769230769231,
+          "ratio_BA": 0.7505264461786201,
+          "worst_ratio": 0.7542769230769231,
+          "passed": true,
+          "gated": false,
+          "production_median_us": 48.594,
+          "candidate_median_us": 36.5625,
+          "saved_us": 12.031500000000001,
+          "bar_us": 41.304899999999996
+        },
+        "warm-real-layer0": {
+          "orders": {
+            "AB": {
+              "production": {
+                "n": 200,
+                "median_ns": 48020.5,
+                "p10_ns": 47709,
+                "p90_ns": 48334,
+                "mean_ns": 48034.425,
+                "min_ns": 47604,
+                "max_ns": 48958,
+                "median_us": 48.0205,
+                "p90_over_median": 1.0065284618027717
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 36250.0,
+                "p10_ns": 35937,
+                "p90_ns": 36666,
+                "mean_ns": 36266.125,
+                "min_ns": 35625,
+                "max_ns": 37500,
+                "median_us": 36.25,
+                "p90_over_median": 1.0114758620689654
+              },
+              "ratio": 0.7548859341322977,
+              "passed": true
+            },
+            "BA": {
+              "production": {
+                "n": 200,
+                "median_ns": 48020.5,
+                "p10_ns": 47708,
+                "p90_ns": 48333,
+                "mean_ns": 48099.995,
+                "min_ns": 47396,
+                "max_ns": 67396,
+                "median_us": 48.0205,
+                "p90_over_median": 1.0065076373632094
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 35989.5,
+                "p10_ns": 35417,
+                "p90_ns": 36667,
+                "mean_ns": 36018.755,
+                "min_ns": 35000,
+                "max_ns": 37604,
+                "median_us": 35.9895,
+                "p90_over_median": 1.0188249350505008
+              },
+              "ratio": 0.7494611676263263,
+              "passed": true
+            }
+          },
+          "ratio_AB": 0.7548859341322977,
+          "ratio_BA": 0.7494611676263263,
+          "worst_ratio": 0.7548859341322977,
+          "passed": true,
+          "gated": false,
+          "production_median_us": 48.0205,
+          "candidate_median_us": 36.119749999999996,
+          "saved_us": 11.900750000000002,
+          "bar_us": 40.817425
+        },
+        "warm-real-layer24": {
+          "orders": {
+            "AB": {
+              "production": {
+                "n": 200,
+                "median_ns": 48021.0,
+                "p10_ns": 47812,
+                "p90_ns": 48437,
+                "mean_ns": 48062.01,
+                "min_ns": 47604,
+                "max_ns": 48958,
+                "median_us": 48.021,
+                "p90_over_median": 1.0086628766581287
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 36042.0,
+                "p10_ns": 35833,
+                "p90_ns": 36459,
+                "mean_ns": 36128.64,
+                "min_ns": 35417,
+                "max_ns": 37083,
+                "median_us": 36.042,
+                "p90_over_median": 1.0115698351922757
+              },
+              "ratio": 0.750546635846817,
+              "passed": true
+            },
+            "BA": {
+              "production": {
+                "n": 200,
+                "median_ns": 48125.0,
+                "p10_ns": 47813,
+                "p90_ns": 48438,
+                "mean_ns": 48136.46,
+                "min_ns": 47708,
+                "max_ns": 49271,
+                "median_us": 48.125,
+                "p90_over_median": 1.0065038961038961
+              },
+              "candidate": {
+                "n": 200,
+                "median_ns": 36354.0,
+                "p10_ns": 35938,
+                "p90_ns": 36979,
+                "mean_ns": 36420.83,
+                "min_ns": 35625,
+                "max_ns": 38334,
+                "median_us": 36.354,
+                "p90_over_median": 1.0171920558948122
+              },
+              "ratio": 0.7554077922077922,
+              "passed": true
+            }
+          },
+          "ratio_AB": 0.750546635846817,
+          "ratio_BA": 0.7554077922077922,
+          "worst_ratio": 0.7554077922077922,
+          "passed": true,
+          "gated": false,
+          "production_median_us": 48.073,
+          "candidate_median_us": 36.198,
+          "saved_us": 11.875,
+          "bar_us": 40.862049999999996
+        }
+      },
+      "control_vs_fresh_production": {
+        "cold": {
+          "interleaved_production_us": 73.17699999999999,
+          "control_us": 73.229,
+          "control": {
+            "n": 7680,
+            "median_ns": 73229.0,
+            "p10_ns": 72708,
+            "p90_ns": 73855,
+            "mean_ns": 73266.52200520833,
+            "min_ns": 71459,
+            "max_ns": 80000,
+            "median_us": 73.229,
+            "p90_over_median": 1.0085485258572424
+          },
+          "deviation": 0.0007101011894195838
+        },
+        "warm": {
+          "interleaved_production_us": 48.906,
+          "control_us": 48.959,
+          "control": {
+            "n": 200,
+            "median_ns": 48959.0,
+            "p10_ns": 48750,
+            "p90_ns": 49375,
+            "mean_ns": 49033.88,
+            "min_ns": 48645,
+            "max_ns": 49688,
+            "median_us": 48.959,
+            "p90_over_median": 1.0084969055740518
+          },
+          "deviation": 0.0010825384505403373
+        }
+      },
+      "kills": [],
+      "verdict": "qualified: <= 0.85 x production cold and warm in both orders",
+      "ungated_strata": {
+        "warm-direct": "<= 0.85",
+        "warm-real-layer0": "<= 0.85",
+        "warm-real-layer24": "<= 0.85"
+      },
+      "layer": {
+        "saved_us_cold": 15.937499999999993,
+        "saved_us_warm": 12.030999999999999,
+        "projected_one_card_pct_cold": 2.796052631578946,
+        "projected_one_card_pct_warm": 2.1107017543859645,
+        "note": "one gate/up launch per layer (48 serial layer bodies on the one-card record line); the ruling's 11.4 us/layer = +2 %; the engine screen (packet58-onecard-diet shape) decides, never this micro"
+      }
+    }
+  },
+  "exactness": {
+    "production/fixture": {
+      "rows": 411,
+      "claimed": 408,
+      "equal": 408,
+      "nan_rows": 3,
+      "nan_equal": 3
+    },
+    "p58-diet/production": {
+      "rows": 411,
+      "claimed": 408,
+      "equal": 408,
+      "nan_rows": 3,
+      "nan_equal": 3
+    },
+    "p58-diet/fixture": {
+      "rows": 411,
+      "claimed": 408,
+      "equal": 408,
+      "nan_rows": 3,
+      "nan_equal": 3
+    },
+    "production/indirect": {
+      "rows": 1,
+      "claimed": 1,
+      "equal": 1,
+      "nan_rows": 0,
+      "nan_equal": 0
+    },
+    "production/direct-permuted": {
+      "rows": 16,
+      "claimed": 16,
+      "equal": 16,
+      "nan_rows": 0,
+      "nan_equal": 0
+    }
+  },
+  "nan_payload_order_rows": [
+    {
+      "candidate": "production",
+      "against": "fixture",
+      "stratum": "exceptional",
+      "nan_vs_nan_words": 5558
+    },
+    {
+      "candidate": "p58-diet",
+      "against": "fixture",
+      "stratum": "exceptional",
+      "nan_vs_nan_words": 5558
+    }
+  ],
+  "rule": {
+    "gate": 0.85,
+    "gated_strata": [
+      "cold",
+      "warm"
+    ],
+    "control_limit": 0.1,
+    "disturbance_limit": 1.5,
+    "one_card_pct_per_us": 0.17543859649122806,
+    "packet193_two_card_datum": {
+      "cold_ratio": 0.784,
+      "warm_ratio": 0.77,
+      "saved_us_cold": 15.9,
+      "saved_us_warm": 10.8
+    },
+    "source": "coordinator ruling 2026-10-23 (packet58-onecard-diet-micro brief); packet100 micro gate 0.85; packet141 10 % control rule; packet193 NaN-payload lesson"
+  },
+  "identity": {
+    "route_count": 384,
+    "cold_repeats": 20,
+    "warm_repeats": 200,
+    "passes": 2,
+    "warmups_excluded": 5,
+    "identity_as_proposed": true,
+    "proposed": {
+      "routes": 384,
+      "cold_repeats": 20,
+      "warm_repeats": 200
+    },
+    "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+    "device_peak_bytes": 1106117780
+  },
+  "samples_sha256": "0aab83b6f40861254f884469a028bed316230239c7fa82a6078e257e7b3f06d3"
+}

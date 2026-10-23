@@ -49,3 +49,11 @@ CPU proofs ran at 2 OpenMP threads under nice 19 on cores 8-15. Units and other 
 The lane-B window driver may admit the one proposal row. PASS (≤ 0.85× cold and warm, byte-identical) → the engine
 key `expert_gateup=production|diet` on the one-card record line with K1a/K1b and the one-load max23 bracket
 (packet58-onecard-diet recommendation 2). Closed → not repeated in this diet form.
+
+## Device result (2026-10-23, lane B card 2, unit lanequeue-B41, 07:41-07:42 UTC): qualified
+
+**Measured 2026-10-23 (lane B, card 2, lanequeue-B41, 07:41-07:42 UTC, 40 s on device): QUALIFIED.** p58-diet cold 57.24 vs production 73.18 µs (0.779 A/B, 0.785 B/A), warm 36.88 vs 48.91 (0.753/0.755), warm-direct 0.754/0.751, real layer0/layer24 0.749-0.755; interleaved production within 0.1 % of a fresh production-only pass; every claimed stratum exact on device (408/408 rows, NaN-only rows by is-NaN, 2 payload-order-only rows diagnostic); no kill rule. Saved 15.9 µs/layer cold, 12.0 warm → one-card projection +2.1 (warm) to +2.8 % (cold). Next: packet58-onecard-diet-engine integrates it behind `expert_gateup=production|diet` for the card-0 screen. Evidence `evidence/dietmicro-B1/s58dm_report.md`.
+
+Reading: the one-card halfcache kernel diets by the same fraction as the two-card kernel (0.75-0.78 vs 0.77-0.78), so the table decode and slot resolution cost nothing extra under the diet; the saving per layer is 12-16 µs against the 11.4 µs that equals +2 % on this line (48 serial layer bodies). The wrapper released the lane before the report and left no marker; the two NaN-payload-order rows were classified diagnostic by design.
+
+Window receipts: `lineage/window-20261023/`; endpoints restored as `*-20261023-restore23`; PAUSE-A untouched, PAUSE-B re-armed.
