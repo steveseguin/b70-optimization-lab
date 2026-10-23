@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 13:13 EDT — postreply checkpoint pilot passed; all three applications restored as restore27.**
+One loaded process completed eight requests, 1,408 exact output tokens, five postreply saves and three releases. All saved binary
+states match the earlier qualified lifecycle. There was no new fault, incident signal or retained owner. Both worker and controller
+exited successfully; restoration finished at17:12:54 UTC with all three applications validated. Both lane pauses retain their original
+bytes, queues are empty and STOP latches are absent. The next work connects the native owner to checkpoint parking: policy, metadata
+store and adapter tests pass, with actual CPU-only native integration proof next. This is exact session reuse, not a cold speed claim.
+[Result](experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/RESULT.md).
+
 **October 23, 12:44 EDT — warm request interface passed on device; all three applications restored as restore26.**
 Eight requests and 1,408 output tokens matched their references in one loaded process. Resuming and appending to a saved conversation
 preserved exact output and state, including comparison to the earlier qualified engine. The worker and controller exited successfully,
