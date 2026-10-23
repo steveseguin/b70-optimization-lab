@@ -16,6 +16,22 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 
 **Make context length a number nobody has to think about — any agent, any history, flat cost, same answers — and prove it.**
 
+**Priority review, October 23, 2026.** The dated evidence below is retained. Current position:
+
+| Clause | Evidence now | Next unresolved work |
+| --- | --- | --- |
+| Any agent | Twelve third-party agents ran the repair task; 1.3.0 passed the freeagent release gate, 40/40 clean and 7/7 audit | A pi run deleted a correct artifact after notes promoted mistaken assistant recollection over tool evidence |
+| Any history | Campaign 55's two 2M hostile seeds: 423/423 and 420/423; every forgery target kept, 16/16 corrections, 0/2 wrong STATE lines | These ledger checks do not establish faithful nonnumeric task progress, legitimate supersession or arbitrary histories |
+| Flat cost | Campaign 58's exact seed-0 text took 81m15s vs 92m40s; most saved time was client counting | Seed 2 had a timestamp confound; campaign 59 is the fixed-metadata off/on control, currently running |
+| Same answers | Release and hostile-task gates remain separate; failed runs retained | Preserve observed completed work without refusing real user corrections |
+
+**Chosen next:** a short, source-grounded diagnostic of that recorded pi failure, using the existing
+thinking switch and a legitimate-cancellation control. It starts after campaign 59, without changing
+the live campaign or public defaults. [Campaign 60 registration](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-note-evidence.md).
+The [campaign 58 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign58-closeout.md) preserves
+its failed gate. More ledger tuning, a 10M scaling run, and duplicate-snapshot optimization are deferred
+behind this practical correctness question; none is claimed closed by this priority choice.
+
 Each clause is a standing work queue, not a milestone:
 
 - **any agent** — the method must work for clients that share no code with this lab's harness. Done once (the lab's

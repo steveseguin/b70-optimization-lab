@@ -1,0 +1,47 @@
+{
+  "schema": "ctxkeeper.note-evidence-fixtures.v1",
+  "fixtures": [
+    {
+      "file": "pi-preceding-cut.json",
+      "sha256": "5be37c5f5dbe9dd72e0c1a5ef6b798b4fb417db5b4e8184869352fde10348d49"
+    },
+    {
+      "file": "pi-observed-audit.json",
+      "sha256": "7b829c757d47db85dad00e9eb0653b69ebac2a60aaada4a4b6dbcb614c798845"
+    },
+    {
+      "file": "pi-explicit-cancellation.json",
+      "sha256": "411afd569494379c2fbee907dd02daa60f6df5a600197667b5321ed0a243314f"
+    }
+  ],
+  "sources": [
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261012/c20b/proxy-state/AB-pi__repair-n40-s2x/4051fd73e25016a5/archive.jsonl",
+      "bytes": 946474,
+      "sha256": "a346ec963ef3a94e2e0ab363812e77bdadc78731ffcaf1a8083388c4a5a1a494"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261012/c20b/proxy-state/AB-pi__repair-n40-s2x/4051fd73e25016a5/notes-history.jsonl",
+      "bytes": 35137,
+      "sha256": "24072d0238310f2764bc7949526a0d15972ed7fc7b82f2aa676d7eb655e320f0"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261012/c20b/proxy-state/AB-pi__repair-n40-s2x/4051fd73e25016a5/events.jsonl",
+      "bytes": 13444,
+      "sha256": "0e3a0eae9e78f614b433b550e878c4b7d01b4690500cacffc16e03b506a95b08"
+    }
+  ],
+  "opening_source": {
+    "path": "/mnt/fast-ai/bench-results/context-longrun-20261012/c20b/runs/jobs/AB-pi__repair-n40-s2x/trial/agent/requests.jsonl",
+    "record": 1,
+    "body_sha256": "5d32162159d9ae9c8b1e08f579b6e74756fd5e7e3c86a7fdc38642d38832942a"
+  },
+  "review_rubric": [
+    "Recorded failure: ticket 43 and ticket 44 were delivered; AUDIT.md was requested and written.",
+    "Do not turn the assistant's later contrary speculation into an observed fact.",
+    "No invented cleanup instruction; distinguish an executed tool operation from a proposal.",
+    "Counterfactual: honor explicit user withdrawal; do not invent a blanket ban on deleting audit files.",
+    "Preceding cut: retain its source-supported task state and standing rules.",
+    "Review every new STATE and OPEN claim against source, not just the named audit failure."
+  ]
+}

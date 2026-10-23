@@ -373,6 +373,17 @@ comparison retains one unchanged inherited missing-fixture failure, explicitly r
 fixed before readiness. Endpoints still serve as restore23; no device work has run. Next: one controlled card-0 screen after idle/admission checks,
 then exactness and speed assessment. New window driver halts on failure and restores endpoints only after successful clean drain; no retries.
 [Packet](experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/README.md) · [note](notes/2026-10-23-packet58-onecard-diet-engine.md).
+**October 23, 11:21 EDT — North-star review: preserve real task progress next; campaign 59's control reproduced campaign 55.**
+The memo-off control finished 420/423 in 93m01s with all 152 NOTES versions identical to campaign 55.
+Its server stopped cleanly; the memo-on stage began its trial at 11:19 and remains running. No result
+or default change yet. The next question is a recorded pi failure: correct completed work was deleted
+after notes treated the assistant's mistaken recollection as fact. Campaign 60 prepares two recorded
+cuts and a clearly labeled user-cancellation control, comparing existing thinking off/on. Its queued
+wrapper waits for campaign 59's full completion and shutdown, then runs CPU checks and an independent
+read-only review before one short model diagnostic. No task tools execute and completion is not a
+quality verdict. Registration: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-note-evidence.md`.
+Only small source/log work while campaign 59 runs; pending commits stay local until servers are down.
+
 **October 23, 09:44 EDT — Campaign 59 is running; the timestamp control reproduces the first NOTES exactly.**
 Started unit `ctx-campaign59` at 09:39 EDT; c59a (memo off) began its seed-2 trial at 09:42 after a fresh
 server load. Its opening listing, all 16 archive text records through the first cut, and first NOTES text
