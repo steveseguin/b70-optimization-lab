@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 23, 17:23 EDT — storage recovery verified; mixed streaming qualification is sealed.**
+A verified external archive preserved8,766 closed compiler-cache files before their local copies were removed. Independent
+archive hash, recovery-map and file-absence checks passed; the daily applications kept the same PIDs. Root has about28.74GB
+free, roughly933MB beyond the floor plus the complete test forecast. The fresh streaming plan and384-file source configuration
+are sealed. Independent admission verification, committed CI and fresh live checks precede one sixteen-turn test and guarded
+restore30. [Admission and scope](experiments/own-xpu-runtime/stage2/packet201-streaming-serving/ADMISSION.md).
+
 **October 23, 17:16 EDT — streaming window preparation passes 110 CPU checks across its three parts.**
 The worker's31 checks, client's25 checks and controller/restoration's54 checks all have independent reviews. The guarded
 window requires all16 outputs to match, seven complete streamed replies, successful client and owner exits and physical

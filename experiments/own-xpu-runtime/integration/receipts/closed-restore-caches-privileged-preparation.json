@@ -1,0 +1,66 @@
+{
+  "schema": "closed-restore-caches-privileged-cpu-preparation.v1",
+  "passed": true,
+  "tests": 14,
+  "test_seconds": 0.761,
+  "cpu_only": true,
+  "native_execution": false,
+  "device_execution": false,
+  "real_privileged_calls": false,
+  "real_service_queries": false,
+  "real_cache_contents_read": false,
+  "real_archive_copy_or_prune": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/closed_restore_cache_fs.py": "ae2354e0636c6c085f3b9d27245f6d5d1b41cc01e26b951904e83e9c1fe0374f",
+    "experiments/own-xpu-runtime/integration/archive_closed_restore_caches_privileged.py": "3f795835563569c503dc4dbcee2df6a59a10908791a4002bf55de9a684748dc2",
+    "experiments/own-xpu-runtime/integration/test_closed_restore_caches_privileged.py": "18b5419b0c53ba1d004e345e306b17c954e9a275dbf408c028c8d5ec4e51abf9",
+    "experiments/own-xpu-runtime/integration/CLOSED-RESTORE-CACHES-PRIVILEGED.md": "23273dcf1f1919785ca892aedda8915c6a611a3c826c9f5d5bf1ba225624c49f",
+    "experiments/own-xpu-runtime/integration/archive_closed_restore_caches.py": "36a4929508e7a73f476de31f5bcc29edf49ca3ec49180999822637d97565457a",
+    "experiments/own-xpu-runtime/integration/archive_p199_checkpoints.py": "46710ec916aea75a11ee22679f1f18220eecb5d62cd0e300fafddbd93f80aba0",
+    "experiments/own-xpu-runtime/integration/archive_p184_checkpoints.py": "4d84e566824579c5d8f6ee264d59f4638deddfa2dbbab6e2fea53539c0a8d8f7",
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-inputs.json": "9bc047db8d4ee3c8f969143b9a7ace8848a6379f004658b1f6633feccd4c2c19"
+  },
+  "log": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-privileged-tests.log",
+    "sha256": "0471adb2df31bab90c545981698d99cc57631796c066240f2041545c6c8db941"
+  },
+  "plan": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-privileged-plan.json",
+    "sha256": "be81aa64124d3193897887564bd5a62cef959ee1858e02b7ae65d63de8e927e1"
+  },
+  "original_refusal": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-copy-refusal.json",
+    "sha256": "7437fba8b35eaa8512f8a9e5bc49397a319c33f8716481e09dfee13d8ebcd405"
+  },
+  "metadata_inventory": {
+    "roots": 18,
+    "files": 8766,
+    "logical_bytes": 1070345088,
+    "unreadable_root_owned_files": 36,
+    "unreadable_bytes": 582155334,
+    "root_owned_nonwritable_file_parents": 1908,
+    "marker_parents_user_writable": 18
+  },
+  "capability_split": [
+    "normal-user coordinator alone queries current restore29 services and exact mount/reserve",
+    "isolated root filesystem child accepts only fixed copy/verify/prune-root0..17 operations with no path or command inputs",
+    "fresh user-owned source/boot/monotonic/service admission before every privileged batch",
+    "all18 copies and complete original/member/archive verification precede any deletion",
+    "all18 durable recovery markers and global map before per-file inode/hash guarded unlink",
+    "no original chmod/chown, directory removal, retry, native/service/settings operations",
+    "uncertain privilege subprocess retained without timeout kill; CLI holds resources"
+  ],
+  "tests_scope": [
+    "two-root tiny temporary filesystem pipeline, archive byte/member/attribute verification and individual unlink only inside fixture",
+    "all sudo/Popen/service/mount invocations intercepted; secret-channel test uses a temporary synthetic credential",
+    "stale/source/config admission refusal, full-copy and pre-prune refusal, marker fsync and archive replacement refusal",
+    "post-child service failures preserve actual successful filesystem result and halt later batches",
+    "partial unlink failure retains full restore map; explicit0600 mode independent of umask; first exception preserved"
+  ],
+  "limitations": [
+    "No actual privileged filesystem invocation has been qualified by preparation. Root must review exact source and invoke the coordinator CLI once per phase.",
+    "Current service proof is a fresh trusted normal-user attestation, not an independent service query from the privileged child.",
+    "Repeated full archive verification before each root costs extra sequential read I/O; no performance or immutable-filesystem claim.",
+    "Original fixed helpers/inventory/refusal preserved; new archive and attempt namespaces are separate."
+  ]
+}

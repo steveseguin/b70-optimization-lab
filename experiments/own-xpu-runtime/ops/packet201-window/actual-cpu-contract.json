@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "read_only": true,
+  "live_admission_ready": false,
+  "operational_entrypoint_enabled": false,
+  "staging_identity": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a",
+    "device": 66306,
+    "inode": 51931632,
+    "uid": 1000,
+    "mode": "0700"
+  },
+  "plan_sha256": "85f3e70a071dee9438fab957f0bc98593175954323820b88718c7084d8030bad",
+  "source_files": 266,
+  "topology": [
+    "read-only admission and endpoint-idle proof",
+    "record endpoint and latch identities",
+    "one graceful endpoint stop",
+    "passive privileged preflight drain",
+    "revalidate closure/memory/storage/fault review",
+    "locked PAUSE-A handoff",
+    "one worker unit",
+    "fault/STOP/worker monitoring",
+    "rearm exact PAUSE-A",
+    "terminal runtime+evidence+unit proof",
+    "passive privileged postflight drain",
+    "one guarded restoration of prior endpoints"
+  ],
+  "safe_properties": {
+    "Restart": "no",
+    "SendSIGKILL": "no",
+    "TimeoutStopSec": "infinity",
+    "KillMode": "process",
+    "ExitType": "cgroup"
+  }
+}

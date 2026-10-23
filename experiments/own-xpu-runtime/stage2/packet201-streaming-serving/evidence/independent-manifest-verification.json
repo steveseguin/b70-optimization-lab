@@ -1,0 +1,87 @@
+{
+  "actual_cpu_plan": {
+    "path": "experiments/own-xpu-runtime/ops/packet201-window/actual-cpu-plan.json",
+    "sha256": "a8e070df1736ad510146fc3e1bd351f641b49317b8702b62ba78427cd49d58de"
+  },
+  "all_hashes_verified": true,
+  "binary": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/device/own-rt-iq3",
+    "sha256": "c9b401089d95eeb152953a8c0d82d0678de2474934941bc6c97abd4b03287875"
+  },
+  "canonical_plan_sha256": "85f3e70a071dee9438fab957f0bc98593175954323820b88718c7084d8030bad",
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "env",
+    "OMP_NUM_THREADS=2",
+    "OPENBLAS_NUM_THREADS=2",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/run.py",
+    "--verify-admission"
+  ],
+  "cpu_only": true,
+  "device_execution": false,
+  "exit_code": 0,
+  "external_files": 35,
+  "fresh_paths": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a/checkpoints",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/client-a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/fault-review-device-a.json",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/fault-review-device-a.kernel.jsonl.gz",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet201-window/evidence/window-a"
+  ],
+  "host_fault_capture": false,
+  "limitations": [
+    "Source-only admission does not establish current service idleness, fault/kernel state, physical device drain, queue/latch admission or live memory availability.",
+    "No operational controller, host-fault capture, native process or HTTP request was run.",
+    "Storage is a point-in-time monitored forecast, not a certified hard write bound; live checks remain pending."
+  ],
+  "manifest": {
+    "path": "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/READY-FOR-DEVICE.json",
+    "sha256": "7d0eceb06516995ba6ab0876d9a439aef5ef920c879afe2da7a3ab0f16549383"
+  },
+  "native_execution": false,
+  "passed": true,
+  "privileged_calls": false,
+  "readiness_source_audit": {
+    "audited_union": 383,
+    "enforced_union": 316,
+    "path": "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/readiness-source-audit.json",
+    "sha256": "e1ec1a236942f9d802d07d668e7d971b002a43412ae50a86e5669900769be3b1"
+  },
+  "required_floor_plus_forecast_bytes": 27806354944,
+  "restore_suffix": "20261023-restore30",
+  "root_free_observed_bytes": 28738834432,
+  "schema": "packet201.independent-manifest-verification.v1",
+  "service_queries": false,
+  "source_files": 384,
+  "source_only": true,
+  "staging_identity": {
+    "device": 66306,
+    "inode": 51931632,
+    "mode": "0700",
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet201-streaming-serving/evidence/planned-a",
+    "uid": 1000
+  },
+  "staging_parent_empty": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/tmp/p201-independent-verify-admission.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 76238,
+    "path": "/tmp/p201-independent-verify-admission.stdout.json",
+    "semantic_copy_retained_at": "experiments/own-xpu-runtime/ops/packet201-window/actual-cpu-plan.json",
+    "sha256": "bf42d1530ba8c42607d95b70af7c0afcbf3357372ccdf53d50cc94d73504b69d"
+  },
+  "streaming_source_files": 49,
+  "utc": "2026-10-23T21:23:38.025702+00:00",
+  "working_directory": "/home/steve/llm-optimizations"
+}

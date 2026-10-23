@@ -1,0 +1,108 @@
+{
+  "author_log": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-privileged-tests.log",
+    "sha256": "0471adb2df31bab90c545981698d99cc57631796c066240f2041545c6c8db941"
+  },
+  "author_plan": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-privileged-plan.json",
+    "sha256": "be81aa64124d3193897887564bd5a62cef959ee1858e02b7ae65d63de8e927e1"
+  },
+  "author_receipt": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-privileged-preparation.json",
+    "sha256": "fd6f7aa97ab42ffdd1f0c364254ef4fead5312eb735bc4eeb3e1b54c9ca18030"
+  },
+  "closure_sha256": {
+    "experiments/own-xpu-runtime/ops/packet196-window/evidence/window-a/post-stop-drain.json": "65eaf399486cc3e635b12287d6282c2b88ecb28a78576880e4ec7f169fcfcda0",
+    "experiments/own-xpu-runtime/ops/packet196-window/evidence/window-a/preflight.json": "e62ac77d75238b98c4e2248b98908413efe3ba627f5ef275cc372c0a560c1bd1",
+    "experiments/own-xpu-runtime/ops/packet197-window/evidence/window-a/post-stop-drain.json": "65eaf399486cc3e635b12287d6282c2b88ecb28a78576880e4ec7f169fcfcda0",
+    "experiments/own-xpu-runtime/ops/packet197-window/evidence/window-a/preflight.json": "9215c0a3d77fb5e81b04a2215c335a6b79959c7cc206ee09383062edd30f5b75",
+    "experiments/own-xpu-runtime/ops/packet198-window/evidence/window-a/post-stop-drain.json": "65eaf399486cc3e635b12287d6282c2b88ecb28a78576880e4ec7f169fcfcda0",
+    "experiments/own-xpu-runtime/ops/packet198-window/evidence/window-a/preflight.json": "1c5697a6938ddaa816ec8fc0e03298407cfec4bfbb53c4c2abadf957018045d9",
+    "experiments/own-xpu-runtime/ops/packet199-window/evidence/window-a/post-stop-drain.json": "65eaf399486cc3e635b12287d6282c2b88ecb28a78576880e4ec7f169fcfcda0",
+    "experiments/own-xpu-runtime/ops/packet199-window/evidence/window-a/preflight.json": "5606f6f8221fa46b48fde0237124e9c121f8be06488f071a915dd38a4c438d88",
+    "experiments/own-xpu-runtime/ops/packet200-window/evidence/window-a/post-stop-drain.json": "65eaf399486cc3e635b12287d6282c2b88ecb28a78576880e4ec7f169fcfcda0",
+    "experiments/own-xpu-runtime/ops/packet200-window/evidence/window-a/preflight.json": "48c41b0924d157ffd0a8fbcbeecbb6526089faafe03776a3c2c7198f349c05e0",
+    "experiments/own-xpu-runtime/ops/packet58dietengine-window/evidence/window-a/post-stop-drain.json": "65eaf399486cc3e635b12287d6282c2b88ecb28a78576880e4ec7f169fcfcda0",
+    "experiments/own-xpu-runtime/ops/packet58dietengine-window/evidence/window-a/preflight.json": "984501d67c9859c4ddcd60e88409c14cd0fe95c691ea95f46325a07463450ce9",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lineage/window-20261023/driver.log": "dad8054c06e8a25215da2d905292dd3f80f08f5ee8d829e7f6108188f0194577",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lineage/window-20261023/window-result.json": "bd7f9a030e15d43db02f0df369722e2df573a75093bc4310ca743c2f5990c4f0",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/lineage/window-20261023/driver.log": "963b9031c8bcbb16b10c9deb072a9c207f306bc444f9bc84ca3cd97e4272710d",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/lineage/window-20261023/window-result.json": "cf1871ab94bb2cff7495037b01d4da70b47f79d8734e1194c265271a2dd2d4ef",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/restore29/qwen38-27b-fp8-ready.json": "d33706a3b686ebfdaf22e6ace58a5cb8cb0f33c0be7cc3e790497b9de4a8d606",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/restore29/qwen38-27b-fp8-tp1-test-ready.json": "ef3dd906e1d10f2cf09a41d522226f4fcb76b21ec118fb7eaa6c78e25048e330",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/restore29/qwen38-27b-vision-ready.json": "515dd4ecacaea0533fb1994fb9d44c99440c4d4ae555d4c80ae8f1f952c9f7e6",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/lineage/window-20261023/driver.log": "d9af4cb3182942bfeec29e119106f29a343d35167537f37dce347873b99c6c98",
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/lineage/window-20261023/window-result.json": "286e28d0ba0bb60e1349fe2c698a0c6f84f6c4b633ab56c7376285a57fe7c392"
+  },
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "env",
+    "OMP_NUM_THREADS=2",
+    "OPENBLAS_NUM_THREADS=2",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "test_closed_restore_caches_privileged",
+    "-v"
+  ],
+  "cpu_only": true,
+  "device_execution": false,
+  "findings": [],
+  "limitations": [
+    "CPU fixtures only: actual elevated filesystem invocation, external durability and reclaimed space remain root-owned future checks.",
+    "Fresh service proof is trusted-user attestation, not root service discovery; no hostile-user mutation or immutable-filesystem claim.",
+    "Repeated complete archive checks add bounded sequential read I/O; no throughput claim.",
+    "If receipt storage itself fails, complete durable pre-unlink maps remain but detailed final accounting may be incomplete; first operational exception is retained.",
+    "Coordinator CLI must own execution so timeout/uncertain-child retention remains active."
+  ],
+  "native_execution": false,
+  "original_refusal": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-copy-refusal.json",
+    "sha256": "7437fba8b35eaa8512f8a9e5bc49397a319c33f8716481e09dfee13d8ebcd405"
+  },
+  "passed": true,
+  "real_archive_copy_or_prune": false,
+  "real_cache_contents_read": false,
+  "real_privileged_calls": false,
+  "real_service_queries": false,
+  "resolved_findings": [
+    "Explicit mode0600 user admissions/receipts/markers independent of umask.",
+    "Tar member readback checks original UID/GID/mode as well as size and SHA256.",
+    "Successful copy/root-batch result survives subsequent user guard or receipt failure; next batch is not dispatched."
+  ],
+  "schema": "closed-restore-caches-privileged-independent-review.v1",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/CLOSED-RESTORE-CACHES-PRIVILEGED.md": "23273dcf1f1919785ca892aedda8915c6a611a3c826c9f5d5bf1ba225624c49f",
+    "experiments/own-xpu-runtime/integration/archive_closed_restore_caches.py": "36a4929508e7a73f476de31f5bcc29edf49ca3ec49180999822637d97565457a",
+    "experiments/own-xpu-runtime/integration/archive_closed_restore_caches_privileged.py": "3f795835563569c503dc4dbcee2df6a59a10908791a4002bf55de9a684748dc2",
+    "experiments/own-xpu-runtime/integration/archive_p184_checkpoints.py": "4d84e566824579c5d8f6ee264d59f4638deddfa2dbbab6e2fea53539c0a8d8f7",
+    "experiments/own-xpu-runtime/integration/archive_p199_checkpoints.py": "46710ec916aea75a11ee22679f1f18220eecb5d62cd0e300fafddbd93f80aba0",
+    "experiments/own-xpu-runtime/integration/closed_restore_cache_fs.py": "ae2354e0636c6c085f3b9d27245f6d5d1b41cc01e26b951904e83e9c1fe0374f",
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-inputs.json": "9bc047db8d4ee3c8f969143b9a7ace8848a6379f004658b1f6633feccd4c2c19",
+    "experiments/own-xpu-runtime/integration/test_closed_restore_caches_privileged.py": "18b5419b0c53ba1d004e345e306b17c954e9a275dbf408c028c8d5ec4e51abf9"
+  },
+  "test_log": {
+    "path": "experiments/own-xpu-runtime/integration/receipts/independent-closed-restore-caches-privileged-tests.log",
+    "sha256": "2d06a1b5e5b80ced35a461319f0db9379fd1067e583da483e84346a7b08bee0b"
+  },
+  "test_seconds": 0.775,
+  "tests": 14,
+  "utc": "2026-10-23T21:13:56.374445+00:00",
+  "verified": [
+    "Only fixed copy/verify/prune-root0..17 tokens accepted; no caller paths, commands, service names or arbitrary file list.",
+    "Privileged CLI requires uid0 and exact /usr/bin/python3 spelling with isolated mode; fixed sudo argv, closed environment and synthetic secret-on-stdin interception verified.",
+    "Only user coordinator checks three exact restore29 configurations and external mount/50GiB reserve; child consumes fresh boot/monotonic/source-bound user proof and runs no subprocesses.",
+    "Fixed18 roots and8766 metadata pins remain unchanged; root-owned unreadable files use privileged no-follow reads without original permission changes.",
+    "Full source hashing, copy, member/whole-tar readback and original rehash before successful copy; separate full verification before markers.",
+    "Durable global restore map and all18 per-root markers precede any individual unlink; per-root archive verification and held recovery FD, per-file hash/inode checks, parent FD-relative unlink and fsync are present.",
+    "No retries, chmod/chown, directory removal, service restarts or timeout kills; uncertain Popen/communication retains child/coordinator.",
+    "Original unprivileged refusal and frozen source/inventory preserved; separate operation and archive namespace."
+  ],
+  "working_directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration"
+}
