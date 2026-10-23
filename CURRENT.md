@@ -373,6 +373,15 @@ comparison retains one unchanged inherited missing-fixture failure, explicitly r
 fixed before readiness. Endpoints still serve as restore23; no device work has run. Next: one controlled card-0 screen after idle/admission checks,
 then exactness and speed assessment. New window driver halts on failure and restores endpoints only after successful clean drain; no retries.
 [Packet](experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/README.md) · [note](notes/2026-10-23-packet58-onecard-diet-engine.md).
+**October 23, 09:44 EDT — Campaign 59 is running; the timestamp control reproduces the first NOTES exactly.**
+Started unit `ctx-campaign59` at 09:39 EDT; c59a (memo off) began its seed-2 trial at 09:42 after a fresh
+server load. Its opening listing, all 16 archive text records through the first cut, and first NOTES text
+match campaign 55 exactly. c59b (memo on) follows automatically on its own fresh server after clean
+completion/shutdown checks. Expected finish roughly 12:45 EDT; full results remain pending. The runner
+saves both unchanged audits, comparisons and time budgets under `context-longrun-20261016/campaign59-control/`.
+All prior audit/setup commits were pushed before launch; this live-state/early-check commit stays local
+until servers are down. No other work on this host while the campaign runs. Public figures and memo
+default remain unchanged. Early receipt: `experiments/qwen38-27b-b70/data/2026-10-23-campaign59-preflight/early-control.json`.
 
 **October 23, 09:38 EDT — Campaign 59 is registered and prepared: isolate the counting memo from seed 2's directory timestamp.**
 Two fresh-server seed-2 runs, upstream counts then memo, use a separate fixture that sets only the sandbox
