@@ -1,0 +1,53 @@
+{
+  "schema": "closed-restore-caches-independent-preparation-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/archive_closed_restore_caches.py": "36a4929508e7a73f476de31f5bcc29edf49ca3ec49180999822637d97565457a",
+    "experiments/own-xpu-runtime/integration/prune_closed_restore_caches.py": "4b355669c9bbc937d0c5f59f139adb271f5c03b72d02dcb5186d6cf74079bc7e",
+    "experiments/own-xpu-runtime/integration/test_closed_restore_caches.py": "1c0e4d8653ceb2f0cb390bf7dece1ef49acb79ea82367687e51292e496db83ce",
+    "experiments/own-xpu-runtime/integration/CLOSED-RESTORE-CACHES.md": "fac1ec7e339c4ec3d05eaa1b76ca1e9b80b737d9b60f4ae29c89f967e6b8f71b",
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-inputs.json": "9bc047db8d4ee3c8f969143b9a7ace8848a6379f004658b1f6633feccd4c2c19",
+    "experiments/own-xpu-runtime/integration/archive_p199_checkpoints.py": "46710ec916aea75a11ee22679f1f18220eecb5d62cd0e300fafddbd93f80aba0",
+    "experiments/own-xpu-runtime/integration/archive_p184_checkpoints.py": "4d84e566824579c5d8f6ee264d59f4638deddfa2dbbab6e2fea53539c0a8d8f7",
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-preparation.json": "cc33e4c2de8af7aeb121113e73ec88c35453ccd76e17c584ac92b848eeb21339",
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-plan.json": "1f4480a28a8a36db07705ee106743d4273b4b572eece3b8b5028b0f51d58f211",
+    "experiments/own-xpu-runtime/integration/receipts/independent-closed-restore-caches-tests.log": "6122c12fd3154fe75556f4b4b212dcf39365ba79ee000504c453803c8d9e4263"
+  },
+  "tests": {
+    "count": 15,
+    "passed": 15,
+    "seconds": 0.516,
+    "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest test_closed_restore_caches -v",
+    "scope": "Tiny temporary archive/prune fixtures; all service/mount queries mocked."
+  },
+  "metadata_inventory": {
+    "roots": 18,
+    "files": 8766,
+    "directories": 2197,
+    "logical_bytes": 1070345088,
+    "allocated_bytes": 1088151552,
+    "distinct_inodes": 8766,
+    "cache_contents_read": false,
+    "active_restore29_excluded": true
+  },
+  "checks": [
+    "Fixed SHA-bound inventory and closure evidence admit only card0/card3 restore20..28 torch_compile_cache files; logs/state/overlays/modelinfos/model/research results and restore29 excluded.",
+    "Copy and prune have separate exclusive attempt receipts; neither retries or overwrites previous operation artifacts.",
+    "Actual operations must compare all three current active/running service argv and working directories against pinned restore29 configuration, with bounded read-only systemctl queries.",
+    "Exact external mount UUID/source/fstype/parent inode and 50GiB reserve, plus source+32MiB archive allowance before copy, are required.",
+    "Every tar member extent and SHA, complete member set and whole archive hash are verified; originals are rehashed after copy and independently before pruning.",
+    "Recovery archive descriptor remains open, with inode/path/stamp rechecks before each unlink.",
+    "All eighteen sibling incomplete-cache markers and full restore map are file- and directory-fsynced before any deletion; permission refusal precedes markers.",
+    "Per-file SHA/stamp plus no-follow held parent FD and final relative inode check precede each unlink; parent directory fsynced after unlink.",
+    "Symlinks, hardlinks, unexpected files/directories and observed identity drift are refused. No directory deletion or service mutation is implemented.",
+    "Documentation retains exact 4.26MB original inventory permanently and describes separate-directory reconstruction and prohibition on silently rebuilding pins after partial pruning."
+  ],
+  "limits": [
+    "Historical restore20..22 stop/inactive logs are weaker than complete privileged owner inventories; later complete drains corroborate closure.",
+    "Current service configuration is checked only by the future root-run operation. This review performed no real service/mount queries, archive copy, cache hashing or pruning.",
+    "Trusted coordinator must avoid concurrent reuse/reconfiguration; metadata/FD checks are not an atomic filesystem transaction or a proof against hostile same-user races.",
+    "A crash after unlink can precede final per-file accounting; durable complete restore maps and archive preserve recovery.",
+    "If writing the failure receipt itself fails, that secondary exception can supersede the original operation exception, matching pinned parent behavior. The durable start receipt/markers remain and no successful result is returned."
+  ],
+  "findings": []
+}

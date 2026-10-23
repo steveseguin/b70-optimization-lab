@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 17:05 EDT — streaming session ready; real-model client preparation continues.**
+The tiny native proof and guarded session composition are committed as dcf817d70, with all three CI workflows green.
+The new streaming worker passes 31 CPU checks and independent review; it retains the successful pilot's launch, ownership
+and shutdown safeguards. The next test will compare a mix of ordinary and streamed replies against all sixteen recorded
+outputs. All three restore29 applications remain running. Archiving closed compiler caches stopped before mutation because
+some files are root-owned and unreadable by the normal user; a separate, narrowly scoped privileged filesystem helper is
+being prepared. No permissions or settings changed, and no new device window has started.
+[Worker preparation](experiments/own-xpu-runtime/stage2/packet201-streaming-serving/README.md) ·
+[Archive refusal](experiments/own-xpu-runtime/integration/CLOSED-RESTORE-CACHES-REFUSAL.md).
+
 **October 23, 16:48 EDT — tiny CPU-native streaming passed; guarded lifecycle passes 27 CPU checks.**
 One synthetic native process served two streamed requests, saved then released state and quit cleanly. Both clients received
 text before disposition; all eight tokens and 21 checkpoint binary hashes verified. This is a CPU-native protocol proof, not

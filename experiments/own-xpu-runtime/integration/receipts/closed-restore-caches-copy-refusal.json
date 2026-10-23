@@ -1,0 +1,27 @@
+{
+  "schema": "closed-restore-caches-pre-mutation-refusal.v1",
+  "recorded_utc": "2026-10-23T21:03:33.408625+00:00",
+  "passed": false,
+  "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B experiments/own-xpu-runtime/integration/archive_closed_restore_caches.py --copy-verify",
+  "exit_code": 1,
+  "review_sha256": "e0e43e2ce7868bac2cb05a3599d7372c60c77e22e0ce73550b47084ceee1ba33",
+  "source_pins_verified": true,
+  "error_type": "PermissionError",
+  "errno": 13,
+  "failing_path": "/home/steve/inference/qwen38-27b-fp8-card0-20261023-restore20/cache/torch_compile_cache/torch_aot_compile/1e0792d562c608e47ae7fe512809dd41a5e54d2e987cabadf3f4b0f641ae51fd/rank_0_0/model",
+  "file_uid": 0,
+  "file_gid": 0,
+  "file_mode": "0o600",
+  "failure_phase": "initial source hash before archive-start receipt",
+  "observed_artifacts": {
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-archive-start.json": false,
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-archive.json": false,
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-prune-start.json": false,
+    "experiments/own-xpu-runtime/integration/receipts/closed-restore-caches-prune.json": false,
+    "/mnt/usb-models/own-runtime-archives/closed-restore20-28-compiler-caches-20261023.tar": false
+  },
+  "cache_deletions": 0,
+  "service_mutations": 0,
+  "source_cache_content_reads": "Initial inventory attempted hashing; failed on unreadable root-owned model. No complete content verification claimed.",
+  "followup": "Preserve frozen helpers and inventory; independently review a separate scoped privileged approach or alternative storage candidate. No retry of original operation."
+}

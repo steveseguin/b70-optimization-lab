@@ -1,0 +1,109 @@
+--- experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py
++++ experiments/own-xpu-runtime/stage2/packet201-streaming-serving/device_worker.py
+@@ -24,15 +24,17 @@
+ ROOT = P.parents[3]
+ INTEGRATION = P.parents[1] / 'integration'
+ P199 = P.parent / 'packet199-chat-parking'
+-UNIT = 'packet200-bounded-serving-a'
++UNIT = 'packet201-streaming-serving-a'
+ MANIFEST = P / 'READY-FOR-DEVICE.json'
++PARENT_WORKER = P.parent/'packet200-bounded-serving/device_worker.py'
++PARENT_WORKER_SHA = '1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f'
+ MAIN_CORES = {0, 1, 2, 3, 16, 17, 18, 19}
+ HELPER_CORES = set(range(8, 16)) | set(range(24, 32))
+ MIB = 1024**2
+ if str(INTEGRATION) not in sys.path:
+     sys.path.insert(0, str(INTEGRATION))
+ import bounded_serving_profile as profile_module
+-import bounded_serving_session as session_module
++from streaming_v1 import session as session_module
+ from bounded_evidence import BoundedEvidence
+ from native_diagnostics import PipeDiagnostics
+ from native_checkpoint_store import NativeCheckpointStore
+@@ -54,6 +56,7 @@
+ 
+ 
+ def integration_origins():
++    require(sha(PARENT_WORKER) == PARENT_WORKER_SHA, 'frozen p200 parent worker changed')
+     session_module._module_origins()  # Also checks nested chat/engine/lifecycle origins before launch.
+     for name in ('bounded_serving_profile','bounded_serving_session','bounded_evidence','native_diagnostics',
+                  'native_checkpoint_store','request_front.client_v2'):
+@@ -66,28 +69,37 @@
+     integration_origins()
+     parent = Path(staging_parent)
+     require(activity_mode in ('launch', 'mapped-cold-start'), 'registered activity mode required')
++    streaming_sources = session_module.source_closure()
+     profile = profile_module.build_profile(parent / 'output', parent / 'checkpoints')
+-    return dict(schema='packet200.bounded-serving-plan.v1', passed=True, device_executed=False,
++    return dict(schema='packet201.streaming-serving-plan.v1', passed=True, device_executed=False,
+         live_admission_ready=False, storage_admission_mode='monitored-forecast', storage_bound_proven=False,
+         unit=UNIT, profile=profile, profile_sha256=digest(profile), activity_mode=activity_mode,
++        streaming_sources=streaming_sources, streaming_sources_sha256=digest(streaming_sources),
++        parent_worker=dict(path=str(PARENT_WORKER.relative_to(ROOT)),sha256=PARENT_WORKER_SHA),
+         terminal_receipt=str(parent/'output/terminal/worker.json'), bind_host='127.0.0.1', bind_port=0,
+         stderr_capture_bytes=8*MIB, control_evidence_bytes=7*MIB, terminal_evidence_bytes=MIB,
+         native_processes=1, native_cpu_affinity=sorted(MAIN_CORES), native_nice=0,
+         helper_cpu_affinity=sorted(HELPER_CORES), helper_nice=19,
+-        source_sha256={str((P/name).relative_to(ROOT)):sha(P/name) for name in
+-                       ('device_worker.py', 'test_device_worker.py', 'README.md')})
++        source_sha256={str(path.relative_to(ROOT)):sha(path) for path in
++                       (P/'device_worker.py', P/'test_device_worker.py', P/'README.md', PARENT_WORKER)})
+ 
+ 
+ def authorize(plan, manifest):
+     integration_origins()
+     require(Path(manifest) == MANIFEST, 'fixed future coordinator manifest required')
+     row = json.loads(MANIFEST.read_text())
+-    require(row.get('schema') == 'packet200.execution-admission.v1' and row.get('passed') is True
++    require(row.get('schema') == 'packet201.execution-admission.v1' and row.get('passed') is True
+             and row.get('operational_launch_authorized') is True and row.get('plan_sha256') == digest(plan),
+             'separate operational admission absent or changed')
+     require(row.get('storage_admission_mode') == 'monitored-forecast' and row.get('storage_bound_proven') is False,
+             'forecast must not become a hard-bound claim')
++    streaming_sources = session_module.source_closure()
++    require(plan.get('streaming_sources') == streaming_sources and
++            plan.get('streaming_sources_sha256') == digest(streaming_sources), 'streaming plan closure changed')
+     expected = dict(plan['profile']['source_sha256']); expected.update(plan['source_sha256'])
++    for path, value in streaming_sources.items():
++        require(expected.get(path,value) == value, 'canonical/streaming source conflict: '+path)
++        expected[path] = value
+     for name in ('native_diagnostics.py','initial_idle_origin.py'):
+         expected[str((INTEGRATION/name).relative_to(ROOT))] = sha(INTEGRATION/name)
+     if plan['activity_mode'] == 'mapped-cold-start':
+@@ -126,7 +138,7 @@
+ class Safety:
+     """Narrow pinned p199/p198 admission reuse; no historical execution wrapper."""
+     def __init__(self, plan, fault_review):
+-        spec = importlib.util.spec_from_file_location('_p200_pinned_p199', P199/'device_worker.py')
++        spec = importlib.util.spec_from_file_location('_p201_pinned_p199', P199/'device_worker.py')
+         module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+         self.parent = module.parent(); self.m = module.parent_modules()
+         self.plan, self.fault_review = plan, Path(fault_review)
+@@ -267,7 +279,7 @@
+         def start():
+             try:helper_placement();self.diagnostics.start()
+             except BaseException as error:result['error']=error
+-        self.startup_thread=threading.Thread(target=start,name='p200-diagnostics-start',daemon=False)
++        self.startup_thread=threading.Thread(target=start,name='p201-diagnostics-start',daemon=False)
+         self.startup_thread.start();self.startup_thread.join(5)
+         require(not self.startup_thread.is_alive(),'diagnostic startup retained')
+         if 'error' in result:raise result['error']
+@@ -302,7 +314,7 @@
+             self.spawn_uncertain=False;self.record['native_process_count']=1
+             self._start_diagnostics()  # No readiness wait or file scan before stderr drain.
+             self.safety.register(self.child)
+-            self.monitor_thread=threading.Thread(target=self._monitor,name='p200-passive-guard',daemon=False)
++            self.monitor_thread=threading.Thread(target=self._monitor,name='p201-passive-guard',daemon=False)
+             self.monitor_thread.start()
+             self.front=NativeFront(self.child,context=4096,vocab=248320,max_requests=16,startup_timeout=900,request_timeout=900)
+             self.record['model_loads']=self.front.ready['model_loads']
+@@ -316,7 +328,8 @@
+             else:
+                 self.store=NativeCheckpointStore(Path(self.profile['paths']['checkpoint_root']),Path(self.profile['binary']['path']),
+                     self.profile['binary']['sha256'],self.safety.store_environment())
+-                self.session=session_module.attach(self.profile,front=self.front,store=self.store,
++                self.session=session_module.attach(self.profile,streaming_sources=self.plan['streaming_sources'],
++                    front=self.front,store=self.store,
+                     admitted_argv=self.profile['native_argv'],launched_at=self.launched_at,last_native_activity=activity,guard=self.guard)
+                 self.guard();address=self.session.open_listener(('127.0.0.1',0))
+                 self.record.update(listener_exposed=True,address=list(address))
