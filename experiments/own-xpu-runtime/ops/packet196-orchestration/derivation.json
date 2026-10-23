@@ -1,0 +1,44 @@
+{
+  "schema": "packet196.derivation.v1",
+  "passed": true,
+  "device_executed": false,
+  "argv": [
+    "--parent-orch",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet58c23chain-orchestration",
+    "--packet",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain",
+    "--out",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-orchestration",
+    "--unit",
+    "packet58-onecard-diet-a",
+    "--output",
+    "evidence/card0-diet-a",
+    "--binary",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/own-rt-iq3",
+    "--host-binary",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/gnu-host/own-rt-iq3",
+    "--bracket-summary",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/evidence/card0-58de-v5-a/resident/WSCREEN/summary.json",
+    "--threshold-file",
+    "/home/steve/llm-optimizations/scripts/packet58_onecard_record_threshold.json",
+    "--flag",
+    "wait-policy=spin",
+    "--flag",
+    "foreground-io=kernel",
+    "--flag",
+    "expert-gateup=diet"
+  ],
+  "generator_delta": {
+    "shared_path": "experiments/own-xpu-runtime/ops/onecard_chain_derive.py",
+    "shared_sha256": "19d528a62cd5362d45e3947f69170bbbc42b348055dcf85d0a570da832895c7e",
+    "private_sha256": "303259cd69465896700d573833ea8bf15eeb9bf5bf3d90b028802c6aa055d9af",
+    "edits": {
+      "host_required_available_bytes=98990252032": "host_required_available_bytes=100487123456",
+      "planned_write_bytes=R0.get('planned_write_bytes', 1)": "planned_write_bytes=397492208",
+      "for f in (P / 'READY-FOR-DEVICE.json', O / 'READY-FOR-DEVICE.json'):": "for f in (P / 'DERIVATION-READY.json', O / 'DERIVATION-READY.json'):",
+      "                shutil.rmtree(d)": "                print(\"preserved incomplete derivation: \" + str(d), file=sys.stderr)"
+    }
+  },
+  "compiled_here": false,
+  "preparation_complete": false
+}

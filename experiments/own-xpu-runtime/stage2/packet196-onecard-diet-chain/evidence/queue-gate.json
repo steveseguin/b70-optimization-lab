@@ -1,0 +1,69 @@
+{
+  "schema": "packet58cache23chain.gate.queue.v1",
+  "passed": true,
+  "plan": {
+    "passed": true,
+    "device_executed": false,
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ],
+    "gap_seconds": 90,
+    "scope": "whole-host",
+    "host_required_available_bytes": 100487123456
+  },
+  "ws128_command": [
+    "/usr/bin/taskset",
+    "-c",
+    "0-3,16-19",
+    "/usr/bin/env",
+    "-i",
+    "PATH=/usr/bin:/bin",
+    "OMP_NUM_THREADS=2",
+    "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/window.py",
+    "--authorized-device-window",
+    "--window",
+    "WS128",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/.plan-probe/WS128",
+    "--faults-reviewed-through",
+    "2026-01-01T00:00:00Z",
+    "--view",
+    "down-tile16",
+    "--previous",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/.plan-probe/WS128x/window.json",
+    "--k1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/.plan-probe/K1a/window.json",
+    "--k1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/.plan-probe/K1b/window.json"
+  ],
+  "entry_proposal_sha256": "9edd39782986c37a81b5d66362187be3480cadf772c5967bdeb84964137987c5",
+  "lanequeue_plan": {
+    "name": "packet58-onecard-cache23-chain-chain-A",
+    "plan": "passed",
+    "seal": "checked by packet plan/wrapper",
+    "storage_admission": {
+      "planned_write_bytes": 1,
+      "reservation_source": "proposal",
+      "root_free_bytes": 30804246528,
+      "required_free_bytes": 25000000001,
+      "free_floor_bytes": 25000000000,
+      "passed": true
+    },
+    "host_required_available_bytes": 100487123456
+  },
+  "lanequeue_sha256": "010d83445665cf93641901c845e28ccc36ef41909d2171ccc2f877509eaffe25",
+  "live_queue_changed": false,
+  "launched_by": "launch_chain.sh (systemd-run unit packet58-onecard-cache23-a), never a lane queue row",
+  "device_executed": false
+}

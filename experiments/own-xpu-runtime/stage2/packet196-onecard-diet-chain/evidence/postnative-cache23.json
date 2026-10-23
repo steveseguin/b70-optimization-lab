@@ -1,0 +1,88 @@
+{
+  "schema": "packet58cache23chain.gate.postnative.v1",
+  "passed": true,
+  "evidence": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident",
+  "evidence_files": [
+    {
+      "name": "window.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/window.json",
+      "parent_digest": "fd494904a32cc9263d4dd8006e75cd179189d556a22dd396716f57612111f2b6"
+    },
+    {
+      "name": "summary.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/summary.json",
+      "parent_digest": "3ac7f4aba00f75237d77ddff17c5b82af5d7103de7f4313685047b90d15fa7ed"
+    }
+  ],
+  "budget": {
+    "host_required_available_bytes": 100487123456,
+    "device_owned_bound_bytes": 29828911360,
+    "expert_cache_arena": 23049601024,
+    "driver_allowance_bytes": 671088640
+  },
+  "records": [
+    {
+      "window": "K1a",
+      "passed": true,
+      "keys": 24,
+      "equal_to_screen_summary": true,
+      "differing_keys": []
+    },
+    {
+      "window": "K1b",
+      "passed": true,
+      "keys": 24,
+      "equal_to_screen_summary": true,
+      "differing_keys": []
+    },
+    {
+      "window": "WSCREEN",
+      "passed": true,
+      "plan_window": "WS128",
+      "full_cache_bytes": 23049601024,
+      "kv_bytes": 116391936,
+      "pinned_expert_bytes": 48627712000,
+      "peak_shadow_bytes": 659013632,
+      "equal_to_screen_postload_memory": true,
+      "compared_keys": [
+        "after_load_shadow_bytes",
+        "attribution",
+        "complete_postload",
+        "full_cache_bytes",
+        "kv_bytes",
+        "observed_supervisor_peak_bytes",
+        "peak_shadow_bytes",
+        "pinned_expert_bytes",
+        "source",
+        "sources"
+      ],
+      "keys_absent_in_screen_receipt": [
+        "exact_half_decode_table_bytes"
+      ],
+      "sources": {
+        "run/run/census.json": {
+          "name": "census.json",
+          "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/run/run/census.json",
+          "parent_digest": "4bf5b6b2764ff46b25069ded4510bc6af667077f5dc3e159187e8331a3f3be3b"
+        },
+        "run/run/host-memory.jsonl": {
+          "name": "host-memory.jsonl",
+          "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/run/run/host-memory.jsonl",
+          "parent_digest": "1fa5e0b433ab0d14a70f4fd04319095bb137520834fdf576ab92e47f39269bae"
+        },
+        "host-memory.jsonl": {
+          "name": "host-memory.jsonl",
+          "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/host-memory.jsonl",
+          "parent_digest": "1505af568837d32e7607bd93bbb627dc4313c1465b97a0ce71cc071ef1558e58"
+        }
+      }
+    }
+  ],
+  "generator_rehearsal": {
+    "name": "postnative-rehearsal.json",
+    "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/postnative-rehearsal.json",
+    "parent_digest": "be8b2944d02213f591898496cd0ccdf5e33d850d267b648d1e41b77f77a905db",
+    "note": "packet182c real chain (21.55 GB arena) with the parent plan at derivation time"
+  },
+  "device_executed": false
+}

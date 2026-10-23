@@ -1,0 +1,214 @@
+{
+  "schema": "onecard-chain-derive.predevice.v1",
+  "device_executed": false,
+  "passed": true,
+  "windows": [
+    "K1a",
+    "K1b",
+    "KD",
+    "W2m",
+    "WS",
+    "WS128x",
+    "WS128"
+  ],
+  "records": [
+    {
+      "window": "K1a",
+      "mode": "K1",
+      "passed": true,
+      "boundary": "output directory creation",
+      "argv": [
+        "--authorized-device-window",
+        "--window",
+        "K1",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-derive-predevice-gmqw3uyt/K1a",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--view",
+        "down-tile16"
+      ],
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    },
+    {
+      "window": "K1b",
+      "mode": "K1",
+      "passed": true,
+      "boundary": "output directory creation",
+      "argv": [
+        "--authorized-device-window",
+        "--window",
+        "K1",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-derive-predevice-gmqw3uyt/K1b",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--view",
+        "down-tile16"
+      ],
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    },
+    {
+      "window": "KD",
+      "mode": "KD",
+      "passed": true,
+      "boundary": "previous-window prerequisite K1",
+      "argv": [
+        "--authorized-device-window",
+        "--window",
+        "KD",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-derive-predevice-gmqw3uyt/KD",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--view",
+        "down-tile16",
+        "--previous",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1b/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1a/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1b/window.json"
+      ],
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    },
+    {
+      "window": "W2m",
+      "mode": "W2m",
+      "passed": true,
+      "boundary": "previous-window prerequisite KD",
+      "argv": [
+        "--authorized-device-window",
+        "--window",
+        "W2m",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-derive-predevice-gmqw3uyt/W2m",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--view",
+        "down-tile16",
+        "--previous",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/KD/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1a/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1b/window.json"
+      ],
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    },
+    {
+      "window": "WS",
+      "mode": "WS",
+      "passed": true,
+      "boundary": "previous-window prerequisite W2m",
+      "argv": [
+        "--authorized-device-window",
+        "--window",
+        "WS",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-derive-predevice-gmqw3uyt/WS",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--view",
+        "down-tile16",
+        "--previous",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/W2m/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1a/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1b/window.json"
+      ],
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    },
+    {
+      "window": "WS128x",
+      "mode": "WS128x",
+      "passed": true,
+      "boundary": "previous-window prerequisite WS",
+      "argv": [
+        "--authorized-device-window",
+        "--window",
+        "WS128x",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-derive-predevice-gmqw3uyt/WS128x",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--view",
+        "down-tile16",
+        "--previous",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/WS/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1a/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1b/window.json"
+      ],
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    },
+    {
+      "window": "WS128",
+      "mode": "WS128",
+      "passed": true,
+      "boundary": "previous-window prerequisite WS128x",
+      "argv": [
+        "--authorized-device-window",
+        "--window",
+        "WS128",
+        "--card",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-derive-predevice-gmqw3uyt/WS128",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--view",
+        "down-tile16",
+        "--previous",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/WS128x/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1a/window.json",
+        "--k1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/.predevice-plan/K1b/window.json"
+      ],
+      "simulated": [
+        "priority",
+        "affinity",
+        "user_unit_gate"
+      ]
+    }
+  ]
+}

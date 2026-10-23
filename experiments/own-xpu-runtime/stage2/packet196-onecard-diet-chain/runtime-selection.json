@@ -1,0 +1,24 @@
+{
+  "view": "down-tile16",
+  "cache_maintenance": "overlap",
+  "miss_path": "zero-copy",
+  "cache_cap": "max23",
+  "cache_allocation_bytes": 23049601024,
+  "cache_bytes": 23049601024,
+  "kv_dtype": "BF16",
+  "context": 4096,
+  "hc": "p60fusion",
+  "hc_geometry": "hc-wide",
+  "experts": "wide64+halfcache",
+  "other_fusion": "fused",
+  "retirement": "ordered-foreground",
+  "lookups": "resident",
+  "chain_flags": {
+    "--wait-policy": "spin",
+    "--foreground-io": "kernel",
+    "--expert-gateup": "diet"
+  },
+  "wait_policy": "spin",
+  "foreground_io": "kernel",
+  "expert_gateup": "diet"
+}

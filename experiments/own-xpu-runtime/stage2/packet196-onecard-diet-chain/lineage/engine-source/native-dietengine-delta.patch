@@ -1,0 +1,626 @@
+--- a/native/bracket_table.hpp
++++ b/native/bracket_table.hpp
+@@ -1,18 +1,19 @@
+-struct BracketView {std::string label;fs::path selection;std::string digest,maintenance,capacity,hc;bool resident=false;};
++struct BracketView {std::string label;fs::path selection;std::string digest,maintenance,capacity,hc;bool resident=false;std::string gateup="production";};
+ static std::vector<BracketView> bracket_table(const Options& a) {
+-  if(a.bracket_inputs.empty())return {{"",a.selection,a.selection_sha256,a.cache_maintenance,a.cache_cap,a.hc,a.resident_lookups}};
++  if(a.bracket_inputs.empty())return {{"",a.selection,a.selection_sha256,a.cache_maintenance,a.cache_cap,a.hc,a.resident_lookups,a.expert_gateup}};
+   require(!a.suite_inputs.empty()&&!a.mtp&&a.cards==1&&a.rank<0&&a.memory=="resident"&&!a.legacy&&a.miss_path=="zero-copy",
+           "capacity bracket requires resident single-card zero-copy suite");
+   require(a.mini||((a.tokens==64||a.tokens==128)&&a.context==4096&&a.retain_steps.ranges.empty()),"fixed smoke/bracket dimensions");
+   std::ifstream f(a.bracket_inputs);std::vector<BracketView> views;std::string line;
+   while(std::getline(f,line)) {
+     std::istringstream row(line);BracketView v;std::string extra;
+-    require(bool(row>>v.label>>v.selection>>v.digest>>v.maintenance>>v.capacity>>v.hc)&&!(row>>extra),"complete six-field bracket row");
++    require(bool(row>>v.label>>v.selection>>v.digest>>v.maintenance>>v.capacity>>v.hc>>v.gateup)&&!(row>>extra),"complete seven-field bracket row");
+     require(views.size()<5&&v.selection.is_absolute(),"bounded absolute bracket selection");
+     p49d::Selection selection;selection.load(v.selection.string(),v.digest);Engine::bracket_domain(selection);
+     require(v.digest==a.selection_sha256&&v.selection==a.selection,"immutable tile16 identity");
+     require(v.maintenance==a.cache_maintenance,"maintenance fixed throughout capacity bracket");
+     require(v.capacity=="max"||v.capacity=="max23","cache capacity dimension");
++    require(v.gateup=="production"||v.gateup=="diet","expert gate/up dimension");
+     require(v.hc=="spin-kio","kernel foreground io fixed throughout the capacity bracket");v.resident=true;
+     require(!a.wait_policy_supplied||a.wait_policy=="spin","wait policy conflicts with bracket view");
+     require(!a.foreground_io_supplied,"bracket selects foreground io per view");
+@@ -20,11 +21,11 @@
+   }
+   require(f.eof()&&(views.size()==1||views.size()==5),"complete smoke or five-view bracket required");
+   if(views.size()==1) {
+-    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max23"&&views[0].hc=="spin-kio","fixed maximum smoke");
++    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max23"&&views[0].gateup=="diet"&&views[0].hc=="spin-kio","fixed maximum smoke");
+   } else {
+     require(a.mini||a.tokens==128,"128-token bracket required");
+     const char* labels[]={"A0","B0","A1","B1","A2"};
+-    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].capacity==(i%2?"max23":"max")&&views[i].hc=="spin-kio","max/max23 capacity bracket order");
++    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].capacity=="max23"&&views[i].gateup==(i%2?"diet":"production")&&views[i].hc=="spin-kio","max23 production/diet gate-up bracket order");
+   }
+   return views;
+ }
+--- a/native/generated/main.cpp
++++ b/native/generated/main.cpp
+@@ -136,6 +136,7 @@
+ };
+ struct Options {
+   std::string hc="p60fusion",hc_geometry="production",experts="production",other_fusion="production",retirement="production";
++  std::string expert_gateup="production"; // packet58-onecard-diet-engine: production|diet (p58ag_diet::GateUp), halfcache gate/up sites only
+   uint64_t cache_bytes=23049601024ull;std::string cache_cap="max";std::string miss_path="zero-copy",cache_maintenance="serial";
+   RetainSteps retain_steps;
+   int cancel_launch=-1;
+@@ -231,6 +232,7 @@
+     else if (k == "--retirement") {a.retirement=value();require(a.retirement=="production"||a.retirement=="ordered-foreground","retirement dimension");}
+     else if (k == "--hc-geometry") {a.hc_geometry=value();require(a.hc_geometry=="production"||a.hc_geometry=="hc-wide","HC geometry");}
+     else if (k == "--experts") {a.experts=value();require(a.experts=="production"||a.experts=="wide64"||a.experts=="wide64+halfcache","expert dimension");}
++    else if (k == "--expert-gateup") {a.expert_gateup=value();require(a.expert_gateup=="production"||a.expert_gateup=="diet","expert gate/up dimension");}
+     else if (k == "--other-fusion") {a.other_fusion=value();require(a.other_fusion=="production"||a.other_fusion=="fused","fusion dimension");}
+     else if (k == "--hc") {a.hc=value();require(a.hc=="production"||a.hc=="p60fusion","HC dimension");}
+     else if (k == "--lookups") {auto v=value();require(v=="mapped"||v=="resident","lookup dimension");a.resident_lookups=v=="resident";}
+@@ -274,6 +276,7 @@
+   require(!a.output.empty(), "--output required");
+   require(a.cards==1 && a.rank==-1 && !a.mtp && (a.memory=="layer-streaming" || a.memory=="resident"), "packet58 target-only single-device process required");
+   require(a.cache_cap=="18GB"||a.cache_cap=="max"||a.cache_cap=="max23","cache capacity mode");
++  require(a.expert_gateup=="production"||a.experts=="wide64+halfcache","expert_gateup=diet requires experts=wide64+halfcache");
+   require(a.mini||a.cache_bytes==23049601024ull,"single admitted maximum allocation required");
+   require(a.cache_maintenance=="serial"||a.cache_maintenance=="overlap","cache maintenance mode");
+   require(a.cache_maintenance!="overlap"||a.miss_path=="zero-copy","overlap requires zero-copy misses");
+@@ -1148,6 +1151,17 @@
+   std::map<std::string,Allocation> state_spares;
+   int context_extent=32, alternate_context_extent=32;
+   uint64_t capacity_reprepares=0;
++  // packet58-onecard-diet-engine: gate/up sites prepared with p58ag_diet::GateUp (diet) or the record kernel (production)
++  // since the last key switch; the labels name the switching sites. Counted at the p58ag dispatch while preparing.
++  uint64_t expert_diet_sites=0,expert_production_sites=0;std::vector<std::string> expert_diet_labels;
++  std::string expert_gateup_for(const flash::Launch& l){if(a.expert_gateup=="diet"){++expert_diet_sites;expert_diet_labels.push_back(l.label);return "diet";}++expert_production_sites;return "production";}
++  void expert_gateup(const std::string& key) {
++    require(key=="production"||key=="diet","expert gate/up dimension");
++    require(key=="production"||a.experts=="wide64+halfcache","expert_gateup=diet requires experts=wide64+halfcache");
++    require(!maintenance.running,"gate/up switch during position refused");
++    drain();cache_quiesce(); // the drained view boundary; the kernel takes effect through the boundary re-preparation
++    a.expert_gateup=key;expert_diet_sites=expert_production_sites=0;expert_diet_labels.clear();
++  }
+   std::unordered_map<const flash::Launch*,Prepared> alternate_prepared;
+   void swap_state_banks() {
+     drain();
+@@ -1390,7 +1404,7 @@
+       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+       // Same engine call for ordinary decode and each serial M=2 row.
+       const bool round2=!a.mini&&a.memory=="resident"&&((kind==p39::Kind::silu_div4&&(cls=="hc.a.low"||cls=="hc.f.low"))||kind==p39::Kind::attention_combine);
+-      finish(c,round2?p49c::dense_submit(dev(c),m,kind,b):p49b_site(w,a,l)?(kind==p39::Kind::expert_checks&&a.experts!="production"?p58ag::expert(dev(c),selected,b,halfcache,a.experts=="wide64+halfcache"):p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.at("down"))):p39::submit(dev(c),selected,kind,b),true);return;
++      finish(c,round2?p49c::dense_submit(dev(c),m,kind,b):p49b_site(w,a,l)?(kind==p39::Kind::expert_checks&&a.experts!="production"?p58ag::expert(dev(c),selected,b,halfcache,a.experts=="wide64+halfcache",expert_gateup_for(l)):p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.at("down"))):p39::submit(dev(c),selected,kind,b),true);return;
+     }
+     const auto cls=packet26::Dispatch::class_name(l.label);
+     if(!a.mini&&a.memory=="resident"&&(cls=="hc.a.gate"||cls=="hc.f.gate")){
+@@ -1899,7 +1913,7 @@
+ 
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/native/bracket_table.hpp"
+ int main(int argc, char **argv) {
+-  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap 18GB|max|max23 (default:max) --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --foreground-io copy|kernel (default:copy) --wait-seconds --p58r-parse-test --help\n";return 0;}
++  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap 18GB|max|max23 (default:max) --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --expert-gateup production|diet (default:production) --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-policy poll|spin (default:poll) --foreground-io copy|kernel (default:copy) --wait-seconds --p58r-parse-test --help\n";return 0;}
+ #ifdef OWN_RT_HOST_ONLY
+   if(argc>2&&std::string(argv[1])=="--p58r-parse-test") {
+     try {
+@@ -2024,7 +2038,8 @@
+     p176::kernel_io=a.bracket_inputs.empty()?a.foreground_io=="kernel":view.hc=="spin-kio";
+     const auto view_output=view.label.empty()?root_output:root_output/view.label;
+     if(!view.label.empty()) {
+-      fs::create_directories(view_output);record_host_memory(view_output,"before_view_reset");e->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);record_host_memory(view_output,"after_view_reset");
++      fs::create_directories(view_output);record_host_memory(view_output,"before_view_reset");e->expert_gateup(view.gateup);e->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);record_host_memory(view_output,"after_view_reset");
++      require(view.gateup!="diet"||e->expert_diet_sites>0,"selected diet prepared no gate/up site");require(view.gateup!="production"||e->expert_diet_sites==0,"production view prepared a diet site");
+       require(loaded_arena==e->bracket_arena_hash()&&loaded_weights==e->bracket_arena_hash(true),"bracket loaded identity changed");
+       save(view_output/"lookup-backing.json","{\"resident\":"+std::string(view.resident?"true":"false")+",\"copies\":"+w->residency+"}\n");
+       save(view_output/"boundary.json","{\"passed\":true,\"selection_sha256\":"+ownrt::quote(view.digest)+
+@@ -2032,6 +2047,7 @@
+         ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+",\"wait_policy\":"+ownrt::quote(view.hc=="spin-kio"?std::string("spin"):view.hc)+",\"bracket_arm\":"+ownrt::quote(view.hc)+
+         ",\"foreground_io\":"+ownrt::quote(std::string(p176::kernel_io?"kernel":"copy"))+
+         ",\"cache_cap\":"+ownrt::quote(view.capacity)+",\"cache_allocation_bytes\":23049601024,\"cache_usable_bytes\":"+std::to_string(e->expert_cache?e->expert_cache->capacity():0)+",\"cache_started_empty\":true"+
++        ",\"expert_gateup\":"+ownrt::quote(view.gateup)+",\"expert_diet_sites\":"+std::to_string(e->expert_diet_sites)+",\"expert_production_sites\":"+std::to_string(e->expert_production_sites)+
+         ",\"arena_descriptors_sha256\":"+ownrt::quote(loaded_arena)+",\"weight_descriptors_sha256\":"+ownrt::quote(loaded_weights)+
+         ",\"allocation_ids_preserved\":true,\"weight_uploads_during_switch\":0,\"cache_fill_bytes_total\":"+std::to_string(e->cache_fill_bytes)+
+         ",\"context_extent\":32,\"model_loads\":1}\n");
+--- a/native/generated/p58ag_diet.hpp
++++ b/native/generated/p58ag_diet.hpp
+@@ -0,0 +1,161 @@
++#pragma once
++// Packet58-onecard-diet-micro: EXACT instruction diet of the ONE-card record gate/up kernel, written beside the
++// pinned production source (native-pinned/p58ag_expert.hpp, sha 89394237..., never edited):
++//   production  p58ag_exp::Kernel<IQ2_S,2560,WG64,Prefetch=false,Wide=true,Followup=0,Cached=true>
++//               820-B p49bgemv rows; block scale = 16-bit half at halves+2*step decoded through the 65,536-entry
++//               halfcache table (binding p[19]; the engine fills it with iq3::half(i) for every i); rows reached
++//               through p58::resolve(bank, source*rb, rows*rb, indirect) over p58::Pointer expert-cache slots.
++//   candidate   p58ag_diet::GateUp : diet_chains = packet193's three exact transformations applied to
++//               p58ag_exp::wide_chains<IQ2_S,K,8>, keeping the half load + table decode line, the slot resolution,
++//               the bindings (bind through the production Kernel) and the kernel shell VERBATIM.
++// Exact-identity invariants (README section 2): identical loads and load widths (codes vec4, high/scales 16-bit,
++// one 16-bit half + one table gather per step); per chain the identical FP32 sequence
++//   v = scale*float(q); product = v*input; sum = sum + product   (j = 0..7 in order, chains independent)
++// no contraction, no reassociation; outputs, status, peer_status and error words written as production writes them.
++#include "p58ag_expert.hpp"
++#include <bit>
++namespace p58ag_diet {
++using iq3::Type;
++inline constexpr char version[]="p58dm-diet-v1";
++// (i) needs q != 0 for every grid magnitude: every byte of the IQ2_S grid (p42expert::iq2_words = pack32(p28::iq2_bytes),
++// 1024 entries x 8 bytes) is in {8, 25, 43}. Proved at compile time against THIS tree's table.
++consteval bool grid_magnitudes_in_8_25_43(){
++ for(uint32_t w:p42expert::iq2_words)for(unsigned j=0;j<4;++j){unsigned m=(w>>(8*j))&255u;if(m!=8u&&m!=25u&&m!=43u)return false;}
++ return p42expert::iq2_words.size()==2048;
++}
++static_assert(grid_magnitudes_in_8_25_43(),"IQ2_S grid magnitude outside {8,25,43}: sign-after-multiply is not provably exact");
++// ---------------------------------------------------------------------------------------------------------
++// Production per step (p58ag_exp::wide_chains): codes[4] (vec4 load), high, scales (16-bit loads),
++//   bits = load16(w+l.halves+2*step); decoded = halfcache ? halfcache[bits] : iq3::half(bits)     <- KEPT VERBATIM
++// Production per tile (p58ag_exp::decode_tile, textually p90exp::decode_tile): index=(t.a&255)|(((t.high>>(2*(q%4)))&3)<<8),
++//   signs=t.a>>8 (the sign byte of the 16-bit code pair: the table carries NO sign; the half's own sign bit lives in d),
++//   scale=(d*(0.5f+float((t.scale>>(4*((i/16)%2)))&15)))*0.25f,
++//   exceptional=(bits(d)&0x7fffffff)>=0x7f800000 || (bits(scale)&0x7fffffff)>0x7f800000,
++//   per weight: m=((j<4?a:b)>>(8*(j%4)))&255; exceptional ? v=(scale*float(m))*float(sign?-1:1)
++//                                                        : v=scale*float(sign?-int(m):int(m))
++// With k=first+chain*8, i=k%256=8*(physical*8+chain): q%4==chain%4, (i/16)%2==(chain/2)%2, t.scale byte==chain/4,
++// t.high byte==chain/4 (compile-time after unrolling).
++// (iii) exceptional depends on d only. d is a table entry = iq3::half(bits): finite (|d| <= 65504) or +-Inf or the
++//       canonical NaN. d finite => |d*(0.5+s)| <= 65504*15.5 < 2^20 is finite (not even +-Inf here), *0.25f keeps it
++//       so => second clause false; d non-finite => first clause true. Hence exceptional <=> d non-finite, uniform over
++//       the 256-weight step. (For an arbitrary FP32 table entry packet193's weaker argument still holds: d finite =>
++//       d*(0.5+s) finite or +-Inf, never NaN.) `halfcache` null falls back to iq3::half(bits) in BOTH kernels (same line).
++// (i)   q in {8,25,43} (static_assert above), so float(-q) == -float(q) exactly; IEEE-754 RN multiplication is
++//       sign-symmetric: scale*(-float(q)) == -(scale*float(q)) bit for bit, including scale = +-0 (d = +-0 half) and
++//       any finite scale; scale is never NaN or Inf on the normal arm (iii). The negation is applied to v (the decoded
++//       weight) BEFORE the input multiply, so product = v*input and the sum are the production operations on
++//       identical operands. The exceptional arm keeps production's decode_tile verbatim (NaN/Inf payloads unchanged).
++// (iv)  eff[b][n] = (d*(0.5f+float((scales>>(8b+4n))&15)))*0.25f is production's expression with t.scale =
++//       (scales>>(8b))&255 substituted: identical integer, identical float ops, computed once per step (pure CSE).
++// (ii)  byte extraction keeps production's shift/mask spelling (IGC emits :ub regions; packet193's ISA gate rejected
++//       std::bit_cast byte arrays). The table gather and the slot resolution are untouched.
++// ---------------------------------------------------------------------------------------------------------
++template<unsigned K,unsigned V,bool Packed=false>inline std::array<float,V> diet_chains(const uint8_t*w,const uint16_t*x,unsigned physical,const float* halfcache){
++ static_assert(V==8&&K%256==0);constexpr auto l=p49bgemv::layout(Type::IQ2_S,K);std::array<float,V> sums{};
++ for(unsigned step=0;step<K/256;++step){
++  const unsigned first=step*256+8*physical*V;
++  uint32_t codes[4];
++#if defined(__SYCL_DEVICE_ONLY__)
++  sycl::vec<uint32_t,4> words;words.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(w+step*64+physical*16)));
++  #pragma unroll
++  for(unsigned i=0;i<4;++i)codes[i]=words[i];
++#else
++  for(unsigned i=0;i<4;++i)codes[i]=p49bgemv::load32(w+step*64+physical*16+4*i);
++#endif
++  const uint16_t high=p49bgemv::load16(w+l.high+step*8+physical*2);
++  const uint16_t scales=p49bgemv::load16(w+l.scales+step*8+physical*2);
++  const auto bits=p49bgemv::load16(w+l.halves+2*step);const float d=halfcache?halfcache[bits]:iq3::half(bits);   // production's decode line, verbatim
++  const bool exceptional=(std::bit_cast<uint32_t>(d)&0x7fffffffu)>=0x7f800000u;           // (iii) hoisted, uniform per step
++  float eff[2][2];                                                                             // (iv) [scale byte][nibble]
++  #pragma unroll
++  for(unsigned b=0;b<2;++b){
++   #pragma unroll
++   for(unsigned n=0;n<2;++n)eff[b][n]=(d*(0.5f+float((scales>>(8*b+4*n))&15)))*0.25f;}
++  auto accumulate=[&](unsigned chain,const float(&values)[8]){const unsigned k=first+chain*8;
++#if defined(__SYCL_DEVICE_ONLY__)
++   sycl::vec<uint16_t,8> inputs;
++   if constexpr(Packed){
++    sycl::vec<uint32_t,4> packed;
++    packed.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(x+k)));
++    #pragma unroll
++    for(unsigned j=0;j<8;++j)inputs[j]=uint16_t(packed[j/2]>>(16*(j%2)));
++   }else inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));
++#endif
++   #pragma unroll
++   for(unsigned j=0;j<8;++j){
++#if defined(__SYCL_DEVICE_ONLY__)
++    uint16_t bits=inputs[j];
++#else
++    uint16_t bits;if constexpr(Packed){uint32_t packed=p49bgemv::load32(reinterpret_cast<const uint8_t*>(x+k+2*(j/2)));bits=uint16_t(packed>>(16*(j%2)));}else bits=x[k+j];
++#endif
++    float product=values[j]*iq3::bits_float(uint32_t(bits)<<16);sums[chain]=sums[chain]+product;
++   }};
++  if(!exceptional){
++   #pragma unroll
++   for(unsigned chain=0;chain<V;++chain){
++    const unsigned ta=(codes[chain/2]>>(16*(chain%2)))&65535u,th=(high>>(8*(chain/4)))&255u;
++    const unsigned index=(ta&255u)|(((th>>(2*(chain%4)))&3u)<<8),signs=ta>>8;const float scale=eff[chain/4][(chain/2)%2];
++    const uint32_t a=p42expert::iq2_words[2*index],b=p42expert::iq2_words[2*index+1];
++    float values[8];
++    #pragma unroll
++    for(unsigned j=0;j<8;++j){const unsigned magnitude=((j<4?a:b)>>(8*(j%4)))&255u;const float v=scale*float(magnitude);values[j]=((signs>>j)&1u)?-v:v;}   // (i)
++    accumulate(chain,values);
++   }
++  }else{
++   // Production exceptional path, verbatim per tile (d non-finite): kept for exactness of the NaN/Inf payloads.
++   #pragma unroll
++   for(unsigned chain=0;chain<V;++chain){
++    p58ag_exp::RawTile t;t.a=(codes[chain/2]>>(16*(chain%2)))&65535;t.high=(high>>(8*(chain/4)))&255;t.scale=(scales>>(8*(chain/4)))&255;
++    float values[8];p58ag_exp::decode_tile<Type::IQ2_S>(t,first+chain*8,values,d);accumulate(chain,values);
++   }
++  }
++ }
++ return sums;
++}
++// Kernel shell: the production p58ag_exp::Kernel body (bind through the production Kernel incl. the halfcache binding
++// p[19] and the indirect flag; logical_row; p58::resolve; the P-lane select tree; the status/error epilogue) with
++// `chains` replaced by diet_chains. The device launch form (ownrt::prepared_submit, no packet26::checked) is production's.
++struct GateUp final:p49b::Base {
++ using Production=p58ag_exp::Kernel<Type::IQ2_S,2560,64,false,true,0,true>;
++ static constexpr unsigned K=2560,WG=64,V=Production::V,P=Production::P,SG=Production::SG,RowsPerGroup=Production::RowsPerGroup;
++ static_assert(V==8&&P==4&&SG==2&&RowsPerGroup==8&&Production::paired);
++ unsigned rows=640,count=10,experts=512;bool indirect=false;
++ using Bound=Production::Bound;
++ Bound bind(std::span<void*const>p)const{Production base;base.rows=rows;base.count=count;base.experts=experts;base.indirect=indirect;return base.bind(p);}
++ static std::array<float,V> chains(const uint8_t*w,const uint16_t*x,unsigned lane,const float* halfcache){return diet_chains<K,V>(w,x,lane,halfcache);}
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override{
++  auto b=bind(p);unsigned total=rows*count,groups=(total+RowsPerGroup-1)/RowsPerGroup;
++  for(unsigned group=0;group<groups;++group)for(unsigned sub=0;sub<SG;++sub)for(unsigned rr=0;rr<V;++rr){
++   unsigned logical=Production::logical_row(group,sub,rr*P);if(logical>=total)continue;
++   unsigned row=logical%rows,slot=logical/rows,stream=sub%2;
++   auto route=b.routes[slot];bool ok=iq3::valid_route(route,experts,rows,rows),valid=ok&&row<route.row_count;
++   float values[P]{};if(valid){size_t source=size_t(route.expert_id)*rows+route.row_begin+row;
++    for(unsigned lane=0;lane<P;++lane)values[lane]=p49dvirtual::local_tree<V>(chains(p58::resolve(stream?b.peer:b.w,source*b.rb,size_t(b.rows)*b.rb,b.indirect),b.x,lane,b.halfcache));
++   }
++   for(unsigned width=1;width<P;width*=2)for(unsigned lane=0;lane<P;lane+=2*width)values[lane]=values[lane]+values[lane+width];
++   (stream?b.py:b.y)[logical]=iq3::bf16_bits(valid?values[0]:iq3::bits_float(0x7fc00000));
++   if(!row){(stream?b.peer_status:b.status)[slot]=!ok;if(!ok&&*b.active&&!*b.error)*b.error=1;}
++  }
++ }
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  auto b=bind(p);unsigned total=rows*count,groups=(total+RowsPerGroup-1)/RowsPerGroup;(void)deps;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(groups)*WG,WG)](sycl::handler& h){
++   h.parallel_for(p35_range0,[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++    auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32,physical=lane%P,stream=sub%2;
++    unsigned logical=Production::logical_row(it.get_group_linear_id(),sub,lane),row=logical%b.rows,slot=logical/b.rows;bool in_range=logical<total;
++    iq3::Route route{};if(in_range)route=b.routes[slot];bool ok=in_range&&iq3::valid_route(route,b.experts,b.rows,b.rows),valid=ok&&row<route.row_count;
++    float value=0;if(valid){size_t source=size_t(route.expert_id)*b.rows+route.row_begin+row;
++     value=p49dvirtual::local_tree<V>(chains(p58::resolve(stream?b.peer:b.w,source*b.rb,size_t(b.rows)*b.rb,b.indirect),b.x,physical,b.halfcache));
++    }
++    for(unsigned width=1;width<P;width*=2){float rhs=sycl::select_from_group(sg,value,(lane+width)%32);if(physical%(2*width)==0)value=value+rhs;}
++    if(in_range&&!physical){(stream?b.py:b.y)[logical]=iq3::bf16_bits(valid?value:iq3::bits_float(0x7fc00000));
++     if(!row){(stream?b.peer_status:b.status)[slot]=!ok;if(!ok&&*b.active){uint32_t expected=0;sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error).compare_exchange_strong(expected,1);}}
++    }
++   });
++  });
++ }
++#endif
++};
++}
+--- a/native/generated/p58ag_diet_submit.cpp
++++ b/native/generated/p58ag_diet_submit.cpp
+@@ -0,0 +1,49 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/native/p58ag_submit.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/native/p58ag_expert.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/native/p58ag_diet.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/expert_down.hpp"
++namespace p58ag {
++using p39::Kind;using p39::Bindings;using iq3::Type;
++// packet58-onecard-diet-engine: the exact instruction diet of the ONE-card record gate/up kernel, p58ag_diet::GateUp
++// (packet58-onecard-diet-micro, qualified 0.78x cold / 0.75x warm, byte-identical on device), registered in its OWN
++// translation unit so that p58ag_submit.cpp's device code stays exactly the record kernel set (per-kernel SPIR-V identity).
++// issue_diet is the production p58ag::issue<IQ2_S,2560,expert_checks,1,Tile=false,Cached=true> body VERBATIM (the same 20
++// bindings incl. the halfcache table p[19], the same p39::validate, extents and half-table alias checks) with the kernel
++// object replaced by p58ag_diet::GateUp (which binds through the production Kernel::bind). Reached only from
++// p58ag::expert(..., gateup="diet") on the halfcache layout (experts=wide64+halfcache).
++template<Type T,unsigned K,Kind E,unsigned Split,bool Tile=false,bool Cached=true>integrated::Launch issue_diet(ownrt::Device&d,const std::vector<integrated::Matrix>&m,const Bindings&b,ownrt::Allocation halfcache){
++ static_assert(T==Type::IQ2_S&&K==2560&&E==Kind::expert_checks&&Split==1&&!Tile&&Cached,"the diet is a diet of the halfcache gate/up kernel only");
++ const auto&a=m[0];const auto&peer=m.size()==2?m[1]:a;
++ if(!b.indirect){ if constexpr(E==Kind::down_status)p29::validate(d,m,"p29.down.wg32",false,2);else
++ p28::validate(d,m,E==Kind::expert_checks?"p28.paired.wg32":"p28.dense.wg32",E==Kind::expert_checks,(T==Type::Q6_K||T==Type::Q8_0?(Split==4?7:6):2));
++ }
++ std::array<ownrt::Allocation,20> ids{a.w,peer.w,a.x,a.y,peer.y,a.routes?a.routes:a.x,a.status?a.status:a.y,peer.status?peer.status:peer.y,a.workspace,b.other?b.other:a.x,b.out?b.out:a.y,b.streams?b.streams:a.y,b.inject?b.inject:a.x,b.mixture?b.mixture:a.x,b.shared_gate?b.shared_gate:a.x,b.one?b.one:a.x,b.error,b.active,b.position,halfcache};
++ p58ag_diet::GateUp k;
++ if constexpr(Tile)if(a.rows%16)throw std::invalid_argument("p58j tile rows");k.indirect=b.indirect;k.rows=a.rows;k.count=a.count;k.experts=a.experts;const auto rb=p49bgemv::layout(T,K).row_bytes;
++ // Validate complete live allocations and byte ranges before any compute hook.
++ std::array<void*,20>p;for(size_t j=0;j<ids.size();++j){const auto&r=d.arena.row(ids[j]);if(!r.live||r.memory!=ownrt::Memory::device)throw std::invalid_argument("p39 dead/nondevice binding");p[j]=r.pointer;}
++ auto bound=k.bind(p);bound.position=static_cast<const uint32_t*>(p[18]);bound.capacity=b.capacity;p39::validate<T,K,E,Split>(bound);
++ if(uintptr_t(bound.w)%(Tile?16:4)||uintptr_t(bound.peer)%(Tile?16:4))throw std::invalid_argument("p49b weight alignment");
++ auto extent=[&](ownrt::Allocation id,size_t n){if(d.arena.row(id).bytes<n)throw std::invalid_argument("p39 allocation extent");};
++ extent(halfcache,65536*4);
++ if(uintptr_t(p[19])%4)throw std::invalid_argument("half table alignment");
++ for(unsigned j:{3u,4u,6u,7u,8u,16u}){auto lo=uintptr_t(p[j]),hi=lo+d.arena.row(ids[j]).bytes,t=uintptr_t(p[19]);if(lo<t+65536*4&&t<hi)throw std::invalid_argument("half table write alias");}
++
++ size_t n=size_t(a.rows)*a.count;extent(a.w,b.indirect?size_t(a.experts)*sizeof(p58::Pointer):size_t(a.experts)*a.rows*rb);extent(a.x,size_t(K)*(E==Kind::down_status?a.count:1)*2);extent(a.y,n*2);extent(b.error,4);extent(b.active,4);extent(b.position,4);
++ if constexpr(Split==4)extent(a.workspace,n*32);
++ if constexpr(E==Kind::expert_checks){extent(peer.w,b.indirect?size_t(a.experts)*sizeof(p58::Pointer):size_t(a.experts)*a.rows*rb);extent(peer.y,n*2);extent(a.routes,a.count*sizeof(iq3::Route));extent(a.status,a.count*4);extent(peer.status,a.count*4);}
++ if constexpr(E==Kind::down_status){extent(a.routes,a.count*sizeof(iq3::Route));extent(a.status,a.count*4);}
++ if constexpr(E==Kind::silu_div4||E==Kind::shared_act||E==Kind::shared_combine)extent(b.out,n*2);
++ if constexpr(E==Kind::shared_act)extent(b.other,n*2);
++ if constexpr(E==Kind::attention_combine||E==Kind::shared_combine){extent(b.streams,n*8);extent(b.inject,8);}
++ if constexpr(E==Kind::shared_combine){extent(b.mixture,n*2);extent(b.shared_gate,2);extent(b.one,4);}
++ auto first=d.compute(k,ids,{});integrated::Launch result{first,first,1};
++
++ return result;
++}
++integrated::Launch expert_diet(ownrt::Device& d,const std::vector<integrated::Matrix>& m,const Bindings& b,ownrt::Allocation halfcache){
++ if(m.size()!=2||m[0].type!=Type::IQ2_S||m[0].columns!=2560)throw std::invalid_argument("p58ag expert shape");
++ if(!b.indirect)throw std::invalid_argument("p58ag expert_gateup=diet requires the indirect expert-cache slot path");
++ return issue_diet<Type::IQ2_S,2560,Kind::expert_checks,1,false,true>(d,m,b,halfcache);
++}
++}
+--- a/native/generated/p58ag_submit.cpp
++++ b/native/generated/p58ag_submit.cpp
+@@ -32,8 +32,12 @@
+ 
+  return result;
+ }
+-integrated::Launch expert(ownrt::Device& d,const std::vector<integrated::Matrix>& m,const Bindings& b,ownrt::Allocation halfcache,bool cached){
++integrated::Launch expert(ownrt::Device& d,const std::vector<integrated::Matrix>& m,const Bindings& b,ownrt::Allocation halfcache,bool cached,const std::string& gateup){
+  if(m.size()!=2||m[0].type!=Type::IQ2_S||m[0].columns!=2560)throw std::invalid_argument("p58ag expert shape");
++ if(gateup!="production"&&gateup!="diet")throw std::invalid_argument("p58ag expert_gateup: unknown");
++ // packet58-onecard-diet-engine: the exact instruction diet of the record gate/up kernel (p58ag_diet::GateUp) lives in its own
++ // TU (p58ag_diet_submit.cpp) so this TU's device code is exactly the record kernel set; selectable only on the halfcache layout.
++ if(gateup=="diet"){if(!cached)throw std::invalid_argument("p58ag expert_gateup=diet requires experts=wide64+halfcache");return expert_diet(d,m,b,halfcache);}
+  return cached?issue<Type::IQ2_S,2560,Kind::expert_checks,1>(d,m,b,halfcache):issue<Type::IQ2_S,2560,Kind::expert_checks,1,false,false>(d,m,b,halfcache);
+ }
+ }
+--- a/native/generated/p58ag_submit.hpp
++++ b/native/generated/p58ag_submit.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_submit.hpp"
+ namespace p58ag {
+-integrated::Launch expert(ownrt::Device&,const std::vector<integrated::Matrix>&,const p39::Bindings&,ownrt::Allocation,bool cached=true);
++integrated::Launch expert(ownrt::Device&,const std::vector<integrated::Matrix>&,const p39::Bindings&,ownrt::Allocation,bool cached=true,const std::string& gateup="production");
++integrated::Launch expert_diet(ownrt::Device&,const std::vector<integrated::Matrix>&,const p39::Bindings&,ownrt::Allocation); // p58ag_diet_submit.cpp
+ bool other(ownrt::Device&); // no mutable global selection
+ }
+--- a/native/p58ag_diet.hpp
++++ b/native/p58ag_diet.hpp
+@@ -0,0 +1,161 @@
++#pragma once
++// Packet58-onecard-diet-micro: EXACT instruction diet of the ONE-card record gate/up kernel, written beside the
++// pinned production source (native-pinned/p58ag_expert.hpp, sha 89394237..., never edited):
++//   production  p58ag_exp::Kernel<IQ2_S,2560,WG64,Prefetch=false,Wide=true,Followup=0,Cached=true>
++//               820-B p49bgemv rows; block scale = 16-bit half at halves+2*step decoded through the 65,536-entry
++//               halfcache table (binding p[19]; the engine fills it with iq3::half(i) for every i); rows reached
++//               through p58::resolve(bank, source*rb, rows*rb, indirect) over p58::Pointer expert-cache slots.
++//   candidate   p58ag_diet::GateUp : diet_chains = packet193's three exact transformations applied to
++//               p58ag_exp::wide_chains<IQ2_S,K,8>, keeping the half load + table decode line, the slot resolution,
++//               the bindings (bind through the production Kernel) and the kernel shell VERBATIM.
++// Exact-identity invariants (README section 2): identical loads and load widths (codes vec4, high/scales 16-bit,
++// one 16-bit half + one table gather per step); per chain the identical FP32 sequence
++//   v = scale*float(q); product = v*input; sum = sum + product   (j = 0..7 in order, chains independent)
++// no contraction, no reassociation; outputs, status, peer_status and error words written as production writes them.
++#include "p58ag_expert.hpp"
++#include <bit>
++namespace p58ag_diet {
++using iq3::Type;
++inline constexpr char version[]="p58dm-diet-v1";
++// (i) needs q != 0 for every grid magnitude: every byte of the IQ2_S grid (p42expert::iq2_words = pack32(p28::iq2_bytes),
++// 1024 entries x 8 bytes) is in {8, 25, 43}. Proved at compile time against THIS tree's table.
++consteval bool grid_magnitudes_in_8_25_43(){
++ for(uint32_t w:p42expert::iq2_words)for(unsigned j=0;j<4;++j){unsigned m=(w>>(8*j))&255u;if(m!=8u&&m!=25u&&m!=43u)return false;}
++ return p42expert::iq2_words.size()==2048;
++}
++static_assert(grid_magnitudes_in_8_25_43(),"IQ2_S grid magnitude outside {8,25,43}: sign-after-multiply is not provably exact");
++// ---------------------------------------------------------------------------------------------------------
++// Production per step (p58ag_exp::wide_chains): codes[4] (vec4 load), high, scales (16-bit loads),
++//   bits = load16(w+l.halves+2*step); decoded = halfcache ? halfcache[bits] : iq3::half(bits)     <- KEPT VERBATIM
++// Production per tile (p58ag_exp::decode_tile, textually p90exp::decode_tile): index=(t.a&255)|(((t.high>>(2*(q%4)))&3)<<8),
++//   signs=t.a>>8 (the sign byte of the 16-bit code pair: the table carries NO sign; the half's own sign bit lives in d),
++//   scale=(d*(0.5f+float((t.scale>>(4*((i/16)%2)))&15)))*0.25f,
++//   exceptional=(bits(d)&0x7fffffff)>=0x7f800000 || (bits(scale)&0x7fffffff)>0x7f800000,
++//   per weight: m=((j<4?a:b)>>(8*(j%4)))&255; exceptional ? v=(scale*float(m))*float(sign?-1:1)
++//                                                        : v=scale*float(sign?-int(m):int(m))
++// With k=first+chain*8, i=k%256=8*(physical*8+chain): q%4==chain%4, (i/16)%2==(chain/2)%2, t.scale byte==chain/4,
++// t.high byte==chain/4 (compile-time after unrolling).
++// (iii) exceptional depends on d only. d is a table entry = iq3::half(bits): finite (|d| <= 65504) or +-Inf or the
++//       canonical NaN. d finite => |d*(0.5+s)| <= 65504*15.5 < 2^20 is finite (not even +-Inf here), *0.25f keeps it
++//       so => second clause false; d non-finite => first clause true. Hence exceptional <=> d non-finite, uniform over
++//       the 256-weight step. (For an arbitrary FP32 table entry packet193's weaker argument still holds: d finite =>
++//       d*(0.5+s) finite or +-Inf, never NaN.) `halfcache` null falls back to iq3::half(bits) in BOTH kernels (same line).
++// (i)   q in {8,25,43} (static_assert above), so float(-q) == -float(q) exactly; IEEE-754 RN multiplication is
++//       sign-symmetric: scale*(-float(q)) == -(scale*float(q)) bit for bit, including scale = +-0 (d = +-0 half) and
++//       any finite scale; scale is never NaN or Inf on the normal arm (iii). The negation is applied to v (the decoded
++//       weight) BEFORE the input multiply, so product = v*input and the sum are the production operations on
++//       identical operands. The exceptional arm keeps production's decode_tile verbatim (NaN/Inf payloads unchanged).
++// (iv)  eff[b][n] = (d*(0.5f+float((scales>>(8b+4n))&15)))*0.25f is production's expression with t.scale =
++//       (scales>>(8b))&255 substituted: identical integer, identical float ops, computed once per step (pure CSE).
++// (ii)  byte extraction keeps production's shift/mask spelling (IGC emits :ub regions; packet193's ISA gate rejected
++//       std::bit_cast byte arrays). The table gather and the slot resolution are untouched.
++// ---------------------------------------------------------------------------------------------------------
++template<unsigned K,unsigned V,bool Packed=false>inline std::array<float,V> diet_chains(const uint8_t*w,const uint16_t*x,unsigned physical,const float* halfcache){
++ static_assert(V==8&&K%256==0);constexpr auto l=p49bgemv::layout(Type::IQ2_S,K);std::array<float,V> sums{};
++ for(unsigned step=0;step<K/256;++step){
++  const unsigned first=step*256+8*physical*V;
++  uint32_t codes[4];
++#if defined(__SYCL_DEVICE_ONLY__)
++  sycl::vec<uint32_t,4> words;words.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(w+step*64+physical*16)));
++  #pragma unroll
++  for(unsigned i=0;i<4;++i)codes[i]=words[i];
++#else
++  for(unsigned i=0;i<4;++i)codes[i]=p49bgemv::load32(w+step*64+physical*16+4*i);
++#endif
++  const uint16_t high=p49bgemv::load16(w+l.high+step*8+physical*2);
++  const uint16_t scales=p49bgemv::load16(w+l.scales+step*8+physical*2);
++  const auto bits=p49bgemv::load16(w+l.halves+2*step);const float d=halfcache?halfcache[bits]:iq3::half(bits);   // production's decode line, verbatim
++  const bool exceptional=(std::bit_cast<uint32_t>(d)&0x7fffffffu)>=0x7f800000u;           // (iii) hoisted, uniform per step
++  float eff[2][2];                                                                             // (iv) [scale byte][nibble]
++  #pragma unroll
++  for(unsigned b=0;b<2;++b){
++   #pragma unroll
++   for(unsigned n=0;n<2;++n)eff[b][n]=(d*(0.5f+float((scales>>(8*b+4*n))&15)))*0.25f;}
++  auto accumulate=[&](unsigned chain,const float(&values)[8]){const unsigned k=first+chain*8;
++#if defined(__SYCL_DEVICE_ONLY__)
++   sycl::vec<uint16_t,8> inputs;
++   if constexpr(Packed){
++    sycl::vec<uint32_t,4> packed;
++    packed.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(x+k)));
++    #pragma unroll
++    for(unsigned j=0;j<8;++j)inputs[j]=uint16_t(packed[j/2]>>(16*(j%2)));
++   }else inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));
++#endif
++   #pragma unroll
++   for(unsigned j=0;j<8;++j){
++#if defined(__SYCL_DEVICE_ONLY__)
++    uint16_t bits=inputs[j];
++#else
++    uint16_t bits;if constexpr(Packed){uint32_t packed=p49bgemv::load32(reinterpret_cast<const uint8_t*>(x+k+2*(j/2)));bits=uint16_t(packed>>(16*(j%2)));}else bits=x[k+j];
++#endif
++    float product=values[j]*iq3::bits_float(uint32_t(bits)<<16);sums[chain]=sums[chain]+product;
++   }};
++  if(!exceptional){
++   #pragma unroll
++   for(unsigned chain=0;chain<V;++chain){
++    const unsigned ta=(codes[chain/2]>>(16*(chain%2)))&65535u,th=(high>>(8*(chain/4)))&255u;
++    const unsigned index=(ta&255u)|(((th>>(2*(chain%4)))&3u)<<8),signs=ta>>8;const float scale=eff[chain/4][(chain/2)%2];
++    const uint32_t a=p42expert::iq2_words[2*index],b=p42expert::iq2_words[2*index+1];
++    float values[8];
++    #pragma unroll
++    for(unsigned j=0;j<8;++j){const unsigned magnitude=((j<4?a:b)>>(8*(j%4)))&255u;const float v=scale*float(magnitude);values[j]=((signs>>j)&1u)?-v:v;}   // (i)
++    accumulate(chain,values);
++   }
++  }else{
++   // Production exceptional path, verbatim per tile (d non-finite): kept for exactness of the NaN/Inf payloads.
++   #pragma unroll
++   for(unsigned chain=0;chain<V;++chain){
++    p58ag_exp::RawTile t;t.a=(codes[chain/2]>>(16*(chain%2)))&65535;t.high=(high>>(8*(chain/4)))&255;t.scale=(scales>>(8*(chain/4)))&255;
++    float values[8];p58ag_exp::decode_tile<Type::IQ2_S>(t,first+chain*8,values,d);accumulate(chain,values);
++   }
++  }
++ }
++ return sums;
++}
++// Kernel shell: the production p58ag_exp::Kernel body (bind through the production Kernel incl. the halfcache binding
++// p[19] and the indirect flag; logical_row; p58::resolve; the P-lane select tree; the status/error epilogue) with
++// `chains` replaced by diet_chains. The device launch form (ownrt::prepared_submit, no packet26::checked) is production's.
++struct GateUp final:p49b::Base {
++ using Production=p58ag_exp::Kernel<Type::IQ2_S,2560,64,false,true,0,true>;
++ static constexpr unsigned K=2560,WG=64,V=Production::V,P=Production::P,SG=Production::SG,RowsPerGroup=Production::RowsPerGroup;
++ static_assert(V==8&&P==4&&SG==2&&RowsPerGroup==8&&Production::paired);
++ unsigned rows=640,count=10,experts=512;bool indirect=false;
++ using Bound=Production::Bound;
++ Bound bind(std::span<void*const>p)const{Production base;base.rows=rows;base.count=count;base.experts=experts;base.indirect=indirect;return base.bind(p);}
++ static std::array<float,V> chains(const uint8_t*w,const uint16_t*x,unsigned lane,const float* halfcache){return diet_chains<K,V>(w,x,lane,halfcache);}
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override{
++  auto b=bind(p);unsigned total=rows*count,groups=(total+RowsPerGroup-1)/RowsPerGroup;
++  for(unsigned group=0;group<groups;++group)for(unsigned sub=0;sub<SG;++sub)for(unsigned rr=0;rr<V;++rr){
++   unsigned logical=Production::logical_row(group,sub,rr*P);if(logical>=total)continue;
++   unsigned row=logical%rows,slot=logical/rows,stream=sub%2;
++   auto route=b.routes[slot];bool ok=iq3::valid_route(route,experts,rows,rows),valid=ok&&row<route.row_count;
++   float values[P]{};if(valid){size_t source=size_t(route.expert_id)*rows+route.row_begin+row;
++    for(unsigned lane=0;lane<P;++lane)values[lane]=p49dvirtual::local_tree<V>(chains(p58::resolve(stream?b.peer:b.w,source*b.rb,size_t(b.rows)*b.rb,b.indirect),b.x,lane,b.halfcache));
++   }
++   for(unsigned width=1;width<P;width*=2)for(unsigned lane=0;lane<P;lane+=2*width)values[lane]=values[lane]+values[lane+width];
++   (stream?b.py:b.y)[logical]=iq3::bf16_bits(valid?values[0]:iq3::bits_float(0x7fc00000));
++   if(!row){(stream?b.peer_status:b.status)[slot]=!ok;if(!ok&&*b.active&&!*b.error)*b.error=1;}
++  }
++ }
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  auto b=bind(p);unsigned total=rows*count,groups=(total+RowsPerGroup-1)/RowsPerGroup;(void)deps;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(groups)*WG,WG)](sycl::handler& h){
++   h.parallel_for(p35_range0,[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++    auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32,physical=lane%P,stream=sub%2;
++    unsigned logical=Production::logical_row(it.get_group_linear_id(),sub,lane),row=logical%b.rows,slot=logical/b.rows;bool in_range=logical<total;
++    iq3::Route route{};if(in_range)route=b.routes[slot];bool ok=in_range&&iq3::valid_route(route,b.experts,b.rows,b.rows),valid=ok&&row<route.row_count;
++    float value=0;if(valid){size_t source=size_t(route.expert_id)*b.rows+route.row_begin+row;
++     value=p49dvirtual::local_tree<V>(chains(p58::resolve(stream?b.peer:b.w,source*b.rb,size_t(b.rows)*b.rb,b.indirect),b.x,physical,b.halfcache));
++    }
++    for(unsigned width=1;width<P;width*=2){float rhs=sycl::select_from_group(sg,value,(lane+width)%32);if(physical%(2*width)==0)value=value+rhs;}
++    if(in_range&&!physical){(stream?b.py:b.y)[logical]=iq3::bf16_bits(valid?value:iq3::bits_float(0x7fc00000));
++     if(!row){(stream?b.peer_status:b.status)[slot]=!ok;if(!ok&&*b.active){uint32_t expected=0;sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error).compare_exchange_strong(expected,1);}}
++    }
++   });
++  });
++ }
++#endif
++};
++}
+--- a/native/p58ag_diet_submit.cpp
++++ b/native/p58ag_diet_submit.cpp
+@@ -0,0 +1,49 @@
++#include "p58ag_submit.hpp"
++#include "p58ag_expert.hpp"
++#include "p58ag_diet.hpp"
++#include "expert_down.hpp"
++namespace p58ag {
++using p39::Kind;using p39::Bindings;using iq3::Type;
++// packet58-onecard-diet-engine: the exact instruction diet of the ONE-card record gate/up kernel, p58ag_diet::GateUp
++// (packet58-onecard-diet-micro, qualified 0.78x cold / 0.75x warm, byte-identical on device), registered in its OWN
++// translation unit so that p58ag_submit.cpp's device code stays exactly the record kernel set (per-kernel SPIR-V identity).
++// issue_diet is the production p58ag::issue<IQ2_S,2560,expert_checks,1,Tile=false,Cached=true> body VERBATIM (the same 20
++// bindings incl. the halfcache table p[19], the same p39::validate, extents and half-table alias checks) with the kernel
++// object replaced by p58ag_diet::GateUp (which binds through the production Kernel::bind). Reached only from
++// p58ag::expert(..., gateup="diet") on the halfcache layout (experts=wide64+halfcache).
++template<Type T,unsigned K,Kind E,unsigned Split,bool Tile=false,bool Cached=true>integrated::Launch issue_diet(ownrt::Device&d,const std::vector<integrated::Matrix>&m,const Bindings&b,ownrt::Allocation halfcache){
++ static_assert(T==Type::IQ2_S&&K==2560&&E==Kind::expert_checks&&Split==1&&!Tile&&Cached,"the diet is a diet of the halfcache gate/up kernel only");
++ const auto&a=m[0];const auto&peer=m.size()==2?m[1]:a;
++ if(!b.indirect){ if constexpr(E==Kind::down_status)p29::validate(d,m,"p29.down.wg32",false,2);else
++ p28::validate(d,m,E==Kind::expert_checks?"p28.paired.wg32":"p28.dense.wg32",E==Kind::expert_checks,(T==Type::Q6_K||T==Type::Q8_0?(Split==4?7:6):2));
++ }
++ std::array<ownrt::Allocation,20> ids{a.w,peer.w,a.x,a.y,peer.y,a.routes?a.routes:a.x,a.status?a.status:a.y,peer.status?peer.status:peer.y,a.workspace,b.other?b.other:a.x,b.out?b.out:a.y,b.streams?b.streams:a.y,b.inject?b.inject:a.x,b.mixture?b.mixture:a.x,b.shared_gate?b.shared_gate:a.x,b.one?b.one:a.x,b.error,b.active,b.position,halfcache};
++ p58ag_diet::GateUp k;
++ if constexpr(Tile)if(a.rows%16)throw std::invalid_argument("p58j tile rows");k.indirect=b.indirect;k.rows=a.rows;k.count=a.count;k.experts=a.experts;const auto rb=p49bgemv::layout(T,K).row_bytes;
++ // Validate complete live allocations and byte ranges before any compute hook.
++ std::array<void*,20>p;for(size_t j=0;j<ids.size();++j){const auto&r=d.arena.row(ids[j]);if(!r.live||r.memory!=ownrt::Memory::device)throw std::invalid_argument("p39 dead/nondevice binding");p[j]=r.pointer;}
++ auto bound=k.bind(p);bound.position=static_cast<const uint32_t*>(p[18]);bound.capacity=b.capacity;p39::validate<T,K,E,Split>(bound);
++ if(uintptr_t(bound.w)%(Tile?16:4)||uintptr_t(bound.peer)%(Tile?16:4))throw std::invalid_argument("p49b weight alignment");
++ auto extent=[&](ownrt::Allocation id,size_t n){if(d.arena.row(id).bytes<n)throw std::invalid_argument("p39 allocation extent");};
++ extent(halfcache,65536*4);
++ if(uintptr_t(p[19])%4)throw std::invalid_argument("half table alignment");
++ for(unsigned j:{3u,4u,6u,7u,8u,16u}){auto lo=uintptr_t(p[j]),hi=lo+d.arena.row(ids[j]).bytes,t=uintptr_t(p[19]);if(lo<t+65536*4&&t<hi)throw std::invalid_argument("half table write alias");}
++
++ size_t n=size_t(a.rows)*a.count;extent(a.w,b.indirect?size_t(a.experts)*sizeof(p58::Pointer):size_t(a.experts)*a.rows*rb);extent(a.x,size_t(K)*(E==Kind::down_status?a.count:1)*2);extent(a.y,n*2);extent(b.error,4);extent(b.active,4);extent(b.position,4);
++ if constexpr(Split==4)extent(a.workspace,n*32);
++ if constexpr(E==Kind::expert_checks){extent(peer.w,b.indirect?size_t(a.experts)*sizeof(p58::Pointer):size_t(a.experts)*a.rows*rb);extent(peer.y,n*2);extent(a.routes,a.count*sizeof(iq3::Route));extent(a.status,a.count*4);extent(peer.status,a.count*4);}
++ if constexpr(E==Kind::down_status){extent(a.routes,a.count*sizeof(iq3::Route));extent(a.status,a.count*4);}
++ if constexpr(E==Kind::silu_div4||E==Kind::shared_act||E==Kind::shared_combine)extent(b.out,n*2);
++ if constexpr(E==Kind::shared_act)extent(b.other,n*2);
++ if constexpr(E==Kind::attention_combine||E==Kind::shared_combine){extent(b.streams,n*8);extent(b.inject,8);}
++ if constexpr(E==Kind::shared_combine){extent(b.mixture,n*2);extent(b.shared_gate,2);extent(b.one,4);}
++ auto first=d.compute(k,ids,{});integrated::Launch result{first,first,1};
++
++ return result;
++}
++integrated::Launch expert_diet(ownrt::Device& d,const std::vector<integrated::Matrix>& m,const Bindings& b,ownrt::Allocation halfcache){
++ if(m.size()!=2||m[0].type!=Type::IQ2_S||m[0].columns!=2560)throw std::invalid_argument("p58ag expert shape");
++ if(!b.indirect)throw std::invalid_argument("p58ag expert_gateup=diet requires the indirect expert-cache slot path");
++ return issue_diet<Type::IQ2_S,2560,Kind::expert_checks,1,false,true>(d,m,b,halfcache);
++}
++}
+--- a/native/p58ag_submit.cpp
++++ b/native/p58ag_submit.cpp
+@@ -32,8 +32,12 @@
+ 
+  return result;
+ }
+-integrated::Launch expert(ownrt::Device& d,const std::vector<integrated::Matrix>& m,const Bindings& b,ownrt::Allocation halfcache,bool cached){
++integrated::Launch expert(ownrt::Device& d,const std::vector<integrated::Matrix>& m,const Bindings& b,ownrt::Allocation halfcache,bool cached,const std::string& gateup){
+  if(m.size()!=2||m[0].type!=Type::IQ2_S||m[0].columns!=2560)throw std::invalid_argument("p58ag expert shape");
++ if(gateup!="production"&&gateup!="diet")throw std::invalid_argument("p58ag expert_gateup: unknown");
++ // packet58-onecard-diet-engine: the exact instruction diet of the record gate/up kernel (p58ag_diet::GateUp) lives in its own
++ // TU (p58ag_diet_submit.cpp) so this TU's device code is exactly the record kernel set; selectable only on the halfcache layout.
++ if(gateup=="diet"){if(!cached)throw std::invalid_argument("p58ag expert_gateup=diet requires experts=wide64+halfcache");return expert_diet(d,m,b,halfcache);}
+  return cached?issue<Type::IQ2_S,2560,Kind::expert_checks,1>(d,m,b,halfcache):issue<Type::IQ2_S,2560,Kind::expert_checks,1,false,false>(d,m,b,halfcache);
+ }
+ }
+--- a/native/p58ag_submit.hpp
++++ b/native/p58ag_submit.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ #include "p49d_submit.hpp"
+ namespace p58ag {
+-integrated::Launch expert(ownrt::Device&,const std::vector<integrated::Matrix>&,const p39::Bindings&,ownrt::Allocation,bool cached=true);
++integrated::Launch expert(ownrt::Device&,const std::vector<integrated::Matrix>&,const p39::Bindings&,ownrt::Allocation,bool cached=true,const std::string& gateup="production");
++integrated::Launch expert_diet(ownrt::Device&,const std::vector<integrated::Matrix>&,const p39::Bindings&,ownrt::Allocation); // p58ag_diet_submit.cpp
+ bool other(ownrt::Device&); // no mutable global selection
+ }
+--- a/native/preparation_probe.cpp
++++ b/native/preparation_probe.cpp
+@@ -72,8 +72,17 @@
+     for(const auto& view:bracket_table(a)) {
+       fs::create_directories(root/view.label);record_host_memory(root/view.label,"before_view_reset");
+       p58as::spin_enabled=view.hc=="spin"||view.hc=="spin-kio";p176::kernel_io=view.hc=="spin-kio";
+-      engine->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");
++      engine->expert_gateup(view.gateup);engine->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");
+       engine->cache_mode(view.maintenance);engine->cache_capacity(view.capacity);record_host_memory(root/view.label,"after_view_reset");
++      require(view.gateup!="diet"||engine->expert_diet_sites>0,"selected diet prepared no gate/up site");require(view.gateup!="production"||engine->expert_diet_sites==0,"production view prepared a diet site");
++      {// packet58-onecard-diet-engine: per-view capture digest of every prepared site and of the gate/up sites (which sites switch)
++       std::string all,gateup_sites;size_t gateup_count=0;
++       for(size_t i=0;i<engine->p.launches.size();++i){const auto& l=engine->p.launches[i];const auto& site=engine->issue_sites[i];std::string s=l.label+"|"+l.op+"|";
++        for(const auto& cmd:site.commands){for(auto id:cmd.ids)s+=std::to_string(id)+",";s+="|"+std::to_string(cmd.argument_bytes.size())+":"+hash(std::vector<uint8_t>(cmd.argument_bytes.begin(),cmd.argument_bytes.end()))+";";}
++        all+=s+"\n";if(l.op=="expert_gate_up"){gateup_sites+=s+"\n";++gateup_count;}}
++       std::ostringstream o;o<<"{\"label\":"<<ownrt::quote(view.label)<<",\"cache_cap\":"<<ownrt::quote(view.capacity)<<",\"expert_gateup\":"<<ownrt::quote(view.gateup)<<",\"expert_diet_sites\":"<<engine->expert_diet_sites<<",\"expert_production_sites\":"<<engine->expert_production_sites<<",\"gateup_launches\":"<<gateup_count<<",\"sites\":"<<engine->p.launches.size()<<",\"all_sites_sha256\":"<<ownrt::quote(hash(std::vector<uint8_t>(all.begin(),all.end())))<<",\"gateup_sites_sha256\":"<<ownrt::quote(hash(std::vector<uint8_t>(gateup_sites.begin(),gateup_sites.end())))<<",\"diet_labels\":[";
++       for(size_t i=0;i<engine->expert_diet_labels.size();++i)o<<(i?",":"")<<ownrt::quote(engine->expert_diet_labels[i]);o<<"],\"prepared_so_far\":"<<transport->captured<<"}\n";
++       save(root/view.label/"gateup-capture.json",o.str());}
+ 
+       for(int request=0;request<12;++request) {
+         auto destination=root/view.label/std::to_string(request);

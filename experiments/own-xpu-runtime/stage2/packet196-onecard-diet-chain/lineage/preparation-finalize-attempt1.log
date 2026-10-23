@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-orchestration/finalize.py", line 136, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-orchestration/finalize.py", line 133, in main
+    if a.prepare:prepare()
+                 ^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-orchestration/finalize.py", line 59, in prepare
+    seal()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-orchestration/finalize.py", line 52, in seal
+    bad,manifests=g.pin_audit(P,ROOT,[P/n for n in gates],parent=P0);assert not bad,bad[:8]
+                                                                            ^^^^^^^
+AssertionError: ['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/DERIVATION-READY.json: experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/build-receipt.json (packet-local, missing or different bytes)', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/DERIVATION-READY.json: experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/submission-pins.json (packet-local, missing or different bytes)', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/DERIVATION-READY.json: experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/ready.json (packet-local, missing or different bytes)']

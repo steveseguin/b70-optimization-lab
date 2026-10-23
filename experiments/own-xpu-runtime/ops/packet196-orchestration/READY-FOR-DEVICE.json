@@ -1,0 +1,376 @@
+{
+  "schema": "packet196.ready.v1",
+  "packet": "packet196-onecard-diet-chain",
+  "revision": "derived:packet196-onecard-diet-chain",
+  "prepared_utc": "2026-10-23T14:24:40.838093+00:00",
+  "generator": "packet196-orchestration private additive adapter + finalize.py",
+  "preparation_passed": true,
+  "passed": true,
+  "ready_for_device": true,
+  "ready_for_device_chain": true,
+  "ready_for_coordinator_check": true,
+  "reason": "Exact expert instruction diet; qualified screen clears registered chain bar. Candidate chain not yet measured.",
+  "chain_binary_sha256": "537c080767f241653a8ac13c77289cd59e8f7444cbee2a4fcb35586eb1e743d4",
+  "parent_chain_binary_sha256": "083e3853427041be36faeaf804781e4204b79ed19296648e0aaa7f6c5f1b151a",
+  "coordinator_unit": "packet58-onecard-diet-a",
+  "chain_unit": "packet58-onecard-diet-a",
+  "chain_output": "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/card0-diet-a",
+  "fault_review": "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/fault-review-diet-a.json",
+  "chain_command": "systemd-run --user --unit=packet58-onecard-diet-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2 /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/card0-diet-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/fault-review-diet-a.json < /dev/null",
+  "chain_command_digest_sha256": "24162abb5757dcc18147304601382ef20b7facc53c7d6f38c7a2a2d6a8746a03",
+  "command_hash_encoding": "UTF-8, no trailing newline",
+  "windows": [
+    "K1a",
+    "K1b",
+    "KD",
+    "W2m",
+    "WS",
+    "WS128x",
+    "WS128"
+  ],
+  "gap_seconds": 90,
+  "wait_seconds": 300,
+  "lane": "A",
+  "card": 0,
+  "scope": "whole-host",
+  "configuration": {
+    "view": "down-tile16",
+    "cache_maintenance": "overlap",
+    "miss_path": "zero-copy",
+    "cache_cap": "max23",
+    "cache_allocation_bytes": 23049601024,
+    "cache_bytes": 23049601024,
+    "kv_dtype": "BF16",
+    "context": 4096,
+    "hc": "p60fusion",
+    "hc_geometry": "hc-wide",
+    "experts": "wide64+halfcache",
+    "other_fusion": "fused",
+    "retirement": "ordered-foreground",
+    "lookups": "resident",
+    "chain_flags": {
+      "--wait-policy": "spin",
+      "--foreground-io": "kernel",
+      "--expert-gateup": "diet"
+    },
+    "wait_policy": "spin",
+    "foreground_io": "kernel",
+    "expert_gateup": "diet"
+  },
+  "chain_flags": {
+    "--wait-policy": "spin",
+    "--foreground-io": "kernel",
+    "--expert-gateup": "diet"
+  },
+  "whole_host_hold_required_through_gaps": true,
+  "both_lanes_pause_and_drain_required": true,
+  "codex_frozen_from": "WS",
+  "codex_frozen_through": "WS128 completion",
+  "bracket_rates_tok_s": [
+    36.57901841687463,
+    37.573009694813265,
+    36.599322893785605,
+    37.58319207222676,
+    36.600541434877364
+  ],
+  "control_drift_fraction": 3.3294088398720144e-05,
+  "minimum_gain": 0.02656977798173273,
+  "candidate_beats_all_controls": true,
+  "bracket_exact_requests": 60,
+  "pinned_predecessor": {
+    "reference_submission": "cmvkcqznb002lng01fsrhjn7t",
+    "threshold_tok_s": 36.60251162011413
+  },
+  "submission_scope_tokens": 128,
+  "strict512_claim": false,
+  "fresh_timing_repeat_passed": false,
+  "chain_native_interface_passed": true,
+  "bracket_boot_check": "current-boot",
+  "preparation_ram_budget_bytes": 2000000000,
+  "files_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/build-receipt.json": "afcff50a28d03697794f66c4ad7b6c10b3de1c7bcec38fee471acc7d9f6560a0",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/submission-pins.json": "481d02ee5f1133ca2435f9aeb94e84c53db4ed95e980db626dc781e3792a5177",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/ready.json": "08003b5f537d015a541021f7bd2e947fef0b04a63aa11603a4abb132926f66c0",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/derived-chain.json": "537e7b61a00281a06325775d70029ae81bca1ce226fa20b39265cfccedac75f8",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/engine-binding.json": "a6d727d8d936656a2574d5ca587b4bd7594134491c46284d3dc9941ed35ecddf",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/runtime-selection.json": "cd0648cbf77a451f9450dab13052a24a3490709358f6d6116e46d828875e22db",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/final-checks.json": "2530d7c46c43bbfcbbed615ed20b666b477ff0a3bcfd8bb1c090f23c056344fa"
+  },
+  "orchestration_provenance": [
+    {
+      "name": "DERIVATION-READY.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/DERIVATION-READY.json",
+      "parent_digest": "f430ed5f6d58f5ed50b1a90c522964ba0e02aec11b1b8532a3cf07c356f2db98"
+    },
+    {
+      "name": "README.md",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/README.md",
+      "parent_digest": "0653c3d5707c00a43fa30dc68efe06fac581d730e51bed529493d1e42db15278"
+    },
+    {
+      "name": "admission_gate.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/admission_gate.py",
+      "parent_digest": "0369bdb6447358248f9fb2b8a689a95ceda03abf39c32cda2ad91ce4f601d2df"
+    },
+    {
+      "name": "derivation.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/derivation.json",
+      "parent_digest": "4a0e9f6cb4697f769eddedc4d1c5e75c2e45edc9c493a142cf74d71d44f8eff3"
+    },
+    {
+      "name": "derive_diet_chain.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/derive_diet_chain.py",
+      "parent_digest": "8141b94efdaace87adf653767c64834f0dc70701eea237109d9a239767d46844"
+    },
+    {
+      "name": "device_inventory.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/device_inventory.py",
+      "parent_digest": "1b6eddcd138e459d7ce362f6285bc24f15106178e04608fbab938a7c62f159b1"
+    },
+    {
+      "name": "entry-proposal.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/entry-proposal.jsonl",
+      "parent_digest": "cdab5c6843292e14112301a3d82a77c571b53c5d7654302c35d10094ac212bfb"
+    },
+    {
+      "name": "finalize.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/finalize.py",
+      "parent_digest": "6783cb3880c67a66608aed35773cb16b9e9092d893758c6022c73870b08151ca"
+    },
+    {
+      "name": "help.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/help.json",
+      "parent_digest": "0b8b5ed20a099ee3e330dd3b0cb991a13a90797e91e2671313bd8d0b265768ee"
+    },
+    {
+      "name": "launch_chain.sh",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/launch_chain.sh",
+      "parent_digest": "a2634600af59fa28c081ea7340b183c37ca3f3b22c3ab5a9ccc9fb726c985e8b"
+    },
+    {
+      "name": "onecard_chain_derive.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/onecard_chain_derive.py",
+      "parent_digest": "303259cd69465896700d573833ea8bf15eeb9bf5bf3d90b028802c6aa055d9af"
+    },
+    {
+      "name": "passive_device_holders.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/passive_device_holders.py",
+      "parent_digest": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4"
+    },
+    {
+      "name": "postnative-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/postnative-rehearsal.json",
+      "parent_digest": "24768e66ad2ff0d4eefed0b8e96d642a3dbfb9279f312f1b4adb806995d06ba6"
+    },
+    {
+      "name": "predevice-rehearsal.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/predevice-rehearsal.json",
+      "parent_digest": "e35150d5d8cf2e3349eb526b602c798ee8b4648661266520c2d4a335917434d6"
+    },
+    {
+      "name": "prepare_submission.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/prepare_submission.py",
+      "parent_digest": "a91249e01a4a0ee7c5f8fd24dba4d1968f185489f2cc577fd37f1212da64844b"
+    },
+    {
+      "name": "queue-plan.log",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/queue-plan.log",
+      "parent_digest": "26e5abb7cfa9cc35b82b6d918492b91b14e6b799788ca215941636a4b69a94d9"
+    },
+    {
+      "name": "script_argv_check.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/script_argv_check.py",
+      "parent_digest": "3c67823dbca65da6282f8f174a7f8a7e04afb7cf3355d63ddf2c87adf10cfdb7"
+    },
+    {
+      "name": "submission.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/submission.py",
+      "parent_digest": "a422eed3a2a6742a2dcb283982bbdbca20ef1652d6ec7852c067b8d81c07294b"
+    },
+    {
+      "name": "test_launcher.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/test_launcher.py",
+      "parent_digest": "0944a5bdbe85b7553efb085d1dfe36b3c4297b466f325bd1e2f139e3ff55f501"
+    },
+    {
+      "name": "verify_ready.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet196-orchestration/verify_ready.py",
+      "parent_digest": "545d11edbcc672087097784be5c097d94f9a2b5f8571cb4a6d34a4bc3f8ca210"
+    }
+  ],
+  "parent_provenance": [
+    {
+      "name": "READY-FOR-DEVICE.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58c23chain-orchestration/READY-FOR-DEVICE.json",
+      "parent_digest": "42cef3257c3fca111fc624714a958478fa4b7234dd6c22f47ab59cdee5ec2d8a"
+    },
+    {
+      "name": "build-receipt.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/build-receipt.json",
+      "parent_digest": "5f9137ab38d5a3cb322daa3689a2d43cd05abd1396b65739add240df1b041efa"
+    }
+  ],
+  "pin_audit": {
+    "passed": true,
+    "manifests": 62,
+    "cross_packet_mutable_pins": 0
+  },
+  "confirmation_run": false,
+  "confirmation": null,
+  "predevice_rehearsal": {
+    "passed": true,
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ],
+    "boundaries": {
+      "K1a": "output directory creation",
+      "K1b": "output directory creation",
+      "KD": "previous-window prerequisite K1",
+      "W2m": "previous-window prerequisite KD",
+      "WS": "previous-window prerequisite W2m",
+      "WS128x": "previous-window prerequisite WS",
+      "WS128": "previous-window prerequisite WS128x"
+    },
+    "simulated": [
+      "priority",
+      "affinity",
+      "user_unit_gate"
+    ]
+  },
+  "runtime_closure_check": {
+    "passed": true,
+    "checked": 85,
+    "copied_dirs": [
+      "selections",
+      "frozen-inputs",
+      "host-admission",
+      "native",
+      "lineage",
+      "screen-reader"
+    ]
+  },
+  "postnative_rehearsal": {
+    "passed": true,
+    "evidence": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/evidence/card0-cache23-a",
+    "windows": [
+      "K1a",
+      "K1b",
+      "KD",
+      "W2m",
+      "WS",
+      "WS128x",
+      "WS128"
+    ]
+  },
+  "chain_quality_pending": true,
+  "chain_performance_pending": true,
+  "no_retry": true,
+  "queued": false,
+  "device_executed": false,
+  "services_started": false,
+  "model_payload_reads": false,
+  "live_queue_changed": false,
+  "submission_performed": false,
+  "final_content_write": true,
+  "final_checks_sha256": "2530d7c46c43bbfcbbed615ed20b666b477ff0a3bcfd8bb1c090f23c056344fa",
+  "last_packet_write": true,
+  "compiled_here": false,
+  "native_recompiled": false,
+  "reused_qualified_screen_binary": true,
+  "engine_rebound": true,
+  "host_required_available_bytes": 100487123456,
+  "launcher_host_floor_bytes": 101560865280,
+  "planned_write_bytes": 397492208,
+  "gates": {
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/k1-cpu.json": "6caa94f533d264cd9167a8ab1bbe53a9ed9db7a259fef78504f3993005389d24",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/fullshape-submit-cpu.json": "026998f30e92f874bc9c4aebe3f340771b281b8b04fbec4442779f7bc4e2c011",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/postload-allocation-cpu.json": "a4537aed9d67a70850d8e96a57db930bd4e689f9d57ad843f9dce74393037c13",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/argument-gate.json": "3835ec266abe7607e04c76593b679b9bf6c22ebab35b150d8c3e7716a886ede9",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/python-cpu-gates.json": "df1773240deffa7e689f9f88d265a62d7e224f2ee7e4c970241dff5ea516849d",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/submission-rehearsal.json": "fc3361b46147ad3d69ff6f09b22d67b8de2fc23f59623b2d6a5da125c649ac94",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/native-parser.json": "92f07720d9da0df0ee7814dd2c111d6c65a82c48c93e7346dafc8f138d8a2b1e",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/resident-copy-cpu.json": "511a7ecc2cb4988bf061f873cb1feb634a6216fd16e81bd2fc6b52c3459e5f7b",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/resident-engine-cpu.json": "d048cba96288bac40da1dd397b6cece9abc411031b4efa91efe5f3a51ec72688",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/entry-gates.json": "0c5b01f4e5264365b9417f2eaee7ed009b9a9af93111cf7e67fe3c25efeaa9d7",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/packet58ajb-preparation.json": "53038b4a8f931607ee2be3def26cb7ada6edc5f6798e1c23ad014ae3438dcbe3",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/cache23-chain-delta.json": "1286d7840241c666264e0b778d44e2f34d6c5baeac5b51305f7d8e9477e23e88",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/script-argv-check.json": "f9355239bd63fd8d92ab76ad954c58d77054537a7299886395eeb519d4580c5e",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/help-cache23.json": "625db85dc3368f7fa7c1b3230cc31f36087d2f6364428c3f77c33c0d3d61b2ed",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/drain-fix.json": "3e36ef1c4cff28b1be5460b673055b2379231eb035a6aad456c82f56dcfa88e1",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/launch-limits.json": "7aa0fa75cbb6a5141bfc7ac2a91720b73ffb0518b80567465fe050174c02aef9",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/python-cpu-gates-cache23.json": "6a6d96ec8e635426243337b74ca3fd8bc36482ace57b4033faf19d7dd8d31444",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/admission-gate.json": "705c1570788250c191d31d3646ef33fdb78a22cdd7b1b40113f9cbdb8a8a196f",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/engine-binding-check.json": "e4b8d625db155baee5c96c1c7838b588366ae1219cfbf2e4bdc68ff51d647697",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/submission-rehearsal-cache23.json": "c5a9b3f3645b861c1fd32ef059d01088464fc16d7ff845ba0869997f6342e93f",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/predevice-cache23.json": "839f9b93821802f80f00ecf70d8ee42739d5ec3379b895a5173cf409d18e2112",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/closure-cache23.json": "f8c002086bd09aa9227a23bece0f7ba8ef3862f3237c655986867457c455091d",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/postnative-cache23.json": "0b020a007685182daccd84a48c205f14ed4ba0dccb4c12d241dd4c95f0009010",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/queue-gate.json": "f16b53e6f93e2fbc30fb850edfd78aa2baf62df3090ff616fd2df9b76c0eada3",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/chain-flags.json": "e015f77b32d538a4bacb8e92bad9846e2f5f5dba20b235319b616cb6e99b9a32",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/pin-relocation.json": "11bbb41b6f03e622fafd86f3baefb47abbf9b89e36835d8ffbf85c878d79d1f0",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/diet-admission.json": "6b94fc028f116aadc2321a24a405bc0c12464bc256278401d6b73c43ab960d36",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/diet-engine-binding.json": "86cc122ee321a547a97945922e8e569fd69c6cd903433245b7baae7a002f24d0",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/diet-script-argv.json": "0caa339d3c8d698bfc5ed49e6288570ed6e917ac7bb998e107bb03f841490109",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/diet-tests.json": "3ddc40f6cb2520518a3ab7ea438995079b21fac147c19cb657c93a06aab8eb1b",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/diet-submission.json": "fa6f6a2a0228f9eb83c63abb43f88134bf3214ea2741947954e690b154b34e4e",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/diet-final-rehearsals.json": "3acb523565f35231d0d2ff3595a4335db2ea2e1980e8e4aa43bbef6e7f090c65",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/evidence/launcher-tests.json": "e19f33b1d19125b604d7cb3b799e21d5dbf96595323b7d3091564d58ee91b9e3"
+  },
+  "launcher": "ops/packet196-orchestration/launch_chain.sh",
+  "orchestration_source_pins": [
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/admission_gate.py",
+      "digest": "0369bdb6447358248f9fb2b8a689a95ceda03abf39c32cda2ad91ce4f601d2df"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/derive_diet_chain.py",
+      "digest": "8141b94efdaace87adf653767c64834f0dc70701eea237109d9a239767d46844"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/device_inventory.py",
+      "digest": "1b6eddcd138e459d7ce362f6285bc24f15106178e04608fbab938a7c62f159b1"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/finalize.py",
+      "digest": "6783cb3880c67a66608aed35773cb16b9e9092d893758c6022c73870b08151ca"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/launch_chain.sh",
+      "digest": "a2634600af59fa28c081ea7340b183c37ca3f3b22c3ab5a9ccc9fb726c985e8b"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/onecard_chain_derive.py",
+      "digest": "303259cd69465896700d573833ea8bf15eeb9bf5bf3d90b028802c6aa055d9af"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/passive_device_holders.py",
+      "digest": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/prepare_submission.py",
+      "digest": "a91249e01a4a0ee7c5f8fd24dba4d1968f185489f2cc577fd37f1212da64844b"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/script_argv_check.py",
+      "digest": "3c67823dbca65da6282f8f174a7f8a7e04afb7cf3355d63ddf2c87adf10cfdb7"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/submission.py",
+      "digest": "a422eed3a2a6742a2dcb283982bbdbca20ef1652d6ec7852c067b8d81c07294b"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/test_launcher.py",
+      "digest": "0944a5bdbe85b7553efb085d1dfe36b3c4297b466f325bd1e2f139e3ff55f501"
+    },
+    {
+      "relative_path": "experiments/own-xpu-runtime/ops/packet196-orchestration/verify_ready.py",
+      "digest": "545d11edbcc672087097784be5c097d94f9a2b5f8571cb4a6d34a4bc3f8ca210"
+    }
+  ]
+}

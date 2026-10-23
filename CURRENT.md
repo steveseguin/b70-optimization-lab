@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 23, 10:26 EDT — one-card diet record qualification packet is CPU-ready; no second device window launched.**
+Packet196 preserves the max23 record configuration and reuses the exact screen engine with the diet flag. Its final readiness check passes:
+794 sealed packet sources, 227 exact engine-source/proof files, 12 separately verified orchestration sources, 33 gates, zero mutable cross-packet
+pins in the packet closure. CPU tests, script-entry checks, seven-window replays, submission rehearsal and launcher refusal checks pass.
+The +2.657% screen remains the latest measurement; the one-card record is still36.602512 tok/s pending qualification. All three restore24
+endpoints are running and validated; both lane pauses remain armed. [Qualification note](notes/2026-10-23-packet196-onecard-diet-chain.md).
+
 **October 23, 09:56 EDT — one-card diet engine screen wins +2.657%; all 60 responses exact.**
 Control/diet/control/diet/control: 36.579 / 37.573 / 36.599 / 37.583 / 36.601 tok/s. Warm drift0.00333%, unchanged fills/bytes,
 no kill rule. Both screen and chain thresholds passed; this is not a submitted record. The registered row completed13:56 UTC,

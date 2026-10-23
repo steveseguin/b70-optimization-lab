@@ -1,0 +1,1812 @@
+{
+  "schema": "packet58cache23chain.admission-gate.v1",
+  "passed": true,
+  "device_executed": false,
+  "model_reads": false,
+  "copies_made": false,
+  "screen_packet": "packet58-onecard-cache23",
+  "screen_evidence": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN",
+  "screen_identity": {
+    "summary": {
+      "name": "summary.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/summary.json",
+      "parent_digest": "3ac7f4aba00f75237d77ddff17c5b82af5d7103de7f4313685047b90d15fa7ed"
+    },
+    "window": {
+      "name": "window.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/window.json",
+      "parent_digest": "fd494904a32cc9263d4dd8006e75cd179189d556a22dd396716f57612111f2b6"
+    },
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "unit": "screen-packet58cache23-one-card-v5-A.service",
+    "started_utc_ns": 1792717226894521159,
+    "finished_utc_ns": 1792717795791464334
+  },
+  "recomputed": {
+    "rates": [
+      35.89239775457983,
+      36.54557450233753,
+      35.928542461824385,
+      36.5693526068784,
+      35.924936571926665
+    ],
+    "control_drift_fraction": 0.00010037289531466569,
+    "minimum_gain_vs_best_warm_control": 0.017173867856419948,
+    "minimum_gain_vs_every_max_view": 0.017173867856419948,
+    "exact_requests": 60,
+    "fills_reduced_8pct": true,
+    "fills_reduction_fraction": 0.1289,
+    "drm_peak_loaded_bytes": 29988990976,
+    "drm_samples": 133,
+    "drm_loaded_samples": 131,
+    "drm_guard_bytes": 30500000000,
+    "drm_under_guard": true,
+    "screen_winner": true,
+    "chain_rule": false
+  },
+  "views": {
+    "A0": {
+      "view": "max",
+      "exact_requests": 12,
+      "class_medians": {
+        "analysis": 37.515020474866674,
+        "code": 35.520162367284286,
+        "documentation": 36.264633141875386,
+        "operations": 34.47290644172747,
+        "prose": 35.51986857991929,
+        "structured-writing": 37.03482525610188
+      },
+      "rate": 35.89239775457983,
+      "decode_tokens": 1524,
+      "fills_per_token": 15.449
+    },
+    "B0": {
+      "view": "max23",
+      "exact_requests": 12,
+      "class_medians": {
+        "analysis": 38.09114612003604,
+        "code": 36.10965509942131,
+        "documentation": 36.83442097416272,
+        "operations": 35.48507443306617,
+        "prose": 36.256728030512335,
+        "structured-writing": 37.84705608458496
+      },
+      "rate": 36.54557450233753,
+      "decode_tokens": 1524,
+      "fills_per_token": 13.457
+    },
+    "A1": {
+      "view": "max",
+      "exact_requests": 12,
+      "class_medians": {
+        "analysis": 37.54499403504945,
+        "code": 35.53984941976955,
+        "documentation": 36.30420058042195,
+        "operations": 34.49203235322904,
+        "prose": 35.55288434322682,
+        "structured-writing": 37.07906172186313
+      },
+      "rate": 35.928542461824385,
+      "decode_tokens": 1524,
+      "fills_per_token": 15.449
+    },
+    "B1": {
+      "view": "max23",
+      "exact_requests": 12,
+      "class_medians": {
+        "analysis": 38.06174920588766,
+        "code": 36.119041044408675,
+        "documentation": 36.8617194161321,
+        "operations": 35.466174414454386,
+        "prose": 36.2769857976247,
+        "structured-writing": 37.857407728964695
+      },
+      "rate": 36.5693526068784,
+      "decode_tokens": 1524,
+      "fills_per_token": 13.457
+    },
+    "A2": {
+      "view": "max",
+      "exact_requests": 12,
+      "class_medians": {
+        "analysis": 37.54523494018202,
+        "code": 35.5673810247182,
+        "documentation": 36.28249211913512,
+        "operations": 34.483454318493635,
+        "prose": 35.56651832122343,
+        "structured-writing": 37.069175943656894
+      },
+      "rate": 35.924936571926665,
+      "decode_tokens": 1524,
+      "fills_per_token": 15.449
+    }
+  },
+  "admission": {
+    "screen_bar_gain": 0.005,
+    "screen_winner": true,
+    "chain_bar_tok_s": 36.6452544,
+    "chain_bar_met": false,
+    "chain_admitted_by": "coordinator ruling 2026-10-23: lanes idle (the chain policy allows a chain below +2 % on idle lanes); derive the one-card record chain with the max23 selection",
+    "record_bar": {
+      "tok_s": 35.92672010504166,
+      "reference_submission": "cmvjejvoi03qcrf0138emu5a6",
+      "rule": "fresh exact WS128 must exceed it and the live ledger; every exactness gate"
+    },
+    "expected_ws128_tok_s": "36.5-36.6 (the max23 views) against 35.926720; +1.7 % expected, not measured"
+  },
+  "files_read": 330,
+  "files_read_digest": "9553b5735f5455ea3676306cce38b90e396c6eb295336946397ff615d036920e",
+  "files": {
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/suite-inputs.tsv": {
+      "name": "suite-inputs.tsv",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/suite-inputs.tsv",
+      "parent_digest": "1014f78a9be55a7255953ae14001739dc1eb03cb589532868da4fb990e1062dd"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/incident-retrospective/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/incident-retrospective/result.json",
+      "parent_digest": "fe510b20ddaeb6722851d778d53c7b07edfe5ea164314c88d1df2aa2a0a0c954"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/code-review/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/code-review/result.json",
+      "parent_digest": "61df1407ed9e52166e6330776aa2706346f8d6224fbf4b743e521adc311813fa"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/customer-email/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/customer-email/result.json",
+      "parent_digest": "b2d23cc33f4f671e3ac3b4c1c0734b922408ac86d9aafdf0f88908c4fdb5c309"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/sql-debugging/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/sql-debugging/result.json",
+      "parent_digest": "b2c601a53db3d98e4060260414dc6efa4c0898060f284680a7d19163c3243fac"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/release-plan/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/release-plan/result.json",
+      "parent_digest": "a1894c567c53a42c3c2eefcf82fca52fede428c949ad79a42865f046532c70bf"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/benchmark-analysis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/benchmark-analysis/result.json",
+      "parent_digest": "6a789a3cb19d6f31451495292137372229cd7c972a2d1268d24bd16c06b81ef0"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/architecture-tradeoff/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/architecture-tradeoff/result.json",
+      "parent_digest": "d81f50f003b5effe1f2e8402f9de6e4e6723f4e3db1e0d9294ae1496da7a665e"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/bug-report-synthesis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/bug-report-synthesis/result.json",
+      "parent_digest": "5d483c4a74a25f82c986e9fb0b2da513d02c3422db53f2477e09772dafe18f2e"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/technical-guide/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/technical-guide/result.json",
+      "parent_digest": "022ecce9d221496041b6b8d930c9102020d06caf97408526ea442b95ff1e3621"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/risk-register/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/risk-register/result.json",
+      "parent_digest": "ff87a9b5759bcf8931c5f9721e872a1c546e389d736e927f0c797733ad8a3882"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/performance-hypotheses/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/performance-hypotheses/result.json",
+      "parent_digest": "ea78917649672db99ab0ed47a8dc91875a895b41b2b1961efe817ccb07d6939c"
+    },
+    "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/decision-memo/result.json": {
+      "name": "result.json",
+      "parent_relpath": "/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/decision-memo/result.json",
+      "parent_digest": "52bc245d79f771f6fd214a5bf33416301fa7e676b5f4d12cb3163d6ccef119f3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/cache.jsonl": {
+      "name": "cache.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/cache.jsonl",
+      "parent_digest": "e9e193987ff9f52ba503b5ea20e5da0ad9a80ff8edf20fcca88d4d006848c6e6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/result.json",
+      "parent_digest": "27aba82fc17e537983b9cf1cea837beb7c77c7dd16de22bf78b743ddafb09a4d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/prefill-timings.jsonl",
+      "parent_digest": "a1f4c49568c52ee954199342aee903e90051f9f3fdae45e2a365476e1bc8f264"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/timings.jsonl",
+      "parent_digest": "f81ae8a3329c49defe8f50ee0a3090a0534a96c57d61cacd35151886fe687e7f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/result.json",
+      "parent_digest": "f19c14e50e385b8c8fe7908e736addb48f1eeffcc5db4f7d0c5ffc519df27c69"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/prefill-timings.jsonl",
+      "parent_digest": "f4a11364eda8724885ff4f06ba2d8b84a104e5c825db414ee1b26321ad8b4515"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/timings.jsonl",
+      "parent_digest": "dc6ac6a7d05c450fb727940b27a93ba3dd62bc2fdb4d7fcb6d0ad5e7b6bab9c3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/result.json",
+      "parent_digest": "33da8c9b2c119439beb9ebc0b532f716c68020bb5d0b8886105fd4be90ca0728"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/prefill-timings.jsonl",
+      "parent_digest": "edb4cdf38e514d010df98f243402ab3a8ef4ff466b0c56e8a13ce7ddb8c5625f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/timings.jsonl",
+      "parent_digest": "2adb65998ac38a592104d7bfaab0fb130a4508f1e64d4de72a64b55359582b4a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/result.json",
+      "parent_digest": "e86de726e317d23df35dc1dcd019a72b08c3e3c017f4a2c1d9e8a212f99265d4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/prefill-timings.jsonl",
+      "parent_digest": "9179cffa8b9f5d3916a5ef8ed8ba706252a25affc73320c93dda1e51d757d8ab"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/timings.jsonl",
+      "parent_digest": "043ec69ab8895fa4b257c0c776eaefab83bf7258c2aad1b88eab15f551194ad9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/result.json",
+      "parent_digest": "88c1ce84d8002aa5639b79f2b943b0fb4f0664ca1b95a0af3b16d3c1bccd554b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/prefill-timings.jsonl",
+      "parent_digest": "977480b2b9662411bf9fe855858dc54e1e8168bd1e315ce38240302cb5b02d7b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/timings.jsonl",
+      "parent_digest": "9bbfe7222a556399ed29d002fb3540f9cb6a85a7ddf3bcf6578e5134c3112002"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/result.json",
+      "parent_digest": "d3c69b6a4d7e161c4f3762129baba1533bb4952dc023d4f6208fa2ede9721cfb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/prefill-timings.jsonl",
+      "parent_digest": "fea3e3dd6e05a344942d02c26caf3f650899f37b53c88dfff7b038f2fae079b8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/timings.jsonl",
+      "parent_digest": "d5f3f79a265ffa8f3ebf9b75ebbf4ea047d0c01802c23ca554d8c3ab8c13ed16"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/result.json",
+      "parent_digest": "b321ca9c86d79f902daf175e8e1cf824b2cfe76e54a950501c84bf5e8fe63f46"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/prefill-timings.jsonl",
+      "parent_digest": "fdbe75c8a45fd4dc2bd0e6f4cbd8f18662e5f1dc19f3fe50dcc3db7965652ee1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/timings.jsonl",
+      "parent_digest": "e14b0bb73ebdcbd29ebae75d7f0285cb4d3870fc757cf1ce9c647bc55b8451af"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/result.json",
+      "parent_digest": "a1fbde2c89ca0466a4433d353e8de215dc9e4e93f27b5f5f10de4cfb65d4a378"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/prefill-timings.jsonl",
+      "parent_digest": "b104cfe19f373a78536d4a29f812f07127fae884e8be29e65226a8a88e5af111"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/timings.jsonl",
+      "parent_digest": "fdb539a73c0f15c98f68e6c8aa2c5f7ce417b2f8dbf28a9dbca7265ac37bb922"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/result.json",
+      "parent_digest": "c6e8b49c44fcb4244d9b6ddafd09fdb0bf9d011cca5c7ebcc1e8e44ed02a3846"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/prefill-timings.jsonl",
+      "parent_digest": "caab306550ad188817e1639af5b3bfa7d77b8c8688b0556da6f34328bd44fa2e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/timings.jsonl",
+      "parent_digest": "07342d9d0c0b644de568324e2d4feba19cba13bb8723312f5b3c485f944c363b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/result.json",
+      "parent_digest": "a24d4bb80b0ba0f224b9e81e856258c84ae6bbe5fb97e52b40af375b3bcbf3a2"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/prefill-timings.jsonl",
+      "parent_digest": "c5add7eaf591e29c91ddd60a1cb8a08ce40ee9fd1695b6470c51fbb8bc79e3a5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/timings.jsonl",
+      "parent_digest": "ee84ca2f4e0cfab7d55ce5d03cf9106448e4b2e26e4bfcfb08d11b28cd7e652c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/result.json",
+      "parent_digest": "7c89e7889227233667b82022b8efe028a39a1a42d1d6ed0070b2d4d8e3c17026"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/prefill-timings.jsonl",
+      "parent_digest": "b7ce3dac80523134f05ffa45955ba37085fc85ec5b96b2796407b6248c842af8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/timings.jsonl",
+      "parent_digest": "b4c11f4791ec2019c8f44656cf3039751db667873e8375172167d366e4539a45"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/result.json",
+      "parent_digest": "23920cafdabfb5f66e7c14e59c8de581ea29ec77b45151c5bf152ef24e84eb17"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/prefill-timings.jsonl",
+      "parent_digest": "b7b2554055a2cd6566c1130b51efae96b811c80b6b2c9c0b37578c3c491f0faf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/timings.jsonl",
+      "parent_digest": "17a96342eafa0c67d31d020b756e63f94862eaccb09fc965293f96aebdf2291c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/result.json",
+      "parent_digest": "388a196e446b7fd88ffc761365bcc05be6bb2bf4638f67ef07b8658623f68194"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/prefill-timings.jsonl",
+      "parent_digest": "7683f182f44c5ae2655d2014c6bf720d729b52f855755e4ccb34588d903fdca7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/timings.jsonl",
+      "parent_digest": "7427cc6d8b083d60944e225e05241118669556e0be0f8f5d1a7d75372f221a6a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/result.json",
+      "parent_digest": "0d6c6cd270fb97e50e334768eaff847bdd739ee3598bd7331ec30ba298e7de98"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/prefill-timings.jsonl",
+      "parent_digest": "26e5927f646d25cc8f109e07a0e21e100f0e9496b8ec61340428e95962a1eb7a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/timings.jsonl",
+      "parent_digest": "56da93a9c01c11cb11cdb665e14d658b105aa30aff635b087b9fb8523b51f9f9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/result.json",
+      "parent_digest": "5809d83d478b49be051f1f210d2c9ed41feda24e13ea0ecd3d2146534151fd3f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/prefill-timings.jsonl",
+      "parent_digest": "3b4a598f9b46ca82dcc4f70739dc4d6cd251d5b6733df5e477e24c81ac1f2637"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/timings.jsonl",
+      "parent_digest": "3f1d2e525e8a029f369b459fe1ecbe7e512641ab7ed28132279b7c178d50e49f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/result.json",
+      "parent_digest": "35acba29bef1d2e04d2106c8b6271eee266c5bad57af8f0991e8c8e57d2b1be7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/prefill-timings.jsonl",
+      "parent_digest": "5be88b8d314bc3455c9490ce93e79afb0ea320372cebcf1906d665e3cc03ab38"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/timings.jsonl",
+      "parent_digest": "d6754581389a342a8999b2e826811c4245d247ace73c043dc74e2641370cab00"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/result.json",
+      "parent_digest": "7dc941c2aeff46a5771b9bf9c8bac0aac376f6c6d0015f32de687b4479f832f8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/prefill-timings.jsonl",
+      "parent_digest": "022e17e585215c67ad69d6a92112cc823d8c427d9bcc21061bbbd1ac9f9495c0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/timings.jsonl",
+      "parent_digest": "b0c8587f08741380327b5f02947578478e3f37efd11aca8fcde411238f1dd458"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/result.json",
+      "parent_digest": "a5e606686a467cdad9f9ecf49d90cf4716746081becce8d6a2987190cc7037f5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/prefill-timings.jsonl",
+      "parent_digest": "45310658479ae2851d9eece8d10309f2332572eff967179413ad5cd16d90c9e3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/timings.jsonl",
+      "parent_digest": "e64782ce363373203a301ef6227caf19fb21164c7cfac72f6467ce91ea2474a4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/result.json",
+      "parent_digest": "589bfc4ca483946e5dbfe793d8e41bbe0d57323c2da416ba5d3acf8e496f1a27"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/prefill-timings.jsonl",
+      "parent_digest": "f5b9e74154e4ce21a1e8eb53a3eec6104d988fe9b1e78594f9b8d6d036009225"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/timings.jsonl",
+      "parent_digest": "08a64d126a713277605932c167ad1f2d58645d5e70dcddeb0fa658eff8bf60d5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/result.json",
+      "parent_digest": "4fcedeabda21e4f804dafb7d897f4d03bb8ffac1ee185f2475765bea6d8d4e5f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/prefill-timings.jsonl",
+      "parent_digest": "b81ba2beaae25a3064795fda7e05c5300a89f560da7ee9ada322dbf096268792"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/timings.jsonl",
+      "parent_digest": "db2454f21b6f875dba0e1329eda7fab7183798d5e562ad7b4e774d43f3649e9a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/result.json",
+      "parent_digest": "0754d946e5cbfb84a39d0b465b884525c2de773c0f8b61b4c59a85c43684399a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/prefill-timings.jsonl",
+      "parent_digest": "cba16a58baaf847bb95c2b8fa97c00dcd6370914ede5172584d8aa3b28de067d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/timings.jsonl",
+      "parent_digest": "818d9cf0d7e601a124205ffe43d395cb67e1f42e4b95dfd1038cb6981ff3923b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/result.json",
+      "parent_digest": "a0e78b56e97f28e3cfb96376d6f3d921422ac8c9bea25d839ea720861404b042"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/prefill-timings.jsonl",
+      "parent_digest": "bcbb679bb5bb8027ac218a3c41f75cebe686921ffb58290308e030628a5e0100"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/timings.jsonl",
+      "parent_digest": "a780aa93bf867be50f061c07b384d3ddbf9041922705402e07679c1af2d8a478"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/result.json",
+      "parent_digest": "6e0667726bc4a4b409b1bb6bf0dcf33a0d63ef6fa277ca3daa1acb94287519b5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/prefill-timings.jsonl",
+      "parent_digest": "1db5fc697d41a637b9df3c88276bfcb6f8b70a29e60c4db83899dc219c8a95d7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/timings.jsonl",
+      "parent_digest": "573b9be8fe30aeb4bed95fd2c31123c4310772798221e3006093d90ddff1c428"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/result.json",
+      "parent_digest": "cbbe3e34a9f6a597c0459513e89614d79f3e9a896f913efc302211a7bd82be52"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/prefill-timings.jsonl",
+      "parent_digest": "0a32fe34f966544baec50d3a98ee56fc1a33533bd64f30c4f81f197f3cd86d45"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/timings.jsonl",
+      "parent_digest": "8c251e6a22540e7fa4f4bf4a01ae971bcb9643ec20c4b036099c010534d3b3f1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/result.json",
+      "parent_digest": "db1b9a9c7f02be34c071ff7ff9f448ee33ac95a3c6bb8e65b319d07dc8b2306f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/prefill-timings.jsonl",
+      "parent_digest": "784f80da8c4563641fd70032ea44253af33134cc2000dec5d080fc6040e84b26"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/timings.jsonl",
+      "parent_digest": "5f7444a45e280cb552d2c965f78ff7d9abe5b04797db4af0ef565f2ebbd4e9d0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/result.json",
+      "parent_digest": "f348d01439535e6240ecef5a49f3491519724fe19aff1eff159768f9162cc565"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/prefill-timings.jsonl",
+      "parent_digest": "b65c8838f2a436b6d89130552aca0decab40e3732e5f60723ea9e3585dc37a5e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/timings.jsonl",
+      "parent_digest": "15d3cad55e5106762c2be88d95c3f5dee0f41e9f05c602d208b999ae441bfedc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/result.json",
+      "parent_digest": "1bcb9452078fdce59922af8ae2eddc2317b6e3979550dfa29ce4253161292a63"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/prefill-timings.jsonl",
+      "parent_digest": "0407ae6dcf4694c0cf1bd2f4017f75f7ac140e3fab86f4f956e62bc5b4a9f8c1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/timings.jsonl",
+      "parent_digest": "a3d3aec63fc2b62496eb3866fcaa835c895744675d8bb2deeb4bdd9f1b4e3809"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/result.json",
+      "parent_digest": "2c8961a44d308e8c982ff5dbdb250f70407104aea6e620ee91d6021550653ff1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/prefill-timings.jsonl",
+      "parent_digest": "79dd4219a2b0f49a4bebcf182ed129649ec1d7e7b28122fc1ffbba00ea3bcb83"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/timings.jsonl",
+      "parent_digest": "19ece3227c45bac91ff7d63dc8b2afffac3e7f7158efc4a51c67766ea2d66eea"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/result.json",
+      "parent_digest": "1e57cca9dfec7c96f1aa7dacb7fed2750c087b2fd9a894cf7dde5db66858336e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/prefill-timings.jsonl",
+      "parent_digest": "ab2e0b1a53279ebd9ae2ecd7af46dec6675b5eda7b57c195de9613d9629fbfce"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/timings.jsonl",
+      "parent_digest": "286ffd37e11ff0b2a7bf28d77cf627a0b751341ba2c2b06da9d7e532104c68e8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/result.json",
+      "parent_digest": "8c22c566fce3f6fe1cc3036912e1ad466f2d0ac0ba81b3859da1a7f11c4198ed"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/prefill-timings.jsonl",
+      "parent_digest": "9148f5174643e519109196daeb7040951608641e2621b5362f6a4d9838a22e2a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/timings.jsonl",
+      "parent_digest": "945f0bbeb4f13b91e3a94e201587cd116386d87e15317ff6796ffe753939e3b9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/result.json",
+      "parent_digest": "0289c9fa60eb7dc7267c2bfc97c1e73f7bea5e6837cd661dda8557f3a9b3eec8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/prefill-timings.jsonl",
+      "parent_digest": "4c8f7f8d2ef033ab4715d9a51654c541be30de6bb469bece9bf3d49288153e82"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/timings.jsonl",
+      "parent_digest": "946878e6e7aac74a776e153ef18362bad41613e688bec0c57bea654412d265ad"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/result.json",
+      "parent_digest": "9e0d04c199136841d836bde0cf640a700ad5d282089f3af4dc269ee8f3348999"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/prefill-timings.jsonl",
+      "parent_digest": "916396dba15b434489197b2fc6dd6dd7ed47e7c23e81ec39f5a7125ba375e409"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/timings.jsonl",
+      "parent_digest": "389be1e5709b49372575b5fa81108a4640216ab7c1a96cfe81d7a24f97d58b00"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/result.json",
+      "parent_digest": "4e86b5383f3b78ab67fdb13acb1a5d24728f137d42607a38de81a89fee37d3fe"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/prefill-timings.jsonl",
+      "parent_digest": "05c18d165b1d90e5d082e377443fc5a71f06f26c2bc39a808a21037c4652cf5f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/timings.jsonl",
+      "parent_digest": "d2e448e5d4ac6eaff0f9741f968c80684257b2237883babb8f6a40ea8f4ebb48"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/result.json",
+      "parent_digest": "9c3dc2a88c979ad721b2246fb3af10e32b38ca81459ee5bf6e7d844129d30351"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/prefill-timings.jsonl",
+      "parent_digest": "7522e3d19003897ae20ca9e88623d9a5fbba72c8c9d5b54eee9e369c3fcab0f0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/timings.jsonl",
+      "parent_digest": "d442cc4634d34f5e0af7ab141d3eb465ba85e32e46863784c14dae7015121f0c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/result.json",
+      "parent_digest": "18366de7b31bd6f9b3ff92402df478ba3e0c89e9eb4e59a23f7e73d3e011bfc3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/prefill-timings.jsonl",
+      "parent_digest": "c50f5d900a00f40f59f48bc7ae640bce324b05ede2f1a67bc32bcf35ed5dc7b6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/timings.jsonl",
+      "parent_digest": "d0bf1eaa15b21a44883c3be360cf636ba167206ed5054adeaf60892fbe87cff4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/result.json",
+      "parent_digest": "b1ccb9e3058f8ef5b6e67be8fff907e29cd1f7d987ecb05e58fdc9e2c7adc14b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/prefill-timings.jsonl",
+      "parent_digest": "d0dae7353871356e539a0d55b789082ee60e1327e6a96e7ca2a5d87cfd3376d9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/timings.jsonl",
+      "parent_digest": "5c4dc14e1ed4a458cd946a262cd6fb0da2109c3bd03b0974c1ae6d306976d9a5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/result.json",
+      "parent_digest": "9ac986bda007c0f1cbca77d9e0b76faab2419694e3e86a85a3566d17df1c765a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/prefill-timings.jsonl",
+      "parent_digest": "06bfc51474a890508b91e8c452206735ee68553c568f64c9839345c07c33ded4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/timings.jsonl",
+      "parent_digest": "8dfca3ea909408e1f1a76be2b7261dc393cbc07dc733b1db3ff71296551eefd3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/result.json",
+      "parent_digest": "4ed61fc6befd622a95a19066de72cc3b85e2c01f0f2bb38600487e5bce1a24d6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/prefill-timings.jsonl",
+      "parent_digest": "b46f08317d5ed803743b793a40ef4b944ae217458e17bd5bf906a5475bb14d8d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/timings.jsonl",
+      "parent_digest": "ed4a7b9ef6b441be7647db6d744f42ac55895ba69ca90da022a31f5273541dbb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/result.json",
+      "parent_digest": "2f9323f8a19135574588195714b5920293e6fb262b1a250a6669191e72e8c882"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/prefill-timings.jsonl",
+      "parent_digest": "d52e3c9c31e04b01616cb6d5425d49cc27b91be7bcc248b19dca60549e3a5ffb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/timings.jsonl",
+      "parent_digest": "6780ae7d92896847ed57a7685f8663e39edb0b80b62da94780bd463077258046"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/result.json",
+      "parent_digest": "b4186270e7d035cb9fd7e4abd53d1c679299947a5c0ce5a8f04fe6ecdb6fcf29"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/prefill-timings.jsonl",
+      "parent_digest": "e1739cb1f0c17ec16f427d7f5b29ce5175d4955d4e0f0126028ab2f1d957cadc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/timings.jsonl",
+      "parent_digest": "9b0b408b516641e32a1240d23888cbcea130a4ad916618f2d9bd898458e5b112"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/result.json",
+      "parent_digest": "423f1b9b2638d9e6cfcd97ff52431c77cd229354075ed0f2fffada1819643207"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/prefill-timings.jsonl",
+      "parent_digest": "68fb4db7c675542def311a67408c233f911e08b1aa7e6146340a7d095b73b84d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/timings.jsonl",
+      "parent_digest": "80ce15a971618f294dea566ecb5a282b16097fa439b43a6723bfc06b9fcc708d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/result.json",
+      "parent_digest": "9d1e4a39569d22e95daa0aea922fc7e81e78de42baabfee3aa76a162483aa449"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/prefill-timings.jsonl",
+      "parent_digest": "c310465e811ff4b472611b91bb5fea332809171760b7e586ea94203bda4ec635"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/timings.jsonl",
+      "parent_digest": "8ef4cf3655e4d9a0de2f5c7f6d11c50ab34c375e05b2c415275e767fe7e2226c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/result.json",
+      "parent_digest": "19f7477e8ae5d8c63675cfe144ffa08e6388c8f486e2926b6bc8f82576497b82"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/prefill-timings.jsonl",
+      "parent_digest": "b1f43082e854b8b5884c67d63c3333a86b993f2e5ceef1a613f9326d1e860b42"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/timings.jsonl",
+      "parent_digest": "7185e3114ea69d545a5cc0d6f192c124ffd65b73c8e03122b91d141662f6f2d5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/result.json",
+      "parent_digest": "35e2319ffe1294101445dc437d17e5a5910760aa964c62fc1f93c92f01abb324"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/prefill-timings.jsonl",
+      "parent_digest": "dbb87ad92e039749f075fa0d16124cad5a70dffe13f02369b8fd609e443e26e8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/timings.jsonl",
+      "parent_digest": "ce24fd8987efb9494741ee2625d0563338d2e6aeb83e059e22157e69f8c41af2"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/result.json",
+      "parent_digest": "82a4bb3567396b8b546caa38e011aaac8f44130a5918ad335bd5a42afc2921f0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/prefill-timings.jsonl",
+      "parent_digest": "9ba0b32c63b5d4407ce3be23efe3e2e1231fd9a91f019cac126b4fb0e6fc47d3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/timings.jsonl",
+      "parent_digest": "8c19010fd4da660f1fdb56556ec854c7d125450cc31655ba23c3822868474f13"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/result.json",
+      "parent_digest": "2c491758565d635511e4dd2398bc0f576d245bc2853d152f22e1bcacf16d55d8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/prefill-timings.jsonl",
+      "parent_digest": "d9cebd175b0ebb9bde6b5d807ae05fc7d9af9a175a90eb6dd54be8b9ec7b548d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/timings.jsonl",
+      "parent_digest": "b4805640e3640acf4b948167f86b0c3972724cd6ec4862a87087418596fc3ceb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/result.json",
+      "parent_digest": "67e2f87ceeba5714a7340b567fab387a44f3a807c28e298757007c6a42d6afd8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/prefill-timings.jsonl",
+      "parent_digest": "ca388293d97ccec424a3be44e198687e71f275f9ced20d692cced91c807e017c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/timings.jsonl",
+      "parent_digest": "30835024fbe772f0f8a38d7970126b4d2aa2ee01859e8464e470e579ebc4d88e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/result.json",
+      "parent_digest": "c38fc8cab3590934d15b0c8800eef3b8280d1c95102c7fd1910a2df0874de4a6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/prefill-timings.jsonl",
+      "parent_digest": "c490e462e818b1261cf4838fa62548f7bfe5c1777111e932be8e263cb6e73a23"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/timings.jsonl",
+      "parent_digest": "bbf0657acf31f90d8019a9665b90af193598d986de7ef514432e449eb6d08f12"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/result.json",
+      "parent_digest": "d408630219514264285f24edead472a1a495a9b13f8ebfd91b2030f69179d45f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/prefill-timings.jsonl",
+      "parent_digest": "8d44adcc787d4e7cd0b29cd380c8bfc251e722b74a55d50a212353e2c85cf95d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/timings.jsonl",
+      "parent_digest": "d6682e0750e56f346cd98e34146bbfe09463bd0e89b56fce99ac89c32befdac7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/result.json",
+      "parent_digest": "e03c3f2ae813ee79b817b1b3583f179a3006e000be0fd1aa7bd1229dec749c1d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/prefill-timings.jsonl",
+      "parent_digest": "ebbafe57f2b3d2c9a33d19d88a444d869202afdf2eb0b4f111e28e8bbc07d41a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/timings.jsonl",
+      "parent_digest": "9fc0a7ae99b54762528ee6a8059cbf145416f5b00bf1fa4ca0b50ae5964938c6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/result.json",
+      "parent_digest": "6bc3fe6b0eb16222c8f8b1d0f6d52bf86547a3c3096e304f51a712685369c96e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/prefill-timings.jsonl",
+      "parent_digest": "d80ad024087c931d580cc794bd02f9e25ae3e8ff1184ca1e849a0fc9a514261c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/timings.jsonl",
+      "parent_digest": "a3e740cbefea8c0c9191a83d5df99098ba37897b0c0a4bf7561343f9fcbfd1ae"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/result.json",
+      "parent_digest": "03853cbc86ea848f8a705765c327a746ac4e883857fca61121a136c8f3064f9e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/prefill-timings.jsonl",
+      "parent_digest": "9ac802c6c22b733e6a409899b7baad211c6da12586825f473ed7ae933913c94c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/timings.jsonl",
+      "parent_digest": "ef10467f1f580f5c69b28cb147449adaef398e039d138d173ac89734d9427fa2"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/result.json",
+      "parent_digest": "f6c7b449d71b2ffb486d9202f0fdb20cfbff877339d171fba591f994bd27def0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/prefill-timings.jsonl",
+      "parent_digest": "45279406044f7015c85c605c478df0b7f769736542b35c10e2fb2a017d999f67"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/timings.jsonl",
+      "parent_digest": "5a8c5c8880c871324a545830f4b6618008767ee74520d86eb64721d83bc43cf4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/result.json",
+      "parent_digest": "9b40016e05839a88a4c46d6f791136d368995f1837176fd76f52992923e203bb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/prefill-timings.jsonl",
+      "parent_digest": "b8143b8ad0f735c0cc30bc390acfde2d6ee9069f416caa7986b16f42749a20a0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/timings.jsonl",
+      "parent_digest": "5cf36d7e6fa2a342bbb157f58746f2a4a7514615e137f89751df4b2b1d31e3f3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/result.json",
+      "parent_digest": "4193cfeb19ac9310ba5848091936638f8690cdd5474473c9a7da91b622a81891"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/prefill-timings.jsonl",
+      "parent_digest": "8119bb80761751c973455eda36f4a7cb3b6a9106320145119e4666827296feaa"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/timings.jsonl",
+      "parent_digest": "3c28af3171b581431863e1f4269e24b9489fbf398d3729c4f101e30019edf9ea"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/result.json",
+      "parent_digest": "ba75e1410276ee9051a4ce6ce06fdaf58c38b5b988d742c77d29ad8d82f521f0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/prefill-timings.jsonl",
+      "parent_digest": "f6ebaa0f0432159b7c1fb451bd5c9007e313f94f6a26e11d84ad0c6bbe53c0ed"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/timings.jsonl",
+      "parent_digest": "88788e4b557f99d1231a8aa4fe8936879ae1ad9b0a9ba090be9f939fe53e731a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/result.json",
+      "parent_digest": "895e139ae141013c647af3d4abcbf67fc5867739332474c53a6ebf04a18e32ed"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/prefill-timings.jsonl",
+      "parent_digest": "85f6737c4a63f6222abf1e7285a0eaec79b3d6472fce995c055b84dbf2939059"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/timings.jsonl",
+      "parent_digest": "535230b121d09b41e5dffbd13f61ac050b8791e3a331966fdc42d47109d5de81"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/result.json",
+      "parent_digest": "d58b3ca1fc0219e82ac2394b0d267ddf630f887bb4c9fc6f1791374a80d8fc84"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/prefill-timings.jsonl",
+      "parent_digest": "dd1f0cba143e5f4da5842ec16fdb2496399d8569013a3c771cd35ea54ac29a6a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/timings.jsonl",
+      "parent_digest": "79afa2642bf267505e831a250439e32687492fe8f14ef5584fb9da02d0503839"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/result.json",
+      "parent_digest": "336df404a2c938d3388048a5422a9c699581ab7a5c21f17b84c489672172f408"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/prefill-timings.jsonl",
+      "parent_digest": "3ca7cf9ddd6dee38524de3f60ccaf4ddd0c8c6673250291572440f0ad9148e32"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/timings.jsonl",
+      "parent_digest": "f010d1bb73736c02e3c7a5d1880824659d43773af87287201ebcc4443fa6d4a7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/result.json": {
+      "name": "result.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/result.json",
+      "parent_digest": "290d851e3143a4dbedeb263bf80a850ef97e995abf0a1c06dc41f67eb2fe4e43"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/prefill-timings.jsonl": {
+      "name": "prefill-timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/prefill-timings.jsonl",
+      "parent_digest": "979591ad92fe6b6852c7d8bb257107f87a53df90109189f71f80f884974f1574"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/timings.jsonl": {
+      "name": "timings.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/timings.jsonl",
+      "parent_digest": "8fdce9ecfcf91dcbe13eb56101b2e00bbe1378af8e8197b45774f771bdf05301"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/drm-memory-after_reset.txt",
+      "parent_digest": "b3487e32aef879d463afd9fd51b4218fc8a8de1714b4c19e0af2a35384550179"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/architecture-tradeoff/drm-memory-before_reset.txt",
+      "parent_digest": "9d36594e2da486356bd6e4e58033512c6640a6cb754d46afe77dbf78f8030112"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/drm-memory-after_reset.txt",
+      "parent_digest": "a634cc2dc94cea92355fef9b98af04bda5dd15a371aa2b9bb561c714ad5fc065"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/benchmark-analysis/drm-memory-before_reset.txt",
+      "parent_digest": "84eeb3c9fcdf1418271357804864b379ef0dbb70610f4b3afc21350b5949351b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/drm-memory-after_reset.txt",
+      "parent_digest": "69c9598f57f5167a76b8bf6099a4f1ed74ffe6a5e5da9c87bb52fcf3f13490b9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/bug-report-synthesis/drm-memory-before_reset.txt",
+      "parent_digest": "c6fa4089dd44e33c209611a6cf56249588b9220f9190285c7ab846b2f5f5bc6e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/drm-memory-after_reset.txt",
+      "parent_digest": "3dee45408ef0187b8ccb1bbcfef7061c657353702ae2f5e422214776db73a21b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/code-review/drm-memory-before_reset.txt",
+      "parent_digest": "e81d53c58c5731a5e67c7ae80ac0f9f2a28e1980431e5869cb8bcc16210eeba3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/drm-memory-after_reset.txt",
+      "parent_digest": "05bd0935f80cd3c462ac329638b827fe8066347686d792f2e85cbcdae5894df1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/customer-email/drm-memory-before_reset.txt",
+      "parent_digest": "a5c5a6104be4bc8dd228bf0da110047e43656e01c0ee9928e0ceaa67eb9ad0f9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/drm-memory-after_reset.txt",
+      "parent_digest": "7b7d71708e90618240c225e85b0061e15c082e2ca7b070ed0bf3791f1a5fd555"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/decision-memo/drm-memory-before_reset.txt",
+      "parent_digest": "1cb96d8311d3bdfc54cba32e7656ea64abf77a70af8126203af1ec410668ff54"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/drm-memory-after_view_reset.txt": {
+      "name": "drm-memory-after_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/drm-memory-after_view_reset.txt",
+      "parent_digest": "a1533825510c84a2bb0354c355646114620243bd7cd79bc10af39a8d37c9001e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/drm-memory-before_view_reset.txt": {
+      "name": "drm-memory-before_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/drm-memory-before_view_reset.txt",
+      "parent_digest": "64f1ae1f92ef91dfc0d044b53bcf033ecb35fa5cf825dee2625c5caeb1a2d4fe"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/drm-memory-after_reset.txt",
+      "parent_digest": "642443262e6db27f62e338310b695ebbc665897b1be40503d7f65ef59d209a83"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/incident-retrospective/drm-memory-before_reset.txt",
+      "parent_digest": "4fb27246a7696beb431a101bd06e05db46e0701f079300d3fb4c662b47b3c354"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/drm-memory-after_reset.txt",
+      "parent_digest": "c539b5dd7e10bd237fe4cac2b4639b50b847925d3c3a4c1400fb952da7145815"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/performance-hypotheses/drm-memory-before_reset.txt",
+      "parent_digest": "cc067ea5a00492d95f0ccbc5ef7288a806cd99a5dce007b2a314505aa494530b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/drm-memory-after_reset.txt",
+      "parent_digest": "5344eec0a961eacb36a43cc5b1725e2304cd180d134751ae4b02f2fe516b06cb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/release-plan/drm-memory-before_reset.txt",
+      "parent_digest": "d8ecc7e1ab1ac328184f433c0fd8d4405eb6012e6833497f03851ff62ae6ccfc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/drm-memory-after_reset.txt",
+      "parent_digest": "e13c59c85f06f6f686cddf975deae0192e4e0bdfd1749dc65e7a5bfec5753691"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/risk-register/drm-memory-before_reset.txt",
+      "parent_digest": "549e5b902a77b40a4edfcbc2b7f851bfb498b58265795c03aef6d92dfabd7e44"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/drm-memory-after_reset.txt",
+      "parent_digest": "80cc57dfcd6206b752601feb4b6f4392e815c04cddf48117595d20a4f48ace80"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/sql-debugging/drm-memory-before_reset.txt",
+      "parent_digest": "ad19e6e31c5d3be914ab9812891f34014b594be310e5498755f17dcff5ec6e0c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/drm-memory-after_reset.txt",
+      "parent_digest": "fde61786a6ba0ce69cdad4a1df618544074b8c620ddd23ea8f720955e0464af4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A0/technical-guide/drm-memory-before_reset.txt",
+      "parent_digest": "dae969483276f2ff1be11fcc2eb591864e37e5170537b16517600542b697d06f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/drm-memory-after_reset.txt",
+      "parent_digest": "9e00dde8dd5f8d337e449b95fd62a97333837d6127e818142f7bbcc1b08ff425"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/architecture-tradeoff/drm-memory-before_reset.txt",
+      "parent_digest": "e9027a37034f39b9a06fb231ea2f87b1538d6f0148d6ebe0b88aebe8294cb108"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/drm-memory-after_reset.txt",
+      "parent_digest": "e754b9220044bf675adcaa2108e59b7b960b7ec686ed4da1cd313841f0d45afa"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/benchmark-analysis/drm-memory-before_reset.txt",
+      "parent_digest": "231ec0c714cb668bfe0f953bc0050223eb82d79e952e16e885949ec446dadc2d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/drm-memory-after_reset.txt",
+      "parent_digest": "d88349d9088d245c33be1b6017864b084243dcee629dde56dc3cce409c4ea806"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/bug-report-synthesis/drm-memory-before_reset.txt",
+      "parent_digest": "4925f3453aaaa1a0914b2a965158feac42a1a5650d159b16d526ee6ada735177"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/drm-memory-after_reset.txt",
+      "parent_digest": "972f3728a0d103c00ffb944fb046fecde68e6caecd0ec0dc0db8beaa5649dedb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/code-review/drm-memory-before_reset.txt",
+      "parent_digest": "313254b8f56f0e1063dcc9b73d586912315cb826df8b3f9905862526a6c4cb06"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/drm-memory-after_reset.txt",
+      "parent_digest": "a9c8d1c9483d2d747febe7db3086c3866196b8e241c25239368236cafe5002f5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/customer-email/drm-memory-before_reset.txt",
+      "parent_digest": "6539a53b2ef3ce8c4a68230e109fdbb3ac29133e65dbb77910da79ba3711d69e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/drm-memory-after_reset.txt",
+      "parent_digest": "4d46e32ca588f79cec451cb67f6ebe94236997c564e7eb8793fe1c75d04d4812"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/decision-memo/drm-memory-before_reset.txt",
+      "parent_digest": "df50a4657f339e4746e465768659562747af9dd2d2110d382454612477d9c418"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/drm-memory-after_view_reset.txt": {
+      "name": "drm-memory-after_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/drm-memory-after_view_reset.txt",
+      "parent_digest": "d4982f7c2b61d124e664b1330860eb7a8ba864c42592409964229ec93b135f5a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/drm-memory-before_view_reset.txt": {
+      "name": "drm-memory-before_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/drm-memory-before_view_reset.txt",
+      "parent_digest": "4afa4929c735e044bbd6f2903b97fa6a6d66ec78a034fa82925229e582fdb5d3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/drm-memory-after_reset.txt",
+      "parent_digest": "14cfd993a956070eb36fc34692d687b56f27aeace67e708cbffa58029be822bb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/incident-retrospective/drm-memory-before_reset.txt",
+      "parent_digest": "d7707b5bf8f1bfc141e086277112f082f72f773a7cbf84b9b052faf2f0039d55"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/drm-memory-after_reset.txt",
+      "parent_digest": "7599fa59978453258499767597fb8f3b3411d31748736bd48cd3089731beb101"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/performance-hypotheses/drm-memory-before_reset.txt",
+      "parent_digest": "d03345c27787097eff1353c921653ee9a01dba51adfaac48b7136c9b3548aaa7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/drm-memory-after_reset.txt",
+      "parent_digest": "56afc05fc5b04d6cc746bee942e952c2d17f1be477db95d94131631a297b390f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/release-plan/drm-memory-before_reset.txt",
+      "parent_digest": "56cb5ec30b264c2e2f2fea5529a983f3857c3e9b472d926d2e5f7952bc56471c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/drm-memory-after_reset.txt",
+      "parent_digest": "d8ce38680bbf181d7e6e0e63817358903ac986093fdb8c234ea98235713e0c2c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/risk-register/drm-memory-before_reset.txt",
+      "parent_digest": "205aa5e593e103e5eebc419e88619ac818ed384167c855ad8bbf39d14a5444e7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/drm-memory-after_reset.txt",
+      "parent_digest": "9c618314e03e5137f6439f2cf9a1922751245d0eaa5fcace45b7cb6c3bb3f589"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/sql-debugging/drm-memory-before_reset.txt",
+      "parent_digest": "e4f00a0611643b703928344c3ad99038583584d8deb50c993683625a2a686c1f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/drm-memory-after_reset.txt",
+      "parent_digest": "5537b234b931d5d7b800bbdb758001e705f8c00dbc0fede82abfc4c67e3f6290"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A1/technical-guide/drm-memory-before_reset.txt",
+      "parent_digest": "49f28bfa656e2c4331db35b14cab12387cfd5d8d91b73250090355cdefce3c95"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/drm-memory-after_reset.txt",
+      "parent_digest": "3f3c35ccddeb1253aee1790593963b1c3a419b176def0cf097ecdf8e066a1fe8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/architecture-tradeoff/drm-memory-before_reset.txt",
+      "parent_digest": "6db450ee3bdee92d81579629c55bac11dd7a16cfbfb2c026828d56c9605377d3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/drm-memory-after_reset.txt",
+      "parent_digest": "ce624f4aa4338eb34aa7dc79c764830dbf3d6911bad20bbcd67dd3c9ee8a10e9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/benchmark-analysis/drm-memory-before_reset.txt",
+      "parent_digest": "0617a9c3b1558f93e024064bb4832b2bc3adafa1e866fe9062c33a4fdc1d6db6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/drm-memory-after_reset.txt",
+      "parent_digest": "0581601e2c54e11897ec42ac5e37b2850c1d15cf7db9f590719900a1d5ffe88e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/bug-report-synthesis/drm-memory-before_reset.txt",
+      "parent_digest": "e7bf976ba67c5e77dd72bac18528a7e47789d12ec082ae0f154503ab74df0463"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/drm-memory-after_reset.txt",
+      "parent_digest": "fb7504166414da92f1ddc245a9b933c77ae869ff85435688b926a14601f6db54"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/code-review/drm-memory-before_reset.txt",
+      "parent_digest": "e6a894abb056e0f3a690647634d126bf504cdd7b830e494417aecfbb3ea3f8b6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/drm-memory-after_reset.txt",
+      "parent_digest": "c9067dd3a1fe9f92f35e46bb83d23d5330db15aea24c31189c61723e5d574aec"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/customer-email/drm-memory-before_reset.txt",
+      "parent_digest": "b302cc196fd2846f6228ec2c8bf6a6fcd3cca83d0ecf3fceb43a06f867c0321e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/drm-memory-after_reset.txt",
+      "parent_digest": "49bbccc12d20ac81926906a0cb748e57ab200b5f9b44f129eb5fee2c67210c41"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/decision-memo/drm-memory-before_reset.txt",
+      "parent_digest": "6c04eb2d43d0e3f06ff45dc637025e38ea8289e31dbed562e4472363f3d8e1d9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/drm-memory-after_view_reset.txt": {
+      "name": "drm-memory-after_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/drm-memory-after_view_reset.txt",
+      "parent_digest": "8b832a93d44bcfa6df684235fb632075d4e4f4b5453e2258047b2e84b2761037"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/drm-memory-before_view_reset.txt": {
+      "name": "drm-memory-before_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/drm-memory-before_view_reset.txt",
+      "parent_digest": "7612f5bc7d794d0e357aaaaa8906cfdcb5af5d476a9986f725c57b497ecc7c01"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/drm-memory-after_reset.txt",
+      "parent_digest": "280049319aa51f502dd1cad678dc1429bb5d09dc959dca8a6a2ce0abfaae14d8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/incident-retrospective/drm-memory-before_reset.txt",
+      "parent_digest": "24881453ee2ba3a38d297e93bf83ef5c964e89d83b126d63f59d04b7d57e8603"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/drm-memory-after_reset.txt",
+      "parent_digest": "9a5c19ee3bf2c4b495c7983f1258f9df955011fababaac02b8a20569ef3a0089"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/performance-hypotheses/drm-memory-before_reset.txt",
+      "parent_digest": "ee4e67296db7fa34745b72b3ecd46a55ac73831c3441386e9f34817ee019b0a5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/drm-memory-after_reset.txt",
+      "parent_digest": "ffaca66e536b0de21636bb52dd20332bbfcbdfcb5e2ad2ac99fd47d0fc9c9e56"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/release-plan/drm-memory-before_reset.txt",
+      "parent_digest": "616180ce97f88a4c7bb85b82af11e8c611130e54cc4afcd0905c74c29f7b1f15"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/drm-memory-after_reset.txt",
+      "parent_digest": "8c92b752faf58e5a599fe6b1ca354d45e081e0833a9d3e0baa9de219fce076be"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/risk-register/drm-memory-before_reset.txt",
+      "parent_digest": "8d66eb807a740217fec1b14629e52f7c6b566067fa7abf33a6ab40432cdd657b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/drm-memory-after_reset.txt",
+      "parent_digest": "e51b42163e9f0ccee0395eb6a045e7fc0d87ec120bfa3a84f562bf83c91a728d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/sql-debugging/drm-memory-before_reset.txt",
+      "parent_digest": "6d40016c016f6277ec1623c60d9a37dc8eeee9c0df573822fb6b834d5243969a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/drm-memory-after_reset.txt",
+      "parent_digest": "1e95f0d557b2e7b9a472a1ebf35e69453de6f7d6ffc52b0b755c0b65e11f2fda"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/A2/technical-guide/drm-memory-before_reset.txt",
+      "parent_digest": "3f9ea8371cef5973d59edb58b0eb863c4186c4be3f482c45b415596727c72102"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/drm-memory-after_reset.txt",
+      "parent_digest": "8ce9b76bdf12cc8b43589bb9c2f48853bc1123285b09a6d0ca1b7bfdc0124070"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/architecture-tradeoff/drm-memory-before_reset.txt",
+      "parent_digest": "fb3cb7173333fc5f05229b66a2a0efca2d6534ec00af592c8e2c77d89c4ab95c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/drm-memory-after_reset.txt",
+      "parent_digest": "07fe0e1e75231d18bff57b9d6eb18079c8c03cca5ba2657df85e073fb0455f10"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/benchmark-analysis/drm-memory-before_reset.txt",
+      "parent_digest": "bff7d8c180eef6f3c7e1e964787a45f8b559e8ecf301ab72e5779a35f5866488"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/drm-memory-after_reset.txt",
+      "parent_digest": "141943c4da80e18f494b32aaba828fbadcefae6b710f55a35741f70dff15b7fd"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/bug-report-synthesis/drm-memory-before_reset.txt",
+      "parent_digest": "74f3855728092cb4d03d076aa67c50f9f1c542a5d9c7ecacf1988bf2b5846cfb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/drm-memory-after_reset.txt",
+      "parent_digest": "25c41bb9d3ba51145876b1af87976d5392f2e6a526381c30ec9a996d00a093e1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/code-review/drm-memory-before_reset.txt",
+      "parent_digest": "03ba3174a0603d68ba1f99a9e608f4ee66b56848262b909e816405b2ad2f97e0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/drm-memory-after_reset.txt",
+      "parent_digest": "8e0a792882b0bcd02c01445eadd78d0fde7d6e816e48432710d825c309d4b460"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/customer-email/drm-memory-before_reset.txt",
+      "parent_digest": "fa4aed8cfb021bc1fae422dc686af9f289fdd7a0eb76c595288a7d0d78bb5216"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/drm-memory-after_reset.txt",
+      "parent_digest": "988388c46fb82b51467374101e73f948f7707b412bd429f41677a580f8ad3292"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/decision-memo/drm-memory-before_reset.txt",
+      "parent_digest": "5a13e774746dd0a968ef284a2e13ab2eae5cdc105b3433a56e2566b2a3a2caf6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/drm-memory-after_view_reset.txt": {
+      "name": "drm-memory-after_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/drm-memory-after_view_reset.txt",
+      "parent_digest": "e9dec475632037e82cb1dfc16330b787641661543c60de6e53b4f1af6af07300"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/drm-memory-before_view_reset.txt": {
+      "name": "drm-memory-before_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/drm-memory-before_view_reset.txt",
+      "parent_digest": "5234f90f1b91d1eea53db6e62dcf21cd8f84185543a4c0b6351fb87b88b39c5c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/drm-memory-after_reset.txt",
+      "parent_digest": "2a2ae38522f7d57f7e7bd2aa24c07713cf1cd966ce425f2df29871ee08749a21"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/incident-retrospective/drm-memory-before_reset.txt",
+      "parent_digest": "a265dbb258f6eaccaa7f9df0ba0ef0f77de968c33a8adf61f56c2921c2bedf37"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/drm-memory-after_reset.txt",
+      "parent_digest": "feee20fb561f4080a53bfc2339ed75eea5caf1d56477b9f461763fc84fce44d5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/performance-hypotheses/drm-memory-before_reset.txt",
+      "parent_digest": "67c73cf490f9596091a07588aa422c75c42310e35561c16720feda4bd270c109"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/drm-memory-after_reset.txt",
+      "parent_digest": "4bd695e490911b578ed957bdd2f1e0a87dba99659eea6b311611058beb064cce"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/release-plan/drm-memory-before_reset.txt",
+      "parent_digest": "3fa9e5e8cfac1b448d2720050f8fd6fdf8e1f3fc6ef5fc3f7df5febcac135992"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/drm-memory-after_reset.txt",
+      "parent_digest": "69c5cce4411eb564bff4e7fa9f55dbc987d24ac06f270fe2b689f92bf10fde4f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/risk-register/drm-memory-before_reset.txt",
+      "parent_digest": "0eae9cd89cbccfc7621d4691bdc3c4dff39b018fba947263d86021f6cb237642"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/drm-memory-after_reset.txt",
+      "parent_digest": "bc02159a56e81d9c95553bff5fe2b36ea0fe0b83908c470a42b33d7c949379fb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/sql-debugging/drm-memory-before_reset.txt",
+      "parent_digest": "f62863ff1c75bfad268f0d41bbb5697317c3493c9fb03e3ad60948efa1638284"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/drm-memory-after_reset.txt",
+      "parent_digest": "54c1562d9edfdd23768ae36f123e314985fe2f70d838bbbb72a503e1c98eaba3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B0/technical-guide/drm-memory-before_reset.txt",
+      "parent_digest": "d5cf73defd5f29e029dcf87f4127edeab33464b1db8fc5e4472f4ccce73a6e41"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/drm-memory-after_reset.txt",
+      "parent_digest": "2c8b0a3c023796fbbcb967227c1a400200e0d1ebddf08b11be9bf43f5f3b4ee8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/architecture-tradeoff/drm-memory-before_reset.txt",
+      "parent_digest": "30263521895c98bdba6dacacb927d502e77f58b75226af0a6be90c4e9550e864"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/drm-memory-after_reset.txt",
+      "parent_digest": "376547724d1cf862f4a5bb772ec3d947b22eae9eee66507a94f33846c3915b26"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/benchmark-analysis/drm-memory-before_reset.txt",
+      "parent_digest": "ac37e385421a269cb1213d16a0a09702cf5625be127f8c373a7eda64d71c2837"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/drm-memory-after_reset.txt",
+      "parent_digest": "419307e10de7ca02f079c7b2d5d425dcdf7011c78833479183868114afbd8ad8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/bug-report-synthesis/drm-memory-before_reset.txt",
+      "parent_digest": "53aa4539f35eae49b594140b1cc80e41d14e98db2c5600fc5ab2e3f9f81268d3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/drm-memory-after_reset.txt",
+      "parent_digest": "38082c865506e029a9f233f0809c417023e7dc25319111a1efc7cceb9965cc77"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/code-review/drm-memory-before_reset.txt",
+      "parent_digest": "bc64ca3a2cbbf20412757957fa0cbd4f530b7b81f9c3314a4738cc4d628d22e1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/drm-memory-after_reset.txt",
+      "parent_digest": "ff80b900402761cf3bff91dd49b14d9cfe9e9af06ec9a8b30b69833397078d45"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/customer-email/drm-memory-before_reset.txt",
+      "parent_digest": "1b9220029d845af3d0b86a6ed634ce2436209158a165e62a7c855b105308bbfa"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/drm-memory-after_reset.txt",
+      "parent_digest": "a0e9e40fc0e3636594ae4478c3d11c0de597a2af8a62fdb9864e4051bbcecce3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/decision-memo/drm-memory-before_reset.txt",
+      "parent_digest": "00a7648a76cd28d594bde05bf0b920e5499d2c68889c380fff990c8b7c6818ce"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/drm-memory-after_view_reset.txt": {
+      "name": "drm-memory-after_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/drm-memory-after_view_reset.txt",
+      "parent_digest": "652071d1af8474c71536124978af50a15f3066ce2bff0a69662a5b6bb64c66fd"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/drm-memory-before_view_reset.txt": {
+      "name": "drm-memory-before_view_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/drm-memory-before_view_reset.txt",
+      "parent_digest": "4fe4b0245b73feb4b2294ba80e15b6f2e010b3364c31995dab36c709002ff293"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/drm-memory-after_reset.txt",
+      "parent_digest": "39bccaedd3c7481ef223152c0197c4270b8687bd7f24dd5819b3e2631025522b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/incident-retrospective/drm-memory-before_reset.txt",
+      "parent_digest": "4d9857997a72dd627f24de575419d5851965d6c84f52f8eb0748b933117d91b3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/drm-memory-after_reset.txt",
+      "parent_digest": "9427b2c7e38f080f1037aa33563fbc2f6a7c5340b8b20a625b75fb44b130e77c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/performance-hypotheses/drm-memory-before_reset.txt",
+      "parent_digest": "040e29f2c0d46af482ee6125f49dc1cc16962a5acfac59bf717d7205b83f51bd"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/drm-memory-after_reset.txt",
+      "parent_digest": "5d9c44d020eb22956b42c90a27adc86aaa6a512110d760a830ce17906c449528"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/release-plan/drm-memory-before_reset.txt",
+      "parent_digest": "e19ce4af7840c879d1c0b9d43ed0277da613a8f0b3885064c8562215f0a759ec"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/drm-memory-after_reset.txt",
+      "parent_digest": "c47a2b0e3f2e9bcec438586a09ae03492e70cd5221b56b270a59edaaf37d1daa"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/risk-register/drm-memory-before_reset.txt",
+      "parent_digest": "467bf7de6da0dfc1dcfd549cc16ae6f3b5bfad35d09ad8c3a71315f0bdf479c1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/drm-memory-after_reset.txt",
+      "parent_digest": "dbaf18e70e0cf78d8bb04e4c24b3ad1af3292d8483ac1458a6dd2afda827a845"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/sql-debugging/drm-memory-before_reset.txt",
+      "parent_digest": "67977032217366b1fbb8f28cf3a7e98e99986fc30cdfdd43df3479f085660011"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/drm-memory-after_reset.txt": {
+      "name": "drm-memory-after_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/drm-memory-after_reset.txt",
+      "parent_digest": "77b931f6583bb55ecd25d42b218a15f36a06fe3d44bd1b4211b639609c5ea8a8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/drm-memory-before_reset.txt": {
+      "name": "drm-memory-before_reset.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/B1/technical-guide/drm-memory-before_reset.txt",
+      "parent_digest": "02226a5bc5c244cad101b70c57337df135f9b9fc1b8f7a3ca2df0637d4dbd6ab"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/drm-memory-after_load.txt": {
+      "name": "drm-memory-after_load.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/drm-memory-after_load.txt",
+      "parent_digest": "225b8139bccbbaac3d2aae36873e3a112339adcf2b7f4351b765de379ce2c6f8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/drm-memory-before_load.txt": {
+      "name": "drm-memory-before_load.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/drm-memory-before_load.txt",
+      "parent_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/drm-memory-end.txt": {
+      "name": "drm-memory-end.txt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/run/run/drm-memory-end.txt",
+      "parent_digest": "a76f23631718c15c335cd5a74b7a168bd701dfddb551b61cfb253525252e663a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/summary.json": {
+      "name": "summary.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/summary.json",
+      "parent_digest": "3ac7f4aba00f75237d77ddff17c5b82af5d7103de7f4313685047b90d15fa7ed"
+    },
+    "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/window.json": {
+      "name": "window.json",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/screen/evidence/card0-58c23-v5-a/resident/WSCREEN/window.json",
+      "parent_digest": "fd494904a32cc9263d4dd8006e75cd179189d556a22dd396716f57612111f2b6"
+    },
+    "scripts/packet58_onecard_record_threshold.json": {
+      "name": "packet58_onecard_record_threshold.json",
+      "parent_relpath": "scripts/packet58_onecard_record_threshold.json",
+      "parent_digest": "2db5d4a92b70afc7287fcae1349c085532afe0c5866e14c70ae5f981355cbdfe"
+    }
+  },
+  "verified_at_gate_run": {
+    "passed": true,
+    "rates": [
+      35.89239775457983,
+      36.54557450233753,
+      35.928542461824385,
+      36.5693526068784,
+      35.924936571926665
+    ],
+    "minimum_gain": 0.017173867856419948,
+    "drift": 0.00010037289531466569,
+    "fills": [
+      15.449,
+      13.457,
+      15.449,
+      13.457,
+      15.449
+    ],
+    "drm_peak": 29988990976,
+    "files": 330
+  }
+}

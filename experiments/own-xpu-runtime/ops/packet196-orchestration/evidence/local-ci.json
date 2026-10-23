@@ -1,0 +1,429 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "workflow_sha256": "230e056d93a800d77b7bb870b7fdafbab95c5eac9c48cab9f0cb193fa2a6b694",
+  "commands_executed": 46,
+  "all_tracked_after_staging": true,
+  "ordinary_rows": [
+    {
+      "step": 1,
+      "command": "python3 tools/validate-repro-guides.py",
+      "returncode": 0,
+      "seconds": 1.11,
+      "log": "/tmp/p196-ci-20261023/01.log",
+      "free_before_bytes": 28561027072,
+      "free_after_bytes": 28561014784
+    },
+    {
+      "step": 2,
+      "command": "node --test tools/test_guides_browser.cjs",
+      "returncode": 0,
+      "seconds": 0.373,
+      "log": "/tmp/p196-ci-20261023/02.log",
+      "free_before_bytes": 28561010688,
+      "free_after_bytes": 28561006592
+    },
+    {
+      "step": 3,
+      "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "returncode": 0,
+      "seconds": 1.319,
+      "log": "/tmp/p196-ci-20261023/03.log",
+      "free_before_bytes": 28561006592,
+      "free_after_bytes": 28560998400
+    },
+    {
+      "step": 4,
+      "command": "python3 tools/validate-recipe-publication.py",
+      "returncode": 0,
+      "seconds": 6.294,
+      "log": "/tmp/p196-ci-20261023/04.log",
+      "free_before_bytes": 28560998400,
+      "free_after_bytes": 28560994304
+    },
+    {
+      "step": 5,
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "returncode": 0,
+      "seconds": 0.426,
+      "log": "/tmp/p196-ci-20261023/05.log",
+      "free_before_bytes": 28560994304,
+      "free_after_bytes": 28560990208
+    },
+    {
+      "step": 6,
+      "command": "python3 tools/sync-public-result-summary.py --check",
+      "returncode": 0,
+      "seconds": 0.027,
+      "log": "/tmp/p196-ci-20261023/06.log",
+      "free_before_bytes": 28560990208,
+      "free_after_bytes": 28560986112
+    },
+    {
+      "step": 7,
+      "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "returncode": 0,
+      "seconds": 0.052,
+      "log": "/tmp/p196-ci-20261023/07.log",
+      "free_before_bytes": 28560986112,
+      "free_after_bytes": 28560982016
+    },
+    {
+      "step": 8,
+      "command": "python3 tools/build-family-pages.py --check",
+      "returncode": 0,
+      "seconds": 0.353,
+      "log": "/tmp/p196-ci-20261023/08.log",
+      "free_before_bytes": 28560982016,
+      "free_after_bytes": 28560977920
+    },
+    {
+      "step": 9,
+      "command": "python3 -m unittest tools/test_build_family_pages.py",
+      "returncode": 0,
+      "seconds": 1.73,
+      "log": "/tmp/p196-ci-20261023/09.log",
+      "free_before_bytes": 28560977920,
+      "free_after_bytes": 28560973824
+    },
+    {
+      "step": 10,
+      "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "returncode": 0,
+      "seconds": 0.072,
+      "log": "/tmp/p196-ci-20261023/10.log",
+      "free_before_bytes": 28560973824,
+      "free_after_bytes": 28560969728
+    },
+    {
+      "step": 11,
+      "command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.027,
+      "log": "/tmp/p196-ci-20261023/11.log",
+      "free_before_bytes": 28560969728,
+      "free_after_bytes": 28560965632
+    },
+    {
+      "step": 12,
+      "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "returncode": 0,
+      "seconds": 0.53,
+      "log": "/tmp/p196-ci-20261023/12.log",
+      "free_before_bytes": 28560965632,
+      "free_after_bytes": 28560961536
+    },
+    {
+      "step": 13,
+      "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.033,
+      "log": "/tmp/p196-ci-20261023/13.log",
+      "free_before_bytes": 28560961536,
+      "free_after_bytes": 28560957440
+    },
+    {
+      "step": 14,
+      "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "returncode": 0,
+      "seconds": 1.127,
+      "log": "/tmp/p196-ci-20261023/14.log",
+      "free_before_bytes": 28560953344,
+      "free_after_bytes": 28560949248
+    },
+    {
+      "step": 15,
+      "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "returncode": 0,
+      "seconds": 0.359,
+      "log": "/tmp/p196-ci-20261023/15.log",
+      "free_before_bytes": 28560949248,
+      "free_after_bytes": 28560945152
+    },
+    {
+      "step": 16,
+      "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.024,
+      "log": "/tmp/p196-ci-20261023/16.log",
+      "free_before_bytes": 28560945152,
+      "free_after_bytes": 28560941056
+    },
+    {
+      "step": 17,
+      "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "/tmp/p196-ci-20261023/17.log",
+      "free_before_bytes": 28560941056,
+      "free_after_bytes": 28560936960
+    },
+    {
+      "step": 18,
+      "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "returncode": 0,
+      "seconds": 0.071,
+      "log": "/tmp/p196-ci-20261023/18.log",
+      "free_before_bytes": 28560936960,
+      "free_after_bytes": 28560932864
+    },
+    {
+      "step": 19,
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "returncode": 0,
+      "seconds": 3.181,
+      "log": "/tmp/p196-ci-20261023/19.log",
+      "free_before_bytes": 28560932864,
+      "free_after_bytes": 28560928768
+    },
+    {
+      "step": 20,
+      "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "returncode": 0,
+      "seconds": 0.092,
+      "log": "/tmp/p196-ci-20261023/20.log",
+      "free_before_bytes": 28560928768,
+      "free_after_bytes": 28560924672
+    },
+    {
+      "step": 21,
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "returncode": 0,
+      "seconds": 1.889,
+      "log": "/tmp/p196-ci-20261023/21.log",
+      "free_before_bytes": 28560924672,
+      "free_after_bytes": 28560920576
+    },
+    {
+      "step": 22,
+      "command": "python3 -m unittest tools/test_build_model_pages.py",
+      "returncode": 0,
+      "seconds": 0.115,
+      "log": "/tmp/p196-ci-20261023/22.log",
+      "free_before_bytes": 28560920576,
+      "free_after_bytes": 28560916480
+    },
+    {
+      "step": 23,
+      "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "returncode": 0,
+      "seconds": 0.287,
+      "log": "/tmp/p196-ci-20261023/23.log",
+      "free_before_bytes": 28560916480,
+      "free_after_bytes": 28560912384
+    },
+    {
+      "step": 24,
+      "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "returncode": 0,
+      "seconds": 0.075,
+      "log": "/tmp/p196-ci-20261023/24.log",
+      "free_before_bytes": 28560912384,
+      "free_after_bytes": 28560908288
+    },
+    {
+      "step": 25,
+      "command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+      "returncode": 0,
+      "seconds": 0.042,
+      "log": "/tmp/p196-ci-20261023/25.log",
+      "free_before_bytes": 28560908288,
+      "free_after_bytes": 28560904192
+    },
+    {
+      "step": 26,
+      "command": "python3 tools/extract-fp8-one-launch-prefill.py",
+      "returncode": 0,
+      "seconds": 0.061,
+      "log": "/tmp/p196-ci-20261023/26.log",
+      "free_before_bytes": 28560904192,
+      "free_after_bytes": 28560900096
+    },
+    {
+      "step": 27,
+      "command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+      "returncode": 0,
+      "seconds": 0.097,
+      "log": "/tmp/p196-ci-20261023/27.log",
+      "free_before_bytes": 28560900096,
+      "free_after_bytes": 28560896000
+    },
+    {
+      "step": 28,
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+      "returncode": 0,
+      "seconds": 0.078,
+      "log": "/tmp/p196-ci-20261023/28.log",
+      "free_before_bytes": 28560891904,
+      "free_after_bytes": 28560887808
+    },
+    {
+      "step": 29,
+      "command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+      "returncode": 0,
+      "seconds": 0.047,
+      "log": "/tmp/p196-ci-20261023/29.log",
+      "free_before_bytes": 28560887808,
+      "free_after_bytes": 28560883712
+    },
+    {
+      "step": 30,
+      "command": "python3 tools/build-model-pages.py",
+      "returncode": 0,
+      "seconds": 0.075,
+      "log": "/tmp/p196-ci-20261023/30.log",
+      "free_before_bytes": 28560883712,
+      "free_after_bytes": 28557594624
+    },
+    {
+      "step": 31,
+      "command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "returncode": 0,
+      "seconds": 0.245,
+      "log": "/tmp/p196-ci-20261023/31.log",
+      "free_before_bytes": 28557594624,
+      "free_after_bytes": 28557594624
+    },
+    {
+      "step": 32,
+      "command": "python3 tools/check-doc-links.py",
+      "returncode": 0,
+      "seconds": 0.257,
+      "log": "/tmp/p196-ci-20261023/32.log",
+      "free_before_bytes": 28557594624,
+      "free_after_bytes": 28557590528
+    },
+    {
+      "step": 34,
+      "command": "python3 -m unittest tools/test_check_doc_links.py",
+      "returncode": 0,
+      "seconds": 1.177,
+      "log": "/tmp/p196-ci-20261023/34.log",
+      "free_before_bytes": 28557590528,
+      "free_after_bytes": 28557586432
+    },
+    {
+      "step": 35,
+      "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "returncode": 0,
+      "seconds": 0.374,
+      "log": "/tmp/p196-ci-20261023/35.log",
+      "free_before_bytes": 28557586432,
+      "free_after_bytes": 28557574144
+    },
+    {
+      "step": 36,
+      "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "returncode": 0,
+      "seconds": 1.651,
+      "log": "/tmp/p196-ci-20261023/36.log",
+      "free_before_bytes": 28557574144,
+      "free_after_bytes": 28557570048
+    },
+    {
+      "step": 37,
+      "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.744,
+      "log": "/tmp/p196-ci-20261023/37.log",
+      "free_before_bytes": 28557570048,
+      "free_after_bytes": 28557565952
+    },
+    {
+      "step": 38,
+      "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.211,
+      "log": "/tmp/p196-ci-20261023/38.log",
+      "free_before_bytes": 28557565952,
+      "free_after_bytes": 28557561856
+    },
+    {
+      "step": 39,
+      "command": "python3 -B tools/test-restore-source-archives.py",
+      "returncode": 0,
+      "seconds": 0.125,
+      "log": "/tmp/p196-ci-20261023/39.log",
+      "free_before_bytes": 28557561856,
+      "free_after_bytes": 28557557760
+    },
+    {
+      "step": 40,
+      "command": "python3 -m unittest tools/test_xccl_probe.py",
+      "returncode": 0,
+      "seconds": 0.059,
+      "log": "/tmp/p196-ci-20261023/40.log",
+      "free_before_bytes": 28557557760,
+      "free_after_bytes": 28557553664
+    },
+    {
+      "step": 41,
+      "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "returncode": 0,
+      "seconds": 0.088,
+      "log": "/tmp/p196-ci-20261023/41.log",
+      "free_before_bytes": 28557553664,
+      "free_after_bytes": 28557549568
+    },
+    {
+      "step": 42,
+      "command": "python3 tools/check-manifest-paths.py",
+      "returncode": 0,
+      "seconds": 0.1,
+      "log": "/tmp/p196-ci-20261023/42.log",
+      "free_before_bytes": 28557549568,
+      "free_after_bytes": 28557545472
+    },
+    {
+      "step": 43,
+      "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "returncode": 0,
+      "seconds": 0.539,
+      "log": "/tmp/p196-ci-20261023/43.log",
+      "free_before_bytes": 28557541376,
+      "free_after_bytes": 28557537280
+    },
+    {
+      "step": 44,
+      "command": "pip install --quiet pyyaml",
+      "status": "satisfied-prerequisite",
+      "reason": "PyYAML already installed",
+      "version": "6.0.1"
+    },
+    {
+      "step": 45,
+      "command": "python3 tools/check-container-packet.py",
+      "returncode": 0,
+      "seconds": 0.101,
+      "log": "/tmp/p196-ci-20261023/45.log",
+      "free_before_bytes": 28557537280,
+      "free_after_bytes": 28557529088
+    },
+    {
+      "step": 46,
+      "command": "python3 -m unittest tools/test_check_container_packet.py",
+      "returncode": 0,
+      "seconds": 0.29,
+      "log": "/tmp/p196-ci-20261023/46.log",
+      "free_before_bytes": 28557529088,
+      "free_after_bytes": 28557524992
+    },
+    {
+      "step": 47,
+      "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "returncode": 0,
+      "seconds": 0.216,
+      "log": "/tmp/p196-ci-20261023/47.log",
+      "free_before_bytes": 28557524992,
+      "free_after_bytes": 28557520896
+    }
+  ],
+  "tracked_links": {
+    "passed": true,
+    "log": "/tmp/p196-ci-20261023/33-final.log",
+    "summary": [
+      "checked 7494 documents, 0 new broken repository-relative link(s) in 0 file(s), 907 known-broken",
+      "140 unverified host/template reference(s); 0 unreadable document(s)"
+    ]
+  }
+}
