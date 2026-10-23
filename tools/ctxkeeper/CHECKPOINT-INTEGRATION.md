@@ -189,3 +189,57 @@ evidence. Both steps together: messages → text → the exact token prefix a ch
 this host from the pinned header alone. Nothing on the parity side is open; the adapter's parking policy in
 ctxkeeper is next.
 
+
+## Step 3 done, 2026-10-23 01:20 EDT: prompt + generated ids is the next turn's prefix, 50/60 exact; the 10 misses are one trimmed tail token
+
+A parked session's checkpoint holds the engine's token history, the prompt ids followed by the ids it generated.
+The next request is rendered from messages, so a restore needs that history to be an exact prefix of the new
+rendering. `experiments/own-xpu-runtime/integration/continuation_parity.py` checks it on every one-card device
+run that recorded generated ids (packets 178, 179, 180, 181: five runs, 12 prompts each, fixed 512-token greedy
+generations): decode the generated ids with the pinned tokenizer and the header vocabulary, render
+[user: raw prompt, assistant: decoded reply, user: "Continue."] with the pinned template, tokenize, compare.
+Receipt `integration/receipts/continuation-parity-20261023.json`.
+
+- **50/60 requests exact; 29,905 of 29,915 generated ids reproduced in place.** Re-tokenizing the decoded reply
+  gives the generated ids back everywhere, and the template's stored-assistant rendering (`<think>\n\n</think>\n\n`
+  + content) matches the opener the engine generated after.
+- **The 10 misses are two prompts (release-plan, technical-guide) in all five runs, each losing exactly the last
+  generated id:** a `\n` or `\n\n` token at the cut-off point of the 512-token generation, which the template's
+  `|trim` on stored assistant content removes. A fixed-length generation ends mid-text, so this is the
+  cut-off artefact of the measurement, not a property of finished replies.
+- **Finished replies on the agent stream:** of the 2,580 assistant messages the client re-sent as history in
+  campaign 55 (both seeds), 0 end or start with whitespace. The raw engine output is not logged there, so a
+  reply that the engine ended with whitespace before `<|im_end|>` and the client stripped is not excluded by this
+  count; such a reply re-prefills under the policy below (the saved history would not be a prefix), it never
+  restores wrongly.
+
+Parity is therefore closed for the one-card runtime at this template and tokenizer: messages → text → ids
+(steps 1 and 2), and ids held by the engine → the next request's prefix (step 3), all reproducible on this host
+from the pinned header. Whitespace at the end of a reply is the one known way the prefix breaks, and it costs a
+re-prefill, not an error.
+
+## Piece 3 built, 2026-10-23 01:30 EDT: the parking policy, CPU-tested, not yet wired into the request path
+
+`tools/ctxkeeper/parking.py` (stdlib, 13 tests in `test_parking.py`) is ctxkeeper's side of §9 of the contract,
+behind an `Engine` interface that mirrors the four operations plus the running engine's identity, so the
+four-card host's request front can be dropped in when it exists. What it fixes:
+
+- **Identity by token prefix.** A parked session's checkpoint id is derived from the sha256 of its token ids
+  (rendered with the pinned template, tokenized with the pinned tokenizer; both injected), never from the JSON
+  messages. Two message lists that render to the same tokens share an id; the same JSON under a different
+  template does not.
+- **Before a request:** `inspect` the session's checkpoint (no device), check model identity, engine identity
+  and the qualified label against the running engine, then check that the saved history is an exact prefix of
+  the new rendering (length and `tokens_sha256`). Only then `restore` and append the delta. Any other case,
+  including a notes cut or edit inside the saved prefix, a shorter prompt or a trimmed reply tail, is a
+  **prefill** with the named reason, and the stale checkpoint is deleted. There is no approximate restore.
+- **Parking:** one checkpoint per session, saved at the end of a turn as prompt ids + generated ids; a re-park
+  of the same prefix saves nothing; the earlier checkpoint is deleted after the new one is visible.
+- **Eviction:** the total parked bytes (from the manifests' blob sizes, which `inspect` provides) stay under a
+  budget by deleting the least recently used sessions' checkpoints; the session just parked is never evicted;
+  a checkpoint the runtime reports `in_use` is skipped and, if it was being dropped, retried on the next pass.
+- `FakeEngine` models the contract's fail-closed semantics (identity checks, exact prefix extension, `in_use`
+  on delete during a restore) so the tests exercise the policy against the same refusals the engine gives.
+
+The boundary stands: ctxkeeper's request path does not call these operations; CONVERSATIONS.md's journal is
+unchanged. Wiring needs piece 1 (the request front) and, for the two-card lane, the TP2 decision of §10.

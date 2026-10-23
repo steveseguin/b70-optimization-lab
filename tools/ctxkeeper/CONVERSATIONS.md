@@ -135,6 +135,10 @@ checkpoint lifecycle, tokenizer/template identity and a capability/qualification
 signal. Its first design targets a 4,096-token TP1 configuration. That does not
 qualify the 32K ctxkeeper configuration or any restoration speed claim.
 
+The parking policy that will sit between this journal and those operations is
+written and CPU-tested as `parking.py` (see CHECKPOINT-INTEGRATION.md, piece 3);
+the request path does not call it yet.
+
 This implementation is covered by CPU/scripted-model tests, including restart,
 failure, concurrent sessions, tool calls and multimodal JSON. No GPU restore or
 new model-quality/performance benchmark is claimed.

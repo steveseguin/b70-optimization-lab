@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 22, 23:35 EDT — Session-swap parity step 3 (engine history → next turn's prefix) 50/60 exact, misses = one trimmed tail token; parking policy built and CPU-tested.**
+`integration/continuation_parity.py` on the five one-card device runs with recorded generated ids (packets 178-181, 12 prompts each, 512-token
+greedy): decoded reply re-rendered as a stored assistant turn and re-tokenized reproduces 29,905/29,915 generated ids in place; the 10 misses are
+two prompts × 5 runs each losing exactly the last id, a `\n`/`\n\n` at the cut-off that the template's `|trim` removes (a fixed-length artefact; of
+campaign 55's 2,580 re-sent assistant messages, 0 end or start with whitespace). Parity closed on this host from the pinned header. Piece 3 of the
+adapter, `tools/ctxkeeper/parking.py` (stdlib, 13 tests): checkpoint id = sha of the token prefix, restore only when inspect's identity/label pass
+and the saved history is an exact prefix of the new rendering, else prefill with a named reason and the stale checkpoint deleted; one checkpoint per
+session (prompt + generated ids), LRU eviction under a byte budget, in_use never deleted. Not wired into the request path (needs the four-card host's
+request front). Receipt `integration/receipts/continuation-parity-20261023.json`; CHECKPOINT-INTEGRATION.md steps 3 and piece 3. Cards empty.
+
 **October 22, 23:29 EDT — Session-swap parity step 2 DONE (messages → text, 12/12) from the pinned GGUF header itself; the HF template copy was the wrong one.**
 Shard 1 of the runtime's model is 10.9 MB of header, so it was fetched at the pinned revision (file 268f81fd…, header 7c1460a9…, both equal to the
 admission receipt) and `tokenizer.chat_template` read out of it (9,993 chars, sha 12827f24… = the sealed prompt manifest's pin), saved as
