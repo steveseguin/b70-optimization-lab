@@ -1,0 +1,241 @@
+{
+  "schema": "packet192.issue-floor-report.v1",
+  "diagnostic_only": true,
+  "model_output_claim": false,
+  "speed_claim": false,
+  "passed": true,
+  "kills": [],
+  "warnings": [],
+  "verdict": "measured",
+  "gateup_verdict": "instruction-issue bound: only an instruction diet can move the class",
+  "down_verdict": "instruction-issue bound: only an instruction diet can move the class",
+  "kernels": {
+    "gateup": {
+      "strata": {
+        "cold": {
+          "n": 15360,
+          "median_ns": 73750.0,
+          "p10_ns": 73229,
+          "p90_ns": 74271,
+          "mean_ns": 73747.76282552084,
+          "min_ns": 72291,
+          "max_ns": 93438,
+          "pass_median_ns": [
+            73750.0,
+            73646.0
+          ],
+          "pass_disagreement": 0.0014121608777122993,
+          "p90_over_median": 1.007064406779661,
+          "median_us": 73.75
+        },
+        "warm": {
+          "n": 400,
+          "median_ns": 46354.0,
+          "p10_ns": 46145,
+          "p90_ns": 46666,
+          "mean_ns": 46394.055,
+          "min_ns": 45833,
+          "max_ns": 65625,
+          "pass_median_ns": [
+            46354.0,
+            46250.0
+          ],
+          "pass_disagreement": 0.0022486486486486485,
+          "p90_over_median": 1.0067308107175217,
+          "median_us": 46.354
+        },
+        "warm-real-layer0": {
+          "n": 400,
+          "median_ns": 46145.0,
+          "p10_ns": 45937,
+          "p90_ns": 46355,
+          "mean_ns": 46132.2875,
+          "min_ns": 45729,
+          "max_ns": 47187,
+          "pass_median_ns": [
+            46146.0,
+            46042.0
+          ],
+          "pass_disagreement": 0.002258807176056644,
+          "p90_over_median": 1.0045508722505148,
+          "median_us": 46.145
+        },
+        "warm-real-layer24": {
+          "n": 400,
+          "median_ns": 46250.0,
+          "p10_ns": 46041,
+          "p90_ns": 46562,
+          "mean_ns": 46248.96,
+          "min_ns": 45833,
+          "max_ns": 46875,
+          "pass_median_ns": [
+            46250.0,
+            46250.0
+          ],
+          "pass_disagreement": 0.0,
+          "p90_over_median": 1.006745945945946,
+          "median_us": 46.25
+        },
+        "noload": {
+          "n": 400,
+          "median_ns": 44687.0,
+          "p10_ns": 44479,
+          "p90_ns": 44896,
+          "mean_ns": 44695.5925,
+          "min_ns": 44167,
+          "max_ns": 45416,
+          "pass_median_ns": [
+            44687.0,
+            44687.0
+          ],
+          "pass_disagreement": 0.0,
+          "p90_over_median": 1.0046769754067177,
+          "median_us": 44.687
+        }
+      },
+      "ratios": {
+        "warm_over_cold": 0.628528813559322,
+        "noload_over_warm": 0.964037623506062,
+        "noload_over_cold": 0.6059254237288135,
+        "real_layer0_over_warm": 0.9954912197437115,
+        "real_layer24_over_warm": 0.9977563964274928
+      },
+      "noload_vs_warm_gap": 0.03596237649393796,
+      "verdict": "instruction-issue bound: only an instruction diet can move the class",
+      "decomposition_us": {
+        "dram_us": 27.396,
+        "load_latency_us": 1.667,
+        "issue_us": 44.687,
+        "floor_us": 20.079925512104282,
+        "excess_over_floor_us": 53.67007448789572
+      },
+      "follow_on_bars_us": {
+        "exp-diet": {
+          "target": "<= 0.85 x production in both A/B orders and every stratum (packet100 gate)",
+          "cold_bar_us": 62.6875,
+          "warm_bar_us": 39.4009,
+          "counted_against": "kernel"
+        },
+        "exp-act-epilogue": {
+          "target": "<= 0.85 x production in both A/B orders and every stratum (packet100 gate)",
+          "cold_bar_us": 67.29173750000001,
+          "warm_bar_us": 44.0051375,
+          "counted_against": "kernel + expsact launch"
+        }
+      }
+    },
+    "down": {
+      "strata": {
+        "cold": {
+          "n": 15360,
+          "median_ns": 45938.0,
+          "p10_ns": 45417,
+          "p90_ns": 46667,
+          "mean_ns": 46024.21790364583,
+          "min_ns": 44271,
+          "max_ns": 49480,
+          "pass_median_ns": [
+            45938.0,
+            46041.0
+          ],
+          "pass_disagreement": 0.002242152466367713,
+          "p90_over_median": 1.015869215028952,
+          "median_us": 45.938
+        },
+        "warm": {
+          "n": 400,
+          "median_ns": 33750.0,
+          "p10_ns": 33646,
+          "p90_ns": 33958,
+          "mean_ns": 33795.845,
+          "min_ns": 33541,
+          "max_ns": 34479,
+          "pass_median_ns": [
+            33750.0,
+            33750.0
+          ],
+          "pass_disagreement": 0.0,
+          "p90_over_median": 1.006162962962963,
+          "median_us": 33.75
+        },
+        "noload": {
+          "n": 400,
+          "median_ns": 33333.0,
+          "p10_ns": 33229,
+          "p90_ns": 33438,
+          "mean_ns": 33345.855,
+          "min_ns": 33229,
+          "max_ns": 33854,
+          "pass_median_ns": [
+            33333.0,
+            33333.0
+          ],
+          "pass_disagreement": 0.0,
+          "p90_over_median": 1.003150031500315,
+          "median_us": 33.333
+        }
+      },
+      "ratios": {
+        "warm_over_cold": 0.7346858809700031,
+        "noload_over_warm": 0.9876444444444444,
+        "noload_over_cold": 0.7256084287517959
+      },
+      "noload_vs_warm_gap": 0.012355555555555555,
+      "verdict": "instruction-issue bound: only an instruction diet can move the class",
+      "decomposition_us": {
+        "dram_us": 12.188,
+        "load_latency_us": 0.417,
+        "issue_us": 33.333,
+        "floor_us": 17.28148975791434,
+        "excess_over_floor_us": 28.656510242085663
+      },
+      "follow_on_bars_us": {
+        "down-diet": {
+          "target": "<= 0.85 x production in both A/B orders and every stratum (packet100 gate)",
+          "cold_bar_us": 39.0473,
+          "warm_bar_us": 28.6875,
+          "counted_against": "kernel"
+        }
+      }
+    }
+  },
+  "layer_equivalent_us": {
+    "gateup_cold_us": 73.75,
+    "down_cold_us": 45.938,
+    "class_cold_us": 119.688,
+    "class_floor_us": 37.361415270018625,
+    "act_us_packet110": 5.41675,
+    "note": "one launch of each kernel per layer (both ranks run the same kernels); the activation launch is separate (packet110 expsact)"
+  },
+  "cross_checks": {
+    "gateup_warm_real_layer0_over_packet162b": 0.9553830227743273,
+    "down_cold_over_packet100b_tile16": 0.9977628635346757,
+    "parent_datums_us": {
+      "gateup_warm_real": 48.3,
+      "down_cold_tile16": 46.041
+    }
+  },
+  "rule": {
+    "issue_band": 0.1,
+    "latency_ratio": 0.75,
+    "drift_limit": 0.1,
+    "disturbance_limit": 1.5,
+    "follow_on_ratio": 0.85,
+    "source": "Expert kernel-floor study 2026-10-23 (coordinator ruling), packet100 micro gate 0.85, packet141 10 % control rule"
+  },
+  "identity": {
+    "route_count": 384,
+    "cold_repeats": 20,
+    "warm_repeats": 200,
+    "passes": 2,
+    "warmups_excluded": 5,
+    "identity_as_proposed": true,
+    "proposed": {
+      "cold_repeats": 20,
+      "warm_repeats": 200
+    },
+    "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+    "device_peak_bytes": 1108913360
+  },
+  "samples_sha256": "d96211e7ff3bfd8d8750296bc2b95c106ecd002c8e04bd5dfdcbd4f2c330b58e"
+}

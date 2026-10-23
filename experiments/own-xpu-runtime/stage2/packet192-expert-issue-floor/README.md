@@ -1,5 +1,7 @@
 # Packet192: expert-kernel issue-floor decomposition (lane-B micro, measurement only)
 
+**Status (2026-10-23 03:40 UTC): device-measured on lane B (unit lanequeue-B38, 03:33-03:34 UTC): both record expert kernels are instruction-issue bound (no-load within 1-4 % of L2-warm; gate/up 73.75/46.35/44.69 µs cold/warm/no-load, down 45.94/33.75/33.33); the instruction-diet follow-on is packet193 with the ≤ 0.85× bars in `evidence/issue-floor-B1/s192_report.md`.**
+
 CPU preparation is complete; **no GPU ran, nothing is queued, no speed or model-output claim exists.**
 One proposed lane-B micro row (`ops/lane-queue/proposed-p192-micro-B.txt`, PROPOSAL ONLY) measures
 the two record expert kernels in three strata each and reports which bound binds. It is the

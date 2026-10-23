@@ -71,3 +71,11 @@ final-checks.json, final-pin-guard.json, READY-FOR-DEVICE.json (written last).
   384/20/200/2 identity on the device stream and the analysis records `identity_as_proposed`.
 * Parent inputs (routes, real rows, parent streams) are read in place and verified by digest; the
   only copy is the 16 KB route JSON derived from `routes.bin` (the sandbox can read JSON, not .bin).
+
+## Device result (2026-10-23, lane B card 2, unit lanequeue-B38, 03:33-03:34 UTC): instruction-issue bound
+
+**Measured 2026-10-23 (lane B, card 2, lanequeue-B38, 03:33-03:34 UTC, 34 s on device): both kernels instruction-issue bound.** gate/up cold 73.75 / warm 46.35 / no-load 44.69 µs (warm/cold 0.629, no-load/warm 0.964); down cold 45.94 / warm 33.75 / no-load 33.33 (0.735, 0.988); layer-equivalent cold 119.69 µs vs the 37.36 µs copy floor; no kill rule fired; cross-checks vs packet100b/162b within tolerance. Follow-on bars (≤ 0.85× production in both strata): exp-diet cold 62.69 / warm 39.40; exp-act-epilogue cold 67.29 / warm 44.01 (kernel + expsact launch); down-diet cold 39.05 / warm 28.69 → packet193. Evidence `evidence/issue-floor-B1/`.
+
+Reading: the no-load stratum (every row pointer aliased to one L1-resident slab) runs within 1-4 % of the L2-warm stratum for both kernels, so the warm kernels are bound by instruction issue, not by load latency; register-free LSC prefetch is therefore not the candidate. The cold strata add a real DRAM term on top (gate/up +27 µs, down +12 µs over warm), larger than the study assumed from the in-model class numbers, which carry partial L2 reuse. Only an exact instruction diet can move the class; packet193 builds `exp-diet`, `down-diet` and `exp-act-epilogue` with byte-identity proofs on CPU before a lane-B micro.
+
+Window receipts: `lineage/window-20261023/`; endpoints restored as `*-20261023-restore18`; PAUSE-A untouched, PAUSE-B re-armed.

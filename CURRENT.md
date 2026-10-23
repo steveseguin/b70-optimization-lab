@@ -10,6 +10,13 @@ and the saved history is an exact prefix of the new rendering, else prefill with
 session (prompt + generated ids), LRU eviction under a byte budget, in_use never deleted. Not wired into the request path (needs the four-card host's
 request front). Receipt `integration/receipts/continuation-parity-20261023.json`; CHECKPOINT-INTEGRATION.md steps 3 and piece 3. Cards empty.
 
+**October 22, 23:40 EDT — packet192 expert issue-floor micro (lane B, card 2, 03:33 UTC, 34 s): both record expert kernels are instruction-issue bound.**
+gate/up `p90exp` cold 73.75 / L2-warm 46.35 / no-load 44.69 µs; down `p100` 45.94 / 33.75 / 33.33: no-load within 1–4 % of warm, so load latency is
+not the limiter and register-free prefetch is out; the cold strata add a real DRAM term (+27 and +12 µs). Layer-equivalent cold 119.7 µs vs the 37.4 µs
+copy floor. Only an exact instruction diet can move the class; packet193 (`exp-diet`, `down-diet`, `exp-act-epilogue`, byte-identical on all 384 real
+routes on both host twins before any timing, bars ≤ 0.85× production cold and warm in both orders) is being prepared CPU-only. Endpoints restored
+as `*-20261023-restore18`. Packet `stage2/packet192-expert-issue-floor/` (note `notes/2026-10-23-packet192-expert-issue-floor.md`).
+
 **October 22, 23:29 EDT — Session-swap parity step 2 DONE (messages → text, 12/12) from the pinned GGUF header itself; the HF template copy was the wrong one.**
 Shard 1 of the runtime's model is 10.9 MB of header, so it was fetched at the pinned revision (file 268f81fd…, header 7c1460a9…, both equal to the
 admission receipt) and `tokenizer.chat_template` read out of it (9,993 chars, sha 12827f24… = the sealed prompt manifest's pin), saved as
