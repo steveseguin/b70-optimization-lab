@@ -1,0 +1,20 @@
+Started lanequeue-A35.service - /usr/bin/python3 -B experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py run --lane A.
+{"event": "START", "lane": "A", "name": "packet157-split-smoke-A", "utc": "2026-10-19T02:52:39.717476Z"}
+{"event": "ALERT", "lane": "A", "reason": "active lane marker has dead owner; retained for coordinator review: /home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1/active-lane-A.json", "utc": "2026-10-19T02:55:09.498416Z"}
+{"Result": "exit-code", "event": "FAILED", "lane": "A", "name": "packet157-split-smoke-A", "rc": 1, "utc": "2026-10-19T02:55:09.545090Z"}
+{"event": "ALERT", "lane": "A", "reason": "lane stopped; no retry or next job", "utc": "2026-10-19T02:55:09.551403Z"}
+lanequeue-A35.service: Main process exited, code=exited, status=1/FAILURE
+lanequeue-A35.service: Failed with result 'exit-code'.
+lanequeue-A35.service: Consumed 27.614s CPU time.
+Started lanequeue-A35.service - /usr/bin/python3 -B experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py run --lane A.
+{"event": "START", "lane": "A", "name": "packet180-one-card-full512-A-a", "utc": "2026-10-22T06:44:31.812013Z"}
+{"Result": "success", "event": "DONE", "lane": "A", "name": "packet180-one-card-full512-A-a", "rc": 0, "utc": "2026-10-22T06:52:51.272885Z"}
+{"event": "START", "lane": "A", "name": "packet180-one-card-lifecycle-A-b", "utc": "2026-10-22T06:54:23.650843Z"}
+{"Result": "success", "event": "DONE", "lane": "A", "name": "packet180-one-card-lifecycle-A-b", "rc": 0, "utc": "2026-10-22T07:13:50.428737Z"}
+{"event": "STOP", "lane": "A", "reason": "boundary stop requested", "utc": "2026-10-22T07:13:51.435697Z"}
+lanequeue-A35.service: Consumed 4min 447ms CPU time.
+Started lanequeue-A35.service - /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py run --lane A.
+{"event": "START", "lane": "A", "name": "packet58dietengine-one-card-v5-A", "utc": "2026-10-23T13:43:02.884268Z"}
+{"Result": "success", "event": "DONE", "lane": "A", "name": "packet58dietengine-one-card-v5-A", "rc": 0, "utc": "2026-10-23T13:56:06.061415Z"}
+{"event": "STOP", "lane": "A", "reason": "boundary stop requested", "utc": "2026-10-23T13:56:08.068171Z"}
+lanequeue-A35.service: Consumed 1min 55.227s CPU time, 47.1M memory peak, 0B memory swap peak.

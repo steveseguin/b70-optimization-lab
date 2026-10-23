@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-23T13:42:45.768490+00:00",
+  "proposal_sha256": "14b58331cb2cfe9da847dd3032a78247c22533ff8649364da885398ae72b2366",
+  "job": {
+    "name": "packet58dietengine-one-card-v5-A",
+    "lane": "A",
+    "argv": [
+      "/usr/bin/python3",
+      "-B",
+      "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/queue_runner.py",
+      "--arm",
+      "resident",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/evidence/card0-58de-v5-a/resident",
+      "--cache-maintenance",
+      "overlap",
+      "--fault-review",
+      "{REVIEW}",
+      "--library-path",
+      "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "--authorized-device-window"
+    ],
+    "review": "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/screen/fault_review.py",
+    "env_extra": {},
+    "planned_write_bytes": 84385156,
+    "plan": {
+      "host_required_available_bytes": 100487123456,
+      "expected_seconds": [
+        700,
+        1200
+      ],
+      "watchdog_seconds": 3600,
+      "entry_rehearsal": {
+        "preparation_probe_note": "Packet-private device-define CPU preparation of the real WSCREEN argv under Landlock (no /dev/dri, no /mnt) with the max23/max23+diet bracket at production size: packet58-onecard-diet-engine/evidence/preparation.json. The shared prepare_probe cannot admit this unranked one-card argv and private 4 MiB RoPE; keep its WARN explicit.",
+        "timing_evidence": [
+          "experiments/own-xpu-runtime/stage2/packet182-onecard-kio-rebracket/screen/evidence/card0-182-v5-a/resident/WSCREEN/run/run/cold-start.json"
+        ],
+        "binaries": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/own-rt-iq3",
+            "sha256": "537c080767f241653a8ac13c77289cd59e8f7444cbee2a4fcb35586eb1e743d4"
+          },
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/build/device/p58-cache-fixtures",
+            "sha256": "cb159f933ad7943bca8353abf3fac6fbd3b82d372687d362f9b6411175875dfb",
+            "args": [
+              "--help"
+            ],
+            "returncode": 0,
+            "contains": "--output"
+          }
+        ]
+      }
+    }
+  },
+  "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f"
+}

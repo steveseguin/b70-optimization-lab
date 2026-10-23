@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-23T14:03:54.326027+00:00",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=qwen38-27b-vision",
+    "--working-directory=/home/steve/inference/qwen38-27b-vision-20261023-restore24",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=KillMode=process",
+    "--property=ExitType=cgroup",
+    "--property=StandardOutput=append:/home/steve/inference/qwen38-27b-vision-20261023-restore24/server.log",
+    "--property=StandardError=append:/home/steve/inference/qwen38-27b-vision-20261023-restore24/server.log",
+    "/usr/bin/bash",
+    "/home/steve/inference/20261020-restoration/vision.sh"
+  ],
+  "kernel_fault_lines": []
+}
