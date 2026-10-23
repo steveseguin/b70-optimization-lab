@@ -2333,6 +2333,11 @@ off and would still render without the line. The only cache-safe form of a "thin
 the notes request itself, and campaign 57 has just shown the sums need the thinking; that wording is not registered.
 The notes-thinking lever is closed in both forms.
 
+**The wall lever the time budget does show (02:53 EDT):** 807 s of campaign 57 seed 0's 4,800 s (898 of
+campaign 55's 5,524) is the client between steps, growing with the run: the CLM harness counts the whole retained
+history with tiktoken four times a step. An exact per-message memo and campaign 58 (campaign 55 again with it)
+are in [2026-10-23-harness-count-memo.md](2026-10-23-harness-count-memo.md).
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

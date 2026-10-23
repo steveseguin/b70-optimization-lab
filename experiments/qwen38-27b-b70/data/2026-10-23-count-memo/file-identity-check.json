@@ -1,0 +1,34 @@
+{
+ "check": "count-memo-check.sh",
+ "fake_server": "fake_openai_server.py FAKE_VLLM_SHAPE=1 FAKE_DETERMINISTIC=1 FAKE_REASONING=alt FAKE_TEXTCALL=1",
+ "task": "sparse-memory-b8-s0 (make_sparse_prose_tasks.py --n-batches 8 --density 3 --words --probes-every 2 --probes-k 3 --rules --mode memory --batch-tokens 600)",
+ "runs": {
+  "COUNT_MEMO=0": {
+   "request_bodies_sha256": "208c966631bb3d03c2501f5d5d4a6a3490741129d5086aaf41604694fce71d85",
+   "requests": 26,
+   "trajectory_sha256": "a070d309b87dff161586399eef7c21cf23b2dae6fbc61c51ba177c30873f59ac",
+   "usage_sha256": "c7c599d716f379745b021e2bde580deb7dcb4173749d888ba5528dfa0d7dd448",
+   "reward": "0.000000",
+   "context_snapshots": 28,
+   "context_snapshots_sha256_of_shas": "b5ff7ba1279585ae9400b5298ecbb34b515ac3beb4ead86ec2b45df34d157440",
+   "wall_s_and_peak_kib": [
+    "16.72",
+    "132944"
+   ]
+  },
+  "COUNT_MEMO=1": {
+   "request_bodies_sha256": "208c966631bb3d03c2501f5d5d4a6a3490741129d5086aaf41604694fce71d85",
+   "requests": 26,
+   "trajectory_sha256": "a070d309b87dff161586399eef7c21cf23b2dae6fbc61c51ba177c30873f59ac",
+   "usage_sha256": "c7c599d716f379745b021e2bde580deb7dcb4173749d888ba5528dfa0d7dd448",
+   "reward": "0.000000",
+   "context_snapshots": 28,
+   "context_snapshots_sha256_of_shas": "b5ff7ba1279585ae9400b5298ecbb34b515ac3beb4ead86ec2b45df34d157440",
+   "wall_s_and_peak_kib": [
+    "14.72",
+    "133644"
+   ]
+  }
+ },
+ "identical": true
+}

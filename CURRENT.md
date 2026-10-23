@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 02:53 EDT — 17 % of a 2M hostile seed's wall is the harness re-counting the whole history four times a step; exact memo built and checked; campaign 58 (campaign 55 again with it) registered and launching.**
+Campaign 57's time budget: model 3,715 s, tool runs 132 s, proxy/client around calls 146 s, and 807 s between steps in the client (898 s in
+campaign 55), growing from 0.2 s a step to 1.2 s as the history reaches 2M tokens: `clm_harness` counts the full retained history with tiktoken
+at the top-of-step snapshot, the sent_tokens annotation, the sent snapshot and the calibration (0.25-0.36 s each at the end). `clm_baselines.py`
+now installs an exact per-message memo (`COUNT_MEMO=1` default): a message is re-encoded unless its text pieces are the same string objects.
+Checks: equal to the upstream count on 69 cases over the real 2,642-message history (simulated run 14.6 s against ~1,250 s), and one fake-server
+job with the memo off/on writes byte-identical request bodies, trajectory, usage, grader output and all 28 snapshots
+(`data/2026-10-23-count-memo/`). Campaign 58 = K32V on 1.3.0, both seeds, unit `ctx-campaign58`, predictions in
+`notes/2026-10-23-harness-count-memo.md` (seed 0 NOTES identical to campaign 55, 423/423; wall 76-82 and 77-84 min against 92.7/93.2).
+
 **October 23, 02:45 EDT — one-card diet port STOPPED at step 1 (packet58-onecard-diet): the one-card gate/up kernel is a different kernel.**
 The one-card record line runs `p58ag_exp::Kernel<IQ2_S,2560,64,false,true,0,Cached>` (820 B rows, 16-bit halves decoded through the 65,536-entry
 halfcache table, indirect expert-cache slots, 20 bindings), not the two-card `p90exp` kernel (840 B rows, FP32 halves, direct pointers) that

@@ -34,12 +34,22 @@ summarize_results.py adds them.
 
 Note: baselines rebind clm_harness.clm_agent.harness._SYSTEM_TEMPLATE when they run, so do
 not mix ClmAgent and a baseline inside one Harbor job process.
+
+Exact incremental token counting (2026-10-23, COUNT_MEMO=1 by default, 0 = the upstream
+count): importing this module replaces clm_harness.utils.tokens.count_tokens with a version
+that remembers each message's count and re-encodes a message only when any of its text
+pieces is a different string object. The harness counts the whole retained history four
+times a step (top-of-step snapshot, sent_tokens annotation, sent snapshot, calibration);
+at 2M tokens each count is 0.25-0.36 s, about 800 s of a 2M hostile seed's 80-93 min
+(hostile note, campaign 57's time budget). The totals are the same numbers: identical
+string objects encode to the same tokens. count-memo-check.sh shows the files identical.
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
+import os
 import re
 import types
 from typing import Any
@@ -124,6 +134,52 @@ class _NoMirrorEnv(ContextEnv):
 def _as_bool(v: Any) -> bool:
     return v if isinstance(v, bool) else str(v).strip().lower() in ("1", "true", "yes", "on")
 
+
+_MEMO_PATCHED = False
+
+
+def _install_count_memo() -> None:
+    """Replace tk.count_tokens with an exact per-message memo (see the module docstring).
+
+    A message's count is reused only when its text pieces (what tk._iter_text yields for
+    it: content, reasoning_content, tool-call names and arguments) are the very same string
+    objects as last time; strings are immutable, so the encoder would return the same ids.
+    Anything else is re-encoded with the upstream code path. Without tiktoken the upstream
+    estimate is used unchanged. The memo keeps only the messages of the latest call.
+    """
+    global _MEMO_PATCHED
+    if _MEMO_PATCHED or not _as_bool(os.environ.get("COUNT_MEMO", "1")):
+        return
+    orig = tk.count_tokens
+    cache: dict[int, tuple[tuple[Any, ...], int]] = {}
+
+    def count_tokens(messages: list[Any] | None) -> tuple[int, str]:
+        enc = tk.get_encoder()
+        if enc is None:
+            return orig(messages)
+        total = 0
+        fresh: dict[int, tuple[tuple[Any, ...], int]] = {}
+        for msg in messages or []:
+            pieces = tuple(tk._iter_text([msg]))
+            hit = cache.get(id(msg))
+            if hit is not None and len(hit[0]) == len(pieces) and all(a is b for a, b in zip(hit[0], pieces)):
+                n = hit[1]
+            else:
+                n = 0
+                for text in pieces:
+                    if text:
+                        n += len(enc.encode(text, disallowed_special=()))
+            fresh[id(msg)] = (pieces, n)
+            total += n
+        cache.clear()
+        cache.update(fresh)
+        return total, f"tiktoken:{tk._ENCODER_NAME}"
+
+    tk.count_tokens = count_tokens
+    _MEMO_PATCHED = True
+
+
+_install_count_memo()
 
 _PATCHED = False
 # Value sent as chat_template_kwargs.preserve_thinking. False = the original switch. True =
