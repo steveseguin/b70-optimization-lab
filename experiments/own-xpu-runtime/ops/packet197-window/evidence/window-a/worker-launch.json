@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=packet197-warm-request-front-a",
+    "--working-directory=/home/steve/llm-optimizations",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=KillMode=process",
+    "--property=ExitType=cgroup",
+    "--property=Nice=0",
+    "/usr/bin/taskset",
+    "-c",
+    "0-3,16-19",
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/device_worker.py",
+    "--authorized-device-window",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/device-p197-lifecycle-A-a",
+    "--fault-review",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/fault-review-device-a.json"
+  ],
+  "rc": 0,
+  "stdout": "",
+  "stderr": "Running as unit: packet197-warm-request-front-a.service; invocation ID: 687719b0ab8b4cedb3b3cf178ce86b0b\n"
+}

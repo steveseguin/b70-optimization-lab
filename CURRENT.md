@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 12:44 EDT — warm request interface passed on device; all three applications restored as restore26.**
+Eight requests and 1,408 output tokens matched their references in one loaded process. Resuming and appending to a saved conversation
+preserved exact output and state, including comparison to the earlier qualified engine. The worker and controller exited successfully,
+with no new fault or retained device owner. Restore26 completed at16:42:06 UTC; all three applications validated. Both lane pauses retain
+their original bytes, queues are empty and STOP latches are absent. Loading took210 seconds once; restore took0.36–0.37 seconds, kept
+separate from cold speed records. The next separate packet adds postreply SAVE/RELEASE so ctxkeeper can choose a checkpoint ID after
+generation. Its Python transport passes nine CPU tests and independent review; native source preparation is underway.
+[Result](experiments/own-xpu-runtime/stage2/packet197-warm-request-front/RESULT.md) ·
+[next interface](experiments/own-xpu-runtime/integration/request_front/POSTREPLY-CHECKPOINTS.md).
+
 **October 23, 12:23 EDT — warm request interface passes its CPU lifecycle; one-card record approved at 37.595605 tok/s.**
 The diet qualification passed all seven stages, with all12 ×128 output tokens exact and no new GPU fault.
 The independent audit recomputed +2.713% over36.602512. Local and server dry runs passed; the single submission returned

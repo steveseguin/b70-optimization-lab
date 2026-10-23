@@ -45,8 +45,12 @@ objects. The actual host-only engine passed the eight-request lifecycle in
 one process, including resumed output, unrelated-request isolation, and
 byte-identical saved state for appended, repeated and fresh input. This uses
 tiny synthetic CPU geometry and does not establish device correctness or
-model performance. The first real-model device window is being prepared and
-independently reviewed.
+model performance. The single real-model device window subsequently passed
+all eight requests and 1,408 output tokens, exact saved state, one load and
+clean shutdown. The [result](../experiments/own-xpu-runtime/stage2/packet197-warm-request-front/RESULT.md)
+and independent audit preserve the component timings and scope. The next
+implementation is a separate protocol version with explicit postreply
+SAVE/RELEASE, while packet197 stays frozen.
 
 The token-ID pilot is one part of the serving interface. Its RUN command
 chooses a checkpoint ID before generation, whereas ctxkeeper's parking
