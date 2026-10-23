@@ -1,0 +1,21 @@
+{
+  "schema": "packet206.host-fixture-authority.v1",
+  "artifacts_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/host_probe.py": "fbeac0e46447849888c58b012c97ab73e5ccd812dc7b48233de739d363d686ea",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/host-probe.json": "a35a03c966536c5421bc335a32a7915f211f470ec7e2c424c8788a1ad03bbc70",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/host-probe-artifacts.json": "3811ea9b20761648b3cb6ccf260c7169e855803b4e48b828d5475c3f24335108",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/build-compile-only.json": "c1b3378c6237254a4b6363a8bccd20cfbfb67b186deefa7ea7899b2828e2e962",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/main.cpp": "1e7c5f1b6ab19f909fbd03165ead029ea7331a27810b7a6e97961d9f32039581",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/checkpoint.hpp": "3668ee9f15d460eecd020574ae8f941e2cc2e862440facb30cfe42665d90f02c",
+    "experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/authority-inputs.json": "fa51f1b502a725b11d8caa3107a3c892a40bbd4970c964058e86776dcb53231a",
+    "experiments/own-xpu-runtime/stage2/packet205-host-row-capture/authority-inputs.json": "d19eea0c70e8ef6d9466fe5729b38a8333a9653ebcc9b97c2cd4b5ced09a8e0d"
+  },
+  "scope": "Read-only source/retained tiny fixture authority; no p198 checkpoint restoration into newbinary",
+  "limitations": [
+    "Synthetic4layergeometry only",
+    "Real CPU operators and copies, simulated Host/LifetimeMock/MockDevice events",
+    "Expert cache disabled inmini",
+    "Production cachedFP32 conversions not exercised; tiny pipeline disables p27.fp32_input",
+    "No device/model/speed qualification"
+  ]
+}

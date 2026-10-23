@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 23, 18:58 EDT — paired prompt scheduling passes the actual tiny CPU Engine.**
+Sixteen serial and sixteen paired requests match in output and all 13 saved states, including every one of
+the 20 state buffers and token history. All 108 intermediate boundaries match; six older checkpoint references
+also agree. Ten invalid-mode requests were refused before loading, and one intentional partial failure halted
+without a checkpoint and exited safely. Independent artifact review confirms the result; this remains synthetic
+CPU evidence with simulated backend events, no model/device qualification or speed claim. Next is integrating
+shared weight reads for paired GDN projections while preserving causal state updates. Daily applications retain
+their restore30 PIDs, root has 28.36 GB free, and no device window is queued. The previous capture-proof commit
+d7a85f627 has all three CI workflows green.
+[Engine proof and limits](experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/README.md) ·
+[Independent artifact review](experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/evidence/independent-artifact-audit.json).
+
 **October 23, 18:41 EDT — host capture and publication proof passes independent review.**
 The existing runtime owner, arena, prepared operations and copy code pass 33 probe checks and 14 authority
 tests with synthetic data. Independent replay matches all results and four shutdown receipts. Tests cover
