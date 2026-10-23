@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 18:27 EDT — two-row ownership metadata passes independent review.**
+The contract passes 31 binding checks, 17 authority tests and four cache groups. It covers shared persistent
+state, row-specific inputs, causal history/attention boundaries and a completion descriptor for canonical state.
+These are CPU metadata checks; actual native captures, event provenance and publication still need proof.
+The next additive fixture exercises the real HOST_ONLY arena and prepared-submission APIs with synthetic data.
+All three daily applications were read back as running with their restore30 PIDs. No device window is queued.
+The prior output-path commit 69b94647f has all three CI workflows green.
+[Binding contract](experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/README.md) ·
+[Independent review](experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/evidence/independent-cpu-review.json).
+
 **October 23, 18:17 EDT — paired gating, output projection and residual updates pass CPU review.**
 Five synthetic cases pass 45 byte comparisons and 12 authority tests; an independent rerun matches.
 The checks detect ignored gate/control inputs and a missing BF16 rounding step. This extends the earlier

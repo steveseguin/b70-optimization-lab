@@ -1,0 +1,8 @@
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/binding_probe.cpp: In function ‘int main(int, char**)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/binding_probe.cpp:91:5: error: this ‘for’ clause does not guard... [-Werror=misleading-indentation]
+   91 |     for(size_t i=0;i<ids.size();++i)std::cout<<(i?",":"")<<ids[i];std::cout<<"]}\n";return 0;
+      |     ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/binding_probe.cpp:91:67: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘for’
+   91 |     for(size_t i=0;i<ids.size();++i)std::cout<<(i?",":"")<<ids[i];std::cout<<"]}\n";return 0;
+      |                                                                   ^~~
+cc1plus: all warnings being treated as errors

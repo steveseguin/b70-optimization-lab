@@ -1,0 +1,15 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/cache_contract_probe.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/../packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_protocol.hpp: In member function ‘void p58v::Protocol::begin()’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/../packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_protocol.hpp:15:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   15 |     if(running)throw std::logic_error("position already running");running=true;
+      |     ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/../packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_protocol.hpp:15:67: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   15 |     if(running)throw std::logic_error("position already running");running=true;
+      |                                                                   ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/../packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_protocol.hpp: In member function ‘void p58v::Protocol::end(bool)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/../packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_protocol.hpp:18:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   18 |     if(!running||!complete)throw std::logic_error("position still reads cache");running=false;
+      |     ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet204-prefill-row-bindings/../packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/cache_protocol.hpp:18:81: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   18 |     if(!running||!complete)throw std::logic_error("position still reads cache");running=false;
+      |                                                                                 ^~~~~~~
