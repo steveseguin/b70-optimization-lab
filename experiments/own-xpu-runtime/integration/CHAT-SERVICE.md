@@ -40,3 +40,14 @@ response-assembly evidence, separate from native arithmetic and live serving.
 This is a narrow experimental chat-completion shape. Streaming, tools,
 concurrent decode, cancellation, authentication and full OpenAI compatibility
 are not qualified. ctxkeeper's deployed HTTP request path remains unchanged.
+
+## Joined real-model proof, 2026-10-23
+
+[Packet199](../stage2/packet199-chat-parking/RESULT.md) subsequently passed six
+actual HTTP turns through one unchanged device owner, this adapter stack and
+bounded parking: 896 output tokens, five saves and one release. Resumed chat
+matched fresh tokens and saved state; edited history selected fresh processing.
+The independent audit verified HTTP mapping and usage and rehashed both surviving
+checkpoints. Policy-deleted states retain captured digest evidence, with that
+limitation explicit. All replies reached their caps. This is a bounded functional
+pilot, without a general serving, natural-stop, cold-speed or throughput claim.

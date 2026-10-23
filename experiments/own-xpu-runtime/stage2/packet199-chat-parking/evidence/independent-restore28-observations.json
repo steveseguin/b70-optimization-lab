@@ -1,0 +1,34 @@
+{
+  "utc": "2026-10-23T18:20:30.010149+00:00",
+  "systemctl": {
+    "argv": [
+      "systemctl",
+      "--user",
+      "show",
+      "packet199-chat-parking-a.service",
+      "window-p199-driver.service",
+      "qwen38-27b-fp8.service",
+      "qwen38-27b-fp8-tp1-test.service",
+      "qwen38-27b-vision.service",
+      "--property=Id,LoadState,ActiveState,SubState,Result,ExecMainStatus,MainPID,Restart,SendSIGKILL,TimeoutStopUSec,KillMode,ExitType"
+    ],
+    "returncode": 0,
+    "stdout": "ExitType=main\nRestart=no\nTimeoutStopUSec=1min 30s\nMainPID=0\nResult=success\nExecMainStatus=0\nKillMode=control-group\nSendSIGKILL=yes\nId=packet199-chat-parking-a.service\nLoadState=not-found\nActiveState=inactive\nSubState=dead\n\nExitType=main\nRestart=no\nTimeoutStopUSec=1min 30s\nMainPID=0\nResult=success\nExecMainStatus=0\nKillMode=control-group\nSendSIGKILL=yes\nId=window-p199-driver.service\nLoadState=not-found\nActiveState=inactive\nSubState=dead\n\nExitType=cgroup\nRestart=no\nTimeoutStopUSec=infinity\nMainPID=3432043\nResult=success\nExecMainStatus=0\nKillMode=process\nSendSIGKILL=no\nId=qwen38-27b-fp8.service\nLoadState=loaded\nActiveState=active\nSubState=running\n\nExitType=cgroup\nRestart=no\nTimeoutStopUSec=infinity\nMainPID=3434268\nResult=success\nExecMainStatus=0\nKillMode=process\nSendSIGKILL=no\nId=qwen38-27b-fp8-tp1-test.service\nLoadState=loaded\nActiveState=active\nSubState=running\n\nExitType=cgroup\nRestart=no\nTimeoutStopUSec=infinity\nMainPID=3435710\nResult=success\nExecMainStatus=0\nKillMode=process\nSendSIGKILL=no\nId=qwen38-27b-vision.service\nLoadState=loaded\nActiveState=active\nSubState=running\n",
+    "stderr": ""
+  },
+  "kernel_query": {
+    "argv": [
+      "journalctl",
+      "-k",
+      "-b",
+      "--no-pager",
+      "-o",
+      "json",
+      "--after-cursor",
+      "s=e3d94d04f38747dcbe36a4ef06874902;i=20e1b8c;b=2cba7160054a4ffeb4c4e252eb956f5f;m=90a68d4a42;t=65e85c954bea6;x=8caa107583210fb1"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "rows": 14
+  }
+}

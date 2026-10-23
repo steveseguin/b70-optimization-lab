@@ -75,3 +75,14 @@ which validated 1,408 real-model tokens and five state snapshots through its fix
 worker. The policy/adapter integration has only the tiny host proof. ctxkeeper's
 HTTP request path remains unwired; no live model endpoint, serving qualification,
 throughput claim or release bump follows from this result.
+
+## Joined real-model proof, 2026-10-23
+
+[Packet199](../stage2/packet199-chat-parking/RESULT.md) subsequently passed six
+actual HTTP turns through one unchanged device owner, this adapter stack and
+bounded parking: 896 output tokens, five saves and one release. Resumed chat
+matched fresh tokens and saved state; edited history selected fresh processing.
+The independent audit verified HTTP mapping and usage and rehashed both surviving
+checkpoints. Policy-deleted states retain captured digest evidence, with that
+limitation explicit. All replies reached their caps. This is a bounded functional
+pilot, without a general serving, natural-stop, cold-speed or throughput claim.

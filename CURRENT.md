@@ -1,5 +1,28 @@
 # Current Workspace State
 
+**October 23, 14:18 EDT — real chat passed and all three applications are restored.**
+The six-turn pilot completed 896 output tokens through one loaded owner, with exact resumed/fresh tokens and saved state,
+correct edited-history fallback, bounded parking and clean shutdown. Independent device audit passed; restore28 validated
+all three applications by 18:17:48 UTC. Both experiment units exited successfully, with no new fault. The next bounded
+session lifecycle passes 16 CPU tests and independent review. A tiny host-only native proof is prepared; final review is
+fixing a diagnostic race before its one execution. No further GPU window is queued.
+[Chat result](experiments/own-xpu-runtime/stage2/packet199-chat-parking/RESULT.md).
+
+**October 23, 14:09 EDT — real chat passed six turns; application restoration is underway.**
+One loaded owner completed896 output tokens through actual HTTP, with five saves and one final release. Resumed chat exactly
+matched fresh tokens and saved state; changed history selected fresh processing. Independent audit rehashed both surviving
+checkpoints and verified captured evidence for policy-deleted states. No new fault or retained owner occurred. Passive drain
+passed and restore28 began at18:08:16 UTC; availability is not yet claimed. Next CPU work builds a reusable bounded session
+lifecycle around the tested pieces, with no changes to the sealed native engine.
+[Result](experiments/own-xpu-runtime/stage2/packet199-chat-parking/RESULT.md).
+
+**October 23, 14:02 EDT — the six-turn native HTTP chat pilot is running.**
+Preparation is committed and all three CI workflows are green. Live admission passed with unchanged fault history,
+paused empty queues and full storage headroom. The coordinator began graceful application shutdown at18:02:35 UTC;
+one native owner will serve all six turns after passive drain. Restoration as restore28 remains conditional on exact
+results and clean teardown. No power, memory, driver or host-restart action is part of this window.
+[Pilot](experiments/own-xpu-runtime/stage2/packet199-chat-parking/README.md).
+
 **October 23, 13:58 EDT — real HTTP chat pilot is CPU-ready; live admission is next.**
 The six-turn pilot passes 28 worker, readiness and controller checks plus independent review. Its unchanged native engine,
 215 source files and 35 interpreter/dependency files are pinned, and a fresh interpreter verifies the same launch plan.
