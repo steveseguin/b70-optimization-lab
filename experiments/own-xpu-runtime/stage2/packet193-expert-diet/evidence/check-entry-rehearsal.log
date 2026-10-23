@@ -1,0 +1,127 @@
+{
+  "passed": true,
+  "jobs": [
+    {
+      "job": "packet193-expert-diet-micro-B",
+      "unit": "screen-packet193-expert-diet-micro-B",
+      "passed": true,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/micro-device",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 0,
+          "entry_kind": "explicit",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/run_micro.py",
+            "line": 91,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/run_micro.py",
+            "function": "storage_admit",
+            "status": "PASS",
+            "message": "storage helper accepts 25.5 GB plus planned writes"
+          }
+        ]
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "PASS",
+        "passed": true,
+        "executed": true,
+        "returncode": 0,
+        "real_rank_argv": true,
+        "first_decode_required": true,
+        "argv_sha256": "613d34da6a2c34b434f552235093e27c2a55f8295f1b01b11f7a4196dd94ec3f",
+        "binary_sha256": "2e8e407cf1df96dffa8dde5152d4056d30f86ba16853ba260d207d794dda05f9",
+        "legacy_receipt": null,
+        "preparation_bypassed": false,
+        "message": "preparation-path probe completed"
+      },
+      "gate_identity": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "warnings": [],
+        "files_scanned": 14,
+        "message": "0 identity refusals; 0 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": true,
+        "kinds": [
+          {
+            "passed": true,
+            "kind": "micro",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "device_executed": false,
+            "admission_executed": false,
+            "real_entry_main": false,
+            "entry_execution": "parser-and-report-only",
+            "report_lineage": "standalone-micro",
+            "report_contract": "own-runtime.report-contract.v1",
+            "cases": [
+              {
+                "name": "qualified",
+                "samples_sha256": "363535f9d08c3bc5add02f1037575c94fa5f115cc035d877dcfca8c4f0ff5b7f"
+              },
+              {
+                "name": "closed-ratio",
+                "samples_sha256": "14039476e24d5047f64856b777e5663f0436e4c2cb47570c4846974d365b892e"
+              },
+              {
+                "name": "byte-kill",
+                "samples_sha256": "9d9ff924dc513e05e2077e31db3c6fa25381fe18294cef3710356069c682871a"
+              },
+              {
+                "name": "control-kill",
+                "samples_sha256": "4382e7a6c4a591aa4ffe32a6062e7c08a28234d9821d0d093905ad253fb88e98"
+              },
+              {
+                "name": "disturbance-kill",
+                "samples_sha256": "0c9a236a0ef28fa3e838e127a57de17352df68af471317c61055efa29ca61453"
+              }
+            ]
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    }
+  ]
+}

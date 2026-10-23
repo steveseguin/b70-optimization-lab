@@ -1,0 +1,365 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "model_reads": false,
+ "production_shape": {
+  "experts": 512,
+  "routes": 384,
+  "gateup": "640x2560 IQ2_S E1 x2 streams + act twin",
+  "down": "2560x640 IQ4_NL tile16"
+ },
+ "candidates": [
+  "exp-diet",
+  "exp-act-epilogue",
+  "down-diet"
+ ],
+ "gnu": {
+  "stream": "experiments/own-xpu-runtime/stage2/packet193-expert-diet/evidence/cpu-host-gnu.jsonl",
+  "stream_sha256": "364a1fedca985fdb558d5bedef91901853e20234f9d319f5f10882adf090cd8d",
+  "seconds": 14.3,
+  "exact_rows": 3146,
+  "byte_equal_rows": 3146,
+  "payload_order_rows": [],
+  "per_candidate": {
+   "exp-diet": 788,
+   "exp-act-epilogue": 788,
+   "down-diet": 784,
+   "production": 786
+  },
+  "diagnostic_rows": [
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 2334,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 2334,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   }
+  ],
+  "stress": {
+   "exp-diet/mixed": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 23270,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "down-diet/mixed": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 47628,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "exp-diet/finite": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "down-diet/finite": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   }
+  },
+  "samples": 784
+ },
+ "intel": {
+  "stream": "experiments/own-xpu-runtime/stage2/packet193-expert-diet/evidence/cpu-host-intel.jsonl",
+  "stream_sha256": "f1570df22709f2c3a2c28ffb1add8fa6bcb10118332d0fc5505466f2d446ca08",
+  "seconds": 14.1,
+  "exact_rows": 3146,
+  "byte_equal_rows": 3134,
+  "payload_order_rows": [
+   {
+    "candidate": "production",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-valid",
+    "against": "fixture",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-valid",
+    "against": "production",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-valid",
+    "against": "production",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "production",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-invalid",
+    "against": "fixture",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-invalid",
+    "against": "production",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-invalid",
+    "against": "production",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "production",
+    "kernel": "gateup",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 9052,
+    "nan_vs_nan_words": 9052
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "exceptional",
+    "against": "production",
+    "different_words": 5339,
+    "nan_vs_nan_words": 5339
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 6899,
+    "nan_vs_nan_words": 6899
+   },
+   {
+    "candidate": "production",
+    "kernel": "down",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 2358,
+    "nan_vs_nan_words": 2358
+   },
+   {
+    "candidate": "down-diet",
+    "kernel": "down",
+    "stratum": "exceptional",
+    "against": "production",
+    "different_words": 1801,
+    "nan_vs_nan_words": 1801
+   },
+   {
+    "candidate": "down-diet",
+    "kernel": "down",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 2185,
+    "nan_vs_nan_words": 2185
+   }
+  ],
+  "per_candidate": {
+   "exp-diet": 788,
+   "exp-act-epilogue": 788,
+   "down-diet": 784,
+   "production": 786
+  },
+  "diagnostic_rows": [
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 5342,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 8477,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   }
+  ],
+  "stress": {
+   "exp-diet/mixed": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 23270,
+    "chains_compared": 320000,
+    "fp32_mismatches": 105691,
+    "nan_vs_nan_mismatches": 105691,
+    "value_mismatches": 0
+   },
+   "down-diet/mixed": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 47628,
+    "chains_compared": 320000,
+    "fp32_mismatches": 6660,
+    "nan_vs_nan_mismatches": 6660,
+    "value_mismatches": 0
+   },
+   "exp-diet/finite": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "down-diet/finite": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   }
+  },
+  "samples": 784
+ },
+ "gnu_intel_byte_rows_identical": true,
+ "fixtures_sha256": "b5721f0dd1142b96828f0846ab839d465a7b460771d76dd485254a2aa854f5d7",
+ "native_sha256": "2e8e407cf1df96dffa8dde5152d4056d30f86ba16853ba260d207d794dda05f9",
+ "native_command": [
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/micro-device",
+  "--rank",
+  "0",
+  "--routes",
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/lineage-inputs/routes-p100b.json",
+  "--real-rows",
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+  "--fixtures",
+  "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures",
+  "--mode",
+  "device",
+  "--cold-repeats",
+  "20",
+  "--warm-repeats",
+  "200",
+  "--passes",
+  "2",
+  "--coordinator-admitted-device-window"
+ ],
+ "help_flags_listed": [
+  "--rank",
+  "--routes",
+  "--real-rows",
+  "--fixtures",
+  "--mode",
+  "--cold-repeats",
+  "--warm-repeats",
+  "--passes",
+  "--coordinator-admitted-device-window"
+ ],
+ "preparation_probe_cases": [
+  {
+   "case": "exact real argv (preparation path)",
+   "returncode": 0,
+   "expected_returncode": 0,
+   "passed": true,
+   "prepare_receipt": {
+    "passed": true,
+    "device_executed": false,
+    "routes": 384,
+    "planned_device_peak_bytes": 1119693652,
+    "gate_bank_bytes": 275251200,
+    "down_bank_bytes": 471859200,
+    "exceptional_bank_bytes": 10752000,
+    "down_exceptional_bank_bytes": 9216000,
+    "scrub_bytes": 536870912,
+    "cold_repeats": 20,
+    "warm_repeats": 200,
+    "passes": 2,
+    "candidates": 3
+   }
+  },
+  {
+   "case": "no coordinator admission",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "wrong rank",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "unknown option",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "missing argument",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "non-numeric repeats",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "stress refused on device",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "one pass refused",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  },
+  {
+   "case": "truncated routes file",
+   "returncode": 1,
+   "expected_returncode": 1,
+   "passed": true,
+   "prepare_receipt": null
+  }
+ ],
+ "sandbox": "ops/rehearse_entry.prepare_restrict (Landlock): binary, toolchain, routes json, scratch; no /dev"
+}

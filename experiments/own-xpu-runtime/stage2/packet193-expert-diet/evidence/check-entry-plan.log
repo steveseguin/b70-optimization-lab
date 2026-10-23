@@ -1,0 +1,63 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runnable": false,
+  "lane": "B",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/micro-device",
+    "--rank",
+    "0",
+    "--routes",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/lineage-inputs/routes-p100b.json",
+    "--real-rows",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+    "--fixtures",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures",
+    "--mode",
+    "device",
+    "--cold-repeats",
+    "20",
+    "--warm-repeats",
+    "200",
+    "--passes",
+    "2",
+    "--coordinator-admitted-device-window"
+  ],
+  "identity": {
+    "build_receipt_sha256": "2dd27c4958c2a7ebef457cbc0443297d7ed477106e65fc2fe7153aa5cec37725",
+    "binary_sha256": "2e8e407cf1df96dffa8dde5152d4056d30f86ba16853ba260d207d794dda05f9",
+    "fixtures_sha256": "b5721f0dd1142b96828f0846ab839d465a7b460771d76dd485254a2aa854f5d7",
+    "isa_sha256": "98a313d997ede705995399f1233a224bba877d94230cb0034c433703aa8f637c",
+    "routes_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+    "parent_inputs_sha256": "d724dcd0fe680e9da5c1c2f85ec18414d5cd0bacb6638937badf4fcf608c8780",
+    "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40"
+  },
+  "physical_cards": [
+    2
+  ],
+  "native_card": 0,
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:43:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/evidence/diet-B1",
+  "reservation_scope": "lane-B",
+  "drain": "shared DrainPermit held across entire autonomous native lifetime",
+  "host_required_available_bytes": 10737418240,
+  "host_reserve_bytes": 8589934592,
+  "maximum_host_scratch_bytes": 2147483648,
+  "device_bytes_upper_bound": 1200000000,
+  "planned_write_bytes": 100663296,
+  "candidates": [
+    "exp-diet",
+    "exp-act-epilogue",
+    "down-diet"
+  ],
+  "minimum_root_free_bytes": 25000000000,
+  "watchdog_seconds": 1800,
+  "retries": 0,
+  "micro_qualification": "pending: each candidate <= 0.85 x production in both orders and every stratum after device byte identity; diagnostic only; no speed or model-output claim"
+}

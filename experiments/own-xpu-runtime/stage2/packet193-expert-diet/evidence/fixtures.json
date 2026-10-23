@@ -1,0 +1,267 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "schema": "packet193.fixtures.v1",
+ "generator": "GNU host twin (OWN_RT_HOST_ONLY run of the pinned production kernels + the act twin)",
+ "generator_sha256": "94e3581cdbcc8826422fefd9f47f788cff1575829ecd4d7022cb1237383301c6",
+ "verifier_sha256": "051abcc33544a4ba894ed2940985a5d06f419f18b1cdb9cce1834f2f5411c000",
+ "routes_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+ "real_rows": [
+  {
+   "name": "packet162b layer0 rows",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer0.bin",
+   "parent_digest": "eeed9d3bab0c8652c344d363174032c1f197944e7314cdf73fe974493ebc6628",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b layer24 rows",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer24.bin",
+   "parent_digest": "77bdd24006f6f5425b32e78ddfc50e34faa670b5b655070c4c59ed25aa35f52b",
+   "bytes": 10496000
+  }
+ ],
+ "files": {
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/down-cold.bin": "d2face11b0bdec6a16b9b25d9a2760eef09dda2f88e672150360bd6d26863a67",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/down-exc.bin": "e6c38a7e7eb7718ffb869503882885c22d3017ee5a0bb0d584e2bca5b2b0093b",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/down-fx.bin": "a7e9fd9fbf0dc4db1973367260a21a045ca163f01ffc80fd3f66d9e607eec8c8",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/down-warm.bin": "5e5afb9aa8f3999c0cc79ea586ceae8941248fafcd3defe4c5d3e389d0aa4ef1",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/gateup-cold.bin": "4cf1e071c059da03ec42c35cf9d42fc75c89470b093dada36f41a32e22f7e8b9",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/gateup-exc.bin": "78b9259492891be3e85c2bfee8151bb073e8deec39c0e7a633c878b446df7a0f",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/gateup-fx.bin": "bebf90cad9617afb5259a5bf92fa39bbaa0f37bba0ec1d08d31363fab6f2296d",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/gateup-real-layer0.bin": "2f417d3b36c32f8ab1f01748d386f52a04613ed51dd06907ae32b834c51ff721",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/gateup-real-layer24.bin": "49ea9ec732f30efe1ff0d36b50f61096cd5d76dfc1e20cfd02a06051c125e27c",
+  "experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures/gateup-warm.bin": "595989999d9041ef76fbbaf36fe1fe85fbb7e3cd7f941e64fd151b1952998b72"
+ },
+ "gnu": {
+  "exact_rows": 3146,
+  "byte_equal_rows": 3146,
+  "payload_order_rows": [],
+  "per_candidate": {
+   "exp-diet": 788,
+   "exp-act-epilogue": 788,
+   "down-diet": 784,
+   "production": 786
+  },
+  "diagnostic_rows": [
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 2334,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 2334,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   }
+  ],
+  "stress": {
+   "exp-diet/mixed": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 23270,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "down-diet/mixed": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 47628,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "exp-diet/finite": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "down-diet/finite": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   }
+  },
+  "samples": 784
+ },
+ "intel": {
+  "exact_rows": 3146,
+  "byte_equal_rows": 3134,
+  "payload_order_rows": [
+   {
+    "candidate": "production",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-valid",
+    "against": "fixture",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-valid",
+    "against": "production",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-valid",
+    "against": "production",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "production",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-invalid",
+    "against": "fixture",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-invalid",
+    "against": "production",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "kernel": "gateup",
+    "stratum": "fixture-f2-invalid",
+    "against": "production",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "production",
+    "kernel": "gateup",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 9052,
+    "nan_vs_nan_words": 9052
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "exceptional",
+    "against": "production",
+    "different_words": 5339,
+    "nan_vs_nan_words": 5339
+   },
+   {
+    "candidate": "exp-diet",
+    "kernel": "gateup",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 6899,
+    "nan_vs_nan_words": 6899
+   },
+   {
+    "candidate": "production",
+    "kernel": "down",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 2358,
+    "nan_vs_nan_words": 2358
+   },
+   {
+    "candidate": "down-diet",
+    "kernel": "down",
+    "stratum": "exceptional",
+    "against": "production",
+    "different_words": 1801,
+    "nan_vs_nan_words": 1801
+   },
+   {
+    "candidate": "down-diet",
+    "kernel": "down",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 2185,
+    "nan_vs_nan_words": 2185
+   }
+  ],
+  "per_candidate": {
+   "exp-diet": 788,
+   "exp-act-epilogue": 788,
+   "down-diet": 784,
+   "production": 786
+  },
+  "diagnostic_rows": [
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 5342,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   },
+   {
+    "candidate": "exp-act-epilogue",
+    "stratum": "exceptional",
+    "different_bytes": 8477,
+    "compared_bytes": 38484,
+    "bytes_equal": false
+   }
+  ],
+  "stress": {
+   "exp-diet/mixed": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 23270,
+    "chains_compared": 320000,
+    "fp32_mismatches": 105691,
+    "nan_vs_nan_mismatches": 105691,
+    "value_mismatches": 0
+   },
+   "down-diet/mixed": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 47628,
+    "chains_compared": 320000,
+    "fp32_mismatches": 6660,
+    "nan_vs_nan_mismatches": 6660,
+    "value_mismatches": 0
+   },
+   "exp-diet/finite": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   },
+   "down-diet/finite": {
+    "rows": 10000,
+    "blocks": 200000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0
+   }
+  },
+  "samples": 784
+ },
+ "gnu_intel_byte_rows_identical": true,
+ "gnu_intel_identity_scope": "every row outside the NaN-producing strata (f2, exceptional); those rows are per-twin and may be payload-order-only (both sides NaN in every differing word)",
+ "exactness_domain": "candidates byte-identical to production on GNU and Intel for every exactness stratum; the one diagnostic row class (exp-act-epilogue on the non-finite-scale bank) is a NaN payload-order difference of the activation, never a value difference"
+}

@@ -1,0 +1,115 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "schema": "packet193.admission.v1",
+ "lane": "B",
+ "physical_card": 2,
+ "pci": "0000:43:00.0",
+ "candidates": [
+  "exp-diet",
+  "exp-act-epilogue",
+  "down-diet"
+ ],
+ "device": {
+  "phase_gateup_bytes": 1119693652,
+  "phase_down_bytes": 1018048812,
+  "peak_bytes": 1119693652,
+  "declared_upper_bound": 1200000000,
+  "model_load": false,
+  "components": {
+   "scrub": 536870912,
+   "gate_bank": 275251200,
+   "up_bank": 275251200,
+   "down_bank_tile16": 471859200,
+   "real_rows_layer0_24": 21504000,
+   "exceptional_gateup_bank": 10752000,
+   "exceptional_down_bank": 9216000
+  }
+ },
+ "host": {
+  "required_available_bytes": 10737418240,
+  "reserve_bytes": 8589934592,
+  "anonymous_budget_bytes": 2147483648,
+  "binary_estimate_bytes": 272629760,
+  "note": "whole-host admission applies (the window driver stops the owner endpoints); the micro itself stages 3.4 MB chunks, 31 MB of fixtures, 21 MB of real rows and 20 MB of exceptional banks"
+ },
+ "storage": {
+  "minimum_root_free_bytes": 25000000000,
+  "planned_write_bytes": 100663296,
+  "expected_samples_bytes": 30624000
+ },
+ "duration": {
+  "per_cold_cycle_seconds": 0.00092,
+  "parent": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/micro-B/window.json",
+  "packet192_window_seconds": 32.6,
+  "strata": {
+   "cold": {
+    "candidates": 3,
+    "cycles_per_candidate": 30720,
+    "cycles": 92160,
+    "seconds": 85.1,
+    "note": "each cold cycle = 512 MiB scrub + one launch (the epilogue control adds the act launch, ~0.01 ms)"
+   },
+   "warm": {
+    "launches": 4920,
+    "seconds": 3.0,
+    "note": "gate/up candidates: warm + 2 real shapes; down: warm"
+   },
+   "exactness_passes": {
+    "launches": 2424,
+    "seconds": 12.0,
+    "note": "per route: production, act twin, two gate/up candidates; down production + candidate; plus fixtures, each with a host fetch"
+   },
+   "bank_generation_and_upload": {
+    "seconds": 22.0,
+    "note": "host-side LCG generation of 1.0 GB of synthetic rows (single thread) + 20 MB exceptional banks + H2D"
+   },
+   "startup_and_jit": {
+    "seconds": 15.0,
+    "note": "14 kernels (6 production/candidate/act + scrub instantiations) JIT"
+   }
+  },
+  "expected_seconds": [
+   60,
+   411
+  ],
+  "estimate_seconds": 137.1,
+  "watchdog_seconds": 1800,
+  "under_ten_minutes": true,
+  "per_candidate_seconds": {
+   "cold": 28.4,
+   "warm": 1.0
+  }
+ },
+ "identity": {
+  "route_count": 384,
+  "cold_repeats": 20,
+  "warm_repeats": 200,
+  "passes": 2,
+  "orders": [
+   "AB",
+   "BA"
+  ],
+  "warmups_excluded": 5,
+  "gateup": "p90exp::Kernel<IQ2_S,2560,WG64,Prefetch=false,Wide=true>",
+  "down": "p100::Kernel<2>",
+  "act": "p193diet::ActProduction (silu_product twin)",
+  "isa_dynamic_per_weight": {
+   "exp-diet": {
+    "candidate": 11.8125,
+    "production": 15.28125,
+    "ratio": 0.7730061349693251
+   },
+   "exp-act-epilogue": {
+    "candidate": 11.84375,
+    "production": 15.28125,
+    "ratio": 0.7750511247443763
+   },
+   "down-diet": {
+    "candidate": 18.5,
+    "production": 20.8125,
+    "ratio": 0.8888888888888888
+   }
+  }
+ }
+}

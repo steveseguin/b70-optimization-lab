@@ -1,0 +1,97 @@
+{
+ "schema": "packet193.parent-inputs.v1",
+ "rule": "cross-packet files are read in place and verified by digest at plan/run time; they are provenance records, never pin-guard pins",
+ "real_rows_dir": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+ "routes_json": "experiments/own-xpu-runtime/stage2/packet193-expert-diet/lineage-inputs/routes-p100b.json",
+ "routes_json_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+ "packet192_controls_us": {
+  "gateup": {
+   "cold_us": 73.75,
+   "warm_us": 46.354
+  },
+  "down": {
+   "cold_us": 45.938,
+   "warm_us": 33.75
+  }
+ },
+ "packet192_follow_on_bars_us": {
+  "gateup": {
+   "exp-diet": {
+    "target": "<= 0.85 x production in both A/B orders and every stratum (packet100 gate)",
+    "cold_bar_us": 62.6875,
+    "warm_bar_us": 39.4009,
+    "counted_against": "kernel"
+   },
+   "exp-act-epilogue": {
+    "target": "<= 0.85 x production in both A/B orders and every stratum (packet100 gate)",
+    "cold_bar_us": 67.29173750000001,
+    "warm_bar_us": 44.0051375,
+    "counted_against": "kernel + expsact launch"
+   }
+  },
+  "down": {
+   "down-diet": {
+    "target": "<= 0.85 x production in both A/B orders and every stratum (packet100 gate)",
+    "cold_bar_us": 39.0473,
+    "warm_bar_us": 28.6875,
+    "counted_against": "kernel"
+   }
+  }
+ },
+ "parents": [
+  {
+   "name": "packet100b real routes (384 x 10, fixtures 1/16/32/64)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/routes.bin",
+   "parent_digest": "01c8c616990f4dc406f497c9c14da5920aa1b49326ff312a5c2c82a32856c605",
+   "bytes": 46080
+  },
+  {
+   "name": "packet100b route manifest",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/route-inputs.json",
+   "parent_digest": "f91ad7fd56d87eeecfb5f3abf1b01eb6260f72d5513f99e4e6237714fccd2973",
+   "bytes": 2304489
+  },
+  {
+   "name": "packet162b real gate/up rows layer0 (experts 0-9)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer0.bin",
+   "parent_digest": "eeed9d3bab0c8652c344d363174032c1f197944e7314cdf73fe974493ebc6628",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b real gate/up rows layer24 (experts (37i+19)%512)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer24.bin",
+   "parent_digest": "77bdd24006f6f5425b32e78ddfc50e34faa670b5b655070c4c59ed25aa35f52b",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b inputs receipt",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/micro-prep/inputs.json",
+   "parent_digest": "4d8d92220a9f7b3b9ad2bafeb970cff36dbb8c21d1729e49f6b332bb5b7da30d",
+   "bytes": 13817
+  },
+  {
+   "name": "packet192 device analysis (production cold/warm control datums, follow-on bars)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/evidence/issue-floor-B1/analysis.json",
+   "parent_digest": "a2067162214f9ed35903173892d143bff8c0939a2e9bedc43fc771a9d9c95ca8",
+   "bytes": 7235
+  },
+  {
+   "name": "packet192 device samples (production stream, different schema; analyzer must refuse it)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/evidence/issue-floor-B1/samples.jsonl",
+   "parent_digest": "d96211e7ff3bfd8d8750296bc2b95c106ecd002c8e04bd5dfdcbd4f2c330b58e",
+   "bytes": 8245650
+  },
+  {
+   "name": "packet192 routes json (identical derivation)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet192-expert-issue-floor/lineage-inputs/routes-p100b.json",
+   "parent_digest": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+   "bytes": 15837
+  },
+  {
+   "name": "packet110 class roofline (copy floors 20.08 / 17.28 us; expsact 5.42 us)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/roofline.json",
+   "parent_digest": "93fdf583d045a9ab853cd1a62aa26b6f21654983c8513674c31ea05da0c66a19",
+   "bytes": 89513
+  }
+ ]
+}
