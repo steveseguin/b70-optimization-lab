@@ -1,0 +1,308 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "host_native_executed": true,
+  "model_loads": 1,
+  "requests": 8,
+  "protocol_probe_passed": true,
+  "actual_argv_refusals": 3,
+  "save_resume_exact": true,
+  "append_repeat_fresh_state_exact": true,
+  "events": [
+    {
+      "id": "fresh-a",
+      "tokens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 5,
+          "ms": 22.351275
+        },
+        "restore": null,
+        "save": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "2effbea18c23613f1090d1c5a86d0c5e4e5918ca55a59257d53673259e503104",
+          "position": 12,
+          "pending_token": 1,
+          "bytes": 2372,
+          "seconds": 0.164531855,
+          "parent_checkpoint_id": null
+        }
+      }
+    },
+    {
+      "id": "fresh-b",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 4,
+          "ms": 10.416717
+        },
+        "restore": null,
+        "save": null
+      }
+    },
+    {
+      "id": "resume-a",
+      "tokens": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "same-generation-resume",
+          "save"
+        ],
+        "prefill": {
+          "path": null,
+          "first_position": 12,
+          "tokens": 0,
+          "ms": 0
+        },
+        "restore": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "2effbea18c23613f1090d1c5a86d0c5e4e5918ca55a59257d53673259e503104",
+          "operation": "same-generation-resume",
+          "saved_prefix_length": 12,
+          "saved_history_length": 13,
+          "saved_prompt_length": 5,
+          "input_length": 5,
+          "appended_length": 0,
+          "pending_token": 1,
+          "pending_is_stop": false,
+          "pending_token_handling": "stepped as the first decode step at position saved_prefix_length; the output continues the interrupted generation",
+          "restore_ms": 29.923578,
+          "append_prefill_ms": null,
+          "append_prefill_tokens": 0,
+          "append_prefill_path": null,
+          "restored_bytes": 2420
+        },
+        "save": {
+          "checkpoint_id": "s2",
+          "manifest_sha256": "f69771db242456b9cff5449422c52f2367ca74ee82138e66da9754d32f534f9a",
+          "position": 16,
+          "pending_token": 1,
+          "bytes": 2580,
+          "seconds": 0.154770481,
+          "parent_checkpoint_id": "s1"
+        }
+      }
+    },
+    {
+      "id": "append-a",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "append",
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 12,
+          "tokens": 7,
+          "ms": 20.332313
+        },
+        "restore": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "2effbea18c23613f1090d1c5a86d0c5e4e5918ca55a59257d53673259e503104",
+          "operation": "append",
+          "saved_prefix_length": 12,
+          "saved_history_length": 13,
+          "saved_prompt_length": 5,
+          "input_length": 19,
+          "appended_length": 6,
+          "pending_token": 1,
+          "pending_is_stop": false,
+          "pending_token_handling": "input[saved_prefix_length] is the saved pending token; it is stepped first as an ordinary prompt token at position saved_prefix_length, then the appended delta; the last input token's argmax is the first generated token",
+          "restore_ms": 22.478623,
+          "append_prefill_ms": 20.332313,
+          "append_prefill_tokens": 7,
+          "append_prefill_path": "incremental",
+          "restored_bytes": 2420
+        },
+        "save": {
+          "checkpoint_id": "s3",
+          "manifest_sha256": "266152722c691fa7dcd6e0ae43636cca715944238719dfec63a456315b55ebf5",
+          "position": 22,
+          "pending_token": 0,
+          "bytes": 2884,
+          "seconds": 0.154174952,
+          "parent_checkpoint_id": "s1"
+        }
+      }
+    },
+    {
+      "id": "append-repeat",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "append",
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 12,
+          "tokens": 7,
+          "ms": 22.502609
+        },
+        "restore": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "2effbea18c23613f1090d1c5a86d0c5e4e5918ca55a59257d53673259e503104",
+          "operation": "append",
+          "saved_prefix_length": 12,
+          "saved_history_length": 13,
+          "saved_prompt_length": 5,
+          "input_length": 19,
+          "appended_length": 6,
+          "pending_token": 1,
+          "pending_is_stop": false,
+          "pending_token_handling": "input[saved_prefix_length] is the saved pending token; it is stepped first as an ordinary prompt token at position saved_prefix_length, then the appended delta; the last input token's argmax is the first generated token",
+          "restore_ms": 22.425233,
+          "append_prefill_ms": 22.502609,
+          "append_prefill_tokens": 7,
+          "append_prefill_path": "incremental",
+          "restored_bytes": 2420
+        },
+        "save": {
+          "checkpoint_id": "s4",
+          "manifest_sha256": "7bd39497a13fc7d85512346276b80ee47c0eda94f07401d7d0d5ae315b13d9ef",
+          "position": 22,
+          "pending_token": 0,
+          "bytes": 2884,
+          "seconds": 0.155209785,
+          "parent_checkpoint_id": "s1"
+        }
+      }
+    },
+    {
+      "id": "append-fresh",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 19,
+          "ms": 71.728014
+        },
+        "restore": null,
+        "save": {
+          "checkpoint_id": "s5",
+          "manifest_sha256": "66ce0c950ae7e11a59f614313ece0d04450d61168065ca16e549b52542c923f3",
+          "position": 22,
+          "pending_token": 0,
+          "bytes": 2884,
+          "seconds": 0.163023073,
+          "parent_checkpoint_id": null
+        }
+      }
+    },
+    {
+      "id": "fresh-a-reference",
+      "tokens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 5,
+          "ms": 21.7632
+        },
+        "restore": null,
+        "save": null
+      }
+    },
+    {
+      "id": "fresh-b-repeat",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 4,
+          "ms": 19.472237
+        },
+        "restore": null,
+        "save": null
+      }
+    }
+  ],
+  "run_directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160420",
+  "binary_sha256": "03981c0d0d5e052705feae0f39568f1d0359eb73e58e99b83702ed5943142f77",
+  "scope": "Synthetic tiny geometry, real host-only entry/reset/checkpoint logic; no device or production arithmetic/performance qualification."
+}

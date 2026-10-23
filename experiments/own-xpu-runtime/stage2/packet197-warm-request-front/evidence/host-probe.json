@@ -1,0 +1,404 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "host_native_executed": true,
+  "model_loads": 1,
+  "requests": 8,
+  "protocol_probe_passed": true,
+  "protocol_probe_binary_sha256": "d355b746dfaa06538874e220edb351f5f5cac43cad60bbbce873678306244947",
+  "actual_argv_refusals": 3,
+  "argv_refusal_receipts": [
+    {
+      "case": "missing-bounds",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host/own-rt-iq3",
+        "--mini",
+        "--pipeline-mini",
+        "--context",
+        "64",
+        "--retain-steps",
+        "none",
+        "--native-nice",
+        "19",
+        "--seconds",
+        "120",
+        "--request-front",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/bad-missing"
+      ],
+      "expected_refusal": "explicit request-front bounds required",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "explicit request-front bounds required\n",
+      "output_created": false
+    },
+    {
+      "case": "zero-bound",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host/own-rt-iq3",
+        "--mini",
+        "--pipeline-mini",
+        "--context",
+        "64",
+        "--retain-steps",
+        "none",
+        "--native-nice",
+        "19",
+        "--seconds",
+        "120",
+        "--request-front",
+        "--request-front-max-requests",
+        "16",
+        "--request-front-idle-seconds",
+        "10",
+        "--request-front-checkpoints",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/checkpoints",
+        "--request-front-tokenizer-identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/tokenizer.tsv",
+        "--request-front-max-requests",
+        "0",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/bad-zero"
+      ],
+      "expected_refusal": "invalid bounded decimal integer",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "invalid bounded decimal integer\n",
+      "output_created": false
+    },
+    {
+      "case": "mixed-input",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host/own-rt-iq3",
+        "--mini",
+        "--pipeline-mini",
+        "--context",
+        "64",
+        "--retain-steps",
+        "none",
+        "--native-nice",
+        "19",
+        "--seconds",
+        "120",
+        "--request-front",
+        "--request-front-max-requests",
+        "16",
+        "--request-front-idle-seconds",
+        "10",
+        "--request-front-checkpoints",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/checkpoints",
+        "--request-front-tokenizer-identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/tokenizer.tsv",
+        "--input",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/tokenizer.tsv",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545/bad-mixed"
+      ],
+      "expected_refusal": "front owns request inputs and checkpoint modes",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "front owns request inputs and checkpoint modes\n",
+      "output_created": false
+    }
+  ],
+  "save_resume_exact": true,
+  "append_repeat_fresh_state_exact": true,
+  "events": [
+    {
+      "id": "fresh-a",
+      "tokens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 5,
+          "ms": 11.879444
+        },
+        "restore": null,
+        "save": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "ac7f4d446d8e4dd5e307e1fdcea75ed24a9d6cea14963bc53ea3c2e80702d817",
+          "position": 12,
+          "pending_token": 1,
+          "bytes": 2372,
+          "seconds": 0.176817639,
+          "parent_checkpoint_id": null
+        }
+      }
+    },
+    {
+      "id": "fresh-b",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 4,
+          "ms": 10.442836
+        },
+        "restore": null,
+        "save": null
+      }
+    },
+    {
+      "id": "resume-a",
+      "tokens": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "same-generation-resume",
+          "save"
+        ],
+        "prefill": {
+          "path": null,
+          "first_position": 12,
+          "tokens": 0,
+          "ms": 0
+        },
+        "restore": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "ac7f4d446d8e4dd5e307e1fdcea75ed24a9d6cea14963bc53ea3c2e80702d817",
+          "operation": "same-generation-resume",
+          "saved_prefix_length": 12,
+          "saved_history_length": 13,
+          "saved_prompt_length": 5,
+          "input_length": 5,
+          "appended_length": 0,
+          "pending_token": 1,
+          "pending_is_stop": false,
+          "pending_token_handling": "stepped as the first decode step at position saved_prefix_length; the output continues the interrupted generation",
+          "restore_ms": 30.156626,
+          "append_prefill_ms": null,
+          "append_prefill_tokens": 0,
+          "append_prefill_path": null,
+          "restored_bytes": 2420
+        },
+        "save": {
+          "checkpoint_id": "s2",
+          "manifest_sha256": "034d45d8125b472f511fb37062fa27b017d3215f1b2ffbb34bbd2fd896fb8ec0",
+          "position": 16,
+          "pending_token": 1,
+          "bytes": 2580,
+          "seconds": 0.163606553,
+          "parent_checkpoint_id": "s1"
+        }
+      }
+    },
+    {
+      "id": "append-a",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "append",
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 12,
+          "tokens": 7,
+          "ms": 21.141312
+        },
+        "restore": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "ac7f4d446d8e4dd5e307e1fdcea75ed24a9d6cea14963bc53ea3c2e80702d817",
+          "operation": "append",
+          "saved_prefix_length": 12,
+          "saved_history_length": 13,
+          "saved_prompt_length": 5,
+          "input_length": 19,
+          "appended_length": 6,
+          "pending_token": 1,
+          "pending_is_stop": false,
+          "pending_token_handling": "input[saved_prefix_length] is the saved pending token; it is stepped first as an ordinary prompt token at position saved_prefix_length, then the appended delta; the last input token's argmax is the first generated token",
+          "restore_ms": 22.575795,
+          "append_prefill_ms": 21.141312,
+          "append_prefill_tokens": 7,
+          "append_prefill_path": "incremental",
+          "restored_bytes": 2420
+        },
+        "save": {
+          "checkpoint_id": "s3",
+          "manifest_sha256": "65af5244908ebc6d49100857b924a3d04d388a4f8da4bac5fb999e44e4a683fd",
+          "position": 22,
+          "pending_token": 0,
+          "bytes": 2884,
+          "seconds": 0.154081762,
+          "parent_checkpoint_id": "s1"
+        }
+      }
+    },
+    {
+      "id": "append-repeat",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "append",
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 12,
+          "tokens": 7,
+          "ms": 23.54736
+        },
+        "restore": {
+          "checkpoint_id": "s1",
+          "manifest_sha256": "ac7f4d446d8e4dd5e307e1fdcea75ed24a9d6cea14963bc53ea3c2e80702d817",
+          "operation": "append",
+          "saved_prefix_length": 12,
+          "saved_history_length": 13,
+          "saved_prompt_length": 5,
+          "input_length": 19,
+          "appended_length": 6,
+          "pending_token": 1,
+          "pending_is_stop": false,
+          "pending_token_handling": "input[saved_prefix_length] is the saved pending token; it is stepped first as an ordinary prompt token at position saved_prefix_length, then the appended delta; the last input token's argmax is the first generated token",
+          "restore_ms": 22.302292,
+          "append_prefill_ms": 23.54736,
+          "append_prefill_tokens": 7,
+          "append_prefill_path": "incremental",
+          "restored_bytes": 2420
+        },
+        "save": {
+          "checkpoint_id": "s4",
+          "manifest_sha256": "305ff394187614a2a965e2ec8e820ef38c8afa5d60f7273d665c8ebef6ece3f5",
+          "position": 22,
+          "pending_token": 0,
+          "bytes": 2884,
+          "seconds": 0.155292056,
+          "parent_checkpoint_id": "s1"
+        }
+      }
+    },
+    {
+      "id": "append-fresh",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [
+          "save"
+        ],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 19,
+          "ms": 71.72686
+        },
+        "restore": null,
+        "save": {
+          "checkpoint_id": "s5",
+          "manifest_sha256": "5d477d5c39745a4586a9a0dab5111729cba011a74742566c97f3603e00fc93ab",
+          "position": 22,
+          "pending_token": 0,
+          "bytes": 2884,
+          "seconds": 0.163120963,
+          "parent_checkpoint_id": null
+        }
+      }
+    },
+    {
+      "id": "fresh-a-reference",
+      "tokens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 5,
+          "ms": 21.446113
+        },
+        "restore": null,
+        "save": null
+      }
+    },
+    {
+      "id": "fresh-b-repeat",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": {
+        "contract": "v1.2+p197",
+        "label": "experimental-warm-front",
+        "operations": [],
+        "prefill": {
+          "path": "incremental",
+          "first_position": 0,
+          "tokens": 4,
+          "ms": 19.37329
+        },
+        "restore": null,
+        "save": null
+      }
+    }
+  ],
+  "run_directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build/host-probe-20261023T160545",
+  "binary_sha256": "03981c0d0d5e052705feae0f39568f1d0359eb73e58e99b83702ed5943142f77",
+  "harness_sha256": "06d12535bcff30579bd95ae99c6362d44fcb5784420a52ee7ee0056ff5a1afe2",
+  "scope": "Synthetic tiny geometry, real host-only entry/reset/checkpoint logic; no device or production arithmetic/performance qualification."
+}

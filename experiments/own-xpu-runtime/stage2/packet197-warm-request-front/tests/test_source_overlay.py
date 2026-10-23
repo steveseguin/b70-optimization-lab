@@ -1,9 +1,10 @@
 """CPU source-integration/transport contract checks, explicitly not a C++ compilation gate."""
-import ast,hashlib,importlib.util,json,re,sys,unittest
+import ast,hashlib,importlib.util,json,re,sys,tempfile,unittest
 from pathlib import Path
 P=Path(__file__).resolve().parents[1];ROOT=P.parents[3]
 sys.path.insert(0,str(P))
 import prepare_overlay as overlay
+import build_engine
 spec=importlib.util.spec_from_file_location('p197_transport',ROOT/'experiments/own-xpu-runtime/integration/request_front/client.py')
 transport=importlib.util.module_from_spec(spec);spec.loader.exec_module(transport)
 
@@ -59,6 +60,19 @@ class SourceOverlay(unittest.TestCase):
   for name,digest in pins['sources'].items():self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(),digest,name)
   self.assertEqual((P/'build/native/main.cpp').read_text(),self.main)
   self.assertEqual((P/'build/native/checkpoint.hpp').read_text(),self.checkpoint)
+ def test_dependency_closure_accepts_only_exact_admitted_repo_inputs(self):
+  pins=json.loads((P/'parent-pins.json').read_text())
+  for target in ('protocol','host','device'):
+   expected=build_engine.expected_dependencies(target,pins)
+   with self.subTest(target=target),tempfile.TemporaryDirectory(prefix='p197-depfile-') as temp:
+    dep=Path(temp)/'entry.d'
+    def write(paths):dep.write_text('entry.o: '+ ' \\\n '.join(str(p) for p in sorted(paths))+'\n')
+    write(expected)
+    self.assertEqual(set(build_engine.verify_dependencies(target,dep,pins)),{str(p.relative_to(ROOT)) for p in expected})
+    write(expected-{next(iter(expected))})
+    with self.assertRaises(AssertionError):build_engine.verify_dependencies(target,dep,pins)
+    write(expected|{(P/'README.md').resolve()})
+    with self.assertRaises(AssertionError):build_engine.verify_dependencies(target,dep,pins)
  def test_context_guard_and_checkpoint_frame_contract(self):
   frame=transport.encode_request('r1',[1,2,3],4,context=32,vocab=10,restore='s1',save='s2')
   self.assertEqual(frame,b'RUN\tr1\t4\ts1\ts2\t1 2 3\n')

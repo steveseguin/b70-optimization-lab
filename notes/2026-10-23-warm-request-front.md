@@ -31,8 +31,29 @@ The [request transport](../experiments/own-xpu-runtime/integration/request_front
 has CPU subprocess tests; neither that mock nor the metadata bridge proves
 an end-to-end device serving result.
 
-The planned device sequence is one load: fresh A and save, unrelated fresh B,
-restore A with appended input and save, repeat append, then final drain.
-Every output and relevant saved state must equal the matching reference.
-Report load, restore, append, first-token latency and request overhead
-separately. Session reuse must never enter the cold record scoreboard.
+The planned device sequence is one load and eight requests: fresh A and save,
+unrelated fresh B, resume A and save, append to A and save, repeat the append
+and save, run that appended prompt fresh and save, uninterrupted A, and B
+again. Every output and relevant saved state must equal the matching
+reference. Report load, restore, append, first-token latency and request
+overhead separately. Session reuse must never enter the cold record scoreboard.
+
+All three native targets now compile: the standalone protocol probe, the
+host-only engine and the device engine. Compiler dependency checks cover the
+full repository input closure; the device link reuses 41 unchanged parent
+objects. The actual host-only engine passed the eight-request lifecycle in
+one process, including resumed output, unrelated-request isolation, and
+byte-identical saved state for appended, repeated and fresh input. This uses
+tiny synthetic CPU geometry and does not establish device correctness or
+model performance. The first real-model device window is being prepared and
+independently reviewed.
+
+The token-ID pilot is one part of the serving interface. Its RUN command
+chooses a checkpoint ID before generation, whereas ctxkeeper's parking
+policy computes its full-history ID after the reply and then calls save.
+Connecting that policy therefore still needs an explicit postreply SAVE
+operation or a separately specified mapping to pre-saved native IDs.
+Inspect and delete are native CPU commands, not request-front operations.
+The metadata bridge currently accepts qualified packet181 checkpoints only;
+packet197 requires its own evidence and explicit adapter support. No
+ctxkeeper or OpenAI-compatible endpoint is wired by this pilot.

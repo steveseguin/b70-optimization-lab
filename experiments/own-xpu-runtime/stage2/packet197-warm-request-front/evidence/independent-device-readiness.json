@@ -1,0 +1,80 @@
+{
+  "schema": "packet197.independent-readiness-audit.v1",
+  "created_utc": "2026-10-23T16:25:56.531519+00:00",
+  "passed": true,
+  "device_executed_by_auditor": false,
+  "tests_executed_by_auditor": false,
+  "scope": "Read-only independent source/evidence audit; no device qualification or throughput claim.",
+  "checks": {
+    "ready_files_exact": 169,
+    "parent_source_pins_exact": 111,
+    "compiled_targets": {
+      "protocol": {
+        "binary_sha256": "d355b746dfaa06538874e220edb351f5f5cac43cad60bbbce873678306244947",
+        "repository_dependencies": 2,
+        "reused_objects": 0
+      },
+      "host": {
+        "binary_sha256": "03981c0d0d5e052705feae0f39568f1d0359eb73e58e99b83702ed5943142f77",
+        "repository_dependencies": 98,
+        "reused_objects": 33
+      },
+      "device": {
+        "binary_sha256": "f1e6e6de5c3b1fe8798fc3b4cce0f66f1fb4dc7e82f94c933d495100d01b4f35",
+        "repository_dependencies": 96,
+        "reused_objects": 41
+      }
+    },
+    "retained_host_artifacts_exact": 13,
+    "real_host_requests_exact": 8,
+    "append_host_state_files_equal": 21,
+    "worker_cpu_tests_recorded_passed": 10,
+    "actual_production_argv_intercepted_before_exec": true,
+    "actual_host_parser_refusals_exact": 2,
+    "frozen_controller_helpers_exact": 5
+  },
+  "reviewed_safety": [
+    "Fixed single native owner and eight requests; exact production argv and one-card environment; no finite RLIMIT_AS admitted on real owner.",
+    "Parent bare-import namespace is checked; source inventory binds parent helpers, fixtures, oracle, native binaries and repository headers.",
+    "Journal calls bounded to 15 seconds; live guard serialized with shared cursor; guard before and after every request; background guard during loading and requests.",
+    "Fault/STOP/deadline/resource failure halts intake and sends native SIGTERM at most once; no restart, kill escalation or power/memory-setting change.",
+    "Failure preserves lease/drain markers; still-running native process is retained under process-mode cgroup unit.",
+    "Stream/result/cap, reset state, resume/uninterrupted tokens, two prompt identities, append/repeat/fresh tokens and checkpoint state are checked.",
+    "Controller requires exact eight completions, owner exit and clean passive postflight before one restoration; external PAUSE bytes preserved during incident.",
+    "Guarded restoration binds frozen parent restore/validator while adding p197 STOP checks before operations and HTTP calls."
+  ],
+  "unchanged_arithmetic_review": "Previously independently compared p181 and p197 reset, step, save and restore bodies byte-for-byte; all identical. Build objects and repository dependency hashes rechecked in this receipt.",
+  "limitations": [
+    "Host execution uses tiny synthetic geometry; production model arithmetic, warm reuse and device teardown await the one-shot device lifecycle.",
+    "Packet197 derives the p181 checkpoint runtime/cache identity, not qualified packet196 diet/max23 performance identity.",
+    "Checkpoints are experimental-warm-front / v1.2+p197 with empty device_gates; p181 qualification must not be transferred.",
+    "RUN chooses save ID before generation. Parking.park requires post-reply Engine.save; explicit SAVE or a separately specified catalog adapter is still needed.",
+    "Inspect/delete remain native CPU commands, not transport operations; no ctxkeeper/OpenAI endpoint integration is claimed.",
+    "System/toolchain headers are outside the repository source pin closure."
+  ],
+  "blockers": [],
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/READY-FOR-DEVICE.json": "e84339b009a1696a132f7a9f5a87aef026374070b6308c7978dba4052db8c41c",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/device_worker.py": "3ac6321822b3f414d1432a8739fad415315ba3440e26dd6f6a235ecf2f13760b",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/device_fault_review.py": "2b9bc9af610eaba411b1c0b76f130cdfeedd82968d9434f65b06f3a37870301c",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/device_gates.py": "43d3e3fc0623af00d5a25d01feee21c602d8f92809e0d74ec4f3d0c120d46101",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/tests/test_device_worker.py": "fe5da8a459f3cd1bed76445388852c7d3875c20dcec923dc34cf8fd6d63fe4ea",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/device-cpu-gates.json": "e7a25f784fd5c5473cca45bc09777ef3e1c9f802dad179fd062cbf43a83bac2a",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/device-worker-tests.log": "7acd14065729701a6b118f7baf2ad6b213bab3f032bb287116dc93377c1a5d3b",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/build-compile-only.json": "f389ccf2d9c3f8f848feb433d88effa269e3b95835858674e7b5450a75ad9d55",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/host-probe.json": "a64d026f0bc6031d2d3d7a414bcf3742fac823d61acd4c2a34adbff26eb18f37",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/host-probe-artifacts.json": "9cd8cc7829781094bf4e5c968812405840aead3e5894db5182354b2348c47a43",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/host_probe.py": "06d12535bcff30579bd95ae99c6362d44fcb5784420a52ee7ee0056ff5a1afe2",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/build_engine.py": "c1d363d154d09d13852c0446d137e7149d931ce57bbfb17f12cd8794e2da3be8",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/parent-pins.json": "7cc62557091f8c01fbc0782e93ff4ecdeaa89ae91df5e5d1d2adff5277e86cd6",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/native/request_front.hpp": "e1b5833bd83c5fbadc1227c230d2974e098ce402a3602fd995860217e662d764",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/native-request-front.patch": "4823b4075f71f0c9d21f2879c48b304275e2ac0f196cb97715fa42c86ea1d0f7",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/evidence/source-overlay.json": "b85525007b2b79cf51f1b14deafcc5f8bb6592805e57416aa2b39d9998472495",
+    "experiments/own-xpu-runtime/integration/request_front/client.py": "8e83916d4fe84e9aee7f70c5cb0c7a822d915389d378a1a75f24bcb9aef470b8",
+    "experiments/own-xpu-runtime/ops/packet197-window/window.py": "49b73a94cd0457c19033f961c0d3f9a7b13a97b11bd32bd9c87ce1514d492dfc",
+    "experiments/own-xpu-runtime/ops/packet197-window/helpers.py": "0dec35606429b9619eca37a108e3f634b6ed72900a47089a25850bc63d12f3be",
+    "experiments/own-xpu-runtime/ops/packet197-window/restore_guard.py": "9c1a507a56b70a95cbf42f3f462cf3debd4d93e7ab25cdf9f60843580072a136",
+    "experiments/own-xpu-runtime/ops/packet197-window/test_window.py": "98d46094d0b0046b55f6503dd1850089673998d9d706d6de6b483814e55556b4",
+    "experiments/own-xpu-runtime/ops/packet197-window/helper-pins.json": "c9b53847cf489d41a1442757f9e05c7e3874ef0a55d7bbff370a345bb8bc5366"
+  }
+}
