@@ -151,3 +151,41 @@ Step 2, messages to that text, needs one input from the runtime owner: the chat 
 header carries it (`tokenizer.chat_template`, inside the pinned header sha256 `7c1460a9…`), or its sha256 so the
 Hugging Face `tokenizer_config.json` template here can be checked against it. Until then the harness covers
 already-rendered text only, and ctxkeeper still does not call the checkpoint operations.
+
+## Step 2 done, 2026-10-23 00:30 EDT: messages to that text, 12/12, from the pinned header itself
+
+The input did not need the other host after all: GGUF shard 1 of the runtime's model is only 10.9 MB and is
+almost entirely header, so it was fetched from the publisher at the pinned revision (`766911a6`), checked
+(whole-file sha256 `268f81fd…` and header sha256 `7c1460a9…` both equal to the admission receipt's), and
+`tokenizer.chat_template` was read out of it: 9,993 characters, sha256 `12827f24…`, which is exactly the
+`template_sha256` the sealed prompt manifest (`packet2-cpu-oracle/prompts/prompts.json`) pins. The text is saved
+as `experiments/own-xpu-runtime/integration/chat_template-7c1460a9.jinja`.
+
+**The Hugging Face copy on this host was the wrong template.** `stage1/packet1/metadata/tokenizer_config.json`
+(8,952 characters, sha256 `c3cf9e34…`) differs from the header's: the header's version merges every leading
+`system` or `developer` message into one system block (joined with newlines), renders `developer` as `system`,
+and maps reasoning effort `high` to `xhigh`. Checking the two by sha256, as the previous section proposed, would
+have failed, and an adapter built on the HF copy would have rendered a different prefix for any request with a
+developer message or more than one system message. That is the reason the step existed.
+
+`experiments/own-xpu-runtime/integration/template_parity.py` renders the suite's 12 raw prompts with the saved
+template the way the sealed files were made (jinja2 `ImmutableSandboxedEnvironment`, one user message,
+`add_generation_prompt`, thinking off) and compares bytes with the sealed files: **12/12 identical**, from the
+saved copy and again straight from the shard header (`--gguf`), receipt
+`integration/receipts/template-parity-20261023.json`. The receipt also records the rendering of four message
+shapes ctxkeeper sends, as the fixtures an adapter is checked against:
+
+| Shape | Rendered as |
+| --- | --- |
+| system + user | `<\|im_start\|>system\n…<\|im_end\|>\n<\|im_start\|>user\n…<\|im_end\|>\n<\|im_start\|>assistant\n<think>\n\n</think>\n\n` |
+| two turns (user, assistant, user) | the earlier assistant turn is rendered **with an empty think block before its text** (`<think>\n\n</think>\n\nBlue.`), so a reply stored in history must be re-rendered this way, not as the raw text the client saw |
+| two system messages | one system block, contents joined with a newline |
+| developer + user | the developer message becomes the system block |
+
+Step 1 was also re-run with the vocabulary, merges and token types read from the same header
+(`render_parity.py --gguf`, header pin checked): **12/12 identical**, receipt
+`integration/receipts/render-parity-gguf-20261023.json`. The HF `tokenizer.json` stand-in is no longer part of the
+evidence. Both steps together: messages → text → the exact token prefix a checkpoint is valid for, reproducible on
+this host from the pinned header alone. Nothing on the parity side is open; the adapter's parking policy in
+ctxkeeper is next.
+

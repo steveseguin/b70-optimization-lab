@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 22, 23:29 EDT — Session-swap parity step 2 DONE (messages → text, 12/12) from the pinned GGUF header itself; the HF template copy was the wrong one.**
+Shard 1 of the runtime's model is 10.9 MB of header, so it was fetched at the pinned revision (file 268f81fd…, header 7c1460a9…, both equal to the
+admission receipt) and `tokenizer.chat_template` read out of it (9,993 chars, sha 12827f24… = the sealed prompt manifest's pin), saved as
+`experiments/own-xpu-runtime/integration/chat_template-7c1460a9.jinja`. The `tokenizer_config.json` copy on this host (8,952 chars) differs: the
+header's template merges leading system/developer messages into one block, renders developer as system, maps effort high → xhigh, and renders a
+history assistant turn with an empty think block before its text. `integration/template_parity.py` renders the 12 raw suite prompts the way the
+sealed files were made: 12/12 byte-identical from the saved copy and from the shard header (`--gguf`); four ctxkeeper message shapes recorded as
+adapter fixtures. Step 1 re-run with the header's own vocabulary (`render_parity.py --gguf`): 12/12, HF stand-in no longer in the evidence.
+Receipts `integration/receipts/{template-parity,render-parity-gguf}-20261023.json`; CHECKPOINT-INTEGRATION.md updated. Parity closed; next is the
+parking policy in ctxkeeper behind an engine interface, CPU-tested until the four-card host's request front exists. Cards empty.
+
 **October 22, 22:45 EDT — PRs #77 and #75 merged; the OpenVINO GenAI community entry is now `B70-verified` (reference-lab rerun on card 0, 02:30–03:10 UTC).**
 bosd's documentation-only entry `community/bosd-openvino-genai-b70/` (OpenVINO GenAI 2026.4.1, Qwen2.5-7B INT4, one B70) reproduced within 2 %:
 no-spec 114.7/114.6 tok/s (contributor 114.0/112.5), 1.5B-draft spec 95.1/126.0 (98.6/128.2), fresh llama.cpp-SYCL `184f653` tg256 99.5 ± 0.1 and

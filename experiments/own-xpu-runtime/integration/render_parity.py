@@ -44,19 +44,38 @@ def meta_from_hf(tokenizer_json: Path) -> dict:
             'tokenizer.ggml.token_type': types}
 
 
+def meta_from_gguf(shard1: Path) -> dict:
+    """The same metadata read straight from GGUF shard 1's header (tokens, merges, token types), so the
+    vocabulary needs no Hugging Face stand-in. The header's sha256 is checked against the packets' pin."""
+    from gguf import GGUFReader
+    head = shard1.read_bytes()[:10946618]
+    assert hashlib.sha256(head).hexdigest() == '7c1460a95eb2e95377c32b14deb92cf74fe504d4feb5a62a40d48f78e9e0dcb8', 'header pin'
+    r = GGUFReader(str(shard1))
+    def strings(key):
+        f = r.fields[key]
+        return [bytes(f.parts[i]).decode('utf-8') for i in f.data]
+    types = r.fields['tokenizer.ggml.token_type']
+    return {'tokenizer.ggml.pre': 'qwen35', 'tokenizer.ggml.tokens': strings('tokenizer.ggml.tokens'),
+            'tokenizer.ggml.merges': strings('tokenizer.ggml.merges'),
+            'tokenizer.ggml.token_type': [int(types.parts[i][0]) for i in types.data]}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--tokenizer', default='/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json')
+    ap.add_argument('--gguf', default='', help='GGUF shard 1: take the vocabulary from its header instead of --tokenizer')
     ap.add_argument('--out', default='')
     a = ap.parse_args()
     tok_src = ORACLE / 'tokenizer.py'
+    vocab_src = ({'path': a.gguf, 'sha256': sha(Path(a.gguf)), 'note': 'GGUF shard 1 at the pinned revision; header sha256 checked against the pin'}
+                 if a.gguf else
+                 {'path': a.tokenizer, 'sha256': sha(Path(a.tokenizer)), 'note': 'Hugging Face tokenizer.json on this host; the sealed records pin the GGUF header instead'})
     receipt = {'schema': 'own-runtime.render-parity.v1', 'oracle_tokenizer': {'path': str(tok_src), 'sha256': sha(tok_src),
                'pinned': PINNED_TOKENIZER_SHA, 'matches_pin': sha(tok_src) == PINNED_TOKENIZER_SHA},
-               'vocabulary_source': {'path': a.tokenizer, 'sha256': sha(Path(a.tokenizer)), 'note': 'Hugging Face tokenizer.json on this host; the sealed records pin the GGUF header instead'},
-               'prompts': [], 'passed': False}
+               'vocabulary_source': vocab_src, 'prompts': [], 'passed': False}
     spec = importlib.util.spec_from_file_location('oracle_tokenizer', tok_src)
     mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    tokenizer = mod.Tokenizer(meta_from_hf(Path(a.tokenizer)))
+    tokenizer = mod.Tokenizer(meta_from_gguf(Path(a.gguf)) if a.gguf else meta_from_hf(Path(a.tokenizer)))
     ok = 0
     for rec in sorted(RECORDS.glob('*/input.json')):
         d = json.loads(rec.read_text())
