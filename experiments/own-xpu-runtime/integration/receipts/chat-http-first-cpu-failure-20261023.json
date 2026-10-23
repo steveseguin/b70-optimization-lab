@@ -1,0 +1,19 @@
+{
+  "passed": false,
+  "tests": 12,
+  "errors": 1,
+  "reason": "Deep JSON nesting was valid to Python decoder with imported recursion limit; reached mockservice then test failure formatting itself recursed. Add explicit bounded JSON nesting before forward.",
+  "full_log": "/tmp/chat-http-first-cpu-failure-20261023.log",
+  "full_log_sha256": "9179a22036cd4fc8b309d0c0ad64fd9be6779adf10a6d1d1f4081aec514baa6f",
+  "source_before_fix": {
+    "chat_http.py": "bf88cb199742fe12a55c068ad8236825dad90291c1679c59fafc9165c8c81900",
+    "test_chat_http.py": "cab709efd820ab756977aac312f686661f86a7f8f956cc041e20cf5b2058b9ea"
+  },
+  "retained": {
+    "lineage/chat-http-first-cpu-failure-20261023/chat_http.py.txt": "bf88cb199742fe12a55c068ad8236825dad90291c1679c59fafc9165c8c81900",
+    "lineage/chat-http-first-cpu-failure-20261023/test_chat_http.py.txt": "cab709efd820ab756977aac312f686661f86a7f8f956cc041e20cf5b2058b9ea",
+    "lineage/chat-http-first-cpu-failure-20261023/failure.log": "9179a22036cd4fc8b309d0c0ad64fd9be6779adf10a6d1d1f4081aec514baa6f"
+  },
+  "source_recovery": "Reversed later additive edits; both recovered source files match the hashes recorded before the failed run exactly.",
+  "pre_header_fix_retention": "No independently hashed pre-header-fix snapshot was retained; current corrected source and reviewer finding document that intermediate issue."
+}

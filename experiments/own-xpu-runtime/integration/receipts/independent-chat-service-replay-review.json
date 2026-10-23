@@ -1,0 +1,53 @@
+{
+  "checks": [
+    "Recorded result/input bytes checked against p198 closeout inventory sizes and hashes.",
+    "Actual pinned codec renders each retained source prompt to exactly the original device input IDs.",
+    "Replay owner refuses any different prompt or generation count and returns only retained output IDs.",
+    "Facade returns exact prompt/completion token usage and length finish reason; re-encoding presented response recovers every retained output ID.",
+    "Raw prompt-plus-reply history remains unchanged.",
+    "CHAT-SERVICE.md explicitly distinguishes replay assembly from native arithmetic and live serving."
+  ],
+  "limitations": [
+    "No native executable/model process, GPU request, HTTP listener, checkpoint SAVE/restore or real parking disposition runs in this replay.",
+    "Both examples end at requested generation cap; terminal-stop behavior is covered separately by synthetic facade tests.",
+    "This binds retained p198 evidence and current codec/facade assembly; it does not independently repeat device arithmetic or establish live chat serving."
+  ],
+  "passed": true,
+  "replayed": [
+    {
+      "finish_reason": "length",
+      "generated_tokens": 256,
+      "prompt_tokens": 87,
+      "request": "fresh-a"
+    },
+    {
+      "finish_reason": "length",
+      "generated_tokens": 128,
+      "prompt_tokens": 60,
+      "request": "fresh-b"
+    }
+  ],
+  "schema": "independent-recorded-chat-replay-review-v1",
+  "source_and_evidence_sha256": {
+    "experiments/own-xpu-runtime/integration/CHAT-SERVICE.md": "2cca1e990ccd257990d81b0068adc58a1a3443317414ed2150e36263cd083178",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p198/admitted-engine-identity.json": "0f2c697eea8dae482008218e8e61dc3171cfa73fc700838b73d4dae81239d7ad",
+    "experiments/own-xpu-runtime/integration/test_chat_service_replay.py": "b8e95f291d09eaf64749a87fcbe3a54e2454edbebf594bc262676656ea4345c7",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/closeout-inventory.json": "8bc8db01722c94b8b0d0f60896fbbbfdf4ebf2a95a96f1bb83144cd44e23d749",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-a/input.tokens": "6fb4a0cc3d75f35ea2996b8fda1b7045c133cc834b9dc6c225df28799b962fa2",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-a/result.json": "fcf2b916fae9aec4937316393bd9da2f6058b514616148f285d512807e391206",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-b/input.tokens": "5e6674369a27ff7e3d03ec53f281b0036c995cfa6b6b3606c55fa68a388bedb2",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-b/result.json": "acabde54907d1c224e534d0b59dbf9f076cc9097fd1723104c6c98a7dc9676e8",
+    "repro/rapid-model-snapshots-b70/realistic-suite-v1.json": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+  },
+  "utc": "2026-10-23T17:28:03.446909+00:00",
+  "validation": {
+    "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest test_chat_service_replay -v",
+    "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration",
+    "exit_code": 0,
+    "reported_seconds": 1.213,
+    "subcases": 2,
+    "tests": 1
+  }
+}

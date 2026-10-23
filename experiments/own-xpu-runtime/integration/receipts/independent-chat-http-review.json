@@ -1,0 +1,38 @@
+{
+  "checks": [
+    "Literal IPv4 127.0.0.1 bind only; serial HTTPServer and unique server-assigned safe native request IDs.",
+    "Request line and headers share absolute five-second deadline and 65536-byte cap; slow-byte dribble regression refuses then intake recovers.",
+    "POST requires one exact Content-Length <=524288, one JSON content type, one safe session; transfer encodings, Expect and duplicate framing refuse before service.",
+    "Body uses separate absolute five-second deadline and bounded incremental reads; incomplete body and timeout refuse.",
+    "Strict UTF-8 JSON rejects duplicate keys, nonfinite numbers and excessive nesting.",
+    "Only fixed health/models/completion routes; HTTP0.9 and unsupported methods refuse; every response closes the connection.",
+    "Draining/halted service prevents new requests; runtime/serialization failure halts listener intake without retry or owner lifecycle action.",
+    "Recoverable ChatRequestError returns generic400 unless service has already halted, when generic503 takes precedence.",
+    "Disconnect during normal completion preserves normal disposition; socket write failures do not cancel or restart owner.",
+    "Errors do not expose exception details, request contents or private filesystem paths."
+  ],
+  "passed": true,
+  "remaining_blockers": [],
+  "resolved_findings": [
+    "Inherited request-line/header parser originally had only idle timeout; agent added absolute bounded header reader and dribble/size/HTTP0.9 regression coverage."
+  ],
+  "schema": "independent-local-chat-http-review-v1",
+  "scope": [
+    "Actual ephemeral loopback sockets against synthetic service only; no native executable, model process, GPU, real checkpoint operations or deployed service used.",
+    "Caller must supply an independently admitted ChatService; make_server does not establish model/tokenizer/runtime identity.",
+    "Local unauthenticated experiment; sessions share coordinator checkpoint root. No remote serving, streaming, cancellation or full OpenAI compatibility claim."
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/test_chat_http.py": "1186f1ccf4ee7a677b985c6c08cced49e6868b6fa04765b448e4d5a522ab95bb"
+  },
+  "utc": "2026-10-23T17:29:27.283883+00:00",
+  "validation": {
+    "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest test_chat_http -v",
+    "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration",
+    "exit_code": 0,
+    "reported_seconds": 0.708,
+    "tests": 15
+  }
+}

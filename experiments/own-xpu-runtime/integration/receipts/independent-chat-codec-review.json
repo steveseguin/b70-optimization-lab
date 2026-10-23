@@ -1,0 +1,39 @@
+{
+  "checks": [
+    "Source modules execute from hash-verified bytes; GGUF is a bounded regular-file nofollow header read with exact digest and extent.",
+    "Publisher chat template bytes equal pinned GGUF header metadata; thinking is explicitly disabled.",
+    "Native vocab.bin reconstruction matches fixed digest and exact five-key admitted tokenizer identity.",
+    "All twelve sealed prompts match exact rendered bytes and token IDs; four retained message shapes also match.",
+    "Header EOS248046 is distinguished from BOS/padding248044; both token strings/types are checked. Production native source stops on geometry.eos or248046, while miniature source stops only on its own EOS.",
+    "Decode preserves whitespace and terminal token strings; invalid token IDs refuse. Facade separately admits native stop IDs and removes only the final terminal ID for presentation.",
+    "Input roles, message counts, UTF-8 text bytes and encoded/decoded token counts are bounded; wrong header/source/identity/vocabulary pins refuse."
+  ],
+  "limitations": [
+    "CPU header/tokenizer/template tests only; no native/model payload/device/HTTP execution or throughput claim.",
+    "Library versions are recorded by codec provenance; the implementation does not pin package wheels. Current tested renderer output is covered by retained fixtures.",
+    "Publisher template intentionally trims message content and can render conversation history differently from exact saved raw IDs; checkpoint reuse must continue to require exact token-prefix equality and fall back to prefill on mismatch."
+  ],
+  "passed": true,
+  "remaining_blockers": [],
+  "schema": "independent-pinned-chat-codec-review-v1",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/chat_template-7c1460a9.jinja": "12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p198/admitted-engine-identity.json": "0f2c697eea8dae482008218e8e61dc3171cfa73fc700838b73d4dae81239d7ad",
+    "experiments/own-xpu-runtime/integration/receipts/template-parity-20261023.json": "f3804edc74b0e1e8af470339732a276df433276f36e2bc8e432482914fcab05a",
+    "experiments/own-xpu-runtime/integration/test_chat_codec.py": "02c7fa5714ffd6d78c3260ed404ec67629c989caccfcccba6d6c9158ccd31e12",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/tokenizer-identity.tsv": "5e88b69b8c30b6f79807bbbad23126e3262c5fd9be87e338b25e48bf7d15d32b",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/checkpoint.hpp": "3668ee9f15d460eecd020574ae8f941e2cc2e862440facb30cfe42665d90f02c",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/main.cpp": "1e7c5f1b6ab19f909fbd03165ead029ea7331a27810b7a6e97961d9f32039581",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7"
+  },
+  "utc": "2026-10-23T17:26:24.014182+00:00",
+  "validation": {
+    "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest test_chat_codec -v",
+    "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration",
+    "exit_code": 0,
+    "reported_seconds": 2.385,
+    "tests": 7
+  }
+}

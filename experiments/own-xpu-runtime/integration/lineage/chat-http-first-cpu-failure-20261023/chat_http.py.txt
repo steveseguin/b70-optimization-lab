@@ -1,0 +1,201 @@
+"""Experimental local HTTP adapter for an already admitted ChatService.
+
+No CLI, owner startup, authentication, retries, or owner lifecycle actions.
+"""
+from __future__ import annotations
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+import math
+import re
+import socket
+import time
+import uuid
+
+from chat_service import ChatRequestError
+
+MAX_BODY_BYTES = 524288
+SOCKET_TIMEOUT = 5.0
+_SESSION = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,38}\Z', re.ASCII)
+
+
+class _InputError(ValueError):
+    pass
+
+
+def _pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise _InputError('duplicate JSON key')
+        result[key] = value
+    return result
+
+
+def _constant(value):
+    raise _InputError('nonfinite JSON number')
+
+
+def _float(value):
+    number = float(value)
+    if not math.isfinite(number):
+        raise _InputError('nonfinite JSON number')
+    return number
+
+
+class _Server(HTTPServer):
+    # HTTPServer handles one connection/request at a time. No thread-per-request.
+    allow_reuse_address = False
+
+    def __init__(self, service, address):
+        self.service = service
+        self.intake_halted = False
+        self._request_namespace = uuid.uuid4().hex
+        self._request_counter = 0
+        super().__init__(address, _Handler)
+
+    def get_request(self):
+        connection, address = super().get_request()
+        connection.settimeout(SOCKET_TIMEOUT)
+        return connection, address
+
+    def intake_state(self):
+        if self.intake_halted or getattr(self.service, 'halted_reason', None) is not None:
+            return 'halted'
+        front = getattr(getattr(self.service, 'engine', None), 'front', None)
+        state = getattr(front, 'state', 'ready')
+        return 'ready' if state == 'ready' else 'draining'
+
+    def next_request_id(self):
+        self._request_counter += 1
+        if self._request_counter >= 2**64:
+            raise RuntimeError('request ID namespace exhausted')
+        return 'h' + self._request_namespace + '-' + format(self._request_counter, '016x')
+
+
+class _Handler(BaseHTTPRequestHandler):
+    protocol_version = 'HTTP/1.0'
+    server_version = 'OwnrtLocalExperiment'
+    sys_version = ''
+
+    def log_message(self, format, *args):
+        # Caller owns audit receipts; never print headers, prompts, or host paths.
+        pass
+
+    def _reply(self, status, value):
+        raw = json.dumps(value, ensure_ascii=False, allow_nan=False,
+                         separators=(',', ':')).encode('utf-8')
+        self.close_connection = True
+        try:
+            self.send_response(status)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(raw)))
+            self.send_header('Connection', 'close')
+            self.end_headers()
+            self.wfile.write(raw)
+            self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, socket.timeout):
+            # Complete() already performed its normal SAVE/RELEASE disposition.
+            # A disconnected reader cannot cancel, undo, or restart the owner.
+            pass
+
+    def send_error(self, code, message=None, explain=None):
+        # Base request/header parse failures must not echo untrusted text or paths.
+        self._reply(400 if code != 404 else 404, {'error': {'message': 'request refused'}})
+
+    def _framing(self, *, body):
+        if self.headers.get_all('Transfer-Encoding') is not None:
+            raise _InputError('transfer encoding unsupported')
+        lengths = self.headers.get_all('Content-Length', [])
+        if len(lengths) > 1:
+            raise _InputError('ambiguous length')
+        if self.headers.get_all('Expect') is not None:
+            raise _InputError('expect unsupported')
+        if not lengths:
+            if body:
+                raise _InputError('length required')
+            return 0
+        text = lengths[0]
+        if re.fullmatch(r'[0-9]{1,6}', text, re.ASCII) is None:
+            raise _InputError('invalid length')
+        length = int(text)
+        if length > MAX_BODY_BYTES or (not body and length != 0) or (body and length == 0):
+            raise _InputError('body bound')
+        return length
+
+    def do_GET(self):
+        try:
+            self._framing(body=False)
+        except _InputError:
+            self._reply(400, {'error': {'message': 'request refused'}})
+            return
+        if self.path == '/health':
+            state = self.server.intake_state()
+            self._reply(200 if state == 'ready' else 503,
+                        {'status': state, 'scope': 'experimental-local-only'})
+        elif self.path == '/v1/models':
+            self._reply(200, {'object': 'list', 'data': [
+                {'id': self.server.service.model, 'object': 'model', 'owned_by': 'local-experiment'}]})
+        else:
+            self._reply(404, {'error': {'message': 'route not found'}})
+
+    def do_POST(self):
+        if self.path != '/v1/chat/completions':
+            self._reply(404, {'error': {'message': 'route not found'}})
+            return
+        if self.server.intake_state() != 'ready':
+            self._reply(503, {'error': {'message': 'chat intake unavailable'}})
+            return
+        try:
+            length = self._framing(body=True)
+            sessions = self.headers.get_all('X-Ownrt-Session', [])
+            if (len(sessions) != 1 or _SESSION.fullmatch(sessions[0]) is None
+                    or sessions[0].endswith('.lock')):
+                raise _InputError('invalid session')
+            content_types = self.headers.get_all('Content-Type', [])
+            if (len(content_types) != 1 or content_types[0].lower() not in
+                    ('application/json', 'application/json; charset=utf-8')):
+                raise _InputError('JSON content type required')
+            # read1 exposes partial progress, so a dribbling body cannot reset the
+            # absolute body deadline indefinitely. Never read more than the bound.
+            deadline = time.monotonic() + SOCKET_TIMEOUT
+            parts, remaining = [], length
+            while remaining:
+                timeout = deadline - time.monotonic()
+                if timeout <= 0:
+                    raise _InputError('body deadline')
+                self.connection.settimeout(min(SOCKET_TIMEOUT, timeout))
+                chunk = self.rfile.read1(min(remaining, 65536))
+                if not chunk:
+                    raise _InputError('incomplete body')
+                parts.append(chunk)
+                remaining -= len(chunk)
+            payload = json.loads(b''.join(parts).decode('utf-8'), object_pairs_hook=_pairs,
+                                 parse_constant=_constant, parse_float=_float)
+        except (ValueError, UnicodeError, RecursionError, OSError):
+            self._reply(400, {'error': {'message': 'request refused'}})
+            return
+        try:
+            result = self.server.service.complete(payload, session=sessions[0],
+                                                  request_id=self.server.next_request_id())
+            # Serialization belongs to runtime correctness; write disconnects do not.
+            self._reply(200, result)
+        except ChatRequestError:
+            self._reply(400, {'error': {'message': 'chat request refused'}})
+        except Exception:
+            self.server.intake_halted = True
+            self._reply(503, {'error': {'message': 'chat intake unavailable'}})
+
+
+def make_server(service, address=('127.0.0.1', 0)):
+    """Bind one serial loopback listener; caller owns serve/shutdown and owner.
+
+    No hostname resolution or wildcard/LAN/IPv6 binding is permitted. Sessions
+    share the caller's checkpoint root; this is not an authenticated boundary.
+    """
+    if (type(address) is not tuple or len(address) != 2 or address[0] != '127.0.0.1'
+            or type(address[1]) is not int or not 0 <= address[1] <= 65535):
+        raise ValueError('literal IPv4 loopback and valid port required')
+    if not callable(getattr(service, 'complete', None)) or type(getattr(service, 'model', None)) is not str:
+        raise ValueError('admitted chat service required')
+    return _Server(service, address)

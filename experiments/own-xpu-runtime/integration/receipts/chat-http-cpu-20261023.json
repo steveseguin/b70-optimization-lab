@@ -1,0 +1,25 @@
+{
+  "schema": "own-runtime.chat-http-cpu.v1",
+  "passed": true,
+  "tests": 15,
+  "native_executed": false,
+  "device_executed": false,
+  "network_scope": "actual sockets, literal127.0.0.1 only, synthetic service",
+  "command": "nice -n19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_chat_http.py -v",
+  "body_bound_bytes": 524288,
+  "header_bound_bytes": 65536,
+  "socket_timeout_seconds": 5,
+  "header_absolute_deadline_seconds": 5,
+  "body_absolute_deadline_seconds": 5,
+  "json_depth_bound": 64,
+  "files": {
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/test_chat_http.py": "1186f1ccf4ee7a677b985c6c08cced49e6868b6fa04765b448e4d5a522ab95bb",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/CHAT-HTTP.md": "0fd54cbdbc65635c5253cb430b04314fe7a21f6290028495eb6d9d0426dc3d76",
+    "experiments/own-xpu-runtime/integration/receipts/chat-http-cpu-20261023.log": "c97f8bdf50845b52e2ba8bdceac92b65eb26d5776c354f5f4d1812e1e55bb100",
+    "experiments/own-xpu-runtime/integration/receipts/chat-http-first-cpu-failure-20261023.json": "e70b5a48fbe97368fd84f75412a934e40f25e2c698ab90a4df1cd65bb6b5517c"
+  },
+  "scope": "Local HTTP transport only; no native owner/adapter/model execution or serving claim",
+  "evidence_refresh": "Documentation and first-failure retention metadata updated after test pass; executable source/tests unchanged."
+}

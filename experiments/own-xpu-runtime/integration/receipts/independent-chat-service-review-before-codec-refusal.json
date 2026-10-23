@@ -1,0 +1,37 @@
+{
+  "checks": [
+    "Explicit independent native stop-ID admission equals codec terminal set and contains admitted geometry EOS.",
+    "Exact policy renderer/tokenizer callbacks checked at construction and before RUN; actual prompt equality checked.",
+    "Unsupported options, malformed messages, context bounds and unsafe coordinator IDs refuse before RUN.",
+    "Terminal output omitted only in presented text; complete raw IDs remain checkpoint history and usage.",
+    "Terminal at cap reports stop; full cap without terminal reports length; early nonterminal and internal terminal halt.",
+    "Runtime and postprocessing failures poison service without retry, owner restart or fabricated completion.",
+    "Decoded completion must be str and valid UTF-8; whitespace is preserved."
+  ],
+  "passed": true,
+  "remaining_blockers": [],
+  "resolved_findings": [
+    "Stop set previously trusted codec alone; now independent constructor admission.",
+    "Policy callback mismatch could pass one render; now exact callback checks.",
+    "Decode could return nontext; now type and UTF-8 guard."
+  ],
+  "schema": "independent-chat-facade-review-v1",
+  "scope": [
+    "CPU synthetic codec/owner tests only; no native, device, HTTP or process execution.",
+    "Coordinator must admit immutable deterministic codec and trusted launch stop IDs; this receipt does not qualify a model/tokenizer or attach the facade to a live owner."
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/chat_service.py": "b8dd59c3b80eb7adb2da1ce1d1e1e548aa345c6983f41a7667ad2b7d905edc48",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/test_chat_service.py": "791e0962c37cc32b799827d955472429c3dc487f72262a5f4790324c3d54d82f"
+  },
+  "utc": "2026-10-23T17:23:37.205426+00:00",
+  "validation": {
+    "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest test_chat_service -v",
+    "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration",
+    "exit_code": 0,
+    "reported_seconds": 0.001,
+    "tests": 12
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "own-runtime.chat-http-retained-replay-cpu.v1",
+  "passed": true,
+  "tests": 2,
+  "native_executed": false,
+  "device_executed": false,
+  "checkpoint_mutated": false,
+  "actual_network": "ephemeral serial127.0.0.1 HTTPServer per test; all listeners joined/closed",
+  "real_components": [
+    "chat_http",
+    "ChatService",
+    "PinnedChatCodec",
+    "Parking construction/render callbacks"
+  ],
+  "synthetic_component": "ReplayOwner returns retained native token IDs; no real run_turn/parking persistence",
+  "recorded_rows": [
+    {
+      "name": "fresh-a",
+      "prompt_tokens": 87,
+      "completion_tokens": 256
+    },
+    {
+      "name": "fresh-b",
+      "prompt_tokens": 60,
+      "completion_tokens": 128
+    }
+  ],
+  "checks": [
+    "two sequential HTTP replies exact fields/text/usage",
+    "response text tokenizes back to exact retained output IDs",
+    "raw replay history retains prompt plus all generated IDs",
+    "invalid temperature/top_p/n/stream yields400 and zero replay-owner calls",
+    "intake remains usable after validation refusal"
+  ],
+  "command": "nice -n19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_chat_http_replay.py -v",
+  "files": {
+    "experiments/own-xpu-runtime/integration/test_chat_http_replay.py": "39d13f801cce13422b034722a11bcce77296adf5a20400acdfd213f3c5733769",
+    "experiments/own-xpu-runtime/integration/test_chat_service_replay.py": "b8e95f291d09eaf64749a87fcbe3a54e2454edbebf594bc262676656ea4345c7",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p198/admitted-engine-identity.json": "0f2c697eea8dae482008218e8e61dc3171cfa73fc700838b73d4dae81239d7ad",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "repro/rapid-model-snapshots-b70/realistic-suite-v1.json": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/closeout-inventory.json": "8bc8db01722c94b8b0d0f60896fbbbfdf4ebf2a95a96f1bb83144cd44e23d749",
+    "experiments/own-xpu-runtime/integration/receipts/chat-http-replay-cpu-20261023.log": "46db87a46e792a7cff414b588b4afe2017579d5a0a58afea76dd1bcce74cf1e8",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-a/input.tokens": "6fb4a0cc3d75f35ea2996b8fda1b7045c133cc834b9dc6c225df28799b962fa2",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-a/result.json": "fcf2b916fae9aec4937316393bd9da2f6058b514616148f285d512807e391206",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-b/input.tokens": "5e6674369a27ff7e3d03ec53f281b0036c995cfa6b6b3606c55fa68a388bedb2",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/device-p198-lifecycle-A-a/owner/requests/fresh-b/result.json": "acabde54907d1c224e534d0b59dbf9f076cc9097fd1723104c6c98a7dc9676e8"
+  },
+  "scope": "CPU replay integration only; not live native HTTP serving, checkpoint save/restore or new model qualification"
+}

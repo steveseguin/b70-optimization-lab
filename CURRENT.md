@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 13:35 EDT — local text chat interface passes its CPU and socket tests.**
+All38 chat checks pass, including the exact pinned codec and two retained device replies replayed through the actual HTTP interface.
+The native parking integration is committed and pushed; all four CI workflows are green.
+The next test will use one native owner for real chat turns, exact append/fresh comparison and edited-prefix fallback. Storage
+admission is being checked: the full local forecast leaves too little margin above the27GB root floor, and the external filesystem
+must prove the required checkpoint permissions and locking before use.
+No new device window has started; all three restore27 applications remain running.
+[Interface evidence](notes/2026-10-23-local-chat-interface-closeout.md).
+
 **October 23, 13:26 EDT — checkpoint parking now works through the actual native CPU owner.**
 The thin adapter completed eight requests and eight dispositions through the real native protocol, store, bridge and parking policy.
 Restored append matched fresh tokens and state; changed input prefills, no-save and same-ID paths release cleanly, and the owner exited

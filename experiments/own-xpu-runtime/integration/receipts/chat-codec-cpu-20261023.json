@@ -1,0 +1,38 @@
+{
+  "schema": "own-runtime.chat-codec-cpu.v1",
+  "passed": true,
+  "device_executed": false,
+  "native_executed": false,
+  "tests": 7,
+  "sealed_prompt_rows": 12,
+  "retained_message_shapes": 4,
+  "command": "nice -n19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_chat_codec.py -v",
+  "dependency_versions": {
+    "regex": "2026.5.9",
+    "jinja2": "3.1.6"
+  },
+  "pins": {
+    "gguf_header_sha256": "7c1460a95eb2e95377c32b14deb92cf74fe504d4feb5a62a40d48f78e9e0dcb8",
+    "gguf_header_bytes": 10946618,
+    "vocab_bin_sha256": "7a0e612475366f8d368dbfee6a0a01336f1059e71fa98d91300eb62abd996a64",
+    "terminal_ids": [
+      248044,
+      248046
+    ],
+    "gguf_eos_id": 248046,
+    "gguf_bos_padding_id": 248044
+  },
+  "files": {
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/test_chat_codec.py": "02c7fa5714ffd6d78c3260ed404ec67629c989caccfcccba6d6c9158ccd31e12",
+    "experiments/own-xpu-runtime/integration/CHAT-CODEC.md": "788e9e911dd8c403efe8902c0f77044f0d09288348deeac951fb8154db1c30b1",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle/tokenizer.py": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7",
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/tokenizer-identity.tsv": "5e88b69b8c30b6f79807bbbad23126e3262c5fd9be87e338b25e48bf7d15d32b",
+    "experiments/own-xpu-runtime/integration/chat_template-7c1460a9.jinja": "12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce",
+    "experiments/own-xpu-runtime/integration/receipts/template-parity-20261023.json": "f3804edc74b0e1e8af470339732a276df433276f36e2bc8e432482914fcab05a",
+    "experiments/own-xpu-runtime/integration/receipts/render-parity-gguf-20261023.json": "ee1d9990c8e652ee5f03698193e28e295a6f7d532bfbf8bb254e51305ffbf565",
+    "experiments/own-xpu-runtime/integration/receipts/chat-codec-cpu-20261023.log": "664d5a959add028b6800615e6a430129db5bbe895bfd7eb75c8b22c050c01697"
+  },
+  "scope": "CPU text rendering/tokenization/decoding only; no native owner, endpoint, or model execution"
+}
