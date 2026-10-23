@@ -14,3 +14,14 @@ extracted from the packet97 tar matched its manifest hash. Both packets' tracked
 receipts are untouched. Also removed: my scratch venv (196 MB) and 28.77 MB of stopped Docker containers.
 
 Restore: `tar xf <archive> -C experiments/own-xpu-runtime/stage2/<packet>/build/` then `sha256sum -c <name>.sha256`.
+
+## 2026-10-23 addendum (before the one-card cache23 record chain)
+
+Root was back at 27 GB after the packet190/191 chain outputs and evidence. Same archive-then-verify procedure, exact directories:
+
+| Source (git-ignored chain outputs of closed, superseded record bundles) | Files | Archive (uncompressed tar) | sha256 |
+| --- | --- | --- | --- |
+| `packet124c-record-bundle/build/device-cards01-a` (record 58.223834, 2026-10-18; superseded) | 42,974 | `/mnt/usb-models/own-runtime-archives/packet124c-record-bundle-chain-outputs-20261023.tar` (1,221,724,160 B) | `d272c540eb89c6cab586219ee1cdfe42b8d5fd4286562e02a3dab3d9a5635c7c` |
+| `packet136-record-bundle/build/device-cards01-a` (record 58.798109, 2026-10-18; superseded) | 42,974 | `/mnt/usb-models/own-runtime-archives/packet136-record-bundle-chain-outputs-20261023.tar` (1,221,775,360 B) | `e7a7e0dcf444c0215ca6caf38f5062208d8853bd7b3662a49ff3d55bca00563c` |
+
+Per-file sha256 manifests beside each tar as `<name>.sha256`; tar member counts equal the source counts; `device-cards01-a/K1a/round2/output.bin` extracted from each tar matched its manifest hash. Both packets' tracked `evidence/` and submission receipts are untouched.
