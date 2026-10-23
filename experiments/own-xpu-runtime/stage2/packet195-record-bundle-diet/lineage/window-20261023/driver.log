@@ -1,0 +1,32 @@
+2026-10-23T06:43:05.888766+00:00 window start
+2026-10-23T06:43:05.896304+00:00 preconditions ok (PAUSE-B present, no busy units, no markers, fresh output)
+2026-10-23T06:43:05.909363+00:00 stopping endpoints: ['qwen38-27b-vision', 'qwen38-27b-fp8-tp1-test', 'qwen38-27b-fp8']
+2026-10-23T06:43:14.227206+00:00 stop rc=0 
+2026-10-23T06:43:24.243316+00:00 endpoints stopped; MemAvailable=120862326784 required=109870790382; root free=31184211968 required=28324718708
+2026-10-23T06:43:25.176826+00:00 PAUSE-A archived and removed for the approved chain window (PAUSE-B untouched)
+2026-10-23T06:43:26.339828+00:00 launch_chain.sh --dry-run rc=0 'm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet195-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a </dev/null'
+2026-10-23T06:43:27.537239+00:00 launch_chain.sh rc=0 'tion/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a </dev/null\n2026-10-23T06:43:27Z p195-launch packet195-chain-a is active; chain owns its windows now (no retry, no service restoration by this launcher)'
+2026-10-23T06:43:27.541903+00:00 unit packet195-chain-a state=active
+2026-10-23T06:43:27.546387+00:00 waiting: unit=active completed=None
+2026-10-23T06:44:57.578103+00:00 queue-state completed=['K0']
+2026-10-23T06:47:42.637192+00:00 queue-state completed=['K0', 'K1a']
+2026-10-23T06:50:42.702878+00:00 queue-state completed=['K0', 'K1a', 'K1b']
+2026-10-23T06:53:27.759418+00:00 waiting: unit=active completed=['K0', 'K1a', 'K1b']
+2026-10-23T06:58:12.860265+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2']
+2026-10-23T06:59:57.897994+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2', 'W0p']
+2026-10-23T07:03:27.972416+00:00 waiting: unit=active completed=['K0', 'K1a', 'K1b', 'K2', 'W0p']
+2026-10-23T07:04:27.993471+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD']
+2026-10-23T07:10:13.118815+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m']
+2026-10-23T07:13:28.189148+00:00 waiting: unit=active completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m']
+2026-10-23T07:15:13.226081+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m', 'WS']
+2026-10-23T07:20:13.332116+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m', 'WS', 'WSs']
+2026-10-23T07:23:28.401699+00:00 waiting: unit=active completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m', 'WS', 'WSs']
+2026-10-23T07:25:43.448840+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m', 'WS', 'WSs', 'WS128x']
+2026-10-23T07:31:13.566224+00:00 queue-state completed=['K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m', 'WS', 'WSs', 'WS128x', 'WS128']
+2026-10-23T07:31:13.566360+00:00 unit packet195-chain-a state=inactive
+2026-10-23T07:31:13.566486+00:00 queue-all-complete.json present: True
+2026-10-23T07:31:13.629636+00:00 chain result: {"state": "inactive", "all_complete": true, "completed": ["K0", "K1a", "K1b", "K2", "W0p", "KD", "W2m", "WS", "WSs", "WS128x", "WS128"]}
+2026-10-23T07:31:13.634938+00:00 PAUSE-A re-armed
+2026-10-23T07:31:13.635066+00:00 restoring endpoints: /usr/bin/python3 -u /tmp/claude-1000/-home-steve/1df77db8-272b-4a21-9a32-d0349da3fe39/scratchpad/restore-endpoints-20261021.py 20261023-restore22
+2026-10-23T07:40:32.620067+00:00 restore rc=0
+2026-10-23T07:40:32.620552+00:00 window end
