@@ -1,0 +1,559 @@
+--- experiments/own-xpu-runtime/stage2/packet200-bounded-serving/run.py
++++ experiments/own-xpu-runtime/stage2/packet201-streaming-serving/run.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Additive packet200 entry point; operational modes require root admission."""
++"""Additive packet201 entry point; operational modes require root admission."""
+ from __future__ import annotations
+ import argparse
+ import gzip
+@@ -12,7 +12,7 @@
+ sys.dont_write_bytecode = True
+ P = Path(__file__).resolve().parent
+ ROOT = P.parents[3]
+-OPS = ROOT/'experiments/own-xpu-runtime/ops/packet200-window'
++OPS = ROOT/'experiments/own-xpu-runtime/ops/packet201-window'
+ STAGE = P/'evidence/planned-a'
+ REVIEW = P/'evidence/fault-review-device-a.json'
+ MANIFEST = P/'READY-FOR-DEVICE.json'
+@@ -27,12 +27,14 @@
+     return module
+ 
+ 
+-W = load('_p200_adapter_frozen_worker', P/'device_worker.py')
++W = load('_p201_adapter_frozen_worker', P/'device_worker.py')
+ require, sha = W.require, W.sha
+ 
+ 
+ def required_sources():
+-    return [P/n for n in ('run.py','test_run.py','client_pilot.py','test_client_pilot.py','client-vectors.json','evidence/client-cpu-tests.json')] + [OPS/n for n in
++    vectors=json.loads((P/'client-vectors.json').read_text())
++    baseline=[ROOT/name for name in vectors['source_sha256']]
++    return baseline+[P.parent/'packet200-bounded-serving/client-vectors.json']+[P/n for n in ('run.py','test_run.py','client_pilot.py','test_client_pilot.py','client-vectors.json','CLIENT.md','evidence/client-cpu-tests.json')] + [OPS/n for n in
+         ('driver.py','helpers.py','restore_guard.py','test_driver.py','DRIVER.md',
+          'window.py','test_window.py','helper-pins.json')]
+ 
+@@ -43,7 +45,7 @@
+     digest = hashlib.sha256(raw).hexdigest()
+     require(expected_sha is None or digest == expected_sha, 'operational manifest changed')
+     row = json.loads(raw)
+-    require(row.get('schema') == 'packet200.execution-admission.v1' and row.get('passed') is True
++    require(row.get('schema') == 'packet201.execution-admission.v1' and row.get('passed') is True
+             and row.get('operational_launch_authorized') is True, 'root operational admission required')
+     require(row.get('storage_admission_mode') == 'monitored-forecast' and row.get('storage_bound_proven') is False,
+             'forecast is not a certified storage bound')
+@@ -64,7 +66,7 @@
+ 
+ def admitted_plan():
+     row, digest = verify_manifest()
+-    contract=load('_p200_adapter_frozen_contract',OPS/'window.py')
++    contract=load('_p201_adapter_frozen_contract',OPS/'window.py')
+     require(contract.staging_identity(STAGE)==row.get('controller',{}).get('staging_identity'),
+             'root-admitted staging identity changed')
+     value = plan()
+--- experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_run.py
++++ experiments/own-xpu-runtime/stage2/packet201-streaming-serving/test_run.py
+@@ -5,7 +5,7 @@
+ import tempfile
+ import unittest
+ from unittest.mock import patch
+-spec=importlib.util.spec_from_file_location('p200_test_run_adapter',Path(__file__).with_name('run.py'))
++spec=importlib.util.spec_from_file_location('p201_test_run_adapter',Path(__file__).with_name('run.py'))
+ A=importlib.util.module_from_spec(spec);spec.loader.exec_module(A)
+ 
+ 
+@@ -32,7 +32,7 @@
+ 
+     def write_manifest(self):
+         source=self.root/'source.py';source.write_text('# synthetic fixture\n')
+-        row=dict(schema='packet200.execution-admission.v1',passed=True,operational_launch_authorized=True,
++        row=dict(schema='packet201.execution-admission.v1',passed=True,operational_launch_authorized=True,
+                  storage_admission_mode='monitored-forecast',storage_bound_proven=False,
+                  source_sha256={'source.py':A.sha(source)})
+         self.manifest.write_text(json.dumps(row));return source,row
+@@ -81,7 +81,9 @@
+         self.assertEqual(argv[:3],[A.PYTHON,'-B',str(A.P/'run.py')])
+         self.assertEqual(argv[argv.index('--activity-mode')+1],'launch')
+         self.assertEqual({p.name for p in A.required_sources()},
+-                         {'run.py','test_run.py','client_pilot.py','test_client_pilot.py','client-vectors.json','client-cpu-tests.json','driver.py','helpers.py','restore_guard.py','test_driver.py','DRIVER.md','window.py','test_window.py','helper-pins.json'})
++                         {'run.py','test_run.py','client_pilot.py','test_client_pilot.py','client-vectors.json','CLIENT.md','client-cpu-tests.json','driver.py','helpers.py','restore_guard.py','test_driver.py','DRIVER.md','window.py','test_window.py','helper-pins.json'}|
++                         {f'{i:02d}-{kind}.json' for i in range(1,17) for kind in ('http','native')})
++        self.assertEqual(len(A.required_sources()),48)
+ 
+ 
+ if __name__=='__main__':unittest.main()
+--- experiments/own-xpu-runtime/ops/packet200-window/window.py
++++ experiments/own-xpu-runtime/ops/packet201-window/window.py
+@@ -1,4 +1,4 @@
+-"""Non-operational packet200 window contract scaffold.
++"""Non-operational packet201 window contract scaffold.
+ 
+ No service/queue/latch/worker command is executed or imported here. The sealed
+ packet199 topology is retained by hash for a later separately reviewed adapter.
+@@ -13,9 +13,9 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ ROOT = HERE.parents[3]
+-PACKET = ROOT / 'experiments/own-xpu-runtime/stage2/packet200-bounded-serving'
++PACKET = ROOT / 'experiments/own-xpu-runtime/stage2/packet201-streaming-serving'
+ PYTHON = '/home/steve/.venvs/vllm-xpu/bin/python'
+-UNIT = 'packet200-bounded-serving-a'
++UNIT = 'packet201-streaming-serving-a'
+ OPERATIONAL_ENTRYPOINT_ENABLED = False
+ SAFE_PROPERTIES = dict(Restart='no', SendSIGKILL='no', TimeoutStopSec='infinity',
+                        KillMode='process', ExitType='cgroup')
+@@ -66,7 +66,7 @@
+     """Read-only contract/source checks; does not call the worker or admit live work."""
+     stage = staging_identity(parent)
+     parent = Path(stage['path'])
+-    require(plan.get('schema') == 'packet200.bounded-serving-plan.v1' and plan.get('passed') is True
++    require(plan.get('schema') == 'packet201.streaming-serving-plan.v1' and plan.get('passed') is True
+             and plan.get('device_executed') is False and plan.get('live_admission_ready') is False,
+             'CPU-only worker plan required')
+     require(plan.get('storage_admission_mode') == 'monitored-forecast' and plan.get('storage_bound_proven') is False,
+@@ -93,6 +93,12 @@
+     require(plan.get('helper_cpu_affinity') == list(range(8,16))+list(range(24,32)) and plan.get('helper_nice') == 19,
+             'helper placement differs')
+     sources = dict(profile['source_sha256'])
++    streaming = plan.get('streaming_sources')
++    require(type(streaming) is dict and bool(streaming) and
++            plan.get('streaming_sources_sha256') == digest(streaming), 'streaming source closure/digest missing')
++    for name, value in streaming.items():
++        require(sources.get(name,value) == value, 'conflicting streaming source closure')
++        sources[name] = value
+     for name, value in plan['source_sha256'].items():
+         require(sources.get(name,value) == value, 'conflicting source closure')
+         sources[name] = value
+--- experiments/own-xpu-runtime/ops/packet200-window/test_window.py
++++ experiments/own-xpu-runtime/ops/packet201-window/test_window.py
+@@ -1,4 +1,4 @@
+-"""CPU-only packet200 contract checks; no operational helper calls."""
++"""CPU-only packet201 contract checks; no operational helper calls."""
+ import copy
+ import importlib.util
+ import os
+@@ -7,7 +7,7 @@
+ import unittest
+ from unittest.mock import patch
+ 
+-spec=importlib.util.spec_from_file_location('packet200_window_contract',Path(__file__).with_name('window.py'))
++spec=importlib.util.spec_from_file_location('packet201_window_contract',Path(__file__).with_name('window.py'))
+ W=importlib.util.module_from_spec(spec);spec.loader.exec_module(W)
+ 
+ 
+@@ -35,11 +35,12 @@
+                 planned_write_bytes=768*1024**2,disk_floor_bytes=27000000000,
+                 host_required_available_bytes=98990252032,coordinator_margin_bytes=1024**3),
+             source_sha256={'worker.py':W.sha(self.source)})
+-        self.plan=dict(schema='packet200.bounded-serving-plan.v1',passed=True,device_executed=False,live_admission_ready=False,
++        self.plan=dict(schema='packet201.streaming-serving-plan.v1',passed=True,device_executed=False,live_admission_ready=False,
+             storage_admission_mode='monitored-forecast',storage_bound_proven=False,unit=W.UNIT,native_processes=1,
+             activity_mode='launch',terminal_receipt=str(self.stage/'output/terminal/worker.json'),bind_host='127.0.0.1',bind_port=0,
+             profile=self.profile,profile_sha256=W.digest(self.profile),native_cpu_affinity=[0,1,2,3,16,17,18,19],native_nice=0,
+-            helper_cpu_affinity=list(range(8,16))+list(range(24,32)),helper_nice=19,source_sha256={})
++            helper_cpu_affinity=list(range(8,16))+list(range(24,32)),helper_nice=19,source_sha256={},streaming_sources={'worker.py':W.sha(self.source)},
++            streaming_sources_sha256=W.digest({'worker.py':W.sha(self.source)}))
+ 
+     def check_terminal(self,row,**kw):
+         pre=copy.deepcopy(row)
+@@ -134,5 +135,16 @@
+         row['post_completion_evidence_failure']=True
+         with self.assertRaises(RuntimeError):self.check_terminal(row)
+ 
++    def test_streaming_map_missing_digest_conflict_or_file_drift_refuses(self):
++        for mode in ('missing','digest','conflict'):
++            changed=copy.deepcopy(self.plan)
++            if mode=='missing':changed.pop('streaming_sources')
++            elif mode=='digest':changed['streaming_sources_sha256']='0'*64
++            else:
++                changed['streaming_sources']['worker.py']='0'*64
++                changed['streaming_sources_sha256']=W.digest(changed['streaming_sources'])
++            with self.subTest(mode=mode),self.assertRaisesRegex(RuntimeError,'streaming source'):
++                W.validate_cpu_plan(changed,self.stage)
++
+ 
+ if __name__=='__main__':unittest.main(verbosity=2)
+--- experiments/own-xpu-runtime/ops/packet200-window/driver.py
++++ experiments/own-xpu-runtime/ops/packet201-window/driver.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Single manually coordinated packet200 lifecycle window; no retry/resume path."""
++"""Single manually coordinated packet201 lifecycle window; no retry/resume path."""
+ import argparse
+ import hashlib
+ import json
+@@ -20,22 +20,23 @@
+     return module
+ 
+ _THIS=Path(__file__).resolve().parent
+-H=load('_p200_driver_helpers',_THIS/'helpers.py')
+-C=load('_p200_frozen_window_contract',_THIS/'window.py')
++H=load('_p201_driver_helpers',_THIS/'helpers.py')
++C=load('_p201_frozen_window_contract',_THIS/'window.py')
+ S = H.S
+ HERE, ROOT, QUEUE, UNIT = H.HERE, H.ROOT, S.QUEUE, S.UNIT
+ PACKET = C.PACKET
+-A = load('_p200_execution_adapter', PACKET/'run.py')
++A = load('_p201_execution_adapter', PACKET/'run.py')
+ WORKER = PACKET/'run.py'
+ STAGE = A.STAGE
+ OUTPUT = STAGE/'output'
+ REVIEW = A.REVIEW
+ PYTHON = A.PYTHON
+ CHECKPOINT_ROOT = STAGE/'checkpoints'
+-CLIENT_UNIT='packet200-client-a'
++CLIENT_UNIT='packet201-client-a'
+ CLIENT_SCRIPT=PACKET/'client_pilot.py'
+ CLIENT_RESULT=PACKET/'evidence/client-a/client-result.json'
+ EXPECTED_MANIFEST_SHA = None
++RESTORE_SUFFIX = '20261023-restore30'
+ 
+ 
+ def admission():
+@@ -103,7 +104,7 @@
+               'fixed sixteen-request client qualification required')
+     stage=C.staging_identity(STAGE)
+     S.require(controller.get('staging_identity')==stage,'root-admitted private staging identity differs')
+-    S.require(re.fullmatch(r'20261023-restore[0-9]+', suffix), 'explicit fresh restore suffix required')
++    S.require(suffix == RESTORE_SUFFIX, 'fixed restore30 suffix required')
+     S.require(not any(os.path.lexists(p) for p in (evidence, OUTPUT, REVIEW, REVIEW.with_suffix('.kernel.jsonl.gz'), CHECKPOINT_ROOT, PACKET/'evidence/client-a')),
+               'fresh coordinator/worker/review/checkpoint paths required; never retry')
+     for name in (suffix, 'qwen38-27b-fp8-card0-' + suffix, 'qwen38-27b-fp8-card3-' + suffix, 'qwen38-27b-vision-' + suffix):
+@@ -171,7 +172,9 @@
+     client_provenance()
+     row,_=bounded_json(CLIENT_RESULT,65536)
+     expected=dict(passed=True,requests=16,exact_recorded_requests=5,resumed_fresh_pairs=1,
+-                  maximum_output_tokens=1728,controls_claimed=False,submission_eligible=False,speed_claim=False)
++                  maximum_output_tokens=1728,output_tokens=1484,controls_claimed=False,submission_eligible=False,speed_claim=False,
++                  p200_exact_requests=16,sse_requests=7,ordinary_requests=9,sse_terminal_sequences=7,
++                  observed_delivery_timing_only=True)
+     S.require(all(type(row.get(k)) is type(v) and row[k]==v for k,v in expected.items()),
+               'client qualification counts/oracle/scope proof failed')
+     S.require(type(row.get('output_tokens')) is int and 1<=row['output_tokens']<=1728,'client output token count outside cap')
+@@ -217,7 +220,7 @@
+         for path in (QUEUE / 'STOP-A', OUTPUT / 'STOP'):
+             if not path.parent.exists(): continue
+             try:
+-                with path.open('xb') as file: file.write(('packet200 incident ' + S.now() + '\n').encode())
++                with path.open('xb') as file: file.write(('packet201 incident ' + S.now() + '\n').encode())
+             except FileExistsError: pass
+         if self.launched and S.active(UNIT) and not self.signalled:
+             safe_stop(UNIT); self.signalled = True
+--- experiments/own-xpu-runtime/ops/packet200-window/helpers.py
++++ experiments/own-xpu-runtime/ops/packet201-window/helpers.py
+@@ -1,4 +1,4 @@
+-"""Private, source-pinned p196 safety import for the additive p200 driver."""
++"""Private, source-pinned p196 safety import for the additive p201 driver."""
+ import hashlib
+ import importlib.util
+ import json
+@@ -21,7 +21,7 @@
+ 
+ pins=verify()
+ PARENT=ROOT/pins['safety_parent']
+-spec=importlib.util.spec_from_file_location('_p200_driver_owned_safety',PARENT/'safety.py')
++spec=importlib.util.spec_from_file_location('_p201_driver_owned_safety',PARENT/'safety.py')
+ S=importlib.util.module_from_spec(spec);spec.loader.exec_module(S)
+-S.UNIT='packet200-bounded-serving-a'
++S.UNIT='packet201-streaming-serving-a'
+ RESTORE=PARENT/'restore.py'
+--- experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py
++++ experiments/own-xpu-runtime/ops/packet201-window/restore_guard.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""One pinned p196 restore, with p200 manifest and per-operation incident guards."""
++"""One pinned p196 restore, with p201 manifest and per-operation incident guards."""
+ import importlib.util
+ import json
+ from pathlib import Path
+@@ -8,7 +8,7 @@
+ import sys
+ sys.dont_write_bytecode=True
+ HERE=Path(__file__).resolve().parent
+-spec=importlib.util.spec_from_file_location('_p200_restore_driver',HERE/'driver.py')
++spec=importlib.util.spec_from_file_location('_p201_restore_driver',HERE/'driver.py')
+ D=importlib.util.module_from_spec(spec);sys.modules[spec.name]=D;spec.loader.exec_module(D)
+ VALIDATIONS=[['--base','http://127.0.0.1:18130','--model','qwen38-27b-fp8','--kind','vllm'],
+              ['--base','http://127.0.0.1:18131','--model','qwen38-27b-fp8','--kind','vllm'],
+@@ -16,6 +16,7 @@
+ 
+ 
+ def admit_restore(manifest,validate,args):
++    D.S.require(manifest['controller']['restore_suffix']==D.RESTORE_SUFFIX,'fixed restore30 suffix required')
+     evidence=Path(manifest['controller']['evidence'])
+     marker=evidence/'restore-admission.json'
+     if validate:
+@@ -62,7 +63,7 @@
+         return original_run(command,*a,**kw)
+ 
+     # Only this child process redirects the historical bare import. The frozen
+-    # p200 contract remains uniquely named and is never edited or executed live.
++    # p201 contract remains uniquely named and is never edited or executed live.
+     sys.modules['window']=D
+     sys.argv=[str(target),*(args[1:] if validate else args)]
+     subprocess.run=dispatch
+--- experiments/own-xpu-runtime/ops/packet200-window/test_driver.py
++++ experiments/own-xpu-runtime/ops/packet201-window/test_driver.py
+@@ -16,8 +16,8 @@
+     mod=importlib.util.module_from_spec(spec);sys.modules[name]=mod;spec.loader.exec_module(mod);return mod
+ 
+ 
+-D=load('p200_driver_test','driver.py');R=load('p200_restore_test','restore_guard.py')
+-T=load('p200_frozen_contract_tests','test_window.py')
++D=load('p201_driver_test','driver.py');R=load('p201_restore_test','restore_guard.py')
++T=load('p201_frozen_contract_tests','test_window.py')
+ S=D.S
+ 
+ 
+@@ -31,7 +31,7 @@
+             self.stack.enter_context(patch.object(D,key,value))
+         for lane in ('A','B'):
+             (self.queue/f'PAUSE-{lane}').write_text('original '+lane+'\n');(self.queue/f'queue-{lane}.txt').write_text('')
+-        self.window=D.Window(self.evidence,'20261023-restore29')
++        self.window=D.Window(self.evidence,'20261023-restore30')
+         self.window.pause={l:(self.queue/f'PAUSE-{l}').read_bytes() for l in ('A','B')}
+         self.plan={'profile':{'limits':dict(host_required_available_bytes=1,coordinator_margin_bytes=1,
+                    disk_floor_bytes=27_000_000_000,planned_write_bytes=1)}}
+@@ -71,7 +71,7 @@
+     def test_missing_manifest_before_commands_locks_or_latches_for_both_modes(self):
+         with patch.object(D.A,'MANIFEST',self.root/'absent'),patch.object(S,'locked') as lock:
+             for mode in ('--check','--run'):
+-                with patch.object(sys,'argv',['driver',mode,'--restore-suffix','20261023-restore29','--output',str(self.evidence)]):
++                with patch.object(sys,'argv',['driver',mode,'--restore-suffix','20261023-restore30','--output',str(self.evidence)]):
+                     with self.assertRaises(FileNotFoundError):D.main()
+             lock.assert_not_called();self.command.assert_not_called()
+         self.assertFalse(self.evidence.exists());self.assertTrue((self.queue/'PAUSE-A').exists())
+@@ -152,8 +152,8 @@
+             from window import faults_clear
+             self.assertEqual(faults_clear.__name__,'restore_clear')
+             subprocess.run(['/usr/bin/python3',str(R.D.H.PARENT/'validate.py'),'--base','http://mock'])
+-        with patch.object(R.D,'admission',return_value=({'controller':{'restore_suffix':'20261023-restore29'}},'hash')),patch.object(R.D.H,'verify'),patch.object(R.D,'restore_clear'),patch.object(R,'admit_restore'),patch.object(R.runpy,'run_path',side_effect=inherited),patch.object(subprocess,'run',return_value=subprocess.CompletedProcess([],0)) as run:
+-            R.main(['--manifest-sha256','hash','20261023-restore29'])
++        with patch.object(R.D,'admission',return_value=({'controller':{'restore_suffix':'20261023-restore30'}},'hash')),patch.object(R.D.H,'verify'),patch.object(R.D,'restore_clear'),patch.object(R,'admit_restore'),patch.object(R.runpy,'run_path',side_effect=inherited),patch.object(subprocess,'run',return_value=subprocess.CompletedProcess([],0)) as run:
++            R.main(['--manifest-sha256','hash','20261023-restore30'])
+         self.assertIs(sys.modules['window'],sentinel)
+         self.assertEqual(run.call_args.args[0][3:7],['--manifest-sha256','hash','--validate','--base'])
+         self.assertEqual(D.C.OPERATIONAL_ENTRYPOINT_ENABLED,False)
+@@ -161,18 +161,18 @@
+     def test_direct_restore_rejects_retained_worker_before_parent_execution(self):
+         self.evidence.mkdir()
+         (self.evidence/'preflight.json').write_text(json.dumps({'manifest_sha256':'hash','plan':self.plan}))
+-        manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':'20261023-restore29'},'plan_sha256':D.C.digest(self.plan)}
++        manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':'20261023-restore30'},'plan_sha256':D.C.digest(self.plan)}
+         with patch.object(R.D,'EXPECTED_MANIFEST_SHA','hash'),patch.object(R.D,'status',return_value={'ActiveState':'active'}),patch.object(R.D.S,'require_drained') as drain:
+-            with self.assertRaisesRegex(RuntimeError,'worker must exit'):R.admit_restore(manifest,False,['20261023-restore29'])
++            with self.assertRaisesRegex(RuntimeError,'worker must exit'):R.admit_restore(manifest,False,['20261023-restore30'])
+             drain.assert_not_called()
+         self.assertFalse((self.evidence/'restore-admission.json').exists())
+ 
+     def test_direct_restore_bad_precompletion_refuses_before_marker(self):
+         self.evidence.mkdir()
+         (self.evidence/'preflight.json').write_text(json.dumps({'manifest_sha256':'hash','plan':self.plan}))
+-        manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':'20261023-restore29'},'plan_sha256':D.C.digest(self.plan)}
++        manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':'20261023-restore30'},'plan_sha256':D.C.digest(self.plan)}
+         with patch.object(R.D,'EXPECTED_MANIFEST_SHA','hash'),patch.object(R.D,'status',return_value=dict(ActiveState='inactive',Result='success',ExecMainStatus='0')),patch.object(R.D.S,'require_drained',return_value={}),patch.object(R.D,'terminal',side_effect=RuntimeError('bad precompletion')):
+-            with self.assertRaisesRegex(RuntimeError,'bad precompletion'):R.admit_restore(manifest,False,['20261023-restore29'])
++            with self.assertRaisesRegex(RuntimeError,'bad precompletion'):R.admit_restore(manifest,False,['20261023-restore30'])
+         self.assertFalse((self.evidence/'restore-admission.json').exists())
+ 
+     def test_successful_parent_exit_does_not_hide_final_guard_failure(self):
+@@ -181,7 +181,7 @@
+ 
+     def test_client_extra_megabyte_reserved_before_host_actions(self):
+         ops=self.root/'ops';(ops/'evidence').mkdir(parents=True);evidence=ops/'evidence/new'
+-        controller={'restore_suffix':'20261023-restore29','evidence':str(evidence),'staging_identity':{},'additional_write_bytes':1048576,'client_unit':D.CLIENT_UNIT,'client_receipt':str(D.CLIENT_RESULT),'qualification_requests':16}
++        controller={'restore_suffix':'20261023-restore30','evidence':str(evidence),'staging_identity':{},'additional_write_bytes':1048576,'client_unit':D.CLIENT_UNIT,'client_receipt':str(D.CLIENT_RESULT),'qualification_requests':16}
+         plan={'profile':{'limits':{'disk_floor_bytes':27000000000,'planned_write_bytes':768*1024**2}}}
+         free=27000000000+768*1024**2+1048576-1
+         with patch.object(D,'HERE',ops),patch.object(D,'admission',return_value=({'controller':controller},'hash')),patch.object(D.H,'verify'),patch.object(D.C,'staging_identity',return_value={}),patch.object(D,'plan',return_value=plan),patch.object(D.shutil,'disk_usage',return_value=type('Usage',(),{'free':free})()),patch.object(D,'clear') as clear:
+@@ -189,7 +189,7 @@
+             clear.assert_not_called();self.command.assert_not_called()
+ 
+     def test_validation_refuses_arbitrary_target_and_replay(self):
+-        self.evidence.mkdir();manifest={'controller':{'evidence':str(self.evidence)}}
++        self.evidence.mkdir();manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':D.RESTORE_SUFFIX}}
+         with patch.object(R.D,'EXPECTED_MANIFEST_SHA','hash'):
+             with self.assertRaisesRegex(RuntimeError,'exact inherited'):R.admit_restore(manifest,True,['--base','http://unadmitted'])
+             (self.evidence/'restore-admission.json').write_text(json.dumps({'passed':True,'manifest_sha256':'hash'}))
+@@ -204,7 +204,7 @@
+ 
+     def test_missing_core_closure_and_orphan_capture_refuse_before_host_actions(self):
+         ops=self.root/'ops';(ops/'evidence').mkdir(parents=True);evidence=ops/'evidence/new'
+-        controller={'restore_suffix':'20261023-restore29','evidence':str(evidence),'staging_identity':{},'additional_write_bytes':1048576,'client_unit':D.CLIENT_UNIT,'client_receipt':str(D.CLIENT_RESULT),'qualification_requests':16}
++        controller={'restore_suffix':'20261023-restore30','evidence':str(evidence),'staging_identity':{},'additional_write_bytes':1048576,'client_unit':D.CLIENT_UNIT,'client_receipt':str(D.CLIENT_RESULT),'qualification_requests':16}
+         with patch.object(D,'HERE',ops),patch.object(D,'admission',return_value=({'controller':controller},'hash')),patch.object(D.H,'verify'),patch.object(D.C,'staging_identity',return_value={}),patch.object(D,'plan',side_effect=RuntimeError('core closure missing')):
+             with self.assertRaisesRegex(RuntimeError,'core closure missing'):D.check(controller['restore_suffix'],evidence)
+             self.review.with_suffix('.kernel.jsonl.gz').write_bytes(b'orphan')
+@@ -225,7 +225,7 @@
+ 
+     def test_restore_missing_manifest_refuses_before_runpy(self):
+         with patch.object(R.D.A,'MANIFEST',self.root/'absent'),patch.object(R.runpy,'run_path') as parent:
+-            with self.assertRaises(FileNotFoundError):R.main(['--manifest-sha256','hash','20261023-restore29'])
++            with self.assertRaises(FileNotFoundError):R.main(['--manifest-sha256','hash','20261023-restore30'])
+             parent.assert_not_called()
+ 
+     def test_restore_guard_checks_output_stop_and_original_pauses(self):
+@@ -237,7 +237,9 @@
+ 
+     def good_client(self):
+         return dict(passed=True,requests=16,exact_recorded_requests=5,resumed_fresh_pairs=1,
+-                    maximum_output_tokens=1728,output_tokens=1728,controls_claimed=False,submission_eligible=False,speed_claim=False)
++                    maximum_output_tokens=1728,output_tokens=1484,controls_claimed=False,submission_eligible=False,speed_claim=False,
++                    p200_exact_requests=16,sse_requests=7,ordinary_requests=9,sse_terminal_sequences=7,
++                    observed_delivery_timing_only=True)
+ 
+     def test_listener_launches_exactly_one_safe_helper_client(self):
+         self.evidence.mkdir();self.command.side_effect=None
+@@ -247,7 +249,7 @@
+             self.window.start_client(event)
+             with self.assertRaisesRegex(RuntimeError,'already attempted'):self.window.start_client(event)
+         self.command.assert_called_once();argv=self.command.call_args.args[0]
+-        self.assertIn('--unit=packet200-client-a',argv);self.assertIn('--property=Nice=19',argv)
++        self.assertIn('--unit=packet201-client-a',argv);self.assertIn('--property=Nice=19',argv)
+         self.assertIn('8-15,24-31',argv);self.assertIn('--property=SendSIGKILL=no',argv)
+         self.assertEqual(argv[-4:],[D.PYTHON,'-B',str(D.CLIENT_SCRIPT),'--execute'])
+ 
+@@ -264,6 +266,8 @@
+         state=dict(ActiveState='inactive',Result='success',ExecMainStatus='0')
+         with patch.object(D,'client_provenance'):
+             for key,value in [('requests',0),('requests',True),('exact_recorded_requests',4),('resumed_fresh_pairs',0),
++                              ('p200_exact_requests',15),('sse_requests',6),('ordinary_requests',8),
++                              ('sse_terminal_sequences',6),('observed_delivery_timing_only',False),('output_tokens',1485),
+                               ('output_tokens',1729),('submission_eligible',True),('speed_claim',True),('passed',False)]:
+                 row=self.good_client();row[key]=value;D.CLIENT_RESULT.write_text(json.dumps(row))
+                 with self.subTest(key=key,value=value),self.assertRaises(RuntimeError):D.client_terminal(state)
+@@ -311,12 +315,32 @@
+ 
+     def test_direct_restore_waits_for_client_even_after_worker_success(self):
+         self.evidence.mkdir();(self.evidence/'preflight.json').write_text(json.dumps({'manifest_sha256':'hash','plan':self.plan}))
+-        manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':'20261023-restore29'},'plan_sha256':D.C.digest(self.plan)}
++        manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':'20261023-restore30'},'plan_sha256':D.C.digest(self.plan)}
+         good=dict(ActiveState='inactive',Result='success',ExecMainStatus='0')
+         def status(unit=R.D.UNIT):return good if unit==R.D.UNIT else {'ActiveState':'active'}
+         with patch.object(R.D,'EXPECTED_MANIFEST_SHA','hash'),patch.object(R.D,'status',side_effect=status),patch.object(R.D.S,'require_drained',return_value={}),patch.object(R.D,'terminal',return_value={'worker':{'requests':16,'controls':16}}):
+-            with self.assertRaisesRegex(RuntimeError,'client unit must exit'):R.admit_restore(manifest,False,['20261023-restore29'])
++            with self.assertRaisesRegex(RuntimeError,'client unit must exit'):R.admit_restore(manifest,False,['20261023-restore30'])
+         self.assertFalse((self.evidence/'restore-admission.json').exists())
+ 
++    def test_wrong_restore_suffix_refuses_before_marker_or_physical_action(self):
++        manifest={'controller':{'evidence':str(self.evidence),'restore_suffix':'20261023-restore29'}}
++        with patch.object(R.D.S,'require_drained') as drain:
++            with self.assertRaisesRegex(RuntimeError,'restore30'):R.admit_restore(manifest,False,['20261023-restore29'])
++            drain.assert_not_called()
++        self.assertFalse(self.evidence.exists())
++
++    def test_window_state_machine_ast_preserves_p200_ownership_topology(self):
++        import ast
++        parent=D.ROOT/'experiments/own-xpu-runtime/ops/packet200-window/driver.py'
++        original=ast.parse(parent.read_text());current=ast.parse(Path(D.__file__).read_text())
++        class Normalize(ast.NodeTransformer):
++            def visit_Constant(self,node):
++                if type(node.value) is str:
++                    node.value=node.value.replace('packet200-bounded-serving','packet201-streaming-serving').replace('packet200','packet201').replace('p200','p201')
++                return node
++        old=next(n for n in original.body if getattr(n,'name',None)=='Window')
++        new=next(n for n in current.body if getattr(n,'name',None)=='Window')
++        self.assertEqual(ast.dump(Normalize().visit(old)),ast.dump(new))
++
+ 
+ if __name__=='__main__':unittest.main()
+--- experiments/own-xpu-runtime/ops/packet200-window/DRIVER.md
++++ experiments/own-xpu-runtime/ops/packet201-window/DRIVER.md
+@@ -1,21 +1,21 @@
+-# Packet200 operational adapters
++# Packet201 streaming operational adapters — CPU preparation
+ 
+ These additive files connect the frozen CPU worker and contract. They have only
+ CPU mock validation; no operational admission, fault capture, model start or
+ service action is part of their preparation. The root coordinator alone writes
+-`../../stage2/packet200-bounded-serving/READY-FOR-DEVICE.json`.
++`../../stage2/packet201-streaming-serving/READY-FOR-DEVICE.json`.
+ 
+-That manifest keeps `packet200.execution-admission.v1`, `passed: true`,
++That manifest keeps `packet201.execution-admission.v1`, `passed: true`,
+ `operational_launch_authorized: true`, the exact canonical CPU plan digest,
+ `storage_admission_mode: monitored-forecast`, and `storage_bound_proven: false`.
+ Its `source_sha256` closes the frozen worker/profile inputs and every file
+ returned by `run.py:required_sources()`. It additionally records `controller`
+-with the chosen fresh `restore_suffix`, absolute controller `evidence` directory,
++with fixed fresh `restore_suffix: 20261023-restore30`, absolute controller `evidence` directory,
+ `additional_write_bytes: 1048576` for the separate bounded client evidence,
+-`client_unit: packet200-client-a`, the fixed absolute `client_receipt` path
+-`packet200-bounded-serving/evidence/client-a/client-result.json`,
++`client_unit: packet201-client-a`, the fixed absolute `client_receipt` path
++`packet201-streaming-serving/evidence/client-a/client-result.json`,
+ `qualification_requests: 16`, and the exact `staging_identity` returned by the frozen contract for
+-`packet200-bounded-serving/evidence/planned-a`. No file here creates that manifest.
++`packet201-streaming-serving/evidence/planned-a`. No file here creates that manifest.
+ 
+ `driver.py --check --restore-suffix SUFFIX --output EVIDENCE` is read-only and
+ refuses missing admission before host inspection. `--run` requires the same
+@@ -43,8 +43,10 @@
+ valid turns. It performs no retry. Both worker and client units must exit with
+ success; restoration waits for the client's final response/oracle validation.
+ The joined proof requires sixteen worker requests and controls, sixteen client
+-turns, five recorded-output matches, one resumed/fresh pair, at most 1728 output
+-tokens, and no speed/submission claim. Client admission metadata binds the exact
++turns, five original recorded-output matches, one resumed/fresh pair, all16 exact
++p200 prompt/native/text/usage matches and1484 output tokens within the1728 cap,
++seven complete SSE terminal sequences, nine ordinary replies, observed-delivery
++timing only, and no speed/submission claim. Client admission metadata binds the exact
+ manifest, vectors, listener event bytes and address. This is a bounded serving
+ pilot qualification, not a general hosting or performance benchmark. The frozen
+ contract still labels zero turns lifecycle-only; this first pilot refuses zero
+@@ -56,7 +58,7 @@
+ independent physical drain. Only then may one guarded restoration use the fresh
+ suffix. The restore child binds the exact manifest bytes and pinned unchanged
+ p196 restore/validation sources. Its process-local `window` alias targets the
+-operational guard; the frozen p200 contract remains uniquely imported. Direct restore invocation independently rechecks worker/client terminal, unit and drain evidence and
++operational guard; the frozen p201 contract remains uniquely imported. Direct restore invocation independently rechecks worker/client terminal, unit and drain evidence and
+ creates an exclusive attempt marker. Each of the three exact validation argument
+ tuples also has a one-use marker; arbitrary validation targets and replay are
+ refused. Every restore/validation operation checks faults, STOP latches, original PAUSE bytes
+@@ -66,3 +68,17 @@
+ main-process SIGTERM. No group kill, retry, reset, resume or second restoration
+ exists. A retained worker is left for review; restoration is refused. Source
+ changes, failed evidence or a failed unit cannot be turned into a clean result.
++
++The additive worker plan includes a separate streaming source map/digest, checked
++by this contract and the worker's full authorization. Its49-file streaming source
++closure supplements the unchanged canonical profile. Adapter source admission
++also requires the32 p200 HTTP/native baseline files, p200 vectors and new client
++documentation/CPU receipt. `helper-pins.json` binds the actual frozen p200 window,
++driver, restore adapter and tests in addition to the inherited safety helpers.
++The Window state machine has an AST equality check against p200 after packet-name
++substitution; ownership/incident/stop/restore ordering is unchanged.
++
++No real staging directory, operational manifest or fresh production plan was
++created for this CPU preparation. Fixtures intercept all services, queue, launch,
++privileged drain and restoration operations. Root must independently establish
++headroom before a real plan and review the complete new closure before a window.
+--- experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json
++++ experiments/own-xpu-runtime/ops/packet201-window/helper-pins.json
+@@ -1,6 +1,6 @@
+ {
+-  "schema": "packet200.window-frozen-topology.v1",
+-  "parent": "experiments/own-xpu-runtime/ops/packet199-window",
++  "schema": "packet201.window-frozen-topology.v1",
++  "parent": "experiments/own-xpu-runtime/ops/packet200-window",
+   "safety_parent": "experiments/own-xpu-runtime/ops/packet196-window",
+   "files_sha256": {
+     "experiments/own-xpu-runtime/ops/packet196-window/safety.py": "d9c36bed2319e525e354c9e37801ebabdbadc5ba37e751d7b6243863206cf7e7",
+@@ -22,8 +22,15 @@
+     "experiments/own-xpu-runtime/ops/packet199-window/helpers.py": "272af0e1669338f677c2424553ba427b2ba4c681fcf2d747bbe4923f73691d32",
+     "experiments/own-xpu-runtime/ops/packet199-window/helper-pins.json": "0a368c89028937374155795773391ea08ce3d09900590159041f3caf42d5c00b",
+     "experiments/own-xpu-runtime/ops/packet199-window/restore_guard.py": "a8c212a218b9d864fb4b8d4966902a9cd05c77db9a392eb51f7672fc3d0c4b5f",
+-    "experiments/own-xpu-runtime/ops/packet199-window/test_window.py": "8a2626467b66ebe635684f56c86dd5864262dde5b7fe5cb61cea54843e557c83"
++    "experiments/own-xpu-runtime/ops/packet199-window/test_window.py": "8a2626467b66ebe635684f56c86dd5864262dde5b7fe5cb61cea54843e557c83",
++    "experiments/own-xpu-runtime/ops/packet200-window/window.py": "0c311165ab1626e2438aa8965337a1ee534d1c09a59f40a88de2f1063ef4be7e",
++    "experiments/own-xpu-runtime/ops/packet200-window/test_window.py": "9eb617925046be139e1b6b7ea6f0a5336b571d02e8083131ecec5d28eb4c36cb",
++    "experiments/own-xpu-runtime/ops/packet200-window/helpers.py": "43b9cbcb80ce903e1de1946250d8623640fff5cf39aa8fc848e30f8822405294",
++    "experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json": "efe1e79ace454da133547c5a318ccce4a8c7d8e4c3e7552a5a0e3169ac4b0400",
++    "experiments/own-xpu-runtime/ops/packet200-window/driver.py": "4105b247ef995fe8c30cdc748b9d470712483802c320d40948f7367b75b88dee",
++    "experiments/own-xpu-runtime/ops/packet200-window/restore_guard.py": "b68fb7955012feeffe1911b4f6291755d1d2f67c366ad22086fe58ce710c215a",
++    "experiments/own-xpu-runtime/ops/packet200-window/test_driver.py": "b49833ccde4eff653ed975bfc600d5fb8f7c88395b3570ed5c913b3491fe3461"
+   },
+-  "purpose": "CPU scaffold binds proven one-stop/passive-drain/one-restore topology without importing or executing any operational helper",
++  "purpose": "Pin unchanged p200 one-stop/client-join/passive-drain/one-restore topology and frozen p196 helpers for additive streaming successor; no operational authorization.",
+   "operational_entrypoint_enabled": false
+ }

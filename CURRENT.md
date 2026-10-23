@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 23, 17:16 EDT — streaming window preparation passes 110 CPU checks across its three parts.**
+The worker's31 checks, client's25 checks and controller/restoration's54 checks all have independent reviews. The guarded
+window requires all16 outputs to match, seven complete streamed replies, successful client and owner exits and physical
+drain before one restoration as restore30. No actual device plan or launch configuration has been created yet. The verified
+external compiler-cache archive is complete; separate guarded removal is in progress to recover disk headroom. All three
+restore29 applications remain running. [Controller scope](experiments/own-xpu-runtime/ops/packet201-window/DRIVER.md).
+
 **October 23, 17:13 EDT — mixed streaming client passes independent review and 25 CPU checks.**
 The next sixteen-turn test will use seven streamed and nine ordinary replies. Every result must match the prior native
 run's complete output, consumed prompt, text and usage; original token oracles and resumed/fresh checks remain. Review fixed
