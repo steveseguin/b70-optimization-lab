@@ -1,0 +1,125 @@
+{
+  "schema": "ownrt.initial-idle-origin-proof.v1",
+  "passed": true,
+  "utc": "2026-10-23T18:49:59.864409+00:00",
+  "scope": "Source/binary/library-bound conditional lower bound and pure CPU replay; no process mapping or fresh-owner admission.",
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "live_admission_ready": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/initial_idle_origin.py": "7074009460c176a022f6a0439b02c2758bfc6e6fb53358d68810d2ebcc3b0d40",
+    "experiments/own-xpu-runtime/integration/test_initial_idle_origin.py": "60b11b29e3ce4198b92b65bf2dd67bbfb9c5d1f3d3eff9f8c708a68f784168e0",
+    "experiments/own-xpu-runtime/integration/receipts/initial-idle-clock-disassembly.txt": "9db460ccd430c4cd53f3049ae7db51ddcca1195163e488291d7c8f3c759e83b1",
+    "experiments/own-xpu-runtime/integration/receipts/initial-idle-native-link.txt": "1beef0f823ab36f517a7cce8a7efa37f05c7d5e3405a43683136ebc802f94e54",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/cold-start.json": "37592f0fc333aabe4a436d53b15c6e295c7860a6b6e7f071fca11263a76c5e51",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/main.cpp": "1e7c5f1b6ab19f909fbd03165ead029ea7331a27810b7a6e97961d9f32039581",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/request_front.hpp": "e3a5a90848c88bf7833b6df354115d18e3ef594bbb86eaf3774a8a3281e41dde",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/build-compile-only.json": "c1b3378c6237254a4b6363a8bccd20cfbfb67b186deefa7ea7899b2828e2e962",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/source-overlay.json": "761c3817c05e7ab21fb39004b361b4c03250fc65c031ca6cca1ed5bb86a67fbf"
+  },
+  "native_binary": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/device/own-rt-iq3",
+    "sha256": "c9b401089d95eeb152953a8c0d82d0678de2474934941bc6c97abd4b03287875"
+  },
+  "clock_library": {
+    "path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+    "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+    "verified_on_disk": true,
+    "verified_mapped_in_new_owner": false,
+    "symbol": "_ZNSt6chrono3_V212steady_clock3nowEv@@GLIBCXX_3.4.19",
+    "disassembly": "0xdf965 mov $0x1,%edi;0xdf982 call clock_gettime@plt;0xdf987 sec*1000000000 then add nsec",
+    "meaning": "Linux CLOCK_MONOTONIC is1; elapsed steady_clock nanoseconds use the same rate as Python monotonic, conditional on this actual mapped function without interposition."
+  },
+  "python_clock": {
+    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+    "monotonic": true,
+    "adjustable": false
+  },
+  "ordering": [
+    {
+      "point": "L",
+      "basis": "Trusted coordinator monotonic timestamp before Popen; fresh run and same boot required."
+    },
+    {
+      "point": "S",
+      "basis": "main.cpp1973 cold_load_start=steady_clock::now(), after main entry, parse, new output and signal setup."
+    },
+    {
+      "point": "E",
+      "basis": "Engine::ms at774-775 reads steady_clock::now()-S; evaluated in cold-start.json expression2022 before save returns."
+    },
+    {
+      "point": "R",
+      "basis": "ready is emitted at2026 after cold-start write. Observation of readiness may be delayed and is never the activity origin."
+    },
+    {
+      "point": "I",
+      "basis": "main.cpp2048 first Reader.next; request_front.hpp84 samples steady_clock::now to construct initial idle deadline. Thus L<=S<=E<=R<=I."
+    }
+  ],
+  "arithmetic": {
+    "formula": "d=max(0,floor(reported_ms/1000 -0.001));origin=L if d==0 else nextafter(L+d,-infinity)",
+    "proof": "For positive d, d<=E-S after subtracting formatting/conversion error, hence L+d<=S+d<=E<=I. For zero d, L<=I directly. Downward float addition preserves lower bound.",
+    "precision": "Exact six-fractional-digit millisecond grammar. Report bounded0..7200000ms; nanosecond interval is below2^53, so integer-to-double conversion is exact, division and six-decimal formatting error are far below1ms. Build uses-fno-fast-math. Independent Decimal context precision80/ROUND_FLOOR prevents caller settings from erasing margin; float inputs bounded0..2^40, final nextafter downward.",
+    "absolute_deadline": "UNCHANGED: Engine deadline starts in constructor812 before E; adding load duration to absolute origin would be invalid."
+  },
+  "caller_obligations": [
+    "Bind pre-Popen timestamp, readiness and cold-start artifact to the same fresh owner and boot.",
+    "Use trusted existing held owner-output dev/ino; artifact SHA alone is not process identity.",
+    "Confirm mapped libstdc++ path/hash in that owner and absence of clock-symbol interposition; no native process maps were checked here.",
+    "Retain exact admitted p198 binary/source/argv/profile and require zero requests/controls before attaching initial activity.",
+    "Keep absolute deadline based on original before-Popen timestamp; this helper only advances the initial idle lower bound."
+  ],
+  "loader_observation": {
+    "native_needed": "libstdc++.so.6",
+    "native_runpath": "/opt/intel/oneapi/compiler/2026.0/bin/../lib:/usr/lib/x86_64-linux-gnu",
+    "other_libstdcpp_in_ten_pinned_LD_LIBRARY_PATH_components": false,
+    "scope": "Read-only on-disk observation, not proof of a future process mapping."
+  },
+  "tests": {
+    "count": 10,
+    "result": "OK",
+    "elapsed_seconds": 0.017,
+    "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_initial_idle_origin.py -v"
+  },
+  "retained_fixture": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/cold-start.json",
+    "sha256": "37592f0fc333aabe4a436d53b15c6e295c7860a6b6e7f071fca11263a76c5e51",
+    "reported_load_and_pin_ms": "215480.035061",
+    "replay_uses_synthetic_launch_and_observation_times": true,
+    "example": {
+      "schema": "ownrt.initial-idle-origin.v1",
+      "scope": "conditional conservative initial idle lower bound",
+      "last_native_activity": 1215.1249999999998,
+      "whole_seconds_added": 215,
+      "launch_monotonic": 1000.125,
+      "observed_monotonic": 1216.0,
+      "reported_load_and_pin_ms": "215480.035061",
+      "rounding_margin_seconds": "0.001",
+      "cold_start_sha256": "37592f0fc333aabe4a436d53b15c6e295c7860a6b6e7f071fca11263a76c5e51",
+      "native_binary_sha256": "c9b401089d95eeb152953a8c0d82d0678de2474934941bc6c97abd4b03287875",
+      "clock_library_path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+      "clock_library_sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+      "absolute_origin_monotonic": 1000.125,
+      "absolute_deadline_changed": false,
+      "fresh_owner_provenance_verified": false,
+      "process_mapping_verified": false,
+      "live_admission_ready": false
+    }
+  },
+  "coverage": [
+    "round-up at whole-second boundaries",
+    "zero/subsecond/max duration",
+    "ambient Decimal context",
+    "nonfinite/invalid timestamps",
+    "exact grammar/hash/binary/library mismatch",
+    "symlink/hardlink/FIFO/oversize",
+    "owner directory and file replacement"
+  ],
+  "limitations": [
+    "No fresh-owner or mapped-library authorization can be derived from cold-start contents.",
+    "Duration above7200000ms is refused even if a native run could spend longer before its Engine deadline; do not silently widen the bound.",
+    "Timestamp returned is a conservative lower bound, not exact native idle start or a performance measurement."
+  ]
+}

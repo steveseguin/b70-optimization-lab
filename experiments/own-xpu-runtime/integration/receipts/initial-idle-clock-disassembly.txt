@@ -1,0 +1,38 @@
+
+/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .plt.sec:
+
+Disassembly of section .text:
+
+00000000000df960 <_ZNSt6chrono3_V212steady_clock3nowEv@@GLIBCXX_3.4.19>:
+   df960:	f3 0f 1e fa          	endbr64
+   df964:	55                   	push   %rbp
+   df965:	bf 01 00 00 00       	mov    $0x1,%edi
+   df96a:	48 89 e5             	mov    %rsp,%rbp
+   df96d:	48 83 ec 20          	sub    $0x20,%rsp
+   df971:	64 48 8b 34 25 28 00 	mov    %fs:0x28,%rsi
+   df978:	00 00 
+   df97a:	48 89 75 f8          	mov    %rsi,-0x8(%rbp)
+   df97e:	48 8d 75 e0          	lea    -0x20(%rbp),%rsi
+   df982:	e8 a9 22 fc ff       	call   a1c30 <clock_gettime@plt>
+   df987:	48 69 45 e0 00 ca 9a 	imul   $0x3b9aca00,-0x20(%rbp),%rax
+   df98e:	3b 
+   df98f:	48 03 45 e8          	add    -0x18(%rbp),%rax
+   df993:	48 8b 55 f8          	mov    -0x8(%rbp),%rdx
+   df997:	64 48 2b 14 25 28 00 	sub    %fs:0x28,%rdx
+   df99e:	00 00 
+   df9a0:	75 02                	jne    df9a4 <_ZNSt6chrono3_V212steady_clock3nowEv@@GLIBCXX_3.4.19+0x44>
+   df9a2:	c9                   	leave
+   df9a3:	c3                   	ret
+   df9a4:	e8 87 46 fc ff       	call   a4030 <__stack_chk_fail@plt>
+
+Disassembly of section .fini:
+

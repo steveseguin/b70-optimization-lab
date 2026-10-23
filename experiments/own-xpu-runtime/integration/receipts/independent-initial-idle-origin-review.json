@@ -1,0 +1,46 @@
+{
+  "schema": "ownrt.initial-idle-origin-independent-review.v1",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "tests": {
+    "count": 10,
+    "result": "OK",
+    "elapsed_seconds": 0.027,
+    "command": "nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest test_initial_idle_origin -v"
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/initial_idle_origin.py": "7074009460c176a022f6a0439b02c2758bfc6e6fb53358d68810d2ebcc3b0d40",
+    "experiments/own-xpu-runtime/integration/test_initial_idle_origin.py": "60b11b29e3ce4198b92b65bf2dd67bbfb9c5d1f3d3eff9f8c708a68f784168e0",
+    "experiments/own-xpu-runtime/integration/receipts/initial-idle-clock-disassembly.txt": "9db460ccd430c4cd53f3049ae7db51ddcca1195163e488291d7c8f3c759e83b1",
+    "experiments/own-xpu-runtime/integration/receipts/initial-idle-native-link.txt": "1beef0f823ab36f517a7cce8a7efa37f05c7d5e3405a43683136ebc802f94e54",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a/owner/cold-start.json": "37592f0fc333aabe4a436d53b15c6e295c7860a6b6e7f071fca11263a76c5e51",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/main.cpp": "1e7c5f1b6ab19f909fbd03165ead029ea7331a27810b7a6e97961d9f32039581",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/request_front.hpp": "e3a5a90848c88bf7833b6df354115d18e3ef594bbb86eaf3774a8a3281e41dde",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/build-compile-only.json": "c1b3378c6237254a4b6363a8bccd20cfbfb67b186deefa7ea7899b2828e2e962",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/source-overlay.json": "761c3817c05e7ab21fb39004b361b4c03250fc65c031ca6cca1ed5bb86a67fbf",
+    "experiments/own-xpu-runtime/integration/receipts/initial-idle-origin-proof.json": "2b1e54b99f42be6a8d963be732f810b193dafae66f8f4474604ee6ea0932fe24",
+    "experiments/own-xpu-runtime/integration/receipts/independent-initial-idle-tests.log": "ebd3fde3346ef1e768484ac36c7dc0d0da028d8e45cf0f2adf8044e6a780d9cc"
+  },
+  "reviewed": [
+    "Native source order L<=S<=E<=ready emission<=initial Reader.next idle origin independently confirmed at main1973/2022/2026/2048 and header84.",
+    "Independently readelf inspected device ELF steady_clock symbol import and objdump inspected pinned libstdc++ function: clock_gettime CLOCK_MONOTONIC1, seconds*1e9+nanoseconds. No native ELF execution.",
+    "Reported interval minus1ms, whole-second FLOOR under private Decimal context80 and downward nextafter yield conservative lower bound with admitted timestamp range.",
+    "Engine absolute deadline begins before cold interval ends; helper correctly leaves absolute origin unchanged.",
+    "Cold file bounded regular/no-follow read validates owner directory identity and stable file/path stamps. Content hash does not establish process ownership."
+  ],
+  "proof_sha256": "2b1e54b99f42be6a8d963be732f810b193dafae66f8f4474604ee6ea0932fe24",
+  "native_binary_sha256": "c9b401089d95eeb152953a8c0d82d0678de2474934941bc6c97abd4b03287875",
+  "clock_library_sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+  "conditional_on": [
+    "Trusted pre-Popen timestamp and same fresh owner/boot/output/readiness binding.",
+    "Verified actual mapped clock library and absence of clock-symbol interposition.",
+    "Zero completed requests/controls at initial attach and unchanged admitted native binary/profile."
+  ],
+  "live_admission_ready": false,
+  "profile_wiring_performed": false,
+  "limitations": [
+    "Retained p199 interval replay uses synthetic launch/observation times; no new owner or live timing claim.",
+    "No absolute-deadline extension, ready-receipt reset or performance claim."
+  ]
+}

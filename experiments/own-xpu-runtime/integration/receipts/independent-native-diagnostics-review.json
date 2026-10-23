@@ -1,0 +1,34 @@
+{
+  "schema": "ownrt.native-diagnostics-independent-review.v1",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "child_process_started": false,
+  "tests": {
+    "count": 10,
+    "result": "OK",
+    "elapsed_seconds": 0.621,
+    "command": "nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 python3 -B -m unittest test_native_diagnostics -v"
+  },
+  "source_sha256": {
+    "native_diagnostics.py": "d5c5ec0426f33d36384b7a15d98648301a5b936da4411a469905aa6d7b1d5f68",
+    "test_native_diagnostics.py": "996054bb3ef7ddc511cab15ef290b952eab9f23943584b7c64b5566a8fd8a31a",
+    "bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "NATIVE-DIAGNOSTICS.md": "0e23324cc1188df6e49afecc6efaa24b729c86b7080fecca19f42c1da7cec4c3",
+    "receipts/native-diagnostics-cpu.json": "77ec162675858ca543109a996d76f2dc077a78141b3b070a8e427280ca1e9913",
+    "receipts/independent-native-diagnostics-tests.log": "b6d318d930ea27c68226853ef4c9cc0da95bd325beb37160762557bcb5b877bb"
+  },
+  "reviewed": [
+    "Cap/write failure and queue saturation preserve first incident while reader continues discard to EOF; no blocking sentinel insertion.",
+    "Fixed queue plus active reader/capture payload bound; bounded shared join deadline does not close busy FDs.",
+    "Read failure retains last endpoint and reports no EOF; explicit verified producer-exit attestation required for later release.",
+    "Interrupted reader start retains endpoint rather than closing an uncertain busy descriptor.",
+    "Original first/capture exception objects retained; partial writes reported only as confirmed-byte lower bound."
+  ],
+  "limitations": [
+    "Startup with no confirmed reader may remain uncertain and retained for manual inspection; no forced cleanup or clean-exit claim.",
+    "Unexpected read failure prevents guaranteed producer progress, despite retained endpoint avoiding induced SIGPIPE.",
+    "Blocked filesystem capture can remain non-daemon and retained after join timeout; caller must keep writer alive.",
+    "Routed stderr only. No complete live storage bound, native-owner integration, driver-cache bound or model/device qualification."
+  ]
+}

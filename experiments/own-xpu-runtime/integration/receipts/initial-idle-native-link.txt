@@ -1,0 +1,40 @@
+Command: readelf -d experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/device/own-rt-iq3
+
+Dynamic section at offset 0xed0d60 contains 31 entries:
+  Tag        Type                         Name/Value
+ 0x0000000000000001 (NEEDED)             Shared library: [libcrypto.so.3]
+ 0x0000000000000001 (NEEDED)             Shared library: [libze_loader.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libsycl.so.9]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x000000000000001d (RUNPATH)            Library runpath: [/opt/intel/oneapi/compiler/2026.0/bin/../lib:/usr/lib/x86_64-linux-gnu]
+ 0x000000000000000c (INIT)               0x409000
+ 0x000000000000000d (FINI)               0x7f3fdc
+ 0x0000000000000019 (INIT_ARRAY)         0x12d0ea0
+ 0x000000000000001b (INIT_ARRAYSZ)       80 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x12d0ef0
+ 0x000000000000001c (FINI_ARRAYSZ)       16 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x4003b0
+ 0x0000000000000005 (STRTAB)             0x402b60
+ 0x0000000000000006 (SYMTAB)             0x400778
+ 0x000000000000000a (STRSZ)              14801 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000015 (DEBUG)              0x0
+ 0x0000000000000003 (PLTGOT)             0x12d1fe8
+ 0x0000000000000002 (PLTRELSZ)           6720 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x406d08
+ 0x0000000000000007 (RELA)               0x406a20
+ 0x0000000000000008 (RELASZ)             744 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000006ffffffe (VERNEED)            0x406830
+ 0x000000006fffffff (VERNEEDNUM)         4
+ 0x000000006ffffff0 (VERSYM)             0x406532
+ 0x0000000000000000 (NULL)               0x0
+
+Command: readelf -Ws experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/device/own-rt-iq3 | rg 'UND.*_ZNSt6chrono3_V212steady_clock3nowEv'
+   211: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND _ZNSt6chrono3_V212steady_clock3nowEv@GLIBCXX_3.4.19 (26)
+ 17566: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND _ZNSt6chrono3_V212steady_clock3nowEv@GLIBCXX_3.4.19
+

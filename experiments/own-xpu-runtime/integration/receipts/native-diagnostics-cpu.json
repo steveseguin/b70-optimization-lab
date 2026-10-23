@@ -1,0 +1,33 @@
+{
+  "schema": "ownrt.native-diagnostics-cpu.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T18:48:49.963141+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "producer_kind": "os.pipe plus Python threads only",
+  "tests": 10,
+  "seconds": 0.612,
+  "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_native_diagnostics.py -v",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/native_diagnostics.py": "d5c5ec0426f33d36384b7a15d98648301a5b936da4411a469905aa6d7b1d5f68",
+    "experiments/own-xpu-runtime/integration/test_native_diagnostics.py": "996054bb3ef7ddc511cab15ef290b952eab9f23943584b7c64b5566a8fd8a31a",
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf"
+  },
+  "default_payload_buffer_bound_bytes": 98304,
+  "source_budget_profile_unchanged": true,
+  "guarantees": [
+    "Reader never waits on evidence writer or queue capacity; fixed queue saturation is incident/discard",
+    "Capture failures preserve original objects and keep draining to EOF without producer signals",
+    "Only observed EOF closes reader duplicate automatically; unexpected read/startup incident retains endpoint",
+    "Join timeout truthfully reports reader/capture/endpoint retention without forced close",
+    "Actual partial-write counts remain bounded-writer authority; confirmed-success capture bytes are labeled lower bound"
+  ],
+  "limitations": [
+    "Scheduling/read I/O failures may still impede producer; no absolute progress guarantee",
+    "Caller supplies exclusive blocking read pipe ownership and keeps writer alive while retained",
+    "Explicit retained-endpoint release requires caller-proved producer exit and finished reader/capture",
+    "Native file/cache writers remain unbounded by this component; no live profile admission"
+  ],
+  "prior_candidate": "experiments/own-xpu-runtime/integration/lineage/native-diagnostics-before-endpoint-review"
+}

@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 14:52 EDT — idle timing and bounded diagnostic helpers pass 20 CPU checks.**
+The timing helper safely recovers most model-loading time from initial idle accounting, conditional on proving the fresh
+owner and mapped clock library; absolute deadlines stay unchanged. The pipe collector preserves bounded evidence and keeps
+draining after capture failure, while uncertain endpoints and blocked workers remain explicitly retained. Both independent
+reviews passed. The serving-component commit has green CI. All three restore28 applications remain running; no model or GPU
+work was launched for these helpers. Coordinator integration remains the next step.
+[Timing proof](experiments/own-xpu-runtime/integration/INITIAL-IDLE-ORIGIN.md) ·
+[Diagnostic handling](experiments/own-xpu-runtime/integration/NATIVE-DIAGNOSTICS.md).
+
 **October 23, 14:39 EDT — reusable bounded serving components pass 37 CPU checks.**
 The profile pins the tested baseline engine and its dependencies, and the session assembly guards both native and metadata
 operations. Final review fixed open-file identity checks and receipt reads during active requests. A bounded writer preserves
