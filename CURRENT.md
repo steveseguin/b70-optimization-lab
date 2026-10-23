@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**October 23, 19:13 EDT — paired GDN projections match the serial Engine on CPU.**
+The new captured operator issues 400 paired projections in place of 800 originals across the fixed tiny
+fixture. All 16 replies, 13 complete saved states and 108 intermediate boundaries match the serial Engine
+and previous reference. The same allocation/capture interface also passes full-size synthetic Q6 qkv/z
+comparisons against independent arithmetic. Independent artifact review confirms the bytes and bindings.
+An initial harness read the final allocation inventory too early; that attempt is preserved, and the corrected
+run passed with the same binary. This is CPU correctness evidence, not device or speed qualification.
+Next is the native paired-kernel implementation and its compile-only preparation. Daily applications retain
+their restore30 PIDs, root has 28.30 GB free, and no device window is queued. The previous Engine proof's
+final commit 49dcc27b9 has all three CI workflows green.
+[Paired projections and limits](experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/README.md) ·
+[Independent artifact review](experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/evidence/independent-artifact-audit.json).
+
 **October 23, 18:58 EDT — paired prompt scheduling passes the actual tiny CPU Engine.**
 Sixteen serial and sixteen paired requests match in output and all 13 saved states, including every one of
 the 20 state buffers and token history. All 108 intermediate boundaries match; six older checkpoint references

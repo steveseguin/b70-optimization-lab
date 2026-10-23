@@ -1,0 +1,49 @@
+{
+  "passed": true,
+  "returncode": 0,
+  "command": [
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/tests",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/tests/test_host_authority.py": "4da90d761aee1ffe11e45b0973941906af3e37a65b5fff407586cff89b19b0fc",
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/tests/test_census_timing.py": "954b3eaa57a980115152809d1fa2eb5ba1a5b5a09934c2182dc3c8e2a58dfd4a",
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py": "8c8dce7126b1e93da588cd0c5f29990c2891454fe7171c87f53646f3e92d0f60",
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/evidence/raw-host-proof-index.json": "fd85e91544deab4d7be6dd3325cc5e2ac78042a66edfcadc75e96b5b574f5d3c",
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/evidence/raw-host-proof.tar.gz": "9cf233547797df858b668f3fff86b6056588809f40878246d42033c40fef573e",
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/evidence/host-proof.json": "85aceaa711159be58426d8c1888ba18e8e4de4c30cfcca26eeb69b3f826d1fcd"
+  },
+  "log": "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/evidence/authority-check-1792797147824729164/tests.log",
+  "log_sha256": "0482c14857a60e6bfca67c9549d85d01daca83ec8956c9ce355b5f53023c0e15",
+  "native_executed": false,
+  "device_executed": false,
+  "scope": "Read-only actual B artifact proof plus retained A census-order regressions",
+  "placement": {
+    "nice": 19,
+    "cpu_affinity": "8-15,24-31",
+    "threads": 2
+  },
+  "tests_passed": 12,
+  "native_processes_started_by_checks": 0,
+  "final_documentation_sha256": {
+    "AUTHORITY.md": "fe054b4e7742f95af262706144d98f4f0929c0bb425c53403324a74ef8589bbe"
+  },
+  "successful_run": {
+    "comparison_owner_processes": 2,
+    "standalone_abi_processes": 1,
+    "parser_refusal_processes": 10,
+    "completed_requests": 32,
+    "paired_projection_sites": 400,
+    "original_projection_sites_skipped": 800,
+    "intermediate_endpoints_exact": 108
+  },
+  "failed_attempt_preserved": "lineage/before-final-census-join/retention.json"
+}

@@ -1,0 +1,308 @@
+{
+  "schema": "packet206.synthetic-fixtures.v1",
+  "context": 64,
+  "vocab": 16,
+  "eos": 15,
+  "rows": [
+    {
+      "id": "fresh-a",
+      "tokens": [
+        2,
+        5,
+        3,
+        7,
+        1
+      ],
+      "max_new": 8,
+      "save": "s1"
+    },
+    {
+      "id": "fresh-b",
+      "tokens": [
+        4,
+        6,
+        2,
+        8
+      ],
+      "max_new": 4
+    },
+    {
+      "id": "resume-a",
+      "tokens": [
+        2,
+        5,
+        3,
+        7,
+        1
+      ],
+      "max_new": 4,
+      "restore": "s1",
+      "same_generation": true,
+      "save": "s2"
+    },
+    {
+      "id": "append-a",
+      "append_from": "fresh-a",
+      "suffix": [
+        4,
+        6,
+        9,
+        2,
+        8,
+        3
+      ],
+      "max_new": 4,
+      "restore": "s1",
+      "save": "s3"
+    },
+    {
+      "id": "append-repeat",
+      "append_from": "fresh-a",
+      "suffix": [
+        4,
+        6,
+        9,
+        2,
+        8,
+        3
+      ],
+      "max_new": 4,
+      "restore": "s1",
+      "save": "s4"
+    },
+    {
+      "id": "append-fresh",
+      "append_from": "fresh-a",
+      "suffix": [
+        4,
+        6,
+        9,
+        2,
+        8,
+        3
+      ],
+      "max_new": 4,
+      "save": "s5"
+    },
+    {
+      "id": "fresh-a-reference",
+      "tokens": [
+        2,
+        5,
+        3,
+        7,
+        1
+      ],
+      "max_new": 12
+    },
+    {
+      "id": "fresh-b-repeat",
+      "tokens": [
+        4,
+        6,
+        2,
+        8
+      ],
+      "max_new": 4,
+      "save": "s6"
+    },
+    {
+      "id": "boundary-seed",
+      "tokens": [
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7
+      ],
+      "max_new": 8,
+      "save": "boundary-seed"
+    },
+    {
+      "id": "boundary-append",
+      "append_from": "boundary-seed",
+      "suffix": [
+        4,
+        6,
+        9,
+        2,
+        8,
+        3
+      ],
+      "max_new": 4,
+      "restore": "boundary-seed",
+      "save": "boundary-append"
+    },
+    {
+      "id": "boundary-fresh",
+      "append_from": "boundary-seed",
+      "suffix": [
+        4,
+        6,
+        9,
+        2,
+        8,
+        3
+      ],
+      "max_new": 4,
+      "save": "boundary-fresh"
+    },
+    {
+      "id": "odd-tail",
+      "tokens": [
+        9,
+        3,
+        5,
+        2
+      ],
+      "max_new": 3,
+      "save": "odd-tail"
+    },
+    {
+      "id": "single-input",
+      "tokens": [
+        2
+      ],
+      "max_new": 2,
+      "save": "single-input"
+    },
+    {
+      "id": "fresh33",
+      "tokens": [
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3
+      ],
+      "max_new": 2,
+      "save": "fresh33"
+    },
+    {
+      "id": "near-capacity",
+      "tokens": [
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2,
+        5,
+        3,
+        7,
+        1,
+        2
+      ],
+      "max_new": 2,
+      "save": "near-capacity"
+    },
+    {
+      "id": "final-b-release",
+      "tokens": [
+        4,
+        6,
+        2,
+        8
+      ],
+      "max_new": 4
+    }
+  ],
+  "scope": "Synthetic token fixtures; first8 reproduce retainedp198 host requests, not model prompts"
+}

@@ -1,0 +1,27 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py", line 653, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py", line 645, in main
+    result = execute(spec)
+             ^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py", line 616, in execute
+    chunk = run_variant(spec, "chunk", env)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py", line 402, in run_variant
+    raise primary
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py", line 370, in run_variant
+    pairs = paired_sites(directory, row["id"], trace, name == "chunk")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py", line 415, in paired_sites
+    census = read(directory / "owner/census.json")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/host_probe.py", line 36, in read
+    return json.loads(Path(path).read_text())
+                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/build/host-proof-a/chunk/owner/census.json'

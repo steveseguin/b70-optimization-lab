@@ -1,0 +1,25 @@
+{
+  "schema": "packet207.host-fixture-authority.v1",
+  "artifacts_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/host_probe.py": "8acd366491baf8350ef6de3714b381afc1435689ab968ddca30a7bd67cdb4342",
+    "experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/fixtures.json": "5ffa2f7c754f278013ac63b24e934d0d196f08557da35bdd77ac871a4fe4c04d",
+    "experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/authority-inputs.json": "3b09a3e1a62eb56196f1382fa7ff6f143c15d97a0a2c9917546a151d79315bdb",
+    "experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/evidence/host-proof.json": "14ffdd01d5924b51dc3650107313393c9da8f2db0c9087b12411faa34a5034d2",
+    "experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/evidence/raw-host-proof-index.json": "e804bf9a9172c2c31c5dbfe316799c29995e96543023ea6875f3cbf0c5b2a431",
+    "experiments/own-xpu-runtime/stage2/packet206-host-engine-chunk/evidence/build-compile-only.json": "c955c080365d89563804122b0866a8d2d587833343745a71e8d3c933cf930402",
+    "experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/production-census.json": "3dd7c60fb7eac27b0b5016ca8e67116aa14b36b4fa83dafdbec710f1d49a6196",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/inputs/plan.tsv": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656"
+  },
+  "scope": "P206 read-only fixture bytes; no cross-binary checkpoint restoration; two new synthetic HOST_ONLY owners",
+  "limitations": [
+    "Mini F32 pair path is separate from full-shape synthetic Q6 arithmetic proof",
+    "Simulated backend event semantics",
+    "No production FP32 conversion/cache, model, device or speed qualification"
+  ],
+  "production_type_authority": {
+    "plan": "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/inputs/plan.tsv",
+    "layer0_qkv_and_z_gguf_type": 14,
+    "layer2_qkv_and_z_gguf_type": 8,
+    "type_scope": "GGUF14=Q6_K,8=Q8_0; pair proof qualifies only explicitly supported type/layout/shape"
+  }
+}
