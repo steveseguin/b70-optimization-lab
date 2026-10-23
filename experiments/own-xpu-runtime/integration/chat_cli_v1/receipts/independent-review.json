@@ -1,0 +1,67 @@
+{
+  "author_receipt_sha256": "6b8f9c7e84320fc6d5357f7b458de21f320485152586c23cf6167498e0e8067b",
+  "checks": {
+    "absolute_header_deadline_and_64KiB_header_cap": true,
+    "bounded_read1_body_deadlines_and_evidence": true,
+    "explicit_literal_loopback_attachment": true,
+    "no_owner_native_lifecycle_imports_or_actions": true,
+    "no_retry_or_history_truncation": true,
+    "partial_reply_preserved_on_original_error": true,
+    "response_and_connection_closed_primary_error_preserved": true,
+    "serial_history_commits_after_validated_response_and_cleanup": true,
+    "sse_content_length_refused_before_body": true,
+    "sse_role_identity_terminal_usage_done_and_eof_validation": true,
+    "strict_utf8_and_usage_integer_context_bounds": true,
+    "synthetic_delayed_release_keeps_history_uncommitted": true,
+    "synthetic_failed_save_and_sink_disconnect_do_not_add_history": true,
+    "transfer_encoding_refused_before_body": true
+  },
+  "independent_tests": {
+    "command": "OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest chat_cli_v1.test_client -v",
+    "count": 17,
+    "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration",
+    "elapsed_seconds": 1.389,
+    "log": "experiments/own-xpu-runtime/integration/chat_cli_v1/receipts/independent-review-tests.log",
+    "log_sha256": "0b2f0d921ea386a4ef60284beff7091188369e409fe88da978940e2a272b2358"
+  },
+  "limitations": [
+    "Experimental client for the admitted serial 4096-context protocol; not a generic HTTP/OpenAI client.",
+    "Partial text may be shown before server disposition, but is never committed as successful history before validated terminal response and cleanup.",
+    "The client does not independently attest native SAVE/RELEASE; server owns disposition.",
+    "Deadlines bound socket reads; arbitrary local output callbacks are not forcibly interrupted, and connection/request send retain bounded socket timeout semantics.",
+    "No real-model CLI qualification or latency/throughput claim."
+  ],
+  "passed": true,
+  "resolved_findings": [
+    "Internal HTTP header readline could outlive an absolute deadline under trickled input; new per-byte header reader refreshes remaining timeout and bounds aggregate bytes.",
+    "HTTPResponse chunked parsing has internal chunk-size/trailer reads outside the body deadline loop; all Transfer-Encoding is now refused before body reads. SSE explicitly uses the admitted close-delimited framing."
+  ],
+  "schema": "ownrt.chat-cli-v1.independent-review.v1",
+  "scope": "Independent source review, source/parent hash verification, and 17 CPU tests using ephemeral loopback sockets with actual codec/streaming HTTP/service but synthetic native/store fixtures. No existing endpoint calls, model/native process, GPU, service, kernel, or owner actions.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/chat_cli_v1/README.md": "6064a0136c84dc7cee0d7b494023b2662c503efb84f7079a38d142ed33a44ab8",
+    "experiments/own-xpu-runtime/integration/chat_cli_v1/__init__.py": "a3d010efb2d720b85ecda163989fd4e972c20fd38aaa21df471eff808ba6532f",
+    "experiments/own-xpu-runtime/integration/chat_cli_v1/__main__.py": "0426c5f113df0479006fa6cf05469ff4482cd98dbf5ab66938906052eb1bc4db",
+    "experiments/own-xpu-runtime/integration/chat_cli_v1/client.py": "ba8a9b9138bbc8be0c63d60566bd376462ed01df8625ae1f157aa422c2cb6963",
+    "experiments/own-xpu-runtime/integration/chat_cli_v1/parent-pin.json": "3b86edbe9b7759167844d2c47272cf250e31b29285b32741a55415af3d4559b0",
+    "experiments/own-xpu-runtime/integration/chat_cli_v1/test_client.py": "a65f66f56caf59e3ba202079fdd6018de63e11f9737d7db704b80b5d8aad13a4",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/streaming_v1/__init__.py": "296dfc17cfc0ad7de8492ecd9a39ff4ee0a89e710846554fd42f0ec3be56e78a",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder.py": "3b2ea358c86f423a38dbee16f36281c3cfbc27f08c0f65c6e23ad42d76aa35ac",
+    "experiments/own-xpu-runtime/integration/streaming_v1/delivery.py": "427495f19637c9f0caf5b26cb2a573e42d339366a80f810ca88bd170a46579b6",
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine.py": "522b0cd8d212e5b8d4a9432acb771fa9f67d20b6873fb8fdfdcc587b183a89f5",
+    "experiments/own-xpu-runtime/integration/streaming_v1/http.py": "e163f24fa87460362408f9a474a8e68480403c73487b57ea7d82365c46226dcb",
+    "experiments/own-xpu-runtime/integration/streaming_v1/service.py": "d03511e9fa83345f3369d071ae2a4f4a496c4e4add3306b8f6291af8dfccc632",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_engine.py": "3bb2e86e5b953764c8081f361216bc2d58809d09548e85f844881ad62f3ed856",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_service.py": "6d3051919a2eec26fab8bf05c9b6b3afc9a9d60c9770a1a1b5179e545b264fd0",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/client_pilot.py": "3fd2793e68059a40137b3f3741eb031d76eff37aad5f8ae736df3fc459014df6",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+  },
+  "utc": "2026-10-23T21:41:38.794995+00:00"
+}
