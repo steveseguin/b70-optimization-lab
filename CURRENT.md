@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 11:59 EDT — new approved one-card local record: 37.595605 tok/s; continuing with the warm request interface.**
+The diet qualification passed all seven stages, with all12 ×128 output tokens exact and no new GPU fault.
+The independent audit recomputed +2.713% over36.602512. Local and server dry runs passed; the single submission returned
+HTTP201 APPROVED (`cmvl5k4p9004nng01z5xtanw5`), and the matching local record threshold is updated. This retains the
+established128-token scope, not a512-token promotion claim. Clean teardown and privileged passive ownership checks passed.
+Restore25 completed at16:00:51UTC with all three applications validated; both lane pauses retain their original bytes and STOP latches are absent. The warm request interface has CPU-tested
+metadata/transport and a native source overlay with unchanged checkpoint arithmetic. Compiling and testing its host-only lifecycle
+is now in progress after restoration. [Record](experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/RESULT.md) ·
+[next work](notes/2026-10-23-warm-request-front.md).
+
 **October 23, 11:20 EDT — one-card diet qualification is running; first two gates passed.**
 The service-state parser fix passed its regression tests and the qualification packet was resealed. The first admission refusal
 was manually reviewed and archived: it launched no benchmark and all cards had drained. The resumed coordinator skipped endpoint
