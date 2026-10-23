@@ -1,0 +1,133 @@
+{
+ "openvino_genai": "2026.4.1.0-3408-ab01d1771e4",
+ "arms": [
+  {
+   "label": "OV INT4 no-spec",
+   "device": "GPU.0",
+   "prompts": {
+    "tech": {
+     "reps": [
+      {
+       "tput": 114.74095916748047,
+       "ttft": 22.505128860473633,
+       "tpot": 8.715283393859863,
+       "ntok": 256,
+       "wall_s": 2.2547532449825667,
+       "text": "Speculative decoding is a technique used to speed up the inference of language models, particularly Long Short-Term Memory (LSTM) networks and Transformer models. The core idea is to predict the next token in the sequence before the current token has been fully processed, thereby overlapping the decoding of the current token with the prediction of the next token. This can significantly reduce the latency of inference, especially in high-latency environments such as interactive chat or real-time translation.\n\n### How Speculative Decoding Works\n\n1. **Token Prediction**:\n   - **Current Token Processing**: The model processes the current token \\( x_t \\) to generate a probability distribution over the next token \\( x_{t+1} \\).\n   - **Speculative Prediction**: Before the current token \\( x_t \\) is fully processed, the model starts predicting the next token \\( x_{t+1} \\) based on the partial information available.\n\n2. **Overlap of Computation**:\n   - **Decoding Overlap**: While the model is still processing the current token \\( x_t \\), it begins to predict the next token \\( x_{t+1} \\). This means that the computation for \\( x_{t+1} \\) starts before \\( x_t \\) is"
+      },
+      {
+       "tput": 114.48445129394531,
+       "ttft": 73.2486343383789,
+       "tpot": 8.734810829162598,
+       "ntok": 256,
+       "wall_s": 2.301762635994237,
+       "text": "Speculative decoding is a technique used to speed up the inference of language models, particularly Long Short-Term Memory (LSTM) networks and Transformer models. The core idea is to predict the next token in the sequence before the current token has been fully processed, thereby overlapping the decoding of the current token with the prediction of the next token. This can significantly reduce the latency of inference, especially in real-time applications.\n\n### Technical Explanation\n\n1. **Basic Concept**:\n   - **Decoding**: In language modeling, decoding refers to the process of generating the next token in a sequence given the previous tokens.\n   - **Speculative Decoding**: This involves predicting the next token while the current token is still being processed. This allows the model to start working on the next token before the current one is fully decoded.\n\n2. **Implementation**:\n   - **Forward Pass**: During the forward pass of the model, the current token is processed to generate a probability distribution over the next token.\n   - **Speculative Prediction**: Before the current token is fully processed, the model starts predicting the next token based on the intermediate results of the current token.\n   - **Backward Pass**: The backward pass continues to refine the probability distribution of the current token while the speculative prediction of"
+      },
+      {
+       "tput": 114.77591705322266,
+       "ttft": 16.212488174438477,
+       "tpot": 8.712629318237305,
+       "ntok": 256,
+       "wall_s": 2.238377748988569,
+       "text": "Speculative decoding is a technique used to speed up the inference of language models, particularly Long Short-Term Memory (LSTM) networks and Transformer models. The core idea is to predict the next token in the sequence before the current token has been fully processed, thereby overlapping the decoding of the current token with the prediction of the next token. This can significantly reduce the latency of inference, especially in real-time applications.\n\n### Technical Explanation\n\n1. **Basic Concept**:\n   - **Decoding**: In language modeling, decoding refers to the process of generating the next token in a sequence given the previous tokens.\n   - **Speculative Decoding**: This involves predicting the next token while the current token is still being processed. This allows the model to start working on the next token before the current one is fully decoded.\n\n2. **Implementation**:\n   - **Forward Pass**: During the forward pass of the model, the current token is processed to generate a probability distribution over the next token.\n   - **Speculative Prediction**: Before the current token is fully processed, the model starts predicting the next token based on the intermediate results of the current token.\n   - **Backward Pass**: The backward pass continues to refine the probability distribution of the current token while the speculative prediction of"
+      }
+     ],
+     "identical_text": false
+    },
+    "code": {
+     "reps": [
+      {
+       "tput": 114.58150482177734,
+       "ttft": 84.35819244384766,
+       "tpot": 8.727412223815918,
+       "ntok": 256,
+       "wall_s": 2.310918832983589,
+       "text": "Certainly! Below is a Python function that merges two sorted lists into one sorted list without using the `sort()` method:\n\n```python\ndef merge_sorted_lists(list1, list2):\n    \"\"\"\n    Merge two sorted lists into one sorted list.\n\n    Parameters:\n    list1 (list): The first sorted list.\n    list2 (list): The second sorted list.\n\n    Returns:\n    list: A new sorted list containing all elements from both input lists.\n    \"\"\"\n    merged_list = []\n    i, j = 0, 0\n\n    # Loop until one of the lists is exhausted\n    while i < len(list1) and j < len(list2):\n        if list1[i] < list2[j]:\n            merged_list.append(list1[i])\n            i += 1\n        else:\n            merged_list.append(list2[j])\n            j += 1\n\n    # Append any remaining elements from list1\n    while i < len(list1):\n        merged_list.append(list1[i])\n        i += 1\n\n    # Append any remaining elements from list2\n    while j < len(list2):\n        merged_list.append(list2[j])\n        j += 1\n\n    return merged_list\n```\n\nYou can use this function by passing"
+      },
+      {
+       "tput": 114.61283874511719,
+       "ttft": 37.221553802490234,
+       "tpot": 8.72502613067627,
+       "ntok": 256,
+       "wall_s": 2.26258287197561,
+       "text": "Certainly! Below is a Python function that merges two sorted lists into one sorted list without using the `sort()` method:\n\n```python\ndef merge_sorted_lists(list1, list2):\n    \"\"\"\n    Merge two sorted lists into one sorted list.\n\n    Args:\n        list1 (list): The first sorted list.\n        list2 (list): The second sorted list.\n\n    Returns:\n        list: A new sorted list containing all elements from both input lists.\n    \"\"\"\n    merged_list = []\n    i, j = 0, 0\n\n    # Loop until one of the lists is exhausted\n    while i < len(list1) and j < len(list2):\n        if list1[i] < list2[j]:\n            merged_list.append(list1[i])\n            i += 1\n        else:\n            merged_list.append(list2[j])\n            j += 1\n\n    # Append any remaining elements from list1\n    while i < len(list1):\n        merged_list.append(list1[i])\n        i += 1\n\n    # Append any remaining elements from list2\n    while j < len(list2):\n        merged_list.append(list2[j])\n        j += 1\n\n    return merged_list\n```\n\nThis function iterates through both lists"
+      },
+      {
+       "tput": 114.72280883789062,
+       "ttft": 14.850905418395996,
+       "tpot": 8.716662406921387,
+       "ntok": 256,
+       "wall_s": 2.2381698290118948,
+       "text": "Certainly! Below is a Python function that merges two sorted lists into one sorted list without using the `sort()` method:\n\n```python\ndef merge_sorted_lists(list1, list2):\n    \"\"\"\n    Merge two sorted lists into one sorted list.\n\n    Args:\n        list1 (list): The first sorted list.\n        list2 (list): The second sorted list.\n\n    Returns:\n        list: A new sorted list containing all elements from both input lists.\n    \"\"\"\n    merged_list = []\n    i, j = 0, 0\n\n    # Loop until one of the lists is exhausted\n    while i < len(list1) and j < len(list2):\n        if list1[i] < list2[j]:\n            merged_list.append(list1[i])\n            i += 1\n        else:\n            merged_list.append(list2[j])\n            j += 1\n\n    # Append any remaining elements from list1\n    while i < len(list1):\n        merged_list.append(list1[i])\n        i += 1\n\n    # Append any remaining elements from list2\n    while j < len(list2):\n        merged_list.append(list2[j])\n        j += 1\n\n    return merged_list\n```\n\nThis function iterates through both lists"
+      }
+     ],
+     "identical_text": false
+    }
+   }
+  },
+  {
+   "label": "OV INT4 + spec(draft 1.5B, k=5)",
+   "device": "GPU.0",
+   "prompts": {
+    "tech": {
+     "reps": [
+      {
+       "tput": 97.1831283569336,
+       "ttft": 19.588275909423828,
+       "tpot": 10.289852142333984,
+       "ntok": 256,
+       "wall_s": 2.6460409309947863,
+       "text": "Speculative decoding is a technique used to speed up the inference of language models, particularly Long Short-Term Memory (LSTM) networks and Transformer models. The core idea is to predict the next token in the sequence before the current token has been fully processed, thereby overlapping the computation of the current token with the decoding of the next token. This can significantly reduce the latency of inference, especially in real-time applications.\n\n### Technical Explanation\n\n1. **Decoding Process**:\n   - In traditional decoding, the model processes each token sequentially. For a sequence of tokens \\( \\{x_1, x_2, \\ldots, x_n\\} \\), the model computes the output for \\( x_i \\) based on the previous tokens \\( \\{x_1, x_2, \\ldots, x_{i-1}\\} \\).\n\n2. **Speculative Decoding**:\n   - Speculative decoding aims to predict the next token \\( x_{i+1} \\) while the model is still processing the current token \\( x_i \\). This is achieved by using the intermediate states of the model during the processing of \\( x_i \\) to make a prediction for \\( x_{i+1} \\).\n\n3. **Intermediate States"
+      },
+      {
+       "tput": 93.8317642211914,
+       "ttft": 74.56295013427734,
+       "tpot": 10.657371520996094,
+       "ntok": 256,
+       "wall_s": 2.7935495740093756,
+       "text": "Speculative decoding is a technique used in the inference of language models (LLMs) to speed up the decoding process by predicting the next token in the sequence before the current token has been fully processed. This can significantly reduce the latency of generating responses, especially in real-time applications. Here\u2019s a precise and technical explanation of how speculative decoding works:\n\n### 1. **Basic Concept of Speculative Decoding**\n\nIn traditional decoding, the model processes tokens one at a time, waiting for the current token to be fully decoded before moving on to the next token. Speculative decoding, on the other hand, attempts to predict the next token while the current token is still being processed. This can be achieved by using a combination of techniques such as beam search, sampling, or other decoding strategies that can predict the next token based on the partial results of the current token.\n\n### 2. **Techniques for Speculative Decoding**\n\n#### a. **Beam Search with Speculative Decoding**\n\nIn traditional beam search, a beam of candidate sequences is maintained, and the top-k sequences are expanded at each step. Speculative decoding can be integrated into this process by allowing the beam to expand based on predictions of the next token while the current token is still being processed.\n\n- **Partial"
+      },
+      {
+       "tput": 94.40642547607422,
+       "ttft": 19.259174346923828,
+       "tpot": 10.592499732971191,
+       "ntok": 256,
+       "wall_s": 2.721024820988532,
+       "text": "Speculative decoding is a technique used in the inference of language models (LLMs) to speed up the decoding process by predicting the next token in the sequence before the current token has been fully processed. This can significantly reduce the latency of generating responses, especially in real-time applications. Here\u2019s a precise and technical explanation of how speculative decoding works:\n\n### 1. **Basic Concept of Speculative Decoding**\n\nIn traditional decoding, the model processes tokens one at a time, waiting for the current token to be fully decoded before moving on to the next token. Speculative decoding, on the other hand, attempts to predict the next token while the current token is still being processed. This can be achieved by using a combination of techniques such as beam search, sampling, or other decoding strategies that can predict the next token based on the partial results of the current token.\n\n### 2. **Techniques for Speculative Decoding**\n\n#### a. **Beam Search with Speculative Decoding**\n\nIn traditional beam search, a beam of candidate sequences is maintained, and the top-k sequences are expanded at each step. Speculative decoding can be integrated into this process by allowing the beam to expand based on predictions of the next token while the current token is still being processed.\n\n- **Partial"
+      }
+     ],
+     "identical_text": false
+    },
+    "code": {
+     "reps": [
+      {
+       "tput": 124.58912658691406,
+       "ttft": 87.65180206298828,
+       "tpot": 8.026382446289062,
+       "ntok": 256,
+       "wall_s": 2.135012168000685,
+       "text": "Certainly! Below is a Python function that merges two sorted lists into one sorted list without using the `sort()` method:\n\n```python\ndef merge_sorted_lists(list1, list2):\n    \"\"\"\n    Merge two sorted lists into one sorted list.\n\n    Args:\n        list1 (list): The first sorted list.\n        list2 (list): The second sorted list.\n\n    Returns:\n        list: A new sorted list containing all elements from both input lists.\n\n    Example:\n        >>> merge_sorted_lists([1, 3, 5], [2, 4, 6])\n        [1, 2, 3, 4, 5, 6]\n    \"\"\"\n    merged_list = []\n    i, j = 0, 0\n\n    # Loop until one of the lists is exhausted\n    while i < len(list1) and j < len(list2):\n        if list1[i] < list2[j]:\n            merged_list.append(list1[i])\n            i += 1\n        else:\n            merged_list.append(list2[j])\n            j += 1\n\n    # Append any remaining elements from list1\n    while i < len(list1):\n        merged_list.append(list1[i])\n        i += 1\n\n   "
+      },
+      {
+       "tput": 126.68482208251953,
+       "ttft": 15.600907325744629,
+       "tpot": 7.8936052322387695,
+       "ntok": 256,
+       "wall_s": 2.0290457590017468,
+       "text": "Certainly! Below is a Python function that merges two sorted lists into one sorted list without using the `sort()` method:\n\n```python\ndef merge_sorted_lists(list1, list2):\n    \"\"\"\n    Merge two sorted lists into one sorted list.\n\n    Parameters:\n    list1 (list): The first sorted list.\n    list2 (list): The second sorted list.\n\n    Returns:\n    list: A new sorted list containing all elements from both input lists.\n    \"\"\"\n    merged_list = []\n    i, j = 0, 0\n\n    # Loop until one of the lists is exhausted\n    while i < len(list1) and j < len(list2):\n        if list1[i] < list2[j]:\n            merged_list.append(list1[i])\n            i += 1\n        else:\n            merged_list.append(list2[j])\n            j += 1\n\n    # Append any remaining elements from list1\n    while i < len(list1):\n        merged_list.append(list1[i])\n        i += 1\n\n    # Append any remaining elements from list2\n    while j < len(list2):\n        merged_list.append(list2[j])\n        j += 1\n\n    return merged_list\n```\n\nYou can use this function by passing"
+      },
+      {
+       "tput": 126.76325225830078,
+       "ttft": 16.194307327270508,
+       "tpot": 7.888721466064453,
+       "ntok": 256,
+       "wall_s": 2.037009480991401,
+       "text": "Certainly! Below is a Python function that merges two sorted lists into one sorted list without using the `sort()` method:\n\n```python\ndef merge_sorted_lists(list1, list2):\n    \"\"\"\n    Merge two sorted lists into one sorted list.\n\n    Parameters:\n    list1 (list): The first sorted list.\n    list2 (list): The second sorted list.\n\n    Returns:\n    list: A new sorted list containing all elements from both input lists.\n    \"\"\"\n    merged_list = []\n    i, j = 0, 0\n\n    # Loop until one of the lists is exhausted\n    while i < len(list1) and j < len(list2):\n        if list1[i] < list2[j]:\n            merged_list.append(list1[i])\n            i += 1\n        else:\n            merged_list.append(list2[j])\n            j += 1\n\n    # Append any remaining elements from list1\n    while i < len(list1):\n        merged_list.append(list1[i])\n        i += 1\n\n    # Append any remaining elements from list2\n    while j < len(list2):\n        merged_list.append(list2[j])\n        j += 1\n\n    return merged_list\n```\n\nYou can use this function by passing"
+      }
+     ],
+     "identical_text": false
+    }
+   }
+  }
+ ]
+}

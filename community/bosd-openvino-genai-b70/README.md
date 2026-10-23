@@ -1,5 +1,15 @@
 # OpenVINO GenAI on Intel Arc Pro B70 (Battlemage)
 
+> **Maintainer note (2026-10-23).** The reference lab re-ran this entry on one
+> of its own B70s: OpenVINO GenAI 114.7 tok/s and a fresh llama.cpp-SYCL 99.5
+> tok/s, both within 2% of the numbers below, so the throughput claims are
+> `B70-verified`. One addition the contributor did not report: the first greedy
+> generation of a fresh OpenVINO pipeline decodes differently from every later
+> one, deterministically. Status and the lab's own records are in
+> [`STATUS.md`](STATUS.md) and [`validation/`](validation/).
+
+---
+
 > **Community submission — not reproduced in the reference lab.**
 > Read [`STATUS.md`](STATUS.md) first. All numbers below are contributor
 > measurements on the contributor's hardware (2× Arc Pro B70, Fedora 44,

@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 22, 22:45 EDT — PRs #77 and #75 merged; the OpenVINO GenAI community entry is now `B70-verified` (reference-lab rerun on card 0, 02:30–03:10 UTC).**
+bosd's documentation-only entry `community/bosd-openvino-genai-b70/` (OpenVINO GenAI 2026.4.1, Qwen2.5-7B INT4, one B70) reproduced within 2 %:
+no-spec 114.7/114.6 tok/s (contributor 114.0/112.5), 1.5B-draft spec 95.1/126.0 (98.6/128.2), fresh llama.cpp-SYCL `184f653` tg256 99.5 ± 0.1 and
+pp512 3755 (contributor 98.6/3528), so the 15 % engine gap and the "rebuild llama.cpp first" caution both hold; 114.7 tok/s is 79 % of the 608 GB/s
+roofline, not "at" it. New lab finding: OpenVINO GenAI greedy output is not repeat-stable on the first generation of a fresh pipeline (later
+generations stable, settled text depends on whether a warmup ran, byte-identical across two instances and two processes, so a deterministic
+ordering effect, cause not isolated). Prediction registered before the run; four of five held, the "identical text" one failed and was probed.
+Records in `community/bosd-openvino-genai-b70/validation/` (`lab-run.md`, raw logs, probe). #75 (Dependabot, hermes-agent pyjwt 2.15.0 and
+urllib3 2.8.0) pins verified against PyPI hashes. OpenVINO venv at the lab's `builds/ov-genai-repro`, models under the HF cache, llama.cpp build at
+`builds/llama-fresh-20261023` on the fast disk. Cards empty afterwards.
+
 **October 22, 22:40 EDT — NEW ONE-CARD RECORD: 36.602512 tok/s class-balanced (packet58-onecard-cache23 chain, LocalMaxxing `cmvkcqznb002lng01fsrhjn7t`, APPROVED, +1.88 % over 35.926720).**
 The chain (packet182c's seven windows on card 0 with `cache_cap max23` = 23.05 GB admitted device expert cache and the plan re-partitioned from 182c's
 lifetime receipts; engine `083e3853…` bound byte for byte) ran 01:55–02:29 UTC (unit `packet58-onecard-cache23-a`): K1a, K1b, KD, W2m, WS, WS128x,

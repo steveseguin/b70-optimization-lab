@@ -4,11 +4,11 @@
 
 | Field | Value |
 | --- | --- |
-| Evidence level | `community-reported` (contributor-measured on real B70 hardware) |
-| Patch review status | n/a — no patch; stock `pip` packages + pre-converted IR |
-| Tested in reference lab | no |
+| Evidence level | `B70-verified` for the throughput and install claims (reference-lab reproduction 2026-10-23, both engines within 2%); no exactness gate exists for this entry and the greedy-repeat finding below is a caveat on it |
+| Patch review status | read; no patch, stock `pip` packages + pre-converted IR; harness read and re-run as `validation/ov-bench-lab.py` |
+| Tested in reference lab | yes, 2026-10-23: both OpenVINO arms (3 repeats per prompt), the llama.cpp-SYCL baseline (10 repeats) and a greedy-repeat probe on one B70; see [`validation/lab-run.md`](validation/lab-run.md) |
 | Safe to merge as documentation | yes |
-| Eligible for `repro/` or `results/` | no until `B70-tested` in the reference lab |
+| Eligible for `repro/` or `results/` | no; an engine datapoint on a dense model outside the lab's lanes, not a recipe or result packet |
 
 ## Provenance
 
@@ -43,7 +43,19 @@ A **current** llama.cpp-SYCL build nearly matches this at **~98.6 tok/s** on the
 
 ## Reference Lab Environment
 
-No reference-lab runtime applies — nothing here has been executed in the reference lab. All numbers are contributor-measured on the hardware above.
+Maintainer section, added 2026-10-23. The reference lab (2x Arc Pro B70, Ubuntu 24.04, kernel 7.0, `xe`, OpenVINO GenAI 2026.4.1 in a CPython 3.12 uv venv with no `setvars`, llama.cpp upstream `184f653` built with the contributor's flags) re-ran the contributor's harness and baseline on one B70. Environment table, raw logs and the probe script are in [`validation/`](validation/).
+
+| Measurement | Contributor | Reference lab |
+| --- | --- | --- |
+| OV GenAI INT4 no-spec, tech / code | 114.0 / 112.5 tok/s | 114.7 / 114.6 tok/s (sd 0.1, 3 reps) |
+| OV GenAI INT4 + 1.5B draft, tech / code | 98.6 / 128.2 | 95.1 / 126.0 |
+| llama.cpp-SYCL fresh, tg256 / pp512 | 98.6 / 3528 | 99.5 ± 0.1 / 3755 ± 9 |
+
+Reference-lab findings beyond the contributor's:
+
+1. The 15% engine gap and the "rebuild llama.cpp first" caution both hold on the reference hardware.
+2. 114.7 tok/s on 4.2 GB of weights is about 480 GB/s, 79% of the B70's 608 GB/s; the contributor's "at roofline" overstates slightly ("~107 tok/s roofline" rests on an unstated ~450 GB/s figure).
+3. **OpenVINO GenAI greedy output is not repeat-stable on the first generation.** The first 256-token generation of a fresh `LLMPipeline` differs from every later one; later ones are stable; the settled text depends on whether a warmup ran. Reproducible byte for byte across two instances and two processes, so it is a deterministic ordering effect in the GPU plugin, not noise. Throughput is unaffected. Cause not isolated. Details in `validation/lab-run.md`.
 
 ## What Was Actually Run Here
 
@@ -76,4 +88,4 @@ No reference-lab runtime applies — nothing here has been executed in the refer
 
 ## Disposition
 
-Documentation-only, `community-reported`. Useful as the first OpenVINO-GenAI-on-Battlemage datapoint and as a caution that llama.cpp-SYCL engine comparisons must use a current build. Not a recommendation to replace the deployed llama.cpp/vLLM-XPU serving stack, which runs GDN/MoE `qwen3_5` models OV likely cannot yet convert.
+`B70-verified` for throughput and install (reference-lab reproduction 2026-10-23, both engines within 2%), with the greedy first-generation caveat recorded above. Useful as the first OpenVINO-GenAI-on-Battlemage datapoint and as a caution that llama.cpp-SYCL engine comparisons must use a current build. Not a recommendation to replace the deployed llama.cpp/vLLM-XPU serving stack, which runs GDN/MoE `qwen3_5` models OV likely cannot yet convert.
