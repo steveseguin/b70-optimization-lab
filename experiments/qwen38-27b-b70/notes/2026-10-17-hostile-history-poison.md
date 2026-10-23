@@ -2222,7 +2222,7 @@ next step is a release candidate of ctxkeeper 1.3.0 with these four levers (thro
 upload being the owner's), and, for the answer path, a look at why an old-value question goes unanswered when the
 archive holds the value.
 
-## Answer-path look (2026-10-23, CPU only): blank answers are one block in nine runs; the answer-path lever is closed
+## Answer-path look (2026-10-22 23:38 EDT, CPU only): blank answers are one block in nine runs; the answer-path lever is closed
 
 The decision above asked why an old-value question goes unanswered when the archive holds the value. Campaign 55
 seed 2's two blanks (p10_2 rolo78 at item 199, p10_7 sagudo54 at item 136) were written in one tool-call block at
@@ -2241,7 +2241,7 @@ about item 373 asked at item 378, 6.9K tokens back and in view) is a reading sli
 model, not a keeper matter. With the removed/reopened family, the set and removal checks, cut-off lines and loop
 rejection all in, the keeper's levers on this stream are closed at 423/420; what remains on seed 2 is the client.
 
-## Campaign 57: notes thinking off on the hostile stream, both seeds, registered 2026-10-23 02:05 EDT (before any run)
+## Campaign 57: notes thinking off on the hostile stream, both seeds, registered 2026-10-22 23:41 EDT (before any run; launched 23:42)
 
 **Where campaign 55's time went (seed 0, `calls.jsonl`):** 1,452 main calls, 2,642 s, 116 tokens written a call,
 2,222 uncached prompt tokens a call (the new item; re-prefill after a cut is 18 calls and 65 s in all); 174 notes

@@ -152,12 +152,12 @@ header carries it (`tokenizer.chat_template`, inside the pinned header sha256 `7
 Hugging Face `tokenizer_config.json` template here can be checked against it. Until then the harness covers
 already-rendered text only, and ctxkeeper still does not call the checkpoint operations.
 
-## Step 2 done, 2026-10-23 00:30 EDT: messages to that text, 12/12, from the pinned header itself
+## Step 2 done, 2026-10-22 23:29 EDT: messages to that text, 12/12, from the pinned header itself
 
 The input did not need the other host after all: GGUF shard 1 of the runtime's model is only 10.9 MB and is
 almost entirely header, so it was fetched from the publisher at the pinned revision (`766911a6`), checked
 (whole-file sha256 `268f81fd…` and header sha256 `7c1460a9…` both equal to the admission receipt's), and
-`tokenizer.chat_template` was read out of it: 9,993 characters, sha256 `12827f24…`, which is exactly the
+`tokenizer.chat_template` was read out of it (2026-10-22 EDT): 9,993 characters, sha256 `12827f24…`, which is exactly the
 `template_sha256` the sealed prompt manifest (`packet2-cpu-oracle/prompts/prompts.json`) pins. The text is saved
 as `experiments/own-xpu-runtime/integration/chat_template-7c1460a9.jinja`.
 
@@ -190,7 +190,7 @@ this host from the pinned header alone. Nothing on the parity side is open; the 
 ctxkeeper is next.
 
 
-## Step 3 done, 2026-10-23 01:20 EDT: prompt + generated ids is the next turn's prefix, 50/60 exact; the 10 misses are one trimmed tail token
+## Step 3 done, 2026-10-22 23:35 EDT: prompt + generated ids is the next turn's prefix, 50/60 exact; the 10 misses are one trimmed tail token
 
 A parked session's checkpoint holds the engine's token history, the prompt ids followed by the ids it generated.
 The next request is rendered from messages, so a restore needs that history to be an exact prefix of the new
@@ -218,7 +218,7 @@ Parity is therefore closed for the one-card runtime at this template and tokeniz
 from the pinned header. Whitespace at the end of a reply is the one known way the prefix breaks, and it costs a
 re-prefill, not an error.
 
-## Piece 3 built, 2026-10-23 01:30 EDT: the parking policy, CPU-tested, not yet wired into the request path
+## Piece 3 built, 2026-10-22 23:35 EDT: the parking policy, CPU-tested, not yet wired into the request path
 
 `tools/ctxkeeper/parking.py` (stdlib, 13 tests in `test_parking.py`) is ctxkeeper's side of §9 of the contract,
 behind an `Engine` interface that mirrors the four operations plus the running engine's identity, so the

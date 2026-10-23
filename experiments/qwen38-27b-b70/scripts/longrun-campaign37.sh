@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Campaign 52 (2026-10-21, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32V is K32C with
-# Campaign 57 (2026-10-23, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32T is K32V with
+# Campaign 57 (2026-10-22, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32T is K32V with
 # --notes-thinking off (the notes calls wrote ~1,200 tokens a call in campaign 55 for ~115 tokens of change). Earlier header follows.
 # ctxkeeper 1.3.0.dev1's --set-check (a set the turns state for a name that no CHANGES line of the name takes is asked
 # about once) and its stored-as-the-set STATE lines (`53 set to -39` is stored as `-39`). The tools/ctxkeeper check also
