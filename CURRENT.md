@@ -373,6 +373,12 @@ comparison retains one unchanged inherited missing-fixture failure, explicitly r
 fixed before readiness. Endpoints still serve as restore23; no device work has run. Next: one controlled card-0 screen after idle/admission checks,
 then exactness and speed assessment. New window driver halts on failure and restores endpoints only after successful clean drain; no retries.
 [Packet](experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/README.md) · [note](notes/2026-10-23-packet58-onecard-diet-engine.md).
+**October 23, 11:23 EDT — Campaign 60 is queued behind campaign 59.**
+Unit `ctx-campaign60-queued` is active and waiting (about 8 MB); campaign 59 remains the only model job.
+Syntax and fixture tool-call pairing checks passed. Full CPU checks and the independent review are
+deferred until shutdown. Queue status: `context-longrun-20261016/campaign60-note-evidence/status.json`.
+Registration and source fixtures are committed locally in `7281f7adf`; no push while the server runs.
+
 **October 23, 11:21 EDT — North-star review: preserve real task progress next; campaign 59's control reproduced campaign 55.**
 The memo-off control finished 420/423 in 93m01s with all 152 NOTES versions identical to campaign 55.
 Its server stopped cleanly; the memo-on stage began its trial at 11:19 and remains running. No result
