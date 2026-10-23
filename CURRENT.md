@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 18:17 EDT — paired gating, output projection and residual updates pass CPU review.**
+Five synthetic cases pass 45 byte comparisons and 12 authority tests; an independent rerun matches.
+The checks detect ignored gate/control inputs and a missing BF16 rounding step. This extends the earlier
+CPU proof but still uses synthetic upstream controls and does not qualify full-model or device execution.
+Next is the actual engine's two-row buffer/state ownership contract, including causal attention and cache
+maintenance. All three daily applications remain restored; no new device work is queued. The earlier
+CPU baseline 4efea254c has all three CI workflows green.
+[Result and scope](experiments/own-xpu-runtime/stage2/packet203-prefill-gdn-branch/README.md) ·
+[Independent review](experiments/own-xpu-runtime/stage2/packet203-prefill-gdn-branch/evidence/independent-cpu-review.json).
+
 **October 23, 18:09 EDT — the first paired-prefill CPU proof passes independent review.**
 Five synthetic cases pass all 50 intermediate byte comparisons, and all 20 planner/authority tests pass.
 An independent rerun reproduces the results. The proof covers paired Q6 projections and causal convolution/GDN
