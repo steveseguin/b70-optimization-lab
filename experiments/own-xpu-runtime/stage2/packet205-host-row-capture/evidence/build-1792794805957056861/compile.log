@@ -1,0 +1,7 @@
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet205-host-row-capture/capture_probe.cpp: In member function ‘void {anonymous}::Fixture::sequence(int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet205-host-row-capture/capture_probe.cpp:60:82: error: assigning to an array from an initializer list
+   60 |   auto conv=spec();conv.op=Op::conv;conv.ni=2;conv.no=2;conv.nw=1;conv.site.shape={4};conv.site.parameter=1;
+      |                                                                   ~~~~~~~~~~~~~~~^~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet205-host-row-capture/capture_probe.cpp:63:93: error: assigning to an array from an initializer list
+   63 |   auto combine=spec();combine.op=Op::hc_combine;combine.ni=3;combine.no=1;combine.site.shape={4,4};
+      |                                                                           ~~~~~~~~~~~~~~~~~~^~~~~~

@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 23, 18:41 EDT — host capture and publication proof passes independent review.**
+The existing runtime owner, arena, prepared operations and copy code pass 33 probe checks and 14 authority
+tests with synthetic data. Independent replay matches all results and four shutdown receipts. Tests cover
+fixed captured bindings, live payloads, shared-buffer reuse, stale allocations and partial-publication failure.
+CPU operations and copies are real; the existing host backend's event/queue completion remains simulated.
+Next is an opt-in chunk path in the actual Engine's tiny CPU fixture, preserving the serial default and
+excluding model/device execution. Daily applications remain restored; no new device window is queued.
+The previous binding-contract commit 330f7b08f has all three CI workflows green.
+[Host proof and limits](experiments/own-xpu-runtime/stage2/packet205-host-row-capture/README.md) ·
+[Independent review](experiments/own-xpu-runtime/stage2/packet205-host-row-capture/evidence/independent-cpu-review.json).
+
 **October 23, 18:27 EDT — two-row ownership metadata passes independent review.**
 The contract passes 31 binding checks, 17 authority tests and four cache groups. It covers shared persistent
 state, row-specific inputs, causal history/attention boundaries and a completion descriptor for canonical state.
