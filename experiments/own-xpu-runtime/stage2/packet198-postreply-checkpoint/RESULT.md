@@ -76,8 +76,13 @@ submission is made for session reuse or this protocol change.
 The five states contain369,087,828 binary bytes. Large tensor blobs stay out
 of Git; compact manifests, original control/token payloads, request/control
 results and digest evidence preserve their identities. Archive/reproduction
-details are recorded alongside the result before local redundant state is
-removed.
+details are in the [binary-only archive reuse map](evidence/checkpoint-archive-reuse.json).
+All645 binary files matched the verified packet197 external archive; their
+p198 manifests and fields remain distinct. After actual native metadata
+fixtures were captured,605 redundant local tensor files (368,974,848 bytes)
+were removed, with [prune receipt](evidence/checkpoint-local-prune.json).
+Restore only mapped binary members into a fresh copy with the p198 metadata;
+local checkpoint directories are now incomplete until reconstructed.
 
 ## When to revisit
 

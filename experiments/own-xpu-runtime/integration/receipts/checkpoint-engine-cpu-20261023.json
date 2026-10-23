@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "tests": 13,
+  "created_utc": "2026-10-23T17:11:54.803266+00:00",
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "test_checkpoint_engine",
+    "-v"
+  ],
+  "returncode": 0,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "checkpoint_files_changed": false,
+  "scope": "Synthetic bridge envelopes and mocked front/store only; no real tools or owner execution",
+  "files_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE.md": "68585c60768004c84b87d38b686301bbd332c58897afa8dd32056c19b4716580",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+  },
+  "log_sha256": "a07b548d77052332432b25831deb4c85cedb0160b65ea3e47448b85951b9c91f"
+}

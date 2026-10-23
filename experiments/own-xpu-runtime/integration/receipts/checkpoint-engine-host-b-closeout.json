@@ -1,0 +1,1442 @@
+{
+  "schema": "checkpoint-engine-host-b-closeout-v1",
+  "created_utc": "2026-10-23T17:24:35.143043+00:00",
+  "classification": "PASS: tiny GNU HOST_ONLY end-to-end policy/adapter/store/protocol integration; no device/model/HTTP qualification",
+  "checks": {
+    "passed": true,
+    "device_executed": false,
+    "native_host_executed": true,
+    "native_process_count": 1,
+    "model_loads": 1,
+    "requests": 8,
+    "generated_tokens": 44,
+    "controls": 8,
+    "save_count": 5,
+    "release_count": 3,
+    "append_fresh_tokens_exact": true,
+    "append_fresh_state_exact": true,
+    "edited_prefill": true,
+    "same_id_reinspected_then_released": true,
+    "stopped": {
+      "event": "stopped",
+      "reason": "request-limit",
+      "safe_to_exit": true,
+      "completed_requests": 8,
+      "completed_controls": 8,
+      "discarded_pending": false,
+      "pending_request_id": ""
+    },
+    "native_owner_returncode": 0,
+    "native_owner_pid_absent": true
+  },
+  "identity": {
+    "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+    "geometry": {
+      "layers": 4,
+      "qsa_layers": [
+        1,
+        3
+      ],
+      "gdn_layers": [
+        0,
+        2
+      ],
+      "kvh": 1,
+      "ad": 4,
+      "ih": 4,
+      "id": 4,
+      "qh": 4,
+      "gdn": {
+        "kh": 1,
+        "vh": 3,
+        "d": 4
+      },
+      "context": 64,
+      "vocab": 16,
+      "eos": 15
+    },
+    "synthetic_model": {
+      "identity_tsv_sha256": "29803272e9e415114ba235f8833dce7b01d27ea4ca5b2ea7607d67570980249d",
+      "shard_stat_rows": [
+        {
+          "name": "synthetic-host-shard-0",
+          "size": 0,
+          "dev": 0,
+          "ino": 0,
+          "mtime": 0,
+          "ctime": 0
+        },
+        {
+          "name": "synthetic-host-shard-1",
+          "size": 0,
+          "dev": 0,
+          "ino": 0,
+          "mtime": 0,
+          "ctime": 0
+        },
+        {
+          "name": "synthetic-host-shard-2",
+          "size": 0,
+          "dev": 0,
+          "ino": 0,
+          "mtime": 0,
+          "ctime": 0
+        }
+      ]
+    },
+    "admitted_contract": "v1.2+p198",
+    "label": "experimental-postreply-front"
+  },
+  "original_run": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b",
+  "compact_copy": "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b",
+  "raw_artifact_file_count": 177,
+  "raw_artifact_bytes": 5474617,
+  "compact_file_count": 124,
+  "compact_bytes": 841857,
+  "raw_artifacts": {
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/active.bin": {
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.0.gdn.history.bin": {
+      "bytes": 120,
+      "sha256": "1c2d92f6973f7ea2f19399f5b4f9c85974bdf2ef0123f7ae250acaae60287015"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.0.gdn.state.bin": {
+      "bytes": 96,
+      "sha256": "000d7f5514e1e7dc9dd7aec05eeab3d3d21337b56ff7d9e58cffada7685c2cf4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.ple.history.bin": {
+      "bytes": 1152,
+      "sha256": "fab56b3b4fc0cd90f9f50900efaad8922ab4245586cfd62a7379c603bf137d0c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.keys.bin": {
+      "bytes": 64,
+      "sha256": "ac3d377f56e4dd4f7e56d6f066388defc4ca2bd4fa5b96d802ed3043ea702427"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.pooled.bin": {
+      "bytes": 16,
+      "sha256": "2b0a51d3cdc6eae38717880cbeb40d4a16490304d17ed012b62eddfc0ee55cd6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.raw.bin": {
+      "bytes": 64,
+      "sha256": "2a97040d86771b1e75359c3440f2d6eb3dd4559d38dfb527718cdef0887ff166"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.values.bin": {
+      "bytes": 64,
+      "sha256": "dfc99e4aac382712cce6a011dc986c751fb1d1d39da14453a909e7af93f3c9c8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.2.gdn.history.bin": {
+      "bytes": 120,
+      "sha256": "d473ed78c88a98d1d6d0f4e88b164dd49020407ec01d402c2d037b52466c8c01"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.2.gdn.state.bin": {
+      "bytes": 96,
+      "sha256": "9b68e1d8ca338c76d0fdac8f84c43ebe38cfea68c25b56def69434dbb861c1fc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.keys.bin": {
+      "bytes": 64,
+      "sha256": "14e345675cc03ce3ee2bfe46a4ba408a5dcf7a07367e059ceda1565bacaf8953"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.pooled.bin": {
+      "bytes": 16,
+      "sha256": "99fd34b71c824b3f3b5464f7997e664a5b81082546ecade59d5e474cb6981bcf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.raw.bin": {
+      "bytes": 64,
+      "sha256": "f59bdc9d8d0f4b8d44877725d4e0715a2de1911bdcc93507387a667a640f0dd1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.values.bin": {
+      "bytes": 64,
+      "sha256": "be95fa9fb290814ddae62177d1a9538d862f51b7b34040af9205343d315de566"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/error.bin": {
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/fields.tsv": {
+      "bytes": 16677,
+      "sha256": "2c9509bfb28494547c5503402be132f109995acd89ff30d3a8c3d6ce39674e27"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/manifest.json": {
+      "bytes": 21023,
+      "sha256": "bd4a6c0c70ff0075fbdbb2b9d2a2bb43d0b2598e5d82efee88a12ca1a9dccf88"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/next_token.bin": {
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/position.bin": {
+      "bytes": 4,
+      "sha256": "dc765660b06ee03dd16fd7ca5b957e8c805161ac2c4af28c5a100ab2ab432ca1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/streams.bin": {
+      "bytes": 128,
+      "sha256": "07a27b48c4d1904865045fdbaa7e1ab4ee6f4801767855d32fbc74383018c415"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/token.bin": {
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/token_history.bin": {
+      "bytes": 16,
+      "sha256": "814dd7b9784d57c15b9c2972e9b4fd6cf7e164f8162a934bdb2452a413dab1f7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/tokens.bin": {
+      "bytes": 32,
+      "sha256": "f132ea9a7c24fb9c432a1597b528c1c32c510d719f1c2f1196ee5be1318bde2c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244.lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/active.bin": {
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.0.gdn.history.bin": {
+      "bytes": 120,
+      "sha256": "3f3b8d07b4355b8329f3ce4d55fe30895b74f11f265cae93d79adb193a00e8a0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.0.gdn.state.bin": {
+      "bytes": 96,
+      "sha256": "d0d2ef007f2002e5e387734554032131b8390d32fee89cb6b5bfa920d032c874"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.ple.history.bin": {
+      "bytes": 1152,
+      "sha256": "23028f81e56546498d80add0a40573e8fee32751b4156f89fa5b40504e6b31eb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.keys.bin": {
+      "bytes": 176,
+      "sha256": "39c70d28ddf49f114fb42eec258caf8e1c08929ac9b3bd125754bf4f7e900c94"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.pooled.bin": {
+      "bytes": 40,
+      "sha256": "ad08f6d0ba9063b8639ce012bb9313f90f5d7661a32c9938835c2be618f711fc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.raw.bin": {
+      "bytes": 176,
+      "sha256": "9563037411818d0d2ae4cc2d49e26f63adbfc9a97244940993356439c342b73b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.values.bin": {
+      "bytes": 176,
+      "sha256": "12664bb792736a1c95e7aece5265f7d7436d462cded175910feae88cfa02a9e6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.2.gdn.history.bin": {
+      "bytes": 120,
+      "sha256": "ed96cb7dca0eddf33bd8e7a4fb9fff73f3f0e614a17a11b962f6026ef624b3b0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.2.gdn.state.bin": {
+      "bytes": 96,
+      "sha256": "82620d083a2b9be685110eee8d05a61aea3df46d5a697821e6d77bb1f082bafd"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.keys.bin": {
+      "bytes": 176,
+      "sha256": "2143b3bc9a93f14c45b229541ded797b91f7bc6d595909c592758e970443c68d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.pooled.bin": {
+      "bytes": 40,
+      "sha256": "32e94f8423e5d1a78228ce235a847aeff69008c8d1d41f189ef187545c221ce6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.raw.bin": {
+      "bytes": 176,
+      "sha256": "b1674b6ca7a7a98f37f74a9004c2e3ca0567f1012b59780a610e25504efb42e0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.values.bin": {
+      "bytes": 176,
+      "sha256": "dd6c70dc49514988e0857fd3876d85cf00a38ca0268908074674d29a75368b2e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/error.bin": {
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/fields.tsv": {
+      "bytes": 16696,
+      "sha256": "967579c01319df51e8741999864caee6ae24ef850d81886c958719e76ef08e76"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/manifest.json": {
+      "bytes": 21042,
+      "sha256": "46fa945b00f24665ecb0bdd9a9517c9d66026fbe58c405d756e4a868e9073c76"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/next_token.bin": {
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/position.bin": {
+      "bytes": 4,
+      "sha256": "f59d756696b2089fca5969fdfde2674e333765e1dad0a51c8ebbc63f351c4ca5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/streams.bin": {
+      "bytes": 128,
+      "sha256": "3e061f237a625a57bdd49a7e79d6a55678a719b6c7e5ff0612a1729212f0f12a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/token.bin": {
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/token_history.bin": {
+      "bytes": 16,
+      "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/tokens.bin": {
+      "bytes": 88,
+      "sha256": "8d974c491ab9e8b9a80c63c5222255a04b0e67cc2e95bd26317bd2f1d23a25d8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162.lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/active.bin": {
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.0.gdn.history.bin": {
+      "bytes": 120,
+      "sha256": "1c2d92f6973f7ea2f19399f5b4f9c85974bdf2ef0123f7ae250acaae60287015"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.0.gdn.state.bin": {
+      "bytes": 96,
+      "sha256": "b52378d670dd8e5d2159c1bc5e673ba1bd0abde1fba06d098daa3ff92e52754a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.ple.history.bin": {
+      "bytes": 1152,
+      "sha256": "b8dfa9db4b120c33ee5ffa602f86cb8bbf81e6b2679461694576489bffd4605f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.keys.bin": {
+      "bytes": 96,
+      "sha256": "dc5558315a7fe186c4abffe04192df3a079027a14f2c0c86703df7b9474faa57"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.pooled.bin": {
+      "bytes": 24,
+      "sha256": "58d39411e5d3e13cf71e7f1e6e859132017009820259fcf87100a9f247a859fc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.raw.bin": {
+      "bytes": 96,
+      "sha256": "218ea19ffcc588dca89e8c88f438bebf74c89682285d04ce79d942edbecfba28"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.values.bin": {
+      "bytes": 96,
+      "sha256": "8a571941e86d59f9f9b4f214f43896fe7acd94b9cf16460c4da022c052c90638"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.2.gdn.history.bin": {
+      "bytes": 120,
+      "sha256": "8a797999c7167c2b15aee882b6778016765129a5843447fe192e8dd97d42f27c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.2.gdn.state.bin": {
+      "bytes": 96,
+      "sha256": "4352906e57994420e0f06bba0990aa7dca2e1a2b9e163fba2af907010925beaf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.keys.bin": {
+      "bytes": 96,
+      "sha256": "86debc532b7c98c4e0226e78c53dc876042539e16266842572bd4e36b6686b46"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.pooled.bin": {
+      "bytes": 24,
+      "sha256": "29799957c095a0f2fb4bb5da4cab366effa071b3bc089fd6bb4d975c39c5447b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.raw.bin": {
+      "bytes": 96,
+      "sha256": "f1aec47ba09958db4b3d768d8870f85df54668ae2dd60f46360b6cdca792f6e9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.values.bin": {
+      "bytes": 96,
+      "sha256": "3c734fd95d75d4f7e69acf492887a083a7eb01f2c608102a6443b6c98f19e8bb"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/error.bin": {
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/fields.tsv": {
+      "bytes": 16680,
+      "sha256": "b93a4194ea696c74cb61357ef9b5ed7b5dc3dc35ebdc00c54047be2ec6e47e32"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/manifest.json": {
+      "bytes": 21026,
+      "sha256": "efc8d1ac6df4ed6ce757ae18ae87aaf902ff9963130a3b4cd82d55557dc495a5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/next_token.bin": {
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/position.bin": {
+      "bytes": 4,
+      "sha256": "42f4aeb81c1ef81f771f3de8abca9dcf66901c575530e7672e4b1146474ae650"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/streams.bin": {
+      "bytes": 128,
+      "sha256": "cb56bfaf3f0844ccbd7486e248075c82dd416a384d6a1c22956e2b80ddefc4a5"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/token.bin": {
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/token_history.bin": {
+      "bytes": 16,
+      "sha256": "814dd7b9784d57c15b9c2972e9b4fd6cf7e164f8162a934bdb2452a413dab1f7"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/tokens.bin": {
+      "bytes": 48,
+      "sha256": "49f97cc4fbc5f29e4dd9794eecc37c14e24e45e141d5ef7e7c45f591d77d4227"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77.lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/census.json": {
+      "bytes": 1476375,
+      "sha256": "9f063c3cd462cf6055887b114bebada6e80eea5b32032a99527a26afc1237616"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/cold-start.json": {
+      "bytes": 156,
+      "sha256": "0596eb88a095f98d3db7d1330ed43e53cc023d8bf4ad737c95ff6a0c760bf06d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/drm-memory-after_load.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/drm-memory-before_load.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/drm-memory-end.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/host-memory.jsonl": {
+      "bytes": 213,
+      "sha256": "1b0ec04c0a9353a80ca9fa33f7ac749b9051fce5216dd0b7c73b4742644f4551"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/host-status-after_load.txt": {
+      "bytes": 1569,
+      "sha256": "6a20a3ff17b9b871111088bd0cdb88231cc69fdf8e2fe44b8d64e36027b2d545"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/host-status-before_load.txt": {
+      "bytes": 1569,
+      "sha256": "7c4b10c3b389ad6ea78305c53cd96c370b7912fb1e3130552b072c67bdbc347d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/host-status-end.txt": {
+      "bytes": 1572,
+      "sha256": "70066ccfcc6ebb37830e963f4e39def4c5b3db8ec3211e136f86a3b1a55e255e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/memory.json": {
+      "bytes": 100,
+      "sha256": "fe7a6d2b9be2c8b58dc263bdef71e77fba11619a24caefb69202c3d94e74eded"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-1/save.json": {
+      "bytes": 467,
+      "sha256": "b6a79f12d80a6f6d7eb5d38560807425a39fd34acc9f866fd52f6945790202bf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-3/save.json": {
+      "bytes": 469,
+      "sha256": "792a19e41b1ed2f6145a14ec57f2802f62741ca60f91ce848e469fa216517f76"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-4/save.json": {
+      "bytes": 481,
+      "sha256": "05e14b59534d096b3aba409cea988e56b6ed99a14b8881f1902e817c36b770e3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-5/save.json": {
+      "bytes": 467,
+      "sha256": "43bc75f3f73f8dd9507b317cdcf9738d4e99ef831048bb0020838a1653148723"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-6/save.json": {
+      "bytes": 479,
+      "sha256": "b56439dd3f1b1174b362de5f00dfb794e6c2dbf3c64445890e02abbc80979495"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/plan.json": {
+      "bytes": 29857,
+      "sha256": "ed4dfa9d87509fefd8a281fd79ff92f9d7b077770065f222edfb9ef4f81ccb6c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/prefill-timings.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/progress.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/receipt.json": {
+      "bytes": 535770,
+      "sha256": "3c919adff4e449735f4213991f75676162750cd8ea435cafb51a8cca6dd42a7f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/input.tokens": {
+      "bytes": 38,
+      "sha256": "069b3f74b03e863eb36cdfffca09e81ed81325a255afd32d9b4b31771852711f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/prefill-timings.jsonl": {
+      "bytes": 4103,
+      "sha256": "7a718815baec74faee159c2a9f8e9528d91a33c650484656901905fd98847528"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/progress.jsonl": {
+      "bytes": 102766,
+      "sha256": "f60fbd3213d340187c7de6d627667c6db6fb448aa34ecf06395cf311bddcd257"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/receipt.json": {
+      "bytes": 1586,
+      "sha256": "426c88359f2fd85f04b0a13cf83713cdc02b0ac1d702fa6d4b00b46519b91c9e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/result.json": {
+      "bytes": 1586,
+      "sha256": "426c88359f2fd85f04b0a13cf83713cdc02b0ac1d702fa6d4b00b46519b91c9e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/sites.jsonl": {
+      "bytes": 251944,
+      "sha256": "9cbc2e34c4ff566938742b34833f428979e7089ea8d9642459d3cea00d6a717d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/timings.jsonl": {
+      "bytes": 2741,
+      "sha256": "695a55940758bc1fd94f71e34dd825e1dc9c7143570d57ebc1a0ebe239e655ec"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/first-prefill-progress.jsonl": {
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/input.tokens": {
+      "bytes": 10,
+      "sha256": "0348b021b6984ed78954eca5f06976dd2457c3917f55605c00a3f041d4115537"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/prefill-timings.jsonl": {
+      "bytes": 2731,
+      "sha256": "ccd45dbe20070617a6a57c5197f53052b891114b1e2334c655e49ebfd6b0f136"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/progress.jsonl": {
+      "bytes": 82536,
+      "sha256": "a21fa126935985863c1c6ec6d29b6f8a3014fd708c6f76db46efd5c720875568"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/receipt.json": {
+      "bytes": 868,
+      "sha256": "070f80e86cfdbf6266828f78e1f34b48f547c251b622413cb9a4cf964fb60243"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/result.json": {
+      "bytes": 868,
+      "sha256": "070f80e86cfdbf6266828f78e1f34b48f547c251b622413cb9a4cf964fb60243"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/sites.jsonl": {
+      "bytes": 202376,
+      "sha256": "6a3764a0c66be25948f2a97bbc24c60b85349289a5510c6dd8a669d1b719fc4f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/timings.jsonl": {
+      "bytes": 2735,
+      "sha256": "63f9c948b2a5f2fdd2a0a0715b6596cbe3b05a14ad0386936436417d96fcd41e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/first-prefill-progress.jsonl": {
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/input.tokens": {
+      "bytes": 10,
+      "sha256": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/prefill-timings.jsonl": {
+      "bytes": 2728,
+      "sha256": "94efb696e348564351933d6f7ae7a38cd2151d0ef4ede9586a41b2226c770609"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/progress.jsonl": {
+      "bytes": 124612,
+      "sha256": "e9e53807840baaf74eb82c96a459f985195cdccd8459d229ad097758cd3da45f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/receipt.json": {
+      "bytes": 1040,
+      "sha256": "7a6f8ed34c06c783404d3750fe4bc84362df475e7c2eb3991a23f18f344d1702"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/result.json": {
+      "bytes": 1040,
+      "sha256": "7a6f8ed34c06c783404d3750fe4bc84362df475e7c2eb3991a23f18f344d1702"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/sites.jsonl": {
+      "bytes": 305700,
+      "sha256": "bba4381341348c592ed133a34853477f7ca3adf0760c0117d9853150df5abe2d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/timings.jsonl": {
+      "bytes": 5469,
+      "sha256": "cf1dfc5332c031b545c3f8c63fcb06c6b82cccc4c607ff9f2b1a0a7bd745b8cf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/first-prefill-progress.jsonl": {
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/input.tokens": {
+      "bytes": 8,
+      "sha256": "3cb3b5999e8cbbf959807a519f4c256dfe746d4aaf4098c0a18d9cf0f4f5477b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/prefill-timings.jsonl": {
+      "bytes": 2048,
+      "sha256": "7d12fed1c1bf45b2886b11bd5b63798294c180f86a2f25b3455654e45adff3a2"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/progress.jsonl": {
+      "bytes": 72421,
+      "sha256": "20c371c6d7cfac82fd251a2fb46e254cd766fafc4612dad95deb5bef279a32e8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/receipt.json": {
+      "bytes": 858,
+      "sha256": "e3a3049c4fecf5e1c1e149fae372668ec91d53f2610cccb296b4e68fbef8ed0e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/result.json": {
+      "bytes": 858,
+      "sha256": "e3a3049c4fecf5e1c1e149fae372668ec91d53f2610cccb296b4e68fbef8ed0e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/sites.jsonl": {
+      "bytes": 177624,
+      "sha256": "5bdca66d688c994b08d5d12e6847e9c69733c150d3bbbf3a7483c71bf1c57f2e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/timings.jsonl": {
+      "bytes": 2736,
+      "sha256": "51f70d87a19b18a063cf142a3fafb09dd15cb2380a79632e2d9fe3759e7fefa9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/first-prefill-progress.jsonl": {
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/input.tokens": {
+      "bytes": 8,
+      "sha256": "3cb3b5999e8cbbf959807a519f4c256dfe746d4aaf4098c0a18d9cf0f4f5477b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/prefill-timings.jsonl": {
+      "bytes": 2048,
+      "sha256": "40eca9226e10e689757e3ac794a40afe1fec3aa4ce6b673a55c0c5f5802e787e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/progress.jsonl": {
+      "bytes": 72421,
+      "sha256": "20c371c6d7cfac82fd251a2fb46e254cd766fafc4612dad95deb5bef279a32e8"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/receipt.json": {
+      "bytes": 886,
+      "sha256": "b5529cf746bc6f646b3e4b6c7f68a06232c0ebff24f6e814a0cac037ca40a982"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/result.json": {
+      "bytes": 886,
+      "sha256": "b5529cf746bc6f646b3e4b6c7f68a06232c0ebff24f6e814a0cac037ca40a982"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/sites.jsonl": {
+      "bytes": 177582,
+      "sha256": "c2435c0e91e4a135b8f6ea8bf8c20c57b29580e5d0e8cf2d23eafe37931a8db6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/timings.jsonl": {
+      "bytes": 2736,
+      "sha256": "ebadaea5b71554b868c03e8f0ade794d2b343c3c70be05c18cf7aa9cfeb69ba1"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/first-prefill-progress.jsonl": {
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/input.tokens": {
+      "bytes": 38,
+      "sha256": "069b3f74b03e863eb36cdfffca09e81ed81325a255afd32d9b4b31771852711f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/prefill-timings.jsonl": {
+      "bytes": 12282,
+      "sha256": "b67dd4386442fc617ab3623d2ebc9fa1697772772c8e9eb10698ec7a4e93bc24"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/progress.jsonl": {
+      "bytes": 224146,
+      "sha256": "8b14786916478a0a29b43219949c20e3ac2dc552aef14a00e7bd2bcdc38a314b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/receipt.json": {
+      "bytes": 886,
+      "sha256": "bca0bebb846a7420294896f36cd4e110abdcdecbc74363f7562035dfb95bc479"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/result.json": {
+      "bytes": 886,
+      "sha256": "bca0bebb846a7420294896f36cd4e110abdcdecbc74363f7562035dfb95bc479"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/sites.jsonl": {
+      "bytes": 549167,
+      "sha256": "9891532ef554da72f66f0ebc8fd46522a877c1b602b2865d3b1604e1e656cd97"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/timings.jsonl": {
+      "bytes": 2740,
+      "sha256": "298b5fdd18a1b14432b7d38f77fce1cbf416c5ffc74467d9d65bd0e4eaad3dcf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/first-prefill-progress.jsonl": {
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/input.tokens": {
+      "bytes": 10,
+      "sha256": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/prefill-timings.jsonl": {
+      "bytes": 2729,
+      "sha256": "c7a2b890759d52c4294d6aa6ced1fb8db445b1b5ba955817058aaac8764fbe25"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/progress.jsonl": {
+      "bytes": 124612,
+      "sha256": "e9e53807840baaf74eb82c96a459f985195cdccd8459d229ad097758cd3da45f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/receipt.json": {
+      "bytes": 1062,
+      "sha256": "da34a677ca6d18ab071098af62fa733f571e8cd862c29e389bc591b98bd61517"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/result.json": {
+      "bytes": 1062,
+      "sha256": "da34a677ca6d18ab071098af62fa733f571e8cd862c29e389bc591b98bd61517"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/sites.jsonl": {
+      "bytes": 305685,
+      "sha256": "7107d9fee4bc6059a34908793347544c9b773687f4f5c5a5f62bc20aa7bb959e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/timings.jsonl": {
+      "bytes": 5474,
+      "sha256": "91cd19bdc5bca83200c4a704f1a87781cc1860bef74d7e1aac9e23b4570e5746"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/first-prefill-progress.jsonl": {
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/input.tokens": {
+      "bytes": 10,
+      "sha256": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/lookup-request-complete.json": {
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/prefill-timings.jsonl": {
+      "bytes": 2728,
+      "sha256": "eb3d28a6d4c7ad3bec44851605886ecbddc2d9fa2affddf950275a5c897f4ed9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/progress.jsonl": {
+      "bytes": 124612,
+      "sha256": "e9e53807840baaf74eb82c96a459f985195cdccd8459d229ad097758cd3da45f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/receipt.json": {
+      "bytes": 1066,
+      "sha256": "0f25839445886e146f4c5d16cd6bbdccaf10e5b59f0733685cd8f0b322d0442d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/reset.json": {
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/result.json": {
+      "bytes": 1066,
+      "sha256": "0f25839445886e146f4c5d16cd6bbdccaf10e5b59f0733685cd8f0b322d0442d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/sites.jsonl": {
+      "bytes": 305620,
+      "sha256": "f61851c9f885ff3ef030f506e4e629f6c73a92208bda304d496709979fe1a973"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/timings.jsonl": {
+      "bytes": 5475,
+      "sha256": "039a8a6c4a9945368be25c716eea41c5ca9cfa869c64cd1e2d86732e3a52c7cc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/sites.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/timings.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/plan.json": {
+      "bytes": 5286,
+      "sha256": "82259d1b661f1957cf310244b1db8b37ec0c0f4a7818de3a5710add67442df92"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/result.json": {
+      "bytes": 12897,
+      "sha256": "75e5c8719d0ca29623088565a391fc5dd11eb00b276e0c6dd5adcad001e43d5b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/stderr.log": {
+      "bytes": 244,
+      "sha256": "eb38fe4ad98367b9860c74b41e15eed1d661a23a591497fff0f14fd2141d235d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/synthetic-identity.tsv": {
+      "bytes": 99,
+      "sha256": "29803272e9e415114ba235f8833dce7b01d27ea4ca5b2ea7607d67570980249d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/tokenizer.tsv": {
+      "bytes": 290,
+      "sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa"
+    }
+  },
+  "retained_files": {
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": {
+      "source": "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py",
+      "bytes": 13932,
+      "sha256": "ca169592f1950451c48e445fa9c13bb674d394e12eae45c7b665428375b76cae"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/checkpoint_engine.py": {
+      "source": "experiments/own-xpu-runtime/integration/checkpoint_engine.py",
+      "bytes": 14233,
+      "sha256": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/checkpoint_bridge.py": {
+      "source": "experiments/own-xpu-runtime/integration/checkpoint_bridge.py",
+      "bytes": 11453,
+      "sha256": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/native_checkpoint_store.py": {
+      "source": "experiments/own-xpu-runtime/integration/native_checkpoint_store.py",
+      "bytes": 20259,
+      "sha256": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/request_front/client_v2.py": {
+      "source": "experiments/own-xpu-runtime/integration/request_front/client_v2.py",
+      "bytes": 14245,
+      "sha256": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/tools/ctxkeeper/parking.py": {
+      "source": "tools/ctxkeeper/parking.py",
+      "bytes": 20324,
+      "sha256": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE.md": {
+      "source": "experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE.md",
+      "bytes": 4438,
+      "sha256": "68585c60768004c84b87d38b686301bbd332c58897afa8dd32056c19b4716580"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": {
+      "source": "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py",
+      "bytes": 13271,
+      "sha256": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/test_checkpoint_engine_host_probe.py": {
+      "source": "experiments/own-xpu-runtime/integration/test_checkpoint_engine_host_probe.py",
+      "bytes": 1664,
+      "sha256": "345ccaed5f50a4e6d530e4ecad461a1cdbc6c44176542395219b92329c6c54c7"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/plan.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/plan.json",
+      "bytes": 5286,
+      "sha256": "82259d1b661f1957cf310244b1db8b37ec0c0f4a7818de3a5710add67442df92"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/result.json",
+      "bytes": 12897,
+      "sha256": "75e5c8719d0ca29623088565a391fc5dd11eb00b276e0c6dd5adcad001e43d5b"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/stderr.log": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/stderr.log",
+      "bytes": 244,
+      "sha256": "eb38fe4ad98367b9860c74b41e15eed1d661a23a591497fff0f14fd2141d235d"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/synthetic-identity.tsv": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/synthetic-identity.tsv",
+      "bytes": 99,
+      "sha256": "29803272e9e415114ba235f8833dce7b01d27ea4ca5b2ea7607d67570980249d"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/tokenizer.tsv": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/tokenizer.tsv",
+      "bytes": 290,
+      "sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/receipt.json",
+      "bytes": 535770,
+      "sha256": "3c919adff4e449735f4213991f75676162750cd8ea435cafb51a8cca6dd42a7f"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/plan.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/plan.json",
+      "bytes": 29857,
+      "sha256": "ed4dfa9d87509fefd8a281fd79ff92f9d7b077770065f222edfb9ef4f81ccb6c"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/cold-start.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/cold-start.json",
+      "bytes": 156,
+      "sha256": "0596eb88a095f98d3db7d1330ed43e53cc023d8bf4ad737c95ff6a0c760bf06d"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-append/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/input.tokens",
+      "bytes": 38,
+      "sha256": "069b3f74b03e863eb36cdfffca09e81ed81325a255afd32d9b4b31771852711f"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-append/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/receipt.json",
+      "bytes": 1586,
+      "sha256": "426c88359f2fd85f04b0a13cf83713cdc02b0ac1d702fa6d4b00b46519b91c9e"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-append/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-append/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-append/result.json",
+      "bytes": 1586,
+      "sha256": "426c88359f2fd85f04b0a13cf83713cdc02b0ac1d702fa6d4b00b46519b91c9e"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-edited/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/input.tokens",
+      "bytes": 10,
+      "sha256": "0348b021b6984ed78954eca5f06976dd2457c3917f55605c00a3f041d4115537"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-edited/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/receipt.json",
+      "bytes": 868,
+      "sha256": "070f80e86cfdbf6266828f78e1f34b48f547c251b622413cb9a4cf964fb60243"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-edited/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-edited/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-edited/result.json",
+      "bytes": 868,
+      "sha256": "070f80e86cfdbf6266828f78e1f34b48f547c251b622413cb9a4cf964fb60243"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-park/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/input.tokens",
+      "bytes": 10,
+      "sha256": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-park/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/receipt.json",
+      "bytes": 1040,
+      "sha256": "7a6f8ed34c06c783404d3750fe4bc84362df475e7c2eb3991a23f18f344d1702"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-park/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/a-park/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/a-park/result.json",
+      "bytes": 1040,
+      "sha256": "7a6f8ed34c06c783404d3750fe4bc84362df475e7c2eb3991a23f18f344d1702"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/b-release/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/input.tokens",
+      "bytes": 8,
+      "sha256": "3cb3b5999e8cbbf959807a519f4c256dfe746d4aaf4098c0a18d9cf0f4f5477b"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/b-release/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/receipt.json",
+      "bytes": 858,
+      "sha256": "e3a3049c4fecf5e1c1e149fae372668ec91d53f2610cccb296b4e68fbef8ed0e"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/b-release/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/b-release/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/b-release/result.json",
+      "bytes": 858,
+      "sha256": "e3a3049c4fecf5e1c1e149fae372668ec91d53f2610cccb296b4e68fbef8ed0e"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/final-b-release/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/input.tokens",
+      "bytes": 8,
+      "sha256": "3cb3b5999e8cbbf959807a519f4c256dfe746d4aaf4098c0a18d9cf0f4f5477b"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/final-b-release/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/receipt.json",
+      "bytes": 886,
+      "sha256": "b5529cf746bc6f646b3e4b6c7f68a06232c0ebff24f6e814a0cac037ca40a982"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/final-b-release/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/final-b-release/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/final-b-release/result.json",
+      "bytes": 886,
+      "sha256": "b5529cf746bc6f646b3e4b6c7f68a06232c0ebff24f6e814a0cac037ca40a982"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/fresh-append/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/input.tokens",
+      "bytes": 38,
+      "sha256": "069b3f74b03e863eb36cdfffca09e81ed81325a255afd32d9b4b31771852711f"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/fresh-append/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/receipt.json",
+      "bytes": 886,
+      "sha256": "bca0bebb846a7420294896f36cd4e110abdcdecbc74363f7562035dfb95bc479"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/fresh-append/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/fresh-append/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/fresh-append/result.json",
+      "bytes": 886,
+      "sha256": "bca0bebb846a7420294896f36cd4e110abdcdecbc74363f7562035dfb95bc479"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-initial/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/input.tokens",
+      "bytes": 10,
+      "sha256": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-initial/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/receipt.json",
+      "bytes": 1062,
+      "sha256": "da34a677ca6d18ab071098af62fa733f571e8cd862c29e389bc591b98bd61517"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-initial/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-initial/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-initial/result.json",
+      "bytes": 1062,
+      "sha256": "da34a677ca6d18ab071098af62fa733f571e8cd862c29e389bc591b98bd61517"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-replay/input.tokens": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/input.tokens",
+      "bytes": 10,
+      "sha256": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-replay/receipt.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/receipt.json",
+      "bytes": 1066,
+      "sha256": "0f25839445886e146f4c5d16cd6bbdccaf10e5b59f0733685cd8f0b322d0442d"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-replay/reset.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/requests/same-replay/result.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/requests/same-replay/result.json",
+      "bytes": 1066,
+      "sha256": "0f25839445886e146f4c5d16cd6bbdccaf10e5b59f0733685cd8f0b322d0442d"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/operations/parking-1/save.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-1/save.json",
+      "bytes": 467,
+      "sha256": "b6a79f12d80a6f6d7eb5d38560807425a39fd34acc9f866fd52f6945790202bf"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/operations/parking-3/save.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-3/save.json",
+      "bytes": 469,
+      "sha256": "792a19e41b1ed2f6145a14ec57f2802f62741ca60f91ce848e469fa216517f76"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/operations/parking-4/save.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-4/save.json",
+      "bytes": 481,
+      "sha256": "05e14b59534d096b3aba409cea988e56b6ed99a14b8881f1902e817c36b770e3"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/operations/parking-5/save.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-5/save.json",
+      "bytes": 467,
+      "sha256": "43bc75f3f73f8dd9507b317cdcf9738d4e99ef831048bb0020838a1653148723"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/owner/operations/parking-6/save.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner/operations/parking-6/save.json",
+      "bytes": 479,
+      "sha256": "b56439dd3f1b1174b362de5f00dfb794e6c2dbf3c64445890e02abbc80979495"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/active.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/active.bin",
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.0.gdn.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.0.gdn.history.bin",
+      "bytes": 120,
+      "sha256": "1c2d92f6973f7ea2f19399f5b4f9c85974bdf2ef0123f7ae250acaae60287015"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.0.gdn.state.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.0.gdn.state.bin",
+      "bytes": 96,
+      "sha256": "000d7f5514e1e7dc9dd7aec05eeab3d3d21337b56ff7d9e58cffada7685c2cf4"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.1.ple.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.ple.history.bin",
+      "bytes": 1152,
+      "sha256": "fab56b3b4fc0cd90f9f50900efaad8922ab4245586cfd62a7379c603bf137d0c"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.keys.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.keys.bin",
+      "bytes": 64,
+      "sha256": "ac3d377f56e4dd4f7e56d6f066388defc4ca2bd4fa5b96d802ed3043ea702427"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.pooled.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.pooled.bin",
+      "bytes": 16,
+      "sha256": "2b0a51d3cdc6eae38717880cbeb40d4a16490304d17ed012b62eddfc0ee55cd6"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.raw.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.raw.bin",
+      "bytes": 64,
+      "sha256": "2a97040d86771b1e75359c3440f2d6eb3dd4559d38dfb527718cdef0887ff166"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.values.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.1.qsa.values.bin",
+      "bytes": 64,
+      "sha256": "dfc99e4aac382712cce6a011dc986c751fb1d1d39da14453a909e7af93f3c9c8"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.2.gdn.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.2.gdn.history.bin",
+      "bytes": 120,
+      "sha256": "d473ed78c88a98d1d6d0f4e88b164dd49020407ec01d402c2d037b52466c8c01"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.2.gdn.state.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.2.gdn.state.bin",
+      "bytes": 96,
+      "sha256": "9b68e1d8ca338c76d0fdac8f84c43ebe38cfea68c25b56def69434dbb861c1fc"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.keys.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.keys.bin",
+      "bytes": 64,
+      "sha256": "14e345675cc03ce3ee2bfe46a4ba408a5dcf7a07367e059ceda1565bacaf8953"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.pooled.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.pooled.bin",
+      "bytes": 16,
+      "sha256": "99fd34b71c824b3f3b5464f7997e664a5b81082546ecade59d5e474cb6981bcf"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.raw.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.raw.bin",
+      "bytes": 64,
+      "sha256": "f59bdc9d8d0f4b8d44877725d4e0715a2de1911bdcc93507387a667a640f0dd1"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.values.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/blk.3.qsa.values.bin",
+      "bytes": 64,
+      "sha256": "be95fa9fb290814ddae62177d1a9538d862f51b7b34040af9205343d315de566"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/error.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/error.bin",
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/fields.tsv": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/fields.tsv",
+      "bytes": 16677,
+      "sha256": "2c9509bfb28494547c5503402be132f109995acd89ff30d3a8c3d6ce39674e27"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/manifest.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/manifest.json",
+      "bytes": 21023,
+      "sha256": "bd4a6c0c70ff0075fbdbb2b9d2a2bb43d0b2598e5d82efee88a12ca1a9dccf88"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/next_token.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/next_token.bin",
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/position.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/position.bin",
+      "bytes": 4,
+      "sha256": "dc765660b06ee03dd16fd7ca5b957e8c805161ac2c4af28c5a100ab2ab432ca1"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/streams.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/streams.bin",
+      "bytes": 128,
+      "sha256": "07a27b48c4d1904865045fdbaa7e1ab4ee6f4801767855d32fbc74383018c415"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/token.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/token.bin",
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/token_history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/token_history.bin",
+      "bytes": 16,
+      "sha256": "814dd7b9784d57c15b9c2972e9b4fd6cf7e164f8162a934bdb2452a413dab1f7"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/a-f53cecad3cef77170cf56244/tokens.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/a-f53cecad3cef77170cf56244/tokens.bin",
+      "bytes": 32,
+      "sha256": "f132ea9a7c24fb9c432a1597b528c1c32c510d719f1c2f1196ee5be1318bde2c"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/active.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/active.bin",
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.0.gdn.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.0.gdn.history.bin",
+      "bytes": 120,
+      "sha256": "3f3b8d07b4355b8329f3ce4d55fe30895b74f11f265cae93d79adb193a00e8a0"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.0.gdn.state.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.0.gdn.state.bin",
+      "bytes": 96,
+      "sha256": "d0d2ef007f2002e5e387734554032131b8390d32fee89cb6b5bfa920d032c874"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.ple.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.ple.history.bin",
+      "bytes": 1152,
+      "sha256": "23028f81e56546498d80add0a40573e8fee32751b4156f89fa5b40504e6b31eb"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.keys.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.keys.bin",
+      "bytes": 176,
+      "sha256": "39c70d28ddf49f114fb42eec258caf8e1c08929ac9b3bd125754bf4f7e900c94"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.pooled.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.pooled.bin",
+      "bytes": 40,
+      "sha256": "ad08f6d0ba9063b8639ce012bb9313f90f5d7661a32c9938835c2be618f711fc"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.raw.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.raw.bin",
+      "bytes": 176,
+      "sha256": "9563037411818d0d2ae4cc2d49e26f63adbfc9a97244940993356439c342b73b"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.values.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.1.qsa.values.bin",
+      "bytes": 176,
+      "sha256": "12664bb792736a1c95e7aece5265f7d7436d462cded175910feae88cfa02a9e6"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.2.gdn.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.2.gdn.history.bin",
+      "bytes": 120,
+      "sha256": "ed96cb7dca0eddf33bd8e7a4fb9fff73f3f0e614a17a11b962f6026ef624b3b0"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.2.gdn.state.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.2.gdn.state.bin",
+      "bytes": 96,
+      "sha256": "82620d083a2b9be685110eee8d05a61aea3df46d5a697821e6d77bb1f082bafd"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.keys.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.keys.bin",
+      "bytes": 176,
+      "sha256": "2143b3bc9a93f14c45b229541ded797b91f7bc6d595909c592758e970443c68d"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.pooled.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.pooled.bin",
+      "bytes": 40,
+      "sha256": "32e94f8423e5d1a78228ce235a847aeff69008c8d1d41f189ef187545c221ce6"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.raw.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.raw.bin",
+      "bytes": 176,
+      "sha256": "b1674b6ca7a7a98f37f74a9004c2e3ca0567f1012b59780a610e25504efb42e0"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.values.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/blk.3.qsa.values.bin",
+      "bytes": 176,
+      "sha256": "dd6c70dc49514988e0857fd3876d85cf00a38ca0268908074674d29a75368b2e"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/error.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/error.bin",
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/fields.tsv": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/fields.tsv",
+      "bytes": 16696,
+      "sha256": "967579c01319df51e8741999864caee6ae24ef850d81886c958719e76ef08e76"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/manifest.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/manifest.json",
+      "bytes": 21042,
+      "sha256": "46fa945b00f24665ecb0bdd9a9517c9d66026fbe58c405d756e4a868e9073c76"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/next_token.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/next_token.bin",
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/position.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/position.bin",
+      "bytes": 4,
+      "sha256": "f59d756696b2089fca5969fdfde2674e333765e1dad0a51c8ebbc63f351c4ca5"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/streams.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/streams.bin",
+      "bytes": 128,
+      "sha256": "3e061f237a625a57bdd49a7e79d6a55678a719b6c7e5ff0612a1729212f0f12a"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/token.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/token.bin",
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/token_history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/token_history.bin",
+      "bytes": 16,
+      "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/fresh-1e914e827012c88771b0a162/tokens.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/fresh-1e914e827012c88771b0a162/tokens.bin",
+      "bytes": 88,
+      "sha256": "8d974c491ab9e8b9a80c63c5222255a04b0e67cc2e95bd26317bd2f1d23a25d8"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/active.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/active.bin",
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.0.gdn.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.0.gdn.history.bin",
+      "bytes": 120,
+      "sha256": "1c2d92f6973f7ea2f19399f5b4f9c85974bdf2ef0123f7ae250acaae60287015"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.0.gdn.state.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.0.gdn.state.bin",
+      "bytes": 96,
+      "sha256": "b52378d670dd8e5d2159c1bc5e673ba1bd0abde1fba06d098daa3ff92e52754a"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.ple.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.ple.history.bin",
+      "bytes": 1152,
+      "sha256": "b8dfa9db4b120c33ee5ffa602f86cb8bbf81e6b2679461694576489bffd4605f"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.keys.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.keys.bin",
+      "bytes": 96,
+      "sha256": "dc5558315a7fe186c4abffe04192df3a079027a14f2c0c86703df7b9474faa57"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.pooled.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.pooled.bin",
+      "bytes": 24,
+      "sha256": "58d39411e5d3e13cf71e7f1e6e859132017009820259fcf87100a9f247a859fc"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.raw.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.raw.bin",
+      "bytes": 96,
+      "sha256": "218ea19ffcc588dca89e8c88f438bebf74c89682285d04ce79d942edbecfba28"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.values.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.1.qsa.values.bin",
+      "bytes": 96,
+      "sha256": "8a571941e86d59f9f9b4f214f43896fe7acd94b9cf16460c4da022c052c90638"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.2.gdn.history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.2.gdn.history.bin",
+      "bytes": 120,
+      "sha256": "8a797999c7167c2b15aee882b6778016765129a5843447fe192e8dd97d42f27c"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.2.gdn.state.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.2.gdn.state.bin",
+      "bytes": 96,
+      "sha256": "4352906e57994420e0f06bba0990aa7dca2e1a2b9e163fba2af907010925beaf"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.keys.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.keys.bin",
+      "bytes": 96,
+      "sha256": "86debc532b7c98c4e0226e78c53dc876042539e16266842572bd4e36b6686b46"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.pooled.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.pooled.bin",
+      "bytes": 24,
+      "sha256": "29799957c095a0f2fb4bb5da4cab366effa071b3bc089fd6bb4d975c39c5447b"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.raw.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.raw.bin",
+      "bytes": 96,
+      "sha256": "f1aec47ba09958db4b3d768d8870f85df54668ae2dd60f46360b6cdca792f6e9"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.values.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/blk.3.qsa.values.bin",
+      "bytes": 96,
+      "sha256": "3c734fd95d75d4f7e69acf492887a083a7eb01f2c608102a6443b6c98f19e8bb"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/error.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/error.bin",
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/fields.tsv": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/fields.tsv",
+      "bytes": 16680,
+      "sha256": "b93a4194ea696c74cb61357ef9b5ed7b5dc3dc35ebdc00c54047be2ec6e47e32"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/manifest.json": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/manifest.json",
+      "bytes": 21026,
+      "sha256": "efc8d1ac6df4ed6ce757ae18ae87aaf902ff9963130a3b4cd82d55557dc495a5"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/next_token.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/next_token.bin",
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/position.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/position.bin",
+      "bytes": 4,
+      "sha256": "42f4aeb81c1ef81f771f3de8abca9dcf66901c575530e7672e4b1146474ae650"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/streams.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/streams.bin",
+      "bytes": 128,
+      "sha256": "cb56bfaf3f0844ccbd7486e248075c82dd416a384d6a1c22956e2b80ddefc4a5"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/token.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/token.bin",
+      "bytes": 4,
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/token_history.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/token_history.bin",
+      "bytes": 16,
+      "sha256": "814dd7b9784d57c15b9c2972e9b4fd6cf7e164f8162a934bdb2452a413dab1f7"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/run/checkpoints/same-fb950fedac453bd55ced5b77/tokens.bin": {
+      "source": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints/same-fb950fedac453bd55ced5b77/tokens.bin",
+      "bytes": 48,
+      "sha256": "49f97cc4fbc5f29e4dd9794eecc37c14e24e45e141d5ef7e7c45f591d77d4227"
+    },
+    "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b/sources/experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE-HOST-PROBE.md.txt": {
+      "source": "experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE-HOST-PROBE.md",
+      "bytes": 2892,
+      "sha256": "cb806a52d3b4b3e84399a9e5b05a24ae482936eb26346f3a69c41faa147d5261"
+    }
+  },
+  "prior_failure": "experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-attempt-a-failure.json",
+  "reproduction": {
+    "script": "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py",
+    "exact_command": "nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py --run-host-only",
+    "conditions": "Completed output B is preserved and refuses reuse. A future replay needs a fresh separately reviewed scratch output and same admitted HOST_ONLY binary/source identity; never rerun a completed output automatically."
+  },
+  "limitations": [
+    "Tiny context64/vocab16 synthetic geometry only; no model shards were loaded.",
+    "Append checkpoint equality was recorded before policy deletion of replaced old states; final surviving tiny checkpoints are fully retained.",
+    "Direct same-ID fresh replay skips before_request to isolate the shortcut; automatic run_turn release on non-None same-ID hit is covered by CPU mocks.",
+    "No HTTP wiring, real-model adapter/device serving qualification, throughput claim or release bump.",
+    "Owner census/progress/site timing logs remain at original ignored scratch paths with complete size/digest inventory; no large logs copied.",
+    "The executed-version host guide is retained byte-exact as .md.txt so its historical relative links are not interpreted as live links inside the archived source tree."
+  ]
+}

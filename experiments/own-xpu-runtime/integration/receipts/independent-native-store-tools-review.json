@@ -1,0 +1,50 @@
+{
+  "schema": "ownrt.independent-native-store-tools-review.v1",
+  "created_utc": "2026-10-23T17:19:29.178877+00:00",
+  "passed": true,
+  "auditor_native_executed": false,
+  "auditor_device_executed": false,
+  "scope": "Read-only verification of actual five-call GNU-host maintenance probe and replay of captured small bytes through pure bridge; not a model-owner adapter run.",
+  "checks": {
+    "actual_native_tool_calls": 5,
+    "metadata_inspections": 3,
+    "delete_attempts_on_disposable_copy": 2,
+    "returncodes": [
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "shared_lock_delete_refused_in_use": true,
+    "disposable_copy_deleted": true,
+    "missing_proven_without_extra_call_recorded": true,
+    "original_host_files_unchanged": true,
+    "fixture_files_verified": 19,
+    "admitted_production_snapshots_replayed": {
+      "s1": {
+        "processed_tokens": 342,
+        "pending_token": 37574,
+        "storage_bytes": 69121547,
+        "manifest_sha256": "e22f08a8eedadca40f395c2c4254f35626b31249beca0367439e10d42450b361"
+      },
+      "s3": {
+        "processed_tokens": 596,
+        "pending_token": 11,
+        "storage_bytes": 76342000,
+        "manifest_sha256": "e36cb9913f2967be8a8636a07c3605367c8970e189c4bb1b94592198bd78f8bb"
+      }
+    }
+  },
+  "limitations": [
+    "Metadata mode plus stat extents and small-payload digests; full tensor revalidation was not performed by this probe.",
+    "GNU-host tool binary differs from admitted device owner binary; this proves Store+Bridge metadata behavior, not attachment of CheckpointEngine to an actual production owner."
+  ],
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/integration/receipts/native-checkpoint-store-tools-20261023.json": "a7e0f7471cab91c8545ff248851df4f52f306b713f90f9bf8da53ac16b14438d",
+    "experiments/own-xpu-runtime/integration/checkpoint-fixtures-p198/provenance.json": "2b6852446719f55f98b5e6616b2e0a0a0f925ce82a40cc692afb9c5ce8166c96",
+    "experiments/own-xpu-runtime/integration/probe_native_checkpoint_store.py": "2dd6d81343fd12f929ba3170ff50887d5b7d7bb01cfc3b198952a2c1137ca780",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9"
+  }
+}

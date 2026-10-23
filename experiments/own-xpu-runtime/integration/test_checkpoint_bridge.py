@@ -50,6 +50,42 @@ def replace_inspect(args, edit):
 
 
 class CheckpointBridgeTests(unittest.TestCase):
+    def postreply_envelope(self):
+        """Synthetic contract-policy case, not p198 native/device evidence."""
+        args = fixture()
+        def edit(native):
+            native['contract'] = 'v1.2+p198'
+            native['label'] = 'experimental-postreply-front'
+            native['engine']['binary_sha256'] = 'b' * 64
+            native['qualified_by']['device_gates'] = []
+        replace_manifest(args, edit)
+        native = json.loads(args['manifest_bytes'])
+        replace_inspect(args, lambda inspected: inspected.update(
+            contract=native['contract'], label=native['label']))
+        args['expected_identity'] = {k:native[k] for k in IDENTITY_FIELDS}
+        return args
+
+    def test_postreply_contract_requires_explicit_selection_and_keeps_label(self):
+        args = self.postreply_envelope()
+        with self.assertRaisesRegex(BridgeRefusal, 'unsupported checkpoint contract'):
+            validate_snapshot(**args)
+        view = validate_snapshot(**args, admitted_contract='v1.2+p198')
+        self.assertEqual(view.manifest_bytes, args['manifest_bytes'])
+        self.assertEqual(view.parking_metadata()['label'], 'experimental-postreply-front')
+        self.assertEqual(view.parking_metadata()['contract'], 'v1.2+p198')
+
+    def test_explicit_postreply_selection_does_not_bypass_binary_identity(self):
+        args = self.postreply_envelope()
+        args['expected_identity']['engine'] = copy.deepcopy(args['expected_identity']['engine'])
+        args['expected_identity']['engine']['binary_sha256'] = 'c' * 64
+        with self.assertRaisesRegex(BridgeRefusal, 'engine identity differs'):
+            validate_snapshot(**args, admitted_contract='v1.2+p198')
+
+    def test_unknown_contract_cannot_be_enabled_by_expected_identity(self):
+        for contract in ('v1.2+p197','future',None):
+            with self.subTest(contract=contract), self.assertRaisesRegex(BridgeRefusal, 'unsupported admitted'):
+                validate_snapshot(**fixture(), admitted_contract=contract)
+
     def test_fixture_provenance_and_binary_payloads(self):
         provenance = json.loads((FIXTURES / "provenance.json").read_text())
         for name, digest in provenance["files_sha256"].items():

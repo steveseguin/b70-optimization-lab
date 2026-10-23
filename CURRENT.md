@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 13:26 EDT — checkpoint parking now works through the actual native CPU owner.**
+The thin adapter completed eight requests and eight dispositions through the real native protocol, store, bridge and parking policy.
+Restored append matched fresh tokens and state; changed input prefills, no-save and same-ID paths release cleanly, and the owner exited
+with no retained process. The first tiny-host fixture failed because it lacked required identity rows; its exact source and safe teardown
+are retained, and a separate corrected fixture passed. This proves tiny CPU integration, not another device qualification. The real-model
+postreply result is pushed with green CI, and restore27 applications remain running. Next: pinned text chat rendering and a local HTTP
+interface, with CPU socket/replay checks before any real-model serving window.
+[Integration](experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE.md).
+
 **October 23, 13:13 EDT — postreply checkpoint pilot passed; all three applications restored as restore27.**
 One loaded process completed eight requests, 1,408 exact output tokens, five postreply saves and three releases. All saved binary
 states match the earlier qualified lifecycle. There was no new fault, incident signal or retained owner. Both worker and controller

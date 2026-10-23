@@ -1,0 +1,75 @@
+{
+  "schema": "ownrt.independent-checkpoint-policy-store-review.v1",
+  "created_utc": "2026-10-23T17:12:01.004735+00:00",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "scope": "Finite source review plus independent CPU unit/mock tests; actual p198 native metadata-tool fixture and adapter qualification remain pending.",
+  "validation": [
+    {
+      "suite": "test_checkpoint_bridge.py",
+      "tests": 20,
+      "passed": true,
+      "reported_seconds": 0.358
+    },
+    {
+      "suite": "test_parking.py",
+      "tests": 25,
+      "passed": true,
+      "reported_seconds": 0.003
+    },
+    {
+      "suite": "test_native_checkpoint_store.py",
+      "tests": 20,
+      "passed": true,
+      "reported_seconds": 0.032
+    }
+  ],
+  "placement": "nice19; taskset8-15,24-31; python3 -B",
+  "resolved_finding": "Store snapshot originally accepted stable tensor truncation/extension because neither its inventory nor native metadata mode checked blob extents. Fixed with integer/type validation and stat-size equality for every declared blob, without reading large tensors; regression mocks pass.",
+  "reviewed_checks": [
+    "Explicit known p198 contract selection preserves experimental label and all expected identity fields, including exact engine binary and qualified_by; p181 remains default and unknown contracts refuse.",
+    "Policy reserves trusted additional SAVE peak before calling engine; old checkpoint stays charged until successful replacement deletion; detached in-use and ambiguous states retain conservative charges.",
+    "Same-ID policy hit re-inspects current identity/prefix and may return existing Parked without SAVE; future adapter must RELEASE any still-pending reply even after a non-None return.",
+    "Store accepts only safe native IDs under a fixed real absolute root, checks root/directory inodes, and refuses symlinks/nonregular entries.",
+    "Pinned executable is hashed from retained FD and executed through that FD; argv permits only native metadata inspect or native delete with one fixed-root target, never model/device execution arguments.",
+    "Snapshot holds native-compatible nonblocking shared sibling flock through native metadata inspection and all small payload reads; lock inode replacement attempts are bounded to three.",
+    "Manifest/fields/token/pending reads are bounded; manifest identity/hash, exact closed file set, stable inode/extent/timestamps and declared blob extents checked; storage_bytes includes all regular checkpoint files.",
+    "Native inspection remains metadata-only: full tensor hashing/semantic validation is not claimed and native restore must revalidate state.",
+    "Delete remains a native-tool operation; success requires typed positive removal receipt and actual absence, in_use requires exact lock refusal, missing is returned only for proven absence; malformed/partial refusal raises.",
+    "Timeout applies only to admitted CPU maintenance tool; no model process restart, signal, setting change or recursive Python deletion exists in the store."
+  ],
+  "save_bound_verification": {
+    "receipt_sha256": "c6efc1fd69306a1409d2f0664a683e3674841f3c58e2d1f808dc57cd4602e4e3",
+    "exact_p198_binary_and_writer_identity": true,
+    "context": 4096,
+    "fixed_blob_count": 80,
+    "fixed_bytes": 59039780,
+    "variable_qsa_blob_count": 48,
+    "variable_qsa_max_bytes": 116391936,
+    "tokens_max_bytes": 16384,
+    "max_payload_bytes": 175448100,
+    "metadata_staging_allowance_bytes": 8388608,
+    "reservation_bytes": 268435456,
+    "remaining_margin_bytes": 84598748,
+    "pooled_rows": "N/4 per exact native source; conservative N4096 gives1024 rows",
+    "existing_checkpoints_charged_separately": true
+  },
+  "blockers": [],
+  "limitations": [
+    "P198 bridge contract cases use synthetic envelope edits for policy negatives; they do not replace actual native snapshot evidence.",
+    "Store runner tests use filesystem/runner mocks and an unexecuted ELF-shaped fixture.",
+    "Expected identity, closed loader environment, private root ownership and conservative size bound must come from trusted admission, not an arbitrary checkpoint.",
+    "Adapter must validate SAVE snapshot before returning policy metadata, RELEASE on every successful no-SAVE path, and halt rather than release/retry after an ambiguous exception."
+  ],
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_bridge.py": "e8279ac09b4ecf5de4cf7769c8822e8578dd60a420e769fb2c999f388d08fda8",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/test_native_checkpoint_store.py": "7627270416da73fef375de4baeffe7679a9ed9ece8dc4846890f6482dc4b8fa9",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "tools/ctxkeeper/test_parking.py": "4651ec807c28e1c63a31d224d94ed75758cfa5b99da1bfb8462e83c1ebf44944",
+    "experiments/own-xpu-runtime/integration/receipts/p198-checkpoint-size-bound.json": "c6efc1fd69306a1409d2f0664a683e3674841f3c58e2d1f808dc57cd4602e4e3",
+    "experiments/own-xpu-runtime/integration/receipts/native-checkpoint-store-cpu-20261023.json": "908349f0a48611c273541da01e88f01d4743ed54e67f834dfdd0c6f655439b3e"
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "schema": "checkpoint-engine-host-attempt-a-failure-v1",
+  "created_utc": "2026-10-23T17:21:35.981227+00:00",
+  "passed": false,
+  "classification": "CPU-only synthetic identity fixture rejected at first SAVE; native model arithmetic not blamed",
+  "error": "native owner halted: three admitted shards required",
+  "original_run": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a",
+  "source_archive": "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a",
+  "drain": {
+    "native_safe_to_exit": true,
+    "native_device_executed": false,
+    "owner_retained": false,
+    "incident_sigterm_count": 1,
+    "pid": 3419481,
+    "pid_exists_at_inventory": false,
+    "stderr_teardown": "context lifetime PASS: 5829 destructions, native release last, zero late destructions"
+  },
+  "diagnosis": {
+    "path": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/checkpoint.hpp",
+    "line": 728,
+    "cause": "Providing --identity enters the checkpoint writer identity branch; it requires exactly three parseable shard-stat rows. The fixture supplied an empty TSV. Mini weight loading skipped that file, so RUN passed but SAVE failed.",
+    "planned_fix": "New fixture TSV with exactly three explicitly synthetic basename + five unsigned integer rows; derive expected model identity from those exact bytes and rows. Preserve GNU HOST_ONLY binary and all runtime/bridge checks; use fresh engine-integration-b output.",
+    "native_reexecution_authorized_or_performed_by_this_inventory": false
+  },
+  "files": {
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": {
+      "original": "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py",
+      "bytes": 12876,
+      "sha256": "10e3dd633c5c676cf661cb9eff3969e034e3a3c4d1730624fa5a969207981b5e"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/experiments/own-xpu-runtime/integration/checkpoint_engine.py": {
+      "original": "experiments/own-xpu-runtime/integration/checkpoint_engine.py",
+      "bytes": 14233,
+      "sha256": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/experiments/own-xpu-runtime/integration/checkpoint_bridge.py": {
+      "original": "experiments/own-xpu-runtime/integration/checkpoint_bridge.py",
+      "bytes": 11453,
+      "sha256": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/experiments/own-xpu-runtime/integration/native_checkpoint_store.py": {
+      "original": "experiments/own-xpu-runtime/integration/native_checkpoint_store.py",
+      "bytes": 20259,
+      "sha256": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/experiments/own-xpu-runtime/integration/request_front/client_v2.py": {
+      "original": "experiments/own-xpu-runtime/integration/request_front/client_v2.py",
+      "bytes": 14245,
+      "sha256": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/tools/ctxkeeper/parking.py": {
+      "original": "tools/ctxkeeper/parking.py",
+      "bytes": 20324,
+      "sha256": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/checkpoints/a-fb950fedac453bd55ced5b77.lock": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/checkpoints/a-fb950fedac453bd55ced5b77.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/cold-start.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/cold-start.json",
+      "bytes": 156,
+      "sha256": "2117a71664679ecbcad7b0026c7094b121bf49043107897901d3fcb3cc89231e"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/drm-memory-after_load.txt": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/drm-memory-after_load.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/drm-memory-before_load.txt": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/drm-memory-before_load.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/drm-memory-end.txt": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/drm-memory-end.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/failure.txt": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/failure.txt",
+      "bytes": 31,
+      "sha256": "f1465d222a77c6809be4d0f1eb50288d925376f783223d8fea236a0526f2b662"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/host-memory.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/host-memory.jsonl",
+      "bytes": 213,
+      "sha256": "18980c87d08142438ce6eec2b150a5a928bddb145449a847b57615d1050ec164"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/host-status-after_load.txt": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/host-status-after_load.txt",
+      "bytes": 1569,
+      "sha256": "963023edf89544bb0bd109f090dc75b361424e80ad3e9b67f6ee7b09386fa1da"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/host-status-before_load.txt": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/host-status-before_load.txt",
+      "bytes": 1569,
+      "sha256": "2ae3577f4cb50e307a5864d9970f5667c6cc7fe897ba2dfe1fca9966d1e35dc4"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/host-status-end.txt": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/host-status-end.txt",
+      "bytes": 1570,
+      "sha256": "da7e62cd7921138856f930d0f7636ee8fbc980f93fbda87832a616d6d4c33597"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/plan.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/plan.json",
+      "bytes": 29857,
+      "sha256": "ed4dfa9d87509fefd8a281fd79ff92f9d7b077770065f222edfb9ef4f81ccb6c"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/prefill-timings.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/prefill-timings.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/progress.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/progress.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/receipt.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/receipt.json",
+      "bytes": 79922,
+      "sha256": "1a24d27158efdd0d77733ea34e0c2192f3b3e3b4fc45dedd4664ba07f41b1f57"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/first-prefill-progress.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/first-prefill-progress.jsonl",
+      "bytes": 374,
+      "sha256": "36c4e39d3723e7a58adbbabb8c55c4078812be18899d3bfbf3665052da0cd887"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/input.tokens": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/input.tokens",
+      "bytes": 10,
+      "sha256": "4fbb634308caff48782eae1b97e2a425b4b4743513f1093248a604413e95ab13"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/lookup-request-complete.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/lookup-request-complete.json",
+      "bytes": 16,
+      "sha256": "1ea63e7fda68e7ce49b013af8410102e9228f7591e79ef602dd23d95556d03bc"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/prefill-timings.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/prefill-timings.jsonl",
+      "bytes": 2729,
+      "sha256": "edeb83c4cb163b01a5b1d84580649457a0a8a698417285e499146d07d095a2cd"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/progress.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/progress.jsonl",
+      "bytes": 124612,
+      "sha256": "e9e53807840baaf74eb82c96a459f985195cdccd8459d229ad097758cd3da45f"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/receipt.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/receipt.json",
+      "bytes": 1066,
+      "sha256": "4c8287f40dec3927fc93f4160ad425dfe5bfbb7bcc4806e6b6b38cb0e806ceed"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/reset.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/reset.json",
+      "bytes": 102,
+      "sha256": "974231255416714906b92df6e94b988e543e8020ec3d1e2b419b10c17ac82a89"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/result.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/result.json",
+      "bytes": 1066,
+      "sha256": "4c8287f40dec3927fc93f4160ad425dfe5bfbb7bcc4806e6b6b38cb0e806ceed"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/sites.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/sites.jsonl",
+      "bytes": 305687,
+      "sha256": "8562e3d2049ab0a412d5c320cca717a5577144bf376765c39064d7c98b028430"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/requests/a-park/timings.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/requests/a-park/timings.jsonl",
+      "bytes": 5476,
+      "sha256": "29a8a01a166489a37fe46e1c2825d47d15f3b8a2ef17e08ad653ff86c8109cca"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/sites.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/sites.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/owner/timings.jsonl": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner/timings.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/plan.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/plan.json",
+      "bytes": 4637,
+      "sha256": "02c9a9f0ad2b020af59790028885f929eca863ef8222eacf45ccc2baf3a83646"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/result.json": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/result.json",
+      "bytes": 5138,
+      "sha256": "eb0e5f7ca9443b83ee00a9aca4d8c623d17b76115b460d66c1cd7a105c059c61"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/stderr.log": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/stderr.log",
+      "bytes": 172,
+      "sha256": "02729fd711e47ac0d3e3ff714d406a0bebd08e6f67fbcac4b3a6ce1bdd4da1fa"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/synthetic-identity.tsv": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/synthetic-identity.tsv",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/run/tokenizer.tsv": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/tokenizer.tsv",
+      "bytes": 290,
+      "sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE-HOST-PROBE.md": {
+      "original": "experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE-HOST-PROBE.md",
+      "bytes": 2014,
+      "sha256": "e38b547ad40c3d785619a33ab668717077b858e3ece179742d764c4bc79a72dc"
+    },
+    "experiments/own-xpu-runtime/integration/lineage/checkpoint-engine-host-attempt-a/sources/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/checkpoint.hpp": {
+      "original": "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/checkpoint.hpp",
+      "bytes": 68476,
+      "sha256": "3668ee9f15d460eecd020574ae8f941e2cc2e862440facb30cfe42665d90f02c"
+    }
+  }
+}

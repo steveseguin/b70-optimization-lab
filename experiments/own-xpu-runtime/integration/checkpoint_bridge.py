@@ -21,6 +21,10 @@ IDENTITY_FIELDS = (
 )
 _HEX = re.compile(r"[0-9a-f]{64}\Z")
 _ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z")
+_CONTRACT_LABELS = {
+    "v1.2+p181": "qualified-one-card",
+    "v1.2+p198": "experimental-postreply-front",
+}
 
 
 class BridgeRefusal(ValueError):
@@ -150,22 +154,26 @@ def validate_snapshot(
     next_token_bytes: bytes,
     checkpoint_id: str,
     expected_identity: Mapping[str, Any],
+    admitted_contract: str = "v1.2+p181",
 ) -> CheckpointView:
     """Validate native inspect + exact small payloads; perform no I/O.
 
     expected_identity is supplied by the admitted running engine, not copied
     from an untrusted checkpoint. All IDENTITY_FIELDS must match exactly. This
-    initial bridge accepts only packet181's TP1 contract; it does not bless a
-    changed binary or transfer a qualification label to a successor engine.
+    default remains packet181's TP1 contract. The experimental packet198
+    contract requires explicit selection by the caller, with that admitted
+    engine's complete expected identity. Selection neither qualifies the engine
+    nor changes any label, binary check, or native manifest byte.
     """
     try:
         return _validate(inspect_stdout, inspect_returncode, manifest_bytes, tokens_bytes,
-                         next_token_bytes, checkpoint_id, expected_identity)
+                         next_token_bytes, checkpoint_id, expected_identity, admitted_contract)
     except (KeyError, TypeError, OverflowError, struct.error) as error:
         raise BridgeRefusal("malformed checkpoint snapshot") from error
 
 
-def _validate(stdout, returncode, manifest_bytes, tokens_bytes, next_token_bytes, checkpoint_id, expected):
+def _validate(stdout, returncode, manifest_bytes, tokens_bytes, next_token_bytes, checkpoint_id, expected, contract):
+    _require(type(contract) is str and contract in _CONTRACT_LABELS, "unsupported admitted contract")
     _require(type(returncode) is int and returncode == 0, "native inspect failed")
     _require(type(checkpoint_id) is str and _ID.fullmatch(checkpoint_id) is not None
              and not checkpoint_id.endswith(".lock"),
@@ -184,7 +192,7 @@ def _validate(stdout, returncode, manifest_bytes, tokens_bytes, next_token_bytes
     _require(native["checkpoint_id"] == inspected["checkpoint_id"] == checkpoint_id, "checkpoint id differs")
     for key in ("label", "contract"):
         _require(native[key] == inspected[key], "inspect " + key + " differs")
-    _require(native["contract"] == "v1.2+p181" and native["label"] == "qualified-one-card",
+    _require(native["contract"] == contract and native["label"] == _CONTRACT_LABELS[contract],
              "unsupported checkpoint contract/label")
     _require(native["engine"]["profile"] == "tp1-full512", "unsupported profile")
     for key in IDENTITY_FIELDS:

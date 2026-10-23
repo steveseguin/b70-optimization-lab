@@ -1,0 +1,39 @@
+# Prepared host-only integration probe
+
+[checkpoint_engine_host_probe.py](checkpoint_engine_host_probe.py) prepares one
+unchanged packet198 GNU `HOST_ONLY` owner, with tiny context64/vocab16 geometry.
+Read-only plan:
+
+```sh
+nice -n 19 taskset -c 8-15,24-31 python3 -B \
+  experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py --plan
+```
+
+After coordinator review and explicit authorization, the launch command is:
+
+```sh
+nice -n 19 taskset -c 8-15,24-31 python3 -B \
+  experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py --run-host-only
+```
+
+All generated files go to the fresh ignored
+`stage2/packet198-postreply-checkpoint/build/engine-integration-a` directory.
+Existing outputs refuse; the frozen host proof remains unchanged. The probe
+binds its owner and native metadata tool to the same sealed GNU binary. An empty
+synthetic identity TSV supplies an explicit digest for new fixture manifests;
+this is not a model identity or a claim about real-model arithmetic. No bridge
+validation is weakened to admit the earlier mini fixture's empty identity hash.
+
+Its eight replies cover A parking, B no-save release, restored append versus
+fresh token/state equality, edited-prefix prefill, and final no-save release and
+clean stopped. One deliberate fresh replay exercises the actual same-ID parking
+shortcut followed by explicit adapter RELEASE. This phase skips normal
+`before_request`, which would correctly delete the prior checkpoint when given
+the repeated shorter prompt. Automatic non-None/same-ID RELEASE inside
+`run_turn` remains separately covered by the synthetic CPU unit test.
+
+The host harness allows one cooperative SIGTERM to its exact retained host PID
+on failure, followed by a bounded wait; it never kills, retries or restarts.
+The adapter itself still does not signal. The harness checks helper-core/nice19
+placement, a 4 GiB process address-space limit, and the 27 GB free-space floor.
+No native owner was executed merely by preparing or checking `--plan`.

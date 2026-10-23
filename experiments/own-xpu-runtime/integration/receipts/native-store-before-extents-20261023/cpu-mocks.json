@@ -1,0 +1,30 @@
+{
+  "schema": "native-checkpoint-store.cpu-mocks.v1",
+  "passed": true,
+  "tests": 18,
+  "native_executed": false,
+  "model_executed": false,
+  "device_executed": false,
+  "subprocess_runner": "injected mocks only; no executable invoked",
+  "command": "nice -n19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_native_checkpoint_store.py -v",
+  "files_sha256": {
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "cf5a45774852f3ba16d976df7c4ac6d16111c948c213b65330424eef916530cc",
+    "experiments/own-xpu-runtime/integration/test_native_checkpoint_store.py": "276a55ac5b53a91f0d3210b2e2ba67ab325de18a96790f2a8653e395ff7dae63"
+  },
+  "log_sha256": "222dfc90c90f30d50ffc3899e93852968bf119b5b8ea9c063628f25ec4b75852",
+  "coverage": [
+    "outer shared flock held through tool and payload reads",
+    "three bounded inode/dev lock retries",
+    "exact raw snapshot bytes and metadata-only qualification",
+    "closed complete-file storage accounting without large-blob reads",
+    "safe IDs/real paths/no symlinks",
+    "fixed binary digest and FD-backed tool-only exec",
+    "closed environment and timeout/output bounds",
+    "native delete delegation and typed missing/in_use/refusal"
+  ],
+  "pending": [
+    "explicitly authorized actual native CPU-tool fixture test",
+    "independent source review",
+    "adapter and parking integration qualification"
+  ]
+}

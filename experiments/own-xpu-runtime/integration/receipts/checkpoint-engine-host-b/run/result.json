@@ -1,0 +1,337 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "native_host_executed": true,
+  "plan": {
+    "passed": true,
+    "device_executed": false,
+    "native_executed": false,
+    "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b",
+    "argv": [
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host/own-rt-iq3",
+      "--mini",
+      "--pipeline-mini",
+      "--context",
+      "64",
+      "--retain-steps",
+      "none",
+      "--identity",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/synthetic-identity.tsv",
+      "--native-nice",
+      "19",
+      "--seconds",
+      "180",
+      "--request-front",
+      "--request-front-max-requests",
+      "8",
+      "--request-front-idle-seconds",
+      "30",
+      "--request-front-checkpoints",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/checkpoints",
+      "--request-front-tokenizer-identity",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/tokenizer.tsv",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-b/owner"
+    ],
+    "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+    "prior_manifest": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s1/manifest.json",
+    "prior_manifest_sha256": "e6662298129208a75996dff27957e974665ace9408e714eb036700db7fe98847",
+    "tokenizer_source": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/tokenizer.tsv",
+    "tokenizer_sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa",
+    "expected_identity": {
+      "model": {
+        "identity_tsv_sha256": "29803272e9e415114ba235f8833dce7b01d27ea4ca5b2ea7607d67570980249d",
+        "shard_stat_rows": [
+          {
+            "name": "synthetic-host-shard-0",
+            "size": 0,
+            "dev": 0,
+            "ino": 0,
+            "mtime": 0,
+            "ctime": 0
+          },
+          {
+            "name": "synthetic-host-shard-1",
+            "size": 0,
+            "dev": 0,
+            "ino": 0,
+            "mtime": 0,
+            "ctime": 0
+          },
+          {
+            "name": "synthetic-host-shard-2",
+            "size": 0,
+            "dev": 0,
+            "ino": 0,
+            "mtime": 0,
+            "ctime": 0
+          }
+        ]
+      },
+      "engine": {
+        "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+        "packet": "packet198-postreply-checkpoint",
+        "profile": "tp1-full512"
+      },
+      "geometry": {
+        "layers": 4,
+        "qsa_layers": [
+          1,
+          3
+        ],
+        "gdn_layers": [
+          0,
+          2
+        ],
+        "kvh": 1,
+        "ad": 4,
+        "ih": 4,
+        "id": 4,
+        "qh": 4,
+        "gdn": {
+          "kh": 1,
+          "vh": 3,
+          "d": 4
+        },
+        "context": 64,
+        "vocab": 16,
+        "eos": 15
+      },
+      "dtypes": {
+        "kv": "bf16",
+        "gdn_state": "bf16",
+        "ple": "bf16"
+      },
+      "tokenizer_identity": {
+        "file_sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa",
+        "format": "ownrt.tokenizer-identity.v1",
+        "gguf_header_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "tokenizer_source_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "vocab_bin_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "label": "experimental-postreply-front",
+      "contract": "v1.2+p198",
+      "qualified_by": {
+        "scope": "experimental postreply checkpoint front; no device qualification",
+        "device_gates": []
+      }
+    },
+    "synthetic_identity_bytes": 99,
+    "synthetic_identity_sha256": "29803272e9e415114ba235f8833dce7b01d27ea4ca5b2ea7607d67570980249d",
+    "synthetic_identity_text": "synthetic-host-shard-0 0 0 0 0 0\nsynthetic-host-shard-1 0 0 0 0 0\nsynthetic-host-shard-2 0 0 0 0 0\n",
+    "save_bound_bytes": 8388608,
+    "disk_floor_bytes": 27000000000,
+    "expected_requests": 8,
+    "expected_controls": 8,
+    "scope": "Tiny HOST_ONLY arithmetic and adapter/store integration only; no real-model/device/HTTP qualification",
+    "sources_sha256": {
+      "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": "ca169592f1950451c48e445fa9c13bb674d394e12eae45c7b665428375b76cae",
+      "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+      "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+      "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+      "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+      "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+    }
+  },
+  "events": [
+    {
+      "request_id": "a-park",
+      "action": "prefill",
+      "reason": "no checkpoint for this session",
+      "tokens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": "a-fb950fedac453bd55ced5b77",
+      "released": false
+    },
+    {
+      "request_id": "b-release",
+      "action": "prefill",
+      "reason": "no checkpoint for this session",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": null,
+      "released": true
+    },
+    {
+      "request_id": "a-append",
+      "action": "restore",
+      "reason": "the request extends the saved prefix exactly",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": "a-1e914e827012c88771b0a162",
+      "released": false
+    },
+    {
+      "request_id": "fresh-append",
+      "action": "prefill",
+      "reason": "no checkpoint for this session",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": "fresh-1e914e827012c88771b0a162",
+      "released": false
+    },
+    {
+      "request_id": "a-edited",
+      "action": "prefill",
+      "reason": "the saved prefix is not a prefix of this request (a cut or edit inside it, or a shorter prompt)",
+      "tokens": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": "a-f53cecad3cef77170cf56244",
+      "released": false
+    },
+    {
+      "request_id": "same-initial",
+      "action": "prefill",
+      "reason": "no checkpoint for this session",
+      "tokens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": "same-fb950fedac453bd55ced5b77",
+      "released": false
+    },
+    {
+      "request_id": "same-replay",
+      "action": "explicit-fresh-replay",
+      "tokens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "checkpoint": "same-fb950fedac453bd55ced5b77",
+      "released": true,
+      "same_id_reinspected": true
+    },
+    {
+      "request_id": "final-b-release",
+      "action": "prefill",
+      "reason": "no checkpoint for this session",
+      "tokens": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "checkpoint": null,
+      "released": true
+    }
+  ],
+  "pid": 3420253,
+  "stopped": {
+    "event": "stopped",
+    "reason": "request-limit",
+    "safe_to_exit": true,
+    "completed_requests": 8,
+    "completed_controls": 8,
+    "discarded_pending": false,
+    "pending_request_id": ""
+  },
+  "model_loads": 1,
+  "owner_returncode": 0,
+  "append_fresh_tokens_exact": true,
+  "append_fresh_state_exact": true,
+  "append_state_sha256": {
+    "active.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+    "blk.0.gdn.history.bin": "3f3b8d07b4355b8329f3ce4d55fe30895b74f11f265cae93d79adb193a00e8a0",
+    "blk.0.gdn.state.bin": "d0d2ef007f2002e5e387734554032131b8390d32fee89cb6b5bfa920d032c874",
+    "blk.1.ple.history.bin": "23028f81e56546498d80add0a40573e8fee32751b4156f89fa5b40504e6b31eb",
+    "blk.1.qsa.keys.bin": "39c70d28ddf49f114fb42eec258caf8e1c08929ac9b3bd125754bf4f7e900c94",
+    "blk.1.qsa.pooled.bin": "ad08f6d0ba9063b8639ce012bb9313f90f5d7661a32c9938835c2be618f711fc",
+    "blk.1.qsa.raw.bin": "9563037411818d0d2ae4cc2d49e26f63adbfc9a97244940993356439c342b73b",
+    "blk.1.qsa.values.bin": "12664bb792736a1c95e7aece5265f7d7436d462cded175910feae88cfa02a9e6",
+    "blk.2.gdn.history.bin": "ed96cb7dca0eddf33bd8e7a4fb9fff73f3f0e614a17a11b962f6026ef624b3b0",
+    "blk.2.gdn.state.bin": "82620d083a2b9be685110eee8d05a61aea3df46d5a697821e6d77bb1f082bafd",
+    "blk.3.qsa.keys.bin": "2143b3bc9a93f14c45b229541ded797b91f7bc6d595909c592758e970443c68d",
+    "blk.3.qsa.pooled.bin": "32e94f8423e5d1a78228ce235a847aeff69008c8d1d41f189ef187545c221ce6",
+    "blk.3.qsa.raw.bin": "b1674b6ca7a7a98f37f74a9004c2e3ca0567f1012b59780a610e25504efb42e0",
+    "blk.3.qsa.values.bin": "dd6c70dc49514988e0857fd3876d85cf00a38ca0268908074674d29a75368b2e",
+    "error.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "next_token.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "position.bin": "f59d756696b2089fca5969fdfde2674e333765e1dad0a51c8ebbc63f351c4ca5",
+    "streams.bin": "3e061f237a625a57bdd49a7e79d6a55678a719b6c7e5ff0612a1729212f0f12a",
+    "token.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "token_history.bin": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+    "tokens.bin": "8d974c491ab9e8b9a80c63c5222255a04b0e67cc2e95bd26317bd2f1d23a25d8"
+  },
+  "fresh_state_sha256": {
+    "active.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+    "blk.0.gdn.history.bin": "3f3b8d07b4355b8329f3ce4d55fe30895b74f11f265cae93d79adb193a00e8a0",
+    "blk.0.gdn.state.bin": "d0d2ef007f2002e5e387734554032131b8390d32fee89cb6b5bfa920d032c874",
+    "blk.1.ple.history.bin": "23028f81e56546498d80add0a40573e8fee32751b4156f89fa5b40504e6b31eb",
+    "blk.1.qsa.keys.bin": "39c70d28ddf49f114fb42eec258caf8e1c08929ac9b3bd125754bf4f7e900c94",
+    "blk.1.qsa.pooled.bin": "ad08f6d0ba9063b8639ce012bb9313f90f5d7661a32c9938835c2be618f711fc",
+    "blk.1.qsa.raw.bin": "9563037411818d0d2ae4cc2d49e26f63adbfc9a97244940993356439c342b73b",
+    "blk.1.qsa.values.bin": "12664bb792736a1c95e7aece5265f7d7436d462cded175910feae88cfa02a9e6",
+    "blk.2.gdn.history.bin": "ed96cb7dca0eddf33bd8e7a4fb9fff73f3f0e614a17a11b962f6026ef624b3b0",
+    "blk.2.gdn.state.bin": "82620d083a2b9be685110eee8d05a61aea3df46d5a697821e6d77bb1f082bafd",
+    "blk.3.qsa.keys.bin": "2143b3bc9a93f14c45b229541ded797b91f7bc6d595909c592758e970443c68d",
+    "blk.3.qsa.pooled.bin": "32e94f8423e5d1a78228ce235a847aeff69008c8d1d41f189ef187545c221ce6",
+    "blk.3.qsa.raw.bin": "b1674b6ca7a7a98f37f74a9004c2e3ca0567f1012b59780a610e25504efb42e0",
+    "blk.3.qsa.values.bin": "dd6c70dc49514988e0857fd3876d85cf00a38ca0268908074674d29a75368b2e",
+    "error.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "next_token.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "position.bin": "f59d756696b2089fca5969fdfde2674e333765e1dad0a51c8ebbc63f351c4ca5",
+    "streams.bin": "3e061f237a625a57bdd49a7e79d6a55678a719b6c7e5ff0612a1729212f0f12a",
+    "token.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "token_history.bin": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+    "tokens.bin": "8d974c491ab9e8b9a80c63c5222255a04b0e67cc2e95bd26317bd2f1d23a25d8"
+  },
+  "edited_prefill": true,
+  "same_id_reinspected_then_released": true,
+  "completed_controls": 8,
+  "policy_status": {
+    "sessions": {
+      "fresh": {
+        "checkpoint": "fresh-1e914e827012c88771b0a162",
+        "tokens": 23,
+        "bytes": 8388608
+      },
+      "a": {
+        "checkpoint": "a-f53cecad3cef77170cf56244",
+        "tokens": 9,
+        "bytes": 8388608
+      }
+    },
+    "bytes": 16777216,
+    "budget": 33554432,
+    "pending_delete": [],
+    "retained_bytes": {}
+  },
+  "native_receipt_sha256": "3c919adff4e449735f4213991f75676162750cd8ea435cafb51a8cca6dd42a7f",
+  "finished_utc_ns": 1792776190528775357
+}

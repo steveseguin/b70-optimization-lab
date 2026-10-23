@@ -1,0 +1,264 @@
+"""Small filesystem/runner mocks only. Never execute a native binary or open a GPU."""
+import copy
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import tempfile
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+
+from native_checkpoint_store import (CheckpointInUse, NativeCheckpointStore, StoreRefusal,
+                                     MAX_BINARY, MAX_MANIFEST, MAX_STDOUT)
+
+
+def sha(data): return hashlib.sha256(data).hexdigest()
+
+
+class StoreTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix='native-store-mock-')
+        self.base = Path(self.temporary.name)
+        self.root = self.base / 'checkpoints'; self.root.mkdir()
+        self.binary = self.base / 'not-executed-native-fixture'
+        self.binary.write_bytes(b'\x7fELFmock only; never executed'); self.binary.chmod(0o700)
+        self.digest = sha(self.binary.read_bytes())
+        self.env = dict(PATH='/usr/bin:/bin', OMP_NUM_THREADS='2', LD_LIBRARY_PATH='/fixture/oneapi/lib')
+        self.folder = self.root / 's1'; self.folder.mkdir()
+        self.tokens = b'\x02\0\0\0\x05\0\0\0'; self.pending = b'\x03\0\0\0'
+        self.manifest = dict(format='ownrt.session-checkpoint.v1', checkpoint_id='s1',
+                             label='fixture-only-unqualified', contract='fixture-contract',
+                             token_state=dict(length=2, tokens_sha256=sha(self.tokens)),
+                             blobs=[dict(name='next_token', bytes=4, sha256=sha(self.pending)),
+                                    dict(name='state', bytes=16, sha256=sha(b'x'*16))])
+        self.manifest_bytes = (json.dumps(self.manifest, indent=1) + '\n').encode()
+        (self.folder / 'manifest.json').write_bytes(self.manifest_bytes)
+        (self.folder / 'fields.tsv').write_bytes(b'mocked native cross-check input\n')
+        (self.folder / 'tokens.bin').write_bytes(self.tokens)
+        (self.folder / 'next_token.bin').write_bytes(self.pending)
+        (self.folder / 'state.bin').write_bytes(b'x'*16)
+        self.calls = []
+        self.store = NativeCheckpointStore(self.root, self.binary, self.digest, self.env, runner=self.inspect)
+
+    def tearDown(self):
+        self.store.close(); self.temporary.cleanup()
+
+    def envelope(self):
+        return dict(schema='ownrt.checkpoint-inspect.v1', ok=True, mode='metadata', device_required=False,
+                    checkpoint_dir=str(self.folder), checkpoint_id='s1', label=self.manifest['label'],
+                    contract=self.manifest['contract'], manifest_sha256=sha(self.manifest_bytes),
+                    manifest=self.manifest, error=None,
+                    verified=dict(manifest_seal=True, fields_tsv_cross_check=True, file_set_closed=True,
+                                  tokens=None, semantic_blob_checks=None, blobs_verified=None, blob_bytes_verified=None))
+
+    def inspect(self, argv, **kwargs):
+        self.calls.append((argv, kwargs))
+        self.assertEqual(argv, [str(self.binary), '--checkpoint-inspect-metadata', str(self.folder)])
+        return subprocess.CompletedProcess(argv, 0, json.dumps(self.envelope()).encode(), b'fixture inspect diagnostics\n')
+
+    def delete_result(self, reason=None, check=None, removed=5):
+        ok = reason is None
+        return dict(schema='ownrt.checkpoint-delete.v1', ok=ok, deleted=ok,
+                    checkpoint_dir=str(self.folder), checkpoint_id='s1', files_removed=removed,
+                    reason=reason, error=None if ok else dict(check=check, detail='fixture refusal'))
+
+    def assert_shared_locked(self):
+        fd = os.open(self.root / 's1.lock', os.O_RDWR)
+        try:
+            with self.assertRaises(BlockingIOError): fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        finally: os.close(fd)
+
+    def test_snapshot_preserves_exact_bytes_closed_env_and_storage(self):
+        snapshot = self.store.snapshot('s1')
+        self.assertEqual(snapshot.manifest_bytes, self.manifest_bytes)
+        self.assertEqual(snapshot.tokens_bytes, self.tokens); self.assertEqual(snapshot.next_token_bytes, self.pending)
+        self.assertEqual(snapshot.inspect_returncode, 0)
+        self.assertEqual(snapshot.inspect_stderr, b'fixture inspect diagnostics\n')
+        self.assertEqual(snapshot.storage_bytes, sum(p.stat().st_size for p in self.folder.iterdir()))
+        arguments = snapshot.bridge_arguments()
+        self.assertNotIn('storage_bytes', arguments); self.assertNotIn('expected_identity', arguments)
+        self.assertNotIn('admitted_contract', arguments)
+        self.assertEqual(arguments['manifest_bytes'], self.manifest_bytes)
+        self.assertEqual(json.loads(arguments['manifest_bytes'])['label'], 'fixture-only-unqualified')
+        argv, kwargs = self.calls[0]
+        self.assertEqual(kwargs['env'], self.env); self.assertEqual(kwargs['timeout'], 15)
+        self.assertEqual(kwargs['stdin'], subprocess.DEVNULL)
+        self.assertEqual(kwargs['executable'], '/proc/self/fd/' + str(self.store._binary_fd))
+        self.assertEqual(kwargs['pass_fds'], (self.store._binary_fd,))
+        self.assertTrue(kwargs['close_fds']); self.assertTrue(kwargs['capture_output'])
+
+    def test_lock_held_during_native_call_and_every_small_read(self):
+        original = self.store._read_small
+        reads = []
+        def read(*args, **kwargs):
+            self.assert_shared_locked(); reads.append(args[1]); return original(*args, **kwargs)
+        def run(*args, **kwargs): self.assert_shared_locked(); return self.inspect(*args, **kwargs)
+        self.store._runner = run
+        with patch.object(self.store, '_read_small', side_effect=read): self.store.snapshot('s1')
+        self.assertIn('tokens.bin', reads); self.assertIn('next_token.bin', reads)
+        fd = os.open(self.root / 's1.lock', os.O_RDWR)
+        try: fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        finally: os.close(fd)
+
+    def test_metadata_accounting_does_not_read_large_blob(self):
+        with (self.folder / 'state.bin').open('r+b') as file: file.truncate(16*1024**2)
+        self.manifest['blobs'][1]['bytes'] = 16*1024**2
+        self.manifest_bytes = (json.dumps(self.manifest, indent=1) + '\n').encode()
+        (self.folder / 'manifest.json').write_bytes(self.manifest_bytes)
+        original = self.store._read_small; names = []
+        def read(*args, **kwargs): names.append(args[1]); return original(*args, **kwargs)
+        with patch.object(self.store, '_read_small', side_effect=read): snapshot = self.store.snapshot('s1')
+        self.assertNotIn('state.bin', names)
+        self.assertGreater(snapshot.storage_bytes, 16*1024**2)
+        self.assertIsNone(json.loads(snapshot.inspect_stdout)['verified']['blobs_verified'])
+
+    def test_stable_truncated_or_expanded_blob_refuses_without_read(self):
+        for size in (15,17):
+            with (self.folder / 'state.bin').open('r+b') as file: file.truncate(size)
+            with self.subTest(size=size), self.assertRaisesRegex(StoreRefusal, 'blob extent differs'):
+                self.store.snapshot('s1')
+        self.assertEqual(self.calls, [])
+
+    def test_invalid_declared_blob_extent_refuses(self):
+        for extent in (-1, True, '16', None):
+            self.manifest['blobs'][1]['bytes'] = extent
+            (self.folder / 'manifest.json').write_text(json.dumps(self.manifest))
+            with self.subTest(extent=extent), self.assertRaisesRegex(StoreRefusal, 'invalid native blob extent'):
+                self.store.snapshot('s1')
+        self.assertEqual(self.calls, [])
+
+    def test_lock_contention_is_nonblocking_and_never_executes(self):
+        fd = os.open(self.root / 's1.lock', os.O_RDWR | os.O_CREAT, 0o644)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            with self.assertRaises(CheckpointInUse): self.store.snapshot('s1')
+        finally: os.close(fd)
+        self.assertEqual(self.calls, [])
+
+    def test_lock_inode_replacement_has_exactly_three_attempts(self):
+        original = self.store._lstat; after_opens = []
+        def lstat(name):
+            info = original(name)
+            if name == 's1.lock' and info is not None:
+                after_opens.append(name)
+                return SimpleNamespace(st_mode=stat.S_IFREG | 0o644, st_dev=info.st_dev, st_ino=info.st_ino+1)
+            return info
+        with patch.object(self.store, '_lstat', side_effect=lstat):
+            with self.assertRaisesRegex(StoreRefusal, 'three bounded attempts'): self.store.snapshot('s1')
+        self.assertEqual(len(after_opens), 5)  # first pre-open is absent; three post-lock plus two pre-open checks
+        self.assertEqual(self.calls, [])
+
+    def test_missing_is_proven_without_tool_or_lock_creation(self):
+        self.assertIsNone(self.store.snapshot('absent'))
+        self.assertEqual(self.store.delete('absent'), 'missing')
+        self.assertFalse((self.root / 'absent.lock').exists()); self.assertEqual(self.calls, [])
+
+    def test_invalid_ids_rejected_before_filesystem_or_tool(self):
+        for name in ('', '../s1', '/tmp/s1', 's1/child', 's1.lock', '.hidden', 'x'*65, 'é', None):
+            for method in (self.store.snapshot, self.store.delete):
+                with self.subTest(name=name, method=method.__name__), self.assertRaises(StoreRefusal): method(name)
+        self.assertEqual(self.calls, [])
+
+    def test_symlink_directory_file_and_lock_refuse(self):
+        (self.root / 'link').symlink_to(self.folder, target_is_directory=True)
+        with self.assertRaises(StoreRefusal): self.store.snapshot('link')
+        with self.assertRaises(StoreRefusal): self.store.delete('link')
+        token = self.folder / 'tokens.bin'; token.unlink(); token.symlink_to(self.binary)
+        with self.assertRaises(StoreRefusal): self.store.snapshot('s1')
+        token.unlink(); token.write_bytes(self.tokens)
+        lock = self.root / 's1.lock'; lock.unlink(missing_ok=True); lock.symlink_to(self.binary)
+        with self.assertRaises(StoreRefusal): self.store.snapshot('s1')
+        self.assertEqual(self.calls, [])
+
+    def test_binary_digest_path_and_environment_admission(self):
+        for digest in ('f'*64, 'not-a-sha'):
+            with self.assertRaises(StoreRefusal): NativeCheckpointStore(self.root, self.binary, digest, self.env, runner=self.inspect)
+        link = self.base / 'binary-link'; link.symlink_to(self.binary)
+        with self.assertRaises(StoreRefusal): NativeCheckpointStore(self.root, link, self.digest, self.env, runner=self.inspect)
+        with self.assertRaises(StoreRefusal): NativeCheckpointStore(self.root, self.binary, self.digest, dict(self.env, LD_PRELOAD='/bad'), runner=self.inspect)
+        self.binary.write_bytes(b'\x7fELFchanged fixture')
+        with self.assertRaisesRegex(StoreRefusal, 'digest changed'): self.store.snapshot('s1')
+        self.assertEqual(self.calls, [])
+
+    def test_root_replacement_refuses_before_tool(self):
+        old = self.base / 'old-checkpoints'; self.root.rename(old); self.root.mkdir()
+        with self.assertRaisesRegex(StoreRefusal, 'root replaced'): self.store.snapshot('s1')
+        self.assertEqual(self.calls, [])
+
+    def test_native_malformed_identity_or_overclaimed_metadata_refuses(self):
+        edits = [lambda r:r.update(checkpoint_id='other'), lambda r:r.update(checkpoint_dir='/other'),
+                 lambda r:r.update(manifest_sha256='f'*64), lambda r:r.update(mode='full'),
+                 lambda r:r.update(device_required=True), lambda r:r['verified'].update(tokens=True),
+                 lambda r:r['verified'].pop('semantic_blob_checks'), lambda r:r.update(label='invented-qualified')]
+        for edit in edits:
+            row = copy.deepcopy(self.envelope()); edit(row)
+            self.store._runner = lambda *a, row=row, **k: subprocess.CompletedProcess(a[0], 0, json.dumps(row).encode(), b'')
+            with self.subTest(row=row), self.assertRaises(StoreRefusal): self.store.snapshot('s1')
+        self.store._runner = lambda *a, **k: subprocess.CompletedProcess(a[0], 0, b'{"ok":true,"ok":true}', b'')
+        with self.assertRaises(StoreRefusal): self.store.snapshot('s1')
+
+    def test_changed_small_or_inventory_file_refuses_not_zero_bytes(self):
+        original = self.inspect
+        def changed(argv, **kwargs):
+            result = original(argv, **kwargs)
+            (self.folder / 'state.bin').write_bytes(b'changed-to-16byt')
+            return result
+        self.store._runner = changed
+        with self.assertRaisesRegex(StoreRefusal, 'files changed'): self.store.snapshot('s1')
+        self.store._runner = original
+        (self.folder / 'tokens.bin').write_bytes(b'\0'*len(self.tokens))
+        with self.assertRaisesRegex(StoreRefusal, 'tokens.bin digest'): self.store.snapshot('s1')
+
+    def test_bounded_native_timeout_and_output_refuse(self):
+        def timeout(*args, **kwargs):
+            self.assertEqual(kwargs['timeout'], 15)
+            raise subprocess.TimeoutExpired(args[0], 15)
+        self.store._runner = timeout
+        with self.assertRaisesRegex(StoreRefusal, 'bounded native'): self.store.snapshot('s1')
+        self.store._runner = lambda *a, **k: subprocess.CompletedProcess(a[0], 0, b'x'*(MAX_STDOUT+1), b'')
+        with self.assertRaisesRegex(StoreRefusal, 'output exceeds'): self.store.snapshot('s1')
+
+    def test_oversized_metadata_and_binary_refuse_before_native(self):
+        with (self.folder / 'manifest.json').open('r+b') as file: file.truncate(MAX_MANIFEST+1)
+        with self.assertRaisesRegex(StoreRefusal, 'oversized'): self.store.snapshot('s1')
+        self.assertEqual(self.calls, [])
+        with self.binary.open('r+b') as file: file.truncate(MAX_BINARY+1)
+        with self.assertRaisesRegex(StoreRefusal, 'bounded regular'): self.store.delete('s1')
+
+    def test_delete_is_native_delegation_and_absence_checked(self):
+        def delete(argv, **kwargs):
+            self.calls.append((argv, kwargs))
+            self.assertEqual(argv, [str(self.binary), '--checkpoint-delete', str(self.folder)])
+            for path in self.folder.iterdir(): path.unlink()  # Mock the native tool only, not store deletion code.
+            self.folder.rmdir()
+            return subprocess.CompletedProcess(argv, 0, json.dumps(self.delete_result()).encode(), b'')
+        self.store._runner = delete
+        self.assertEqual(self.store.delete('s1'), 'ok'); self.assertFalse(self.folder.exists())
+        self.assertEqual(len(self.calls), 1)
+
+    def test_delete_in_use_and_refusal_are_distinct(self):
+        row = self.delete_result('in_use', 'lock', 0)
+        self.store._runner = lambda *a, **k: subprocess.CompletedProcess(a[0], 1, json.dumps(row).encode(), b'')
+        self.assertEqual(self.store.delete('s1'), 'in_use'); self.assertTrue(self.folder.exists())
+        row = self.delete_result('not_a_checkpoint', 'visibility', 0)
+        with self.assertRaises(StoreRefusal): self.store.delete('s1')
+        row = self.delete_result('io', 'io', 1)
+        with self.assertRaises(StoreRefusal): self.store.delete('s1')
+
+    def test_delete_false_success_and_wrong_identity_refuse(self):
+        row = self.delete_result()
+        self.store._runner = lambda *a, **k: subprocess.CompletedProcess(a[0], 0, json.dumps(row).encode(), b'')
+        with self.assertRaisesRegex(StoreRefusal, 'still exists'): self.store.delete('s1')
+        row['checkpoint_id'] = 'other'
+        with self.assertRaisesRegex(StoreRefusal, 'identity differs'): self.store.delete('s1')
+
+    def test_closed_store_refuses(self):
+        self.store.close()
+        with self.assertRaises(StoreRefusal): self.store.snapshot('s1')
+
+
+if __name__ == '__main__': unittest.main()

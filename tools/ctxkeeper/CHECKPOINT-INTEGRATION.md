@@ -243,3 +243,44 @@ four-card host's request front can be dropped in when it exists. What it fixes:
 
 The boundary stands: ctxkeeper's request path does not call these operations; CONVERSATIONS.md's journal is
 unchanged. Wiring needs piece 1 (the request front) and, for the two-card lane, the TP2 decision of §10.
+
+## Update 2026-10-23: native postreply front and host adapter integration passed; HTTP remains unwired
+
+The native request front now exists. Packet197 retained one owner across eight
+requests; packet198 added protocol-v2 postreply SAVE/RELEASE. The
+[packet198 device audit](../../experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/evidence/independent-device-result.json)
+verified eight requests, 1,408 exact generated tokens and five checkpoint states
+against packet197, followed by clean drain. Its label remains
+`experimental-postreply-front`, contract `v1.2+p198`; this does not inherit p181's
+qualified label or authorize HTTP serving.
+
+The CPU integration pieces now include a
+[locked native snapshot/delete store](../../experiments/own-xpu-runtime/integration/native_checkpoint_store.py),
+explicit p198 admission in the
+[identity bridge](../../experiments/own-xpu-runtime/integration/checkpoint_bridge.py),
+and an [attached-owner adapter](../../experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE.md).
+Parking now has 25 focused CPU tests. It admits experimental contracts only by
+explicit trusted `(label, contract)` configuration, validates native-safe IDs,
+reserves trusted peak SAVE bytes before writing, counts detached in-use and
+ambiguous states, and reinspects same-ID shortcuts. It does not silently relabel
+checkpoints. A normal no-save or same-ID hit releases the pending reply; ambiguous
+failures halt adapter intake without automatic retry or owner restart.
+
+The actual front, store, bridge, Parking and adapter together passed a separate
+[tiny GNU HOST_ONLY integration probe](../../experiments/own-xpu-runtime/integration/receipts/checkpoint-engine-host-b-closeout.json):
+context64/vocab16, one model load, eight requests, 44 generated tokens, five saves,
+three releases and clean stopped. Appended restore matched fresh tokens and
+state exactly; edited-prefix prefill and same-ID release passed. The first
+attempt's empty identity TSV failed SAVE's three-row requirement; its evidence
+was retained before the corrected synthetic fixture passed in a fresh output.
+The [six-section closeout](../../experiments/own-xpu-runtime/notes/2026-10-23-checkpoint-engine-host-closeout.md)
+records exact identities, evidence, limitations and replay conditions.
+
+These are distinct proofs: the fixed native worker has the packet198 device
+lifecycle result, while the complete policy/adapter path has tiny-host
+integration evidence. **ctxkeeper's HTTP request path still does not call these
+operations.** No HTTP endpoint, release bump, real-model adapter serving
+qualification or speed claim was introduced. The next integration boundary must
+retain tokenizer/template identity, exact-prefix fallback, bounded requests,
+cancellation and the admitted persistent owner's fault/drain rules. TP2 remains
+outside this one-card path.

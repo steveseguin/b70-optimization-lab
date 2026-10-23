@@ -1,0 +1,41 @@
+{
+  "schema": "ownrt.independent-checkpoint-engine-review.v1",
+  "created_utc": "2026-10-23T17:13:36.476388+00:00",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "scope": "Finite adapter source review and synthetic CPU tests only.",
+  "validation": {
+    "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest -v test_checkpoint_engine.py",
+    "returncode": 0,
+    "tests": 13,
+    "reported_seconds": 0.005
+  },
+  "checks": [
+    "Deep-copied complete caller identity; explicit experimental p198 contract; exact store-root and store-binary/owner-binary binding; ready context/vocabulary/one-load checks.",
+    "One reentrant owner mutex spans policy lookup, RUN, postreply parking and disposition. No launch, signal, restart, HTTP or checkpoint serialization operation.",
+    "SAVE requires current reply identity and exact full visible IDs, fresh checkpoint ID, conservative free-space admission, manifest hash acknowledgement and validated locked snapshot with identical history.",
+    "Append intent captures manifest hash/input once, is revalidated against actual max_new before RUN and consumed on attempt; same-generation resume is refused by this API.",
+    "All normally completed no-SAVE policy paths release pending reply, including non-None same-ID reuse; final release may leave front draining for coordinator stop/exit checks.",
+    "Any exception poisons further intake; no automatic RELEASE/retry/close/signal after ambiguity; Parking retained reservations remain charged."
+  ],
+  "blockers": [],
+  "limitations": [
+    "All13 tests use synthetic metadata and mocked front/store objects; no native integration qualification is inferred.",
+    "Trusted launch provenance must attest actual owner binary/startup checkpoint root; ready protocol does not attest those values.",
+    "Size-bound proof remains injected and caller-owned; accepted256MiB proof is restricted to the exact p198 real-model identity/context4096.",
+    "Constructor intentionally requires identical store-tool and admitted owner binary SHA. A GNU-host tool inspecting device-binary checkpoints proves only Store+Bridge, not actual device-owner adapter attachment.",
+    "Native restore must perform full state validation again before upload; metadata snapshots do not validate tensor contents."
+  ],
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/own-xpu-runtime/integration/CHECKPOINT-ENGINE.md": "68585c60768004c84b87d38b686301bbd332c58897afa8dd32056c19b4716580",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "experiments/own-xpu-runtime/integration/receipts/independent-checkpoint-policy-store-review.json": "3348e16753813e3833851fd37f16d9c92c17083ef327b5d0fe163293abc39d18",
+    "experiments/own-xpu-runtime/integration/receipts/p198-checkpoint-size-bound.json": "c6efc1fd69306a1409d2f0664a683e3674841f3c58e2d1f808dc57cd4602e4e3"
+  }
+}

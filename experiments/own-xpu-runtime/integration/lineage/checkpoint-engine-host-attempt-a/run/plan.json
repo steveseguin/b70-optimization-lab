@@ -1,0 +1,105 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "native_executed": false,
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a",
+  "argv": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host/own-rt-iq3",
+    "--mini",
+    "--pipeline-mini",
+    "--context",
+    "64",
+    "--retain-steps",
+    "none",
+    "--identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/synthetic-identity.tsv",
+    "--native-nice",
+    "19",
+    "--seconds",
+    "180",
+    "--request-front",
+    "--request-front-max-requests",
+    "8",
+    "--request-front-idle-seconds",
+    "30",
+    "--request-front-checkpoints",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/checkpoints",
+    "--request-front-tokenizer-identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/tokenizer.tsv",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-a/owner"
+  ],
+  "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+  "prior_manifest": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s1/manifest.json",
+  "prior_manifest_sha256": "e6662298129208a75996dff27957e974665ace9408e714eb036700db7fe98847",
+  "tokenizer_source": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/tokenizer.tsv",
+  "tokenizer_sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa",
+  "expected_identity": {
+    "model": {
+      "identity_tsv_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "shard_stat_rows": []
+    },
+    "engine": {
+      "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+      "packet": "packet198-postreply-checkpoint",
+      "profile": "tp1-full512"
+    },
+    "geometry": {
+      "layers": 4,
+      "qsa_layers": [
+        1,
+        3
+      ],
+      "gdn_layers": [
+        0,
+        2
+      ],
+      "kvh": 1,
+      "ad": 4,
+      "ih": 4,
+      "id": 4,
+      "qh": 4,
+      "gdn": {
+        "kh": 1,
+        "vh": 3,
+        "d": 4
+      },
+      "context": 64,
+      "vocab": 16,
+      "eos": 15
+    },
+    "dtypes": {
+      "kv": "bf16",
+      "gdn_state": "bf16",
+      "ple": "bf16"
+    },
+    "tokenizer_identity": {
+      "file_sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa",
+      "format": "ownrt.tokenizer-identity.v1",
+      "gguf_header_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "tokenizer_source_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "vocab_bin_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    "label": "experimental-postreply-front",
+    "contract": "v1.2+p198",
+    "qualified_by": {
+      "scope": "experimental postreply checkpoint front; no device qualification",
+      "device_gates": []
+    }
+  },
+  "synthetic_identity_bytes": 0,
+  "synthetic_identity_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "save_bound_bytes": 8388608,
+  "disk_floor_bytes": 27000000000,
+  "expected_requests": 8,
+  "expected_controls": 8,
+  "scope": "Tiny HOST_ONLY arithmetic and adapter/store integration only; no real-model/device/HTTP qualification",
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": "10e3dd633c5c676cf661cb9eff3969e034e3a3c4d1730624fa5a969207981b5e",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+  }
+}
