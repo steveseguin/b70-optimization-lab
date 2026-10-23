@@ -1,0 +1,27 @@
+{
+  "schema": "packet209.root-passive-admission-disposition.v1",
+  "utc": "2026-10-23T23:37:42.423831+00:00",
+  "preparation_only": true,
+  "device_opens": 0,
+  "device_enumerated": false,
+  "launch_attempted": false,
+  "manifest_issued": false,
+  "admission_passed": false,
+  "reason": "Target BDF0000:27:00.0 has a protected daily-application DRM descriptor holder. All four BDFs currently have holders. No idle-card qualification is admitted.",
+  "target_bdf": "0000:27:00.0",
+  "target_nodes": [
+    "/dev/dri/card4",
+    "/dev/dri/renderD131"
+  ],
+  "target_holder": {
+    "pid": 3487303,
+    "start_ticks": 63453537,
+    "unit": "qwen38-27b-vision.service",
+    "node": "/dev/dri/renderD131"
+  },
+  "evidence_sha256": {
+    "root-ownership-preparation.json": "676ac869b939cae35f1c3ad99ed295ad3474cbfa5638f402220ef49911786b48",
+    "root-holders-preparation.json": "84e5fae4b3faef2e38ed0955611244412d9d624b31b368100df2824f86dfc17e"
+  },
+  "next_action": "Finish CPU-only entry/guard build and tests, preserve application identities, continue production Engine buffer/cache proof. Fresh admission is required before any future device work."
+}

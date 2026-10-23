@@ -1,0 +1,53 @@
+{
+  "command": [
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/tests",
+    "-p",
+    "test_guards.py",
+    "-v"
+  ],
+  "cpu_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "log": "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/evidence/guard-tests-1792798983528813373/tests.log",
+  "log_sha256": "fdfed73887df0c93f44113042b11946f11df5b7f617762614e8a40da829033e0",
+  "nice": 19,
+  "passed": true,
+  "returncode": 0,
+  "schema": "packet209.cpu-guard-tests.v1",
+  "scope": "Python actual guard functions, injected subprocess boundaries and real temporary flocks only; no native execution, device enumeration, service query or privilege",
+  "snapshot": "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/evidence/guard-tests-1792798983528813373",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/AUTHORITY.md": "b9ce98835d7ba4ce86249597818131d7fe5986c6fa86329b1275517147292d7c",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/authority-inputs.json": "6b4204630419a1710e7086644280a85557ca97c4baa2cf22c0211f69f51eb4d9",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/build_entry.py": "9779c8f0d646d62074afa7b40a09cd2ab79e5283e12f2d146cc2d98687ff6f4d",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/entry.cpp": "750a7bc8c7a07692dd34ea303f2e56fb82dd6b4f0244fc5b13017bbfc8d3465a",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/live_ops.py": "0dbf2e60848c2e18b3cd0f426733cc24eff9ee17f79e71ff312b8767e7de8ee1",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/native_guard.hpp": "b92abf908826d06aa0e2dd3ddb1359d502db82d678d3354829298aab35b8dd5a",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/parent-pins.json": "498891477a8df73ae1d8812101fc7f4f0450e8b8c7b81856198ec273f273a9a5",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/runner.py": "8b4234c5fe8e890a7b4e5dc2c908a3bdd56fd744110b56832f0f64edebf29ee7",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/strict_json.hpp": "368c40d4888d2ebb696ac4dab1c0af23c03560f7ad4169d022da6c64794c2243",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/tests/test_guards.py": "ebd689ab71a0c0ccf2d7594fe180a46d8d6fe16e894f804fa47d726164d11da5"
+  },
+  "source_unchanged": true
+}

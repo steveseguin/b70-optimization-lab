@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 19:45 EDT — guarded native entry compiles; the proposed idle-card test is not admitted.**
+The vision application's unchanged process holds a device descriptor on the proposed BDF27 target;
+all four cards currently have holders. No qualification manifest was issued and no device process was
+launched. The three daily applications retain their restore30 process identities. The guarded native
+entry preserves the earlier kernel image and passes 25 Python failure-path tests plus an independent
+rerun. Native behavior remains untested and operational execution stays disabled. Next is a synthetic
+CPU proof of captured pointer-table consumers, retained prompt-row routes and expert-cache replacement.
+[Passive evidence and decision](experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/evidence/root-admission-disposition.json).
+
 **October 23, 19:22 EDT — native paired projection compiles; GPU execution remains untested.**
 The SYCL kernel and synthetic comparison fixture compile and link with the selected runtime owner and
 arithmetic objects. Independent offline inspection confirms both Q6 kernel entries, the retained comparison

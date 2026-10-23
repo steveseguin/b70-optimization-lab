@@ -1,0 +1,40 @@
+{
+  "critical_limitations": [
+    "Lane-A helper covers physical cards0+1 and cannot directly admit dailyapps oncard0",
+    "native_env(A) fixes BDF23 and must not select P209 card",
+    "Global passive scan passed=false while expectedothercardapps holdGPUFDs is not a target-idle decision",
+    "Reservation/DrainPermit context exit always closes locks; markers alone do not mean locks retained"
+  ],
+  "intended_target": {
+    "cooperative_lane": "A",
+    "native_visible_ordinal": 0,
+    "pci": "0000:27:00.0",
+    "physical_card": 1,
+    "physical_card_note": "Historical ordinal1 only; actual Linux names from retained preparation are card4/renderD131, never inferred from ordinal."
+  },
+  "schema": "packet209.admission-source-authority.v1",
+  "scope": "CPU admission/lifecycle tests only; no launch authorization",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/ops/packet196-orchestration/passive_device_holders.py": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/chain_devices.py": "81f34a2df9917af22b60dd0c7df9e32c5be3318cd15e05a3dde047904a340d83",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/conditions.py": "0f7760d38a5bfff8fac0766417124d13198e9d6781b8d506ff4e5104fcb717ef",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/drain_gate.py": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/exec_limits.py": "4cd56fe75aed545f572f3ef6a484f6794e529f27c6e1adcd04bf916a51288d89",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/fault_review.py": "e6b233737d2591ef653052129de45f65793dc69f8a260e4830f9fe1491afdc08",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/lane_admission.py": "fcd61deafe52b170cd20c649ff5690d6a92a1e0584db90ed982e54781752e4f4",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native_env.py": "150b2ce2b9388d015eb87c2b33e32138feeea6390280a72bda61825e1deb4f1d",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/device_worker.py": "36e399927de28fb04fcf1f70ed2202a198faa6a52cb968aa9dcd942f2ebb49ea",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py": "1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f",
+    "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/evidence/build-compile-only.json": "88854c0d69d5bd9ac8174c020f40c4905706004b6780570a10f886852eb78c8e",
+    "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/native_fixture.cpp": "140973651ab6e32385d2e19b57617542d401dbe964bb225cf73c5477c3f90b2d",
+    "experiments/own-xpu-runtime/stage2/packet208-sycl-paired-projections/paired_sycl.hpp": "c2956639688b332b2f93e5aa5374bd9dab5d29894e40ae3cd5e3c2bb5f89afdf",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/evidence/root-admission-disposition.json": "d6d42e32d2c5bc4533850aa244a80cf6eb2ac91e0ba99f36759dfa35b290ecf4",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/evidence/root-holders-preparation.json": "84e5fae4b3faef2e38ed0955611244412d9d624b31b368100df2824f86dfc17e",
+    "experiments/own-xpu-runtime/stage2/packet209-native-pair-qualification/evidence/root-ownership-preparation.json": "676ac869b939cae35f1c3ad99ed295ad3474cbfa5638f402220ef49911786b48"
+  },
+  "unchanged_parent": {
+    "packet208_build_receipt_sha256": "88854c0d69d5bd9ac8174c020f40c4905706004b6780570a10f886852eb78c8e"
+  }
+}
