@@ -69,10 +69,10 @@ raw receipts therefore have sample count 1 and are not twelve-prompt medians.
 The separately approved capped records are two-card **62.345282 tok/s**
 (packet190 k3x chain: packet187's V3 line + GDN layer 26 on the rank-0 boundary +
 kernel token I/O + async rank-0 prepare, export on the copy engine, October 22,
-`cmvk51wfn001gng01fpbfy89q`; supersedes packet187 60.659520 and packet136 58.798109) and one-card **35.926720
-tok/s** (packet182c: packet58as bounded spin + packet176 kernel foreground token
-I/O, October 22, `cmvjejvoi03qcrf0138emu5a6`; supersedes packet58as 34.573038,
-`cmvf31py400furf01tv54rxo7`). They use the older 128-token cap. Those record
+`cmvk51wfn001gng01fpbfy89q`; supersedes packet187 60.659520 and packet136 58.798109) and one-card **36.602512
+tok/s** (packet58-onecard-cache23-chain: the packet182c line (packet58as bounded spin +
+packet176 kernel foreground token I/O) with a 23.05 GB admitted device expert cache,
+October 23, `cmvkcqznb002lng01fsrhjn7t`; supersedes packet182c 35.926720 and packet58as 34.573038). They use the older 128-token cap. Those record
 packets do not have the full-512/prefill measurements above; packet58aj does. See the [submission ledger](../localmaxxing-submissions.md).
 
 Actual prompt-length scaling and concurrency remain unmeasured on these exact

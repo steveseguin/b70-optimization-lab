@@ -1,5 +1,7 @@
 # Packet58-onecard-cache23-chain: one-card record chain of the max23 capacity screen (CPU-prepared, not launched)
 
+**Status (2026-10-23 02:40 UTC): chain run on card 0 (unit `packet58-onecard-cache23-a`, 01:55-02:29 UTC), all 7 windows passed; WS128 36.602512 tok/s class-balanced, 12/12 exact; submitted and APPROVED as LocalMaxxing `cmvkcqznb002lng01fsrhjn7t` (+1.88 % over 35.926720). Chain receipts under `evidence/card0-cache23-a/`, bundle under `submission/prepared-a/`, window receipts under `lineage/window-20261023/`.**
+
 **Status (2026-10-23, CPU only):** derived, gated and sealed; READY written last; nothing queued, launched, submitted
 or committed by the preparation. The chain has not run: device exactness, the fresh WS128 rate and any submission are
 pending. Lane A, card 0, Qwen3.8 Flash-Next 125B-A6B UD-IQ3_XXS (the quantized compressed version), 128-token capped

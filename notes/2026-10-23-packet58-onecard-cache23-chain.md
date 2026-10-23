@@ -78,3 +78,16 @@ filtered; the notes and result packet disclose the 128-token capped scope and th
 - The carried 58ah a/b submission disclosure is compacted (facts kept) to stay under the 2,000-character cap.
 - `--server-dry-run` needs the key: coordinator step. No device result, speed or record; +1.7 % is the screen's
   in-load measurement. Root free 30.9 GB at the end (26 GB floor kept); packet 121 MB (49 MB ignored build).
+
+## Device result and submission (2026-10-23, chain 01:55-02:29 UTC, unit packet58-onecard-cache23-a): NEW RECORD 36.602512 tok/s, APPROVED
+
+All seven windows passed on card 0 (K1a, K1b, KD, W2m, WS, WS128x, WS128), exact. WS128: **36.602512 tok/s** class-balanced (median of prompt-class
+medians; all-prompt median 37.433, p10 34.75; class medians analysis 38.11, code 36.14, documentation 36.89, operations 35.52, prose 36.31), 12/12 prompts
+and 1,536 tokens exact vs `iq3-p49-split32-v1`, timing-claim eligible; TTFT median 1.79 s, wall rate 24.6 tok/s.
+
+`prepare_submission.py --chain … --output submission/prepared-a` (under `taskset -c 4-15,20-31`) -> `submission.py --dry-run` (passed) -> `--server-dry-run`
+HTTP 200 `{"valid": true}` -> real submit **HTTP 201, run `cmvkcqznb002lng01fsrhjn7t`, APPROVED** (+1.88 % over `cmvjejvoi03qcrf0138emu5a6` 35.926720) -> `--update-record`
+(threshold 36.60251162011413, result sha `6791845c…`). Receipt `data/localmaxxing-responses/2026-10-23-packet58-onecard-cache23-chain-a-onecard-ws128.txt`.
+
+Host: endpoints idle since the restore16 validations (01:19 UTC); root 31 GB free after archiving packet124c/136 chain outputs; endpoints restored
+afterwards as `*-20261023-restore17`; PAUSE-A re-armed, PAUSE-B untouched. Window receipts: `lineage/window-20261023/` in the packet.

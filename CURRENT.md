@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 22, 22:40 EDT — NEW ONE-CARD RECORD: 36.602512 tok/s class-balanced (packet58-onecard-cache23 chain, LocalMaxxing `cmvkcqznb002lng01fsrhjn7t`, APPROVED, +1.88 % over 35.926720).**
+The chain (packet182c's seven windows on card 0 with `cache_cap max23` = 23.05 GB admitted device expert cache and the plan re-partitioned from 182c's
+lifetime receipts; engine `083e3853…` bound byte for byte) ran 01:55–02:29 UTC (unit `packet58-onecard-cache23-a`): K1a, K1b, KD, W2m, WS, WS128x,
+WS128 all passed and exact. WS128: 36.602512 class-balanced (all-prompt median 37.43, p10 34.75), 12/12 exact, timing-claim eligible, TTFT 1.79 s.
+Submitted 02:36 UTC after a local dry run and a server dry run (HTTP 200 valid): HTTP 201, APPROVED; `scripts/packet58_onecard_record_threshold.json`
+updated; receipt `data/localmaxxing-responses/2026-10-23-packet58-onecard-cache23-chain-a-onecard-ws128.txt`. Chained under the idle-lanes rule (screen
++1.72 %, below the +2 % chain bar). Endpoints restored as `*-20261023-restore17`; PAUSE-A re-armed, PAUSE-B untouched. Packet
+`stage2/packet58-onecard-cache23-chain/` (chain receipts under `evidence/card0-cache23-a/`, bundle under `submission/prepared-a/`),
+`ops/packet58c23chain-orchestration/`, note `notes/2026-10-23-packet58-onecard-cache23-chain.md`. Both records are now from this session:
+one card 35.93 → 36.60, two cards 58.80 → 60.66 → 62.35.
+
 **October 22, 21:15 EDT — one-card 23 GB expert-cache screen WINS +1.72 % (packet58-onecard-cache23, card 0, 00:57–01:10 UTC).**
 One load max/max23/max/max23/max = 35.892/**36.546**/35.929/**36.569**/35.925 tok/s with K1a/K1b passed; every view 12/12 exact, drift 0.01 %;
 fills per token 15.45 → 13.46 (−12.9 %), fill MB 30.6 → 26.7; no kill rule fired; DRM stayed under the unchanged 30.5 GB guard with the plan
