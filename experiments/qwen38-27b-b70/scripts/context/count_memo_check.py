@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Exactness and time of clm_baselines' incremental token count against the upstream count.
 
-  count_memo_check.py <context_snapshots/turn-NNNN.json> [--out receipt.json]
+  COUNT_MEMO=1 count_memo_check.py <context_snapshots/turn-NNNN.json> [--out receipt.json]
 
 Takes the recorded message list (a real 2M hostile history), and checks that the memo returns
 the upstream count for: 60 prefixes of the history, the full list, a replaced content string, a

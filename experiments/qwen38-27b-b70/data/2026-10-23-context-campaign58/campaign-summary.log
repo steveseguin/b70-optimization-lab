@@ -1,0 +1,30 @@
+### 02:53:35 campaign 37 runner (c58, per-arm servers 1, trajectory export 0, lean client 1, keeper 1.3.0, depth 5, piece 832, one launch 1, tail 1) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE58.txt (2 lines); MemAvailable 13661 MiB
+### 02:53:36 queue checked: K32V hostile2mk 0 14400;K32V hostile2mk 2 14400;
+### 02:53:36 stopping the Gemma service (front door state: down down)
+### 02:53:41 cards free; MemAvailable 13639 MiB
+### 02:53:41 arm 1 (K32V hostile2mk 0 14400): its own server
+### 02:56:11 server ready after ~165 s; MemAvailable 2844 MiB
+### 02:56:12 [K32V__sparse-memory-t2000k-poison-retro-s0] start (cap 14400s); MemAvailable 2680 MiB; server totals: prompt 15 cached 0 generated 64
+### 04:17:47 [K32V__sparse-memory-t2000k-poison-retro-s0] done rc=0 in 81 min 36 s; MemAvailable 2513 MiB; server totals: prompt 19585859 cached 16031808 generated 377386
+   RESULT 423/423 void=False violations=0 counts={'correct': 423, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 1298 (main loop 1298), written 112632, prompt 14577349 cached 11438336
+   proxy: cuts 153 (in place 153, failed 0, asked again 20), archived 2582, recalls 180, full-rewrite failed 0, notes read 3164419 cached 2971072 written 208249; background started 0 applied 0 discarded 0 waited 0 s; upstream 4359.882 s (background 0 s); restarts 0
+   calls: main 1452 calls 2642 s read 16421425 cached 13060736 written 169073; notes 174 calls 1718 s read 3164419 cached 2971072 written 208249; largest call (read + written) 27418 tokens
+### 04:18:08 stopping the server; MemAvailable 2580 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.19  1% 2.30  median 2.43 GiB  (10162 samples)
+### 04:18:36 arm 2 (K32V hostile2mk 2 14400): its own server
+### 04:21:42 server ready after ~165 s; MemAvailable 3078 MiB
+### 04:21:43 [K32V__sparse-memory-t2000k-poison-retro-s2] start (cap 14400s); MemAvailable 3071 MiB; server totals: prompt 15 cached 0 generated 64
+### 05:45:26 [K32V__sparse-memory-t2000k-poison-retro-s2] done rc=0 in 83 min 44 s; MemAvailable 2701 MiB; server totals: prompt 20814043 cached 17204928 generated 383445
+   RESULT 418/423 void=False violations=0 counts={'correct': 418, 'blank': 0, 'wrong': 5, 'stale': 0}
+   client: calls 1435 (main loop 1435), written 127193, prompt 15590493 cached 12390976
+   proxy: cuts 154 (in place 154, failed 0, asked again 36), archived 2856, recalls 172, full-rewrite failed 0, notes read 3394585 cached 3211520 written 201283; background started 0 applied 0 discarded 0 waited 0 s; upstream 4406.149 s (background 0 s); restarts 0
+   calls: main 1591 calls 2743 s read 17419443 cached 13993408 written 182098; notes 190 calls 1663 s read 3394585 cached 3211520 written 201283; largest call (read + written) 25416 tokens
+### 05:45:52 stopping the server; MemAvailable 2784 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.36  1% 2.45  median 2.58 GiB  (10430 samples)
+### 05:46:20 queue empty after 2 lines; waiting up to 0s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE58.txt
+### 05:46:30 no new line for 0s; ending
+### 05:46:30 RESTORE=0: cards left empty for the next server
+### 05:46:30 campaign 28 (c58) complete

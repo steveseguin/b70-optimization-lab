@@ -1,5 +1,11 @@
 # The harness counts the whole history four times a step: an exact memo, and campaign 58 to measure it (2026-10-23)
 
+**Result update, 09:32 EDT:** campaign 58 failed its full gate. Seed 0 reproduced all NOTES and 423/423
+in 81 min 15 s; seed 2 scored 418/423 with 16 audit flags and received a different directory timestamp
+before its first NOTES request. `COUNT_MEMO=0` is restored as the default pending a controlled comparison.
+The public wall figures are unchanged. [Closeout and evidence](2026-10-23-campaign58-closeout.md).
+The preregistration below is preserved as written.
+
 **Written 02:53 EDT, before any run. CPU only so far.**
 
 ## Where a 2M hostile seed's time goes

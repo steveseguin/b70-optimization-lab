@@ -2338,6 +2338,21 @@ campaign 55's 5,524) is the client between steps, growing with the run: the CLM 
 history with tiktoken four times a step. An exact per-message memo and campaign 58 (campaign 55 again with it)
 are in [2026-10-23-harness-count-memo.md](2026-10-23-harness-count-memo.md).
 
+## Campaign 58 ran: seed 0 exact and faster; seed 2 fails, with a timestamp confound; audited October 23, 09:32 EDT
+
+Seed 0: **423/423, 0 wrong STATE lines**, all 153 NOTES texts identical to campaign 55, 81 min 15 s
+instead of 92 min 40 s. Seed 2: **418/423, 16 audit flags**, 83 min 19 s instead of 93 min 10 s;
+FAIL (one flag is a historical-removal parser false positive; 15 actual wrong lines remain). Both
+seeds keep every forgery target and apply all 16 audits. The registered between-step limit also fails:
+233/277 s residual, and 414/490 s summed no-notes call gaps, versus at most 150 s.
+
+Seed 2's opening `ls -la /app/` exposes a different parent-directory timestamp before the first NOTES
+request; all other archived text through that first request is identical. This is an uncontrolled
+input difference, not evidence that the memo changes token counts. Per registration, the memo is
+withdrawn from the default pending a matched off/on comparison. Public wall numbers stay unchanged.
+Both servers stopped, cards empty. [Closeout](2026-10-23-campaign58-closeout.md),
+[audits and receipts](../data/2026-10-23-context-campaign58/).
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

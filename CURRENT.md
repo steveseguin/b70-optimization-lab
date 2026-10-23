@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 09:32 EDT — Campaign 58 is audited; memo withdrawn from the default pending a controlled seed-2 comparison.**
+On the two-card host, seed 0 reproduced all 153 NOTES and 423/423 with zero wrong STATE lines in 81 min 15 s
+(was 92 min 40 s). Seed 2 scored 418/423 with 16 audit flags and failed; its opening directory listing exposed
+a different timestamp before its first NOTES call, so the comparison did not hold model input fixed.
+Both seeds kept every forgery target and applied all audits. The remaining between-step work is 233/277 s,
+above the 150 s prediction. `COUNT_MEMO=0` is restored as default and public wall figures stay unchanged.
+Both servers stopped at campaign end (05:46 EDT), cards empty. Preparing a fixed-metadata off/on comparison;
+no new GPU work yet. Evidence: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign58-closeout.md`.
+
 **October 23, 03:50 EDT — the one-card expert instruction diet qualifies on device (packet58-onecard-diet-micro, lane B card 2, 07:41 UTC).**
 The diet re-derived for the one-card halfcache gate/up kernel (`p58ag_diet::GateUp`: hoisted exceptional test from the halfcache entry, sign
 after the scale multiply from the 16-bit code pair, hoisted effective scales; 12.0 vs 15.7 instructions per weight) runs at 0.78× production

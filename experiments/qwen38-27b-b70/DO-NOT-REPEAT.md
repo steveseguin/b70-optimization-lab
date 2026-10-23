@@ -372,6 +372,11 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
 
 ## Context keeper and proxy: closed mistakes (2026-10-12, campaigns 11 and 12)
 
+Campaign 58 follow-up: do not call runs identical-input merely because their task and model settings match.
+Seed 2's opening `ls -la /app/` exposes the container root mtime; c55/c58 differ before the first NOTES call.
+Pin sandbox metadata in a separately labeled control, preserve tool text, and compare inputs before assigning
+quality differences to harness optimization. [Closeout](notes/2026-10-23-campaign58-closeout.md).
+
 Record: [closeout](notes/2026-10-12-context-campaigns-11-12-closeout.md); every run and table is in the
 [lab note](notes/2026-10-10-context-16k-baseline.md), sections "Campaign 11" and "Campaign 12".
 

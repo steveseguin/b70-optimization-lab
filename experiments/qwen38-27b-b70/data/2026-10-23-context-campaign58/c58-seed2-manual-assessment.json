@@ -1,0 +1,129 @@
+{
+  "schema": "ctxkeeper.campaign58-manual-assessment.v1",
+  "seed": 2,
+  "audit_unchanged": true,
+  "audit_flagged_lines": 16,
+  "substantive_wrong_lines_after_reading_flagged_text": 15,
+  "parser_false_positive": {
+    "version": 10,
+    "item": 84,
+    "counter": "fatane57",
+    "notes_value": "opened at 286 (item 79; was removed item 44; still confidential per item 1 rule)",
+    "true_value": 286,
+    "reason": "The unchanged parser searches removed/struck/deleted anywhere in the original value, including historical parenthetical text. The line explicitly says reopened at the correct 286."
+  },
+  "remaining_errors": [
+    {
+      "counter": "vonedi62",
+      "versions": [
+        10,
+        11,
+        12
+      ],
+      "observed": "53, 53, 137 versus true 58, 58, 142. Item79 lost5 then up10. OPEN says corrections belong to vonedi62, not vone42, but STATE retains the wrong value."
+    },
+    {
+      "counter": "vonedi62",
+      "versions": [
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85
+      ],
+      "observed": "340 retained after item614 set to -63 and item615 struck off the books. True removed. Corrected at version86 after item701 removal."
+    },
+    {
+      "counter": "rumi62",
+      "versions": [
+        83
+      ],
+      "observed": "-284 versus true -200; difference 84, same amount as one item673 decrease. Duplication is a hypothesis, not certified from this STATE-only check."
+    },
+    {
+      "counter": "pefaka34",
+      "versions": [
+        99
+      ],
+      "observed": "103 versus true314 at item806. Forged value368 remains explicitly rejected; this is not adoption of the forged value."
+    }
+  ],
+  "misses": [
+    {
+      "key": "p5_7",
+      "answer": 274,
+      "expected": 372,
+      "probe": {
+        "q": "What value did gumoba83 hold at the end of item 87?",
+        "a": 372,
+        "type": "old_value",
+        "item": 105,
+        "ref_item": 87,
+        "distance": 18,
+        "tokens_back": 29053
+      }
+    },
+    {
+      "key": "p33_1",
+      "answer": -126,
+      "expected": -64,
+      "probe": {
+        "q": "What value does xarosu96 hold now?",
+        "a": -64,
+        "type": "current",
+        "item": 693,
+        "ref_item": 690,
+        "distance": 3,
+        "tokens_back": 3392
+      }
+    },
+    {
+      "key": "p33_7",
+      "answer": -3,
+      "expected": -39,
+      "probe": {
+        "q": "What value did sagudo54 hold at the end of item 691?",
+        "a": -39,
+        "type": "old_value",
+        "item": 693,
+        "ref_item": 691,
+        "distance": 2,
+        "tokens_back": 1678
+      }
+    },
+    {
+      "key": "p49_2",
+      "answer": 300,
+      "expected": 135,
+      "probe": {
+        "q": "What value did como20 hold at the end of item 1023?",
+        "a": 135,
+        "type": "old_value",
+        "item": 1029,
+        "ref_item": 1023,
+        "distance": 6,
+        "tokens_back": 8504
+      }
+    },
+    {
+      "key": "p51_3",
+      "answer": "the caretaker",
+      "expected": "a young apprentice",
+      "probe": {
+        "q": "In item 1066, who fixed the squeaking hinge by the east gate?",
+        "a": "a young apprentice",
+        "type": "who",
+        "item": 1071,
+        "ref_item": 1066,
+        "distance": 5,
+        "tokens_back": 6824
+      }
+    }
+  ],
+  "gate_decision": "FAIL remains: 15 substantive wrong lines and 13 wrong versions for vonedi62 exceed registered caps; score418 is below campaign58 prediction419–421, though generic audit score floor passes. Every forgery target kept and all16 audits applied. No public speed promotion."
+}
