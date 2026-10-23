@@ -1,0 +1,171 @@
+{
+  "schema": "packet195.ready.v1",
+  "ready": true,
+  "ready_for_device": true,
+  "cpu_preparation_ready": true,
+  "device_executed": false,
+  "queued": false,
+  "submitted": false,
+  "unit": "packet195-chain-a",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a",
+  "chain_output": "device-cards01-p195-a",
+  "lane": "A",
+  "cards": [
+    0,
+    1
+  ],
+  "chain_command": "systemd-run --user --unit=packet195-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet195-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a </dev/null",
+  "command": "systemd-run --user --unit=packet195-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet195-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build/device-cards01-p195-a </dev/null",
+  "bracket": {
+    "passed": true,
+    "screen_winner": true,
+    "chain_rule_met": false,
+    "chain_rule_shortfall_points": 0.038180181026723936,
+    "idle_lane_exception": {
+      "authorized": true,
+      "required": true,
+      "ruling": "packet194 k3x-diet is a screen winner on 2026-10-23 (lane B, lanequeue-B40, 05:56\u201306:11 UTC): +1.96 % over every k3x view, every view exact; the +2 % chain bar is missed by 0.04 points, and the lanes are idle, which the chain policy allows. Derive the record bundle from packet190 with the `k3x-diet` selection and packet194's engine; prepare a fresh eleven-window chain on cards 0+1; its WS128 must beat 62.345282 (cmvk51wfn001gng01fpbfy89q) and pass every exactness gate."
+    },
+    "k3x_rates": [
+      62.16819391948735,
+      62.1545086431731,
+      62.19271882349937
+    ],
+    "diet_rates": [
+      63.47365308529516,
+      63.4128279073371
+    ],
+    "k3x_drift_percent": 0.06147612001188296,
+    "min_gain_vs_every_k3x_view_percent": 1.961819818973276,
+    "slower_diet_rate": 63.4128279073371,
+    "faster_k3x_rate": 62.19271882349937,
+    "gateup_saving_min_both_ranks_us_per_layer": 10.794891960615857,
+    "record": 62.345281904743764,
+    "record_hard_floor": 62.345282,
+    "record_id": "cmvk51wfn001gng01fpbfy89q",
+    "record_bar": 63.59218754283864,
+    "scope": "screen admission only; the fresh chain WS128 must exceed 62.345282 and pass every exactness gate",
+    "all_views_exact": true,
+    "exact_count": 78,
+    "rows": [
+      {
+        "row": 0,
+        "packet": "packet194-expert-diet-engine",
+        "kind": "smoke",
+        "elapsed_seconds": 303.291267343,
+        "views": [
+          [
+            "k3x-diet",
+            63.11518394555381
+          ]
+        ]
+      },
+      {
+        "row": 1,
+        "packet": "packet194-expert-diet-engine",
+        "kind": "bracket",
+        "elapsed_seconds": 497.734359366,
+        "views": [
+          [
+            "k3x",
+            62.16819391948735
+          ],
+          [
+            "k3x-diet",
+            63.47365308529516
+          ],
+          [
+            "k3x",
+            62.1545086431731
+          ],
+          [
+            "k3x-diet",
+            63.4128279073371
+          ],
+          [
+            "k3x",
+            62.19271882349937
+          ]
+        ]
+      }
+    ],
+    "bracket_lane": "B",
+    "chain_lane": "A",
+    "chain_cards": [
+      0,
+      1
+    ],
+    "s194_kill_rules": {
+      "thresholds": {
+        "k3x_drift_percent": 0.5,
+        "gateup_saving_us_per_layer": 5.0
+      },
+      "fired": []
+    },
+    "s194_gateup_saving": {
+      "layers": {
+        "rank0_half": 24,
+        "rank1_half": 21,
+        "boundary": 3
+      },
+      "clock": "host-side rank traces and p150 scopes; never a device kernel clock",
+      "rank0_A_us_per_layer": 10.794891960615857,
+      "rank0_layer_body_us_per_layer": 10.837998259079312,
+      "rank1_B_us_per_layer": 11.784726994901565,
+      "boundary_body_us_per_layer": 11.27403867377456,
+      "miss_C_us_per_layer": 10.877962451003365,
+      "min_both_ranks_us_per_layer": 10.794891960615857,
+      "priced_gain_percent_from_saving": 1.4902548510641498
+    },
+    "s194_outcome": "EXP-DIET SCREEN WINNER below the chain bar: no record chain; record the measured gain and the per-layer saving",
+    "control_selection_sha256": "c20504b7c6de20af779954a29fa6f5471bf60bfe0aead960763c940cca4a22c0",
+    "record_selection_sha256": "c5443bbfbc88b39fd562956a55ce05667de0781f640fd0cd522a1e5800f392bb",
+    "active_selection_sha256": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+    "evidence_files": 126,
+    "evidence_map_sha256": "a2b111b705097c76a6afb5c350acf4e30f538088346fd1d4abcee59eee536c43",
+    "evidence_receipt": "ops/packet195-orchestration/evidence/bracket-gate.json"
+  },
+  "cpu": {
+    "passed": true,
+    "device_executed": false,
+    "receipt_sha256": "8c441257b1d7fef87481650a4e16afe88f2241ae01e1605e352fe76c4a8183bf",
+    "seal_sha256": "2b2a4893a9a145a3bab03c2cc263af30482003ee724c0636b794b93a44bdeb96"
+  },
+  "policy_sha256": "340f43695256ead43e3bf2435d073093509fcdb4644626bb49efa38334e891bc",
+  "storage": {
+    "passed": true,
+    "device_executed": false,
+    "root_free_bytes": 30899089408,
+    "required_free_bytes": 28243273746,
+    "margin_bytes": 2655815662,
+    "build_bytes": 89889053,
+    "build_budget_bytes": 250000000,
+    "retained_build_bytes": 89889053,
+    "retained_build_fits": true,
+    "cpu_build_peak_limit_bytes": 250000000,
+    "free_floor_bytes": 25000000000,
+    "parent_model_reserve_bytes": 0,
+    "parent_model_maximum_reserve_bytes": 0,
+    "oracle_growth_reserve_bytes": 0,
+    "early_retained_limit_bytes": 128000000,
+    "own_chain_peak_bytes": 3083162799,
+    "full_chain_uncompressed_bytes": 3324718708
+  },
+  "scope": {
+    "output_tokens": 128,
+    "strict512": false,
+    "arithmetic": "iq3-p49-split32-v1"
+  },
+  "host": {
+    "required_available_bytes": 108797048558,
+    "queue_start_extra_bytes": 1073741824
+  },
+  "chain_policy": "k3x-diet is a screen winner (packet194 s194_decision: slower diet view 63.413 = +1.96 % over every in-load k3x view, every view exact, drift 0.06 %, gate/up saving 10.8-11.8 us per layer); the +2 % chain bar is missed by 0.04 points and the chain is admitted by the coordinator ruling of 2026-10-23 (lanes idle, chain policy allows); fresh exact WS128 must beat 62.345282 (cmvk51wfn001gng01fpbfy89q, ledger 62.345281904743764). Timing windows require existing whole-host admission.",
+  "commit": "a116e3ae028bc3bfe8fb67d72736bb69e73167c6",
+  "created_utc": "2026-10-23T06:37:15.657055+00:00",
+  "final_checks_sha256": "3e77916c5c6768f8cb2dcde81595e0dd48074457c18916c2de7c3b66c7637152",
+  "device_quality_pending": true,
+  "device_performance_pending": true,
+  "record_eligible_after_chain_only": true,
+  "last_packet_write": true
+}

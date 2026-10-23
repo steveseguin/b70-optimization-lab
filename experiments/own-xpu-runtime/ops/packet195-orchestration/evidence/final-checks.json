@@ -1,0 +1,96 @@
+{
+ "schema": "packet195.final-checks.v1",
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "submitted": false,
+ "binary_sha256": "b8482321769039274daf42b70f783517177cbc8c1d0b2d81b8ebab25f1442bdc",
+ "reused_byte_for_byte": true,
+ "relinked": false,
+ "compiler_runs": 0,
+ "cpu": {
+  "passed": true,
+  "device_executed": false,
+  "receipt_sha256": "8c441257b1d7fef87481650a4e16afe88f2241ae01e1605e352fe76c4a8183bf",
+  "seal_sha256": "2b2a4893a9a145a3bab03c2cc263af30482003ee724c0636b794b93a44bdeb96"
+ },
+ "census_bytes_per_rank": [
+  31374119922,
+  31581735626
+ ],
+ "w0p_handovers": 1000,
+ "entry_windows": 11,
+ "bracket": {
+  "slower_diet_rate": 63.4128279073371,
+  "faster_k3x_rate": 62.19271882349937,
+  "gain_vs_every_k3x_percent": 1.961819818973276,
+  "k3x_drift_percent": 0.06147612001188296,
+  "record_bar": 63.59218754283864,
+  "chain_rule_met": false,
+  "idle_lane_exception": true,
+  "gateup_saving_us_per_layer": 10.794891960615857,
+  "evidence_files": 126
+ },
+ "notes_chars": 1726,
+ "pin_guard_before_ready": {
+  "check_job": [
+   {
+    "job": "packet195-chain-A",
+    "passed": true,
+    "pins": 923,
+    "manifests": 37
+   }
+  ],
+  "collected_pins": 923,
+  "manifests": 37,
+  "ready_in_closure": [],
+  "classes": {
+   "hash-pinned parent binary": 78,
+   "packet-private": 811,
+   "oracle-binding.json target": 7,
+   "frozen v4 wrappers": 27
+  },
+  "cross_packet_mutable_pins": 0,
+  "cross_examples": []
+ },
+ "private_plan": {
+  "returncode": 0,
+  "rows": [
+   {
+    "name": "packet195-chain-A",
+    "plan": "unsupported; static argv/environment checks only",
+    "storage_admission": {
+     "planned_write_bytes": 3324718708,
+     "reservation_source": "proposal",
+     "root_free_bytes": 30899077120,
+     "required_free_bytes": 28324718708,
+     "free_floor_bytes": 25000000000,
+     "passed": true
+    },
+    "host_required_available_bytes": 108797048558
+   }
+  ],
+  "live_queue_modified": false,
+  "lanequeue": "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+  "lanequeue_sha256": "010d83445665cf93641901c845e28ccc36ef41909d2171ccc2f877509eaffe25",
+  "applicability": "informative only: the chain is launched by launch_chain.sh (systemd unit packet195-chain-a), never appended to queue-A"
+ },
+ "guard_layout_receipt": "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/lineage/packet195-guard-layout.json",
+ "guard_layout_moves": [
+  "calibration",
+  "parent-snapshot",
+  "prefix-calibration"
+ ],
+ "lane_state_observed": {
+  "pause_files": [
+   "PAUSE-A",
+   "PAUSE-B"
+  ],
+  "queue_files": [
+   "queue-A.txt",
+   "queue-B.txt"
+  ],
+  "note": "observed only; never written by preparation"
+ },
+ "root_free_bytes": 30899089408
+}

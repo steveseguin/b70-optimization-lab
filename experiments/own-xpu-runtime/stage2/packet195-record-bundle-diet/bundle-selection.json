@@ -1,0 +1,68 @@
+{
+  "dense": "production",
+  "hc": "hc-wide",
+  "experts": "wide64+halfcache",
+  "host": "ordered",
+  "route": "fast",
+  "norm": "production",
+  "recurrence": "rec-both-plus",
+  "draft_head": "production",
+  "head": "production",
+  "hc_norm": "production",
+  "down": "tile16",
+  "draft_attention": "split32",
+  "other_fusion": "fused",
+  "target_head": "production",
+  "draft_prefix": "80128",
+  "rollback_state": "banks",
+  "name": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--production--80128--banks--snapshot-static--k3x-diet",
+  "placement": "1",
+  "draft": "draft-hc",
+  "miss": "banks-batch",
+  "draft_rank": 1,
+  "target_split": 0,
+  "layer_boundary": 24,
+  "selection_sha256": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+  "screen_seal_sha256": "df3cd28ed0cd2beabdb8f5c14c513b276055ff07023cb65181daedc81a64b06e",
+  "snapshot_host": "static",
+  "v3": {
+    "rank0_layers": "0-26",
+    "boundary": "rank0-k3",
+    "rank1_first_layer": 27,
+    "target_layers": [
+      27,
+      24
+    ],
+    "kernel_io": "kernel",
+    "rank0_prepare": "async",
+    "boundary_export": "copy",
+    "origin": "packet189 k3x arm (v5/lineage/k3x), measured on lane B 2026-10-22 (lanequeue-B36); record chain packet190"
+  },
+  "k3x": {
+    "moved_layers": "24-26",
+    "boundary": "rank0-k3",
+    "kernel_io": "kernel",
+    "rank0_prepare": "async",
+    "boundary_export": "copy",
+    "memory_plan_sha256": "97a7611646cdab0d9780166a3a670375a986dcb150cae491c686203eb0fb7d39",
+    "rank0_census_bytes": 31374119922,
+    "rank1_census_bytes": 31581735626
+  },
+  "diet": {
+    "expert_gateup": "diet",
+    "kernel": "p193diet::GateUp",
+    "production_kernel": "p90exp::Kernel<IQ2_S,2560,64,false,true>",
+    "sites": {
+      "rank0": 26,
+      "rank1": 24
+    },
+    "other_layout_sites_unchanged": "IQ3_S p28 gate/up layers keep their kernel",
+    "census_delta_bytes_per_rank": [
+      0,
+      0
+    ],
+    "control_selection_sha256": "c20504b7c6de20af779954a29fa6f5471bf60bfe0aead960763c940cca4a22c0",
+    "record_selection_sha256": "c5443bbfbc88b39fd562956a55ce05667de0781f640fd0cd522a1e5800f392bb",
+    "origin": "packet194 k3x-diet arm (v5/lineage/k3x-diet), screened on lane B 2026-10-23 (lanequeue-B40, 05:56-06:11 UTC)"
+  }
+}

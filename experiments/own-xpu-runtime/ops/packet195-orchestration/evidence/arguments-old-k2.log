@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet195-orchestration/argument_gate.py", line 225, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet195-orchestration/argument_gate.py", line 199, in main
+    else:result=replay(a.probe=='old-k2') if a.probe in ('k2-replay','old-k2') else probe(a.probe)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet195-orchestration/argument_gate.py", line 168, in replay
+    result,policy=module.pin_production_dispatch(run,summary,round3_root=evidence/'round3-timing')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124-record-bundle/p49_dispatch.py", line 64, in pin_production_dispatch
+    new_coverage=measured_coverage(round3_root,dict(selection,choices=inherited))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/p49d_k2.py", line 21, in measured_coverage
+    validate_choices(selection['choices'])
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/selection_gate.py", line 48, in validate_choices
+    require(isinstance(value, dict) and set(value) == set(CHOICES), 'selection must name exactly route/recurrence/hc')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/selection_gate.py", line 44, in require
+    raise ValueError(reason)
+ValueError: selection must name exactly route/recurrence/hc

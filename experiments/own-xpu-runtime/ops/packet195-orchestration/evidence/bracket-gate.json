@@ -1,0 +1,348 @@
+{
+  "passed": true,
+  "screen_winner": true,
+  "chain_rule_met": false,
+  "chain_rule_shortfall_points": 0.038180181026723936,
+  "idle_lane_exception": {
+    "authorized": true,
+    "required": true,
+    "ruling": "packet194 k3x-diet is a screen winner on 2026-10-23 (lane B, lanequeue-B40, 05:56\u201306:11 UTC): +1.96 % over every k3x view, every view exact; the +2 % chain bar is missed by 0.04 points, and the lanes are idle, which the chain policy allows. Derive the record bundle from packet190 with the `k3x-diet` selection and packet194's engine; prepare a fresh eleven-window chain on cards 0+1; its WS128 must beat 62.345282 (cmvk51wfn001gng01fpbfy89q) and pass every exactness gate."
+  },
+  "k3x_rates": [
+    62.16819391948735,
+    62.1545086431731,
+    62.19271882349937
+  ],
+  "diet_rates": [
+    63.47365308529516,
+    63.4128279073371
+  ],
+  "k3x_drift_percent": 0.06147612001188296,
+  "min_gain_vs_every_k3x_view_percent": 1.961819818973276,
+  "slower_diet_rate": 63.4128279073371,
+  "faster_k3x_rate": 62.19271882349937,
+  "gateup_saving_min_both_ranks_us_per_layer": 10.794891960615857,
+  "record": 62.345281904743764,
+  "record_hard_floor": 62.345282,
+  "record_id": "cmvk51wfn001gng01fpbfy89q",
+  "record_bar": 63.59218754283864,
+  "scope": "screen admission only; the fresh chain WS128 must exceed 62.345282 and pass every exactness gate",
+  "all_views_exact": true,
+  "exact_count": 78,
+  "rows": [
+    {
+      "row": 0,
+      "packet": "packet194-expert-diet-engine",
+      "kind": "smoke",
+      "elapsed_seconds": 303.291267343,
+      "views": [
+        [
+          "k3x-diet",
+          63.11518394555381
+        ]
+      ]
+    },
+    {
+      "row": 1,
+      "packet": "packet194-expert-diet-engine",
+      "kind": "bracket",
+      "elapsed_seconds": 497.734359366,
+      "views": [
+        [
+          "k3x",
+          62.16819391948735
+        ],
+        [
+          "k3x-diet",
+          63.47365308529516
+        ],
+        [
+          "k3x",
+          62.1545086431731
+        ],
+        [
+          "k3x-diet",
+          63.4128279073371
+        ],
+        [
+          "k3x",
+          62.19271882349937
+        ]
+      ]
+    }
+  ],
+  "evidence": {
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/window.json": "e0ab77bd150fb146bb3440973fca2c66502f2b0d62e287729f92a3ac921e3f88",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/device-isolation.json": "30ad076901694d770dd7f3cb11cd51777545b956f5785a79db669f98128d2e6f",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/teardown.json": "d1823403970d556935dd27d3c991fe71510bd63b8c5cd5ede59bc7e594823a22",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/identity.json": "bfba8c659ddab08beb0152d49bc283c3f361627be9c7178847c841a13f98dc0a",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/bracket-summary.json": "e4c0bdea5bee394cdc6c30d3b3e17a2899cbd5c8d08bfa1b357076b6145dd34f",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/lineage/k3x-diet/selection.json": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/summary.json": "77c23f6d574b458efaaa34b217b93f4e03ebe4a56f155976bc0832e8be1035d7",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/incident64/receipt.json": "23c97ae6370520807cf62efbbc28aa58495b5e5d9ce8d89cf28e40bd1cae9756",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/incident-retrospective/result.json": "fe510b20ddaeb6722851d778d53c7b07edfe5ea164314c88d1df2aa2a0a0c954",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/incident64/rank1/draft-rows.jsonl": "4c02f5252c3060fb0a8289aa3007bf6bcc18f60233ac01ab34abaaed5f92ef0e",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/incident-retrospective/rank1/draft-rows.jsonl": "ca74cc1df131630644a16bb69a575af3db081c235aebebe5eab886217330e646",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/code-review/result.json": "61df1407ed9e52166e6330776aa2706346f8d6224fbf4b743e521adc311813fa",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/code-review/rank1/draft-rows.jsonl": "bacb9c4e2dd77ecc64037d5f4cec75d537783819756be9fc50e438f99557dc16",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/customer-email/result.json": "b2d23cc33f4f671e3ac3b4c1c0734b922408ac86d9aafdf0f88908c4fdb5c309",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/customer-email/rank1/draft-rows.jsonl": "eae4c54924750d7bc9b757a249a0dac4238d640e16d10a346986460da3730d97",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/sql-debugging/result.json": "b2c601a53db3d98e4060260414dc6efa4c0898060f284680a7d19163c3243fac",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/sql-debugging/rank1/draft-rows.jsonl": "2a24ac9bf3746a6526f9d5ea0b3e5ce620fbc8c1c0e30907cc52c4f05557ac1e",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/release-plan/result.json": "a1894c567c53a42c3c2eefcf82fca52fede428c949ad79a42865f046532c70bf",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/release-plan/rank1/draft-rows.jsonl": "1266bb7fb09eca512858c7284df00fb3843536a0b2b59f8a12efdb0689d6a5e8",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/benchmark-analysis/result.json": "6a789a3cb19d6f31451495292137372229cd7c972a2d1268d24bd16c06b81ef0",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/benchmark-analysis/rank1/draft-rows.jsonl": "5bf9e174287d58ae4e1abb894dbe4ac88e0566ff9b454cd4210c00a6fe26ac86",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/architecture-tradeoff/result.json": "d81f50f003b5effe1f2e8402f9de6e4e6723f4e3db1e0d9294ae1496da7a665e",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/architecture-tradeoff/rank1/draft-rows.jsonl": "1b52557ed38f9b40cf71aa81f29dad671f849fead5c9a9d94daa6903cf44f1a0",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/bug-report-synthesis/result.json": "5d483c4a74a25f82c986e9fb0b2da513d02c3422db53f2477e09772dafe18f2e",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/bug-report-synthesis/rank1/draft-rows.jsonl": "5e1aa4f4fbbb2ed77b03ef1017ddcd7c4ea0570ec9bdcb86a999ea15f12fa6d0",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/technical-guide/result.json": "022ecce9d221496041b6b8d930c9102020d06caf97408526ea442b95ff1e3621",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/technical-guide/rank1/draft-rows.jsonl": "1df8cfa42d1b5d06e7b9abd15370a97985ef7287156420a14a6ba237778e20b2",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/risk-register/result.json": "ff87a9b5759bcf8931c5f9721e872a1c546e389d736e927f0c797733ad8a3882",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/risk-register/rank1/draft-rows.jsonl": "03534f7e090f8012b2f58a0a689b69dceb788d359a953cd0c3493079871d256f",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/performance-hypotheses/result.json": "ea78917649672db99ab0ed47a8dc91875a895b41b2b1961efe817ccb07d6939c",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/performance-hypotheses/rank1/draft-rows.jsonl": "3d7971d0b5ffb083a4b70e3a6a5335ababbf3045999792c79f7bee9d6a5f3023",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/results/decision-memo/result.json": "52bc245d79f771f6fd214a5bf33416301fa7e676b5f4d12cb3163d6ccef119f3",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/decision-memo/rank1/draft-rows.jsonl": "debda0e271bb4d3c3090003db6a913474f96aea7cf384ec6774f5469ed396d7c",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/boundary/boundary-rank0.json": "93e35f073b4c27d557eb58c266e996c85d8818b5338772270033fc10eed6449d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row0-smoke-k3x-diet-B-p194/run/views/00-candidate/boundary/boundary-rank1.json": "584eeb07d00ee4316a63aace1158bb6efa60041ac4ea1434bd29b105863caea6",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/window.json": "defe0775b693e774116a0275e1d22170dc7fb3a9bf5a1c6b1396a6d0581865a2",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/device-isolation.json": "8014ea10d24cbf54fa3326ff6cbf2cf4fdefab688a2801a8fba158095892eef4",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/teardown.json": "2cda5e17c33708b8c3382b7780b137667775611db4a9e40a12d0b1568ca62bec",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/identity.json": "95a0758a088ca4a7e517ef432bafc9712712e3a2768e2e1669f375244b446599",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/bracket-summary.json": "c309758f59afcfde9f4aad6db938a376af0cb5a399816bde2fbc3b00a266a167",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/lineage/k3x/selection.json": "c20504b7c6de20af779954a29fa6f5471bf60bfe0aead960763c940cca4a22c0",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/summary.json": "9e411eab5741f5c6b3d7bfd421d4d0394e230c6fc581e9c010581321b7779f30",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/incident64/receipt.json": "9112a78ad1c6ea2f38d3b7e5438706153d268c5704caf5a01af4f97a76445d19",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/incident64/rank1/draft-rows.jsonl": "57d93dcfbf613e3c27c17c0be27912fa489733b37dceac5c953d526968613421",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/incident-retrospective/rank1/draft-rows.jsonl": "2f684cf24fcb16332df87af99049731eec1f1944415896d31dd407a33506e8dd",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/code-review/rank1/draft-rows.jsonl": "fc1bedf9d03e6c42e233035ac1fc79e9d05ec81869a4b0cf6715130af8557392",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/customer-email/rank1/draft-rows.jsonl": "629ab8e9dcbe1a374cb23f7760307305c3ee3bec6a27f5977929185bfdc58d0e",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/sql-debugging/rank1/draft-rows.jsonl": "37c6d3f3f0fbed94304b9d8787ccfc25854364b361dc445f378ec6cd8bf93304",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/release-plan/rank1/draft-rows.jsonl": "5e2dbb9404ac3479d6b636b9ac9fd82d6e5f45c7c7fb217f117d3bfebee3820f",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/benchmark-analysis/rank1/draft-rows.jsonl": "4bd015c9319a88134d27d5b757f71d6b5c4fbf1fd4c4cfcc40cdddae33368009",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/architecture-tradeoff/rank1/draft-rows.jsonl": "0cd477f723f7e4ee96753cb8790c79bef7f85b96d80ea3a30e35d6a65d33c50f",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/bug-report-synthesis/rank1/draft-rows.jsonl": "7529bbd1021689070eba6f7b1bf7f140305029ada768b0e22ab4cfcfdd6cb004",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/technical-guide/rank1/draft-rows.jsonl": "b502d6dc426911538d57408c7683df76117158a717abcd65eb370bb446df9ff4",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/risk-register/rank1/draft-rows.jsonl": "173e8d3cb1b6bb35c6349c45ebb84cb5b3ec66c7bebada5656456d12197fef71",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/performance-hypotheses/rank1/draft-rows.jsonl": "a6971edeb68ca73637a6f9b9bd78695d5af8e6b8e1adb77b2d0c45d0c7280bd3",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/decision-memo/rank1/draft-rows.jsonl": "2d712b8f6765556ce03e5a07649faa83135d4352d3b0cc90efb14fc713d3eb74",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/boundary/boundary-rank0.json": "072c4c9f19cf85f651a64f5149b69291596f1d53c582f325141bc0de63d4b5fa",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/00-control/boundary/boundary-rank1.json": "3a9ab19c804cc1a3d8135caf25a394507c2564982c35825ee225cfd1383cae55",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/summary.json": "5643547b217b1eaabea540e678c3ad6e7fbb81471e3f0f2e1aa8d73d176244e0",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/incident64/receipt.json": "8193e9db76a13e72f47fb56c4cde467ae34dc3e4d092190929f9011acc691d24",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/incident64/rank1/draft-rows.jsonl": "3fc0921b9d68d2934a099a919d05b59136231c574c6739c1e2d84682acc3f462",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/incident-retrospective/rank1/draft-rows.jsonl": "34b8552cf8e77ddca484628a7ea007467e1ec36051b939803ca5c655e311aae4",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/code-review/rank1/draft-rows.jsonl": "89b4f9fc6c9d22a76ac28c400bcd94735f0f324bebc5a7f396f572c2204eec7f",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/customer-email/rank1/draft-rows.jsonl": "79bc42e301998893e1bc27dc7ad1c2a857d7435d1144a15480a93ce3e7d7a5a9",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/sql-debugging/rank1/draft-rows.jsonl": "a25c95be2a8885e60e92c085b12b1bb6b4139f5226cf33644030d87a41277f0c",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/release-plan/rank1/draft-rows.jsonl": "1f48179c50a27d8ae3094212baea3b56e04872291a7f44fb90862cb4a35ddacd",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/benchmark-analysis/rank1/draft-rows.jsonl": "78ee3d00d886b1ffc7afb4121c21ac5ff2c4522610f27e30c6183e760da17747",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/architecture-tradeoff/rank1/draft-rows.jsonl": "b3e1a9a215c2374fc96f97191a6af5d00cc4d105c3b0a0b0d006d0c0b9f30e8c",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/bug-report-synthesis/rank1/draft-rows.jsonl": "7f6ea7cafa4079d0997e7eaccedc2c1a01850fd58cf889299526c8058f4bbeff",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/technical-guide/rank1/draft-rows.jsonl": "a8a457b9e8ea7c2ac963732f2e3f2f83cc651f4cb6f4ce3007bacf9d809e2314",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/risk-register/rank1/draft-rows.jsonl": "fff63d7fcd26e54f191f1203ca16574e6b7a981b0660999e03dad7171a68fa38",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/performance-hypotheses/rank1/draft-rows.jsonl": "5d6fae87f1975e47ce86d11794357354b1658de0e00898f32ead0f3259edf3ca",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/decision-memo/rank1/draft-rows.jsonl": "502edc63c686250d99be09cf678f5708486ad6ca65b4ecce16e7e416ea95c11d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/boundary/boundary-rank0.json": "93e35f073b4c27d557eb58c266e996c85d8818b5338772270033fc10eed6449d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/01-candidate/boundary/boundary-rank1.json": "584eeb07d00ee4316a63aace1158bb6efa60041ac4ea1434bd29b105863caea6",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/summary.json": "4292ad7c7305dc46df477b2a31b6ff1fe78ae85a57fe17e8b6dfcbf146c0b1d8",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/incident64/receipt.json": "212d4cac0a0399cabaa46e8427a40ec367654d66525cd558c78fef3661e79d0e",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/incident64/rank1/draft-rows.jsonl": "9a8e8a742d5425fe56bf9525bf2bc76c3626ad6cd5f3331b3e8f11234c47faae",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/incident-retrospective/rank1/draft-rows.jsonl": "15170e094e457e6b6b3f1d02c3b388ea5aede209b1e2e0518f4fde2a64647f09",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/code-review/rank1/draft-rows.jsonl": "aa8dffd8fd5d563e853ea5e3aff4159a8ed7731efb0a81956ffb694c361990b4",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/customer-email/rank1/draft-rows.jsonl": "87fd8c9b80c7c9f282e3e96e2fdb34b338f15aebc7cf0f1d8557c3a3fcc564d3",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/sql-debugging/rank1/draft-rows.jsonl": "c8b8246f3c6e764e279f8f0df3a62a5926a87409e417e05879f1953194bb0b62",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/release-plan/rank1/draft-rows.jsonl": "ca15d195438c4762eca22e94947130e2c92b74949632e889ff9596b1c137c8c8",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/benchmark-analysis/rank1/draft-rows.jsonl": "223d78f31e3c5f6ab2bff255131f0766973081c99bb69b0843ee3cf768e4080f",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/architecture-tradeoff/rank1/draft-rows.jsonl": "1e658edad6faaf4a8f55aeb2fd624ea8d93cfe5e85f2e6cce77224e70b83a51d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/bug-report-synthesis/rank1/draft-rows.jsonl": "dcc530149e0463768156270095c652d44c4f3340c97e8dc0a4e522db0a8f74fa",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/technical-guide/rank1/draft-rows.jsonl": "692b4cbf9d47c3db158e4bd105b81a4645b6e38e3e056911c87d4b236ce52151",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/risk-register/rank1/draft-rows.jsonl": "aac65fd60366f8ccd507f9a769d2e9e362b7cb763936dc645154514674979003",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/performance-hypotheses/rank1/draft-rows.jsonl": "f447021e513a90a74580138dfb50cb6177f29a882c4e09a072bd8b78f2000ecc",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/decision-memo/rank1/draft-rows.jsonl": "192b80c6bddf573db06a5d9bab8c44e0236621386817663f94f6595115c05ad4",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/boundary/boundary-rank0.json": "072c4c9f19cf85f651a64f5149b69291596f1d53c582f325141bc0de63d4b5fa",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/02-control/boundary/boundary-rank1.json": "3a9ab19c804cc1a3d8135caf25a394507c2564982c35825ee225cfd1383cae55",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/summary.json": "02fcd08ab523a48f50832c56476e9a4393b51efff2c76051a4815322c7b2efa3",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/incident64/receipt.json": "efc6cc74614422368158694d133f85bf0409e5f29703e1649050673da43055fc",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/incident64/rank1/draft-rows.jsonl": "5eec168ad16086f00e147afd653e54130bca8ec0e980b5a6b3ef0da5a1f87205",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/incident-retrospective/rank1/draft-rows.jsonl": "5c3d49e82138f76159d8907621bc8ec633ed748138ab7c2dfa65dac01b50c578",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/code-review/rank1/draft-rows.jsonl": "a18a76de724309ebc3c98abc94af52109bc75ea644966b45c6493e65e467fe02",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/customer-email/rank1/draft-rows.jsonl": "b7e07f6463a95b26883a5d6648a9cf49898eb6e28faa29f5de13a0932d9a3d47",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/sql-debugging/rank1/draft-rows.jsonl": "16436b114707c3b5ecb30c8d76e0c7bcccc9699d7b54a539b66b631ec74a1f46",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/release-plan/rank1/draft-rows.jsonl": "7c8b672c1f7645779c69a21448e7c7a419e586ad731a0addcc53915ef34c0a9f",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/benchmark-analysis/rank1/draft-rows.jsonl": "38044ea5170876b9359640f84d2f2fd5f940cf7d2542f5dd3acc0864674dd1e8",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/architecture-tradeoff/rank1/draft-rows.jsonl": "7411323676f2db684db9b993ad6b4bea7d6e1a833d265adaccc8b76e197a97d4",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/bug-report-synthesis/rank1/draft-rows.jsonl": "cc478df6defbf62c79451d7819177ccde4005e619d86767905192d7ed6c8bb71",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/technical-guide/rank1/draft-rows.jsonl": "7030e2e9328da4f6035bb23ffb2651b63179e81e3f8ee63b48294a118cea094c",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/risk-register/rank1/draft-rows.jsonl": "d561cb873f7830cf3dbc9bd9ab6aae7170e184af7cf4de3f6a1f3181905fd250",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/performance-hypotheses/rank1/draft-rows.jsonl": "2a4a429370b5dd184f88fe6fafdcf24397dd87e3667d1cad3feb5d00637b9b96",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/decision-memo/rank1/draft-rows.jsonl": "f792ac1a8351adbcee24c864b25b3e73a95f07ae8d60196f35ab7e468d53db21",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/boundary/boundary-rank0.json": "93e35f073b4c27d557eb58c266e996c85d8818b5338772270033fc10eed6449d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/03-candidate/boundary/boundary-rank1.json": "584eeb07d00ee4316a63aace1158bb6efa60041ac4ea1434bd29b105863caea6",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/summary.json": "b946626b8098a5322cfeecba8ee2bde6885f4a047c1c327073b30bc4c39fa289",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/incident64/receipt.json": "7ae41d2208cf04fd8d05650e1eaaa22d171bba8d1bed5b007c6f5c588cbe683d",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/incident64/rank1/draft-rows.jsonl": "8d21024474ca98508292b1a0e8a853a06dde470d021bbe28dedbdc0c1b748e65",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/incident-retrospective/rank1/draft-rows.jsonl": "cd1d8f3dbdc6a92af4da4e78ceb826e453e48cede93534a54557a3bc588ed4f6",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/code-review/rank1/draft-rows.jsonl": "b29ee581e176507456ef86a5eb8fc7eaf522edb0756445b8a32a498da8704ece",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/customer-email/rank1/draft-rows.jsonl": "96d18734ef797726f208ecaa36cce5f99111b96b30452c0abdb4d443f34814dc",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/sql-debugging/rank1/draft-rows.jsonl": "0d6fd9038a10be92d20c27c3b4557e320dbe12917de24130835528a1a8303533",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/release-plan/rank1/draft-rows.jsonl": "93e5be5be7cd060e84120432a7253706f7ebfad2aa3a07ae217c26dbf7dd17ce",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/benchmark-analysis/rank1/draft-rows.jsonl": "a3cfc6c78e0af5baee1e92d1de040cf28b310780ffa9e66d813efc7ed1b5312a",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/architecture-tradeoff/rank1/draft-rows.jsonl": "670f6766b30b86502a387eae2afdd718a7d270f51c48737efc212014b7e1c796",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/bug-report-synthesis/rank1/draft-rows.jsonl": "ab475b0b49b1456dcb2c8fd557bb32b19c00ccfa46575ec95c263ed86d76e2c8",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/technical-guide/rank1/draft-rows.jsonl": "c19c6803d39552e9b42f2e91bf80e4af2980866c5e68cfb2288379a767a86f52",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/risk-register/rank1/draft-rows.jsonl": "b9a190805b715af836ff7be100dcfcc2e46b87d95a51d558df33786c90b8aada",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/performance-hypotheses/rank1/draft-rows.jsonl": "ba6fb6fd77929cf4d0a9034ec61ecf0d78c8e5cab0f5fc10e3a0720067535020",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/decision-memo/rank1/draft-rows.jsonl": "09ed6c19e5abad1e4658e0a817554ac57e26d49386380a8b385e86d7a7893c2b",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/boundary/boundary-rank0.json": "072c4c9f19cf85f651a64f5149b69291596f1d53c582f325141bc0de63d4b5fa",
+    "experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/evidence/device-row1-bracket-k3x-diet-B-p194/run/views/04-control/boundary/boundary-rank1.json": "3a9ab19c804cc1a3d8135caf25a394507c2564982c35825ee225cfd1383cae55"
+  },
+  "bracket_lane": "B",
+  "chain_lane": "A",
+  "chain_cards": [
+    0,
+    1
+  ],
+  "s194_kill_rules": {
+    "thresholds": {
+      "k3x_drift_percent": 0.5,
+      "gateup_saving_us_per_layer": 5.0
+    },
+    "fired": []
+  },
+  "s194_gateup_saving": {
+    "layers": {
+      "rank0_half": 24,
+      "rank1_half": 21,
+      "boundary": 3
+    },
+    "clock": "host-side rank traces and p150 scopes; never a device kernel clock",
+    "rank0_A_us_per_layer": 10.794891960615857,
+    "rank0_layer_body_us_per_layer": 10.837998259079312,
+    "rank1_B_us_per_layer": 11.784726994901565,
+    "boundary_body_us_per_layer": 11.27403867377456,
+    "miss_C_us_per_layer": 10.877962451003365,
+    "min_both_ranks_us_per_layer": 10.794891960615857,
+    "priced_gain_percent_from_saving": 1.4902548510641498
+  },
+  "s194_outcome": "EXP-DIET SCREEN WINNER below the chain bar: no record chain; record the measured gain and the per-layer saving",
+  "control_selection_sha256": "c20504b7c6de20af779954a29fa6f5471bf60bfe0aead960763c940cca4a22c0",
+  "record_selection_sha256": "c5443bbfbc88b39fd562956a55ce05667de0781f640fd0cd522a1e5800f392bb",
+  "active_selection_sha256": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+  "device_executed": false,
+  "schema": "packet195.bracket-gate.v1",
+  "sources": {
+    "experiments/own-xpu-runtime/ops/packet195-orchestration/bracket_gate.py": "43168186799b065fb01aa888e7feadc531da2b3d6e8b2cca33fb38b052715b6d"
+  },
+  "summary": {
+    "passed": true,
+    "screen_winner": true,
+    "chain_rule_met": false,
+    "chain_rule_shortfall_points": 0.038180181026723936,
+    "idle_lane_exception": {
+      "authorized": true,
+      "required": true,
+      "ruling": "packet194 k3x-diet is a screen winner on 2026-10-23 (lane B, lanequeue-B40, 05:56\u201306:11 UTC): +1.96 % over every k3x view, every view exact; the +2 % chain bar is missed by 0.04 points, and the lanes are idle, which the chain policy allows. Derive the record bundle from packet190 with the `k3x-diet` selection and packet194's engine; prepare a fresh eleven-window chain on cards 0+1; its WS128 must beat 62.345282 (cmvk51wfn001gng01fpbfy89q) and pass every exactness gate."
+    },
+    "k3x_rates": [
+      62.16819391948735,
+      62.1545086431731,
+      62.19271882349937
+    ],
+    "diet_rates": [
+      63.47365308529516,
+      63.4128279073371
+    ],
+    "k3x_drift_percent": 0.06147612001188296,
+    "min_gain_vs_every_k3x_view_percent": 1.961819818973276,
+    "slower_diet_rate": 63.4128279073371,
+    "faster_k3x_rate": 62.19271882349937,
+    "gateup_saving_min_both_ranks_us_per_layer": 10.794891960615857,
+    "record": 62.345281904743764,
+    "record_hard_floor": 62.345282,
+    "record_id": "cmvk51wfn001gng01fpbfy89q",
+    "record_bar": 63.59218754283864,
+    "scope": "screen admission only; the fresh chain WS128 must exceed 62.345282 and pass every exactness gate",
+    "all_views_exact": true,
+    "exact_count": 78,
+    "rows": [
+      {
+        "row": 0,
+        "packet": "packet194-expert-diet-engine",
+        "kind": "smoke",
+        "elapsed_seconds": 303.291267343,
+        "views": [
+          [
+            "k3x-diet",
+            63.11518394555381
+          ]
+        ]
+      },
+      {
+        "row": 1,
+        "packet": "packet194-expert-diet-engine",
+        "kind": "bracket",
+        "elapsed_seconds": 497.734359366,
+        "views": [
+          [
+            "k3x",
+            62.16819391948735
+          ],
+          [
+            "k3x-diet",
+            63.47365308529516
+          ],
+          [
+            "k3x",
+            62.1545086431731
+          ],
+          [
+            "k3x-diet",
+            63.4128279073371
+          ],
+          [
+            "k3x",
+            62.19271882349937
+          ]
+        ]
+      }
+    ],
+    "bracket_lane": "B",
+    "chain_lane": "A",
+    "chain_cards": [
+      0,
+      1
+    ],
+    "s194_kill_rules": {
+      "thresholds": {
+        "k3x_drift_percent": 0.5,
+        "gateup_saving_us_per_layer": 5.0
+      },
+      "fired": []
+    },
+    "s194_gateup_saving": {
+      "layers": {
+        "rank0_half": 24,
+        "rank1_half": 21,
+        "boundary": 3
+      },
+      "clock": "host-side rank traces and p150 scopes; never a device kernel clock",
+      "rank0_A_us_per_layer": 10.794891960615857,
+      "rank0_layer_body_us_per_layer": 10.837998259079312,
+      "rank1_B_us_per_layer": 11.784726994901565,
+      "boundary_body_us_per_layer": 11.27403867377456,
+      "miss_C_us_per_layer": 10.877962451003365,
+      "min_both_ranks_us_per_layer": 10.794891960615857,
+      "priced_gain_percent_from_saving": 1.4902548510641498
+    },
+    "s194_outcome": "EXP-DIET SCREEN WINNER below the chain bar: no record chain; record the measured gain and the per-layer saving",
+    "control_selection_sha256": "c20504b7c6de20af779954a29fa6f5471bf60bfe0aead960763c940cca4a22c0",
+    "record_selection_sha256": "c5443bbfbc88b39fd562956a55ce05667de0781f640fd0cd522a1e5800f392bb",
+    "active_selection_sha256": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+    "evidence_files": 126,
+    "evidence_map_sha256": "a2b111b705097c76a6afb5c350acf4e30f538088346fd1d4abcee59eee536c43",
+    "evidence_receipt": "ops/packet195-orchestration/evidence/bracket-gate.json"
+  }
+}

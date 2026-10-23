@@ -1,0 +1,50 @@
+[
+  {
+    "command": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet60-hc-fusion/build/fixture.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet60-hc-fusion/build/fixture"
+    ],
+    "cwd": "/home/steve/llm-optimizations",
+    "name": "compile-cpu"
+  },
+  {
+    "command": [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fsycl",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet60-hc-fusion/build/device-primitives.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet60-hc-fusion/build/device-primitives.o"
+    ],
+    "cwd": "/home/steve/llm-optimizations",
+    "name": "compile-device"
+  },
+  {
+    "command": [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fsycl",
+      "-MM",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet60-hc-fusion/build/device-primitives.cpp"
+    ],
+    "cwd": "/home/steve/llm-optimizations",
+    "name": "dependencies"
+  }
+]

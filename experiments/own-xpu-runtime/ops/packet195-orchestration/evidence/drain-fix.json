@@ -1,0 +1,75 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+  "reports": [
+    {
+      "schema": "drain-fix-report.v1",
+      "root": "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet",
+      "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+      "counts": {
+        "FIXED": 2,
+        "UNFIXED": 0
+      },
+      "passed": true,
+      "files": [
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/drain_gate.py",
+          "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 51,
+              "status": "FIXED"
+            }
+          ]
+        },
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/orchestration-snapshot/drain_gate.py",
+          "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 51,
+              "status": "FIXED"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "drain-fix-report.v1",
+      "root": "experiments/own-xpu-runtime/ops/packet195-orchestration",
+      "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+      "counts": {
+        "FIXED": 2,
+        "UNFIXED": 0
+      },
+      "passed": true,
+      "files": [
+        {
+          "path": "experiments/own-xpu-runtime/ops/packet195-orchestration/drain_gate.py",
+          "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 51,
+              "status": "FIXED"
+            }
+          ]
+        },
+        {
+          "path": "experiments/own-xpu-runtime/ops/packet195-orchestration/lineage-p195-scaffolding/lanequeue.py",
+          "sha256": "5eac9e79f861394516851cf53604b9fbcdde34599aa9e754608f8f1538ee5e82",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 721,
+              "status": "FIXED"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
