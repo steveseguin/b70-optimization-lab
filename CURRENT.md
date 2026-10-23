@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 23, 14:25 EDT — bounded sessions now close cleanly through the real CPU-native protocol.**
+The new attachable lifecycle passes 16 socket tests and independent review. Its separate tiny host-only proof completed two
+HTTP turns, saved both states and sent one clean QUIT before the native request limit, with no incident signal. The model
+chat pilot and restore28 receipts are committed and pushed; CI is being watched. All three daily applications remain restored.
+Next is a reusable experimental serving profile with fixed limits and reviewed admission; CPU preparation continues without
+queuing another GPU window. The existing benchmark package and sealed device sources remain intact.
+
 **October 23, 14:18 EDT — real chat passed and all three applications are restored.**
 The six-turn pilot completed 896 output tokens through one loaded owner, with exact resumed/fresh tokens and saved state,
 correct edited-history fallback, bounded parking and clean shutdown. Independent device audit passed; restore28 validated

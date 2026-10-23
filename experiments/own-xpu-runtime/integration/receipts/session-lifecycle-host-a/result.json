@@ -1,0 +1,175 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "native_host_executed": true,
+  "requests": [
+    {
+      "session": "alpha",
+      "payload": {
+        "model": "synthetic-host-lifecycle",
+        "messages": [
+          {
+            "role": "user",
+            "content": "BCD"
+          }
+        ],
+        "max_tokens": 4
+      },
+      "status": 200,
+      "response": {
+        "id": "chatcmpl-h73cd5066401c4e988319e49c4d4611f3-0000000000000001",
+        "object": "chat.completion",
+        "created": 1792779667,
+        "model": "synthetic-host-lifecycle",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "AAAA"
+            },
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 3,
+          "completion_tokens": 4,
+          "total_tokens": 7
+        }
+      }
+    },
+    {
+      "session": "beta",
+      "payload": {
+        "model": "synthetic-host-lifecycle",
+        "messages": [
+          {
+            "role": "user",
+            "content": "EF"
+          }
+        ],
+        "max_tokens": 4
+      },
+      "status": 200,
+      "response": {
+        "id": "chatcmpl-h73cd5066401c4e988319e49c4d4611f3-0000000000000002",
+        "object": "chat.completion",
+        "created": 1792779667,
+        "model": "synthetic-host-lifecycle",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "BBBB"
+            },
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2,
+          "completion_tokens": 4,
+          "total_tokens": 6
+        }
+      }
+    }
+  ],
+  "lifecycle": {
+    "passed": true,
+    "reason": "request-limit",
+    "native_stopped": {
+      "event": "stopped",
+      "reason": "quit",
+      "safe_to_exit": true,
+      "completed_requests": 2,
+      "completed_controls": 2,
+      "discarded_pending": false,
+      "pending_request_id": ""
+    },
+    "completed_requests": 2,
+    "close_calls": 1,
+    "scope": "attached owner lifecycle; physical drain remains outer-coordinator responsibility"
+  },
+  "incident_sigterm_count": 0,
+  "pid": 3436973,
+  "launched_monotonic": 622375.123408994,
+  "checkpoints": {
+    "alpha": {
+      "id": "alpha-612cc8547cbde00cecb3d023",
+      "storage_bytes": 39764,
+      "state_sha256": {
+        "active.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+        "blk.0.gdn.history.bin": "3f3b8d07b4355b8329f3ce4d55fe30895b74f11f265cae93d79adb193a00e8a0",
+        "blk.0.gdn.state.bin": "ea78da20bac8dd0c2c68265b369378c7ffb9fc6ab0fe86a0cf2adc45570aa74e",
+        "blk.1.ple.history.bin": "867b8c4a35606ace25bd5021a4f1b6a23d151a0b6f526d3598c7b71de1a19282",
+        "blk.1.qsa.keys.bin": "4c463eb5128a3921c48f1e7437ff45d488e9b2a3fdc15691eba6e51c33e5ecbc",
+        "blk.1.qsa.pooled.bin": "5b594b5b2be26210a99be24b30000dbc8ffb744d3f535e3c1476b126e4484c80",
+        "blk.1.qsa.raw.bin": "23a9e5b34f117819e709131dde73f6a90918d00e145a4fd22d630582f15a33e2",
+        "blk.1.qsa.values.bin": "b51ce449c11a69964810ed311d0eb1a259d41f0af181a3073e6aa2215f2923b1",
+        "blk.2.gdn.history.bin": "37bab435d3af5056a98f2a4c311fdfe792aa63bbcc5daa557b1d47d8565e3204",
+        "blk.2.gdn.state.bin": "0dea2affaedad46fe83250e5e2aefde025547d178724ca3176c33d9c1b40d75d",
+        "blk.3.qsa.keys.bin": "bc8dd0b1e738555c0965dac1a0314cef1544068d5d7b9dc7fb111881e98057ab",
+        "blk.3.qsa.pooled.bin": "d19fe08ead39843b80987092ae5331f2c659971d1bc5fde62e1665ad55d7e816",
+        "blk.3.qsa.raw.bin": "09e482db908795a94d9bca3c2851bf4366ad61e3b3c8f4bcda92fa1749362035",
+        "blk.3.qsa.values.bin": "c0f52ea9dd9691799e90531f07b734d099022026993267c74352ca477b0443a7",
+        "error.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "next_token.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "position.bin": "7aa8ca4a02506da9133d8f889678b76f716ce45d02e22fdb7b70a15e56a0eff8",
+        "streams.bin": "e04c1bc0858a7a8a89c12744a89ac1e628704b0f34e77be2c84430e72826303e",
+        "token.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "token_history.bin": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+        "tokens.bin": "4a41bd30c5a9362b72e57263ba6d885dc36ae3140c67b7c891cb4574dd556432"
+      }
+    },
+    "beta": {
+      "id": "beta-babdde4791712f5baba4a082",
+      "storage_bytes": 39710,
+      "state_sha256": {
+        "active.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+        "blk.0.gdn.history.bin": "1c2d92f6973f7ea2f19399f5b4f9c85974bdf2ef0123f7ae250acaae60287015",
+        "blk.0.gdn.state.bin": "f4926fa10705ebaa9b7bf5b0d28539a7c449eb4079863df909bb54e4a43e22d5",
+        "blk.1.ple.history.bin": "94622c1a771efec4c57a46ab6cadb9f6def5a63ac340f71a6af69f71145ce49f",
+        "blk.1.qsa.keys.bin": "16daf339d53dc0a1a97fde1060e18ba7af0ef414d6f248361c4e2ceb13814266",
+        "blk.1.qsa.pooled.bin": "2b9e6643a981bf225d9dba9394dc02ce4f05149a8a173d1e926ccc8d19c4119e",
+        "blk.1.qsa.raw.bin": "31975f57a4bae2388ce5754531132c6aafcc1d66516b38de8537acb8dc5a750e",
+        "blk.1.qsa.values.bin": "553d1814093344c2e29362adaed64b45f568f9cbc36c437f01ca04c0538931a4",
+        "blk.2.gdn.history.bin": "b35ef16c3e36ff62196cbeab0c30cc045ad596e723d9af4c7805c0f0b342aa99",
+        "blk.2.gdn.state.bin": "310334850cb687b07bf82b06b198a735b76fc76d6b7117bf744a5011d639ea99",
+        "blk.3.qsa.keys.bin": "495fdad18101e8b6dbe6a3581674afc3109d7da0d06609b8ec60af54bc7e3518",
+        "blk.3.qsa.pooled.bin": "5ceb7f348b5b4b99bfde48e9961d7eaafd96a199fe9ef6cd7831796ff678ceb1",
+        "blk.3.qsa.raw.bin": "d348b0071ed5337bf6d241d62e9abc14c1ff0078489e36a94c70f85b7fc2576e",
+        "blk.3.qsa.values.bin": "adcae0ba28729f5e8c4df78a05d1d3453a23beb1894000e54077757e842347f0",
+        "error.bin": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "next_token.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+        "position.bin": "2594b6a92ebfb1c3312deb7d01c015fb95e9fbe9bd7bc6b527af07813ec7b910",
+        "streams.bin": "f70efdba10b7dc0aa89d127608ed2036b2fc99b9a226e8eb805c7d4753d8cfd1",
+        "token.bin": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450",
+        "token_history.bin": "814dd7b9784d57c15b9c2972e9b4fd6cf7e164f8162a934bdb2452a413dab1f7",
+        "tokens.bin": "90e3b13405ba0ff11668fde6921ffbd36fb0195869090ec042e1df6c5c2b49d4"
+      }
+    }
+  },
+  "model_loads": 1,
+  "owner_returncode": 0,
+  "guard_checks": 18,
+  "policy": {
+    "sessions": {
+      "alpha": {
+        "checkpoint": "alpha-612cc8547cbde00cecb3d023",
+        "tokens": 7,
+        "bytes": 8388608
+      },
+      "beta": {
+        "checkpoint": "beta-babdde4791712f5baba4a082",
+        "tokens": 6,
+        "bytes": 8388608
+      }
+    },
+    "bytes": 16777216,
+    "budget": 16777216,
+    "pending_delete": [],
+    "retained_bytes": {}
+  },
+  "native_receipt_sha256": "595893d56ed2b4a4253861fe2373b0cb933e3385e5405b662f36c6661f3c64be",
+  "finished_utc_ns": 1792779668017640493
+}

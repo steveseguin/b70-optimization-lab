@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "created_utc": "2026-10-23T18:16:49.782355+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "tests": 5,
+  "test_seconds": 0.105,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/session_lifecycle_host_probe.py": "3b4e25e1511a29fe149c587301a36a1be74a6282bd2e39f6d952059cf1d16db8",
+    "experiments/own-xpu-runtime/integration/test_session_lifecycle_host_probe.py": "4f74b69d93b94ca76727a2d96fe0136e0dfbc317a296b281f0248db42783290d"
+  },
+  "plan": "experiments/own-xpu-runtime/integration/receipts/session-lifecycle-host-plan.json",
+  "plan_sha256": "3746773b4f7c60cd0a72543f1addafe7ac898e4d8241edcb86678d038085257e",
+  "review_required_before_native_run": true,
+  "run_command": "nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/integration/session_lifecycle_host_probe.py --run-host-only",
+  "scope": "Actual pinned HOST_ONLY argv intercepted before exec; synthetic codec roundtrip and source/fixture identities checked. No owner started."
+}

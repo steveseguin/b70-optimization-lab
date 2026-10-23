@@ -1,0 +1,290 @@
+"""Bounded lifecycle for an exclusively borrowed, already admitted owner.
+
+Construct CheckpointEngine with RunAdmission.front before attaching. No process
+startup, signals, retries, settings, store cleanup or qualification lives here.
+"""
+from __future__ import annotations
+
+import json
+import math
+import threading
+import time
+
+import chat_http
+from chat_service import ChatRequestError
+
+
+class LifecycleError(RuntimeError):
+    pass
+
+
+class IntakeClosed(LifecycleError):
+    """Refused before entering ChatService; no adapter operation started."""
+
+
+def require(condition, message):
+    if not condition:
+        raise LifecycleError(message)
+
+
+def finite(value):
+    return type(value) in (int, float) and math.isfinite(value)
+
+
+class _FrontProxy:
+    def __init__(self, admission):
+        self._admission = admission
+
+    def __getattr__(self, name):
+        # Read-only delegation preserves constructor identity/geometry checks.
+        value = getattr(self._admission._raw, name)
+        if callable(value):
+            raise AttributeError('native methods must pass lifecycle admission: ' + name)
+        return value
+
+    def request(self, *args, **kwargs):
+        a = self._admission
+        try:
+            a._inside_service()
+            a.guard()
+            # Guard may itself take time. Check again immediately before RUN.
+            a._pre_run()
+            result = a._raw.request(*args, **kwargs)
+            a.guard()
+            return result
+        except BaseException as error:
+            a._fail(error)
+            raise
+
+    def _control(self, name, *args, **kwargs):
+        a = self._admission
+        try:
+            a._inside_service()
+            a.guard()
+            # A close latch/soft expiry never interrupts an admitted disposition.
+            # Timestamp BEFORE control dispatch is conservative relative to the
+            # native reader's next idle period, which starts after the control.
+            started = a.clock()
+            result = getattr(a._raw, name)(*args, **kwargs)
+            a.guard()
+            a.last_native_activity = started
+            return result
+        except BaseException as error:
+            a._fail(error)
+            raise
+
+    def save(self, *args, **kwargs):
+        return self._control('save', *args, **kwargs)
+
+    def release(self, *args, **kwargs):
+        return self._control('release', *args, **kwargs)
+
+
+class RunAdmission:
+    """Front proxy installed at adapter construction, with trusted launch times.
+
+    last_native_activity must be a coordinator-observed conservative timestamp,
+    never the time this proxy happened to be constructed. The caller binds the
+    native idle and absolute limits to its admitted argv; ready cannot attest
+    those limits. Soft limits cannot exceed them. Native asynchronous expiry
+    can still win after a successful check; that is an incident, never a retry.
+
+    The caller must independently guard store snapshot/delete operations and
+    maintain fault monitoring during active requests. This class guards front
+    RUN/SAVE/RELEASE only, and does not claim whole-window device admission.
+    """
+    def __init__(self, front, *, guard, request_limit, idle_seconds, absolute_deadline,
+                 last_native_activity, native_idle_seconds, native_absolute_deadline,
+                 clock=time.monotonic):
+        require(callable(guard) and callable(clock), 'guard and monotonic clock required')
+        require(type(request_limit) is int and 1 <= request_limit <= front.max_requests <= 1024,
+                'request limit must fit admitted native bound')
+        now = clock()
+        require(all(finite(x) for x in (now, idle_seconds, absolute_deadline, last_native_activity,
+                                       native_idle_seconds, native_absolute_deadline)), 'finite monotonic limits required')
+        require(0 < idle_seconds <= native_idle_seconds <= 3600 and
+                absolute_deadline <= native_absolute_deadline and last_native_activity <= now,
+                'soft limits must preserve admitted native limits/activity')
+        require(front.state == 'ready' and front.pending is None, 'ready owner without pending reply required')
+        require(type(front.completed) is int and type(front.completed_controls) is int and
+                0 <= front.completed == front.completed_controls < request_limit, 'owner counters/pending state mismatch')
+        require(not hasattr(front, '_session_lifecycle_claim'), 'front already exclusively claimed')
+        self._claim = object()
+        front._session_lifecycle_claim = self._claim
+        self._raw, self.guard, self.clock = front, guard, clock
+        self.request_limit, self.idle_seconds = request_limit, float(idle_seconds)
+        self.absolute_deadline = float(absolute_deadline)
+        self.last_native_activity = float(last_native_activity)
+        self.native_idle_seconds, self.native_absolute_deadline = native_idle_seconds, native_absolute_deadline
+        self.front = _FrontProxy(self)
+        self.lifecycle = None
+        self.failure = None
+
+    def _fail(self, error):
+        if self.failure is None:
+            self.failure = error
+
+    def _inside_service(self):
+        life = self.lifecycle
+        require(life is not None and life._in_service and life._thread == threading.get_ident(),
+                'native operation outside exclusive admitted service call')
+        require(self._raw._session_lifecycle_claim is self._claim, 'exclusive owner claim changed')
+        if self.failure is not None:
+            raise self.failure
+
+    def _expired(self):
+        now = self.clock()
+        if now >= self.absolute_deadline:
+            return 'deadline'
+        if now - self.last_native_activity >= self.idle_seconds:
+            return 'idle'
+        return None
+
+    def _pre_run(self):
+        # A late refusal occurs inside adapter policy work: its exception is an
+        # incident, even when the underlying owner is still ready. Never convert
+        # that poisoned adapter into a fabricated normal-close receipt.
+        require(self._expired() is None, 'late pre-RUN deadline admission refused')
+        require(self._raw.completed < self.request_limit, 'late pre-RUN count admission refused')
+        require(self._raw.state == 'ready' and self._raw.pending is None, 'native not ready before RUN')
+        require(self._raw.process.poll() is None, 'native exited before RUN admission')
+
+
+class _ServiceProxy:
+    def __init__(self, lifecycle):
+        self._lifecycle = lifecycle
+
+    def __getattr__(self, name):
+        return getattr(self._lifecycle._service, name)
+
+    def complete(self, *args, **kwargs):
+        life = self._lifecycle
+        entered = False
+        try:
+            require(life._thread == threading.get_ident() and life._in_handler, 'service outside lifecycle handler')
+            reason = life._boundary_reason()
+            if reason is not None:
+                life._normal_reason = reason
+                raise IntakeClosed('chat intake closed')
+            entered = life._in_service = True
+            result = life._service.complete(*args, **kwargs)
+            # Match HTTP serialization here so its original exception remains
+            # available despite the transport's intentionally generic503.
+            json.dumps(result, ensure_ascii=False, allow_nan=False, separators=(',', ':')).encode('utf-8')
+            return result
+        except IntakeClosed:
+            raise  # Refused before entering the real service/adapter.
+        except BaseException as error:
+            if not (isinstance(error, ChatRequestError) and life._service.halted_reason is None):
+                life.admission._fail(error)
+            raise
+        finally:
+            if entered:
+                life._in_service = False
+
+
+class SessionLifecycle:
+    """Single-use serial HTTP loop; outer coordinator retains physical ownership.
+
+    Build a server with chat_http.make_server(lifecycle.service), then call
+    serve(server). request_close() is thread-safe and only sets a latch. Closing
+    never overlaps a handler; accepted turns finish normal disposition first.
+    Raw front aliases must remain unused for the whole exclusive borrow.
+    """
+    def __init__(self, service, admission, *, poll_seconds=.1, close_timeout=120):
+        require(admission.lifecycle is None, 'admission already attached')
+        require(service.engine.front is admission.front and service.parking.engine is service.engine,
+                'service/adapter was not constructed with this admission proxy')
+        require(service.halted_reason is None and service.engine.halted_reason is None,
+                'halted service cannot attach')
+        require(finite(poll_seconds) and 0 < poll_seconds <= .25 and
+                finite(close_timeout) and 0 < close_timeout <= 120, 'bounded polling/close required')
+        self._service, self.admission = service, admission
+        self.poll_seconds, self.close_timeout = poll_seconds, close_timeout
+        self.service = _ServiceProxy(self)
+        self.state = 'attached'
+        self._close_requested = threading.Event()
+        self._used = self._in_handler = self._in_service = self._close_called = False
+        self._thread = None
+        self._normal_reason = None
+        admission.lifecycle = self
+
+    def request_close(self):
+        self._close_requested.set()
+
+    def _boundary_reason(self):
+        a, front = self.admission, self.admission._raw
+        if a.failure is not None:
+            raise a.failure
+        require(self._service.halted_reason is None and self._service.engine.halted_reason is None,
+                'service or adapter halted outside captured lifecycle error')
+        require(front.pending is None and front.state in ('ready', 'draining'),
+                'handler left exceptional or undisposed owner state')
+        if self._close_requested.is_set():
+            return 'requested'
+        if self._normal_reason is not None:
+            return self._normal_reason
+        if front.state == 'draining' or front.completed >= a.request_limit:
+            return 'request-limit'
+        expiry = a._expired()
+        if expiry:
+            return expiry
+        code = front.process.poll()
+        require(code in (None, 0), 'native exited unsuccessfully before intake')
+        return 'native-exit' if code == 0 else None
+
+    def serve(self, server):
+        require(not self._used, 'lifecycle is single use')
+        require(type(server) is chat_http._Server and server.service is self.service,
+                'exact serial HTTP server attached to lifecycle service required')
+        self._used = True
+        self._thread = threading.get_ident()
+        self.state = 'serving'
+        try:
+            server.timeout = self.poll_seconds
+            while True:
+                reason = self._boundary_reason()
+                if reason is not None:
+                    break
+                self._in_handler = True
+                try:
+                    server.handle_request()
+                finally:
+                    self._in_handler = False
+                if self.admission.failure is not None:
+                    raise self.admission.failure
+                require(not server.intake_halted or self._normal_reason is not None,
+                        'HTTP intake halted without a captured service error')
+            self.state = 'closing'
+            server.intake_halted = True
+            server.server_close()
+            require(not self._in_service and self.admission._raw.pending is None,
+                    'normal close requires completed disposition')
+            self.admission.guard()
+            self._close_called = True
+            stopped = self.admission._raw.close(timeout=self.close_timeout)
+            expected = dict(event='stopped', safe_to_exit=True,
+                completed_requests=self.admission._raw.completed,
+                completed_controls=self.admission._raw.completed_controls,
+                discarded_pending=False, pending_request_id='')
+            require(all(type(stopped.get(k)) is type(v) and stopped[k] == v for k, v in expected.items()) and
+                    stopped.get('reason') in ('quit','eof','request-limit','idle-timeout','deadline','signal') and
+                    self.admission._raw.process.poll() == 0, 'native clean shutdown proof mismatch')
+            self.admission.guard()
+            self.state = 'closed'
+            return dict(passed=True, reason=reason, native_stopped=stopped,
+                        completed_requests=stopped['completed_requests'], close_calls=1,
+                        scope='attached owner lifecycle; physical drain remains outer-coordinator responsibility')
+        except BaseException as error:
+            self.admission._fail(error)
+            primary = self.admission.failure
+            self.state = 'incident'
+            server.intake_halted = True
+            try:
+                server.server_close()
+            except BaseException as cleanup_error:
+                primary.add_note('listener cleanup failed: ' + str(cleanup_error)[:1024])
+            raise primary
+        finally:
+            self._in_handler = self._in_service = False
+            self._thread = None

@@ -1,0 +1,41 @@
+{
+  "schema": "ownrt.session-lifecycle-host-independent-review.v1",
+  "passed": true,
+  "review_kind": "read-only source and pinned-artifact review; no tests or native execution by reviewer",
+  "native_executed": false,
+  "device_executed": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": "ca169592f1950451c48e445fa9c13bb674d394e12eae45c7b665428375b76cae",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "experiments/own-xpu-runtime/integration/session_lifecycle_host_probe.py": "d04df3644e63e18b4de3e26a9bef6ee22a66628f361d08bd5cdce245683486c1",
+    "experiments/own-xpu-runtime/integration/test_session_lifecycle_host_probe.py": "09be573051bfb3f8463e54c3560ba4e74437ca978bc678a7ee267be910136fba",
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/receipts/session-lifecycle-host-plan.json": "e5bf2f1ee71a61be9677bc8c06cb57322deea91481826a9faef00fda27106424",
+    "experiments/own-xpu-runtime/integration/receipts/session-lifecycle-host-preparation.json": "24988f3eb8f277036dd1e449d83c2becd4bda4ccb0b7e150e579aa2543257100"
+  },
+  "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+  "plan_sha256": "e5bf2f1ee71a61be9677bc8c06cb57322deea91481826a9faef00fda27106424",
+  "fresh_output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-lifecycle-a",
+  "findings_resolved": [
+    "HTTP503 publication race now prefers the exact admission.failure exception; failure receipt preserves type/message and caller_error; rethrows primary_error"
+  ],
+  "checks": [
+    "GNU HOST_ONLY build and prior tiny fixture pinned through sealedp198READY/artifactmanifest",
+    "--mini --pipeline-mini context64 vocab16 synthetic3rowmodelidentity; no real model/header reads",
+    "synthetic alphabetA..P exactstopID15; no productiontokenizer claim",
+    "same hostELF for owner and NativeCheckpointStore tool modes",
+    "actualHTTP ChatService/CheckpointEngine/Parking via guarded admission proxy and guarded store",
+    "native8 /soft2 then oneQUIT; twoSAVE states and2request/2control/zeroexit proof required",
+    "fixedfresh0700 ignoredscratch rootfloor27GB+64MiBforecast",
+    "4GiBAS limit applies only explicit fresh tinyCPU process",
+    "failure onecooperativeSIGTERM boundedwait; no retry/kill; fdretain whilehandleralive; primaryerrorpreserved"
+  ],
+  "preparation_tests_observed": 6,
+  "scope": "Source readiness for root-owned one-shot HOST_ONLY execution; not actual execution or device qualification"
+}

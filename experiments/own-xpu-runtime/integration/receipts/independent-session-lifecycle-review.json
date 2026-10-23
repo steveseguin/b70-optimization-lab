@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "created_utc": "2026-10-23T18:14:22.218836+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/own-xpu-runtime/integration/test_session_lifecycle.py": "c15ced4866e9ea547a67bc437667ed7cc45c9e95ab219b3a7066698d992d33e2",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b"
+  },
+  "tests": {
+    "passed": true,
+    "count": 16,
+    "seconds": 0.043,
+    "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_session_lifecycle.py -v"
+  },
+  "findings": [],
+  "verified": [
+    "Expired body admission closes normally with zero RUN; late pre-RUN expiry is incident and preserves poisoned-adapter semantics",
+    "Close latch during admitted turn waits for disposition; single-use loop closes native at most once",
+    "Stale ready state/native exit and unavoidable pre-RUN race handled without retry",
+    "RUN/SAVE/RELEASE and normal-close guard injection retained; store guards and active-request fault monitoring remain caller duties",
+    "Original runtime, boundary and serialization exceptions survive generic HTTP errors and secondary cleanup failure",
+    "Unexpected HTTP or service/engine halt terminates lifecycle as incident"
+  ],
+  "limitations": [
+    "Synthetic owner/socket tests only; no native execution",
+    "Trusted launch times/limits, exclusive raw aliases, store guarding and physical drain remain outer-coordinator responsibilities"
+  ]
+}

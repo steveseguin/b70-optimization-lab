@@ -1,0 +1,25 @@
+{
+  "schema": "own-runtime.attached-session-lifecycle-cpu.v1",
+  "passed": true,
+  "tests": 16,
+  "native_executed": false,
+  "device_executed": false,
+  "network": "ephemeral127.0.0.1 sockets, synthetic native owner",
+  "command": "nice -n19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_session_lifecycle.py -v",
+  "scope": "CPU lifecycle/HTTP/adapter/policy only; no real native quit/idle or physical drain qualification",
+  "initial_native_activity": "explicit caller-supplied conservative monotonic timestamp; never proxy construction time",
+  "metadata_guards": "caller-owned, not attested by this front lifecycle module",
+  "files": {
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/own-xpu-runtime/integration/test_session_lifecycle.py": "c15ced4866e9ea547a67bc437667ed7cc45c9e95ab219b3a7066698d992d33e2",
+    "experiments/own-xpu-runtime/integration/SESSION-LIFECYCLE.md": "71f2a2ef8273ac114314a908f91cf08504a6eb16dcf4fb5eda99b2b51f844491",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "experiments/own-xpu-runtime/integration/receipts/session-lifecycle-cpu-20261023.log": "d6284c205e26d353662963b900bd85c8d9b24b20cc2abaf72eefc39e0b456f4c"
+  },
+  "retained_initial_candidate": "lineage/session-lifecycle-before-transport-halt-review/receipt.json"
+}
