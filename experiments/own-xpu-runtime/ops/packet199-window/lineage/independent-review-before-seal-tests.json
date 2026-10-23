@@ -1,0 +1,116 @@
+{
+  "schema": "packet199.window-independent-review.v1",
+  "created_utc": "2026-10-23T17:54:21.250461+00:00",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "controller_check_or_run_invoked": false,
+  "services_changed": false,
+  "privileged_invocation": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/ops/packet199-window/window.py": "95d10b5142390eeb534506083ffb4b53f6ea8f29df06e7e6605e0abdfbcf0844",
+    "experiments/own-xpu-runtime/ops/packet199-window/helpers.py": "272af0e1669338f677c2424553ba427b2ba4c681fcf2d747bbe4923f73691d32",
+    "experiments/own-xpu-runtime/ops/packet199-window/helper-pins.json": "0a368c89028937374155795773391ea08ce3d09900590159041f3caf42d5c00b",
+    "experiments/own-xpu-runtime/ops/packet199-window/restore_guard.py": "a8c212a218b9d864fb4b8d4966902a9cd05c77db9a392eb51f7672fc3d0c4b5f",
+    "experiments/own-xpu-runtime/ops/packet199-window/test_window.py": "8a2626467b66ebe635684f56c86dd5864262dde5b7fe5cb61cea54843e557c83",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_worker.py": "64406957211ecddddf723b40703fe4c999c25a92f55af12ce749f4f79a5f803b",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_fault_review.py": "33992f93a96927c3049e5d24190461d71fdd3271d2eaf2d5ee317d9be6dafdf3",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_gates.py": "8d7c8f9727fe49c939c95f0389a10b946ed465afa73360a46bfccf60a665eaf3",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/plan.json": "974291b4c90d9c2f3109410a9305b3092b9b9b9d4c3e7190e43380a4f2d24080",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/vectors.json": "278c5ca8150ba3a67b2326a3e6418ee211d6b16455eaec3b666b2bcdf7c8060a"
+  },
+  "helper_pins_verified": 15,
+  "tests": {
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15,24-31",
+      "/home/steve/.venvs/vllm-xpu/bin/python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "experiments/own-xpu-runtime/ops/packet199-window",
+      "-p",
+      "test_window.py",
+      "-v"
+    ],
+    "tests": 17,
+    "passed": true,
+    "seconds": 0.028,
+    "scope": "Temporary fixtures and intercepted operations only"
+  },
+  "plan_interface": {
+    "passed": true,
+    "real_worker_plan_constructor": true,
+    "real_controller_plan_validator": true,
+    "readiness_and_native_argv_mocked": true,
+    "subprocess_intercepted": true,
+    "unit": "packet199-chat-parking-a",
+    "worker_argv": [
+      "/home/steve/.venvs/vllm-xpu/bin/python",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_worker.py",
+      "--authorized-device-window",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/device-p199-chat-A-a",
+      "--fault-review",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/fault-review-device-a.json"
+    ],
+    "checkpoint_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/runcheckpoints",
+    "host_required_available_bytes": 98990252032,
+    "live_memory_margin_bytes": 1073741824,
+    "disk_floor_bytes": 27000000000,
+    "planned_write_bytes": 671088640,
+    "expected_request_ids": [
+      "a-park",
+      "b-park",
+      "a-chat-append",
+      "a-chat-fresh",
+      "a-edited",
+      "final-b-no-park"
+    ],
+    "expected_controls": [
+      "parking-1",
+      "parking-2",
+      "parking-3",
+      "parking-4",
+      "parking-5",
+      "parking-6"
+    ],
+    "maximum_output_tokens": 896,
+    "correctness_keys": [
+      "A_parent_exact",
+      "B_parent_exact",
+      "append_restore_selected",
+      "append_fresh_tokens_exact",
+      "append_fresh_state_exact",
+      "edited_prefill",
+      "final_B_repeat",
+      "postreply_controls_exact",
+      "final_release_before_stopped",
+      "http_usage_exact",
+      "parking_budget_respected"
+    ]
+  },
+  "reviewed": [
+    "Shared pinned safety helpers preserve one graceful endpoint stop, passive privileged pre/post drain, queue/latch preservation, fault halt, one main-process SIGTERM and no retry/resume path.",
+    "Both queue STOP latches and worker output STOP gate admission/watch/each inherited restore and validation operation; failures preserve incident and foreign latch evidence.",
+    "All four fixed output/review/checkpoint/evidence freshness paths reject dangling symlinks before any service command; advertised checkpoint root is bound to the fixed local private root.",
+    "Actual worker plan constructor is accepted by actual controller validator under CPU interception: fixed venv argv without --lane, exact six requests and controls, memory/storage constants and paths agree.",
+    "All 11 worker correctness keys match controller terminal requirements; 5 SAVE then final RELEASE and clean stopped/unit exit 0 required before passive drain and one restoration.",
+    "Gate seals exact worker/controller source closure and independent review hashes, intercepts production native launch, runs CPU mocks, and invalidates readiness on fresh-interpreter plan failure."
+  ],
+  "resolved_prior_findings": [
+    "worker-interface",
+    "fresh-path-symlink",
+    "checkpoint-plan-binding"
+  ],
+  "prior_review": "experiments/own-xpu-runtime/ops/packet199-window/independent-review-before-interface.json",
+  "findings": [],
+  "scope": "Finite CPU source/interface review only. Fresh sealed worker --plan and live admission remain root-owned; this receipt does not authorize or claim device execution."
+}

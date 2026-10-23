@@ -1,0 +1,209 @@
+"""CPU-only worker integration mocks: real HTTP/codec/policy, synthetic owner/state."""
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sys
+import subprocess
+import tempfile
+from types import ModuleType
+import unittest
+from unittest.mock import patch
+
+P = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location('p199_test_worker', P / 'device_worker.py')
+W = importlib.util.module_from_spec(spec);spec.loader.exec_module(W)
+sys.path.insert(0, str(W.INTEGRATION))
+from chat_codec import PinnedChatCodec
+from test_checkpoint_engine import snapshot
+
+
+class Store:
+    def __init__(self, root, identity):
+        self.root, self.binary_sha256 = root, identity['engine']['binary_sha256']
+        self.saved = {}; self.calls = []
+    def snapshot(self, cid):
+        self.calls.append(('snapshot', cid)); return self.saved.get(cid)
+    def delete(self, cid):
+        self.calls.append(('delete', cid))
+        return 'ok' if self.saved.pop(cid, None) is not None else 'missing'
+
+
+class Front:
+    def __init__(self, store, identity, vectors, output):
+        self.store, self.identity, self.vectors, self.output = store, identity, vectors, output
+        self.state = 'ready';self.pending = None;self.operations = set()
+        self.ready = dict(protocol='ownrt.request-front.v2', experimental=True, context=4096, vocab=248320, model_loads=1)
+        self.calls = [];self.completed = 0;self.completed_controls = 0
+    def request(self, request_id, tokens, maximum, restore=None):
+        row = self.vectors['rows'][self.completed];self.completed += 1
+        if tokens != row['prompt_tokens'] or bool(restore) != (row['expected_policy_action'] == 'restore'):
+            raise ValueError('synthetic native input/restore mismatch')
+        if row['expected_output']['kind'] == 'exact-recorded-p198':
+            generated = list(row['expected_output']['tokens'])
+        else:
+            generated = [10] * maximum  # Explicitly synthetic output, never native qualification.
+        self.calls.append(('RUN', request_id, restore));self.request_id = request_id
+        self.visible = tokens + generated
+        self.pending = dict(request_id=request_id, visible_tokens=len(self.visible),
+                            processed_tokens=len(self.visible)-1, pending_token=generated[-1])
+        self.state = 'awaiting-disposition'
+        folder = self.output / 'owner/requests' / request_id;folder.mkdir(parents=True)
+        cached = row.get('saved_prefix', {}).get('visible_tokens', 1) - 1 if restore else 0
+        W.save(folder / 'result.json', dict(passed=True, tokens=generated,
+            request_front_scope='experimental-postreply-owner-v2', session_reuse=bool(restore), cached_tokens=cached))
+        W.save(folder / 'reset.json', dict(cached_tokens=0))
+        return dict(tokens=generated, completion=dict(save_pending=True))
+    def dispose(self, operation, event):
+        self.operations.add(operation);self.completed_controls += 1
+        self.pending = None;self.state = 'draining' if self.completed == 6 else 'ready'
+        return dict(event=event, request_id=self.request_id, operation_id=operation,
+                    request_disposed=True, request_quiesced=True, final_request=self.completed == 6)
+    def save(self, operation, cid, tokens):
+        self.calls.append(('SAVE', operation, cid))
+        saved = snapshot(cid, tokens, self.identity);self.store.saved[cid] = saved
+        event = self.dispose(operation, 'checkpoint-saved')
+        event.update(checkpoint_id=cid, manifest_sha256=hashlib.sha256(saved.manifest_bytes).hexdigest())
+        folder = self.output / 'owner/operations' / operation;folder.mkdir(parents=True)
+        W.save(folder / 'save.json', event);return event
+    def release(self, operation):
+        self.calls.append(('RELEASE', operation));return self.dispose(operation, 'request-released')
+
+
+class WorkerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.codec = PinnedChatCodec()
+        cls.config = W.read(P / 'plan.json');cls.vectors = W.read(P / 'vectors.json')
+
+    def test_full_six_row_http_policy_lifecycle_with_synthetic_native(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory); root = output / 'checkpoints';root.mkdir()
+            store = Store(root, self.config['identity'])
+            front = Front(store, self.config['identity'], self.vectors, output)
+            guards, operations, progress = [], [], []
+            def capture(store, cid, output, name, guard):
+                guard();saved = store.snapshot(cid);guard()
+                # Synthetic state digest equality follows exact token history only.
+                return dict(manifest_sha256=hashlib.sha256(saved.manifest_bytes).hexdigest(),
+                            state_sha256={'synthetic': hashlib.sha256(saved.tokens_bytes).hexdigest()})
+            with patch.object(W, 'CHECKPOINTS', root):
+                correct, rows, captured = W.lifecycle(front, store, self.codec, self.config, self.vectors, output,
+                    lambda: guards.append(True), lambda rows: progress.append(len(rows)), operations.append, capture=capture)
+            self.assertTrue(all(correct.values()));self.assertEqual(len(correct), 11)
+            self.assertEqual(progress, [1,2,3,4,5,6]);self.assertEqual(front.completed_controls, 6)
+            self.assertEqual([x[0] for x in front.calls], ['RUN','SAVE'] * 5 + ['RUN','RELEASE'])
+            self.assertEqual(rows[2]['decision']['action'], 'restore')
+            self.assertEqual(rows[4]['decision']['action'], 'prefill')
+            self.assertEqual([r['session'] for r in rows[2]['policy_events'] if r['event']=='checkpoint evicted'], ['p199-b'])
+            self.assertTrue(any(call[0] == 'delete' for call in store.calls))
+            self.assertEqual(captured['a-chat-append']['state_sha256'], captured['a-chat-fresh']['state_sha256'])
+            self.assertEqual(len(operations) % 2, 0)
+            for before, after in zip(operations[::2], operations[1::2]):
+                self.assertEqual((before['phase'], after['phase']), ('before', 'after'))
+                self.assertEqual(before['operation'], after['operation'])
+            self.assertGreater(len(guards), 30)
+            stopped = dict(event='stopped',safe_to_exit=True,reason='request-limit',completed_requests=6,
+                           completed_controls=6,discarded_pending=False,pending_request_id='')
+            W.verify_stopped(stopped, rows)
+            for field, value in [('safe_to_exit',False),('completed_controls',5),('discarded_pending',True)]:
+                with self.assertRaises(ValueError):W.verify_stopped(stopped | {field:value}, rows)
+
+    def test_failed_save_keeps_private_cause_and_stops_intake(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output=Path(directory);root=output/'checkpoints';root.mkdir()
+            store=Store(root,self.config['identity'])
+            front=Front(store,self.config['identity'],self.vectors,output)
+            original=front.save
+            front.save=lambda *args: original(*args) | {'manifest_sha256':'0'*64}
+            with patch.object(W,'CHECKPOINTS',root):
+                with self.assertRaisesRegex(ValueError,'HTTP completion failed: 503'):
+                    W.lifecycle(front,store,self.codec,self.config,self.vectors,output,
+                                lambda:None,lambda rows:None,lambda row:None)
+            incident=W.read(output/'http-incident.json')
+            self.assertIn('SAVE acknowledgement/snapshot binding mismatch',incident['engine_halted_reason'])
+            self.assertIn('SAVE acknowledgement/snapshot binding mismatch',incident['service_halted_reasons']['parked'])
+            self.assertEqual([call[0] for call in front.calls],['RUN','SAVE'])
+            self.assertEqual((output/'http-incident.json').stat().st_mode & 0o777,0o600)
+            self.assertLess((output/'http-incident.json').stat().st_size,65536)
+
+    def test_guard_failure_before_operation_never_forwards(self):
+        calls=[]
+        class Target:
+            def delete(self, cid):calls.append(cid)
+        def fail():raise ValueError('new fault')
+        wrapped=W.Guarded(Target(), ('delete',), fail, calls.append, 'store')
+        with self.assertRaisesRegex(ValueError,'new fault'):wrapped.delete('a')
+        self.assertEqual(calls, [])
+
+    def test_guard_failure_after_operation_does_not_repeat(self):
+        calls=[]; count=[0]
+        class Target:
+            def save(self, operation):calls.append(operation);return True
+        def guard():
+            count[0]+=1
+            if count[0]==2:raise ValueError('postop fault')
+        wrapped=W.Guarded(Target(), ('save',), guard, lambda row:None, 'front')
+        with self.assertRaisesRegex(ValueError,'postop fault'):wrapped.save('parking-1')
+        self.assertEqual(calls,['parking-1'])
+
+    def test_native_argv_changes_only_three_registered_fields(self):
+        original=W.parent().native_argv();actual=W.native_argv()
+        fields={'--output':str(W.OUTPUT/'owner'), '--request-front-checkpoints':str(W.CHECKPOINTS),
+                '--request-front-max-requests':'6'}
+        for flag,value in fields.items():original[original.index(flag)+1]=value
+        self.assertEqual(actual,original)
+        self.assertEqual(actual[actual.index('--max-new')+1],'512')
+        self.assertIn(str(W.P198/'build/device/own-rt-iq3'), actual)
+
+    def test_owner_launch_is_intercepted_and_limited_as_refuses(self):
+        calls=[]
+        class Limits:
+            @staticmethod
+            def check():calls.append('limits')
+        with patch.object(W.parent(), 'parent_modules', return_value={'exec_limits':Limits}):
+            env={'OMP_NUM_THREADS':'2','FilterBdfPath':'0000:23:00.0'}
+            result=W.start_owner(W.native_argv(),env,None,popen=lambda *a,**k:calls.append((a,k)) or 'intercepted')
+        self.assertEqual(result,'intercepted');self.assertEqual(calls[0],'limits')
+        class Refuse:
+            @staticmethod
+            def check():raise ValueError('finite RLIMIT_AS')
+        with patch.object(W.parent(),'parent_modules',return_value={'exec_limits':Refuse}):
+            with self.assertRaisesRegex(ValueError,'finite RLIMIT_AS'):
+                W.start_owner(W.native_argv(),env,None,popen=lambda *a,**k:self.fail('must not exec'))
+
+    def test_external_dependency_inventory_is_deterministic(self):
+        initial = W.external_dependencies()
+        import jinja2.sandbox
+        self.assertIn(Path(jinja2.sandbox.__file__).resolve(), initial)
+        fake = ModuleType('jinja2.not_a_real_module');fake.__file__ = '/tmp/unrelated.py'
+        with patch.dict(sys.modules, {'jinja2.not_a_real_module':fake}):
+            self.assertEqual(W.external_dependencies(), initial)
+        self.assertTrue(any(path.suffix == '.so' for path in initial))
+
+    def test_dependency_closure_matches_fresh_process_after_codec(self):
+        program = """import importlib.util,json
+from pathlib import Path
+path=Path('experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_worker.py')
+s=importlib.util.spec_from_file_location('fresh_worker',path);w=importlib.util.module_from_spec(s);s.loader.exec_module(w)
+a=w.external_dependencies();w.integration()['codec']();b=w.external_dependencies()
+assert a==b
+print(json.dumps({'equal':True,'files':len(a)}))
+"""
+        result=subprocess.run([sys.executable,'-B','-c',program],cwd=W.ROOT,
+            env={'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2','OPENBLAS_NUM_THREADS':'2'},
+            capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertTrue(json.loads(result.stdout)['equal'])
+        self.assertGreater(json.loads(result.stdout)['files'],10)
+
+    def test_private_checkpoint_root_exclusive_real_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)/'states'
+            with patch.object(W,'CHECKPOINTS',root):
+                row=W.create_checkpoint_root();self.assertEqual(row['mode'],'0700')
+                with self.assertRaisesRegex(ValueError,'fresh'):W.create_checkpoint_root()
+
+
+if __name__ == '__main__':unittest.main(verbosity=2)

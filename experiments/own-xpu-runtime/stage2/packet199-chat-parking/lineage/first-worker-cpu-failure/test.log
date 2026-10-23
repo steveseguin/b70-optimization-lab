@@ -1,0 +1,24 @@
+test_full_six_row_http_policy_lifecycle_with_synthetic_native (test_device_worker.WorkerTests.test_full_six_row_http_policy_lifecycle_with_synthetic_native) ... FAIL
+test_guard_failure_after_operation_does_not_repeat (test_device_worker.WorkerTests.test_guard_failure_after_operation_does_not_repeat) ... ok
+test_guard_failure_before_operation_never_forwards (test_device_worker.WorkerTests.test_guard_failure_before_operation_never_forwards) ... ok
+test_native_argv_changes_only_three_registered_fields (test_device_worker.WorkerTests.test_native_argv_changes_only_three_registered_fields) ... ok
+test_owner_launch_is_intercepted_and_limited_as_refuses (test_device_worker.WorkerTests.test_owner_launch_is_intercepted_and_limited_as_refuses) ... ok
+test_private_checkpoint_root_exclusive_real_mode (test_device_worker.WorkerTests.test_private_checkpoint_root_exclusive_real_mode) ... ok
+
+======================================================================
+FAIL: test_full_six_row_http_policy_lifecycle_with_synthetic_native (test_device_worker.WorkerTests.test_full_six_row_http_policy_lifecycle_with_synthetic_native)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet199-chat-parking/tests/test_device_worker.py", line 97, in test_full_six_row_http_policy_lifecycle_with_synthetic_native
+    self.assertEqual(rows[2]['policy_events'][0]['session'], 'p199-b')
+AssertionError: 'p199-a' != 'p199-b'
+- p199-a
+?      ^
++ p199-b
+?      ^
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.365s
+
+FAILED (failures=1)

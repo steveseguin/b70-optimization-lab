@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 13:58 EDT — real HTTP chat pilot is CPU-ready; live admission is next.**
+The six-turn pilot passes 28 worker, readiness and controller checks plus independent review. Its unchanged native engine,
+215 source files and 35 interpreter/dependency files are pinned, and a fresh interpreter verifies the same launch plan.
+It will compare resumed chat against fresh tokens and saved state, check edited history and enforce bounded parking.
+Root has enough room for the full forecast without lowering the 27 GB floor. No new device window has started;
+all three restore27 applications remain running. One clean pilot and drain will precede their single restore28 reload.
+[Pilot](experiments/own-xpu-runtime/stage2/packet199-chat-parking/README.md).
+
 **October 23, 13:44 EDT — live chat test has local storage headroom; final CPU review is underway.**
 A verified external archive preserves all876 files from four closed two-card checkpoint trees. Removing only796 matching untracked
 tensor copies recovered530.6MB; metadata and small controls remain, with explicit reconstruction receipts. Root now has28.20GB free,

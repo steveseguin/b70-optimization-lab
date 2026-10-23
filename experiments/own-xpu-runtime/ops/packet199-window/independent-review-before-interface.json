@@ -1,0 +1,66 @@
+{
+  "schema": "packet199.window-independent-review.v1",
+  "created_utc": "2026-10-23T17:41:47.427506+00:00",
+  "passed": false,
+  "status": "finite source review complete; pre-seal interface/freshness fixes pending",
+  "native_executed": false,
+  "device_executed": false,
+  "controller_check_or_run_invoked": false,
+  "services_changed": false,
+  "privileged_invocation": false,
+  "files_sha256": {
+    "experiments/own-xpu-runtime/ops/packet199-window/window.py": "95d10b5142390eeb534506083ffb4b53f6ea8f29df06e7e6605e0abdfbcf0844",
+    "experiments/own-xpu-runtime/ops/packet199-window/helpers.py": "272af0e1669338f677c2424553ba427b2ba4c681fcf2d747bbe4923f73691d32",
+    "experiments/own-xpu-runtime/ops/packet199-window/helper-pins.json": "0a368c89028937374155795773391ea08ce3d09900590159041f3caf42d5c00b",
+    "experiments/own-xpu-runtime/ops/packet199-window/restore_guard.py": "a8c212a218b9d864fb4b8d4966902a9cd05c77db9a392eb51f7672fc3d0c4b5f",
+    "experiments/own-xpu-runtime/ops/packet199-window/test_window.py": "8a2626467b66ebe635684f56c86dd5864262dde5b7fe5cb61cea54843e557c83"
+  },
+  "worker_in_progress_sha256": "45bbf2434c35fb383c10be31fb06f54a88a07ca7de3d76794854c3609697dcb5",
+  "helper_pins_verified": 15,
+  "tests": {
+    "command": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15,24-31",
+      "python3",
+      "-B",
+      "-m",
+      "unittest",
+      "test_window",
+      "-v"
+    ],
+    "tests": 16,
+    "passed": true,
+    "seconds": 0.039,
+    "scope": "temporary fixtures and intercepted operations only"
+  },
+  "reviewed": [
+    "Diff against frozen p198 controller retains single graceful endpointstop, complete passive pre/postdrain, queue/latch preservation, exact bootfault guards, one cooperative mainSIGTERM and no retry path.",
+    "Restore adapter retains p199 STOP/fault guard before inherited startup and validator operations.",
+    "Plan binds fixed venv interpreter, unit, paths, sixrequest/control identities, exactstoragefloor/writeforecast/hostbasebytes; successrequires5SAVE1RELEASE, finalpendingfalse, unitexit0 and allcorrectnessflags."
+  ],
+  "findings": [
+    {
+      "id": "worker-interface",
+      "severity": "pre-seal-blocker",
+      "status": "sent to worker owner",
+      "details": "In-progress worker lifecycle correctness keys differ from controller; agree exact base-memory plan field plus coordinator1GiB margin, and CLI lane/no-lane spelling before sealing. Worker plan/terminal implementation not complete at review."
+    },
+    {
+      "id": "fresh-path-symlink",
+      "severity": "pre-device-preflight",
+      "status": "sent to root",
+      "details": "check() uses Path.exists for newly fixed checkpointroot; a dangling symlink passes initialfreshness then worker lexists rejects after endpointshutdown. Use lexists on allfourfreshpaths and add mocked danglingpath refusal before service calls."
+    },
+    {
+      "id": "checkpoint-plan-binding",
+      "severity": "pre-seal-contract",
+      "status": "sent to root",
+      "details": "Bind finalworkerplan checkpoint_root field to fixed CHECKPOINT_ROOT once workerplan interface lands."
+    }
+  ],
+  "remaining": "Fresh sourcehash review/mocktests after fixes; actual sealed worker --plan contract may be checked CPU-only later. No live --check/--run authorized by this review."
+}

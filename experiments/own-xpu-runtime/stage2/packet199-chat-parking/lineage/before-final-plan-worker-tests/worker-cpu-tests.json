@@ -1,0 +1,37 @@
+{
+  "schema": "packet199.worker-cpu-mocks.v1",
+  "passed": true,
+  "tests": 9,
+  "native_executed": false,
+  "device_executed": false,
+  "command": "nice -n19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/stage2/packet199-chat-parking/tests -p test_device_worker.py -v",
+  "scope": "Real loopback HTTP, codec, facade, checkpoint adapter and parking over synthetic front/state; native exec intercepted, no device/model/tool execution",
+  "checks": [
+    "six semantic rows,5SAVE1RELEASE",
+    "restore selection and B eviction",
+    "append/fresh synthetic state equality",
+    "edited prompt prefill",
+    "final no-parking release",
+    "guards before/after each intercepted operation",
+    "nativeargv differs from p198 onlyoutput/checkpointroot/requestcount",
+    "nativeexec limits checked before interceptedPopen",
+    "exclusive0700 local checkpointdirectory",
+    "fixed-package dependency inventory includes lazy sandbox",
+    "fresh subprocess dependency closure unchanged after codec initialization",
+    "wrongSAVEack yields private0600cause and no extraRUN"
+  ],
+  "files": {
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_worker.py": "29556d8eae613df0374e1cb14a663763b370722f84582f50322ac0ca24ad7ef1",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_fault_review.py": "33992f93a96927c3049e5d24190461d71fdd3271d2eaf2d5ee317d9be6dafdf3",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/tests/test_device_worker.py": "52bfba652807cf457d149f95b505c9365107f296eab415eaa7f14a5890999911",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/plan.json": "74337af976f88d30c30ca27b683e8a92331d75a49c4a4de3576eebd93f45d640",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/vectors.json": "278c5ca8150ba3a67b2326a3e6418ee211d6b16455eaec3b666b2bcdf7c8060a",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/worker-cpu-tests.log": "ebc8b96c517bad95a9bc05aa7c3c4567116625cb6e44045776035a496ebde5e5"
+  },
+  "limitations": [
+    "No production native command executed",
+    "No model-output or real-checkpoint equality claim",
+    "Independent source review/readiness sealing pending"
+  ],
+  "first_failure": "lineage/first-worker-cpu-failure/receipt.json"
+}
