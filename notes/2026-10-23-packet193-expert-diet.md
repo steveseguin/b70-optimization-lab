@@ -66,3 +66,17 @@ with packet192 > 10 %, p90/median > 1.5. If the ISA ratios transferred 1:1 to th
   README 2.7); the epilogue's non-finite-scale stratum is the one diagnostic row (`exactness_claim: false`).
 * `units_idle` would tolerate the owner's endpoint-restore window (`window-p192-driver`, `-restore18`) per the brief; it
   had finished before the first compile, so every compile saw no active unit.
+
+## Device result (2026-10-23, lane B card 2, unit lanequeue-B39, 04:27-04:28 UTC): exp-diet passes the bar
+
+**Measured 2026-10-23 (lane B, card 2, lanequeue-B39, 04:27-04:28 UTC, 82 s on device, 101,052 samples; native run returncode 0, drained):** every claimed stratum (384 cold routes, warm, real rows) byte-identical on device for all three candidates. The wrapper stopped the row (rc 1) on a byte mismatch of the PRODUCTION kernel against the GNU CPU fixture on the NaN-only `exceptional` diagnostic stratum: 2,353 differing words, all NaN-vs-NaN, payload order only, 0 other bytes (the device's NaN payload order differs from the host twin's, as the Intel twin's did); coordinator ruling: diagnostic, not a candidate exactness failure; the production kernel's own fixture carries the host NaN order. The packet's `s193_report.evaluate` was not run (its reader raised on the device stream; left unmodified post-window); medians below were computed from `samples.jsonl` by the coordinator (per candidate, kernel, stratum, arm, order; warm-ups excluded).
+
+| candidate | cold median µs (cand / prod, A/B and B/A) | warm median µs | ratio cold / warm | µs saved per layer (cold / warm) | verdict (≤ 0.85 both strata, both orders) |
+| --- | --- | --- | --- | --- | --- |
+| exp-diet (gate/up) | 57.92 / 73.85 (both orders) | 35.99–36.15 / 46.77 | 0.784 / 0.769–0.773 | 15.9 / 10.8 | **PASS → packet194 engine screen** |
+| exp-act-epilogue (gate/up + SLM activation epilogue) | 62.71 / 76.56–76.67 | 41.88 / 49.27 | 0.818–0.819 / 0.850 | no gain over exp-diet + the separate activation launch | borderline (warm exactly at the bar); dropped in favour of exp-diet |
+| down-diet (down) | 45.52 / 47.08 | 32.92 / 34.27–34.38 | 0.967 / 0.958–0.960 | 1.5 / 1.4 | FAIL (bar 0.85); closed |
+
+Reading: the gate/up instruction diet removes 10.8 µs (L2-warm) to 15.9 µs (DRAM-cold) per layer-equivalent from the record kernel while staying bit-identical; the in-model regime sits between the strata, so the engine-level saving is expected at 11-16 µs per GDN layer on both ranks, i.e. about +1.5 to +2.1 % on the two-card line (+1.32 % per 0.01 ms, lever synthesis 4) and about +2 % on one card (11.4 µs per layer = +2 %). The epilogue variant gains nothing over exp-diet plus the separate activation launch; the down diet's 1.5 µs is below the bar. Next: packet194 integrates `exp-diet` into the k3x record engine behind an in-load `expert_gateup=production|diet` key with engine-level exactness proofs, then a lane-B one-load bracket k3x / k3x+diet / k3x / k3x+diet / k3x.
+
+Post-window lane state: the wrapper raised after the drain, so the lane-B marker `active-lane-B.json` was retained with a dead owner (pid 3256683); it was archived into `evidence/diet-B1/active-lane-B.retained-dead-owner.json` and removed, and the failed `screen-*`/`lanequeue-B39` units were reset. Window receipts: `lineage/window-20261023/`; endpoints restored as `*-20261023-restore19`; PAUSE-A untouched, PAUSE-B re-armed.

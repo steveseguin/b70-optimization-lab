@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 00:45 EDT — packet193 instruction diet: the exact gate/up diet runs at 0.78× cold / 0.77× warm (lane B, card 2, 04:27 UTC); first lever in the +2 % family.**
+On device every claimed stratum was byte-identical for all three candidates. exp-diet (hoisted `exceptional` test, sign applied after the scale multiply,
+hoisted effective scales; 11.8 vs 15.3 dynamic instructions per weight) 57.92 vs 73.85 µs cold and 36.0 vs 46.8 warm (−15.9 / −10.8 µs per layer-
+equivalent); exp-act-epilogue 0.82/0.85 with no gain over exp-diet plus the separate activation launch (dropped); down-diet 0.96 (closed). The wrapper
+stopped the row on the production kernel's NaN-payload order vs the CPU fixture on the NaN-only diagnostic stratum (ruled diagnostic, not an
+exactness failure); the dead-owner lane marker was archived and removed. Projection: +1.5 to +2.1 % two-card, about +2 % one-card. Next:
+packet194 integrates exp-diet into the k3x record engine (`expert_gateup=production|diet`, engine-level exactness proofs) with a lane-B one-load
+bracket; prepared CPU-only. Endpoints restored as `*-20261023-restore19`. Packet `stage2/packet193-expert-diet/` (note `notes/2026-10-23-packet193-expert-diet.md`).
+
 **October 22, 23:35 EDT — Session-swap parity step 3 (engine history → next turn's prefix) 50/60 exact, misses = one trimmed tail token; parking policy built and CPU-tested.**
 `integration/continuation_parity.py` on the five one-card device runs with recorded generated ids (packets 178-181, 12 prompts each, 512-token
 greedy): decoded reply re-rendered as a stored assistant turn and re-tokenized reproduces 29,905/29,915 generated ids in place; the 10 misses are

@@ -1,6 +1,6 @@
 # Packet193 negative-result index (exact instruction diet of the record expert kernels)
 
-Pending device measurement; no row below is a speed result. The expert-class closures of the kernel-floor study
+Measured 2026-10-23 (lane B micro; results below); no row below is a speed claim on a model. The expert-class closures of the kernel-floor study
 (`../packet190-record-bundle-k3x/analysis/expert-kernel-study-20261023.md`, section B) and packet192's ledger are carried
 so that no closed mechanism is re-tried; 227 `DO-NOT-REPEAT.md` files were grepped on 2026-10-23
 (`evidence/do-not-repeat-search.txt`).
@@ -23,7 +23,16 @@ so that no closed mechanism is re-tried; 227 `DO-NOT-REPEAT.md` files were grepp
 | 2026-10-23 | negating the *product* instead of the decoded weight | not exact: `Inf*0` default-NaN sign is hardware-fixed; the sign is applied to `v` (README 2.2) | - |
 | 2026-10-23 | NaN payload order on the Intel host twin for NaN-producing strata (packet162b f2, non-finite-scale banks): 12 rows differ in payload order only; Intel's production also differs from GNU's | recorded, never canonicalised (packet25/54/109 rules); device gate strict | a device payload-order-only kill is a ruling question, not a kernel defect |
 
-Pending rows per candidate (appended by `s193_report.evaluate` after the window): exp-diet, exp-act-epilogue, down-diet
+Measured rows per candidate (2026-10-23):
+
+**Measured 2026-10-23 (lane B, card 2, lanequeue-B39, 04:27-04:28 UTC, 82 s on device, 101,052 samples; native run returncode 0, drained):** every claimed stratum (384 cold routes, warm, real rows) byte-identical on device for all three candidates. The wrapper stopped the row (rc 1) on a byte mismatch of the PRODUCTION kernel against the GNU CPU fixture on the NaN-only `exceptional` diagnostic stratum: 2,353 differing words, all NaN-vs-NaN, payload order only, 0 other bytes (the device's NaN payload order differs from the host twin's, as the Intel twin's did); coordinator ruling: diagnostic, not a candidate exactness failure; the production kernel's own fixture carries the host NaN order. The packet's `s193_report.evaluate` was not run (its reader raised on the device stream; left unmodified post-window); medians below were computed from `samples.jsonl` by the coordinator (per candidate, kernel, stratum, arm, order; warm-ups excluded).
+
+| candidate | cold median µs (cand / prod, A/B and B/A) | warm median µs | ratio cold / warm | µs saved per layer (cold / warm) | verdict (≤ 0.85 both strata, both orders) |
+| --- | --- | --- | --- | --- | --- |
+| exp-diet (gate/up) | 57.92 / 73.85 (both orders) | 35.99–36.15 / 46.77 | 0.784 / 0.769–0.773 | 15.9 / 10.8 | **PASS → packet194 engine screen** |
+| exp-act-epilogue (gate/up + SLM activation epilogue) | 62.71 / 76.56–76.67 | 41.88 / 49.27 | 0.818–0.819 / 0.850 | no gain over exp-diet + the separate activation launch | borderline (warm exactly at the bar); dropped in favour of exp-diet |
+| down-diet (down) | 45.52 / 47.08 | 32.92 / 34.27–34.38 | 0.967 / 0.958–0.960 | 1.5 / 1.4 | FAIL (bar 0.85); closed |
+
 -> qualified (<= 0.85x cold and warm, both orders) / closed / withheld with the measured ratios. A qualified candidate
 goes to the exact one-load v5 bracket on the record selection (study C chain of evidence); a closed one is not repeated in
 this diet form.

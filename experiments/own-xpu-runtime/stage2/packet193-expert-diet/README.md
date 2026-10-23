@@ -1,5 +1,7 @@
 # Packet193: exact instruction-diet micro of the record expert kernels (lane-B micro, PROPOSAL ONLY)
 
+**Status (2026-10-23 04:45 UTC): device-measured on lane B card 2 (unit lanequeue-B39): exp-diet 0.784× cold / 0.77× warm, byte-identical on every claimed stratum → PASS (packet194 integrates it into the k3x engine); exp-act-epilogue borderline and dropped; down-diet 0.96 → closed. The wrapper stop was the production kernel's NaN-payload order vs the CPU fixture on the NaN-only diagnostic stratum (ruled diagnostic). See `DO-NOT-REPEAT.md` and the note.**
+
 CPU preparation is complete; **no GPU ran, nothing is queued, no speed or model-output claim exists.** One proposed
 lane-B micro row (`ops/lane-queue/proposed-p193-micro-B.txt`, mirror `proposals/`) measures three exact
 instruction-diet candidates against the two record expert kernels, after re-proving byte identity on the device.

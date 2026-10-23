@@ -1,0 +1,225 @@
+{
+  "schema": "own-runtime.packet193.micro-window.v1",
+  "passed": false,
+  "device_executed": true,
+  "drained": false,
+  "child_still_running": false,
+  "lane": "B",
+  "physical_cards": [
+    2
+  ],
+  "native_card": 0,
+  "pci": "0000:43:00.0",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "identity": {
+    "build_receipt_sha256": "2dd27c4958c2a7ebef457cbc0443297d7ed477106e65fc2fe7153aa5cec37725",
+    "binary_sha256": "2e8e407cf1df96dffa8dde5152d4056d30f86ba16853ba260d207d794dda05f9",
+    "fixtures_sha256": "b5721f0dd1142b96828f0846ab839d465a7b460771d76dd485254a2aa854f5d7",
+    "isa_sha256": "98a313d997ede705995399f1233a224bba877d94230cb0034c433703aa8f637c",
+    "routes_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+    "parent_inputs_sha256": "d724dcd0fe680e9da5c1c2f85ec18414d5cd0bacb6638937badf4fcf608c8780",
+    "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40"
+  },
+  "build_receipt_sha256": "2dd27c4958c2a7ebef457cbc0443297d7ed477106e65fc2fe7153aa5cec37725",
+  "binary_sha256": "2e8e407cf1df96dffa8dde5152d4056d30f86ba16853ba260d207d794dda05f9",
+  "fixtures_sha256": "b5721f0dd1142b96828f0846ab839d465a7b460771d76dd485254a2aa854f5d7",
+  "isa_sha256": "98a313d997ede705995399f1233a224bba877d94230cb0034c433703aa8f637c",
+  "routes_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+  "parent_inputs_sha256": "d724dcd0fe680e9da5c1c2f85ec18414d5cd0bacb6638937badf4fcf608c8780",
+  "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/micro-device",
+    "--rank",
+    "0",
+    "--routes",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/lineage-inputs/routes-p100b.json",
+    "--real-rows",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+    "--fixtures",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/build/fixtures",
+    "--mode",
+    "device",
+    "--cold-repeats",
+    "20",
+    "--warm-repeats",
+    "200",
+    "--passes",
+    "2",
+    "--coordinator-admitted-device-window"
+  ],
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet193-expert-diet-micro-B.service\n",
+  "systemd_properties": {
+    "ExitType": "cgroup",
+    "Restart": "no",
+    "TimeoutStopUSec": "infinity",
+    "KillMode": "process",
+    "SendSIGKILL": "no"
+  },
+  "started_utc_ns": 1792729623770777831,
+  "model_lifetimes": 0,
+  "watchdog_seconds": 1800,
+  "stop_reasons": [
+    "native byte mismatch in an exactness stratum: {\"kind\": \"bytes\", \"candidate\": \"production\", \"kernel\": \"gateup\", \"stratum\": \"exceptional\", \"route\": -1, \"against\": \"fixture\", \"different_bytes\": 2382, \"compared_bytes\": 38484, \"bytes_equal\": false, \"different_words\": 2353, \"nan_vs_nan_words\": 2353, \"other_bytes\": 0, \"payload_order_only\": true, \"exactness_claim\": true, \"cpu_only\": false}"
+  ],
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:43:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/evidence/diet-B1/native-home"
+  },
+  "coordinator_fault_review": {
+    "schema": "own-runtime.screen.fault-review.v3",
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "fault_count": 2,
+    "faults": [
+      {
+        "SYSLOG_IDENTIFIER": "kernel",
+        "__MONOTONIC_TIMESTAMP": "42064105058",
+        "PRIORITY": "6",
+        "_RUNTIME_SCOPE": "system",
+        "_KERNEL_SUBSYSTEM": "pci",
+        "_SOURCE_MONOTONIC_TIMESTAMP": "42063964780",
+        "_HOSTNAME": "steve-b70s",
+        "_MACHINE_ID": "9c3959da4143428eb2e83dbae3e4a0f7",
+        "__REALTIME_TIMESTAMP": "1792199356236486",
+        "_UDEV_SYSNAME": "0000:47:00.0",
+        "_BOOT_ID": "2cba7160054a4ffeb4c4e252eb956f5f",
+        "__SEQNUM": "34454776",
+        "__CURSOR": "s=e3d94d04f38747dcbe36a4ef06874902;i=20dbcf8;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9cb374e62;t=65dfeedfec2c6;x=433472837baa3e90",
+        "_TRANSPORT": "kernel",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "__SEQNUM_ID": "e3d94d04f38747dcbe36a4ef06874902",
+        "SYSLOG_FACILITY": "0",
+        "_KERNEL_DEVICE": "+pci:0000:47:00.0"
+      },
+      {
+        "__CURSOR": "s=e3d94d04f38747dcbe36a4ef06874902;i=20dbcf9;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9cb374f53;t=65dfeedfec3b8;x=7f42b4c9291f9442",
+        "_MACHINE_ID": "9c3959da4143428eb2e83dbae3e4a0f7",
+        "__SEQNUM": "34454777",
+        "_UDEV_SYSNAME": "0000:47:00.0",
+        "_KERNEL_DEVICE": "+pci:0000:47:00.0",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+        "SYSLOG_FACILITY": "0",
+        "_RUNTIME_SCOPE": "system",
+        "_TRANSPORT": "kernel",
+        "_KERNEL_SUBSYSTEM": "pci",
+        "__REALTIME_TIMESTAMP": "1792199356236728",
+        "_HOSTNAME": "steve-b70s",
+        "_BOOT_ID": "2cba7160054a4ffeb4c4e252eb956f5f",
+        "SYSLOG_IDENTIFIER": "kernel",
+        "__SEQNUM_ID": "e3d94d04f38747dcbe36a4ef06874902",
+        "PRIORITY": "6",
+        "_SOURCE_MONOTONIC_TIMESTAMP": "42063964790",
+        "__MONOTONIC_TIMESTAMP": "42064105299"
+      }
+    ],
+    "cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20e12ea;b=2cba7160054a4ffeb4c4e252eb956f5f;m=8540bca481;t=65e7a638418e6;x=5079de8c293aedb",
+    "through": "2026-10-23T04:26:48.886502Z",
+    "through_us": 1792729608886502,
+    "driver_sha256": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
+    "journal_sha256": "2b7abfe0ed01f0a922ebfad17776320127fc41821fff67418238614edfa40c6d",
+    "kernel_capture": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/lanequeue-review-d45e6cabdbf14b3ba5386fff143d3f84.kernel.jsonl.gz"
+  },
+  "device_topology": {
+    "lane": "B",
+    "filter": "0000:4",
+    "native_indices": [
+      0,
+      1
+    ],
+    "nodes": [
+      {
+        "pci": "0000:43:00.0",
+        "path": "/dev/dri/by-path/pci-0000:43:00.0-render",
+        "node": "/dev/dri/renderD128",
+        "driver": "xe"
+      },
+      {
+        "pci": "0000:47:00.0",
+        "path": "/dev/dri/by-path/pci-0000:47:00.0-render",
+        "node": "/dev/dri/renderD129",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "clients_before": {
+    "scope": "lane-B",
+    "blocked": [],
+    "other": [],
+    "inaccessible_processes": 508,
+    "hidden_clients_require_coordinator_ownership": true,
+    "device_nodes_opened": false
+  },
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "memory_admission": {
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120658345984,
+      "SwapTotal": 0,
+      "SwapFree": 0,
+      "GPUActive": 114688
+    },
+    "required_bytes": 10737418240,
+    "host_reserve_bytes": 8589934592,
+    "anonymous_budget_bytes": 2147483648,
+    "device_bytes_upper_bound": 1200000000
+  },
+  "storage_admission": {
+    "root_free_bytes": 30572986368,
+    "minimum_root_free_bytes": 25000000000,
+    "planned_write_bytes": 100663296
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007dac70c43000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007dac70800000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007dac70b3e000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007dac70b10000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007dac70400000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007dac70000000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007dac70c45000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007dac70b09000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007dac6f200000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007dac70b04000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007dac70aff000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007dac6ec00000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007dac70ae1000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007dac6d400000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007dac70307000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007dac70a7e000)\n",
+    "stderr": ""
+  },
+  "pid": 3256703,
+  "process_start_ticks": 57233217,
+  "device_isolation": {
+    "passed": true,
+    "allowed_pci": [
+      "0000:43:00.0"
+    ],
+    "observed_pci": [
+      "0000:43:00.0"
+    ],
+    "latest_fds": [
+      {
+        "pid": 3256703,
+        "fd": "4",
+        "driver": "xe",
+        "pci": "0000:43:00.0",
+        "client_id": "22139"
+      }
+    ]
+  },
+  "anonymous_peak_bytes": 178413568,
+  "anonymous_limit_bytes": 2147483648,
+  "anonymous_stop_bytes": 2080374784,
+  "memory_last_sample": {
+    "anonymous_bytes": 178413568,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 3256703,
+        "rss_anon_bytes": 178413568
+      }
+    ]
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 82.3917719660094
+}
