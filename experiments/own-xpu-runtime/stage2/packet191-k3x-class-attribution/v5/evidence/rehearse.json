@@ -1,0 +1,541 @@
+{
+  "passed": true,
+  "jobs": [
+    {
+      "job": "packet191-row0-smoke-k3x-on-B",
+      "unit": "screen-packet191-row0-smoke-k3x-on-B",
+      "passed": true,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 186,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 229,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/copy_packet191.py",
+            "line": 38,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/copy_packet191.py",
+            "line": 38,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/entry_gate.py",
+            "line": 57,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_queue_plan.py",
+            "line": 102,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 81,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 79,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 351,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 191,
+        "message": "0 identity refusals; 32 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false
+    },
+    {
+      "job": "packet191-row1-bracket-sites-B",
+      "unit": "screen-packet191-row1-bracket-sites-B",
+      "passed": true,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 186,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 229,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/copy_packet191.py",
+            "line": 38,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/copy_packet191.py",
+            "line": 38,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/dry_run.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/prepare_selections.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/propose_smoke.py",
+            "line": 8,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/smoke_screen.py",
+            "line": 73,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/smoke_screen.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/smoke_screen.py",
+            "line": 308,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/window_adapter.py",
+            "line": 174,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/entry_gate.py",
+            "line": 25,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/entry_gate.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/entry_gate.py",
+            "line": 57,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 32,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 33,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 68,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 118,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_lane_admission.py",
+            "line": 120,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_queue_plan.py",
+            "line": 102,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 81,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 79,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/screen.py",
+            "line": 351,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 191,
+        "message": "0 identity refusals; 32 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false
+    }
+  ],
+  "shared_report_rehearsal": {
+    "passed": false,
+    "returncode": 1,
+    "kinds": [
+      {
+        "job": "packet191-row0-smoke-k3x-on-B",
+        "report": [
+          {
+            "kind": "smoke",
+            "passed": false
+          },
+          {
+            "kind": "bracket",
+            "passed": false
+          }
+        ]
+      },
+      {
+        "job": "packet191-row1-bracket-sites-B",
+        "report": [
+          {
+            "kind": "smoke",
+            "passed": false
+          },
+          {
+            "kind": "bracket",
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "note": "informational: v5/report_gate.py covers the real report path for all three rows on both lanes",
+    "log": "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/evidence/rehearse-report.log"
+  }
+}

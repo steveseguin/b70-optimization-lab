@@ -1,0 +1,270 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "real_historical_schema_checked": true,
+  "missing_streams_and_scopes_refused": true,
+  "head_scope_absence_enforced": true,
+  "boundary_scopes_mandatory_every_cycle": true,
+  "staged_view_refuses_synchronous_token_history": true,
+  "first_request_gate_in_every_row": true,
+  "elapsed_time_informational_only": true,
+  "draft_definition": "D = draft_rows.draft_wall_ms (publication observed), never the op-9 command duration",
+  "s191_rule": "measurement: per rank, per phase, per class: ms/half, us per GDN and QSA layer, excess over the 537 GB/s copy floor (packet72/77 byte formulas) and over packet110 (roofline.json @128); lever-eligible by excess iff excess over the floor >= 15.1 us per GDN layer on BOTH ranks (3.8 us screen) with the DO-NOT-REPEAT closures named; kill rules: exact/proposals, off drift > 0.5 %, on/off < 0.93 (table withheld, never ratio-corrected), class sums vs body > 10 %",
+  "off_views_on_real_packet189": {
+    "rates": [
+      62.24199434282818,
+      62.22542821257332
+    ],
+    "source": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/evidence/device-row1-bracket-v3k-k3x-B-p189/bracket-summary.json",
+    "sha256": "e11a02d5350e35d5c4910dfe6525725d5ca7ede743216c32f4ab18aafc88a9cb",
+    "hit_ms": [
+      13.530244966973891,
+      13.532478854463879
+    ],
+    "miss_ms": [
+      25.57030979960473,
+      25.568453733285423
+    ],
+    "layer_body_ms": [
+      11.603355915512466,
+      11.604707658587262
+    ],
+    "boundary_ms": [
+      1.4812405650352043,
+      1.481171039231881
+    ],
+    "draft_wall_ms": [
+      1.531522698497854,
+      1.5320715847639486
+    ],
+    "site_rows": 0
+  },
+  "record_on_real_packet190": {
+    "rate": 62.345281904743764,
+    "source": "experiments/own-xpu-runtime/stage2/packet190-record-bundle-k3x/evidence/device-cards01-p190-a/WS128/run/summary.json",
+    "sha256": "76bc7015b984ac489ec8d390cd8e588be5727f435705392c91919ef1fdf1f8bb",
+    "hits": 932,
+    "misses": 256,
+    "hit_ms": 13.50896515298431,
+    "miss_ms": 25.510820638373843
+  },
+  "engine_site_row_format_proof": {
+    "k3x-off-first-rank0": {
+      "rows": 1144,
+      "phases": [
+        "boundary",
+        "half"
+      ],
+      "groups": [
+        "control",
+        "dense",
+        "experts",
+        "hc",
+        "norms",
+        "ple",
+        "qsa_attention",
+        "recurrence",
+        "route_small"
+      ],
+      "sites_per_gdn_layer": 29
+    },
+    "k3x-off-first-rank1": {
+      "rows": 908,
+      "phases": [
+        "draft",
+        "half"
+      ],
+      "groups": [
+        "control",
+        "dense",
+        "draft",
+        "experts",
+        "hc",
+        "head",
+        "norms",
+        "qsa_attention",
+        "recurrence",
+        "route_small"
+      ],
+      "sites_per_gdn_layer": 20
+    },
+    "k3x-on-first-rank0": {
+      "rows": 1716,
+      "phases": [
+        "boundary",
+        "half"
+      ],
+      "groups": [
+        "control",
+        "dense",
+        "experts",
+        "hc",
+        "norms",
+        "ple",
+        "qsa_attention",
+        "recurrence",
+        "route_small"
+      ],
+      "sites_per_gdn_layer": 29
+    },
+    "k3x-on-first-rank1": {
+      "rows": 1362,
+      "phases": [
+        "draft",
+        "half"
+      ],
+      "groups": [
+        "control",
+        "dense",
+        "draft",
+        "experts",
+        "hc",
+        "head",
+        "norms",
+        "qsa_attention",
+        "recurrence",
+        "route_small"
+      ],
+      "sites_per_gdn_layer": 20
+    }
+  },
+  "s191_on_synthetic_instrumented_views": {
+    "outcome": "MEASUREMENT COMPLETE: instrumented/control 0.9850; classes >= 15.1 us/GDN layer over the copy floor on BOTH ranks (chain bar): ['dense', 'experts', 'hc', 'norms', 'recurrence', 'route_small']; >= 3.8 us (screen bar): ['dense', 'experts', 'hc', 'norms', 'recurrence', 'route_small']; open mechanisms among them: NONE (every excess-eligible class is closed by the DO-NOT-REPEAT rows named; no kernel brief can honestly be priced at +2 %)",
+    "instrumented_over_control": 0.9850437018295931,
+    "control_drift_percent": 0.02662276617568793,
+    "off_timing_equivalent_to_packet189": true,
+    "completeness": [
+      {
+        "halves": 57,
+        "kernel_ms": 12.101291000000002,
+        "body_ms": 11.611426,
+        "kernel_over_body": 1.044195033146556,
+        "deviation_pct": 4.419503314655593
+      },
+      {
+        "halves": 288,
+        "kernel_ms": 12.101291000000002,
+        "body_ms": 11.6150375,
+        "kernel_over_body": 1.0420611042802783,
+        "deviation_pct": 4.206110428027832
+      },
+      {
+        "halves": 288,
+        "kernel_ms": 12.35544,
+        "body_ms": 11.9114,
+        "kernel_over_body": 1.0371346915232236,
+        "deviation_pct": 3.7134691523223573
+      },
+      {
+        "halves": 57,
+        "kernel_ms": 12.101291000000002,
+        "body_ms": 11.607263,
+        "kernel_over_body": 1.044061761750363,
+        "deviation_pct": 4.4061761750362916
+      },
+      {
+        "halves": 288,
+        "kernel_ms": 12.101291000000002,
+        "body_ms": 11.6151925,
+        "kernel_over_body": 1.0419003316506514,
+        "deviation_pct": 4.1900331650651435
+      },
+      {
+        "halves": 288,
+        "kernel_ms": 12.35544,
+        "body_ms": 11.918099999999999,
+        "kernel_over_body": 1.0363927829481192,
+        "deviation_pct": 3.6392782948119207
+      }
+    ],
+    "chain_eligible_by_excess": [
+      "dense",
+      "experts",
+      "hc",
+      "norms",
+      "recurrence",
+      "route_small"
+    ],
+    "screen_eligible_by_excess": [
+      "dense",
+      "experts",
+      "hc",
+      "norms",
+      "recurrence",
+      "route_small"
+    ],
+    "open_mechanisms_remaining": {},
+    "rank0_speculative_us_per_gdn_layer": {
+      "dense": 154.89499999999998,
+      "experts": 116.667,
+      "hc": 66.457,
+      "norms": 17.395,
+      "ple": 24.0,
+      "recurrence": 38.437,
+      "route_small": 67.28999999999999
+    },
+    "rank0_speculative_excess_floor_us_per_gdn_layer": {
+      "dense": 20.30858659217877,
+      "experts": 79.71079888268157,
+      "hc": 38.132262569832406,
+      "norms": 17.085130353817505,
+      "recurrence": 31.83713407821229,
+      "route_small": 44.480089385474855
+    },
+    "rank1_half_us_per_gdn_layer": {
+      "dense": 154.89499999999998,
+      "experts": 116.667,
+      "hc": 66.457,
+      "norms": 17.395,
+      "recurrence": 38.437,
+      "route_small": 67.28999999999999
+    },
+    "rank0_excess_over_packet110_us_per_gdn_layer": {
+      "dense": -0.0010000000000047748,
+      "experts": -0.0005000000000023874,
+      "hc": -0.0009999999999994458,
+      "norms": 0.0,
+      "recurrence": 0.0,
+      "route_small": -0.0010000000000029985
+    },
+    "note": "synthetic durations = packet110 call times on the real plan labels and the real packet189 streams: the table must reproduce packet110 (excess over packet110 ~ 0); this is a packaging test, not a measurement"
+  },
+  "overhead_withheld": {
+    "outcome": "TABLE INADMISSIBLE: instrumented/control 0.9200 < 0.93 (packet128: \"A failed overhead gate withholds rankings. Do not correct event times by a throughput ratio.\" (packet128b measured 0.728 and withheld; packet191 samples 24 of 127 fixtures))",
+    "instrumented_over_control": 0.9200408179525134,
+    "class_table_withheld": true
+  },
+  "real_inputs_read_in_place": 134,
+  "real_inputs_receipt": "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/evidence/analysis-real-inputs.json",
+  "real_inputs_map_sha256": "9ce490de500faabd00160b92c9ea004d8ed325dc4ab1720c49f65dab8f2257c8",
+  "tests": [
+    {
+      "name": "test_analyze.py",
+      "passed": true,
+      "log_digest": "72bf1fe260b88fe3fa57c54345c6d3593627350a87fbc860a0f60cb013380319"
+    },
+    {
+      "name": "test_timing_report.py",
+      "passed": true,
+      "log_digest": "921b60a7fd52e978fbb551cacd29df2d6708879400278e1fcc70fceeb0c6f8e0"
+    },
+    {
+      "name": "test_s191_report.py",
+      "passed": true,
+      "log_digest": "dc701eadbeaaa89a521c622fd23d9a0354951b7440dc04c49abb84d29a8f16a6"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/analysis_gate.py": "1659d4d6040ff89d2021a4dbc0e48a003683034bdd93b1d7d941ca7222cd05ad",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/analyze.py": "de94dc075d28e2356b4124c9cc9f7620ee397896f3fbcd036ecea3a47a67f848",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/timing_report.py": "09238487260e0129956f4700ea6df99840a6d4c59e0ec486f37e86a1bf02c7ac",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/test_analyze.py": "014d61bd9dafd3f1ebd81592a1efa0a8529c667b3c176491fdcf6bc23f8f11d1",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/test_timing_report.py": "aeb03d646df8a898c2e19a3ad5b0b6b5fa9102a2e24fe70d1dc7ddc42766fed9",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/s191_report.py": "19880511682d716ab5abe36da0d185375b3acc66bc1463ccb99a26ce68264f30",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/interval_model.py": "a6b48cd353488ffa52add0bd7a95312f42de30f4aeeda24b0eb07e90a8de266e",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/test_s191_report.py": "89bafb3f4f65b1940cabefc5a99df6a38dfdccbf17a4c63ef11df34a4b3ea0d6",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/analysis/dnr-class-grep.txt": "c525f746fa13765b6206f6ff795bc8b1ba13c93343dd8aa25e0f42fcc4f67346",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/analysis/dnr-count.txt": "094395ba86ece5655ac515da0ca860a49a3f3d2cc1064131be4a8cc39ad71c6a",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/analysis/dnr-list.txt": "b5e2599ccf188e9d14b27b942766a2ba722206453394f4ac6714af7caaa87b66"
+  }
+}

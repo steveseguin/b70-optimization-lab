@@ -1,0 +1,1072 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "passed": true,
+      "kind": "smoke",
+      "row_index": 0,
+      "variant": "k3x-on",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-k1d3rgof/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-k1d3rgof/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-k1d3rgof/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-k1d3rgof/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-k1d3rgof/run/adapter/selection.json",
+          "--selection-sha256",
+          "3fee7f49f8f76dfc59d6111a0da6a9af8ef500796fd338890f865861f0784e79",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-on/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-k1d3rgof/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-k1d3rgof/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-k1d3rgof/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-k1d3rgof/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-k1d3rgof/run/adapter/selection.json",
+          "--selection-sha256",
+          "3fee7f49f8f76dfc59d6111a0da6a9af8ef500796fd338890f865861f0784e79",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-on/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "smoke",
+      "row_index": 0,
+      "variant": "k3x-on",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-8t7ga27t/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-8t7ga27t/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-8t7ga27t/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-8t7ga27t/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-8t7ga27t/run/adapter/selection.json",
+          "--selection-sha256",
+          "3fee7f49f8f76dfc59d6111a0da6a9af8ef500796fd338890f865861f0784e79",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-on/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-8t7ga27t/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-8t7ga27t/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-8t7ga27t/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-8t7ga27t/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-8t7ga27t/run/adapter/selection.json",
+          "--selection-sha256",
+          "3fee7f49f8f76dfc59d6111a0da6a9af8ef500796fd338890f865861f0784e79",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-on/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "bracket",
+      "row_index": 1,
+      "variant": "k3x-off",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-fmyy_9qk/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-fmyy_9qk/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-fmyy_9qk/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-fmyy_9qk/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-fmyy_9qk/run/adapter/selection.json",
+          "--selection-sha256",
+          "eaba9647ddeadb937aa38f7fd0339d3d3987366d7ea005044bb22a77eeb65cbc",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-off/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-fmyy_9qk/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-fmyy_9qk/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-fmyy_9qk/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-fmyy_9qk/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-fmyy_9qk/run/adapter/selection.json",
+          "--selection-sha256",
+          "eaba9647ddeadb937aa38f7fd0339d3d3987366d7ea005044bb22a77eeb65cbc",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-off/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "bracket",
+      "row_index": 1,
+      "variant": "k3x-off",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-6dme2ihg/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-6dme2ihg/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-6dme2ihg/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-6dme2ihg/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-6dme2ihg/run/adapter/selection.json",
+          "--selection-sha256",
+          "eaba9647ddeadb937aa38f7fd0339d3d3987366d7ea005044bb22a77eeb65cbc",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-off/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-6dme2ihg/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-6dme2ihg/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "900",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-6dme2ihg/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-6dme2ihg/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-6dme2ihg/run/adapter/selection.json",
+          "--selection-sha256",
+          "eaba9647ddeadb937aa38f7fd0339d3d3987366d7ea005044bb22a77eeb65cbc",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/lineage/k3x-off/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/launch_limit_gate.py": "16b0a302b2f2098de1eb3d9d7f5e4ee96761241314f342c4fc592a3dd4e748ca",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/argument_gate.py": "15c1e355c805373c0b2f735d8dd5af560e1859c623b25e8a355b3dece4f11938",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_exec_limits.py": "c998ae4e35775c189006da5f2dc308ccdf2dd33d1fa4e8c58c90197427c4fae9",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/tp2_worker.py": "eb19c0d5d6a76988a7711a997a45b417302cb51ec742e2678e7dc37a73934e0e"
+  }
+}

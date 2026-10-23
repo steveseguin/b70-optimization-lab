@@ -1,0 +1,995 @@
+{
+  "schema": "packet185.view-row.v1",
+  "passed": true,
+  "kind": "view",
+  "view_index": 2,
+  "variant": "production",
+  "model_lifetimes": 1,
+  "target_loads": 1,
+  "draft_loads": 1,
+  "teardown_count": 1,
+  "fresh_load_view": true,
+  "views": [
+    {
+      "index": 2,
+      "choice": "control",
+      "variant": "production",
+      "all_13_exact": true,
+      "exact_count": 13,
+      "draft_proposals": {
+        "incident64": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "incident-retrospective": {
+          "rows": 213,
+          "sha256": "16772b634cadabe6e5c9c5fec9c6cdb45391fed2cba5bf59244ebe0cc1a736a4"
+        },
+        "code-review": {
+          "rows": 216,
+          "sha256": "6bda63732fea9bdea50a1e2b7b700f385f7b5e420e2c3caa3bd2a468b953ebfb"
+        },
+        "customer-email": {
+          "rows": 203,
+          "sha256": "069cdf0997fb2575ddefb9cf8305f616c1bc01aa3ff6d4d698527e0cfa320ac0"
+        },
+        "sql-debugging": {
+          "rows": 209,
+          "sha256": "f5d71a57d95fe983283e2e2b6e4d4d1caa4a3758f076ae5d3e8195c0bf3008f5"
+        },
+        "release-plan": {
+          "rows": 194,
+          "sha256": "a7e7437ec429b6a4f2fb0217f9b5925ac5c69c61af40f317f9c8e3bca3e9aa20"
+        },
+        "benchmark-analysis": {
+          "rows": 191,
+          "sha256": "bd9d9921e09646865d27fa4bb760841f06d3791bf53f00a539a770b6e7531e4d"
+        },
+        "architecture-tradeoff": {
+          "rows": 193,
+          "sha256": "1e8d9b06628ab19fd74839db88638969e204d500791caad3539a71a0d3de83f1"
+        },
+        "bug-report-synthesis": {
+          "rows": 197,
+          "sha256": "95439363aa14cc01e53d87677a2c8c3dbc1cd33e1f57e9a5a1054fcfca4f8332"
+        },
+        "technical-guide": {
+          "rows": 195,
+          "sha256": "d75afc4713b3db515fb5a4e7531b09e6e4df15519837d73d2d00ec53aeb66d50"
+        },
+        "risk-register": {
+          "rows": 187,
+          "sha256": "019a4279a2dd85f1d9557419a81be2c33cb18ab2fc7ce6ff6a566c89ceb370d8"
+        },
+        "performance-hypotheses": {
+          "rows": 190,
+          "sha256": "0a0a20f8d694ee9a3c8479e710bd25941dc77d7c54e4c72647bdf869b5a62397"
+        },
+        "decision-memo": {
+          "rows": 186,
+          "sha256": "6d2f3cb39e1a437084da2699b1d1e2b0d14d685130fe82022b4aec85b8588640"
+        }
+      },
+      "lane": "B",
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/device-view2-production-B-p185/run/views/00-control",
+      "started_utc_ns": 1792678160725423482,
+      "finished_utc_ns": 1792678283278311205,
+      "rate": 58.53626279919084,
+      "acceptance": 0.7828083989501312,
+      "acceptance_counts": [
+        {
+          "prompt_id": "incident-retrospective",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "code-review",
+          "hits": 99,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "customer-email",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "sql-debugging",
+          "hits": 103,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "release-plan",
+          "hits": 98,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "benchmark-analysis",
+          "hits": 101,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "architecture-tradeoff",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "bug-report-synthesis",
+          "hits": 83,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "technical-guide",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "risk-register",
+          "hits": 108,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "performance-hypotheses",
+          "hits": 94,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "decision-memo",
+          "hits": 101,
+          "guesses": 127
+        }
+      ]
+    }
+  ],
+  "all_13_exact": true,
+  "interval_stats": {
+    "intervals": 1188,
+    "hits": 932,
+    "misses": 256,
+    "cycles": 1188,
+    "hit": {
+      "D": 1.60460733458082,
+      "A": 12.503425785115033,
+      "B": 13.171119191618876,
+      "B_minus_A": 0.6676934065038435,
+      "B_minus_A_p10": 0.6218582973815501,
+      "B_minus_A_p50": 0.6687954883091152,
+      "rank0_slack": 0.6680764818000468,
+      "offset": -0.00038307529620330605,
+      "G": 0.019369032104047966,
+      "elapsed": 14.795095558303744
+    },
+    "miss": {
+      "D": 1.6050015121891192,
+      "R": 0.5448434958452708,
+      "C": 11.847608880088956,
+      "A": 12.503516064953146,
+      "B": 13.319272393118808,
+      "B_minus_A": 0.8157563281656621,
+      "G": 0.013472878436004976,
+      "elapsed": 25.72519764748904
+    },
+    "pooled_interval_ms": 17.150403752606298,
+    "head_service_per_cycle_ms": {
+      "head_service_total": 0.4029118468013468,
+      "head_hidden_wait": 0.001060983164983165,
+      "suffix_head": 0.3101481936026936,
+      "head_import": 0.024722840909090913,
+      "head_export": 0.0255838872053872
+    },
+    "sigma_rank0_service_ms": 0.40185086363636363,
+    "split_head": true,
+    "definition": "packet85 intervals (vendored); hit = guess verified at the starting emission; B includes rank-1 head and (split) merge wait; rank0_slack = B - A - offset"
+  },
+  "class_copies": [],
+  "measured_wall_seconds": 207.64939474,
+  "evidence_label": "screen",
+  "diagnostic": true,
+  "qualifying": false,
+  "submission_eligible": false,
+  "speed_evidence_eligible": false,
+  "realistic_final_gate": {
+    "passed": false,
+    "reason": "screen only; full sealed chain required"
+  },
+  "prompt_kv_response_reuse": false,
+  "scheduling_costs": {
+    "definition": "rank0 confirmed HALF host duration, including preparation, waits, exchanges and receipt work; rollback excluded; all generated misses (not only first 100)",
+    "comparison": "candidate mean corrected-half ms minus mean of control-view means; control drift and per-prompt counts retained",
+    "half_busy_definition": "Engine half busy_ms, narrower host interval; no GPU-only claim",
+    "views": [
+      {
+        "index": 0,
+        "choice": "control",
+        "probe": "off",
+        "miss_count": 331,
+        "corrected_half": {
+          "count": 331,
+          "mean_ms": 11.82391620241692,
+          "median_ms": 11.825688,
+          "total_ms": 3913.716263
+        },
+        "corrected_half_clock": "engine completion before reporting",
+        "native_command": {
+          "count": 331,
+          "mean_ms": 11.865229154880696,
+          "median_ms": 11.869219015352428,
+          "total_ms": 3927.3908502655104
+        },
+        "engine_busy": {
+          "count": 331,
+          "mean_ms": 11.834374610271903,
+          "median_ms": 11.836348,
+          "total_ms": 3917.177996
+        },
+        "exchange_audit": {
+          "covered_misses": 331,
+          "counts": [
+            0
+          ],
+          "send_bytes_per_miss": [
+            0
+          ],
+          "receive_bytes_per_miss": [
+            0
+          ]
+        },
+        "missing_native_trace": [],
+        "status": "measured",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.899469087966867,
+              "median_ms": 11.900416982825845,
+              "total_ms": 368.8835417269729
+            }
+          },
+          {
+            "prompt_id": "code-review",
+            "miss_count": 28,
+            "corrected_half": {
+              "count": 28,
+              "mean_ms": 11.879117855901963,
+              "median_ms": 11.87410848797299,
+              "total_ms": 332.61529996525496
+            }
+          },
+          {
+            "prompt_id": "customer-email",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.871859063244154,
+              "median_ms": 11.891900969203562,
+              "total_ms": 368.0276309605688
+            }
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "miss_count": 24,
+            "corrected_half": {
+              "count": 24,
+              "mean_ms": 11.873391335636066,
+              "median_ms": 11.871127993799746,
+              "total_ms": 284.9613920552656
+            }
+          },
+          {
+            "prompt_id": "release-plan",
+            "miss_count": 29,
+            "corrected_half": {
+              "count": 29,
+              "mean_ms": 11.851661517445383,
+              "median_ms": 11.841306986752898,
+              "total_ms": 343.6981840059161
+            }
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.85374749519934,
+              "median_ms": 11.84511900646612,
+              "total_ms": 308.1974348751828
+            }
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.860487799276598,
+              "median_ms": 11.869029025547206,
+              "total_ms": 237.20975598553196
+            }
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "miss_count": 44,
+            "corrected_half": {
+              "count": 44,
+              "mean_ms": 11.865050678765824,
+              "median_ms": 11.867330991663039,
+              "total_ms": 522.0622298656963
+            }
+          },
+          {
+            "prompt_id": "technical-guide",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.856083845486864,
+              "median_ms": 11.863864492624998,
+              "total_ms": 237.1216769097373
+            }
+          },
+          {
+            "prompt_id": "risk-register",
+            "miss_count": 19,
+            "corrected_half": {
+              "count": 19,
+              "mean_ms": 11.827889370339873,
+              "median_ms": 11.8300870526582,
+              "total_ms": 224.7298980364576
+            }
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "miss_count": 33,
+            "corrected_half": {
+              "count": 33,
+              "mean_ms": 11.852731362027539,
+              "median_ms": 11.860514001455158,
+              "total_ms": 391.1401349469088
+            }
+          },
+          {
+            "prompt_id": "decision-memo",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.874756574308357,
+              "median_ms": 11.87473998288624,
+              "total_ms": 308.74367093201727
+            }
+          }
+        ],
+        "exchange_cost_per_miss_ms": null
+      }
+    ]
+  },
+  "rank0_split": {
+    "passed": true,
+    "schema": "packet185.host-boundary.v1",
+    "status": "single fresh-load view: timing data complete",
+    "views": [
+      {
+        "index": 0,
+        "choice": "control",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520935.180905062,
+            "last_timestamp": 520936.868916033,
+            "complete_scopes": 2219,
+            "boundary_or_prefill_scopes": 1801,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.12850958585858588,
+              "capture_snapshot": 0.7607998585858586,
+              "suffix_head": 0.3099498383838383,
+              "merge_handoff_waits": 1.727813181818183,
+              "draft_wait": 0.006192333333333333
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0002032626262626264,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0002212323232323233,
+              "merge_handoff_waits": 0.00017970707070707068,
+              "draft_wait": 2.184848484848489e-05
+            },
+            "other_outside_ms_per_cycle": 0.1578640202020203,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 159.19720200000012,
+              "rollback": 10.859616999999998,
+              "token_history": 2.7354730000000003,
+              "token_prep": 9.986976,
+              "token_prep_duplicate": 0.020123000000000012,
+              "layer_body": 1381.1621640000005,
+              "handoff_export": 6.712869999999997,
+              "half_total": 1476.609629,
+              "accept": 0.023791000000000024,
+              "handoff_host": 0.05659599999999999,
+              "draft_wait": 0.613041,
+              "draft_zero_wait": 0.002163000000000004,
+              "snapshot": 64.435778,
+              "head_hidden_wait": 0.12077800000000001,
+              "head_zero_wait": 0.017790999999999998,
+              "head_import": 2.4418589999999996,
+              "suffix_head": 30.685033999999995,
+              "suffix_duplicate": 0.02190200000000001,
+              "head_export": 2.5242000000000004,
+              "head_service_total": 39.88385699999999
+            },
+            "cancelled_halves": 0,
+            "hits": 96,
+            "misses": 31
+          },
+          {
+            "prompt_id": "code-review",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520940.38219837,
+            "last_timestamp": 520942.091340508,
+            "complete_scopes": 2233,
+            "boundary_or_prefill_scopes": 1805,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.13049843434343444,
+              "capture_snapshot": 0.7716096464646466,
+              "suffix_head": 0.3101852525252525,
+              "merge_handoff_waits": 1.6890051919191922,
+              "draft_wait": 0.006067777777777776
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0002013030303030305,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0001694848484848486,
+              "merge_handoff_waits": 0.00018533333333333333,
+              "draft_wait": 2.1585858585858616e-05
+            },
+            "other_outside_ms_per_cycle": 0.1604506666666665,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 155.19956800000003,
+              "accept": 0.023478000000000027,
+              "handoff_host": 0.056758,
+              "draft_wait": 0.6007099999999999,
+              "draft_zero_wait": 0.002137000000000003,
+              "snapshot": 64.23523600000001,
+              "token_history": 2.776604000000001,
+              "token_prep": 10.142741000000008,
+              "token_prep_duplicate": 0.01992900000000002,
+              "layer_body": 1404.5754290000004,
+              "handoff_export": 6.886156999999999,
+              "half_total": 1500.4591689999997,
+              "head_hidden_wait": 0.10557899999999999,
+              "head_zero_wait": 0.018348,
+              "head_import": 2.4481900000000008,
+              "suffix_head": 30.708339999999993,
+              "suffix_duplicate": 0.01677900000000001,
+              "head_export": 2.515261999999999,
+              "head_service_total": 39.874040999999984,
+              "rollback": 12.130640999999997
+            },
+            "cancelled_halves": 0,
+            "hits": 99,
+            "misses": 28
+          },
+          {
+            "prompt_id": "customer-email",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520945.367071376,
+            "last_timestamp": 520947.083026593,
+            "complete_scopes": 2240,
+            "boundary_or_prefill_scopes": 1650,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.13161459595959593,
+              "capture_snapshot": 0.7757599191919194,
+              "suffix_head": 0.310183292929293,
+              "merge_handoff_waits": 1.6510590101010105,
+              "draft_wait": 0.006098878787878787
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00020113131313131323,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0001635252525252526,
+              "merge_handoff_waits": 0.0001799797979797979,
+              "draft_wait": 2.2454545454545496e-05
+            },
+            "other_outside_ms_per_cycle": 0.16051107070707074,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 151.45118700000003,
+              "accept": 0.023539000000000015,
+              "handoff_host": 0.057135999999999985,
+              "draft_wait": 0.6037889999999999,
+              "draft_zero_wait": 0.002223000000000004,
+              "snapshot": 64.33968000000002,
+              "token_history": 2.808507000000001,
+              "token_prep": 10.221337999999998,
+              "token_prep_duplicate": 0.01991200000000001,
+              "layer_body": 1414.6276669999995,
+              "handoff_export": 6.865348000000003,
+              "half_total": 1510.7197310000004,
+              "head_hidden_wait": 0.10375900000000003,
+              "head_zero_wait": 0.01781799999999999,
+              "head_import": 2.4394079999999994,
+              "suffix_head": 30.708146000000003,
+              "suffix_duplicate": 0.01618900000000001,
+              "head_export": 2.538004,
+              "head_service_total": 39.87664099999999,
+              "rollback": 12.437013000000002
+            },
+            "cancelled_halves": 0,
+            "hits": 96,
+            "misses": 31
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520950.463977055,
+            "last_timestamp": 520952.159393752,
+            "complete_scopes": 2226,
+            "boundary_or_prefill_scopes": 1693,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.1294671313131313,
+              "capture_snapshot": 0.7668676767676764,
+              "suffix_head": 0.3103650202020202,
+              "merge_handoff_waits": 1.6797287373737377,
+              "draft_wait": 0.006274919191919192
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00020564646464646473,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.00016803030303030303,
+              "merge_handoff_waits": 0.00017475757575757575,
+              "draft_wait": 2.2272727272727314e-05
+            },
+            "other_outside_ms_per_cycle": 0.15965525252525237,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 154.33105100000003,
+              "rollback": 11.546041999999998,
+              "token_history": 2.744511000000001,
+              "token_prep": 10.072734999999998,
+              "token_prep_duplicate": 0.02035900000000001,
+              "layer_body": 1392.382312,
+              "handoff_export": 6.814594,
+              "half_total": 1488.12217,
+              "accept": 0.023874000000000024,
+              "handoff_host": 0.054953000000000016,
+              "draft_wait": 0.621217,
+              "draft_zero_wait": 0.0022050000000000043,
+              "snapshot": 64.34998399999998,
+              "head_hidden_wait": 0.103334,
+              "head_zero_wait": 0.017301,
+              "head_import": 2.4555560000000005,
+              "suffix_head": 30.726137000000005,
+              "suffix_duplicate": 0.016635,
+              "head_export": 2.5336569999999994,
+              "head_service_total": 39.920815
+            },
+            "cancelled_halves": 0,
+            "hits": 103,
+            "misses": 24
+          },
+          {
+            "prompt_id": "release-plan",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520955.275178967,
+            "last_timestamp": 520956.966563877,
+            "complete_scopes": 2226,
+            "boundary_or_prefill_scopes": 1533,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.12932634343434343,
+              "capture_snapshot": 0.766324787878788,
+              "suffix_head": 0.3101111111111111,
+              "merge_handoff_waits": 1.667150888888888,
+              "draft_wait": 0.006330080808080808
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00020255555555555565,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.00016223232323232326,
+              "merge_handoff_waits": 0.00017266666666666667,
+              "draft_wait": 2.1565656565656604e-05
+            },
+            "other_outside_ms_per_cycle": 0.1592289090909091,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 152.9043059999999,
+              "accept": 0.02385000000000002,
+              "handoff_host": 0.056946000000000004,
+              "draft_wait": 0.626678,
+              "draft_zero_wait": 0.0021350000000000036,
+              "snapshot": 64.45108,
+              "token_history": 2.768167,
+              "token_prep": 10.035141,
+              "token_prep_duplicate": 0.02005300000000001,
+              "layer_body": 1389.7506570000003,
+              "handoff_export": 6.999807000000002,
+              "half_total": 1485.7309730000002,
+              "head_hidden_wait": 0.10304299999999998,
+              "head_zero_wait": 0.017094,
+              "head_import": 2.454735000000001,
+              "suffix_head": 30.701,
+              "suffix_duplicate": 0.016061000000000002,
+              "head_export": 2.5291009999999994,
+              "head_service_total": 39.87862800000002,
+              "rollback": 11.391223999999998
+            },
+            "cancelled_halves": 0,
+            "hits": 98,
+            "misses": 29
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520960.090626459,
+            "last_timestamp": 520961.781760207,
+            "complete_scopes": 2226,
+            "boundary_or_prefill_scopes": 1473,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.12967412121212127,
+              "capture_snapshot": 0.7678140404040403,
+              "suffix_head": 0.3104533636363636,
+              "merge_handoff_waits": 1.6639445757575773,
+              "draft_wait": 0.006370060606060606
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.0001950000000000001,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.00016255555555555562,
+              "merge_handoff_waits": 0.0001747777777777778,
+              "draft_wait": 2.307070707070711e-05
+            },
+            "other_outside_ms_per_cycle": 0.15911389898989906,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 152.76702900000015,
+              "accept": 0.023607000000000006,
+              "handoff_host": 0.05642500000000001,
+              "draft_wait": 0.630636,
+              "draft_zero_wait": 0.002284000000000004,
+              "snapshot": 64.487848,
+              "token_history": 2.7587580000000003,
+              "token_prep": 10.078980000000005,
+              "token_prep_duplicate": 0.01930500000000001,
+              "layer_body": 1389.612491,
+              "handoff_export": 6.843074999999997,
+              "half_total": 1485.4953339999997,
+              "head_hidden_wait": 0.10370500000000002,
+              "head_zero_wait": 0.017303000000000002,
+              "head_import": 2.434500000000001,
+              "suffix_head": 30.734882999999996,
+              "suffix_duplicate": 0.016093000000000007,
+              "head_export": 2.5257790000000004,
+              "head_service_total": 39.88966199999998,
+              "rollback": 11.502134999999999
+            },
+            "cancelled_halves": 0,
+            "hits": 101,
+            "misses": 26
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520964.902463332,
+            "last_timestamp": 520966.519321472,
+            "complete_scopes": 2177,
+            "boundary_or_prefill_scopes": 1506,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.12177272727272725,
+              "capture_snapshot": 0.7281451010101009,
+              "suffix_head": 0.31010834343434335,
+              "merge_handoff_waits": 1.783632232323234,
+              "draft_wait": 0.0067370202020202025
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00019606060606060612,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.00016874747474747475,
+              "merge_handoff_waits": 0.0001781313131313131,
+              "draft_wait": 2.2787878787878828e-05
+            },
+            "other_outside_ms_per_cycle": 0.15293825252525245,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 164.97806600000015,
+              "accept": 0.023773000000000034,
+              "handoff_host": 0.05704799999999999,
+              "draft_wait": 0.666965,
+              "draft_zero_wait": 0.002256000000000004,
+              "snapshot": 64.29899099999999,
+              "token_history": 2.6101120000000004,
+              "token_prep": 9.445387999999998,
+              "token_prep_duplicate": 0.019410000000000007,
+              "layer_body": 1308.8298089999996,
+              "handoff_export": 6.435020000000001,
+              "half_total": 1402.7094590000006,
+              "head_hidden_wait": 0.103239,
+              "head_zero_wait": 0.017634999999999998,
+              "head_import": 2.450027999999999,
+              "suffix_head": 30.700725999999992,
+              "suffix_duplicate": 0.016706,
+              "head_export": 2.556190000000001,
+              "head_service_total": 39.914682000000006,
+              "rollback": 7.763601
+            },
+            "cancelled_halves": 0,
+            "hits": 107,
+            "misses": 20
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520969.702568394,
+            "last_timestamp": 520971.528044765,
+            "complete_scopes": 2310,
+            "boundary_or_prefill_scopes": 1593,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.14225243434343435,
+              "capture_snapshot": 0.8314668888888891,
+              "suffix_head": 0.3099103131313131,
+              "merge_handoff_waits": 1.5142413939393937,
+              "draft_wait": 0.005199767676767675
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00021734343434343461,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.00016722222222222225,
+              "merge_handoff_waits": 0.00018218181818181818,
+              "draft_wait": 2.3141414141414187e-05
+            },
+            "other_outside_ms_per_cycle": 0.17126775757575755,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 137.29643199999998,
+              "accept": 0.024378000000000018,
+              "handoff_host": 0.055178000000000026,
+              "draft_wait": 0.5147769999999998,
+              "draft_zero_wait": 0.0022910000000000044,
+              "snapshot": 64.33084900000003,
+              "token_history": 3.028474999999999,
+              "token_prep": 11.054516000000001,
+              "token_prep_duplicate": 0.021517000000000026,
+              "layer_body": 1530.1377579999996,
+              "handoff_export": 7.4600899999999974,
+              "half_total": 1628.912243999999,
+              "head_hidden_wait": 0.103914,
+              "head_zero_wait": 0.018036,
+              "head_import": 2.452119999999999,
+              "suffix_head": 30.681121,
+              "suffix_duplicate": 0.016555000000000004,
+              "head_export": 2.542164,
+              "head_service_total": 39.890379,
+              "rollback": 17.959994999999996
+            },
+            "cancelled_halves": 0,
+            "hits": 83,
+            "misses": 44
+          },
+          {
+            "prompt_id": "technical-guide",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520974.745043202,
+            "last_timestamp": 520976.395790433,
+            "complete_scopes": 2198,
+            "boundary_or_prefill_scopes": 1511,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.12513669696969695,
+              "capture_snapshot": 0.7448502323232322,
+              "suffix_head": 0.3101431515151515,
+              "merge_handoff_waits": 1.748827747474748,
+              "draft_wait": 0.006597494949494948
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00019491919191919201,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.00017189898989898998,
+              "merge_handoff_waits": 0.00018176767676767678,
+              "draft_wait": 2.2777777777777824e-05
+            },
+            "other_outside_ms_per_cycle": 0.15485316161616186,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 161.43101900000005,
+              "accept": 0.024008000000000026,
+              "handoff_host": 0.055696999999999997,
+              "draft_wait": 0.6531519999999998,
+              "draft_zero_wait": 0.0022550000000000044,
+              "snapshot": 64.44215899999999,
+              "token_history": 2.6573090000000006,
+              "token_prep": 9.731224,
+              "token_prep_duplicate": 0.01929700000000001,
+              "layer_body": 1343.9915680000004,
+              "handoff_export": 6.560794000000002,
+              "half_total": 1438.6782299999998,
+              "head_hidden_wait": 0.10335200000000004,
+              "head_zero_wait": 0.017995,
+              "head_import": 2.450650000000001,
+              "suffix_head": 30.704171999999996,
+              "suffix_duplicate": 0.01701800000000001,
+              "head_export": 2.532435,
+              "head_service_total": 39.88020600000001,
+              "rollback": 9.274006
+            },
+            "cancelled_halves": 0,
+            "hits": 107,
+            "misses": 20
+          },
+          {
+            "prompt_id": "risk-register",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520979.420611878,
+            "last_timestamp": 520981.09191297,
+            "complete_scopes": 2212,
+            "boundary_or_prefill_scopes": 1386,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.1266147777777778,
+              "capture_snapshot": 0.7546204646464649,
+              "suffix_head": 0.31011909090909096,
+              "merge_handoff_waits": 1.715396242424243,
+              "draft_wait": 0.006386141414141415
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00019913131313131324,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0001646060606060607,
+              "merge_handoff_waits": 0.00018192929292929285,
+              "draft_wait": 2.279797979797984e-05
+            },
+            "other_outside_ms_per_cycle": 0.15726736363636362,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 158.02534600000007,
+              "accept": 0.024194000000000014,
+              "handoff_host": 0.05660400000000001,
+              "draft_wait": 0.6322280000000001,
+              "draft_zero_wait": 0.0022570000000000042,
+              "snapshot": 64.37313100000003,
+              "token_history": 2.705188000000001,
+              "token_prep": 9.829675,
+              "token_prep_duplicate": 0.01971400000000001,
+              "layer_body": 1366.4997220000005,
+              "handoff_export": 6.679084999999999,
+              "half_total": 1461.6232029999999,
+              "head_hidden_wait": 0.10294000000000002,
+              "head_zero_wait": 0.018010999999999992,
+              "head_import": 2.4354800000000005,
+              "suffix_head": 30.701790000000006,
+              "suffix_duplicate": 0.01629600000000001,
+              "head_export": 2.5247730000000006,
+              "head_service_total": 39.852071,
+              "rollback": 10.310101
+            },
+            "cancelled_halves": 0,
+            "hits": 108,
+            "misses": 19
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520984.11942869,
+            "last_timestamp": 520985.867471332,
+            "complete_scopes": 2261,
+            "boundary_or_prefill_scopes": 1474,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.13438168686868682,
+              "capture_snapshot": 0.7937525353535354,
+              "suffix_head": 0.31009125252525255,
+              "merge_handoff_waits": 1.6138420202020214,
+              "draft_wait": 0.005856232323232323
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00020420202020202035,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.00017104040404040404,
+              "merge_handoff_waits": 0.0001868383838383839,
+              "draft_wait": 2.3707070707070748e-05
+            },
+            "other_outside_ms_per_cycle": 0.16357103030303036,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 147.50219700000014,
+              "accept": 0.024191000000000032,
+              "handoff_host": 0.056675,
+              "draft_wait": 0.579767,
+              "draft_zero_wait": 0.002347000000000004,
+              "snapshot": 64.59389900000001,
+              "token_history": 2.8605729999999996,
+              "token_prep": 10.443213999999996,
+              "token_prep_duplicate": 0.020216000000000015,
+              "layer_body": 1448.0680130000003,
+              "handoff_export": 7.119300000000003,
+              "half_total": 1545.2422189999995,
+              "head_hidden_wait": 0.10306199999999999,
+              "head_zero_wait": 0.018497000000000006,
+              "head_import": 2.451531999999999,
+              "suffix_head": 30.699034000000005,
+              "suffix_duplicate": 0.016933,
+              "head_export": 2.537593999999999,
+              "head_service_total": 39.88317999999999,
+              "rollback": 13.963410999999997
+            },
+            "cancelled_halves": 0,
+            "hits": 94,
+            "misses": 33
+          },
+          {
+            "prompt_id": "decision-memo",
+            "interval_count": 99,
+            "split_head": true,
+            "first_timestamp": 520988.915616744,
+            "last_timestamp": 520990.586827245,
+            "complete_scopes": 2212,
+            "boundary_or_prefill_scopes": 1422,
+            "segments_ms_per_cycle": {
+              "token_prep": 0.12701545454545457,
+              "capture_snapshot": 0.7554301919191919,
+              "suffix_head": 0.310158292929293,
+              "merge_handoff_waits": 1.7080379696969716,
+              "draft_wait": 0.0065089191919191925
+            },
+            "replay_ms_per_cycle": {
+              "token_prep": 0.00019698989898989908,
+              "capture_snapshot": 0.0,
+              "suffix_head": 0.0001596767676767678,
+              "merge_handoff_waits": 0.00018362626262626255,
+              "draft_wait": 2.2949494949494994e-05
+            },
+            "other_outside_ms_per_cycle": 0.15726834343434334,
+            "residual_definition": "exclusive half setup/finalization/report plus suffix setup/publication",
+            "raw_scope_totals_ms": {
+              "remote_reply_wait": 157.21055200000018,
+              "accept": 0.02375200000000002,
+              "handoff_host": 0.06629300000000002,
+              "draft_wait": 0.644383,
+              "draft_zero_wait": 0.0022720000000000045,
+              "snapshot": 64.413809,
+              "token_history": 2.706456000000001,
+              "token_prep": 9.868074000000002,
+              "token_prep_duplicate": 0.01950200000000001,
+              "layer_body": 1367.0186270000004,
+              "handoff_export": 6.723995,
+              "half_total": 1462.2394939999997,
+              "head_hidden_wait": 0.10374300000000004,
+              "head_zero_wait": 0.018178999999999994,
+              "head_import": 2.456677,
+              "suffix_head": 30.705671000000002,
+              "suffix_duplicate": 0.015808000000000013,
+              "head_export": 2.534498999999999,
+              "head_service_total": 39.915112,
+              "rollback": 10.350028
+            },
+            "cancelled_halves": 0,
+            "hits": 101,
+            "misses": 26
+          }
+        ],
+        "segments_ms_per_cycle": {
+          "token_prep": 0.12939673737373736,
+          "capture_snapshot": 0.7665962323232323,
+          "suffix_head": 0.3101311212121212,
+          "merge_handoff_waits": 1.684366964646465,
+          "draft_wait": 0.0063025
+        }
+      }
+    ],
+    "device_evidence": true,
+    "clock": "host scopes; async snapshot copy is not isolated GPU latency",
+    "rate_scope": "first 100 events / 99 intervals"
+  },
+  "candidate_qualified": false,
+  "purpose": "packet185 fresh-load attribution of the split-head coupling (V3 kill thresholds); never a record or speed claim",
+  "s185_decision": {
+    "schema": "packet185.s185-decision.v1",
+    "v3_go": false,
+    "outcome": "PENDING: decided by view row 4 (or s185_decision.py over all five rows)"
+  }
+}

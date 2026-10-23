@@ -1,0 +1,88 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "cpu_seal_sha256": "faea6f6695df08e11fbbcf7967c1cfb8e2cda1691f37c806c132c6563f009e71",
+ "binary_sha256": "cd199292efe810b8ad0d767193f5788605ef3b93a06925e9061819f66c6ddea9",
+ "receipts": {
+  "build": "21dab9651076409cc37f57e82b74254c6c8f332a7c1a866ebea1ebced2541050",
+  "full-shape": "988038c7d052eb01d9fe6aa739cce96db56349ab3c5929bdf96fd850b7fe6199",
+  "k3-state": "54cf6156621bdde0eee433278b3205367960dc2bb9f7461c8f6dfc746ba06fbb",
+  "admission": "0d18321e1ef08bf97770d1ecdd13b6d381f27f30a2d9db4afb7b54bc29da632d",
+  "analysis": "f929f399edb9165f73de5dc22f18799b7574a61a984326493327381b4d4e231c",
+  "controller": "8ae697f39349701416bd65b55f56274660c739a1ccaa896dc35d5aca596156b2",
+  "safety": "ff49c302052cc10dafcb0c1e95e4624771d9b0d65d70289f491e31733dad3b1b",
+  "exec-limits": "ec1fd968fa4e4ebe5c8ece9eb726f3c171be0a7b1739ef5e4eb95e1e1b5e7184",
+  "loader": "fb5f2244bb1ff54336739619ad2cb8f9ee1e76d9259515953bdbe56ad1d0bf4f",
+  "entry-gate": "967d0b427239ce00490c78ec38f0a71f28a50fff4140460681de4f9814ab72d6",
+  "launch-limits": "abe397aff7a19492099111d4668e73f2f9fca8ff7c434d3540c43abb87958cf9",
+  "worker-gate": "75e47e7fdaf16358c5076aed2c320f339c57d71c1447f7ed84c7bb0ce313dbe9",
+  "report-gate": "8f89cdcda5311abb5ec871acc73010cc2d0a280b286bc3aca6be5a1c03920b40",
+  "queue-plan": "e6bcbc85da1eb0ba846ced617ab0ac99993ebd7a0ba5737db6bb7c61fc8a93d0",
+  "pin-guard": "0c760d163782e0299401e9116d8c4d8e4bd1c94dde92fe7aaef60831018776ce",
+  "package-rows": "868bdb5d32db9bc35fde9ac22b08bc892382d10597395d8ccb469620fc59eeaa",
+  "check-queue-rows": "538b54103891634e47d02816a4167afcf874ba155567ef61a0795439ea744f69"
+ },
+ "drain": {
+  "scan_rc": 1,
+  "fixed": [
+   "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/drain_gate.py:51",
+   "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lineage-inputs/queue/lanequeue.py:901",
+   "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/conditions.py:89",
+   "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py:51"
+  ],
+  "unfixed_vendored_historical": [
+   "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/screen/v4-lanes/conditions.py:89",
+   "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/screen/v4-lanes/drain_gate.py:51"
+  ],
+  "entry_plan_import_trace": {
+   "rc": 0,
+   "drain_and_condition_modules": [
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/conditions.py",
+    "experiments/own-xpu-runtime/stage2/packet191-k3x-class-attribution/v5/p191_v5_drain_gate.py"
+   ]
+  }
+ },
+ "rebuilt": true,
+ "census_delta_bytes_per_rank": [
+  1129070858,
+  0
+ ],
+ "launches": {
+  "rank0_v3_commands": 573,
+  "rank0_k3_commands": 593,
+  "rank0_layer26_commands": 20,
+  "rank1_commands": 526,
+  "rank1_identical": true,
+  "layer26_kernels": [
+   "p100::Kernel<2u>",
+   "p109::SharedDown",
+   "p109route::Kernel",
+   "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+   "p42::Kernel<(ng::Op)8, 0, 0>",
+   "p49c::DenseKernel<(iq3::Type)14, 6144u, 4u, (p39::Kind)4, 0u, false>",
+   "p49dvirtual::SmallKernel<4u>",
+   "p60::Kernel<0, false, false, false, false>",
+   "p60::Kernel<1, false, false, false, false>",
+   "p60::Kernel<2, true, false, false, false>",
+   "p82brec::Kernel<true>",
+   "p90exp::Kernel<(iq3::Type)22, 2560u, 64u, false, true, 0u>",
+   "packet18::(anonymous namespace)::NgHost",
+   "packet18::(anonymous namespace)::SimpleNew<(integrated::Op)4, 0, 0, 0>",
+   "packet27::small::(anonymous namespace)::Tuple<packet27::small::(anonymous namespace)::Member<(iq3::Type)0, 48u, 2560u, 4u>, packet27::small::(anonymous namespace)::Member<(iq3::Type)0, 48u, 2560u, 4u>, packet27::small::(anonymous namespace)::Empty, packet27::small::(anonymous namespace)::Empty>"
+  ]
+ },
+ "lane_state_observed": {
+  "pause_files": [
+   "PAUSE-A",
+   "PAUSE-B"
+  ],
+  "queue_files": [
+   "queue-A.txt",
+   "queue-B.txt"
+  ],
+  "note": "observed only; never written by preparation"
+ },
+ "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p191-two-card-B.txt",
+ "proposal_sha256": "b74b930029e23f6257c7192643c124789f59ef8d1030a7b472ca03c578d37ebb"
+}

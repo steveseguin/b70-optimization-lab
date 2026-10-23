@@ -1,0 +1,39 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "queued": false,
+ "live_queue_modified": false,
+ "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p189-two-card-B.txt",
+ "proposal_sha256": "1165c07a887c36d5dccbbafad3171a077cdd46309730fc8c1b6795a7baa77152",
+ "mirror": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/proposals/proposed-p189-two-card-B.txt",
+ "cpu_seal": "experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/v5/cpu-seal.json",
+ "cpu_seal_sha256": "d7e37b39e66b1df5b42ab4241d2213d2fc28c0631901d99dc0f0e3f6531412ef",
+ "rows": [
+  {
+   "job": "packet189-row0-smoke-k3x-B",
+   "lane": "B",
+   "depends_on": [],
+   "expected_seconds": [
+    270,
+    420
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 108797048558,
+   "planned_writes": 240000000
+  },
+  {
+   "job": "packet189-row1-bracket-v3k-k3x-B",
+   "lane": "B",
+   "depends_on": [
+    "packet189-row0-smoke-k3x-B"
+   ],
+   "expected_seconds": [
+    460,
+    900
+   ],
+   "watchdog_seconds": 3600,
+   "host_required_available_bytes": 108797048558,
+   "planned_writes": 1200000000
+  }
+ ]
+}

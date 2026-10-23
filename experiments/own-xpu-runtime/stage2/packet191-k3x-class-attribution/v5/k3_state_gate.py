@@ -1,0 +1,258 @@
+"""Packet189 k3x state-correctness and export-byte-identity gate (CPU only, synthetic miniature weights, no device).
+
+The k3 storage (rank0_layers 0-26) uses the five-layer pipeline miniature G Q G G Q (mini GDN layers 2-3 =
+full-model GDN layers 24-26; mini layer 4 = QSA layer 27).
+
+Part A, engine (native/v3_state.cpp): one rank-0 miniature engine in the k3 storage; 64-step direct vs mixed
+hit/miss(every cancellation cut)/abandoned-redo/no-guess sequence compared on the canonical bytes of every rank-0
+allocation INCLUDING the exported shared slot, guard refusals, decode-token verification, and a negative control
+(advancing the moved layers on a guessed token is detected). Lean rerun (packet188's proof is retained and pinned):
+k3x with GNU and Intel, and k3trims with GNU as the in-binary export partner. The canonical transcript of k3x must
+equal k3trims' (the copy-engine and KioCopy export paths deliver byte-identical export bytes at every step) and
+packet188's retained k3trims transcript (d451302d954f...: the k3x engine moves no byte that packet188 did not);
+the export counters prove which path ran (k3x: copy-engine runs only; k3trims: kernel runs only).
+
+Part B, two-rank pipeline (the packet188 gnu-host own-rt-iq3, the real native controllers run/run_v3, the real
+bracket switch op 13, the vendored packet56 transport): a fresh production-layout reference (five-layer
+miniature, --pipeline-mini5), then one-load miniature brackets in BOTH start orders (V3/k3x/V3/k3x/V3 and
+k3x/V3/...); each view runs
+four requests (MTP draft, scripted hit/miss/no-guess mix, no draft, EOS). Every request must equal the
+reference request: tokens, all 120 per-step per-layer stream fixtures (merged over ranks), draft proposals,
+draft final state and every per-layer target state buffer (owner rank by layout). Boundary views issue one
+boundary per rank-0 accept; rank 1 never runs a layer its view moved to rank 0.
+"""
+import gzip,hashlib,json,os,resource,subprocess,sys,time
+from pathlib import Path
+from unittest.mock import patch
+from p191_v5_build_engine import P,LOCAL,ROOT,B,CHECKED,sha,save,limits,run
+
+OUT=B/'k3-state'
+P56=LOCAL/'lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/packet56-draft-prefix'
+BINARY=B/'gnu-host/own-rt-iq3'
+INTEL='/opt/intel/oneapi/compiler/2026.0/bin/icpx'
+PROMPT=[2,5,3,7,1]
+
+
+K3={'k3x','k3trims'}
+TRIMS={'v3k':('copy','sync','copy'),'k3x':('kernel','async','copy'),'k3trims':('kernel','async','kernel'),'k3x-off':('kernel','async','copy'),'k3x-on':('kernel','async','copy')}
+# packet191: k3x (19-key record choices), k3x-off and k3x-on with GNU; k3x-on with Intel. All four canonical transcripts must be
+# identical to each other and to packet188/189's retained k3x transcript: the instrumentation view moves no byte.
+ENGINE_MODES=(('GNU','/usr/bin/g++',('k3x','k3x-off','k3x-on')),('Intel',INTEL,('k3x-on',)))
+P188_STATE=LOCAL/'lineage-inputs/packet188-own/v5/evidence/k3-state.json'
+P189_STATE=LOCAL/'lineage-inputs/packet189-own/v5/evidence/k3-state.json'
+
+
+def selections():
+    """Miniature-admissible record-line choices (experts/head production: the mini engine has no
+    halfcache layout and no split head) plus the packet188 keys; written under build/, hashed."""
+    base=json.loads((P/'lineage/v3/selection.json').read_text())
+    choices={k:v for k,v in base['choices'].items() if k not in ('rank0_layers','boundary')}
+    choices.update(experts='production',head='production')
+    k3=lambda boundary,io,prep,export,snap='static':dict(rank0_layers='0-26',boundary=boundary,kernel_io=io,rank0_prepare=prep,boundary_export=export,snapshot_host=snap)
+    rows={'production':{},'v3k':k3('rank0','copy','sync','copy'),'k3x':k3('rank0-k3','kernel','async','copy'),'k3trims':k3('rank0-k3','kernel','async','kernel'),
+          'k3x-off':dict(k3('rank0-k3','kernel','async','copy'),sites='off'),'k3x-on':dict(k3('rank0-k3','kernel','async','copy'),sites='on')}
+    out={}
+    for name,extra in rows.items():
+        path=OUT/'selections'/(name+'.json');path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(json.dumps(dict(base,choices=dict(choices,**extra)),indent=2)+'\n');out[name]=(path,sha(path))
+    return out
+
+
+def engine_part(sel):
+    prior=json.loads((P/'engine-commands.json').read_text())
+    args=list(next(r['command'] for r in prior if r['name']=='gnu-host-entry-main'));args=args[1:args.index('-o')];i=args.index('-c');del args[i:i+2]
+    rows=[]
+    for compiler,cxx,modes in ENGINE_MODES:
+        obj=OUT/(compiler+'.o');binary=OUT/('engine-'+compiler)
+        # icpx spells the same OpenMP option -qopenmp (otherwise a driver recommendation warning).
+        spell=(lambda xs:['-qopenmp' if x=='-fopenmp' else x for x in xs]) if compiler=='Intel' else (lambda xs:xs)
+        run([cxx,*spell(args),'-c',P/'native/v3_state.cpp','-o',obj],'v3-state-'+compiler+'-compile')
+        link=list(next(r['command'] for r in prior if r['name']=='gnu-host-link'))
+        link=[str(obj) if x.endswith('/entry-main.o') else x for x in link if not x.endswith('own-rt-iq3-entry.cpp.o')]
+        link=spell(link);link[0]=cxx;link[link.index('-o')+1]=str(binary)
+        if compiler=='Intel':link+=['-no-pie','-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib']
+        run(link,'v3-state-'+compiler+'-link')
+        for mode in modes:
+            path,digest=sel[mode];dest=OUT/f'engine-{compiler}-{mode}'
+            if dest.exists():dest.rename(dest.with_name(dest.name+'-old-'+str(time.time_ns())))
+            dest.mkdir()
+            env=dict(os.environ,OMP_NUM_THREADS='2',LD_LIBRARY_PATH='/opt/intel/oneapi/compiler/2026.0/lib')
+            log=P/'evidence'/f'k3-state-engine-{compiler}-{mode}.log'
+            with log.open('w') as stream:
+                r=subprocess.run([sys.executable,'-B',str(P/'k3_state_gate.py'),'--worker',str(binary),str(path),digest,str(dest)],env=env,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=900)
+            assert r.returncode==0,log.read_text()[-4000:]
+            result=json.loads((dest/'result.json').read_text())
+            archive=P/'evidence'/f'k3-state-engine-{compiler}-{mode}.txt.gz';archive.write_bytes(gzip.compress((dest/'cases.txt').read_bytes(),mtime=0))
+            result.update(compiler=compiler,selection=mode,binary_sha256=sha(binary),transcript_sha256=sha(archive),snapshot=json.loads((dest/'speculative-snapshot.json').read_text()))
+            assert result['passed'] and result['cases']>=65 and result['refusals']>=8 and result['negatives']==2
+            io,prep,export=TRIMS[mode]
+            assert (result['kernel_io'],result['rank0_prepare'],result['boundary_export'])==(io,prep,export),result
+            assert (result['kio_sync_transfers']>0)==(io=='kernel') and (result['staged_halves']>0)==(prep=='async'),('trim counters',mode,result)
+            assert result['export_copy_runs']+result['export_kernel_runs']>=65 and (result['export_kernel_runs']>0)==(export=='kernel') and (result['export_copy_runs']>0)==(export=='copy'),('export counters',mode,result)
+            assert result['moved_sites']>0 and result['stored_sites']>result['moved_sites'] if mode=='v3k' else result['stored_sites']==result['moved_sites'],('k3 sites',mode,result)
+            assert result['sites']==('on' if mode=='k3x-on' else 'off') and result['sites_rows']==0,('packet191 sites flag; the host engine writes no timestamp rows',mode,result)
+            result.pop('transcript',None);result['transcript_bytes']=archive.stat().st_size
+            rows.append(result);print('engine',compiler,mode,'PASS',result['cases'],'cases',result['refusals'],'refusals',flush=True)
+    for mode in ('k3x','k3x-on'):
+        assert len({r['canonical_sha256'] for r in rows if r['selection']==mode})==1,'compilers differ: '+mode
+    canon=lambda mode:next(r['canonical_sha256'] for r in rows if r['selection']==mode)
+    assert canon('k3x')==canon('k3x-off')==canon('k3x-on'),'the sites view changed engine state bytes (every rank-0 allocation and the exported slot are in the canonical set)'
+    parent=json.loads(P188_STATE.read_text());parent_canon={r['selection']:r['canonical_sha256'] for r in parent['engine_runs']}
+    parent189={r['selection']:r['canonical_sha256'] for r in json.loads(P189_STATE.read_text())['engine_runs']}
+    assert canon('k3x')==parent_canon['k3trims']==parent_canon['k3']==parent189['k3x'],'k3x canonical transcript differs from packet188/189\'s retained transcripts'
+    assert parent_canon['v3k']!=canon('k3x'),'the k3 boundary must change which rank-0 layer state evolves (packet188 v3k transcript)'
+    return rows
+
+
+# ------------------------------------------------------------------ part B: two-rank pipeline
+def pipeline_module():
+    if str(P56) not in sys.path:sys.path.insert(0,str(P56))
+    import pipeline
+    return pipeline
+
+
+def h(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+class Load:
+    def __init__(self,pipeline,sel,first,out,fault='none'):
+        self.pl=pipeline;self.sel=sel;self.out=out
+        path,digest=sel[first];real=pipeline.subprocess.Popen
+        def popen(cmd,*a,**k):
+            cmd=list(cmd);assert '--mini' in cmd and '--selection' not in cmd
+            return real(cmd+['--selection',str(path),'--selection-sha256',digest,'--pipeline-mini5'],*a,**k) # packet188: five-layer miniature for every load
+        args=pipeline.parser().parse_args(['--binary',str(BINARY),'--output',str(out),'--mini','--context','256','--tokens','24',
+            '--seconds','600','--wait-seconds','300','--native-nice','19','--draft','mtp','--draft-rank','1','--target-split','0',
+            '--draft-fault',fault,'--controller','native','--timing','token','--retain-steps','1-24'])
+        args.host_memory='resident';out.mkdir(parents=True)
+        with patch.object(pipeline.subprocess,'Popen',popen):
+            self.t=pipeline.Transport(args,out,{'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2'})
+        self.args=args;self.current=None;self.view=first
+    def _clear(self,dest):
+        t=self.t;t.request_output=dest;t.mapping[:]=bytes(len(t.mapping));t.trace=[]
+        t.metrics=[dict(busy_ms=0.,handover_ms=0.,calls=0,gpu_ms=0.) for _ in range(2)];t.last_complete=[0.,0.]
+    def switch(self,name,dest):
+        """Bracket switch + total reset (op 13) on both ranks, as v5/bracket.py does."""
+        path,digest=self.sel[name];t=self.t;dest.mkdir(parents=True)
+        for rank in (0,1):
+            meta=t.out/f'rank{rank}'/f'bracket-{t.seq[rank]+1}.txt';reset=meta.with_suffix('.reset.txt')
+            receipt=dest/f'boundary-rank{rank}.json';reset.write_text(str(dest/f'rank{rank}')+'\n\n')
+            meta.write_text('\n'.join([str(path),digest,str(reset),str(receipt)])+'\n');t.call(rank,13)
+            proof=json.loads(receipt.read_text());assert proof['passed'] and proof['total_reset'] and proof['selection_sha256']==digest
+        self._clear(dest);self.view=name
+    def reset(self,dest):
+        t=self.t;dest.mkdir(parents=True)
+        for rank in (0,1):
+            meta=t.out/f'rank{rank}'/f'reset-{t.seq[rank]+1}.txt';meta.write_text(str(dest/f'rank{rank}')+'\n\n');t.call(rank,11)
+        self._clear(dest)
+    def request(self,scenario):
+        pl=self.pl;mode,guesses,eos={'mtp':('mtp',[],()),'script':('script',SCRIPT,()),'none':('none',[],()),'eos':('script',[1]*30,(1,))}[scenario]
+        result=pl.request_run(self.t,pl.Draft(mode,guesses),PROMPT,24,eos,True,False)
+        for rank in (0,1):self.t.call(rank,4,position=2147483647)
+        return result
+    def close(self):self.t.close(True)
+
+
+SCRIPT=[1,3,1,-1,1,1,3,3,1,-1,1,3,1,1,1,-1,3,1,1,1,3,1,-1,1,1,1,1,1,1,1]  # hit/miss/no-guess mix (mini target emits 1)
+SCENARIOS=('mtp','script','none','eos')
+
+
+def identity(dest,result,view):
+    fixtures={}
+    for rank in (0,1):
+        for f in (dest/f'rank{rank}').glob('step*/layer-*.bf16'):
+            key=f.parent.name+'/'+f.name;assert key not in fixtures,'fixture produced by both ranks: '+key;fixtures[key]=h(f)
+    moved={'production':(),'v3k':(2,)}.get(view,(2,3)) # mini layers run by rank 0's boundary in this view (k3x, k3x-off, k3x-on: 2-3)
+    state={}
+    for rank in (0,1):
+        for f in (dest/f'rank{rank}/state-2147483647').glob('*.bin'):
+            name=f.stem
+            if name.startswith('blk.'):
+                layer=int(name.split('.')[1]);owner=0 if layer<2 else (0 if layer in moved else 1)
+                if owner==rank:state[name]=h(f)
+            elif name.startswith('alternate-blk.') and rank==0:state[name]=h(f)
+            elif rank==1 and (name.startswith('final.') or name in ('logits','next_token')):state[name]=h(f)
+    rows=[json.loads(x) for x in (dest/'rank1/draft-rows.jsonl').read_text().splitlines() if x.strip()] if (dest/'rank1/draft-rows.jsonl').exists() else []
+    trace=result['rank_trace'];boundaries=sum(1 for x in trace if x['rank']==0 and x['op']==15)
+    accepts=sum(1 for x in trace if x['rank']==0 and x['op']==2)
+    rank1_layers=sorted({f.name for f in (dest/'rank1').glob('step*/layer-*.bf16')})
+    return dict(tokens=result['tokens'],stats={k:result['stats'][k] for k in ('guesses','hits','misses','no_guess')},fixtures=fixtures,state=state,
+                proposals=[(r.get('draft_position'),r.get('confirmed_token'),r.get('guess')) for r in rows],
+                boundaries=boundaries,accepts=accepts,rank1_layers=rank1_layers,moved=list(moved))
+
+
+def draft_state(dest):
+    d=dest/'rank1/draft-final-state'
+    return {str(f.relative_to(d)):h(f) for f in d.rglob('*') if f.is_file()} if d.exists() else {}
+
+
+def pipeline_part(sel):
+    pl=pipeline_module();stamp=str(time.time_ns());root=OUT/('pipeline-'+stamp)
+    plans=[('reference','production',['production'],'none'),
+           ('bracket-off-first','k3x-off',['k3x-off','k3x-on','k3x-off','k3x-on','k3x-off'],'none'),
+           ('bracket-on-first','k3x-on',['k3x-on','k3x-off','k3x-on','k3x-off','k3x-on'],'none')]
+    loads={};reference=None
+    for label,first,views,fault in plans:
+        load=Load(pl,sel,first,root/label/'load',fault);rows=[]
+        try:
+            for index,view in enumerate(views):
+                vdir=root/label/f'view{index}-{view}'
+                load.switch(view,vdir/'switch')
+                for scenario in (SCENARIOS if fault=='none' else ('mtp',)):
+                    dest=vdir/scenario;load.reset(dest);result=load.request(scenario)
+                    rows.append(dict(view=view,index=index,scenario=scenario,dest=dest,identity=identity(dest,result,view)))
+            load.reset(root/label/'tail')
+        finally:load.close()
+        for row in rows:row['identity']['draft_state']=draft_state(row['dest'])
+        loads[label]=rows;print('pipeline',label,'ran',len(rows),'requests',flush=True)
+    ref={r['scenario']:r['identity'] for r in loads['reference']}
+    supp_ref=None;summary=[]
+    for label,rows in loads.items():
+        for r in rows:
+            i=r['identity'];expected=ref[r['scenario']] if label!='suppress' else (supp_ref:=supp_ref or i)
+            for key in ('tokens','fixtures','state','proposals','draft_state'):
+                assert i[key]==expected[key],f'{label} view{r["index"]}-{r["view"]} {r["scenario"]}: {key} differs from the reference'
+            assert i['stats']==expected['stats'],f'{label} {r["scenario"]}: acceptance differs'
+            boundary=r['view']!='production'
+            assert (i['boundaries']==i['accepts'] if boundary else i['boundaries']==0),f'{label} {r["view"]} {r["scenario"]}: boundary count {i["boundaries"]} vs accepts {i["accepts"]}'
+            assert not any(f'layer-{m:02d}.bf16' in i['rank1_layers'] for m in i['moved']),f'{label} {r["view"]}: rank 1 ran a moved layer'
+            assert len(i['fixtures'])==(120 if r['scenario']!='eos' else len(i['fixtures'])) and i['state'],'fixture/state census'
+            summary.append(dict(load=label,view=r['view'],index=r['index'],scenario=r['scenario'],tokens=len(i['tokens']),
+                                fixtures=len(i['fixtures']),state_buffers=len(i['state']),stats=i['stats'],boundaries=i['boundaries'],accepts=i['accepts']))
+    hits=sum(s['stats']['hits'] for s in summary);misses=sum(s['stats']['misses'] for s in summary);no_guess=sum(s['stats']['no_guess'] for s in summary)
+    assert hits and misses and no_guess,'scenario mix must contain hits, misses and no-guess steps'
+    return dict(root=str(root.relative_to(ROOT)),requests=len(summary),hits=hits,misses=misses,no_guess=no_guess,rows=summary,
+                reference_scenarios={k:dict(tokens=len(v['tokens']),stats=v['stats']) for k,v in ref.items()})
+
+
+def main():
+    limits();OUT.mkdir(parents=True,exist_ok=True);sel=selections()
+    engine=engine_part(sel)
+    os.environ['OMP_NUM_THREADS']='2'
+    pipe=pipeline_part(sel)
+    save(P/'evidence/k3-state.json',dict(passed=True,device_executed=False,model_read=False,full_shape_read=False,
+        selections={k:dict(path=str(v[0].relative_to(ROOT)),sha256=v[1]) for k,v in sel.items()},
+        engine_runs=engine,pipeline=pipe,
+        scope='packet191: k3x-off / k3x-on (sites view) byte identity with the record k3x path: engine-level direct vs '
+              'speculative sequences with every cancellation cut, redo/fallback, guard refusals and a detecting negative control '
+              'for k3x (GNU, Intel) and k3trims (GNU); identical canonical transcripts (incl. the exported slot) across the copy-engine '
+              'and KioCopy export paths and with packet188\'s retained proof; two-rank miniature one-load V3/k3x brackets in both start '
+              'orders against a fresh five-layer production-layout reference (tokens, 120 fixtures, proposals, draft and target state)',
+        export_identity=dict(k3x_canonical=next(r['canonical_sha256'] for r in engine if r['selection']=='k3x'),k3x_off_canonical=next(r['canonical_sha256'] for r in engine if r['selection']=='k3x-off'),k3x_on_canonical=next(r['canonical_sha256'] for r in engine if r['selection']=='k3x-on'),
+                             packet188_k3trims_canonical=next(r['canonical_sha256'] for r in json.loads(P188_STATE.read_text())['engine_runs'] if r['selection']=='k3trims'),
+                             note='the canonical transcript hashes every rank-0 allocation and the exported shared slot after every step'),
+        sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'k3_state_gate.py',P/'native/v3_state.cpp',P/'native/v3_boundary.hpp',P/'native/engine_bracket.hpp',
+                 P/'native/kernel_io.hpp',P/'native/bracket_boundary.hpp',P/'native-src/rank.hpp',P/'native-src/main.cpp',P/'native-src/mtp.hpp',
+                 P/'native-src/strict_snapshot.hpp',P/'native/p191_sites.hpp',BINARY,P188_STATE,P189_STATE)}))
+    # Raw miniature request trees are scratch: the identities above are the retained evidence.
+    import shutil;shutil.rmtree(ROOT/pipe['root'])
+    for leftover in OUT.glob('engine-*-*'):
+        if leftover.is_dir():shutil.rmtree(leftover)
+    limits()
+
+
+if __name__=='__main__':
+    if '--worker' in sys.argv:
+        resource.setrlimit(resource.RLIMIT_AS,(1280*1024**2,1280*1024**2));os.execv(sys.argv[2],sys.argv[2:])
+    else:
+        resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()

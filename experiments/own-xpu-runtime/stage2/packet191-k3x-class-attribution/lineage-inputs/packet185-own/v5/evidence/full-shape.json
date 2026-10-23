@@ -1,0 +1,982 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "runs": [
+    {
+      "selection": "production",
+      "rank": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/production-rank0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99"
+      ],
+      "wall_seconds": 1.518448274990078,
+      "memory": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 28144229620,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28819894072,
+        "planned_free_bytes": 6098068236,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 0,
+        "reset_extents_verified": 5545,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 15,
+        "initial_capture": "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+        "view_captures": [
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246",
+          "9233e6f833bb0b992319b7ff5a51cf57dda8ad15e09f48ea8a366ff190dfe246"
+        ]
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-06d7cb1be7295ca37c0216a98c425abcb0614f75e0bb6bffd97820637c9f9957.tar.gz",
+        "sha256": "06d7cb1be7295ca37c0216a98c425abcb0614f75e0bb6bffd97820637c9f9957",
+        "members": 78,
+        "original_bytes": 23973566,
+        "archive_bytes": 1233728,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "production",
+      "rank": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/production-rank1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/selection.json",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99"
+      ],
+      "wall_seconds": 0.9678392339847051,
+      "memory": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31425985242,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 32056359642,
+        "planned_free_bytes": 2816312614,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 1,
+        "reset_extents_verified": 5450,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 15,
+        "initial_capture": "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+        "view_captures": [
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980",
+          "e17187f5be82bf189c3754847143f6c8abac583704e553fd7757afec37caedb0d4fef117e66c66b0ad25ecdc1b4164ceba366abfeb08fc0478a359ee30bf0980"
+        ]
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-0b8d0b935b02a7515543af042e19e05ffb440a8e66c3559fc27aa0b191d5583f.tar.gz",
+        "sha256": "0b8d0b935b02a7515543af042e19e05ffb440a8e66c3559fc27aa0b191d5583f",
+        "members": 82,
+        "original_bytes": 10272147,
+        "archive_bytes": 696520,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "unsplit",
+      "rank": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/selection.json",
+        "a6ee79d5c83c2b89b68ba411c704b794eea3eeab461880de39b8042cd707e2d6",
+        "0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/unsplit-rank0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/selection.json",
+        "a6ee79d5c83c2b89b68ba411c704b794eea3eeab461880de39b8042cd707e2d6"
+      ],
+      "wall_seconds": 1.4687515909899957,
+      "memory": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 27986907348,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28662571800,
+        "planned_free_bytes": 6255390508,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 0,
+        "reset_extents_verified": 5505,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 15,
+        "initial_capture": "a1899054c55ac08b973d75b7ec92aaec86c6f2a026a8d4dcea87a3a0ff1e08fa",
+        "view_captures": [
+          "a1899054c55ac08b973d75b7ec92aaec86c6f2a026a8d4dcea87a3a0ff1e08fa",
+          "a1899054c55ac08b973d75b7ec92aaec86c6f2a026a8d4dcea87a3a0ff1e08fa",
+          "a1899054c55ac08b973d75b7ec92aaec86c6f2a026a8d4dcea87a3a0ff1e08fa",
+          "a1899054c55ac08b973d75b7ec92aaec86c6f2a026a8d4dcea87a3a0ff1e08fa",
+          "a1899054c55ac08b973d75b7ec92aaec86c6f2a026a8d4dcea87a3a0ff1e08fa"
+        ]
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-c889b34ea0d082f6a62fbbca9f03e47767e25786f8cd47ca2af46a23c4b730f0.tar.gz",
+        "sha256": "c889b34ea0d082f6a62fbbca9f03e47767e25786f8cd47ca2af46a23c4b730f0",
+        "members": 77,
+        "original_bytes": 23966899,
+        "archive_bytes": 1233697,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "unsplit",
+      "rank": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/selection.json",
+        "a6ee79d5c83c2b89b68ba411c704b794eea3eeab461880de39b8042cd707e2d6",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/unsplit-rank1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/selection.json",
+        "a6ee79d5c83c2b89b68ba411c704b794eea3eeab461880de39b8042cd707e2d6"
+      ],
+      "wall_seconds": 0.9184574740356766,
+      "memory": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31581735626,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 32212110026,
+        "planned_free_bytes": 2660562230,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "views": 5,
+        "target_loads": 1,
+        "draft_loads": 1,
+        "reset_extents_verified": 5445,
+        "fresh_start_capture_identity": true,
+        "layout_refused": true,
+        "native_refusals": 15,
+        "initial_capture": "2b084f161299793ee9790432810216a8eeef6e1613895dcc213de02517bb047ce7f8f2d12f84f775a8da75f0427a5e2e8c187036c160ea5fa402829a45060d42",
+        "view_captures": [
+          "2b084f161299793ee9790432810216a8eeef6e1613895dcc213de02517bb047ce7f8f2d12f84f775a8da75f0427a5e2e8c187036c160ea5fa402829a45060d42",
+          "2b084f161299793ee9790432810216a8eeef6e1613895dcc213de02517bb047ce7f8f2d12f84f775a8da75f0427a5e2e8c187036c160ea5fa402829a45060d42",
+          "2b084f161299793ee9790432810216a8eeef6e1613895dcc213de02517bb047ce7f8f2d12f84f775a8da75f0427a5e2e8c187036c160ea5fa402829a45060d42",
+          "2b084f161299793ee9790432810216a8eeef6e1613895dcc213de02517bb047ce7f8f2d12f84f775a8da75f0427a5e2e8c187036c160ea5fa402829a45060d42",
+          "2b084f161299793ee9790432810216a8eeef6e1613895dcc213de02517bb047ce7f8f2d12f84f775a8da75f0427a5e2e8c187036c160ea5fa402829a45060d42"
+        ]
+      },
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-f39bedffe8f58349c29d3924aecc8108d838e395338d37b6c5b79e92ccc6a087.tar.gz",
+        "sha256": "f39bedffe8f58349c29d3924aecc8108d838e395338d37b6c5b79e92ccc6a087",
+        "members": 81,
+        "original_bytes": 10271823,
+        "archive_bytes": 696396,
+        "all_original_bytes_verified": true
+      }
+    }
+  ],
+  "startup_runs": [
+    {
+      "selection": "production",
+      "rank": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "0",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/selection.json",
+        "--selection-sha256",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/startup-production-rank0"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "device_census_bytes": 28144229620,
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-04a569e6d69153b977b618357cc7aa1aa88595170e519b3d2341e5b44cb8203e.tar.gz",
+        "sha256": "04a569e6d69153b977b618357cc7aa1aa88595170e519b3d2341e5b44cb8203e",
+        "members": 9,
+        "original_bytes": 832772,
+        "archive_bytes": 57884,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "production",
+      "rank": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "1",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/selection.json",
+        "--selection-sha256",
+        "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/startup-production-rank1",
+        "--draft-mtp"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "device_census_bytes": 31425985242,
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-4a5c484f7f25c5f252d7fb7255393f2b944ee3ed4234e603b81c3c9e47fbab4d.tar.gz",
+        "sha256": "4a5c484f7f25c5f252d7fb7255393f2b944ee3ed4234e603b81c3c9e47fbab4d",
+        "members": 13,
+        "original_bytes": 538515,
+        "archive_bytes": 36648,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "unsplit",
+      "rank": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "0",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/selection.json",
+        "--selection-sha256",
+        "a6ee79d5c83c2b89b68ba411c704b794eea3eeab461880de39b8042cd707e2d6",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/startup-unsplit-rank0"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "device_census_bytes": 27986907348,
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-1bbdc7cf2dcb6949dc18b36af889ca45bca95cd6a7729b4ed1487fe0a2029a09.tar.gz",
+        "sha256": "1bbdc7cf2dcb6949dc18b36af889ca45bca95cd6a7729b4ed1487fe0a2029a09",
+        "members": 8,
+        "original_bytes": 831416,
+        "archive_bytes": 57724,
+        "all_original_bytes_verified": true
+      }
+    },
+    {
+      "selection": "unsplit",
+      "rank": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+        "--startup109",
+        "--rank",
+        "1",
+        "--draft-rank",
+        "1",
+        "--target-split",
+        "0",
+        "--context",
+        "4096",
+        "--tokens",
+        "128",
+        "--memory",
+        "resident",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--gemv",
+        "r5",
+        "--nongemv",
+        "parallel",
+        "--timing",
+        "token",
+        "--retain-steps",
+        "none",
+        "--selection",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/selection.json",
+        "--selection-sha256",
+        "a6ee79d5c83c2b89b68ba411c704b794eea3eeab461880de39b8042cd707e2d6",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/dispatch-speed6.json",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/mtp-manifest.tsv",
+        "--native-nice",
+        "19",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/startup-unsplit-rank1",
+        "--draft-mtp"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "context": 4096,
+        "hidden": 2560,
+        "vocab": 248320,
+        "prepared": true
+      },
+      "device_census_bytes": 31581735626,
+      "artifact": {
+        "path": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/evidence/shape-58cab28dad5929246653da5defbe201d30eabb0fc97d8b8661afedba685238d0.tar.gz",
+        "sha256": "58cab28dad5929246653da5defbe201d30eabb0fc97d8b8661afedba685238d0",
+        "members": 12,
+        "original_bytes": 538243,
+        "archive_bytes": 36579,
+        "all_original_bytes_verified": true
+      }
+    }
+  ],
+  "binary_sha256": "c6dfc3b2266fbb8596a73344020924fffe8c474824503f9b9f376f3528012427",
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/build/checked/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/entry.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/entry.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/build/checked/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-p60.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-p60.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/build/checked/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-parser.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-dispatch.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/build/checked/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head",
+      "-O0",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-s1.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-s1.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-dispatch.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-s1.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/4b1882c19a58-p49d_expert_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/e853e11e211b-2da2af621a95-85d35223e1cb-95a634abb866-65f127d435c4-p49c_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/a5430df4c5c0-15deb6a28fe1-44725e3bef69-beef754eeb2f-f379f48c08fc-a68494e2e4c0-4cddb8a717fb-6cd25906942c-48e0912b2bff-e7f6725ff84c-p49b_expert_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/addbb9eb84a2-b64a29125484-87ad21abc5d9-d00b11f53590-a3742032ed9a-f345eb3f3024-6cb5f4cc4056-fd1c0349608a-4827a8cdbf45-dd3fe83164f7-p49_qsa_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/4ac6344b9386-ac32151bb352-835b26dccf1e-d05472ede328-e8968671e5d7-e0ea41f70509-4b6ae833ee22-87e707a47556-720e35b289b9-adf2b5a8f3ec-p39_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/e653ca3eb887-c48e68a0be9c-35f0dab87698-6b10ee64460c-c122e49e15d4-59bc2dba898a-b0110af3c37a-41d3226df94e-649ecdb83388-a8b76a5aaefb-p39_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/036a4e3a393f-7dbaca72f5c9-d96ae8b72f2c-b76b5e603ef9-47c5860d12b8-14d684459c4b-a943e3b493fd-9836c7c776b1-a787c281735b-66b9acec72b5-route42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/d9d385af7d9f-ef8c80aa1132-5cbc8d783f6b-db54394cf6db-9cfc73e45e28-0cc26f81fd96-749fce04a85a-31758dd066a2-351ca077111d-b096fb3deb15-p42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/940da8cc2514-33518be76194-297901bafd80-a72e71523c23-f34e0651f285-cdb28d227ab1-ba28681e1125-5918cd95ab06-78d17e6ffba1-a887e2f17924-p30_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/ae3894d7506a-7f5954279018-71a1cff6c190-5e90c72adb80-74b23c90431d-9a5119b5252d-5f0435142c81-5b2198890f19-7f445c54ca41-7fe00edacb14-mtp_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/fe8746ed24ca-a907ae341d19-7abdd1e47b63-b3b5b364052c-29c06f745bff-fa3d727f09ba-a665f57c4bfb-041777358bf1-f398d6bf103e-1bf31e00af83-p33_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/b4f54d8689b9-1b963e614bf7-95d45d65d758-88dd092c4ac9-b6df9c549afe-a78fb9597cb9-42304aa2d058-ce0256371cd4-d1df9ba61a4b-fadc41d19a64-p33r2.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/23c3737f6878-bf0b1a8455d2-22ec62ddae27-693b39561366-932c8dade0f6-7bdb7da0eb10-f0b55e298146-1597daf59a69-1baa01931d50-05f62427b363-submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/115df1a2f69a-441535b1ecb7-8d22bc3cac9c-7470793bdabe-76c1f5cc6a93-a853d1b80369-904dfc899fff-41c3704d5d32-4da274ebc82d-80c5be9f8e62-expert_down.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/01ac3722e6c5-67872a5eb05d-f29aa697be5c-b65fbcb0f497-ac9e0bc238c9-1fd214a63a82-6f906662dec8-f9bea326a1f2-56363b721e23-223383c5fd57-round2_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/2b544d597d2c-16ef4594f6a3-b2270f8711cc-8690e14d583d-40f2243ba055-1d7ad6dff140-2ee63ec39c04-01a4704fdf1f-a1753931e596-84461f568174-small_gemv.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/c2c99f0e26bf-a1dfa246320d-d7f2c2875e3f-9fa243b0f070-c155e09c5450-0f3d227e7289-15a5b80c43cf-f4f921be6036-640df8460433-3e4f50a8c71c-small_gemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/976ac70a1ae8-3dee407055bc-94f8fd08074d-bd0541f93576-445f5f1d29a8-12ab76812132-49788aef79dc-8f920220a636-bae5aee863a6-1d87bbff48f0-p25_bridge.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/8871602bbd3c-87cacc5a80f0-1f90412ecacf-74640c8c1dcf-8649468c9b21-e8ccd8a7a042-564cc4d239ed-8e840f7c116f-40727737505b-33e04660e9b8-gemv_timing.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/ae7dd077ae92-a1b5e21829d4-175bd37f001a-1f61722d0f9e-b6f920769952-1518629f79d8-418ffd9aae66-b74e2ce2e3f6-eb3f20934fcf-5af6922e74be-adapter_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/6a25292858ea-4e379386cec8-95566332736a-d4fe8f606e5c-ecfa061e2395-bbec72fc1a30-a200ff83d1a3-59405fbdc454-f93770bfac06-53937d4d075a-performance.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/09beb7f436c1-b0cb75e599d5-0ced092cc3ae-299e19fa71eb-0719ad38c087-f94248d6c910-cb486a1dd5a8-0da6b9a243bc-2f59e733d4ff-a0a95539031a-adapter.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/d55d84d77df7-61a114e5523e-3f231205b58b-d697c81eb684-dd0e536caf97-b715c102884d-bcf1c7d0fe04-35e778110a5e-c545afc7abed-504e2f6b4fea-specialised_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/e7cf3f7c5b11-e9743c4c7cae-441a629bd522-aec1ae8d60fa-106105cb53fa-0de4a1cc27ba-6aa37d275eb5-9ba03e6dd860-5d60edc0f9e4-333c9a3673dd-runtime_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/1af5e34a8ea5-ee670e7938fd-b304d4cc1e87-764eeb3ddeb9-678f78508314-e297e9148922-ab655ee0da37-71f33ba80296-e1b4d7f94b48-c54cf2dec7dc-owner.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/621635c9b4b9-b398819ae50a-ff83379e311a-46da7a9ef952-owner_retire.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/7e76b59a6253-8f6325199078-5867b182815f-a982ef5bada4-d7e8810f9bb8-fd24fc7c3daf-cfb5817ad892-c8498c60aa60-bf7aefab963e-ba99d9e2967c-gguf.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/entry.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/50716f2ba8b1-0ce057c4ab88-fae88a10b728-f776945e8e3b-e6c29c7f2797-9cc58382bf12-9c0144b06f0d-b4558c6fc734-cc25ca237a56-a1788b72f6f9-entry-nongemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/f28b737052c5-8f4c9da3bd39-71202298bb50-61934330e5e1-f4ccc78582fb-cfcba76ca8ef-936a2e7aa4a0-9ec06cf0cc62-1c1e23a41e1f-b7851df5e164-entry-k2_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-p60.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/5eb4f7b945f1-9a6f3a807dbf-bc6146f0263b-e673a54be165-f4ef6437d0d1-p74_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/6abb616b473c-3efaa7f633d9-p93_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/p105_submit.o",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/fixture",
+      "-Wl,-rpath,/usr/lib/x86_64-linux-gnu",
+      "/usr/lib/x86_64-linux-gnu/libcrypto.so",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/gnu-host/inherited/0c610cab9549-c65155282bca-9f13b6fadbb6-07ffe95e124f-3d83b39c69a1-af51bd323cc4-eb1bfd31f503-417ab0b9139f-host_wait_mode.o"
+    ]
+  ],
+  "head_sites": [
+    {
+      "rank": 0,
+      "commands": 533,
+      "identical_non_head_commands": 533,
+      "split_head_sites": [],
+      "full_head_sites": []
+    },
+    {
+      "rank": 1,
+      "commands": 526,
+      "identical_non_head_commands": 523,
+      "split_head_sites": [
+        {
+          "label": "logits",
+          "op": "gemv",
+          "kernel": "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+          "shape": [
+            1,
+            248320,
+            2560
+          ],
+          "bindings": [
+            {
+              "label": "card0:weight:output.weight",
+              "bytes": 683571200
+            },
+            {
+              "label": "card0:weight:output.weight",
+              "bytes": 683571200
+            },
+            {
+              "label": "card0:final.mix",
+              "bytes": 5120
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:final.mix",
+              "bytes": 5120
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:gemv-workspace",
+              "bytes": 8388608
+            }
+          ]
+        },
+        {
+          "label": "argmax",
+          "op": "argmax",
+          "kernel": "round2::Simple<(integrated::Op)17, 0, (flash::Scalar)0, 0, 0>",
+          "shape": [
+            248320
+          ],
+          "bindings": [
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:next_token",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:operator-scratch",
+              "bytes": 268435456
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:position",
+              "bytes": 4
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:rope-v2",
+              "bytes": 4194304
+            }
+          ]
+        },
+        {
+          "label": "argmax",
+          "op": "argmax",
+          "kernel": "round2::Simple<(integrated::Op)17, 1, (flash::Scalar)0, 0, 0>",
+          "shape": [
+            248320
+          ],
+          "bindings": [
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:next_token",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:operator-scratch",
+              "bytes": 268435456
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:position",
+              "bytes": 4
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:rope-v2",
+              "bytes": 4194304
+            }
+          ]
+        }
+      ],
+      "full_head_sites": [
+        {
+          "label": "logits",
+          "op": "gemv",
+          "kernel": "p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>",
+          "shape": [
+            1,
+            248320,
+            2560
+          ],
+          "bindings": [
+            {
+              "label": "card0:weight:output.weight",
+              "bytes": 839321600
+            },
+            {
+              "label": "card0:weight:output.weight",
+              "bytes": 839321600
+            },
+            {
+              "label": "card0:final.mix",
+              "bytes": 5120
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:final.mix",
+              "bytes": 5120
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:gemv-workspace",
+              "bytes": 8388608
+            }
+          ]
+        },
+        {
+          "label": "argmax",
+          "op": "argmax",
+          "kernel": "round2::Simple<(integrated::Op)17, 0, (flash::Scalar)0, 0, 0>",
+          "shape": [
+            248320
+          ],
+          "bindings": [
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:next_token",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:operator-scratch",
+              "bytes": 268435456
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:position",
+              "bytes": 4
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:rope-v2",
+              "bytes": 4194304
+            }
+          ]
+        },
+        {
+          "label": "argmax",
+          "op": "argmax",
+          "kernel": "round2::Simple<(integrated::Op)17, 1, (flash::Scalar)0, 0, 0>",
+          "shape": [
+            248320
+          ],
+          "bindings": [
+            {
+              "label": "card0:logits",
+              "bytes": 496640
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:next_token",
+              "bytes": 4
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:operator-scratch",
+              "bytes": 268435456
+            },
+            {
+              "label": "card0:error",
+              "bytes": 4
+            },
+            {
+              "label": "card0:position",
+              "bytes": 4
+            },
+            {
+              "label": "card0:active",
+              "bytes": 4
+            },
+            {
+              "label": "card0:rope-v2",
+              "bytes": 4194304
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "draft_commands_identical": true,
+  "memory": [
+    {
+      "selection": "production",
+      "rank": 0,
+      "device_allocation_bytes": 28144229620,
+      "arena_headroom_bytes": 4068025100,
+      "physical_free_bytes": 6098068236
+    },
+    {
+      "selection": "production",
+      "rank": 1,
+      "device_allocation_bytes": 31425985242,
+      "arena_headroom_bytes": 786269478,
+      "physical_free_bytes": 2816312614
+    },
+    {
+      "selection": "unsplit",
+      "rank": 0,
+      "device_allocation_bytes": 27986907348,
+      "arena_headroom_bytes": 4225347372,
+      "physical_free_bytes": 6255390508
+    },
+    {
+      "selection": "unsplit",
+      "rank": 1,
+      "device_allocation_bytes": 31581735626,
+      "arena_headroom_bytes": 630519094,
+      "physical_free_bytes": 2660562230
+    }
+  ],
+  "census_delta_bytes_per_rank": [
+    -157322272,
+    155750384
+  ],
+  "unsplit_memory_plan": "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/memory-plan.json",
+  "unsplit_memory_plan_sha256": "3f918e6ef8c18cc086ea18816a72a179f0afd0a2d515c92721b6b5da04ab804d",
+  "one_load_switch_refused": "bracket_select refuses head head-split-compute <-> production in both directions (storage choice); allocations differ by the census delta",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p185_v5_full_shape.py": "79e8e4bc12bba6f11247699a767b124a5a0f35c80ef86ed01ae2baa6531639c9",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/p183_shape_mock.py": "d0006b2bfca2ea9c83dc697689104594a194053494ee722bfa0e115228b061c5",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/native/full_shape_entry.cpp": "e5b007a42df2aa514321ebd4daa1f28dd86ce38240d71e1870e34d56159a03ed",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/native/audit_s1.hpp": "4df991f64987b0265983114cec6d788b38e3dda7353dabcfb420d984d8d656b4",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/build/checked/experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/s1_kernels.hpp": "93a7f3e4e5acf81efc36a413889dd58a607d39d89107d39eb02f50188569df6b",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/selection.json": "51b99015e6c1e18af01a14fadd18141be7191dd0a4a60091485dadd590edfd99",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/selection.json": "a6ee79d5c83c2b89b68ba411c704b794eea3eeab461880de39b8042cd707e2d6",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/production/memory-plan.json": "2dfd6abb075a0e05d1d407b1a81943af102db1651d0e2d0e24d77acdae34aeb2",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/lineage/unsplit/memory-plan.json": "3f918e6ef8c18cc086ea18816a72a179f0afd0a2d515c92721b6b5da04ab804d",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-s1.cpp": "fd10ae5876f5ad376ff733a90d540b9968ba64162572d37d4d2045344cc1d07c",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-parser.cpp": "b4f3f7cded6927cfa8c3d7e2657b1f2ada42bf10436213d6e1dd8af13b0e2ce5",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/entry.cpp": "f59ded275f2e07e62b49f8d8388902182770f8f942949c0fd39ddfe296d5147a",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/main.cpp": "5935470ad30062324d4f9beb1ce3975412db876466642ce4a0c7a68f7c762ce1",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/audit-p60.cpp": "fd15208ae64197eb2f9839159a76e34d6ffc0a00a5836c53a0185fa5e589cb30",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/rank.hpp": "addcb4d8e83b4b2df00545ead1520ed5bd3457c406794fdf508eee63e11f8428",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/mtp.hpp": "b5b550deeaba71c22bee291abb5eb294e4f8eb83c23607a29026753a8af04224",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/request_reset.hpp": "7d97bd77782c55b8dfe8078f093b605e48ce797703940842a56c2d5f705737fa",
+    "experiments/own-xpu-runtime/stage2/packet185-twocard-unsplit-head/v5/build/full-shape/p109_fusion.hpp": "ee6326429e0d890b2febc8ee671af70747b0580ebb8d72190b1b47ed057dd777"
+  },
+  "payload_mocks": [
+    "numerical device addresses",
+    "weight upload elision",
+    "scalar readback",
+    "state-dump payload elision"
+  ],
+  "real_paths": [
+    "initialize",
+    "banks",
+    "SpeculativeImage",
+    "DraftRuntime",
+    "bracket_select",
+    "request_reset",
+    "bracket_boundary",
+    "p105::Runtime (split only)",
+    "memory admission"
+  ]
+}

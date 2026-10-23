@@ -1,0 +1,218 @@
+--- a/v5/native-src/main.cpp
++++ b/v5/native-src/main.cpp
+@@ -580,7 +580,7 @@
+   Scalar type;
+ };
+ static size_t target_scratch_bytes(const flash::Plan&,const Options&);
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/PACKET/build/checked/experiments/own-xpu-runtime/stage2/PACKET/p65_attribution.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/PACKET/v5/native/p191_sites.hpp" // packet191: per-class site recorder (sites=off|on view key); same namespace as p65_attribution.hpp
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/PACKET/build/checked/experiments/own-xpu-runtime/stage2/PACKET/p109_fusion.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/PACKET/v5/native/split_timing.hpp"
+ class Engine final : public flash::Backend {
+@@ -683,20 +683,22 @@
+   void finish(int, Launch l, bool gemv) {
+     // Submission only. Owner::compute appends the preceding owned event.
+     if(preparing_commands)return;
+-    if(profile_events||draft_timing)pending.push_back({l,gemv,current_cls});
+-    if(!draft_timing&&attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event);
++    // packet191 sites=on: sampled halves/boundaries/drafts also retain their events for the drain-time timestamp read (as timing=class does).
++    if(profile_events||draft_timing||attribution.active())pending.push_back({l,gemv,current_cls});
++    if(attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event,draft_timing?"draft":nullptr);
+     tail=l.last; submitted+=l.passes;
+   }
+   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
+   void attribution_row(ownrt::Event event,const ownrt::EventTiming& t) {
+     auto found=attribution.events.find(event);if(found==attribution.events.end())return;
+     const auto& site=found->second;
+-    site_timings<<"{\"schema\":\"packet65.event.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
+-      <<",\"half\":"<<site.half<<",\"fixture\":"<<site.fixture<<",\"position\":"<<site.position
+-      <<",\"speculative\":"<<(site.speculative?"true":"false")<<",\"label\":"<<ownrt::quote(site.label)
+-      <<",\"class\":\"moe_experts\",\"event\":"<<event
++    // packet191: one row per recorded kernel event (device timestamps of ONE card; never compared across cards).
++    site_timings<<"{\"schema\":\"packet191.site.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
++      <<",\"half\":"<<site.half<<",\"phase\":\""<<site.phase<<"\",\"fixture\":"<<site.fixture<<",\"position\":"<<site.position
++      <<",\"speculative\":"<<(site.speculative?"true":"false")<<",\"corrected\":"<<(site.corrected?"true":"false")<<",\"label\":"<<ownrt::quote(site.label)
++      <<",\"event\":"<<event
+       <<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns<<"}\n";
+-    attribution.events.erase(found);
++    ++attribution.rows;attribution.events.erase(found);
+   }
+   void drain() {
+     if(!tail && pending.empty())return;
+--- a/v5/native-src/rank.hpp
++++ b/v5/native-src/rank.hpp
+@@ -130,7 +130,7 @@
+  require(request.token>=0&&request.token<e.p.g.vocab,"half token bound");
+  require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
+  e.verify_configuration();e.guard();
+- if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);
++ if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative,"half",corrected); // packet191: half phase + corrected tag
+  // Snapshot the prior launch extents before admitting a speculative bucket.
+  if(request.speculative)p150::measure("snapshot",request.position,false,[&]{image.begin(shared,staged?request.position:-1);});
+  e.admit_position(request.position);
+--- a/v5/native/engine_bracket.hpp
++++ b/v5/native/engine_bracket.hpp
+@@ -31,7 +31,8 @@
+       // packet188: a k3-storage load (rank0_layers 0-26) may also switch the two trims.
+       const bool k3_storage=sealed_selection.choices.contains("rank0_layers")&&sealed_selection.choices.at("rank0_layers")=="0-26";
+       // packet189: a k3-storage load may also switch the boundary export path (boundary_export copy <-> kernel).
+-      const bool switchable=sealed_selection.choices.contains("rank0_layers")&&(key=="boundary"||key=="snapshot_host"||(k3_storage&&(key=="kernel_io"||key=="rank0_prepare"||key=="boundary_export")));
++      // packet191: a k3-storage load may also switch the per-class site instrumentation (sites off <-> on).
++      const bool switchable=sealed_selection.choices.contains("rank0_layers")&&(key=="boundary"||key=="snapshot_host"||(k3_storage&&(key=="kernel_io"||key=="rank0_prepare"||key=="boundary_export"||key=="sites")));
+       if(!switchable)
+         require(next.choices.at(key)==value,"bracket storage/unsupported choice differs: reload required: "+key);
+     }
+@@ -55,9 +56,10 @@
+           domain(selection->choices,"kernel_io",{"copy","kernel"});
+           domain(selection->choices,"rank0_prepare",{"sync","async"});
+           domain(selection->choices,"boundary_export",{"copy","kernel"}); // packet189
++          if(selection->choices.contains("sites"))domain(selection->choices,"sites",{"off","on"}); // packet191 (absent = off: the 19-key record selection)
+         } else {
+           domain(selection->choices,"boundary",{"none","rank0"});
+-          require(!selection->choices.contains("kernel_io")&&!selection->choices.contains("rank0_prepare")&&!selection->choices.contains("boundary_export"),"packet188 trims require the k3 storage");
++          require(!selection->choices.contains("kernel_io")&&!selection->choices.contains("rank0_prepare")&&!selection->choices.contains("boundary_export")&&!selection->choices.contains("sites"),"packet188 trims require the k3 storage");
+         }
+         domain(selection->choices,"head",{"production"}); // V3: full target head on rank 1, no merge
+       }
+@@ -99,14 +101,18 @@
+   // packet189: boundary_export=copy (default; V3's copy-engine readback of the 20,480-byte export) or kernel
+   // (packet188's folded KioCopy readback). Only meaningful with kernel_io=kernel; counters prove which path ran.
+   bool export_copy=true;uint64_t export_copy_runs=0,export_kernel_runs=0;
++  // packet191: sites=on (k3-storage selections only; absent = off) enables the per-class site recorder (p191_sites.hpp).
++  bool sites_on=false;
+   std::vector<uint8_t> v3_skip_half;std::vector<size_t> v3_sites,v3_store_sites;std::set<std::string> v3_private;
+   void refresh_v3(){
+     auto pick=[&](const char* key,const char* fallback){auto i=sealed_selection.choices.find(key);return i==sealed_selection.choices.end()?std::string(fallback):i->second;};
+-    const auto layers=pick("rank0_layers","0-23"),mode=pick("boundary","none"),io=pick("kernel_io","copy"),prep=pick("rank0_prepare","sync"),exp=pick("boundary_export","copy");
++    const auto layers=pick("rank0_layers","0-23"),mode=pick("boundary","none"),io=pick("kernel_io","copy"),prep=pick("rank0_prepare","sync"),exp=pick("boundary_export","copy"),sites=pick("sites","off");
+     require(layers=="0-23"||layers=="0-25"||layers=="0-26","packet188 rank0_layers domain");
+     require(mode=="none"||mode=="rank0"||mode=="rank0-k3","packet188 boundary domain");
+     require(io=="copy"||io=="kernel","packet188 kernel_io domain");require(prep=="sync"||prep=="async","packet188 rank0_prepare domain");
+     require(exp=="copy"||exp=="kernel","packet189 boundary_export domain");
++    require(sites=="off"||sites=="on","packet191 sites domain");
++    require(layers=="0-26"||!sealed_selection.choices.contains("sites"),"packet191 sites is a k3-storage key");
+     v3_extended=layers!="0-23";v3_active=mode!="none";
+     require(!v3_active||v3_extended,"V3 boundary requires an extended rank-0 layout");
+     require(mode!="rank0-k3"||layers=="0-26","packet188 k3 boundary requires rank0_layers 0-26");
+@@ -114,6 +120,8 @@
+     require(layers!="0-26"||v3_active,"packet188 k3 storage runs a boundary in every view");
+     require(layers!="0-26"||sealed_selection.choices.contains("boundary_export"),"packet189 k3 storage selections name boundary_export explicitly");
+     kio_active=io=="kernel";prepare_async=prep=="async";export_copy=exp=="copy";
++    sites_on=sites=="on";attribution.enabled=sites_on||a.timing=="attribution";attribution.events.clear();
++    require(!sites_on||profile_events||a.rank==0||a.mtp||!a.draft_capture.empty(),"packet191 sites=on needs the profiling queue this rank already runs");
+     if(v3_extended)require(resident&&!a.legacy&&a.draft_rank==1&&a.target_split==0&&head_choice()=="production",
+       "V3 layout requires the resident prepared path, the rank-1 draft, the 24/24 base split and the full target head on rank 1");
+     const int mini=a.mini?1:0;
+--- a/v5/native/v3_boundary.hpp
++++ b/v5/native/v3_boundary.hpp
+@@ -64,6 +64,7 @@
+  const double gpu=e.gemv_ms+e.nongemv_ms;
+  Candidate fixtures;fixtures.fixture=r.fixture;std::array<int,4> captured{};size_t captured_count=0;
+  const auto body=std::chrono::steady_clock::now();
++ if(e.attribution.enabled)e.attribution.begin(r.fixture,r.position,false,"boundary"); // packet191: layers 24-26 recorded as the boundary phase
+  for(size_t index:e.v3_sites){
+   const auto& l=e.p.launches[index];
+   e.enqueue(l,e.logical);
+--- a/v5/native/full_shape_entry.cpp
++++ b/v5/native/full_shape_entry.cpp
+@@ -76,7 +76,7 @@
+  if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}
+  {pipeline::SpeculativeImage image(*e);if(a.rank==1)draft=std::make_unique<mtp36::DraftRuntime>(*e);
+  if(a.rank==0)image.census131(a.output/"image-census.json",0); // packet186: speculative image sources at real shape
+- {std::ofstream f(a.output/"v3-load.json");f<<"{\"rank0_extended\":"<<(e->v3_extended?"true":"false")<<",\"moved_sites\":"<<e->v3_sites.size()<<",\"stored_sites\":"<<e->v3_store_sites.size()<<",\"kio_bytes\":"<<e->kio_bytes<<",\"kio_stage_bytes\":"<<e->kio_stage_bytes<<",\"kio_cards\":"<<e->kio.size()<<",\"boundary_export\":"<<ownrt::quote(e->export_copy?"copy":"kernel")<<",\"private_buffers\":[";
++ {std::ofstream f(a.output/"v3-load.json");f<<"{\"rank0_extended\":"<<(e->v3_extended?"true":"false")<<",\"moved_sites\":"<<e->v3_sites.size()<<",\"stored_sites\":"<<e->v3_store_sites.size()<<",\"kio_bytes\":"<<e->kio_bytes<<",\"kio_stage_bytes\":"<<e->kio_stage_bytes<<",\"kio_cards\":"<<e->kio.size()<<",\"boundary_export\":"<<ownrt::quote(e->export_copy?"copy":"kernel")<<",\"sites\":"<<ownrt::quote(e->sites_on?"on":"off")<<",\"private_buffers\":[";
+   bool first=true;for(const auto& n:e->v3_private){f<<(first?"":",")<<ownrt::quote(n);first=false;}f<<"],\"banked_state\":[";
+   first=true;for(const auto& [n,id]:e->state_spares){f<<(first?"":",")<<ownrt::quote(n);first=false;}f<<"]}\n";}
+  e->bracket_weights_locked=true;const auto initial=e->bracket_arena_hash();
+@@ -119,6 +119,13 @@
+   require(e->kio_active==(choices.contains("kernel_io")&&choices.at("kernel_io")=="kernel")&&e->prepare_async==(choices.contains("rank0_prepare")&&choices.at("rank0_prepare")=="async"),"packet188 trim flags");
+   require(e->export_copy==!(choices.contains("boundary_export")&&choices.at("boundary_export")=="kernel"),"packet189 boundary_export flag"); // copy unless the k3-storage selection says kernel
+   require(e->v3_end==(k3_view?27:26)||!startup_extended,"packet188 boundary set");
++  require(e->sites_on==(choices.contains("sites")&&choices.at("sites")=="on")&&e->attribution.enabled==e->sites_on,"packet191 sites flag"); // off unless the k3-storage selection says on
++  if(e->sites_on){ // packet191 format proof on the real production plan: every site a half, the boundary and the draft would record, written through the real row writer (synthetic 1-us timestamps; no device)
++   unsigned long long event=1;auto row=[&](const flash::Launch& l,const char* override){e->attribution.current.label=l.label;e->attribution.record(event,override);e->attribution_row(event,ownrt::EventTiming{event*1000,event*1000+1000});++event;};
++   e->attribution.begin(9,77,a.rank==0,"half",false);for(size_t i=0;i<e->p.launches.size();++i)if(!e->v3_skip_half[i])row(e->p.launches[i],nullptr);
++   if(a.rank==0){e->attribution.begin(9,77,false,"boundary");for(size_t i:e->v3_sites)row(e->p.launches[i],nullptr);}
++   if(a.rank==1&&draft){for(int k=0;k<8;++k)row(e->p.launches[0],"draft");} // the draft's events carry the override label (the engine never records their site labels)
++   require(e->attribution.events.empty()&&e->attribution.rows>0,"packet191 format proof rows");e->site_timings.flush();}
+   {size_t skipped=0;for(auto x:e->v3_skip_half)skipped+=x;
+    auto moved_layer=[&](const auto& l){for(int k=24;k<(k3_view?27:26);++k)if(l.label.starts_with("blk."+std::to_string(k)+"."))return true;return false;};
+    const size_t expected=a.rank==0?e->v3_store_sites.size():(e->v3_active?size_t(std::count_if(e->p.launches.begin(),e->p.launches.end(),moved_layer)):0);
+@@ -154,7 +161,9 @@
+  if(startup_extended)for(const auto& [key,value]:std::vector<std::pair<std::string,std::string>>{{"rank0_layers","0-23"},{"boundary","unknown"},{"rank0_layers","0-27"},{"rank0_layers",e->v3_store_end==27?"0-25":"0-26"},
+    {"boundary",e->v3_store_end==27?"none":"rank0-k3"},
+    // packet189: the export path key is a k3-storage key with a closed domain; absent in the 0-25 (record) storage, where the rank0_layers cross value covers the refusal.
+-   {e->v3_store_end==27?"boundary_export":"rank0_layers",e->v3_store_end==27?"unknown":"0-27"}}){
++   {e->v3_store_end==27?"boundary_export":"rank0_layers",e->v3_store_end==27?"unknown":"0-27"},
++   // packet191: the sites key is a k3-storage key with a closed domain; absent in the 0-25 (record) storage (rank0_layers cross value again).
++   {e->v3_store_end==27&&text.find("\"sites\": ")!=std::string::npos?"sites":"rank0_layers",e->v3_store_end==27&&text.find("\"sites\": ")!=std::string::npos?"unknown":"0-27"}}){ // sites:unknown where the load's selection names the key (k3x-off/on), else the rank0_layers cross value again
+   auto bad=text;auto marker=ownrt::quote(key)+": ";auto at=bad.find(marker);require(at!=std::string::npos,"negative V3 fixture field");
+   at+=marker.size();auto end=bad.find('"',at+1);bad.replace(at,end-at+1,ownrt::quote(value));
+   auto path=a.output/"bad-layout.json";save(path,bad);bool refused=false;
+--- a/v5/native/v3_state.cpp
++++ b/v5/native/v3_state.cpp
+@@ -118,7 +118,7 @@
+  auto raw=evidence.str();save(a.output/"cases.txt",raw);
+  save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"cases\":"+std::to_string(cases)+",\"refusals\":"+std::to_string(refusals)+",\"negatives\":"+std::to_string(negatives)+
+    ",\"moved_sites\":"+std::to_string(e->v3_sites.size())+",\"stored_sites\":"+std::to_string(e->v3_store_sites.size())+",\"moved_private_buffers\":"+std::to_string(e->v3_private.size())+",\"snapshot_host\":"+ownrt::quote(e->sealed_selection.choices.at("snapshot_host"))+
+-   ",\"boundary_export\":"+ownrt::quote(e->export_copy?"copy":"kernel")+",\"export_copy_runs\":"+std::to_string(e->export_copy_runs)+",\"export_kernel_runs\":"+std::to_string(e->export_kernel_runs)+",\"kernel_io\":"+ownrt::quote(e->kio_active?"kernel":"copy")+",\"rank0_prepare\":"+ownrt::quote(e->prepare_async?"async":"sync")+",\"kio_sync_transfers\":"+std::to_string(e->kio_sync_transfers)+",\"kio_async_copies\":"+std::to_string(e->kio_async_copies)+",\"staged_halves\":"+std::to_string(e->staged_halves)+
++   ",\"sites\":"+ownrt::quote(e->sites_on?"on":"off")+",\"sites_rows\":"+std::to_string(e->attribution.rows)+",\"boundary_export\":"+ownrt::quote(e->export_copy?"copy":"kernel")+",\"export_copy_runs\":"+std::to_string(e->export_copy_runs)+",\"export_kernel_runs\":"+std::to_string(e->export_kernel_runs)+",\"kernel_io\":"+ownrt::quote(e->kio_active?"kernel":"copy")+",\"rank0_prepare\":"+ownrt::quote(e->prepare_async?"async":"sync")+",\"kio_sync_transfers\":"+std::to_string(e->kio_sync_transfers)+",\"kio_async_copies\":"+std::to_string(e->kio_async_copies)+",\"staged_halves\":"+std::to_string(e->staged_halves)+
+    ",\"boundary\":"+ownrt::quote(e->sealed_selection.choices.at("boundary"))+",\"rank0_layers\":"+ownrt::quote(e->sealed_selection.choices.at("rank0_layers"))+
+    ",\"canonical_sha256\":"+ownrt::quote(hash(std::vector<uint8_t>(raw.begin(),raw.end())))+"}");
+  }
+--- a/native-base/.../p49d_submit.cpp
++++ b/native-base/.../p49d_submit.cpp
+@@ -65,6 +65,7 @@
+  if(cls=="kernel_io"&&(choice=="copy"||choice=="kernel"))return production; // packet188: per-interval small transfers as compute kernels (no copy engine)
+  if(cls=="rank0_prepare"&&(choice=="sync"||choice=="async"))return production; // packet188: rank-0 half inputs staged without host waits
+  if(cls=="boundary_export"&&(choice=="copy"||choice=="kernel"))return production; // packet189: V3 boundary export on the copy engine (copy, record path) or packet188's folded KioCopy readback (kernel)
++ if(cls=="sites"&&(choice=="off"||choice=="on"))return production; // packet191: per-class site instrumentation view (observation only; off = the record path)
+  if(cls=="probe"&&(choice=="off"||choice=="split"))return production;
+  if(cls=="other_fusion"&&(choice=="production"||choice=="fused"))return production;
+  if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
+@@ -114,9 +115,9 @@
+    }
+   }else throw std::invalid_argument("p49d unknown selection field");
+  }while(more());take('}');ws();
+- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||!(values.size()==14||(values.size()==16&&values.contains("rank0_layers")&&values.contains("boundary"))||(values.size()==19&&values.contains("rank0_layers")&&values.contains("boundary")&&values.contains("kernel_io")&&values.contains("rank0_prepare")&&values.contains("boundary_export")))||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||!(values.size()==14||(values.size()==16&&values.contains("rank0_layers")&&values.contains("boundary"))||((values.size()==19||(values.size()==20&&values.contains("sites")))&&values.contains("rank0_layers")&&values.contains("boundary")&&values.contains("kernel_io")&&values.contains("rank0_prepare")&&values.contains("boundary_export")))||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
+  p59c::validate(draft_values);
+- auto target_values=values;target_values.erase("rank0_layers");target_values.erase("boundary");target_values.erase("kernel_io");target_values.erase("rank0_prepare");target_values.erase("boundary_export");target_values.erase("snapshot_host");target_values.erase("dense_scales");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
++ auto target_values=values;target_values.erase("rank0_layers");target_values.erase("boundary");target_values.erase("kernel_io");target_values.erase("rank0_prepare");target_values.erase("boundary_export");target_values.erase("sites");target_values.erase("snapshot_host");target_values.erase("dense_scales");target_values.erase("probe");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
+  if(target_values.at("recurrence")=="rec-both"||target_values.at("recurrence")=="rec-both-plus"||target_values.at("recurrence")=="rec-gates"||target_values.at("recurrence")=="rec-parallel")target_values["recurrence"]="rows4-shared";
+  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
+  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;
+--- a/v5/native/p191_sites.hpp
++++ b/v5/native/p191_sites.hpp
+@@ -0,0 +1,31 @@
++// Packet191: per-class site instrumentation as an in-load view key (`sites=off|on`, k3-storage selections only).
++//
++// Replaces packet65's expert-only recorder (p65_attribution.hpp) under the same namespace, so rank.hpp's half
++// hooks compile unchanged. Observation only: no kernel, no barrier, no device readback. With `sites=on` the
++// engine records, for every kernel event it submits inside a SAMPLED half/boundary/draft (fixtures 9-16,
++// 57-64 and 105-112 of each request: three eight-token windows across the 128-token request), the site label
++// it was issued under; at the half's own final drain (after the GPU finished, exactly where `timing=class`
++// reads them) the event's start/end timestamps are read from the profiling queue and one JSON row is written
++// to sites.jsonl. Both ranks already run profiling-enabled queues on the record line (rank 0 always, rank 1
++// for the MTP draft), so `on` changes no queue property. With `sites=off` (and in the 19-key record selection
++// without the key) `enabled` is false: active() is false, nothing is recorded, nothing is written, and the
++// submit path is the record path plus one bool test (the same test packet65/77 left in it).
++#pragma once
++#include <map>
++#include <string>
++namespace p65timing {
++inline bool sample(int fixture) { return (fixture>=9&&fixture<=16)||(fixture>=57&&fixture<=64)||(fixture>=105&&fixture<=112); }
++struct Site {std::string label;int fixture=0,position=-1;bool speculative=false;unsigned long long half=0;const char* phase="half";bool corrected=false;};
++struct Recorder {
++ bool enabled=false;unsigned long long next_half=0,rows=0;Site current;
++ std::map<unsigned long long,Site> events;
++ bool active() const {return enabled&&sample(current.fixture);}
++ void begin(int fixture,int position,bool speculative,const char* phase="half",bool corrected=false){current={"",fixture,position,speculative,++next_half,phase,corrected};}
++ // `override` tags events submitted outside a labelled site (the rank-1 MTP draft: label "draft", phase "draft").
++ void record(unsigned long long event,const char* override=nullptr){
++  if(!active())return;
++  if(!override){events.emplace(event,current);return;}
++  Site s=current;s.label=override;s.phase=override;events.emplace(event,s);
++ }
++};
++}
