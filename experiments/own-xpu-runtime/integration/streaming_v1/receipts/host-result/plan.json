@@ -1,0 +1,237 @@
+{
+  "schema": "ownrt.streaming-tiny-host-plan.v1",
+  "passed": true,
+  "device_executed": false,
+  "native_executed": false,
+  "production_service_exercised": false,
+  "base": {
+    "passed": true,
+    "device_executed": false,
+    "native_executed": false,
+    "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a",
+    "argv": [
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host/own-rt-iq3",
+      "--mini",
+      "--pipeline-mini",
+      "--context",
+      "64",
+      "--retain-steps",
+      "none",
+      "--identity",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/synthetic-identity.tsv",
+      "--native-nice",
+      "19",
+      "--seconds",
+      "180",
+      "--request-front",
+      "--request-front-max-requests",
+      "8",
+      "--request-front-idle-seconds",
+      "30",
+      "--request-front-checkpoints",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/checkpoints",
+      "--request-front-tokenizer-identity",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/tokenizer.tsv",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/owner"
+    ],
+    "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+    "prior_manifest": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/checkpoints/s1/manifest.json",
+    "prior_manifest_sha256": "e6662298129208a75996dff27957e974665ace9408e714eb036700db7fe98847",
+    "tokenizer_source": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host-probe-20261023T164948/lifecycle/tokenizer.tsv",
+    "tokenizer_sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa",
+    "expected_identity": {
+      "model": {
+        "identity_tsv_sha256": "29803272e9e415114ba235f8833dce7b01d27ea4ca5b2ea7607d67570980249d",
+        "shard_stat_rows": [
+          {
+            "name": "synthetic-host-shard-0",
+            "size": 0,
+            "dev": 0,
+            "ino": 0,
+            "mtime": 0,
+            "ctime": 0
+          },
+          {
+            "name": "synthetic-host-shard-1",
+            "size": 0,
+            "dev": 0,
+            "ino": 0,
+            "mtime": 0,
+            "ctime": 0
+          },
+          {
+            "name": "synthetic-host-shard-2",
+            "size": 0,
+            "dev": 0,
+            "ino": 0,
+            "mtime": 0,
+            "ctime": 0
+          }
+        ]
+      },
+      "engine": {
+        "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+        "packet": "packet198-postreply-checkpoint",
+        "profile": "tp1-full512"
+      },
+      "geometry": {
+        "layers": 4,
+        "qsa_layers": [
+          1,
+          3
+        ],
+        "gdn_layers": [
+          0,
+          2
+        ],
+        "kvh": 1,
+        "ad": 4,
+        "ih": 4,
+        "id": 4,
+        "qh": 4,
+        "gdn": {
+          "kh": 1,
+          "vh": 3,
+          "d": 4
+        },
+        "context": 64,
+        "vocab": 16,
+        "eos": 15
+      },
+      "dtypes": {
+        "kv": "bf16",
+        "gdn_state": "bf16",
+        "ple": "bf16"
+      },
+      "tokenizer_identity": {
+        "file_sha256": "33a8b24d72f60e01dc99890d1e0a9dfd9db0eac975bd5367cceb8f437889b7fa",
+        "format": "ownrt.tokenizer-identity.v1",
+        "gguf_header_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "tokenizer_source_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "vocab_bin_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "label": "experimental-postreply-front",
+      "contract": "v1.2+p198",
+      "qualified_by": {
+        "scope": "experimental postreply checkpoint front; no device qualification",
+        "device_gates": []
+      }
+    },
+    "synthetic_identity_bytes": 99,
+    "synthetic_identity_sha256": "29803272e9e415114ba235f8833dce7b01d27ea4ca5b2ea7607d67570980249d",
+    "synthetic_identity_text": "synthetic-host-shard-0 0 0 0 0 0\nsynthetic-host-shard-1 0 0 0 0 0\nsynthetic-host-shard-2 0 0 0 0 0\n",
+    "save_bound_bytes": 8388608,
+    "disk_floor_bytes": 27000000000,
+    "expected_requests": 8,
+    "expected_controls": 8,
+    "scope": "Tiny HOST_ONLY arithmetic and adapter/store integration only; no real-model/device/HTTP qualification",
+    "sources_sha256": {
+      "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": "ca169592f1950451c48e445fa9c13bb674d394e12eae45c7b665428375b76cae",
+      "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+      "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+      "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+      "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+      "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12"
+    }
+  },
+  "argv": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/host/own-rt-iq3",
+    "--mini",
+    "--pipeline-mini",
+    "--context",
+    "64",
+    "--retain-steps",
+    "none",
+    "--identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/synthetic-identity.tsv",
+    "--native-nice",
+    "19",
+    "--seconds",
+    "180",
+    "--request-front",
+    "--request-front-max-requests",
+    "8",
+    "--request-front-idle-seconds",
+    "30",
+    "--request-front-checkpoints",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/checkpoints",
+    "--request-front-tokenizer-identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/tokenizer.tsv",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a/owner"
+  ],
+  "binary_sha256": "41cbb6c4ad3bf6626dfba24d3bbd9d95d76b512102e8b94c164e9d421b3c40ca",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/engine-integration-streaming-a",
+  "native_request_limit": 8,
+  "requests": [
+    {
+      "session": "alpha",
+      "content": "BCD",
+      "tokens": [
+        1,
+        2,
+        3
+      ],
+      "generated": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "disposition": "SAVE"
+    },
+    {
+      "session": "beta",
+      "content": "EF",
+      "tokens": [
+        4,
+        5
+      ],
+      "generated": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "disposition": "RELEASE"
+    }
+  ],
+  "native_seconds": 180,
+  "native_idle_seconds": 30,
+  "fixture_seconds": 150,
+  "request_timeout_seconds": 30,
+  "client_timeout_seconds": 35,
+  "address_space_limit_bytes": 4294967296,
+  "planned_write_bytes": 67108864,
+  "disk_floor_bytes": 27000000000,
+  "save_bound_bytes": 8388608,
+  "expected_controls": [
+    "SAVE",
+    "RELEASE"
+  ],
+  "expected_stop_reason": "quit",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": "ca169592f1950451c48e445fa9c13bb674d394e12eae45c7b665428375b76cae",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "experiments/own-xpu-runtime/integration/streaming_v1/__init__.py": "296dfc17cfc0ad7de8492ecd9a39ff4ee0a89e710846554fd42f0ec3be56e78a",
+    "experiments/own-xpu-runtime/integration/streaming_v1/host_probe.py": "178857a8b1b1c439ec13d81815cd3fd05ff13c509dfd7d61bceaaae4251890df",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_host_probe.py": "90af7f582105a14b472cf712007c8abf78211df277dd3bb3e6034f5d6fa90d69",
+    "experiments/own-xpu-runtime/integration/streaming_v1/HOST-ONLY-PLAN.md": "380c60e28e92b9bb42245d0811ff578c0e9e033d5321ff9faacfc2fbab69b872",
+    "experiments/own-xpu-runtime/integration/streaming_v1/HOST-PROBE-PREP.md": "77c5b8911511696ae00d0820928e27905864647852456b24e5069102b6e9b3fb",
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine.py": "522b0cd8d212e5b8d4a9432acb771fa9f67d20b6873fb8fdfdcc587b183a89f5",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder.py": "3b2ea358c86f423a38dbee16f36281c3cfbc27f08c0f65c6e23ad42d76aa35ac",
+    "experiments/own-xpu-runtime/integration/streaming_v1/http.py": "e163f24fa87460362408f9a474a8e68480403c73487b57ea7d82365c46226dcb",
+    "experiments/own-xpu-runtime/integration/streaming_v1/delivery.py": "427495f19637c9f0caf5b26cb2a573e42d339366a80f810ca88bd170a46579b6",
+    "experiments/own-xpu-runtime/integration/session_lifecycle_host_probe.py": "d04df3644e63e18b4de3e26a9bef6ee22a66628f361d08bd5cdce245683486c1",
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718"
+  },
+  "scope": "Synthetic tiny owner and fixture facade; actual decoder/engine/store/HTTP. No production chat service, model or device qualification."
+}

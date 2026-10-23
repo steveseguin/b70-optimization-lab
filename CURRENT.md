@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 16:48 EDT — tiny CPU-native streaming passed; guarded lifecycle passes 27 CPU checks.**
+One synthetic native process served two streamed requests, saved then released state and quit cleanly. Both clients received
+text before disposition; all eight tokens and 21 checkpoint binary hashes verified. This is a CPU-native protocol proof, not
+model/GPU qualification. The separate streaming lifecycle preserves guarded admission and graceful closure in its 27 checks.
+The earlier 64-check component commit9e36c7267 has green CI. All three restore29 applications remain running. Next is the
+borrowed-owner session composition and storage planning for a later device test.
+[Proof and scope](experiments/own-xpu-runtime/integration/streaming_v1/HOST-RESULT.md).
+
 **October 23, 16:35 EDT — streaming replies pass 64 CPU and socket checks.**
 The additive service sends stable text while tokens arrive and waits for successful SAVE/RELEASE before its final stream marker.
 Recorded replies match ordinary responses; slow or disconnected readers cannot cancel state disposition. Independent component

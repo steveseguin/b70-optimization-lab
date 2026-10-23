@@ -1,0 +1,64 @@
+{
+  "schema": "ownrt.streaming-tiny-host-independent-preparation-review.v1",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "http_requests_executed": false,
+  "production_service_exercised": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/checkpoint_engine_host_probe.py": "ca169592f1950451c48e445fa9c13bb674d394e12eae45c7b665428375b76cae",
+    "experiments/own-xpu-runtime/integration/checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "experiments/own-xpu-runtime/integration/checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "experiments/own-xpu-runtime/integration/streaming_v1/__init__.py": "296dfc17cfc0ad7de8492ecd9a39ff4ee0a89e710846554fd42f0ec3be56e78a",
+    "experiments/own-xpu-runtime/integration/streaming_v1/host_probe.py": "178857a8b1b1c439ec13d81815cd3fd05ff13c509dfd7d61bceaaae4251890df",
+    "experiments/own-xpu-runtime/integration/streaming_v1/test_host_probe.py": "90af7f582105a14b472cf712007c8abf78211df277dd3bb3e6034f5d6fa90d69",
+    "experiments/own-xpu-runtime/integration/streaming_v1/HOST-ONLY-PLAN.md": "380c60e28e92b9bb42245d0811ff578c0e9e033d5321ff9faacfc2fbab69b872",
+    "experiments/own-xpu-runtime/integration/streaming_v1/HOST-PROBE-PREP.md": "77c5b8911511696ae00d0820928e27905864647852456b24e5069102b6e9b3fb",
+    "experiments/own-xpu-runtime/integration/streaming_v1/engine.py": "522b0cd8d212e5b8d4a9432acb771fa9f67d20b6873fb8fdfdcc587b183a89f5",
+    "experiments/own-xpu-runtime/integration/streaming_v1/decoder.py": "3b2ea358c86f423a38dbee16f36281c3cfbc27f08c0f65c6e23ad42d76aa35ac",
+    "experiments/own-xpu-runtime/integration/streaming_v1/http.py": "e163f24fa87460362408f9a474a8e68480403c73487b57ea7d82365c46226dcb",
+    "experiments/own-xpu-runtime/integration/streaming_v1/delivery.py": "427495f19637c9f0caf5b26cb2a573e42d339366a80f810ca88bd170a46579b6",
+    "experiments/own-xpu-runtime/integration/session_lifecycle_host_probe.py": "d04df3644e63e18b4de3e26a9bef6ee22a66628f361d08bd5cdce245683486c1",
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/own-xpu-runtime/integration/chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "experiments/own-xpu-runtime/integration/chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "experiments/own-xpu-runtime/integration/chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718"
+  },
+  "evidence_sha256": {
+    "experiments/own-xpu-runtime/integration/streaming_v1/receipts/host-preparation.json": "860e365d1da8ca79cd56d991bd17e2d5b1a82e9cc0e4ac43dc0277899036a0d8",
+    "experiments/own-xpu-runtime/integration/streaming_v1/receipts/host-plan.json": "4f862e71536f8aa0b3373246221373dde9feaa24034be716586b084aad419918",
+    "experiments/own-xpu-runtime/integration/streaming_v1/receipts/host-probe-review.log": "98959fc3b545a3103c2c47400c7e18556008af1a7a9a3648ee34810c7341ecbe"
+  },
+  "tests": {
+    "count": 14,
+    "passed": 14,
+    "seconds": 1.341,
+    "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest streaming_v1.test_host_probe -v",
+    "scope": "Synthetic front/store, intercepted sockets/Popen, actual pinned codec and read-only qualified-module --plan subprocess; no native owner or network request."
+  },
+  "checks": {
+    "fixed_host_binary_and_unchanged_parent_argv": true,
+    "explicit_synthetic_vocabulary16_context64_eos15_facade": true,
+    "production_service_admission_unchanged": true,
+    "fixed_interpreter_and_canonical_module_symbol_origins_before_plan": true,
+    "codec_verified_before_owner_creation": true,
+    "bounded_two_turns_save_then_release_and_quit_below_eight_limit": true,
+    "token_callback_front_state_precedes_native_terminal_and_disposition": true,
+    "native_failure_remains_primary_and_disables_new_intake": true,
+    "partial_sse_and_primary_client_error_preserved": true,
+    "uncertain_popen_thread_start_or_owner_poll_retains_resources": true,
+    "single_cooperative_sigterm_no_retry_or_forced_kill": true,
+    "store_close_only_after_owner_and_handler_exit": true,
+    "receive_time_observation_not_forced_early_receipt_claim": true
+  },
+  "limitations": [
+    "Preparation only; actual tiny HOST_ONLY execution and its complete native/SSE evidence remain unperformed by this reviewer.",
+    "Synthetic FixtureFacade deliberately does not exercise production StreamingChatService admission or real-model/device generation.",
+    "The pinned codec maps tiny output IDs, but the tiny native identity is not a qualified production tokenizer/model identity.",
+    "Client receive timestamps are observations, not a latency benchmark or a guarantee that the peer receives text before SAVE/RELEASE."
+  ],
+  "findings": []
+}
