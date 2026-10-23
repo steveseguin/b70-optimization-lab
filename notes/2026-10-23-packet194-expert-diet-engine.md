@@ -64,3 +64,11 @@ to +2.1 % (15.9 µs cold) at +1.32 % per 0.01 ms per GDN layer.
   tolerates restore windows per the brief and refuses every other active window/lanequeue/packet unit.
 * Two preparation mishaps, both harmless to the packet: a `pgrep -f` self-match killed my own shell twice (the memory note
   stands), and one stale build was stopped by pid and redone; every receipt comes from the final serial chain.
+
+## Device result (2026-10-23, lane B window 05:56-06:11 UTC, unit lanequeue-B40): screen win +1.96 %
+
+**Measured 2026-10-23 (lane B, lanequeue-B40, 05:56-06:11 UTC): SCREEN WIN +1.96 %.** One load k3x/k3x-diet/k3x/k3x-diet/k3x = 62.168/**63.474**/62.155/**63.413**/62.193 (slower diet view +1.96 % over the fastest k3x view; drift 0.06 %); every view 13/13 exact, draft proposals and acceptance identical; smoke 13/13 exact. Gate/up saving from the host scopes: rank 0 A 10.8 µs/layer, rank 1 B 11.8, boundary 11.3, miss C 10.9 (both ranks ≥ 5). Hit 13.543 → 13.284 ms, miss 25.58 → 25.01. No kill rule fired. Chain rule (+2 % and ≥ 63.592) missed by 0.04 points; lanes idle → record bundle derived (packet195). Evidence `v5/evidence/device-row1-bracket-k3x-diet-B-p194/bracket-summary.json`.
+
+Note on the window: a first launch at 05:47 UTC was refused by the lane runner ("previous job failed; lane remains stopped for review") because packet193's wrapper failure was still in `done-B.txt`; the driver closed the window and restored the endpoints (restore20); the done-file was reviewed and archived under `ops/lane-queue/reviewed/`, and the relaunch at 05:56 ran both rows. Engine-level saving matches the micro: 10.8-11.8 µs per layer in the model against 10.8 (warm) to 15.9 (cold) in the micro.
+
+Window receipts: `lineage/window-20261023/`; endpoints restored as `*-20261023-restore21`; PAUSE-A untouched, PAUSE-B re-armed.

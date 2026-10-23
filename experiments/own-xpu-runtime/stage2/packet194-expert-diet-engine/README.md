@@ -4,7 +4,7 @@
 LocalMaxxing `cmvk51wfn001gng01fpbfy89q`; selection packet189 `k3x` c5443bbf…, engine 87eec645…). **Chain bar:** 1.02 ×
 62.345281904743764 = **63.59218754283864 tok/s**. **Screen bar:** +0.5 % over every k3x view.
 
-**Status:** prepared CPU-only, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
+**Status:** device-measured 2026-10-23 (lane B, unit lanequeue-B40, 05:56-06:11 UTC): **screen win +1.96 %** (k3x-diet 63.474/63.413 vs k3x 62.168/62.155/62.193, every view exact, gate/up saving 10.8-11.8 µs/layer; `s194_decision` in `v5/evidence/device-row1-bracket-k3x-diet-B-p194/bracket-summary.json`); chain bar missed by 0.04 points, record bundle packet195 derived under the idle-lanes rule. Prepared CPU-only, READY for a lane-B device window (`READY-FOR-DEVICE.json`, written last). Nothing was
 queued, armed, launched or committed. No GPU, `/dev/dri`, device binary run, systemd unit change, PAUSE/STOP or queue file
 was touched. The only systemd calls were read-only `systemctl --user list-units` polls before each compile batch
 (`v5/evidence/compile-poll.json`; the owner's endpoint-restore window `window-p193-driver …-restore19` was active and is

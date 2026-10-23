@@ -1,0 +1,114 @@
+{
+  "placement": {
+    "name": "1",
+    "draft_rank": 1,
+    "target_split": 0,
+    "layer_boundary": 24,
+    "target_layers": [
+      27,
+      24
+    ],
+    "context": 4096,
+    "memory_admitted": true,
+    "supported": true,
+    "v3_layout": "rank 0 holds 0-26 (k3 storage), rank 1 holds 24-47 + full head; boundary=rank0-k3 kernel_io=kernel rank0_prepare=async boundary_export=copy expert_gateup=diet",
+    "reason": "packet194 k3 storage (packet188/189's, unchanged; the diet adds 0 B): packet186 V3 dual ledger plus the measured full-shape census delta (rank0 +1129070858 B, rank1 +0 B; v5/evidence/full-shape.json)",
+    "configuration": {
+      "context_capacity": 4096,
+      "ranks": [
+        {
+          "rank": 0,
+          "draft_rank": 1,
+          "target_layers": 27,
+          "target_modeled_allocations_bytes": 32003283826,
+          "allocation_reserve_bytes": 46500548,
+          "draft_total_bytes": 0,
+          "draft_duplicate_head_bytes": 0,
+          "target_total_bytes": 32049784374,
+          "total_with_mtp_bytes": 32049784374,
+          "free_with_mtp_bytes": 2192513482,
+          "allocation_margin_passed": true,
+          "arena_device_bytes": 32003283826,
+          "arena_headroom_bytes": 208970894,
+          "arena_margin_passed": true
+        },
+        {
+          "rank": 1,
+          "draft_rank": 1,
+          "target_layers": 24,
+          "target_modeled_allocations_bytes": 28856517012,
+          "allocation_reserve_bytes": 1228800,
+          "draft_total_bytes": 3354364214,
+          "draft_duplicate_head_bytes": 0,
+          "target_total_bytes": 28857745812,
+          "total_with_mtp_bytes": 32212110026,
+          "free_with_mtp_bytes": 2030187830,
+          "allocation_margin_passed": true,
+          "arena_device_bytes": 32210881226,
+          "arena_headroom_bytes": 1373494,
+          "arena_margin_passed": true
+        }
+      ]
+    },
+    "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+    "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232"
+  },
+  "timing": "token",
+  "timing_modes": [
+    "token"
+  ],
+  "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/lineage/k3x-diet",
+  "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/lineage/k3x-diet/screen-seal.json",
+  "seal_sha256": "6d22559e806b8896bf6289034ff8f2a6e8b6e32e0d9a427e1b59ae3a8807e95c",
+  "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/build/device/own-rt-iq3",
+  "binary_sha256": "b8482321769039274daf42b70f783517177cbc8c1d0b2d81b8ebab25f1442bdc",
+  "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/lineage/k3x-diet/dispatch-speed6.json",
+  "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+  "profile": "tp2",
+  "selection_sha256": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+  "memory_plan_sha256": "97a7611646cdab0d9780166a3a670375a986dcb150cae491c686203eb0fb7d39",
+  "host_required_available_bytes": 108797048558,
+  "lane": "B",
+  "conditions": {
+    "card": 2,
+    "cards": [
+      2,
+      3
+    ],
+    "pci": [
+      "0000:43:00.0",
+      "0000:47:00.0"
+    ],
+    "cores": [
+      4,
+      5,
+      6,
+      7,
+      20,
+      21,
+      22,
+      23
+    ],
+    "affinity": "4-7,20-23",
+    "nice": 0,
+    "native_card": 0,
+    "native_cards": [
+      0,
+      1
+    ]
+  },
+  "bracket": {
+    "kind": "smoke",
+    "row_index": 0,
+    "views": [
+      {
+        "choice": "candidate",
+        "selection": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/lineage/k3x-diet/selection.json",
+        "selection_sha256": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+        "max_new": 64
+      }
+    ]
+  },
+  "bracket_config": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/v5/configs/row0-smoke-k3x-diet.json",
+  "bracket_config_sha256": "e89367332ae8a4b2a2e1b465572768d3b9e392ff43c11dcc5a008861bc33285b"
+}

@@ -47,11 +47,11 @@ per-layer gate/up saving (from the p150 scopes or the class attribution of packe
 | 2026-10-22 | **packet189 k3x on the V3 record line** (packet188's k3 + trims with the boundary export on the copy engine) | **WIN, chain rule met**: one load V3/k3x/V3/k3x/V3 = 60.615/**62.242**/60.444/**62.225**/60.498 (+2.66 % over the fastest V3 view, every view 13/13 exact); record bundle packet190: fresh chain **62.345282** tok/s, LocalMaxxing `cmvk51wfn001gng01fpbfy89q` | — (it is the current record line) |
 | 2026-10-23 | **packet193 exp-diet micro** (card 2) | gate/up cold 57.92 vs 73.85 µs (0.784), warm 36.0–36.2 vs 46.77 (0.77); byte-identical on every claimed stratum | — (this packet is its engine screen) |
 
-## Pending (this packet)
+## Measured (this packet)
 
 | Date | Arm | Outcome | Revisit only when |
 | --- | --- | --- | --- |
-| 2026-10-23 | **exp-diet in the k3x record engine** (`expert_gateup=diet`, selection `k3x-diet` eb417ec9…, engine packet194): rows k3x-diet smoke, one-load k3x/k3x-diet/k3x/k3x-diet/k3x (lane B); decision `s194_decision`; priced +1.4 % (10.8 µs warm) to +2.1 % (15.9 µs cold) at +1.32 % per 0.01 ms per GDN layer | **pending device measurement** | — |
+| 2026-10-23 | **exp-diet in the k3x record engine** (`expert_gateup=diet`, selection `k3x-diet` eb417ec9…, engine packet194): rows k3x-diet smoke, one-load k3x/k3x-diet/k3x/k3x-diet/k3x (lane B); decision `s194_decision`; priced +1.4 % (10.8 µs warm) to +2.1 % (15.9 µs cold) at +1.32 % per 0.01 ms per GDN layer | **Measured 2026-10-23 (lane B, lanequeue-B40, 05:56-06:11 UTC): SCREEN WIN +1.96 %.** One load k3x/k3x-diet/k3x/k3x-diet/k3x = 62.168/**63.474**/62.155/**63.413**/62.193 (slower diet view +1.96 % over the fastest k3x view; drift 0.06 %); every view 13/13 exact, draft proposals and acceptance identical; smoke 13/13 exact. Gate/up saving from the host scopes: rank 0 A 10.8 µs/layer, rank 1 B 11.8, boundary 11.3, miss C 10.9 (both ranks ≥ 5). Hit 13.543 → 13.284 ms, miss 25.58 → 25.01. No kill rule fired. Chain rule (+2 % and ≥ 63.592) missed by 0.04 points; lanes idle → record bundle derived (packet195). Evidence `v5/evidence/device-row1-bracket-k3x-diet-B-p194/bracket-summary.json`. | — |
 
 ## Boundaries (do not)
 

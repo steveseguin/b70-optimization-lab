@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 02:15 EDT — packet194: the exact expert instruction diet wins +1.96 % in the two-card record engine (lane B, 05:56–06:11 UTC).**
+One load k3x/k3x+diet/k3x/k3x+diet/k3x = 62.168/**63.474**/62.155/**63.413**/62.193 tok/s; every view 13/13 exact, draft proposals and acceptance
+identical, drift 0.06 %; gate/up saving 10.8 (rank 0) and 11.8 (rank 1) µs per layer from the host scopes; hit cycle 13.54 → 13.28 ms, miss
+25.58 → 25.01. The chain bar (+2 %, 63.592) is missed by 0.04 points; the lanes are idle, so the record bundle (packet195 = packet190 with the
+`k3x-diet` selection and packet194's engine `b8482321…`) is being derived CPU-only, and the same kernel is being ported to the one-card record
+line (packet58-onecard-diet screen, where 11.4 µs/layer is worth +2 %). A first launch was refused by the lane runner until packet193's failed
+done-file was reviewed and archived (`ops/lane-queue/reviewed/`). Endpoints restored as `*-20261023-restore21`. Packet
+`stage2/packet194-expert-diet-engine/` (note `notes/2026-10-23-packet194-expert-diet-engine.md`).
+
 **October 23, 00:45 EDT — packet193 instruction diet: the exact gate/up diet runs at 0.78× cold / 0.77× warm (lane B, card 2, 04:27 UTC); first lever in the +2 % family.**
 On device every claimed stratum was byte-identical for all three candidates. exp-diet (hoisted `exceptional` test, sign applied after the scale multiply,
 hoisted effective scales; 11.8 vs 15.3 dynamic instructions per weight) 57.92 vs 73.85 µs cold and 36.0 vs 46.8 warm (−15.9 / −10.8 µs per layer-
