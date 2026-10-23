@@ -1,0 +1,430 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "workflow_sha256": "230e056d93a800d77b7bb870b7fdafbab95c5eac9c48cab9f0cb193fa2a6b694",
+  "commands_executed": 46,
+  "all_tracked_after_staging": true,
+  "rows": [
+    {
+      "step": 1,
+      "command": "python3 tools/validate-repro-guides.py",
+      "returncode": 0,
+      "seconds": 1.144,
+      "log": "/tmp/p58de-result-ci-20261023/01.log",
+      "free_before_bytes": 29132562432,
+      "free_after_bytes": 29119963136
+    },
+    {
+      "step": 2,
+      "command": "node --test tools/test_guides_browser.cjs",
+      "returncode": 0,
+      "seconds": 0.414,
+      "log": "/tmp/p58de-result-ci-20261023/02.log",
+      "free_before_bytes": 29119959040,
+      "free_after_bytes": 29116424192
+    },
+    {
+      "step": 3,
+      "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "returncode": 0,
+      "seconds": 1.39,
+      "log": "/tmp/p58de-result-ci-20261023/03.log",
+      "free_before_bytes": 29116424192,
+      "free_after_bytes": 29106454528
+    },
+    {
+      "step": 4,
+      "command": "python3 tools/validate-recipe-publication.py",
+      "returncode": 0,
+      "seconds": 6.108,
+      "log": "/tmp/p58de-result-ci-20261023/04.log",
+      "free_before_bytes": 29106454528,
+      "free_after_bytes": 29074522112
+    },
+    {
+      "step": 5,
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "returncode": 0,
+      "seconds": 0.347,
+      "log": "/tmp/p58de-result-ci-20261023/05.log",
+      "free_before_bytes": 29074522112,
+      "free_after_bytes": 29071220736
+    },
+    {
+      "step": 6,
+      "command": "python3 tools/sync-public-result-summary.py --check",
+      "returncode": 0,
+      "seconds": 0.034,
+      "log": "/tmp/p58de-result-ci-20261023/06.log",
+      "free_before_bytes": 29071220736,
+      "free_after_bytes": 29070770176
+    },
+    {
+      "step": 7,
+      "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "returncode": 0,
+      "seconds": 0.047,
+      "log": "/tmp/p58de-result-ci-20261023/07.log",
+      "free_before_bytes": 29070770176,
+      "free_after_bytes": 29070307328
+    },
+    {
+      "step": 8,
+      "command": "python3 tools/build-family-pages.py --check",
+      "returncode": 0,
+      "seconds": 0.366,
+      "log": "/tmp/p58de-result-ci-20261023/08.log",
+      "free_before_bytes": 29070307328,
+      "free_after_bytes": 29066035200
+    },
+    {
+      "step": 9,
+      "command": "python3 -m unittest tools/test_build_family_pages.py",
+      "returncode": 0,
+      "seconds": 1.756,
+      "log": "/tmp/p58de-result-ci-20261023/09.log",
+      "free_before_bytes": 29066035200,
+      "free_after_bytes": 29049446400
+    },
+    {
+      "step": 10,
+      "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "returncode": 0,
+      "seconds": 0.079,
+      "log": "/tmp/p58de-result-ci-20261023/10.log",
+      "free_before_bytes": 29049446400,
+      "free_after_bytes": 29048270848
+    },
+    {
+      "step": 11,
+      "command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.033,
+      "log": "/tmp/p58de-result-ci-20261023/11.log",
+      "free_before_bytes": 29048270848,
+      "free_after_bytes": 29047857152
+    },
+    {
+      "step": 12,
+      "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "returncode": 0,
+      "seconds": 0.51,
+      "log": "/tmp/p58de-result-ci-20261023/12.log",
+      "free_before_bytes": 29047857152,
+      "free_after_bytes": 29042458624
+    },
+    {
+      "step": 13,
+      "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "returncode": 0,
+      "seconds": 0.035,
+      "log": "/tmp/p58de-result-ci-20261023/13.log",
+      "free_before_bytes": 29042458624,
+      "free_after_bytes": 29042200576
+    },
+    {
+      "step": 14,
+      "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "returncode": 0,
+      "seconds": 1.204,
+      "log": "/tmp/p58de-result-ci-20261023/14.log",
+      "free_before_bytes": 29042196480,
+      "free_after_bytes": 29027344384
+    },
+    {
+      "step": 15,
+      "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "returncode": 0,
+      "seconds": 0.357,
+      "log": "/tmp/p58de-result-ci-20261023/15.log",
+      "free_before_bytes": 29027344384,
+      "free_after_bytes": 29025374208
+    },
+    {
+      "step": 16,
+      "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.025,
+      "log": "/tmp/p58de-result-ci-20261023/16.log",
+      "free_before_bytes": 29025370112,
+      "free_after_bytes": 29025218560
+    },
+    {
+      "step": 17,
+      "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "returncode": 0,
+      "seconds": 0.109,
+      "log": "/tmp/p58de-result-ci-20261023/17.log",
+      "free_before_bytes": 29025218560,
+      "free_after_bytes": 29024804864
+    },
+    {
+      "step": 18,
+      "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "returncode": 0,
+      "seconds": 0.069,
+      "log": "/tmp/p58de-result-ci-20261023/18.log",
+      "free_before_bytes": 29024804864,
+      "free_after_bytes": 29024407552
+    },
+    {
+      "step": 19,
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "returncode": 0,
+      "seconds": 3.183,
+      "log": "/tmp/p58de-result-ci-20261023/19.log",
+      "free_before_bytes": 29024407552,
+      "free_after_bytes": 29003509760
+    },
+    {
+      "step": 20,
+      "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "returncode": 0,
+      "seconds": 0.089,
+      "log": "/tmp/p58de-result-ci-20261023/20.log",
+      "free_before_bytes": 29003497472,
+      "free_after_bytes": 29002727424
+    },
+    {
+      "step": 21,
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "returncode": 0,
+      "seconds": 1.897,
+      "log": "/tmp/p58de-result-ci-20261023/21.log",
+      "free_before_bytes": 29002723328,
+      "free_after_bytes": 28998397952
+    },
+    {
+      "step": 22,
+      "command": "python3 -m unittest tools/test_build_model_pages.py",
+      "returncode": 0,
+      "seconds": 0.121,
+      "log": "/tmp/p58de-result-ci-20261023/22.log",
+      "free_before_bytes": 28998397952,
+      "free_after_bytes": 28998393856
+    },
+    {
+      "step": 23,
+      "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "returncode": 0,
+      "seconds": 0.281,
+      "log": "/tmp/p58de-result-ci-20261023/23.log",
+      "free_before_bytes": 28998393856,
+      "free_after_bytes": 28998389760
+    },
+    {
+      "step": 24,
+      "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "returncode": 0,
+      "seconds": 0.08,
+      "log": "/tmp/p58de-result-ci-20261023/24.log",
+      "free_before_bytes": 28998389760,
+      "free_after_bytes": 28998385664
+    },
+    {
+      "step": 25,
+      "command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+      "returncode": 0,
+      "seconds": 0.04,
+      "log": "/tmp/p58de-result-ci-20261023/25.log",
+      "free_before_bytes": 28998385664,
+      "free_after_bytes": 28998369280
+    },
+    {
+      "step": 26,
+      "command": "python3 tools/extract-fp8-one-launch-prefill.py",
+      "returncode": 0,
+      "seconds": 0.065,
+      "log": "/tmp/p58de-result-ci-20261023/26.log",
+      "free_before_bytes": 28998369280,
+      "free_after_bytes": 28998328320
+    },
+    {
+      "step": 27,
+      "command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+      "returncode": 0,
+      "seconds": 0.1,
+      "log": "/tmp/p58de-result-ci-20261023/27.log",
+      "free_before_bytes": 28998328320,
+      "free_after_bytes": 28998262784
+    },
+    {
+      "step": 28,
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+      "returncode": 0,
+      "seconds": 0.083,
+      "log": "/tmp/p58de-result-ci-20261023/28.log",
+      "free_before_bytes": 28998258688,
+      "free_after_bytes": 28998242304
+    },
+    {
+      "step": 29,
+      "command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+      "returncode": 0,
+      "seconds": 0.053,
+      "log": "/tmp/p58de-result-ci-20261023/29.log",
+      "free_before_bytes": 28998242304,
+      "free_after_bytes": 28998201344
+    },
+    {
+      "step": 30,
+      "command": "python3 tools/build-model-pages.py",
+      "returncode": 0,
+      "seconds": 0.075,
+      "log": "/tmp/p58de-result-ci-20261023/30.log",
+      "free_before_bytes": 28998201344,
+      "free_after_bytes": 28994859008
+    },
+    {
+      "step": 31,
+      "command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "returncode": 0,
+      "seconds": 0.25,
+      "log": "/tmp/p58de-result-ci-20261023/31.log",
+      "free_before_bytes": 28994859008,
+      "free_after_bytes": 28995014656
+    },
+    {
+      "step": 32,
+      "command": "python3 tools/check-doc-links.py",
+      "returncode": 0,
+      "seconds": 0.256,
+      "log": "/tmp/p58de-result-ci-20261023/32.log",
+      "free_before_bytes": 28995014656,
+      "free_after_bytes": 28994994176
+    },
+    {
+      "step": 34,
+      "command": "python3 -m unittest tools/test_check_doc_links.py",
+      "returncode": 0,
+      "seconds": 1.188,
+      "log": "/tmp/p58de-result-ci-20261023/34.log",
+      "free_before_bytes": 28994994176,
+      "free_after_bytes": 28994990080
+    },
+    {
+      "step": 35,
+      "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "returncode": 0,
+      "seconds": 0.686,
+      "log": "/tmp/p58de-result-ci-20261023/35.log",
+      "free_before_bytes": 28994990080,
+      "free_after_bytes": 28994949120
+    },
+    {
+      "step": 36,
+      "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "returncode": 0,
+      "seconds": 1.617,
+      "log": "/tmp/p58de-result-ci-20261023/36.log",
+      "free_before_bytes": 28994949120,
+      "free_after_bytes": 28994101248
+    },
+    {
+      "step": 37,
+      "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.783,
+      "log": "/tmp/p58de-result-ci-20261023/37.log",
+      "free_before_bytes": 28994101248,
+      "free_after_bytes": 28994097152
+    },
+    {
+      "step": 38,
+      "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "seconds": 0.212,
+      "log": "/tmp/p58de-result-ci-20261023/38.log",
+      "free_before_bytes": 28994097152,
+      "free_after_bytes": 28994093056
+    },
+    {
+      "step": 39,
+      "command": "python3 -B tools/test-restore-source-archives.py",
+      "returncode": 0,
+      "seconds": 0.126,
+      "log": "/tmp/p58de-result-ci-20261023/39.log",
+      "free_before_bytes": 28994093056,
+      "free_after_bytes": 28994088960
+    },
+    {
+      "step": 40,
+      "command": "python3 -m unittest tools/test_xccl_probe.py",
+      "returncode": 0,
+      "seconds": 0.06,
+      "log": "/tmp/p58de-result-ci-20261023/40.log",
+      "free_before_bytes": 28994088960,
+      "free_after_bytes": 28994084864
+    },
+    {
+      "step": 41,
+      "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "returncode": 0,
+      "seconds": 0.091,
+      "log": "/tmp/p58de-result-ci-20261023/41.log",
+      "free_before_bytes": 28994084864,
+      "free_after_bytes": 28994080768
+    },
+    {
+      "step": 42,
+      "command": "python3 tools/check-manifest-paths.py",
+      "returncode": 0,
+      "seconds": 0.114,
+      "log": "/tmp/p58de-result-ci-20261023/42.log",
+      "free_before_bytes": 28994076672,
+      "free_after_bytes": 28994072576
+    },
+    {
+      "step": 43,
+      "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "returncode": 0,
+      "seconds": 0.527,
+      "log": "/tmp/p58de-result-ci-20261023/43.log",
+      "free_before_bytes": 28994072576,
+      "free_after_bytes": 28994068480
+    },
+    {
+      "step": 44,
+      "command": "pip install --quiet pyyaml",
+      "status": "satisfied-prerequisite",
+      "reason": "PyYAML already installed",
+      "version": "6.0.1"
+    },
+    {
+      "step": 45,
+      "command": "python3 tools/check-container-packet.py",
+      "returncode": 0,
+      "seconds": 0.104,
+      "log": "/tmp/p58de-result-ci-20261023/45.log",
+      "free_before_bytes": 28994068480,
+      "free_after_bytes": 28994060288
+    },
+    {
+      "step": 46,
+      "command": "python3 -m unittest tools/test_check_container_packet.py",
+      "returncode": 0,
+      "seconds": 0.301,
+      "log": "/tmp/p58de-result-ci-20261023/46.log",
+      "free_before_bytes": 28994060288,
+      "free_after_bytes": 28994056192
+    },
+    {
+      "step": 47,
+      "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "returncode": 0,
+      "seconds": 0.181,
+      "log": "/tmp/p58de-result-ci-20261023/47.log",
+      "free_before_bytes": 28994056192,
+      "free_after_bytes": 28994052096
+    },
+    {
+      "step": 33,
+      "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "returncode": 0,
+      "seconds": 7.343,
+      "log": "/tmp/p58de-result-ci-20261023/33.log",
+      "free_before_bytes": 28990914560,
+      "free_after_bytes": 28990406656
+    }
+  ]
+}

@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 23, 09:56 EDT — one-card diet engine screen wins +2.657%; all 60 responses exact.**
+Control/diet/control/diet/control: 36.579 / 37.573 / 36.599 / 37.583 / 36.601 tok/s. Warm drift0.00333%, unchanged fills/bytes,
+no kill rule. Both screen and chain thresholds passed; this is not a submitted record. The registered row completed13:56 UTC,
+clean teardown and complete passive owner check passed; endpoints are restoring once as restore24. CPU preparation of a separate
+qualification packet is next; no second device window launched. [Result](experiments/own-xpu-runtime/stage2/packet58-onecard-diet-engine/RESULT.md).
+
 **October 23, 09:41 EDT — one-card diet engine CPU preparation completed; device screen pending.**
 The resumed packet preserves all 47 production device images and adds the qualified diet kernel. Exactly 47 halfcache gate/up sites switch;
 layer 2 keeps its other-layout kernel. Cache capacity and the production-size memory census are unchanged. All required CPU gates pass:
