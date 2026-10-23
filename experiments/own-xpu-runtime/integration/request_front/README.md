@@ -1,9 +1,9 @@
 # Warm native request transport
 
-CPU implementation for the next own-runtime serving step. The native side is
-being derived separately in packet197 from the qualified packet181 checkpoint
-engine. This transport has not run with a device engine and is not a serving
-qualification or a speed result.
+Packet197's bounded device lifecycle now passes with this v1 transport:
+eight requests, one load, exact outputs and checkpoint state, clean shutdown.
+See the [device result](../../stage2/packet197-warm-request-front/RESULT.md).
+This is not a complete serving qualification or a speed record.
 
 `client.py` attaches to one already started native owner through binary pipes.
 It accepts sequential token-ID requests, with optional checkpoint restore/save
@@ -28,10 +28,18 @@ python3 -B -m unittest discover \
   -s experiments/own-xpu-runtime/integration/request_front -p 'test_*.py'
 ```
 
-The mock's speed and outputs are not model evidence. Before a device run,
-the native overlay must pass its parser, reset, identity and teardown checks.
-The device gate will interleave fresh A, fresh B and restored/appended A in
-one load, compare outputs and saved state against exact references, and report
-loading, restore, prefill and first-token time separately. Checkpoint reuse
-is outside the cold record metric. Chat rendering and parking policy attach
-only after this token-ID boundary works.
+The mock's speed and outputs are not model evidence. The device gate
+interleaved fresh A, fresh B and restored/appended A in one load and compared
+outputs and state against exact references. Checkpoint reuse is outside the
+cold record metric. Chat rendering and parking policy are not yet attached.
+
+`client_v2.py` is a separate experimental transport for packet198's postreply
+SAVE/RELEASE protocol. It keeps a completed request pending until explicitly
+saved or released, including after the final allowed RUN. It validates
+operation identities, token-history bounds, manifest receipts and explicit
+discard-on-close events. Nine CPU subprocess tests and an independent review
+pass; this does not yet establish native compilation or device qualification.
+The old client remains unchanged and hash-pinned by packet197.
+
+The [postreply design](POSTREPLY-CHECKPOINTS.md) records the protocol and later
+adapter gaps. Inspect/delete and ctxkeeper wiring remain separate work.

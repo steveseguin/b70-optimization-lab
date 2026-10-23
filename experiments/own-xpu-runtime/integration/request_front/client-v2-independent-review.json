@@ -1,0 +1,43 @@
+{
+  "schema": "request-front.client-v2-independent-review.v1",
+  "created_utc": "2026-10-23T16:41:13.805657+00:00",
+  "passed": true,
+  "scope": "CPU subprocess client tests plus read-only comparison against current draft p198 native protocol source; no native compilation/execution, device, service or HTTP action.",
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "experiments/own-xpu-runtime/integration/request_front/test_client_v2.py": "b77b5665808881e093575c9710a878c527a62412186d3d1dd39bba68acadc66e",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/native/request_front.hpp": "e3a5a90848c88bf7833b6df354115d18e3ef594bbb86eaf3774a8a3281e41dde",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/prepare_overlay.py": "11b7ce8d3eeac71a0aade8456135492c435fc6b73f4cfb5af7a5fa968d79244f"
+  },
+  "validation": {
+    "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest -v test_client_v2.py",
+    "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/request_front",
+    "returncode": 0,
+    "tests": 9,
+    "reported_duration_seconds": 0.312,
+    "result": "OK"
+  },
+  "resolved_finding": {
+    "problem": "Restored request completion previously accepted visible history shorter than submitted input plus emitted tokens.",
+    "fix": "Require visible_tokens >= len(input)+len(emitted) for every request; retain equality for fresh requests.",
+    "test": "test_restored_descriptor_cannot_omit_input_or_generated_tokens"
+  },
+  "reviewed_checks": [
+    "RUN cannot embed immediate save; each completed request blocks next RUN until explicit SAVE or RELEASE.",
+    "Ready admission validates v2 protocol, context, vocabulary, one model load and equal request/control budgets.",
+    "Token sequence, completion identity/count/quiescence and pending request/processed/visible/pending-token descriptor are checked.",
+    "Local malformed save inputs do not consume pending state; operation IDs cannot repeat.",
+    "SAVE acknowledgement validates checkpoint identity, root-relative path scope, operation receipt, manifest digest syntax and unchanged pending descriptor.",
+    "Final request remains awaiting disposition; successful final SAVE or RELEASE transitions to draining without another QUIT.",
+    "Explicit close can discard an unresolved pending request only when terminal receipt reports that exact pending request and discard state.",
+    "Terminal completed request/control counts and safe exit are required, followed by zero process exit.",
+    "Event deadlines are checked even for buffered events; transport/control failures halt later intake and retain process for coordinator drain.",
+    "Current p198 source emits expected field names/types; full submitted SAVE history is compared with retained native processed tokens and pending token."
+  ],
+  "blockers": [],
+  "limitations": [
+    "Native p198 source is still under preparation; these hashes identify the reviewed draft, not compiled or device-qualified behavior.",
+    "Client cannot independently authenticate a manifest hash against filesystem contents; a save caller must verify the retained native receipt/manifest when integrating storage policy.",
+    "No general parking policy, HTTP service, OpenAI compatibility, concurrency or device qualification is claimed."
+  ]
+}
