@@ -80,6 +80,7 @@ case "$AGENT_KIND" in
   clm)     AGENT=clm_harness.clm_agent.harness:ClmAgent
            [[ "$DROP_OLD_THINKING" == 1 ]] && AGENT=clm_baselines:ClmAgentT ;;
   plain)   AGENT=clm_baselines:PlainAgent ;;
+  plain-stable-fixture) AGENT=clm_stable_fixture:StableFixtureAgent ;;
   summary) AGENT=clm_baselines:SummaryAgent ;;
   truncate) AGENT=clm_baselines:TruncateAgent ;;  # lossy: drop oldest turns over the limit, down to 0.75
   compact)  AGENT=clm_baselines:CompactAgent ;;   # lossy: stub old tool outputs at 0.75, then drop oldest

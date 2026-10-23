@@ -8,6 +8,7 @@ HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 V=${VENV:-/mnt/fast-ai/venvs/clm}/bin/python
 O=${1:?usage: count-memo-check.sh <out_dir>}
 PORT=${PORT:-18236}
+CHECK_AGENT=${CHECK_AGENT:-plain}
 mkdir -p "$O"; cd "$HERE"
 fail=0
 fake() { FAKE_VLLM_SHAPE=1 FAKE_DETERMINISTIC=1 FAKE_REASONING=alt FAKE_TEXTCALL=1 FAKE_BODY_LOG="$1" \
@@ -20,7 +21,7 @@ for v in 0 1; do
   /usr/bin/time -o "$O/job-$v.time" -f "%e %M" env COUNT_MEMO=$v LEAN_CLIENT=1 PYTHONHASHSEED=7 TASKS="$T" JOB_NAME=job-$v \
     CONTEXT_BUDGET=0 DROP_OLD_THINKING=0 ENABLE_THINKING=true MAX_TOKENS=8192 TEMPERATURE=0 TASK_TEMPLATE=open_problems \
     API_BASE="http://127.0.0.1:$PORT/v1" MODEL_NAME=qwen38-27b-fp8 EXTRA_KWARGS=emit_ctx_trajectory=false \
-    ./run-context-job.sh plain "$O/runs-$v" > "$O/job-$v.out" 2>&1 || { echo "job memo=$v failed"; fail=1; }
+    ./run-context-job.sh "$CHECK_AGENT" "$O/runs-$v" > "$O/job-$v.out" 2>&1 || { echo "job memo=$v failed"; fail=1; }
   kill $FP; wait $FP 2>/dev/null
 done
 cmp -s "$O/job-bodies-0.jsonl" "$O/job-bodies-1.jsonl" \

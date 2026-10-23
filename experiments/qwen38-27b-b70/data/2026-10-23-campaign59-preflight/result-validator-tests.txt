@@ -1,0 +1,13 @@
+CPU-only result validator checks at 2026-10-23T13:38:29.338318+00:00
+script: /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/campaign59_result.py
+sha256: 76e7b22ca1b220739072c2b8c00a62640a3baa30ab4ad01f23ab2e154d7a8c90
+No GPU, docker, systemd, trajectories, or snapshots used.
+PASS Exact c55 opening accepted with fixed root mtime
+PASS Real c58 opening timestamp difference rejected: opening tool text differs from c55 (including parent directory mtime)
+PASS Incorrect root mtime rejected: fixed fixture root mtime must equal 1792687500 seconds
+PASS Real c55 completed job, clean stopped server, 423-key grader, audit and time budget validated
+PASS Empty NOTES rejected: /tmp/tmpl1ubdr38/empty.jsonl: empty JSONL
+PASS Malformed NOTES rejected: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+PASS Mock c59a using completed c55 evidence exports unchanged CLI audit and byte-identical fixture receipt
+PASS Unconfirmed server stop rejected: c59a: server lacks clean confirmed stop
+PASS Mock c59a using completed c58 evidence and self-baseline opening exports quality FAIL as complete evidence (418/423); no promotion

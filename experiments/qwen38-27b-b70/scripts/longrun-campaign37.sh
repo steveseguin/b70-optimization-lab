@@ -75,6 +75,12 @@ LAB=/home/steve/b70-optimization-lab
 CTX=$LAB/experiments/qwen38-27b-b70/scripts/context
 O=/mnt/fast-ai/bench-results/context-longrun-20261016
 RUN=${RUN:-c28}
+PLAIN_AGENT_KIND=${PLAIN_AGENT_KIND:-plain}
+case "$PLAIN_AGENT_KIND" in
+  plain) ;;
+  plain-stable-fixture) [[ ${SANDBOX_ROOT_MTIME:-} =~ ^[0-9]+$ ]] || { echo "explicit SANDBOX_ROOT_MTIME required"; exit 2; } ;;
+  *) echo "unsupported PLAIN_AGENT_KIND=$PLAIN_AGENT_KIND"; exit 2 ;;
+esac
 KV=${KEEPER_VERSION:-1.2.0.dev1}
 TAIL=${TAIL:-1}
 EDIT=${EDIT:-0}
@@ -304,13 +310,13 @@ run_line() {  # arm kind seed cap
   if [[ $kind == repair ]]; then
     timeout -s INT -k 180 "$cap" env TASKS="$tasks" JOB_NAME="$job" CONTEXT_BUDGET=0 ENABLE_THINKING=true MAX_TOKENS=8192 \
         MAX_STEPS="$MAX_STEPS_REPAIR" LM_CALL_CAP="$((3 * MAX_STEPS_REPAIR))" TASK_TEMPLATE=open_problems EXTRA_KWARGS="$xk" \
-        API_BASE="http://127.0.0.1:$PPORT/v1" MODEL_NAME=qwen38-27b-fp8 ./run-context-job.sh plain "$runs" > "$runs/$job.out" 2>&1
+        API_BASE="http://127.0.0.1:$PPORT/v1" MODEL_NAME=qwen38-27b-fp8 ./run-context-job.sh "$PLAIN_AGENT_KIND" "$runs" > "$runs/$job.out" 2>&1
     rc=$?
   else
     snap_loop "$O/snap" "$tag" & snp=$!
     timeout -s INT -k 180 "$cap" env TASKS="$tasks" JOB_NAME="$job" CONTEXT_BUDGET=0 DROP_OLD_THINKING=0 ENABLE_THINKING=true \
         MAX_TOKENS=8192 TEMPERATURE=0 TASK_TEMPLATE=open_problems API_BASE="http://127.0.0.1:$PPORT/v1" MODEL_NAME=qwen38-27b-fp8 \
-        EXTRA_KWARGS="$xk" ./run-context-job.sh plain "$runs" > "$runs/$job.out" 2>&1
+        EXTRA_KWARGS="$xk" ./run-context-job.sh "$PLAIN_AGENT_KIND" "$runs" > "$runs/$job.out" 2>&1
     rc=$?
     kill "$snp" 2>/dev/null; wait "$snp" 2>/dev/null
   fi

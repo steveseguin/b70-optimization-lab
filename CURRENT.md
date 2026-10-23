@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 09:38 EDT — Campaign 59 is registered and prepared: isolate the counting memo from seed 2's directory timestamp.**
+Two fresh-server seed-2 runs, upstream counts then memo, use a separate fixture that sets only the sandbox
+root directory mtime to campaign 55's observed timestamp before the first model call. No tool output is
+filtered. Five fixture tests and two CPU fake-server Harbor jobs pass; memo off/on writes identical requests,
+trajectory, usage, grader output and snapshots. The runner records audits after each shutdown and compares
+all NOTES/archive text and answers at the end. Memo default remains off; public wall figures unchanged.
+Launch target `ctx-campaign59`; no server running at this entry. Registration:
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-matched-memo.md`; results will be under
+`/mnt/fast-ai/bench-results/context-longrun-20261016/campaign59-control/`.
+
 **October 23, 09:32 EDT — Campaign 58 is audited; memo withdrawn from the default pending a controlled seed-2 comparison.**
 On the two-card host, seed 0 reproduced all 153 NOTES and 423/423 with zero wrong STATE lines in 81 min 15 s
 (was 92 min 40 s). Seed 2 scored 418/423 with 16 audit flags and failed; its opening directory listing exposed
