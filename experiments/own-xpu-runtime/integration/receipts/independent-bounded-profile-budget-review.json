@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "created_utc": "2026-10-23T18:39:24.027618+00:00",
+  "scope": "Finite source and budget binding review only; no build_profile/validate_profile/live admission invocation",
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/bounded_serving_profile.py": "8ed8a86c02630a5cfdd9704e5692f2252efe805bf9194b045048b9a625ae34f2",
+    "experiments/own-xpu-runtime/integration/test_bounded_serving_profile.py": "7590d3e57507e1796e606846ad10977b20a7bdeaeb25e86509f525959196975d",
+    "experiments/own-xpu-runtime/integration/receipts/bounded-serving-storage-budget.json": "d877c8f1026cbee39b835d155d213f36f90f1b39cb180bf3c3277ded0f76466b",
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "experiments/own-xpu-runtime/integration/test_bounded_evidence.py": "7b3ab077efe73b132d8a6909e34d2ea88e216f9029b78a96e6180d3eb76a32ff"
+  },
+  "verified": [
+    "Budget SHA is hard-pinned and all budget source hashes checked/merged into profile closure",
+    "Declared16/context4096/output512/512MiBparking/256MiBSAVE/768MiBforecast/27GBfloor match immutable receipt",
+    "Both profile live_admission_ready and receipt_admitted stay literal false; passed audit cannot promote admission",
+    "Fresh read-only profile forecasts full budget; attached mode checks current floor and explicitly does not reserve future growth",
+    "Native argv changes only output/checkpoint roots and maxrequests16; pinned token timing/retainnone/context4096 preserved",
+    "Outer coordinator retains actual memory/fault/device/store/admission responsibilities"
+  ],
+  "findings": [],
+  "test_note": "No duplicate suite run: root owns final combined checks; reviewed profile literals/limits/hashes and all documentation links here."
+}

@@ -1,0 +1,217 @@
+"""Composition for one exclusively borrowed, already admitted native owner.
+
+No process startup, retries, signals, filesystem cleanup or live admission.
+The caller retains raw process/store ownership and physical incident handling.
+"""
+from __future__ import annotations
+
+import copy
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import shutil
+import stat
+import sys
+import threading
+import time
+
+from chat_codec import PinnedChatCodec
+from chat_http import make_server
+from chat_service import ChatService
+from checkpoint_engine import CheckpointEngine
+from native_checkpoint_store import NativeCheckpointStore
+from request_front.client_v2 import NativeFront
+from session_lifecycle import RunAdmission, SessionLifecycle, finite
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+class SessionRefusal(RuntimeError):
+    pass
+
+
+def require(value, message):
+    if not value:
+        raise SessionRefusal(message)
+
+
+def _module_origins():
+    here = Path(__file__).resolve().parent
+    for name in ('chat_codec', 'chat_http', 'chat_service', 'checkpoint_engine',
+                 'checkpoint_bridge', 'native_checkpoint_store', 'session_lifecycle',
+                 'request_front.client_v2', 'bounded_serving_profile'):
+        module = sys.modules.get(name)
+        expected = here / (name.replace('.', '/') + '.py')
+        require(module is not None and Path(getattr(module, '__file__', '')).resolve() == expected,
+                'loaded module origin differs from pinned repository: ' + name)
+
+
+def _parking_class():
+    # Fixed repository implementation, not an ambient module named "parking".
+    name = '_ownrt_bounded_session_parking'
+    path = ROOT / 'tools/ctxkeeper/parking.py'
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module.Parking
+
+
+class _GuardedStore:
+    def __init__(self, store, admission):
+        self._store, self._admission = store, admission
+        self.root, self.binary_sha256 = store.root, store.binary_sha256
+
+    def _call(self, operation, checkpoint_id):
+        a = self._admission
+        try:
+            a._inside_service()
+            a.guard()
+            result = getattr(self._store, operation)(checkpoint_id)
+            a.guard()
+            return result
+        except BaseException as error:
+            a._fail(error)
+            raise
+
+    def snapshot(self, checkpoint_id):
+        return self._call('snapshot', checkpoint_id)
+
+    def delete(self, checkpoint_id):
+        return self._call('delete', checkpoint_id)
+
+
+class BoundedServingSession:
+    """Use attach() for production; constructor is intentionally unavailable.
+
+    open_listener() binds literal loopback only. serve() is single use and runs
+    serially in the caller's thread. request_close() merely sets the lifecycle
+    latch; an admitted reply finishes its SAVE/RELEASE before normal shutdown.
+    The caller must not use raw front/store aliases during this exclusive loan.
+    """
+    def __init__(self):
+        raise TypeError('use attach() with an independently admitted owner')
+
+    def open_listener(self, address=('127.0.0.1', 0)):
+        require(self._server is None and self.lifecycle.state == 'attached', 'listener is single use')
+        self._server = make_server(self.lifecycle.service, address)
+        return self._server.server_address
+
+    def request_close(self):
+        self.lifecycle.request_close()
+
+    def serve(self):
+        with self._state_lock:
+            require(self._server is not None, 'open the loopback listener first')
+            require(not self._running and self.lifecycle.state == 'attached', 'session is single use')
+            self._running = True
+        try:
+            self._terminal = self.lifecycle.serve(self._server)
+        except BaseException as error:
+            self._failure = self._failure or error
+            raise  # No close/retry/store disposal after an incident.
+        finally:
+            with self._state_lock:
+                self._running = False
+        return self.receipt()
+
+    def receipt(self):
+        with self._state_lock:
+            require(not self._running and self.lifecycle.state in ('attached', 'closed', 'incident'),
+                    'receipt unavailable while session serves or closes')
+            return self._receipt()
+
+    def _receipt(self):
+        # Do not call metadata/native methods while reporting or after failure.
+        result = dict(schema='ownrt.bounded-serving-session.v1',
+            scope=self._scope, live_admission_claimed=False,
+            profile_sha256=self._profile_sha256, state=self.lifecycle.state,
+            passed=self._terminal is not None and self._failure is None,
+            native_completed=self.admission._raw.completed,
+            native_controls=self.admission._raw.completed_controls,
+            parking=copy.deepcopy(self.parking.status()),
+            lifecycle=copy.deepcopy(self._terminal))
+        if self._failure is not None:
+            result['error'] = dict(type=type(self._failure).__name__, message=str(self._failure)[:2048])
+        return result
+
+
+def _compose(*, profile, front, store, codec, guard, launched_at,
+             last_native_activity, clock, storage_available, scope):
+    """Internal component seam used by synthetic tests; never validates a profile."""
+    limits = profile['limits']
+    admission = RunAdmission(front, guard=guard, request_limit=limits['requests'],
+        idle_seconds=limits['idle_seconds'], absolute_deadline=launched_at + limits['absolute_seconds'],
+        last_native_activity=last_native_activity, native_idle_seconds=limits['native_idle_seconds'],
+        native_absolute_deadline=launched_at + limits['native_seconds'], clock=clock)
+    guarded_store = _GuardedStore(store, admission)
+    engine = CheckpointEngine(admission.front, guarded_store,
+        root=Path(profile['paths']['checkpoint_root']), expected_identity=profile['identity'],
+        admitted_contract='v1.2+p198', save_size_bound_bytes=limits['save_bound_bytes'],
+        storage_available=storage_available, floor_bytes=limits['disk_floor_bytes'])
+    parking = _parking_class()(engine, codec.render, codec.encode,
+        budget_bytes=limits['parking_bytes'], accepted_contracts={('experimental-postreply-front','v1.2+p198')})
+    service = ChatService(engine, parking, codec, model=profile['model'],
+        native_stop_token_ids=set(profile['native_stop_token_ids']))
+    lifecycle = SessionLifecycle(service, admission)
+    result = object.__new__(BoundedServingSession)
+    result.admission, result.engine, result.parking, result.lifecycle = admission, engine, parking, lifecycle
+    result._server = result._terminal = result._failure = None
+    result._state_lock, result._running = threading.RLock(), False
+    result._scope = scope
+    result._profile_sha256 = hashlib.sha256(json.dumps(profile, sort_keys=True,
+        separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+    return result
+
+
+def attach(profile, *, front, store, admitted_argv, launched_at, last_native_activity, guard):
+    """Attach after coordinator launch/admission, without executing native tools.
+
+    launched_at is sampled BEFORE the native launch, and last_native_activity
+    is a conservative coordinator observation (launch time itself is safe).
+    These timestamps and admitted_argv are trusted coordinator evidence, not
+    claims inferred from readiness or checkpoint contents. The profile remains
+    CPU-experimental until separate live admission, owned by the coordinator.
+    """
+    from bounded_serving_profile import validate_profile
+    _module_origins()
+    validate_profile(profile, check_fresh=False)
+    require(type(front) is NativeFront and type(store) is NativeCheckpointStore,
+            'exact admitted native front and store required')
+    now = time.monotonic()
+    require(all(finite(x) for x in (launched_at, last_native_activity)) and
+            launched_at <= last_native_activity <= now and
+            now < launched_at + profile['limits']['absolute_seconds'] and
+            now < last_native_activity + profile['limits']['idle_seconds'],
+            'conservative unexpired native launch/activity timestamps required')
+    require(callable(guard), 'coordinator fault/admission guard required')
+    require(type(admitted_argv) is list and admitted_argv == profile['native_argv'] and
+            front.process.args == admitted_argv, 'owner argv differs from admitted profile')
+    require(front.max_requests == profile['limits']['requests'] and
+            front.completed == front.completed_controls == 0 and not front.operations and
+            front.process.poll() is None, 'fresh live owner required')
+    require(front.ready.get('max_requests') == front.max_requests and
+            front.ready.get('max_control_ops') == front.max_requests, 'ready native limits mismatch')
+    root = Path(profile['paths']['checkpoint_root'])
+    require(store.root == root and str(store.binary) == profile['binary']['path'] and
+            store.binary_sha256 == profile['binary']['sha256'], 'store root/binary differs from admitted owner')
+    store._check_binary()  # Rehash held ELF and compare current path; no execution.
+    info = root.stat(follow_symlinks=False)
+    held = os.fstat(store._root_fd)
+    require((held.st_dev, held.st_ino) == (info.st_dev, info.st_ino),
+            'held checkpoint directory differs from admitted root')
+    require(root.resolve(strict=True) == root and stat.S_ISDIR(info.st_mode) and
+            stat.S_IMODE(info.st_mode) == 0o700 and info.st_uid == os.getuid() and
+            not any(root.iterdir()), 'fresh empty private checkpoint directory required')
+    guard()
+    codec = PinnedChatCodec()
+    require(codec.tokenizer_identity == profile['identity']['tokenizer_identity'] and
+            codec.vocab == profile['limits']['vocab'] and
+            codec.terminal_token_ids == set(profile['native_stop_token_ids']), 'codec identity differs from admitted profile')
+    guard()
+    return _compose(profile=copy.deepcopy(profile), front=front, store=store, codec=codec,
+        guard=guard, launched_at=launched_at, last_native_activity=last_native_activity,
+        clock=time.monotonic, storage_available=lambda path: shutil.disk_usage(path).free,
+        scope='experimental production composition; caller owns live admission and physical drain')

@@ -1,0 +1,36 @@
+{
+  "schema": "ownrt.bounded-serving-profile-cpu.v1",
+  "passed": true,
+  "scope": "CPU-only profile/full-stack closure validation, filesystem refusal tests and synthetic loopback composition. No native execution or live admission.",
+  "utc": "2026-10-23T18:38:42.444866+00:00",
+  "tests": {
+    "count": 37,
+    "profile": 10,
+    "composition": 19,
+    "evidence": 8,
+    "result": "OK",
+    "elapsed_seconds": 0.437,
+    "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/integration -p 'test_bounded*.py' -v"
+  },
+  "real_checks": [
+    "p199 READY SHA and source/gate closure",
+    "35-file external interpreter/package identity and exact inventory",
+    "p198 binary SHA",
+    "model shard stat identity"
+  ],
+  "mock_scope": "After one real baseline check, mutation tests cache that baseline and mock free-space observations; public APIs have no synthetic-admission override.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/bounded_serving_profile.py": "8ed8a86c02630a5cfdd9704e5692f2252efe805bf9194b045048b9a625ae34f2",
+    "experiments/own-xpu-runtime/integration/test_bounded_serving_profile.py": "7590d3e57507e1796e606846ad10977b20a7bdeaeb25e86509f525959196975d"
+  },
+  "live_admission_ready": false,
+  "storage_budget_admitted": false,
+  "limitations": [
+    "Forecast is provisional until an independent storage budget and live guards are admitted.",
+    "Initial launch-origin idle allowance includes model loading.",
+    "Arbitrary chat prompts have no prerecorded exact-output oracle."
+  ],
+  "full_profile_sources": 228,
+  "external_files": 35,
+  "prior_receipt": "experiments/own-xpu-runtime/integration/lineage/bounded-serving-profile-before-full-closure/bounded-serving-profile-cpu.json"
+}

@@ -1,0 +1,112 @@
+{
+  "schema": "ownrt.bounded-serving-storage-budget.v1",
+  "created_utc": "2026-10-23T18:34:45.693639+00:00",
+  "passed": true,
+  "live_admission_ready": false,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/main.cpp": "1e7c5f1b6ab19f909fbd03165ead029ea7331a27810b7a6e97961d9f32039581",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/checkpoint.hpp": "3668ee9f15d460eecd020574ae8f941e2cc2e862440facb30cfe42665d90f02c",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/build/native/request_front.hpp": "e3a5a90848c88bf7833b6df354115d18e3ef594bbb86eaf3774a8a3281e41dde",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/READY-FOR-DEVICE.json": "096e731f91f9831e88db693011d49c1d9d64b717e849c2f6a483bd53040b261b",
+    "experiments/own-xpu-runtime/integration/receipts/p198-checkpoint-size-bound.json": "c6efc1fd69306a1409d2f0664a683e3674841f3c58e2d1f808dc57cd4602e4e3",
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "experiments/own-xpu-runtime/integration/test_bounded_evidence.py": "7b3ab077efe73b132d8a6909e34d2ea88e216f9029b78a96e6180d3eb76a32ff",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "tools/ctxkeeper/parking.py": "575af886bd45836718d53593b6985bb49e8f9adfc0aac0dc6bb3e5174da2dd12",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native_env.py": "150b2ce2b9388d015eb87c2b33e32138feeea6390280a72bda61825e1deb4f1d",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364"
+  },
+  "native_binary_sha256": "c9b401089d95eeb152953a8c0d82d0678de2474934941bc6c97abd4b03287875",
+  "limits": {
+    "requests": 16,
+    "context": 4096,
+    "max_output_tokens_per_request": 512,
+    "maximum_output_tokens": 8192,
+    "maximum_evaluated_positions": 65536,
+    "parking_bytes": 536870912,
+    "save_reservation_bytes": 268435456,
+    "auxiliary_proposed_bytes": 268435456,
+    "planned_write_bytes": 805306368,
+    "disk_floor_bytes": 27000000000
+  },
+  "count_proof": "Each RUN enforces input_tokens + max_new <=4096. Fresh decoding evaluates input positions plus at most generated-1; append/resume cannot exceed admitted context. Sixteen requests therefore conservatively admit at most65536 evaluated positions and8192 emitted tokens. SAVE/RELEASE count <=16.",
+  "categories": [
+    {
+      "name": "parked checkpoint peak",
+      "bound_bytes": 536870912,
+      "basis": "Parking pre-SAVE reservation and retained/ambiguous accounting; exact p198 context4096 SAVE bound256MiB includes metadata/staging allowance. Charge existing checkpoints while replacement is pending. This logical-byte policy is not a filesystem quota.",
+      "enforced_by": "Parking + exact admitted engine bound",
+      "status": "source_bound_with_existing_identity"
+    },
+    {
+      "name": "native timing+prefill rows",
+      "bound_bytes": 134217728,
+      "rows": 65536,
+      "row_bytes": 2048,
+      "basis": "main.cpp2197-2216 emits one row/evaluated position. Token timing disables variable family object; cards=1 fixes one copy-count object. All lexical literals including unused alternatives total631 bytes; at most33 scalar slots each conservatively32 bytes (native64-bit ints/defaultfloat and device_ms precision12) plus quotes fit2048. No precision/fixed/locale mutation on these streams in pinned source.",
+      "status": "conditional_success_path_source_bound"
+    },
+    {
+      "name": "native overlap cache rows",
+      "bound_bytes": 33554432,
+      "rows": 65536,
+      "row_bytes": 512,
+      "basis": "main.cpp1073-1086 emits one overlap row/evaluated position.171 literal bytes and8 numeric slots at32 bytes fit512. cache-stats is replaced, not appended.",
+      "status": "conditional_success_path_source_bound"
+    },
+    {
+      "name": "native request/result/receipt/reset/operation and startup inventory",
+      "bound_bytes": null,
+      "forecast_bytes": 16777216,
+      "basis": "At most16 request result+receipt pairs,512 generated IDs/timestamps per result and16 SAVE/RELEASE controls. Retained layer dumps/class/site timing disabled by argv. Full aggregate extent of census/plan/progress/startup and failure paths not certified here;16MiB is allocation of forecast only.",
+      "status": "forecast_not_hard_bound"
+    },
+    {
+      "name": "future coordinator evidence routed through bounded writer",
+      "bound_bytes": 16777216,
+      "forecast_bytes": 16777216,
+      "basis": "Proposed caller-configured total_limit_bytes=16MiB with <=16 files; BoundedEvidence enforces supplied bytes only. Not wired by this component, so no bound on external/rawFD writers.",
+      "status": "available_enforcement_not_integrated"
+    },
+    {
+      "name": "driver persistent cache, native stderr and other runtime diagnostics",
+      "bound_bytes": null,
+      "forecast_bytes": 67108864,
+      "basis": "Driver/runtime cache writers and native stderr are outside BoundedEvidence. Existing native launch environment has no admitted storage quota for them. Native record_host_memory copies proc status/fdinfo without explicit output byte caps; exception diagnostic text also lacks an aggregate cap.64MiB is forecast only.",
+      "status": "unresolved_external_writer_bound"
+    }
+  ],
+  "forecast": {
+    "parking_bytes": 536870912,
+    "native_timing_and_cache_bytes": 167772160,
+    "other_native_forecast_bytes": 16777216,
+    "routed_evidence_proposed_bytes": 16777216,
+    "driver_stderr_other_forecast_bytes": 67108864,
+    "total_bytes": 805306368,
+    "auxiliary_remainder_after_counted_logs_bytes": 100663296
+  },
+  "measured_observations_not_bounds": {
+    "p199_token_row_bytes_reported": 688,
+    "p199_cache_row_bytes_reported": 221,
+    "p199_driver_cache_bytes_reported_approx": 10600000,
+    "provenance": "Root-reported p199 observations; intentionally not used to derive hard limits"
+  },
+  "unresolved": [
+    "Native stderr/driver persistent-cache aggregate byte cap not admitted",
+    "Other native startup/failure/proc diagnostics aggregate remains a forecast",
+    "Filesystem allocation rounding/inodes/journal and unrelated root writers are outside payload accounting",
+    "Bounded writer is not yet integrated into a coordinator; no raw child fd or pipe-drainer supplied"
+  ],
+  "coordinator_obligations": [
+    "Revalidate exact source/argv/geometry and16-request/context4096 limits",
+    "Reserve proposed768MiB above27GB floor at admission, but do not promote forecast to proven live budget",
+    "Maintain independent root-space/fault checks before new native/store requests and during active work",
+    "Route chosen Python evidence through bounded writer; on refusal halt intake and arrange one externally coordinated drain",
+    "Any future native stderr drainer must continue handling producer output safely at cap; do not use filesystem RLIMIT/SIGXFSZ or native kill to enforce evidence limits",
+    "Keep source/result evidence; do not lower floors or claim a native cache cap from one measurement"
+  ],
+  "conclusion": "CPU audit complete and bounded routed-evidence component tested. Proposed768MiB forecast is not a certified whole-window storage bound; live admission remains pending external coordinator decisions/evidence."
+}

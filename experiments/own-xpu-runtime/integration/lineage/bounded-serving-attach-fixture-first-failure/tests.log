@@ -1,0 +1,96 @@
+test_argv_drift_refuses_before_codec_and_claim (test_bounded_serving_session.AttachBoundaryTests.test_argv_drift_refuses_before_codec_and_claim) ... ERROR
+test_imported_module_origin_mismatch_refuses (test_bounded_serving_session.AttachBoundaryTests.test_imported_module_origin_mismatch_refuses) ... ERROR
+test_initial_idle_is_never_reset_at_attachment (test_bounded_serving_session.AttachBoundaryTests.test_initial_idle_is_never_reset_at_attachment) ... ERROR
+test_public_composition_exact_proxy_and_borrowed_store (test_bounded_serving_session.AttachBoundaryTests.test_public_composition_exact_proxy_and_borrowed_store) ... ERROR
+test_root_nonprivate_or_used_refuses_before_claim (test_bounded_serving_session.AttachBoundaryTests.test_root_nonprivate_or_used_refuses_before_claim) ... ERROR
+test_guard_before_save_halts_without_cleanup (test_bounded_serving_session.SessionTests.test_guard_before_save_halts_without_cleanup) ... ok
+test_guarded_metadata_cannot_be_called_outside_handler (test_bounded_serving_session.SessionTests.test_guarded_metadata_cannot_be_called_outside_handler) ... ok
+test_late_codec_expiry_prevents_run_and_preserves_incident (test_bounded_serving_session.SessionTests.test_late_codec_expiry_prevents_run_and_preserves_incident) ... ok
+test_listener_and_lifecycle_single_use (test_bounded_serving_session.SessionTests.test_listener_and_lifecycle_single_use) ... ok
+test_malformed_never_forwarded_then_valid (test_bounded_serving_session.SessionTests.test_malformed_never_forwarded_then_valid) ... ok
+test_metadata_failure_original_retained_without_save_or_close (test_bounded_serving_session.SessionTests.test_metadata_failure_original_retained_without_save_or_close) ... ok
+test_nonloopback_refused_without_native_work (test_bounded_serving_session.SessionTests.test_nonloopback_refused_without_native_work) ... ok
+test_policy_replacement_delete_is_guarded (test_bounded_serving_session.SessionTests.test_policy_replacement_delete_is_guarded) ... ok
+test_production_attach_does_not_accept_synthetic_profile (test_bounded_serving_session.SessionTests.test_production_attach_does_not_accept_synthetic_profile) ... ok
+test_trusted_identity_not_learned_from_store (test_bounded_serving_session.SessionTests.test_trusted_identity_not_learned_from_store) ... ok
+test_two_actual_http_replies_save_then_single_quit (test_bounded_serving_session.SessionTests.test_two_actual_http_replies_save_then_single_quit) ... ok
+
+======================================================================
+ERROR: test_argv_drift_refuses_before_codec_and_claim (test_bounded_serving_session.AttachBoundaryTests.test_argv_drift_refuses_before_codec_and_claim)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_bounded_serving_session.py", line 155, in setUp
+    self.store=S.NativeCheckpointStore(self.root,self.binary,digest,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 125, in __init__
+    self._check_binary()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 162, in _check_binary
+    _require(stat.S_ISREG(before.st_mode) and bool(before.st_mode & 0o111) and 4 <= before.st_size <= MAX_BINARY,
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 46, in _require
+    raise StoreRefusal(message)
+native_checkpoint_store.StoreRefusal: bounded regular executable required
+
+======================================================================
+ERROR: test_imported_module_origin_mismatch_refuses (test_bounded_serving_session.AttachBoundaryTests.test_imported_module_origin_mismatch_refuses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_bounded_serving_session.py", line 155, in setUp
+    self.store=S.NativeCheckpointStore(self.root,self.binary,digest,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 125, in __init__
+    self._check_binary()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 162, in _check_binary
+    _require(stat.S_ISREG(before.st_mode) and bool(before.st_mode & 0o111) and 4 <= before.st_size <= MAX_BINARY,
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 46, in _require
+    raise StoreRefusal(message)
+native_checkpoint_store.StoreRefusal: bounded regular executable required
+
+======================================================================
+ERROR: test_initial_idle_is_never_reset_at_attachment (test_bounded_serving_session.AttachBoundaryTests.test_initial_idle_is_never_reset_at_attachment)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_bounded_serving_session.py", line 155, in setUp
+    self.store=S.NativeCheckpointStore(self.root,self.binary,digest,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 125, in __init__
+    self._check_binary()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 162, in _check_binary
+    _require(stat.S_ISREG(before.st_mode) and bool(before.st_mode & 0o111) and 4 <= before.st_size <= MAX_BINARY,
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 46, in _require
+    raise StoreRefusal(message)
+native_checkpoint_store.StoreRefusal: bounded regular executable required
+
+======================================================================
+ERROR: test_public_composition_exact_proxy_and_borrowed_store (test_bounded_serving_session.AttachBoundaryTests.test_public_composition_exact_proxy_and_borrowed_store)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_bounded_serving_session.py", line 155, in setUp
+    self.store=S.NativeCheckpointStore(self.root,self.binary,digest,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 125, in __init__
+    self._check_binary()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 162, in _check_binary
+    _require(stat.S_ISREG(before.st_mode) and bool(before.st_mode & 0o111) and 4 <= before.st_size <= MAX_BINARY,
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 46, in _require
+    raise StoreRefusal(message)
+native_checkpoint_store.StoreRefusal: bounded regular executable required
+
+======================================================================
+ERROR: test_root_nonprivate_or_used_refuses_before_claim (test_bounded_serving_session.AttachBoundaryTests.test_root_nonprivate_or_used_refuses_before_claim)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/test_bounded_serving_session.py", line 155, in setUp
+    self.store=S.NativeCheckpointStore(self.root,self.binary,digest,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 125, in __init__
+    self._check_binary()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 162, in _check_binary
+    _require(stat.S_ISREG(before.st_mode) and bool(before.st_mode & 0o111) and 4 <= before.st_size <= MAX_BINARY,
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/integration/native_checkpoint_store.py", line 46, in _require
+    raise StoreRefusal(message)
+native_checkpoint_store.StoreRefusal: bounded regular executable required
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.157s
+
+FAILED (errors=5)

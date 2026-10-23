@@ -1,0 +1,32 @@
+{
+  "schema": "ownrt.bounded-serving-session-cpu.v1",
+  "passed": true,
+  "tests": 19,
+  "native_executed": false,
+  "device_executed": false,
+  "live_admission_ready": false,
+  "command": "nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest test_bounded_serving_session -v",
+  "scope": "Real loopback sockets plus actual adapter/policy/facade/lifecycle with synthetic owner; public attach boundary fixtures use real store file descriptors and mocked profile validation, without executing fake ELF or native tools.",
+  "source_sha256": {
+    "bounded_serving_session.py": "61fda8c8a83fb85287b172c50078842025bfcab4906b0ae06b0f34f803431153",
+    "test_bounded_serving_session.py": "716a722835e229641c42f24ceaf128e7eaac0aa0ed10f047f0f5d5a16b594657",
+    "BOUNDED-SERVING-SESSION.md": "3ebca4add9f09d5e7f069c2c76605c776605c8ab8348a2ddd709466319d218b8",
+    "receipts/bounded-serving-session-cpu.log": "477140e273e515ff33fe233becf38e82116e8729a2fefff11c040f08009259c1",
+    "session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "chat_service.py": "368b904558ff1e28f32cd60821f4478538b0db25b3457a506e3f12d3769a4647",
+    "chat_http.py": "50ea09e9453c1d8424f169d13f1aa9cdc878e37061e1b8ccca3119097a2b9718",
+    "checkpoint_engine.py": "5bee78743a8c98c3dd24af0703de429cf0e1ede0b0fb9a772bb3c624be581295",
+    "checkpoint_bridge.py": "aa3877055d610bb3d8c3ca518b62fc33b379144788ff7ef7cea4f1508da488b9",
+    "native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "chat_codec.py": "20c0fac1f268eaa2f95b6c86a266e906b92008537f3de157a7e3279d3b74909b",
+    "request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "test_session_lifecycle.py": "c15ced4866e9ea547a67bc437667ed7cc45c9e95ab219b3a7066698d992d33e2"
+  },
+  "preserved_lineage": [
+    "lineage/bounded-serving-composition-before-origin-review",
+    "lineage/bounded-serving-attach-fixture-first-failure",
+    "lineage/bounded-serving-before-open-fd-review",
+    "lineage/bounded-serving-before-terminal-receipt-review"
+  ]
+}

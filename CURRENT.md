@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 14:39 EDT — reusable bounded serving components pass 37 CPU checks.**
+The profile pins the tested baseline engine and its dependencies, and the session assembly guards both native and metadata
+operations. Final review fixed open-file identity checks and receipt reads during active requests. A bounded writer preserves
+evidence at its limits. The proposed 16-request profile remains CPU-only: its 768 MiB forecast still includes unbounded external
+driver and diagnostic writers, so no live readiness is claimed. Both completed chat/lifecycle commits have green CI, all three
+restore28 applications remain running, and no new GPU window is queued. Coordinator and diagnostic work is the next step.
+[Components](experiments/own-xpu-runtime/integration/BOUNDED-SERVING.md).
+
 **October 23, 14:25 EDT — bounded sessions now close cleanly through the real CPU-native protocol.**
 The new attachable lifecycle passes 16 socket tests and independent review. Its separate tiny host-only proof completed two
 HTTP turns, saved both states and sent one clean QUIT before the native request limit, with no incident signal. The model

@@ -1,0 +1,15 @@
+{
+  "schema": "ownrt.bounded-evidence-cpu.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T18:34:45.693639+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "tests": 8,
+  "seconds": 0.094,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "experiments/own-xpu-runtime/integration/test_bounded_evidence.py": "7b3ab077efe73b132d8a6909e34d2ea88e216f9029b78a96e6180d3eb76a32ff"
+  },
+  "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/integration -p test_bounded_evidence.py -v",
+  "scope": "Private temporary directories only; caps/existing files/symlinks/partial-write accounting/external replacement tested; no native FD or cache enforcement"
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "ownrt.independent-bounded-serving-review.v1",
+  "passed": true,
+  "utc": "2026-10-23T18:38:42.444866+00:00",
+  "scope": "Independent review of peer composition and bounded evidence. Profile is authored here and closure/self-validated; peer independent profile review is separate. CPU only.",
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "live_admission_ready": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/bounded_serving_profile.py": "8ed8a86c02630a5cfdd9704e5692f2252efe805bf9194b045048b9a625ae34f2",
+    "experiments/own-xpu-runtime/integration/test_bounded_serving_profile.py": "7590d3e57507e1796e606846ad10977b20a7bdeaeb25e86509f525959196975d",
+    "experiments/own-xpu-runtime/integration/bounded_serving_session.py": "61fda8c8a83fb85287b172c50078842025bfcab4906b0ae06b0f34f803431153",
+    "experiments/own-xpu-runtime/integration/test_bounded_serving_session.py": "716a722835e229641c42f24ceaf128e7eaac0aa0ed10f047f0f5d5a16b594657",
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "experiments/own-xpu-runtime/integration/test_bounded_evidence.py": "7b3ab077efe73b132d8a6909e34d2ea88e216f9029b78a96e6180d3eb76a32ff",
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/own-xpu-runtime/integration/test_session_lifecycle.py": "c15ced4866e9ea547a67bc437667ed7cc45c9e95ab219b3a7066698d992d33e2",
+    "experiments/own-xpu-runtime/integration/test_checkpoint_engine.py": "626e1042de74ed57061ff4828f6224bc342c5c6891ad67a1d76f4738886792bc",
+    "experiments/own-xpu-runtime/integration/receipts/bounded-serving-storage-budget.json": "d877c8f1026cbee39b835d155d213f36f90f1b39cb180bf3c3277ded0f76466b",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/independent-device-result.json": "335e914aa0cf3db7ee02ec5bec36248382937e049fe80b3ad6bec133f45a3019"
+  },
+  "tests": {
+    "count": 37,
+    "profile": 10,
+    "composition": 19,
+    "evidence": 8,
+    "result": "OK",
+    "elapsed_seconds": 0.437,
+    "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/integration -p 'test_bounded*.py' -v"
+  },
+  "checks": {
+    "origins": "Canonical integration modules checked before attach; loaded codec packages checked against pinned inventory.",
+    "attachment": "Exact NativeFront/NativeCheckpointStore, fixed argv matching Popen args, zero requests/controls, no pending reply, ready geometry/one load, empty private root.",
+    "held_fds": "Rehash held executable and check current binary inode before claim; held root FD dev/ino equals current root. Both regression refusals passed before RUN.",
+    "timers": "Trusted explicit monotonic launch/activity; no readiness reset. Every RUN and disposition guarded; soft close allows admitted disposition.",
+    "errors": "Store snapshot/delete guard inside active service thread. Preserve original error; no recovery RELEASE/retry/close after ambiguity. One normal close validates terminal counts.",
+    "receipt": "Short state lock refuses active serving/closing snapshots; repeated serve refusal preserves terminal proof.",
+    "evidence": "Exclusive0600 files under owned0700 held root; byte/file-count bounds, inode/content refusal, partial-write charges and poisoned-on-error state preserve evidence.",
+    "closure": "Actual p199 audit, historical source/ELF/dependencies, new profile/composition/evidence/lifecycle modules and tests, transitive fixture and independent storage receipt are bound.",
+    "storage": "160MiB source-derived success logs; remaining96MiB auxiliary forecast not proven. Whole768MiB forecast unadmitted."
+  },
+  "resolved_findings": [
+    "Check held binary identity before first RUN",
+    "Compare held root FD to admitted directory",
+    "Check loaded codec dependency origins"
+  ],
+  "validation": {
+    "actual_profile_build_and_validate": true,
+    "source_count": 228,
+    "external_count": 35,
+    "temporary_private_parent_only": true,
+    "output_or_checkpoint_destinations_created": false,
+    "read_only_free_bytes": 27924451328,
+    "proposed_write_bytes": 805306368
+  },
+  "limitations": [
+    "No native process or real-model serving run in this new component proof.",
+    "Public attach tests mock profile validation and use nonexecuted synthetic ELF/front state; profile tests separately verify actual historical identity.",
+    "Whole-host reservation, faults/memory/drain guards and one incident action belong to outer coordinator.",
+    "External native/driver/filesystem growth prevents certified whole-window storage bound.",
+    "Launch-origin idle includes model loading. Arbitrary prompts have no prerecorded oracle.",
+    "Fresh paths require an existing trusted local parent; direct group-writable repository parent is refused."
+  ]
+}

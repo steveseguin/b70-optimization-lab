@@ -1,0 +1,37 @@
+{
+  "schema": "ownrt.bounded-serving-profile-independent-review.v1",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "reviewer_tests_executed": false,
+  "review": "Read-only source/test review plus independent current-byte hashing of baseline, external dependencies, binary, actual device provenance and storage audit closure.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/integration/bounded_serving_profile.py": "8ed8a86c02630a5cfdd9704e5692f2252efe805bf9194b045048b9a625ae34f2",
+    "experiments/own-xpu-runtime/integration/test_bounded_serving_profile.py": "7590d3e57507e1796e606846ad10977b20a7bdeaeb25e86509f525959196975d",
+    "experiments/own-xpu-runtime/integration/bounded_serving_session.py": "61fda8c8a83fb85287b172c50078842025bfcab4906b0ae06b0f34f803431153",
+    "experiments/own-xpu-runtime/integration/test_bounded_serving_session.py": "716a722835e229641c42f24ceaf128e7eaac0aa0ed10f047f0f5d5a16b594657",
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "experiments/own-xpu-runtime/integration/test_bounded_evidence.py": "7b3ab077efe73b132d8a6909e34d2ea88e216f9029b78a96e6180d3eb76a32ff",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/READY-FOR-DEVICE.json": "096e731f91f9831e88db693011d49c1d9d64b717e849c2f6a483bd53040b261b",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/evidence/independent-device-result.json": "335e914aa0cf3db7ee02ec5bec36248382937e049fe80b3ad6bec133f45a3019",
+    "experiments/own-xpu-runtime/integration/receipts/bounded-serving-storage-budget.json": "d877c8f1026cbee39b835d155d213f36f90f1b39cb180bf3c3277ded0f76466b",
+    "experiments/own-xpu-runtime/integration/receipts/bounded-serving-profile-cpu.json": "6eaa2375fad24cd62bed26a0c7382ea40a66a696991e935e86380fb4d0d8d6a6"
+  },
+  "baseline_source_files_verified": 215,
+  "external_files_verified": 35,
+  "storage_audit_sources_verified": 11,
+  "checks": [
+    "Whole-profile strict JSON rederivation rejects changed identity, argv, limits, paths, flags and source hashes.",
+    "Fresh mode refuses occupied, aliased, nested, external and non-private-parent paths; attached mode requires existing0700 local directories.",
+    "Exactly three native argv value changes; original arithmetic/cache/spin/kernel identity preserved.",
+    "Own composition/lifecycle/writer tests and source are added to frozen p199 closure.",
+    "Loaded codec package origins must belong to pinned dependency inventory.",
+    "Actual p199 device audit and independent storage budget pinned; neither certifies this new live profile.",
+    "Initial activity explicitly conservative; launch-origin idle includes model loading, readiness cannot reset it."
+  ],
+  "limitations": [
+    "No reviewer native execution or additional owner starts. Author reports37 CPU tests; root owns final combined verification.",
+    "Profile live_admission_ready remains false and768MiB remains a forecast, not a certified whole-window write bound.",
+    "Temporary private trusted parent required; group-writable integration parent correctly refuses."
+  ]
+}

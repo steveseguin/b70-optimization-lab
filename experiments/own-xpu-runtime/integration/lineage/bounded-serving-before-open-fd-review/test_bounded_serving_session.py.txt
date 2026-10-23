@@ -1,0 +1,214 @@
+"""Loopback composition tests with synthetic owner/store/codec only."""
+import copy
+import hashlib
+import http.client
+import json
+import os
+from pathlib import Path
+import tempfile
+import threading
+import time
+import unittest
+from unittest.mock import patch
+
+import bounded_serving_session as S
+from test_checkpoint_engine import Store, identity
+from test_session_lifecycle import Front, Codec, Clock
+
+
+class SessionTests(unittest.TestCase):
+    def setUp(self):
+        self.clock=Clock();self.store=Store();self.identity=identity()
+        self.front=Front(self.store,self.identity);self.codec=Codec();self.guards=[]
+        self.spec=dict(model='synthetic',identity=self.identity,native_stop_token_ids=[0],
+            paths=dict(checkpoint_root=str(self.store.root)),
+            limits=dict(requests=2,idle_seconds=20,absolute_seconds=100,native_idle_seconds=30,
+                native_seconds=180,save_bound_bytes=8192,parking_bytes=65536,disk_floor_bytes=1000))
+        self.session=None;self.thread=None;self.outcome={}
+
+    def compose(self,guard=None):
+        self.session=S._compose(profile=self.spec,front=self.front,store=self.store,codec=self.codec,
+            guard=guard or (lambda:self.guards.append(True)),launched_at=100,last_native_activity=100,
+            clock=self.clock,storage_available=lambda root:20000,scope='synthetic component test only')
+        return self.session
+
+    def start(self):
+        self.address=self.session.open_listener()
+        def serve():
+            try:self.outcome['receipt']=self.session.serve()
+            except BaseException as error:self.outcome['error']=error
+        self.thread=threading.Thread(target=serve,daemon=True);self.thread.start()
+
+    def request(self,session='alpha',payload=None):
+        payload=payload or dict(model='synthetic',messages=[dict(role='user',content='hi')],max_tokens=2)
+        c=http.client.HTTPConnection(*self.address,timeout=2)
+        try:
+            c.request('POST','/v1/chat/completions',json.dumps(payload),{'Content-Type':'application/json','X-Ownrt-Session':session})
+            r=c.getresponse();return r.status,json.loads(r.read())
+        finally:c.close()
+
+    def finish(self):
+        self.thread.join(2);self.assertFalse(self.thread.is_alive());return self.outcome
+
+    def tearDown(self):
+        if self.thread and self.thread.is_alive():self.session.request_close();self.thread.join(2)
+        if self.session and self.session._server:self.session._server.server_close()
+
+    def test_two_actual_http_replies_save_then_single_quit(self):
+        self.compose();self.start()
+        for name in ('alpha','beta'):
+            status,response=self.request(name)
+            self.assertEqual(status,200);self.assertEqual(response['choices'][0]['message']['content'],'reply')
+            self.assertEqual(response['usage']['completion_tokens'],2)
+        result=self.finish()['receipt']
+        self.assertTrue(result['passed']);self.assertFalse(result['live_admission_claimed'])
+        self.assertEqual(result['native_completed'],2);self.assertEqual(result['native_controls'],2)
+        self.assertEqual(result['lifecycle']['native_stopped']['reason'],'quit')
+        self.assertEqual(self.front.close_calls,1);self.assertEqual(self.front.max_requests,8)
+        self.assertEqual([x[0] for x in self.front.calls],['RUN','SAVE','RUN','SAVE'])
+        self.assertEqual(set(result['parking']['sessions']),{'alpha','beta'})
+        self.assertEqual(len(self.guards),18)
+
+    def test_malformed_never_forwarded_then_valid(self):
+        self.compose();self.start()
+        self.assertEqual(self.request(payload={'stream':True})[0],400)
+        self.assertEqual(self.front.calls,[]);self.assertEqual(self.guards,[])
+        self.assertEqual(self.request()[0],200);self.session.request_close()
+        self.assertTrue(self.finish()['receipt']['passed'])
+
+    def test_metadata_failure_original_retained_without_save_or_close(self):
+        failure=OSError('metadata unavailable');self.compose()
+        def broken(cid):raise failure
+        self.store.snapshot=broken;self.start()
+        self.assertEqual(self.request()[0],503)
+        self.assertIs(self.finish()['error'],failure);self.assertIs(self.session.admission.failure,failure)
+        self.assertEqual([x[0] for x in self.front.calls],['RUN'])
+        self.assertEqual(self.front.close_calls,0);self.assertFalse(self.session.receipt()['passed'])
+        self.assertEqual(self.session.receipt()['error']['message'],'metadata unavailable')
+
+    def test_guard_before_save_halts_without_cleanup(self):
+        failure=OSError('fault before save');calls=[]
+        def guard():
+            calls.append(True)
+            if len(calls)==5:raise failure
+        self.compose(guard);self.start();self.assertEqual(self.request()[0],503)
+        self.assertIs(self.finish()['error'],failure)
+        self.assertEqual([x[0] for x in self.front.calls],['RUN']);self.assertEqual(self.front.close_calls,0)
+
+    def test_guarded_metadata_cannot_be_called_outside_handler(self):
+        self.compose()
+        with self.assertRaisesRegex(RuntimeError,'outside exclusive'):
+            self.session.engine.store.snapshot('valid')
+        self.assertEqual(self.store.calls,[]);self.assertEqual(self.guards,[])
+
+    def test_policy_replacement_delete_is_guarded(self):
+        self.compose();self.start();self.assertEqual(self.request()[0],200)
+        self.assertEqual(self.request()[0],200);self.assertTrue(self.finish()['receipt']['passed'])
+        self.assertTrue(any(row[0]=='delete' for row in self.store.calls))
+        self.assertGreater(len(self.guards),18)
+
+    def test_late_codec_expiry_prevents_run_and_preserves_incident(self):
+        self.compose()
+        def delayed(messages):self.clock.value=121;return 'hi'
+        self.codec.render=delayed;self.session.parking.render=delayed
+        self.start();self.assertEqual(self.request()[0],503)
+        self.assertIn('late pre-RUN',str(self.finish()['error']))
+        self.assertEqual(self.front.calls,[]);self.assertEqual(self.front.close_calls,0)
+
+    def test_listener_and_lifecycle_single_use(self):
+        self.compose();self.session.open_listener()
+        with self.assertRaisesRegex(S.SessionRefusal,'single use'):self.session.open_listener()
+        self.session.request_close();self.assertTrue(self.session.serve()['passed'])
+        with self.assertRaisesRegex(RuntimeError,'single use'):self.session.serve()
+        self.assertEqual(self.front.close_calls,1)
+
+    def test_nonloopback_refused_without_native_work(self):
+        self.compose()
+        with self.assertRaises(ValueError):self.session.open_listener(('0.0.0.0',0))
+        self.assertEqual(self.front.calls,[]);self.assertEqual(self.front.close_calls,0)
+
+    def test_trusted_identity_not_learned_from_store(self):
+        self.spec['identity']=copy.deepcopy(self.identity)
+        self.spec['identity']['engine']['binary_sha256']='c'*64
+        with self.assertRaisesRegex(RuntimeError,'store binary'):self.compose()
+        self.assertEqual(self.store.calls,[]);self.assertEqual(self.front.calls,[])
+
+    def test_production_attach_does_not_accept_synthetic_profile(self):
+        with self.assertRaises((RuntimeError,ValueError,KeyError)):
+            S.attach(self.spec,front=self.front,store=self.store,admitted_argv=[],
+                launched_at=100,last_native_activity=100,guard=lambda:None)
+        self.assertEqual(self.front.calls,[]);self.assertEqual(self.store.calls,[])
+
+
+class AttachBoundaryTests(unittest.TestCase):
+    """Public composition checks with mocked profile validation only.
+
+    Actual production profile pins have their own independent tests. The native
+    front object here is uninitialized transport state: no process is started.
+    The real store opens a small fake executable, never executes it.
+    """
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name)
+        self.root=self.base/'checkpoints';self.root.mkdir(mode=0o700)
+        self.binary=self.base/'fake-binary';self.binary.write_bytes(b'\x7fELFsynthetic fixture only')
+        self.binary.chmod(0o700)  # Store admission only; never executed.
+        digest=hashlib.sha256(self.binary.read_bytes()).hexdigest()
+        self.store=S.NativeCheckpointStore(self.root,self.binary,digest,
+            {'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2','LD_LIBRARY_PATH':'/synthetic'})
+        trusted=identity();trusted['engine']['binary_sha256']=digest
+        mock=Front(self.store,trusted);mock.max_requests=16
+        mock.ready.update(max_requests=16,max_control_ops=16)
+        mock.process.args=['synthetic-fixed-argv']
+        self.front=object.__new__(S.NativeFront);self.front.__dict__.update(mock.__dict__)
+        self.profile=dict(model='synthetic',identity=trusted,native_stop_token_ids=[0],
+            native_argv=mock.process.args,binary=dict(path=str(self.binary),sha256=digest),
+            paths=dict(checkpoint_root=str(self.root)),
+            limits=dict(requests=16,idle_seconds=240,absolute_seconds=4800,native_idle_seconds=300,
+                native_seconds=7200,vocab=32,save_bound_bytes=8192,parking_bytes=65536,disk_floor_bytes=0))
+        self.now=time.monotonic();self.codec=Codec();self.guards=[]
+        self.validator=patch('bounded_serving_profile.validate_profile',return_value=None)
+        self.validator.start()
+
+    def tearDown(self):
+        self.validator.stop();self.store.close();self.temp.cleanup()
+
+    def attach(self,**overrides):
+        args=dict(front=self.front,store=self.store,admitted_argv=['synthetic-fixed-argv'],
+            launched_at=self.now,last_native_activity=self.now,guard=lambda:self.guards.append(True))
+        args.update(overrides)
+        with patch.object(S,'PinnedChatCodec',return_value=self.codec):
+            return S.attach(self.profile,**args)
+
+    def test_public_composition_exact_proxy_and_borrowed_store(self):
+        session=self.attach()
+        self.assertIs(session.engine.front,session.admission.front)
+        self.assertIs(session.parking.engine,session.engine)
+        self.assertEqual(session.admission.last_native_activity,self.now)
+        self.assertEqual(self.guards,[True,True])
+        self.assertFalse(session.receipt()['passed']);self.assertEqual(self.front.calls,[])
+        self.assertIsNotNone(self.store._root_fd)
+
+    def test_argv_drift_refuses_before_codec_and_claim(self):
+        with self.assertRaisesRegex(S.SessionRefusal,'argv differs'):
+            self.attach(admitted_argv=['different'])
+        self.assertFalse(hasattr(self.front,'_session_lifecycle_claim'))
+
+    def test_root_nonprivate_or_used_refuses_before_claim(self):
+        self.root.chmod(0o755)
+        with self.assertRaisesRegex(S.SessionRefusal,'private checkpoint'):self.attach()
+        self.root.chmod(0o700);(self.root/'existing').write_text('preserve')
+        with self.assertRaisesRegex(S.SessionRefusal,'private checkpoint'):self.attach()
+        self.assertEqual((self.root/'existing').read_text(),'preserve')
+
+    def test_initial_idle_is_never_reset_at_attachment(self):
+        with self.assertRaisesRegex(S.SessionRefusal,'timestamps'):
+            self.attach(launched_at=self.now-250,last_native_activity=self.now-250)
+        self.assertEqual(self.guards,[]);self.assertFalse(hasattr(self.front,'_session_lifecycle_claim'))
+
+    def test_imported_module_origin_mismatch_refuses(self):
+        with patch.object(S.sys.modules['chat_service'],'__file__','/tmp/ambient-chat-service.py'):
+            with self.assertRaisesRegex(S.SessionRefusal,'module origin'):self.attach()
+        self.assertFalse(hasattr(self.front,'_session_lifecycle_claim'))
+
+
+if __name__=='__main__':unittest.main()
