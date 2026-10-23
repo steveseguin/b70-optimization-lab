@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Campaign 52 (2026-10-21, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32V is K32C with
+# Campaign 57 (2026-10-23, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32T is K32V with
+# --notes-thinking off (the notes calls wrote ~1,200 tokens a call in campaign 55 for ~115 tokens of change). Earlier header follows.
 # ctxkeeper 1.3.0.dev1's --set-check (a set the turns state for a name that no CHANGES line of the name takes is asked
 # about once) and its stored-as-the-set STATE lines (`53 set to -39` is stored as `-39`). The tools/ctxkeeper check also
 # requires --set-check. Earlier header follows.
@@ -141,7 +143,7 @@ mline() {
 arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in
     K06) echo "6144 2800" ;;   K08) echo "8192 3750" ;;   K12 | R12) echo "12288 5600" ;;
-    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | K32H | K32U | K32S | K32C | K32V | A32d | A32dp | M32dp) echo "32768 15000" ;;
+    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | K32H | K32U | K32S | K32C | K32V | K32T | A32d | A32dp | M32dp) echo "32768 15000" ;;
     K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;   S16) echo "16384 5000" ;;
     *) return 1 ;;
   esac
@@ -162,9 +164,11 @@ start_proxy() {  # tag arm kind
                     --recite-when "$RECITE_RE_REPAIR" --notes-mode inplace --notes-checks off --max-recalls 16) ;;
     smoke)      fl=(--recipe qwen) ;;
   esac
-  local rs=(); [[ $arm == K32R || $arm == K32H || $arm == K32U || $arm == K32S || $arm == K32C || $arm == K32V ]] && rs=(--rule-scan "$RULE_RE"); [[ $arm == K32H || $arm == K32U || $arm == K32S || $arm == K32C || $arm == K32V ]] && rs+=(--hold-open)
-  [[ $arm == K32U || $arm == K32S || $arm == K32C || $arm == K32V ]] && rs+=(--notes-upto); [[ $arm == K32S || $arm == K32C || $arm == K32V ]] && rs+=(--sum-check)
-  [[ $arm == K32C || $arm == K32V ]] && rs+=(--cited-entries); [[ $arm == K32V ]] && rs+=(--set-check)
+  local rs=(); [[ $arm == K32R || $arm == K32H || $arm == K32U || $arm == K32S || $arm == K32C || $arm == K32V || $arm == K32T ]] && rs=(--rule-scan "$RULE_RE"); [[ $arm == K32H || $arm == K32U || $arm == K32S || $arm == K32C || $arm == K32V || $arm == K32T ]] && rs+=(--hold-open)
+  [[ $arm == K32U || $arm == K32S || $arm == K32C || $arm == K32V || $arm == K32T ]] && rs+=(--notes-upto); [[ $arm == K32S || $arm == K32C || $arm == K32V || $arm == K32T ]] && rs+=(--sum-check)
+  [[ $arm == K32C || $arm == K32V || $arm == K32T ]] && rs+=(--cited-entries); [[ $arm == K32V || $arm == K32T ]] && rs+=(--set-check)
+  # Campaign 57: K32T = K32V with notes thinking off (a later --notes-thinking wins over the kind's).
+  [[ $arm == K32T ]] && rs+=(--notes-thinking off)
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null
   # shellcheck disable=SC2046
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \

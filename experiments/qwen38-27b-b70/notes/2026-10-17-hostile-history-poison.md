@@ -2241,6 +2241,36 @@ about item 373 asked at item 378, 6.9K tokens back and in view) is a reading sli
 model, not a keeper matter. With the removed/reopened family, the set and removal checks, cut-off lines and loop
 rejection all in, the keeper's levers on this stream are closed at 423/420; what remains on seed 2 is the client.
 
+## Campaign 57: notes thinking off on the hostile stream, both seeds, registered 2026-10-23 02:05 EDT (before any run)
+
+**Where campaign 55's time went (seed 0, `calls.jsonl`):** 1,452 main calls, 2,642 s, 116 tokens written a call,
+2,222 uncached prompt tokens a call (the new item; re-prefill after a cut is 18 calls and 65 s in all); 174 notes
+calls, **1,717 s (39 % of the model's time)**, 1,197 tokens written a call at 8.2 ms a token, 94 % of their
+prompts cached. The notes themselves change by a median 460 characters a version (about 115 tokens, p90 170), so
+roughly nine tenths of what a notes call writes is thinking (`--notes-thinking on`, the hostile kinds' recipe
+since campaign 37; the repair kind runs it off). Main-call time is reading the item and writing the tool call,
+both inherent to the task. The one lever on wall time is the notes thinking.
+
+**Arm K32T** = K32V with `--notes-thinking off` (runner `longrun-campaign37.sh`, the later flag wins over the
+kind's). Everything else as campaign 55: ctxkeeper 1.3.0 (the release candidate, `KEEPER_VERSION=1.3.0`), queue
+`QUEUE57.txt` (`K32T hostile2mk 0 14400`, then seed 2), unit `ctx-campaign57`, about 2 h 30 min if the prediction
+holds. Nothing else runs on this host; the campaign disk has 128 GB free; no latch.
+
+**Predictions:**
+- **Time:** notes calls write 150-350 tokens a call (the delta plus the headers) and take 2-4 s; notes time
+  400-700 s a seed (campaign 55: 1,717 and 1,879 s); wall 72-80 min a seed (93 and 95 min), a 15-22 % cut.
+- **Answers:** seed 0 at least 421/423 (campaign 55: 423); seed 2 at least 418/423 (420). Wrong STATE lines at
+  most 3 a seed (0 and 2); 16/16 audits; every forgery target kept; loops 0-3 a seed, named and recovered.
+- **The checks carry more:** set-check and mention-check asks rise (campaign 55: 20 and 27 in-place re-asks a
+  seed) to 25-45, because the first reply without thinking leaves more out; the asked-once budget holds.
+- **Not claimed:** that thinking off is lossless on every stream; the repair task already runs it off.
+
+**Decision:** both seeds within the answer and line bars → K32T becomes the hostile recipe and the public 2M wall
+figure is re-quoted (the 1.3.0 gate's numbers were taken with thinking off on the repair task already, so the
+release is unaffected either way). Either seed under the bar → thinking stays on for the hostile stream, the
+lever is closed with the measured cost, and the next look is at the thinking length rather than its presence
+(`--effort low` for notes calls).
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for
