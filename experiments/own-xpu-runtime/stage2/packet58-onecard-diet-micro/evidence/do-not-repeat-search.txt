@@ -1,0 +1,71 @@
+# DO-NOT-REPEAT grep 2026-10-23 (packet58-onecard-diet-micro): every stage2 DO-NOT-REPEAT.md; terms: diet, halfcache, p58ag, wide64, one-card gate/up, exceptional, sign, hoist, table decode, slot/indirect
+files: 231
+packet104-tile-transpose/DO-NOT-REPEAT.md:28:| target-gate-halfcache-tile16 | 0.892953 | Same override; exact FP32 weight-scale cache, never compressed KV. |
+packet104-tile-transpose/DO-NOT-REPEAT.md:37:| Claim plain gate-tile16 isolates the transpose against E1 control | Refused: this arm removes E1. The halfcache-tile16 arm retains E1 and isolates transpose. |
+packet101-draft-geometry/DO-NOT-REPEAT.md:7:| Attribute packet69 combined +0.82% solely to attention and HC | Its selection also enabled target and draft wide64 heads. Do not transfer that speed or its old HC cost to packet97. |
+packet11-kopt6/DO-NOT-REPEAT.md:11:| Scale conversions must be hoisted again | Already one block leader + subblock leaders | Native evidence of redundant work |
+packet142-class-layout/DO-NOT-REPEAT.md:4:  retains exact E1 halfcache rows and only changes the allocation/order of copies.
+packet192-expert-issue-floor/DO-NOT-REPEAT.md:10:| 2026-10-23 | **packet192 issue-floor decomposition** of `p90exp::Kernel<IQ2_S,2560,WG64,wide>` and `p100::Kernel<2>`: cold (384 real routes, 512 MiB scrub) / L2-warm / no-load (aliased slab) | **Measured 2026-10-23 (lane B, card 2, lanequeue-B38, 03:33-03:34 UTC, 34 s on device): both kernels instruction-iss
+packet192-expert-issue-floor/DO-NOT-REPEAT.md:12:| 2026-10-17 | fewer activation loads (packet81, loads 51->27 / 79->31) | neutral on lane A, exact: "expert limiter is not load issue"; revisit condition is exactly an ALU/latency analysis | this measurement is that analysis; a diet brief may cite it |
+packet192-expert-issue-floor/DO-NOT-REPEAT.md:14:| 2026-10-18 | IQ2 grid relocation / compaction: SLM, compact global, compact+halfcache (packet99; packet52/53) | closed: 1.24-1.78x slower | - |
+packet192-expert-issue-floor/DO-NOT-REPEAT.md:31:| 2026-10-23 | packet192 issue-floor measurement (record gate/up + down kernels; cold/warm/no-load) | measured; gate/up: instruction-issue bound: only an instruction diet can move the class; down: instruction-issue bound: only an instruction diet can move the class; evidence `issue-floor-B1/analysis.json` | pe
+packet193-expert-diet/DO-NOT-REPEAT.md:1:# Packet193 negative-result index (exact instruction diet of the record expert kernels)
+packet193-expert-diet/DO-NOT-REPEAT.md:11:| 2026-10-17 | fewer activation loads / packed input reads (packet81, loads 51->27 / 79->31) | neutral on lane A, exact; revisit = an ALU/latency analysis | packet192 is that analysis; packed reads are not part of this diet (attribution) and remain a separate follow-on |
+packet193-expert-diet/DO-NOT-REPEAT.md:20:| 2026-10-23 | **explicit byte-regioned extraction via `std::bit_cast` byte arrays** (brief item ii) | **closed by the ISA gate**: IGC materialises the array (~10 moves per byte); exp-diet 20.5 instr/weight with 4.9 KB spills vs production 15.3; production's shift/mask is already lowered to `:ub` regions (`evidence/i
+packet193-expert-diet/DO-NOT-REPEAT.md:21:| 2026-10-23 | **down-diet hoisted `d*float(level)` products selected by q** (brief's form) | **closed by the ISA gate**: a0 register-indirect moves (258) + 512 B spills at 128 GRF, 1.26x dynamic instructions (`evidence/isa-rejected/down-diet-hoisted-products.asm.gz`); confirms the study's "adds 16 live floats per la
+packet193-expert-diet/DO-NOT-REPEAT.md:32:| exp-diet (gate/up) | 57.92 / 73.85 (both orders) | 35.99–36.15 / 46.77 | 0.784 / 0.769–0.773 | 15.9 / 10.8 | **PASS → packet194 engine screen** |
+packet193-expert-diet/DO-NOT-REPEAT.md:33:| exp-act-epilogue (gate/up + SLM activation epilogue) | 62.71 / 76.56–76.67 | 41.88 / 49.27 | 0.818–0.819 / 0.850 | no gain over exp-diet + the separate activation launch | borderline (warm exactly at the bar); dropped in favour of exp-diet |
+packet193-expert-diet/DO-NOT-REPEAT.md:34:| down-diet (down) | 45.52 / 47.08 | 32.92 / 34.27–34.38 | 0.967 / 0.958–0.960 | 1.5 / 1.4 | FAIL (bar 0.85); closed |
+packet193-expert-diet/DO-NOT-REPEAT.md:38:this diet form.
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:1:# Packet194 negative-result index (exp-diet gate/up kernel in the k3x record engine, `expert_gateup=production|diet`)
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:8:"packet193 measured the exact gate/up instruction diet at 0.78× production cold and 0.77× warm on card 2, byte-identical on
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:9:every claimed stratum. Integrate `exp-diet` into the k3x record engine as an in-load key `expert_gateup=production|diet`
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:11:bracket k3x / k3x+diet / k3x / k3x+diet / k3x. Screen winner at ≥ +0.5 % over every k3x view; chain rule at ≥ +2 % over every
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:12:k3x view AND ≥ 63.592 tok/s. Kill rules: any inexact view; proposals or acceptance differ; k3x drift > 0.5 %; the diet's
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:15:## Rows checked before work (quoted; packet189's rows carried, plus the diet search)
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:17:* **All 322 DO-NOT-REPEAT.md files under stage2** were grepped (`analysis/dnr-grep.txt`) for `expert_gateup`, `exp-diet`,
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:18:  `instruction diet`, `p193diet`, `GateUp`, `gate/up diet`, `sign after`, `hoisted exceptional`: only packet192 (the
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:21:  hoisted down products (spills); closed on device: down-diet (0.96, below the 0.85 bar) and exp-act-epilogue (0.82/0.85, no
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:22:  gain over exp-diet + the separate activation launch). **Only exp-diet enters the engine.** NaN payload order is never
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:32:  copy engine; the diet is a kernel choice with 0 B of allocation.
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:34:* **Expert-class closures carried from packet193's index** (geometry sweeps, prefetch/halfcache variants, grid relocation,
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:35:  2D block loads, large GRF, kernel-order layout, enumerative decoders, warm-ahead): none is re-tried; the diet is an
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:38:  `expert_gateup=diet` with a non-halfcache `experts` choice outside the miniature, counts the diet sites and the
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:39:  other-layout (IQ3_S p28) gate/up sites per prepare, refuses a selected diet with zero diet sites at production shape, and
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:40:  the production-shape gate requires the diet kernel at every exp-halfcache gate/up site, so a silently inert candidate
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:48:| 2026-10-23 | **packet193 exp-diet micro** (card 2) | gate/up cold 57.92 vs 73.85 µs (0.784), warm 36.0–36.2 vs 46.77 (0.77); byte-identical on every claimed stratum | — (this packet is its engine screen) |
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:54:| 2026-10-23 | **exp-diet in the k3x record engine** (`expert_gateup=diet`, selection `k3x-diet` eb417ec9…, engine packet194): rows k3x-diet smoke, one-load k3x/k3x-diet/k3x/k3x-diet/k3x (lane B); decision `s194_decision`; priced +1.4 % (10.8 µs warm) to +2.1 % (15.9 µs cold) at +1.32 % per 0.01 ms per GDN
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:58:* **Do not loosen exactness for the diet.** It is byte-identical to the record kernel on CPU (both twins, real rows, NaN/Inf
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:60:* **Do not screen the diet on a non-halfcache gate/up layout.** The diet is a diet of `p90exp::Kernel<IQ2_S,2560,64,wide>`
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:62:* **Do not treat the miniature's canonical identity as the kernel proof.** The miniature has no exp-halfcache layout (diet
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:63:  inert, counted); the kernel proof is `diet-fixture.json` + the production-shape launch census.
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:65:  host scopes; a gain the scopes cannot see is not the diet's.
+packet194-expert-diet-engine/DO-NOT-REPEAT.md:67:  with the k3x-diet selection and this engine, WS128 above 62.345282, exact.
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:1:# Packet195 boundaries (k3x-diet record chain)
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:5:  `policy195.json` `coordinator_idle_lane_exception_authorized` with the 2026-10-23 ruling quoted. A future diet-like
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:7:- **Do not let KD's layer-streaming reference carry `expert_gateup`.** packet194's `engine_bracket.hpp` refuses it
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:11:  kernel; the diet touches no draft kernel.
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:22:- **Do not expect the miniature to exercise the diet kernel.** The five-layer miniature has no exp-halfcache layout, so
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:23:  `expert_gateup=diet` is inert and counted there (`expert_diet_sites=0`, `expert_diet_inert_sites=4`); the transport
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:24:  gate proves the key plumbing and the k3 state only. The diet's engine-level exactness is packet194's dispatch
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:25:  fixture, its production-shape launch census and the device rows; packet195's real-shape gate requires the diet at
+packet195-record-bundle-diet/DO-NOT-REPEAT.md:26:  every exp-halfcache site (26 / 24) and a capture that differs from the production k3x capture.
+packet58ao-onecard-next/DO-NOT-REPEAT.md:5:| 2026-10-19 / another accepted target-kernel port behind packet58am | No build: p60, HC-wide, wide64, adapted E1, p109 fast-route/fusion, ordered retirement and tile16 are already present. Rec-both-plus alone remains unselected, with no new evidence overcoming 58r's inconclusive +0.37% route/recurrence screen. [Inv
+packet58-onecard-diet/DO-NOT-REPEAT.md:1:# Packet58-onecard-diet boundaries
+packet58-onecard-diet/DO-NOT-REPEAT.md:27:## Carried diet rows (packet192 / 193 / 194)
+packet58-onecard-diet/DO-NOT-REPEAT.md:30:- exp-diet (`p193diet::GateUp`) on the two-card kernel: 0.784× cold / 0.77× warm, byte-identical on every claimed stratum
+packet58-onecard-diet/DO-NOT-REPEAT.md:31:  (packet193); in the k3x engine behind `expert_gateup=diet`: +1.96 % screen win, 10.8–11.8 µs per layer, every view
+packet58-onecard-diet/DO-NOT-REPEAT.md:32:  exact (packet194); record bundle packet195. down-diet closed (0.96); exp-act-epilogue dropped; `std::bit_cast` byte
+packet58-onecard-diet/DO-NOT-REPEAT.md:33:  arrays and hoisted down products closed by the ISA gate; NaN payload order never canonicalised.
+packet58-onecard-diet/DO-NOT-REPEAT.md:34:- **Do not screen the diet on a non-halfcache gate/up layout** (packet194): the diet is a diet of
+packet58-onecard-diet/DO-NOT-REPEAT.md:41:| **Register packet193's `p193_diet.hpp` (`p193diet::GateUp`) as-is in the one-card expert dispatch behind `expert_gateup=production\|diet`** | **Impossible by layout** (`evidence/layout-mismatch.json`, `evidence/compiler-proof.json`): the header binds through `p90exp::Kernel::bind` (rb = `p90::expert_stride(2560)` =
+packet58-onecard-diet/DO-NOT-REPEAT.md:42:| Read "the kernel dispatch tables of packet182c and the packet190 k3x selection are byte-identical" (one-card synthesis 1) as "the same expert gate/up kernel" | Wrong: that table is `dispatch-speed6.json` (22 `packet26.dispatch.v1` classes; the only ffn entry is `ffn.combine`). The expert kernel is the `experts` sel
+packet58-onecard-diet/DO-NOT-REPEAT.md:43:| One-card exp-diet (`p58ag_diet::GateUp`, the three transformations on `p58ag_exp::wide_chains`) | **Pending, not built.** Priced at the brief's 11.4 µs per layer = +2 % (48 serial layer bodies); packet194 measured 10.8–11.8 µs on the two-card kernel, but the one-card kernel pays a table gather for `d` and a slo
+packet69-rank1-head/DO-NOT-REPEAT.md:10:| Target wide64/wide128, draft head/attention/HC | CPU checks pass; device comparisons pending. Do not call them winners yet. |
+packet72-occupancy/DO-NOT-REPEAT.md:8:| Attention wide64 final | GNU/Intel byte exact;9→7 static loads; device pending | Coordinator laneA then best-only laneB |
+packet77-attribution/DO-NOT-REPEAT.md:6:| 2026-10-17 | Packet64/69 costs as packet70 wide64 costs | Invalid identity. Use packet77 paired events before ranking current levers. |
+packet80-record-bundle/DO-NOT-REPEAT.md:4:  to production and experts to wide64. Do not extract HC from an experts2
+packet83-draft-bytes/DO-NOT-REPEAT.md:6:- Head-wide64, draft-attention and draft-HC geometry arms remain closed by packet69.
+packet90-expert-hc/DO-NOT-REPEAT.md:5:- The record control is explicit: hc-wide, wide64, ordered, rec-parallel.
+packet90-expert-hc/DO-NOT-REPEAT.md:8:- FP32 weight caches are exact immutable decodes, never compressed weights/KV.
+packet97-record-bundle/DO-NOT-REPEAT.md:6:  capture validation and memory ledger. IQ4 down remains wide64.

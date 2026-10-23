@@ -1,0 +1,28 @@
+{
+  "schema": "own-runtime.report-contract.v1",
+  "analyzer": "s58dm_report:analyze",
+  "fixture_generator": "s58dm_report:synthetic_fixture",
+  "data_roots": ["s58dm_report:P"],
+  "samples": {"path": "samples.jsonl", "format": "jsonl", "required": {"kind": "str"}},
+  "analysis": {"path": "analysis.json", "format": "json", "required": {"schema": "str", "passed": "bool", "diagnostic_only": "bool", "speed_claim": "bool", "verdict": "str", "candidates": "dict", "exactness": "dict", "kills": "list", "samples_sha256": "str"}},
+  "cases": [
+    {"name": "qualified", "fixture": {"routes": 12, "cold_repeats": 2, "warm_repeats": 20,
+      "cold": {"production": 76000, "ratio": 0.78}, "warm": {"production": 48000, "ratio": 0.78}, "warm-direct": {"production": 47500, "ratio": 0.78}, "warm-real-layer0": {"production": 47800, "ratio": 0.78}, "warm-real-layer24": {"production": 47900, "ratio": 0.78}},
+     "expected": {"passed": true, "verdict": "measured", "speed_claim": false, "diagnostic_only": true}},
+    {"name": "closed-ratio", "fixture": {"routes": 12, "cold_repeats": 2, "warm_repeats": 20,
+      "cold": {"production": 76000, "ratio": 0.92}, "warm": {"production": 48000, "ratio": 0.92}, "warm-direct": {"production": 47500, "ratio": 0.92}, "warm-real-layer0": {"production": 47800, "ratio": 0.92}, "warm-real-layer24": {"production": 47900, "ratio": 0.92}},
+     "expected": {"passed": true, "verdict": "measured"}},
+    {"name": "byte-kill", "fixture": {"routes": 12, "cold_repeats": 2, "warm_repeats": 20, "byte_mismatch": [["cold", "production"]],
+      "cold": {"production": 76000, "ratio": 0.78}, "warm": {"production": 48000, "ratio": 0.78}, "warm-direct": {"production": 47500, "ratio": 0.78}, "warm-real-layer0": {"production": 47800, "ratio": 0.78}, "warm-real-layer24": {"production": 47900, "ratio": 0.78}},
+     "expected": {"passed": true, "verdict": "measured"}},
+    {"name": "nan-payload-order-diagnostic", "fixture": {"routes": 12, "cold_repeats": 2, "warm_repeats": 20, "nan_payload": ["exceptional", "fixture-f2-valid", "fixture-f2-invalid"],
+      "cold": {"production": 76000, "ratio": 0.78}, "warm": {"production": 48000, "ratio": 0.78}, "warm-direct": {"production": 47500, "ratio": 0.78}, "warm-real-layer0": {"production": 47800, "ratio": 0.78}, "warm-real-layer24": {"production": 47900, "ratio": 0.78}},
+     "expected": {"passed": true, "verdict": "measured"}},
+    {"name": "control-kill", "fixture": {"routes": 12, "cold_repeats": 2, "warm_repeats": 20, "control_scale": 1.2,
+      "cold": {"production": 76000, "ratio": 0.78}, "warm": {"production": 48000, "ratio": 0.78}, "warm-direct": {"production": 47500, "ratio": 0.78}, "warm-real-layer0": {"production": 47800, "ratio": 0.78}, "warm-real-layer24": {"production": 47900, "ratio": 0.78}},
+     "expected": {"passed": false, "verdict": "withheld: production cold/warm disagreement with the fresh production-only pass > 10 %"}},
+    {"name": "disturbance-kill", "fixture": {"routes": 12, "cold_repeats": 2, "warm_repeats": 20, "disturb": "warm",
+      "cold": {"production": 76000, "ratio": 0.78}, "warm": {"production": 48000, "ratio": 0.78}, "warm-direct": {"production": 47500, "ratio": 0.78}, "warm-real-layer0": {"production": 47800, "ratio": 0.78}, "warm-real-layer24": {"production": 47900, "ratio": 0.78}},
+     "expected": {"passed": false, "verdict": "withheld: p90/median > 1.5 (host disturbance)"}}
+  ]
+}

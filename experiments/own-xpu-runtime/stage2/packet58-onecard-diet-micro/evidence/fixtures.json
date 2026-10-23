@@ -1,0 +1,178 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "schema": "packet58dm.fixtures.v1",
+ "generator": "GNU host twin (OWN_RT_HOST_ONLY run of the pinned production one-card kernel)",
+ "generator_sha256": "730e2bcc60ea52eb3a162dacc02f49cbbae936d307fe795e26528e11b2a0a2fe",
+ "verifier_sha256": "51d5bf8b9620889ee492afb91769f3f6983931c7991fa116c7817173bb007748",
+ "routes_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+ "real_rows": [
+  {
+   "name": "packet162b layer0 rows",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer0.bin",
+   "parent_digest": "eeed9d3bab0c8652c344d363174032c1f197944e7314cdf73fe974493ebc6628",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b layer24 rows",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer24.bin",
+   "parent_digest": "77bdd24006f6f5425b32e78ddfc50e34faa670b5b655070c4c59ed25aa35f52b",
+   "bytes": 10496000
+  }
+ ],
+ "files": {
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-cold.bin": "f184e56eafa36c5da3935bd2a55fe819ab0dda25c9cf44706c2c339a2ea016fc",
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-exc.bin": "2a9607641c68d902f0034efebdcbc1e04b04312eecf5573e0277b5b09f327d28",
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-fx.bin": "9705edf423e5ce1dbe1bdd61b426b90c128b036ed696c233d315b1c6adf3aff2",
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-real-layer0.bin": "a55d02b60c2c443fc2301f6f3edccebf655bb780f4de25714c64e1c9379a7cea",
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-real-layer24.bin": "ca6f6d99198386967f56daed12ccb3bf3a1d5299763914ae7e9422481a440764",
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-slots.bin": "323468934919fc1e72b5e7b09c7af5776ee6f0ebbd02fc9f492db99ec2ebca3a",
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-warm-direct.bin": "8784e4cc0d3dd46a1de5bdedb4406ab050e5c412d5bd00bc8972fb31b453d238",
+  "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/build/fixtures/gateup-warm.bin": "8784e4cc0d3dd46a1de5bdedb4406ab050e5c412d5bd00bc8972fb31b453d238"
+ },
+ "gnu": {
+  "bytes_rows": 1250,
+  "exact_rows": 1241,
+  "byte_equal_rows": 1241,
+  "nan_rows": 9,
+  "nan_equal_rows": 9,
+  "nan_payload_order_rows": [],
+  "per_candidate_against": {
+   "production/fixture": 411,
+   "p58-diet/production": 411,
+   "p58-diet/fixture": 411,
+   "production/indirect": 1,
+   "production/direct-permuted": 16
+  },
+  "stress": {
+   "mixed": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 37142,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0,
+    "nocache_fp32_mismatches": 0,
+    "nocache_value_mismatches": 0,
+    "table_vs_half_mismatches": 0,
+    "table_vs_half_nan_vs_nan": 0,
+    "table_vs_half_value_mismatches": 0
+   },
+   "finite": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0,
+    "nocache_fp32_mismatches": 0,
+    "nocache_value_mismatches": 0,
+    "table_vs_half_mismatches": 0,
+    "table_vs_half_nan_vs_nan": 0,
+    "table_vs_half_value_mismatches": 0
+   }
+  },
+  "samples": 392
+ },
+ "intel": {
+  "bytes_rows": 1250,
+  "exact_rows": 1241,
+  "byte_equal_rows": 1241,
+  "nan_rows": 9,
+  "nan_equal_rows": 9,
+  "nan_payload_order_rows": [
+   {
+    "candidate": "production",
+    "stratum": "fixture-f2-valid",
+    "against": "fixture",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "p58-diet",
+    "stratum": "fixture-f2-valid",
+    "against": "production",
+    "different_words": 12800,
+    "nan_vs_nan_words": 12800
+   },
+   {
+    "candidate": "production",
+    "stratum": "fixture-f2-invalid",
+    "against": "fixture",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "p58-diet",
+    "stratum": "fixture-f2-invalid",
+    "against": "production",
+    "different_words": 11514,
+    "nan_vs_nan_words": 11514
+   },
+   {
+    "candidate": "production",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 7356,
+    "nan_vs_nan_words": 7356
+   },
+   {
+    "candidate": "p58-diet",
+    "stratum": "exceptional",
+    "against": "production",
+    "different_words": 6381,
+    "nan_vs_nan_words": 6381
+   },
+   {
+    "candidate": "p58-diet",
+    "stratum": "exceptional",
+    "against": "fixture",
+    "different_words": 7214,
+    "nan_vs_nan_words": 7214
+   }
+  ],
+  "per_candidate_against": {
+   "production/fixture": 411,
+   "p58-diet/production": 411,
+   "p58-diet/fixture": 411,
+   "production/indirect": 1,
+   "production/direct-permuted": 16
+  },
+  "stress": {
+   "mixed": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 37142,
+    "chains_compared": 320000,
+    "fp32_mismatches": 128314,
+    "nan_vs_nan_mismatches": 128314,
+    "value_mismatches": 0,
+    "nocache_fp32_mismatches": 126162,
+    "nocache_value_mismatches": 0,
+    "table_vs_half_mismatches": 7970,
+    "table_vs_half_nan_vs_nan": 7970,
+    "table_vs_half_value_mismatches": 0
+   },
+   "finite": {
+    "rows": 10000,
+    "blocks": 100000,
+    "exceptional_blocks": 0,
+    "chains_compared": 320000,
+    "fp32_mismatches": 0,
+    "nan_vs_nan_mismatches": 0,
+    "value_mismatches": 0,
+    "nocache_fp32_mismatches": 0,
+    "nocache_value_mismatches": 0,
+    "table_vs_half_mismatches": 0,
+    "table_vs_half_nan_vs_nan": 0,
+    "table_vs_half_value_mismatches": 0
+   }
+  },
+  "samples": 392
+ },
+ "gnu_intel_byte_rows_identical": true,
+ "gnu_intel_identity_scope": "every row outside the NaN-only strata (f2, exceptional); those rows are per-twin and may be payload-order-only (both sides NaN in every differing word, no status/error byte)",
+ "exactness_domain": "candidate byte-identical to production on GNU and Intel for every exactness stratum; the NaN-only strata are compared by is-NaN per word (nan_claim) and never by bytes"
+}

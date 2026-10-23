@@ -1,0 +1,102 @@
+{
+ "passed": true,
+ "device_executed": false,
+ "schema": "packet58dm.admission.v1",
+ "lane": "B",
+ "physical_card": 2,
+ "pci": "0000:43:00.0",
+ "candidates": [
+  "p58-diet"
+ ],
+ "device": {
+  "peak_bytes": 1106093204,
+  "declared_upper_bound": 1200000000,
+  "model_load": false,
+  "components": {
+   "scrub": 536870912,
+   "gate_bank": 268697600,
+   "up_bank": 268697600,
+   "real_rows_layer0_24": 20992000,
+   "exceptional_bank": 10496000,
+   "halfcache_table": 262144,
+   "slot_tables": 25536,
+   "inputs": 25600,
+   "outputs": 25684
+  }
+ },
+ "host": {
+  "required_available_bytes": 10737418240,
+  "reserve_bytes": 8589934592,
+  "anonymous_budget_bytes": 2147483648,
+  "binary_estimate_bytes": 272629760,
+  "note": "whole-host admission applies (the window driver stops the owner endpoints); the micro itself stages 3.4 MB chunks, 10 MB of fixtures, 21 MB of real rows and 10 MB of exceptional rows"
+ },
+ "storage": {
+  "minimum_root_free_bytes": 25000000000,
+  "planned_write_bytes": 100663296,
+  "expected_samples_bytes": 11410100
+ },
+ "duration": {
+  "per_cold_cycle_seconds": 0.00092,
+  "parent": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/micro-B/window.json",
+  "packet193_window_seconds": 82.4,
+  "strata": {
+   "cold": {
+    "cycles_interleaved": 30720,
+    "cycles_control": 7680,
+    "seconds": 35.5,
+    "note": "each cold cycle = 512 MiB scrub + one launch; indirect slots (the record line's path)"
+   },
+   "warm": {
+    "launches": 3485,
+    "seconds": 2.1,
+    "note": "warm (indirect), warm-direct, 2 real-row shapes, both orders; plus the production-only warm control"
+   },
+   "exactness_passes": {
+    "launches": 838,
+    "seconds": 6.0,
+    "note": "per route: production + candidate with a host fetch each; plus warm/direct, 16 permuted-slot routes (x3 launches), real rows, fixtures, exceptional bank"
+   },
+   "bank_generation_and_upload": {
+    "seconds": 14.0,
+    "note": "host-side LCG generation of 537 MB of synthetic 820-B rows (single thread, repack_row per row) + 31 MB real/exceptional rows + 256 KiB table + H2D"
+   },
+   "startup_and_jit": {
+    "seconds": 10.0,
+    "note": "2 gate/up kernels (production, candidate) + the scrub kernel JIT"
+   }
+  },
+  "expected_seconds": [
+   60,
+   202
+  ],
+  "estimate_seconds": 67.6,
+  "watchdog_seconds": 1800,
+  "under_ten_minutes": true,
+  "per_candidate_seconds": {
+   "cold": 28.4,
+   "warm": 2.1
+  }
+ },
+ "identity": {
+  "route_count": 384,
+  "cold_repeats": 20,
+  "warm_repeats": 200,
+  "passes": 2,
+  "orders": [
+   "AB",
+   "BA"
+  ],
+  "control_order": "P",
+  "warmups_excluded": 5,
+  "gateup": "p58ag_exp::Kernel<IQ2_S,2560,WG64,Prefetch=false,Wide=true,0,Cached=true> (820-B rows, halfcache table, indirect slots)",
+  "candidate": "p58ag_diet::GateUp",
+  "isa_dynamic_per_weight": {
+   "p58-diet": {
+    "candidate": 12.015625,
+    "production": 15.65625,
+    "ratio": 0.7674650698602794
+   }
+  }
+ }
+}

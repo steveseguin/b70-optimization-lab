@@ -1,0 +1,72 @@
+{
+ "schema": "packet58dm.parent-inputs.v1",
+ "rule": "cross-packet files are read in place and verified by digest at plan/run time; they are provenance records, never pin-guard pins",
+ "real_rows_dir": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+ "routes_json": "experiments/own-xpu-runtime/stage2/packet58-onecard-diet-micro/lineage-inputs/routes-p100b.json",
+ "routes_json_sha256": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+ "control_rule": "no prior one-card micro datum exists for p58ag_exp; the window runs a fresh production-only pass (cold + warm) and the interleaved production medians must agree with it within 10 %",
+ "packet193_two_card_datum": {
+  "exp_diet_cold_ratio": 0.784,
+  "exp_diet_warm_ratio": 0.77,
+  "production_cold_us": 73.85,
+  "production_warm_us": 46.77,
+  "saved_us_per_layer_cold": 15.9,
+  "saved_us_per_layer_warm": 10.8
+ },
+ "parents": [
+  {
+   "name": "packet100b real routes (384 x 10, fixtures 1/16/32/64)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/routes.bin",
+   "parent_digest": "01c8c616990f4dc406f497c9c14da5920aa1b49326ff312a5c2c82a32856c605",
+   "bytes": 46080
+  },
+  {
+   "name": "packet100b route manifest",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet100b-route-capture/evidence/route-inputs.json",
+   "parent_digest": "f91ad7fd56d87eeecfb5f3abf1b01eb6260f72d5513f99e4e6237714fccd2973",
+   "bytes": 2304489
+  },
+  {
+   "name": "packet162b real gate/up rows layer0 (experts 0-9), raw GGUF 820-B rows",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer0.bin",
+   "parent_digest": "eeed9d3bab0c8652c344d363174032c1f197944e7314cdf73fe974493ebc6628",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b real gate/up rows layer24 (experts (37i+19)%512)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs/layer24.bin",
+   "parent_digest": "77bdd24006f6f5425b32e78ddfc50e34faa670b5b655070c4c59ed25aa35f52b",
+   "bytes": 10496000
+  },
+  {
+   "name": "packet162b inputs receipt",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/micro-prep/inputs.json",
+   "parent_digest": "4d8d92220a9f7b3b9ad2bafeb970cff36dbb8c21d1729e49f6b332bb5b7da30d",
+   "bytes": 13817
+  },
+  {
+   "name": "packet193 measured two-card diet datum (exp-diet 0.784x cold / 0.77x warm; provenance only, never a control for the one-card kernel)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet193-expert-diet/DO-NOT-REPEAT.md",
+   "parent_digest": "bc7949a116a6e7ba5cfd61079d77c626b2aa2b5769f746e6299590e20be1dde1",
+   "bytes": 6073
+  },
+  {
+   "name": "packet193 device samples (two-card stream, different schema; the analyzer must refuse it)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet193-expert-diet/evidence/diet-B1/samples.jsonl",
+   "parent_digest": "7478f4e4586edfbb2d99566c4f55b085ec3f4060d45072751f8794fbd8a00a26",
+   "bytes": 34475517
+  },
+  {
+   "name": "packet193 routes json (identical derivation)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet193-expert-diet/lineage-inputs/routes-p100b.json",
+   "parent_digest": "17858c97590c7a8996f8e4904f4185242efa6e19b32ebcf96973abdecff7d0e8",
+   "bytes": 15837
+  },
+  {
+   "name": "packet58-onecard-cache23-chain runtime selection (experts=wide64+halfcache, the record line)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/runtime-selection.json",
+   "parent_digest": "43488e31f6ab3b18e912d1d78e13b5cf4cc356079e8c99003bdac7efe0d836fc",
+   "bytes": 537
+  }
+ ]
+}
