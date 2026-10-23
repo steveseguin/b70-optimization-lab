@@ -1,0 +1,50 @@
+{
+  "schema": "packet58diet.compiler-proof.v1",
+  "passed": true,
+  "device_executed": false,
+  "checked_utc": "2026-10-23T06:19:54Z",
+  "host_compilers_before": 0,
+  "active_units_before": [
+    "window-p194b-driver.service"
+  ],
+  "compiler": "/usr/bin/g++ -fsyntax-only (host, OWN_RT_HOST_ONLY)",
+  "rows": [
+    {
+      "name": "onecard",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-fsyntax-only",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet/build/onecard_stride.cpp"
+      ],
+      "returncode": 0,
+      "seconds": 0.49,
+      "warnings": 0,
+      "stderr_tail": "",
+      "source": "#define OWN_RT_HOST_ONLY 1\n#include \"p49b_gemv.hpp\"\nstatic_assert(p49bgemv::layout(iq3::Type::IQ2_S,2560).row_bytes==820,\"one-card IQ2_S K=2560 row stride\");\nstatic_assert(p49bgemv::layout(iq3::Type::IQ2_S,2560).halves==800,\"one-card halves offset\");\nint main(){}\n"
+    },
+    {
+      "name": "twocard",
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-fsyntax-only",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/native-pinned/checked/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-diet/build/twocard_stride.cpp"
+      ],
+      "returncode": 0,
+      "seconds": 0.47,
+      "warnings": 0,
+      "stderr_tail": "",
+      "source": "#define OWN_RT_HOST_ONLY 1\n#include \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/native-pinned/checked/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p90_layout.hpp\"\nstatic_assert(p90::expert_stride(2560)==840,\"two-card expanded row stride\");\nstatic_assert(p49bgemv::layout(iq3::Type::IQ2_S,2560).halves==800,\"two-card halves offset\");\nint main(){}\n"
+    }
+  ],
+  "root_free_bytes": 28707926016
+}

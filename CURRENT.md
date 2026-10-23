@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 02:45 EDT — one-card diet port STOPPED at step 1 (packet58-onecard-diet): the one-card gate/up kernel is a different kernel.**
+The one-card record line runs `p58ag_exp::Kernel<IQ2_S,2560,64,false,true,0,Cached>` (820 B rows, 16-bit halves decoded through the 65,536-entry
+halfcache table, indirect expert-cache slots, 20 bindings), not the two-card `p90exp` kernel (840 B rows, FP32 halves, direct pointers) that
+packet193's diet header diets; `p90exp::validate` refuses the one-card stride. The "byte-identical dispatch tables" of one-card synthesis 1 were
+the packet26 small-kernel classes, not the expert gate/up class. Per the stop rule the packet reports with stride/binding proofs (compiler
+`static_assert` receipts) and proposes no row. Next: a packet193-shaped micro that applies the same three exact transformations to
+`p58ag_exp::wide_chains` (keeping the table decode and slot resolution) with device byte identity at ≤ 0.85×, then the engine screen.
+Packet `stage2/packet58-onecard-diet/` (note `notes/2026-10-23-packet58-onecard-diet.md`).
+
 **October 23, 02:15 EDT — packet194: the exact expert instruction diet wins +1.96 % in the two-card record engine (lane B, 05:56–06:11 UTC).**
 One load k3x/k3x+diet/k3x/k3x+diet/k3x = 62.168/**63.474**/62.155/**63.413**/62.193 tok/s; every view 13/13 exact, draft proposals and acceptance
 identical, drift 0.06 %; gate/up saving 10.8 (rank 0) and 11.8 (rank 1) µs per layer from the host scopes; hit cycle 13.54 → 13.28 ms, miss

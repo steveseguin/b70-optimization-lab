@@ -1,0 +1,127 @@
+{
+  "schema": "packet58diet.layout-mismatch.v1",
+  "passed": true,
+  "device_executed": false,
+  "compiler_runs": 0,
+  "checked_utc": "2026-10-23T06:19:08Z",
+  "verdict": "STOP: packet193 exp-diet (p193diet::GateUp) is a diet of the two-card p90exp kernel on 840-byte FP32-expanded rows with direct pointers and 19 bindings; the one-card record line dispatches p58ag_exp::Kernel on 820-byte rows with 16-bit halves decoded through the halfcache table (binding 20) and indirect expert-cache pointer slots. The header cannot be registered as-is; a one-card diet would be a new kernel (re-derivation), which the brief forbids.",
+  "onecard": {
+    "record_selection_experts": "wide64+halfcache",
+    "chain_selection_experts": "wide64+halfcache",
+    "kernel": "p58ag_exp::Kernel<IQ2_S,2560,64,false,true,0,Cached=true>",
+    "dispatch": "p58ag::expert (p58ag_submit.cpp)",
+    "row_layout": {
+      "codes": 0,
+      "high": 640,
+      "scales": 720,
+      "halves": 800,
+      "row_bytes": 820,
+      "halves_bytes_per_step": 2
+    },
+    "bindings": 20,
+    "halves_decode": "halfcache[bits] (65,536-entry exact FP32 table, p[19])",
+    "pointer_resolution": "p58::resolve(base, offset, span, b.indirect) over p58::Pointer slots",
+    "validate": "p39::validate (rb = layout.row_bytes)"
+  },
+  "twocard": {
+    "kernel": "p90exp::Kernel<IQ2_S,2560,64,false,true> (packet103/136/189/194 record gate/up)",
+    "row_stride_bytes": 840,
+    "halves_bytes_per_step": 4,
+    "halves_decode": "bits_float(load32(w+halves+4*step)) (FP32 expanded at load)",
+    "bindings": 19,
+    "pointer_resolution": "direct: (stream?peer:w)+source*rb",
+    "validate": "p90exp::validate (requires rb == expert_stride)"
+  },
+  "diet": {
+    "header": "packet193-expert-diet/p193_diet.hpp",
+    "pinned_sha256": "aab37609be226ead4a255a44d87c1afb93e6d64d7819457c4aeecd33bcb750d8",
+    "binds_through": "p90exp::Kernel::bind -> rb = 840",
+    "reads_halves": "load32(w+l.halves+4*step)",
+    "indirect_support": false,
+    "halfcache_binding": false
+  },
+  "mismatch": {
+    "row_stride_bytes": [
+      820,
+      840
+    ],
+    "halves_bytes_per_step": [
+      2,
+      4
+    ],
+    "bindings": [
+      20,
+      19
+    ],
+    "pointer_resolution": [
+      "indirect p58::Pointer slots",
+      "direct"
+    ],
+    "validate": [
+      "p39::validate rb==820",
+      "p90exp::validate rb==840"
+    ]
+  },
+  "premise_check": {
+    "claim": "\"the one-card line uses the same expert dispatch tables as the two-card record (one-card synthesis 1 diffed them byte-identical)\"",
+    "finding": "the byte-identical table is dispatch-speed6.json (packet26 dense/registry classes); the expert gate/up kernel is chosen by the selection key experts=wide64+halfcache -> p58ag::expert, outside that table"
+  },
+  "pins": {
+    "onecard_layout": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_gemv.hpp",
+      "sha256": "fa47b999ef28343e725aed83ce4e8f7df3cf258ee7387794f07087ed77dc5d40",
+      "lines_asserted": 3
+    },
+    "onecard_virtual_bind": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_expert.hpp",
+      "sha256": "5c32c18080779626f878cf9c79dcb1e61f21eb13fc5a62f77082fb75ad715a81",
+      "lines_asserted": 1
+    },
+    "onecard_kernel": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/native/generated/p58ag_expert.hpp",
+      "sha256": "893942377cc85ea347cb58d4627a0326b958a15ca5ddcf4246f6090822d0849e",
+      "lines_asserted": 4
+    },
+    "onecard_dispatch": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/native/generated/p58ag_submit.cpp",
+      "sha256": "59cfa5ac6711a1d12526d1df4bf1a73995eb91bee10559aa9ec91148af2a55bb",
+      "lines_asserted": 5
+    },
+    "onecard_entry": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/native/generated/main.cpp",
+      "sha256": "dd887b5c69ac793afb540715a7aa2fcb38a4ee5bea9e8ebf97046b3494446bf4",
+      "lines_asserted": 3
+    },
+    "onecard_selection": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23/runtime-selection.json",
+      "sha256": "a6a1669a3167ddcda9bdaa4b83a87d95a117f0c228235136b1a80e1dfd31e9ab",
+      "lines_asserted": 0
+    },
+    "onecard_chain_selection": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard-cache23-chain/runtime-selection.json",
+      "sha256": "43488e31f6ab3b18e912d1d78e13b5cf4cc356079e8c99003bdac7efe0d836fc",
+      "lines_asserted": 0
+    },
+    "twocard_layout": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/native-pinned/checked/experiments/own-xpu-runtime/stage2/packet189-twocard-k3x/p90_layout.hpp",
+      "sha256": "dc41f73e9ec7770a32d284546c0c0a968237cbd22f27198b74bcdaaaca1aff0e",
+      "lines_asserted": 1
+    },
+    "twocard_kernel": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p90_expert.hpp",
+      "sha256": "df2a026fbf44065aacc9842a7579507cf6ae5e98fccae411689fe3d17becbba2",
+      "lines_asserted": 4
+    },
+    "diet_header": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet193-expert-diet/p193_diet.hpp",
+      "sha256": "aab37609be226ead4a255a44d87c1afb93e6d64d7819457c4aeecd33bcb750d8",
+      "lines_asserted": 4
+    },
+    "packet194_dnr": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/DO-NOT-REPEAT.md",
+      "sha256": "40bf4904650e427668062e565e98545852621b06a21a52f54469e9dac7bd6b98",
+      "lines_asserted": 1
+    }
+  },
+  "missing_lines": []
+}
