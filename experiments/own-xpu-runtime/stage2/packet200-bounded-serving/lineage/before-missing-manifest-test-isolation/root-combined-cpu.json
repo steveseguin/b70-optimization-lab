@@ -1,0 +1,59 @@
+{
+  "schema": "packet200.root-combined-cpu.v1",
+  "passed": true,
+  "device_executed": false,
+  "native_executed": false,
+  "utc": "2026-10-23T19:24:33.872341+00:00",
+  "rows": [
+    {
+      "name": "worker",
+      "returncode": 0,
+      "seconds": 1.4448192649288103,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15,24-31",
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving",
+        "-p",
+        "test_device_worker.py",
+        "-v"
+      ],
+      "log": "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/root-worker-cpu-tests.log",
+      "log_sha256": "db5e36dacc363c4714ad0117d969ea67b59572a5903770634f91c040dd8bd929"
+    },
+    {
+      "name": "window",
+      "returncode": 0,
+      "seconds": 0.0721237639663741,
+      "command": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15,24-31",
+        "/home/steve/.venvs/vllm-xpu/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet200-window",
+        "-p",
+        "test_window.py",
+        "-v"
+      ],
+      "log": "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/root-window-cpu-tests.log",
+      "log_sha256": "5c1dc6aca1ec3592c61ddf1fef63c119c16394f465c6d8b27835844614258181"
+    }
+  ]
+}

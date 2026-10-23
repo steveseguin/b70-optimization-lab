@@ -1,0 +1,51 @@
+{
+  "schema": "packet200.window-scaffold-cpu.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T19:25:14.664766+00:00",
+  "operational_entrypoint_enabled": false,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "privileged_calls": false,
+  "tests": 11,
+  "seconds": 0.016,
+  "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/ops/packet200-window -p test_window.py -v",
+  "frozen_helper_files_verified": 20,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/ops/packet200-window/window.py": "0c311165ab1626e2438aa8965337a1ee534d1c09a59f40a88de2f1063ef4be7e",
+    "experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json": "efe1e79ace454da133547c5a318ccce4a8c7d8e4c3e7552a5a0e3169ac4b0400",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_window.py": "9eb617925046be139e1b6b7ea6f0a5336b571d02e8083131ecec5d28eb4c36cb",
+    "experiments/own-xpu-runtime/ops/packet200-window/README.md": "5bc187eefd3d1aad123771c0f272571d69ef45e824082bca83c526f24d5e27e5"
+  },
+  "worker_interface": "Frozen worker actual cpu_plan validated; two-phase closeout source matched, unitexit0 independently mandatory",
+  "scope": "Private temporary fixture plan/terminal checks only; no live --check/--run or worker execution",
+  "pending": [
+    "Root-written operational manifest/seal and worker gates",
+    "Separate worker live CLI assignment",
+    "Final fault-review capture and stage identity binding",
+    "Operational copy+delta adapter for pinned p199 topology; scaffold only currently"
+  ],
+  "storage_metadata": {
+    "p199_remaining_bin_bytes": 147009584,
+    "p199_all_files_bytes": 147737106,
+    "p199_file_allocated_bytes": 148070400,
+    "selected_older_ignored_trace_files": 1591,
+    "selected_older_ignored_trace_bytes": 64102987,
+    "selected_older_trace_allocated_bytes": 66449408,
+    "archived": false,
+    "pruned": false,
+    "qualification": "Metadata only; ignored does not mean disposable"
+  },
+  "log": "experiments/own-xpu-runtime/ops/packet200-window/cpu-tests.log",
+  "log_sha256": "698470dc636d79959b0152c90af33c7d7cccf876b2a25c8ca569267f9362c7ac",
+  "actual_cpu_plan_sha256": "64ec8a55605920f355f8996737ddc986d51008689bdf963f72d5f428a682a793",
+  "actual_cpu_contract_sha256": "cdd062b362c033abddd33a5aff8ac02183b3c07e87a6f28eeb51e92bd1da0fd4",
+  "staging_identity": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/planned-a",
+    "device": 66306,
+    "inode": 51944557,
+    "uid": 1000,
+    "mode": "0700"
+  },
+  "prior_candidate": "experiments/own-xpu-runtime/ops/packet200-window/lineage/before-activity-mode-review"
+}

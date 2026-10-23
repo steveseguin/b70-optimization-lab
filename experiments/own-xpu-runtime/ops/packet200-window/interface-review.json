@@ -1,0 +1,50 @@
+{
+  "schema": "packet200.window-worker-interface-review.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T19:29:52.114400+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "safety_preflight_called": false,
+  "operational_manifest_created": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/ops/packet200-window/window.py": "0c311165ab1626e2438aa8965337a1ee534d1c09a59f40a88de2f1063ef4be7e",
+    "experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json": "efe1e79ace454da133547c5a318ccce4a8c7d8e4c3e7552a5a0e3169ac4b0400",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_window.py": "9eb617925046be139e1b6b7ea6f0a5336b571d02e8083131ecec5d28eb4c36cb",
+    "experiments/own-xpu-runtime/ops/packet200-window/README.md": "5bc187eefd3d1aad123771c0f272571d69ef45e824082bca83c526f24d5e27e5",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py": "1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_device_worker.py": "2e77102590253aa1f096b9e4780caffd3067758f77c4b052038b683571ad319e",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/README.md": "d594fc6e5cb1ec8aedb449e779e04a423f009cc4cfd0bf261efc5e087a1bccfc"
+  },
+  "actual_plan": {
+    "path": "experiments/own-xpu-runtime/ops/packet200-window/actual-cpu-plan.json",
+    "sha256": "95ef80738a0283738c31c7bb1d834c56b3ccafe6020142a9019935c46c9f0839",
+    "canonical_digest": "2c2a705ade948bd3a6ea988cc861133bc5976dc9c9ff897009bc89cfae737834",
+    "source_files": 231,
+    "frozen_helpers": 20
+  },
+  "contract": {
+    "path": "experiments/own-xpu-runtime/ops/packet200-window/actual-cpu-contract.json",
+    "sha256": "44414b77ee77525d115fbf81f977c3d38d8f8fb55a83cf1626154bfd5b359cb3"
+  },
+  "staging_identity": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/planned-a",
+    "device": 66306,
+    "inode": 51944557,
+    "uid": 1000,
+    "mode": "0700"
+  },
+  "staging_children": [],
+  "reviewed": [
+    "Future worker argv explicitly preserves exact launch/mapped-cold-start activity mode; operationalCLI remains absent",
+    "Real frozen worker cpu_plan accepted by scaffold with231 source files and20 pinned inherited helpers",
+    "Private staging0700uid1000/dev/inode retained; no output/checkpointchildren created",
+    "Terminal requires matching pre-completion and finalack phaseflags, plan/count/stopped/diagnostic identity",
+    "FinalpassedJSON cannot override failed workerunitexit, terminalclose error or postcompletion evidencefailure",
+    "Normal0..16 lifecycle closure retained; native request-limit reason requires16; signal/EOF excluded from normal restoration",
+    "No inferred live admission: monitoredforecast/provenfalse claims preserved; no operationalmanifest generated",
+    "Missing-manifest regression uses isolated temporary absent path and explicit manifest argument; only test source closure changed"
+  ],
+  "remaining": "Root-owned operational gates/seal, explicit worker liveCLI assignment and controller execution adapter remain future work. This is CPU source/interface evidence only.",
+  "prior_receipt": "experiments/own-xpu-runtime/ops/packet200-window/lineage/before-missing-manifest-test-isolation"
+}

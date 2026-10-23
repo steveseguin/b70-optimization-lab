@@ -1,0 +1,62 @@
+{
+  "schema": "packet200.worker-independent-cpu-review.v1",
+  "passed": true,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "queue_changed": false,
+  "live_admission_ready": false,
+  "tests": {
+    "count": 26,
+    "result": "OK",
+    "elapsed_seconds": 1.333,
+    "command": "nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest test_device_worker -v"
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py": "1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_device_worker.py": "9c3b11bc2f5be19134653ce015379c6c3fbd4b1d09083cbe9683b691d1cb1391",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/README.md": "d594fc6e5cb1ec8aedb449e779e04a423f009cc4cfd0bf261efc5e087a1bccfc",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/worker-cpu-tests.json": "064aeaf449ed4e44d39f8bac892e15c006b02f3172a17510cc4f8b008c008baf",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/independent-worker-tests.log": "21218ff8e644521afb1d01d70daa86f11a822c37b8bc2374da170b1db95af33b",
+    "experiments/own-xpu-runtime/integration/bounded_serving_profile.py": "8ed8a86c02630a5cfdd9704e5692f2252efe805bf9194b045048b9a625ae34f2",
+    "experiments/own-xpu-runtime/integration/bounded_serving_session.py": "61fda8c8a83fb85287b172c50078842025bfcab4906b0ae06b0f34f803431153",
+    "experiments/own-xpu-runtime/integration/native_diagnostics.py": "d5c5ec0426f33d36384b7a15d98648301a5b936da4411a469905aa6d7b1d5f68",
+    "experiments/own-xpu-runtime/integration/bounded_evidence.py": "cc4cb531189ad1fa268622ce211337595361c764f58d6eaa65b946c46533f1bf",
+    "experiments/own-xpu-runtime/integration/initial_idle_origin.py": "7074009460c176a022f6a0439b02c2758bfc6e6fb53358d68810d2ebcc3b0d40",
+    "experiments/own-xpu-runtime/integration/owner_idle_provenance.py": "9edf5828bc9cf95b0757d4914186ce15476fccd27d7b8ea1ec71c283057adeb0",
+    "experiments/own-xpu-runtime/integration/session_lifecycle.py": "0956d849c5a529eeed0afb285c4983d1992ab509a1a3871c9b5029265f8e2c24",
+    "experiments/own-xpu-runtime/integration/native_checkpoint_store.py": "271a4e1abee208bd10276919aca0f3e3444ae31aa44aa5e8b1cbc7bd778ffc10",
+    "experiments/own-xpu-runtime/integration/request_front/client_v2.py": "d316cf76bf66bf891a19c9cf01300028c1ba08950ec7d9949bf5970e70635f0b",
+    "experiments/own-xpu-runtime/stage2/packet199-chat-parking/device_worker.py": "6735e527379f331376261adefa5d89790e5994073c513b2c7713478b40c05a42",
+    "experiments/own-xpu-runtime/stage2/packet198-postreply-checkpoint/device_worker.py": "36e399927de28fb04fcf1f70ed2202a198faa6a52cb968aa9dcd942f2ebb49ea",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/lane_admission.py": "fcd61deafe52b170cd20c649ff5690d6a92a1e0584db90ed982e54781752e4f4",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/drain_gate.py": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/chain_devices.py": "81f34a2df9917af22b60dd0c7df9e32c5be3318cd15e05a3dde047904a340d83",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native_env.py": "150b2ce2b9388d015eb87c2b33e32138feeea6390280a72bda61825e1deb4f1d",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/exec_limits.py": "4cd56fe75aed545f572f3ef6a484f6794e529f27c6e1adcd04bf916a51288d89"
+  },
+  "findings_resolved": [
+    "Durable pre-completion proof precedes permit/lease completion; post-completion acknowledgement failure is distinct from retained ownership.",
+    "Initial/finish errors preserve original cause and bounded failure evidence or WorkerFailure exposure.",
+    "Deterministic pre-Popen refusal cannot fabricate unknown child ownership.",
+    "Raw fault journal slice and bounded excerpt/cursor preserved before guard refusal.",
+    "Canonical wrapper/nested chat/provenance origins checked before native startup."
+  ],
+  "reviewed": [
+    "CLI remains plan-only; execute requires future fixed operational manifest/plan/source admission.",
+    "Sole Popen intercepted with full actual argv; stderr diagnostics attach before readiness and device-registration scans.",
+    "Non-daemon helper placement inherited by pipe reader/capture; diagnostics startup uncertainty retains original endpoint.",
+    "Original incident object preserved; outer cooperative SIGTERM at most once; no restart/kill/normal-close after runtime incident.",
+    "Retained owner/capture/pipe/start uncertainty keeps store/evidence/reservation/drain resources; no timeout-driven context unwind.",
+    "Normal0..16 requests equal controls, integer one model load, no pending/discard, native exit0, diagnostics EOF and passive/native shutdown proof.",
+    "Two-phase evidence distinguishes physical/coordination completion from final receipt failures; controller also needs actual exit0.",
+    "Explicit monitored-forecast storage admission remains distinct from hard bound and frozen profile readiness stays false."
+  ],
+  "remaining_scope": [
+    "No real native/model/device owner executed. Worker session/front tests use synthetic doubles; one integration test uses actual anonymous pipe and production diagnostics/evidence components.",
+    "Physical/drain/journal/unit operations were mocked or not invoked; real live admission and controller operational interface remain root-owned future work.",
+    "Unexpected pipe/read/start or blocked filesystem state can remain retained; no forced cleanup or guarantee of producer progress.",
+    "768MiB is monitored forecast, not a certified driver/native filesystem quota."
+  ]
+}

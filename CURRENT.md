@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 15:28 EDT — bounded interactive coordinator passes37 CPU checks.**
+The worker's26 checks and independent review cover one-owner launch interception, real pipe draining, first-error retention
+and durable completion before reservation release. Eleven outer-window checks require matching pre-completion/final receipts,
+successful unit exit and separate physical drain. The private staging parent is empty; no operational manifest or device
+window exists. The idle-provenance commit has green CI, and all three restore28 applications remain running. Additive execution
+adapters are now being prepared around the frozen worker and contract.
+[CPU result](experiments/own-xpu-runtime/stage2/packet200-bounded-serving/CPU-CLOSEOUT.md).
+
 **October 23, 15:16 EDT — fresh-owner idle provenance passes16 CPU checks and independent review.**
 The optional clock proof now binds a fresh private output to the observed owner, exact command/environment and actual loaded
 clock-symbol providers. Review fixed production environment compatibility and runtime ELF symbol-table coverage. Tests use

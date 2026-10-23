@@ -1,0 +1,45 @@
+{
+  "schema": "packet200.worker-cpu-tests.v1",
+  "passed": true,
+  "utc": "2026-10-23T19:27:57.500322+00:00",
+  "native_executed": false,
+  "device_executed": false,
+  "listener_started": false,
+  "services_changed": false,
+  "tests": 26,
+  "elapsed_seconds": 1.324,
+  "command": "nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/vllm-xpu/bin/python -B -m unittest discover -s experiments/own-xpu-runtime/stage2/packet200-bounded-serving -p test_device_worker.py -v",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/device_worker.py": "1e2832c190608ad4227cecf1689a919fc7d04d7c5a358f2a1ffa78178c06fd0f",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/test_device_worker.py": "2e77102590253aa1f096b9e4780caffd3067758f77c4b052038b683571ad319e",
+    "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/README.md": "d594fc6e5cb1ec8aedb449e779e04a423f009cc4cfd0bf261efc5e087a1bccfc"
+  },
+  "log": {
+    "path": "experiments/own-xpu-runtime/stage2/packet200-bounded-serving/evidence/worker-cpu-tests.log",
+    "sha256": "0a74e6588f49328b1c5d06662609f2146f99e8823b47eda4c5875081bb35f748"
+  },
+  "scope": "Real frozen CPU profile/source checks and pinned Safety constructor only; one real os.pipe+PipeDiagnostics+BoundedEvidence case. Popen intercepted; owner/front/session/safety runtime mocked. No native or service execution.",
+  "gates": [
+    "real full-argv interception",
+    "new and nested namespace refusal",
+    "finite AS/placement refusal before spawn boundary",
+    "one real pipe EOF/join/capture",
+    "normal0/2/16 requests",
+    "single close/exact model and terminal counts",
+    "partial admission",
+    "preflight original error without writer",
+    "unknown spawn/startup/live-owner/capture retention",
+    "one SIGTERM and original error",
+    "raw fault evidence before refusal",
+    "provenance contradiction no fallback",
+    "durable pre-completion before release",
+    "completion guard retains open control writer",
+    "post-completion evidence failure does not invent retained markers"
+  ],
+  "limitations": [
+    "No live manifest/operational admission or queued window.",
+    "Monitored forecast is not a certified storage quota.",
+    "Unit exit0 and pre-completion/final artifacts are all required by future controller."
+  ],
+  "missing_manifest_test_isolated": true
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "packet200.window-scaffold-cpu.v1",
+  "passed": true,
+  "created_utc": "2026-10-23T19:13:14.387427+00:00",
+  "operational_entrypoint_enabled": false,
+  "native_executed": false,
+  "device_executed": false,
+  "services_changed": false,
+  "privileged_calls": false,
+  "tests": 9,
+  "seconds": 0.005,
+  "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/ops/packet200-window -p test_window.py -v",
+  "frozen_helper_files_verified": 20,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/ops/packet200-window/window.py": "7a1f89a70918d39877542c4924531a88fa94fd7de763aec594e86a57638d3e41",
+    "experiments/own-xpu-runtime/ops/packet200-window/helper-pins.json": "efe1e79ace454da133547c5a318ccce4a8c7d8e4c3e7552a5a0e3169ac4b0400",
+    "experiments/own-xpu-runtime/ops/packet200-window/test_window.py": "d4f276a5a54186aee0a5c3c7aff62613dbc6c28718f95445ad41a70e6f86defd",
+    "experiments/own-xpu-runtime/ops/packet200-window/README.md": "642cdd15e3273ffcbeb4c32d1455929576e0f96487cd073b4571223af83509bb"
+  },
+  "worker_interface": "First packet200 source checkpoint; final frozen worker plan/terminal integration review still required",
+  "scope": "Private temporary fixture plan/terminal checks only; no live --check/--run or worker execution",
+  "pending": [
+    "Root-written operational manifest/seal and worker gates",
+    "Separate worker live CLI assignment",
+    "Final fault-review capture and stage identity binding",
+    "Operational copy+delta adapter for pinned p199 topology; scaffold only currently"
+  ],
+  "storage_metadata": {
+    "p199_remaining_bin_bytes": 147009584,
+    "p199_all_files_bytes": 147737106,
+    "p199_file_allocated_bytes": 148070400,
+    "selected_older_ignored_trace_files": 1591,
+    "selected_older_ignored_trace_bytes": 64102987,
+    "selected_older_trace_allocated_bytes": 66449408,
+    "archived": false,
+    "pruned": false,
+    "qualification": "Metadata only; ignored does not mean disposable"
+  }
+}
