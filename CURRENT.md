@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 17:13 EDT — mixed streaming client passes independent review and 25 CPU checks.**
+The next sixteen-turn test will use seven streamed and nine ordinary replies. Every result must match the prior native
+run's complete output, consumed prompt, text and usage; original token oracles and resumed/fresh checks remain. Review fixed
+partial-response closure and deadline enforcement during trickled input. The worker preparation commit84810a6d5 has green CI.
+All three restore29 applications remain running. A separate privileged filesystem helper is completing review before it
+archives and verifies closed compiler caches; no deletion or new device window has occurred.
+[Client checks and limits](experiments/own-xpu-runtime/stage2/packet201-streaming-serving/CLIENT.md).
+
 **October 23, 17:05 EDT — streaming session ready; real-model client preparation continues.**
 The tiny native proof and guarded session composition are committed as dcf817d70, with all three CI workflows green.
 The new streaming worker passes 31 CPU checks and independent review; it retains the successful pilot's launch, ownership
