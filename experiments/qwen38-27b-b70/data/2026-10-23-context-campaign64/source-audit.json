@@ -1,0 +1,1598 @@
+{
+  "schema": "ctxkeeper.campaign64-source-audit.v1",
+  "audited_at": "2026-10-24T02:31:56.489254+00:00",
+  "quality_pass": false,
+  "promotion": false,
+  "verdict": "All40 bugs repaired and rule-clean; retrospective audit omits four of seven required early bugs. Failure is incomplete historical coverage, compounded by misleading NOTES identities and one archive-only failed cut. No reviewer experiment adopted.",
+  "scope": {
+    "message_numbering": "1-based original full client messages; archive preserves messages3..585 with same n. Final request has607 messages. NOTES version numbers are 1-based successful snapshot order; failed cut at455 has no snapshot.",
+    "evidence_accessibility": "Audit uses original model-visible opening/receipts/actions, all18 persisted NOTES, raw delta events, frozen proxy source, final artifacts and existing grader. The audit request arrives at601, after all early receipts are archived; pi could use archive recall but did not do so then. The first notes writer saw early receipts, unlike partial C61-C63 fixtures.",
+    "limits": [
+      "No new model run, GPU work, network access, grader rerun or final container mutation. Existing grader results inspected rather than independently reexecuted.",
+      "Inspecting all NOTES and all bug receipt identities does not prove every diagnostic prose claim or arbitrary future query correct. This audit records concrete errors and corrections, not a per-token fidelity score.",
+      "C20b is historical context with changed keeper/server settings, not a causal quality or speed control.",
+      "C60 completion clarification remains: opening explicitly authorizes stopping when queue empty; bare job-done wording is not a separate unsupported-completion failure. C64 quality fails because AUDIT omits observed BUG identities."
+    ]
+  },
+  "sources": [
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/c64-K32V-check-s0.json",
+      "sha256": "00838998438c5d0c0a7232a4a78ce56932dae315e4ca70ddf89bdd771bdc8f02"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/notes-history.jsonl",
+      "sha256": "aca6e5f6c148268abf6b15fb97234be0eab853a7f631d62139b06aa75fb3f90c"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/events.jsonl",
+      "sha256": "16a7b2aeecc1a752f938d7d8295e866c4ac32b245f2bba89e3d56e1fdf5ac23d"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/archive.jsonl",
+      "sha256": "ea9da6e45bd9ef1bd67ab8cf0092f667152bb8eb8dcd5d47567e592cb392f43f"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/calls.jsonl",
+      "sha256": "2359823720a4e0158b315d463dd7dc32d99205a0a37994072a2a8b34b3bd88f0"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/state.json",
+      "sha256": "6dd619ec23192162de29ac8d2d5f533d4efc6d0773a0915ef90f404fc86a9d5a"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/verifier/details.json",
+      "sha256": "72cde126a7f57dc76f2db1012699cc036fcc57b32784a139ed15bee01dc176d0"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/tools/ctxkeeper/ctxkeeper.py",
+      "sha256": "2e00eda4b74ec009eadaabd47b5c04518d6191a9a4c97074e2450dca7270c5d0"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/tools/ctxkeeper/notesdelta.py",
+      "sha256": "e9687faa47b6a9b2cbd69d84b98973b4234f0a7610a26d104e1b1af1d0b7859a"
+    }
+  ],
+  "final_grading": {
+    "reported": {
+      "n": 40,
+      "fixed": 40,
+      "clean": 40,
+      "rules": {
+        "R1": {
+          "applies": 38,
+          "kept": 38
+        },
+        "R2": {
+          "applies": 33,
+          "kept": 33
+        },
+        "R3": {
+          "applies": 27,
+          "kept": 27
+        }
+      },
+      "audit": {
+        "asked": 7,
+        "right": 3,
+        "lines": 3,
+        "other_tickets": 0
+      },
+      "void": false,
+      "tickets_fetched": 44,
+      "score": 1.0
+    },
+    "per_ticket_all_fixed_and_clean": true,
+    "tests_touched": [],
+    "stray_unmarked_lines": [],
+    "violations": [],
+    "recipes_wrongly_listed": [],
+    "tickets_delivered_twice": 0,
+    "fixes_lines": 33,
+    "recipe_lines": 10,
+    "score_limitation": "score1.0/40clean covers repair and standing-rule checks; separate seven-line AUDIT gate is3/7, so campaign quality_pass remains false. All44 fetched means35 was not skipped."
+  },
+  "full_ticket_receipt_matrix": [
+    {
+      "ticket": 1,
+      "type": "BUG",
+      "function": "split_at",
+      "message": 5,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 5,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "clean": true
+      }
+    },
+    {
+      "ticket": 2,
+      "type": "BUG",
+      "function": "sample",
+      "message": 14,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 11,
+          "bad": 0
+        },
+        "clean": true
+      }
+    },
+    {
+      "ticket": 3,
+      "type": "NOTICE",
+      "function": null,
+      "message": 23,
+      "final_grader": null
+    },
+    {
+      "ticket": 4,
+      "type": "BUG",
+      "function": "substrings_indexes",
+      "message": 25,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 5,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 5,
+      "type": "BUG",
+      "function": "ichunked",
+      "message": 32,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 7,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 6,
+      "type": "BUG",
+      "function": "time_limited",
+      "message": 71,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 7,
+      "type": "BUG",
+      "function": "numeric_range",
+      "message": 87,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 18,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 8,
+      "type": "BUG",
+      "function": "classify_unique",
+      "message": 105,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 14,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 9,
+      "type": "NOTICE",
+      "function": null,
+      "message": 117,
+      "final_grader": null
+    },
+    {
+      "ticket": 10,
+      "type": "BUG",
+      "function": "strictly_n",
+      "message": 119,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 5,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 11,
+      "type": "BUG",
+      "function": "adjacent",
+      "message": 137,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 10,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 12,
+      "type": "BUG",
+      "function": "chunked_even",
+      "message": 148,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 2,
+        "tests": {
+          "run": 8,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 13,
+      "type": "BUG",
+      "function": "only",
+      "message": 165,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 14,
+      "type": "BUG",
+      "function": "constrained_batches",
+      "message": 175,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 5,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 15,
+      "type": "BUG",
+      "function": "set_partitions",
+      "message": 185,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 9,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 16,
+      "type": "NOTICE",
+      "function": null,
+      "message": 199,
+      "final_grader": null
+    },
+    {
+      "ticket": 17,
+      "type": "BUG",
+      "function": "all_equal",
+      "message": 201,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 8,
+        "tests": {
+          "run": 7,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 18,
+      "type": "BUG",
+      "function": "callback_iter",
+      "message": 219,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 6,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 19,
+      "type": "BUG",
+      "function": "subslices",
+      "message": 235,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 1,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 20,
+      "type": "BUG",
+      "function": "grouper",
+      "message": 245,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 6,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 21,
+      "type": "BUG",
+      "function": "mark_ends",
+      "message": 255,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 1,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 22,
+      "type": "BUG",
+      "function": "rlocate",
+      "message": 267,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 7,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 23,
+      "type": "BUG",
+      "function": "nth_combination",
+      "message": 277,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 24,
+      "type": "BUG",
+      "function": "intersperse",
+      "message": 297,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 6,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 25,
+      "type": "BUG",
+      "function": "divide",
+      "message": 311,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 26,
+      "type": "BUG",
+      "function": "nth_combination_with_replacement",
+      "message": 323,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 27,
+      "type": "BUG",
+      "function": "iter_except",
+      "message": 333,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 5,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 28,
+      "type": "BUG",
+      "function": "sliding_window",
+      "message": 343,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 29,
+      "type": "BUG",
+      "function": "circular_shifts",
+      "message": 353,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 6,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 30,
+      "type": "BUG",
+      "function": "gray_product",
+      "message": 363,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 31,
+      "type": "BUG",
+      "function": "unzip",
+      "message": 381,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 3,
+        "tests": {
+          "run": 5,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 32,
+      "type": "BUG",
+      "function": "sieve",
+      "message": 403,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 33,
+      "type": "BUG",
+      "function": "factor",
+      "message": 431,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 2,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 34,
+      "type": "BUG",
+      "function": "is_sorted",
+      "message": 442,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 1,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 35,
+      "type": "BUG",
+      "function": "windowed_complete",
+      "message": 484,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 36,
+      "type": "BUG",
+      "function": "convolve",
+      "message": 493,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 37,
+      "type": "BUG",
+      "function": "replace",
+      "message": 512,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 2,
+        "tests": {
+          "run": 8,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 38,
+      "type": "BUG",
+      "function": "polynomial_eval",
+      "message": 529,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 3,
+        "tests": {
+          "run": 1,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 39,
+      "type": "BUG",
+      "function": "distribute",
+      "message": 541,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 2,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 40,
+      "type": "BUG",
+      "function": "unique_in_window",
+      "message": 551,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 41,
+      "type": "BUG",
+      "function": "nth_or_last",
+      "message": 565,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 42,
+      "type": "BUG",
+      "function": "split_after",
+      "message": 577,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 43,
+      "type": "BUG",
+      "function": "unique_to_each",
+      "message": 587,
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 3,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    },
+    {
+      "ticket": 44,
+      "type": "AUDIT",
+      "function": null,
+      "message": 601,
+      "final_grader": null
+    }
+  ],
+  "early_audit_membership": [
+    {
+      "ticket": 1,
+      "function": "split_at",
+      "receipt_message": 5,
+      "edit_messages": [
+        11,
+        12
+      ],
+      "successful_test_messages": [
+        13,
+        14
+      ],
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 5,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "clean": true
+      },
+      "persisted_notes_versions_with_function": [],
+      "final_audit_present": false,
+      "loss_or_survival": "Raw first delta emits completed split_at under generic Ticket progress, then subsequent same-key entries replace it. Never occurs in any persisted NOTES."
+    },
+    {
+      "ticket": 2,
+      "function": "sample",
+      "receipt_message": 14,
+      "edit_messages": [
+        20,
+        21
+      ],
+      "successful_test_messages": [
+        22,
+        23
+      ],
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 11,
+          "bad": 0
+        },
+        "clean": true
+      },
+      "persisted_notes_versions_with_function": [],
+      "final_audit_present": false,
+      "loss_or_survival": "Raw first delta emits completed sample under generic Ticket progress, then subsequent same-key entries replace it. Never occurs in any persisted NOTES."
+    },
+    {
+      "ticket": 4,
+      "function": "substrings_indexes",
+      "receipt_message": 25,
+      "edit_messages": [
+        29,
+        30
+      ],
+      "successful_test_messages": [
+        31,
+        32
+      ],
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 5,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      },
+      "persisted_notes_versions_with_function": [],
+      "final_audit_present": false,
+      "loss_or_survival": "Original receipt and successful fix/test are before first cut. First delta omits substrings_indexes and incorrectly calls current ichunked ticket 4. Never occurs in persisted NOTES."
+    },
+    {
+      "ticket": 5,
+      "function": "ichunked",
+      "receipt_message": 32,
+      "edit_messages": [
+        64,
+        65
+      ],
+      "successful_test_messages": [
+        68,
+        69
+      ],
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 7,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      },
+      "persisted_notes_versions_with_function": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "final_audit_present": false,
+      "loss_or_survival": "First delta misnumbers current ichunked as ticket4. Second records fix applied/not yet verified. Successful test at69 is not incorporated at v3; stale unverified state persists through v10 then disappears in v11."
+    },
+    {
+      "ticket": 6,
+      "function": "time_limited",
+      "receipt_message": 71,
+      "edit_messages": [],
+      "successful_test_messages": [],
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      },
+      "persisted_notes_versions_with_function": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "final_audit_present": true,
+      "loss_or_survival": "Distinct ticket6 key enters v3; identity survives later compact completed list and final audit."
+    },
+    {
+      "ticket": 7,
+      "function": "numeric_range",
+      "receipt_message": 87,
+      "edit_messages": [],
+      "successful_test_messages": [],
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 18,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      },
+      "persisted_notes_versions_with_function": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "final_audit_present": true,
+      "loss_or_survival": "Distinct ticket7 key enters v3; identity survives later compact completed list and final audit."
+    },
+    {
+      "ticket": 8,
+      "function": "classify_unique",
+      "receipt_message": 105,
+      "edit_messages": [],
+      "successful_test_messages": [],
+      "final_grader": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 14,
+          "bad": 0
+        },
+        "R1": true,
+        "clean": true
+      },
+      "persisted_notes_versions_with_function": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "final_audit_present": true,
+      "loss_or_survival": "Distinct ticket8 key enters v3; identity survives later compact completed list and final audit."
+    }
+  ],
+  "first_delta_collision": {
+    "raw_changes": [
+      [
+        "ticket progress",
+        "1/44 done (split_at fixed: maxsplit logic replaced with `if maxsplit != -1: maxsplit -= 1; if maxsplit == 0: yield list(it); return` before `buf = []`; SplitAtTests OK)"
+      ],
+      [
+        "ticket progress",
+        "2/44 done (sample fixed: `if k <= 0` → `if k < 0` in more.py; SampleTests OK)"
+      ],
+      [
+        "ticket progress",
+        "3/44 done (NOTICE, no fix)"
+      ],
+      [
+        "ticket progress",
+        "4/44 in progress (BUG `ichunked`, tests `t IchunkedTests`)"
+      ]
+    ],
+    "raw_event_at": 1792806935.7,
+    "source_contract": [
+      "tools/ctxkeeper/notesdelta.py:98 fact_of normalizes name to lowercase.",
+      "tools/ctxkeeper/notesdelta.py:568 apply_delta maintains one STATE slot per name.",
+      "tools/ctxkeeper/notesdelta.py:762 replaces that slot for later changes, intentionally keeping latest state."
+    ],
+    "normalized_key": "ticket progress",
+    "cpu_replay_exactly_matches_snapshot1": true,
+    "cpu_replay_info": {
+      "changed": 3,
+      "added": 3,
+      "sums_corrected": [],
+      "mismatch": [],
+      "new_rules": 2,
+      "mismatch_at": [],
+      "steps": {
+        "ticket progress": 5,
+        "ichunked diagnosis": 2,
+        "t": 3
+      }
+    },
+    "interpretation": "Generic current-progress key was used to carry independent completed events. Intended last-value replacement removes first two useful historical facts. This is a representation/contract mismatch, not evidence of a parser implementation bug. Sequential changes to the same numeric state are legitimate, so globally banning duplicate keys would be wrong.",
+    "separate_model_error": "substrings_indexes4 never emitted; current ichunked5 misnumbered4. Preserving the raw repeated-key reply alone would not recover all seven correct audit identities."
+  },
+  "notes_versions": [
+    {
+      "version": 1,
+      "upto_message": 51,
+      "newly_cut_message_count_since_prior_success": 49,
+      "characters": 1185,
+      "at": 1792806935.7,
+      "audit": "New identity error: ticket4=ichunked (actual5). Completed1/2 emitted but same generic key overwrites them; completed4 omitted. Individual-test-pass claim not supported by test runner used.",
+      "early_bug_name_coverage": [
+        "ichunked"
+      ]
+    },
+    {
+      "version": 2,
+      "upto_message": 65,
+      "newly_cut_message_count_since_prior_success": 14,
+      "characters": 1439,
+      "at": 1792807027.4,
+      "audit": "Correct ichunked edit captured, verification still pending at this point; inherited ticket4 misnumbering and missing1/2/4.",
+      "early_bug_name_coverage": [
+        "ichunked"
+      ]
+    },
+    {
+      "version": 3,
+      "upto_message": 151,
+      "newly_cut_message_count_since_prior_success": 86,
+      "characters": 2832,
+      "at": 1792807104.0,
+      "audit": "Correct completed6/7/8/10/11 added. Successful ichunked test69 omitted, leaving inherited not-yet-verified claim. chunked_even float diagnosis asserted from ValueError although negative integer min_buffer was actual cause.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 4,
+      "upto_message": 205,
+      "newly_cut_message_count_since_prior_success": 54,
+      "characters": 4114,
+      "at": 1792807267.2,
+      "audit": "NOTICE16 retained; completed12–15 and current17 captured. Correct chunked_even fix is added under a new key while old diagnosis still exists.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 5,
+      "upto_message": 279,
+      "newly_cut_message_count_since_prior_success": 74,
+      "characters": 5442,
+      "at": 1792807385.1,
+      "audit": "Completed17–22 captured; current23 correctly pending. Early omissions/ichunked staleness persist.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 6,
+      "upto_message": 335,
+      "newly_cut_message_count_since_prior_success": 56,
+      "characters": 6528,
+      "at": 1792807499.4,
+      "audit": "Completed23–26 captured; current27 pending. Records successful intersperse recovery, distinct distribute occurrence left untouched.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 7,
+      "upto_message": 357,
+      "newly_cut_message_count_since_prior_success": 22,
+      "characters": 6638,
+      "at": 1792807743.0,
+      "audit": "Ordinary rewrite preserves completed27/28 and current29. Prior diagnosis entries replaced with removed markers, including false chunked_even diagnosis. Early omissions/ichunked staleness persist.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 8,
+      "upto_message": 373,
+      "newly_cut_message_count_since_prior_success": 16,
+      "characters": 7504,
+      "at": 1792807859.4,
+      "audit": "Completed29 captured; current30 pending. Hand-trace claim of an or-variant infinite loop is agent reasoning, not established test result; next version replaces it with actual successful fix.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 9,
+      "upto_message": 417,
+      "newly_cut_message_count_since_prior_success": 44,
+      "characters": 7934,
+      "at": 1792807949.7,
+      "audit": "Completed30/31 captured; sieve32 pending accurately at this cut. Early omissions/ichunked staleness persist.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 10,
+      "upto_message": 457,
+      "newly_cut_message_count_since_prior_success": 40,
+      "characters": 7934,
+      "at": 1792808142.6,
+      "audit": "Exactly identical to v9 despite upto moving417→457: intervening ordinary rewrite failed at455, then delta CHANGES(none). Completed32/33 and active34 absent, sieve pending stale.",
+      "early_bug_name_coverage": [
+        "ichunked",
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 11,
+      "upto_message": 459,
+      "newly_cut_message_count_since_prior_success": 2,
+      "characters": 4555,
+      "at": 1792808306.2,
+      "audit": "Ordinary rewrite compacts completed list6–31; removes ichunked entirely. Current32 and unperformed sieve fix persist falsely after observed completed32/33 and active34. Existing-state restoration adds10 lines, none of omitted early identities.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 12,
+      "upto_message": 465,
+      "newly_cut_message_count_since_prior_success": 6,
+      "characters": 5097,
+      "at": 1792808329.5,
+      "audit": "Recent code view correctly shows sieve edit already applied, but claims tests/records still pending although427/429 previously confirmed them. Current work remains confused. Opening user rules correctly reinstated; not invented instructions.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 13,
+      "upto_message": 515,
+      "newly_cut_message_count_since_prior_success": 50,
+      "characters": 5947,
+      "at": 1792808349.8,
+      "audit": "Corrects recent regression via fresh evidence:32/33 complete,34 fixed/deduped,35 fixed/record repaired,36 complete,37 pending. Early audit identities remain absent.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 14,
+      "upto_message": 519,
+      "newly_cut_message_count_since_prior_success": 4,
+      "characters": 5524,
+      "at": 1792808499.6,
+      "audit": "37 edit failure accurately captured; retained duplicate replace records are diagnosis plus failed attempt, not final success claim. Completed recent records retained.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 15,
+      "upto_message": 521,
+      "newly_cut_message_count_since_prior_success": 2,
+      "characters": 5550,
+      "at": 1792808524.5,
+      "audit": "37 exact whitespace/guard located; pending fix remains correct. Cut advances only2 messages.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 16,
+      "upto_message": 527,
+      "newly_cut_message_count_since_prior_success": 6,
+      "characters": 4818,
+      "at": 1792808557.2,
+      "audit": "37 complete, next38 accurate; compact completed list6–37 still not exhaustive for original job. Blanket FIXES claim for6–8 overgeneralizes: pre-notice records were never required/present. Factor33 lacks recipe marker although final recipe artifact includes it.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 17,
+      "upto_message": 535,
+      "newly_cut_message_count_since_prior_success": 8,
+      "characters": 5193,
+      "at": 1792808587.0,
+      "audit": "38 edit applied, tests/records pending correctly at535. Existing-state restoration retains12 lines.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    },
+    {
+      "version": 18,
+      "upto_message": 585,
+      "newly_cut_message_count_since_prior_success": 50,
+      "characters": 5896,
+      "at": 1792808615.2,
+      "audit": "38–42 successful completions captured; original Ticket38 status STILL TODO retained alongside new ticket38 complete key, a stale contradiction. Completed list6–42 retains early omissions. Final audit relies on this list.",
+      "early_bug_name_coverage": [
+        "time_limited",
+        "numeric_range",
+        "classify_unique"
+      ]
+    }
+  ],
+  "failed_cut_and_recovery": {
+    "failed_upto": 455,
+    "prior_success_upto": 417,
+    "lost_live_receipt_interval": [
+      418,
+      455
+    ],
+    "failure": "First ordinary rewrite omitted callback_iter and triggered retry; retry exhausted8192 tokens with empty content, notes_failed increments. Existing NOTES stay unchanged.",
+    "intentional_implementation": "ctxkeeper.py:1297 comments that cut still happens because turns are archived; keep()1337–1344 archives then calls notes_call and unconditionally advances cut/cuts. This is archive-only preservation, not zero information loss from live context.",
+    "next_snapshot": {
+      "version": 10,
+      "upto": 457,
+      "equal_to_previous": true,
+      "raw_delta": "CHANGES\n(none)"
+    },
+    "observed_consequence": [
+      "sieve edit424/425, tests426/427, records428/429 and factor completion are absent from subsequent current state.",
+      "v11 incorrectly says sieve32 not yet applied while actual work is is_sorted34.",
+      "Pi460 opens wrong /app/recipes.py path;462–465 locates/views actual fixed sieve; v12 now says already-applied but tests/records pending, still stale.",
+      "Fresh sieve test468/469 and existing FIXES view470/471 prevent duplicate32 record; is_sorted work resumes. v13 recognizes32/33 complete and34–36 repaired."
+    ],
+    "recalls": [
+      {
+        "event": "recall",
+        "args": {
+          "pattern": "ticket",
+          "last": 15
+        },
+        "chars": 1760,
+        "at": 1792808161.5
+      },
+      {
+        "event": "recall",
+        "args": {
+          "pattern": "is_sorted",
+          "last": 6
+        },
+        "chars": 792,
+        "at": 1792808209.8
+      }
+    ],
+    "recall_limit": "Only two recall calls, both around is_sorted recovery, with patterns ticket(last15) and is_sorted(last6). None occurs during final AUDIT request601 onward. They are not a coverage search of the early history."
+  },
+  "record_repair_34_35": {
+    "classification": "Transient duplicate/missing record, repaired before final; no skipped bug or final R2 failure.",
+    "timeline": [
+      {
+        "messages": [
+          442
+        ],
+        "fact": "TICKET34 is_sorted receipt."
+      },
+      {
+        "messages": [
+          450,
+          451,
+          452,
+          453
+        ],
+        "fact": "Initial <= fix fails BarelySortable tests."
+      },
+      {
+        "messages": [
+          477,
+          478,
+          479,
+          480
+        ],
+        "fact": "Correct non-strict test uses not any(map(lt,b,a)); test passes."
+      },
+      {
+        "messages": [
+          483,
+          484
+        ],
+        "fact": "Append34 and fetch35 windowed_complete."
+      },
+      {
+        "messages": [
+          488,
+          489,
+          490,
+          491
+        ],
+        "fact": "windowed_complete range fix succeeds, four tests pass."
+      },
+      {
+        "messages": [
+          492,
+          493
+        ],
+        "fact": "Erroneously append duplicate34 rather than35, then fetch36."
+      },
+      {
+        "messages": [
+          494,
+          495
+        ],
+        "fact": "Append missing35; tool view shows34 twice."
+      },
+      {
+        "messages": [
+          497,
+          498,
+          502,
+          503
+        ],
+        "fact": "Remove duplicate34 and restore ascending34/35 record order."
+      },
+      {
+        "messages": [
+          607
+        ],
+        "fact": "Final FIXES contains one correct34 and one correct35."
+      }
+    ],
+    "final_grader": {
+      "t34": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 1,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      },
+      "t35": {
+        "fixed": true,
+        "changed_lines": 1,
+        "tests": {
+          "run": 4,
+          "bad": 0
+        },
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "clean": true
+      }
+    }
+  },
+  "other_source_fidelity_findings": [
+    {
+      "class": "unsupported test claim",
+      "new_at_version": 1,
+      "claim": "all7 ichunked tests pass individually",
+      "sources": [
+        46,
+        47,
+        49
+      ],
+      "finding": "Loop instantiates named unittest cases and calls .run() without inspecting returned TestResult; printing ok is not a pass assertion. Five named cases were run, not seven. Full t still fails. This is assistant reasoning promoted into NOTES, later replaced by actual root cause, not proof of a correct intermediate test."
+    },
+    {
+      "class": "incorrect diagnosis and stale alias",
+      "new_at_version": 3,
+      "claim": "chunked_even min_buffer is a float, likely / instead of //",
+      "finding": "ValueError also results from negative integer; actual fix was n-2→n-1 plus islice start. v4 adds correct fix under chunked_even but leaves old diagnosis; v7 marks diagnosis removed. Final grade verifies fix."
+    },
+    {
+      "class": "stale verification",
+      "new_at_version": 3,
+      "claim": "ichunked not yet verified",
+      "sources": [
+        68,
+        69
+      ],
+      "finding": "Seven tests succeeded before v3; v3–v10 keep earlier unverified line. v11 removes ichunked entirely."
+    },
+    {
+      "class": "summary overgeneralization",
+      "new_at_version": 11,
+      "claim": "Completed6–31(all verified,FIXES.md lines appended)",
+      "finding": "6/7/8 correctly fixed but predate NOTICE9 and have no FIXES records. Rules preserve correct scope and final records are clean. Later completed-list variants inherit this overgeneralization."
+    },
+    {
+      "class": "missing summary marker",
+      "new_at_version": 16,
+      "claim": "factor33 lacks(R) in compact list",
+      "finding": "factor is recipes.py; final RECIPES includes factor. Incomplete summary annotation, no final artifact omission."
+    },
+    {
+      "class": "retained contradiction",
+      "new_at_version": 18,
+      "claim": "Ticket38 status STILL TODO and ticket38 complete coexist",
+      "sources": [
+        535,
+        536,
+        537,
+        538,
+        539
+      ],
+      "finding": "Completion is newly recorded under different normalized key from earlier pending status; stale pending claim remains. Final artifacts/tests confirm completion; no later38 duplicate action observed."
+    },
+    {
+      "class": "instruction provenance",
+      "finding": "NOTICE3/9/16 content and later whole-job rules agree with original user/notice receipts. t-internals/memory interpretation is observational/diagnostic prose placed in RULES, not a new maintainer instruction. No evidence in this audit of a forged notice or invented external instruction."
+    }
+  ],
+  "final_audit_action": {
+    "request_message": 601,
+    "requested_expected_lines": [
+      "1 | split_at",
+      "2 | sample",
+      "4 | substrings_indexes",
+      "5 | ichunked",
+      "6 | time_limited",
+      "7 | numeric_range",
+      "8 | classify_unique"
+    ],
+    "write_message": 602,
+    "write_success": 603,
+    "written_lines": [
+      "6 | time_limited",
+      "7 | numeric_range",
+      "8 | classify_unique"
+    ],
+    "reasoning_quote": "Ticket 44: Write /app/AUDIT.md, one line per BUG ticket numbered below 9, in the format `<ticket number> | <function name>`. BUG tickets below 9: from the completed tickets, 6, 7, 8 (and maybe there were other BUG tickets below 9 — 6 time_limited, 7 numeric_range, 8 classify_unique). Ticket 3 was a NOTICE, 9 was a NOTICE, 10 onward are BUG. Therefore tickets below 9: 6, 7, 8.\n\nChecking the FIXES.md convention — FIXES.md starts from ticket 9. That is, BUG tickets below 9: 6, 7, 8.\n",
+    "verification_quote": "Let me verify my memory of tickets 6-8: from the notes — \"6 time_limited, 7 numeric_range, 8 classify_unique\". Yes. Next, running `next` — the queue should come up empty.\n",
+    "queue_empty_message": 605,
+    "final_file_view_message": 607,
+    "classification": "Four omissions from incomplete historical coverage, not four wrong repairs. Agent voices possible earlier bugs then treats NOTES completed list as exhaustive without archive recall. No AUDIT file deletion or denial occurs; three correct lines survive to grader."
+  },
+  "cut_and_cost_context": {
+    "successful_snapshots": 18,
+    "cut_count": 19,
+    "notes_failed": 1,
+    "inplace_cuts": 11,
+    "ordinary_cuts_including_failure": 8,
+    "recalls": 2,
+    "largest_turn_tokens": 17873,
+    "state_lines_put_back": 43,
+    "notes_written_tokens_state_counter": 14698,
+    "all_upstream_notes_calls": 23,
+    "all_upstream_notes_written_tokens": 43361,
+    "all_upstream_notes_s": 393.181,
+    "late_cut_boundaries": [
+      457,
+      459,
+      465,
+      515,
+      519,
+      521,
+      527,
+      535,
+      585
+    ],
+    "late_cut_interpretation": "Observed increasingly short intervals include457→459,515→519→521→527→535. Keeper reserves max(largest_turn) in both full-view cut trigger and inplace-fit threshold; with17873-token largest turn plus growing NOTES the room is small. This explains the mechanism for pressure but is not an ablation proving that counterfactual sizing preserves quality. Ordinary rewrite adds risk/cost and cannot restore identities never retained.",
+    "cost_counter_limit": "notes_prompt/cached/written and notes_s state counters do not cover all ordinary rewrite calls; calls.jsonl is the source for total notes cost. See separate provenance audit."
+  },
+  "next_lever": {
+    "recommended": "Bounded archive coverage for retrospective/exhaustive requests, with explicit source ranges and source identities, plus a separate regression for generic event identity versus mutable-state key handling.",
+    "source_basis": [
+      "Raw archive still contains all seven needed early receipts; final agent calls no recall after it notices uncertainty.",
+      "First two completed facts are already present in raw delta but overwritten by generic key; one completed fact never emitted and another later removed. Duplicate-key handling alone cannot fix whole failure.",
+      "One capped rewrite advances cut with prior notes; archive coverage/failure visibility is needed even if normal summaries improve.",
+      "Existing put-back restores43 prior-state lines but cannot recover absent source identities or resolve alias contradictions."
+    ],
+    "concrete_reviewable_followup": [
+      "Freeze request601 with final notes+tail and unchanged archive. Register a general range-coverage retrieval experiment that supplies observed role-tagged receipt spans with coverage metadata before making an exhaustive list; no ticket-specific expected answers, regex that encodes this seven-item set, or task-specific reviewer prompt.",
+      "CPU regression should reproduce raw repeated-key delta exactly and document latest-value contract; do not globally reject sequential same-key arithmetic. If event preservation changes, test generic independent completed events versus true updates with source anchors.",
+      "A failed ordinary rewrite should expose that the moved range is only archived and not summarized, so later completeness-sensitive work cannot assume its absence from notes means no event. Any behavior change remains unqualified until fresh full-task gate40fixed/40clean/7audit and source audit."
+    ],
+    "not_claimed": "No prediction that retrieval or duplicate-key treatment alone will pass; no further reviewer sweep or public promotion justified by this failed baseline."
+  }
+}

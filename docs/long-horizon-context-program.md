@@ -20,12 +20,12 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 
 | Clause | Evidence now | Next unresolved work |
 | --- | --- | --- |
-| Any agent | Twelve third-party agents ran the repair task; 1.3.0 passed the freeagent release gate, 40/40 clean and 7/7 audit | A pi run deleted a correct artifact after notes promoted mistaken assistant recollection over tool evidence |
+| Any agent | Twelve third-party agents ran the repair task; 1.3.0 passed the freeagent release gate, 40/40 clean and 7/7 audit | Current pi repairs all 40 and keeps rules, but historical audit is 3/7; selective notes are mistaken for complete history |
 | Any history | Campaign 55's two 2M hostile seeds: 423/423 and 420/423; every forgery target kept, 16/16 corrections, 0/2 wrong STATE lines | These ledger checks do not establish faithful nonnumeric task progress, legitimate supersession or arbitrary histories |
 | Flat cost | Campaign 59's fixed-metadata pair reproduced every NOTES/archive text and answer; counting memo cut request-clock wall 92m25s→83m12s (9.97%) | Memo default restored; residual client work still grows; this is not a cold model speed claim |
 | Same answers | Release and hostile-task gates remain separate; failed runs retained | Preserve observed completed work without refusing real user corrections |
 
-**Chosen next:** the full pi repair task with current ctxkeeper and explicit notes thinking on.
+**Chosen next:** verify exhaustive historical requests against original archive evidence, using the current pi failure.
 Campaign 60 reproduced the pi failure with both thinking workflows; all 18 conditions fail the broad
 source gate, including omitted work and wrong identities. Its thinking-on failure cut hit the cap and
 fell back. [Campaign 60 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-closeout.md)
@@ -35,9 +35,11 @@ repairs the preceding-cut cap and core omissions but passes 0/12 broader conditi
 inferred without original receipts. [Campaign 63](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-closeout.md)
 acquires some original receipts but still passes 0/12; a reviewer even misreads a retrieved ticket number.
 The replay sequence is closed without adopting its reviewer, projection or planner.
-[Campaign 64](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-current-pi.md)
-measures actual task completion and notes fidelity with the existing keeper; the new trajectory will
-choose the next practical lever.
+[Campaign 64](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-closeout.md)
+repairs all 40 and keeps all rules but writes only 3/7 historical audit entries. Early completed tasks
+were omitted from notes; pi treats the surviving list as exhaustive without archive recall. Next is
+one general main-agent history-use instruction at that actual failure, with a reconstructed control
+before any fresh full-task confirmation. This changes candidate behavior; no lossless speed claim.
 The [campaign 59 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md) records
 the qualified harness memo and its measurement scope.
 The [campaign 58 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign58-closeout.md) preserves

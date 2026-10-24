@@ -1,0 +1,457 @@
+{
+  "schema": "ctxkeeper.campaign64-provenance-audit.v1",
+  "audited_at": "2026-10-24T02:28:58.358639+00:00",
+  "complete_evidence": true,
+  "quality_pass": false,
+  "promotion": false,
+  "verdict": "Valid completed current-pi baseline; broad task quality fails audit 3/7 despite 40/40 fixed and clean.",
+  "scope": "Independent provenance, lifecycle, original history-check and cost audit. Does not independently classify every semantic NOTES claim or establish causality relative to campaign20b.",
+  "identity": {
+    "agent_image_id": "sha256:015ded922b7f05212e76d8cc0053e5d8411c8ac1bf39e1389ab43b2f6fd808be",
+    "same_agent_image_as_c20b": true,
+    "agent_version": "@earendil-works/pi-coding-agent 1.2.0 (npm sha512-h/4WaVWv1VlCaY8x8qEN5U+7jbF/e7+Ck6moPeEOFn5juMTWwNAXjwgYM7gRgbBYh8Zppwt6qWvJDzNTf4GNEQ==)",
+    "keeper_version": "1.3.0",
+    "proxy_recipe": [
+      "--recipe",
+      "qwen",
+      "--notes-thinking",
+      "on"
+    ],
+    "experimental_reviewer_used": false,
+    "task_path": "/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2/tasks/repair-n40-s2x",
+    "task_file_hashes_verified": 32,
+    "client_script_hashes_verified": 7,
+    "campaign_pin_hashes_verified": 11,
+    "client_receipt_hashes_verified": 4,
+    "server_image_id": "sha256:8b78916004ca6581822b6e1f06791f94586a6c1d265c3f63b81b49c09bee1525",
+    "server_launch_equal_c59b_except_container_name_and_output_mounts": true,
+    "same_reference_overlay_guard_hashes_as_c59b": true,
+    "source_pins": {
+      "scripts": {
+        "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/current_pi_probe.py": "72f1c8883d7a48f5aad206f1c2643f5bcc56905e1bc63301b6598992834ec5a5",
+        "/home/steve/b70-optimization-lab/tools/agentbench/run-agent-job.sh": "290baf667e766e960b0d6192073a809f6560837c375d9b2a16620e37b273f746",
+        "/home/steve/b70-optimization-lab/tools/agentbench/check_history.py": "4122d34e430efe9a6cfec4aca8f18b0d0baa5238a31371fc7f5c370f64253074",
+        "/home/steve/b70-optimization-lab/tools/agentbench/bridge.py": "f8c158964474214ac892162ce6d7c8d1f58918c56adfbf4f6dc12fc15207882b",
+        "/home/steve/b70-optimization-lab/tools/agentbench/memwatch.py": "4bdfde1f4eaf266f1cdbbd79ddb856c30dd4581a67a02c2dc0fb77c4acade722",
+        "/home/steve/b70-optimization-lab/tools/ctxkeeper/ctxkeeper.py": "2e00eda4b74ec009eadaabd47b5c04518d6191a9a4c97074e2450dca7270c5d0",
+        "/home/steve/b70-optimization-lab/tools/ctxkeeper/notesdelta.py": "e9687faa47b6a9b2cbd69d84b98973b4234f0a7610a26d104e1b1af1d0b7859a"
+      },
+      "task": {
+        "environment/Dockerfile": "2fdef02b19df9f1686861149e812ebd3584e41d11e508c39711e26e3512a85e7",
+        "environment/end_text": "40234956041dc60cb8b0f621bc4de1e233c88376d930bc2faf36f0ae8250e4f4",
+        "environment/more_itertools/__init__.py": "50b88caebee2a5fa159b59419d9c0d456f84df3f71ba00cea0e876e9b6bb2d6f",
+        "environment/more_itertools/__init__.pyi": "e41dde4f338dd4106e38ba1bd6f09f97211bda549deaeb17410f82bfe85791e0",
+        "environment/more_itertools/more.py": "5be4cb0c77b98f2908879ee91005b42b26aef8c675553c1ffc8dd9d33607291c",
+        "environment/more_itertools/more.pyi": "1d567512bc8d882018eff2fb77f350b3db0653afa1bb8f42e2e03ee712e1b054",
+        "environment/more_itertools/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "environment/more_itertools/recipes.py": "b9094b6e9625d871da22d108ce2235cc2f372afc2703aebaee60856ab42b3f34",
+        "environment/more_itertools/recipes.pyi": "cc14aa6ee9120e08b9273a1a35e7e304b9a4e918163406bf6d519646ec222bb0",
+        "environment/next": "7955bc5f89457f95ae78ad9527a4d9f41584a5bf00fb0c8045edd2d69c106adf",
+        "environment/t": "59eb8319fb220b568bb63d8229f5483d22d7a9ae6f299e4708b65c5a67be73a4",
+        "environment/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "environment/tests/test_more.py": "dbc4a45e58207c9bb39498006708c9022dbb6146d4bc8e86e70d250f365a145c",
+        "environment/tests/test_recipes.py": "86004efad326a1dd07c732bfe12ffeb50a04d63b5e6482fcae2116d8c1662f90",
+        "environment/tickets.jsonl": "829b847c098081355c4ac119d4eb50a39d1361d9bf288127dd76f255c63718e2",
+        "instruction.md": "da5a456293e25384ede73d460eb378608bedaa2647987c03f6288a1c0f5bbda1",
+        "solution/reference/more.py": "162286435953bca58f7bc5dee49dd31503f5d9eab8ca3cd7838b141f979c1e89",
+        "solution/reference/recipes.py": "35629c7df5dccdfd89c58104ddab57df638973d6ed746bc606b860f9cb6da3f7",
+        "solution/solve.py": "535a82603ba0ea11d7458b616ce6c57a0577efc0e4d6be6649a2fb6ab2fc05e7",
+        "solution/solve.sh": "ba29fff7c0af8272b701ee9a3408f4248eb7eaddde6ec95aa21243fc42b6c172",
+        "solution/spec.json": "296a7bf65da1c1fdd479e0d1186273be25da4589f246ed5fe3ebf246cca8bad1",
+        "task.toml": "4e0b217f5d6dd336678bfd2a3283d362c3f6cba93456dc7126a321d17755567a",
+        "tests/broken/more.py": "5be4cb0c77b98f2908879ee91005b42b26aef8c675553c1ffc8dd9d33607291c",
+        "tests/broken/recipes.py": "b9094b6e9625d871da22d108ce2235cc2f372afc2703aebaee60856ab42b3f34",
+        "tests/grade.py": "85eb6e03f649888dd7cca8c9c4501b89eafa10c7c780cd7e6b73042cd047692b",
+        "tests/orig_tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/orig_tests/test_more.py": "dbc4a45e58207c9bb39498006708c9022dbb6146d4bc8e86e70d250f365a145c",
+        "tests/orig_tests/test_recipes.py": "86004efad326a1dd07c732bfe12ffeb50a04d63b5e6482fcae2116d8c1662f90",
+        "tests/reference/more.py": "162286435953bca58f7bc5dee49dd31503f5d9eab8ca3cd7838b141f979c1e89",
+        "tests/reference/recipes.py": "35629c7df5dccdfd89c58104ddab57df638973d6ed746bc606b860f9cb6da3f7",
+        "tests/spec.json": "296a7bf65da1c1fdd479e0d1186273be25da4589f246ed5fe3ebf246cca8bad1",
+        "tests/test.sh": "6f1597e431b940714b9443e379ed84e47803d924e64cdac82c606698e49c2eeb"
+      }
+    },
+    "campaign_pins": {
+      "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/current_pi_probe.py": "72f1c8883d7a48f5aad206f1c2643f5bcc56905e1bc63301b6598992834ec5a5",
+      "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/run_campaign64.py": "3969028c597b1e70e40dc5fe5e0229d965228cc0e9322bd5ecd3d5bc357d6f51",
+      "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/longrun-campaign37.sh": "f03465e82c553b5a9c42588570e917e8646a7d8e7993b63f9d1774bb668ac25e",
+      "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/run_campaign60_when_idle.py": "ea0aff8579e933349dfc2ad060a2bf15772df1bae8c3f7f88c04172c09ed58a6",
+      "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/test_current_pi_probe.py": "f215a140eae9712c4da573efde8efa37e29311027b57c059168951fb5a873275",
+      "/home/steve/b70-optimization-lab/tools/agentbench/run-agent-job.sh": "290baf667e766e960b0d6192073a809f6560837c375d9b2a16620e37b273f746",
+      "/home/steve/b70-optimization-lab/tools/agentbench/check_history.py": "4122d34e430efe9a6cfec4aca8f18b0d0baa5238a31371fc7f5c370f64253074",
+      "/home/steve/b70-optimization-lab/tools/agentbench/bridge.py": "f8c158964474214ac892162ce6d7c8d1f58918c56adfbf4f6dc12fc15207882b",
+      "/home/steve/b70-optimization-lab/tools/ctxkeeper/ctxkeeper.py": "2e00eda4b74ec009eadaabd47b5c04518d6191a9a4c97074e2450dca7270c5d0",
+      "/home/steve/b70-optimization-lab/tools/ctxkeeper/notesdelta.py": "e9687faa47b6a9b2cbd69d84b98973b4234f0a7610a26d104e1b1af1d0b7859a",
+      "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-campaign64-preflight/review.json": "13b11cc10a18c85d7b486363704f5e5f806c821f0ee845f5b102ae777546d380"
+    },
+    "derived_task_runner_changes": [
+      {
+        "old": "HERE=$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)",
+        "new": "HERE=/home/steve/b70-optimization-lab/tools/agentbench"
+      },
+      {
+        "old": "IMG=\"agentbench-$AGENT:$TNAME\"",
+        "new": "IMG=sha256:015ded922b7f05212e76d8cc0053e5d8411c8ac1bf39e1389ab43b2f6fd808be"
+      },
+      {
+        "old": "docker image inspect \"$IMG\" >/dev/null 2>&1 || \"$HERE/build-agent-image.sh\" \"$AGENT\" \"$TASK\" || die \"image build failed\"",
+        "new": "docker image inspect \"$IMG\" >/dev/null 2>&1 || die \"pinned image missing; building is forbidden\""
+      },
+      {
+        "old": "python3 -I \"$HERE/check_history.py\" \"$TRIAL/agent/requests.jsonl\" > \"$TRIAL/agent/history-check.json\" 2>/dev/null || true",
+        "new": "# C64: original check_history.py runs only after the model server is down (--finalize)."
+      }
+    ]
+  },
+  "lifecycle": {
+    "server_stopped_confirmed": true,
+    "server_error": null,
+    "container_exit_code": 0,
+    "container_oom_killed": false,
+    "proxy_stopped_receipt": true,
+    "current_units_inactive": {
+      "ctx-fp8-tp2-server": true,
+      "ctx-keeper-proxy": true
+    },
+    "kernel_fault_signature_count": 0,
+    "memory_guard_fired": false,
+    "proxy_restart_count": 0,
+    "agent_exec_rc": 0,
+    "agent_exit": {
+      "exit_code": 0,
+      "seconds": 1812,
+      "timed_out": false
+    },
+    "server_finished_at": "2026-10-24T02:24:26.275343+00:00",
+    "history_check_mtime_seconds_after_server_finish": 18.450011,
+    "original_checker_reexecuted_identically": true,
+    "original_agentbench_history_retained_null": true,
+    "history_gate": {
+      "requests": 292,
+      "posts": 292,
+      "chat_completions": 292,
+      "other_paths": [],
+      "responses_api": 0,
+      "chunked_bodies": 0,
+      "n_not_1": 0,
+      "stream": [
+        "True"
+      ],
+      "with_tools": 292,
+      "tool_names": [
+        "bash",
+        "edit",
+        "read",
+        "write"
+      ],
+      "conversations": [
+        {
+          "key": "8ddfca3bae0d",
+          "requests": 292,
+          "max_messages": 607,
+          "head_messages": 2,
+          "first_roles": "su",
+          "with_tools": 292,
+          "every_request_extends_previous": true,
+          "breaks": []
+        }
+      ],
+      "main_conversation": "8ddfca3bae0d",
+      "whole_history_ok": true
+    }
+  },
+  "quality": {
+    "fixed": 40,
+    "clean": 40,
+    "rules": {
+      "R1": {
+        "applies": 38,
+        "kept": 38
+      },
+      "R2": {
+        "applies": 33,
+        "kept": 33
+      },
+      "R3": {
+        "applies": 27,
+        "kept": 27
+      }
+    },
+    "tickets_fetched": 44,
+    "void": false,
+    "audit": {
+      "asked": 7,
+      "right": 3,
+      "lines": 3,
+      "other_tickets": 0
+    },
+    "task_score": 1.0,
+    "note": "The task score is clean fixes/40 and excludes audit correctness; score1.0 is not the full registered quality gate."
+  },
+  "memory": {
+    "required_available_mib": 2706,
+    "available_mib_before_proxy": 3087,
+    "available_mib_before_container": 3067,
+    "task_peak_bytes": 347496448,
+    "task_peak_mib": 331.398,
+    "task_memory_and_memory_swap_configured_mib": 768,
+    "server_memory_and_memory_swap_bytes": 12884901888,
+    "server_samples": 3974,
+    "minimum_host_available_bytes": 2181394432,
+    "minimum_host_available_gib": 2.031582,
+    "server_guard_min_available_gib": 1.6
+  },
+  "cost": {
+    "agent_work_seconds": 1812,
+    "agent_job_wall_seconds": 1816,
+    "client_wrapper_wall_seconds": 1817.522,
+    "proxy_first_call_start_to_last_end_seconds": 1811.404,
+    "upstream_all": {
+      "calls": 317,
+      "seconds": 1768.778,
+      "ok": 317,
+      "finish_reasons": {
+        "tool_calls": 293,
+        "stop": 23,
+        "length": 1
+      },
+      "prompt_tokens": 3568387,
+      "cached_tokens": 3081728,
+      "written_tokens": 146471
+    },
+    "upstream_main": {
+      "calls": 294,
+      "seconds": 1375.597,
+      "ok": 294,
+      "finish_reasons": {
+        "tool_calls": 293,
+        "stop": 1
+      },
+      "prompt_tokens": 3266895,
+      "cached_tokens": 2837952,
+      "written_tokens": 103110
+    },
+    "upstream_notes_all": {
+      "calls": 23,
+      "seconds": 393.181,
+      "ok": 23,
+      "finish_reasons": {
+        "stop": 22,
+        "length": 1
+      },
+      "prompt_tokens": 301492,
+      "cached_tokens": 243776,
+      "written_tokens": 43361
+    },
+    "inplace_notes_calls": {
+      "calls": 12,
+      "seconds": 138.061,
+      "ok": 12,
+      "finish_reasons": {
+        "stop": 12
+      },
+      "prompt_tokens": 226709,
+      "cached_tokens": 216320,
+      "written_tokens": 14698
+    },
+    "rewrite_notes_calls": {
+      "calls": 11,
+      "seconds": 255.12,
+      "ok": 11,
+      "finish_reasons": {
+        "stop": 10,
+        "length": 1
+      },
+      "prompt_tokens": 74783,
+      "cached_tokens": 27456,
+      "written_tokens": 28663
+    },
+    "proxy_handle_seconds": 1769.429,
+    "agent_wall_minus_proxy_handle_seconds": 42.571,
+    "residual_scope": "Tools plus client/proxy/inter-call work; not a separately timed tool-only measurement.",
+    "cost_caveat": "proxy state notes_s/notes token counters cover in-place work here, not all rewriting calls; full notes cost comes from calls.jsonl. Timings are diagnostic, not a matched-input speed claim."
+  },
+  "notes_accounting": {
+    "cut_attempts": 19,
+    "saved_notes_versions": 18,
+    "inplace_cuts": 11,
+    "ordinary_cut_attempts": 8,
+    "notes_failed": 1,
+    "inplace_failed": 0,
+    "inplace_reasks_state_counter": 0,
+    "inplace_reply_thinking_counts": {
+      "True": 11,
+      "False": 1
+    },
+    "event_counts": {
+      "in-place notes reply": 12,
+      "in-place notes reply rejected": 1,
+      "notes rewrite: STATE lines left out asked about": 3,
+      "notes call rejected": 1,
+      "recall": 2,
+      "notes rewrite: STATE lines it lost put back": 4
+    },
+    "existing_internal_thinking_off_fallback": {
+      "observed": true,
+      "at": 1792807267.2,
+      "reason": "First in-place response ended stop but had empty content; attempt2 used thinkingFalse and returned a delta. This is existing keeper behavior despite notesON configuration."
+    },
+    "rewrite_length_failure": {
+      "observed": true,
+      "at": 1792808128.9,
+      "written_tokens": 8192,
+      "notes_call_seconds": 70.337,
+      "finish": "length",
+      "why": "empty reply"
+    },
+    "state_lines_put_back": 43,
+    "recalls": 2
+  },
+  "artifacts": {
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/c64-K32V-check-s0.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/c64-K32V-check-s0.json",
+      "sha256": "00838998438c5d0c0a7232a4a78ce56932dae315e4ca70ddf89bdd771bdc8f02",
+      "bytes": 5454
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/status.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/status.json",
+      "sha256": "6c9cd275c5956082719a5646424febdc1ac9ca9572ac4885dd827bf7080ba79c",
+      "bytes": 137
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/pins.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/pins.json",
+      "sha256": "ee1533aa1189d6d1f86dc1837f42bb0e889c39359c0bcec81f2cd969c9adfe4e",
+      "bytes": 1719
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/preflight.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/preflight.json",
+      "sha256": "f6c609cc3f63ac48bbfcbd50cbe04c8bc1f1b9e6759e823006e749be080698cf",
+      "bytes": 6821
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/agent-driver.sh": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/agent-driver.sh",
+      "sha256": "0c371399b4cbff32c28777540468adf5c7a86a9bfacfd8ed5910f06da235e63b",
+      "bytes": 6824
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/agent-driver.diff": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/agent-driver.diff",
+      "sha256": "ce72d7e25a24a958546baaa240b334191dc39099a43da5ab465b4e6062b719d2",
+      "bytes": 1771
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/driver.sh": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/driver.sh",
+      "sha256": "4b8bcb9c3038bd068332b43fbb97fbd44d80d0cf32a239ecbb7e669dfbae1b2c",
+      "bytes": 39027
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/queue.txt": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/queue.txt",
+      "sha256": "9b80f4d3718aa0e57121ae644e847de465ee0f28fe6a4eb3ef725badb46ea516",
+      "bytes": 18
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/campaign.log": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/campaign.log",
+      "sha256": "49cb8ca53325710bee098b64749d6ca1123836d46562fb65e59f5b74121eed07",
+      "bytes": 1304
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/agent-job.log": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/agent-job.log",
+      "sha256": "6c220e648001646c329350792f8120e72e943547e170907d7e759f2ec4ce4446",
+      "bytes": 475
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/kernel.log": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign64-current-pi/kernel.log",
+      "sha256": "efc7d5a7e5b4e7e7ed608b14c5c8f5d5c7daba4ecb31266e01d4c91a8deb1898",
+      "bytes": 1297
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/state.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/state.json",
+      "sha256": "1e99404a4375e75444d0c1ccf41e52ae94b4b1e10eff2d7e25358cbacc5b3e36",
+      "bytes": 5258
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/launch.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/launch.json",
+      "sha256": "c779ea4fb1bed24ffadbfd69b0d1401f0f3150f31dc634c0851aa4a13438f160",
+      "bytes": 11586
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/container-final.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/container-final.json",
+      "sha256": "9569eb876b982348109d4ca552bb1af3bd84ff1598ab19a3f8d6949eaa7e57ec",
+      "bytes": 13860
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/memory-guard.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c64-a1/memory-guard.jsonl",
+      "sha256": "e8da773ad47361e1c3c4822a430f731f66480b3f7a84bf1ac78acc075584286f",
+      "bytes": 507542
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/agentbench.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/agentbench.json",
+      "sha256": "49f9fa7a87c2340267c15d764f4139db6c412635894f504d7ed71bafe32a59d6",
+      "bytes": 1446
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/exit.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/exit.json",
+      "sha256": "348c09878a258e0aeef29a4dd051237161040358d1fc2439fb6c9e645ecc4430",
+      "bytes": 54
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/memory.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/memory.json",
+      "sha256": "a58dd5e2371c35ee845aa6c1b10c71927a3ea2405009b522f40af79dd594bb32",
+      "bytes": 361
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/memory.peak": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/memory.peak",
+      "sha256": "542ee508a1bb7452417a6a8cccd78e7133bf17048b905cd3f1326b1bd58048d5",
+      "bytes": 10
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/requests.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/requests.jsonl",
+      "sha256": "66093752925bb0f2656c2eb23ddffec7c5de9f6102127fdbf715196bd3419a5a",
+      "bytes": 104440642
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/history-check.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/history-check.json",
+      "sha256": "a94b123e0cdc7b52a94ef91d589d1378c40c07660fb7c67deeaae13e3b7b9fff",
+      "bytes": 542
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/pi-events.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/agent/pi-events.jsonl",
+      "sha256": "6bd966671be8852429c5748f395b87ff0972b54911f4a37d9290e9ff98f50797",
+      "bytes": 5974850
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/verifier/details.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/verifier/details.json",
+      "sha256": "72cde126a7f57dc76f2db1012699cc036fcc57b32784a139ed15bee01dc176d0",
+      "bytes": 7748
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/verifier/test-stdout.txt": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c64/pi/jobs/AB-pi__repair-n40-s2x/trial/verifier/test-stdout.txt",
+      "sha256": "d8ce7dd8360af6b58736e75afff55116c8b2d0ec0ea7f236d7f2e58b627657eb",
+      "bytes": 142
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/state.json": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/state.json",
+      "sha256": "6dd619ec23192162de29ac8d2d5f533d4efc6d0773a0915ef90f404fc86a9d5a",
+      "bytes": 6656
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/calls.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/calls.jsonl",
+      "sha256": "2359823720a4e0158b315d463dd7dc32d99205a0a37994072a2a8b34b3bd88f0",
+      "bytes": 65987
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/events.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/events.jsonl",
+      "sha256": "16a7b2aeecc1a752f938d7d8295e866c4ac32b245f2bba89e3d56e1fdf5ac23d",
+      "bytes": 28011
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/notes-history.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/notes-history.jsonl",
+      "sha256": "aca6e5f6c148268abf6b15fb97234be0eab853a7f631d62139b06aa75fb3f90c",
+      "bytes": 98171
+    },
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/archive.jsonl": {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c64-pi/4051fd73e25016a5/archive.jsonl",
+      "sha256": "ea9da6e45bd9ef1bd67ab8cf0092f667152bb8eb8dcd5d47567e592cb392f43f",
+      "bytes": 1257525
+    }
+  }
+}

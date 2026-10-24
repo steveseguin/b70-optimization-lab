@@ -1,0 +1,33 @@
+--- /home/steve/b70-optimization-lab/tools/agentbench/run-agent-job.sh
++++ c64-agent-driver.sh
+@@ -25,10 +25,10 @@
+ AGENT_MEM=${AGENT_MEM:-768m}
+ AGENT_MEM_SWAP=${AGENT_MEM_SWAP:-$AGENT_MEM}
+ TAP=${TAP:-summary}
+-HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
++HERE=/home/steve/b70-optimization-lab/tools/agentbench
+ TASK=$(cd "$TASK" && pwd)
+ TNAME=$(basename "$TASK")
+-IMG="agentbench-$AGENT:$TNAME"
++IMG=sha256:015ded922b7f05212e76d8cc0053e5d8411c8ac1bf39e1389ab43b2f6fd808be
+ C="agentbench-$JOB"
+ TRIAL="$OUT/jobs/$JOB/trial"
+ T0=$SECONDS
+@@ -40,7 +40,7 @@
+ PORT=${BASH_REMATCH[2]}
+ URL_IN="http://127.0.0.1:$PORT${BASH_REMATCH[3]}"
+ [ -f "$HERE/agents/$AGENT/Dockerfile" ] || die "no agent $AGENT (see $HERE/agents/)"
+-docker image inspect "$IMG" >/dev/null 2>&1 || "$HERE/build-agent-image.sh" "$AGENT" "$TASK" || die "image build failed"
++docker image inspect "$IMG" >/dev/null 2>&1 || die "pinned image missing; building is forbidden"
+ 
+ mkdir -p "$TRIAL/agent" "$TRIAL/verifier"
+ SOCKDIR="${XDG_RUNTIME_DIR:-/tmp}/agentbench/$JOB"
+@@ -87,7 +87,7 @@
+ docker exec --privileged "$C" python3 /tests/grade.py 2>&1 | tee "$TRIAL/verifier/test-stdout.txt" | grep 'repair score' || true
+ docker cp "$C:/logs/verifier/." "$TRIAL/verifier/" >/dev/null 2>&1 || true
+ 
+-python3 -I "$HERE/check_history.py" "$TRIAL/agent/requests.jsonl" > "$TRIAL/agent/history-check.json" 2>/dev/null || true
++# C64: original check_history.py runs only after the model server is down (--finalize).
+ python3 -I - "$TRIAL" "$AGENT" "$IMG" "$JOB" "$TNAME" "$PROXY_URL" "$MODEL_NAME" "$TIME_LIMIT" "$AGENT_MEM" "$RC" \
+   "$((SECONDS - T0))" "$(docker image inspect -f '{{.Id}}' "$IMG")" \
+   "$(docker image inspect -f '{{index .Config.Labels "agentbench.agent.version"}}' "$IMG")" <<'EOF'

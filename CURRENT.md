@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 22:28 EDT — two-card host: pi repairs all code, but its historical audit is incomplete.**
+Campaign 64 finishes with 40/40 fixed and rule-clean, all 44 tickets, but only 3/7 audit entries.
+The server and proxy are down; whole-history checking passes. Early completed work vanished from
+selective notes, then pi treated the surviving list as complete instead of recalling the originals.
+Independent source/provenance audits are finishing. The complete calls log also exposes an internal
+thinking-off fallback and a capped rewrite that the headline counters hide. No quality promotion.
+Next: test a general history-use instruction at the actual failed audit turn, requiring original
+evidence for exhaustive historical lists. A reconstructed control must reproduce the failure first.
+Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-closeout.md`.
+
 **October 23, 21:54 EDT — four-card host: Flash-Next optimization closed at the owner's request; publication updated.**
 The current arithmetic issue is resolved: 100 CPU checks across 17 cases and nine independent artifact
 checks pass, with both failures preserved. The updated neural.download sources and recipe identify the
