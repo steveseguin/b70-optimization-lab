@@ -1,5 +1,25 @@
 # Current Workspace State
 
+**October 24, 13:40 EDT — four-card host: SC117 LAN chat service is running at the owner's request.**
+The owner asked to host the SC117 IQ3_S model on our own engine for LAN computers. The model is now served at
+`http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0; the vision server on 27/43 is
+untouched).
+- It handles one request at a time, has MTP on and uses greedy decoding with a 4096-token context.
+- It is experimental: the fidelity question above is still open.
+- The current build skips the per-request state dump (a reset takes 0.1 s instead of 4.1 s) and streams each
+  target-confirmed token.
+- Before serving, it passed a one-time GPU gate against engine 5926: tokens identical and full engine state
+  byte-identical on both cards.
+- Stop it with `systemctl --user stop sc117-lan`. It never restarts by itself and stops at 47 h.
+
+Next, as the owner asked:
+- faster prompt reading that stays bit-identical;
+- original-FP8 draft experts for better MTP acceptance;
+- full-F32 precision qualification against our own reference.
+
+Root disk is about 180 MB above its 27 GB floor; an old scratch virtualenv was deleted to make room.
+[Service](experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/README.md), [speed work](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/).
+
 **October 24, 10:57 EDT — four-card host: current work wrapped up at the owner's request.**
 The shared-prefix replay passed independent readback and reproduced the longer
 comparison's token71 difference. Native logits21.0 versus20.625 rule out final
