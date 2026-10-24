@@ -1,5 +1,26 @@
 # Current Workspace State
 
+**October 24, 10:39 EDT — four-card host: three longer CPU reference outputs passed readback.**
+The first two fixed requests reached 512 tokens; the third ended naturally at
+334. All raw output IDs and probability rows are retained, with no prompt reuse.
+The CPU owner closed cleanly. The corrected native comparison is being bound to
+these exact outputs and will halt further requests on a mismatch. This remains
+a fidelity investigation, with no new speed or broad quality claim.
+[Reference result](experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/RESULT.md).
+
+**October 24, 10:31 EDT — four-card host: longer independent reference comparison is running.**
+The retained same-prefix logits show numerical differences despite matching
+32-token outputs. Remaining BF16 activation/head boundaries and different
+reference arithmetic are documented; no quality penalty or harmlessness is
+assumed. One CPU reference owner is processing the first three original prompts
+with natural EOS and 512-token caps; the first completed512 tokens and the second
+is running with zero reused prompt tokens. Target GPUs are idle and protected
+vision is unchanged. The separate corrected-native comparison will follow after
+closed reference readback. Verified canonical preservation recovered950 MB;
+nine B canonical state files and all restoration mappings are protected.
+[Logit result](experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/RESULT.md).
+
+
 **October 24, 10:09 EDT — four-card host: corrected model pair passes independent readback.**
 The FP32 recurrent engine passes the real-model target-only/MTP comparison:
 32 matching tokens, identical full target state, five rejected draft tokens

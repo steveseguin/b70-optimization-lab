@@ -1,0 +1,31 @@
+{
+  "schema": "gsq.reference.cpu3.independent-audit-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/audit.py": "3523fabaed5b6e22cbb0d0bea2d4472eb26e08b3ce1d5d88ae814f17f4f63c08",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/test_audit.py": "8d5d14adc14aa26c7916f59ac4ed5ad829113cb09c5f4174a27af2c985cab3a7",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/audit-delta.patch": "81d7af7cdb6c60e9288a5b6cc7fe9243cc50357b6b83ecde5194517990133d63",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/once.py": "fe416c91b7fea02ff4a99c94daf74fa68bca15b247f8d1d39e2aa166e77235a4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/requests.json": "7121e1525884d8bf50e4fc779543c309bf6f573aa9c3dfb8bcdb2b0eab56ea4d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/plan.json": "c32288583d1cc40369c81e6722e3f955d9d9828ba7250a743389224a13538079",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/audit.py": "f5ecadd37e369b4b5d8e8c015a692b4554cfcf13201a26a6bfc31803dca96f27",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/evidence/audit-tests.log": "8f82250569e78bcda69d85b0fe6469f587e93f6358bcb0f579bf42dda6a444a5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/evidence/independent-review.json": "360bf01ee785737a49634c9c42f7e267c89187039fb9f29d5c7abf5e60088e2b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/evidence/eos-cardinality-source-review.json": "9249cdb5cbddf125197d1d719629e8760d6b3d9e67b9c769ccedab0ccb2680dd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/evidence/audit-preparation.json": "526ef6819264bc9ed99de74a6bc5b5bdb5ce43e7bca08abea850f299c6636264"
+  },
+  "tests_reviewed_not_replayed": 5,
+  "scope": "Source, retained synthetic tests and admitted plan metadata only; no active reference outputs, model/header/state payload, compiler/device/endpoint action.",
+  "findings": [],
+  "checks": [
+    "Exact fixed three original numeric requests and effective greedy settings; complete all-ID output oracle and cold prompt counts",
+    "Reported probability rows independently validated as ordered subsequence with omitted counts and no repeated-ID positional claim",
+    "Every raw request/response/live-validation/full-result join, full text and EOS/cap retained",
+    "Successful single owner terminal, one graceful SIGTERM, sampled same-PID/memory/backend scope and immutable closed artifact hashes",
+    "No old native output equality assumption; corrected native comparison pending"
+  ],
+  "conditions": [
+    "Root invokes only after actual CPU owner closure; successful source review is not a result review.",
+    "Bounded three prompts and probability evidence do not certify broad quality or full-distribution parity."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "scope": "Source-only EOS and incomplete-UTF8 cardinality review; no reference execution",
+  "source_sha256": {
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/tools/server/server-context.cpp": "0df45fda4618e735b240d03609f3fbc0a6c9ee4dba40f0c604f3cbab62165618",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/tools/server/server-task.cpp": "4c3f413b9b54d4cc0e7b5998e6979a2389f5ff716e20cb1510ca7745fa233495"
+  },
+  "chain": [
+    "server-context.cpp4365 increments stats.n_gen for each sampled token before process_token",
+    "process_token1978 appends generated_tokens for return_tokens before EOG handling2088",
+    "process_token1984 tests accumulated UTF8 completeness and2011 adds generated_token_probs only in complete branch",
+    "send_final_response2244/2251 moves all token IDs and reports n_decoded=stats.n_gen",
+    "send_final_response2270..2279 copies all recorded probabilities; trimming only STOP_TYPE_WORD, excluded by empty stop strings",
+    "server-task.cpp340/352 serializes tokens_predicted and probability array without synthesizing omitted rows"
+  ],
+  "conclusion": "Token count includes natural EOS. Probabilities may omit incomplete-UTF8 steps; validate ordered subsequence and each reported argmax, never invent missing rows/unique repeated-ID alignment."
+}

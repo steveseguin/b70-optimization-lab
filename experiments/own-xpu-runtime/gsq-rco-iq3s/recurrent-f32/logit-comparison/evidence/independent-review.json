@@ -1,0 +1,26 @@
+{
+  "schema": "gsq.recurrent-f32.logit-comparison.independent-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/compare.py": "72f8f3abea3798380761740d773597c30bab69eb77e105471f366cda1fa954f4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/test_compare.py": "63f6611b06b52b63790182979c2f2972c5eadbf1dafbd63ea9552f03206fc923",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/PLAN.md": "eeec559a6d60492a4af4dbbb56ce374b2e2804d9e4f5725890660927eb81e283",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/source-inputs.json": "378634003da55c5eb31dd1d27c2b85d3a5fe79b201660e2760a9716e02c670bc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/evidence/preparation.json": "2a39ddf116a41b84567c5a879ea6eb579115a1b9aaa737e754c1bb09bc22ef9d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/evidence/metadata-plan.json": "f7aeac508e16e9bc941095fc2e2fe77abf8e6ac442caf15500a2efeed0b7fdde"
+  },
+  "tests_reviewed_not_replayed": 7,
+  "scope": "Finite source/retained metadata/test review; no native/reference execution or bundle/model payload read by reviewer.",
+  "findings": [],
+  "checks": [
+    "Same87input+31generated conditional prefix established from both rank traces and reference token IDs; saved scalar bytes additionally checked on actual extraction",
+    "Only fixed four ranges496652B; held audited nofollow identity before/after, entire index/metadata authority and per-range SHA",
+    "Exact248320 BF16 logit extent, finite full native values, stable float64 max-shift/fsum normalization and global ranks/tie intervals",
+    "Reference retains only top32; report overlap and deltas with no invented acceptance tolerance or full-reference KL claim",
+    "Comparison can pass evidence completion while argmax differs; quality_qualified remains false; failed CPU terminal preserved"
+  ],
+  "conditions": [
+    "Root alone invokes --read-ranges against closed protected B target bundle.",
+    "One conditional position remains bounded diagnostic evidence and cannot certify broader model quality."
+  ]
+}

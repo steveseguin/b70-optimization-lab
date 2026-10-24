@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "scope": "Finite source/delta and retained mock/actual prior response schema review; no test replay, operational plan, model/header/payload read, compiler, endpoint, or owner invocation",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/once.py": "6e43f689ac939f19cd53f0d11af44ce774f1e9f6d59474bd4a8ed70b1a368c9b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/test_once.py": "decee38aea11bee286e9ead9397ad53dd01ad75fd54af222dc7bf545de4192fa",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/requests.json": "7121e1525884d8bf50e4fc779543c309bf6f573aa9c3dfb8bcdb2b0eab56ea4d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/runtime-delta.patch": "9052fed178c550dd0b43ea347f0492c4823e4d72d8f4e4448c0b019e764c921e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/README.md": "be9678c97c34c4c53860c0d4169148e470cc13cb22a76b16341089e42b822c52",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/evidence/source-tests.log": "e955b211f26c603b74fd7f951e687c5a7612b6dcb7a6890e721f112149793595",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/once.py": "d11af7129cdab746b1e59625b6afa21cc72c342223a782b74c62d7a56adc1500",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/evidence/closed-readback-review.json": "c028ff21c0c32af97a752fa49db65c1b6463bc3ee2bde104a01ee24cbfc66a7b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/evidence/device-b/review.json": "08b09b122647c553c4d71c2050cdca6f5f223c613fc88af4a8046ebeddb4e1c3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/source-preparation.json": "80d64b8a951a06648009b6e4df9652432e11504a6185053fd5c305932c760b31",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/request-proposal.json": "d6fe9f8fc8a63e923ef4d4cc6d872c6ae6d1f15c29ff0b7abd596852f4cbfd77",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/manifest.json": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20"
+  },
+  "unchanged_functions": [
+    "limits",
+    "socket_owned",
+    "no_device",
+    "request_http",
+    "dtype_log",
+    "model_stats",
+    "save"
+  ],
+  "fixed_requests": 3,
+  "prompt_lengths": [
+    87,
+    90,
+    77
+  ],
+  "output_caps": [
+    512,
+    512,
+    512
+  ],
+  "single_owner_no_retry": true,
+  "initial_and_ongoing_resource_guards_preserved": true,
+  "no_device_scope": "Same pinned static CPU binary/build admission, empty backend search path, isolated cwd, clean environment, sampled FD and exact shared-library map checks. No absolute transient-FD claim.",
+  "response_checks": "Pre-sampling top32 every output; actual schema temperature0; zero request cache_n and full numeric prompt; natural EOS versus full512 cap retained. Each response saved before validation, stop-on-failure and one graceful termination.",
+  "limitations": [
+    "Only three original short prompts; long-context fidelity remains separate.",
+    "No model/native comparison performed by this preparation.",
+    "Output quota monitored between samples; inherited HTTP response cap8MiB and total deadline3600s unchanged."
+  ]
+}

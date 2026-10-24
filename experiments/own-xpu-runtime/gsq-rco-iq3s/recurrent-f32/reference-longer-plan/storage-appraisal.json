@@ -1,0 +1,63 @@
+{
+  "schema": "gsq.recurrent-f32.closed-canonical-metadata-appraisal.v1",
+  "metadata_matches": true,
+  "payload_verified": false,
+  "operations_authorized_by_this_file": false,
+  "rows": [
+    {
+      "original": "gsq-recurrent-f32-a/rank0/state-2147483647/state.bundle",
+      "canonical": "gsq-recurrent-f32-b/rank0/state-2147483647/state.bundle",
+      "bytes": 184765556,
+      "sha256": "9abf3609d0658c9785ce4315a5d6757398e3d569ea94448eec8bc882840983dd",
+      "authority_scope": "failed A declared seal identity only; actual full bytes require root verification"
+    },
+    {
+      "original": "gsq-recurrent-f32-a/rank1/state-2147483647/state.bundle",
+      "canonical": "gsq-recurrent-f32-b/rank1/state-2147483647/state.bundle",
+      "bytes": 125598668,
+      "sha256": "d9e92040c85caf2b8ded26e1b2b4acf52d50123ade3050a18fc47d3e335c647f",
+      "authority_scope": "failed A declared seal identity only; actual full bytes require root verification"
+    },
+    {
+      "original": "gsq-recurrent-f32-a/prompt-00-none/rank0/state-2147483647/state.bundle",
+      "canonical": "gsq-recurrent-f32-b/prompt-00-none/rank0/state-2147483647/state.bundle",
+      "bytes": 184765556,
+      "sha256": "3a1dc720a5923bf581cf6fdb8cbe80de8f7df3f12db07fc568f653a6128418ed",
+      "authority_scope": "failed A declared seal identity only; actual full bytes require root verification"
+    },
+    {
+      "original": "gsq-recurrent-f32-a/prompt-00-none/rank1/state-2147483647/state.bundle",
+      "canonical": "gsq-recurrent-f32-b/prompt-00-none/rank1/state-2147483647/state.bundle",
+      "bytes": 125598668,
+      "sha256": "7b19eede9f1be03fda96ffad2bdb13ec22e92a070dc241ea7cff203afee79658",
+      "authority_scope": "failed A declared seal identity only; actual full bytes require root verification"
+    },
+    {
+      "original": "gsq-recurrent-f32-b/prompt-00-mtp/rank0/state-2147483647/state.bundle",
+      "canonical": "gsq-recurrent-f32-b/prompt-00-none/rank0/state-2147483647/state.bundle",
+      "bytes": 184765556,
+      "sha256": "3a1dc720a5923bf581cf6fdb8cbe80de8f7df3f12db07fc568f653a6128418ed",
+      "authority_scope": "audited B physical bundle equality"
+    },
+    {
+      "original": "gsq-recurrent-f32-b/prompt-00-mtp/rank1/state-2147483647/state.bundle",
+      "canonical": "gsq-recurrent-f32-b/prompt-00-none/rank1/state-2147483647/state.bundle",
+      "bytes": 125598668,
+      "sha256": "7b19eede9f1be03fda96ffad2bdb13ec22e92a070dc241ea7cff203afee79658",
+      "authority_scope": "audited B physical bundle equality"
+    }
+  ],
+  "recoverable_bytes": 931092672,
+  "retained_canonical_files": 4,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/evidence/device-b/review.json": "08b09b122647c553c4d71c2050cdca6f5f223c613fc88af4a8046ebeddb4e1c3",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank0/state-2147483647/state-seal.txt": "a9524da1d01a270c6d05460cddfd43c78355cc6e00b6aa2ff6fe0fc9110d99be",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank1/state-2147483647/state-seal.txt": "a3132733e49eb2c0e61733d9bb5aff61155e41f0e112d361d7a786b2935dbafb",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/prompt-00-none/rank0/state-2147483647/state-seal.txt": "3588ea9bb17f926bf53716963b81b80ff8cd60f21cc40c85e55d914f14b212e0",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/prompt-00-none/rank1/state-2147483647/state-seal.txt": "8d2c2ec5a8564ab63f60402022b1beed1806acc52b38d311df3e5aa02bfb7810",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-mtp/rank0/state-2147483647/state-seal.txt": "3588ea9bb17f926bf53716963b81b80ff8cd60f21cc40c85e55d914f14b212e0",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-mtp/rank1/state-2147483647/state-seal.txt": "8d2c2ec5a8564ab63f60402022b1beed1806acc52b38d311df3e5aa02bfb7810",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/evidence/device-a/failure-metadata-review.json": "7958c033df8990abfa0d1bddf0b15638e7c5017a0bd5940823a6d34feafb372e"
+  },
+  "proposal": "Use frozen quality-pair-canonical lifecycle with common fixed RAW parent and exact six cross-run relative mappings. Keep all A/B seals/index/stateJSON/draft/results/incident files. Source schema must accept failed A only as safely closed forensic material, never as qualified output. Root must verify and independently rehash both full raw streams before separate release, preserve durable restore and original inode metadata, validate held identities immediately before unlink and fsync source directory. No archive/temp payload writes."
+}

@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/compare.py": "72f8f3abea3798380761740d773597c30bab69eb77e105471f366cda1fa954f4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/test_compare.py": "63f6611b06b52b63790182979c2f2972c5eadbf1dafbd63ea9552f03206fc923",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/PLAN.md": "eeec559a6d60492a4af4dbbb56ce374b2e2804d9e4f5725890660927eb81e283",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/logit-comparison/source-inputs.json": "378634003da55c5eb31dd1d27c2b85d3a5fe79b201660e2760a9716e02c670bc"
+  },
+  "scope": "Root finite source review, no payload read yet",
+  "checks": [
+    "87 input plus31 identical consumed generated tokens proven from both rank traces",
+    "32 reference rows join exact token IDs and final conditional prefix",
+    "Prior full bundle readback plus unchanged held identities and sealed metadata authorize four fixed ranges",
+    "496652B total range bound with per-range SHA; actual stored position/input/selected token checked",
+    "All248320 BF16 logits finite, stable float64 normalized log probabilities compared to retained32 reference probabilities",
+    "Diagnostic only; no invented tolerance, full-reference KL, broad quality or performance claim"
+  ]
+}

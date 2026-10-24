@@ -1,0 +1,7 @@
+# Closed F32 raw canonical preservation
+
+Fixed16 originals only: failed A initial/target four bundles and initial five draft files, plus qualified B MTP two bundles and initial five draft files. Retain B initial/target four bundles and B target-only five draft files as protected canonicals. All mappings are direct, with no chain through another removed file. Total950,491,336 bytes; all JSON, seals, indexes, incident/results and other files remain. A remains a failed, unqualified run.
+
+The six reviewed filesystem lifecycle functions are AST-identical to the frozen quality-pair helper. Each root-operated `--verify --batch N` fully hashes held original and canonical files, preserves original identity/metadata and a durable restore map. A seal/draft hash is only a declaration until this actual readback. Separate `--release-verified --batch N` rehashes both streams and matches identities again, saves the before receipt, rechecks held paths immediately before unlink, fsyncs the original directory and verifies the canonical remains. No overwrite, retry, model/cache action or archive payload copies.
+
+Root may inspect `--plan` metadata. Actual phases require independent source review and unchanged27GB+64MiB NVMe floor, fixed USB device2050 and helper placement/4GiBAS. Process batches0..15 explicitly, stop at first failure, and retain every receipt/restore map. No operation has been performed by this preparation. Metadata-only checks joined all16 paths, rejected invalid batch IDs, proved canonical/original disjointness and verified unchanged lifecycle ASTs.

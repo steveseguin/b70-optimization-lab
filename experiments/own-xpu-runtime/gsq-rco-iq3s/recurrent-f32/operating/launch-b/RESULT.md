@@ -28,3 +28,7 @@ covers 166 artifacts and 983,965,212 bytes. Broad quality remains unqualified:
 a short token match does not establish recurrent fidelity on long sequences or
 resolve remaining reference activation/rounding differences. Next is a retained
 same-prefix logit comparison and a few longer controlled comparisons.
+
+Duplicate closed copies are now preserved through the
+[canonical restoration mappings](../../../storage/recurrent-f32-canonical/RESULT.md).
+The qualified target-only captures remain protected and directly readable.

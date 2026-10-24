@@ -1,0 +1,778 @@
+{
+  "schema": "gsq.same-prefix-logits.v1",
+  "passed": true,
+  "metadata_only": false,
+  "source_sha256": "72f8f3abea3798380761740d773597c30bab69eb77e105471f366cda1fa954f4",
+  "authority_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/evidence/device-b/review.json": "08b09b122647c553c4d71c2050cdca6f5f223c613fc88af4a8046ebeddb4e1c3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/evidence/closed-readback-review.json": "c028ff21c0c32af97a752fa49db65c1b6463bc3ee2bde104a01ee24cbfc66a7b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/evidence/actual/request.json": "d6fe9f8fc8a63e923ef4d4cc6d872c6ae6d1f15c29ff0b7abd596852f4cbfd77",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/evidence/actual/response.json": "43440c3c22f629cec44b802b6436a6fbb81ac1272be980712468ce3c8d930bdc",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/f32-correctness.json": "6349b64c0706789aa8ccfba2a22d17b6d66fb47bf882a1c2667282f647b4edd6"
+  },
+  "alignment": {
+    "input_tokens": 87,
+    "generated_tokens": 32,
+    "consumed_tokens": 118,
+    "last_evaluated_position_zero_based": 117,
+    "committed_position": 118,
+    "last_consumed_token": 220,
+    "selected_token": 16,
+    "conditional_prefix_ids": [
+      248045,
+      846,
+      198,
+      2523,
+      513,
+      60566,
+      449,
+      13343,
+      2015,
+      1238,
+      264,
+      2393,
+      10142,
+      13,
+      9357,
+      264,
+      61446,
+      694,
+      4434,
+      10142,
+      76135,
+      364,
+      264,
+      5492,
+      5165,
+      85093,
+      8613,
+      539,
+      264,
+      3743,
+      6297,
+      8060,
+      362,
+      5728,
+      13,
+      28763,
+      5253,
+      11,
+      24024,
+      11,
+      27780,
+      9085,
+      11,
+      17448,
+      31092,
+      11,
+      32418,
+      6880,
+      11,
+      25411,
+      944,
+      11,
+      321,
+      6171,
+      1375,
+      1783,
+      13,
+      5272,
+      14542,
+      3992,
+      364,
+      23438,
+      321,
+      19079,
+      13,
+      68227,
+      364,
+      883,
+      220,
+      19,
+      20,
+      15,
+      12,
+      20,
+      20,
+      15,
+      4105,
+      13,
+      248046,
+      198,
+      248045,
+      74455,
+      198,
+      248068,
+      271,
+      248069,
+      271,
+      332,
+      37947,
+      1653,
+      10082,
+      3508,
+      8812,
+      25,
+      23288,
+      5165,
+      4230,
+      416,
+      318,
+      37163,
+      12,
+      17,
+      15,
+      17,
+      19,
+      12,
+      15,
+      23,
+      24,
+      31230,
+      271,
+      332,
+      18656,
+      332,
+      198,
+      1860,
+      6324,
+      220
+    ]
+  },
+  "ranges": {
+    "logits.bin": {
+      "offset": 125081536,
+      "bytes": 496640,
+      "sha256": "92008861cfadec36bc021712deea97952401d85c9245656d5e4f84b12b8ed452"
+    },
+    "position.bin": {
+      "offset": 125578180,
+      "bytes": 4,
+      "sha256": "3aeafee1e1d75bc3e6e86b332352ed62c7c2ff29c76cc399c8596f8dd1ed36f2"
+    },
+    "token.bin": {
+      "offset": 125598664,
+      "bytes": 4,
+      "sha256": "c9ef9bd66be720a334bfda5cb425f28b35f20c5c82cf95c86a41995bdaab34c9"
+    },
+    "next_token.bin": {
+      "offset": 125578176,
+      "bytes": 4,
+      "sha256": "097328e8c957de2428283954f6a1ee8ff7ad7def12e100a600178407f5decf24"
+    }
+  },
+  "maximum_payload_read_bytes": 496652,
+  "payload_bytes_read": 496652,
+  "native_whole_bundle_rehashed": false,
+  "whole_bundle_authority": "prior independent full streamed readback + unchanged closed FD/path stamps + seal; this helper only hashes four named ranges",
+  "quality_qualified": false,
+  "stored_context": {
+    "position.bin": 118,
+    "token.bin": 220,
+    "next_token.bin": 16
+  },
+  "comparison": {
+    "native_argmax": 16,
+    "reference_selected": 16,
+    "argmax_agrees": true,
+    "selected_native_logprob": -0.0624186340116054,
+    "selected_reference_logprob": -0.060894884169101715,
+    "selected_logprob_delta": -0.0015237498425036827,
+    "native_top32": [
+      {
+        "token_id": 16,
+        "logit": 22.5,
+        "logprob": -0.0624186340116054
+      },
+      {
+        "token_id": 17,
+        "logit": 19.75,
+        "logprob": -2.8124186340116055
+      },
+      {
+        "token_id": 19,
+        "logit": 14.25,
+        "logprob": -8.312418634011605
+      },
+      {
+        "token_id": 18,
+        "logit": 13.6875,
+        "logprob": -8.874918634011605
+      },
+      {
+        "token_id": 20,
+        "logit": 12.0,
+        "logprob": -10.562418634011605
+      },
+      {
+        "token_id": 15,
+        "logit": 10.4375,
+        "logprob": -12.124918634011605
+      },
+      {
+        "token_id": 23,
+        "logit": 10.25,
+        "logprob": -12.312418634011605
+      },
+      {
+        "token_id": 22,
+        "logit": 10.125,
+        "logprob": -12.437418634011605
+      },
+      {
+        "token_id": 21,
+        "logit": 9.5625,
+        "logprob": -12.999918634011605
+      },
+      {
+        "token_id": 24,
+        "logit": 9.5625,
+        "logprob": -12.999918634011605
+      },
+      {
+        "token_id": 220,
+        "logit": 9.0625,
+        "logprob": -13.499918634011605
+      },
+      {
+        "token_id": 506,
+        "logit": 7.46875,
+        "logprob": -15.093668634011605
+      },
+      {
+        "token_id": 198,
+        "logit": 6.5,
+        "logprob": -16.062418634011607
+      },
+      {
+        "token_id": 96025,
+        "logit": 6.3125,
+        "logprob": -16.249918634011607
+      },
+      {
+        "token_id": 4010,
+        "logit": 6.28125,
+        "logprob": -16.281168634011607
+      },
+      {
+        "token_id": 2972,
+        "logit": 6.0,
+        "logprob": -16.562418634011607
+      },
+      {
+        "token_id": 393,
+        "logit": 5.96875,
+        "logprob": -16.593668634011607
+      },
+      {
+        "token_id": 5955,
+        "logit": 5.9375,
+        "logprob": -16.624918634011607
+      },
+      {
+        "token_id": 197,
+        "logit": 5.875,
+        "logprob": -16.687418634011607
+      },
+      {
+        "token_id": 11,
+        "logit": 5.65625,
+        "logprob": -16.906168634011607
+      },
+      {
+        "token_id": 248044,
+        "logit": 5.59375,
+        "logprob": -16.968668634011607
+      },
+      {
+        "token_id": 337,
+        "logit": 5.53125,
+        "logprob": -17.031168634011607
+      },
+      {
+        "token_id": 348,
+        "logit": 5.5,
+        "logprob": -17.062418634011607
+      },
+      {
+        "token_id": 3966,
+        "logit": 5.5,
+        "logprob": -17.062418634011607
+      },
+      {
+        "token_id": 466,
+        "logit": 5.4375,
+        "logprob": -17.124918634011607
+      },
+      {
+        "token_id": 57487,
+        "logit": 5.4375,
+        "logprob": -17.124918634011607
+      },
+      {
+        "token_id": 149,
+        "logit": 5.375,
+        "logprob": -17.187418634011607
+      },
+      {
+        "token_id": 561,
+        "logit": 5.375,
+        "logprob": -17.187418634011607
+      },
+      {
+        "token_id": 46701,
+        "logit": 5.3125,
+        "logprob": -17.249918634011607
+      },
+      {
+        "token_id": 1510,
+        "logit": 5.28125,
+        "logprob": -17.281168634011607
+      },
+      {
+        "token_id": 29969,
+        "logit": 5.28125,
+        "logprob": -17.281168634011607
+      },
+      {
+        "token_id": 318,
+        "logit": 5.1875,
+        "logprob": -17.374918634011607
+      }
+    ],
+    "reference_top_rows": [
+      {
+        "token_id": 16,
+        "reference_retained_rank": 1,
+        "native_rank_tie_break_low_id": 1,
+        "native_tie_rank_interval": [
+          1,
+          1
+        ],
+        "native_logit": 22.5,
+        "native_logprob": -0.0624186340116054,
+        "reference_logprob": -0.060894884169101715,
+        "native_minus_reference_logprob": -0.0015237498425036827
+      },
+      {
+        "token_id": 17,
+        "reference_retained_rank": 2,
+        "native_rank_tie_break_low_id": 2,
+        "native_tie_rank_interval": [
+          2,
+          2
+        ],
+        "native_logit": 19.75,
+        "native_logprob": -2.8124186340116055,
+        "reference_logprob": -2.833573341369629,
+        "native_minus_reference_logprob": 0.021154707358023384
+      },
+      {
+        "token_id": 19,
+        "reference_retained_rank": 3,
+        "native_rank_tie_break_low_id": 3,
+        "native_tie_rank_interval": [
+          3,
+          3
+        ],
+        "native_logit": 14.25,
+        "native_logprob": -8.312418634011605,
+        "reference_logprob": -8.732888221740723,
+        "native_minus_reference_logprob": 0.4204695877291176
+      },
+      {
+        "token_id": 18,
+        "reference_retained_rank": 4,
+        "native_rank_tie_break_low_id": 4,
+        "native_tie_rank_interval": [
+          4,
+          4
+        ],
+        "native_logit": 13.6875,
+        "native_logprob": -8.874918634011605,
+        "reference_logprob": -9.383932113647461,
+        "native_minus_reference_logprob": 0.5090134796358559
+      },
+      {
+        "token_id": 20,
+        "reference_retained_rank": 5,
+        "native_rank_tie_break_low_id": 5,
+        "native_tie_rank_interval": [
+          5,
+          5
+        ],
+        "native_logit": 12.0,
+        "native_logprob": -10.562418634011605,
+        "reference_logprob": -11.153379440307617,
+        "native_minus_reference_logprob": 0.5909608062960121
+      },
+      {
+        "token_id": 15,
+        "reference_retained_rank": 6,
+        "native_rank_tie_break_low_id": 6,
+        "native_tie_rank_interval": [
+          6,
+          6
+        ],
+        "native_logit": 10.4375,
+        "native_logprob": -12.124918634011605,
+        "reference_logprob": -12.477999687194824,
+        "native_minus_reference_logprob": 0.35308105318321914
+      },
+      {
+        "token_id": 22,
+        "reference_retained_rank": 7,
+        "native_rank_tie_break_low_id": 8,
+        "native_tie_rank_interval": [
+          8,
+          8
+        ],
+        "native_logit": 10.125,
+        "native_logprob": -12.437418634011605,
+        "reference_logprob": -12.576793670654297,
+        "native_minus_reference_logprob": 0.1393750366426918
+      },
+      {
+        "token_id": 23,
+        "reference_retained_rank": 8,
+        "native_rank_tie_break_low_id": 7,
+        "native_tie_rank_interval": [
+          7,
+          7
+        ],
+        "native_logit": 10.25,
+        "native_logprob": -12.312418634011605,
+        "reference_logprob": -12.68466854095459,
+        "native_minus_reference_logprob": 0.37224990694298477
+      },
+      {
+        "token_id": 21,
+        "reference_retained_rank": 9,
+        "native_rank_tie_break_low_id": 9,
+        "native_tie_rank_interval": [
+          9,
+          10
+        ],
+        "native_logit": 9.5625,
+        "native_logprob": -12.999918634011605,
+        "reference_logprob": -13.20708179473877,
+        "native_minus_reference_logprob": 0.20716316072716445
+      },
+      {
+        "token_id": 220,
+        "reference_retained_rank": 10,
+        "native_rank_tie_break_low_id": 11,
+        "native_tie_rank_interval": [
+          11,
+          11
+        ],
+        "native_logit": 9.0625,
+        "native_logprob": -13.499918634011605,
+        "reference_logprob": -13.435736656188965,
+        "native_minus_reference_logprob": -0.06418197782264023
+      },
+      {
+        "token_id": 24,
+        "reference_retained_rank": 11,
+        "native_rank_tie_break_low_id": 10,
+        "native_tie_rank_interval": [
+          9,
+          10
+        ],
+        "native_logit": 9.5625,
+        "native_logprob": -12.999918634011605,
+        "reference_logprob": -13.471264839172363,
+        "native_minus_reference_logprob": 0.4713462051607582
+      },
+      {
+        "token_id": 506,
+        "reference_retained_rank": 12,
+        "native_rank_tie_break_low_id": 12,
+        "native_tie_rank_interval": [
+          12,
+          12
+        ],
+        "native_logit": 7.46875,
+        "native_logprob": -15.093668634011605,
+        "reference_logprob": -15.578316688537598,
+        "native_minus_reference_logprob": 0.4846480545259926
+      },
+      {
+        "token_id": 198,
+        "reference_retained_rank": 13,
+        "native_rank_tie_break_low_id": 13,
+        "native_tie_rank_interval": [
+          13,
+          13
+        ],
+        "native_logit": 6.5,
+        "native_logprob": -16.062418634011607,
+        "reference_logprob": -15.795523643493652,
+        "native_minus_reference_logprob": -0.2668949905179545
+      },
+      {
+        "token_id": 96025,
+        "reference_retained_rank": 14,
+        "native_rank_tie_break_low_id": 14,
+        "native_tie_rank_interval": [
+          14,
+          14
+        ],
+        "native_logit": 6.3125,
+        "native_logprob": -16.249918634011607,
+        "reference_logprob": -16.17194175720215,
+        "native_minus_reference_logprob": -0.07797687680945842
+      },
+      {
+        "token_id": 393,
+        "reference_retained_rank": 15,
+        "native_rank_tie_break_low_id": 17,
+        "native_tie_rank_interval": [
+          17,
+          17
+        ],
+        "native_logit": 5.96875,
+        "native_logprob": -16.593668634011607,
+        "reference_logprob": -16.552566528320312,
+        "native_minus_reference_logprob": -0.041102105691294355
+      },
+      {
+        "token_id": 197,
+        "reference_retained_rank": 16,
+        "native_rank_tie_break_low_id": 19,
+        "native_tie_rank_interval": [
+          19,
+          19
+        ],
+        "native_logit": 5.875,
+        "native_logprob": -16.687418634011607,
+        "reference_logprob": -16.55844497680664,
+        "native_minus_reference_logprob": -0.12897365720496623
+      },
+      {
+        "token_id": 4010,
+        "reference_retained_rank": 17,
+        "native_rank_tie_break_low_id": 15,
+        "native_tie_rank_interval": [
+          15,
+          15
+        ],
+        "native_logit": 6.28125,
+        "native_logprob": -16.281168634011607,
+        "reference_logprob": -16.597442626953125,
+        "native_minus_reference_logprob": 0.31627399294151815
+      },
+      {
+        "token_id": 2972,
+        "reference_retained_rank": 18,
+        "native_rank_tie_break_low_id": 16,
+        "native_tie_rank_interval": [
+          16,
+          16
+        ],
+        "native_logit": 6.0,
+        "native_logprob": -16.562418634011607,
+        "reference_logprob": -16.91042709350586,
+        "native_minus_reference_logprob": 0.3480084594942525
+      },
+      {
+        "token_id": 248044,
+        "reference_retained_rank": 19,
+        "native_rank_tie_break_low_id": 21,
+        "native_tie_rank_interval": [
+          21,
+          21
+        ],
+        "native_logit": 5.59375,
+        "native_logprob": -16.968668634011607,
+        "reference_logprob": -17.025602340698242,
+        "native_minus_reference_logprob": 0.05693370668663533
+      },
+      {
+        "token_id": 3966,
+        "reference_retained_rank": 20,
+        "native_rank_tie_break_low_id": 24,
+        "native_tie_rank_interval": [
+          23,
+          24
+        ],
+        "native_logit": 5.5,
+        "native_logprob": -17.062418634011607,
+        "reference_logprob": -17.070959091186523,
+        "native_minus_reference_logprob": 0.008540457174916583
+      },
+      {
+        "token_id": 348,
+        "reference_retained_rank": 21,
+        "native_rank_tie_break_low_id": 23,
+        "native_tie_rank_interval": [
+          23,
+          24
+        ],
+        "native_logit": 5.5,
+        "native_logprob": -17.062418634011607,
+        "reference_logprob": -17.084171295166016,
+        "native_minus_reference_logprob": 0.02175266115440877
+      },
+      {
+        "token_id": 5955,
+        "reference_retained_rank": 22,
+        "native_rank_tie_break_low_id": 18,
+        "native_tie_rank_interval": [
+          18,
+          18
+        ],
+        "native_logit": 5.9375,
+        "native_logprob": -16.624918634011607,
+        "reference_logprob": -17.174678802490234,
+        "native_minus_reference_logprob": 0.5497601684786275
+      },
+      {
+        "token_id": 149,
+        "reference_retained_rank": 23,
+        "native_rank_tie_break_low_id": 27,
+        "native_tie_rank_interval": [
+          27,
+          28
+        ],
+        "native_logit": 5.375,
+        "native_logprob": -17.187418634011607,
+        "reference_logprob": -17.223793029785156,
+        "native_minus_reference_logprob": 0.036374395773549395
+      },
+      {
+        "token_id": 337,
+        "reference_retained_rank": 24,
+        "native_rank_tie_break_low_id": 22,
+        "native_tie_rank_interval": [
+          22,
+          22
+        ],
+        "native_logit": 5.53125,
+        "native_logprob": -17.031168634011607,
+        "reference_logprob": -17.227100372314453,
+        "native_minus_reference_logprob": 0.19593173830284627
+      },
+      {
+        "token_id": 1510,
+        "reference_retained_rank": 25,
+        "native_rank_tie_break_low_id": 30,
+        "native_tie_rank_interval": [
+          30,
+          31
+        ],
+        "native_logit": 5.28125,
+        "native_logprob": -17.281168634011607,
+        "reference_logprob": -17.229042053222656,
+        "native_minus_reference_logprob": -0.052126580788950605
+      },
+      {
+        "token_id": 466,
+        "reference_retained_rank": 26,
+        "native_rank_tie_break_low_id": 25,
+        "native_tie_rank_interval": [
+          25,
+          26
+        ],
+        "native_logit": 5.4375,
+        "native_logprob": -17.124918634011607,
+        "reference_logprob": -17.273256301879883,
+        "native_minus_reference_logprob": 0.14833766786827596
+      },
+      {
+        "token_id": 46701,
+        "reference_retained_rank": 27,
+        "native_rank_tie_break_low_id": 29,
+        "native_tie_rank_interval": [
+          29,
+          29
+        ],
+        "native_logit": 5.3125,
+        "native_logprob": -17.249918634011607,
+        "reference_logprob": -17.366130828857422,
+        "native_minus_reference_logprob": 0.11621219484581502
+      },
+      {
+        "token_id": 561,
+        "reference_retained_rank": 28,
+        "native_rank_tie_break_low_id": 28,
+        "native_tie_rank_interval": [
+          27,
+          28
+        ],
+        "native_logit": 5.375,
+        "native_logprob": -17.187418634011607,
+        "reference_logprob": -17.371707916259766,
+        "native_minus_reference_logprob": 0.18428928224815877
+      },
+      {
+        "token_id": 57487,
+        "reference_retained_rank": 29,
+        "native_rank_tie_break_low_id": 26,
+        "native_tie_rank_interval": [
+          25,
+          26
+        ],
+        "native_logit": 5.4375,
+        "native_logprob": -17.124918634011607,
+        "reference_logprob": -17.389684677124023,
+        "native_minus_reference_logprob": 0.2647660431124166
+      },
+      {
+        "token_id": 11,
+        "reference_retained_rank": 30,
+        "native_rank_tie_break_low_id": 20,
+        "native_tie_rank_interval": [
+          20,
+          20
+        ],
+        "native_logit": 5.65625,
+        "native_logprob": -16.906168634011607,
+        "reference_logprob": -17.396625518798828,
+        "native_minus_reference_logprob": 0.49045688478722127
+      },
+      {
+        "token_id": 271,
+        "reference_retained_rank": 31,
+        "native_rank_tie_break_low_id": 37,
+        "native_tie_rank_interval": [
+          37,
+          37
+        ],
+        "native_logit": 5.03125,
+        "native_logprob": -17.531168634011607,
+        "reference_logprob": -17.478593826293945,
+        "native_minus_reference_logprob": -0.05257480771766154
+      },
+      {
+        "token_id": 248046,
+        "reference_retained_rank": 32,
+        "native_rank_tie_break_low_id": 35,
+        "native_tie_rank_interval": [
+          34,
+          35
+        ],
+        "native_logit": 5.09375,
+        "native_logprob": -17.468668634011607,
+        "reference_logprob": -17.544099807739258,
+        "native_minus_reference_logprob": 0.07543117372765096
+      }
+    ],
+    "topk_overlap": {
+      "1": 1,
+      "5": 5,
+      "10": 9,
+      "32": 30
+    },
+    "retained_top_mean_abs_logprob_delta": 0.2208714240997982,
+    "retained_top_max_abs_logprob_delta": 0.5909608062960121,
+    "normalization": "float64 max-shift + math.fsum over every native BF16 logit; descriptive analysis, not reference FP32 softmax reproduction"
+  },
+  "limitations": [
+    "One final position for one shared 118-token conditional prefix, not broad quality certification.",
+    "Reference retains only top32 probabilities; no full-reference logits, KL, or full-distribution equality claim.",
+    "Native logits are BF16; reference logits/softmax and reported logarithms are FP32. Different arithmetic orders and rounding preclude an assumed bitwise numerical oracle.",
+    "No acceptance threshold is invented; passed means alignment/readback/comparison completed, even if argmax or distributions differ.",
+    "Original CPU runtime terminal remains failed from the separately audited postresponse validator bug."
+  ]
+}

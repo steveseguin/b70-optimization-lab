@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "scope": "Final source-only cardinality correction review; prior stricter source/review retained. No test replay, plan, model or device invocation.",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/once.py": "fe416c91b7fea02ff4a99c94daf74fa68bca15b247f8d1d39e2aa166e77235a4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/test_once.py": "9c3b04933897b6564cf68bb0d9fe100cbf37cdd44c2bb817934e7d52282f5b0c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/requests.json": "7121e1525884d8bf50e4fc779543c309bf6f573aa9c3dfb8bcdb2b0eab56ea4d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/runtime-delta.patch": "a1a23baa2e94ea68c598ac6baff0bf1fc1b7803374cc3e0fe37098b07b063b68",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/README.md": "a66a327c6294119714ad64f224ecc37c2b5cf16d7915a1cf6232a37909d5aea8",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/evidence/source-tests.log": "a30d8cedde7201048e5b0d0405cdb7b6eb3ca5b26eed275f7f9dd06e94f36a24",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/evidence/eos-cardinality-source-review.json": "9249cdb5cbddf125197d1d719629e8760d6b3d9e67b9c769ccedab0ccb2680dd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/once.py": "d11af7129cdab746b1e59625b6afa21cc72c342223a782b74c62d7a56adc1500",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/evidence/closed-readback-review.json": "c028ff21c0c32af97a752fa49db65c1b6463bc3ee2bde104a01ee24cbfc66a7b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/evidence/device-b/review.json": "08b09b122647c553c4d71c2050cdca6f5f223c613fc88af4a8046ebeddb4e1c3",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/tools/server/server-context.cpp": "0df45fda4618e735b240d03609f3fbc0a6c9ee4dba40f0c604f3cbab62165618",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/tools/server/server-task.cpp": "4c3f413b9b54d4cc0e7b5998e6979a2389f5ff716e20cb1510ca7745fa233495",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/source-preparation.json": "0517baab92b3f7e2948a921e7c1387381b743afeb2cd36e4353a9302f68763d4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/manifest.json": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/request-proposal.json": "d6fe9f8fc8a63e923ef4d4cc6d872c6ae6d1f15c29ff0b7abd596852f4cbfd77"
+  },
+  "unchanged_functions": [
+    "limits",
+    "socket_owned",
+    "no_device",
+    "request_http",
+    "dtype_log",
+    "model_stats",
+    "save"
+  ],
+  "fixed_requests": 3,
+  "prompt_lengths": [
+    87,
+    90,
+    77
+  ],
+  "output_caps": [
+    512,
+    512,
+    512
+  ],
+  "single_owner_no_retry": true,
+  "initial_and_ongoing_resource_guards_preserved": true,
+  "no_device_scope": "Same pinned static CPU binary/build admission, empty backend search path, isolated cwd, clean environment, sampled FD and exact shared-library map checks. No absolute transient-FD claim.",
+  "response_checks": "All generated token IDs/count remain exact including EOS; each returned pre-sampling row is greedy and an ordered subsequence. Explicit missing-row count; no unique per-position inference for repeated IDs.",
+  "limitations": [
+    "Only three original short prompts; long-context fidelity remains separate.",
+    "No model/native comparison performed by this preparation.",
+    "Output quota monitored between samples; inherited HTTP response cap8MiB and total deadline3600s unchanged."
+  ],
+  "prior_review_sha256": "6e0fd0b1668485704dd33b79547e08c038deb4a4eaf070b737c0cc5861046ed7",
+  "prior_review_retained": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-longer-a/lineage/before-utf8-probability-cardinality/independent-review.json",
+  "narrow_changed_functions": [
+    "response_check",
+    "run"
+  ],
+  "reviewed_tests": 6
+}

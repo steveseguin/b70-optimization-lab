@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "scope": "Finite source and closed metadata review only; no payload reads, verify/release actions, or source mutations",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/recurrent-f32-canonical/reuse.py": "8957f11dfff73b7da62026029570073cbf31b478b6f38d69eb695fe628afc55a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/recurrent-f32-canonical/closure-binding.json": "39b90f1ac8f821ad43f7b98a7e3ca13121ad5845603d38d3b23f4dc8a6c1babd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/recurrent-f32-canonical/delta.patch": "f9cfc11a9d97b6130f3005b90737d07fe823ed9bca141a63efb0bf0cdb73a136",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/recurrent-f32-canonical/README.md": "192438a60ed3200f88fcf5ea92a44a4f823bc2edbb85e7251b718bc0b54f9f95",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/recurrent-f32-canonical/evidence/metadata-plan.json": "f092eae6927f5a4c583cca3764484324b135fdf3dff145867ab684facdc2216c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/quality-pair-canonical/reuse.py": "d6c5eb7b24e3481a64fa9f6d6461d61e11825175bf3632abd2354669fa1c2a33",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/recurrent-f32-canonical/evidence/preparation.json": "4a96605d40beba033e1435bc491cd448f34b9c720559310e75fa24d4dffd649b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/blank-draft-canonical/reuse.py": "e54d2ad9f0067445273e08b1501ebe3246abfa747cbbcfabd6b01d764b1c1f05"
+  },
+  "actual_metadata_mappings": 16,
+  "recoverable_bytes": 950491336,
+  "protected_canonical_files": 9,
+  "unchanged_functions": [
+    "syncdir",
+    "anchor",
+    "held",
+    "verify",
+    "release",
+    "review"
+  ],
+  "failed_A_remains_unqualified": true,
+  "root_full_bytes_verification_required_before_release": true,
+  "preserves_B_target_only_logit_capture": true,
+  "checks": [
+    "All authority/index/result/seal/draft metadata pins join actual closed evidence",
+    "Originals and retained canonical paths are disjoint fixed allowlists",
+    "Both full files hashed under held FDs in verify and again in separate release",
+    "Restore map and before-release receipt durably fsynced; exclusive phase receipts prevent automatic retry",
+    "Held inode/path identities checked before unlink; canonical retained and checked afterward",
+    "All metadata/unindexed evidence remains; prior failed A is forensic preservation only"
+  ]
+}
