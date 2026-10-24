@@ -35,3 +35,17 @@ correctness scope and benchmark fairness. It reports recommendations to the
 coordinator and records concise dated feedback here in the lane. It does not
 operate GPUs, alter services/settings, or authorize a shortcut. The coordinator
 owns action selection, all device operations, and evidence-backed conclusions.
+
+## Measured next step — 06:12 UTC
+
+The [resident baseline](baseline/RESULT.md) and [class diagnostic](profiling/RESULT.md)
+are independently audited. The next single candidate is existing p33 segmented Q8
+variant6, split1, restricted to the48 attention projections at N2560/K6144. It preserves
+lane products, ordered accumulation, SG32 reduction and BF16 output; no precision or
+model change is allowed. It replaces packed shared-memory staging with exact expanded
+codes/scales, adding47,185,920 device bytes perrank. Actual native equality and speed
+must be measured; the slightly larger read footprint could erase the staging benefit.
+Preserve the frozen baseline binary and source closure. A dependency-proven one-TU
+build is preferable to rebuilding39 unchanged objects. Test control/candidate kernels
+within one owner; do not create a fresh-server timing chain. End-to-end candidate
+numbers remain provisional until their control comparison is fair.

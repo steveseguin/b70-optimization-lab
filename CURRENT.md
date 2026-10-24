@@ -1,14 +1,17 @@
 # Current Workspace State
 
-**October 24, 02:07 EDT — four-card host: audited SC117 resident baseline passes; class profiling running.**
+**October 24, 02:12 EDT — four-card host: SC117 baseline and profiling audited; one attention candidate in preparation.**
 All twelve original target/MTP prompt pairs match exact tokens and full target state.
 Independent readback verifies 57,675 files / 6.34 GB. Decode is 12.6346 target-only and
 17.9772 MTP tokens/s (+42.29%) for this one resident short-prompt/cap128 suite; both
 order groups favor MTP, with residual ordering effects retained. MTP accepts 1,160/1,524
 proposals. This is same-engine equivalence, not an independent broad quality oracle.
 Baseline owners exited safely with target cards drained and unchanged fault/vision state.
-A separately reviewed, bounded class diagnostic is running on BDF23/47 with the same
-binary; it must match the first baseline prompt exactly. No speed claim from profiling.
+The bounded class diagnostic also passed exact baseline equality and independent readback;
+both owners exited cleanly and target cards are empty. Attention Q8 projections account for
+11.02% of summed whole-request GPU event time. One candidate will reuse existing p33
+variant6 only at those48 sites, preserving arithmetic and adding47.2MB perrank. No measured
+candidate speed claim yet; source/CPU checks and bounded native comparison precede promotion.
 Continue measured lossless acceleration and the 30-minute progress/fairness reviews.
 [Baseline result](experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/RESULT.md).
 
