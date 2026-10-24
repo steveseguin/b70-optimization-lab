@@ -1,0 +1,19 @@
+{
+  "status": "UNEXECUTED_SOURCE_A_BOUND_RUN_FAILED",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/audit.py": "b732464d4bddc5c1abd603f8d11ae626a9768a6f52a42dc21c152585864f97bb",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/bundle_scan.py": "9c0c7f198661e3219e288dfea02feaafc3d660b00a2e5e24556f2144ca38b17b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/bundle-scan.patch": "d16f3ca77ff58a6c76f59d9b0add698e5b06a95a5570657fb9886669e6bc4c4f"
+  },
+  "syntax_parsed": true,
+  "tests_executed": false,
+  "actual_audit_executed": false,
+  "native_A_qualified": false,
+  "scope": "Success auditor written while A was active; requires successful retained terminal and thus cannot qualify failed A. Preserve this source before any separately root-admitted B binding. Actual A failure/closure audit owned by peer/root.",
+  "proposed_checks": [
+    "six bundles independently streamed; corrected lengths only from prior inventory, no old BF16 hash oracle",
+    "330 F32 recurrent ranges, measured non-BF16 low bits counted in same stream",
+    "new target/MTP32 full-state equality, CPU reference comparison diagnostic",
+    "positive physical closure, exact census and five acknowledged capture stages"
+  ]
+}

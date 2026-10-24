@@ -1,0 +1,1574 @@
+{
+  "passed": true,
+  "scope": "Corrected F32 native pair readback; no speed or broad quality claim",
+  "historical_bf16_state_oracle_used": false,
+  "plan_sha256": "67add3de84d91bf85d09e3d98d73ac1d5dc46306b24056682ad8b249b576e1ee",
+  "native_binary_sha256": "5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4",
+  "full_result_sha256": "6349b64c0706789aa8ccfba2a22d17b6d66fb47bf882a1c2667282f647b4edd6",
+  "arms": [
+    {
+      "name": "prompt-00-none",
+      "mode": "none",
+      "tokens": [
+        332,
+        37947,
+        1653,
+        10082,
+        3508,
+        8812,
+        25,
+        23288,
+        5165,
+        4230,
+        416,
+        318,
+        37163,
+        12,
+        17,
+        15,
+        17,
+        19,
+        12,
+        15,
+        23,
+        24,
+        31230,
+        271,
+        332,
+        18656,
+        332,
+        198,
+        1860,
+        6324,
+        220,
+        16
+      ],
+      "stats": {
+        "guesses": 0,
+        "hits": 0,
+        "misses": 0,
+        "no_guess": 31,
+        "redo_ms": 0
+      },
+      "reference_equal": true,
+      "reference_first_difference": null,
+      "scope": "Only this87-token input/32 cap; no general quality or bitwise-logit claim"
+    },
+    {
+      "name": "prompt-00-mtp",
+      "mode": "mtp",
+      "tokens": [
+        332,
+        37947,
+        1653,
+        10082,
+        3508,
+        8812,
+        25,
+        23288,
+        5165,
+        4230,
+        416,
+        318,
+        37163,
+        12,
+        17,
+        15,
+        17,
+        19,
+        12,
+        15,
+        23,
+        24,
+        31230,
+        271,
+        332,
+        18656,
+        332,
+        198,
+        1860,
+        6324,
+        220,
+        16
+      ],
+      "stats": {
+        "guesses": 31,
+        "hits": 26,
+        "misses": 5,
+        "no_guess": 0,
+        "redo_ms": 151.08656929805875
+      },
+      "reference_equal": true,
+      "reference_first_difference": null,
+      "scope": "Only this87-token input/32 cap; no general quality or bitwise-logit claim"
+    }
+  ],
+  "corrected_target_mtp_exact": true,
+  "reference32_equal": true,
+  "reference_review_sha256": "c028ff21c0c32af97a752fa49db65c1b6463bc3ee2bde104a01ee24cbfc66a7b",
+  "captures": [
+    {
+      "path": "rank0/state-2147483647",
+      "payload_bytes": 184765556,
+      "ranges": 1076,
+      "f32_ranges": {
+        "blk.0.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.0.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.1.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.1.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.1.ple.history.bin": {
+          "words": 92160,
+          "non_bf16_words": 0
+        },
+        "blk.10.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.10.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.12.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.12.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.13.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.13.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.14.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.14.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.16.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.16.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.17.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.17.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.18.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.18.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.2.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.2.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.20.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.20.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.21.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.21.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.22.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.22.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.4.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.4.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.5.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.5.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.6.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.6.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.8.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.8.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.9.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.9.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.0.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.0.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.1.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.1.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.1.ple.history.bin": {
+          "words": 92160,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.10.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.10.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.12.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.12.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.13.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.13.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.14.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.14.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.16.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.16.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.17.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.17.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.18.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.18.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.2.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.2.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.20.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.20.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.21.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.21.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.22.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.22.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.4.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.4.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.5.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.5.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.6.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.6.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.8.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.8.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.9.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.9.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        }
+      },
+      "physical_sha256": {
+        "state-seal.txt": "a9524da1d01a270c6d05460cddfd43c78355cc6e00b6aa2ff6fe0fc9110d99be",
+        "state-index.tsv": "48be410333259c16b9411c25ec629bc54ba13f943d260790214b9e3ca2fecc88",
+        "state.json": "277d0fbf77f8137727c0bcc93df636e8955228b271b268891f6157584d11e918",
+        "state.bundle": "9abf3609d0658c9785ce4315a5d6757398e3d569ea94448eec8bc882840983dd"
+      }
+    },
+    {
+      "path": "rank1/state-2147483647",
+      "payload_bytes": 125598668,
+      "ranges": 1032,
+      "f32_ranges": {
+        "blk.24.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.24.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.25.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.25.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.26.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.26.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.28.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.28.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.29.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.29.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.30.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.30.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.32.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.32.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.33.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.33.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.34.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.34.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.36.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.36.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.37.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.37.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.38.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.38.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.40.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.40.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.41.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.41.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.42.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.42.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.44.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.44.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.45.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.45.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        },
+        "blk.46.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.46.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 0
+        }
+      },
+      "physical_sha256": {
+        "state-seal.txt": "a3132733e49eb2c0e61733d9bb5aff61155e41f0e112d361d7a786b2935dbafb",
+        "state-index.tsv": "4a420c62449481ef6c047c0cf22ede2bbfa3de1855a40eac2f6813782c91fab1",
+        "state.json": "63183f4ca311ea2e7414c11368cb23950695bd80fd522080b27dc0508b70f4be",
+        "state.bundle": "d9e92040c85caf2b8ded26e1b2b4acf52d50123ade3050a18fc47d3e335c647f"
+      }
+    },
+    {
+      "path": "prompt-00-none/rank0/state-2147483647",
+      "payload_bytes": 184765556,
+      "ranges": 1076,
+      "f32_ranges": {
+        "blk.0.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.0.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786403
+        },
+        "blk.1.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.1.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 783977
+        },
+        "blk.1.ple.history.bin": {
+          "words": 92160,
+          "non_bf16_words": 0
+        },
+        "blk.10.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.10.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786397
+        },
+        "blk.12.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.12.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.13.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.13.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "blk.14.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.14.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.16.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.16.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.17.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.17.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786411
+        },
+        "blk.18.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.18.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.2.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.2.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786003
+        },
+        "blk.20.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.20.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.21.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.21.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786399
+        },
+        "blk.22.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.22.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786406
+        },
+        "blk.4.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.4.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786411
+        },
+        "blk.5.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.5.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786401
+        },
+        "blk.6.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.6.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786392
+        },
+        "blk.8.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.8.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786404
+        },
+        "blk.9.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.9.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786396
+        },
+        "alternate-blk.0.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.0.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786414
+        },
+        "alternate-blk.1.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.1.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 783958
+        },
+        "alternate-blk.1.ple.history.bin": {
+          "words": 92160,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.10.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.10.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786403
+        },
+        "alternate-blk.12.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.12.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786410
+        },
+        "alternate-blk.13.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.13.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "alternate-blk.14.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.14.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786407
+        },
+        "alternate-blk.16.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.16.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786407
+        },
+        "alternate-blk.17.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.17.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "alternate-blk.18.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.18.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "alternate-blk.2.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.2.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786014
+        },
+        "alternate-blk.20.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.20.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "alternate-blk.21.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.21.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786393
+        },
+        "alternate-blk.22.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.22.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786403
+        },
+        "alternate-blk.4.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.4.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "alternate-blk.5.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.5.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786406
+        },
+        "alternate-blk.6.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.6.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786401
+        },
+        "alternate-blk.8.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.8.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786404
+        },
+        "alternate-blk.9.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.9.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786394
+        }
+      },
+      "physical_sha256": {
+        "state-seal.txt": "3588ea9bb17f926bf53716963b81b80ff8cd60f21cc40c85e55d914f14b212e0",
+        "state-index.tsv": "bb29b047b459bf985fb3ed1cc570f7365c2986f030c40f2a67f5a1130e84080c",
+        "state.json": "0a29c52014d131a87eaa4fb69663d8b9e7786005efa25944d851c9fd17cf3593",
+        "state.bundle": "3a1dc720a5923bf581cf6fdb8cbe80de8f7df3f12db07fc568f653a6128418ed"
+      }
+    },
+    {
+      "path": "prompt-00-none/rank1/state-2147483647",
+      "payload_bytes": 125598668,
+      "ranges": 1032,
+      "f32_ranges": {
+        "blk.24.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.24.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "blk.25.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.25.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.26.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.26.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "blk.28.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.28.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786410
+        },
+        "blk.29.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.29.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786402
+        },
+        "blk.30.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.30.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786419
+        },
+        "blk.32.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.32.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786412
+        },
+        "blk.33.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.33.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786412
+        },
+        "blk.34.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.34.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.36.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.36.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.37.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.37.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "blk.38.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.38.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786405
+        },
+        "blk.40.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.40.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786410
+        },
+        "blk.41.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.41.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.42.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.42.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786398
+        },
+        "blk.44.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.44.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786414
+        },
+        "blk.45.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.45.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786411
+        },
+        "blk.46.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.46.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786406
+        }
+      },
+      "physical_sha256": {
+        "state-seal.txt": "8d2c2ec5a8564ab63f60402022b1beed1806acc52b38d311df3e5aa02bfb7810",
+        "state-index.tsv": "2d15c2d7a1c711719c477585f191dcd637912555eb16204ba67893a00b3feed7",
+        "state.json": "da7fac067507c0012dc7da9390500867189882d3b4c5f03595ca3f0bdd3913bb",
+        "state.bundle": "7b19eede9f1be03fda96ffad2bdb13ec22e92a070dc241ea7cff203afee79658"
+      }
+    },
+    {
+      "path": "prompt-00-mtp/rank0/state-2147483647",
+      "payload_bytes": 184765556,
+      "ranges": 1076,
+      "f32_ranges": {
+        "blk.0.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.0.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786403
+        },
+        "blk.1.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.1.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 783977
+        },
+        "blk.1.ple.history.bin": {
+          "words": 92160,
+          "non_bf16_words": 0
+        },
+        "blk.10.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.10.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786397
+        },
+        "blk.12.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.12.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.13.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.13.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "blk.14.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.14.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.16.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.16.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.17.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.17.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786411
+        },
+        "blk.18.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.18.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.2.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.2.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786003
+        },
+        "blk.20.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.20.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.21.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.21.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786399
+        },
+        "blk.22.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.22.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786406
+        },
+        "blk.4.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.4.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786411
+        },
+        "blk.5.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.5.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786401
+        },
+        "blk.6.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.6.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786392
+        },
+        "blk.8.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.8.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786404
+        },
+        "blk.9.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.9.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786396
+        },
+        "alternate-blk.0.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.0.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786414
+        },
+        "alternate-blk.1.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.1.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 783958
+        },
+        "alternate-blk.1.ple.history.bin": {
+          "words": 92160,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.10.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.10.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786403
+        },
+        "alternate-blk.12.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.12.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786410
+        },
+        "alternate-blk.13.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.13.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "alternate-blk.14.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.14.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786407
+        },
+        "alternate-blk.16.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.16.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786407
+        },
+        "alternate-blk.17.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.17.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "alternate-blk.18.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.18.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "alternate-blk.2.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.2.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786014
+        },
+        "alternate-blk.20.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.20.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "alternate-blk.21.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.21.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786393
+        },
+        "alternate-blk.22.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.22.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786403
+        },
+        "alternate-blk.4.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.4.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "alternate-blk.5.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.5.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786406
+        },
+        "alternate-blk.6.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.6.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786401
+        },
+        "alternate-blk.8.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.8.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786404
+        },
+        "alternate-blk.9.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "alternate-blk.9.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786394
+        }
+      },
+      "physical_sha256": {
+        "state-seal.txt": "3588ea9bb17f926bf53716963b81b80ff8cd60f21cc40c85e55d914f14b212e0",
+        "state-index.tsv": "bb29b047b459bf985fb3ed1cc570f7365c2986f030c40f2a67f5a1130e84080c",
+        "state.json": "0a29c52014d131a87eaa4fb69663d8b9e7786005efa25944d851c9fd17cf3593",
+        "state.bundle": "3a1dc720a5923bf581cf6fdb8cbe80de8f7df3f12db07fc568f653a6128418ed"
+      }
+    },
+    {
+      "path": "prompt-00-mtp/rank1/state-2147483647",
+      "payload_bytes": 125598668,
+      "ranges": 1032,
+      "f32_ranges": {
+        "blk.24.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.24.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "blk.25.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.25.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.26.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.26.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786409
+        },
+        "blk.28.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.28.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786410
+        },
+        "blk.29.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.29.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786402
+        },
+        "blk.30.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.30.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786419
+        },
+        "blk.32.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.32.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786412
+        },
+        "blk.33.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.33.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786412
+        },
+        "blk.34.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.34.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.36.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.36.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786413
+        },
+        "blk.37.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.37.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786400
+        },
+        "blk.38.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.38.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786405
+        },
+        "blk.40.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.40.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786410
+        },
+        "blk.41.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.41.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786408
+        },
+        "blk.42.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.42.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786398
+        },
+        "blk.44.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.44.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786414
+        },
+        "blk.45.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.45.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786411
+        },
+        "blk.46.gdn.history.bin": {
+          "words": 30720,
+          "non_bf16_words": 0
+        },
+        "blk.46.gdn.state.bin": {
+          "words": 786432,
+          "non_bf16_words": 786406
+        }
+      },
+      "physical_sha256": {
+        "state-seal.txt": "8d2c2ec5a8564ab63f60402022b1beed1806acc52b38d311df3e5aa02bfb7810",
+        "state-index.tsv": "2d15c2d7a1c711719c477585f191dcd637912555eb16204ba67893a00b3feed7",
+        "state.json": "da7fac067507c0012dc7da9390500867189882d3b4c5f03595ca3f0bdd3913bb",
+        "state.bundle": "7b19eede9f1be03fda96ffad2bdb13ec22e92a070dc241ea7cff203afee79658"
+      }
+    }
+  ],
+  "target_bundles": 6,
+  "f32_ranges": 330,
+  "non_bf16_f32_words": 84920510,
+  "actual_device_bytes": [
+    31083481994,
+    29995470740
+  ],
+  "owners": [
+    {
+      "status": "complete",
+      "safe_to_exit": true,
+      "in_flight": 0,
+      "live_bytes": 0,
+      "exit_code": 0
+    },
+    {
+      "status": "complete",
+      "safe_to_exit": true,
+      "in_flight": 0,
+      "live_bytes": 0,
+      "exit_code": 0
+    }
+  ],
+  "ownership": {
+    "retained_pids": [],
+    "stop_requested": false,
+    "returncodes": [
+      0,
+      0
+    ],
+    "signals_sent": 0,
+    "diagnostic_errors": []
+  },
+  "rank_identities": [
+    [
+      3667149,
+      69338701
+    ],
+    [
+      3667157,
+      69338745
+    ]
+  ],
+  "physical_drain": true,
+  "kernel_fault_baseline_unchanged": true,
+  "artifact_count": 166,
+  "indexed_bytes": 983965212,
+  "index_sha256": "4b8c23c4868f5f45e1eb9f04c27f2cd1e6bffbe7dc74790e6798640d1a862256",
+  "capture_budget": {
+    "stage": 5,
+    "acknowledged": [
+      "initial_reset",
+      "target_dump",
+      "second_reset",
+      "mtp_dump",
+      "finish"
+    ],
+    "remaining_payload_bytes": 0,
+    "metadata_reserve_bytes": 134217728,
+    "external_floor_bytes": 2147483648
+  },
+  "quality_qualified": false,
+  "auditor_sha256": "e77a18931b0f92700f66dbed319c0397368c144a9cce78c67e61ae73fcbd61b5",
+  "bundle_scan_sha256": "9c0c7f198661e3219e288dfea02feaafc3d660b00a2e5e24556f2144ca38b17b",
+  "elapsed_seconds": 9.151964357006364
+}

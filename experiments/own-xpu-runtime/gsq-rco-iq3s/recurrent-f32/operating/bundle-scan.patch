@@ -1,0 +1,32 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/audit.py
++++ bundle_scan.py::stream_bundle
+@@ -27,22 +27,26 @@
+   require(index.endswith(b'\n'),'index newline');lines=index.decode('ascii')[:-1].split('\n')
+   require(lines[0]=='GSQ_STATE_BUNDLE_V1' and len(lines)==len(expected) and 0<len(state_names)<=4096,'bounded complete index')
+   require(length==stamps['state.bundle'].st_size==sum(x['bytes'] for k,x in expected.items() if k!='state.json'),'original total payload extent')
+-  seen={};offset=0;whole=hashlib.sha256()
++  seen={};offset=0;whole=hashlib.sha256();precision={}
+   for line in lines[1:]:
+    parts=line.split('\t');require(len(parts)==4,'index row fields');name,start,size,h=parts
+    require(name in state_names and name not in seen and h==state_names[name],'exact indexed range name/hash')
+    if semantic_oracle:require(h==expected[name]['sha256'],'original baseline range hash')
+    start=number(start);size=number(size);require(start==offset and size==expected[name]['bytes'] and size<=length-offset,'exact original length/contiguous range')
+-   part=hashlib.sha256();left=size
++   part=hashlib.sha256();left=size;tail=b"";non_bf16=0;words=0
++   recurrent=name.endswith((".gdn.state.bin",".gdn.history.bin","ple.history.bin"))
+    while left:
+     data=os.read(opened['state.bundle'],min(left,256*1024));require(data,'payload truncated');whole.update(data);part.update(data);left-=len(data)
++    if recurrent:
++     joined=tail+data;end=len(joined)//4*4;non_bf16+=sum((v&65535)!=0 for (v,) in struct.iter_unpack('<I',joined[:end]));words+=end//4;tail=joined[end:]
+    require(part.hexdigest()==h,'actual range bytes differ');seen[name]=h;offset+=size
++   if recurrent:require(not tail and words*4==size,'F32 range words');precision[name]={'words':words,'non_bf16_words':non_bf16}
+   require(offset==length and not os.read(opened['state.bundle'],1) and whole.hexdigest()==fields[2],'complete physical payload')
+   physical['state.bundle']=whole.hexdigest();seen['state.json']=digest(state)
+   for name,f in opened.items():require(stamp(os.fstat(f))==stamp(stamps[name])==stamp(os.stat(name,dir_fd=fd,follow_symlinks=False)),'file changed during streaming')
+   now=os.stat(path,follow_symlinks=False);require(stat.S_ISDIR(now.st_mode) and (now.st_dev,now.st_ino)==(ds.st_dev,ds.st_ino) and set(os.listdir(fd))==FILES,'directory changed')
+   differences=[n for n,h in seen.items() if h!=expected[n]['sha256']]
+-  return dict(logical_map=seen,physical_sha256=physical,snapshots={n:snapshot(st) for n,st in stamps.items()},payload_bytes=length,ranges=len(state_names),semantic_baseline_required=semantic_oracle,baseline_hash_differences=differences,state_json_original_length_equal=len(state)==expected['state.json']['bytes'])
++  return dict(recurrent_precision=precision,logical_map=seen,physical_sha256=physical,snapshots={n:snapshot(st) for n,st in stamps.items()},payload_bytes=length,ranges=len(state_names),semantic_baseline_required=semantic_oracle,baseline_hash_differences=differences,state_json_original_length_equal=len(state)==expected['state.json']['bytes'])
+  finally:
+   for f in opened.values():os.close(f)
+   os.close(fd)

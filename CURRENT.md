@@ -1,5 +1,47 @@
 # Current Workspace State
 
+**October 24, 10:09 EDT — four-card host: corrected model pair passes independent readback.**
+The FP32 recurrent engine passes the real-model target-only/MTP comparison:
+32 matching tokens, identical full target state, five rejected draft tokens
+handled correctly, and all six saved bundles verified. The 32 tokens also
+match the independent CPU reference. Both owners exited cleanly; target GPUs
+are idle, protected vision and the fault baseline are unchanged. This is a
+bounded correctness result, not broad quality certification or a speed result.
+Continue with same-prefix logits and a few longer reference comparisons before
+resuming speed work. [Result](experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/RESULT.md).
+
+
+**October 24, 10:05 EDT — four-card host: corrected model comparison B is running.**
+A verified USB archive preserved all 440 older closed-run cache files before
+271 MB of root copies were released. The failed A cache and captures remain.
+B adds a one-time startup requirement of 27 GB + 256 MiB; the existing ongoing
+27 GB + 128 MiB reserve and all other guards remain unchanged. Root had 27.396 GB
+free before launch. The same corrected binary is testing target-only/MTP for
+32 outputs with a full reset; no speed claim. Both owners will close safely.
+Protected vision remains unchanged.
+
+
+**October 24, 09:56 EDT — four-card host: corrected model test stopped at root cache reserve.**
+The F32 pair observed both target GPUs, then stopped when 15.5 MB of driver cache
+growth crossed the root cache forecast threshold. Both owners exited and target
+GPU descriptors drained; no restart or hard kill occurred. Correctness remains
+unqualified for this attempt. Preserve its failed terminal and all captures.
+Older closed-run driver caches will be archived and verified on USB to recover
+headroom while retaining the existing safety thresholds. No new run is admitted
+yet. Protected vision is unchanged.
+
+
+**October 24, 09:52 EDT — four-card host: corrected real-model comparison is running.**
+One persistent pair is testing target-only and MTP on the same fixed prompt,
+with 32 output tokens each and a full reset between requests. Both expected
+GPUs have been observed; the monitor reports no new fault or ownership issue.
+The engine keeps recurrent state in FP32 and attention KV in BF16. The test
+requires matching corrected target/MTP tokens and state; comparison with the
+independent CPU reference is reported separately. No speed claim is planned.
+Protected vision remains unchanged. The run will close its two owners safely.
+[Bound source review](experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/evidence/independent-review.json).
+
+
 **October 24, 09:50 EDT — four-card host: recurrent precision fix ready for a small model test.**
 The corrected GPU and CPU engines built successfully. The focused state checks
 and full CPU reset, checkpoint and MTP rollback tests passed independent review.

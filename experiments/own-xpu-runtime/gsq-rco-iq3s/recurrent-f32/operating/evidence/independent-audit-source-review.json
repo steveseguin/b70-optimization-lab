@@ -1,0 +1,28 @@
+{
+  "schema": "gsq.recurrent-f32.independent-audit-source-review.v1",
+  "passed": true,
+  "conditional_source_review_only": true,
+  "actual_audit_authorized": false,
+  "native_A_qualified": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/audit.py": "b732464d4bddc5c1abd603f8d11ae626a9768a6f52a42dc21c152585864f97bb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/bundle_scan.py": "9c0c7f198661e3219e288dfea02feaafc3d660b00a2e5e24556f2144ca38b17b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/bundle-scan.patch": "d16f3ca77ff58a6c76f59d9b0add698e5b06a95a5570657fb9886669e6bc4c4f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/evidence/audit-source-checkpoint.json": "45a2f7ddc15abe1ce78bb9fe4f4e11704a810a96dbbec91913418e7e486fe528",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/evidence/device-a/failure-metadata-review.json": "7958c033df8990abfa0d1bddf0b15638e7c5017a0bd5940823a6d34feafb372e"
+  },
+  "reviewed_checks": [
+    "Pinned independent sealed four-file parser, unique contiguous ranges, full/range hashes, stable no-follow held descriptors and exact inventory",
+    "Corrected F32 matrix/history/PLE lengths; 330 recurrent ranges across three rank-pair captures; measured low-bit telemetry",
+    "Historical BF16 hashes deliberately excluded as semantic state oracle; corrected target/MTP32 tokens and full state must match",
+    "Exact new census, positive physical contacts/drain, two clean owners, five successful capture acknowledgements and explicit final repeat",
+    "Raw request result joined before enriched reference comparison; reference equality diagnostic only"
+  ],
+  "limitations": [
+    "A has failed terminal and no complete two-arm result; this success-only auditor must not run to qualify A. Future B requires separately reviewed additive identity binding.",
+    "No actual state, model, cache payload, or binary execution during this review; no test replay.",
+    "Low-bit counts demonstrate storage contains bits unavailable in BF16; they are not a finite-value or external model-quality proof.",
+    "Reference equality is independently recomputed; first_difference is supplementary harness metadata, not independently validated by this auditor."
+  ],
+  "finding_count": 0
+}

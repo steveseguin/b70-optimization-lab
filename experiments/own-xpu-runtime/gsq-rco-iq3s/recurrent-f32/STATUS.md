@@ -1,3 +1,9 @@
+**Current: native build, full CPU lifecycle, and the bounded real-model pair pass.**
+See [the independent GPU result](operating/launch-b/RESULT.md). Target-only/MTP
+state and 32 tokens match; all 32 also match the independent CPU reference.
+No broad quality or speed qualification follows yet. Longer comparisons are next.
+The source-preparation descriptions below are retained as historical context.
+
 # Correction checkpoint
 
 This additive note corrects the earlier, pinned PLAN.md without rewriting its history. The actual linked closure contains the current entry plus39 older objects. Historical object0 appears in provenance but is not linked. The private205-file materialization rebuilds the current entry and20 linked consumers of the changed shared definitions;19 linked objects remain unchanged. Therefore the recipe is21 translation-unit compilations plus19 reused objects, not22 rebuilt objects or39 reused objects.

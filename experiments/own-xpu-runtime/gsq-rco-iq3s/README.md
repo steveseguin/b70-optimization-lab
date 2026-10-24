@@ -1,12 +1,14 @@
 # SC117 IQ3_S integration into our own engine
 
-**Precision correction in progress.** A [compiled-source and allocation audit](reference-cpu/RECURRENT-DTYPE.md)
-confirms that this engine rounds GDN recurrent matrix state toBF16 each token,
-while the compatible reference retainsF32. The earlier exactness and speed
-results compare paths within that BF16-state contract. They do not establish
-no added quality loss relative to the reference. Further speed changes are held
-while recurrent storage is corrected and an independent same-weight CPU path
-is prepared. BF16 attention KV remains separate from this recurrent-state issue.
+**Recurrent precision corrected; broader fidelity checks continue.** The old
+engine rounded GDN recurrent state to BF16 each token; the compatible reference
+keeps FP32. The corrected engine now passes an independently audited
+[target-only/MTP pair](recurrent-f32/operating/launch-b/RESULT.md): full state
+matches, all 32 tokens match the same-weight CPU reference, and real captures
+confirm FP32 recurrent storage. BF16 attention KV is unchanged. This short test
+does not establish broad quality. Further speed work stays on hold for same-prefix
+logit checks and longer comparisons. Earlier rates below describe the historical
+BF16-state engine and internal optimization parity, not reference fidelity.
 
 The requested model is downloaded and verified. Our engine now passes exact target-only/MTP comparison on all twelve fixed short prompts. The independently audited [resident baseline](baseline/RESULT.md) measures 12.63 tokens/s target-only and 17.98 with MTP, with full target state preserved. This is a short-prompt baseline, not broad quality certification. The owner explicitly
 requested the SC117 source and our custom engine with MTP. This is a distinct
@@ -19,7 +21,7 @@ cap128 resident screen; publication quality/context gaps are explicitly retained
 
 The [116-site dense decoder](dense-packed-block/engine/operating/launch-b/RESULT.md)
 now passes all24 original arms and54 bundles, measuring19.61 /28.14 tokens/s
-with unchanged memory and acceptance. It is the current short-screen engine;
+with unchanged memory and acceptance. It was the final BF16-state short-screen engine;
 [expanded task readback](quality-expanded/RESULT.md) also passes exact prefixes
 and all12 full target/MTP pairs on this binary. Eleven answers are capped and
 incomplete; one reaches EOS. Technical/unsupported-claim cautions remain, and

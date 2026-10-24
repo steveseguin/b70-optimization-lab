@@ -1,0 +1,11 @@
+--- B-before-plan-binding/audit.py
++++ B/audit.py
+@@ -5,7 +5,7 @@
+ HERE=Path(__file__).resolve().parent;P=HERE.parent;L=P.parents[1];R=L.parents[2];D=HERE/'evidence/device-b'
+ CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-b.control')
+ EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b')
+-PLAN_SHA=None # root binds separately admitted B plan; failed A is never qualified
++PLAN_SHA='67add3de84d91bf85d09e3d98d73ac1d5dc46306b24056682ad8b249b576e1ee' # separately admitted B; failed A remains unqualified
+ BINARY='5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4'
+ INDEX=L/'baseline/evidence/independent-a/artifact-index.jsonl.gz'
+ INDEX_SHA='e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982'

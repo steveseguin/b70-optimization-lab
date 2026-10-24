@@ -1,0 +1,99 @@
+{
+  "schema": "gsq.recurrent-f32.failure-metadata-review.v1",
+  "evidence_review_passed": true,
+  "run_qualification_passed": false,
+  "scope": "Closed metadata/source only; no state/model/cache payload read, rerun or device action",
+  "plan_sha256": "bd300c2bc5b002193fa0017a07b7df7f53eb4b6df82c4d55e27250c418db29e3",
+  "terminal_sha256": "b267c9c16a394ccd65d614842890150ef464e1e2a5a0262796c4a7481192f7a5",
+  "stage": {
+    "stage": 2,
+    "acknowledged": [
+      "initial_reset",
+      "target_dump"
+    ],
+    "remaining_payload_bytes": 329762888,
+    "metadata_reserve_bytes": 134217728,
+    "external_floor_bytes": 2147483648
+  },
+  "completed_pair": false,
+  "durable_target_result_row": false,
+  "mtp_request_started": false,
+  "safe_owner_teardowns": 2,
+  "rank_result_passed": [
+    false,
+    false
+  ],
+  "rank_exit_codes": [
+    1,
+    1
+  ],
+  "both_physical_contacts": true,
+  "physical_drain": true,
+  "signals_sent": 0,
+  "hard_kills": 0,
+  "kernel_baseline_unchanged": true,
+  "actual_logical_device_bytes": [
+    31083481994,
+    29995470740
+  ],
+  "root_free_at_admission": 27142774784,
+  "root_free_after": 27126620160,
+  "ongoing_root_required": 27134217728,
+  "initial_slack_bytes": 8557056,
+  "after_shortfall_bytes": 7597568,
+  "new_private_cache_logical_bytes_stat_only": 15501200,
+  "classification": "Acknowledged first target DUMP followed by strict root cache forecast/floor refusal before durable row save. No completed correctness/MTP/reference qualification.",
+  "accounting_recommendation": "Preserve existing27GB+128MiB ongoing guard and recover independently verified closed capacity first. If redesigning later, preregister a total private-cache budget with initial allowance and separate measured spent/remaining allocation; driver cache writes have no existing durable acknowledgement, so do not credit guessed bytes or silently reinterpret this guard.",
+  "artifacts": {
+    "/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-a.control/admission.json": {
+      "bytes": 35115,
+      "sha256": "06b78e1f826abb2393c32b7f8e49ef7c3b04ecf07e2fe840e8c2c4daf85873a7"
+    },
+    "/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-a.control/terminal.json": {
+      "bytes": 5761,
+      "sha256": "b267c9c16a394ccd65d614842890150ef464e1e2a5a0262796c4a7481192f7a5"
+    },
+    "/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-a.control/plan.json": {
+      "bytes": 28301,
+      "sha256": "bd300c2bc5b002193fa0017a07b7df7f53eb4b6df82c4d55e27250c418db29e3"
+    },
+    "/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-a.control/registered-ranks.json": {
+      "bytes": 176,
+      "sha256": "fe44943ebfde430601c03243d97b6b7b72c493e4e9d686e4bf5f0e9b89bb59fc"
+    },
+    "/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-a.control/monitor.json": {
+      "bytes": 5599,
+      "sha256": "b46f08df7df965fc1a84d982b43fe0af7f9b05c82ebef103167ec5052ff8903b"
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/f32-incident.json": {
+      "bytes": 332,
+      "sha256": "b7f794d43cf8a9200b09146682770067f6166e31da4a65769109cef7fee25ece"
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/ownership.json": {
+      "bytes": 137,
+      "sha256": "07a0617b383d4a70712d61b637feb9d4baf62791a429687873e9770b08f48326"
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/logical-memory.json": {
+      "bytes": 185,
+      "sha256": "a0aeae4b54716c444863bb760dd5ee078b41b785085d4ad082f9e5828546aa42"
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/failure-before-teardown.json": {
+      "bytes": 105,
+      "sha256": "aafe8956cbf2804d64c4079f6ec2a01776f96fd338d32884996183ee53c07028"
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank0/receipt.json": {
+      "bytes": 81332,
+      "sha256": "2932d90c76fa77fc3cce0e3550ec065314f57fe0f5a353aa12e4e146953cebb6"
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank1/receipt.json": {
+      "bytes": 74304,
+      "sha256": "b6b2f3658f8d24167c5f460cb1f1b19f61d968c325c46847e84d2589c0a7781e"
+    }
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/suite.py": "55bb386804f62d9f613deb21f6b3552d4687399a993b6164c2c1b13b56ef8af3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/budget.py": "9f3bd6768ddcfc4fbf949be1035b763a1ef92e0aaa551046235589014e9aae9d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/once.py": "b2e761b4ec27c56d215d462f31045a43b3d36c0c71a0697395944853bba97a14",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/generated/adapter.py": "748e77f825e94b7775be3cd3dab7db62780ac2667b9742ab653851670491292c"
+  }
+}

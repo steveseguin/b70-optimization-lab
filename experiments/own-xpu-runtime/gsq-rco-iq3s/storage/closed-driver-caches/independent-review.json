@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "scope": "Finite source-only preservation review; no source-cache/archive payload reads or operations",
+  "source_sha256": "f28ad2df0179f4510910bd5bc894c8fb20f1dd66382803fe32a85de4c0914caf",
+  "checks": [
+    "Selection limited to gsq-* closed control roots with children exited and target descriptors empty; latest failed F32-A explicitly excluded",
+    "Canonical control/cache/terminal paths and no symlink member admission; complete exact archive membership/size/hash verification",
+    "One O_NOFOLLOW regular archive FD held across compressed hash, every tar member hash, path/fstat identity checks and entire separate release",
+    "File and parent-directory fsync before verified authority; separate release revalidates terminal/source identities and bytes plus complete archive",
+    "Every source is removed only after retained archive verification; restore map preserves fixed root-relative paths and tar metadata; no model/service/cache-setting change",
+    "Fixed USB device2050 and conservative archive capacity floor; no auto retry or pruning of directories/other evidence"
+  ],
+  "limitations": [
+    "Archive/verify/release are separate root-operated phases; this source review does not assert any actual archive or release passed",
+    "Closed private cache directories must remain writer-free; no protection against an actively adversarial concurrent privileged writer is claimed",
+    "Original failed precision cache stays untouched"
+  ]
+}

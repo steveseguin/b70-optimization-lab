@@ -1,0 +1,38 @@
+--- operating/audit.py-unexecuted-failed-A
++++ operating/launch-b/audit.py
+@@ -2,10 +2,10 @@
+ """Root-only closed F32 pair readback. No model payload/runtime/device operations."""
+ from pathlib import Path
+ import argparse,gzip,hashlib,importlib.util,json,os,resource,stat,time
+-P=Path(__file__).resolve().parent;L=P.parents[1];R=L.parents[2];D=P/'evidence/device-a'
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a')
+-PLAN_SHA='bd300c2bc5b002193fa0017a07b7df7f53eb4b6df82c4d55e27250c418db29e3'
++HERE=Path(__file__).resolve().parent;P=HERE.parent;L=P.parents[1];R=L.parents[2];D=HERE/'evidence/device-b'
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-b.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b')
++PLAN_SHA=None # root binds separately admitted B plan; failed A is never qualified
+ BINARY='5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4'
+ INDEX=L/'baseline/evidence/independent-a/artifact-index.jsonl.gz'
+ INDEX_SHA='e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982'
+@@ -33,6 +33,7 @@
+   require(sha(CONTROL/'plan.json')==ad['plan_sha256']==term['plan_sha256']==PLAN_SHA and ad['plan']==plan,'exact admitted plan');require(S.digest(json.dumps(plan,sort_keys=True,separators=(',',':')).encode())==ad['canonical_plan_sha256'],'canonical plan')
+   for k,v in plan['unit_properties'].items():require(ad['unit'][k]==v,'safe unit property')
+   B.validate_passive(ad['before'],term['after'],term)
++  require(plan['initial_cache_growth_margin_bytes']==128<<20 and plan['initial_root_free_required_bytes']==27000000000+(256<<20),'initial-only B cache admission')
+   require(plan['requests']==plan['suite']['requests']==2 and plan['suite']['max_new']==32 and plan['suite']['modes']==['none','mtp'] and not plan['suite']['historical_bf16_state_oracle'],'fixed new-baseline scope')
+   for mapping in (plan['source_sha256'],plan['suite']['source_sha256'],plan['adapter']['source_sha256']):
+    for f,h in mapping.items():require(sha(R/f)==h,'source '+f)
+@@ -78,8 +79,10 @@
+    B.timing(row['result'],len(tokens));B.confirmed_inputs(row['result'],row['prompt_tokens'])
+    if mode=='mtp':B.guess_outcomes(row['result'],row['prompt_tokens'],len(tokens))
+    else:require(all(row['result']['stats'][k]==0 for k in ('guesses','hits','misses')),'target-only stats')
+-   reference_equal=tokens==ref['output_tokens'];require(row['reference_comparison']['equal']==reference_equal,'reference comparison truth')
+-   arms.append({'name':name,'mode':mode,'tokens':tokens,'stats':row['result']['stats'],'reference_equal':reference_equal,'scope':'Only this87-token input/32 cap; no general quality or bitwise-logit claim'})
++   reference_equal=tokens==ref['output_tokens'];first=next((j for j,(x,y) in enumerate(zip(tokens,ref['output_tokens'])) if x!=y),None)
++   if first is None and len(tokens)!=len(ref['output_tokens']):first=min(len(tokens),len(ref['output_tokens']))
++   require(row['reference_comparison']['equal']==reference_equal and row['reference_comparison']['reference_tokens']==ref['output_tokens'] and row['reference_comparison']['first_difference']==first,'reference comparison truth')
++   arms.append({'name':name,'mode':mode,'tokens':tokens,'stats':row['result']['stats'],'reference_equal':reference_equal,'reference_first_difference':first,'scope':'Only this87-token input/32 cap; no general quality or bitwise-logit claim'})
+   require(arms[0]['tokens']==arms[1]['tokens'] and full['rows'][0]['state_sha256']==full['rows'][1]['state_sha256'] and full['corrected_target_mtp_exact'],'new target/MTP exact')
+   require(full['reference_equal']==arms[0]['reference_equal'],'full reference flag')
+   owners=[];memory=[]

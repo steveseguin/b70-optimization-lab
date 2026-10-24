@@ -1,0 +1,64 @@
+EEEE
+======================================================================
+ERROR: test_closed_budget (__main__.Tests.test_closed_budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/test_audit.py", line 19, in test_closed_budget
+    with self.assertRaises(AssertionError):A.budget_ok(dict(v,stage=4))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/audit.py", line 24, in budget_ok
+    require(v['stage']==5 and v['acknowledged']==['initial_reset','target_dump','second_reset','mtp_dump','finish'] and v['remaining_payload_bytes']==0,'closed capture ACK chain')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py", line 13, in require
+    if not v:raise ValueError(msg)
+             ^^^^^^^^^^^^^^^^^^^^^
+ValueError: closed capture ACK chain
+
+======================================================================
+ERROR: test_exact_new_geometry (__main__.Tests.test_exact_new_geometry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/test_audit.py", line 7, in test_exact_new_geometry
+    with self.assertRaises(AssertionError):A.corrected_extent('blk.0.gdn.state.bin',16)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/audit.py", line 18, in corrected_extent
+    if name.endswith('.gdn.state.bin'):require(old==1572864,'old matrix geometry');return 3145728
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py", line 13, in require
+    if not v:raise ValueError(msg)
+             ^^^^^^^^^^^^^^^^^^^^^
+ValueError: old matrix geometry
+
+======================================================================
+ERROR: test_new_bytes_not_old_hash (__main__.Tests.test_new_bytes_not_old_hash)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/test_audit.py", line 16, in test_new_bytes_not_old_hash
+    with self.assertRaises(AssertionError):A.S.stream_bundle(p,expected,semantic_oracle=False)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/bundle_scan.py", line 51, in stream_bundle
+    require(part.hexdigest()==h,'actual range bytes differ');seen[name]=h;offset+=size
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py", line 13, in require
+    if not v:raise ValueError(msg)
+             ^^^^^^^^^^^^^^^^^^^^^
+ValueError: actual range bytes differ
+
+======================================================================
+ERROR: test_raw_enriched_join (__main__.Tests.test_raw_enriched_join)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/test_audit.py", line 22, in test_raw_enriched_join
+    with self.assertRaises(AssertionError):A.raw_join({'name':'y'},dict(raw,reference_comparison={}))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/audit.py", line 27, in raw_join
+    expected=dict(row);expected.pop('reference_comparison');require(saved==expected,'raw arm versus enriched result')
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py", line 13, in require
+    if not v:raise ValueError(msg)
+             ^^^^^^^^^^^^^^^^^^^^^
+ValueError: raw arm versus enriched result
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.011s
+
+FAILED (errors=4)

@@ -1,0 +1,33 @@
+{
+  "schema": "gsq.recurrent-f32.launch-b.independent-audit-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/audit.py": "e77a18931b0f92700f66dbed319c0397368c144a9cce78c67e61ae73fcbd61b5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/audit-plan-binding.patch": "b97e9741ccb6d6b2d9dbadda28fe45c35a694a206b35ba8c92b4696fe81969e4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/test_audit.py": "3a456826d0086e8463a859d11266b9b135d82147418b329c5c08551501b280cd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/evidence/audit-tests.log": "feabb4add9e2ca3374e538560634d1ec97dc4f4ce89aab12f3d726e36ea9b2f6",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/bundle_scan.py": "9c0c7f198661e3219e288dfea02feaafc3d660b00a2e5e24556f2144ca38b17b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/evidence/audit-binding.json": "716f3586161caa930e79789b81e40a5d266f955be55ff946fb41099b21c41b39",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/evidence/audit-preparation.json": "7a0ea00ef3f21cf1171ad9beb033d4a8cf6c73e403dafc1f56c1653908ee57ae",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/launch-b/audit-delta.patch": "4a95221d289a7fdb0fc10277bb0cc8fe30626c518ea81e5d8e3aa678d19ed593",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/audit.py": "b732464d4bddc5c1abd603f8d11ae626a9768a6f52a42dc21c152585864f97bb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/evidence/independent-audit-source-review.json": "d3a6a187e8081591b37555b5ee3e5e0bf25cec457e8b627240fe1b082397e784",
+    "/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-b.control/plan.json": "67add3de84d91bf85d09e3d98d73ac1d5dc46306b24056682ad8b249b576e1ee"
+  },
+  "plan_sha256": "67add3de84d91bf85d09e3d98d73ac1d5dc46306b24056682ad8b249b576e1ee",
+  "findings": [],
+  "tests_reviewed_not_replayed": 4,
+  "scope": "Finite source, retained synthetic tests and small exact plan metadata only. No real state/model/cache payload read, compiler, device or actual auditor invocation.",
+  "checks": [
+    "Exact A-to-B delta: fresh roots, initial margin gate, independently recomputed reference tokens/equality/first difference",
+    "Final plan change is one constant assignment; tests and shared sealed-stream parser unchanged",
+    "Six bundles,330 F32 recurrent ranges and corrected extents; exact target/MTP tokens and full state; no historical BF16 semantic state oracle",
+    "Same positive physical contacts, allocation census, safe owners, full closure and five acknowledged capture stages",
+    "Synthetic low-bit telemetry and corruption refusal, geometry, budget and raw/enriched joins reviewed from four passing retained tests"
+  ],
+  "conditions": [
+    "Root may invoke only after B has closed with success and physical drain; no active payload reads.",
+    "Failed A remains failed and is never retroactively qualified.",
+    "One87-input32-output corrected-state test does not establish broad no-quality-loss or speed claims."
+  ]
+}
