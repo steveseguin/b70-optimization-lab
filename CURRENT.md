@@ -1,17 +1,17 @@
 # Current Workspace State
 
-**October 24, 01:30 EDT — four-card host: SC117 engine builds and miniature lifecycle pass; real-model comparison next.**
-The requested IQ3_S download is verified on USB. All five new native format kernels pass
-15 cases/45 executions. The complete engine rebuild passes, and one persistent synthetic
-rank pair produces identical target-only/MTP tokens and target state after RESET, including
-accepted and rejected proposals. Full-model inference and speed remain unmeasured.
-Both idle text applications were stopped once, gracefully, freeing BDF23/47; the vision
-application on BDF27/43 remains unchanged. No new kernel fault, reboot or setting change.
-The next step loads the real target with the existing draft and compares two requests in
-the same pair. Large state evidence will go to the healthy USB disk; controls stay on NVMe.
-The owner now requests continuous lossless speed optimization after correctness, with a
-subagent reviewing efficiency and benchmark fairness every 30 minutes. The reviewer is active.
-The old Unsloth lane remains closed and published. [Integration and continuing plan](experiments/own-xpu-runtime/gsq-rco-iq3s/WORK-PLAN.md).
+**October 24, 01:47 EDT — four-card host: real SC117 target/MTP comparison passed; fair speed baseline next.**
+Our custom engine loaded the downloaded IQ3_S target and the existing official draft on
+BDF23/47. One persistent pair produced identical 32-token output and all 2,110 target-state
+files after RESET. MTP accepted 25 of 31 proposals and rejected six correctly. Independent
+readback review passed; this is one capped correctness fixture, not a broad quality or speed claim.
+Both engine owners exited cleanly, target cards are empty, and the exact driver-fault baseline
+is unchanged. The vision application on BDF27/43 remains running; the two text applications
+remain stopped after their single graceful stops. No reboot or settings change.
+Next is a preregistered, balanced target/MTP baseline using the existing twelve prompts, fresh
+request state and one loaded pair throughout. After correctness, continue lossless acceleration;
+the progress/fairness reviewer is active on a 30-minute schedule. The old Unsloth lane remains
+closed and published. [Real-model evidence](experiments/own-xpu-runtime/gsq-rco-iq3s/serving/evidence/real-model-a/README.md).
 
 
 **October 23, 23:25 EDT — two-card host: authority-transfer diagnostic ready.**

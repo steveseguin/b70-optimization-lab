@@ -1,7 +1,6 @@
 # SC117 IQ3_S integration into our own engine
 
-The requested model is downloaded and verified. Integration is in progress;
-there is no new-model inference or speed result yet. The owner explicitly
+The requested model is downloaded and verified. Our engine passes its first real-model target-only/MTP comparison: identical 32 tokens and complete target plan/alternate state. This is one capped fixture; a fair speed baseline and broader correctness checks are next. The owner explicitly
 requested the SC117 source and our custom engine with MTP. This is a distinct
 modified target, separate from the closed and published Unsloth optimization.
 
@@ -36,7 +35,7 @@ and CPU comparison oracles, not an imported inference runtime.
 | Primitive coefficients | [Upload conversion](controls/README.md) passes exhaustive half/BF16 checks; actual graph needs only F16 PLE widening, adding 81,920 bytes. |
 | Two-shard loader | [Authenticated loader](loader/README.md): ten parser tests and 24 immutable-authority checks pass; real headers are bound separately from payload checks. |
 | Native kernels | [Packed backend](native-formats/README.md): 15 Host cases, 60 checks and 100 refusals pass. Five native kernels pass 15 synthetic GPU cases with 45 exact kernel executions. |
-| Native inference | The [complete native build](integration/README.md) passes. The [tiny native qualification runner](native-qualification/README.md) passed; full-model inference remains pending. |
+| Native inference | The [complete native build](integration/README.md) passes. The [tiny native qualification runner](native-qualification/README.md) passed; the [first real-model comparison](serving/evidence/real-model-a/README.md) passes with 25 accepted and six rejected proposals. |
 | Speed | Unmeasured for this model, both target-only and MTP. |
 
 The model label does not describe every tensor. New support includes Q2_0,
@@ -71,7 +70,7 @@ not an oracle for this modified model; compare against the same downloaded
 weights and preserve exact run identity.
 
 [Initial passive host observation](initial-host-state.json) found daily
-applications still holding devices. The idle card0 text application was subsequently stopped once, gracefully, for the bounded native kernel test. The second idle text application was then stopped once for the planned two-card model comparison. The vision application remains unchanged. No full-model owner, power/memory change or restart was performed for this lane. CPU
+applications still holding devices. The idle card0 text application was subsequently stopped once, gracefully, for the bounded native kernel test. The second idle text application was then stopped once for the planned two-card model comparison. The vision application remains unchanged. A real two-owner model comparison subsequently completed with both owners safely closed, target cards empty and the exact fault baseline unchanged. No power/memory change, reboot or automatic restart was performed. CPU
 helpers use bounded memory, helper cores and low priority. Model payloads,
 binaries and temporary row samples stay outside tracked artifacts. Existing
 frozen runtime packets and failed attempts remain unchanged.
@@ -79,3 +78,5 @@ frozen runtime packets and failed attempts remain unchanged.
 The additive loading/dispatch changes described in the [source audit](native-integration-audit.md) are under integration review. The frozen preparation receipts pass an [independent source/artifact rehash](native-preparation-review.json). The tiny native kernel qualification now passes. Full Engine build precedes target-only output, then MTP equality against that same target before measuring any speed benefit.
 
 The owner requested [continuous lossless acceleration work](WORK-PLAN.md) after correctness, with a dedicated progress and fairness reviewer every 30 minutes. The complete [same-pair Host lifecycle](serving/HOST-RESULT.md) passes; it remains synthetic evidence.
+
+The first real-model output is coherent but capped at 32 tokens. The independent review rehashed all retained target-state files and verified exact target/MTP equality, the full-vocabulary draft head and safe ownership closure. It does not establish general task quality, cross-process determinism or a speed improvement.
