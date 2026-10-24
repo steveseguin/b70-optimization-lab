@@ -151,3 +151,15 @@ existing narrow attribution to join actual layer costs to formats, not proportio
 layer counts. Controller fixtures9–16 sample early generated-token steps. Keep that
 scope explicit; no new native build or general profiling framework. Closed combined
 state archival is underway outside GPU work for future full-suite byte capacity.
+
+## Exact attribution selects IQ3_XXS packed decode — 08:40 UTC
+
+[Independent narrow trace](profiling/current-attribution/RESULT.md) verifies6,912
+events and baselineexact model state. IQ3_XXS gate/up55.122711ms is the largest
+combined format cost in this fixed early-generated sample. Prepare one blockwise
+decode candidate, no added resident weight cache. Preserve exact decode equations,
+strided lane chain, SG32tree, BF16rounding, ten per-slot gathered inputs/routes/status.
+Reuse prior format proofs and validate only the new arithmetic/loop/binding delta,
+then bounded native exactness and latency before full-engine adoption. Root's initial
+shared-input assumption was corrected from actual graph before implementation.
+Do not extrapolate sample shares into a promised whole-model gain.

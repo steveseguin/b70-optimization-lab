@@ -1,0 +1,7299 @@
+{
+  "schema": "gsq.current-attribution.independent-device.v1",
+  "passed": true,
+  "no_speed_claim": true,
+  "device_executed_by_reviewer": false,
+  "requests": 2,
+  "measured_requests": 1,
+  "captures": 3,
+  "bundles": 6,
+  "arms": [
+    {
+      "name": "warmup-none",
+      "excluded": true,
+      "mode": "none",
+      "tokens": [
+        46474,
+        4,
+        5,
+        515,
+        24218,
+        10,
+        4838,
+        1665
+      ],
+      "stats": {
+        "guesses": 0,
+        "hits": 0,
+        "misses": 0,
+        "no_guess": 7,
+        "redo_ms": 0
+      },
+      "consumed_positions": 12,
+      "baseline_tokens_exact": false,
+      "baseline_state_exact": false
+    },
+    {
+      "name": "prompt-00-none",
+      "excluded": false,
+      "mode": "none",
+      "tokens": [
+        332,
+        37947,
+        1653,
+        10082,
+        3508,
+        8812,
+        25,
+        23288,
+        5165,
+        4230,
+        416,
+        318,
+        37163,
+        12,
+        17,
+        15,
+        17,
+        19,
+        12,
+        15,
+        23,
+        24,
+        31230,
+        271,
+        332,
+        18656,
+        332,
+        198,
+        1860,
+        6324,
+        220,
+        16,
+        17,
+        11,
+        220,
+        17,
+        15,
+        17,
+        18,
+        11,
+        1881,
+        220,
+        16,
+        19,
+        25,
+        15,
+        15,
+        321,
+        220,
+        16,
+        19,
+        25,
+        19,
+        20,
+        26516,
+        11,
+        279,
+        5839,
+        2570,
+        11976,
+        5165,
+        10015,
+        264,
+        220,
+        19,
+        20,
+        22764,
+        85093,
+        12571,
+        303,
+        220,
+        16,
+        15,
+        15,
+        4,
+        1412,
+        7566,
+        364,
+        1301,
+        7289,
+        13,
+        561,
+        3578,
+        5073,
+        557,
+        264,
+        5605,
+        78636,
+        6297,
+        8060,
+        362,
+        5728,
+        25241,
+        2261,
+        264,
+        13618,
+        4416,
+        4722,
+        11,
+        864,
+        21433,
+        264,
+        35622,
+        286,
+        56162,
+        2376,
+        2272,
+        279,
+        5839,
+        4475,
+        13,
+        271,
+        332,
+        69075,
+        332,
+        198,
+        760,
+        85093,
+        11164,
+        12805,
+        220,
+        16,
+        20,
+        11,
+        15,
+        15,
+        15,
+        4393
+      ],
+      "stats": {
+        "guesses": 0,
+        "hits": 0,
+        "misses": 0,
+        "no_guess": 127,
+        "redo_ms": 0
+      },
+      "consumed_positions": 214,
+      "baseline_tokens_exact": true,
+      "baseline_state_exact": true
+    }
+  ],
+  "attribution_reports": {
+    "0": {
+      "stream_sha256": "f2ed35d6656c7d2501d4652c847de038a664b4228a1e4e44be76c343f303938b",
+      "rank": 0,
+      "fixtures": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "absolute_positions": [
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101
+      ],
+      "half_count": 8,
+      "event_count": 3456,
+      "device_ns": 94786745,
+      "by_label": [
+        {
+          "label": "blk.0.expsact",
+          "event_count": 8,
+          "device_ns": 31355,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031355
+        },
+        {
+          "label": "blk.0.expsdown",
+          "event_count": 8,
+          "device_ns": 827813,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.0.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.827813
+        },
+        {
+          "label": "blk.0.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25000,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025
+        },
+        {
+          "label": "blk.0.expsgate",
+          "event_count": 8,
+          "device_ns": 1698648,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.0.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.698648
+        },
+        {
+          "label": "blk.0.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32811,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032811
+        },
+        {
+          "label": "blk.0.expsup",
+          "event_count": 8,
+          "device_ns": 1652916,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.0.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.652916
+        },
+        {
+          "label": "blk.0.expsup.check",
+          "event_count": 8,
+          "device_ns": 25000,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025
+        },
+        {
+          "label": "blk.0.ffn.combine",
+          "event_count": 8,
+          "device_ns": 89790,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.08979
+        },
+        {
+          "label": "blk.0.gather",
+          "event_count": 16,
+          "device_ns": 191458,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.191458
+        },
+        {
+          "label": "blk.0.moe",
+          "event_count": 16,
+          "device_ns": 43855,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043855
+        },
+        {
+          "label": "blk.0.route",
+          "event_count": 40,
+          "device_ns": 559164,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.559164
+        },
+        {
+          "label": "blk.0.router",
+          "event_count": 8,
+          "device_ns": 95623,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.0.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.095623
+        },
+        {
+          "label": "blk.1.expsact",
+          "event_count": 8,
+          "device_ns": 31668,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031668
+        },
+        {
+          "label": "blk.1.expsdown",
+          "event_count": 8,
+          "device_ns": 1027918,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.1.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.027918
+        },
+        {
+          "label": "blk.1.expsdown.check",
+          "event_count": 8,
+          "device_ns": 23959,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.023959
+        },
+        {
+          "label": "blk.1.expsgate",
+          "event_count": 8,
+          "device_ns": 696666,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.1.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.696666
+        },
+        {
+          "label": "blk.1.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31773,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031773
+        },
+        {
+          "label": "blk.1.expsup",
+          "event_count": 8,
+          "device_ns": 693959,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.1.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.693959
+        },
+        {
+          "label": "blk.1.expsup.check",
+          "event_count": 8,
+          "device_ns": 24480,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02448
+        },
+        {
+          "label": "blk.1.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87082,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087082
+        },
+        {
+          "label": "blk.1.gather",
+          "event_count": 16,
+          "device_ns": 184479,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184479
+        },
+        {
+          "label": "blk.1.moe",
+          "event_count": 16,
+          "device_ns": 39897,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.039897
+        },
+        {
+          "label": "blk.1.route",
+          "event_count": 40,
+          "device_ns": 572501,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.572501
+        },
+        {
+          "label": "blk.1.router",
+          "event_count": 8,
+          "device_ns": 94896,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.1.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094896
+        },
+        {
+          "label": "blk.10.expsact",
+          "event_count": 8,
+          "device_ns": 32812,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032812
+        },
+        {
+          "label": "blk.10.expsdown",
+          "event_count": 8,
+          "device_ns": 1027397,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.10.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.027397
+        },
+        {
+          "label": "blk.10.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24376,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024376
+        },
+        {
+          "label": "blk.10.expsgate",
+          "event_count": 8,
+          "device_ns": 701353,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.10.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.701353
+        },
+        {
+          "label": "blk.10.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31876,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031876
+        },
+        {
+          "label": "blk.10.expsup",
+          "event_count": 8,
+          "device_ns": 701771,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.10.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.701771
+        },
+        {
+          "label": "blk.10.expsup.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.10.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87397,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087397
+        },
+        {
+          "label": "blk.10.gather",
+          "event_count": 16,
+          "device_ns": 184063,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184063
+        },
+        {
+          "label": "blk.10.moe",
+          "event_count": 16,
+          "device_ns": 41666,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041666
+        },
+        {
+          "label": "blk.10.route",
+          "event_count": 40,
+          "device_ns": 541151,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.541151
+        },
+        {
+          "label": "blk.10.router",
+          "event_count": 8,
+          "device_ns": 94584,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.10.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094584
+        },
+        {
+          "label": "blk.11.expsact",
+          "event_count": 8,
+          "device_ns": 33227,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033227
+        },
+        {
+          "label": "blk.11.expsdown",
+          "event_count": 8,
+          "device_ns": 808855,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.11.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.808855
+        },
+        {
+          "label": "blk.11.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26146,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.026146
+        },
+        {
+          "label": "blk.11.expsgate",
+          "event_count": 8,
+          "device_ns": 696562,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.11.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.696562
+        },
+        {
+          "label": "blk.11.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31562,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031562
+        },
+        {
+          "label": "blk.11.expsup",
+          "event_count": 8,
+          "device_ns": 698542,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.11.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.698542
+        },
+        {
+          "label": "blk.11.expsup.check",
+          "event_count": 8,
+          "device_ns": 24374,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024374
+        },
+        {
+          "label": "blk.11.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87398,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087398
+        },
+        {
+          "label": "blk.11.gather",
+          "event_count": 16,
+          "device_ns": 184167,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184167
+        },
+        {
+          "label": "blk.11.moe",
+          "event_count": 16,
+          "device_ns": 43228,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043228
+        },
+        {
+          "label": "blk.11.route",
+          "event_count": 40,
+          "device_ns": 546045,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.546045
+        },
+        {
+          "label": "blk.11.router",
+          "event_count": 8,
+          "device_ns": 94375,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.11.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094375
+        },
+        {
+          "label": "blk.12.expsact",
+          "event_count": 8,
+          "device_ns": 30729,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.030729
+        },
+        {
+          "label": "blk.12.expsdown",
+          "event_count": 8,
+          "device_ns": 1024376,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.12.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.024376
+        },
+        {
+          "label": "blk.12.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24376,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024376
+        },
+        {
+          "label": "blk.12.expsgate",
+          "event_count": 8,
+          "device_ns": 1615416,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.12.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.615416
+        },
+        {
+          "label": "blk.12.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31981,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031981
+        },
+        {
+          "label": "blk.12.expsup",
+          "event_count": 8,
+          "device_ns": 1595416,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.12.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.595416
+        },
+        {
+          "label": "blk.12.expsup.check",
+          "event_count": 8,
+          "device_ns": 24582,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024582
+        },
+        {
+          "label": "blk.12.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87709,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087709
+        },
+        {
+          "label": "blk.12.gather",
+          "event_count": 16,
+          "device_ns": 183334,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183334
+        },
+        {
+          "label": "blk.12.moe",
+          "event_count": 16,
+          "device_ns": 41354,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041354
+        },
+        {
+          "label": "blk.12.route",
+          "event_count": 40,
+          "device_ns": 542603,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.542603
+        },
+        {
+          "label": "blk.12.router",
+          "event_count": 8,
+          "device_ns": 94999,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.12.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094999
+        },
+        {
+          "label": "blk.13.expsact",
+          "event_count": 8,
+          "device_ns": 33543,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033543
+        },
+        {
+          "label": "blk.13.expsdown",
+          "event_count": 8,
+          "device_ns": 1026668,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.13.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.026668
+        },
+        {
+          "label": "blk.13.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24063,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024063
+        },
+        {
+          "label": "blk.13.expsgate",
+          "event_count": 8,
+          "device_ns": 693749,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.13.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.693749
+        },
+        {
+          "label": "blk.13.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32500,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.0325
+        },
+        {
+          "label": "blk.13.expsup",
+          "event_count": 8,
+          "device_ns": 698333,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.13.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.698333
+        },
+        {
+          "label": "blk.13.expsup.check",
+          "event_count": 8,
+          "device_ns": 24583,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024583
+        },
+        {
+          "label": "blk.13.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87708,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087708
+        },
+        {
+          "label": "blk.13.gather",
+          "event_count": 16,
+          "device_ns": 183752,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183752
+        },
+        {
+          "label": "blk.13.moe",
+          "event_count": 16,
+          "device_ns": 40939,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.040939
+        },
+        {
+          "label": "blk.13.route",
+          "event_count": 40,
+          "device_ns": 541771,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.541771
+        },
+        {
+          "label": "blk.13.router",
+          "event_count": 8,
+          "device_ns": 92187,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.13.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.092187
+        },
+        {
+          "label": "blk.14.expsact",
+          "event_count": 8,
+          "device_ns": 31564,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031564
+        },
+        {
+          "label": "blk.14.expsdown",
+          "event_count": 8,
+          "device_ns": 805626,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.14.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.805626
+        },
+        {
+          "label": "blk.14.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24480,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02448
+        },
+        {
+          "label": "blk.14.expsgate",
+          "event_count": 8,
+          "device_ns": 1628854,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.14.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.628854
+        },
+        {
+          "label": "blk.14.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32187,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032187
+        },
+        {
+          "label": "blk.14.expsup",
+          "event_count": 8,
+          "device_ns": 1618854,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.14.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.618854
+        },
+        {
+          "label": "blk.14.expsup.check",
+          "event_count": 8,
+          "device_ns": 24375,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024375
+        },
+        {
+          "label": "blk.14.ffn.combine",
+          "event_count": 8,
+          "device_ns": 88124,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.088124
+        },
+        {
+          "label": "blk.14.gather",
+          "event_count": 16,
+          "device_ns": 184272,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184272
+        },
+        {
+          "label": "blk.14.moe",
+          "event_count": 16,
+          "device_ns": 41045,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041045
+        },
+        {
+          "label": "blk.14.route",
+          "event_count": 40,
+          "device_ns": 543330,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.54333
+        },
+        {
+          "label": "blk.14.router",
+          "event_count": 8,
+          "device_ns": 94167,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.14.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094167
+        },
+        {
+          "label": "blk.15.expsact",
+          "event_count": 8,
+          "device_ns": 31770,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.03177
+        },
+        {
+          "label": "blk.15.expsdown",
+          "event_count": 8,
+          "device_ns": 810104,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.15.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.810104
+        },
+        {
+          "label": "blk.15.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25208,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025208
+        },
+        {
+          "label": "blk.15.expsgate",
+          "event_count": 8,
+          "device_ns": 693854,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.15.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.693854
+        },
+        {
+          "label": "blk.15.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31771,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031771
+        },
+        {
+          "label": "blk.15.expsup",
+          "event_count": 8,
+          "device_ns": 694688,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.15.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.694688
+        },
+        {
+          "label": "blk.15.expsup.check",
+          "event_count": 8,
+          "device_ns": 24271,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024271
+        },
+        {
+          "label": "blk.15.ffn.combine",
+          "event_count": 8,
+          "device_ns": 88021,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.088021
+        },
+        {
+          "label": "blk.15.gather",
+          "event_count": 16,
+          "device_ns": 184165,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184165
+        },
+        {
+          "label": "blk.15.moe",
+          "event_count": 16,
+          "device_ns": 42500,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.0425
+        },
+        {
+          "label": "blk.15.route",
+          "event_count": 40,
+          "device_ns": 539479,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539479
+        },
+        {
+          "label": "blk.15.router",
+          "event_count": 8,
+          "device_ns": 94167,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.15.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094167
+        },
+        {
+          "label": "blk.16.expsact",
+          "event_count": 8,
+          "device_ns": 31771,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031771
+        },
+        {
+          "label": "blk.16.expsdown",
+          "event_count": 8,
+          "device_ns": 807915,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.16.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.807915
+        },
+        {
+          "label": "blk.16.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24270,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02427
+        },
+        {
+          "label": "blk.16.expsgate",
+          "event_count": 8,
+          "device_ns": 1617708,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.16.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.617708
+        },
+        {
+          "label": "blk.16.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31665,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031665
+        },
+        {
+          "label": "blk.16.expsup",
+          "event_count": 8,
+          "device_ns": 1604897,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.16.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.604897
+        },
+        {
+          "label": "blk.16.expsup.check",
+          "event_count": 8,
+          "device_ns": 24793,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024793
+        },
+        {
+          "label": "blk.16.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87396,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087396
+        },
+        {
+          "label": "blk.16.gather",
+          "event_count": 16,
+          "device_ns": 183227,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183227
+        },
+        {
+          "label": "blk.16.moe",
+          "event_count": 16,
+          "device_ns": 41667,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041667
+        },
+        {
+          "label": "blk.16.route",
+          "event_count": 40,
+          "device_ns": 541352,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.541352
+        },
+        {
+          "label": "blk.16.router",
+          "event_count": 8,
+          "device_ns": 94686,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.16.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094686
+        },
+        {
+          "label": "blk.17.expsact",
+          "event_count": 8,
+          "device_ns": 33124,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033124
+        },
+        {
+          "label": "blk.17.expsdown",
+          "event_count": 8,
+          "device_ns": 806252,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.17.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.806252
+        },
+        {
+          "label": "blk.17.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24272,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024272
+        },
+        {
+          "label": "blk.17.expsgate",
+          "event_count": 8,
+          "device_ns": 680936,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.17.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.680936
+        },
+        {
+          "label": "blk.17.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32084,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032084
+        },
+        {
+          "label": "blk.17.expsup",
+          "event_count": 8,
+          "device_ns": 678228,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.17.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.678228
+        },
+        {
+          "label": "blk.17.expsup.check",
+          "event_count": 8,
+          "device_ns": 24686,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024686
+        },
+        {
+          "label": "blk.17.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87604,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087604
+        },
+        {
+          "label": "blk.17.gather",
+          "event_count": 16,
+          "device_ns": 183331,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183331
+        },
+        {
+          "label": "blk.17.moe",
+          "event_count": 16,
+          "device_ns": 43643,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043643
+        },
+        {
+          "label": "blk.17.route",
+          "event_count": 40,
+          "device_ns": 539997,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539997
+        },
+        {
+          "label": "blk.17.router",
+          "event_count": 8,
+          "device_ns": 94478,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.17.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094478
+        },
+        {
+          "label": "blk.18.expsact",
+          "event_count": 8,
+          "device_ns": 33020,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.03302
+        },
+        {
+          "label": "blk.18.expsdown",
+          "event_count": 8,
+          "device_ns": 809063,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.18.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.809063
+        },
+        {
+          "label": "blk.18.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26041,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.026041
+        },
+        {
+          "label": "blk.18.expsgate",
+          "event_count": 8,
+          "device_ns": 1616353,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.18.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.616353
+        },
+        {
+          "label": "blk.18.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32187,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032187
+        },
+        {
+          "label": "blk.18.expsup",
+          "event_count": 8,
+          "device_ns": 1616147,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.18.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.616147
+        },
+        {
+          "label": "blk.18.expsup.check",
+          "event_count": 8,
+          "device_ns": 24791,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024791
+        },
+        {
+          "label": "blk.18.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87917,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087917
+        },
+        {
+          "label": "blk.18.gather",
+          "event_count": 16,
+          "device_ns": 184065,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184065
+        },
+        {
+          "label": "blk.18.moe",
+          "event_count": 16,
+          "device_ns": 42392,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042392
+        },
+        {
+          "label": "blk.18.route",
+          "event_count": 40,
+          "device_ns": 542290,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.54229
+        },
+        {
+          "label": "blk.18.router",
+          "event_count": 8,
+          "device_ns": 93645,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.18.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.093645
+        },
+        {
+          "label": "blk.19.expsact",
+          "event_count": 8,
+          "device_ns": 31041,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031041
+        },
+        {
+          "label": "blk.19.expsdown",
+          "event_count": 8,
+          "device_ns": 808854,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.19.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.808854
+        },
+        {
+          "label": "blk.19.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24895,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024895
+        },
+        {
+          "label": "blk.19.expsgate",
+          "event_count": 8,
+          "device_ns": 692708,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.19.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.692708
+        },
+        {
+          "label": "blk.19.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31979,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031979
+        },
+        {
+          "label": "blk.19.expsup",
+          "event_count": 8,
+          "device_ns": 694271,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.19.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.694271
+        },
+        {
+          "label": "blk.19.expsup.check",
+          "event_count": 8,
+          "device_ns": 24584,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024584
+        },
+        {
+          "label": "blk.19.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87710,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.08771
+        },
+        {
+          "label": "blk.19.gather",
+          "event_count": 16,
+          "device_ns": 182915,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.182915
+        },
+        {
+          "label": "blk.19.moe",
+          "event_count": 16,
+          "device_ns": 42498,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042498
+        },
+        {
+          "label": "blk.19.route",
+          "event_count": 40,
+          "device_ns": 539164,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539164
+        },
+        {
+          "label": "blk.19.router",
+          "event_count": 8,
+          "device_ns": 94478,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.19.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094478
+        },
+        {
+          "label": "blk.2.expsact",
+          "event_count": 8,
+          "device_ns": 30416,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.030416
+        },
+        {
+          "label": "blk.2.expsdown",
+          "event_count": 8,
+          "device_ns": 810207,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.2.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.810207
+        },
+        {
+          "label": "blk.2.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25728,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025728
+        },
+        {
+          "label": "blk.2.expsgate",
+          "event_count": 8,
+          "device_ns": 701770,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.2.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.70177
+        },
+        {
+          "label": "blk.2.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31875,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031875
+        },
+        {
+          "label": "blk.2.expsup",
+          "event_count": 8,
+          "device_ns": 702396,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.2.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.702396
+        },
+        {
+          "label": "blk.2.expsup.check",
+          "event_count": 8,
+          "device_ns": 24478,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024478
+        },
+        {
+          "label": "blk.2.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87604,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087604
+        },
+        {
+          "label": "blk.2.gather",
+          "event_count": 16,
+          "device_ns": 182813,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.182813
+        },
+        {
+          "label": "blk.2.moe",
+          "event_count": 16,
+          "device_ns": 43959,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043959
+        },
+        {
+          "label": "blk.2.route",
+          "event_count": 40,
+          "device_ns": 538438,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.538438
+        },
+        {
+          "label": "blk.2.router",
+          "event_count": 8,
+          "device_ns": 94791,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.2.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094791
+        },
+        {
+          "label": "blk.20.expsact",
+          "event_count": 8,
+          "device_ns": 34166,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.034166
+        },
+        {
+          "label": "blk.20.expsdown",
+          "event_count": 8,
+          "device_ns": 1027189,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.20.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.027189
+        },
+        {
+          "label": "blk.20.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24168,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024168
+        },
+        {
+          "label": "blk.20.expsgate",
+          "event_count": 8,
+          "device_ns": 1627915,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.20.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.627915
+        },
+        {
+          "label": "blk.20.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32187,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032187
+        },
+        {
+          "label": "blk.20.expsup",
+          "event_count": 8,
+          "device_ns": 1616667,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.20.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.616667
+        },
+        {
+          "label": "blk.20.expsup.check",
+          "event_count": 8,
+          "device_ns": 24480,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02448
+        },
+        {
+          "label": "blk.20.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87605,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087605
+        },
+        {
+          "label": "blk.20.gather",
+          "event_count": 16,
+          "device_ns": 184585,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184585
+        },
+        {
+          "label": "blk.20.moe",
+          "event_count": 16,
+          "device_ns": 43646,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043646
+        },
+        {
+          "label": "blk.20.route",
+          "event_count": 40,
+          "device_ns": 539789,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539789
+        },
+        {
+          "label": "blk.20.router",
+          "event_count": 8,
+          "device_ns": 94374,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.20.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094374
+        },
+        {
+          "label": "blk.21.expsact",
+          "event_count": 8,
+          "device_ns": 32397,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032397
+        },
+        {
+          "label": "blk.21.expsdown",
+          "event_count": 8,
+          "device_ns": 1025833,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.21.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.025833
+        },
+        {
+          "label": "blk.21.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.21.expsgate",
+          "event_count": 8,
+          "device_ns": 683435,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.21.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.683435
+        },
+        {
+          "label": "blk.21.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32293,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032293
+        },
+        {
+          "label": "blk.21.expsup",
+          "event_count": 8,
+          "device_ns": 681147,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.21.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.681147
+        },
+        {
+          "label": "blk.21.expsup.check",
+          "event_count": 8,
+          "device_ns": 24480,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02448
+        },
+        {
+          "label": "blk.21.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87186,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087186
+        },
+        {
+          "label": "blk.21.gather",
+          "event_count": 16,
+          "device_ns": 184998,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184998
+        },
+        {
+          "label": "blk.21.moe",
+          "event_count": 16,
+          "device_ns": 43332,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043332
+        },
+        {
+          "label": "blk.21.route",
+          "event_count": 40,
+          "device_ns": 542394,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.542394
+        },
+        {
+          "label": "blk.21.router",
+          "event_count": 8,
+          "device_ns": 94687,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.21.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094687
+        },
+        {
+          "label": "blk.22.expsact",
+          "event_count": 8,
+          "device_ns": 31771,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031771
+        },
+        {
+          "label": "blk.22.expsdown",
+          "event_count": 8,
+          "device_ns": 809792,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.22.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.809792
+        },
+        {
+          "label": "blk.22.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24374,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024374
+        },
+        {
+          "label": "blk.22.expsgate",
+          "event_count": 8,
+          "device_ns": 1618123,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.22.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.618123
+        },
+        {
+          "label": "blk.22.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32188,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032188
+        },
+        {
+          "label": "blk.22.expsup",
+          "event_count": 8,
+          "device_ns": 1629270,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.22.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.62927
+        },
+        {
+          "label": "blk.22.expsup.check",
+          "event_count": 8,
+          "device_ns": 24688,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024688
+        },
+        {
+          "label": "blk.22.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87602,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087602
+        },
+        {
+          "label": "blk.22.gather",
+          "event_count": 16,
+          "device_ns": 184061,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184061
+        },
+        {
+          "label": "blk.22.moe",
+          "event_count": 16,
+          "device_ns": 44478,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.044478
+        },
+        {
+          "label": "blk.22.route",
+          "event_count": 40,
+          "device_ns": 543333,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.543333
+        },
+        {
+          "label": "blk.22.router",
+          "event_count": 8,
+          "device_ns": 95001,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.22.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.095001
+        },
+        {
+          "label": "blk.23.expsact",
+          "event_count": 8,
+          "device_ns": 30624,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.030624
+        },
+        {
+          "label": "blk.23.expsdown",
+          "event_count": 8,
+          "device_ns": 808751,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.23.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.808751
+        },
+        {
+          "label": "blk.23.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24896,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024896
+        },
+        {
+          "label": "blk.23.expsgate",
+          "event_count": 8,
+          "device_ns": 700520,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.23.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.70052
+        },
+        {
+          "label": "blk.23.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31978,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031978
+        },
+        {
+          "label": "blk.23.expsup",
+          "event_count": 8,
+          "device_ns": 694686,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.23.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.694686
+        },
+        {
+          "label": "blk.23.expsup.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.23.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87708,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087708
+        },
+        {
+          "label": "blk.23.gather",
+          "event_count": 16,
+          "device_ns": 183750,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.18375
+        },
+        {
+          "label": "blk.23.moe",
+          "event_count": 16,
+          "device_ns": 41460,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.04146
+        },
+        {
+          "label": "blk.23.route",
+          "event_count": 40,
+          "device_ns": 541041,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.541041
+        },
+        {
+          "label": "blk.23.router",
+          "event_count": 8,
+          "device_ns": 94271,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.23.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094271
+        },
+        {
+          "label": "blk.3.expsact",
+          "event_count": 8,
+          "device_ns": 31562,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031562
+        },
+        {
+          "label": "blk.3.expsdown",
+          "event_count": 8,
+          "device_ns": 806250,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.3.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.80625
+        },
+        {
+          "label": "blk.3.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26459,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.026459
+        },
+        {
+          "label": "blk.3.expsgate",
+          "event_count": 8,
+          "device_ns": 692292,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.3.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.692292
+        },
+        {
+          "label": "blk.3.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32083,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032083
+        },
+        {
+          "label": "blk.3.expsup",
+          "event_count": 8,
+          "device_ns": 690939,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.3.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.690939
+        },
+        {
+          "label": "blk.3.expsup.check",
+          "event_count": 8,
+          "device_ns": 24793,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024793
+        },
+        {
+          "label": "blk.3.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87499,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087499
+        },
+        {
+          "label": "blk.3.gather",
+          "event_count": 16,
+          "device_ns": 183854,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183854
+        },
+        {
+          "label": "blk.3.moe",
+          "event_count": 16,
+          "device_ns": 42605,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042605
+        },
+        {
+          "label": "blk.3.route",
+          "event_count": 40,
+          "device_ns": 539576,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539576
+        },
+        {
+          "label": "blk.3.router",
+          "event_count": 8,
+          "device_ns": 93749,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.3.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.093749
+        },
+        {
+          "label": "blk.4.expsact",
+          "event_count": 8,
+          "device_ns": 31978,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031978
+        },
+        {
+          "label": "blk.4.expsdown",
+          "event_count": 8,
+          "device_ns": 823855,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.4.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.823855
+        },
+        {
+          "label": "blk.4.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26250,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02625
+        },
+        {
+          "label": "blk.4.expsgate",
+          "event_count": 8,
+          "device_ns": 702292,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.4.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.702292
+        },
+        {
+          "label": "blk.4.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32083,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032083
+        },
+        {
+          "label": "blk.4.expsup",
+          "event_count": 8,
+          "device_ns": 715315,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.4.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.715315
+        },
+        {
+          "label": "blk.4.expsup.check",
+          "event_count": 8,
+          "device_ns": 24272,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024272
+        },
+        {
+          "label": "blk.4.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87499,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087499
+        },
+        {
+          "label": "blk.4.gather",
+          "event_count": 16,
+          "device_ns": 183437,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183437
+        },
+        {
+          "label": "blk.4.moe",
+          "event_count": 16,
+          "device_ns": 43437,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043437
+        },
+        {
+          "label": "blk.4.route",
+          "event_count": 40,
+          "device_ns": 538228,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.538228
+        },
+        {
+          "label": "blk.4.router",
+          "event_count": 8,
+          "device_ns": 94167,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.4.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094167
+        },
+        {
+          "label": "blk.5.expsact",
+          "event_count": 8,
+          "device_ns": 32083,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032083
+        },
+        {
+          "label": "blk.5.expsdown",
+          "event_count": 8,
+          "device_ns": 807293,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.5.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.807293
+        },
+        {
+          "label": "blk.5.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26042,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.026042
+        },
+        {
+          "label": "blk.5.expsgate",
+          "event_count": 8,
+          "device_ns": 692395,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.5.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.692395
+        },
+        {
+          "label": "blk.5.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31980,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.03198
+        },
+        {
+          "label": "blk.5.expsup",
+          "event_count": 8,
+          "device_ns": 700937,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.5.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.700937
+        },
+        {
+          "label": "blk.5.expsup.check",
+          "event_count": 8,
+          "device_ns": 24375,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024375
+        },
+        {
+          "label": "blk.5.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87814,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087814
+        },
+        {
+          "label": "blk.5.gather",
+          "event_count": 16,
+          "device_ns": 184060,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.18406
+        },
+        {
+          "label": "blk.5.moe",
+          "event_count": 16,
+          "device_ns": 43643,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043643
+        },
+        {
+          "label": "blk.5.route",
+          "event_count": 40,
+          "device_ns": 539172,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539172
+        },
+        {
+          "label": "blk.5.router",
+          "event_count": 8,
+          "device_ns": 95314,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.5.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.095314
+        },
+        {
+          "label": "blk.6.expsact",
+          "event_count": 8,
+          "device_ns": 33332,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033332
+        },
+        {
+          "label": "blk.6.expsdown",
+          "event_count": 8,
+          "device_ns": 811041,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.6.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.811041
+        },
+        {
+          "label": "blk.6.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26563,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.026563
+        },
+        {
+          "label": "blk.6.expsgate",
+          "event_count": 8,
+          "device_ns": 690522,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.6.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.690522
+        },
+        {
+          "label": "blk.6.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31877,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031877
+        },
+        {
+          "label": "blk.6.expsup",
+          "event_count": 8,
+          "device_ns": 694688,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.6.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.694688
+        },
+        {
+          "label": "blk.6.expsup.check",
+          "event_count": 8,
+          "device_ns": 24584,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024584
+        },
+        {
+          "label": "blk.6.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87291,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087291
+        },
+        {
+          "label": "blk.6.gather",
+          "event_count": 16,
+          "device_ns": 183958,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183958
+        },
+        {
+          "label": "blk.6.moe",
+          "event_count": 16,
+          "device_ns": 43648,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043648
+        },
+        {
+          "label": "blk.6.route",
+          "event_count": 40,
+          "device_ns": 540212,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.540212
+        },
+        {
+          "label": "blk.6.router",
+          "event_count": 8,
+          "device_ns": 94166,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.6.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094166
+        },
+        {
+          "label": "blk.7.expsact",
+          "event_count": 8,
+          "device_ns": 34895,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.034895
+        },
+        {
+          "label": "blk.7.expsdown",
+          "event_count": 8,
+          "device_ns": 805106,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.7.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.805106
+        },
+        {
+          "label": "blk.7.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24271,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024271
+        },
+        {
+          "label": "blk.7.expsgate",
+          "event_count": 8,
+          "device_ns": 1610209,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.7.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.610209
+        },
+        {
+          "label": "blk.7.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31874,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031874
+        },
+        {
+          "label": "blk.7.expsup",
+          "event_count": 8,
+          "device_ns": 1622917,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.7.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.622917
+        },
+        {
+          "label": "blk.7.expsup.check",
+          "event_count": 8,
+          "device_ns": 24271,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024271
+        },
+        {
+          "label": "blk.7.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87397,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087397
+        },
+        {
+          "label": "blk.7.gather",
+          "event_count": 16,
+          "device_ns": 183020,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.18302
+        },
+        {
+          "label": "blk.7.moe",
+          "event_count": 16,
+          "device_ns": 42604,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042604
+        },
+        {
+          "label": "blk.7.route",
+          "event_count": 40,
+          "device_ns": 541357,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.541357
+        },
+        {
+          "label": "blk.7.router",
+          "event_count": 8,
+          "device_ns": 94375,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.7.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094375
+        },
+        {
+          "label": "blk.8.expsact",
+          "event_count": 8,
+          "device_ns": 33228,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033228
+        },
+        {
+          "label": "blk.8.expsdown",
+          "event_count": 8,
+          "device_ns": 1029792,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.8.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.029792
+        },
+        {
+          "label": "blk.8.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24582,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024582
+        },
+        {
+          "label": "blk.8.expsgate",
+          "event_count": 8,
+          "device_ns": 694479,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.8.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.694479
+        },
+        {
+          "label": "blk.8.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31978,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031978
+        },
+        {
+          "label": "blk.8.expsup",
+          "event_count": 8,
+          "device_ns": 701251,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.8.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.701251
+        },
+        {
+          "label": "blk.8.expsup.check",
+          "event_count": 8,
+          "device_ns": 24271,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024271
+        },
+        {
+          "label": "blk.8.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87398,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087398
+        },
+        {
+          "label": "blk.8.gather",
+          "event_count": 16,
+          "device_ns": 183543,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183543
+        },
+        {
+          "label": "blk.8.moe",
+          "event_count": 16,
+          "device_ns": 42710,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.04271
+        },
+        {
+          "label": "blk.8.route",
+          "event_count": 40,
+          "device_ns": 539374,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539374
+        },
+        {
+          "label": "blk.8.router",
+          "event_count": 8,
+          "device_ns": 94480,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.8.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.09448
+        },
+        {
+          "label": "blk.9.expsact",
+          "event_count": 8,
+          "device_ns": 31562,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031562
+        },
+        {
+          "label": "blk.9.expsdown",
+          "event_count": 8,
+          "device_ns": 810833,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.9.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.810833
+        },
+        {
+          "label": "blk.9.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24376,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024376
+        },
+        {
+          "label": "blk.9.expsgate",
+          "event_count": 8,
+          "device_ns": 696563,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.9.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.696563
+        },
+        {
+          "label": "blk.9.expsgate.check",
+          "event_count": 8,
+          "device_ns": 33229,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.033229
+        },
+        {
+          "label": "blk.9.expsup",
+          "event_count": 8,
+          "device_ns": 704270,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.9.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.70427
+        },
+        {
+          "label": "blk.9.expsup.check",
+          "event_count": 8,
+          "device_ns": 24271,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024271
+        },
+        {
+          "label": "blk.9.ffn.combine",
+          "event_count": 8,
+          "device_ns": 87292,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.087292
+        },
+        {
+          "label": "blk.9.gather",
+          "event_count": 16,
+          "device_ns": 183854,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183854
+        },
+        {
+          "label": "blk.9.moe",
+          "event_count": 16,
+          "device_ns": 42916,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042916
+        },
+        {
+          "label": "blk.9.route",
+          "event_count": 40,
+          "device_ns": 539369,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.539369
+        },
+        {
+          "label": "blk.9.router",
+          "event_count": 8,
+          "device_ns": 93958,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.9.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.093958
+        }
+      ],
+      "by_class_format": [
+        {
+          "class_name": "expsact",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 773638,
+          "device_ms": 0.773638
+        },
+        {
+          "class_name": "expsdown",
+          "format": "IQ4_NL",
+          "event_count": 136,
+          "device_ns": 13777610,
+          "device_ms": 13.77761
+        },
+        {
+          "class_name": "expsdown",
+          "format": "Q2_0",
+          "event_count": 56,
+          "device_ns": 7189173,
+          "device_ms": 7.189173
+        },
+        {
+          "class_name": "expsdown.check",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 599274,
+          "device_ms": 0.599274
+        },
+        {
+          "class_name": "expsgate",
+          "format": "IQ2_S",
+          "event_count": 112,
+          "device_ns": 9745725,
+          "device_ms": 9.745725
+        },
+        {
+          "class_name": "expsgate",
+          "format": "IQ3_S",
+          "event_count": 16,
+          "device_ns": 1364371,
+          "device_ms": 1.364371
+        },
+        {
+          "class_name": "expsgate",
+          "format": "IQ3_XXS",
+          "event_count": 64,
+          "device_ns": 13033226,
+          "device_ms": 13.033226
+        },
+        {
+          "class_name": "expsgate.check",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 770001,
+          "device_ms": 0.770001
+        },
+        {
+          "class_name": "expsup",
+          "format": "IQ2_S",
+          "event_count": 112,
+          "device_ns": 9786046,
+          "device_ms": 9.786046
+        },
+        {
+          "class_name": "expsup",
+          "format": "IQ3_S",
+          "event_count": 16,
+          "device_ns": 1359375,
+          "device_ms": 1.359375
+        },
+        {
+          "class_name": "expsup",
+          "format": "IQ3_XXS",
+          "event_count": 64,
+          "device_ns": 12957084,
+          "device_ms": 12.957084
+        },
+        {
+          "class_name": "expsup.check",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 588440,
+          "device_ms": 0.58844
+        },
+        {
+          "class_name": "ffn.combine",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 2103751,
+          "device_ms": 2.103751
+        },
+        {
+          "class_name": "gather",
+          "format": "none",
+          "event_count": 384,
+          "device_ns": 4419161,
+          "device_ms": 4.419161
+        },
+        {
+          "class_name": "moe",
+          "format": "none",
+          "event_count": 384,
+          "device_ns": 1023122,
+          "device_ms": 1.023122
+        },
+        {
+          "class_name": "route",
+          "format": "none",
+          "event_count": 960,
+          "device_ns": 13031130,
+          "device_ms": 13.03113
+        },
+        {
+          "class_name": "router",
+          "format": "BF16",
+          "event_count": 192,
+          "device_ns": 2265618,
+          "device_ms": 2.265618
+        }
+      ]
+    },
+    "1": {
+      "stream_sha256": "7c5930605b598eab0da2fe0107b621b05c7ddbab66d38484ae41ed955a80afd4",
+      "rank": 1,
+      "fixtures": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "absolute_positions": [
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101
+      ],
+      "half_count": 8,
+      "event_count": 3456,
+      "device_ns": 97361453,
+      "by_label": [
+        {
+          "label": "blk.24.expsact",
+          "event_count": 8,
+          "device_ns": 34479,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.034479
+        },
+        {
+          "label": "blk.24.expsdown",
+          "event_count": 8,
+          "device_ns": 816873,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.24.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.816873
+        },
+        {
+          "label": "blk.24.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26146,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.026146
+        },
+        {
+          "label": "blk.24.expsgate",
+          "event_count": 8,
+          "device_ns": 703647,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.24.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.703647
+        },
+        {
+          "label": "blk.24.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31146,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031146
+        },
+        {
+          "label": "blk.24.expsup",
+          "event_count": 8,
+          "device_ns": 731666,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.24.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.731666
+        },
+        {
+          "label": "blk.24.expsup.check",
+          "event_count": 8,
+          "device_ns": 24896,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024896
+        },
+        {
+          "label": "blk.24.ffn.combine",
+          "event_count": 8,
+          "device_ns": 89376,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.089376
+        },
+        {
+          "label": "blk.24.gather",
+          "event_count": 16,
+          "device_ns": 187083,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.187083
+        },
+        {
+          "label": "blk.24.moe",
+          "event_count": 16,
+          "device_ns": 43647,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043647
+        },
+        {
+          "label": "blk.24.route",
+          "event_count": 40,
+          "device_ns": 558021,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.558021
+        },
+        {
+          "label": "blk.24.router",
+          "event_count": 8,
+          "device_ns": 94479,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.24.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094479
+        },
+        {
+          "label": "blk.25.expsact",
+          "event_count": 8,
+          "device_ns": 34479,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.034479
+        },
+        {
+          "label": "blk.25.expsdown",
+          "event_count": 8,
+          "device_ns": 857083,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.25.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.857083
+        },
+        {
+          "label": "blk.25.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25624,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025624
+        },
+        {
+          "label": "blk.25.expsgate",
+          "event_count": 8,
+          "device_ns": 705625,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.25.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.705625
+        },
+        {
+          "label": "blk.25.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32501,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032501
+        },
+        {
+          "label": "blk.25.expsup",
+          "event_count": 8,
+          "device_ns": 700833,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.25.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.700833
+        },
+        {
+          "label": "blk.25.expsup.check",
+          "event_count": 8,
+          "device_ns": 25105,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025105
+        },
+        {
+          "label": "blk.25.ffn.combine",
+          "event_count": 8,
+          "device_ns": 95626,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.095626
+        },
+        {
+          "label": "blk.25.gather",
+          "event_count": 16,
+          "device_ns": 209167,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.209167
+        },
+        {
+          "label": "blk.25.moe",
+          "event_count": 16,
+          "device_ns": 42707,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042707
+        },
+        {
+          "label": "blk.25.route",
+          "event_count": 40,
+          "device_ns": 587919,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.587919
+        },
+        {
+          "label": "blk.25.router",
+          "event_count": 8,
+          "device_ns": 97395,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.25.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.097395
+        },
+        {
+          "label": "blk.26.expsact",
+          "event_count": 8,
+          "device_ns": 31460,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.03146
+        },
+        {
+          "label": "blk.26.expsdown",
+          "event_count": 8,
+          "device_ns": 812187,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.26.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.812187
+        },
+        {
+          "label": "blk.26.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26665,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.026665
+        },
+        {
+          "label": "blk.26.expsgate",
+          "event_count": 8,
+          "device_ns": 727187,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.26.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.727187
+        },
+        {
+          "label": "blk.26.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31564,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031564
+        },
+        {
+          "label": "blk.26.expsup",
+          "event_count": 8,
+          "device_ns": 715208,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.26.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.715208
+        },
+        {
+          "label": "blk.26.expsup.check",
+          "event_count": 8,
+          "device_ns": 24582,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024582
+        },
+        {
+          "label": "blk.26.ffn.combine",
+          "event_count": 8,
+          "device_ns": 94896,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.094896
+        },
+        {
+          "label": "blk.26.gather",
+          "event_count": 16,
+          "device_ns": 186459,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.186459
+        },
+        {
+          "label": "blk.26.moe",
+          "event_count": 16,
+          "device_ns": 41874,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041874
+        },
+        {
+          "label": "blk.26.route",
+          "event_count": 40,
+          "device_ns": 555523,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.555523
+        },
+        {
+          "label": "blk.26.router",
+          "event_count": 8,
+          "device_ns": 95207,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.26.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.095207
+        },
+        {
+          "label": "blk.27.expsact",
+          "event_count": 8,
+          "device_ns": 32292,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032292
+        },
+        {
+          "label": "blk.27.expsdown",
+          "event_count": 8,
+          "device_ns": 805729,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.27.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.805729
+        },
+        {
+          "label": "blk.27.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24792,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024792
+        },
+        {
+          "label": "blk.27.expsgate",
+          "event_count": 8,
+          "device_ns": 681669,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.27.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.681669
+        },
+        {
+          "label": "blk.27.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31146,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031146
+        },
+        {
+          "label": "blk.27.expsup",
+          "event_count": 8,
+          "device_ns": 676460,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.27.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.67646
+        },
+        {
+          "label": "blk.27.expsup.check",
+          "event_count": 8,
+          "device_ns": 25208,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025208
+        },
+        {
+          "label": "blk.27.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91044,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091044
+        },
+        {
+          "label": "blk.27.gather",
+          "event_count": 16,
+          "device_ns": 184062,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184062
+        },
+        {
+          "label": "blk.27.moe",
+          "event_count": 16,
+          "device_ns": 42709,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042709
+        },
+        {
+          "label": "blk.27.route",
+          "event_count": 40,
+          "device_ns": 546148,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.546148
+        },
+        {
+          "label": "blk.27.router",
+          "event_count": 8,
+          "device_ns": 93960,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.27.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.09396
+        },
+        {
+          "label": "blk.28.expsact",
+          "event_count": 8,
+          "device_ns": 32814,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032814
+        },
+        {
+          "label": "blk.28.expsdown",
+          "event_count": 8,
+          "device_ns": 804167,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.28.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.804167
+        },
+        {
+          "label": "blk.28.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24792,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024792
+        },
+        {
+          "label": "blk.28.expsgate",
+          "event_count": 8,
+          "device_ns": 702186,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.28.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.702186
+        },
+        {
+          "label": "blk.28.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31249,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031249
+        },
+        {
+          "label": "blk.28.expsup",
+          "event_count": 8,
+          "device_ns": 699583,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.28.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.699583
+        },
+        {
+          "label": "blk.28.expsup.check",
+          "event_count": 8,
+          "device_ns": 24583,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024583
+        },
+        {
+          "label": "blk.28.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91249,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091249
+        },
+        {
+          "label": "blk.28.gather",
+          "event_count": 16,
+          "device_ns": 183748,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183748
+        },
+        {
+          "label": "blk.28.moe",
+          "event_count": 16,
+          "device_ns": 41665,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041665
+        },
+        {
+          "label": "blk.28.route",
+          "event_count": 40,
+          "device_ns": 547920,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.54792
+        },
+        {
+          "label": "blk.28.router",
+          "event_count": 8,
+          "device_ns": 94479,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.28.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094479
+        },
+        {
+          "label": "blk.29.expsact",
+          "event_count": 8,
+          "device_ns": 32185,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032185
+        },
+        {
+          "label": "blk.29.expsdown",
+          "event_count": 8,
+          "device_ns": 807085,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.29.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.807085
+        },
+        {
+          "label": "blk.29.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24271,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024271
+        },
+        {
+          "label": "blk.29.expsgate",
+          "event_count": 8,
+          "device_ns": 686251,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.29.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.686251
+        },
+        {
+          "label": "blk.29.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31458,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031458
+        },
+        {
+          "label": "blk.29.expsup",
+          "event_count": 8,
+          "device_ns": 675937,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.29.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.675937
+        },
+        {
+          "label": "blk.29.expsup.check",
+          "event_count": 8,
+          "device_ns": 24790,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02479
+        },
+        {
+          "label": "blk.29.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91042,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091042
+        },
+        {
+          "label": "blk.29.gather",
+          "event_count": 16,
+          "device_ns": 202708,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.202708
+        },
+        {
+          "label": "blk.29.moe",
+          "event_count": 16,
+          "device_ns": 42812,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042812
+        },
+        {
+          "label": "blk.29.route",
+          "event_count": 40,
+          "device_ns": 548230,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.54823
+        },
+        {
+          "label": "blk.29.router",
+          "event_count": 8,
+          "device_ns": 93022,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.29.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.093022
+        },
+        {
+          "label": "blk.30.expsact",
+          "event_count": 8,
+          "device_ns": 32812,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032812
+        },
+        {
+          "label": "blk.30.expsdown",
+          "event_count": 8,
+          "device_ns": 1026667,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.30.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.026667
+        },
+        {
+          "label": "blk.30.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24584,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024584
+        },
+        {
+          "label": "blk.30.expsgate",
+          "event_count": 8,
+          "device_ns": 1614793,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.30.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.614793
+        },
+        {
+          "label": "blk.30.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32187,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032187
+        },
+        {
+          "label": "blk.30.expsup",
+          "event_count": 8,
+          "device_ns": 1602916,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.30.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.602916
+        },
+        {
+          "label": "blk.30.expsup.check",
+          "event_count": 8,
+          "device_ns": 24688,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024688
+        },
+        {
+          "label": "blk.30.ffn.combine",
+          "event_count": 8,
+          "device_ns": 90938,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.090938
+        },
+        {
+          "label": "blk.30.gather",
+          "event_count": 16,
+          "device_ns": 183959,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183959
+        },
+        {
+          "label": "blk.30.moe",
+          "event_count": 16,
+          "device_ns": 41663,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041663
+        },
+        {
+          "label": "blk.30.route",
+          "event_count": 40,
+          "device_ns": 568643,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.568643
+        },
+        {
+          "label": "blk.30.router",
+          "event_count": 8,
+          "device_ns": 94269,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.30.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094269
+        },
+        {
+          "label": "blk.31.expsact",
+          "event_count": 8,
+          "device_ns": 31666,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031666
+        },
+        {
+          "label": "blk.31.expsdown",
+          "event_count": 8,
+          "device_ns": 807290,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.31.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.80729
+        },
+        {
+          "label": "blk.31.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.31.expsgate",
+          "event_count": 8,
+          "device_ns": 1624687,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.31.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.624687
+        },
+        {
+          "label": "blk.31.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31144,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031144
+        },
+        {
+          "label": "blk.31.expsup",
+          "event_count": 8,
+          "device_ns": 1606669,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.31.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.606669
+        },
+        {
+          "label": "blk.31.expsup.check",
+          "event_count": 8,
+          "device_ns": 24480,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02448
+        },
+        {
+          "label": "blk.31.ffn.combine",
+          "event_count": 8,
+          "device_ns": 90937,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.090937
+        },
+        {
+          "label": "blk.31.gather",
+          "event_count": 16,
+          "device_ns": 184583,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184583
+        },
+        {
+          "label": "blk.31.moe",
+          "event_count": 16,
+          "device_ns": 41251,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041251
+        },
+        {
+          "label": "blk.31.route",
+          "event_count": 40,
+          "device_ns": 547189,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.547189
+        },
+        {
+          "label": "blk.31.router",
+          "event_count": 8,
+          "device_ns": 94062,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.31.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094062
+        },
+        {
+          "label": "blk.32.expsact",
+          "event_count": 8,
+          "device_ns": 32602,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032602
+        },
+        {
+          "label": "blk.32.expsdown",
+          "event_count": 8,
+          "device_ns": 808019,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.32.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.808019
+        },
+        {
+          "label": "blk.32.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25104,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025104
+        },
+        {
+          "label": "blk.32.expsgate",
+          "event_count": 8,
+          "device_ns": 702396,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.32.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.702396
+        },
+        {
+          "label": "blk.32.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31146,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031146
+        },
+        {
+          "label": "blk.32.expsup",
+          "event_count": 8,
+          "device_ns": 695624,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.32.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.695624
+        },
+        {
+          "label": "blk.32.expsup.check",
+          "event_count": 8,
+          "device_ns": 24478,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024478
+        },
+        {
+          "label": "blk.32.ffn.combine",
+          "event_count": 8,
+          "device_ns": 93124,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.093124
+        },
+        {
+          "label": "blk.32.gather",
+          "event_count": 16,
+          "device_ns": 184270,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.18427
+        },
+        {
+          "label": "blk.32.moe",
+          "event_count": 16,
+          "device_ns": 42082,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042082
+        },
+        {
+          "label": "blk.32.route",
+          "event_count": 40,
+          "device_ns": 547191,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.547191
+        },
+        {
+          "label": "blk.32.router",
+          "event_count": 8,
+          "device_ns": 93751,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.32.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.093751
+        },
+        {
+          "label": "blk.33.expsact",
+          "event_count": 8,
+          "device_ns": 32396,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032396
+        },
+        {
+          "label": "blk.33.expsdown",
+          "event_count": 8,
+          "device_ns": 806770,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.33.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.80677
+        },
+        {
+          "label": "blk.33.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24792,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024792
+        },
+        {
+          "label": "blk.33.expsgate",
+          "event_count": 8,
+          "device_ns": 1630521,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.33.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.630521
+        },
+        {
+          "label": "blk.33.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31456,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031456
+        },
+        {
+          "label": "blk.33.expsup",
+          "event_count": 8,
+          "device_ns": 1612606,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.33.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.612606
+        },
+        {
+          "label": "blk.33.expsup.check",
+          "event_count": 8,
+          "device_ns": 24584,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024584
+        },
+        {
+          "label": "blk.33.ffn.combine",
+          "event_count": 8,
+          "device_ns": 93439,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.093439
+        },
+        {
+          "label": "blk.33.gather",
+          "event_count": 16,
+          "device_ns": 183019,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183019
+        },
+        {
+          "label": "blk.33.moe",
+          "event_count": 16,
+          "device_ns": 42813,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042813
+        },
+        {
+          "label": "blk.33.route",
+          "event_count": 40,
+          "device_ns": 546664,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.546664
+        },
+        {
+          "label": "blk.33.router",
+          "event_count": 8,
+          "device_ns": 94376,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.33.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094376
+        },
+        {
+          "label": "blk.34.expsact",
+          "event_count": 8,
+          "device_ns": 31874,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031874
+        },
+        {
+          "label": "blk.34.expsdown",
+          "event_count": 8,
+          "device_ns": 806146,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.34.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.806146
+        },
+        {
+          "label": "blk.34.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24584,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024584
+        },
+        {
+          "label": "blk.34.expsgate",
+          "event_count": 8,
+          "device_ns": 696354,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.34.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.696354
+        },
+        {
+          "label": "blk.34.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31561,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031561
+        },
+        {
+          "label": "blk.34.expsup",
+          "event_count": 8,
+          "device_ns": 693854,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.34.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.693854
+        },
+        {
+          "label": "blk.34.expsup.check",
+          "event_count": 8,
+          "device_ns": 24687,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024687
+        },
+        {
+          "label": "blk.34.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91355,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091355
+        },
+        {
+          "label": "blk.34.gather",
+          "event_count": 16,
+          "device_ns": 183226,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183226
+        },
+        {
+          "label": "blk.34.moe",
+          "event_count": 16,
+          "device_ns": 42502,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042502
+        },
+        {
+          "label": "blk.34.route",
+          "event_count": 40,
+          "device_ns": 548542,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.548542
+        },
+        {
+          "label": "blk.34.router",
+          "event_count": 8,
+          "device_ns": 94688,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.34.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094688
+        },
+        {
+          "label": "blk.35.expsact",
+          "event_count": 8,
+          "device_ns": 32710,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.03271
+        },
+        {
+          "label": "blk.35.expsdown",
+          "event_count": 8,
+          "device_ns": 811143,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.35.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.811143
+        },
+        {
+          "label": "blk.35.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24477,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024477
+        },
+        {
+          "label": "blk.35.expsgate",
+          "event_count": 8,
+          "device_ns": 683229,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.35.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.683229
+        },
+        {
+          "label": "blk.35.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31563,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031563
+        },
+        {
+          "label": "blk.35.expsup",
+          "event_count": 8,
+          "device_ns": 674896,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.35.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.674896
+        },
+        {
+          "label": "blk.35.expsup.check",
+          "event_count": 8,
+          "device_ns": 24168,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024168
+        },
+        {
+          "label": "blk.35.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91978,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091978
+        },
+        {
+          "label": "blk.35.gather",
+          "event_count": 16,
+          "device_ns": 184688,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184688
+        },
+        {
+          "label": "blk.35.moe",
+          "event_count": 16,
+          "device_ns": 43958,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043958
+        },
+        {
+          "label": "blk.35.route",
+          "event_count": 40,
+          "device_ns": 546876,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.546876
+        },
+        {
+          "label": "blk.35.router",
+          "event_count": 8,
+          "device_ns": 94791,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.35.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094791
+        },
+        {
+          "label": "blk.36.expsact",
+          "event_count": 8,
+          "device_ns": 31147,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031147
+        },
+        {
+          "label": "blk.36.expsdown",
+          "event_count": 8,
+          "device_ns": 1025000,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.36.ffn_down_exps.weight",
+              "type": "Q2_0",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.025
+        },
+        {
+          "label": "blk.36.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.36.expsgate",
+          "event_count": 8,
+          "device_ns": 697812,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.36.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.697812
+        },
+        {
+          "label": "blk.36.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31252,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031252
+        },
+        {
+          "label": "blk.36.expsup",
+          "event_count": 8,
+          "device_ns": 698957,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.36.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.698957
+        },
+        {
+          "label": "blk.36.expsup.check",
+          "event_count": 8,
+          "device_ns": 24687,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024687
+        },
+        {
+          "label": "blk.36.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91043,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091043
+        },
+        {
+          "label": "blk.36.gather",
+          "event_count": 16,
+          "device_ns": 183855,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183855
+        },
+        {
+          "label": "blk.36.moe",
+          "event_count": 16,
+          "device_ns": 42918,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042918
+        },
+        {
+          "label": "blk.36.route",
+          "event_count": 40,
+          "device_ns": 548332,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.548332
+        },
+        {
+          "label": "blk.36.router",
+          "event_count": 8,
+          "device_ns": 95832,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.36.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.095832
+        },
+        {
+          "label": "blk.37.expsact",
+          "event_count": 8,
+          "device_ns": 32499,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.032499
+        },
+        {
+          "label": "blk.37.expsdown",
+          "event_count": 8,
+          "device_ns": 810210,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.37.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.81021
+        },
+        {
+          "label": "blk.37.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24688,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024688
+        },
+        {
+          "label": "blk.37.expsgate",
+          "event_count": 8,
+          "device_ns": 1630834,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.37.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.630834
+        },
+        {
+          "label": "blk.37.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31458,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031458
+        },
+        {
+          "label": "blk.37.expsup",
+          "event_count": 8,
+          "device_ns": 1609168,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.37.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.609168
+        },
+        {
+          "label": "blk.37.expsup.check",
+          "event_count": 8,
+          "device_ns": 24791,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024791
+        },
+        {
+          "label": "blk.37.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91665,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091665
+        },
+        {
+          "label": "blk.37.gather",
+          "event_count": 16,
+          "device_ns": 184582,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184582
+        },
+        {
+          "label": "blk.37.moe",
+          "event_count": 16,
+          "device_ns": 44271,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.044271
+        },
+        {
+          "label": "blk.37.route",
+          "event_count": 40,
+          "device_ns": 549273,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.549273
+        },
+        {
+          "label": "blk.37.router",
+          "event_count": 8,
+          "device_ns": 94480,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.37.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.09448
+        },
+        {
+          "label": "blk.38.expsact",
+          "event_count": 8,
+          "device_ns": 33230,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.03323
+        },
+        {
+          "label": "blk.38.expsdown",
+          "event_count": 8,
+          "device_ns": 827813,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.38.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.827813
+        },
+        {
+          "label": "blk.38.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24897,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024897
+        },
+        {
+          "label": "blk.38.expsgate",
+          "event_count": 8,
+          "device_ns": 1612605,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.38.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.612605
+        },
+        {
+          "label": "blk.38.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31250,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.03125
+        },
+        {
+          "label": "blk.38.expsup",
+          "event_count": 8,
+          "device_ns": 1632294,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.38.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.632294
+        },
+        {
+          "label": "blk.38.expsup.check",
+          "event_count": 8,
+          "device_ns": 25000,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025
+        },
+        {
+          "label": "blk.38.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91249,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091249
+        },
+        {
+          "label": "blk.38.gather",
+          "event_count": 16,
+          "device_ns": 184061,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184061
+        },
+        {
+          "label": "blk.38.moe",
+          "event_count": 16,
+          "device_ns": 42396,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042396
+        },
+        {
+          "label": "blk.38.route",
+          "event_count": 40,
+          "device_ns": 545627,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.545627
+        },
+        {
+          "label": "blk.38.router",
+          "event_count": 8,
+          "device_ns": 94583,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.38.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094583
+        },
+        {
+          "label": "blk.39.expsact",
+          "event_count": 8,
+          "device_ns": 33126,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033126
+        },
+        {
+          "label": "blk.39.expsdown",
+          "event_count": 8,
+          "device_ns": 807397,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.39.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.807397
+        },
+        {
+          "label": "blk.39.expsdown.check",
+          "event_count": 8,
+          "device_ns": 26250,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02625
+        },
+        {
+          "label": "blk.39.expsgate",
+          "event_count": 8,
+          "device_ns": 699165,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.39.ffn_gate_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.699165
+        },
+        {
+          "label": "blk.39.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31564,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031564
+        },
+        {
+          "label": "blk.39.expsup",
+          "event_count": 8,
+          "device_ns": 699581,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.39.ffn_up_exps.weight",
+              "type": "IQ2_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.699581
+        },
+        {
+          "label": "blk.39.expsup.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.39.ffn.combine",
+          "event_count": 8,
+          "device_ns": 92189,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.092189
+        },
+        {
+          "label": "blk.39.gather",
+          "event_count": 16,
+          "device_ns": 184271,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184271
+        },
+        {
+          "label": "blk.39.moe",
+          "event_count": 16,
+          "device_ns": 42292,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042292
+        },
+        {
+          "label": "blk.39.route",
+          "event_count": 40,
+          "device_ns": 548227,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.548227
+        },
+        {
+          "label": "blk.39.router",
+          "event_count": 8,
+          "device_ns": 92918,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.39.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.092918
+        },
+        {
+          "label": "blk.40.expsact",
+          "event_count": 8,
+          "device_ns": 33021,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033021
+        },
+        {
+          "label": "blk.40.expsdown",
+          "event_count": 8,
+          "device_ns": 805522,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.40.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.805522
+        },
+        {
+          "label": "blk.40.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25313,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025313
+        },
+        {
+          "label": "blk.40.expsgate",
+          "event_count": 8,
+          "device_ns": 684480,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.40.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.68448
+        },
+        {
+          "label": "blk.40.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31252,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031252
+        },
+        {
+          "label": "blk.40.expsup",
+          "event_count": 8,
+          "device_ns": 678122,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.40.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.678122
+        },
+        {
+          "label": "blk.40.expsup.check",
+          "event_count": 8,
+          "device_ns": 25207,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025207
+        },
+        {
+          "label": "blk.40.ffn.combine",
+          "event_count": 8,
+          "device_ns": 93855,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.093855
+        },
+        {
+          "label": "blk.40.gather",
+          "event_count": 16,
+          "device_ns": 184269,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184269
+        },
+        {
+          "label": "blk.40.moe",
+          "event_count": 16,
+          "device_ns": 42605,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042605
+        },
+        {
+          "label": "blk.40.route",
+          "event_count": 40,
+          "device_ns": 549062,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.549062
+        },
+        {
+          "label": "blk.40.router",
+          "event_count": 8,
+          "device_ns": 95000,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.40.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.095
+        },
+        {
+          "label": "blk.41.expsact",
+          "event_count": 8,
+          "device_ns": 33020,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.03302
+        },
+        {
+          "label": "blk.41.expsdown",
+          "event_count": 8,
+          "device_ns": 808335,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.41.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.808335
+        },
+        {
+          "label": "blk.41.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25313,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025313
+        },
+        {
+          "label": "blk.41.expsgate",
+          "event_count": 8,
+          "device_ns": 1622292,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.41.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.622292
+        },
+        {
+          "label": "blk.41.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31353,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031353
+        },
+        {
+          "label": "blk.41.expsup",
+          "event_count": 8,
+          "device_ns": 1609167,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.41.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.609167
+        },
+        {
+          "label": "blk.41.expsup.check",
+          "event_count": 8,
+          "device_ns": 24480,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02448
+        },
+        {
+          "label": "blk.41.ffn.combine",
+          "event_count": 8,
+          "device_ns": 92709,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.092709
+        },
+        {
+          "label": "blk.41.gather",
+          "event_count": 16,
+          "device_ns": 183958,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183958
+        },
+        {
+          "label": "blk.41.moe",
+          "event_count": 16,
+          "device_ns": 42188,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042188
+        },
+        {
+          "label": "blk.41.route",
+          "event_count": 40,
+          "device_ns": 547289,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.547289
+        },
+        {
+          "label": "blk.41.router",
+          "event_count": 8,
+          "device_ns": 94687,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.41.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094687
+        },
+        {
+          "label": "blk.42.expsact",
+          "event_count": 8,
+          "device_ns": 34897,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.034897
+        },
+        {
+          "label": "blk.42.expsdown",
+          "event_count": 8,
+          "device_ns": 808541,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.42.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.808541
+        },
+        {
+          "label": "blk.42.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25521,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025521
+        },
+        {
+          "label": "blk.42.expsgate",
+          "event_count": 8,
+          "device_ns": 1625834,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.42.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.625834
+        },
+        {
+          "label": "blk.42.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31354,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031354
+        },
+        {
+          "label": "blk.42.expsup",
+          "event_count": 8,
+          "device_ns": 1623749,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.42.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.623749
+        },
+        {
+          "label": "blk.42.expsup.check",
+          "event_count": 8,
+          "device_ns": 24791,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024791
+        },
+        {
+          "label": "blk.42.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91353,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091353
+        },
+        {
+          "label": "blk.42.gather",
+          "event_count": 16,
+          "device_ns": 183646,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183646
+        },
+        {
+          "label": "blk.42.moe",
+          "event_count": 16,
+          "device_ns": 41771,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041771
+        },
+        {
+          "label": "blk.42.route",
+          "event_count": 40,
+          "device_ns": 547082,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.547082
+        },
+        {
+          "label": "blk.42.router",
+          "event_count": 8,
+          "device_ns": 94896,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.42.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094896
+        },
+        {
+          "label": "blk.43.expsact",
+          "event_count": 8,
+          "device_ns": 31978,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.031978
+        },
+        {
+          "label": "blk.43.expsdown",
+          "event_count": 8,
+          "device_ns": 808022,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.43.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.808022
+        },
+        {
+          "label": "blk.43.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24480,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.02448
+        },
+        {
+          "label": "blk.43.expsgate",
+          "event_count": 8,
+          "device_ns": 1617917,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.43.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.617917
+        },
+        {
+          "label": "blk.43.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31252,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031252
+        },
+        {
+          "label": "blk.43.expsup",
+          "event_count": 8,
+          "device_ns": 1617289,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.43.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.617289
+        },
+        {
+          "label": "blk.43.expsup.check",
+          "event_count": 8,
+          "device_ns": 24792,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024792
+        },
+        {
+          "label": "blk.43.ffn.combine",
+          "event_count": 8,
+          "device_ns": 88230,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.08823
+        },
+        {
+          "label": "blk.43.gather",
+          "event_count": 16,
+          "device_ns": 183957,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183957
+        },
+        {
+          "label": "blk.43.moe",
+          "event_count": 16,
+          "device_ns": 42398,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042398
+        },
+        {
+          "label": "blk.43.route",
+          "event_count": 40,
+          "device_ns": 548440,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.54844
+        },
+        {
+          "label": "blk.43.router",
+          "event_count": 8,
+          "device_ns": 94270,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.43.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.09427
+        },
+        {
+          "label": "blk.44.expsact",
+          "event_count": 8,
+          "device_ns": 33124,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033124
+        },
+        {
+          "label": "blk.44.expsdown",
+          "event_count": 8,
+          "device_ns": 800832,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.44.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.800832
+        },
+        {
+          "label": "blk.44.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24686,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024686
+        },
+        {
+          "label": "blk.44.expsgate",
+          "event_count": 8,
+          "device_ns": 682503,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.44.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.682503
+        },
+        {
+          "label": "blk.44.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31248,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031248
+        },
+        {
+          "label": "blk.44.expsup",
+          "event_count": 8,
+          "device_ns": 674689,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.44.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.674689
+        },
+        {
+          "label": "blk.44.expsup.check",
+          "event_count": 8,
+          "device_ns": 24687,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024687
+        },
+        {
+          "label": "blk.44.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91770,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.09177
+        },
+        {
+          "label": "blk.44.gather",
+          "event_count": 16,
+          "device_ns": 183750,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.18375
+        },
+        {
+          "label": "blk.44.moe",
+          "event_count": 16,
+          "device_ns": 41459,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041459
+        },
+        {
+          "label": "blk.44.route",
+          "event_count": 40,
+          "device_ns": 548023,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.548023
+        },
+        {
+          "label": "blk.44.router",
+          "event_count": 8,
+          "device_ns": 94062,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.44.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094062
+        },
+        {
+          "label": "blk.45.expsact",
+          "event_count": 8,
+          "device_ns": 33853,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033853
+        },
+        {
+          "label": "blk.45.expsdown",
+          "event_count": 8,
+          "device_ns": 807187,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.45.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.807187
+        },
+        {
+          "label": "blk.45.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.45.expsgate",
+          "event_count": 8,
+          "device_ns": 684897,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.45.ffn_gate_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.684897
+        },
+        {
+          "label": "blk.45.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31667,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031667
+        },
+        {
+          "label": "blk.45.expsup",
+          "event_count": 8,
+          "device_ns": 674583,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.45.ffn_up_exps.weight",
+              "type": "IQ3_S",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.674583
+        },
+        {
+          "label": "blk.45.expsup.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.45.ffn.combine",
+          "event_count": 8,
+          "device_ns": 91041,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.091041
+        },
+        {
+          "label": "blk.45.gather",
+          "event_count": 16,
+          "device_ns": 184167,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.184167
+        },
+        {
+          "label": "blk.45.moe",
+          "event_count": 16,
+          "device_ns": 43434,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.043434
+        },
+        {
+          "label": "blk.45.route",
+          "event_count": 40,
+          "device_ns": 548855,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.548855
+        },
+        {
+          "label": "blk.45.router",
+          "event_count": 8,
+          "device_ns": 93334,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.45.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.093334
+        },
+        {
+          "label": "blk.46.expsact",
+          "event_count": 8,
+          "device_ns": 33749,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033749
+        },
+        {
+          "label": "blk.46.expsdown",
+          "event_count": 8,
+          "device_ns": 806355,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.46.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.806355
+        },
+        {
+          "label": "blk.46.expsdown.check",
+          "event_count": 8,
+          "device_ns": 24375,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024375
+        },
+        {
+          "label": "blk.46.expsgate",
+          "event_count": 8,
+          "device_ns": 1607811,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.46.ffn_gate_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.607811
+        },
+        {
+          "label": "blk.46.expsgate.check",
+          "event_count": 8,
+          "device_ns": 31249,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.031249
+        },
+        {
+          "label": "blk.46.expsup",
+          "event_count": 8,
+          "device_ns": 1631249,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.46.ffn_up_exps.weight",
+              "type": "IQ3_XXS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.631249
+        },
+        {
+          "label": "blk.46.expsup.check",
+          "event_count": 8,
+          "device_ns": 24479,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024479
+        },
+        {
+          "label": "blk.46.ffn.combine",
+          "event_count": 8,
+          "device_ns": 89688,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.089688
+        },
+        {
+          "label": "blk.46.gather",
+          "event_count": 16,
+          "device_ns": 183752,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183752
+        },
+        {
+          "label": "blk.46.moe",
+          "event_count": 16,
+          "device_ns": 41458,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.041458
+        },
+        {
+          "label": "blk.46.route",
+          "event_count": 40,
+          "device_ns": 548853,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.548853
+        },
+        {
+          "label": "blk.46.router",
+          "event_count": 8,
+          "device_ns": 94272,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.46.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.094272
+        },
+        {
+          "label": "blk.47.expsact",
+          "event_count": 8,
+          "device_ns": 33647,
+          "op": "silu_product",
+          "weights": [],
+          "device_ms": 0.033647
+        },
+        {
+          "label": "blk.47.expsdown",
+          "event_count": 8,
+          "device_ns": 804061,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.47.ffn_down_exps.weight",
+              "type": "IQ4_NL",
+              "dimensions": [
+                640,
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.804061
+        },
+        {
+          "label": "blk.47.expsdown.check",
+          "event_count": 8,
+          "device_ns": 25415,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.025415
+        },
+        {
+          "label": "blk.47.expsgate",
+          "event_count": 8,
+          "device_ns": 1497917,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.47.ffn_gate_exps.weight",
+              "type": "IQ4_XS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.497917
+        },
+        {
+          "label": "blk.47.expsgate.check",
+          "event_count": 8,
+          "device_ns": 32605,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.032605
+        },
+        {
+          "label": "blk.47.expsup",
+          "event_count": 8,
+          "device_ns": 1499688,
+          "op": "routed_gemv",
+          "weights": [
+            {
+              "name": "blk.47.ffn_up_exps.weight",
+              "type": "IQ4_XS",
+              "dimensions": [
+                2560,
+                640,
+                512
+              ]
+            }
+          ],
+          "device_ms": 1.499688
+        },
+        {
+          "label": "blk.47.expsup.check",
+          "event_count": 8,
+          "device_ns": 24374,
+          "op": "check_status",
+          "weights": [],
+          "device_ms": 0.024374
+        },
+        {
+          "label": "blk.47.ffn.combine",
+          "event_count": 8,
+          "device_ns": 88855,
+          "op": "hc_combine",
+          "weights": [],
+          "device_ms": 0.088855
+        },
+        {
+          "label": "blk.47.gather",
+          "event_count": 16,
+          "device_ns": 183647,
+          "op": "expert_gather",
+          "weights": [],
+          "device_ms": 0.183647
+        },
+        {
+          "label": "blk.47.moe",
+          "event_count": 16,
+          "device_ns": 42085,
+          "op": "moe_combine",
+          "weights": [],
+          "device_ms": 0.042085
+        },
+        {
+          "label": "blk.47.route",
+          "event_count": 40,
+          "device_ns": 549890,
+          "op": "route",
+          "weights": [],
+          "device_ms": 0.54989
+        },
+        {
+          "label": "blk.47.router",
+          "event_count": 8,
+          "device_ns": 95105,
+          "op": "gemv",
+          "weights": [
+            {
+              "name": "blk.47.ffn_gate_inp.weight",
+              "type": "BF16",
+              "dimensions": [
+                2560,
+                512
+              ]
+            }
+          ],
+          "device_ms": 0.095105
+        }
+      ],
+      "by_class_format": [
+        {
+          "class_name": "expsact",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 789060,
+          "device_ms": 0.78906
+        },
+        {
+          "class_name": "expsdown",
+          "format": "IQ4_NL",
+          "event_count": 176,
+          "device_ns": 17836767,
+          "device_ms": 17.836767
+        },
+        {
+          "class_name": "expsdown",
+          "format": "Q2_0",
+          "event_count": 16,
+          "device_ns": 2051667,
+          "device_ms": 2.051667
+        },
+        {
+          "class_name": "expsdown.check",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 600206,
+          "device_ms": 0.600206
+        },
+        {
+          "class_name": "expsgate",
+          "format": "IQ2_S",
+          "event_count": 48,
+          "device_ns": 4226561,
+          "device_ms": 4.226561
+        },
+        {
+          "class_name": "expsgate",
+          "format": "IQ3_S",
+          "event_count": 64,
+          "device_ns": 5510840,
+          "device_ms": 5.51084
+        },
+        {
+          "class_name": "expsgate",
+          "format": "IQ3_XXS",
+          "event_count": 72,
+          "device_ns": 14587294,
+          "device_ms": 14.587294
+        },
+        {
+          "class_name": "expsgate",
+          "format": "IQ4_XS",
+          "event_count": 8,
+          "device_ns": 1497917,
+          "device_ms": 1.497917
+        },
+        {
+          "class_name": "expsgate.check",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 755625,
+          "device_ms": 0.755625
+        },
+        {
+          "class_name": "expsup",
+          "format": "IQ2_S",
+          "event_count": 48,
+          "device_ns": 4234890,
+          "device_ms": 4.23489
+        },
+        {
+          "class_name": "expsup",
+          "format": "IQ3_S",
+          "event_count": 64,
+          "device_ns": 5455103,
+          "device_ms": 5.455103
+        },
+        {
+          "class_name": "expsup",
+          "format": "IQ3_XXS",
+          "event_count": 72,
+          "device_ns": 14545107,
+          "device_ms": 14.545107
+        },
+        {
+          "class_name": "expsup",
+          "format": "IQ4_XS",
+          "event_count": 8,
+          "device_ns": 1499688,
+          "device_ms": 1.499688
+        },
+        {
+          "class_name": "expsup.check",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 592495,
+          "device_ms": 0.592495
+        },
+        {
+          "class_name": "ffn.combine",
+          "format": "none",
+          "event_count": 192,
+          "device_ns": 2198651,
+          "device_ms": 2.198651
+        },
+        {
+          "class_name": "gather",
+          "format": "none",
+          "event_count": 384,
+          "device_ns": 4464887,
+          "device_ms": 4.464887
+        },
+        {
+          "class_name": "moe",
+          "format": "none",
+          "event_count": 384,
+          "device_ns": 1018958,
+          "device_ms": 1.018958
+        },
+        {
+          "class_name": "route",
+          "format": "none",
+          "event_count": 960,
+          "device_ns": 13227819,
+          "device_ms": 13.227819
+        },
+        {
+          "class_name": "router",
+          "format": "BF16",
+          "event_count": 192,
+          "device_ns": 2267918,
+          "device_ms": 2.267918
+        }
+      ]
+    }
+  },
+  "sampled_by_class_format": [
+    {
+      "class_name": "expsact",
+      "format": "none",
+      "event_count": 384,
+      "device_ns": 1562698,
+      "device_ms": 1.562698
+    },
+    {
+      "class_name": "expsdown",
+      "format": "IQ4_NL",
+      "event_count": 312,
+      "device_ns": 31614377,
+      "device_ms": 31.614377
+    },
+    {
+      "class_name": "expsdown",
+      "format": "Q2_0",
+      "event_count": 72,
+      "device_ns": 9240840,
+      "device_ms": 9.24084
+    },
+    {
+      "class_name": "expsdown.check",
+      "format": "none",
+      "event_count": 384,
+      "device_ns": 1199480,
+      "device_ms": 1.19948
+    },
+    {
+      "class_name": "expsgate",
+      "format": "IQ2_S",
+      "event_count": 160,
+      "device_ns": 13972286,
+      "device_ms": 13.972286
+    },
+    {
+      "class_name": "expsgate",
+      "format": "IQ3_S",
+      "event_count": 80,
+      "device_ns": 6875211,
+      "device_ms": 6.875211
+    },
+    {
+      "class_name": "expsgate",
+      "format": "IQ3_XXS",
+      "event_count": 136,
+      "device_ns": 27620520,
+      "device_ms": 27.62052
+    },
+    {
+      "class_name": "expsgate",
+      "format": "IQ4_XS",
+      "event_count": 8,
+      "device_ns": 1497917,
+      "device_ms": 1.497917
+    },
+    {
+      "class_name": "expsgate.check",
+      "format": "none",
+      "event_count": 384,
+      "device_ns": 1525626,
+      "device_ms": 1.525626
+    },
+    {
+      "class_name": "expsup",
+      "format": "IQ2_S",
+      "event_count": 160,
+      "device_ns": 14020936,
+      "device_ms": 14.020936
+    },
+    {
+      "class_name": "expsup",
+      "format": "IQ3_S",
+      "event_count": 80,
+      "device_ns": 6814478,
+      "device_ms": 6.814478
+    },
+    {
+      "class_name": "expsup",
+      "format": "IQ3_XXS",
+      "event_count": 136,
+      "device_ns": 27502191,
+      "device_ms": 27.502191
+    },
+    {
+      "class_name": "expsup",
+      "format": "IQ4_XS",
+      "event_count": 8,
+      "device_ns": 1499688,
+      "device_ms": 1.499688
+    },
+    {
+      "class_name": "expsup.check",
+      "format": "none",
+      "event_count": 384,
+      "device_ns": 1180935,
+      "device_ms": 1.180935
+    },
+    {
+      "class_name": "ffn.combine",
+      "format": "none",
+      "event_count": 384,
+      "device_ns": 4302402,
+      "device_ms": 4.302402
+    },
+    {
+      "class_name": "gather",
+      "format": "none",
+      "event_count": 768,
+      "device_ns": 8884048,
+      "device_ms": 8.884048
+    },
+    {
+      "class_name": "moe",
+      "format": "none",
+      "event_count": 768,
+      "device_ns": 2042080,
+      "device_ms": 2.04208
+    },
+    {
+      "class_name": "route",
+      "format": "none",
+      "event_count": 1920,
+      "device_ns": 26258949,
+      "device_ms": 26.258949
+    },
+    {
+      "class_name": "router",
+      "format": "BF16",
+      "event_count": 384,
+      "device_ns": 4533536,
+      "device_ms": 4.533536
+    }
+  ],
+  "event_count": 6912,
+  "sampled_fixtures": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "sampled_positions": [
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101
+  ],
+  "attribution_source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/main.cpp": "1591e923f10ca40950eb282758d18c6aaace66bacf075f81144f74f9e25c9f8b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "3048c31d11102e3692ac9f5c3276ec342d8b9c2cf5891ec657ae371e4cb9ae71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p65_attribution.hpp": "d87c7d8343b336f5b9dedfd3ce7bc8af3e06a80351fb3590082c7742acaa8e1a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp": "cbc2c25f2e64a3ff77e2ce4e2d6cfeaf94217a79bb098853588abf66d4cde4c9"
+  },
+  "consumed_positions": 214,
+  "bundle_captures": [
+    {
+      "path": "rank0/state-2147483647",
+      "payload_bytes": 125561972,
+      "ranges": 1076,
+      "baseline_semantic_oracle_required": false,
+      "baseline_hash_differences": [],
+      "state_json_original_length_equal": true,
+      "inventory_and_lengths_exact": true,
+      "physical_sha256": {
+        "state-seal.txt": "7279131ea5ad502600c462aae0c8861e7f48531a630c8383b6508986d1ba7759",
+        "state-index.tsv": "3989079041449cda6b7c915ed443dbec52b1e3d44bb8dc517b1122748b8abcd8",
+        "state.json": "1f608e4380679cf1512cc79f59937faff5129d2c021af0b62928f290d75bda37",
+        "state.bundle": "6a2cc1668f612282bc07dd0100895bb29b9114695a2a4864d657c85e27af65a0"
+      }
+    },
+    {
+      "path": "rank1/state-2147483647",
+      "payload_bytes": 96181196,
+      "ranges": 1032,
+      "baseline_semantic_oracle_required": false,
+      "baseline_hash_differences": [],
+      "state_json_original_length_equal": true,
+      "inventory_and_lengths_exact": true,
+      "physical_sha256": {
+        "state-seal.txt": "00663c232ac3885a7cbf09c7fd887101430fe7ba7146751fab7f4c09b85006a7",
+        "state-index.tsv": "6aea71190f05027c43dd340fcf498f00b414697a7b6bbb51069d1611699522d8",
+        "state.json": "c1d880213e796db297ca92dd6c21506d6d22525ff1e9559dd72b7cac203b8db9",
+        "state.bundle": "756a5f85217ee9779466128d0d27cd396a17bbf065823990b5a00d3e331eaaba"
+      }
+    },
+    {
+      "path": "warmup-none/rank0/state-2147483647",
+      "payload_bytes": 125561972,
+      "ranges": 1076,
+      "baseline_semantic_oracle_required": false,
+      "baseline_hash_differences": [],
+      "state_json_original_length_equal": true,
+      "inventory_and_lengths_exact": true,
+      "physical_sha256": {
+        "state-seal.txt": "f3886dc4933864abefec7c9c8ef7fdfffc0a91e9b57fee80d925c86b8fe4929e",
+        "state-index.tsv": "fdb6d8f9576764738bd3eaecde04b34e2ab4697313afa0af281f73c5135dbe42",
+        "state.json": "ff48201e80cc83d6bf860e0c1eed1a045699e24b6640cb6ca3b3cba323a00cbe",
+        "state.bundle": "771a41833a8cdcc63c92fe65e20a8c94fa6b5e33f32d6dedacd9d2f49d445711"
+      }
+    },
+    {
+      "path": "warmup-none/rank1/state-2147483647",
+      "payload_bytes": 96181196,
+      "ranges": 1032,
+      "baseline_semantic_oracle_required": false,
+      "baseline_hash_differences": [],
+      "state_json_original_length_equal": true,
+      "inventory_and_lengths_exact": true,
+      "physical_sha256": {
+        "state-seal.txt": "0f9aa848cc095569f07bca84fb7b61fdfb4761f834addbc43fa028134de06594",
+        "state-index.tsv": "e907e026163b59de5e523d2370d0088762a75ee289f5b63c6aff093ad4e8645d",
+        "state.json": "9a8d80e665b93e27908034ae30222a8decfe5125f87c879e678f1f82ca68d0be",
+        "state.bundle": "6d7f2608966771ec0ee7eafe4090a0e6dc23a65684da67608777fa3403eb31d8"
+      }
+    },
+    {
+      "path": "prompt-00-none/rank0/state-2147483647",
+      "payload_bytes": 125561972,
+      "ranges": 1076,
+      "baseline_semantic_oracle_required": true,
+      "baseline_hash_differences": [],
+      "state_json_original_length_equal": true,
+      "inventory_and_lengths_exact": true,
+      "physical_sha256": {
+        "state-seal.txt": "2297e4193c3a839ff792de8696d12ac280af45761c1b9b499e6f18d2a9157b5a",
+        "state-index.tsv": "6f7ce7d6380c23514481f83eb006a98902d08201c294e6e66826f4f305852eb5",
+        "state.json": "5840714f71d40c936bc0dcd1b91acd2a16788c21f270c77d36735ce9e3835e78",
+        "state.bundle": "cc308634f952e4160bb08481b7f8f82ca6f8e25bf5a1341048365f323cba6b5d"
+      }
+    },
+    {
+      "path": "prompt-00-none/rank1/state-2147483647",
+      "payload_bytes": 96181196,
+      "ranges": 1032,
+      "baseline_semantic_oracle_required": true,
+      "baseline_hash_differences": [],
+      "state_json_original_length_equal": true,
+      "inventory_and_lengths_exact": true,
+      "physical_sha256": {
+        "state-seal.txt": "3cd524965cf7b8edfba856ab4df4b3061159eecf36220f2006a7182a47307c49",
+        "state-index.tsv": "77ef80732e6600a4c6f1155dfddd80996ef057ec579adbdc39a3d1c08c609838",
+        "state.json": "8a726560337c971bc0b7aa445a00ca6bd586c6d077907077e65f38de0d772333",
+        "state.bundle": "e5c142a1d7c2f318db1a9f3ee1f21977214bdb2767f8ef7274bf8cdb2d06ca5a"
+      }
+    }
+  ],
+  "measured_arm_state_json_bytes_exact": true,
+  "all_original_buffer_lengths_exact": true,
+  "initial_capture_semantic_baseline_required": false,
+  "explicit_repeat_and_closed_stamp_verified": true,
+  "baseline_review_sha256": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+  "baseline_index_sha256": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982",
+  "plan_sha256": "1c1512c80116979b4e336e2b708c01b63886d1b4c6579cac1a35fd5ceb51f0a5",
+  "native_binary_sha256": "5a8c9d3b58606022e21e2f0347360e4dd9cfdf6a869c8daac145e928fe4d4306",
+  "full_result_sha256": "943868c7766990db597e30ff73e79caf3ffa050433d8e41f9e3f98b3aa6899d5",
+  "rank_identities": [
+    [
+      3611855,
+      67376064
+    ],
+    [
+      3611863,
+      67376109
+    ]
+  ],
+  "owners": [
+    {
+      "status": "complete",
+      "safe_to_exit": true,
+      "in_flight": 0,
+      "live_bytes": 0,
+      "exit_code": 0
+    },
+    {
+      "status": "complete",
+      "safe_to_exit": true,
+      "in_flight": 0,
+      "live_bytes": 0,
+      "exit_code": 0
+    }
+  ],
+  "ownership": {
+    "retained_pids": [],
+    "stop_requested": false,
+    "returncodes": [
+      0,
+      0
+    ],
+    "signals_sent": 0,
+    "diagnostic_errors": []
+  },
+  "actual_device_bytes": [
+    30947490698,
+    29824495508
+  ],
+  "physical_drain": true,
+  "kernel_fault_baseline_unchanged": true,
+  "artifact_count": 163,
+  "indexed_bytes": 718483227,
+  "index_sha256": "fada76de5c960fb7ee4a72774d8f13505b708def4aaa3e7dd773ebf7838113cc",
+  "limitations": [
+    "Initial and warmup capture hashes are informational versus baseline; sealed bytes, full inventory and original buffer lengths remain verified.",
+    "One fixed prompt00 target-only attribution diagnostic, with excluded disjoint warmup; exact prior-baseline state/tokens. Event totals cover only eight early generated positions94..101 and routed labels. No prefill, whole-decode extrapolation, copy-completeness, speed or general-quality claim.",
+    "Closure uses retained successful DUMP/RESET/FINISH and owner/drain evidence; a seal alone is insufficient.",
+    "No model weights read or GPU/service operations by reviewer; physical host findings use retained monitor evidence."
+  ],
+  "auditor_sha256": "b366dcad5cf4e83e74c047b197bbda2142c0447a99725f7f8626378d9c466d84",
+  "parent_auditor_sha256": "43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab",
+  "derivative_source_sha256": "a0d6818704f617ed89d8d4f69bca6e573c321bfa5512893687829ee1ef3b4ef9",
+  "elapsed_seconds": 1.313523101969622
+}

@@ -1,13 +1,13 @@
 # Current Workspace State
 
-**October 24, 04:37 EDT — four-card host: narrow expert format trace active.**
-The existing diagnostic samples eight early generated-token steps of originalprompt00,
-with exact full-state checks and unchanged model arithmetic. It will separate expert
-costs by actual tensor format. Unit:`gsq-current-attribution-a`; vision remains
-protected. Nine closed evidence groups have been archived and verified, USB5.56GB;
-remaining archival waits for this owner pair to drain. No kernel candidate adopted.
-[Trace scope](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/README.md).
-
+**October 24, 04:40 EDT — four-card host: exact trace selects packed expert decoding.**
+Independent audit verifies original tokens/full state and all6,912 sampled events.
+IQ3_XXS gate/up is the largest combined format cost in the eight sampled generated
+steps. Prepare one exact packed-block decoding change, preserving original sums,
+all ten gathered expert inputs and routes. No weight expansion or quality change.
+Both owners exited/drained; vision unchanged. Remaining18 closed evidence archive
+groups run outside GPU work; source preparation continues without compilation.
+[Measured trace and scope](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/RESULT.md).
 
 **October 24, 04:34 EDT — four-card host: current profile passes, expert work is next.**
 Independent audit confirms exact baseline tokens/full state, unchanged class counts,
