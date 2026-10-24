@@ -46,7 +46,7 @@ def load(path, name):
     return m
 
 
-ADAPTER_FILE = os.environ.get('SC117_ADAPTER', 'adapter2.py')
+ADAPTER_FILE = os.environ.get('SC117_ADAPTER', 'adapter3.py')
 A = load(P / ADAPTER_FILE, 'sc117_lan_adapter')
 SP = load(LANE / 'service-speed/a-reset-stream/stream_parser.py', 'sc117_stream_parser')
 B0_LAUNCH_B = LANE / 'recurrent-f32/operating/launch-b/evidence/device-b/review.json'

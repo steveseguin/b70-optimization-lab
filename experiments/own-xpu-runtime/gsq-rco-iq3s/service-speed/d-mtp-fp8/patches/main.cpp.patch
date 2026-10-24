@@ -1,0 +1,31 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -147,6 +147,8 @@
+   bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false,dense_packed_block=false;
+   // Evidence/notification only. Defaults preserve the executed engine behavior.
+   bool reset_dump=true,finish_dump=true,token_stream=false;
++  // Draft-only weight format; target arithmetic is untouched. Default keeps the executed INT8 requantization.
++  bool draft_experts_fp8=false;
+   RetainSteps retain_steps;
+   int cancel_launch=-1;
+   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
+@@ -187,6 +189,10 @@
+     else if (k == "--reset-dump" || k == "--finish-dump") {
+       auto v=value();require(v=="all"||v=="none","dump mode must be all or none");
+       (k=="--reset-dump"?a.reset_dump:a.finish_dump)=v=="all";
++    }
++    else if (k == "--draft-experts") {
++      auto v=value();require(v=="int8"||v=="fp8","draft experts must be int8 or fp8");
++      a.draft_experts_fp8=v=="fp8";
+     }
+     else if (k == "--token-stream") {
+       auto v=value();require(v=="none"||v=="jsonl","token stream must be none or jsonl");
+@@ -1756,7 +1762,7 @@
+     weights[c].clear();
+   }
+ };
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp"
+ static void write_plan(const fs::path &path, const flash::Plan &p,
+                        const Weights &w, int cards, const Options& a) {
+   p49d::Selection selected;

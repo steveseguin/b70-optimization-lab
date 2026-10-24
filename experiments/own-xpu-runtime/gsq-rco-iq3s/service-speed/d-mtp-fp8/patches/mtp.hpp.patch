@@ -1,0 +1,74 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+@@ -1,11 +1,11 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/external/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/kernel_guard.hpp"
+ #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/mtp.hpp"
+ #pragma once
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/mtp_kernels.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p59_draft.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p59_hc.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/mtp_kernels.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p59_draft.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p59_hc.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p56_prefix.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p83_head.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p83_head.hpp"
+ #include <cfenv>
+ #include <poll.h>
+ // Included after Engine. All mutable allocations below are private to the draft.
+@@ -37,6 +37,15 @@
+   for(unsigned k=0;k<16;++k){int code=int(std::nearbyint(values[k]/s));code=std::clamp(code,-127,127);out[size_t(r)*rb+g*16+k]=uint8_t(int8_t(code));}
+  }return out;
+ }
++inline std::vector<uint8_t> fp8_pack(const std::vector<uint8_t>& w,const std::vector<uint8_t>& sc,unsigned rows,unsigned cols){
++ // Row = cols E4M3 codes, then cols/128 F32 scales (exact widening of the checkpoint BF16 block scale).
++ require(w.size()==size_t(rows)*cols&&rows%128==0&&cols%128==0&&sc.size()==size_t(rows/128)*(cols/128)*2,"draft FP8/scales shape");
++ size_t rb=cols+cols/128*4;std::vector<uint8_t> out(size_t(rows)*rb);
++ for(unsigned r=0;r<rows;++r){std::memcpy(out.data()+size_t(r)*rb,w.data()+size_t(r)*cols,cols);
++  for(unsigned k=0;k<cols;++k)require((w[size_t(r)*cols+k]&127)!=127,"nonfinite official draft FP8");
++  for(unsigned b=0;b<cols/128;++b){size_t si=((r/128)*(cols/128)+b)*2;uint16_t bits=uint16_t(sc[si])|(uint16_t(sc[si+1])<<8);uint32_t f=uint32_t(bits)<<16;float scale=iq3::bits_float(f);require(std::isfinite(scale)&&scale>=0,"draft FP8 scale");std::memcpy(out.data()+size_t(r)*rb+cols+b*4,&f,4);}
++ }return out;
++}
+ inline std::string official(const std::string& n){
+  if(n.starts_with("mtp."))return n;
+  for(auto [from,to]:std::vector<std::pair<std::string,std::string>>{{"blk.0.hc_attn_","mtp.layers.0.attn_hyper_connection."},{"blk.0.hc_ffn_","mtp.layers.0.mlp_hyper_connection."},{"output_hc_","mtp.hyper_connection_mixer."}})if(n.starts_with(from)){
+@@ -44,7 +53,7 @@
+  static const std::map<std::string,std::string> names{{"attn_q.weight","self_attn.q_proj.weight"},{"attn_k.weight","self_attn.k_proj.weight"},{"attn_v.weight","self_attn.v_proj.weight"},{"attn_output.weight","self_attn.o_proj.weight"},{"attn_q_norm.weight","self_attn.q_norm.weight"},{"attn_k_norm.weight","self_attn.k_norm.weight"},{"indexer.q_norm.weight","self_attn.indexer.q_layernorm.weight"},{"indexer.k_norm.weight","self_attn.indexer.k_layernorm.weight"},{"indexer.q_proj.weight","self_attn.indexer.index_qk_proj.weight"},{"indexer.k_proj.weight","self_attn.indexer.index_qk_proj.weight"},{"ffn_gate_inp.weight","mlp.gate.weight"},{"ffn_gate_inp_shexp.weight","mlp.shared_expert_gate.weight"},{"ffn_gate_shexp.weight","mlp.shared_expert.gate_proj.weight"},{"ffn_up_shexp.weight","mlp.shared_expert.up_proj.weight"},{"ffn_down_shexp.weight","mlp.shared_expert.down_proj.weight"}};
+  return "mtp.layers.0."+names.at(n.substr(6));
+ }
+-struct Weight {Allocation id{};iq3::Type type=iq3::Type::BF16;unsigned rows{},cols{},experts=1;bool int8=false;};
++struct Weight {Allocation id{};iq3::Type type=iq3::Type::BF16;unsigned rows{},cols{},experts=1;bool int8=false,fp8=false;};
+ struct ProviderError:std::runtime_error{using std::runtime_error::runtime_error;};
+ class DraftRuntime {
+  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
+@@ -97,9 +106,9 @@
+  Allocation id(const std::string& name)const{return buffers.at(name).id;}
+  void add(const std::string& n,size_t elements,Scalar type=Scalar::bf16){buffers[n]={alloc(n,elements*flash::scalar_bytes(type),(ends(n,".keys")||ends(n,".values")||ends(n,".raw")||ends(n,".pooled"))?Category::kv:Category::scratch),elements,type};}
+  std::vector<uint8_t> synthetic(const std::string& n,unsigned rows,unsigned cols,bool gain){std::vector<uint8_t> raw(size_t(rows)*cols*(gain?4:2));for(size_t i=0;i<size_t(rows)*cols;++i){float f=flash::mock::weight("draft:"+n,int(i/cols),int(i%cols));if(gain)f+=1;if(gain)std::memcpy(raw.data()+i*4,&f,4);else {auto b=iq3::bf16_bits(f);std::memcpy(raw.data()+i*2,&b,2);}}return raw;}
+- void load(const std::string& name,unsigned rows,unsigned cols,bool gain=false,bool routed=false){if(weights.count(name))return;Weight w;w.rows=rows;w.cols=cols;w.experts=routed?p.g.experts:1;w.int8=routed&&!e.a.mini;w.type=gain?iq3::Type::F32:iq3::Type::BF16;
+-  size_t rb=w.int8?cols+cols/16*4:cols*(gain?4:2);w.id=alloc("weight:"+name,size_t(w.experts)*rows*rb,Category::weights);mutable_ids.erase(w.id);
+-  if(routed){for(unsigned expert=0;expert<w.experts;++expert){std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name+std::to_string(expert),rows,cols,false);else {std::string kind=name.find("gate_")!=std::string::npos?"gate":name.find("up_")!=std::string::npos?"up":"down";std::string prefix="mtp.layers.0.mlp.experts."+std::to_string(expert)+"."+kind+"_proj";raw=requant(store->read(prefix+".weight"),store->read(prefix+".weight_scale_inv"),rows,cols);}e.upload(0,w.id,size_t(expert)*rows*rb,raw.data(),raw.size());}}
++ void load(const std::string& name,unsigned rows,unsigned cols,bool gain=false,bool routed=false){if(weights.count(name))return;Weight w;w.rows=rows;w.cols=cols;w.experts=routed?p.g.experts:1;w.fp8=routed&&!e.a.mini&&e.a.draft_experts_fp8;w.int8=routed&&!e.a.mini&&!w.fp8;w.type=gain?iq3::Type::F32:iq3::Type::BF16;
++  size_t rb=w.int8?cols+cols/16*4:w.fp8?cols+cols/128*4:cols*(gain?4:2);w.id=alloc("weight:"+name,size_t(w.experts)*rows*rb,Category::weights);mutable_ids.erase(w.id);
++  if(routed){for(unsigned expert=0;expert<w.experts;++expert){std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name+std::to_string(expert),rows,cols,false);else {std::string kind=name.find("gate_")!=std::string::npos?"gate":name.find("up_")!=std::string::npos?"up":"down";std::string prefix="mtp.layers.0.mlp.experts."+std::to_string(expert)+"."+kind+"_proj";raw=(w.fp8?fp8_pack:requant)(store->read(prefix+".weight"),store->read(prefix+".weight_scale_inv"),rows,cols);}e.upload(0,w.id,size_t(expert)*rows*rb,raw.data(),raw.size());}}
+   else {std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name,rows,cols,gain);else {auto full=store->read(official(name));if(name=="blk.0.indexer.q_proj.weight")raw={full.begin(),full.begin()+rows*cols*2};else if(name=="blk.0.indexer.k_proj.weight")raw={full.end()-rows*cols*2,full.end()};else raw=std::move(full);require(raw.size()==size_t(rows)*cols*2,"official draft dense shape "+name);if(gain){std::vector<uint8_t> converted(size_t(rows)*cols*4);for(size_t i=0;i<size_t(rows)*cols;++i){uint16_t b;std::memcpy(&b,raw.data()+i*2,2);float f=1.f+iq3::bits_float(uint32_t(b)<<16);std::memcpy(converted.data()+i*4,&f,4);}raw=std::move(converted);}}
+    e.upload(0,w.id,0,raw.data(),raw.size());}weights[name]=w;
+  }
+@@ -114,7 +123,7 @@
+    e.finish(0,(head_candidate.starts_with("p28.")&&!e.a.mini)?p28::submit(e.dev(0),{m},head_candidate,false,head_variant):integrated::dense(e.dev(0),m,head_variant),true);return;}
+   if(!changed(l)){matrix_production(l);return;}
+   if(l.label.ends_with(".gate")&&selected(p59c::consumers.at(l.label.substr(0,l.label.size()-4)+"mix"))){auto prefix=l.label.substr(0,l.label.size()-4);e.finish(0,p59::gate_mix(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),id(prefix+"norm"),id(prefix+"mix"),p.g.h,w.cols),true);return;}
+-  p59::Linear a;a.w=w.id;a.x=id(l.inputs[0]);a.y=id(l.outputs[0]);a.rows=l.shape[1];a.columns=l.shape[2];a.batch=l.shape[0];a.experts=w.experts;a.int8=w.int8;
++  p59::Linear a;a.w=w.id;a.x=id(l.inputs[0]);a.y=id(l.outputs[0]);a.rows=l.shape[1];a.columns=l.shape[2];a.batch=l.shape[0];a.experts=w.experts;a.int8=w.int8;require(!w.fp8,"p59 draft path has no FP8 expert kernel");
+   if(l.op=="routed_gemv"||l.op=="expert_gate_up"){a.routes=id(l.inputs[1]);a.status=id(l.outputs[1]);if(l.op=="expert_gate_up"){a.paired=true;a.peer=weights.at(l.weights[1]).id;a.py=id(l.outputs[2]);a.ps=id(l.outputs[3]);}}
+   if(l.label.ends_with(".low")&&selected(p59c::consumers.at(l.label.substr(0,l.label.size()-3)+"act"))){a.tail=p59::low;a.out=id(l.label.substr(0,l.label.size()-3)+"act");}
+   if(l.label=="blk.0.expsgate"&&selected("fuse_expert_activation")){a.tail=p59::product;a.out=id("blk.0.expsact");}
+@@ -136,7 +145,7 @@
+   }
+   // p30.small rows4 uses Q8_0 weights on the target. Draft BF16 keeps
+   // the equivalent four-subgroup rows4 schedule in mtp36::linear.
+-  Linear a;a.w=w.id;a.x=id(l.inputs[0]);a.y=id(l.outputs[0]);a.rows=l.shape[1];a.columns=l.shape[2];a.batch=l.shape[0];a.experts=w.experts;a.int8=w.int8;
++  Linear a;a.w=w.id;a.x=id(l.inputs[0]);a.y=id(l.outputs[0]);a.rows=l.shape[1];a.columns=l.shape[2];a.batch=l.shape[0];a.experts=w.experts;a.int8=w.int8;a.fp8=w.fp8;
+   if(l.op=="routed_gemv"||l.op=="expert_gate_up"){a.routes=id(l.inputs[1]);a.status=id(l.outputs[1]);if(l.op=="expert_gate_up"){a.paired=true;a.peer=weights.at(l.weights[1]).id;a.py=id(l.outputs[2]);a.ps=id(l.outputs[3]);}}
+   e.finish(0,mtp36::linear(e.dev(0),a),true);
+  }
