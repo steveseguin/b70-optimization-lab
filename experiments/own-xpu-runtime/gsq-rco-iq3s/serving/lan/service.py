@@ -22,7 +22,7 @@ ROOT_FLOOR = 27_000_000_000
 ROOT_START = ROOT_FLOOR + 256 * 1024**2
 ROOT_ONGOING = ROOT_FLOOR + 128 * 1024**2
 EXTERNAL_FLOOR = 2 * 1024**3
-DUMP_BYTES = 310_364_224 + 9_699_332          # one RESET target + draft dump
+DUMP_BYTES = 310_364_224 + 9_699_332          # one RESET target + draft dump (or one explicit DUMP)
 META_RESERVE = 64 * 1024**2
 MEM_START = 98_806_740_766                    # corrected-engine admission (recurrent-f32 plans)
 MEM_ONGOING = 8 * 1024**3
@@ -46,7 +46,11 @@ def load(path, name):
     return m
 
 
-A = load(P / 'adapter.py', 'sc117_lan_adapter')
+ADAPTER_FILE = os.environ.get('SC117_ADAPTER', 'adapter2.py')
+A = load(P / ADAPTER_FILE, 'sc117_lan_adapter')
+SP = load(LANE / 'service-speed/a-reset-stream/stream_parser.py', 'sc117_stream_parser')
+B0_LAUNCH_B = LANE / 'recurrent-f32/operating/launch-b/evidence/device-b/review.json'
+B0_LONGER_A = LANE / 'recurrent-f32/operating/longer-a/evidence/actual/external/prompt-00-none/request-result.json'
 OBS = load(LANE / 'operating/observe.py', 'sc117_lan_observe')
 CHAT = load(P / 'chat.py', 'sc117_lan_chat')
 
@@ -246,9 +250,16 @@ class Engine:
             return 'storage check failed: ' + repr(error)
         if root < ROOT_ONGOING:
             return f'root disk free {root} is below the protected floor {ROOT_ONGOING}'
-        if ext < EXTERNAL_FLOOR + DUMP_BYTES + META_RESERVE:
-            return f'evidence disk free {ext} is below floor + one RESET dump'
+        need = EXTERNAL_FLOOR + META_RESERVE + (0 if self.dump_free() else DUMP_BYTES)
+        if ext < need:
+            return f'evidence disk free {ext} is below {need}'
         return None
+
+    def dump_free(self):
+        return self.t is not None and '--reset-dump' in getattr(self.t, 'plan', {}).get('service_flags', [])
+
+    def streaming(self):
+        return self.t is not None and 'jsonl' in getattr(self.t, 'plan', {}).get('service_flags', [])
 
     def release(self, previous):
         """Service retention: delete the RESET dump(s) written into the previous request's directory."""
@@ -266,8 +277,42 @@ class Engine:
                 shutil.rmtree(path)
         return removed
 
-    def generate(self, prompt, max_new, label):
-        """Caller holds self.lock. Returns (tokens, result-summary)."""
+    @staticmethod
+    def pump(stream):
+        if stream['fd'] is None:
+            try:
+                stream['fd'] = os.open(stream['path'], os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+            except FileNotFoundError:
+                return
+        while True:
+            data = os.read(stream['fd'], 65536)
+            if not data:
+                return
+            for row in stream['parser'].feed(data):
+                if stream['cb'] is not None:
+                    try:
+                        stream['cb'](row['token_id'])
+                    except Exception:
+                        stream['cb'] = None  # a client problem never touches the engine
+
+    def dump_hashes(self):
+        """Explicit full target-state DUMP on both ranks; physical file hashes; dump removed after hashing."""
+        t, out = self.t, {}
+        for rank in (0, 1):
+            t.call(rank, A.BASE.DUMP, position=2147483647)
+            d = t.request_output / f'rank{rank}' / 'state-2147483647'
+            A.BUNDLE.read_state(d)  # independent seal/index/payload verification
+            out[f'rank{rank}'] = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(d.iterdir())}
+            shutil.rmtree(d)
+        return out
+
+    def generate(self, prompt, max_new, label, on_token=None, mode='mtp', force_reset=False):
+        """Caller holds self.lock. Returns (tokens, result-summary).
+
+        With the streaming build, rank0 appends each target-confirmed token to
+        confirmed-tokens.jsonl; we tail it from the transport's health callback
+        and the final list must equal native-result.json exactly.
+        """
         t = self.t
         self.monitor.check()
         t.check_alive()
@@ -275,7 +320,7 @@ class Engine:
         started = time.monotonic()
         reset_ms = released = 0
         stale = None
-        if self.count > 1:
+        if self.count > 1 or force_reset:
             dest = t.out / f'req-{self.count:06d}'
             r0 = time.monotonic()
             A.reset(t, dest)
@@ -284,13 +329,33 @@ class Engine:
         else:
             t.request_output = t.out
             self.previous = t.out
-        r = A.BASE.NativeController(t, A.BASE.Draft('mtp'), True, False).run(prompt, max_new, CHAT.EOS)
+        stream = None
+        if self.streaming():
+            stream = dict(path=t.request_output / 'rank0' / 'confirmed-tokens.jsonl', fd=None,
+                          parser=SP.ConfirmedTokens(t.seq[0] + 1, max_new, 248320), cb=on_token)
+            require(not stream['path'].exists(), 'stale token stream file')
+            original_check = t.check
+
+            def check():
+                original_check()
+                self.pump(stream)
+            t.check = check
+        try:
+            r = A.BASE.NativeController(t, A.BASE.Draft(mode), True, False).run(prompt, max_new, CHAT.EOS)
+        finally:
+            if stream is not None:
+                t.check = original_check
+        if stream is not None:
+            self.pump(stream)
+            streamed = stream['parser'].finish(r)  # exact equality to the native result, or StreamError
+            os.close(stream['fd'])
+            require(streamed == list(r['tokens']), 'stream/result mismatch')
         # Retention: the dump RESET just wrote is not needed; drop it before the next RESET.
         released = self.release(stale)
         tokens = list(r['tokens'])
         require(0 < len(tokens) <= max_new and all(0 <= x < 248320 for x in tokens), 'native output bounds')
         stats = r['stats']
-        summary = dict(request=self.count, label=label, prompt_tokens=len(prompt), output_tokens=len(tokens),
+        summary = dict(request=self.count, label=label, mode=mode, streamed=stream is not None, prompt_tokens=len(prompt), output_tokens=len(tokens),
                        mtp=dict(guesses=stats['guesses'], hits=stats['hits'], misses=stats['misses']),
                        prompt_wall_ms=r.get('prompt_wall_ms'), decode_wall_ms=r.get('decode_wall_ms'),
                        decode_tok_s=r.get('decode_tok_s'), reset_ms=reset_ms, released_dump_bytes=released,
@@ -310,6 +375,38 @@ class State:
         self.waiting = 0
         self.lock = threading.Lock()
         self.stop = threading.Event()
+
+
+def b0_gate(engine, selftest):
+    """One-time device gate for a new binary: tokens and full target state must equal engine 5926."""
+    review = json.loads(B0_LAUNCH_B.read_text())
+    want = {f'rank{r}': next(c['physical_sha256'] for c in review['captures'] if c['path'] == f'prompt-00-mtp/rank{r}/state-2147483647') for r in (0, 1)}
+    require(review['native_binary_sha256'] == '5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4', 'launch-b oracle identity')
+    longer = json.loads(B0_LONGER_A.read_text())
+    inc_prompt, inc_tokens = longer['prompt_tokens'], longer['result']['tokens']
+    require(len(inc_tokens) == 512 and longer['mode'] == 'none', 'longer-a oracle identity')
+    rows = []
+    def step(name, prompt, n, expected, mode='mtp', state=False, force_reset=False):
+        with engine.lock:
+            seen = []
+            tokens, summary = engine.generate(prompt, n, name, on_token=seen.append, mode=mode, force_reset=force_reset)
+            row = dict(name=name, mode=mode, tokens_equal=tokens == expected, stream_equal=seen == tokens if engine.streaming() else None,
+                       first_difference=next((i for i, (a, b) in enumerate(zip(tokens, expected)) if a != b), None), summary=summary)
+            if state:
+                got = engine.dump_hashes()
+                row.update(state_equal=got == want, state=got)
+            rows.append(row)
+        require(row['tokens_equal'], f'B0 gate {name}: tokens differ from engine 5926 at {row["first_difference"]}')
+        require(row['stream_equal'] in (True, None), f'B0 gate {name}: confirmed-token stream differs')
+        require(row.get('state_equal', True), f'B0 gate {name}: full target state differs from launch-b')
+    # launch-b lifecycle: RESET, request, DUMP
+    step('selftest-after-reset', selftest['prompt_tokens'], 32, selftest['expected_tokens'], state=True, force_reset=True)
+    step('incident512-target-only', inc_prompt, 512, inc_tokens, mode='none')
+    step('incident512-mtp', inc_prompt, 512, inc_tokens)
+    step('selftest-after-long', selftest['prompt_tokens'], 32, selftest['expected_tokens'], state=True)
+    return dict(passed=True, binary_sha256=engine.t.plan['binary_sha256'], service_flags=engine.t.plan['service_flags'],
+                oracle=dict(state='launch-b prompt-00-mtp physical state hashes (engine 5926)', tokens='launch-b selftest 32 + longer-a incident 512 target-only (engine 5926)'),
+                rows=rows, utc=utc())
 
 
 def make_handler(state, engine, chat, key):
@@ -424,15 +521,26 @@ def make_handler(state, engine, chat, key):
             if not streaming:
                 return self.reply(200, full)
             try:
-                for chunk in CHAT.chunks(full):
-                    self.send_bytes(b'data: ' + json.dumps(chunk).encode() + b'\n\n')
+                tail, finish = self.streamer.finish(tokens)
+                for field, text in tail:
+                    self.send_delta({field: text})
+                summary['stream_text_mismatch'] = self.streamer.mismatch
+                self.send_chunk({}, finish)
                 if req['include_usage']:
-                    usage = {k: full[k] for k in ('id', 'created', 'model')}
-                    usage.update(object='chat.completion.chunk', choices=[], usage=full['usage'])
-                    self.send_bytes(b'data: ' + json.dumps(usage).encode() + b'\n\n')
+                    self.send_bytes(b'data: ' + json.dumps(dict(self.chunk_base, choices=[], usage=full['usage'])).encode() + b'\n\n')
                 self.send_bytes(b'data: [DONE]\n\n')
             except OSError:
                 pass
+
+        def send_chunk(self, delta, finish=None):
+            if not self.role_sent:
+                delta = dict(role='assistant', **delta)
+                self.role_sent = True
+            chunk = dict(self.chunk_base, choices=[{'index': 0, 'delta': delta, 'finish_reason': finish}])
+            self.send_bytes(b'data: ' + json.dumps(chunk).encode() + b'\n\n')
+
+        def send_delta(self, delta):
+            self.send_chunk(delta)
 
         def send_bytes(self, raw):
             with self.wlock:
@@ -440,22 +548,47 @@ def make_handler(state, engine, chat, key):
                 self.wfile.flush()
 
         def run_engine(self, req, streaming):
-            done = threading.Event()
+            on_token = writer = None
             if streaming:
-                def keepalive():
-                    while not done.wait(10):
+                import queue, uuid
+                self.chunk_base = {'id': 'chatcmpl-' + uuid.uuid4().hex, 'object': 'chat.completion.chunk',
+                                   'created': int(time.time()), 'model': CHAT.MODEL_ID}
+                self.role_sent = False
+                self.streamer = CHAT.Streamer(req, chat)
+                tokens_q = queue.Queue()
+                on_token = tokens_q.put
+
+                def write():
+                    # Decoding and socket writes happen here, never on the engine thread.
+                    alive = True
+                    while True:
                         try:
-                            self.send_bytes(b': generating\n\n')
-                        except OSError:
+                            item = tokens_q.get(timeout=10)
+                        except queue.Empty:
+                            item = False
+                        if item is None:
                             return
-                threading.Thread(target=keepalive, daemon=True).start()
+                        if not alive:
+                            continue
+                        try:
+                            if item is False:
+                                self.send_bytes(b': generating\n\n')
+                                continue
+                            for field, text in self.streamer.feed(item):
+                                self.send_delta({field: text})
+                        except OSError:
+                            alive = False
+                writer = threading.Thread(target=write, daemon=True)
+                writer.start()
             try:
-                return engine.generate(req['prompt_ids'], req['max_new'], 'client')
+                return engine.generate(req['prompt_ids'], req['max_new'], 'client', on_token=on_token)
             except BaseException as error:
                 state.fault(error)
                 raise _Halt(repr(error))
             finally:
-                done.set()
+                if writer is not None:
+                    tokens_q.put(None)
+                    writer.join()
 
         def stream_error(self, streaming, code, message):
             if not streaming:
@@ -563,6 +696,13 @@ def main():
         engine.start()
         st = json.loads((P / 'selftest.json').read_text())
         rows = []
+        marker = P / 'evidence' / f"b0-{engine.t.plan['binary_sha256'][:16]}.json"
+        if engine.t.plan['binary_sha256'] != '5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4' and not marker.exists():
+            state.detail = 'one-time B0 device gate for the new binary (tokens + full state vs engine 5926)'
+            gate = b0_gate(engine, st)
+            marker.parent.mkdir(exist_ok=True)
+            save(marker, gate)
+            save(control / 'b0-gate.json', gate)
         for i in range(2):  # fresh state, then after RESET + retention: both must equal launch-b
             require(not state.stop.is_set(), 'stopped during self-test')
             state.detail = f'startup self-test {i + 1}/2 (fixed 32-token MTP output)'

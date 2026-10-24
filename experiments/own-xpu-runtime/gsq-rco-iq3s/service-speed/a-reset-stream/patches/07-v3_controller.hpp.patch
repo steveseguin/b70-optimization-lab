@@ -1,0 +1,33 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_controller.hpp
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_controller.hpp
+@@ -7,7 +7,7 @@
+ // (host-only, measured 0.3 us/cycle) -> boundary (layers 24-25 + export, inside rank 1's draft
+ // window) -> wait draft -> speculative half. The accept never waits on GPU work and the boundary
+ // never waits on a capture: the speculative image is captured at the start of the NEXT half.
+-inline Result run_v3(Backend& b,const Config& c){
++inline Result run_v3(Backend& b,const Config& c,const EmitConfirmed& emit={}){
+  require(c.draft_rank==1,"V3 controller requires the rank-1 draft");
+  Result out;out.start=clock_now();std::vector<int> history;bool draft_pending=false;double issued_draft_at=0;uint32_t pending_draft_sequence=0;size_t script_index=0;int length=int(c.prompt.size());
+  auto fixture=[&](int p){return std::max(0,p-length+2);};
+@@ -34,15 +34,18 @@
+   Reply result=b.wait(1);double stamp=clock_now();b.call(1,accept);
+   if(c.mode==3&&!out.draft_rows.empty()){auto& dr=out.draft_rows.back();dr.actual=fixture(p)>0?result.token:c.prompt[p+1];dr.hit=guess>=0&&fixture(p)>0?int(guess==result.token):-1;dr.completed=stamp;if(out.draft_rows.size()>1&&!out.rows.empty()){auto& prev=out.draft_rows[out.draft_rows.size()-2];prev.cycle_ms=(stamp-prev.completed)*1000;}}
+   if(fixture(p)>0){out.tokens.push_back(result.token);out.rows.push_back({result.token,stamp});if(out.rows.size()==1)out.prompt_ms=(stamp-out.start)*1000;
+-   if(std::find(c.eos.begin(),c.eos.end(),result.token)!=c.eos.end()){if(pending){b.wait(0);b.call(0,rollback);}break;}
++   if(std::find(c.eos.begin(),c.eos.end(),result.token)!=c.eos.end()){if(pending){b.wait(0);b.call(0,rollback);}if(emit)emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);break;}
+   }
+-  if(!more)break;
++  if(!more){if(emit)emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);break;}
+   if(c.mode==3){int confirmed=known?c.prompt[p+1]:out.tokens.back();
+    b.start(c.draft_rank,draft,confirmed,p+1,int(p+2>=length),1);pending_draft_sequence=b.seq;issued_draft_at=b.sent[c.draft_rank];draft_pending=true;}
+   if(known){if(!pending)half_start(0,c.prompt[p+1],p+1);if(b.pending[0])b.wait(0);b.call(0,accept);boundary(c.prompt[p+1],p+1);}
+   else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;b.call(0,accept);}else{++out.misses;double redo=clock_now();if(b.correction_probe){if(b.pending[1])b.wait(1);b.start(1,14,actual,p+1,fixture(p+1));}b.call(0,rollback,actual,p+1,fixture(p+1),1);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);if(b.correction_probe)b.wait(1);out.redo_ms+=(clock_now()-redo)*1000;}boundary(actual,p+1);out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
+    else{half_start(0,actual,p+1);b.wait(0);b.call(0,accept);boundary(actual,p+1);}}
+-  if(c.dumps)b.call(0,dump,0,p+1);
++   // Both ranks have accepted, or the miss has rolled back and been corrected.
++   // Publish only the target output, never the next-token draft or speculative half.
++   if(fixture(p)>0&&emit)emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);
++   if(c.dumps)b.call(0,dump,0,p+1);
+  }
+  require(!draft_pending,"native unresolved draft");out.end=clock_now();b.call(1,0);return out;
+ }

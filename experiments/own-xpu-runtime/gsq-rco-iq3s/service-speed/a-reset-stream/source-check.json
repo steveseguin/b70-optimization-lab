@@ -1,0 +1,316 @@
+{
+  "passed": true,
+  "verification": "source/bytes only; no build or device execution",
+  "source_checks": [
+    {
+      "original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/entry.cpp",
+      "copy": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/entry.cpp",
+      "receipt_hash_matches": true,
+      "patch_applies_exactly_in_memory": true
+    },
+    {
+      "original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp",
+      "copy": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp",
+      "receipt_hash_matches": true,
+      "patch_applies_exactly_in_memory": true
+    },
+    {
+      "original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp",
+      "copy": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp",
+      "receipt_hash_matches": true,
+      "patch_applies_exactly_in_memory": true
+    },
+    {
+      "original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp",
+      "copy": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp",
+      "receipt_hash_matches": true,
+      "patch_applies_exactly_in_memory": true
+    },
+    {
+      "original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp",
+      "copy": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp",
+      "receipt_hash_matches": true,
+      "patch_applies_exactly_in_memory": true
+    },
+    {
+      "original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp",
+      "copy": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp",
+      "receipt_hash_matches": true,
+      "patch_applies_exactly_in_memory": true
+    },
+    {
+      "original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_controller.hpp",
+      "copy": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_controller.hpp",
+      "receipt_hash_matches": true,
+      "patch_applies_exactly_in_memory": true
+    }
+  ],
+  "object_dependencies": [
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/entry.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/entry.d",
+      "affected": [
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/entry.cpp",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_controller.hpp"
+      ]
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/11.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/11.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/13.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/13.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/15.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/15.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/16.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/16.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/20.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/20.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/22.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/22.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/23.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/23.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/24.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/24.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/25.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/25.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/26.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/26.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/28.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/28.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/29.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/29.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/30.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/30.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/31.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/31.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/32.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/32.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/33.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/33.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/34.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/34.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/35.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/35.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/36.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/36.d",
+      "affected": []
+    },
+    {
+      "object": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/38.o",
+      "exists": true,
+      "dependency_file": "/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/38.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/1.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/1.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/2.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/2.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/3.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/3.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/4.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/4.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/5.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/5.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/6.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/6.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/7.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/7.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/8.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/8.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/9.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/9.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/10.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/10.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/12.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/12.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/14.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/14.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/17.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/17.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/18.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/18.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/19.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/19.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/21.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/21.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/27.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/27.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/37.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/37.d",
+      "affected": []
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/39.o",
+      "exists": true,
+      "dependency_file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/39.d",
+      "affected": []
+    }
+  ],
+  "include_binding_passed": true,
+  "historical_file_assets": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/rope.bf16",
+      "exists": true,
+      "bytes": 4194304,
+      "sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/mtp-manifest.tsv",
+      "exists": true,
+      "bytes": 756336,
+      "sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9"
+    }
+  ],
+  "python_tests": 16,
+  "build_executed": false,
+  "device_executed": false
+}

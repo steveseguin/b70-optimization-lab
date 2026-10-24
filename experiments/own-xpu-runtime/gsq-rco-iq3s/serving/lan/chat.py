@@ -176,3 +176,90 @@ def chunks(full):
         delta['reasoning_content'] = msg['reasoning_content']
     yield dict(base, choices=[{'index': 0, 'delta': delta, 'finish_reason': None}])
     yield dict(base, choices=[{'index': 0, 'delta': {}, 'finish_reason': full['choices'][0]['finish_reason']}])
+
+
+class Streamer:
+    """Incremental text deltas from confirmed token IDs.
+
+    Emits only text that can no longer change: withholds a trailing incomplete
+    UTF-8 character and any tail that could begin a stop string. finish() sends
+    whatever completes the exact final text from shape(), so the concatenated
+    deltas always equal the non-streaming response.
+    """
+
+    def __init__(self, req, chat):
+        self.req, self.chat = req, chat
+        self.ids = []
+        self.sent = {'content': '', 'reasoning_content': ''}
+        self.stopped = False
+        self.mismatch = False
+
+    def _views(self):
+        out = [t for t in self.ids if t not in EOS]
+        if self.req['thinking']:
+            if THINK_END in out:
+                cut = out.index(THINK_END)
+                reasoning = self.chat.decode(out[:cut]).strip()
+                content = self.chat.decode(out[cut + 1:]).lstrip('\n')
+                return reasoning, content, True
+            return self.chat.decode(out).lstrip(), '', False
+        return '', self.chat.decode(out), True
+
+    @staticmethod
+    def _stable(text):
+        return text[:-1] if text.endswith('�') else text
+
+    def _safe_content(self, text):
+        text = self._stable(text)
+        for s in self.req['stop']:
+            at = text.find(s)
+            if at >= 0:
+                self.stopped = True
+                return text[:at]
+        safe = len(text)
+        for s in self.req['stop']:
+            for k in range(min(len(s) - 1, len(text)), 0, -1):
+                if text.endswith(s[:k]):
+                    safe = min(safe, len(text) - k)
+                    break
+        return text[:safe]
+
+    def _delta(self, field, text):
+        prev = self.sent[field]
+        if not text.startswith(prev):
+            self.mismatch = True
+            return None
+        if len(text) > len(prev):
+            self.sent[field] = text
+            return text[len(prev):]
+        return None
+
+    def feed(self, token):
+        if self.stopped:
+            return []
+        self.ids.append(token)
+        reasoning, content, answering = self._views()
+        out = []
+        if self.req['thinking']:
+            # reasoning is strip()ed at the end: withhold trailing whitespace until it is followed.
+            r = self._stable(reasoning) if not answering else reasoning
+            d = self._delta('reasoning_content', r.rstrip() if not answering else r)
+            if d:
+                out.append(('reasoning_content', d))
+        if answering:
+            d = self._delta('content', self._safe_content(content))
+            if d:
+                out.append(('content', d))
+        return out
+
+    def finish(self, tokens):
+        content, reasoning, finish = shape(self.req, tokens, self.chat)
+        out = []
+        for field, final in (('reasoning_content', reasoning or ''), ('content', content)):
+            prev = self.sent[field]
+            if final.startswith(prev):
+                if len(final) > len(prev):
+                    out.append((field, final[len(prev):]))
+            else:
+                self.mismatch = True
+        return out, finish

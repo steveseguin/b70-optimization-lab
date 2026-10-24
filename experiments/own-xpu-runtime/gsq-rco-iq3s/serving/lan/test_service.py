@@ -67,6 +67,34 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(req['ignored_sampling'], ['temperature'])
 
 
+class StreamerTests(unittest.TestCase):
+    def run_stream(self, req, ids):
+        st = C.Streamer(req, CHAT)
+        sent = {'content': '', 'reasoning_content': ''}
+        for t in ids:
+            for f, d in st.feed(t):
+                sent[f] += d
+        tail, finish = st.finish(ids)
+        for f, d in tail:
+            sent[f] += d
+        content, reasoning, fin = C.shape(req, ids, CHAT)
+        self.assertFalse(st.mismatch)
+        self.assertEqual(sent['content'], content)
+        self.assertEqual(sent['reasoning_content'], reasoning or '')
+        self.assertEqual(finish, fin)
+
+    def test_plain_unicode_and_stop(self):
+        ids = CHAT.encode('Héllo wörld — 你好世界 🙂 done. END tail') + [248046]
+        self.run_stream(dict(thinking=False, stop=[], prompt_ids=[1]), ids)
+        self.run_stream(dict(thinking=False, stop=['END', 'xyz'], prompt_ids=[1]), ids)
+        self.run_stream(dict(thinking=False, stop=['🙂'], prompt_ids=[1]), ids[:-1])
+
+    def test_thinking(self):
+        ids = CHAT.encode('  plan it carefully  ') + [248069] + CHAT.encode('\n\nAnswer: 391') + [248046]
+        self.run_stream(dict(thinking=True, stop=[], prompt_ids=[1]), ids)
+        self.run_stream(dict(thinking=True, stop=[], prompt_ids=[1]), CHAT.encode('still thinking'))
+
+
 class FakeEngine:
     def __init__(self, fail=False, delay=0.0):
         self.lock = threading.Lock()
@@ -78,13 +106,17 @@ class FakeEngine:
     def storage_ok(self):
         return None
 
-    def generate(self, prompt, max_new, label):
+    def generate(self, prompt, max_new, label, on_token=None):
         time.sleep(self.delay)
         if self.fail:
             raise RuntimeError('rank failed')
         self.count += 1
         self.calls.append((prompt, max_new))
-        return CHAT.encode('Blue light scatters more.') + [248046], dict(request=self.count)
+        out = CHAT.encode('Blue light scatters more.') + [248046]
+        for t in out:
+            if on_token:
+                on_token(t)
+        return out, dict(request=self.count)
 
 
 class HttpTests(unittest.TestCase):
@@ -118,9 +150,12 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(code, 200)
         events = [json.loads(line[6:]) for line in raw.splitlines() if line.startswith('data: {')]
         self.assertTrue(raw.rstrip().endswith('data: [DONE]'))
-        self.assertEqual(events[0]['choices'][0]['delta']['content'], 'Blue light scatters more.')
-        self.assertEqual(events[1]['choices'][0]['finish_reason'], 'stop')
-        self.assertIn('usage', events[2])
+        deltas = [e['choices'][0]['delta'].get('content', '') for e in events if e['choices']]
+        self.assertGreater(len([d for d in deltas if d]), 2)  # really incremental
+        self.assertEqual(''.join(deltas), 'Blue light scatters more.')
+        self.assertEqual(events[0]['choices'][0]['delta']['role'], 'assistant')
+        self.assertEqual(events[-2]['choices'][0]['finish_reason'], 'stop')
+        self.assertIn('usage', events[-1])
 
     def test_not_ready_and_bad_requests_do_not_touch_engine(self):
         engine = FakeEngine()
@@ -257,6 +292,97 @@ class GenerateOrderTests(unittest.TestCase):
             finally:
                 S.A.reset, S.A.BASE.NativeController = old
         self.assertEqual(events, [('run', 2), ('reset', 'req-000002'), ('run', 3), ('reset', 'req-000003'), ('run', 1)])
+
+
+class StreamTailTests(unittest.TestCase):
+    def test_tail_confirmed_tokens_through_check(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            (out / 'rank0').mkdir()
+
+            class T:
+                pass
+            t = T()
+            t.out = out
+            t.seq = [4, 4]
+            t.plan = {'service_flags': ['--reset-dump', 'none', '--finish-dump', 'none', '--token-stream', 'jsonl']}
+            t.check_alive = lambda: None
+            t.check = lambda: None
+            ids = [11, 22, 248046]
+
+            class NC:
+                def __init__(self, tr, *a):
+                    self.t = tr
+
+                def run(self, prompt, count, eos):
+                    f = open(out / 'rank0/confirmed-tokens.jsonl', 'w')
+                    f.write(json.dumps(dict(type='begin', schema='sc117.confirmed-tokens.v1', request_sequence=5, limit=count, vocab=248320)) + '\n')
+                    f.flush()
+                    rows = []
+                    for i, tok in enumerate(ids, 1):
+                        f.write(json.dumps(dict(type='token', index=i, token_id=tok, target_completed_monotonic=float(i))) + '\n')
+                        f.write('{"type":"tok') if i == 1 else None  # torn line must be held back
+                        f.flush()
+                        self.t.check()
+                        if i == 1:
+                            f.write('en_partial_ignored"}') if False else None
+                        rows.append(dict(generated_index=i, token_id=tok, completed_monotonic=float(i)))
+                    return dict(tokens=ids, timing_rows=rows, stats=dict(guesses=0, hits=0, misses=0))
+            old = S.A.BASE.NativeController
+            S.A.BASE.NativeController = NC
+            got = []
+            try:
+                e = S.Engine(out, out, type('M', (), {'check': lambda self: None})())
+                e.t = t
+                with self.assertRaises(S.SP.StreamError):  # the torn line is malformed once completed
+                    e.generate([1], 8, 'x', on_token=got.append)
+            finally:
+                S.A.BASE.NativeController = old
+            self.assertEqual(got[:1], [11])
+
+    def test_tail_clean(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            (out / 'rank0').mkdir()
+
+            class T:
+                pass
+            t = T()
+            t.out = out
+            t.seq = [0, 0]
+            t.plan = {'service_flags': ['--token-stream', 'jsonl']}
+            t.check_alive = lambda: None
+            t.check = lambda: None
+            ids = [11, 22, 248046]
+
+            class NC:
+                def __init__(self, tr, *a):
+                    self.t = tr
+
+                def run(self, prompt, count, eos):
+                    f = open(out / 'rank0/confirmed-tokens.jsonl', 'w')
+                    f.write(json.dumps(dict(type='begin', schema='sc117.confirmed-tokens.v1', request_sequence=1, limit=count, vocab=248320)) + '\n')
+                    rows = []
+                    for i, tok in enumerate(ids, 1):
+                        line = json.dumps(dict(type='token', index=i, token_id=tok, target_completed_monotonic=float(i))) + '\n'
+                        f.write(line[:10]); f.flush(); self.t.check()  # partial line held back
+                        f.write(line[10:]); f.flush(); self.t.check()
+                        seen_now.append(len(got))
+                        rows.append(dict(generated_index=i, token_id=tok, completed_monotonic=float(i)))
+                    f.write(json.dumps(dict(type='end', count=3)) + '\n'); f.close()
+                    return dict(tokens=ids, timing_rows=rows, stats=dict(guesses=2, hits=2, misses=0))
+            old = S.A.BASE.NativeController
+            S.A.BASE.NativeController = NC
+            got, seen_now = [], []
+            try:
+                e = S.Engine(out, out, type('M', (), {'check': lambda self: None})())
+                e.t = t
+                tokens, summary = e.generate([1], 8, 'x', on_token=got.append)
+            finally:
+                S.A.BASE.NativeController = old
+            self.assertEqual(got, ids)
+            self.assertEqual(seen_now, [1, 2, 3])  # delivered during generation, token by token
+            self.assertTrue(summary['streamed'])
 
 
 if __name__ == '__main__':

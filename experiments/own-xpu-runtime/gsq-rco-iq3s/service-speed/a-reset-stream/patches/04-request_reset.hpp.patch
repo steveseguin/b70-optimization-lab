@@ -1,0 +1,13 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp
+@@ -11,8 +11,8 @@
+  std::ifstream input(metadata);std::string output,oracle;
+  require(bool(std::getline(input,output))&&bool(std::getline(input,oracle)),"reset metadata");
+  fs::path destination(output);require(destination.is_absolute()&&!output.empty(),"reset output absolute");
+- // Retain the complete completed state before resetting, including warm-up.
+- state_dump(e,2147483647);request_state_inventory(e);if(provider)provider->dump_all_state(e.a.output/"draft-final-state");
++ // Keep all boundary/drain/reset actions; only optional evidence readbacks disappear.
++ if(e.a.reset_dump){state_dump(e,2147483647);request_state_inventory(e);if(provider)provider->dump_all_state(e.a.output/"draft-final-state");}
+  e.dump_classes(e.a.output/"class-times.json",accepted);
+  if(e.bank_parity)e.swap_state_banks();
+  // Covers plan allocations, both recurrent banks, QSA unused tails, snapshots,

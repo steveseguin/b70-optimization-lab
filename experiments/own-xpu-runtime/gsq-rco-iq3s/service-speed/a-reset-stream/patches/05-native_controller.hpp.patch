@@ -1,0 +1,72 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp
+@@ -62,7 +62,44 @@
+ struct DraftRow {int position,sequence,guess,error,actual=-1,hit=-1;double wall_ms,gpu_ms,wait_ms,started,half_started=0,completed=0,cycle_ms=-1;};
+ struct Result {std::vector<DraftRow> draft_rows;std::vector<int> guess_sequence;std::vector<int> tokens;std::vector<Row> rows;std::vector<Guess> guesses;int guesses_count=0,hits=0,misses=0,no_guess=0;double redo_ms=0,prompt_ms=0,start=0,end=0;};
+ inline int ngram(const std::vector<int>& h){for(int n:{2,1}){if(int(h.size())<n)continue;for(int s=int(h.size())-n-1;s>=0;--s)if(std::equal(h.begin()+s,h.begin()+s+n,h.end()-n))return h[s+n];}return -1;}
+-inline Result run(Backend& b,const Config& c){
++// Rank-0-only append stream. No shared-map ABI change, device copy or fsync.
++// One fresh file per native request. A stale path is an error, never truncated.
++class ConfirmedStream {
++  int fd_=-1;
++  void line(const std::string& text) {
++    size_t done=0;
++    while(done<text.size()) {
++      auto n=::write(fd_,text.data()+done,text.size()-done);
++      if(n<0&&errno==EINTR)continue;
++      require(n>0,"confirmed token stream write");done+=size_t(n);
++    }
++  }
++public:
++  ConfirmedStream()=default;
++  ConfirmedStream(const ConfirmedStream&)=delete;
++  ConfirmedStream& operator=(const ConfirmedStream&)=delete;
++  ~ConfirmedStream(){if(fd_>=0)::close(fd_);}
++  void begin(const fs::path& path,int request_sequence,int count,int vocab) {
++    require(fd_<0,"confirmed token stream already open");
++    fd_=::open(path.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC|O_NOFOLLOW,0600);
++    require(fd_>=0,"confirmed token stream create");
++    line("{\"type\":\"begin\",\"schema\":\"sc117.confirmed-tokens.v1\",\"request_sequence\":"+
++         std::to_string(request_sequence)+",\"limit\":"+std::to_string(count)+
++         ",\"vocab\":"+std::to_string(vocab)+"}\n");
++  }
++  void token(size_t index,int token,double target_completed) {
++    std::ostringstream out;out.precision(17);
++    out<<"{\"type\":\"token\",\"index\":"<<index<<",\"token_id\":"<<token
++       <<",\"target_completed_monotonic\":"<<target_completed<<"}\n";
++    line(out.str()); // write(2) makes a full line visible; no userspace buffering.
++  }
++  void end(size_t count) {
++    line("{\"type\":\"end\",\"count\":"+std::to_string(count)+"}\n");
++    int fd=fd_;fd_=-1;require(::close(fd)==0,"confirmed token stream close");
++  }
++};
++using EmitConfirmed=std::function<void(size_t,int,double)>;
++inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
+  Result out;out.start=clock_now();std::vector<int> history;bool draft_pending=false;double issued_draft_at=0;uint32_t pending_draft_sequence=0;size_t script_index=0;int length=int(c.prompt.size());
+  auto fixture=[&](int p){return std::max(0,p-length+2);};
+  auto half_start=[&](int rank,int token,int p,bool spec=false){b.start(rank,half,token,p,fixture(p),spec);};
+@@ -87,9 +124,9 @@
+   Reply result=b.wait(1);double stamp=clock_now();b.call(1,accept);
+   if(c.mode==3&&!out.draft_rows.empty()){auto& dr=out.draft_rows.back();dr.actual=fixture(p)>0?result.token:c.prompt[p+1];dr.hit=guess>=0&&fixture(p)>0?int(guess==result.token):-1;dr.completed=stamp;if(out.draft_rows.size()>1&&!out.rows.empty()){auto& prev=out.draft_rows[out.draft_rows.size()-2];prev.cycle_ms=(stamp-prev.completed)*1000;}}
+   if(fixture(p)>0){out.tokens.push_back(result.token);out.rows.push_back({result.token,stamp});if(out.rows.size()==1)out.prompt_ms=(stamp-out.start)*1000;
+-   if(std::find(c.eos.begin(),c.eos.end(),result.token)!=c.eos.end()){if(pending){b.wait(0);b.call(0,rollback);}break;}
++   if(std::find(c.eos.begin(),c.eos.end(),result.token)!=c.eos.end()){if(pending){b.wait(0);b.call(0,rollback);}if(emit)emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);break;}
+   }
+-  if(!more)break;
++  if(!more){if(emit)emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);break;}
+   bool early_accept=false;
+   if(c.mode==3){int confirmed=known?c.prompt[p+1]:out.tokens.back();
+    if(c.draft_rank==0&&pending){b.wait(0);if(known||guess==confirmed){b.call(0,accept);early_accept=true;}}
+@@ -97,7 +134,10 @@
+   if(known){if(!pending)half_start(0,c.prompt[p+1],p+1);if(b.pending[0])b.wait(0);if(!early_accept)b.call(0,accept);}
+   else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;if(!early_accept)b.call(0,accept);}else{++out.misses;double redo=clock_now();if(b.correction_probe){if(b.pending[1])b.wait(1);b.start(1,14,actual,p+1,fixture(p+1));}b.call(0,rollback,actual,p+1,fixture(p+1),1);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);if(b.correction_probe)b.wait(1);out.redo_ms+=(clock_now()-redo)*1000;}out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
+    else{half_start(0,actual,p+1);b.wait(0);b.call(0,accept);}}
+-  if(c.dumps)b.call(0,dump,0,p+1);
++   // Both ranks have accepted, or the miss has rolled back and been corrected.
++   // Publish only the target output, never the next-token draft or speculative half.
++   if(fixture(p)>0&&emit)emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);
++   if(c.dumps)b.call(0,dump,0,p+1);
+  }
+  require(!draft_pending,"native unresolved draft");out.end=clock_now();b.call(1,0);return out;
+ }

@@ -1,0 +1,11 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp
+@@ -27,7 +27,7 @@
+ // 20,480-byte layer-end stream: copy = the copy-engine readback V3 (packet186/187) used, kernel = packet188's
+ // folded KioCopy readback. Only the transfer path differs; the exported bytes are identical (v3_state.cpp proof).
+ #pragma once
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_controller.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_controller.hpp"
+ namespace pipeline {
+ namespace v3 {
+ // Extra layers rank 0 stores beyond 0-23: 0 (production), 2 (V3: 24-25), 3 (packet188 k3 storage: 24-26).

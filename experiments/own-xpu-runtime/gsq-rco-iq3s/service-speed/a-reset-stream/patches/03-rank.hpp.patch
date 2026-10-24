@@ -1,0 +1,41 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -264,9 +264,9 @@
+  require(!stopped && !(fd.revents&(POLLIN|POLLHUP|POLLERR|POLLNVAL)),"cooperative rank stop");
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/rank_canary.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/a-reset-stream/source/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/bracket_boundary.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native/probe_exchange.hpp"
+ static int run_rank(const Options& a) {
+@@ -378,7 +378,7 @@
+    return response;
+   };
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+-   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
++   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
+    Reply response{};
+    if(r.op==10){
+     require(!c.pending,"native entry unresolved candidate");
+@@ -394,8 +394,15 @@
+       backend.split_replay=engine->sealed_selection.choices.at("probe")=="split";
+       backend.correction_probe=engine->sealed_selection.choices.at("probe")=="xchg";
+       if(head_runtime)backend.before_remote_wait=[&](const Request& req){if(req.op==half&&req.fixture>0)head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,[&]{cancel();require(!native38::load(mailbox.abort),"p105 native peer failed");});};
+-      auto result=engine->v3_active?native38::run_v3(backend,cfg):native38::run(backend,cfg); // packet186
++       native38::ConfirmedStream stream;native38::EmitConfirmed emit;
++       if(a.token_stream){
++        stream.begin(engine->a.output/"confirmed-tokens.jsonl",r.sequence,cfg.count,cfg.vocab);
++        emit=[&](size_t index,int token,double stamp){stream.token(index,token,stamp);};
++       }
++       auto result=engine->v3_active?native38::run_v3(backend,cfg,emit):native38::run(backend,cfg,emit); // packet186
+       save(a.shared.parent_path()/"native-result.json",native38::json(result,backend,cfg));
++       // End seals the list, not overall request success: normal rank replies remain required.
++       if(a.token_stream)stream.end(result.tokens.size());
+      }
+      p150::flush(engine->timings,a.rank);engine->timings.flush();native_active=false;
+     }catch(...){p105::publish(head_box.abort,1);native38::abort(mailbox);throw;}
