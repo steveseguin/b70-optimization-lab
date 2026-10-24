@@ -1,0 +1,80 @@
+{
+  "schema": "ownrt.gsq-rco.independent-formats-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/formats/formats.hpp": "6371561fcf4aa1589ce6f01b1b5e907b7b497897b50e125a34cea5e525108c27",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/formats/fixture.cpp": "2cc9caaf5d3cf44637ce0344d8b35ac228847b2bb3aa7c425651f383b17444b4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build_cpu.py": "5e072894ba12695df9fc2a5fdd293e1ad4c1c4da1abb04abffdee398a4b2f181",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/formats/source-pins.json": "1f4d16ec21cb9484bd07a4122138f0a6a3e5fd229430e571a73240aa80a07b20",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/formats/README.md": "4961352d6bfe6fe5fe0b980f326d1f9f50e6d65c3422d265d44ca19a48e82245",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/formats/evidence/cpu-proof.json": "a3cc4fa3515a6c0773fbff44a33843668ee067220174d7ed394be319297f540a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/census.py": "753abbe6ee01f1f3fd53576e858f05533997e2d2f97ddac2cdf443018e5b44ec",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/test_census.py": "786b491ca3522bcc1224a9daecb42b19366e315776f0ab0ea249f4ab0262d5f9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/test_retained.py": "fa37742c04505f4cb93d57c8af8d35580d88b82c6b8a4071e298505f311564a7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/receipt.json": "63f066de7523958ddfef25e6289655179bda0c8adebe7bc696ab590144384528",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/tests-receipt.json": "a8e44b15ea837d58267c472b62da2bf74d4fb0f5c1a720c6a8900363e26d2af6"
+  },
+  "metadata_tests": {
+    "chunk_id": "e34018",
+    "wall_time_seconds": 0.000031259,
+    "exit_code": 0,
+    "original_token_count": 399,
+    "output": "test_duplicate_names_metadata_and_wrong_alignment (test_census.Census.test_duplicate_names_metadata_and_wrong_alignment) ... ok\ntest_equal_array_hashes_do_not_depend_on_summary_prefix (test_census.Census.test_equal_array_hashes_do_not_depend_on_summary_prefix) ... ok\ntest_q2_bad_rows_extent_and_overlaps_refuse (test_census.Census.test_q2_bad_rows_extent_and_overlaps_refuse) ... ok\ntest_q2_layout_header_only_and_hash_accounting (test_census.Census.test_q2_layout_header_only_and_hash_accounting) ... ok\ntest_role_aggregation_preserves_unknown_bytes_scope (test_census.Census.test_role_aggregation_preserves_unknown_bytes_scope) ... ok\ntest_split_coverage_and_duplicate_cross_shards (test_census.Census.test_split_coverage_and_duplicate_cross_shards) ... ok\ntest_truncation_and_header_limit (test_census.Census.test_truncation_and_header_limit) ... ok\ntest_unknown_type_is_opaque_not_invented_payload (test_census.Census.test_unknown_type_is_opaque_not_invented_payload) ... ok\ntest_every_known_extent_and_projection_count (test_retained.Retained.test_every_known_extent_and_projection_count) ... ok\ntest_exact_source_and_closed_artifact_hashes (test_retained.Retained.test_exact_source_and_closed_artifact_hashes) ... ok\ntest_names_shapes_architecture_and_complete_tokenizer_hashes (test_retained.Retained.test_names_shapes_architecture_and_complete_tokenizer_hashes) ... ok\ntest_q2_and_embedding_head_exact_contract (test_retained.Retained.test_q2_and_embedding_head_exact_contract) ... ok\n\n----------------------------------------------------------------------\nRan 12 tests in 0.014s\n\nOK\n"
+  },
+  "format_fixture_replay": {
+    "passed": true,
+    "returncode": 0,
+    "stdout": "{\"passed\":true,\"schema\":\"ownrt.gsq.scalar-formats.v1\",\"device_executed\":false,\"model_executed\":false,\"native_executed\":false,\"cases\":6780,\"decoded_values\":2863488,\"ordered_gemv_rows\":6780,\"finite_half_values\":63488,\"refusals\":7,\"own_output_sha256\":\"3c4263023d181a8be0f0c23c04a74edb972a0c33e4845e4433e61c6046437be7\",\"reference_output_sha256\":\"3c4263023d181a8be0f0c23c04a74edb972a0c33e4845e4433e61c6046437be7\",\"real_slices\":[{\"type\":42,\"columns\":640,\"bytes\":180,\"sha256\":\"bc7651422a29fd87c2a744fc15422addafedae79d5d34605e0757ac395948654\"},{\"type\":42,\"columns\":640,\"bytes\":180,\"sha256\":\"5f837b7443150886e23def3ff044ad45b9f09f2955e9039120b96f7ab7b9a4d2\"},{\"type\":42,\"columns\":640,\"bytes\":180,\"sha256\":\"96fcd8f5175bfea98f2bb9054f02ad815d2b1fa49540a12e0bf754c2d95011d7\"},{\"type\":12,\"columns\":2560,\"bytes\":1440,\"sha256\":\"1fab7eaeb44fbaec9f6076b450c37bdfae86714fc17aea8b6a029eacccb56b17\"},{\"type\":12,\"columns\":2560,\"bytes\":1440,\"sha256\":\"1f180702734ee1aa01575fcea5eb61d2b3e8efe1ede81dca8db2190f1bb0bab7\"},{\"type\":12,\"columns\":2560,\"bytes\":1440,\"sha256\":\"a15a53a4e19a0b5b8665098e71ee9beab6f215c0c421d36e90a202830b138447\"},{\"type\":13,\"columns\":2560,\"bytes\":1760,\"sha256\":\"54c3df977cc919d62db3a0ed926a582a9324f9cdcc8dd94c38fdc6ad42a8f919\"},{\"type\":13,\"columns\":2560,\"bytes\":1760,\"sha256\":\"10261f28dd204e75f19483eb902ac8e730f5eba67cd57a25419e93e1d564e432\"},{\"type\":13,\"columns\":2560,\"bytes\":1760,\"sha256\":\"47a22191d7d60ea90fece4ac81a8c7ced48a593ddaf72fdc72aeab96e242bc20\"},{\"type\":23,\"columns\":2560,\"bytes\":1360,\"sha256\":\"a7a054a2d2730ff53555328eefee95c59d4b3aa98686b81ead8a8628523b66ec\"},{\"type\":23,\"columns\":2560,\"bytes\":1360,\"sha256\":\"f4d73e47863a992737ffef063ae405afb5cc74793af7e16dcbfd7c566a3e47f0\"},{\"type\":23,\"columns\":2560,\"bytes\":1360,\"sha256\":\"bbfba27b16bc52b325990236f9100843a1869aed5e94e8dcee131ebb5ceebb24\"}]}\n",
+    "stderr": "",
+    "source_pins": 15,
+    "dependencies": 6,
+    "model_bytes_read_this_review": 0,
+    "saved_slice_bytes": 14220,
+    "cpu_affinity": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "nice": 19,
+    "receipt_sha256": "a3cc4fa3515a6c0773fbff44a33843668ee067220174d7ed394be319297f540a",
+    "native_model_executed": false
+  },
+  "checks": [
+    "Independent pinned upstream function bodies and block structs in separate translation unit; custom code is not its own dequantization oracle.",
+    "Q2_0 2-bit codes, Q4_K scale/min/nibbles, Q5_K high bits, IQ4_XS signed scale/nonlinear codes reviewed against source.",
+    "Every non-outer-scale packed bit changes reference output relative to nonzero baseline; independent finite half converter exhaustively checked.",
+    "Both compile units use -fno-fast-math and -ffp-contract=off, separate .o/.d closure; compiler rehashed after execution.",
+    "All15 source pins,6 dependencies,reference,binary and12 saved slice hashes verified. Slice rows/offsets/types/columns independently checked against actual census.",
+    "Metadata malformed header, alignment, extent, duplicate, split and opaque-unknown handling checked;12 tests passed."
+  ],
+  "resolved_before_execution": [
+    "Nonvacuous packed-field bit coverage",
+    "Per-TU dependency files",
+    "Decimal27GB floor consistency",
+    "Compiler after-run identity"
+  ],
+  "scope": {
+    "new_model_executed": false,
+    "device_executed": false,
+    "reference_recompiled_by_reviewer": false,
+    "model_payload_read_by_reviewer": 0,
+    "saved_slice_bytes_read": 14220,
+    "independent_fixture_replay": true,
+    "engine_admission": false,
+    "finite_half_only": true,
+    "limits": "Four new scalar format decoders and ordered CPU row GEMV only; sampled12 rows represent one actual tensor role per format, not full model or every tensor. NaN payload/sign parity, native device arithmetic, fused target operators and GPU ownership remain unqualified."
+  }
+}

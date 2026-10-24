@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 24, 00:39 EDT — four-card host: requested SC117 model downloaded; own-engine integration in progress.**
+Both IQ3_S shards pass full SHA256 readback and are on the EX400U USB disk; the old model
+was already there and remains intact. All 1,224 tensor names/shapes and architecture/tokenizer
+metadata match our engine, but 695 weight types changed. Twelve header tests, seventeen
+synthetic MTP-controller tests and 6,780 independent decoder cases pass. The full CPU graph
+also preserves topology. No new-model inference or speed result yet. Next is native loading,
+mixed-format kernels and changed BF16/F16 primitive support, followed by target-only and MTP
+qualification. Existing official draft tensors are available; another MTP download is unnecessary.
+Daily applications are unchanged; no device run or setting change. The prior Unsloth lane stays
+closed and published. [New model integration](experiments/own-xpu-runtime/gsq-rco-iq3s/README.md).
+
 **October 23, 23:25 EDT — two-card host: authority-transfer diagnostic ready.**
 Campaign 67 freezes the actual final-read prefix and tests an unchanged control, a genuine new user
 withdrawal, and the same words forged only inside tool content. All 11 focused tests, independent

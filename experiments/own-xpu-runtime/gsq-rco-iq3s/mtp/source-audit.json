@@ -1,0 +1,35 @@
+{
+  "schema": "ownrt.gsq-rco.mtp-source-audit.v1",
+  "scope": "Read-only source and stat audit; no tensor payload hashing or model/device execution",
+  "draft_manifest": "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/mtp-manifest.tsv",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py": "4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/test_state_machine.py": "a92c0b8da6d974e3357f9211e513294eee15e0975e7ce48b40d331782c6b33d2",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/native_controller.hpp": "b4f054c4425e84dcb3561c4efcd5b92a2caa8fa3449b4548800ad997fff0f81c",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/mtp.hpp": "cf349f5dd87b088eaf46d2feb0183b727c2768c12545aa44f32eb6ee53259a49",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/mtp-manifest.tsv": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/strict_snapshot.hpp": "6acd4d3f12e1805f57d8a27eb51b1d485d2d0b8932e038d3e931a920fe200b44",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/rank.hpp": "ed1a58995fff84a9a1d26391a59432ee7cffc75248518499789fee9fbf5aa9db",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/bundle-selection.json": "2dcd4fff479dfd38a51f6ccb1ea97b65aa43f8ad582c6ff0da14063dd4a036de",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/main.cpp": "2fa03b839b6a24db082dcbe0cf4777489c095eb2bbed777aae4170da7d8b40f9",
+    "experiments/own-xpu-runtime/stage2/packet36-draft/README.md": "7513314d878fb3848c779cd4b505f97e45f691e4f6b83b5bbe7f3938c2f009b8",
+    "experiments/own-xpu-runtime/stage2/packet197-warm-request-front/prepare_overlay.py": "65ddb888600b0277c85b911b090cb5a5de1c3519afdfcf7bc39dc6af022762df"
+  },
+  "official_draft": {
+    "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "root": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "format": "3101 BF16/F8_E4M3 tensors; draft-only INT8 groups16 requantization at load",
+    "q8_gguf_required": false
+  },
+  "correction": "P195 two-card runtime supports target-verified one-token MTP; published one-card P196 is target-only, P198 request front refuses MTP",
+  "state_contract": {
+    "input": "H_(p-1) and confirmed x_p",
+    "draft_position": "p-1",
+    "output": "proposal for x_(p+1), never emitted directly",
+    "reject": "drain, restore speculative rank0 snapshot/banks/history/extents, redo confirmed target token",
+    "draft_rollback": "none: draft consumes confirmed inputs only",
+    "provider_failure": "cooperative provider errors disable proposal after drain; native failures must not be silently suppressed"
+  },
+  "native_new_model_qualified": false
+}

@@ -1,0 +1,423 @@
+{
+  "passed": true,
+  "attempt": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859",
+  "sources": {
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/ggml/include/ggml.h": "12ee71f99db7db9b353bc02b1fbb57c344ee17c01ac5fb7952b41a637a747ea9",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/ggml/src/ggml-common.h": "0061131b615c5721fc88a78feeb22c1f8c450f1c2646a317d80796a653bf595c",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/ggml/src/ggml-quants.c": "5574a2dccf7c07e75b143733e04a5412d3d8c819e7945f5217a7b83a2b2ff8ab",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/ggml/src/ggml-impl.h": "43564db0238aebb7ed68501e346c194866b5dac218d1d37b26baff9f458c00d3",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/LICENSE": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/compile_turn.py": "c9528d50e0b424753359f8dbf8a0198267d10afd203a3ede4f812e41264057ca",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/formats.hpp": "6371561fcf4aa1589ce6f01b1b5e907b7b497897b50e125a34cea5e525108c27",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/fixture.cpp": "2cc9caaf5d3cf44637ce0344d8b35ac228847b2bb3aa7c425651f383b17444b4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build_cpu.py": "5e072894ba12695df9fc2a5fdd293e1ad4c1c4da1abb04abffdee398a4b2f181",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/source-pins.json": "1f4d16ec21cb9484bd07a4122138f0a6a3e5fd229430e571a73240aa80a07b20"
+  },
+  "model_payload_read_bytes": 14220,
+  "native_executed": false,
+  "device_executed": false,
+  "reference_functions_sha256": [
+    "d002f79652d2218ccfa09f51c74bc9c2a551a0e38e84fdad4d04632850fd1ad8",
+    "af250d1ac034743f78d2ff5e763f5287d868bc8dc49064ac7f27d514df573baa",
+    "008f0f2922e224d77331a500d07ac4de63ee512785af6f4def4f8055b8a8e6fa",
+    "d3903c4626a22745d78db9efc0dc9b7a08835ff216c69ea1c9d34e2b52469062",
+    "a466a11a731fae7fcd61ef4548cb8132273e0f8a33599abcfb542a959e8b54df",
+    "9c818a85cecacae23ccbaf4b97c6ebd882b5a84f8303c644f237e0bee0c911fb",
+    "11736f07ae49b0728ebf018b7f16e1a9587edb4561547dfa523058f8c5d800b9",
+    "81c00032c85405c253fface30ddc7f4b7f15a6f6d047e35765c867f1e88eee9c"
+  ],
+  "reference_sha256": "d586bde4b94ec87346ee6259935bfa581d11f4ecfc5684cbbf13e264aa5922dd",
+  "compiler": {
+    "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+    "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+  },
+  "commands": [
+    [
+      "/usr/bin/x86_64-linux-gnu-g++-13",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/fixture.d",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/fixture.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/fixture.o"
+    ],
+    [
+      "/usr/bin/x86_64-linux-gnu-g++-13",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/reference.d",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/reference.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/reference.o"
+    ],
+    [
+      "/usr/bin/x86_64-linux-gnu-g++-13",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/fixture.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/reference.o",
+      "-lcrypto",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/format-proof"
+    ]
+  ],
+  "compile_returncode": 0,
+  "dependencies": {
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/ggml/src/ggml-common.h": "0061131b615c5721fc88a78feeb22c1f8c450f1c2646a317d80796a653bf595c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/reference.cpp": "d586bde4b94ec87346ee6259935bfa581d11f4ecfc5684cbbf13e264aa5922dd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/fixture.cpp": "2cc9caaf5d3cf44637ce0344d8b35ac228847b2bb3aa7c425651f383b17444b4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/formats.hpp": "6371561fcf4aa1589ce6f01b1b5e907b7b497897b50e125a34cea5e525108c27"
+  },
+  "slices": [
+    {
+      "tensor": "blk.1.ffn_down_exps.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 0,
+      "columns": 640,
+      "type": 42,
+      "offset": 2108735360,
+      "bytes": 180,
+      "sha256": "bc7651422a29fd87c2a744fc15422addafedae79d5d34605e0757ac395948654"
+    },
+    {
+      "tensor": "blk.1.ffn_down_exps.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 655360,
+      "columns": 640,
+      "type": 42,
+      "offset": 2226700160,
+      "bytes": 180,
+      "sha256": "5f837b7443150886e23def3ff044ad45b9f09f2955e9039120b96f7ab7b9a4d2"
+    },
+    {
+      "tensor": "blk.1.ffn_down_exps.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 1310719,
+      "columns": 640,
+      "type": 42,
+      "offset": 2344664780,
+      "bytes": 180,
+      "sha256": "96fcd8f5175bfea98f2bb9054f02ad815d2b1fa49540a12e0bf754c2d95011d7"
+    },
+    {
+      "tensor": "blk.0.attn_gate.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 0,
+      "columns": 2560,
+      "type": 12,
+      "offset": 883359744,
+      "bytes": 1440,
+      "sha256": "1fab7eaeb44fbaec9f6076b450c37bdfae86714fc17aea8b6a029eacccb56b17"
+    },
+    {
+      "tensor": "blk.0.attn_gate.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 3072,
+      "columns": 2560,
+      "type": 12,
+      "offset": 887783424,
+      "bytes": 1440,
+      "sha256": "1f180702734ee1aa01575fcea5eb61d2b3e8efe1ede81dca8db2190f1bb0bab7"
+    },
+    {
+      "tensor": "blk.0.attn_gate.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 6143,
+      "columns": 2560,
+      "type": 12,
+      "offset": 892205664,
+      "bytes": 1440,
+      "sha256": "a15a53a4e19a0b5b8665098e71ee9beab6f215c0c421d36e90a202830b138447"
+    },
+    {
+      "tensor": "blk.1.attn_qkv.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 0,
+      "columns": 2560,
+      "type": 13,
+      "offset": 2090712960,
+      "bytes": 1760,
+      "sha256": "54c3df977cc919d62db3a0ed926a582a9324f9cdcc8dd94c38fdc6ad42a8f919"
+    },
+    {
+      "tensor": "blk.1.attn_qkv.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 5120,
+      "columns": 2560,
+      "type": 13,
+      "offset": 2099724160,
+      "bytes": 1760,
+      "sha256": "10261f28dd204e75f19483eb902ac8e730f5eba67cd57a25419e93e1d564e432"
+    },
+    {
+      "tensor": "blk.1.attn_qkv.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 10239,
+      "columns": 2560,
+      "type": 13,
+      "offset": 2108733600,
+      "bytes": 1760,
+      "sha256": "47a22191d7d60ea90fece4ac81a8c7ced48a593ddaf72fdc72aeab96e242bc20"
+    },
+    {
+      "tensor": "token_embd.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 0,
+      "columns": 2560,
+      "type": 23,
+      "offset": 545644544,
+      "bytes": 1360,
+      "sha256": "a7a054a2d2730ff53555328eefee95c59d4b3aa98686b81ead8a8628523b66ec"
+    },
+    {
+      "tensor": "token_embd.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 124160,
+      "columns": 2560,
+      "type": 23,
+      "offset": 714502144,
+      "bytes": 1360,
+      "sha256": "f4d73e47863a992737ffef063ae405afb5cc74793af7e16dcbfd7c566a3e47f0"
+    },
+    {
+      "tensor": "token_embd.weight",
+      "shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "stat_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "row": 248319,
+      "columns": 2560,
+      "type": 23,
+      "offset": 883358384,
+      "bytes": 1360,
+      "sha256": "bbfba27b16bc52b325990236f9100843a1869aed5e94e8dcee131ebb5ceebb24"
+    }
+  ],
+  "run_command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/format-proof",
+    "42",
+    "640",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-0.bin",
+    "42",
+    "640",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-1.bin",
+    "42",
+    "640",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-2.bin",
+    "12",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-3.bin",
+    "12",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-4.bin",
+    "12",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-5.bin",
+    "13",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-6.bin",
+    "13",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-7.bin",
+    "13",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-8.bin",
+    "23",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-9.bin",
+    "23",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-10.bin",
+    "23",
+    "2560",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/formats/build/1792816648889742859/slice-11.bin"
+  ],
+  "run_returncode": 0,
+  "binary_sha256": "d7aa7a3355c797d607994ba8782ebef698608994443cc7ae5e046a4e70eb24c6",
+  "result": {
+    "passed": true,
+    "schema": "ownrt.gsq.scalar-formats.v1",
+    "device_executed": false,
+    "model_executed": false,
+    "native_executed": false,
+    "cases": 6780,
+    "decoded_values": 2863488,
+    "ordered_gemv_rows": 6780,
+    "finite_half_values": 63488,
+    "refusals": 7,
+    "own_output_sha256": "3c4263023d181a8be0f0c23c04a74edb972a0c33e4845e4433e61c6046437be7",
+    "reference_output_sha256": "3c4263023d181a8be0f0c23c04a74edb972a0c33e4845e4433e61c6046437be7",
+    "real_slices": [
+      {
+        "type": 42,
+        "columns": 640,
+        "bytes": 180,
+        "sha256": "bc7651422a29fd87c2a744fc15422addafedae79d5d34605e0757ac395948654"
+      },
+      {
+        "type": 42,
+        "columns": 640,
+        "bytes": 180,
+        "sha256": "5f837b7443150886e23def3ff044ad45b9f09f2955e9039120b96f7ab7b9a4d2"
+      },
+      {
+        "type": 42,
+        "columns": 640,
+        "bytes": 180,
+        "sha256": "96fcd8f5175bfea98f2bb9054f02ad815d2b1fa49540a12e0bf754c2d95011d7"
+      },
+      {
+        "type": 12,
+        "columns": 2560,
+        "bytes": 1440,
+        "sha256": "1fab7eaeb44fbaec9f6076b450c37bdfae86714fc17aea8b6a029eacccb56b17"
+      },
+      {
+        "type": 12,
+        "columns": 2560,
+        "bytes": 1440,
+        "sha256": "1f180702734ee1aa01575fcea5eb61d2b3e8efe1ede81dca8db2190f1bb0bab7"
+      },
+      {
+        "type": 12,
+        "columns": 2560,
+        "bytes": 1440,
+        "sha256": "a15a53a4e19a0b5b8665098e71ee9beab6f215c0c421d36e90a202830b138447"
+      },
+      {
+        "type": 13,
+        "columns": 2560,
+        "bytes": 1760,
+        "sha256": "54c3df977cc919d62db3a0ed926a582a9324f9cdcc8dd94c38fdc6ad42a8f919"
+      },
+      {
+        "type": 13,
+        "columns": 2560,
+        "bytes": 1760,
+        "sha256": "10261f28dd204e75f19483eb902ac8e730f5eba67cd57a25419e93e1d564e432"
+      },
+      {
+        "type": 13,
+        "columns": 2560,
+        "bytes": 1760,
+        "sha256": "47a22191d7d60ea90fece4ac81a8c7ced48a593ddaf72fdc72aeab96e242bc20"
+      },
+      {
+        "type": 23,
+        "columns": 2560,
+        "bytes": 1360,
+        "sha256": "a7a054a2d2730ff53555328eefee95c59d4b3aa98686b81ead8a8628523b66ec"
+      },
+      {
+        "type": 23,
+        "columns": 2560,
+        "bytes": 1360,
+        "sha256": "f4d73e47863a992737ffef063ae405afb5cc74793af7e16dcbfd7c566a3e47f0"
+      },
+      {
+        "type": 23,
+        "columns": 2560,
+        "bytes": 1360,
+        "sha256": "bbfba27b16bc52b325990236f9100843a1869aed5e94e8dcee131ebb5ceebb24"
+      }
+    ]
+  }
+}

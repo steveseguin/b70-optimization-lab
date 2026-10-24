@@ -1,0 +1,91 @@
+{
+  "schema": "ownrt.gsq-rco.header-census.v1",
+  "passed": true,
+  "scope": "Header/directory only; no payload reads/hashes, model or device execution. Unknown types retain opaque reserved spans, not block-layout claims.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage1/packet1b/loaders/headers.py": "7503587cb34eb2ed5464ad78d429817e6abc4121c0db81ffc6011da58a54c9fa",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/census.py": "753abbe6ee01f1f3fd53576e858f05533997e2d2f97ddac2cdf443018e5b44ec"
+  },
+  "format_provenance": {
+    "repository": "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp",
+    "recorded_git_head": "23b0202a189c44a54625aadcb37a946dd1d6278d",
+    "source_sha256": {
+      "ggml/include/ggml.h": "12ee71f99db7db9b353bc02b1fbb57c344ee17c01ac5fb7952b41a637a747ea9",
+      "ggml/src/ggml-common.h": "0061131b615c5721fc88a78feeb22c1f8c450f1c2646a317d80796a653bf595c",
+      "ggml/src/ggml-quants.c": "5574a2dccf7c07e75b143733e04a5412d3d8c819e7945f5217a7b83a2b2ff8ab"
+    },
+    "q2_0": {
+      "type_id": 42,
+      "block_elements": 64,
+      "block_bytes": 18,
+      "scale": "fp16",
+      "codes": "16 bytes, four 2-bit codes per byte; value=(code-1)*scale"
+    }
+  },
+  "download_records": {
+    "/home/steve/model-downloads/qwen38-gsq-rco-iq3s-20261024/completion.json": {
+      "sha256": "30df4bc59e6a4a4b81623a2494c14b82d61f512f07e487f106e233ab5d206290",
+      "bytes": 1281
+    },
+    "/home/steve/model-downloads/qwen38-gsq-rco-iq3s-20261024/download-plan.json": {
+      "sha256": "ef1620fbce74fb0d452642655998ed9087e8d36d6d633b3f520469cefd6dbe6b",
+      "bytes": 950
+    },
+    "/home/steve/model-downloads/qwen38-gsq-rco-iq3s-20261024/hf-metadata.json": {
+      "sha256": "cc90e2534795663fc958f78588e4070e52f9a51a4a714b7b9905e493339908d9",
+      "bytes": 18373
+    },
+    "/home/steve/model-downloads/qwen38-gsq-rco-iq3s-20261024/MODEL_CARD.md": {
+      "sha256": "fe485b8b48f456e9850225b9d8b0b03cd70c6adc824628a25e2e3a2d7b3e8db7",
+      "bytes": 49825
+    }
+  },
+  "download_completion": {
+    "utc": "2026-10-24T04:17:38.490142+00:00",
+    "state": "verified-complete",
+    "repository": "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+    "revision": "eec4e10a2c29b440a2ae85591fa11569ce752963",
+    "destination": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+    "bytes": 83863586496,
+    "files": [
+      {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "bytes": 55063448064,
+        "sha256": "40f369eca301ec6ea318dbb671b3132c26a2f0b89aa5458a7051b33215ee296c",
+        "download_hash_match": true,
+        "readback_hash_match": true
+      },
+      {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00002-of-00002.gguf",
+        "bytes": 28800138432,
+        "sha256": "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113",
+        "download_hash_match": true,
+        "readback_hash_match": true
+      }
+    ],
+    "old_model_action": "preserved at existing USB path; no model moved or deleted",
+    "usb_free_bytes": 19000152064,
+    "kernel_storage_check": "-- No entries --",
+    "transfer_elapsed_seconds": 1411.8
+  },
+  "artifacts": {
+    "old-census.json": {
+      "sha256": "8f8b76de87399da77cfc0324239f8ad12c5f4f90a7a280b44ecc39798bfdcebf",
+      "bytes": 590897
+    },
+    "new-census.json": {
+      "sha256": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+      "bytes": 610761
+    },
+    "compatibility-delta.json": {
+      "sha256": "c30d0024ca8a4c748bb81704c2a3f444f8c2693ece7c924f453ca0a967ef2d8e",
+      "bytes": 64497
+    }
+  },
+  "header_bytes_read": 22049047,
+  "tensor_payload_bytes_read": 0,
+  "initial_inherited_parser_refusal": {
+    "error": "unsupported ggml type 42 in blk.1.ffn_down_exps.weight",
+    "header_offset": 10948774
+  }
+}
