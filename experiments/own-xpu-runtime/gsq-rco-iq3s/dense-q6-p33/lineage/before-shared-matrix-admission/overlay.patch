@@ -1,0 +1,104 @@
+--- parent/main.cpp
++++ candidate/main.cpp
+@@ -143,7 +143,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/admission.hpp"
+ struct Options {
+-  bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false;
++  bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false;
+   RetainSteps retain_steps;
+   int cancel_launch=-1;
+   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
+@@ -175,7 +175,8 @@
+       require(i + 1 < argc, "missing " + k);
+       return std::string(argv[++i]);
+     };
+-    if(k=="--expert-iq3xxs-block") a.expert_iq3xxs_block=true;
++    if(k=="--dense-q6-p33") a.dense_q6_p33=true;
++    else if(k=="--expert-iq3xxs-block") a.expert_iq3xxs_block=true;
+     else if(k=="--qkv-q6-p33") a.qkv_q6_p33=true;
+     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
+     else if(k=="--gsq-packed") a.gsq_packed=true;
+@@ -279,6 +280,7 @@
+   require(getenv("OMP_NUM_THREADS") &&
+               std::string(getenv("OMP_NUM_THREADS")) == "2",
+           "OMP_NUM_THREADS=2 required");
++  if(a.dense_q6_p33)require(a.expert_iq3xxs_block&&a.qkv_q6_p33&&a.attention_q8_p33&&a.gsq_packed&&!a.mini,"dense Q6 requires combined real GSQ mode");
+   if(a.expert_iq3xxs_block)require(a.qkv_q6_p33&&a.attention_q8_p33&&a.gsq_packed&&!a.mini,"IQ3 block requires combined real GSQ mode");
+   if(a.qkv_q6_p33)require(a.attention_q8_p33&&a.gsq_packed&&!a.mini,"QKV requires combined real GSQ mode");
+   if(a.attention_q8_p33)require(a.gsq_packed&&!a.mini,"attention candidate requires real GSQ mode");
+@@ -451,6 +453,7 @@
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build/source/policy.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/policy.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/policy.hpp"
+ static flash::Plan gsq_build_plan(Weights &w, const Options &a) {
+   auto g =
+       a.mini ? Geometry::tiny() : flash::geometry_from_directory(w.directory);
+@@ -534,7 +537,7 @@
+   return p;
+ }
+ static flash::Plan plan(Weights &w, const Options &a) {
+-  if(a.gsq_packed){auto candidate=gsq_build_plan(w,a);combined_admit(w,a,candidate);iq3_block_admit(w,a,candidate);return candidate;}
++  if(a.gsq_packed){auto candidate=gsq_build_plan(w,a);combined_admit(w,a,candidate);iq3_block_admit(w,a,candidate);dense_q6_admit(w,a,candidate);return candidate;}
+   auto g =
+       a.mini ? Geometry::tiny() : flash::geometry_from_directory(w.directory);
+   g.context = a.mini && !a.pipeline_mini ? 8 : a.context;
+@@ -658,7 +661,7 @@
+   return p;
+ }
+ static unsigned selected_variant(const Weights& w,const Options& a,const flash::Plan& p,const flash::Launch& l,size_t projection=0) {
+-  if(a.gsq_packed)return ((!a.mini&&l.weights.at(projection)=="output.weight")||combined_site(w,a,l))?6:0;
++  if(a.gsq_packed)return ((!a.mini&&l.weights.at(projection)=="output.weight")||(combined_site(w,a,l)||dense_q6_site(w,a,l)))?6:0;
+     const auto& t=w.directory.at(l.weights[projection]);
+     auto choice=packet26::dispatch.gemv_for(l.label);
+     if(choice.empty())choice=a.gemv;
+@@ -867,7 +870,7 @@
+     if(a.rank==1){reply_timings.open(a.output/"p92-host.jsonl");require(bool(reply_timings),"p92 host timing open");reply_report.output=&reply_timings;}
+     for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
+       std::array<unsigned,2> variants{selected_variant(w,a,p,l),0};if(l.op=="expert_gate_up")variants[1]=selected_variant(w,a,p,l,1);
+-      gemv_choices.emplace(&l,std::make_pair(a.gsq_packed?(((l.weights[0]=="output.weight"&&!a.mini)||combined_site(w,a,l))?std::string("p33.dense.segment"):std::string("gsq.packed")):packet26::dispatch.gemv_for(l.label),variants));
++      gemv_choices.emplace(&l,std::make_pair(a.gsq_packed?(((l.weights[0]=="output.weight"&&!a.mini)||(combined_site(w,a,l)||dense_q6_site(w,a,l)))?std::string("p33.dense.segment"):std::string("gsq.packed")):packet26::dispatch.gemv_for(l.label),variants));
+     }
+     // Only move sibling projections whose shared input already exists here.
+     // The immutable plan stays intact for the reference oracle and fixtures.
+@@ -1003,10 +1006,10 @@
+     std::memcpy(&v, b.data(), 4);
+     return v;
+   }
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/generic_engine.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/generic_engine.hpp"
+   unsigned variant(const flash::Launch& l,size_t projection=0)const {return gemv_choices.at(&l).second.at(projection);}
+   unsigned weight_variant(const std::string& name)const {
+-    if(a.gsq_packed)return ((name=="output.weight"&&!a.mini)||combined_weight(w,a,name))?6:0;
++    if(a.gsq_packed)return ((name=="output.weight"&&!a.mini)||(combined_weight(w,a,name)||dense_q6_weight(w,a,name)))?6:0;
+     if(name=="output.weight"&&split_head())return 6;
+     for(const auto& l:p.launches)if(l.op=="gemv" && l.weights[0]==name)return variant(l);
+     return 2;
+@@ -1043,7 +1046,7 @@
+   void load(int c, const std::string &name) {
+     if (weights[c].count(name))
+       return;
+-    if(a.gsq_packed&&(name!="output.weight"||a.mini)&&!combined_weight(w,a,name)){gsq_load(c,name);return;}
++    if(a.gsq_packed&&(name!="output.weight"||a.mini)&&!(combined_weight(w,a,name)||dense_q6_weight(w,a,name))){gsq_load(c,name);return;}
+     auto &t = w.directory.at(name);
+     require(t.component != "embedding" && t.component != "ple_lookup",
+             "lookup must be bounded rows");
+--- parent/generic_engine.hpp
++++ candidate/generic_engine.hpp
+@@ -34,6 +34,7 @@
+   const auto& m=it->second.at(0);
+   require(l.op=="gemv"||l.op=="routed_gemv","GSQ unfused linear operation");
+   if(iq3_block_site(w,a,l)){require(m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&!m.fp32&&dev(c).arena.row(m.w).bytes==321126400,"IQ3 block exact matrix storage");finish(c,iq3block::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::per_slot),true);return;}
++  if(dense_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&(m.rows==6144||m.rows==12288)&&m.rows==unsigned(l.shape[1])&&m.columns==2560&&variant(l)==6&&m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==size_t(m.rows)*3380,"dense Q6 variant6 exact matrix");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+   if(qkv_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&m.rows==10240&&m.columns==2560&&variant(l)==6&&m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==34611200,"QKV Q6 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+   if(attention_q8_site(w,a,l)){require(m.type==iq3::Type::Q8_0&&m.rows==2560&&m.columns==6144&&variant(l)==6&&m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==18677760,"attention Q8 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+   if(l.weights[0]=="output.weight"&&!a.mini) {
+--- parent/entry.cpp
++++ candidate/entry.cpp
+@@ -1,4 +1,4 @@
+ #define main packet26_model_entry
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/main.cpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/main.cpp"
+ #undef main
+ int main(int argc,char**argv){bool gsq=false,attention=false,qkv=false;for(int i=1;i<argc;++i){std::string_view x(argv[i]);gsq|=x=="--gsq-packed";attention|=x=="--attention-q8-p33";qkv|=x=="--qkv-q6-p33";}if(!gsq||!attention||!qkv)return 64;return packet26_model_entry(argc,argv);}

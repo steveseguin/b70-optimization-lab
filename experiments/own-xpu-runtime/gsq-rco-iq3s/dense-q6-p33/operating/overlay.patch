@@ -1,0 +1,146 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/generated/adapter.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/generated/adapter.py
+@@ -7,7 +7,7 @@
+ LANE=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
+ ROOT=Path('/home/steve/llm-optimizations')
+ CANDIDATE=P.parent.parent
+-LEDGER=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/candidate-ledger.json')
++LEDGER=P.parent/'candidate-ledger.json'
+ PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
+ PARENT_SHA='4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3'
+ ENV_SOURCE=ROOT/'experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py'
+@@ -50,7 +50,7 @@
+     if rank==0:
+         cmd+=['--draft-mtp','--draft-fault','none']
+         if not plan['mini']:cmd+=['--draft-manifest',str(LANE/'mtp/draft-manifest.tsv'),'--draft-model',str(DRAFT_MODEL)]
+-    cmd.extend(['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block'])
++    cmd.extend(['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block','--dense-q6-p33'])
+     return cmd
+ 
+ def build_plan(output,*,mini=False,max_new=4,seconds=1800,evidence_output=None):
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/generated/suite.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/generated/suite.py
+@@ -13,7 +13,7 @@
+ def load_adapter():
+     p=OPERATING/'generated/adapter.py';s=importlib.util.spec_from_file_location('gsq_resident_adapter',p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+ A=load_adapter()
+-s=importlib.util.spec_from_file_location('gsq_iq3_block_checks',OPERATING/'checks.py');C=importlib.util.module_from_spec(s);s.loader.exec_module(C)
++s=importlib.util.spec_from_file_location('gsq_dense_q6_checks',OPERATING/'checks.py');C=importlib.util.module_from_spec(s);s.loader.exec_module(C)
+ def manifest():
+     m=json.loads(MANIFEST.read_text());require(len(m['prompts'])==12 and m['total_requests']==CAP and m['measured_requests']==24,'fixed full corpus/count')
+     require(m['max_new']==128 and m['context']==4096,'fixed output/context cap')
+@@ -97,7 +97,7 @@
+         destination=t.out/name;A.reset(t,destination);count+=1
+         C.verify_capture_stamps(t.out,capture_stamps)
+         result=A.BASE.NativeController(t,A.BASE.Draft(mode),True,False).run(prompt,cap,(248044,248046) if measuring else ())
+-        result.update(evidence_label='GSQ IQ3_XXS block candidate; every measured arm checked against frozen baseline',decode_tok_s=None)
++        result.update(evidence_label='GSQ additional dense Q6 candidate; every measured arm checked against frozen baseline',decode_tok_s=None)
+         row=dict(request=count,name=name,mode=mode,prompt_tokens=prompt,requested_max_new=cap,measured=measuring,result=result)
+         if measuring:
+             row['metric']=metric(result,cap);row['state_sha256']=A.state_hashes(t);capture_stamps[name]=C.capture_stamp(destination)
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/checks.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/checks.py
+@@ -1,7 +1,7 @@
+ """Immutable baseline authority and per-arm exact gate; no runtime imports."""
+ import hashlib,json
+ from pathlib import Path
+-P=Path(__file__).resolve().parent;CANDIDATE=P.parent;L=P.parents[2];R=L.parents[2]
++P=Path(__file__).resolve().parent;CANDIDATE=P.parent;L=P.parents[1];R=L.parents[2]
+ ATTENTION=L/'attention-q8-p33';QKV=L/'qkv-q6-p33'
+ REVIEW=L/'baseline/evidence/independent-a/review.json'
+ REVIEW_SHA='f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb'
+@@ -18,9 +18,9 @@
+  for name,h in {**prep['source_sha256'],**prep['generated_sha256']}.items():require(sha(R/name)==h,'materialized source '+name)
+  ledger=read(P/'candidate-ledger.json');require(ledger['parent_sha256']==sha(L/'memory/engine-accounting.json'),'ledger authority')
+  old=read(L/'memory/engine-accounting.json')['scenarios']['split24-24_mtp-rank0']['ranks'];new=ledger['scenarios']['split24-24_mtp-rank0']['ranks']
+- require(len(new)==2 and ledger['initial_mem_available_delta_bytes']==382730240,'candidate ledger ranks/delta')
+- for a,b,q6 in zip(old,new,(183500800,104857600)):
+-  require(b['device_logical_bytes']==a['device_logical_bytes']+47185920+q6 and b['expanded_q8_delta_bytes']==47185920 and b['expanded_q6_delta_bytes']==q6,'exact allocation delta')
++ require(len(new)==2 and ledger['initial_mem_available_delta_bytes']==571473920,'candidate ledger ranks/delta')
++ for a,b,q6,dense in zip(old,new,(183500800,104857600),(47185920,141557760)):
++  require(b['device_logical_bytes']==a['device_logical_bytes']+47185920+q6+dense and b['expanded_q8_delta_bytes']==47185920 and b['expanded_q6_delta_bytes']==q6 and b['expanded_dense_q6_delta_bytes']==dense,'exact allocation delta')
+  for name,h in read(P/'authority.json').items():require(sha(name)==h,'combined frozen authority '+name)
+ def baseline():
+  require(sha(REVIEW)==REVIEW_SHA and REFERENCE_SHA is not None,'independent baseline review changed');r=read(REVIEW)
+@@ -43,7 +43,7 @@
+  for name,h in v['source_sha256'].items():require(sha(R/name)==h,'review source '+name)
+  cpu=CANDIDATE/'evidence/cpu-proof.json';c=read(cpu);require(c['passed'] is True and c.get('source_sha256'),'candidate CPU arithmetic proof')
+  for name,h in c['source_sha256'].items():require(sha(R/name)==h,'CPU proof source '+name)
+- scale_authority();qkv_authority()
++ scale_authority();qkv_authority();parent_engine_authority()
+  return REVIEW
+ def scale_authority():
+  scale=read(ATTENTION/'evidence/scale-census.json')
+@@ -67,13 +67,11 @@
+  require(row['result']['tokens']==ref['result']['tokens'],'candidate tokens differ from baseline: '+row['name'])
+  require(row['state_sha256']==ref['state_sha256'],'candidate target state differs from baseline: '+row['name'])
+ 
+-def bundle_and_micro_authority():
+- bundle=read(L/'state-bundle/evidence/device-a/review.json')
+- require(bundle['passed'] is True,'qualified current bundle prerequisite')
+- micro=read(CANDIDATE.parent/'micro/evidence/device-a/review.json')
+- require(micro['audit_passed'] and micro['native_kernel_result_passed'] and micro['exact_pairs']==84 and micro['kernel_submissions']==168,'micro numerical evidence')
+- require(not micro['qualification_complete'] and not micro['coordinator_passed'] and micro['observed_contact_samples']==0,'retain micro physical-attestation failure')
+- return micro
++def parent_engine_authority():
++ parent=read(L/'expert-iq3xxs-block/engine/operating/evidence/device-a/review.json')
++ require(parent['passed'] is True,'qualified current combined Engine')
++ bundle=read(L/'state-bundle/evidence/device-a/review.json');require(bundle['passed'] is True,'qualified bundle writer')
++ return parent
+ 
+ def capture_stamp(destination):
+  out={}
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/once.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/once.py
+@@ -2,16 +2,16 @@
+ """Explicit candidate coordinator; source-only preparation until root admission."""
+ import argparse,hashlib,importlib.util,json
+ from pathlib import Path
+-P=Path(__file__).resolve().parent;L=P.parents[2]
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a')
+-UNIT='gsq-iq3xxs-block-engine-a.service'
++P=Path(__file__).resolve().parent;L=P.parents[1]
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-dense-q6-p33-engine-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-p33-engine-a')
++UNIT='gsq-dense-q6-p33-engine-a.service'
+ PARENT=L/'baseline/once.py';PARENT_SHA='5e7539962f97cb42da560c8c027fa8a739bef94f8797d5dfc4f448c4e485a9ad'
+ def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+ def load(path,name):
+  s=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+ if sha(PARENT)!=PARENT_SHA:raise RuntimeError('frozen baseline coordinator changed')
+-O=load(PARENT,'gsq_iq3_block_frozen_coordinator');S=load(P/'generated/suite.py','gsq_iq3_block_suite');M=O.M
++O=load(PARENT,'gsq_dense_q6_frozen_coordinator');S=load(P/'generated/suite.py','gsq_dense_q6_suite');M=O.M
+ # Frozen run() resolves these private module globals. RetainedOwner consequently
+ # remains the exact class belonging to the candidate adapter used for startup.
+ O.S=S;O.CONTROL=CONTROL;O.EVIDENCE=EVIDENCE;O.UNIT=UNIT
+@@ -20,11 +20,11 @@
+ def build_plan():
+  S.C.verify_materialization();base=M.build_plan();suite=S.build_plan(CONTROL/'ranks',EVIDENCE)
+  base.pop('prompt',None)
+- base.update(schema='ownrt.gsq.iq3xxs-block-once.v1',adapter=suite['adapter'],suite=suite,max_new=128,requests=26,unit=UNIT,scope='candidate all12 exact baseline arms; separate-process timings descriptive only')
++ base.update(schema='ownrt.gsq.dense-q6-once.v1',adapter=suite['adapter'],suite=suite,max_new=128,requests=26,unit=UNIT,scope='candidate all12 exact baseline arms; separate-process timings descriptive only')
+  ledger=json.loads((P/'candidate-ledger.json').read_text());base['initial_mem_available_required']+=ledger['initial_mem_available_delta_bytes']
+- files=[PARENT,Path(__file__),P/'checks.py',P/'prepare.py',P/'preparation.json',P/'overlay.patch',P/'candidate-ledger.json',P/'test_operating.py',P/'README.md',P/'generated/adapter.py',P/'generated/suite.py',P/'evidence/independent-review.json',P.parent/'evidence/native-build.json',P.parent/'evidence/cpu-proof.json',L/'attention-q8-p33/evidence/scale-census.json',L/'qkv-q6-p33/evidence/cpu-proof.json',L/'qkv-q6-p33/micro/evidence/device-a/review.json',P/'authority.json',P/'parent-pins.json',P/'adaptation.patch',L/'state-bundle/evidence/device-a/review.json',P.parent.parent/'micro/evidence/device-a/review.json',S.C.REVIEW,S.C.REFERENCE]
++ files=[PARENT,Path(__file__),P/'checks.py',P/'prepare.py',P/'preparation.json',P/'overlay.patch',P/'candidate-ledger.json',P/'test_operating.py',P/'README.md',P/'generated/adapter.py',P/'generated/suite.py',P/'evidence/independent-review.json',P.parent/'evidence/native-build.json',P.parent/'evidence/cpu-proof.json',L/'attention-q8-p33/evidence/scale-census.json',L/'qkv-q6-p33/evidence/cpu-proof.json',L/'qkv-q6-p33/micro/evidence/device-a/review.json',P/'authority.json',P/'parent-pins.json',P/'overlay.patch',L/'state-bundle/evidence/device-a/review.json',L/'expert-iq3xxs-block/engine/operating/evidence/device-a/review.json',S.C.REVIEW,S.C.REFERENCE]
+  base['source_sha256'].update({str(f):sha(f) for f in files})
+- base['monitor_configuration']=dict(module_sha256=O.MODEL_SHA,coordinator_sha256=PARENT_SHA,CONTROL=str(CONTROL),EVIDENCE=str(EVIDENCE),UNIT=UNIT,initial_ram_delta_bytes=382730240,behavior='unchanged frozen Monitor/run lifecycle; candidate suite and explicit memory admission')
++ base['monitor_configuration']=dict(module_sha256=O.MODEL_SHA,coordinator_sha256=PARENT_SHA,CONTROL=str(CONTROL),EVIDENCE=str(EVIDENCE),UNIT=UNIT,initial_ram_delta_bytes=571473920,behavior='unchanged frozen Monitor/run lifecycle; candidate suite and explicit memory admission')
+  return base
+ O.build_plan=build_plan
+ 
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/test_operating.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/test_operating.py
+@@ -41,10 +41,10 @@
+  def test_candidate_command_delta_only_flag_binary(self):
+   original=O.M.ADAPTER
+   p=dict(output='/private/control',evidence_output='/external/result',binary='/candidate',context=4096,seconds=7200,max_new=128,mini=False)
+-  for rank in (0,1):self.assertEqual(original.command(p,rank,51,52)+['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block'],S.A.command(p,rank,51,52))
++  for rank in (0,1):self.assertEqual(original.command(p,rank,51,52)+['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block','--dense-q6-p33'],S.A.command(p,rank,51,52))
+  def test_materialization_and_memory_authority(self):
+   C.verify_materialization();ledger=json.loads((P/'candidate-ledger.json').read_text())
+-  self.assertEqual([30947490698,29824495508],[r['device_logical_bytes'] for r in ledger['scenarios']['split24-24_mtp-rank0']['ranks']])
++  self.assertEqual([30994676618,29966053268],[r['device_logical_bytes'] for r in ledger['scenarios']['split24-24_mtp-rank0']['ranks']])
+  def test_coordinator_uses_exact_candidate_exception_class(self):
+   self.assertIs(O.O.S,S);self.assertIs(O.O.S.A.RetainedOwner,S.A.RetainedOwner)
+   self.assertEqual(O.CONTROL,O.M.CONTROL);self.assertEqual(O.CONTROL,O.O.CONTROL)

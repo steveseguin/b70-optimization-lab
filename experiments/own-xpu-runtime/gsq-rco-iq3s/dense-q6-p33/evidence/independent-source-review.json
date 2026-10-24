@@ -1,0 +1,53 @@
+{
+  "schema": "gsq.dense-q6.independent-source-build-review.v1",
+  "passed": true,
+  "source_only": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/prepare.py": "5b3b2ada8a7ff079b1e7a9c662c6efd0a01b559f135bf6fafd09fd751d628bdd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build.py": "dba0eb99f1c1a7bb27cdf5d51411ca09c71ab69dceabc242bd72dac054c54b88",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/preparation.json": "3235a32207f7718cd72375bf2790124621eeabe2e2cc190e6f2ce1e861858989",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/parent-pins.json": "8deeab3a38619a4025ae2add18caf8d593f693fbac2c3178b7948c68b1d4576d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/overlay.patch": "83b1d0d1927c247aa58e4b1f36c5a64b9a269062c0e0371d6cc55efc9936458c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/policy_fixture.cpp": "2f9aed587ee72d250b88c06b9fdb5964eb243abf69ab5842f8f99623cad33091",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/cpu-plan.json": "036dea6510ccd0250f11fdecdb38994a0ef83c6462d8bcdfd080548477e235aa",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/native-plan.json": "7d17869f5bb8d00ac87f8be29e7b51e42efa4da8cdda6f9ceeb5b1394c207f11",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/memory-ledger.json": "2ec730da5a9466f463038dfa2e6fafdec48bece5bed84464158fc005e92f53a5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/selection.json": "5c637c05bbff90f8009aff6d3dc88dc7b1d86e284c040270de714f042673b94c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/PROPOSAL.md": "b2bf93c2a715c6e1f3b162ac40e595e6bb502d23bf4903b33f247a1411a13a1d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/QUALIFICATION.md": "1361732ca4fe01761178e20df5c95cecf066084ef08774896fe61e7145031816",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/main.cpp": "c35f1271033658e6384bf6d8cc1fab62014c2fe5d942f21e238abd2995f2e565",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/generic_engine.hpp": "703d1769df8c789c591ce4d4fe23e1ec85f82ac2092b6b30bc19f6f6ccf95ae7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/policy.hpp": "220a39e36a17f0e0ccacdd475394261cbd63fdaf8a0cb4676491583545e23e1c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/entry.cpp": "47348c8a4b9bc95e9b6f27a5c34587f132cfbedffabdb47b60d6f234a084d0e7"
+  },
+  "sites": 19,
+  "z_sites": 14,
+  "qgate_sites": 5,
+  "rank_delta_bytes": [
+    47185920,
+    141557760
+  ],
+  "new_device_forecast_bytes": [
+    30994676618,
+    29966053268
+  ],
+  "reused_objects": 39,
+  "compiler_or_device_invoked": false,
+  "payload_read": false,
+  "findings": [],
+  "checks": [
+    "Exact metadata-derived19label/weight pairs and Q6 shape/packedextent match authoritative graph/census; all otherformats/sites preserve original selectors and fallback.",
+    "New flag requires qualified GSQ/attention/QKV/IQ3 combined mode. Full plan rejects missing/duplicate/relabelled/weight-swapped sites; flag-off leaves existing path unchanged.",
+    "Storage and dispatch extension consistently reaches selected_variant, gemv_choices, weight_variant and load. Actual dispatch shares templated Matrix guard with CPU fixture: Q6/BF16,6144or12288rows bound to selected launch, K2560,variant6,count/experts1,noFP32/routes/status,span0orrows,exactrows*3380 storage.",
+    "No arithmetic kernel/header changed: p33 Q6K2560 split1 accepts runtime rows, inherits adjacent SG32 reductions/BF16. Parent p33 object and39reusedobject identities unchanged; perTUdeps exclude modified entry/main/generic headers.",
+    "One native entry compile/link normalizes exactly to parent strict O2/SYCL FP recipe. CPU fixture includes actual generated selector+Matrix guard, has negative tests for bothN geometries and scope; proof has not run yet.",
+    "Allocation delta188743680B total,rank0+47185920/rank1+141557760; no new workspace allocation,8MiB inherited workspace exceedsmax393216B validator requirement. Initial host forecast adds sameincrement; actual census still mandatory.",
+    "Build helper preserves attempts, source/dep/compiler/object hash gates,16MiB CPU/250MiB native ceilings and27GBfloor; native artifact never invoked by build."
+  ],
+  "limitations": [
+    "This is source clearance for root-authorized CPU proof followed by compile-only, not completed CPU/native proof.",
+    "Existing exceptional-format arithmetic proof is inherited; no claim that all19 real weights were freshly scanned.",
+    "Native same-engine token/fullstate correctness, bothownerphysicalcontact and actualmemorycensus remain required before any qualification.",
+    "No speed estimate from mixed-format profiling or separate-run causal speed claim."
+  ]
+}
