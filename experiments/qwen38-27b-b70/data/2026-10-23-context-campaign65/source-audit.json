@@ -1,0 +1,277 @@
+{
+  "schema": "ctxkeeper.campaign65-source-audit.v1",
+  "audited_at": "2026-10-24T02:49:14.651258+00:00",
+  "promotion": false,
+  "verdict": "Candidate corrects all four missing identities using one genuine archive recall and proposes exact7/7, versus control3/7. It does not freshly retrieve originals for6–8, so the strict registered all-requested-original-receipt coverage gate is not met. Useful bounded gap-repair evidence; not full-task or complete-range coverage qualification.",
+  "gate_results": {
+    "control_behavior_and_token_gate_pass": true,
+    "candidate_proposal_screen_pass": true,
+    "four_missing_entries_original_evidence_pass": true,
+    "seven_proposed_entries_source_correct_on_independent_audit": true,
+    "all_seven_original_receipts_retrieved_by_candidate": false,
+    "strict_preregistered_source_evidence_gate_pass": false,
+    "fresh_full_task_quality_established": false,
+    "production_qualification": false
+  },
+  "gate_interpretation": {
+    "registration_document": "experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-history-coverage.md",
+    "registration_requirement": "Correct proposed content is only a screen: manual source review must establish original-evidence coverage before a full-task follow-up.",
+    "executable_review_requirement": "Manual audit must verify original retrieved receipts cover all requested entries; any recall alone is insufficient.",
+    "strict_reading": "The frozen result/probe says original retrieved receipts must cover all requested entries. Only four are freshly retrieved. Original6/7/8 are independently available to this auditor but not supplied by the candidate recall. Therefore do not turn proposal correctness plus any recall into a full original-coverage pass.",
+    "useful_weaker_result": "Every missing identity is now anchored to an actual original BUG receipt, and three already-correct NOTES identities remain correct. Thus original-evidence gap repair succeeds even though complete requested-range retrieval does not.",
+    "decision_boundary": "The registered complete-evidence gate does not qualify its conditional next step. A separate fresh-full-task registration can still be chosen explicitly from this partial mechanism evidence, preserving the missed gate rather than retroactively relaxing it. No further adaptive replay or reviewer sweep is warranted by this audit."
+  },
+  "sources": [
+    {
+      "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/c65-K32V-check-s0.json",
+      "sha256": "11e772d7b95f1c35cda041567918be2e900a158da398e10361e431ffc8e03043"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-history-coverage.md",
+      "sha256": "0040c9c82e439cb0391076c8c685bc9817159264f0c29446bd5a54720faccc9e"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/main_history_contract_probe.py",
+      "sha256": "cba9c2e7828e834bbf2ed846c2cdf33c3229abd0fb22a13145689eb0bc4f2b34"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-campaign65-fixture/manifest.json.gz",
+      "sha256": "70385e60378d2ede994f8acb7ce42970920d42641aaed9c73f0ab01eb7d50919"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-campaign65-fixture/request-body.json.gz",
+      "sha256": "5656eca39a7ca76cb3a49ce2766fc2d6894285662da2b4737d9cf24dc932215b"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-campaign65-fixture/cpu-capture.json.gz",
+      "sha256": "c3122ce3440929679c34e00f22eb8a2a0ed3f268979f0e65a641bd55d461a4fb"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-campaign65-fixture/state/archive.jsonl.gz",
+      "sha256": "a9b73755491930e04aa34eb84342649eb10575f300cc5466d8716b9df15675f7"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-campaign65-fixture/state/notes-history.jsonl.gz",
+      "sha256": "af1d8f7479eb9e8d63bc2238b0f02724c0cc158421f06dc79514ec8e48deabeb"
+    },
+    {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-context-campaign64/source-audit.json",
+      "sha256": "27741661b9e2c6b8016ca61d6d9d2df93856a31181bfd8c58a9becbe48ed2194"
+    }
+  ],
+  "checks": {
+    "control_first_request_exact_frozen_capture": true,
+    "candidate_first_request_exact_frozen_capture": true,
+    "candidate_only_system_memory_suffix_changed": true,
+    "frozen_original_body_matches_client_request289": true,
+    "original_request_messages": 601,
+    "upstream_initial_messages_each": [
+      19,
+      19
+    ],
+    "archive_ids_exact_3_through585": true,
+    "archive_messages_exact_original_prefix": true,
+    "notes_no_future_cut": true,
+    "last_notes_exact_saved_state": true,
+    "first_request_tail_exact_messages586_through601": true,
+    "last_original_message_is_audit_request": true,
+    "recall_message_ids": [
+      5,
+      14,
+      25,
+      32
+    ],
+    "recalled_ids_all_at_or_before_archive_cut": true,
+    "returned_identity_sentences_found_in_originals": true,
+    "model_calls_total": 3,
+    "notes_calls": 0,
+    "all_model_finish_reasons_tool_calls": true,
+    "output_cap_unchanged": true,
+    "sampling_and_tools_first_request_unchanged": true
+  },
+  "exact_intervention": {
+    "suffix": "\n- NOTES are selective memory, not an exhaustive event log. Absence from NOTES does not establish that an event never happened.\n- Before producing an exhaustive historical list, use recall to inspect the original evidence for the requested range and verify coverage. Search snippets can omit matches or truncate messages; inspect original messages as needed.\n- Historical evidence does not cancel later authorized corrections or changes of instruction.",
+    "task_specific_numbers_names_or_retrieval_hint_in_suffix": false,
+    "delta": "Only suffix appended to existing main system memory instruction in first upstream request. Original user/tool messages, NOTES, tools, cap and sampling unchanged.",
+    "scope": "Reconstructed state capture, not historical upstream HTTP-byte identity. Saved final counters/token ratio were later than target request; frozen CPU capture and actual reproduced control constrain this reconstruction. No later answer or expected artifact enters model input."
+  },
+  "control": {
+    "calls": 1,
+    "prompt_tokens": 6026,
+    "completion_tokens": 147,
+    "cached_prompt_tokens": 0,
+    "recalls": 0,
+    "proposed_lines": [
+      "6 | time_limited",
+      "7 | numeric_range",
+      "8 | classify_unique"
+    ],
+    "exact_historical_three_line_payload": true,
+    "correct_lines": 3,
+    "required_lines": 7,
+    "reasoning": "Create AUDIT.md with one line per BUG ticket below 9, i.e., tickets 6, 7, and 8 (5 is… let me think. According to the state, completed tickets 6-37 include 6 time_limited, 7 numeric_range, 8 classify_unique — ticket 9 is the NOTICE. So the BUG tickets below 9 are 6, 7, and 8).\n",
+    "first_external_action": "proposed write /app/AUDIT.md, not executed"
+  },
+  "candidate": {
+    "calls": 2,
+    "prompt_tokens_by_call": [
+      6106,
+      6445
+    ],
+    "completion_tokens_by_call": [
+      185,
+      178
+    ],
+    "cached_prompt_tokens_by_call": [
+      0,
+      5824
+    ],
+    "recalls_requested": 1,
+    "recalls_served": 1,
+    "model_selected_query": {
+      "pattern": "TICKET (1|2|4|5)/"
+    },
+    "returned_text": "message 5 (tool): TICKET 1/44 (BUG) `split_at` in more_itertools/more.py gives wrong results.\nmessage 14 (tool, \"------------------------------------------------------------\"): TICKET 2/44 (BUG) `sample` in more_itertools/more.py gives wrong results.\nmessage 25 (tool): TICKET 4/44 (BUG) `substrings_indexes` in more_itertools/more.py gives wrong results.\nmessage 32 (tool, \"------------------------------------------------------------\"): TICKET 5/44 (BUG) `ichunked` in more_itertools/more.py gives wrong results.",
+    "returned_original_message_ids": [
+      5,
+      14,
+      25,
+      32
+    ],
+    "proposed_lines": [
+      "1 | split_at",
+      "2 | sample",
+      "4 | substrings_indexes",
+      "5 | ichunked",
+      "6 | time_limited",
+      "7 | numeric_range",
+      "8 | classify_unique"
+    ],
+    "correct_lines": 7,
+    "required_lines": 7,
+    "extra_lines": 0,
+    "exact_expected_payload_set_and_line_count": true,
+    "recall_reasoning": "I need the BUG tickets that are below 9: tickets 6, 7, 8 (10, 11, ... are 9 or above). From the memo: 6 time_limited, 7 numeric_range, 8 classify_unique. Also, tickets 1-5 — could there have been a BUG before ticket 6? According to the memo, the completed tickets 6-37 are listed, and ticket 3 is a NOTICE, ticket 9 is a NOTICE, and ticket 16 is also a NOTICE. What about tickets 1, 2, 4, 5? Let me check what those were. I'll recall (look back over).\n",
+    "first_external_action": "proposed write /app/AUDIT.md, not executed"
+  },
+  "entry_evidence_matrix": [
+    {
+      "ticket": 1,
+      "function": "split_at",
+      "original_receipt_message": 5,
+      "original_receipt_excerpt": "TICKET 1/44 (BUG) `split_at` in more_itertools/more.py gives wrong results. Its tests: `t SplitAtTests` (some fail). Fix it, check, then run `next`.",
+      "freshly_retrieved_in_candidate": true,
+      "model_visible_support": "original archive search result with message ID/type/function",
+      "proposal_correct": true,
+      "independent_auditor_source_check": "matches original C64 receipt",
+      "completion_scope": "C65 request asks identity membership of BUG tickets below9. Receipt establishes BUG number/name; it does not alone establish successful repair. Existing C64 grader independently reports this ticket fixed/clean; C65 does not redo repair."
+    },
+    {
+      "ticket": 2,
+      "function": "sample",
+      "original_receipt_message": 14,
+      "original_receipt_excerpt": "TICKET 2/44 (BUG) `sample` in more_itertools/more.py gives wrong results. Its tests: `t SampleTests` (some fail). Fix it, check, then run `next`.",
+      "freshly_retrieved_in_candidate": true,
+      "model_visible_support": "original archive search result with message ID/type/function",
+      "proposal_correct": true,
+      "independent_auditor_source_check": "matches original C64 receipt",
+      "completion_scope": "C65 request asks identity membership of BUG tickets below9. Receipt establishes BUG number/name; it does not alone establish successful repair. Existing C64 grader independently reports this ticket fixed/clean; C65 does not redo repair."
+    },
+    {
+      "ticket": 4,
+      "function": "substrings_indexes",
+      "original_receipt_message": 25,
+      "original_receipt_excerpt": "TICKET 4/44 (BUG) `substrings_indexes` in more_itertools/more.py gives wrong results. Its tests: `t SubstringsIndexesTests` (some fail). Fix it, check, then run `next`.",
+      "freshly_retrieved_in_candidate": true,
+      "model_visible_support": "original archive search result with message ID/type/function",
+      "proposal_correct": true,
+      "independent_auditor_source_check": "matches original C64 receipt",
+      "completion_scope": "C65 request asks identity membership of BUG tickets below9. Receipt establishes BUG number/name; it does not alone establish successful repair. Existing C64 grader independently reports this ticket fixed/clean; C65 does not redo repair."
+    },
+    {
+      "ticket": 5,
+      "function": "ichunked",
+      "original_receipt_message": 32,
+      "original_receipt_excerpt": "TICKET 5/44 (BUG) `ichunked` in more_itertools/more.py gives wrong results. Its tests: `t IchunkedTests` (some fail). Fix it, check, then run `next`.",
+      "freshly_retrieved_in_candidate": true,
+      "model_visible_support": "original archive search result with message ID/type/function",
+      "proposal_correct": true,
+      "independent_auditor_source_check": "matches original C64 receipt",
+      "completion_scope": "C65 request asks identity membership of BUG tickets below9. Receipt establishes BUG number/name; it does not alone establish successful repair. Existing C64 grader independently reports this ticket fixed/clean; C65 does not redo repair."
+    },
+    {
+      "ticket": 6,
+      "function": "time_limited",
+      "original_receipt_message": 71,
+      "original_receipt_excerpt": "TICKET 6/44 (BUG) `time_limited` (a class) in more_itertools/more.py gives wrong results. Its tests: `t TimeLimitedTests` (some fail). Fix it, check, then run `next`.",
+      "freshly_retrieved_in_candidate": false,
+      "model_visible_support": "supplied NOTES completed list; original receipt not recalled in C65",
+      "proposal_correct": true,
+      "independent_auditor_source_check": "matches original C64 receipt",
+      "completion_scope": "C65 request asks identity membership of BUG tickets below9. Receipt establishes BUG number/name; it does not alone establish successful repair. Existing C64 grader independently reports this ticket fixed/clean; C65 does not redo repair."
+    },
+    {
+      "ticket": 7,
+      "function": "numeric_range",
+      "original_receipt_message": 87,
+      "original_receipt_excerpt": "TICKET 7/44 (BUG) `numeric_range` (a class) in more_itertools/more.py gives wrong results. Its tests: `t NumericRangeTests` (some fail). Fix it, check, then run `next`.",
+      "freshly_retrieved_in_candidate": false,
+      "model_visible_support": "supplied NOTES completed list; original receipt not recalled in C65",
+      "proposal_correct": true,
+      "independent_auditor_source_check": "matches original C64 receipt",
+      "completion_scope": "C65 request asks identity membership of BUG tickets below9. Receipt establishes BUG number/name; it does not alone establish successful repair. Existing C64 grader independently reports this ticket fixed/clean; C65 does not redo repair."
+    },
+    {
+      "ticket": 8,
+      "function": "classify_unique",
+      "original_receipt_message": 105,
+      "original_receipt_excerpt": "TICKET 8/44 (BUG) `classify_unique` in more_itertools/more.py gives wrong results. Its tests: `t ClassifyUniqueTests` (some fail). Fix it, check, then run `next`.",
+      "freshly_retrieved_in_candidate": false,
+      "model_visible_support": "supplied NOTES completed list; original receipt not recalled in C65",
+      "proposal_correct": true,
+      "independent_auditor_source_check": "matches original C64 receipt",
+      "completion_scope": "C65 request asks identity membership of BUG tickets below9. Receipt establishes BUG number/name; it does not alone establish successful repair. Existing C64 grader independently reports this ticket fixed/clean; C65 does not redo repair."
+    }
+  ],
+  "coverage_and_semantic_findings": [
+    {
+      "finding": "The query is chosen by the model from missing numbers, not injected as a fixture-specific hint. It excludes known6–8 and knownNOTICE3 deliberately. It returns four matching snippets, each preserving the full membership tuple(number,BUG,function).",
+      "classification": "successful missing-entry retrieval"
+    },
+    {
+      "finding": "Retrieved snippets omit later text/test completion and do not include6/7/8 originals. They are sufficient to add the four identities to this particular requested list, but not a proof of whole-history repair completion or complete-range original inspection.",
+      "classification": "evidence scope limit"
+    },
+    {
+      "finding": "Candidate retains correct6time_limited,7numeric_range,8classify_unique from NOTES. Independent C64 source audit verifies those original receipts at71/87/105, but the candidate did not retrieve them here.",
+      "classification": "correct inherited memory, not fresh retrieval"
+    },
+    {
+      "finding": "NOTICE3 excludes3 from BUG membership; request says numbered below9, so9 is outside range regardless of NOTICE9. Candidate seven-line proposal includes every actual BUG number in1..8 exactly once.",
+      "classification": "proposal membership correct"
+    },
+    {
+      "finding": "No later correction exists in this frozen question about these seven identities. The suffix preserves later authorized corrections in principle, but this fixture does not exercise cancellation/correction conflicts.",
+      "classification": "unmeasured transfer"
+    },
+    {
+      "finding": "Existing stale38 pending/complete contradiction remains in supplied NOTES. Candidate action does not repair or act on it; success on the seven-line proposal is not general NOTES quality.",
+      "classification": "inherited unrelated defect unchanged"
+    }
+  ],
+  "execution_and_leakage_scope": {
+    "task_tools_executed": 0,
+    "proposed_write_executed": false,
+    "only_served_model_tool": "production archive recall over frozen prefix",
+    "proof": "run_arm invokes Keeper.complete and parses first external response; it has no dispatcher for read/bash/edit/write. Actual upstream responses are control write; candidate recall then write. Frozen historical tool calls/results are input history, not C65 executions.",
+    "external_tools_requested_by_model": [
+      "write",
+      "recall",
+      "write"
+    ],
+    "future_evidence": "Initial body ends at original601; archive/notes through585; second candidate call appends only its recall assistant message and genuine tool search response. Original602+ final answer/files, expected_lines/spec and later grading are not injected.",
+    "caps": "All three model completions finish tool_calls, not length; cap16384 unchanged. One recall round is within unchanged production16-round bound.",
+    "timing": "Control12.504s, candidate5.883s are diagnostic wall receipts only; differing calls and candidate second-call prefix cache preclude a general speed claim."
+  },
+  "recommended_reporting": "Say: the memory suffix prompted one archive search, recovered the four missing early entries, and proposed all seven correctly; three entries still came from NOTES. Complete original-range evidence retrieval and fresh full-task quality remain unproven. Preserve strict source-gate miss and any separately authorized fresh-task rationale explicitly."
+}

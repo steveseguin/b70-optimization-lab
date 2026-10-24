@@ -25,7 +25,7 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 | Flat cost | Campaign 59's fixed-metadata pair reproduced every NOTES/archive text and answer; counting memo cut request-clock wall 92m25s→83m12s (9.97%) | Memo default restored; residual client work still grows; this is not a cold model speed claim |
 | Same answers | Release and hostile-task gates remain separate; failed runs retained | Preserve observed completed work without refusing real user corrections |
 
-**Chosen next:** verify exhaustive historical requests against original archive evidence, using the current pi failure.
+**Chosen next:** an exploratory full pi task with the general history-use instruction; evidence coverage remains unqualified.
 Campaign 60 reproduced the pi failure with both thinking workflows; all 18 conditions fail the broad
 source gate, including omitted work and wrong identities. Its thinking-on failure cut hit the cap and
 fell back. [Campaign 60 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-closeout.md)
@@ -40,7 +40,11 @@ repairs all 40 and keeps all rules but writes only 3/7 historical audit entries.
 were omitted from notes; pi treats the surviving list as exhaustive without archive recall. Next is
 [one general main-agent history-use instruction](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-history-coverage.md)
 at that actual failure, with a reconstructed control
-before any fresh full-task confirmation. This changes candidate behavior; no lossless speed claim.
+before a further full task. [Campaign 65](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-closeout.md)
+proposes 7/7 after retrieving four missing receipts, but fails its strict all-seven original-retrieval
+gate. [Campaign 66](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign66-full-pi-contract.md)
+is separately registered as exploratory practical work, not confirmation of complete-evidence behavior.
+This changes candidate behavior; no production adoption or lossless speed claim.
 The [campaign 59 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md) records
 the qualified harness memo and its measurement scope.
 The [campaign 58 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign58-closeout.md) preserves

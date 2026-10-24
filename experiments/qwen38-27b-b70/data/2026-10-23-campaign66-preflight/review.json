@@ -1,0 +1,40 @@
+{
+  "approved": true,
+  "issues": [],
+  "reviewed_at": "2026-10-24T02:52:03.918740+00:00",
+  "reviewer": "independent audit_c59_final",
+  "sha256": {
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/current_pi_contract_probe.py": "9cf61427bbe763ad53eb45619c785be42b246cfc738097543fe0b5868b1a856b",
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/run_campaign66.py": "76f93760757da74184340204ea3660036c723fd5680dd11ea6e2f4bea48bcb7b",
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/history_contract_keeper.py": "4fd7fa757573f9535b77f5214933416a2c887d0c7800fa3139bdddb23bb7f5a4",
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/main_history_contract_probe.py": "cba9c2e7828e834bbf2ed846c2cdf33c3229abd0fb22a13145689eb0bc4f2b34",
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/current_pi_probe.py": "72f1c8883d7a48f5aad206f1c2643f5bcc56905e1bc63301b6598992834ec5a5"
+  },
+  "checks": {
+    "cpu_tests": "17 pass",
+    "base_c64_client_hash_unchanged": true,
+    "contract_c65_source_hash_unchanged": true,
+    "wrapper_configuration_restored_even_on_exception": true,
+    "suffix_appended_exactly_once": true,
+    "proxy_argv_delta": "launcher and state directory only",
+    "shared_main_and_notes_header_change_explicit": true,
+    "production_keeper_source_and_recipe_defaults_unchanged": true,
+    "all_runtime_import_dependencies_pinned": true,
+    "task_image_limits_and_driver_substitutions_preserved": true,
+    "required_memavailable_mib": 2706,
+    "task_memory_mib": 768,
+    "task_memory_plus_swap_mib": 768,
+    "agent_cap_seconds": 3600,
+    "outer_client_cap_seconds": 4200,
+    "owned_proxy_cleanup_and_no_restore": true,
+    "original_history_checker_deferred_until_server_and_proxy_inactive": true,
+    "runner_binds_all_five_reviewed_sources": true,
+    "quality_gate_includes_40_fixed_40_clean_44_tickets_7_audit_and_rules": true,
+    "prereg_consistency": "separately registered exploratory full task; C65 strict evidence gate remains failed"
+  },
+  "scope": "Source and CPU safety review; parent separately performs actual read-only image/freshness preflight. No GPU, network or container launches during this review.",
+  "limitations": [
+    "Practical full-task success would not qualify original-source coverage or later-correction transfer.",
+    "The suffix affects both main and notes headers; no causal speed comparison or default promotion is authorized."
+  ]
+}

@@ -1,5 +1,24 @@
 # Current Workspace State
 
+**October 23, 22:53 EDT — two-card host: exploratory full pi trial ready.**
+Campaign 66 retains the failed complete-evidence gate from campaign 65 and tests practical task quality
+with the same general memory suffix. Exact original image, task hashes and four task-driver changes
+match campaign 64. All 17 focused tests, independent five-source review and all 46 repository checks pass.
+Cards are empty. Setup is being published through the authenticated GitHub app; local CLI credentials
+remain invalid. No production keeper/default changes. Parent stays active through the full run and audit.
+Registration: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign66-full-pi-contract.md`.
+
+**October 23, 22:51 EDT — two-card host: replay repairs the answer, but its strict evidence gate fails.**
+Campaign 65's control reproduces 3/7; the candidate proposes 7/7 after one recall of the four missing
+original receipts. The other three entries still come from correct notes, so all-seven original
+retrieval is not established. Strict gate failure is retained, with no promotion. Server stopped
+cleanly at 22:46; cards empty. Separately registered campaign 66 is an exploratory full pi trial to
+measure practical artifact quality, not confirmation of complete-evidence behavior. Its same memory
+suffix appears in both main and notes headers through the ordinary keeper; no production defaults
+change. Source/preflight work and independent review precede launch. Parent stays active.
+Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-closeout.md`; next registration:
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign 66-full-pi-contract.md`.
+
 **October 23, 22:42 EDT — two-card host: history-coverage diagnostic launched.**
 Unit `ctx-campaign65` runs the frozen control first; the candidate is gated on exact original behavior
 and prompt count. Setup and campaign64 audit are published in `bbc612b5d`, with byte-identical file
