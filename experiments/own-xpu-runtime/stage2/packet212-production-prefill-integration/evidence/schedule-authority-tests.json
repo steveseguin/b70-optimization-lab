@@ -1,0 +1,41 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "nice",
+    "-n",
+    "19",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/packet212-production-prefill-integration/tests",
+    "-p",
+    "test_schedule_authority.py",
+    "-v"
+  ],
+  "device_executed": false,
+  "log": "experiments/own-xpu-runtime/stage2/packet212-production-prefill-integration/evidence/schedule-authority-tests.log",
+  "log_provenance": "Exact completed test stdout/stderr returned by exec tool retained after run; no rerun",
+  "log_sha256": "5bf57ea9d78dc16b2fa70c2227f136b71a32e63d82d8fd70058a7dd4dbb1c67c",
+  "model_executed": false,
+  "passed": true,
+  "runtime_executed": false,
+  "schema": "packet212.schedule-authority-tests.v1",
+  "scope": "Read-only artifact/source checks only; pure schedule executable was run once by separately retained build attempt",
+  "source_sha256": {
+    "AUTHORITY.md": "bc26b95455db8157deb5d24561968b337583cbf5b89ce2d981a4d9c1e711eeba",
+    "build_schedule_fixture.py": "f7dd680b19bb8b95b1d5bd8a3884f4d34cc7e70d9a3ecf7be6b5d624346ad24e",
+    "evidence/schedule-build.json": "f5242702d6d7f157a3c5fd59e2461f8d155737090b462cd883dddb5957c525e9",
+    "evidence/schedule-proof.json": "da0e3ccb5ac1766d92b0198f27641158193ec435eb6d7a44a1dbbf00d464123a",
+    "prepare_fixture.py": "cd6432471ed50bb3c96211e0ee10bbeb2cc61741baefa54039c06e542841de54",
+    "production_schedule.hpp": "0ca16dfd1bdb62307bc781b2720b1d95a07cc7acc7ce057c003d1ff642755c0f",
+    "schedule-inputs.json": "5fb5c81b09aadc226c18157750f911135729613a272047db714f5e49b5ed7be4",
+    "schedule_fixture.cpp": "c7792fa79902c7559af11af6caa9a42da28c83733f9d50881fa70c6f2067794b",
+    "tests/test_schedule_authority.py": "3f2cbd92717050fbbbba3897908e34a925e78eb119e1ae112418cd5225ed8b4d"
+  },
+  "tests": 7
+}

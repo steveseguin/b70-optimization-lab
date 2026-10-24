@@ -1,0 +1,104 @@
+# P212 production schedule and compile-only authority
+
+## Question and identity
+
+Can the proposed full 48-layer production helper select and order its work from
+actual retained P201 metadata, while keeping Q8 fallback, QSA causality, PLE,
+empty captured followers and cache route chronology intact?
+
+The pure CPU fixture uses the same `build_schedule`, `ordered_steps`,
+`admit_chunk`, `route_offset` and `chronological_routes` functions as the new
+runtime helper. It imports no Device, Weights or backend, links no native runtime
+object and reads no model shard. The compiled production Engine remains a
+separate compile-only artifact; it has not been executed or qualified by this
+metadata fixture.
+
+## Outcome
+
+The pure schedule executable passed 97 checks. The initial seven read-only
+schedule tests passed; the final twelve-test suite also verifies the native
+compile-only artifact and its source/object closure. The native build passed
+with 101 repository dependencies and 38 unchanged parent objects. Offline ELF
+inspection finds both paired Q6 kernel entries and the future body symbol.
+The public `main` only prints a refusal and returns64; its retained disassembly
+contains no call to the future body. No native executable was invoked.
+The actual recorded plan contains 1,486 logical sites, 1,118 prepared command
+records across 1,016 distinct sites, and 470 sites without prepared commands.
+These are distinct quantities: an empty fused follower or lookup slot is kept
+in the logical schedule without being described as a device launch.
+
+For a two-token nonfinal interval, the shared schedule preserves all 1,479
+nonfinal sites in each row's original order. It emits 2,818 ordinary site
+invocations and 70 paired calls replacing exactly 140 original row submissions.
+The seven final normalization/head/argmax/commit sites are excluded. There are
+35 eligible Q6 GDN layers, one Q8 GDN fallback at layer2 and 12 QSA layers.
+Every QSA layer and the Q8 fallback finish row0 before row1. The retained
+`blk.1.ple.lookup` slot appears for both rows despite having no captured command.
+
+The route test uses all 960 row/layer/slot entries, includes expert511 and
+checks chronological row0 layers0–47 then row1 layers0–47. A wrong row order
+changes the result; incomplete logs and out-of-range expert/row/layer values
+refuse. Chunk admission refuses final-token consumption, decode position,
+capacity overflow, unsupported context and crossing a 32-token boundary.
+
+## What worked
+
+[The extracted inputs](schedule-inputs.json) preserve the full recorded logical
+order, operation names, card assignments and prepared-command multiplicity.
+Candidate GDN tensor names join the pinned original input plan to actual stored
+byte extents and the existing production projection census. Selection uses
+Q6 K2560, output widths10240/6144, variant6 and exact3380-byte expanded rows.
+Layer2 remains Q8 with its actual31,129,600/18,677,760-byte stored tensors.
+
+The selected baseline identity is recorded explicitly: `wide64+halfcache`,
+`down-tile16`, `p60fusion`, `hc-wide`, fused other operations, and the original
+21,552,729,600-byte cache with overlap maintenance. A proposed frozen two-row
+maintenance policy is a separate candidate change, not evidence that the
+baseline already used that policy.
+
+The actual compiled runtime consumes the same `ordered_steps` header as the
+pure fixture. Read-only source gates bind the selected production geometry,
+original expert dispatch, actual card0/p33 capture checks and seven-allocation
+pair ABI. The inherited backend source/object lineage is pinned, including its
+ordered-queue and copy-barrier implementation. These are compiled/source facts,
+not observations of device completion. The candidate requires serial cache
+maintenance explicitly; the historical baseline used overlap maintenance.
+
+## What failed or remains uncertain
+
+The first helper attempt failed before compiler spawn because the existing
+`compile_turn` helper imports `build_engine.limits`. The new fixture helper had
+not registered that module seam. Its exact source and failed receipt are retained
+under `evidence/schedule-1792802260460381803`. The corrected helper exposes its
+same CPU limits through the existing seam and completed successfully; no Engine
+or device work occurred in either attempt.
+
+Retained launch metadata omits input/output/weight-name arrays. The fixture does
+not fabricate them. Only the required GDN projection tensor names are joined
+from pinned source identities. Actual input/output allocation binding, card0,
+selected `p33.dense.segment`, native captured argument ownership, cache fills,
+completion and arithmetic remain runtime admission and subsequent execution
+gates. The fixture proves the shared pure schedule against the recorded plan;
+it does not execute those operations or establish GPU correctness or speed.
+
+## Evidence and patches
+
+- [Input extractor](prepare_fixture.py) and [exact source pins](schedule-inputs.json).
+- [Shared selector](production_schedule.hpp) and [pure fixture](schedule_fixture.cpp).
+- [Build/attempt receipt](evidence/schedule-build.json) and [97-check result](evidence/schedule-proof.json).
+- [Schedule tests](tests/test_schedule_authority.py) and [initial seven-test receipt](evidence/schedule-authority-tests.json).
+- [Native offline tests](tests/test_native_authority.py), [final twelve-test receipt](evidence/full-authority-tests.json) and [native build receipt](evidence/build-compile-only.json).
+- [Original authority prose](lineage/authority-before-native-closure/AUTHORITY.md.txt), retained byte-for-byte for the initial receipt.
+
+Each compile attempt preserves its exact local source and extracted TSV input.
+The successful compiler dependency file contains only the fixture and shared
+header; the ignored executable is SHA256-bound. The compact JSON result retains
+the entire emitted sequence and chronological routes for independent inspection.
+All parent source and actual P201 metadata remain unchanged.
+
+## When to revisit
+
+After this production compile/source review, a separately admitted device
+experiment must establish real pointer/capture correctness, causal state and
+full model output equivalence. No execution permission or speed conclusion
+follows from this metadata proof.

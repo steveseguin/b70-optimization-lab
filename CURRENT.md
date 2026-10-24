@@ -1,6 +1,17 @@
 # Current Workspace State
 
-**October 23, 20:49 EDT — Campaigns 59/60 audited; exact counting memo restored, source-verification diagnostic prepared.**
+**October 23, 20:50 EDT — four-card host: the full production prompt integration compiles; execution remains disabled.**
+The two-row schedule is connected to all 48 layers and the existing quantized expert operators. Its shared
+CPU schedule passes 97 checks, including Q6 pairing, the original Q8 path on layer 2 and causal attention
+ordering. Offline inspection confirms both paired kernels and a public entry that refuses every invocation.
+No native correctness or speed result is claimed. Final review found a conservative cleanup limitation:
+some cache-preparation or post-commit logging failures can retain an already-drained owner. Next is fixing
+those transitions and adding the matched serial control needed for a fair comparison in the same binary.
+The native target remains occupied; applications are unchanged. The tiny Engine cache-proof commit
+eeacf90ba has all three CI workflows green.
+[Production integration and limits](experiments/own-xpu-runtime/stage2/packet212-production-prefill-integration/README.md).
+
+**October 23, 20:49 EDT — two-card host: Campaigns 59/60 audited; exact counting memo restored, source-verification diagnostic prepared.**
 Both campaigns finished by 12:57 with servers stopped; the agent did not resume after its prior chat
 turn ended, leaving the audit idle until the owner returned at 20:42. Background units do not wake a
 finished turn. Campaign 59 reproduces all NOTES/archive text and answers (420/423); counting memo
