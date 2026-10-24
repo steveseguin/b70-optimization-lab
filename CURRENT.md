@@ -14,9 +14,10 @@ untouched).
 - A reset takes 0.1 s, and every target-confirmed token is streamed.
 - Stop it with `systemctl --user stop sc117-lan`. It never restarts by itself and stops at 47 h.
 
-- Prompts are read in batches of 16 tokens (engine `afdfa33a9200` since 19:38). Each new binary's startup gate on the
+- Prompts are read in batches of 16 tokens (engine `b6c231473f39` since 20:30). Each new binary's startup gate on the
   cards showed the batched reading identical to token-by-token reading: tokens, guesses and full engine state. A
-  581-token prompt now takes 9.7 s instead of 16.2 s.
+  581-token prompt now takes 9.3 s instead of 16.2 s. An outside review (vLLM XPU kernels PR #22, Strata) ranked further
+  exact ideas: [review](experiments/own-xpu-runtime/research/2026-10-24-external-review-pr22-strata.md).
 
 Next:
 - making batched reading much faster: matrix multiplies are now about 75% of it, and tiled kernels are next;

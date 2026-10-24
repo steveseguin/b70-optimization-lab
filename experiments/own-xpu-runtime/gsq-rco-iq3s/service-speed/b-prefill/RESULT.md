@@ -1,6 +1,6 @@
-# Batched prefill: lossless on device, 1.67× on a 581-token prompt (2026-10-24)
+# Batched prefill: lossless on device, 1.73× on a 581-token prompt (2026-10-24)
 
-The serving engine is `afdfa33a9200` ([receipt](../../../engine/receipts/afdfa33a9200.json)), in F32 exact mode
+The serving engine is `b6c231473f39` ([receipt](../../../engine/receipts/b6c231473f39.json)), in F32 exact mode
 with `--prefill-rows 16`. It serves the LAN endpoint through [adapter6.py](../../serving/lan/adapter6.py) with
 `SC117_PREFILL_ROWS=16`. The first lossless stage was `6fd6eaa7c622`, and the progression table below lists each
 binary.
@@ -70,7 +70,9 @@ On the 581-token prompt, one 16-row chunk takes about 278 ms on each rank, about
 | `dae4f85b` | tiled kopt dense kernel: 16 weight rows per work-group, activations staged in local memory | 18.7 s (exact; slower, most likely accumulator spills; now opt-in, `OWNRT_PREFILL_TILED=1`) |
 | `8a76e3ce` | tiled kernel off by default; `simple_body` reads its Spec by reference (no speed change) | 9.7 s (1.67×) |
 | `afdfa33a` + `OWNRT_PREFILL_TILED=1` | tiled kernel v2: transposed local-memory tile, 16 unrolled tokens, 2 rows per subgroup | 11.0 s (exact). Per family: kopt Q8_0 0.85 → 0.73 ms/row, but 16-bit-weight sites 2.16 → 4.52 ms/row, because their matrices are mostly small-row (1–512 rows) or K=320 |
-| **`afdfa33a`** | default (tiled off) | **9.7 s (1.67×)** |
+| `afdfa33a` | default (tiled off) | 9.7 s (1.67×) |
+| `1ac490cd` + `OWNRT_PREFILL_REUSE=1` | reuse kernels with 4-token tiles (small register tiles, after vllm-xpu-kernels PR #22) | per family: kopt 2.16 → 1.80 ms/row, dense block IQ4_XS 0.55 → 0.39, Q5_K 0.68 → 0.55; p33 Q6_K 0.95 → 1.15 and Q8_0 0.85 → 0.97 (worse) |
+| **`b6c23147`** | 4-token tiles by default for kopt and dense blocks; p33 unchanged | **9.3 s (1.73×)** |
 
 Per-op profiles (`OWNRT_PREFILL_PROFILE=1`, drains after every site) are in [profiles/](profiles/). For `e8823486`, of
 14.8 ms per row on rank 0:
@@ -83,6 +85,11 @@ weight row and re-reads its F32 activation vector, and the work runs at a few pe
 reuse alone (`8feaa684`) lost parallelism without removing the activation traffic.
 
 ## Next
+
+The outside review [../../../research/2026-10-24-external-review-pr22-strata.md](../../../research/2026-10-24-external-review-pr22-strata.md)
+ranks further exact ideas: aligned GGUF block loads, codebooks in registers, MoE in about 3 launches, packed-key top-k,
+and GDN verify without state writes.
+
 
 1. Faster matrix-multiply kernels for the batched shapes. Two tiled attempts were exact but not faster overall
    (table above). The next attempt needs kernel-level measurement (a GPU profiler, or an isolated microbenchmark on a

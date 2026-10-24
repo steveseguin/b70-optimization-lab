@@ -329,9 +329,9 @@ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
     MultiplyTiled<2,16> tiled;tiled.desc=op.desc[0];return d.compute(tiled,ids,{});
   }
-  if(!prefill_switches::weight_reuse_rows())return finish(d,op,ids);
-  // F32 token rows: weight-reuse kernel, 16 token rows per subgroup.
-  constexpr unsigned R=16;MultiplyRows<R> rows_op;rows_op.desc=op.desc[0];rows_op.subgroup=sg;rows_op.local_stride=op.local_stride;
+  if(!prefill_switches::small_tile_rows())return finish(d,op,ids);
+  // F32 token rows: weight-reuse kernel, 4 token rows per subgroup (small register tile, after vllm-xpu-kernels PR #22).
+  constexpr unsigned R=4;MultiplyRows<R> rows_op;rows_op.desc=op.desc[0];rows_op.subgroup=sg;rows_op.local_stride=op.local_stride;
   rows_op.desc.first_group=0;rows_op.groups=(rows*((tokens+R-1)/R)+rows_per_group-1)/rows_per_group;
   if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
   return d.compute(rows_op,ids,{});

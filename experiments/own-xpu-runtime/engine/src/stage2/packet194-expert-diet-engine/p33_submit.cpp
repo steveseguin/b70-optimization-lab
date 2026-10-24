@@ -117,7 +117,7 @@ template<iq3::Type T,unsigned K,unsigned R> struct DenseRows final:ownrt::SyclOp
 template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
 #ifndef OWN_RT_HOST_ONLY
  if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&prefill_switches::weight_reuse_rows()) {
-  constexpr unsigned R=16;DenseRows<T,K,R> k;k.b.rb=integrated::arithmetic::row_bytes(T,K,6);k.b.rows=m[0].rows;k.b.tokens=m[0].tokens;
+  constexpr unsigned R=4;DenseRows<T,K,R> k;k.b.rb=integrated::arithmetic::row_bytes(T,K,6);k.b.rows=m[0].rows;k.b.tokens=m[0].tokens;
   std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};auto e=d.compute(k,ids,{});return {e,e,1};
  }
 #endif

@@ -120,7 +120,7 @@ inline const Site& policy(const integrated::Matrix&m,std::string_view label,std:
 }
 template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.x,m.y};
 #ifndef OWN_RT_HOST_ONLY
- if(s.f32&&s.row_major&&prefill_switches::weight_reuse_rows()){DenseBlockRows<T,16>op;op.s=s;std::array<ownrt::Allocation,3>rows{m.w,m.x,m.y};auto e=d.compute(op,rows,{});return {e,e,1};}
+ if(s.f32&&s.row_major&&prefill_switches::small_tile_rows()){DenseBlockRows<T,4>op;op.s=s;std::array<ownrt::Allocation,3>rows{m.w,m.x,m.y};auto e=d.compute(op,rows,{});return {e,e,1};}
 #endif
  if(s.f32){DenseBlockOperation<T,true>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
  DenseBlockOperation<T>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
