@@ -1,0 +1,497 @@
+--- experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/build/native/main.cpp
++++ experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/build/native/main.cpp
+@@ -134,7 +134,8 @@
+   }
+ };
+ struct Options {
+-  bool p207_host_chunk2=false,p207_fail_after_row0=false,p207_observe=false;
++  bool p211_host_chunk2=false,p211_fail_after_row0=false,p211_observe=false;
++  std::string p211_cache_mode="off";
+   bool request_front=false;int front_max_requests=0,front_idle_seconds=0;
+   fs::path front_checkpoints,front_tokenizer;
+   std::string hc="p60fusion",hc_geometry="production",experts="production",other_fusion="production",retirement="production";
+@@ -163,13 +164,13 @@
+   fs::path inputs, output, model, plan, auth, oracle, suite_inputs, bracket_inputs;
+   fs::path checkpoint_save, checkpoint_restore, tokenizer_identity; std::string checkpoint_id, checkpoint_save_id;
+ };
+-static void p207_validate_options(const Options& a) {
+-  if(!a.p207_host_chunk2 && !a.p207_fail_after_row0 && !a.p207_observe)return;
++static void p211_validate_options(const Options& a) {
++  if(a.p211_cache_mode=="off" && !a.p211_host_chunk2 && !a.p211_fail_after_row0 && !a.p211_observe)return;
+ #ifndef OWN_RT_HOST_ONLY
+-  throw std::runtime_error("p207 chunk2 is HOST_ONLY only");
++  throw std::runtime_error("p211 cache2 is HOST_ONLY only");
+ #else
+-  require((!a.p207_fail_after_row0 || a.p207_host_chunk2) && a.mini && a.pipeline_mini && a.memory=="resident" && a.cards==1 && a.rank==-1 && !a.legacy && !a.mtp && a.draft_capture.empty() && !a.priority_probe && !a.record && !a.first && !a.canary && !a.pipeline_canary && a.bracket_inputs.empty() && a.nongemv=="parallel" && a.context<=128 && a.retain_steps.ranges.empty(),
+-    "p207 chunk2 requires HOST_ONLY mini pipeline resident single-owner mode");
++  require((a.p211_cache_mode=="off"||a.p211_cache_mode=="serial"||a.p211_cache_mode=="paired") && a.cache_maintenance=="serial" && (!a.p211_fail_after_row0 || a.p211_host_chunk2) && a.mini && a.pipeline_mini && a.memory=="resident" && a.cards==1 && a.rank==-1 && !a.legacy && !a.mtp && a.draft_capture.empty() && !a.priority_probe && !a.record && !a.first && !a.canary && !a.pipeline_canary && a.bracket_inputs.empty() && a.nongemv=="parallel" && a.context<=128 && a.retain_steps.ranges.empty(),
++    "p211 cache2 requires HOST_ONLY mini pipeline resident single-owner mode");
+ #endif
+ }
+ static Options parse(int argc, char **argv) {
+@@ -210,9 +211,9 @@
+     else if (k == "--shared") a.shared=value();
+     else if (k == "--pipeline-canary") a.pipeline_canary=true;
+     else if (k == "--pipeline-mini") a.pipeline_mini=true;
+-    else if (k == "--p207-host-chunk2") a.p207_host_chunk2=true;
+-    else if (k == "--p207-host-fail-after-row0") a.p207_fail_after_row0=true;
+-    else if (k == "--p207-host-observe") a.p207_observe=true;
++    else if(k=="--p211-host-cache"){a.p211_cache_mode=value();a.p211_host_chunk2=a.p211_cache_mode=="paired";}
++    else if(k=="--p211-host-observe")a.p211_observe=true;
++    else if(k=="--p211-host-fail-after-row0")a.p211_fail_after_row0=true;
+     else if(k=="--argument-audit")a.argument_audit=true;
+     else if(k=="--audit-prepare-each") {a.argument_audit=true;a.audit_prepare_each=true;}
+     else if(k=="--host-path") {auto v=value();require(v=="legacy"||v=="prepared","host path");a.legacy=v=="legacy";}
+@@ -276,7 +277,7 @@
+     else
+       throw std::runtime_error("unknown option " + k);
+   }
+-  p207_validate_options(a);
++  p211_validate_options(a);
+   if (a.canary && !seconds_supplied) a.seconds = 600;
+   require(a.cancel_launch>=-1,"cancel launch bound");
+ #ifndef OWN_RT_HOST_ONLY
+@@ -637,12 +638,18 @@
+   Scalar type;
+ };
+ static size_t target_scratch_bytes(const flash::Plan&,const Options&);
++#ifdef OWN_RT_HOST_ONLY
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/cache_runtime.hpp"
++#endif
+ class Engine final : public flash::Backend {
+ public:
+   struct ExpertBank {Allocation host=0,table=0;size_t expert_bytes=0;int layer=-1,projection=-1;};
+   std::map<std::string,ExpertBank> expert_banks;
+   Allocation halfcache=0;
+   std::unique_ptr<p58::Cache> expert_cache;
++#ifdef OWN_RT_HOST_ONLY
++  std::unique_ptr<p211::MiniCache> mini_cache;
++#endif
+   Allocation cache_arena=0,route_log=0,table_staging=0;uint64_t cache_epoch=0,cache_fill_bytes=0,cache_fills=0;
+   std::vector<std::pair<int,Allocation>> route_sources;
+   std::vector<uint8_t> host_routes;
+@@ -812,6 +819,9 @@
+     }
+ #endif
+     pending.clear();tail=0;
++#ifdef OWN_RT_HOST_ONLY
++    if(mini_cache)mini_cache->consume_route_events();
++#endif
+     if(!devices.empty())dev(0).retire_completed_events();
+   }
+ 
+@@ -956,6 +966,9 @@
+                   static_cast<const uint8_t *>(src) + i, k);
+       ownrt::CopyEngine copy(dev(c));
+       wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}),"upload",dst,k);
++#ifdef OWN_RT_HOST_ONLY
++      if(mini_cache)mini_cache->consume_route_events();
++#endif
+       dev(c).retire_completed_events();
+     }
+     transfer_ms+=ms(started);
+@@ -968,6 +981,9 @@
+       size_t k = std::min(n - i, size_t(4 * 1024 * 1024));
+       ownrt::CopyEngine copy(dev(c));
+       wait(c, copy.copy(slab[c], 0, src, i, k, {}),"readback",src,k);
++#ifdef OWN_RT_HOST_ONLY
++      if(mini_cache)mini_cache->consume_route_events();
++#endif
+       dev(c).retire_completed_events();
+       std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
+     }
+@@ -994,6 +1010,26 @@
+   bool allocation_probe=false, legacy_pointer_probe=false; // Only the CPU gate sets these.
+ #else
+   static constexpr bool allocation_probe=false, legacy_pointer_probe=false;
++#endif
++#ifdef OWN_RT_HOST_ONLY
++  void initialize_mini_cache(){
++    require(a.mini&&a.pipeline_mini&&a.cards==1&&a.memory=="resident"&&a.cache_maintenance=="serial","p211 tiny cache admission");drain();
++    std::vector<p211::BankSpec> specs;std::set<std::string> expert_names;
++    for(const auto&launch:p.launches)if(launch.op=="expert_gate_up"||launch.op=="routed_gemv")for(const auto&name:launch.weights)expert_names.insert(name);
++    require(expert_names.size()==12,"p211 twelve planned expert banks");
++    for(const auto&name:expert_names){auto id=weights[0].at(name);const auto&t=w.directory.at(name);
++      require(t.shape.size()==3&&flash::grid_type(t.grid)==iq3::Type::F32&&t.shape[0]==p.g.experts,"p211 tiny F32 bank");
++      unsigned layer=std::stoul(name.substr(4));unsigned projection=name.find("ffn_gate_")!=std::string::npos?0:name.find("ffn_up_")!=std::string::npos?1:2;
++      specs.push_back({name,layer,projection,id,size_t(t.bytes)/size_t(p.g.experts)});
++    }
++    auto allocator=[this](const std::string&name,size_t bytes,Category category,Lifetime life,Memory memory){return allocate(0,name,bytes,category,life,memory);};
++    mini_cache=std::make_unique<p211::MiniCache>(dev(0),allocator,specs,p.g.experts,p.g.top);
++    for(const auto&s:specs)weights[0][s.name]=mini_cache->table(s.name);
++  }
++  void retain_mini_routes(const flash::Launch& l){if(mini_cache&&l.op=="expert_gate_up"){
++    require(mini_cache->running(),"p211 routed use without frozen interval");
++    tail=mini_cache->retain(unsigned(std::stoul(l.label.substr(4))),buffers[0].at(l.inputs[1]).id);
++  }}
+ #endif
+   void load_expert_bank(const std::string& name) {
+     const auto& t=w.directory.at(name);require(t.shape.size()==3&&p.g.experts==512,"expert bank shape");
+@@ -1254,6 +1290,9 @@
+             load(l.card, name);
+     }
+     if(caching())initialize_cache();
++#ifdef OWN_RT_HOST_ONLY
++    if(a.p211_cache_mode!="off")initialize_mini_cache();
++#endif
+   }
+   void prepare_plan() {
+     if(a.memory!="resident")return;
+@@ -1380,6 +1419,13 @@
+       it=matrices.emplace(&l,std::move(values)).first;
+     }
+     auto m=a.memory=="resident"?it->second[0]:matrix(l);
++#ifdef OWN_RT_HOST_ONLY
++    if(mini_cache && (l.op=="expert_gate_up"||l.op=="routed_gemv")){
++      std::vector<Matrix> selected{m};std::vector<p211::Span> payload{mini_cache->pinned(l.weights[0])};
++      if(l.op=="expert_gate_up"){selected.push_back(it->second[1]);payload.push_back(mini_cache->pinned(l.weights[1]));}
++      mini_cache->admit();finish(c,p211::indirect_experts(dev(c),selected,l.op=="expert_gate_up",payload,mini_cache->cache_span()),true);return;
++    }
++#endif
+     if(p39::tagged(l)){
+       auto kind=p39::kind(l);auto cls=packet26::Dispatch::class_name(l.label);auto prefix=l.label.substr(0,l.label.size()-cls.size());
+       auto id=[&](const std::string&name){return buffers[c].at(name).id;};
+@@ -1670,6 +1716,9 @@
+   flash::Event issue_site(size_t index,flash::Event dep) {
+     if(poisoned||stopped)throw std::runtime_error("prepared guard closed");
+     if(dep!=logical)throw std::logic_error("step event order");
++#ifdef OWN_RT_HOST_ONLY
++    if(mini_cache)mini_cache->admit();
++#endif
+     auto& site=issue_sites.at(index);int c=site.card;
+     if(submission_card!=c)drain();submission_card=c;current_cls=site.cls;
+     auto previous_submitted=submitted;
+@@ -1684,7 +1733,12 @@
+   flash::Event enqueue(const flash::Launch &l, flash::Event dep) override {
+     last_site=&l.label;
+     if(caching() && a.miss_path=="streamed" && l.op=="expert_gate_up")stream_layer(std::stoi(l.label.substr(4)),buffers[0].at(l.inputs[1]).id);
+-    if(prepared_path){auto index=size_t(&l-p.launches.data());audit_issue_site(index);return issue_site(index,dep);}
++    if(prepared_path){auto index=size_t(&l-p.launches.data());audit_issue_site(index);auto result=issue_site(index,dep);
++#ifdef OWN_RT_HOST_ONLY
++      retain_mini_routes(l);
++#endif
++      return result;
++    }
+     guard();
+     require(dep == logical, "step event order");
+     int c = l.card;
+@@ -1711,9 +1765,16 @@
+     if(a.checked)progress.flush();
+     return ++logical;
+   }
+-  void submission_failed() noexcept override { poisoned = true; }
++  void submission_failed() noexcept override { poisoned = true;
++#ifdef OWN_RT_HOST_ONLY
++    if(mini_cache)mini_cache->poison();
++#endif
++  }
+   std::vector<std::string> shutdown() {
+     std::vector<std::string> receipts;
++#ifdef OWN_RT_HOST_ONLY
++    if(mini_cache){drain();mini_cache->close();}
++#endif
+     for (auto &d : devices) {
+       auto r = d->shutdown(std::chrono::seconds(60));
+       receipts.push_back(r.json());
+@@ -1822,8 +1883,8 @@
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp"
+ #include "checkpoint.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/chunk_runtime.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/pair_proof.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/chunk_runtime.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/indirect_proof.hpp"
+ 
+ // SPEED6_SCRATCH_POLICY_BEGIN
+ // Scope the footprint reduction to the previously refused split23/dr1 arm.
+@@ -1905,7 +1966,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/native-source/repo/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/native/bracket_table.hpp"
+ int main(int argc, char **argv) {
+ #ifdef OWN_RT_HOST_ONLY
+-  if(argc==3 && std::string(argv[1])=="--p207-pair-proof") {try{return p207::pair_proof(argv[2]);}catch(const std::exception& ex){std::cerr<<ex.what()<<std::endl;return 1;}}
++  if(argc==3 && std::string(argv[1])=="--p211-indirect-proof") {try{return p211::indirect_proof(argv[2]);}catch(const std::exception& ex){std::cerr<<ex.what()<<std::endl;return 1;}}
+ #endif
+ 
+ #ifdef OWN_RT_HOST_ONLY
+@@ -2024,8 +2085,8 @@
+     record_host_memory(output,"before_load");
+     e->initialize();
+ #ifdef OWN_RT_HOST_ONLY
+-    std::unique_ptr<p207::Chunks> host_chunks;
+-    if(a.p207_host_chunk2)host_chunks=std::make_unique<p207::Chunks>(*e);
++    std::unique_ptr<p211::Chunks> host_chunks;
++    if(a.p211_host_chunk2)host_chunks=std::make_unique<p211::Chunks>(*e);
+ #endif
+     // Keep a complete owner available for the normal drain-on-error proof.
+     if(a.resident_lookups||!a.bracket_inputs.empty())w->load_resident_lookups();
+@@ -2129,7 +2190,13 @@
+     output=front?root_output/"requests"/request_id:(request_id.empty()?view_output:view_output/request_id);
+     auto monotonic=[](){return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();};
+     const double request_start_seconds=monotonic();
++#ifdef OWN_RT_HOST_ONLY
++    const auto p211_reset_before=e->mini_cache?e->mini_cache->normalized():std::string{};
++#endif
+     p58_reset_request(*e,output);
++#ifdef OWN_RT_HOST_ONLY
++    if(e->mini_cache)e->mini_cache->request_reset(output,p211_reset_before);
++#endif
+     e->request_diagnostics=output;e->request_token_index=0;e->last_site=nullptr;
+     generated.clear();text.clear();
+     std::vector<int> input;
+@@ -2144,6 +2211,10 @@
+       e->request_token_index=token_index;e->checkpoint(fixture_step==0?"prefill-start":"decode-start");
+       e->admit_position(int(token_index));e->verify_configuration();
+       auto token_start=std::chrono::steady_clock::now();e->cache_begin_position();
++#ifdef OWN_RT_HOST_ONLY
++      const bool p211_single=e->mini_cache&&!e->mini_cache->running();
++      if(p211_single){e->drain();e->mini_cache->begin(token_index,1,output);}
++#endif
+       struct rusage process_before{},thread_before{},process_after{},thread_after{};
+       getrusage(RUSAGE_SELF,&process_before);getrusage(RUSAGE_THREAD,&thread_before);
+       double token_g=e->gemv_ms,token_n=e->nongemv_ms,token_t=e->transfer_ms;
+@@ -2195,6 +2266,9 @@
+       e->transfer_ms+=Engine::ms(start_transfer);
+       require(!status,"sticky device error at token "+std::to_string(token_index)+"; rerun --checked for layer localization");
+       e->cache_after_position();
++#ifdef OWN_RT_HOST_ONLY
++      if(p211_single){e->drain();try{e->mini_cache->end();}catch(...){e->poisoned=true;throw;}}
++#endif
+       if(fixture_step>0)generated_stamps.push_back(monotonic());
+       if(capture) {
+         std::vector<std::vector<uint8_t>> raw(a.cards);
+@@ -2243,21 +2317,24 @@
+       token_rows<<"]}\n";
+       if(token_index==1)e->checkpoint("first-prefill-complete");
+ #ifdef OWN_RT_HOST_ONLY
+-      if(a.p207_observe && fixture_step==0)p207::record_state(*e,"serial-prefill-state.jsonl",token_index-1,1);
++      if(a.p211_observe && fixture_step==0 && (!e->mini_cache||p211_single))p211::record_state(*e,"serial-prefill-state.jsonl",token_index-1,1);
+ #endif
+       e->timings.flush();e->prefill_timings.flush();return a.first?-1:result;
+     };
+-    size_t p207_chunk_count=0;
++    size_t p211_chunk_count=0;
+     auto prefill_range = [&](size_t begin) {
+       int result=-1;
+       for(size_t i=begin;i<input.size();) {
+ #ifdef OWN_RT_HOST_ONLY
+-        if(host_chunks && i+2<input.size() && i/32==(i+1)/32) {
+-          require(token_index==i,"p207 host token index");
+-          e->request_token_index=i;e->checkpoint("p207-prefill-chunk-start");
+-          host_chunks->run(input,i);++p207_chunk_count;token_index+=2;i+=2;
+-          e->request_token_index=token_index;e->checkpoint("p207-prefill-chunk-complete");
+-          continue;
++        if(e->mini_cache && i+2<input.size() && i/32==(i+1)/32) {
++          require(token_index==i,"p211 host token index");e->drain();e->mini_cache->begin(i,2,output);
++          e->request_token_index=i;e->checkpoint("p211-prefill-chunk-start");
++          try {
++            if(host_chunks){host_chunks->run(input,i);token_index+=2;}
++            else {e->mini_cache->row(0);step(input[i],0);e->mini_cache->row(1);step(input[i+1],0);}
++            e->drain();e->mini_cache->end();if(!host_chunks)p211::record_state(*e,"prefill-chunks.jsonl",i,2);
++          }catch(...){e->poisoned=true;e->mini_cache->poison();throw;}
++          ++p211_chunk_count;i+=2;e->request_token_index=token_index;e->checkpoint("p211-prefill-chunk-complete");continue;
+         }
+ #endif
+         result=step(input[i],i+1==input.size()?1:0);++i;
+@@ -2326,7 +2403,7 @@
+     const size_t prefill_first=restoring?size_t(restored.position):0;
+     const size_t prefill_tokens=restoring?(appending?input.size()-prefill_first:0):input.size();
+     const std::string checkpoint_json=pipeline::checkpoint_result_json(restoring?&restored:nullptr,checkpoint_restore_ms,append_prefill_ms,saving?&saved:nullptr,
+-      prefill_ms,prefill_first,prefill_tokens,a.p207_host_chunk2?"host-layer-major-paired-projection-chunk2-with-serial-tail":pipeline::CHECKPOINT_PREFILL_PATH);
++      prefill_ms,prefill_first,prefill_tokens,a.p211_cache_mode=="serial"?"host-row-serial-frozen-cache2-with-serial-tail":a.p211_host_chunk2?"host-layer-major-paired-projection-frozen-cache2-with-serial-tail":pipeline::CHECKPOINT_PREFILL_PATH);
+     e->dump_classes(output/"class-times.json",generated.empty()?0:int(generated.size())-1);
+     std::ostringstream rr;rr.precision(17);
+     rr<<"{\"schema\":\"own-runtime.iq3.packet26.run.v1\",\"passed\":true,\"arithmetic\":"<<ownrt::quote(arithmetic::version)
+@@ -2334,7 +2411,7 @@
+       <<",\"request_start_monotonic\":"<<request_start_seconds<<",\"request_end_monotonic\":"<<monotonic()
+       <<",\"prompt_tokens\":"<<input.size()<<",\"requested_max_new\":"<<a.tokens
+       <<",\"prefill_ms\":"<<prefill_ms<<",\"first_generated_token_ms\":"<<first_token_ms<<",\"checkpoint_restore_ms\":"<<restore_ms_json<<",\"checkpoint\":"<<checkpoint_json
+-      <<",\"p207_host_chunk2\":"<<(a.p207_host_chunk2?"true":"false")<<",\"p207_chunk_count\":"<<p207_chunk_count<<",\"tokens\":[";
++      <<",\"p211_cache_mode\":"<<ownrt::quote(a.p211_cache_mode)<<",\"p211_host_chunk2\":"<<(a.p211_host_chunk2?"true":"false")<<",\"p211_chunk_count\":"<<p211_chunk_count<<",\"tokens\":[";
+     for(size_t i=0;i<generated.size();++i)rr<<(i?",":"")<<generated[i];
+     rr<<"],\"timing_rows\":[";
+     for(size_t i=0;i<generated_stamps.size();++i)rr<<(i?",":"")<<"{\"completed_monotonic\":"<<generated_stamps[i]<<"}";
+@@ -2384,6 +2461,9 @@
+     if(!output.empty() && fs::is_directory(output)) {save(output/"failure.txt",error+"\n");save(output/"receipt.json","{\"passed\":false,\"error\":"+ownrt::quote(error)+",\"teardown_pending\":true}\n");}
+     if (e) {
+       e->poisoned = true;
++#ifdef OWN_RT_HOST_ONLY
++      if(e->mini_cache){e->mini_cache->poison();try{e->mini_cache->failure_receipt(output);}catch(const std::exception& evidence_error){std::cerr<<"p211 failure evidence: "<<evidence_error.what()<<std::endl;}}
++#endif
+       if(!owner_shutdown_attempted){owner_shutdown_attempted=true;try {teardown=e->shutdown();owner_shutdown_complete=true;}catch(const std::exception& close_error) {error+="; ";error+=close_error.what();}}
+       e.reset();
+     }
+--- experiments/own-xpu-runtime/stage2/packet207-host-paired-projections/chunk_runtime.hpp
++++ experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/chunk_runtime.hpp
+@@ -2,10 +2,11 @@
+ // Included after the unchanged Engine and checkpoint helpers in the local overlay.
+ // No production/device path uses this experimental scheduling code.
+ #ifdef OWN_RT_HOST_ONLY
+-#include "paired_projection.hpp"
+-namespace p207 {
++#include "../packet207-host-paired-projections/paired_projection.hpp"
++namespace p211 {
++using p207::paired_projection;
+ inline void record_state(Engine& e,const char* filename,size_t start,size_t count) {
+-    std::ofstream out(e.a.output/filename,std::ios::app);require(bool(out),"p207 trace open");
++    std::ofstream out(e.a.output/filename,std::ios::app);require(bool(out),"p211 trace open");
+     size_t layers=0;for(const auto& site:e.issue_sites)if(site.layer_end)++layers;
+     out<<"{\"passed\":true,\"start\":"<<start<<",\"count\":"<<count<<",\"context_extent\":"<<e.context_extent<<",\"layers\":"<<layers<<",\"published_position\":"<<start+count<<",\"canonical_state_sha256\":{";
+     bool first=true;
+@@ -16,7 +17,7 @@
+       auto value=e.readback(0,slot.id,bytes);
+       out<<(first?"":",")<<ownrt::quote(b.name)<<':'<<ownrt::quote(hash(value));first=false;
+     }
+-    out<<"}}\n";out.flush();require(bool(out),"p207 trace write");
++    out<<"}}\n";out.flush();require(bool(out),"p211 trace write");
+   }
+ class Chunks {
+   Engine& e;
+@@ -28,7 +29,7 @@
+     MatrixMap matrices;
+     PreparedMap prepared;
+     std::vector<Engine::IssueSite> sites;
+-    int extent=32;
++    int extent=32;unsigned row=0;
+   };
+   std::array<Bank,2> banks;
+   struct PairSite {
+@@ -40,7 +41,7 @@
+   std::array<Allocation,2> pair_workspace{};
+   const flash::Launch& site(const std::string& label)const {
+     auto it=std::find_if(e.p.launches.begin(),e.p.launches.end(),[&](const auto& l){return l.label==label;});
+-    require(it!=e.p.launches.end(),"p207 required plan site "+label);return *it;
++    require(it!=e.p.launches.end(),"p211 required plan site "+label);return *it;
+   }
+   int captured_extent=0;
+   bool running=false;
+@@ -52,41 +53,41 @@
+       std::swap(e.context_extent,bank.extent);
+       e.fp32_sources[0]=0;e.fp32_extents[0]=0;
+     }
+-    Scope(Engine& engine,Bank& b):e(engine),bank(b){swap();}
++    Scope(Engine& engine,Bank& b):e(engine),bank(b){swap();if(e.mini_cache&&e.mini_cache->running())e.mini_cache->row(bank.row);}
+     ~Scope(){swap();}
+   };
+   void check() {
+-    e.guard();require(!e.poisoned && !e.integer(0,"error") && e.integer(0,"active"),"p207 chunk guard");
+-    require(!e.bank_parity && !e.caching(),"p207 bank/cache admission");
++    e.guard();require(!e.poisoned && !e.integer(0,"error") && e.integer(0,"active"),"p211 chunk guard");
++    require(!e.bank_parity && !e.caching(),"p211 bank/cache admission");
+   }
+   void trace(size_t start) {record_state(e,"prefill-chunks.jsonl",start,2);}
+ 
+ public:
+   explicit Chunks(Engine& engine):e(engine) {
+-    require(e.a.mini && e.a.pipeline_mini && e.a.memory=="resident" && !e.a.legacy && e.a.cards==1,"p207 constructor admission");
++    require(e.a.mini && e.a.pipeline_mini && e.a.memory=="resident" && !e.a.legacy && e.a.cards==1,"p211 constructor admission");
+     // All row storage is allocated before ordinary/row prepared captures. There
+     // is no release during this owner's request lifecycle.
+     for(size_t row=0;row<2;++row) {
+-      banks[row].buffers=e.buffers[0];
++      banks[row].row=unsigned(row);banks[row].buffers=e.buffers[0];
+       for(const auto& name:std::array<std::string,5>{"token","position","streams","embedding","blk.1.ple.lookup"}) {
+         auto slot=e.buffers[0].at(name);auto bytes=slot.n*flash::scalar_bytes(slot.type);
+-        slot.id=e.allocate(0,"p207:row"+std::to_string(row)+":"+name,bytes,Category::scratch,Lifetime::transaction);
++        slot.id=e.allocate(0,"p211:row"+std::to_string(row)+":"+name,bytes,Category::scratch,Lifetime::transaction);
+         std::vector<uint8_t> zero(bytes);e.upload(0,slot.id,0,zero.data(),zero.size());
+         banks[row].buffers.at(name)=slot;
+       }
+-      pair_workspace[row]=e.allocate(0,"p207:pair-workspace"+std::to_string(row),4,Category::scratch,Lifetime::transaction);
++      pair_workspace[row]=e.allocate(0,"p211:pair-workspace"+std::to_string(row),4,Category::scratch,Lifetime::transaction);
+       // One reusable set across GDN layers, fixed into every row's captured
+       // Matrix and prepared site. The other row cannot overwrite these values.
+       const auto& first=site("blk.0.gdn.qkv");
+       const std::array<std::string,4> originals{first.inputs.at(0),site("blk.0.hc.a.inject").outputs.at(0),first.outputs.at(0),site("blk.0.gdn.z").outputs.at(0)};
+       for(size_t n=0;n<originals.size();++n) {
+         auto value=e.buffers[0].at(originals[n]);size_t bytes=value.n*flash::scalar_bytes(value.type);
+-        value.id=e.allocate(0,"p207:row"+std::to_string(row)+":retained"+std::to_string(n),bytes,Category::scratch,Lifetime::transaction);
++        value.id=e.allocate(0,"p211:row"+std::to_string(row)+":retained"+std::to_string(n),bytes,Category::scratch,Lifetime::transaction);
+         std::vector<uint8_t> zero(bytes);e.upload(0,value.id,0,zero.data(),zero.size());
+         for(int layer:{0,2}) {
+           const auto prefix="blk."+std::to_string(layer)+".";const auto& qkv=site(prefix+"gdn.qkv");
+           const std::array<std::string,4> names{qkv.inputs.at(0),site(prefix+"hc.a.inject").outputs.at(0),qkv.outputs.at(0),site(prefix+"gdn.z").outputs.at(0)};
+-          auto old=banks[row].buffers.at(names[n]);require(old.n==value.n && old.type==value.type,"p207 reused row extent");banks[row].buffers.at(names[n])=value;
++          auto old=banks[row].buffers.at(names[n]);require(old.n==value.n && old.type==value.type,"p211 reused row extent");banks[row].buffers.at(names[n])=value;
+         }
+       }
+     }
+@@ -98,26 +99,26 @@
+       bank.matrices.clear();bank.prepared.clear();bank.sites.clear();bank.extent=e.context_extent;
+       Scope selected(e,bank);
+       e.prepare_plan();e.prepare_commands();
+-      require(e.issue_sites.size()==e.p.launches.size(),"p207 captured site count");
++      require(e.issue_sites.size()==e.p.launches.size(),"p211 captured site count");
+     }
+     pairs.clear();
+     for(int layer:{0,2})for(const auto* op:{"qkv","z"}) {
+       PairSite pair;pair.layer=layer;pair.op=op;pair.original=&site("blk."+std::to_string(layer)+".gdn."+op);
+-      require(!e.small_followers.count(pair.original) && !e.small_groups.count(pair.original),"p207 original projection must be standalone");
++      require(!e.small_followers.count(pair.original) && !e.small_groups.count(pair.original),"p211 original projection must be standalone");
+       for(size_t row=0;row<2;++row) {
+         pair.matrix[row]=banks[row].matrices.at(pair.original).at(0);pair.matrix[row].workspace=pair_workspace[row];
+-        require(pair.matrix[row].x==banks[row].buffers.at(pair.original->inputs.at(0)).id && pair.matrix[row].y==banks[row].buffers.at(pair.original->outputs.at(0)).id,"p207 row Matrix binding");
++        require(pair.matrix[row].x==banks[row].buffers.at(pair.original->inputs.at(0)).id && pair.matrix[row].y==banks[row].buffers.at(pair.original->outputs.at(0)).id,"p211 row Matrix binding");
+       }
+       auto& d=e.dev(0);d.begin_capture(pair.commands);
+       try{paired_projection(d,pair.matrix[0],pair.matrix[1],e.variant(*pair.original));d.end_capture();}
+       catch(...){d.end_capture();throw;}
+-      require(pair.commands.size()==1 && pair.commands[0].ids.size()==7,"p207 one captured pair operation");pairs.push_back(std::move(pair));
++      require(pair.commands.size()==1 && pair.commands[0].ids.size()==7,"p211 one captured pair operation");pairs.push_back(std::move(pair));
+     }
+     captured_extent=e.context_extent;
+   }
+   void run(const std::vector<int>& input,size_t start) {
+-    require(!running && start+2<input.size() && start+2<=size_t(e.p.g.context) && start/32==(start+1)/32,"p207 two nonfinal rows/capacity");
+-    require(e.integer(0,"position")==int(start),"p207 canonical starting position");
++    require(!running && start+2<input.size() && start+2<=size_t(e.p.g.context) && start/32==(start+1)/32,"p211 two nonfinal rows/capacity");
++    require(e.integer(0,"position")==int(start),"p211 canonical starting position");
+     running=true;
+     const int64_t old0=e.history0,old1=e.history1;
+     int64_t final0=old0,final1=old1;
+@@ -143,7 +144,7 @@
+       for(const auto& launch:e.p.launches)if(launch.label.starts_with("blk.")) {
+         int layer=std::stoi(launch.label.substr(4));if(layers.empty()||layers.back()!=layer)layers.push_back(layer);
+       }
+-      require(layers==std::vector<int>({0,1,2,3}),"p207 four-layer mini plan");
++      require(layers==std::vector<int>({0,1,2,3}),"p211 four-layer mini plan");
+       std::vector<std::string> pair_records;size_t skipped=0;
+       for(int layer:layers) {
+         const auto prefix="blk."+std::to_string(layer)+".";
+@@ -151,7 +152,7 @@
+         size_t qkv_index=paired?size_t(&site(prefix+"gdn.qkv")-e.p.launches.data()):0;
+         size_t z_index=paired?size_t(&site(prefix+"gdn.z")-e.p.launches.data()):0;
+         if(paired) {
+-          require(z_index==qkv_index+1 && site(prefix+"hc.a.inject").label==e.p.launches.at(qkv_index-1).label,"p207 exact projection split order");
++          require(z_index==qkv_index+1 && site(prefix+"hc.a.inject").label==e.p.launches.at(qkv_index-1).label,"p211 exact projection split order");
+           for(size_t row=0;row<2;++row) {
+             e.guard();Scope selected(e,banks[row]);
+             for(size_t i=0;i<qkv_index;++i)if(e.p.launches[i].label.starts_with(prefix))e.enqueue(e.p.launches[i],e.logical);
+@@ -171,10 +172,10 @@
+             if(paired && (i==qkv_index || i==z_index)){++skipped;continue;}
+             e.enqueue(launch,e.logical);
+           }
+-          if(e.a.p207_fail_after_row0 && layer==0 && row==0)throw std::runtime_error("p207 intentional partial chunk refusal");
+-        }
+-      }
+-      require(skipped==8 && pair_records.size()==4,"p207 exactly four pairs replace eight projections");
++          if(e.a.p211_fail_after_row0 && layer==0 && row==0)throw std::runtime_error("p211 intentional partial chunk refusal");
++        }
++      }
++      require(skipped==8 && pair_records.size()==4,"p211 exactly four pairs replace eight projections");
+       e.drain();check();
+       // No per-row commit touched canonical position. These copies are ordered,
+       // not atomic: any refusal poisons the Engine and forbids checkpoint/retry.
+@@ -186,10 +187,10 @@
+       e.drain();uint32_t position=uint32_t(start+2);e.put(0,"position",&position,4);e.drain();
+       e.history0=final0;e.history1=final1;
+       auto history=e.readback(0,e.buffers[0].at("token_history").id,16);std::array<int64_t,2> native{};std::memcpy(native.data(),history.data(),16);
+-      require(native==std::array<int64_t,2>{final0,final1},"p207 native/staged history mismatch");
++      require(native==std::array<int64_t,2>{final0,final1},"p211 native/staged history mismatch");
+       e.fp32_sources[0]=0;e.fp32_extents[0]=0;check();trace(start);
+-      std::ofstream pair_log(e.a.output/"paired-sites.jsonl",std::ios::app);require(bool(pair_log),"p207 pair trace open");
+-      for(const auto& line:pair_records)pair_log<<line<<'\n';pair_log.flush();require(bool(pair_log),"p207 pair trace write");running=false;
++      std::ofstream pair_log(e.a.output/"paired-sites.jsonl",std::ios::app);require(bool(pair_log),"p211 pair trace open");
++      for(const auto& line:pair_records)pair_log<<line<<'\n';pair_log.flush();require(bool(pair_log),"p211 pair trace write");running=false;
+     }catch(...) {
+       e.history0=old0;e.history1=old1;e.poisoned=true;running=false;
+       throw; // Never retry, publish a success, or run a serial fallback.

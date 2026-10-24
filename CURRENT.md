@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 23, 20:28 EDT — the tiny Engine passes the populated expert-cache proof.**
+All 48 requests match across direct execution, cached serial execution and cached paired execution,
+including saved state, continuation and prompt boundaries. Both cached modes produce the same routes,
+hits, replacements and payloads. The deliberate partial failure stops intake and closes safely without
+publishing a result. Independent review verifies the arithmetic, cache policy and complete retained evidence;
+all 11 artifact tests pass. This is CPU correctness evidence with simulated completion, not a speed result
+or production quantized-model qualification. Next is closing the production prefill integration gaps while
+the native test target remains occupied. Daily applications are unchanged. The previous cache-proof commit
+cbbdca31d has all three CI workflows green.
+[Engine cache proof and limits](experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/README.md) ·
+[Independent review](experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/evidence/independent-cpu-review.json).
+
 **October 23, 19:55 EDT — two-row cache ownership passes the real CPU storage proof.**
 Three matched-policy intervals produce identical output bytes and retained routes across serial and
 layer-major schedules, with 24 cache hits and 552 host misses. All 25 fixture checks and 11 independent

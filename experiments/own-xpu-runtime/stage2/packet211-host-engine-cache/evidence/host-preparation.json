@@ -1,0 +1,32 @@
+{
+  "device_executed": false,
+  "executed": false,
+  "passed": true,
+  "plan_command": [
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "nice",
+    "-n",
+    "19",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/host_probe.py",
+    "--plan"
+  ],
+  "plan_sha256": "df5e79121f0aa5696dadd58f086114b510da87ac4edea951e95173ca1b250bc8",
+  "processes": {
+    "comparison_engines": 3,
+    "intentional_failed_engine": 1,
+    "parser_refusals": 10,
+    "standalone_abi": 1
+  },
+  "review": "Independent pre-run source/build review cleared before plan enabled",
+  "schema": "packet211.host-preparation.v1",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/authority-inputs.json": "26247ff5c8340cc278482da048304360fdb0dda8dd6921753cd465f21ca26fdb",
+    "experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/fixtures.json": "5ffa2f7c754f278013ac63b24e934d0d196f08557da35bdd77ac871a4fe4c04d",
+    "experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/host_probe.py": "92a38a60e997988a0b52df600fc82d78512b7e8534808af3717ef2adbff955f8",
+    "experiments/own-xpu-runtime/stage2/packet211-host-engine-cache/indirect_proof.hpp": "57b8b27afe007addac669e67c3f0c06a08e32538122db51d84a1bf54f5a87beb"
+  }
+}
