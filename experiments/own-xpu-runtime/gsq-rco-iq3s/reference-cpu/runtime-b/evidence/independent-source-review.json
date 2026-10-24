@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "scope": "Finite additive source/metadata correction review; no model/reference invocation or test replay",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/once.py": "d11af7129cdab746b1e59625b6afa21cc72c342223a782b74c62d7a56adc1500",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/test_once.py": "e02a7ceabea6da7eb35eb9954a7042c028189761653cf9bcbfc142e95c0d3a35",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/README.md": "6f904581d94d5c6587610989272f23f28fe9ac9aaa5c18b9ad58cd2db5dfcc29",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/correction.patch": "9757470c6b8b92509316d579885a1cc62907cf2b7ad8e266eb4e1d68175c9c90",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/plan.json": "c2027efd2dd9a330a590d26f19b7bde6fd63109d8b423d92dd49a7aad584d3b0",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/evidence/source-tests.log": "684b546cfc6b79b8da61c5b4c5b88763f4eecb6dd97c3aa8b69bf52a7ef59b73",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/once.py": "3cad869dba8d98ce098ad20cf276a24a95e3e2015bac28497f8bb1b5b5172871",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/evidence/failure-source-review.json": "94e0b4302f318a795c8da0cbb50b9b9c318aaa480022ffba6cb100c883a2ca5d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/evidence/offline-runtime-admission.json": "f195cff31153443215fcdcf3d0f0eed0d18ffed9efa107fdc6630eddf08597f8"
+  },
+  "preparation_sha256": "e476c1bfc74c8900ffd8f81c3f3b7144e25b108150bbd95dbaf430aeead44cdd",
+  "parent_review_sha256": "8400f9137212dbafc584ab6b0c3294b93220dd7ea9669fc1bee73daaed63686e",
+  "actual_plan_sha256": "c2027efd2dd9a330a590d26f19b7bde6fd63109d8b423d92dd49a7aad584d3b0",
+  "checks": [
+    "Exact four identity/logging substitutions reconstruct new source",
+    "Verbosity4 exposes existing GGML INFO logs mapped to TRACE4; BF16 KV and F32 R/S/P validation unchanged",
+    "Same binary/request/one-POST/CPU/no-device/owner-stop/resource guards retained",
+    "Original failed A sources and closed failure metadata preserved; no retry in coordinator"
+  ],
+  "limitations": [
+    "One newly root-admitted process still required; no inference result or dtype runtime claim from this source review"
+  ]
+}

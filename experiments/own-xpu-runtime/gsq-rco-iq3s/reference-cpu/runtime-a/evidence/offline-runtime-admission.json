@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "binary": "/mnt/usb-models/own-xpu-runtime-reference/sc117-cpu-23b0202a-b/build/bin/llama-server",
+  "binary_sha256": "256d4043888e16c387ae0ed51061c9a3839f9d8112ea985e8b4c99f65d23b8ee",
+  "offline_review_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/build-b/evidence/offline-binary-review.json",
+  "offline_review_sha256": "2eaaff8075148c1a2bec59e57e462e8c63d3a7c4008a8276798c78a90b906298",
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgomp.so.1",
+      "resolved": "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0",
+      "sha256": "135f3c8f006d2fe5e68e51281c7974cb991a03de3bfb3593d68d174dfcf854d1",
+      "needed": [
+        "libc.so.6"
+      ]
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+      "resolved": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+      "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+      "needed": [
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2",
+        "libgcc_s.so.1"
+      ]
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+      "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0",
+      "needed": [
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb",
+      "needed": [
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+      "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+      "needed": [
+        "ld-linux-x86-64.so.2"
+      ]
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+      "resolved": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+      "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da",
+      "needed": []
+    }
+  ],
+  "binary_invoked": false,
+  "scope": "Offline ELF dependency closure only. Runtime must separately verify clean environment, empty backend search directories, memory/storage/owner admission and actual loaded dtypes."
+}

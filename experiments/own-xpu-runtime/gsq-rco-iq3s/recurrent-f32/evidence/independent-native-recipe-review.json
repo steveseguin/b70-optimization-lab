@@ -1,0 +1,24 @@
+{
+  "schema": "gsq.recurrent-f32.native-recipe-review.v1",
+  "passed": true,
+  "scope": "Finite source-only root compiler recipe review; no compile/native run by reviewer",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build_native_usb.py": "73264200b628f9714696e00c9deed56b94535d17adb2f2a57983aa88a74d36a7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/native-preparation.json": "b5af9eeaff2b90b5963c4322e43c225f7b99441e9623a6eae96d1c144674711f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/materialization.json": "36d06637ebfafc307f05f90937d12085c438ef7953d2704dd77a7aea6797e653",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/cpu-proof.json": "c4b684dd0c39af0fae991adc7f028c1d459cd7b1f1522c4544c2b3e5dc6a044c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/independent-source-cpu-review.json": "8195a309e036cc04bb2f5c0643fb114dadccaaa28b7353b636bf349e72be11fa"
+  },
+  "translation_units_rebuilt": 21,
+  "linked_objects_reused": 19,
+  "strict_fp_flags_preserved": true,
+  "output_and_temp_on_usb": true,
+  "no_native_artifact_execution": true,
+  "limits": [
+    "4GiB per-process AS; individual-file256MiB limit; compiler helper placement/threads required",
+    "Aggregate256MiB output/512MiB temporary checks occur between subprocesses, not hard aggregate filesystem quotas",
+    "Root floor27GB+64MiB and USB2GiB plus both reservations required",
+    "Failed command/timeout preserves attempt and stops; no automatic retry"
+  ],
+  "native_runtime_admitted": false
+}

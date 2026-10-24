@@ -1,0 +1,47 @@
+{
+  "passed": false,
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-g0",
+      "-DOWN_RT_HOST_ONLY",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-Wall",
+      "-Wextra",
+      "-Werror=return-type",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/cpu-1792848754787504072/proof.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/test_storage.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/cpu-1792848754787504072/proof"
+    ],
+    [
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/cpu-1792848754787504072/proof"
+    ]
+  ],
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/external/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/kernel_guard.hpp": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "5a979519944f617e7d56165851189379ddbb0d15602abda577db8e75b2e08533",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/detmath.hpp": "8bc63fdab77954016c52536811f430a5f642349dbe24b886e8c2f75ac635ba25",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/rope.hpp": "9878ae0cd2eeb0350733d719f7ffa7b1686305c23019f721bfa3171e4c407168",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "ab838b0adc98b4264be957583c13ee0481497a18bbc7ebeb7ceb9aaf816020c7",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "e21241d61621ab73d2d96223c736d271204da458e8586bd5ece789ae02497a9a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7318527d266bb197d8b100481c342e3c5dc525103467a1e137a3933cde0de183",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "4e25a5df2e7a029566fcb45f9ea9e98bbc6b8154b5b9c2d6280b4f5a96d59731",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/recurrent_policy.hpp": "5036721c04e59b34192e180af75beaa48fa10392845a7a6c5420b0b28e1423fd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/source/kernels.hpp": "01ba9d10bada11a78b8383a40af1dd156b4ed633641a9d32406e903d79b51513",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/source/plan.hpp": "e5f4062b78de90a44ecb64e548fab885acdbd8c9bb7776d01c373e48c03c473b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/test_storage.cpp": "127e79c7f233d927eec7391625aba90e50ef854c53e0ffd203b32886475f060c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build_cpu.py": "07f557f28b630efa5da8461818f88617d17ac75fd01cb0fde591836dcddee5b5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/prepare.py": "5e66df780e926f56793aff4d434416eb78907da8785f7f2620fce0931fdc117a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/precision.patch": "241c430cb08c306341c8be8071ac0044d5d8fd2eb0e369381c4dd438505b960f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/source-checkpoint.json": "e64a75051d253796d9277f7c7e88be30814204075a1863507e18253956725c23"
+  },
+  "compiler_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+  "scope": "actual changed HostTeam and graph; no Device/model/production controller qualification",
+  "error": "ModuleNotFoundError(\"No module named 'build_engine'\")"
+}

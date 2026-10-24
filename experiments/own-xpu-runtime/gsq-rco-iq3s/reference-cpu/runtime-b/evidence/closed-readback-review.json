@@ -1,0 +1,160 @@
+{
+  "schema": "gsq.reference.cpu.closed-readback.v1",
+  "evidence_review_passed": true,
+  "original_runtime_terminal_passed": false,
+  "original_runtime_terminal_preserved": true,
+  "postresponse_validator_bug": "Frozen validator expected temperature=-1 echo. Actual schema clamps to0; temp<=0 is greedy. One complete response survives; no rerun.",
+  "independent_effective_request_validation_passed": true,
+  "prompt_tokens": 87,
+  "output_tokens": [
+    332,
+    37947,
+    1653,
+    10082,
+    3508,
+    8812,
+    25,
+    23288,
+    5165,
+    4230,
+    416,
+    318,
+    37163,
+    12,
+    17,
+    15,
+    17,
+    19,
+    12,
+    15,
+    23,
+    24,
+    31230,
+    271,
+    332,
+    18656,
+    332,
+    198,
+    1860,
+    6324,
+    220,
+    16
+  ],
+  "stop_type": "limit",
+  "all32_original_custom_prefix_equal": true,
+  "first_differing_index": null,
+  "chosen_argmax_rows": 32,
+  "top_candidates_per_row": 32,
+  "logprob_margin_min": 0.12733840942382812,
+  "response_content": "**Incident Retrospective: Production API Outage (INC-2024-089)**\n\n**Summary**\nOn October 1",
+  "reference_binary_sha256": "256d4043888e16c387ae0ed51061c9a3839f9d8112ea985e8b4c99f65d23b8ee",
+  "custom_binary_sha256": "5aef74d5f803b33758711db352ee5e1a393a364e6c33aa9f8a4cdb4478f5fe6a",
+  "actual_dtype_logs": [
+    "0.04.546.964 I llama_kv_cache: size =   96.00 MiB (  4096 cells,  12 layers,  1/1 seqs), K (bf16):   48.00 MiB, V (bf16):   48.00 MiB",
+    "0.04.601.766 I llama_kv_cache: size =   24.00 MiB (  4096 cells,  12 layers,  1/1 seqs), K (bf16):   24.00 MiB, V (bf16):    0.00 MiB",
+    "0.04.592.196 I llama_memory_recurrent: size =  112.57 MiB (     1 cells,  48 layers,  1 seqs  0 rs_seq), R (f32):    4.22 MiB, S (f32):  108.00 MiB, P (f32):    0.35 MiB"
+  ],
+  "owner": {
+    "pid": 3663768,
+    "start_ticks": "69188075"
+  },
+  "safe_exit": true,
+  "single_sigterm": true,
+  "monitor_samples": 14,
+  "minimum_mem_available": 113290883072,
+  "accelerator_observation_scope": "Frozen no_device checks ran before each retained monitor sample; raw FD/map lists were not retained. Static library/backend/environment evidence and successful sampled checks are established, not exhaustive transient-FD exclusion.",
+  "source_sha256": {
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/tools/server/server-schema.cpp": "1f9d7b73b4363b90b08de0360b0a5ce0b3d152750bfb8d587a367e90c7904050",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-sampler.cpp": "d0c147129ded606691b0b3e78562bec36f53459446aa7a5bac23bb93a01c86f6",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/common/sampling.cpp": "32f8cf1b487cdb2720dee65650d785ddea4ea3d89c2a8186d830933e6facb233",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-kv-cache.cpp": "4ac534956aa0b384a9a707c778527a4e7cd4ebfbea9c895e531b0935485de3c8",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-memory-recurrent.cpp": "51172be188d0eece2267c9105dc5a8d2c3ef7ebd58e88a6f562ac6ee36326f98",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/once.py": "d11af7129cdab746b1e59625b6afa21cc72c342223a782b74c62d7a56adc1500",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/audit.py": "f5ecadd37e369b4b5d8e8c015a692b4554cfcf13201a26a6bfc31803dca96f27"
+  },
+  "artifact_index": {
+    "monitor.json": {
+      "sha256": "9e9583fb3f57e88f25bdc1264c90dbc68bb9c8cca528b276b791797ff1921e87",
+      "bytes": 25151,
+      "identity": [
+        2050,
+        2790807,
+        25151,
+        1792849202365510100,
+        1792849202365510100
+      ]
+    },
+    "owner.json": {
+      "sha256": "228be3f8ef678efbdb6596125956af9eed7dbfbc3a63d61830263f4d89776639",
+      "bytes": 50,
+      "identity": [
+        2050,
+        2790712,
+        50,
+        1792849172893071800,
+        1792849172893071800
+      ]
+    },
+    "plan.json": {
+      "sha256": "c2027efd2dd9a330a590d26f19b7bde6fd63109d8b423d92dd49a7aad584d3b0",
+      "bytes": 4420,
+      "identity": [
+        2050,
+        2790709,
+        4420,
+        1792849172868994200,
+        1792849172868994200
+      ]
+    },
+    "request.json": {
+      "sha256": "d6fe9f8fc8a63e923ef4d4cc6d872c6ae6d1f15c29ff0b7abd596852f4cbfd77",
+      "bytes": 1174,
+      "identity": [
+        2050,
+        2790710,
+        1174,
+        1792849172870857900,
+        1792849172870857900
+      ]
+    },
+    "response.json": {
+      "sha256": "43440c3c22f629cec44b802b6436a6fbb81ac1272be980712468ce3c8d930bdc",
+      "bytes": 242263,
+      "identity": [
+        2050,
+        2790777,
+        242263,
+        1792849200349067400,
+        1792849200349067400
+      ]
+    },
+    "server.log": {
+      "sha256": "4c4874711c550750acad565e41b03b21052dca0bf5a3dd1ae561f4669d536481",
+      "bytes": 24026,
+      "identity": [
+        2050,
+        2790711,
+        24026,
+        1792849200364851500,
+        1792849200364851500
+      ]
+    },
+    "terminal.json": {
+      "sha256": "d153e428cea0a99823b2d1294fe23ae36e6bebac8104151fb827707a818c18e6",
+      "bytes": 391,
+      "identity": [
+        2050,
+        2790808,
+        391,
+        1792849202370804900,
+        1792849202370804900
+      ]
+    }
+  },
+  "limitations": [
+    "One prompt87/32 continuation only; no broad quality or throughput qualification.",
+    "This tests unchanged CPU reference against historical custom BF16-state binary5aef; it does not qualify the not-yet-run F32 correction.",
+    "No custom logits were retained, so token agreement is not distribution equality.",
+    "Raw terminal remains failed; independent evidence validation is separately reported."
+  ]
+}

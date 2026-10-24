@@ -1,0 +1,114 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/source/plan.hpp
+@@ -128,12 +128,12 @@
+     linear(x, tag + "z", g.vh * g.d, g.h, prefix + "attn_gate.weight");
+     linear(x, tag + "a", g.vh, g.h, prefix + "ssm_alpha.weight");
+     linear(x, tag + "b", g.vh, g.h, prefix + "ssm_beta.weight");
+-    buffer(tag + "history", {ch, 3});
++    buffer(tag + "history", {ch, 3}, Scalar::f32);
+     buffer(tag + "conv", {ch});
+     node("conv", tag + "conv", {tag + "qkv", tag + "history"},
+          {tag + "conv", tag + "history"}, {ch}, {prefix + "ssm_conv1d.weight"},
+          1);
+-    buffer(tag + "state", {g.vh, g.d, g.d});
++    buffer(tag + "state", {g.vh, g.d, g.d}, Scalar::f32);
+     buffer(tag + "y", {g.vh, g.d});
+     node("gdn", tag + "recurrence",
+          {tag + "conv", tag + "a", tag + "b", tag + "state"},
+@@ -236,7 +236,7 @@
+          {t + "ple.kn", t + "ple.qn", t + "ple.value"}, {t + "ple.gated"},
+          {4, g.h});
+     norm(t + "ple.gated", t + "ple.cn", 4, g.h, t + "ple_norm_conv.weight");
+-    buffer(t + "ple.history", {4 * g.h, 9});
++    buffer(t + "ple.history", {4 * g.h, 9}, Scalar::f32);
+     buffer(t + "ple.conv", {4 * g.h});
+     node("conv", t + "ple.conv", {t + "ple.cn", t + "ple.history"},
+          {t + "ple.conv", t + "ple.history"}, {4 * g.h},
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/kernels.hpp
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/source/kernels.hpp
+@@ -15,7 +15,7 @@
+ enum Op { conv, gdn, norm, activation, mix, combine_norm, route_gather,
+           moe_combine, gated_norm, prepare, pool, select, attention_score,
+           attention_softmax, attention_value };
+-// All floating tensors are BF16 except F32 routing probabilities and scratch.
++// Activations/KV remain BF16; flag16 selects F32 GDN matrix/conv/PLE histories.
+ // Buffer slots are documented in README. Position/active/error are device data.
+ struct Shape { int op, tokens=1, width=2560, heads=4, extra=0, flags=0, capacity=128, budget=2048, extent=0; };
+ // extent bounds submitted work only; capacity remains the allocation/ID bound.
+@@ -31,6 +31,8 @@
+   void put(int slot,size_t i,float x) const {static_cast<uint16_t*>(p[slot])[i]=bits(x);}
+   float weight(int slot,size_t index,int flags)const{return (flags&8)?f(slot)[index]:b(slot,index);}
+   float* f(int slot)const{return static_cast<float*>(p[slot]);}
++  float recurrent(int slot,size_t i,int flags)const{return (flags&16)?f(slot)[i]:b(slot,i);}
++  void put_recurrent(int slot,size_t i,float x,int flags)const{if(flags&16)f(slot)[i]=x;else put(slot,i,x);}
+   int32_t* i(int slot)const{return static_cast<int32_t*>(p[slot]);}
+ };
+ inline float sigmoid(float x){return 1.f / (1.f + detmath::exp(-x));}
+@@ -63,6 +65,7 @@
+ inline void validate(Shape s){
+  if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>87||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>32768||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
+  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
++ if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
+  if(s.op==conv&&s.extra!=0&&s.extra!=1&&s.extra!=3)throw std::invalid_argument("conv dilation");
+  if((s.op==norm||s.op==combine_norm)&&s.width>4096)throw std::invalid_argument("norm width");
+  if(s.op==route_gather&&(s.width<1||s.width>512||s.extra<1||s.extra>s.width))throw std::invalid_argument("route geometry");
+@@ -75,8 +78,8 @@
+  auto f=[&](int slot,size_t values){n[slot]=values*4;};
+  auto weight=[&](int slot,size_t values){n[slot]=values*((s.flags&8)?4:2);};
+  switch(s.op){
+- case conv:b(0,T*W);b(1,W*3*(s.extra?s.extra:1));weight(2,W*4);n[3]=n[0];n[4]=n[1];break;
+- case gdn:b(0,T*10240);b(1,T*48);n[2]=n[1];n[3]=48*((s.flags&10)?4:2);weight(4,48);b(5,48*128*128);b(6,T*6144);n[7]=n[5];break;
++ case conv:b(0,T*W);n[1]=W*3*(s.extra?s.extra:1)*((s.flags&16)?4:2);weight(2,W*4);n[3]=n[0];n[4]=n[1];break;
++ case gdn:b(0,T*10240);b(1,T*48);n[2]=n[1];n[3]=48*((s.flags&10)?4:2);weight(4,48);n[5]=48*128*128*((s.flags&16)?4:2);b(6,T*6144);n[7]=n[5];break;
+  case norm:b(0,T*H*W);weight(1,H*W);n[2]=n[0];break;
+  case activation:b(0,T*W);if(s.extra)n[1]=n[0];n[2]=n[0];break;
+  case mix:b(0,T*4*W);n[1]=n[0];b(2,T*W);break;
+@@ -130,20 +133,20 @@
+    float gate=a.b(1,row*48+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate;
+    float av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));float decay=detmath::exp(av*sp);
+    int state=(h*128+j)*128;
+-   t.each(128,[&](int k){t.x[k]=(a.b(0,qbase+k)/qn)/detmath::sqrt(float(128));t.x[128+k]=a.b(0,kbase+k)/kn;t.x[256+k]=a.b(row?7:5,state+k)*decay;});t.barrier();
++   t.each(128,[&](int k){t.x[k]=(a.b(0,qbase+k)/qn)/detmath::sqrt(float(128));t.x[128+k]=a.b(0,kbase+k)/kn;t.x[256+k]=a.recurrent(row?7:5,state+k,s.flags)*decay;});t.barrier();
+    float pred=dot128(t,[&](int k){return t.x[256+k]*t.x[128+k];});t.barrier();
+    float delta=(a.b(0,row*10240+4096+h*128+j)-pred)*sigmoid(a.b(2,row*48+h));
+    t.each(128,[&](int k){t.x[256+k]=t.x[256+k]+delta*t.x[128+k];});t.barrier();
+    float y=dot128(t,[&](int k){return t.x[256+k]*t.x[k];});t.barrier();
+    t.each(1,[&](int){a.put(6,(row*48+h)*128+j,y);});
+-   t.each(128,[&](int k){a.put(7,state+k,t.x[256+k]);});t.barrier();
++   t.each(128,[&](int k){a.put_recurrent(7,state+k,t.x[256+k],s.flags);});t.barrier();
+   }
+  }else if(s.op==conv){
+   t.each(128,[&](int lane){int ch=group*128+lane;if(ch>=s.width)return;int dilation=s.extra?s.extra:1,hist=3*dilation;
+-   float history[9];for(int j=0;j<hist;++j)history[j]=a.b(1,ch*hist+j);
++   float history[9];for(int j=0;j<hist;++j)history[j]=a.recurrent(1,ch*hist+j,s.flags);
+    for(int r=0;r<s.tokens;++r){float x=a.b(0,r*s.width+ch),acc=0;for(int tap=0;tap<4;++tap)acc=acc+(tap==3?x:history[tap*dilation])*a.weight(2,ch*4+tap,s.flags);
+     a.put(3,r*s.width+ch,silu(dilation==3?Args::bf(acc):acc));for(int k=0;k<hist-1;++k)history[k]=history[k+1];history[hist-1]=x;}
+-   for(int j=0;j<hist;++j)a.put(4,ch*hist+j,history[j]);});
++   for(int j=0;j<hist;++j)a.put_recurrent(4,ch*hist+j,history[j],s.flags);});
+  }else if(s.op==norm||s.op==combine_norm||s.op==gated_norm){
+   int width=s.op==gated_norm?128:s.width,stream=group%s.heads,base=group*width;
+   auto value=[&](int k){if(s.op!=combine_norm)return a.b(0,base+k);return Args::bf(a.b(0,base+k)+a.b(1,(group/s.heads)*width+k)*(2.f*sigmoid(a.b(2,group)/4.f)));};
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/adapter.cpp
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/source/adapter.cpp
+@@ -9,7 +9,8 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/adapter.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/route42.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p42_submit.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/kernels.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/source/kernels.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/recurrent_policy.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/specialised_submit.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/round2_submit.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p33r2.hpp"
+@@ -282,6 +283,11 @@
+  case Op::ple_add:return simple_new_submit<Op::ple_add>(d,s,bindings,deps);
+  default:break;}}
+  ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;
++ if(s.special==Special::normal&&(s.op==Op::gdn||s.op==Op::conv)){
++  const int input=s.op==Op::gdn?3:1;
++  if(s.ni<=input||s.no!=2)throw std::invalid_argument("recurrent state binding shape");
++  shape.flags|=recurrent_f32::admit(s.types[input],s.types[s.ni+1],Scalar::bf16,Scalar::f32,s.implementation);
++ }
+  std::array<ownrt::Allocation,19> a;a.fill(control);a[15]=bindings[s.ni+s.no+s.nw+1];a[16]=bindings.back();a[17]=bindings[s.ni+s.no+s.nw+2];a[18]=bindings[s.ni+s.no+s.nw+3];
+  auto in=[&](int dst,int j){a[dst]=bindings[j];};auto out=[&](int dst,int j){a[dst]=bindings[s.ni+j];};auto weight=[&](int dst,int j){a[dst]=bindings[s.ni+s.no+j];};
+  bool use_ng=s.special==Special::normal;

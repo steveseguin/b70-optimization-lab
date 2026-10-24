@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "scope": "Finite source and retained metadata review only; no executable/model/header/payload invocation or test replay",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/once.py": "3cad869dba8d98ce098ad20cf276a24a95e3e2015bac28497f8bb1b5b5172871",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/test_once.py": "ab6e63d7491f98bf3b4818c3cc5625905c20d566f64ebe1e0d8aac486c0ebaad",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/README.md": "9829230816341a3f62e3920b4021af98f18ed5e985a7d7ec51d5ca49c8828c05",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/plan.json": "3462481a9a328e6f5a052c123702023f3e9aa60e57aa0756ccfb881b4ca4efbc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/evidence/source-tests.log": "208c07195bc48a4b776388d4ab6c9cb1a654cd9d64c2ce839f434b41d45d8260",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/evidence/offline-runtime-admission.json": "f195cff31153443215fcdcf3d0f0eed0d18ffed9efa107fdc6630eddf08597f8"
+  },
+  "preparation_sha256": "92272fae5c769db2eed9947e7a56dd53bcbb228dce89b6702677a8105fbdda57",
+  "plan_sha256": "3462481a9a328e6f5a052c123702023f3e9aa60e57aa0756ccfb881b4ca4efbc",
+  "additional_source_sha256": {
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/common/arg.cpp": "8fbac51f5dfa20500a66e9c388663a6b6648a8038acbd57ced2972a392d73d7e",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/tools/server/server-task.cpp": "4c3f413b9b54d4cc0e7b5998e6979a2389f5ff716e20cb1510ca7745fa233495",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/ggml/src/ggml-backend-reg.cpp": "0f63c69ad083e0744872f57d59d049b069283303f5bbc646222907d779afe4d1"
+  },
+  "checks": [
+    "Exact built CPU binary/offline dynamic-library admission; clean environment and empty backend search directories; CPU device none and zero GPU layers",
+    "Actual CLI option definitions and nonstream response schema supported by pinned source",
+    "Fixed 87 numeric tokens, one greedy 32-token request, BF16 KV/F32 R/S/P log admission before POST",
+    "PID-owned listening socket and runtime accelerator-FD/shared-library checks before request; one request thread, no restart/retry",
+    "Memory/storage/deadline guards; exactly one cooperative SIGTERM, indefinite owner retention until exit, no hard kill",
+    "Response preserved before validation; divergence scope and no broad quality claim explicit"
+  ],
+  "limitations": [
+    "Source review does not establish successful actual loading or inference",
+    "Dynamic maps/FD checks are sampled; no-device admission primarily depends on the verified CPU-only build and isolated backend search paths",
+    "Reference and custom activation/reduction numerics remain different; token divergence is diagnostic, not attribution to one source"
+  ]
+}

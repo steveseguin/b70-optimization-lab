@@ -1,0 +1,49 @@
+{
+  "schema": "gsq.reference.runtime-a.failure-source-review.v1",
+  "evidence_review_passed": true,
+  "runtime_passed": false,
+  "request_issued": false,
+  "owner_exited": true,
+  "exit_code": 0,
+  "one_sigterm": true,
+  "reference_dtype_validated": false,
+  "source_diagnosis": "common.cpp installs common_log_default_callback; GGML INFO maps to TRACE level4, default threshold3 suppresses loader KV/R/S/P INFO messages. Server INFO is still visible. --log-verbosity4 restores required actual messages without changing dtype gate.",
+  "minimal_correction": "Additive runtime-b fresh identity and --log-verbosity4; samebinary/request/guards/regex. No automatic retry.",
+  "proposed_correction_executed": false,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-a/once.py": "3cad869dba8d98ce098ad20cf276a24a95e3e2015bac28497f8bb1b5b5172871",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/common/common.cpp": "09927ad4006dfda02dde98fefb0e3dca9d58d60cb7e8b08d56c6e7acc0c7c197",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/common/log.cpp": "a5c1edc4c446a406233b803a935438f1064201764ec8bb515dc91a16619a3b1b",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/common/log.h": "f84dcd0519a8ec2b527d9bd9c39d5f4757d7ff5b2ba8e4d10c7ab8b9154be88b",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/common/arg.cpp": "8fbac51f5dfa20500a66e9c388663a6b6648a8038acbd57ced2972a392d73d7e",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-kv-cache.cpp": "4ac534956aa0b384a9a707c778527a4e7cd4ebfbea9c895e531b0935485de3c8",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-memory-recurrent.cpp": "51172be188d0eece2267c9105dc5a8d2c3ef7ebd58e88a6f562ac6ee36326f98"
+  },
+  "artifact_index": {
+    "monitor.json": {
+      "bytes": 7194,
+      "sha256": "81f14fce309f60af812cff35bb5e231b434285b27839cd2b59c28a47d84370d4"
+    },
+    "owner.json": {
+      "bytes": 50,
+      "sha256": "5b0772e49eea92aa070bb0ec1a35c2b04896cb506aa511b954475e92d5af3ad9"
+    },
+    "plan.json": {
+      "bytes": 4388,
+      "sha256": "3462481a9a328e6f5a052c123702023f3e9aa60e57aa0756ccfb881b4ca4efbc"
+    },
+    "request.json": {
+      "bytes": 1174,
+      "sha256": "d6fe9f8fc8a63e923ef4d4cc6d872c6ae6d1f15c29ff0b7abd596852f4cbfd77"
+    },
+    "server.log": {
+      "bytes": 1322,
+      "sha256": "d06f98bc2adab741659c0260671a1936af344fb5162c4c764d60fc8b14da66fd"
+    },
+    "terminal.json": {
+      "bytes": 392,
+      "sha256": "7f57bdf5cc3fe5f05ae5da330538fbac2f64817e4b38d1e87be157e31fe9d603"
+    }
+  },
+  "scope": "Closed small metadata/log readback only; no model/ELF invocation or model payload read; absence of POST follows frozen source gate before thread launch and no response artifact."
+}

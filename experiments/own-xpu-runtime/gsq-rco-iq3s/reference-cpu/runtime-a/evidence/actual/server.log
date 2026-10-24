@@ -1,0 +1,14 @@
+warning: no usable GPU found, --gpu-layers option will be ignored
+warning: one possible reason is that llama.cpp was compiled without GPU support
+warning: consult docs/build.md for compilation instructions
+0.00.002.850 I srv  llama_server: initializing ...
+0.00.002.859 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.002.930 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.004.150 I srv    load_model: loading model '/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf'
+0.05.176.858 I cmn          init: llama threadpool init, n_threads = 2
+0.05.676.266 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 4096, kv_unified = 'false'
+0.05.676.291 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+0.05.679.966 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.05.679.977 I srv  llama_server: model loaded
+0.05.679.979 I srv  llama_server: listening on http://127.0.0.1:18087
+0.07.120.794 I srv    operator(): operator(): cleaning up before exit...

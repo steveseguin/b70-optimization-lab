@@ -1,5 +1,32 @@
 # Current Workspace State
 
+**October 24, 09:44 EDT — four-card host: FP32 native build passes; independent prefix comparison recorded.**
+The corrected engine5926a247 built with21 affected units rebuilt and19 unchanged
+objects reused. Focused CPU proof passes522checks; a full Host lifecycle build is
+running before device admission. CPU referenceB verified BF16KV/F32 recurrence,
+then produced32 tokens matching the old custom prefix on the same87 inputs.
+Its terminal checker failed on the server's documented temperature-1-to0
+normalization; independent readback qualifies that greedy response without a
+rerun and preserves the failed terminal. This short agreement is not broad
+quality proof. Target GPUs remain idle, vision unchanged, speed work held.
+Public precision qualification2294dce04 is pushed; live checks pending.
+[Reference result](experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/RESULT.md).
+
+
+**October 24, 09:38 EDT — four-card host: FP32 kernel proof passes; reference logging gate needs correction.**
+The additive FP32 recurrent/history correction passed522 focused CPU checks and
+independent source review. Full-engine RESET/rollback and native qualification
+remain pending; further speed work is held. The CPU-only independent reference
+loaded the same SC117 weights once, but stopped before generation because actual
+cache-type log lines were absent. It closed gracefully with exit0; no prompt was
+sent and no reference parity claim follows. Preserve the failed logging admission
+and diagnose the callback/verbosity before a separately reviewed correction.
+Target GPUs remain empty and protected vision unchanged. Public own-engine pages
+now explain that their BF16-state oracle is not reference-FP32/no-added-loss proof;
+commitb914774e3 is pushed, deployment checks pending.
+[FP32 proof](experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/cpu-proof.json).
+
+
 **October 24, 09:22 EDT — four-card host: recurrent precision correction takes priority.**
 Source and actual allocation evidence confirm the custom engine rounds GDN
 recurrent matrix state toBF16 after each update; the compatible reference uses

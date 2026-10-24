@@ -1,0 +1,29 @@
+--- runtime-a/once.py
++++ runtime-b/once.py
+@@ -5,13 +5,13 @@
+ REF=HERE.parent
+ ROOT=pathlib.Path('/home/steve/llm-optimizations')
+ LANE=REF.parent
+-RUN=pathlib.Path('/mnt/usb-models/own-xpu-runtime-reference/sc117-cpu-23b0202a-b/runtime-a')
++RUN=pathlib.Path('/mnt/usb-models/own-xpu-runtime-reference/sc117-cpu-23b0202a-b/runtime-b')
+ PORT=18087
+ GIB=1<<30
+ QUOTA=128<<20
+ ROOT_FLOOR=27_000_000_000+(64<<20)
+ RAM_INITIAL=101_032_431_104
+-ADMISSION=HERE/'evidence/offline-runtime-admission.json'
++ADMISSION=REF/'runtime-a/evidence/offline-runtime-admission.json'
+ BUILD=REF/'build-b/evidence/build-result.json'
+ CENSUS=LANE/'metadata/new-census.json'
+ REQUEST=REF/'request-proposal.json'
+@@ -60,8 +60,8 @@
+     require(len(r['prompt'])==87 and r['n_predict']==32 and r['temperature']==-1 and r['samplers']==['temperature'] and not r['cache_prompt'] and not r['ignore_eos'],'request changed')
+     require(sha(CUSTOM)==CUSTOM_SHA and load(CUSTOM)['passed'],'custom comparison authority')
+     model_stats(c);scan(binary)
+-    argv=[str(binary),'-m',c['shards'][0]['path'],'--device','none','--n-gpu-layers','0','--host','127.0.0.1','--port',str(PORT),'--ctx-size','4096','--parallel','1','--threads','2','--threads-batch','2','--threads-http','1','--cache-type-k','bf16','--cache-type-v','bf16','--flash-attn','off','--no-warmup','--cache-ram','0','--no-cache-prompt','--cache-reuse','0','--no-context-shift','--predict','32']
+-    return {'schema':'gsq.reference.cpu.runtime-a.v1','argv':argv,'environment':clean_env(),'cwd':str(RUN/'cwd'),'output':str(RUN),'binary_sha256':a['binary_sha256'],'source_sha256':{str(p):sha(p) for p in [pathlib.Path(__file__),ADMISSION,BUILD,CENSUS,REQUEST,CUSTOM]},'request':r,'deadline_seconds':3600,'ram_initial':RAM_INITIAL,'ram_floor':8*GIB,'address_space':128*GIB,'output_quota':QUOTA,'usb_floor':2*GIB,'root_floor':ROOT_FLOOR,'model_header_validation_at_run':True,'no_reference_quality_claim':True}
++    argv=[str(binary),'-m',c['shards'][0]['path'],'--device','none','--n-gpu-layers','0','--host','127.0.0.1','--port',str(PORT),'--ctx-size','4096','--parallel','1','--threads','2','--threads-batch','2','--threads-http','1','--cache-type-k','bf16','--cache-type-v','bf16','--flash-attn','off','--no-warmup','--cache-ram','0','--no-cache-prompt','--cache-reuse','0','--no-context-shift','--predict','32','--log-verbosity','4']
++    return {'schema':'gsq.reference.cpu.runtime-b.v1','argv':argv,'environment':clean_env(),'cwd':str(RUN/'cwd'),'output':str(RUN),'binary_sha256':a['binary_sha256'],'source_sha256':{str(p):sha(p) for p in [pathlib.Path(__file__),ADMISSION,BUILD,CENSUS,REQUEST,CUSTOM]},'request':r,'deadline_seconds':3600,'ram_initial':RAM_INITIAL,'ram_floor':8*GIB,'address_space':128*GIB,'output_quota':QUOTA,'usb_floor':2*GIB,'root_floor':ROOT_FLOOR,'model_header_validation_at_run':True,'no_reference_quality_claim':True}
+ def limits():
+     os.nice(19);os.sched_setaffinity(0,set(range(8,16))|set(range(24,32)))
+     resource.setrlimit(resource.RLIMIT_AS,(128*GIB,128*GIB));resource.setrlimit(resource.RLIMIT_CORE,(0,0))

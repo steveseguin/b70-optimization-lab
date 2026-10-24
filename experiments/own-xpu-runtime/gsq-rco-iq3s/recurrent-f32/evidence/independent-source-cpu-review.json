@@ -1,0 +1,29 @@
+{
+  "schema": "gsq.recurrent-f32.independent-source-cpu-review.v1",
+  "passed": true,
+  "scope": "Retained source/CPU proof and source-derived allocation review only; no native/controller/quality admission",
+  "verified_source_dependency_entries": 441,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/precision.patch": "241c430cb08c306341c8be8071ac0044d5d8fd2eb0e369381c4dd438505b960f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/recurrent_policy.hpp": "5036721c04e59b34192e180af75beaa48fa10392845a7a6c5420b0b28e1423fd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/test_storage.cpp": "127e79c7f233d927eec7391625aba90e50ef854c53e0ffd203b32886475f060c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/materialization.json": "36d06637ebfafc307f05f90937d12085c438ef7953d2704dd77a7aea6797e653",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/evidence/cpu-proof.json": "c4b684dd0c39af0fae991adc7f028c1d459cd7b1f1522c4544c2b3e5dc6a044c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/memory-ledger.json": "e2163d1da62fc14b4247b16985239141c2892703b12772ce2b4d36f3e504a4d7"
+  },
+  "cpu_checks": 522,
+  "proof_replayed": false,
+  "native_executed": false,
+  "findings": [
+    "Flag16 survives OR-composed flags; accesses and full state extents change together; specialized F32 implementation rejected.",
+    "tiny_core fallback uses dtype-aware View.get/put, unlike a raw BF16 reinterpretation.",
+    "rank0 banks alone allocate alternate typed buffers; rank1 no alternate; SpeculativeImage rank0 only, full typed row.bytes capacity/write_bytes.",
+    "RedoBankProof BF16-only rejects F32 omission; miss=control conservatively saves full F32 bytes; banks policies remain unsupported.",
+    "RESET and rollback must still be proven on fully materialized actual Host lifecycle; memcpy demo is not production qualification.",
+    "Old39-object reuse forbidden;21 affected TUs including entry and19 unchanged linked objects separated.",
+    "Primary deltas29,601,792/29,417,472; device deltas88,805,376/29,417,472; target paired capture310,364,224B and full27 capture payload8,641,716,012B recomputed.",
+    "FP32 history widening of already-BF16 finite activations adds no precision recovery upstream; remaining reference graph numerical differences remain open."
+  ],
+  "native_admitted": false,
+  "external_reference_equivalence_proven": false
+}
