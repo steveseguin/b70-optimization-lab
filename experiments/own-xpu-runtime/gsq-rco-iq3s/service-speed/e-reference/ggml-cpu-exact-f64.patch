@@ -1,0 +1,106 @@
+--- a/ggml/src/ggml-cpu/ggml-cpu.c	2026-10-10 19:01:45.977981420 -0400
++++ b/ggml/src/ggml-cpu/ggml-cpu.c	2026-10-24 14:17:10.454588102 -0400
+@@ -1162,6 +1162,87 @@
+ 
+ // ggml_compute_forward_mul_mat
+ 
++
++// ---- own-runtime reference patch: exact F32-weight / F64-accumulation matmuls (opt-in) ----
++// GGML_CPU_EXACT_F64=1: every src0 row is dequantized with the format's canonical to_float (no activation
++// quantization, no vec_dot_type packing), and each output is a double-precision sum of float*float products,
++// rounded once to F32. Arithmetically independent of tile/thread/batch shape.
++static int ggml_cpu_exact_mode(void) {
++    static int mode = -1;
++    if (mode < 0) { const char * e = getenv("GGML_CPU_EXACT_F64"); mode = (e && e[0] == '1') ? 1 : 0; }
++    return mode;
++}
++static void ggml_cpu_exact_row(const struct ggml_tensor * t, const char * row, float * out, int64_t n) {
++    if (t->type == GGML_TYPE_F32) { memcpy(out, row, n*sizeof(float)); return; }
++    const struct ggml_type_traits * tr = ggml_get_type_traits(t->type);
++    GGML_ASSERT(tr->to_float != NULL);
++    tr->to_float(row, out, n);
++}
++static float ggml_cpu_exact_out(double v) {
++    // Diagnostic only (GGML_CPU_EXACT_ROUND=bf16): emulate a BF16 store of the matmul result, nearest-even.
++    static int round_bf16 = -1;
++    if (round_bf16 < 0) { const char * e = getenv("GGML_CPU_EXACT_ROUND"); round_bf16 = (e && strcmp(e, "bf16") == 0) ? 1 : 0; }
++    float f = (float) v;
++    if (!round_bf16) return f;
++    uint32_t u; memcpy(&u, &f, 4);
++    if ((u & 0x7f800000u) != 0x7f800000u) u = (u + 0x7fffu + ((u >> 16) & 1u)) & 0xffff0000u;
++    memcpy(&f, &u, 4); return f;
++}
++static double ggml_cpu_exact_dot(const float * a, const float * b, int64_t n) {
++    double s = 0.0;
++    for (int64_t i = 0; i < n; ++i) s += (double) a[i] * (double) b[i];
++    return s;
++}
++static void ggml_compute_forward_mul_mat_exact(const struct ggml_compute_params * params, struct ggml_tensor * dst) {
++    const struct ggml_tensor * src0 = dst->src[0];
++    const struct ggml_tensor * src1 = dst->src[1];
++    GGML_TENSOR_BINARY_OP_LOCALS
++    const int ith = params->ith, nth = params->nth;
++    const int64_t r2 = ne12 / ne02, r3 = ne13 / ne03;
++    float * w = malloc(ne00*sizeof(float));
++    float * x = malloc(ne10*sizeof(float));
++    GGML_ASSERT(w && x && ne00 == ne10);
++    int64_t job = 0;
++    for (int64_t i03 = 0; i03 < ne03; ++i03) for (int64_t i02 = 0; i02 < ne02; ++i02) for (int64_t ir0 = 0; ir0 < ne01; ++ir0, ++job) {
++        if (job % nth != ith) continue;
++        ggml_cpu_exact_row(src0, (const char *) src0->data + ir0*nb01 + i02*nb02 + i03*nb03, w, ne00);
++        for (int64_t i13 = i03*r3; i13 < (i03+1)*r3; ++i13) for (int64_t i12 = i02*r2; i12 < (i02+1)*r2; ++i12) for (int64_t i11 = 0; i11 < ne11; ++i11) {
++            ggml_cpu_exact_row(src1, (const char *) src1->data + i11*nb11 + i12*nb12 + i13*nb13, x, ne10);
++            *(float *)((char *) dst->data + ir0*nb0 + i11*nb1 + i12*nb2 + i13*nb3) = ggml_cpu_exact_out(ggml_cpu_exact_dot(w, x, ne00));
++        }
++    }
++    free(w); free(x);
++}
++static void ggml_compute_forward_mul_mat_id_exact(const struct ggml_compute_params * params, struct ggml_tensor * dst) {
++    const struct ggml_tensor * src0 = dst->src[0];
++    const struct ggml_tensor * src1 = dst->src[1];
++    const struct ggml_tensor * ids  = dst->src[2];
++    GGML_TENSOR_BINARY_OP_LOCALS
++    const int ith = params->ith, nth = params->nth;
++    const int64_t n_ids = ids->ne[0], n_tok = ids->ne[1], n_as = ne02;
++    GGML_ASSERT(ne00 == ne10 && ne1 == n_ids && ne2 == n_tok);
++    float * w = malloc(ne00*sizeof(float));
++    float * x = malloc(ne10*sizeof(float));
++    GGML_ASSERT(w && x);
++    int64_t job = 0;
++    for (int64_t e = 0; e < n_as; ++e) {
++        int used = 0;
++        for (int64_t t = 0; t < n_tok && !used; ++t) for (int64_t k = 0; k < n_ids; ++k)
++            if (*(const int32_t *)((const char *) ids->data + k*ids->nb[0] + t*ids->nb[1]) == e) { used = 1; break; }
++        if (!used) continue;
++        for (int64_t ir0 = 0; ir0 < ne01; ++ir0, ++job) {
++            if (job % nth != ith) continue;
++            ggml_cpu_exact_row(src0, (const char *) src0->data + ir0*nb01 + e*nb02, w, ne00);
++            for (int64_t t = 0; t < n_tok; ++t) for (int64_t k = 0; k < n_ids; ++k) {
++                if (*(const int32_t *)((const char *) ids->data + k*ids->nb[0] + t*ids->nb[1]) != e) continue;
++                ggml_cpu_exact_row(src1, (const char *) src1->data + (k % ne11)*nb11 + t*nb12, x, ne10);
++                *(float *)((char *) dst->data + ir0*nb0 + k*nb1 + t*nb2) = ggml_cpu_exact_out(ggml_cpu_exact_dot(w, x, ne00));
++            }
++        }
++    }
++    free(w); free(x);
++}
++// ---- end own-runtime reference patch ----
+ static void ggml_compute_forward_mul_mat_one_chunk(
+     const struct ggml_compute_params * params,
+     struct ggml_tensor * dst,
+@@ -1265,6 +1346,7 @@
+         return;
+     }
+ 
++    if (ggml_cpu_exact_mode()) { ggml_compute_forward_mul_mat_exact(params, dst); return; }
+     // If tiled is supported, it will execute the full op here and we return
+     if (ggml_compute_forward_mul_mat_tiled(params, dst)) {
+         return;
+@@ -1558,6 +1640,7 @@
+     const struct ggml_tensor * src0 = dst->src[0];
+     const struct ggml_tensor * src1 = dst->src[1];
+     const struct ggml_tensor * ids = dst->src[2];
++    if (ggml_cpu_exact_mode()) { ggml_compute_forward_mul_mat_id_exact(params, dst); return; }
+ 
+     GGML_TENSOR_BINARY_OP_LOCALS
+ 
