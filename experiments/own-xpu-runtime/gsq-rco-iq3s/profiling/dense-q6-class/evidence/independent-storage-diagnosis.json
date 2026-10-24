@@ -1,0 +1,51 @@
+{
+  "schema": "gsq.dense-q6.class-storage-independent-diagnosis.v1",
+  "source_only": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/profile.py": "8e6b17ee5ff1145bc039067f0b3751536f51fc78630e1bc9a35f75d393f0debb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/generated/adapter.py": "242254b8819087b23513c383e91a7b3b3f0b3fcae6a37a740216fd8d6e52e3f1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source/rank.hpp": "3048c31d11102e3692ac9f5c3276ec342d8b9c2cf5891ec657ae371e4cb9ae71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp": "0e718893e0bae5434b37fc9d329c9480d7ea5fb823cb9511b4a4e73ea1d79ab8"
+  },
+  "cause": "profile.storage_guard repeatedly invokes unchanged full-run adapter forecast rather than remaining bytes",
+  "target_bytes": 221743168,
+  "draft_bytes": 9699332,
+  "metadata_reserve_bytes": 134217728,
+  "external_floor_bytes": 2147483648,
+  "initial_payload_bytes": 694327500,
+  "remaining_stages": [
+    {
+      "stage": "admitted_or_loaded_before_initial_RESET",
+      "remaining_payload_bytes": 694327500,
+      "external_free_required_bytes": 2976028876
+    },
+    {
+      "stage": "initial_RESET_acknowledged",
+      "remaining_payload_bytes": 462885000,
+      "external_free_required_bytes": 2744586376
+    },
+    {
+      "stage": "warmup_target_DUMP_verified_before_second_RESET",
+      "remaining_payload_bytes": 241141832,
+      "external_free_required_bytes": 2522843208
+    },
+    {
+      "stage": "second_RESET_acknowledged",
+      "remaining_payload_bytes": 231442500,
+      "external_free_required_bytes": 2513143876
+    },
+    {
+      "stage": "measured_target_DUMP_and_repeat_verified",
+      "remaining_payload_bytes": 9699332,
+      "external_free_required_bytes": 2291400708
+    },
+    {
+      "stage": "FINISH_acknowledged_and_owners_closed",
+      "remaining_payload_bytes": 0,
+      "external_free_required_bytes": 2281701376
+    }
+  ],
+  "critical_fact": "DUMP writes only target. RESET dumps preceding target and draft; FINISH dumps last draft. Before request2 warmup draft still remains.",
+  "proposed_test": "Stateful fake free-space ledger starts at exact initial admission threshold; consume T+D at initialRESET, T at warmupDUMP, D at secondRESET, T at measuredDUMP and D at FINISH. Each appropriate remaining guard must pass while fixed old full-run guard fails at warmup boundary. Refuse one byte below every threshold; do not advance state on failed RESET/DUMP. Preserve fixed root reserve and external floor.",
+  "scope": "No operational helper, actual payload read, compiler, Device or mutation of frozen launch sources"
+}

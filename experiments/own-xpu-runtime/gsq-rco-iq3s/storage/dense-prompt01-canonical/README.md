@@ -1,0 +1,3 @@
+Four prompt01 none/MTP rank0/1 raw bundles only,443,486,336B. This is the frozen prompt00 adapter with only its allowlist, control-directory identity and immutable closure digest changed. Prior source and filesystem proof remain unchanged. Initial/warmup, all other prompts, draft and all sibling metadata remain untouched.
+
+Root alone may separately invoke `--verify --batch N` and `--release-verified --batch N` after independent review. The full raw and compressed canonical bytes, exact single-member bytes, held identities and durable restore map use the identical reviewed implementation. No automatic retry or phase loop. Root retains restore maps/receipts in tracked evidence. The original helper is not modified.

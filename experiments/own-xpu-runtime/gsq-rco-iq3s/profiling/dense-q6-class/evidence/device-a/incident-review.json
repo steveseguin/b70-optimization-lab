@@ -1,0 +1,62 @@
+{
+  "schema": "gsq.dense-class.failed-storage-review.v1",
+  "run_passed": false,
+  "metadata_closure_review_passed": true,
+  "full_payload_audit_performed": false,
+  "excluded_warmup_requests": 1,
+  "warmup_output_tokens": 8,
+  "measured_requests": 0,
+  "measured_prompt_directory_exists": false,
+  "error": "ValueError('external evidence forecast/floor')",
+  "elapsed_seconds": 91.63071833900176,
+  "owners": [
+    {
+      "schema": "own-xpu-runtime.teardown.v1",
+      "backend": "LevelZero:0:Intel(R) Arc(TM) Pro B70 Graphics:driver=1.15.38308+1",
+      "status": "complete",
+      "exit_code": 0,
+      "safe_to_exit": true,
+      "idle_marker_complete": true,
+      "in_flight": 0,
+      "live_bytes": 0,
+      "error": ""
+    },
+    {
+      "schema": "own-xpu-runtime.teardown.v1",
+      "backend": "LevelZero:0:Intel(R) Arc(TM) Pro B70 Graphics:driver=1.15.38308+1",
+      "status": "complete",
+      "exit_code": 0,
+      "safe_to_exit": true,
+      "idle_marker_complete": true,
+      "in_flight": 0,
+      "live_bytes": 0,
+      "error": ""
+    }
+  ],
+  "ownership": {
+    "retained_pids": [],
+    "stop_requested": true,
+    "returncodes": [
+      1,
+      1
+    ],
+    "signals_sent": 0,
+    "diagnostic_errors": []
+  },
+  "both_physical_contacts": true,
+  "physical_drain": true,
+  "unchanged_faults_vision_queue": true,
+  "plan_sha256": "f71f14e146520b2036cf34b6d6214c91119773745653f8d059f68f884aa3cbbe",
+  "artifacts": {
+    "/home/steve/own-xpu-runtime-results/gsq-dense-q6-class-a.control/terminal.json": "19de728ecfe08408a78d69e3ea61a93f747104610c710b73896101c51d25e357",
+    "/home/steve/own-xpu-runtime-results/gsq-dense-q6-class-a.control/admission.json": "20471dc3ec4df39694790923a2bb1d5609931fe1f8b839056148e877e48c5dba",
+    "/home/steve/own-xpu-runtime-results/gsq-dense-q6-class-a.control/monitor.json": "edd0a70cff30c1505134eedc4d2bdd8accd17647f4d7b4805ddbd6bd18b67b7b",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-a/ownership.json": "07a0617b383d4a70712d61b637feb9d4baf62791a429687873e9770b08f48326",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-a/profile-incident.json": "871863d7a674e260b6c176e993b7d32fe9a585ff2306f58223cacbbef3ac6502",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-a/warmup-none/request-result.json": "9a3228aa5e1a1d4548b0a22b095a4209b7790ad99fd0165b71c480e848ca3559",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-a/rank0/receipt.json": "2932d90c76fa77fc3cce0e3550ec065314f57fe0f5a353aa12e4e146953cebb6",
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-a/rank1/receipt.json": "490c1479e3169c9b6d44752fa40244d176ed8ea77f0ace28d96746618b8b0f45"
+  },
+  "diagnosis": "Static whole-run forecast recharged before request2 after initial/warmup captures. Preserve failed sources; additive stage-aware remaining forecast required with unchanged metadata/root/external reserves.",
+  "speed_claim": false
+}

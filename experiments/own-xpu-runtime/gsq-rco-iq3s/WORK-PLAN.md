@@ -255,3 +255,14 @@ canonical references,443,486,336B recovered,all8phasesPASS. Samebinary class
 profile f71f started11:05: excluded8warmup+originalprompt00target128,fullstate
 checks,6bundles, no throughputclaim. No additionalnativebuild. Nextclassaudit
 sourcepreparing while root owns GPU. Coach10:56 review retained; next11:26:38.
+
+
+## October24 11:12UTC — class storage-guard incident
+
+Class-a stopped after excluded8warmup, before measuredprompt, due to recharging
+full828,545,228B forecast after captures. Both processes exit1/cooperative stop;
+backendteardown0/safe/zero live, descriptorsdrained/nofault. No speedresult. Source
+review/mocks missed stateful space consumption; rootowned admission. Incident3eab
+and exactfailed sources preserved. Additive b retains2GiB+128MiB and corrects
+remainingpayload: before request2,T+2D=241,141,832B, notT+D. Fourprompt01bundles
+verified canonical/released,443,486,336B,failedrun retained. No automatic retry.

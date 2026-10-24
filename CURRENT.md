@@ -1,14 +1,16 @@
 # Current Workspace State
 
-**October 24, 07:05 EDT — four-card host: qualified Q6 binary class diagnostic running.**
-The full candidate audit passed:16.17 target/23.44 MTP in the internal128-output
-screen,188.7MB added memory. The small MTPdifference is not a causal gain claim;
-priorbinary long-context coverage stays separate. Four exact duplicate bundles
-now use verified canonical restore maps, recovering443MB. Samebinary diagnostic
-uses one excluded8-output warmup and originalprompt00target128, fullstate/physical
-closure gates, sixbundles. No concurrent compile/archive I/O or model/settings
-changes. USB3.13GB/root27.25GB at admission. Protected vision remains unchanged.
-[Qualified result](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/RESULT.md).
+**October 24, 07:12 EDT — four-card host: class diagnostic stopped safely; storage-accounting fix preparing.**
+The first class run completed its excluded8-output warmup, then refused the measured
+prompt because its guard recharged the full forecast after captures had consumed
+space. Both processes cooperatively exited1; backend teardown completed safely,
+target descriptors empty, no new fault and vision unchanged. Preserve failed
+sources/receipts. Additive launch-b accounts for remaining target/draft writes at
+confirmed boundaries with unchanged reserves. Four more exact prompt01 bundles
+were verified/canonicalized, recovering443MB; failed profile evidence is retained.
+The qualified16.17/23.44 Q6 result remains valid. No GPU work currently running.
+[Incident](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/evidence/device-a/incident-review.json).
+
 
 
 

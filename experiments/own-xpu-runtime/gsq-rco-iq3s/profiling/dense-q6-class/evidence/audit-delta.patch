@@ -1,0 +1,100 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/evidence/device-a/audit.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/evidence/device-a/audit.py
+@@ -8,10 +8,10 @@
+ import argparse,gzip,hashlib,importlib.util,json,math,os,re,resource,stat,time
+ 
+ D=Path(__file__).resolve().parent;P=D.parents[1];L=P.parents[1];R=L.parents[2]
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-current-class-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-current-class-a')
+-PLAN_SHA='8a12f2b92b218b93c66e788b5b802d2fa140a812d9065b85a3dfcb23bd32c298'
+-BINARY='5a8c9d3b58606022e21e2f0347360e4dd9cfdf6a869c8daac145e928fe4d4306'
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-dense-q6-class-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-a')
++PLAN_SHA='f71f14e146520b2036cf34b6d6214c91119773745653f8d059f68f884aa3cbbe'
++BINARY='a0f9ffc58de704a276b237cbeec2b338ee873c0872bcae2da2214286aa5cce50'
+ PRIOR=L/'baseline/evidence/independent-a/review.json'
+ PRIOR_SHA='f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb'
+ OLD_INDEX=PRIOR.parent/'artifact-index.jsonl.gz'
+@@ -21,6 +21,12 @@
+ assert hashlib.sha256(BASE.read_bytes()).hexdigest()==BASE_SHA
+ s=importlib.util.spec_from_file_location('closed_bundle_baseline_helpers',BASE);B=importlib.util.module_from_spec(s);s.loader.exec_module(B)
+ sha,read,require=B.sha,B.read,B.require
++IMMEDIATE_PARENT=L/'profiling/current-combined/evidence/device-a/audit.py'
++IMMEDIATE_PARENT_SHA='a0d6818704f617ed89d8d4f69bca6e573c321bfa5512893687829ee1ef3b4ef9'
++ACTUAL=L/'dense-q6-p33/operating/evidence/device-a/review.json'
++ACTUAL_SHA='8e9c69ae212a45f1bf2491dd25a75743b01a19395064d52b06d713497f686d14'
++BUILD_SHA='33b6add96c907a24a95b9b3161f96b1b78fb9edc4e9d4a050b11edf8e5f8c6ab'
++require(sha(IMMEDIATE_PARENT)==IMMEDIATE_PARENT_SHA,'qualified class auditor source')
+ FILES={'state.bundle','state-index.tsv','state.json','state-seal.txt'}
+ CAP=256*1024**2;META=1024**2
+ 
+@@ -83,13 +89,33 @@
+   for f in opened.values():os.close(f)
+   os.close(fd)
+ 
++def derive_phases(result,classes):
++ """Independent reduction of actual half replies, not the run helper's partition."""
++ require(len(result['tokens'])==128 and all(result['stats'][k]==0 for k in ('guesses','hits','misses')),'fixed target output/stat extent')
++ trace=result['rank_trace'];halves=[x for x in trace if x['op']==1]
++ require(len(halves)==428 and not any(x['op']==9 for x in trace),'428 target halves and no draft')
++ out={}
++ for rank in (0,1):
++  rows=[x for x in halves if x['rank']==rank];require(len(rows)==214,'214 halves per rank');values=[[],[],[]]
++  for position,row in enumerate(rows):
++   require(row['position']==position and row['fixture']==max(0,position-85) and row['speculative'] is False,'ordered complete half identity')
++   duration=row['gpu_ms'];require(type(duration) in (int,float) and math.isfinite(duration) and duration>=0,'finite half event duration')
++   values[0 if position<86 else 1 if position==86 else 2].append(duration)
++  counts=[len(x) for x in values];require(counts==[86,1,127],'phase populations')
++  names=('prompt_only','first_output','later_decode');bounds=((0,85),(86,86),(87,213))
++  groups={n:dict(positions=list(bound),halves=len(v),device_ms_sum=sum(v)) for n,bound,v in zip(names,bounds,values)}
++  total=sum(row['gpu_ms'] for row in rows);class_total=sum(x['device_ms'] for x in classes[str(rank)]['report']['classes']);require(math.isfinite(class_total) and class_total>=0,'finite whole class duration')
++  out[str(rank)]=dict(groups=groups,TTFT_positions_device_ms_sum=sum(values[0])+sum(values[1]),all_half_device_ms=total,whole_request_class_device_ms=class_total,class_minus_half_device_ms=class_total-total)
++ return out
++
+ def run():
+  require(os.getpriority(os.PRIO_PROCESS,0)==19 and os.sched_getaffinity(0)<=set(range(8,16))|set(range(24,32)),'helper placement')
+  resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+  require(not (D/'review.json').exists() and not (D/'artifact-index.jsonl.gz').exists(),'exclusive review')
+- start=time.monotonic();receipt=dict(schema='gsq.current-combined.class-independent-device.v1',passed=False,no_speed_claim=True,device_executed_by_reviewer=False)
++ start=time.monotonic();receipt=dict(schema='gsq.dense-q6.class-independent-device.v1',passed=False,no_speed_claim=True,device_executed_by_reviewer=False)
+  try:
+   require(sha(PRIOR)==PRIOR_SHA and sha(OLD_INDEX)==OLD_INDEX_SHA,'independent original authorities');prior=read(PRIOR)
++  require(sha(ACTUAL)==ACTUAL_SHA,'actual dense qualification');actual=read(ACTUAL);require(actual['passed'] and actual['all12_exact'] and actual['native_binary_sha256']==BINARY and actual['physical_drain'],'qualified current binary')
+   require(prior['passed'] and prior['all12_exact'] and prior['index_sha256']==OLD_INDEX_SHA and sha(REFERENCE)==prior['full_result_sha256'],'baseline receipt/result')
+   refs={a['name']:a for p in read(REFERENCE)['prompts'] for a in p['arms']}
+   plan=read(CONTROL/'plan.json');ad=read(CONTROL/'admission.json');terminal=read(CONTROL/'terminal.json')
+@@ -98,11 +124,12 @@
+   for k,v in plan['unit_properties'].items():require(ad['unit'][k]==v,'safe unit property')
+   B.validate_passive(ad['before'],terminal['after'],terminal)
+   require(plan['requests']==plan['suite']['requests']==2 and plan['suite']['retained_state_dumps']==3 and plan['suite']['measured_requests']==1 and plan['suite']['timing']=='class','fixed two-arm/three-capture scope')
++  require(plan['suite']['candidate_actual_review_sha256']==ACTUAL_SHA,'current qualification plan binding')
+   require(plan['suite']['baseline_review_sha256']==PRIOR_SHA and plan['suite']['baseline_result_sha256']==prior['full_result_sha256'],'baseline admission')
+   require(plan['adapter']['storage']['raw_state_bytes']==694327500 and plan['adapter']['storage']['evidence_forecast_bytes']==828545228,'three-capture storage forecast')
+   for mapping in (plan['source_sha256'],plan['suite']['source_sha256'],plan['adapter']['source_sha256']):
+    for p,h in mapping.items():require(sha(R/p)==h,'source pin '+p)
+-  native=read(plan['adapter']['build_receipt']);require(native['passed'] and native['mode']=='native' and sha(plan['adapter']['build_receipt'])==plan['adapter']['build_receipt_sha256'],'native receipt')
++  native=read(plan['adapter']['build_receipt']);require(native['passed'] and native['mode']=='native' and sha(plan['adapter']['build_receipt'])==plan['adapter']['build_receipt_sha256']==BUILD_SHA,'native receipt')
+   require(sha(plan['adapter']['binary'])==native['binary_sha256']==plan['adapter']['binary_sha256']==BINARY,'native binary')
+   for mapping in (native['source_sha256'],native['object_sha256']):
+    for p,h in mapping.items():require(sha(R/p)==h,'compiled source/object '+p)
+@@ -180,16 +207,17 @@
+    # Count changes require source attribution; do not silently discard classes.
+    classes[str(rank)]=dict(report_sha256=sha(path),classes=report['classes'],device_ms_sum=sum(x['device_ms'] for x in report['classes']),launches=sum(x['launches'] for x in report['classes']),groups=sum(x['groups'] for x in report['classes']))
+   require(not any(count_deltas.values()),'unexpected original-topology class launch/count delta')
+-  ledger=read(L/'qkv-q6-p33/engine/operating/candidate-ledger.json')['scenarios']['split24-24_mtp-rank0']['ranks'];owners=[];memory=[]
++  phases=derive_phases(full['rows'][-1]['result'],full['classes']);require(full['phase_totals']['ranks']==phases,'independently recomputed phase totals and residual')
++  ledger=read(L/'dense-q6-p33/operating/candidate-ledger.json')['scenarios']['split24-24_mtp-rank0']['ranks'];owners=[];memory=[]
+   for rank in (0,1):
+    owner=read(EVIDENCE/f'rank{rank}/receipt.json');require(owner['passed'] and owner['rank']==rank and not owner['error'] and len(owner['teardown'])==1,'clean owner')
+    t=owner['teardown'][0];require(t['safe_to_exit'] and t['in_flight']==t['live_bytes']==t['exit_code']==0,'safe owner teardown');owners.append({k:t[k] for k in ('status','safe_to_exit','in_flight','live_bytes','exit_code')})
+    census=read(EVIDENCE/f'rank{rank}/census.json');amount=sum(a['bytes'] for a in census['allocations'] if a['live'] and a['memory']=='device');require(amount==census['totals']['device']==ledger[rank]['device_logical_bytes'],'unchanged allocation census');memory.append(amount)
+   ownership=read(EVIDENCE/'ownership.json');require(ownership['returncodes']==[0,0] and not ownership['retained_pids'] and ownership['signals_sent']==0 and not ownership['stop_requested'],'clean process closure')
+-  receipt.update(passed=True,requests=2,measured_requests=1,captures=3,bundles=6,arms=arms,class_reports=classes,joined_class_totals=joined,original_class_count_deltas=count_deltas,consumed_positions=214,bundle_captures=captures,measured_arm_state_json_bytes_exact=True,all_original_buffer_lengths_exact=True,initial_capture_semantic_baseline_required=False,explicit_repeat_and_closed_stamp_verified=True,baseline_review_sha256=PRIOR_SHA,baseline_index_sha256=OLD_INDEX_SHA,plan_sha256=PLAN_SHA,native_binary_sha256=BINARY,full_result_sha256=sha(fullpath),rank_identities=terminal['rank_identities'],owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(rawpaths),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Initial and warmup capture hashes are informational versus baseline; sealed bytes, full inventory and original buffer lengths remain verified.','One fixed prompt00 target-only class diagnostic, with excluded disjoint warmup; exact prior-baseline state/tokens. Class event totals cover whole request including prefill, not decode-only, per-layer/per-format, copy-completeness, speed or general-quality proof.','Closure uses retained successful DUMP/RESET/FINISH and owner/drain evidence; a seal alone is insufficient.','No model weights read or GPU/service operations by reviewer; physical host findings use retained monitor evidence.'])
++  receipt.update(passed=True,requests=2,measured_requests=1,captures=3,bundles=6,arms=arms,class_reports=classes,joined_class_totals=joined,independent_phase_totals=phases,phase_scope="Per-rank total half-event durations only; no per-class phase attribution or throughput claim",candidate_actual_review_sha256=ACTUAL_SHA,original_class_count_deltas=count_deltas,consumed_positions=214,bundle_captures=captures,measured_arm_state_json_bytes_exact=True,all_original_buffer_lengths_exact=True,initial_capture_semantic_baseline_required=False,explicit_repeat_and_closed_stamp_verified=True,baseline_review_sha256=PRIOR_SHA,baseline_index_sha256=OLD_INDEX_SHA,plan_sha256=PLAN_SHA,native_binary_sha256=BINARY,full_result_sha256=sha(fullpath),rank_identities=terminal['rank_identities'],owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(rawpaths),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Initial and warmup capture hashes are informational versus baseline; sealed bytes, full inventory and original buffer lengths remain verified.','One fixed prompt00 target-only class diagnostic, with excluded disjoint warmup; exact prior-baseline state/tokens. Class event totals cover whole request including prefill, not decode-only, per-layer/per-format, copy-completeness, speed or general-quality proof.','Closure uses retained successful DUMP/RESET/FINISH and owner/drain evidence; a seal alone is insufficient.','No model weights read or GPU/service operations by reviewer; physical host findings use retained monitor evidence.'])
+  except BaseException as e:receipt['error']=type(e).__name__+': '+str(e);raise
+  finally:
+-  receipt.update(auditor_sha256=sha(__file__),parent_auditor_sha256=BASE_SHA,elapsed_seconds=time.monotonic()-start)
++  receipt.update(auditor_sha256=sha(__file__),immediate_parent_auditor_sha256=IMMEDIATE_PARENT_SHA,parent_auditor_sha256=BASE_SHA,elapsed_seconds=time.monotonic()-start)
+   with (D/'review.json').open('x') as f:json.dump(receipt,f,indent=2);f.write('\n')
+  print(json.dumps(dict(passed=True,review_sha256=sha(D/'review.json'))))
+ 
