@@ -189,3 +189,15 @@ Inspect the largest unchanged measured format, IQ4_NL expert-down, before select
 another exact kernel delta. No redundant profiling campaign yet. Keep the explicit
 [broader coverage plan](expert-iq3xxs-block/engine/PUBLICATION-GAPS.md) for publication;
 twelve short prompts do not establish universal model correctness or quality.
+
+## Archive complete; broaden coverage alongside source work — 09:41 UTC
+
+[All54 target bundles](storage/expert-block-closed/RESULT.md) are losslessly archived,
+all216 phases verified. Prepare six requests on the current qualified973489 binary,
+without rebuilding: originalprompt00 cap512, the existing untemplated512-input real
+text continuation cap512, and a preregistered roughly2048-input fact task cap128,
+each target/MTP with fullRESET. Retain EOS/truncation and rubric failures. This adds
+sequence/context/task coverage but is not an independent full-model reference.
+The next source-only kernel candidate removes local staging/barrier from IQ4_NL
+expert-down while preserving original decode8/lane sum/tree/BF16. No assumed speedup;
+one actual-case AB/BA discriminator is needed after focused new-address checks.

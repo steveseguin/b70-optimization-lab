@@ -59,6 +59,7 @@ independent full-model oracle or broad quality certification. See the
   Raw/control roots are `/mnt/usb-models/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a`
   and `/home/steve/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a.control`.
 
-Closed bundle payloads are released for verified lossless archival; all JSON,
-indices, seals and draft evidence remain in place. Record actual archive completion
-separately before describing any raw bundle as archived. No model file is released.
+All54 closed bundle payloads are now [losslessly archived](../../../storage/expert-block-closed/RESULT.md),
+with complete readback before removal. All JSON, indices, seals and draft evidence
+remain in place. Restore the needed original bundle from its verified archive for
+later raw readback or fixture extraction. No model file was removed.

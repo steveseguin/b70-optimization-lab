@@ -1,0 +1,44 @@
+--- unbound/closed_expert_bundles.py
++++ bound/closed_expert_bundles.py
+@@ -14,9 +14,9 @@
+ PLAN_SHA='61e2e15a3577ae2d972f922cea8ff4a7e8f22567cf3354f761d4fa94b786359d'
+ BINARY_SHA='97348925367e1ad67313cf9863d0c4cba47abea871c386972983965e036ea4b2'
+ MANIFEST=L/'baseline/manifest.json';MANIFEST_SHA='c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20'
+-# Deliberately unbound while the run is active. A reviewed additive binding of
+-# actual PASS artifacts must replace None; a caller cannot supply authority paths.
+-BINDING=P/'evidence/closure-binding.json';BINDING_SHA=None
++# Actual closed PASS and root release are immutable here; caller-supplied
++# authority paths are not accepted. Unbound predecessor retained in lineage.
++BINDING=P/'evidence/closure-binding.json';BINDING_SHA='07cdf32b2b111ed7cf1fbea6435ee3d4eae0a726d992b6042b32c91cd863f584'
+ require(B.sha(MANIFEST)==MANIFEST_SHA,'frozen original schedule')
+ m=json.loads(MANIFEST.read_text())
+ CAPTURES=['']+['warmup-'+w['mode'] for w in m['warmup']]+[f'prompt-{i:02d}-{mode}' for i,p in enumerate(m['prompts']) for mode in p['order']]
+--- unbound/test_scope.py
++++ bound/test_scope.py
+@@ -1,5 +1,6 @@
+ import copy,importlib.util,unittest
+ from pathlib import Path
++from unittest.mock import patch
+ P=Path(__file__).resolve().parent
+ s=importlib.util.spec_from_file_location('expert_archive_scope',P/'closed_expert_bundles.py');A=importlib.util.module_from_spec(s);s.loader.exec_module(A)
+ class Scope(unittest.TestCase):
+@@ -13,8 +14,7 @@
+   for x in (-1,54,True,'0'):
+    with self.assertRaises(Exception):A.selected(x)
+  def test_unbound_refuses_before_authority_or_payload(self):
+-  self.assertIsNone(A.BINDING_SHA)
+-  with self.assertRaisesRegex(Exception,'not yet bound'):A.plan()
++  with patch.object(A,'BINDING_SHA',None),self.assertRaisesRegex(Exception,'not yet bound'):A.plan()
+  def test_complete_closure_and_failed_contact_refused(self):
+   b={'index_sha256':'a'*64,'full_result_sha256':'b'*64}
+   r=dict(passed=True,requests=26,measured_arms=24,exact_pairs=12,all12_exact=True,bundles=54,paired_state_dump_groups=27,physical_drain=True,kernel_fault_baseline_unchanged=True,explicit_final_repeat_and_closed_stamps_verified=True,same_persistent_rank_pair=True,index_sha256='a'*64,plan_sha256=A.PLAN_SHA,native_binary_sha256=A.BINARY_SHA,ownership=dict(returncodes=[0,0],retained_pids=[],signals_sent=0,stop_requested=False),owners=[dict(safe_to_exit=True,in_flight=0,live_bytes=0,exit_code=0)]*2,rank_pids=[1,2],full_result_sha256='b'*64)
+--- unbound/README.md
++++ bound/README.md
+@@ -1,6 +1,6 @@
+ # Closed expert-block target bundles
+ 
+-This source preparation is **unbound and non-operational**. `BINDING_SHA=None` refuses the plan and every archive phase before reading run authorities or payloads. The active run is not presumed successful. After root supplies a complete independent PASS review and explicitly releases the closed files, retain this preparation and bind a new `evidence/closure-binding.json` by exact hash in the helper. Review that small binding delta before use.
++The final binding records the completed independent PASS and root's explicit release of only these 54 target bundles. `evidence/closure-binding.json` is fixed by SHA in the helper. The unbound preparation and conditional review remain byte-for-byte under `lineage/unbound-template/`. The binding does not execute any phase; root still owns explicit archive/prune/offload/release operations after final peer review.
+ 
+ The only eligible files are 54 target `state.bundle` files: initial capture, two warmups, and the 24 original measured arms, each on ranks 0 and 1. Their ordered names come from the immutable original manifest. Each file is its own archive batch, 0–53. Rank payloads are 125,561,972 and 96,181,196 bytes, totaling 5,987,065,536 bytes. All JSON, TSV indices, seals, draft state and other artifacts remain at their original paths. No model, profile or micro fixture path is eligible.
+ 

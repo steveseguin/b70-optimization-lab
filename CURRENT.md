@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 24, 05:41 EDT — four-card host: exact engine retained; broader coverage next.**
+All54 closed target-state bundles are verified in2.32GB lossless archives; USB6.26GB
+and root27.25GB free. Target cards empty, vision unchanged. Preparing a six-request
+coverage run on the qualified15.73/23.30 engine: cap512 output, distinct512-token
+continuation and roughly2048-token fact retrieval, fullRESET and exact target/MTP.
+IQ4_NL direct-global expert-down is the next source-only candidate; unmeasured.
+[Archived evidence](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/expert-block-closed/RESULT.md).
+
+
 **October 24, 05:33 EDT — four-card host: expert-block engine passes, measured23.30 MTP tokens/s.**
 Independent readback verifies all24 measured arms and54 full-state bundles exactly
 against the original baseline. Target-only15.73/MTP23.30 tokens/s in this resident

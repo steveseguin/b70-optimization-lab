@@ -1,0 +1,15 @@
+# Closed expert-block target bundles
+
+This source preparation is **unbound and non-operational**. `BINDING_SHA=None` refuses the plan and every archive phase before reading run authorities or payloads. The active run is not presumed successful. After root supplies a complete independent PASS review and explicitly releases the closed files, retain this preparation and bind a new `evidence/closure-binding.json` by exact hash in the helper. Review that small binding delta before use.
+
+The only eligible files are 54 target `state.bundle` files: initial capture, two warmups, and the 24 original measured arms, each on ranks 0 and 1. Their ordered names come from the immutable original manifest. Each file is its own archive batch, 0–53. Rank payloads are 125,561,972 and 96,181,196 bytes, totaling 5,987,065,536 bytes. All JSON, TSV indices, seals, draft state and other artifacts remain at their original paths. No model, profile or micro fixture path is eligible.
+
+The private import retains the frozen `closed-bundles` canonical path validator and narrows its exact allowlist to this one run. The filesystem `Job` is unchanged. Before any phase the adapter requires the hash-bound actual independent review, compressed artifact index and terminal; complete 26 requests / 24 arms / 12 pairs / 54 bundles, both positive physical contacts, closed native owners, unchanged fault baseline, exact plan/binary/full-result joins, and the indexed terminal/full-result identities. A failed or partial run cannot qualify.
+
+Each explicit batch follows the existing archive → complete archive/member readback → verified prune → external offload/readback → verified local release protocol. No automatic retry or phase chaining is added. The next batch cannot archive before the previous local release succeeds. Root performs each phase explicitly; this preparation executes none.
+
+Limits remain 128 MiB temporary archive quota, 27,000,000,000 bytes plus 64 MiB NVMe reserve floor, and 2 GiB external reserve. Initial NVMe free must satisfy floor plus quota (27,201,326,592 bytes). The largest payload plus 8 KiB tar allowance and 1 MiB conservative overhead is 126,618,740 bytes, below quota. No reserve is reduced if free space changes. The unchanged Job also binds the original external device and requires it differ from the NVMe archive device.
+
+Restoration uses the archive's exact original relative `state.bundle` member path under `/mnt/usb-models/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a`. Verify byte count and SHA against the bound independent index, preserve the adjacent index/seal/state JSON, and never overwrite an existing file without separate review. Inherited receipt wording about `.bin` does not broaden the allowlist.
+
+Four small source/metadata fixtures check exact scope/quota, dangerous paths/batches, unbound refusal, and complete-closure/failed-contact refusal. They do not rerun the filesystem Job or read actual run payloads. `evidence/scope-template.json` lists names and expected extents only; it is not an admitted archive plan.
