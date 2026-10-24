@@ -1,0 +1,320 @@
+{
+  "passed": true,
+  "result": {
+    "passed": true,
+    "requests": 12,
+    "measured_requests": 10,
+    "rank_pids": [
+      3595998,
+      3596006
+    ],
+    "manifest_sha256": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20",
+    "summary": {
+      "order_groups": {
+        "all": {
+          "first_arm": "all",
+          "arms": {
+            "none": {
+              "prompts": 5,
+              "zero_interval_prompts": 0,
+              "total_output_tokens": 640,
+              "decode_intervals": 635,
+              "decode_wall_ms": 45769.942256156355,
+              "interval_weighted_tok_s": 13.873733911355075,
+              "median_prompt_tok_s": 14.355367064348282,
+              "prompt_wall_ms_sum": 11905.16929491423,
+              "guesses": 0,
+              "hits": 0,
+              "misses": 0
+            },
+            "mtp": {
+              "prompts": 5,
+              "zero_interval_prompts": 0,
+              "total_output_tokens": 640,
+              "decode_intervals": 635,
+              "decode_wall_ms": 31912.676656153053,
+              "interval_weighted_tok_s": 19.8980488801326,
+              "median_prompt_tok_s": 20.500652878238114,
+              "prompt_wall_ms_sum": 12365.897217881866,
+              "guesses": 635,
+              "hits": 483,
+              "misses": 152
+            }
+          }
+        },
+        "none": {
+          "first_arm": "none",
+          "arms": {
+            "none": {
+              "prompts": 2,
+              "zero_interval_prompts": 0,
+              "total_output_tokens": 256,
+              "decode_intervals": 254,
+              "decode_wall_ms": 19270.0639560353,
+              "interval_weighted_tok_s": 13.181066787297729,
+              "median_prompt_tok_s": 13.181412233963325,
+              "prompt_wall_ms_sum": 5357.362863956951,
+              "guesses": 0,
+              "hits": 0,
+              "misses": 0
+            },
+            "mtp": {
+              "prompts": 2,
+              "zero_interval_prompts": 0,
+              "total_output_tokens": 256,
+              "decode_intervals": 254,
+              "decode_wall_ms": 12304.076958098449,
+              "interval_weighted_tok_s": 20.643563988180286,
+              "median_prompt_tok_s": 20.643810474594005,
+              "prompt_wall_ms_sum": 4764.8128379369155,
+              "guesses": 254,
+              "hits": 195,
+              "misses": 59
+            }
+          }
+        },
+        "mtp": {
+          "first_arm": "mtp",
+          "arms": {
+            "none": {
+              "prompts": 3,
+              "zero_interval_prompts": 0,
+              "total_output_tokens": 384,
+              "decode_intervals": 381,
+              "decode_wall_ms": 26499.878300121054,
+              "interval_weighted_tok_s": 14.377424518144279,
+              "median_prompt_tok_s": 14.386063551802954,
+              "prompt_wall_ms_sum": 6547.80643095728,
+              "guesses": 0,
+              "hits": 0,
+              "misses": 0
+            },
+            "mtp": {
+              "prompts": 3,
+              "zero_interval_prompts": 0,
+              "total_output_tokens": 384,
+              "decode_intervals": 381,
+              "decode_wall_ms": 19608.599698054604,
+              "interval_weighted_tok_s": 19.430250291549353,
+              "median_prompt_tok_s": 19.46662851412779,
+              "prompt_wall_ms_sum": 7601.08437994495,
+              "guesses": 381,
+              "hits": 288,
+              "misses": 93
+            }
+          }
+        }
+      },
+      "all_cases_retained": true,
+      "short_eos_cases_retained": true,
+      "warmups_excluded": true,
+      "claim_scope": "five-pair separate-session correctness only; do not combine timings with interrupted prefix or claim end-to-end speed"
+    },
+    "full_result_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-completion-a/resident-suite.json",
+    "full_result_sha256": "2ee055460a2b82ad5acab77ccdd9e04b536a90ac89004e2a8f56cf23e5f6b34e",
+    "old_model_record_comparison": false
+  },
+  "first_error": null,
+  "original_error": null,
+  "rank_identities": [
+    [
+      3595998,
+      66855074
+    ],
+    [
+      3596006,
+      66855120
+    ]
+  ],
+  "observed_target_contact": [
+    true,
+    true
+  ],
+  "children_exited": true,
+  "target_descriptors_empty": true,
+  "after": {
+    "utc": "2026-10-24T07:15:14.848764+00:00",
+    "metadata_only": true,
+    "device_api_calls": 0,
+    "device_opens": 0,
+    "service_changes": 0,
+    "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "root_free_bytes": 27563253760,
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 114543304704,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "units": {
+      "qwen38-27b-fp8": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-fp8-tp1-test": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8-tp1-test.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-vision": {
+        "Restart": "no",
+        "TimeoutStopUSec": "infinity",
+        "MainPID": "3487303",
+        "KillMode": "process",
+        "SendSIGKILL": "no",
+        "Id": "qwen38-27b-vision.service",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "drm": {
+      "renderD128": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:128",
+        "driver": "xe"
+      },
+      "card3": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:3",
+        "driver": "xe"
+      },
+      "renderD130": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:130",
+        "driver": "xe"
+      },
+      "renderD129": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:129",
+        "driver": "xe"
+      },
+      "card4": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:4",
+        "driver": "xe"
+      },
+      "card2": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:2",
+        "driver": "xe"
+      },
+      "card0": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:0",
+        "driver": "xe"
+      },
+      "renderD131": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:131",
+        "driver": "xe"
+      }
+    },
+    "passive_helper_sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "inventory": {
+      "passed": false,
+      "holders": [
+        {
+          "pid": 3487303,
+          "fd": "3",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "6",
+          "node": "renderD128"
+        },
+        {
+          "pid": 3487303,
+          "fd": "8",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "11",
+          "node": "renderD128"
+        }
+      ],
+      "errors": [],
+      "nodes": {
+        "226:0": "card0",
+        "226:2": "card2",
+        "226:3": "card3",
+        "226:4": "card4",
+        "226:128": "renderD128",
+        "226:129": "renderD129",
+        "226:130": "renderD130",
+        "226:131": "renderD131"
+      },
+      "intel_devices": [
+        "/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0",
+        "/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0",
+        "/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0",
+        "/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0"
+      ],
+      "metadata_only": true,
+      "device_opens": 0
+    },
+    "holders": {
+      "3487303": {
+        "start_ticks": 63453537,
+        "state": "S"
+      }
+    },
+    "identity_races": [],
+    "kernel": {
+      "journal_sha256": "8b0a397c1e28d7e13aef529ddfdbe13b6836fc36f26d1127e52d386053d5392a",
+      "rows": 3608,
+      "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20e3a8c;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9b83ee62ca;t=65e90a6b5d72e;x=2417e690879dd078",
+      "faults": [
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+          "timestamp": "42064105058"
+        },
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+          "timestamp": "42064105299"
+        }
+      ]
+    },
+    "known_fault_baseline_matches": true,
+    "queue": {
+      "A": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:31:13.634788+00:00 after the 2026-10-23 packet195 chain window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      },
+      "B": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:42:03.395697+00:00 after the 2026-10-22 packet58-diet-micro window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      }
+    },
+    "endpoints": {
+      "18130": {
+        "unavailable": "URLError"
+      },
+      "18131": {
+        "unavailable": "URLError"
+      }
+    }
+  },
+  "elapsed": 273.09922048903536,
+  "service_changes": 0,
+  "retries": 0,
+  "hard_kills": 0,
+  "plan_sha256": "bcb1857899ecd36ba89d3407d3822283c9bb4358f0a9169c772508dc74c22e3c",
+  "scope": "resident baseline only; full external result is hash-bound in compact result join"
+}

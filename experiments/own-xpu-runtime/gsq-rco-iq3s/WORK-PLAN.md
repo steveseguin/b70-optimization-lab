@@ -71,7 +71,7 @@ latency/byte equality, then deliberate completion of the remaining five prompt p
 under a new bounded identity after source/admission review. Preserve the interrupted
 run and do not combine timing sessions into a full resident throughput claim.
 
-## Exact kernel result — 07:12 UTC
+## Exact kernel result — 07:10 UTC
 
 The [paired kernel test](attention-q8-p33/micro/RESULT.md) passed independently:
 84/84 pairs exact, all72 measured pairs retained, summed candidate/control event
@@ -81,3 +81,15 @@ not an end-to-end speed claim. New completion identity retains original indices7
 12requests/13dumps, original arm ordering and exact baseline comparisons. Its file
 forecast is below57,045 records released by verified archival; monitor capacity and
 retain any failure. Do not rerun the seven passed pairs or merge timing sessions.
+
+## All twelve attention pairs exact — 07:16 UTC
+
+The [separate completion](attention-q8-p33/completion/RESULT.md) independently
+verifies the ten remaining arms. All24 arms of the unchanged candidate now match
+the original baseline, with the interrupted session and timings kept separate.
+The focused kernel gain supports retaining this exact internal candidate, not
+promoting a model speed record. Next lever:22 Q6_K GDN-QKV projections N10240/K2560,
+existing p33 variant6/split1, first exact CPU arithmetic and same-owner3-case micro.
+GDN-QKV's aggregate profile includes mixed formats; do not label it Q6-only time.
+Before another full model suite, archive verified closed candidate state binaries
+to recover file records; preserve original failed-request and JSON evidence.

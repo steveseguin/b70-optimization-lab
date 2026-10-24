@@ -1,12 +1,23 @@
 # Current Workspace State
 
-**October 24, 03:12 EDT — four-card host: exact attention kernel improvement verified.**
+**October 24, 03:16 EDT — four-card host: attention candidate passes all twelve prompt pairs.**
+The five remaining pairs pass independent raw readback: every token and full target
+state matches baseline. Together with the seven earlier pairs, all24 arms are exact.
+The earlier storage-interrupted session stays incomplete; separate timings are not
+combined into a resident speed result. The new owners exited cleanly, target cards
+are empty, vision is unchanged and there are no new GPU faults. USB has8.12GB free.
+The exact attention kernel improvement is retained for further internal work. Next
+is a focused Q6 GDN-QKV comparison; restore file-record headroom through verified
+closed-result archival before another full suite. Progress/fairness review continues.
+[Correctness completion](experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/RESULT.md).
+
+**October 24, 03:10 EDT — four-card host: exact attention kernel improvement verified.**
 All 84 paired kernel tests match complete saved baseline outputs. Across three fixed
 real projection cases, candidate GPU event time is about 21.4% of control, with the
 advantage in both execution orders. This is isolated repeated kernel latency, not
 model throughput. Independent review confirms safe exit, empty target cards,
-unchanged vision and no new GPU faults. The next admitted task completes only the
-five missing model prompt pairs after verified storage recovery. Keep separate-run
+unchanged vision and no new GPU faults. One admitted pair is now completing only the five missing model prompt pairs after
+verified storage recovery (`gsq-attention-p33-completion-a`). Keep separate-run
 timings separate; full candidate correctness remains pending those pairs.
 [Kernel result](experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/RESULT.md).
 

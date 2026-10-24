@@ -4,6 +4,12 @@ The requested model is downloaded and verified. Our engine now passes exact targ
 requested the SC117 source and our custom engine with MTP. This is a distinct
 modified target, separate from the closed and published Unsloth optimization.
 
+The attention projection candidate now matches baseline on all twelve prompt pairs
+([separate-session correctness completion](attention-q8-p33/completion/RESULT.md)).
+Its [same-owner kernel comparison](attention-q8-p33/micro/RESULT.md) reduces measured
+isolated event latency with exact bytes; no full-model speed improvement is claimed.
+The next focused candidate is Q6 GDN-QKV.
+
 ## Model and source
 
 [Model identity](model-identity.json) records both shards, full SHA256 readback,
@@ -72,7 +78,7 @@ helpers use bounded memory, helper cores and low priority. Model payloads,
 binaries and temporary row samples stay outside tracked artifacts. Existing
 frozen runtime packets and failed attempts remain unchanged.
 
-The additive loading/dispatch changes described in the [source audit](native-integration-audit.md) are under integration review. The frozen preparation receipts pass an [independent source/artifact rehash](native-preparation-review.json). The tiny native kernel qualification now passes. Full Engine build precedes target-only output, then MTP equality against that same target before measuring any speed benefit.
+The additive loading/dispatch changes described in the [source audit](native-integration-audit.md) pass native integration and real-model execution. The frozen preparation receipts pass an [independent source/artifact rehash](native-preparation-review.json); subsequent full-engine and target/MTP results are linked above.
 
 The owner requested [continuous lossless acceleration work](WORK-PLAN.md) after correctness, with a dedicated progress and fairness reviewer every 30 minutes. The complete [same-pair Host lifecycle](serving/HOST-RESULT.md) passes; it remains synthetic evidence.
 
