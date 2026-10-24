@@ -1,13 +1,16 @@
 # Current Workspace State
 
-**October 24, 06:42 EDT — four-card host: Q6 candidate built; evidence capacity preparing.**
-The19-site Q6 extension passes309 selector checks, native compile and actual
-metadata-only launch plan. No candidate GPU execution yet. Its full screen keeps
-all26 requests and exact original token/state gates. Fourteen broader-coverage
-bundles are verified in683MB archives, recovering869MB; USB5.43GB/root27.29GB free.
-Verify and consolidate duplicate older archives before the8.53GB full-suite admission.
-Target cards remain empty. The exact but slower IQ4 change is rejected; retained
-engine/model precision unchanged. [Candidate status](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/STATUS.md).
+**October 24, 06:53 EDT — four-card host: full Q6 extension screen running.**
+Both native owners have verified physical contact and no monitor error. The fixed
+26-request screen checks every measured token and full target state against the
+original baseline; no candidate speed/qualification result yet. Source/build and
+309 selector checks passed. Verified consolidation of41 duplicate archives recovered
+3.59GB, with original member bytes/metadata retained through tracked restore maps.
+USB9.01GB/root27.28GB and114.27GB available RAM passed admission. No concurrent
+compilation or archive/model I/O. Protected vision and prior fault baseline retained.
+[Candidate](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/STATUS.md);
+[archive restore mapping](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/canonical-archives/RESULT.md).
+
 
 
 **October 24, 06:12 EDT — four-card host: broader coverage independently passes; next native micro preparing.**

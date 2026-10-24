@@ -15,8 +15,10 @@ and the unchanged26-request/24-arm original corpus. The fixed
 [Independent operating review](operating/evidence/independent-review.json)
 binds the source/build and full exactness/closure gates.
 
-No native candidate execution yet. Full-suite admission requires8,530,648,876B
-free on USB including its2GiB reserve. Broader coverage bundles are now losslessly
-archived; canonical duplicate-archive consolidation is preparing. No model or
-precision change is permitted. The existing15.73/23.30 internal-screen engine
-remains retained until actual new-site qualification passes.
+The native full suite started10:52UTC. Both owners have positive physical contact
+and no monitor error at admission; qualification remains pending. Full-suite
+admission passed with9,012,678,656B free on USB versus8,530,648,876B required,
+including its2GiB reserve. Broader coverage archival and canonical duplicate
+consolidation are complete. No model or precision change is permitted. The
+existing15.73/23.30 internal-screen engine remains retained until actual new-site
+qualification passes.

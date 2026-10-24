@@ -233,3 +233,14 @@ operating mocks. Actualmetadata plan a173939f also passes; noGPU execution yet.
 Coverage14bundles archived to682,929,437B with56verified phases. Consolidate41
 proven duplicate older archives only after fullpayload verification/durable
 restore redirects to reach the unchanged full-suite evidence floor.
+
+
+## October24 10:53UTC — full Q6 screen running
+
+All41canonical consolidations passed82explicit verify/release phases, recovering
+3,586,696,105B. Originalmemberbytes/tarmetadata remain restorable via tracked
+redirects; original compressed identities are historical only. BothQ6owners have
+actualphysicalcontact, no monitorerror. Fixed26suite runs with originalexactness
+gates. IQ2simpleblockhoist is closed by source appraisal: existingdecode8 already
+amortizes metadata. AfterQ6 result, refresh currentclass attribution before choosing
+next kernel; integerroute-rank earlyexit is a source-supported possibility only.
