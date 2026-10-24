@@ -15,3 +15,9 @@ graph/copy controls and measured values are unchanged. The changed text is
 server-rendered and remains present without JavaScript. Screenshots are local
 review artifacts under/tmp/own-runtime-precision-* and/tmp/ownrt-tp*-precision-*.
 Deployment and cache-busted live verification remain pending.
+
+Follow-up: the first publication CI browser test rejected the expanded visible
+catalog status for exceeding700characters. The status was shortened while
+retaining historical record scope and the BF16-oracle/FP32-fidelity limitation.
+All19 browser tests now pass locally; detailed scopes and all numeric evidence
+remain unchanged. No test limit was relaxed.
