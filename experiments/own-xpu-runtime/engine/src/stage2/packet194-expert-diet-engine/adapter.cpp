@@ -199,7 +199,7 @@ struct RowBound {
 template<Op Code,int Phase,int FixedN=0,int FixedTop=0,class B=Bound> void simple_body(B b,int index){
  constexpr int phase=Phase;constexpr bool raw_rank=false;
  if(!*b.active()||b.failed())return;
- auto s=b.s;float* tmp=static_cast<float*>(b.scratch());
+ const auto& s=b.s;float* tmp=static_cast<float*>(b.scratch());
  if constexpr(Code==Op::route){
   int n=FixedN?FixedN:int(b.in(0).n),top=FixedTop?FixedTop:s.site.shape[1],chunks=(n+15)/16;
   // tmp: maxima[chunks], subtree sums[chunks], exponentials[n], probabilities[n].

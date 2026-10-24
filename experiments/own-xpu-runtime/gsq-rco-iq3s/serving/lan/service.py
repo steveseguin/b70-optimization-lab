@@ -809,7 +809,10 @@ def main():
                                   status='first F32 run; reference agreement checked offline (service-speed/e-reference)', utc=utc()))
         rows_wanted = getattr(A, 'PREFILL_ROWS', 0)
         if rows_wanted and mode == 'f32':
-            marker = P / 'evidence' / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}.json"
+            # Kernel-choice overrides change the arithmetic path: each combination gets its own gate.
+            overrides = ''.join(f"-{k[len('OWNRT_PREFILL_'):].lower()}{v}" for k, v in sorted(os.environ.items())
+                                if k.startswith('OWNRT_PREFILL_') and k != 'OWNRT_PREFILL_PROFILE')
+            marker = P / 'evidence' / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}{overrides}.json"
             if not marker.exists():
                 state.detail = f'one-time batched-prefill gate ({rows_wanted} rows): tokens, guesses and persistent state vs token-by-token'
                 gate = prefill_gate(engine, rows_wanted)

@@ -1,6 +1,6 @@
 # Batched prefill: lossless on device, 1.67× on a 581-token prompt (2026-10-24)
 
-The serving engine is `e88234864be3` ([receipt](../../../engine/receipts/e88234864be3.json)), in F32 exact mode
+The serving engine is `8a76e3cedbe4` ([receipt](../../../engine/receipts/8a76e3cedbe4.json)), in F32 exact mode
 with `--prefill-rows 16`. It serves the LAN endpoint through [adapter6.py](../../serving/lan/adapter6.py) with
 `SC117_PREFILL_ROWS=16`. The first lossless stage was `6fd6eaa7c622`, and the progression table below lists each
 binary.
@@ -66,7 +66,9 @@ On the 581-token prompt, one 16-row chunk takes about 278 ms on each rank, about
 | `a8790dd5` | generic/specialised ops (GDN, conv, norms, QSA prepare/pool/select, HC mix, activations) run once per chunk | 10.9 s |
 | `8feaa684` | dense kernels decode each weight once for 16 tokens | 12.0 s (slower; now opt-in, `OWNRT_PREFILL_REUSE=1`) |
 | `43043ce7` | SimpleNew route/gather/combine multi-row by copying the binding struct per item | 31.3 s (register spill) |
-| **`e8823486`** | the same through `RowBound` accessor offsets; status checks once over all rows | **9.7 s (1.67×)** |
+| `e8823486` | the same through `RowBound` accessor offsets; status checks once over all rows | 9.7 s (1.67×) |
+| `dae4f85b` | tiled kopt dense kernel: 16 weight rows per work-group, activations staged in local memory | 18.7 s (exact; slower, most likely accumulator spills; now opt-in, `OWNRT_PREFILL_TILED=1`) |
+| **`8a76e3ce`** | tiled kernel off by default; `simple_body` reads its Spec by reference (no speed change) | **9.7 s (1.67×)** |
 
 Per-op profiles (`OWNRT_PREFILL_PROFILE=1`, drains after every site) are in [profiles/](profiles/). For `e8823486`, of
 14.8 ms per row on rank 0:

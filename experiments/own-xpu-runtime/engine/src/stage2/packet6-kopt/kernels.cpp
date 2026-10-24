@@ -214,6 +214,68 @@ ROWS_CASE(F32);ROWS_CASE(F16);ROWS_CASE(BF16);ROWS_CASE(Q8_0);ROWS_CASE(Q6_K);
     throw std::invalid_argument("kopt token rows: dense F32/F16/BF16/Q8_0/Q6_K only");
   }
 };
+// Dense token rows, tiled: a work-group of 4 subgroups owns 16 weight rows (4 per subgroup) and up to 16 token rows.
+// Each 256-column slice of the tokens' F32 activations is staged once in local memory and reused by all 16 weight
+// rows; each weight value is decoded once and applied to every token. Every output (row, token) keeps Multiply's
+// single-row arithmetic exactly: lane l owns columns l*8+256*i+j (SG=32), product then add in that order, then the
+// adjacent-pair subgroup tree.
+template<unsigned RowsPerSubgroup,unsigned Tokens> struct MultiplyTiled:ownrt::SyclOperation {
+  static constexpr unsigned SG=32,Subgroups=4,Rows=RowsPerSubgroup*Subgroups,Step=SG*8;
+  Descriptor desc{};
+  template<Type T> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+    auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt tiled capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+    const size_t groups=(d.span+Rows-1)/Rows;
+    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(groups*SG*Subgroups),sycl::range<1>(SG*Subgroups))](sycl::handler& h) {
+      sycl::local_accessor<float,1> xs(Tokens*Step,h);
+      h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),sub=sg.get_group_linear_id(),local=it.get_local_linear_id();
+        const size_t row0=it.get_group_linear_id()*Rows+sub*RowsPerSubgroup;const unsigned n=unsigned(std::min<size_t>(Tokens,d.count));
+        const float* x=static_cast<const float*>(pointers[d.x]);const uint8_t* w=static_cast<const uint8_t*>(pointers[d.w]);
+        float acc[RowsPerSubgroup][Tokens];
+        for(unsigned r=0;r<RowsPerSubgroup;++r)for(unsigned t=0;t<Tokens;++t)acc[r][t]=0;
+        for(size_t step=0;step<d.k;step+=Step) {
+          it.barrier(sycl::access::fence_space::local_space);
+          for(unsigned i=local;i<n*Step;i+=SG*Subgroups){const unsigned t=i/Step,c=i%Step;xs[i]=step+c<d.k?x[t*d.k+step+c]:0.f;}
+          it.barrier(sycl::access::fence_space::local_space);
+          const size_t base=step+size_t(lane)*8;
+          if(base>=d.k)continue;
+          for(unsigned r=0;r<RowsPerSubgroup;++r) {
+            const size_t row=row0+r;if(row>=d.span)break;
+            const uint8_t* source=w+row*d.rb;float values[8];
+            if constexpr(layout(T).elements==1) {
+              if(base+8<=d.k && reinterpret_cast<uintptr_t>(source+base*layout(T).bytes)%16==0) {
+                if constexpr(T==Type::F32) {
+                  auto v=reinterpret_cast<const sycl::vec<uint32_t,4>*>(source+base*4);auto lo=v[0],hi=v[1];
+                  for(unsigned j=0;j<4;++j){values[j]=bits_float(lo[j]);values[j+4]=bits_float(hi[j]);}
+                } else {
+                  auto v=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(source+base*2);
+                  for(unsigned j=0;j<8;++j) {
+                    if constexpr(T==Type::F16)values[j]=half(v[j]);
+                    else {auto bits=uint32_t(v[j])<<16;if((bits&0x7fffffff)>0x7f800000)bits|=0x400000;values[j]=bits_float(bits);}
+                  }
+                }
+              } else for(unsigned j=0;j<8 && base+j<d.k;++j)values[j]=element(T,source,base+j);
+            } else {
+              if(base+8<=d.k)decode8<T>(source,base,values);else for(size_t j=0;j<d.k-base;++j)values[j]=element(T,source,base+j);
+            }
+            for(unsigned t=0;t<Tokens;++t)if(t<n)for(unsigned j=0;j<8 && base+j<d.k;++j){float input=xs[t*Step+lane*8+j];float product=values[j]*input;acc[r][t]=acc[r][t]+product;}
+          }
+        }
+        for(unsigned r=0;r<RowsPerSubgroup;++r)for(unsigned t=0;t<Tokens;++t){float sum=acc[r][t];
+          for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
+          if(lane==0&&t<n&&row0+r<d.span)static_cast<float*>(pointers[d.y])[t*d.span+row0+r]=sum;}
+      }));
+    });
+  }
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    switch(desc.type){
+#define TILED_CASE(T) case Type::T:return run<Type::T>(q,p,deps)
+TILED_CASE(F32);TILED_CASE(F16);TILED_CASE(BF16);TILED_CASE(Q8_0);TILED_CASE(Q6_K);
+#undef TILED_CASE
+    default:break;}
+    throw std::invalid_argument("kopt tiled token rows: dense F32/F16/BF16/Q8_0/Q6_K only");
+  }
+};
 Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocation>& ids,Matrix m,
                 uint32_t experts,uint32_t count,uint32_t span,ownrt::Allocation r=0,ownrt::Allocation status=0) {
   geometry(m.type,m.activation,m.output_type,m.rows,m.columns,op.subgroup);
@@ -243,7 +305,13 @@ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
   if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;
-  if(a!=Type::F32||o!=Type::F32||tokens==1||!prefill_switches::weight_reuse_rows())return finish(d,op,ids);
+  if(a!=Type::F32||o!=Type::F32||tokens==1)return finish(d,op,ids);
+  if(sg==32&&tokens<=16&&prefill_switches::tiled_rows()){
+    // F32 token rows (up to 16): tiled kernel, activations staged once per 16 weight rows.
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    MultiplyTiled<4,16> tiled;tiled.desc=op.desc[0];return d.compute(tiled,ids,{});
+  }
+  if(!prefill_switches::weight_reuse_rows())return finish(d,op,ids);
   // F32 token rows: weight-reuse kernel, 16 token rows per subgroup.
   constexpr unsigned R=16;MultiplyRows<R> rows_op;rows_op.desc=op.desc[0];rows_op.subgroup=sg;rows_op.local_stride=op.local_stride;
   rows_op.desc.first_group=0;rows_op.groups=(rows*((tokens+R-1)/R)+rows_per_group-1)/rows_per_group;
