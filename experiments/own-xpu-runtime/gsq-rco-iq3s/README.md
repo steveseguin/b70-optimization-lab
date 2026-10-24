@@ -84,6 +84,7 @@ and CPU comparison oracles, not an imported inference runtime.
 | Primitive coefficients | [Upload conversion](controls/README.md) passes exhaustive half/BF16 checks; actual graph needs only F16 PLE widening, adding 81,920 bytes. |
 | Two-shard loader | [Authenticated loader](loader/README.md): ten parser tests and 24 immutable-authority checks pass; real headers are bound separately from payload checks. |
 | Native kernels | [Packed backend](native-formats/README.md): 15 Host cases, 60 checks and 100 refusals pass. Five native kernels pass 15 synthetic GPU cases with 45 exact kernel executions. |
+| LAN hosting (2026-10-24) | The corrected engine is served to the LAN as user unit `sc117-lan` at `http://192.168.2.44:18160/v1`. It is serial, has MTP on and uses greedy decoding. It is experimental and not quality-qualified. See [serving/lan](serving/lan/README.md) and its [commissioning result](serving/lan/RESULT.md). |
 | Native inference | The [complete native build](integration/README.md) passes. The [tiny native qualification runner](native-qualification/README.md) passed; the [first real-model comparison](serving/evidence/real-model-a/README.md) passes with 25 accepted and six rejected proposals. |
 | Speed | [Resident twelve-prompt baseline](baseline/RESULT.md): 12.63 target-only / 17.98 MTP tokens/s; exact paired tokens/state, both order groups retained. |
 
