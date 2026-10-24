@@ -1,0 +1,42 @@
+--- frozen128/run_attached
++++ expanded512/run_attached
+@@ -1,6 +1,6 @@
+ def run_attached(t,plan,m=None):
+     """Strictly serialized fixed schedule; caller owns admission and normal close."""
+-    C.bind_references(plan)
++    C.bind_references(plan);rubrics=read_rubrics()
+     m=m or manifest();require(not getattr(t,'resident_suite_started',False),'suite may run only once');t.resident_suite_started=True
+     count=0;measured=[];warm=[];capture_stamps={};start=time.monotonic()
+     def request(name,mode,prompt,cap,measuring):
+@@ -13,20 +13,21 @@
+         destination=t.out/name;A.reset(t,destination);count+=1
+         C.verify_capture_stamps(t.out,capture_stamps)
+         result=A.BASE.NativeController(t,A.BASE.Draft(mode),True,False).run(prompt,cap,(248044,248046) if measuring else ())
+-        result.update(evidence_label='GSQ dense packed block candidate; every measured arm checked against frozen baseline',decode_tok_s=None)
++        result.update(evidence_label='Expanded512-cap same-target coverage; original128-token prefix only',decode_tok_s=None)
+         row=dict(request=count,name=name,mode=mode,prompt_tokens=prompt,requested_max_new=cap,measured=measuring,result=result)
+         if measuring:
+             row['metric']=metric(result,cap);row['state_sha256']=A.state_hashes(t);capture_stamps[name]=C.capture_stamp(destination)
+         else:require(len(result['tokens'])==cap,'incomplete excluded warmup')
+         A.save(destination/'suite-request.json',row)
+         if measuring:
+-            C.check_arm(row)
+-            A.save(destination/'baseline-exact.json',dict(passed=True,reference_sha256=C.REFERENCE_SHA,scope='exact corresponding independently audited baseline token/state arm'))
++            check_prefix(row)
++            A.save(destination/'baseline-prefix-exact.json',dict(passed=True,reference_sha256=C.REFERENCE_SHA,scope='exact original128-cap token prefix only; final512 state compared within target/MTP pair'))
++            retain_decoded(destination,row,rubrics)
+         t.check_alive();return row
+     for w in m['warmup']:warm.append(request('warmup-'+w['mode'],w['mode'],w['tokens'],w['max_new'],False))
+     for i,prompt in enumerate(m['prompts']):
+         pair=[]
+-        for mode in prompt['order']:pair.append(request(f'prompt-{i:02d}-{mode}',mode,prompt['tokens'],128,True))
++        for mode in prompt['order']:pair.append(request(f'prompt-{i:02d}-{mode}',mode,prompt['tokens'],512,True))
+         require(pair[0]['result']['tokens']==pair[1]['result']['tokens'],'target/MTP tokens differ: '+prompt['prompt_id'])
+         require(pair[0]['state_sha256']==pair[1]['state_sha256'],'target/MTP final state differs: '+prompt['prompt_id'])
+         row=dict(prompt_id=prompt['prompt_id'],order=prompt['order'],exact_tokens=True,exact_final_target_state=True,arms=pair)
+@@ -35,4 +36,4 @@
+     final=measured[-1]['arms'][-1]
+     require(A.state_hashes(t)==final['state_sha256'],'final explicit DUMP differs')
+     C.verify_capture_stamps(t.out,capture_stamps)
+-    return dict(passed=True,capture_stamps=capture_stamps,final_explicit_DUMP_verified=True,rank_pids=[p.pid for p in t.children],requests=count,measured_requests=24,warmup=warm,prompts=measured,summary=summary(measured),manifest_sha256=sha(MANIFEST),output_cap=128,resident_scope=True,cold_start_speed_claim=False,old_model_record_comparison=False,completed_elapsed_seconds=time.monotonic()-start)
++    return dict(passed=True,capture_stamps=capture_stamps,final_explicit_DUMP_verified=True,rank_pids=[p.pid for p in t.children],requests=count,measured_requests=24,warmup=warm,prompts=measured,summary=quality_summary(measured),manifest_sha256=sha(MANIFEST),output_cap=512,startup_output_cap=128,quality_qualified=False,manual_full_output_review_required=True,no_speed_claim=True,resident_scope=True,cold_start_speed_claim=False,old_model_record_comparison=False,completed_elapsed_seconds=time.monotonic()-start)

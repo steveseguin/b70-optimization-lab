@@ -1,5 +1,40 @@
 # Current Workspace State
 
+**October 24, 09:22 EDT — four-card host: recurrent precision correction takes priority.**
+Source and actual allocation evidence confirm the custom engine rounds GDN
+recurrent matrix state toBF16 after each update; the compatible reference uses
+F32. Earlier exact token/state results are historical internal parity, not proof
+of no extra quality loss. Further speed changes are held. Prepare additiveF32
+recurrent storage/checkpoint handling with BF16 attentionKV unchanged and a new
+numerical baseline. The bounded CPU-only reference build passed on USB; offline ELF and
+dependency checks pass, with no model/reference execution yet. The class diagnostic closed safely and passed
+independent readback; target cards are empty, vision/fault baseline unchanged.
+[Exact dtype finding](experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/RECURRENT-DTYPE.md).
+
+**October 24, 09:10 EDT — four-card host: expanded parity passes; current cost diagnostic running.**
+Independent readback verifies all24 original prefixes, twelve full target/MTP
+pairs and54 bundles on5aef. All twelve texts were read and joined to the closed
+index. Eleven are capped/incomplete, one reaches EOS; technical and unsupported
+claim cautions remain. Overall task quality stays unqualified. This is distinct
+from exact optimization/MTP parity. Verified paired-copy preservation recovered
+2.661GB while protecting all target-only canonical bundles and restoration maps.
+One excluded warmup plus original prompt00 target-only128 now measures current
+class costs. Vision is unchanged. A concrete compatible local llama.cpp source
+reference exists; an isolated CPU-only build/probe is being prepared because the
+existing binary probes GPUs even with CPU inference selected. No reference build
+or model load has run yet.
+[Expanded result](experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/RESULT.md).
+
+**October 24, 08:49 EDT — four-card host: expanded quality run started.**
+The qualified dense engine is running all twelve original tasks with512-token
+RPC caps, original128-token prefix checks, full target/MTP output/state equality
+and decoded answer retention. One persistent pair, fullRESET and unchanged
+weights/BF16KV/verifier. Admission passed withUSB9.039GB against8.933GB required,
+including384MiB extra cumulative metadata headroom. All verified canonical
+preservation phases completed before launch; target/draft restoration mappings
+and protected canonical copies remain. Vision is unchanged.
+[Expanded scope](experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/PLAN.md).
+
 **October 24, 08:43 EDT — four-card host: dense engine qualifies; broader quality next.**
 Independent readback passes all24 original token/state arms and54 bundles. The
 short resident screen measures19.61 target-only /28.14 MTP tokens/s, unchanged

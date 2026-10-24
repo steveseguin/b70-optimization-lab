@@ -1,0 +1,164 @@
+{
+  "schema": "gsq.expanded-quality.rubrics.v1",
+  "source_suite": "repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json",
+  "source_sha256": "cdf65eae1b63d39fdca0ae320a91535c3108a6c0bb60c337bf7a060d83f3990c",
+  "scope": "Preregistered manual full-output assessment, not keyword scoring or an independent same-weight model oracle. No inference run.",
+  "common_checks": [
+    "Read every retained unique output in full.",
+    "Report requested elements as covered, partial, missing, or unverifiable; cite output evidence.",
+    "Record contradictions, unsupported factual certainty, invalid technical advice, and malformed requested structures.",
+    "Keep cap truncation distinct from natural EOS and exactness.",
+    "Do not repair, retry, discard or retune prompts after seeing outputs.",
+    "Report model limitations separately from optimization-induced differences; same-target parity can share a bug."
+  ],
+  "cases": [
+    {
+      "id": "incident-retrospective",
+      "prompt_sha256": "b6c5ea9e2495278fbe9314b60c34cb3eb51421c6489478812e598f7b3cc83538",
+      "requested_elements": [
+        "impact",
+        "timeline",
+        "contributing factors",
+        "detection gaps",
+        "remediation",
+        "prevention",
+        "owner handoff",
+        "requested 450\u2013550 word length"
+      ]
+    },
+    {
+      "id": "code-review",
+      "prompt_sha256": "5a92dcc76e641515c54d71d2d3fef6e3b12a88baa616cc967eba6c897e684a33",
+      "requested_elements": [
+        "correctness",
+        "observability",
+        "data loss",
+        "concurrency",
+        "test cases",
+        "acceptance recommendation grounded in stated design"
+      ]
+    },
+    {
+      "id": "customer-email",
+      "prompt_sha256": "6ade325d82c3926f6a1b770d04828e63579e882b6d8de31ad31ad4a986dba43f",
+      "requested_elements": [
+        "one-week delay",
+        "data-integrity issue",
+        "accountable calm tone",
+        "corrective work",
+        "next expectations",
+        "urgent support cases",
+        "no marketing claims"
+      ]
+    },
+    {
+      "id": "sql-debugging",
+      "prompt_sha256": "21229aa5f10636f028248b73cc066b2d49b48580f6a005e110109cd0e4a4320b",
+      "requested_elements": [
+        "EXPLAIN ANALYZE",
+        "indexes",
+        "statistics",
+        "join order",
+        "row estimates",
+        "partial indexes",
+        "materialized views",
+        "rollout safety"
+      ]
+    },
+    {
+      "id": "release-plan",
+      "prompt_sha256": "2aff657de0093a2b612f97a696a85e74cd7c7f36e1cdb1f97ae69ca44479e9e9",
+      "requested_elements": [
+        "feature flags",
+        "staged rollout",
+        "migration",
+        "monitoring",
+        "rollback criteria",
+        "customer communication",
+        "security review",
+        "post-release verification"
+      ]
+    },
+    {
+      "id": "benchmark-analysis",
+      "prompt_sha256": "ad01f6d7127de18807a1f11c9bfc86a2ea86fd3639c40581818dec4a7ea4664d",
+      "requested_elements": [
+        "plausible cache or warming causes",
+        "fresh-response measurement separation",
+        "measurement identity and evidence before publication"
+      ]
+    },
+    {
+      "id": "architecture-tradeoff",
+      "prompt_sha256": "850f7db6d007b66cb1d37440e19c25e69bf6c762c3d3a92a9b18bc3d91de1678",
+      "requested_elements": [
+        "latency",
+        "throughput",
+        "PCIe traffic",
+        "memory",
+        "failure isolation",
+        "scheduling",
+        "loading time",
+        "conditions favoring each option"
+      ]
+    },
+    {
+      "id": "bug-report-synthesis",
+      "prompt_sha256": "9b645eae54d2e851f5182a77a7a68361ee52869baf8eb3cec1afe25535256c1a",
+      "requested_elements": [
+        "root cause hypotheses without invented certainty",
+        "immediate mitigations",
+        "evidence to collect",
+        "minimal reproduction"
+      ]
+    },
+    {
+      "id": "technical-guide",
+      "prompt_sha256": "9fbc35260d4e350f5280a3cb75c0ae8d4371461f18086805e90dd5fb65896cb0",
+      "requested_elements": [
+        "scripts/data/notes/patches/results locations",
+        "run naming",
+        "reproducibility identity",
+        "valid promotion criteria"
+      ]
+    },
+    {
+      "id": "risk-register",
+      "prompt_sha256": "2dcb017f7bb740ae3a8205fcb464068fcfe82189d61be31850d5e6c6492354bf",
+      "requested_elements": [
+        "at least eight operational or quality risks",
+        "severity per risk",
+        "likelihood per risk",
+        "detection per risk",
+        "mitigation per risk",
+        "rollback trigger per risk"
+      ]
+    },
+    {
+      "id": "performance-hypotheses",
+      "prompt_sha256": "07d3df497692ad49145544fc0388001879fe6a7201aca3f9eaa4e14288f0bfeb",
+      "requested_elements": [
+        "fusion",
+        "quantized layout",
+        "route caching caveats",
+        "graph capture",
+        "batch shapes",
+        "bandwidth",
+        "synchronization",
+        "validation traps"
+      ]
+    },
+    {
+      "id": "decision-memo",
+      "prompt_sha256": "e1fcb91edf9a4e6048cd5a5738cebcc0f71edc15281607b795bf2a6dddd6adeb",
+      "requested_elements": [
+        "current evidence with uncertainty",
+        "opportunity cost",
+        "decision criteria",
+        "next experiments",
+        "quality constraints",
+        "preserved artifacts"
+      ]
+    }
+  ]
+}

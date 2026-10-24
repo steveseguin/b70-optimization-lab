@@ -1,5 +1,13 @@
 # SC117 IQ3_S integration into our own engine
 
+**Precision correction in progress.** A [compiled-source and allocation audit](reference-cpu/RECURRENT-DTYPE.md)
+confirms that this engine rounds GDN recurrent matrix state toBF16 each token,
+while the compatible reference retainsF32. The earlier exactness and speed
+results compare paths within that BF16-state contract. They do not establish
+no added quality loss relative to the reference. Further speed changes are held
+while recurrent storage is corrected and an independent same-weight CPU path
+is prepared. BF16 attention KV remains separate from this recurrent-state issue.
+
 The requested model is downloaded and verified. Our engine now passes exact target-only/MTP comparison on all twelve fixed short prompts. The independently audited [resident baseline](baseline/RESULT.md) measures 12.63 tokens/s target-only and 17.98 with MTP, with full target state preserved. This is a short-prompt baseline, not broad quality certification. The owner explicitly
 requested the SC117 source and our custom engine with MTP. This is a distinct
 modified target, separate from the closed and published Unsloth optimization.
@@ -12,7 +20,10 @@ cap128 resident screen; publication quality/context gaps are explicitly retained
 The [116-site dense decoder](dense-packed-block/engine/operating/launch-b/RESULT.md)
 now passes all24 original arms and54 bundles, measuring19.61 /28.14 tokens/s
 with unchanged memory and acceptance. It is the current short-screen engine;
-[expanded task readback](quality-expanded/PLAN.md) is next on this same binary.
+[expanded task readback](quality-expanded/RESULT.md) also passes exact prefixes
+and all12 full target/MTP pairs on this binary. Eleven answers are capped and
+incomplete; one reaches EOS. Technical/unsupported-claim cautions remain, and
+broad task quality is not qualified.
 
 The [19-site Q6 extension](dense-q6-p33/operating/RESULT.md) also passes all24
 original arms and54 bundles, measuring16.17 /23.44 with188.7MB extra device memory.

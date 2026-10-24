@@ -1,0 +1,34 @@
+{
+  "schema": "gsq.dense-packed-canonical.independent-bound-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/reuse.py": "73b6acc97ee2696ce9e43ecf4af82f5f781b33f7b681920d49c99ff651087de9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/test_source.py": "fb24eb3a129b9d626d15dcca00265611a426d5ed64dfdc8b064a4d1415713699",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/README.md": "1d31e96c1d1e8df1ef1fd4af85523e24ec0621ab9dfb34a8786467a905ee94a3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/evidence/source-tests.log": "9ba570fcb59497a2e2e9fcec66a4e67000c4773618dbdb76ea83f1c2bbbdd28f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-prompt01-canonical/reuse.py": "51fba80be57bdbdb6693877b30eeea435155f8c6c36b8e90e06e0f719446ef59",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/canonical-archives/consolidate.py": "64b4c0131eeb8ea0f87bb8fea29864b79dc0b6e9ffc4fb2a7be1e6e1e726ee33",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/evidence/device-a/review.json": "4e97f8a533de01c64d299582e8cdb884bb1979f7e2a405bd5794f36f4869294b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/evidence/device-a/artifact-index.jsonl.gz": "89ae281f5fc9747463ad8eb7d8037fddde57e98d1739603f18bcc42226c932b3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/expert-block-closed/evidence/complete.json": "c1abc25e59589e36df8648890b484d7e206b90f14ba78a0885c5f6475a1f6dd1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/evidence/preparation.json": "674eb89fd75ee49c21d442e2a964bc76717d3ffcc180100a889180ec887f08e4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/closure-binding.json": "4446aa22439d4df84a5075ef8077bb13104aedb30c0fd986df1129e479241341",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/evidence/bound-preparation.json": "00bc5ef23ea13ce9a3648b222ab1c7605cf6f7c16e74ebed71c2866a74a5c647",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/lineage/before-actual-binding/independent-review.json": "0c678072e0f3b0fc2eee618dea8dd64f368ba226955af246e576c3138804225a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/lineage/before-actual-binding/reuse.py": "e62570e976795c773b231966554f72ac880034e7f2c0770ea46dc373cfb36933",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-canonical/lineage/before-actual-binding/preparation.json": "674eb89fd75ee49c21d442e2a964bc76717d3ffcc180100a889180ec887f08e4"
+  },
+  "review_scope": "Exact one constant binding delta, actual closed review/terminal/full-result and two immutable metadata index joins; no payload or operations",
+  "actual_review_sha256": "ccd77d4456f5c66eb0a64d7456a3abb8a23528ab390924c703b471deece6aced",
+  "binding_sha256": "4446aa22439d4df84a5075ef8077bb13104aedb30c0fd986df1129e479241341",
+  "bundles": 54,
+  "recoverable_bytes": 5987065536,
+  "findings": [],
+  "checks": [
+    "All54 physical hashes/lengths matched actual Engine-B index and old canonical index including initial/warmups",
+    "Current actual26-request/24-arm/52-ACK closure and both contacts bound",
+    "Imported reviewed filesystem methods unchanged; verify/readback/restore and separate rehash-before-release still required",
+    "All draft and sibling metadata preserved; canonical archives retained"
+  ],
+  "reviewer_packaging_note": "First receipt writer referenced lineage/evidence/independent-review.json, but actual lineage stores receipts directly. It stopped after metadata joins and before writing any receipt. Corrected packaging paths only; no operation or test replay."
+}

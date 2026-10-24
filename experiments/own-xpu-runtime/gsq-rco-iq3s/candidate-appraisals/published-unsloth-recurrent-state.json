@@ -1,0 +1,32 @@
+{
+  "schema": "gsq.public-recurrence-precision-review.v1",
+  "scope": "Read-only retained source and publication metadata; no binary execution, model or state payload reads, public edits or publication.",
+  "confirmed_two_card_binaries": {
+    "packet195": "b8482321769039274daf42b70f783517177cbc8c1d0b2d81b8ebab25f1442bdc",
+    "packet165": "cb2cef7125f8c20356e83f2a1fdd07c5318ce1518aecff659bdd76e2983c4e3a"
+  },
+  "two_card_selected_recurrence": "rec-both-plus -> p82brec::Kernel<true>; uint16 state load/store; BF16 rounding on every recurrence update",
+  "oracle_scope": "Frozen p17 full CPU graph except independent fixed32 QSA; BF16 state/KV; unchanged packed GEMV order",
+  "one_card_limit": "Packet196 binary537c0807 and packet165 binary1364bb3d bind rows4-shared; current matching source uses BF16 state, but this review did not close a retained header-to-object chain for those binaries. Do not use two-card proof as a family-wide binary proof. Their advertised shared BF16 CPU-oracle limitation is established.",
+  "source_sha256": {
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/README.md": "61e37f8fe6e87ec5782b9ba16fba0767611223fdcbe77dfd32891aeabdbeddba",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/README.md": "5184026a4cf238c739421224ddaf11c67d5c5704ecdf8972e98172261c484238",
+    "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/LATEST.md": "e40f8251a646f16be2bbfe540fff198dded83023a25d003030aca5b2454d7c9b",
+    "packages/qwen38-flash-next-iq3xxs-ownrt-tp2-b70/package.json": "c217be4a75cc529b56133c96f4f9cc65569efe04bb0b0ecfeccb2b6f0f2f7ec4",
+    "own-runtime.html": "fc326ba33623998b8f6a0a568af3358546fefda083a7e3f7ed46e9cf0ac63061",
+    "results/qwen38-flash-next-ud-iq3xxs-b70/README.md": "59d248abef2ecf5b508c81dd4e6eee05005232b675e36239d92c7837c08a35f2",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/build-receipt.json": "2b2a4893a9a145a3bab03c2cc263af30482003ee724c0636b794b93a44bdeb96",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/lineage-inputs/packet194-native.json": "237e1e14dfc584e0550d9e0882cd3933035a1e22aca400805123fc1056da7433",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p49d_submit.cpp": "1baff771e2fb53b0cbdeb486fc9e084b2edc1d374c0c7610358502ce61c03d57",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p82b_recurrence.hpp": "0ecdb92aca9d4fd2531ff4e602f36264a0a9f324663a0cb3cb3034172e4f1aa0",
+    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/identity.json": "36c89c17985a09520eac333485d77cbf82536b640f1d71096ffba32876cbba95",
+    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/seal.json": "5b7d3b9009703950a638c072dc13bc63a4146c4200a7ca09b2b48eaab015eaa1",
+    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/lineage/selection.json": "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/two-card/lineage/p82b_recurrence.hpp": "5376b4e152fbf62c1fed4a894f7fdcb418d0f566dbbcaf0ca567f9596a72ef70",
+    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/identity.json": "0316c2b1a16addaa9cb3bdc4e4ebaf0797b2d2b0c7dfdcb81add7d222cc31984",
+    "experiments/own-xpu-runtime/stage2/packet165-warm-prefill/one-card/lineage/selection.json": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/engine-binding.json": "a6d727d8d936656a2574d5ca587b4bd7594134491c46284d3dc9941ed35ecddf",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/selection.json": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+    "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/arithmetic.json": "1cfa18f9d394a4449bb55c3e8be2cf2bebfffd33ad5faaf97ef0110834dcf161"
+  }
+}

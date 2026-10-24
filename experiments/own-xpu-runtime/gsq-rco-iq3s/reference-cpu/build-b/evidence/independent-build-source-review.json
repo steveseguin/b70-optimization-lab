@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "reviewer": "root reviewed exact corrective delta and actual CMake/registry source",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/build-b/build-recipe.json": "f87bdf6f384c32eee5cc8d5b7325752ac4b4aa0c55fad41d58dd48bf9ddb299d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/build-b/build_once.py": "1f3445228e5cdb1bdb9a97784d483d45a9ee3093e0f99a80371d2092ffcd8933",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/build_once.py": "3abc159af0e3f67db2ff5141836a928c74a542f3a078dd33a6e64d4a7d65e835"
+  },
+  "parent_review_sha256": "b18ebf421ccaf3047f460228cd76548195e60d584573c463f201a86874582877",
+  "checks": [
+    "Exact one conflicting backend-directory flag removed; GGML_BACKEND_DL remains OFF.",
+    "All accelerator flags OFF; static project libraries; no GPU model or executable invocation.",
+    "Fresh build-b output paths and unchanged budgets/driver behavior.",
+    "Registry falls back to executable/CWD scans with no compile-time backend directory; isolated clean paths and environment remain mandatory before runtime."
+  ],
+  "runtime_admitted": false
+}

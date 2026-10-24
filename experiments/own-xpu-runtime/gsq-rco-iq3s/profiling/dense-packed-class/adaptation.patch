@@ -1,0 +1,118 @@
+--- frozen-dense-q6-class-b/profile.py
++++ dense-packed-class/profile.py
+@@ -1,7 +1,7 @@
+ """Current qualified binary, fixed target-only class diagnostic; no device CLI."""
+ import hashlib,importlib.util,json,math,shutil
+ from pathlib import Path
+-P=Path(__file__).resolve().parent;L=P.parents[2];R=L.parents[2]
++P=Path(__file__).resolve().parent;L=P.parents[1];R=L.parents[2]
+ def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+ def require(x,m):
+  if not x:raise ValueError(m)
+@@ -11,14 +11,16 @@
+ PARENT_SHA='98e55149be798ce8294c3774dec531f96870ecac14ce34f9f454c3c14f1bd184'
+ require(sha(PARENT)==PARENT_SHA,'bundle qualification source drift')
+ Q=load(PARENT,'dense_class_bundle_qualification');B=Q.B
+-CAND=L/'dense-q6-p33';OPERATING=CAND/'operating'
++CAND=L/'dense-packed-block/engine';OPERATING=CAND/'operating'
+ PINS=json.loads((P/'parent-pins.json').read_text())
+ for f,h in PINS.items():require(sha(f)==h,'frozen profile parent '+f)
+ A=load(OPERATING/'generated/adapter.py','dense_class_adapter');C=load(OPERATING/'checks.py','dense_class_checks');Q.A=A;Q.C=C
+-ACTUAL=OPERATING/'evidence/device-a/review.json'
+-AUTHORITY=P.parent/'actual-authority.json'
+-BINARY_SHA='a0f9ffc58de704a276b237cbeec2b338ee873c0872bcae2da2214286aa5cce50'
+-PHASES=load(P.parent/'phases.py','dense_class_phases')
++ACTUAL=OPERATING/'launch-b/evidence/device-b/review.json'
++AUTHORITY=P/'actual-authority.json'
++EXPANDED_AUTHORITY=P/'expanded-authority.json'
++EXPANDED_REVIEW=L/'quality-expanded/evidence/device-a/review.json'
++BINARY_SHA='5aef74d5f803b33758711db352ee5e1a393a364e6c33aa9f8a4cdb4478f5fe6a'
++PHASES=load(L/'profiling/dense-q6-class/phases.py','dense_class_phases')
+ BUDGET=load(P/'budget.py','dense_class_remaining_budget')
+ TOKEN_COMMAND=A.command;TOKEN_PLAN=A.build_plan
+ RAW_BYTES=694327500;METADATA_BYTES=128*1024**2
+@@ -35,21 +37,24 @@
+  require(plan['request_cap']==26 and plan['storage']['raw_state_bytes']==27*231442500,'parent full-suite forecast')
+  plan['request_cap']=2;plan['storage'].update(raw_state_bytes=RAW_BYTES,request_count=2)
+  plan['storage'].update(evidence_forecast_bytes=RAW_BYTES+METADATA_BYTES,metadata_forecast_bytes=METADATA_BYTES)
+- plan['source_sha256'].update({str(f):sha(f) for f in (Path(__file__),PARENT,ACTUAL,AUTHORITY,P/'parent-pins.json',P/'budget.py',P.parent/'phases.py')})
++ plan['source_sha256'].update({str(f):sha(f) for f in (Path(__file__),PARENT,ACTUAL,AUTHORITY,P/'parent-pins.json',P/'budget.py',L/'profiling/dense-q6-class/phases.py')})
+  return plan
+ A.build_plan=adapter_plan
+ 
+ def actual_review():
+- require(AUTHORITY.is_file(),'Q6 actual PASS authority not yet sealed')
++ require(AUTHORITY.is_file(),'current Engine actual PASS authority not yet sealed')
+  authority=json.loads(AUTHORITY.read_text());require(authority['passed'] and authority['binary_sha256']==BINARY_SHA and authority['path']==str(ACTUAL),'actual authority identity')
+- require(sha(ACTUAL)==authority['sha256'],'qualified Q6 actual review drift');r=json.loads(ACTUAL.read_text())
+- require(r['passed'] is True and r['native_binary_sha256']==BINARY_SHA and r['all12_exact'] and r['requests']==26 and r['measured_arms']==24 and r['bundles']==54 and r['physical_drain'] and r['explicit_final_repeat_and_closed_stamps_verified'],'actual complete Q6 qualification')
++ require(sha(ACTUAL)==authority['sha256'],'qualified current Engine actual review drift');r=json.loads(ACTUAL.read_text())
++ require(r['passed'] is True and r['native_binary_sha256']==BINARY_SHA and r['all12_exact'] and r['requests']==26 and r['measured_arms']==24 and r['bundles']==54 and r['physical_drain'] and r['explicit_final_repeat_and_closed_stamps_verified'],'actual complete current Engine qualification')
++ require(EXPANDED_AUTHORITY.is_file(),'expanded full readback authority pending')
++ expanded=json.loads(EXPANDED_AUTHORITY.read_text());require(expanded['passed'] and expanded['path']==str(EXPANDED_REVIEW) and sha(EXPANDED_REVIEW)==expanded['sha256'],'expanded actual authority identity')
++ er=json.loads(EXPANDED_REVIEW.read_text());require(er['passed'] and er['native_binary_sha256']==BINARY_SHA and er['all12_target_mtp_exact'] and er['all24_original_prefixes_exact'] and er['measured_arms']==24 and er['bundles']==54 and er['physical_drain'],'expanded full exactness and closure; manual task rubric is separate')
+  return ACTUAL
+ 
+ def build_plan(output,evidence_output):
+  p=Q.manifest();C.baseline();actual_review();prior=C.prerequisites(BINARY_SHA);base=A.build_plan(output,mini=False,max_new=128,seconds=1800,evidence_output=evidence_output)
+- files=[Path(__file__),P/'once.py',P/'test_profile.py',P/'README.md',PARENT,prior,ACTUAL,AUTHORITY,P/'parent-pins.json',P/'budget.py',P.parent/'phases.py',OPERATING/'generated/adapter.py',L/'state-bundle/reader.py',CAND/'evidence/native-build.json',L/'baseline/manifest.json',C.REVIEW,C.REFERENCE]
+- return dict(schema='gsq.dense-q6.class-plan.v1',adapter=base,prompt_id=p['prompt_id'],prompt_tokens=p['tokens'],warmup=B.manifest()['warmup'][0],max_new=128,requests=2,measured_requests=1,retained_state_dumps=3,baseline_review_sha256=C.REVIEW_SHA,baseline_result_sha256=C.REFERENCE_SHA,candidate_actual_review_sha256=sha(ACTUAL),source_sha256={str(f):sha(f) for f in files},timing='class',only_native_argv_delta='--timing token -> class',rank1_queue_profiling_property_changed=True,scope='current dense-Q6 binary whole-request classes plus separately labelled total half-event phase durations; no speed or per-class phase claim',no_speed_claim=True)
++ files=[Path(__file__),P/'once.py',P/'test_profile.py',P/'README.md',PARENT,prior,ACTUAL,AUTHORITY,EXPANDED_AUTHORITY,EXPANDED_REVIEW,P/'parent-pins.json',P/'budget.py',L/'profiling/dense-q6-class/phases.py',OPERATING/'generated/adapter.py',L/'state-bundle/reader.py',CAND/'evidence/native-build.json',L/'baseline/manifest.json',C.REVIEW,C.REFERENCE]
++ return dict(schema='gsq.dense-packed.class-plan.v1',adapter=base,prompt_id=p['prompt_id'],prompt_tokens=p['tokens'],warmup=B.manifest()['warmup'][0],max_new=128,requests=2,measured_requests=1,retained_state_dumps=3,baseline_review_sha256=C.REVIEW_SHA,baseline_result_sha256=C.REFERENCE_SHA,candidate_actual_review_sha256=sha(ACTUAL),expanded_actual_review_sha256=sha(EXPANDED_REVIEW),source_sha256={str(f):sha(f) for f in files},timing='class',only_native_argv_delta='--timing token -> class',rank1_queue_profiling_property_changed=True,scope='current dense-packed binary whole-request classes plus separately labelled total half-event phase durations; no speed or per-class phase claim',no_speed_claim=True)
+ def validate_plan(plan):
+  require(plan==build_plan(plan['adapter']['output'],plan['adapter']['evidence_output']),'plan/source binding');A.validate_plan(plan['adapter'])
+ def storage_guard(plan,budget=None):
+--- frozen-dense-q6-class-b/once.py
++++ dense-packed-class/once.py
+@@ -2,10 +2,10 @@
+ """Explicit root-admitted current class diagnostic using frozen Monitor/run lifecycle."""
+ import argparse,hashlib,importlib.util,json
+ from pathlib import Path
+-P=Path(__file__).resolve().parent;L=P.parents[2]
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-dense-q6-class-b.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-b')
+-UNIT='gsq-dense-q6-class-b.service';PARENT=L/'baseline/once.py';PARENT_SHA='5e7539962f97cb42da560c8c027fa8a739bef94f8797d5dfc4f448c4e485a9ad'
++P=Path(__file__).resolve().parent;L=P.parents[1]
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-dense-packed-class-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-packed-class-a')
++UNIT='gsq-dense-packed-class-a.service';PARENT=L/'baseline/once.py';PARENT_SHA='5e7539962f97cb42da560c8c027fa8a739bef94f8797d5dfc4f448c4e485a9ad'
+ def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+ def load(p,n):
+  s=importlib.util.spec_from_file_location(n,p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+@@ -17,9 +17,9 @@
+  review=P/'evidence/independent-review.json';r=json.loads(review.read_text());S.require(r['passed'] is True and r.get('source_sha256'),'independent current profile review')
+  for f,h in r['source_sha256'].items():S.require(sha(Path(f) if Path(f).is_absolute() else S.R/f)==h,'independent profile source drift')
+  base=M.build_plan();suite=S.build_plan(CONTROL/'ranks',EVIDENCE);base.pop('prompt',None)
+- base.update(schema='gsq.dense-q6.class-once.v1',adapter=suite['adapter'],suite=suite,max_new=128,requests=2,unit=UNIT,scope='excluded warmup plus fixed prompt00 target class diagnostic; no speed claim')
+- ledger=L/'dense-q6-p33/operating/candidate-ledger.json';base['initial_mem_available_required']+=json.loads(ledger.read_text())['initial_mem_available_delta_bytes']
+- files=[Path(__file__),PARENT,P/'profile.py',P/'test_profile.py',P/'budget.py',P.parent/'phases.py',P/'parent-pins.json',P.parent/'actual-authority.json',L/'state-bundle/reader.py',L/'state-bundle/preparation.json',L/'state-bundle/parent-pins.json',P/'evidence/independent-review.json',L/'dense-q6-p33/evidence/native-build.json',ledger]
++ base.update(schema='gsq.dense-packed.class-once.v1',adapter=suite['adapter'],suite=suite,max_new=128,requests=2,unit=UNIT,scope='excluded warmup plus fixed prompt00 target class diagnostic; no speed claim')
++ ledger=L/'dense-packed-block/engine/operating/candidate-ledger.json';base['initial_mem_available_required']+=json.loads(ledger.read_text())['initial_mem_available_delta_bytes']
++ files=[Path(__file__),PARENT,P/'profile.py',P/'test_profile.py',P/'budget.py',L/'profiling/dense-q6-class/phases.py',P/'parent-pins.json',P/'actual-authority.json',L/'state-bundle/reader.py',L/'state-bundle/preparation.json',L/'state-bundle/parent-pins.json',P/'evidence/independent-review.json',L/'dense-packed-block/engine/evidence/native-build.json',ledger]
+  base['source_sha256'].update({str(f):sha(f) for f in files});base['monitor_configuration']=dict(module_sha256=O.MODEL_SHA,coordinator_sha256=PARENT_SHA,CONTROL=str(CONTROL),EVIDENCE=str(EVIDENCE),UNIT=UNIT,initial_ram_delta_bytes=571473920,behavior='unchanged Monitor and two-rank retained-owner cleanup')
+  return base
+ O.build_plan=build_plan
+--- frozen-dense-q6-class-b/test_profile.py
++++ dense-packed-class/test_profile.py
+@@ -70,4 +70,21 @@
+   with patch.object(Q,'validate_plan'),patch.object(Q,'storage_guard'),patch.object(Q.A,'Transport',Broken),patch.object(Q.A,'cleanup_failure',side_effect=retained):
+    with self.assertRaises(Q.A.RetainedOwner) as c:Q.qualification({'adapter':{}},admit=lambda p:None,check=lambda:None,launch_hook=lambda p:None)
+    self.assertIs(c.exception.original,error)
++ def test_current_authority_and_expanded_readback_failclosed(self):
++  self.assertEqual(Q.BINARY_SHA,'5aef74d5f803b33758711db352ee5e1a393a364e6c33aa9f8a4cdb4478f5fe6a')
++  with self.assertRaisesRegex(ValueError,'expanded full readback authority pending'):Q.actual_review()
++  with tempfile.TemporaryDirectory() as td:
++   r=Path(td)/'review.json';a=Path(td)/'authority.json'
++   report=dict(passed=True,native_binary_sha256=Q.BINARY_SHA,all12_target_mtp_exact=True,all24_original_prefixes_exact=True,measured_arms=24,bundles=54,physical_drain=True)
++   r.write_text(json.dumps(report));a.write_text(json.dumps(dict(passed=True,path=str(r),sha256=Q.sha(r))))
++   with patch.object(Q,'EXPANDED_REVIEW',r),patch.object(Q,'EXPANDED_AUTHORITY',a):
++    self.assertEqual(Q.actual_review(),Q.ACTUAL)
++    report['physical_drain']=False;r.write_text(json.dumps(report));a.write_text(json.dumps(dict(passed=True,path=str(r),sha256=Q.sha(r))))
++    with self.assertRaises(ValueError):Q.actual_review()
++ def test_unchanged_budget_and_new_coordinator_globals(self):
++  parent=Q.L/'profiling/dense-q6-class/launch-b/budget.py';self.assertEqual((P/'budget.py').read_bytes(),parent.read_bytes())
++  s=importlib.util.spec_from_file_location('current_dense_class_once_test',P/'once.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
++  self.assertIs(m.O.S,m.S);self.assertIs(m.O.S.A.RetainedOwner,m.S.A.RetainedOwner)
++  for mod in (m.O,m.M):self.assertEqual(mod.CONTROL,m.CONTROL);self.assertEqual(mod.EVIDENCE,m.EVIDENCE);self.assertEqual(mod.UNIT,m.UNIT)
++  self.assertEqual(m.UNIT,'gsq-dense-packed-class-a.service')
+ if __name__=='__main__':unittest.main(verbosity=2)

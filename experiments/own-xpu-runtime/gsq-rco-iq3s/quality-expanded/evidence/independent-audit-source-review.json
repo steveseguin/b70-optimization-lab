@@ -1,0 +1,47 @@
+{
+  "schema": "gsq.expanded-quality.independent-auditor-source-review.v1",
+  "passed": true,
+  "actual_plan_pending": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/audit.py": "67754c3d5f9b26e91302b0a422590f0d56d43a258e6b4e1c229813891514b768",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/audit-delta.patch": "3a359eb3d6d868a3efb9dc6e7a302ed1d2998abd80e63aaa4547a196025e1cef",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/test_audit.py": "10b30e377956ec9aa8e41e636ed13ddfc59c142f33dfd1ef7a679daccb9b4a8c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/actual-authority.json": "5842caf7938a621362664ca8f8a2e100927e52af211a48a6a9bf90e8bb4b40e6",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/audit-tests.log": "dda49b9aae83a7e57bb626a863d3adb7e435150a87836dd81de7bbb5bd07b150",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/lineage/before-actual-authority-and-metadata-margin/audit.py": "b6d703191235ae5775725d3a527dc25d23be23dc36b354137b536bda8478f4ad",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/lineage/before-actual-authority-and-metadata-margin/evidence/audit-preparation.json": "0dd8ec0033775f8edb6cbcbf93826cfba9009bbc9cbdedb33b31ae05b1d3ee65",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/suite.py": "fe4310844d1efab26d74d2cee4b80a2e44ea9c84d79167b324aaea4b608dd8a4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/once.py": "d53d4ae67973fd2fb1bcaac7f8ed05cea902da1ee3515876ae3dfe12c097eef3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/audit-bound-preparation.json": "e596c670607ff26658164b5470fe9a46845247dcfa72ff3e6bc2263e839b5b71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/independent-review.json": "00a997a6034271216e80475c218e9af27aabd1008ae31fef00c3325f8dab2bc3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/audit.py": "0f621eada948c86610a1b698c4e1cf349aa92e5b8c7db39d2c47903f5dfb65f7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/audit.py": "4013acb3216fe908edda3761089a11377e9513f025c99d0442d9792386b5c594",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py": "43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/rubrics.json": "bcc4c2d1ed9ed808d2396355663f8df55e5dc056c396f3f2f2a8531126205e4b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/audit-plan-binding.patch": "a2bcb93a5cc01daa11e2d74b26ce345d4daba655a4caf89d1326a9bf07c30078",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/lineage/auditor-before-plan-binding/audit.py": "707aae7aef9e2359aab41964b288a9cc959863fce4cc3c01ee5361a6f41e8063",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/lineage/auditor-before-plan-binding/evidence/independent-audit-source-review.json": "a6bb245f2de430b711d812e33a83d06316ad9bc9ac542748c1bb8b81081b8b8c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/lineage/auditor-before-plan-binding/evidence/audit-tests.log": "dda49b9aae83a7e57bb626a863d3adb7e435150a87836dd81de7bbb5bd07b150",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/lineage/auditor-before-plan-binding/evidence/audit-bound-preparation.json": "e596c670607ff26658164b5470fe9a46845247dcfa72ff3e6bc2263e839b5b71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/audit-plan-binding.json": "76d1235e0c900d5f664bdd0291d41061f88fc3bd83f2939e277dc6cdcf319dfe"
+  },
+  "retained_tests": 3,
+  "tests_replayed": false,
+  "findings": [],
+  "scope": "Source/metadata review only; no actual expanded results, payload, tokenizer execution, model or device operations.",
+  "checks": [
+    "Exact full delta from qualified B auditor reconstructed; all current/retained test and authority pins verified.",
+    "Fixed512 request caps versus128 startup; original128 prefixes and natural EOS only, full512 state/tokens compared within each target/MTP pair.",
+    "All54 bundles independently stream every range and seal using immutable original buffer inventories/lengths; no false128 payload oracle.",
+    "All24 decoded outputs independently reproduced using pinned decoder; exact rubric and unmodified text joins, no automated quality success.",
+    "Same26RESET/52ACK reconstruction, all timestamps/EOS/MTP outcomes, both physical contacts, full owner/drain/fault/source/binary/memory checks retained.",
+    "Initial384MiB additional margin and unchanged128MiB/2GiB ongoing reserves asserted.",
+    "Final delta is exactly one PLAN_SHA constant; actual admitted small plan metadata hash/binary/request caps/metadata margin independently joined. Prior reviewed source/test log retained. No test rerun or active result/payload reads."
+  ],
+  "limitations": [
+    "Manual full-output rubric evaluation remains required even if audit passes.",
+    "No independent512 reference engine or cross-run causal speed claim."
+  ],
+  "plan_sha256": "e95aba2d48f73b40ae4ef077cb8d2182da09e06bea61184697806c550a006169",
+  "plan_path": "/home/steve/own-xpu-runtime-results/gsq-quality-expanded-a-plan.json"
+}

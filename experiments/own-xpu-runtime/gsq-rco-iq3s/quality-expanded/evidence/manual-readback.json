@@ -1,0 +1,538 @@
+{
+  "schema": "gsq.expanded.closed-manual-readback.v1",
+  "closed_audit_passed": true,
+  "review_sha256": "c70ee06dc9f51e8f3e5506b73fba7b442217421d3e986096d23e3230ccd70ead",
+  "index_sha256": "44d9cd43bf4a36e7c6a7cb49e8856aa7f42bc89ef04059623a5c31aecce3b406",
+  "all12_full_texts_read": true,
+  "all12_source_hashes_join_closed_index": true,
+  "reviewer": "Codex root AI assessment; not independent human/model certification",
+  "complete_natural_eos_cases": 1,
+  "capped_incomplete_cases": 11,
+  "quality_qualified": false,
+  "no_output_repair_or_retry": true,
+  "scope": "Task usefulness and technical caveats are separate from exact original prefixes and same-target full-output/state equality. No inference that a shared-target flaw was introduced by optimization.",
+  "cases": [
+    {
+      "case": "incident-retrospective",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-00.json",
+      "readback_sha256": "e1015fce724ecc76ee37b65a3059f833fef3690b0cdc23eccf1cd70762f13304",
+      "decoded_path": "prompt-00-none/decoded-output.json",
+      "decoded_sha256": "7e362444c6610dd59ec49dabbb247c3df6c9ee14d6f265444b765f4070e76adf",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_unsupported_details",
+      "requested_elements": [
+        {
+          "requested": "impact",
+          "assessment": "covered"
+        },
+        {
+          "requested": "timeline",
+          "assessment": "covered"
+        },
+        {
+          "requested": "contributing factors",
+          "assessment": "partial"
+        },
+        {
+          "requested": "detection gaps",
+          "assessment": "missing"
+        },
+        {
+          "requested": "remediation",
+          "assessment": "partial"
+        },
+        {
+          "requested": "prevention",
+          "assessment": "missing"
+        },
+        {
+          "requested": "owner handoff",
+          "assessment": "missing"
+        },
+        {
+          "requested": "requested 450\u2013550 word length",
+          "assessment": "not_satisfied"
+        }
+      ],
+      "notes": [
+        "Ends mid-sentence in contributing factors; no complete prevention or owner handoff.",
+        "Invents precise dates, user count, revenue, ticket count and SLA-credit consequences without labeling them assumptions.",
+        "A single45-minute outage does not by itself exceed a99.9% availability allowance over a90-day quarter (129.6minutes); cumulative downtime and contract terms are absent."
+      ],
+      "sources": []
+    },
+    {
+      "case": "code-review",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-01.json",
+      "readback_sha256": "4640e6ac12938c46f79164f40a65e765866f2e9294ca3d14527de6ddd301faed",
+      "decoded_path": "prompt-01-mtp/decoded-output.json",
+      "decoded_sha256": "e0fb35ea22f815cc6ac595bd5f0bb59038fba722311c9b72f4207a9bf95b82b1",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_technical_cautions",
+      "requested_elements": [
+        {
+          "requested": "correctness",
+          "assessment": "covered"
+        },
+        {
+          "requested": "observability",
+          "assessment": "missing"
+        },
+        {
+          "requested": "data loss",
+          "assessment": "partial"
+        },
+        {
+          "requested": "concurrency",
+          "assessment": "partial"
+        },
+        {
+          "requested": "test cases",
+          "assessment": "partial"
+        },
+        {
+          "requested": "acceptance recommendation grounded in stated design",
+          "assessment": "covered"
+        }
+      ],
+      "notes": [
+        "Ends at the start of the JSONL data-loss discussion. Observability and complete concurrency/test coverage are absent.",
+        "Identifies retry duplication and ordering risks, but presenting UPSERT/INSERT IGNORE/REPLACE as sufficient to ensure retries cannot corrupt data is too broad. Idempotency depends on keys and update semantics.",
+        "Official MySQL documentation describes REPLACE as deleting a conflicting old row before inserting; it cannot be assumed to preserve the intended update behavior. PostgreSQL permits arbitrary update expressions; repeated increments are a simple non-idempotent counterexample."
+      ],
+      "sources": [
+        "https://dev.mysql.com/doc/refman/8.0/en/replace.html",
+        "https://www.postgresql.org/docs/18/sql-insert.html"
+      ]
+    },
+    {
+      "case": "customer-email",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-02.json",
+      "readback_sha256": "5575d26bb4429112f328e2e9c8c6d919cae27419ddc6cdcdf382536fee9eca37",
+      "decoded_path": "prompt-02-none/decoded-output.json",
+      "decoded_sha256": "2a0b1ed53fd541d2f35b9502a7a41b0f34523038a05e5bacbe55836a72a9a73b",
+      "termination": "eos",
+      "tokens": 316,
+      "outcome": "complete_draft_with_assumptions_to_verify",
+      "requested_elements": [
+        {
+          "requested": "one-week delay",
+          "assessment": "covered"
+        },
+        {
+          "requested": "data-integrity issue",
+          "assessment": "covered"
+        },
+        {
+          "requested": "accountable calm tone",
+          "assessment": "covered"
+        },
+        {
+          "requested": "corrective work",
+          "assessment": "covered"
+        },
+        {
+          "requested": "next expectations",
+          "assessment": "covered"
+        },
+        {
+          "requested": "urgent support cases",
+          "assessment": "covered"
+        },
+        {
+          "requested": "no marketing claims",
+          "assessment": "covered"
+        }
+      ],
+      "notes": [
+        "Natural EOS; complete subject, delay, reason, corrective work, next update, urgent-support path and signoff. Calm, accountable drafting.",
+        "The affected subset of formats, isolated root cause, no-customer-action assertion and availability of manual exports are introduced assumptions. Verify before using this as a real customer communication; model output is an unsent draft."
+      ],
+      "sources": []
+    },
+    {
+      "case": "sql-debugging",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-03.json",
+      "readback_sha256": "5b6e4ff6142ec234abfba24ad338225e5b0ac4cb23a0c3d12760033d66190dab",
+      "decoded_path": "prompt-03-mtp/decoded-output.json",
+      "decoded_sha256": "fd741a11be58991507418cfabc0bb574a818dfd657698dcb60d9d8be47e54915",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap",
+      "requested_elements": [
+        {
+          "requested": "EXPLAIN ANALYZE",
+          "assessment": "covered"
+        },
+        {
+          "requested": "indexes",
+          "assessment": "partial"
+        },
+        {
+          "requested": "statistics",
+          "assessment": "covered"
+        },
+        {
+          "requested": "join order",
+          "assessment": "partial"
+        },
+        {
+          "requested": "row estimates",
+          "assessment": "covered"
+        },
+        {
+          "requested": "partial indexes",
+          "assessment": "missing"
+        },
+        {
+          "requested": "materialized views",
+          "assessment": "missing"
+        },
+        {
+          "requested": "rollout safety",
+          "assessment": "missing"
+        }
+      ],
+      "notes": [
+        "Coherent plan for EXPLAIN, buffers, estimates and ANALYZE; SQL snippets are plausible but not executed.",
+        "Ends mid-index discussion. Partial indexes, materialized views and rollout safety are absent; join-order treatment is partial."
+      ],
+      "sources": []
+    },
+    {
+      "case": "release-plan",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-04.json",
+      "readback_sha256": "48b6796096a8c104545fa9e3ab71c410eae80292fd4e8e9b07fbc3f6542b2440",
+      "decoded_path": "prompt-04-none/decoded-output.json",
+      "decoded_sha256": "ff6540fa779bc5a85966f1d2e6fb3684386ca1f55126ac184b9b5555d8c02c6c",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_unverified_project_assumptions",
+      "requested_elements": [
+        {
+          "requested": "feature flags",
+          "assessment": "covered"
+        },
+        {
+          "requested": "staged rollout",
+          "assessment": "missing"
+        },
+        {
+          "requested": "migration",
+          "assessment": "partial"
+        },
+        {
+          "requested": "monitoring",
+          "assessment": "missing"
+        },
+        {
+          "requested": "rollback criteria",
+          "assessment": "missing"
+        },
+        {
+          "requested": "customer communication",
+          "assessment": "partial"
+        },
+        {
+          "requested": "security review",
+          "assessment": "covered"
+        },
+        {
+          "requested": "post-release verification",
+          "assessment": "missing"
+        }
+      ],
+      "notes": [
+        "Ends mid-backward-compatibility section; staged rollout, monitoring, rollback criteria and post-release verification remain absent.",
+        "Introduces a particular OAuth/OIDC redesign, completed threat modeling, verified compliance and automatic API-key migration as assumed project facts. These are unverified drafting assumptions and must not be treated as completed work."
+      ],
+      "sources": []
+    },
+    {
+      "case": "benchmark-analysis",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-05.json",
+      "readback_sha256": "ffbe75d6a36e25621590b723d35d8f037c062eb29da8b51c2fed12dd987cbe3b",
+      "decoded_path": "prompt-05-mtp/decoded-output.json",
+      "decoded_sha256": "a641dcd82257a72471e2b3a54131404f815cd32ec037f84056c287e4faf3aca9",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_metric_confusion",
+      "requested_elements": [
+        {
+          "requested": "plausible cache or warming causes",
+          "assessment": "partial"
+        },
+        {
+          "requested": "fresh-response measurement separation",
+          "assessment": "missing"
+        },
+        {
+          "requested": "measurement identity and evidence before publication",
+          "assessment": "missing"
+        }
+      ],
+      "notes": [
+        "Ends mid-warmup discussion before the measurement-isolation and publication checklist requested.",
+        "Conflates prefix caching savings with decode-phase tokens/s. Prefix caching directly reduces prefill, while faster end-to-end response rate does not by itself establish faster token generation. The vLLM documentation explicitly separates these phases.",
+        "Batching and padding descriptions are runtime-dependent hypotheses; they should not be presented as universally established causes."
+      ],
+      "sources": [
+        "https://docs.vllm.ai/en/v0.30.0/features/automatic_prefix_caching/"
+      ]
+    },
+    {
+      "case": "architecture-tradeoff",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-06.json",
+      "readback_sha256": "357750b2ab7ba86fd3140cb6c21f5d00412c2ff04352beeb2e3607346e2e6d3e",
+      "decoded_path": "prompt-06-none/decoded-output.json",
+      "decoded_sha256": "c17b9d756aac0ddda981e00807630a51aafd7e77e13f10fe11278bfdefdfb236",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_parallelism_errors",
+      "requested_elements": [
+        {
+          "requested": "latency",
+          "assessment": "partial"
+        },
+        {
+          "requested": "throughput",
+          "assessment": "partial"
+        },
+        {
+          "requested": "PCIe traffic",
+          "assessment": "partial"
+        },
+        {
+          "requested": "memory",
+          "assessment": "partial"
+        },
+        {
+          "requested": "failure isolation",
+          "assessment": "missing"
+        },
+        {
+          "requested": "scheduling",
+          "assessment": "missing"
+        },
+        {
+          "requested": "loading time",
+          "assessment": "missing"
+        },
+        {
+          "requested": "conditions favoring each option",
+          "assessment": "partial"
+        }
+      ],
+      "notes": [
+        "Ends during the throughput table before failure isolation, scheduling and loading-time discussion.",
+        "Incorrectly suggests TP cannot readily process multiple requests without pipeline parallelism and describes compute across TP GPUs as serialized for each token. Tensor-parallel inference can batch requests; TP partitions layer work across GPUs.",
+        "Categorical claims that TP throughput is lower and replicas scale nearly linearly require workload, memory and interconnect measurements."
+      ],
+      "sources": [
+        "https://github.com/vllm-project/vllm/blob/main/docs/configuration/optimization.md",
+        "https://huggingface.co/docs/inference-endpoints/engines/vllm"
+      ]
+    },
+    {
+      "case": "bug-report-synthesis",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-07.json",
+      "readback_sha256": "a57345f66be05d13038324a54ccb41f4e9cbd03d6ccc28732dc741ca63ece430",
+      "decoded_path": "prompt-07-mtp/decoded-output.json",
+      "decoded_sha256": "5c3ba1e8ae790797ce2b7ff6d7a7ad3dd05224e6533b2cd3fac87c5aff595ed2",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap",
+      "requested_elements": [
+        {
+          "requested": "root cause hypotheses without invented certainty",
+          "assessment": "covered"
+        },
+        {
+          "requested": "immediate mitigations",
+          "assessment": "missing"
+        },
+        {
+          "requested": "evidence to collect",
+          "assessment": "missing"
+        },
+        {
+          "requested": "minimal reproduction",
+          "assessment": "missing"
+        }
+      ],
+      "notes": [
+        "Gives plausible, explicitly suspected shared-state, cache-key and buffer-reuse causes, consistent with the supplied symptoms.",
+        "Ends mid-cause discussion without immediate mitigations, evidence collection or a minimal reproduction strategy."
+      ],
+      "sources": []
+    },
+    {
+      "case": "technical-guide",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-08.json",
+      "readback_sha256": "e232080183190d08b6563a80289d9b9352e69dcc55d419022f0374c84f9a3e37",
+      "decoded_path": "prompt-08-none/decoded-output.json",
+      "decoded_sha256": "cddad50a58da5f7c4741b94a3dcd815d5b27aa2d491099d743f59c7ab6c2b81e",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_unqualified_repository_conventions",
+      "requested_elements": [
+        {
+          "requested": "scripts/data/notes/patches/results locations",
+          "assessment": "partial"
+        },
+        {
+          "requested": "run naming",
+          "assessment": "missing"
+        },
+        {
+          "requested": "reproducibility identity",
+          "assessment": "partial"
+        },
+        {
+          "requested": "valid promotion criteria",
+          "assessment": "missing"
+        }
+      ],
+      "notes": [
+        "Starts a plausible proposed directory layout and reproducibility guidance but ends mid-patches section, without run naming, result summaries or promotion criteria.",
+        "The prompt supplies no repository rules, so the invented directory layout is a suggestion, not established policy. Its blanket recommendation to commit datasets under100MB is not automatically appropriate for repository limits, licensing or project practice."
+      ],
+      "sources": []
+    },
+    {
+      "case": "risk-register",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-09.json",
+      "readback_sha256": "4f57eb8222fd4f43bd3b234962277a1b3807591abd97bf971be864e8397f27cc",
+      "decoded_path": "prompt-09-mtp/decoded-output.json",
+      "decoded_sha256": "8dbc06fab954c5baa343868b320b314af3fffd4c621df2e11946ee7addebbd6c",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_identity_caution",
+      "requested_elements": [
+        {
+          "requested": "at least eight operational or quality risks",
+          "assessment": "not_satisfied"
+        },
+        {
+          "requested": "severity per risk",
+          "assessment": "partial"
+        },
+        {
+          "requested": "likelihood per risk",
+          "assessment": "partial"
+        },
+        {
+          "requested": "detection per risk",
+          "assessment": "partial"
+        },
+        {
+          "requested": "mitigation per risk",
+          "assessment": "partial"
+        },
+        {
+          "requested": "rollback trigger per risk",
+          "assessment": "partial"
+        }
+      ],
+      "notes": [
+        "Only two complete risks and the start of a third appear, versus at least eight requested. The table ends mid-cell.",
+        "Quantization-aware retraining changes the model identity and is not solely a runtime migration; it would require separate model validation. Numerical thresholds and shadow-traffic capacity are illustrative assumptions, not validated deployment rules."
+      ],
+      "sources": []
+    },
+    {
+      "case": "performance-hypotheses",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-10.json",
+      "readback_sha256": "a6baf4b9703fd8d1bbef2cdfaa4e9e40442167139a3caa191bef0a0ddbada899",
+      "decoded_path": "prompt-10-none/decoded-output.json",
+      "decoded_sha256": "faefc3bf4fc8e581949d46c6ffd46b534d4d4f0109ee332db83cbd2fb7312e38",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_route_reuse_caution",
+      "requested_elements": [
+        {
+          "requested": "fusion",
+          "assessment": "covered"
+        },
+        {
+          "requested": "quantized layout",
+          "assessment": "covered"
+        },
+        {
+          "requested": "route caching caveats",
+          "assessment": "partial"
+        },
+        {
+          "requested": "graph capture",
+          "assessment": "missing"
+        },
+        {
+          "requested": "batch shapes",
+          "assessment": "partial"
+        },
+        {
+          "requested": "bandwidth",
+          "assessment": "covered"
+        },
+        {
+          "requested": "synchronization",
+          "assessment": "partial"
+        },
+        {
+          "requested": "validation traps",
+          "assessment": "missing"
+        }
+      ],
+      "notes": [
+        "Ends in the route-caching discussion before graph capture and the requested validation-traps coverage.",
+        "Repeated tokens or similar contexts do not establish equal hidden states or exact routing. Reusing expert IDs/weights without validating current routing can change the model; the retained text contains no such safeguard.",
+        "Fusion and layout changes need exact intermediate-rounding/order checks; the capped text has not supplied those checks. These hypotheses are not implemented or adopted by the lab."
+      ],
+      "sources": []
+    },
+    {
+      "case": "decision-memo",
+      "readback_path": "experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/evidence/manual/case-11.json",
+      "readback_sha256": "3a41209887c3e4c1b04d3431fa7cf6d414d15dcbe002b9b78bff380257c8d30d",
+      "decoded_path": "prompt-11-mtp/decoded-output.json",
+      "decoded_sha256": "5d8b75b21c2d2f5e1573e7f945a54c57fe3cceed65fc43957ee865ae7fe6e56f",
+      "termination": "cap",
+      "tokens": 512,
+      "outcome": "incomplete_cap_with_fabricated_decision_evidence",
+      "requested_elements": [
+        {
+          "requested": "current evidence with uncertainty",
+          "assessment": "not_satisfied"
+        },
+        {
+          "requested": "opportunity cost",
+          "assessment": "partial"
+        },
+        {
+          "requested": "decision criteria",
+          "assessment": "missing"
+        },
+        {
+          "requested": "next experiments",
+          "assessment": "partial"
+        },
+        {
+          "requested": "quality constraints",
+          "assessment": "missing"
+        },
+        {
+          "requested": "preserved artifacts",
+          "assessment": "missing"
+        }
+      ],
+      "notes": [
+        "Invents validation accuracy, latency/SLA, prior A/B outcomes, production history, alternative-model benchmarks and dollar estimates without source evidence or hypothetical labeling. It presents a comprehensive review as having occurred when no such data were supplied.",
+        "Recommends a particular two-quarter course and training changes based on invented metrics; this cannot support a real decision.",
+        "Ends mid-opportunity-cost section without complete stopping/decision criteria, quality constraints or artifact preservation."
+      ],
+      "sources": []
+    }
+  ]
+}

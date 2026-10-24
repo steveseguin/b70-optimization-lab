@@ -1,0 +1,54 @@
+{
+  "schema": "gsq.expanded.manual-readback.v1",
+  "case": "sql-debugging",
+  "reviewer": "Codex root; AI assessment, not external human certification",
+  "read_full_output": true,
+  "observed_utc": "2026-10-24T12:56:11.035632+00:00",
+  "provisional_until_closed_audit": true,
+  "source_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-quality-expanded-a/prompt-03-mtp/decoded-output.json",
+  "source_sha256": "fd741a11be58991507418cfabc0bb574a818dfd657698dcb60d9d8be47e54915",
+  "termination": "cap",
+  "output_tokens": 512,
+  "whitespace_word_count": 293,
+  "rubric_sha256": "bcc4c2d1ed9ed808d2396355663f8df55e5dc056c396f3f2f2a8531126205e4b",
+  "elements": [
+    {
+      "requested": "EXPLAIN ANALYZE",
+      "assessment": "covered"
+    },
+    {
+      "requested": "indexes",
+      "assessment": "partial"
+    },
+    {
+      "requested": "statistics",
+      "assessment": "covered"
+    },
+    {
+      "requested": "join order",
+      "assessment": "partial"
+    },
+    {
+      "requested": "row estimates",
+      "assessment": "covered"
+    },
+    {
+      "requested": "partial indexes",
+      "assessment": "missing"
+    },
+    {
+      "requested": "materialized views",
+      "assessment": "missing"
+    },
+    {
+      "requested": "rollout safety",
+      "assessment": "missing"
+    }
+  ],
+  "outcome": "incomplete_cap",
+  "notes": [
+    "Coherent plan for EXPLAIN, buffers, estimates and ANALYZE; SQL snippets are plausible but not executed.",
+    "Ends mid-index discussion. Partial indexes, materialized views and rollout safety are absent; join-order treatment is partial."
+  ],
+  "sources": []
+}

@@ -1,0 +1,101 @@
+--- before/suite.py
++++ after/suite.py
+@@ -2,7 +2,7 @@
+ No CLI, tokenizer execution at import, or operational admission in this module.
+ """
+ from pathlib import Path
+-import hashlib,importlib.util,json,time
++import hashlib,importlib.util,json,time,shutil
+ P=Path(__file__).resolve().parent;L=P.parent;R=L.parents[2]
+ def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+ def require(v,m):
+@@ -18,6 +18,18 @@
+ ACTUAL=L/'dense-packed-block/engine/operating/launch-b/evidence/device-b/review.json'
+ ADAPTER_BUILD=A.build_plan;COMMAND=A.command;SUITE_BUILD=Q.SUITE_BUILD
+ storage_guard=S.storage_guard
++INITIAL_METADATA_MARGIN=384*1024**2
++CHECK_SPACE=Q.check_space
++
++def initial_metadata_admission(external_free,budget):
++ if budget.resets==0:
++  require(external_free>=Q.B.EXTERNAL_FLOOR+Q.B.META+budget.remaining+INITIAL_METADATA_MARGIN,'initial cumulative metadata margin')
++def check_space(plan,budget,started=False):
++ result=CHECK_SPACE(plan,budget,started)
++ e=Path(plan['adapter']['evidence_output']);e=e if started else e.parent
++ initial_metadata_admission(shutil.disk_usage(e).free,budget)
++ return result
++Q.check_space=check_space
+ 
+ def actual_authority():
+  # Root supplies this only after independent actual full-suite readback PASS.
+@@ -53,7 +65,7 @@
+ def suite_build(output,evidence_output):
+  actual_authority();read_rubrics();p=SUITE_BUILD(output,evidence_output)
+  require(p['adapter']['binary_sha256']==BINARY and p['adapter']['build_receipt_sha256']==BUILD and p['adapter']['max_new']==512,'same current binary/request ceiling')
+- p.update(schema='gsq.expanded-quality.plan.v1',max_output_tokens=24*512+2*8,startup_max_new=128,measured_request_max_new=512,no_speed_claim=True,scope='All12 original prompts expanded to512; original128 prefix and full target/MTP equality; manual complete-answer readback required')
++ p.update(initial_cumulative_metadata_margin_bytes=INITIAL_METADATA_MARGIN,initial_external_required_bytes=8933302060,schema='gsq.expanded-quality.plan.v1',max_output_tokens=24*512+2*8,startup_max_new=128,measured_request_max_new=512,no_speed_claim=True,scope='All12 original prompts expanded to512; original128 prefix and full target/MTP equality; manual complete-answer readback required')
+  p['source_sha256'].update(review_sources());return p
+ Q.SUITE_BUILD=suite_build
+ 
+--- before/once.py
++++ after/once.py
+@@ -14,7 +14,7 @@
+ 
+ def build_plan():
+  H.actual_authority();p=PARENT_BUILD()
+- p.update(schema='gsq.quality-expanded.once.v1',max_new=512,startup_max_new=128,measured_request_max_new=512,scope='Original12 unchanged prompts; full512-cap target/MTP equality plus original128 token prefix; full-output task readback pending',no_speed_claim=True)
++ p.update(initial_cumulative_metadata_margin_bytes=H.INITIAL_METADATA_MARGIN,initial_external_required_bytes=8933302060,schema='gsq.quality-expanded.once.v1',max_new=512,startup_max_new=128,measured_request_max_new=512,scope='Original12 unchanged prompts; full512-cap target/MTP equality plus original128 token prefix; full-output task readback pending',no_speed_claim=True)
+  p['source_sha256'].update(H.review_sources())
+  H.require(p['requests']==26 and p['suite']['total_requests']==26 and p['suite']['adapter']['request_cap']==26,'unchanged26 requests')
+  H.require(p['suite']['storage']['retained_state_dumps']==27 and p['suite']['storage']['evidence_forecast_bytes']==6383165228,'unchanged27 captures/128MiB reserve')
+--- before/test_source.py
++++ after/test_source.py
+@@ -54,6 +54,12 @@
+   self.assertIs(W.O.S,S);self.assertIs(W.O.S.A.RetainedOwner,A.RetainedOwner)
+   for mod in (Q,Q.X,W.O,W.M):self.assertEqual(mod.CONTROL,W.CONTROL)
+   self.assertEqual(W.UNIT,'gsq-quality-expanded-a.service')
+-  self.assertFalse((P/'actual-authority.json').exists())
+-  with self.assertRaises(FileNotFoundError):H.actual_authority()
++  authority=H.actual_authority();self.assertEqual(authority['review_sha256'],'ccd77d4456f5c66eb0a64d7456a3abb8a23528ab390924c703b471deece6aced')
++ def test_extra_initial_margin_and_unchanged_ongoing_reserves(self):
++  b=Q.B.Budget();threshold=Q.B.EXTERNAL_FLOOR+Q.B.META+b.remaining+H.INITIAL_METADATA_MARGIN
++  self.assertEqual(threshold,8933302060);H.initial_metadata_admission(threshold,b)
++  with self.assertRaises(ValueError):H.initial_metadata_admission(threshold-1,b)
++  b.reset();H.initial_metadata_admission(Q.B.EXTERNAL_FLOOR+Q.B.META+b.remaining,b)
++  Q.B.check_free(Q.B.ROOT_FLOOR+Q.B.ROOT_CACHE,Q.B.EXTERNAL_FLOOR+Q.B.META+b.remaining,b)
++  with self.assertRaises(ValueError):Q.B.check_free(Q.B.ROOT_FLOOR+Q.B.ROOT_CACHE,Q.B.EXTERNAL_FLOOR+Q.B.META+b.remaining-1,b)
+ if __name__=='__main__':unittest.main(verbosity=2)
+--- before/SOURCE-SCOPE.md
++++ after/SOURCE-SCOPE.md
+@@ -28,11 +28,16 @@
+ still consumes admission slack; there is no reserve waiver or free-space inference
+ from arbitrary files.
+ 
+-No actual-authority file is supplied: the new full Engine readback must first
+-pass and bind the current5aef binary. The new independent source-review receipt
+-is also required before any plan. A later actual auditor must independently check
++The actual-authority file now binds independent Engine-B readback ccd77d44
++and current5aef binary. This is the128-cap prerequisite, not an expanded512
++result. The new independent source-review receipt remains required before any plan. A later actual auditor must independently check
+ full512 pair states, original token prefixes, all54 sealed bundles, complete
+ capture acknowledgements, decode/rubric joins, both physical contacts, and clean
+ closure. These source files have not run tokenizer, owner, native, plan, or model
+-operations. Focused mocks will check the real command builder/startup cap, actual
++operations. Focused mocks check the real command builder/startup cap, actual
+ RPC cap serialization, prefix/EOS refusals, and unchanged accounting before review.
++
++Initial admission additionally requires384MiB cumulative-metadata margin: total
++8,933,302,060B free externally. This margin is checked while zero RESETs are
++acknowledged; it is not repeatedly reserved after captures accrue. The existing
++128MiB ongoing metadata reserve and2GiB free-space floor remain unchanged.
+--- before/audit.py
++++ after/audit.py
+@@ -92,7 +92,7 @@
+   for k,v in plan['unit_properties'].items():require(ad['unit'][k]==v,'safe coordinator property')
+   B.validate_passive(ad['before'],term['after'],term)
+   require(plan['requests']==plan['suite']['total_requests']==26 and plan['suite']['measured_requests']==24,'fixed full suite');require(plan['startup_max_new']==plan['suite']['adapter']['startup_max_new']==128 and plan['suite']['adapter']['max_new']==plan['measured_request_max_new']==512 and plan['suite']['max_output_tokens']==12304,'startup128 actual512 cap split')
+-  require(plan['suite']['storage']['retained_state_dumps']==27 and plan['suite']['storage']['evidence_forecast_bytes']==6383165228,'27-dump plus128MiB admission')
++  require(plan['initial_cumulative_metadata_margin_bytes']==plan['suite']['initial_cumulative_metadata_margin_bytes']==384*1024**2 and plan['initial_external_required_bytes']==plan['suite']['initial_external_required_bytes']==8933302060,'extra initial metadata admission without reserve waiver');require(plan['suite']['storage']['retained_state_dumps']==27 and plan['suite']['storage']['evidence_forecast_bytes']==6383165228,'27-dump plus128MiB admission')
+   require(plan['adapter']['request_cap']==26 and plan['adapter']['storage']['raw_state_bytes']==6248947500 and plan['adapter']['storage']['evidence_forecast_bytes']==6383165228,'adapter fullbundle forecast')
+   require(plan['suite']['baseline_review_sha256']==PRIOR_SHA and plan['suite']['baseline_result_sha256']==prior['full_result_sha256'],'baseline admission')
+   for mapping in (plan['source_sha256'],plan['suite']['source_sha256'],plan['adapter']['source_sha256']):

@@ -1,0 +1,34 @@
+{
+  "schema": "gsq.quality-expanded.metadata-capacity-appraisal.v1",
+  "source_only": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/device-b/review.json": "9ab6bfce305ecb82816bc36b50092a434a1faa4cd2b24eb3f99bbffbb031d2ed",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/device-b/artifact-index.jsonl.gz": "ce564bfc70a5f8400c7602d94d96a97a416fe684195b3ffbbd251596876e7ba9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/evidence/device-a/review.json": "8e9c69ae212a45f1bf2491dd25a75743b01a19395064d52b06d713497f686d14",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/evidence/device-a/artifact-index.jsonl.gz": "ac8a034fa32ed06b01d847c61e7a14184983631c8548d1f65878df20af034ad6"
+  },
+  "payload_reads": false,
+  "method": "Sum non-.bin/non-.bundle files from independently audited physical indices; no rawresult/state/model read. Use actual87input/512output prompt00 coverage pair as request-size template; count per-arm metadata once, pair JSON twice to include root full-result duplication, plus closed128-suite fixed/warmup/root metadata. Separately take4x total measured128-suite metadata as conservative response-cap scaling scenario. Neither is a hard bound.",
+  "observed": {
+    "coverage512_prompt00_arm_local_metadata_bytes": 7693504,
+    "coverage512_prompt00_pair_json_bytes": 3140021,
+    "suite128_all_USB_metadata_bytes": 78290583,
+    "suite128_fixed_warmup_root_metadata_bytes": 5373992
+  },
+  "forecasts": {
+    "twelve_512_template_pairs_plus_fixed_bytes": 173056544,
+    "four_times_all_128_metadata_bytes": 313162332,
+    "recommended_extra_cumulative_metadata_headroom_bytes": 402653184,
+    "raw27capture_bytes": 6248947500,
+    "unchanged_metadata_reserve_bytes": 134217728,
+    "unchanged_external_floor_bytes": 2147483648,
+    "base_admission_bytes": 8530648876,
+    "recommended_external_admission_bytes": 8933302060
+  },
+  "limitations": [
+    "The full128MiB reserve remains charged throughout; writtenmetadata therefore needs additional starting free space, not permission to consume that reserve.",
+    "Template input87 is near originalcorpus60\u201390 but MTP misses/redo and JSONnumber widths vary; extra trace/debug records and newdecoded outputs can increase size.",
+    "Existingcoverage olderbinary capture schema and serializations differ slightly; figures are capacity forecasts, not throughput/quality projections.",
+    "No independent oracle is inferred beyond original128prefix and newfullpair equality; all decoded outputs require manual rubric review."
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "passed": true,
+  "meaning": "Source identity and dtype finding verified; NOT numerical/quality equivalence PASS",
+  "native_build_sha256": "3fe225c3c7076fbf680b3d7e0d1a051e533a34b5ed059da0048b8743323aed95",
+  "native_binary_sha256": "5aef74d5f803b33758711db352ee5e1a393a364e6c33aa9f8a4cdb4478f5fe6a",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "75c6742b254dc447c5b39b04a4b1446f9cf038918a2b2a6fa7f459b1769ee2ea",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "6c6ff9064949dc45c7a7909bcd540e8ae0cdd69cbbdc5a2a70f5d49499a91706",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/adapter.cpp": "f4d1d947107c1d8a8e2b2fc0d05d50216a9fb39e11ae3e4b4c2740f04e70b625",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/kernels.hpp": "439bb7ea6578a6dabf6ee9a9e01c538625bddf549ffc1acdd9c80163ff744084",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/dispatch.hpp": "a568caccaa07c325d3fc2494d538ec848ab65f060213139b1486e5e119b6d1f0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native.cpp": "e4fb9648acbad33fcb64112d34bf2b97a44e08a701ebde244d246010701a677a",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-model.cpp": "64ea0a1ca86578132380b94e9e267a81ca00f00abec40d37d13695070ba0226e",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-memory-hybrid-idx.cpp": "4660d879295fc812b5d334be625d429d5859695204df8978c771ab38ee84aed5",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/src/llama-memory-recurrent.cpp": "51172be188d0eece2267c9105dc5a8d2c3ef7ebd58e88a6f562ac6ee36326f98",
+    "/home/steve/build/flash-next-iq3-baseline-20261010/llama.cpp/ggml/src/ggml-cpu/ops.cpp": "4316ecebab08340c55a98944a30cb12241f572a507ddf9b7ee7ba24c1350cf51"
+  },
+  "reused_object_provenance": [
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/11.o",
+      "object_sha256": "89d797a1d80bfc7064fe842b4a87eff34b1016f1265e7dd8aa66e8e2e71c7979",
+      "depfile_sha256": "bd8e817a532a272b63853cce712d5cac8bff975ce43d2cea23840695e87f2ae5"
+    },
+    {
+      "object": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/full-native-1792819219994861899/13.o",
+      "object_sha256": "c3392466de543d9e22e938619952f697471754e2c149ea3aa77516bb1feff985",
+      "depfile_sha256": "8c0dadaabda7eb14be6549bb100b682c035aa03de8e43380d70f3db321582afa"
+    }
+  ],
+  "current_source_hashes_match_compiled_receipt": true,
+  "actual_metadata": {
+    "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-quality-expanded-a/prompt-00-none/rank0/state-2147483647/state-index.tsv",
+    "sha256": "a5f649e510c095bfadcc9fd57f064cc4f9ca50623ade96b80fb0754637cae8ae",
+    "selected_rows": [
+      [
+        "blk.0.gdn.history.bin",
+        "179004",
+        "61440",
+        "ec64437d116c5d1bf7aaf787f14ede0cf9f4c69375e8ccaf56fdf0e303fa420d"
+      ],
+      [
+        "blk.0.gdn.state.bin",
+        "260924",
+        "1572864",
+        "066b090f2c55ab241d31a650b0161fb98b1950ac9a401db64e6ca0e4fc876c0a"
+      ],
+      [
+        "alternate-blk.0.gdn.history.bin",
+        "95960180",
+        "61440",
+        "092e3b5e8642607f007b391af1c4d44aaae076bec35d4bf23ce8f562c6a4d495"
+      ],
+      [
+        "alternate-blk.0.gdn.state.bin",
+        "96021620",
+        "1572864",
+        "93e770df075ece319803c1e7948317a1c8b3ab969ed77ccd1629df700dc785af"
+      ]
+    ]
+  },
+  "current": {
+    "gdn_state_storage": "BF16",
+    "gdn_state_shape": [
+      48,
+      128,
+      128
+    ],
+    "bytes_per_layer": 1572864,
+    "state_update_accumulator": "FP32",
+    "state_commit": "BF16 nearest-even rounding each token; NaN quieting in Args::bits",
+    "gdn_history_storage": "BF16",
+    "attention_kv_storage": "BF16"
+  },
+  "reference": {
+    "gdn_state_storage": "F32",
+    "gdn_history_storage": "F32",
+    "attention_kv_proposal": "BF16",
+    "state_commit": "F32; no BF16 cast at recurrent commit"
+  },
+  "finding": "Substantive recurrent precision mismatch. Existing optimization/MTP parity is relative to this custom target; same-weight independent numerical/quality validation remains unresolved.",
+  "model_payload_reads": 0,
+  "state_payload_reads": 0,
+  "execution": false
+}

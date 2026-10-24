@@ -362,3 +362,48 @@ unchanged. After the original short suite qualifies the new binary, run the
 [expanded task readback](quality-expanded/PLAN.md) before another speed lever.
 The12:26 coach review agrees this addresses a larger outstanding correctness
 and publication gap. No broad-quality or public-speed claim is implied.
+
+
+## Dense engine qualified; expanded quality running — 12:49 UTC
+
+The [full dense result](dense-packed-block/engine/operating/launch-b/RESULT.md)
+passes all24 original arms and54 independent state readbacks, measuring19.61
+target-only /28.14 MTP tokens/s in the unchanged short resident screen. No
+precision/allocation/acceptance change. All required canonical preservation
+completed with raw/member/compressed readback and separate release.
+The [expanded run](quality-expanded/PLAN.md) now uses the same5aef binary,
+all12 original tasks at actualRPC512/startup128 and extra384MiB initial
+metadata headroom. Retain all caps/EOS and read all answers; no new speed
+candidate is built before this quality result.
+
+
+## Expanded exactness and concrete reference work — 13:10 UTC
+
+[Expanded closed readback](quality-expanded/RESULT.md) passes all24 original
+prefixes and12 complete target/MTP token/state pairs. All12 outputs were read;
+11 are capped/incomplete and one ends naturally. Unsupported factual claims and
+technical cautions stay recorded. This is not a broad task-quality pass, and the
+shared-target limitations are not attributed to an exact optimization.
+
+Verified raw pair preservation recovered2.661GB. Current5aef class diagnostic
+is running as one warmup plus exact original prompt00 target request. A concrete
+[same-weight reference lead](candidate-appraisals/same-sc117-reference.md)
+supports the architecture and all formats; prepare a CPU-only build to avoid
+the existing binary's SYCL enumeration. No new speed candidate is built before
+current costs and the reference procedure are assessed.
+
+
+## Precision concern supersedes next acceleration — 13:22 UTC
+
+The [compiled-source and actual allocation finding](reference-cpu/RECURRENT-DTYPE.md)
+confirms BF16 GDN recurrent matrix storage and rounding at each token, against
+referenceF32 state. Independent review confirms this is substantive; a conv
+history copy of an already-BF16 input is a different, exact-representability
+case and must not be conflated with matrix-state arithmetic rounding.
+
+Preserve all old results as historical internal parity, with no no-added-loss
+inference. Hold further speed changes. Prepare additiveF32 recurrent storage,
+matching native accessors/extents, RESET/checkpoint/rollback and new numerical
+validation; keep BF16attentionKV. An isolated CPU-only same-weight reference
+build is running under bounded USB/CPU limits. Its numerics must be explicitly
+compared; old BF16 tokens cannot force retaining the rounding behavior.

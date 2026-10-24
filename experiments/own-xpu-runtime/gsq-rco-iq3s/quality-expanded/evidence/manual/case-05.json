@@ -1,0 +1,37 @@
+{
+  "schema": "gsq.expanded.manual-readback.v1",
+  "case": "benchmark-analysis",
+  "reviewer": "Codex root; AI assessment, not external human certification",
+  "read_full_output": true,
+  "observed_utc": "2026-10-24T12:59:40.785949+00:00",
+  "provisional_until_closed_audit": true,
+  "source_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-quality-expanded-a/prompt-05-mtp/decoded-output.json",
+  "source_sha256": "a641dcd82257a72471e2b3a54131404f815cd32ec037f84056c287e4faf3aca9",
+  "termination": "cap",
+  "output_tokens": 512,
+  "whitespace_word_count": 350,
+  "rubric_sha256": "bcc4c2d1ed9ed808d2396355663f8df55e5dc056c396f3f2f2a8531126205e4b",
+  "elements": [
+    {
+      "requested": "plausible cache or warming causes",
+      "assessment": "partial"
+    },
+    {
+      "requested": "fresh-response measurement separation",
+      "assessment": "missing"
+    },
+    {
+      "requested": "measurement identity and evidence before publication",
+      "assessment": "missing"
+    }
+  ],
+  "outcome": "incomplete_cap_with_metric_confusion",
+  "notes": [
+    "Ends mid-warmup discussion before the measurement-isolation and publication checklist requested.",
+    "Conflates prefix caching savings with decode-phase tokens/s. Prefix caching directly reduces prefill, while faster end-to-end response rate does not by itself establish faster token generation. The vLLM documentation explicitly separates these phases.",
+    "Batching and padding descriptions are runtime-dependent hypotheses; they should not be presented as universally established causes."
+  ],
+  "sources": [
+    "https://docs.vllm.ai/en/v0.30.0/features/automatic_prefix_caching/"
+  ]
+}

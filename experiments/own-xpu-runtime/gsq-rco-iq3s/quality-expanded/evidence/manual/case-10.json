@@ -1,0 +1,55 @@
+{
+  "schema": "gsq.expanded.manual-readback.v1",
+  "case": "performance-hypotheses",
+  "reviewer": "Codex root; AI assessment, not external human certification",
+  "read_full_output": true,
+  "observed_utc": "2026-10-24T13:03:28.800615+00:00",
+  "provisional_until_closed_audit": true,
+  "source_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-quality-expanded-a/prompt-10-none/decoded-output.json",
+  "source_sha256": "faefc3bf4fc8e581949d46c6ffd46b534d4d4f0109ee332db83cbd2fb7312e38",
+  "termination": "cap",
+  "output_tokens": 512,
+  "whitespace_word_count": 311,
+  "rubric_sha256": "bcc4c2d1ed9ed808d2396355663f8df55e5dc056c396f3f2f2a8531126205e4b",
+  "elements": [
+    {
+      "requested": "fusion",
+      "assessment": "covered"
+    },
+    {
+      "requested": "quantized layout",
+      "assessment": "covered"
+    },
+    {
+      "requested": "route caching caveats",
+      "assessment": "partial"
+    },
+    {
+      "requested": "graph capture",
+      "assessment": "missing"
+    },
+    {
+      "requested": "batch shapes",
+      "assessment": "partial"
+    },
+    {
+      "requested": "bandwidth",
+      "assessment": "covered"
+    },
+    {
+      "requested": "synchronization",
+      "assessment": "partial"
+    },
+    {
+      "requested": "validation traps",
+      "assessment": "missing"
+    }
+  ],
+  "outcome": "incomplete_cap_with_route_reuse_caution",
+  "notes": [
+    "Ends in the route-caching discussion before graph capture and the requested validation-traps coverage.",
+    "Repeated tokens or similar contexts do not establish equal hidden states or exact routing. Reusing expert IDs/weights without validating current routing can change the model; the retained text contains no such safeguard.",
+    "Fusion and layout changes need exact intermediate-rounding/order checks; the capped text has not supplied those checks. These hypotheses are not implemented or adopted by the lab."
+  ],
+  "sources": []
+}
