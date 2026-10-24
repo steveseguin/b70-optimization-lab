@@ -4,11 +4,17 @@ The requested model is downloaded and verified. Our engine now passes exact targ
 requested the SC117 source and our custom engine with MTP. This is a distinct
 modified target, separate from the closed and published Unsloth optimization.
 
+The combined attention/Q6 candidate now matches all twelve original prompt pairs,
+measuring14.85 target-only /22.13 MTP tokens/s in its separately audited resident run
+([full result and scope](qkv-q6-p33/engine/operating/RESULT.md)). This is a cap128
+internal screen, with no matched cross-binary causal or public record claim.
+
 The attention projection candidate now matches baseline on all twelve prompt pairs
 ([separate-session correctness completion](attention-q8-p33/completion/RESULT.md)).
 Its [same-owner kernel comparison](attention-q8-p33/micro/RESULT.md) reduces measured
 isolated event latency with exact bytes; no full-model speed improvement is claimed.
-The next focused candidate is Q6 GDN-QKV.
+The Q6 combination has now passed the full gate linked above; lossless evidence
+bundling is the next iteration-cost task.
 
 ## Model and source
 

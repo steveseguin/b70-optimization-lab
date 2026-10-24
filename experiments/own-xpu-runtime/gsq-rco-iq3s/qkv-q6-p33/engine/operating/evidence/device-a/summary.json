@@ -1,0 +1,70 @@
+{
+  "passed": true,
+  "review_sha256": "778ef93e796ec48fdb73c813b78984e8e7354bdd8417bdb53d18e9d06b101b9e",
+  "all24_exact": true,
+  "same_rank_pair": true,
+  "artifact_count": 57701,
+  "indexed_bytes": 6338134825,
+  "actual_device_bytes": [
+    30947490698,
+    29824495508
+  ],
+  "owners": [
+    {
+      "status": "complete",
+      "exit_code": 0,
+      "safe_to_exit": true,
+      "in_flight": 0,
+      "live_bytes": 0
+    },
+    {
+      "status": "complete",
+      "exit_code": 0,
+      "safe_to_exit": true,
+      "in_flight": 0,
+      "live_bytes": 0
+    }
+  ],
+  "signals_sent": 0,
+  "physical_drain": true,
+  "kernel_fault_baseline_unchanged": true,
+  "timing": {
+    "none": {
+      "prompt_tokens": 862,
+      "prompt_wall_ms_sum": 28417.011593701318,
+      "mean_prompt_wall_ms": 2368.0842994751097,
+      "median_prompt_wall_ms": 2259.312546986621,
+      "prompt_tokens_over_prompt_wall_s": 30.33394265113591,
+      "decode_tok_s": 14.853656383725898,
+      "median_prompt_decode_tok_s": 14.859250322120936,
+      "hits": 0,
+      "guesses": 0
+    },
+    "mtp": {
+      "prompt_tokens": 862,
+      "prompt_wall_ms_sum": 29567.717651138082,
+      "mean_prompt_wall_ms": 2463.9764709281735,
+      "median_prompt_wall_ms": 2348.09571452206,
+      "prompt_tokens_over_prompt_wall_s": 29.15341691809009,
+      "decode_tok_s": 22.133318108966044,
+      "median_prompt_decode_tok_s": 22.200547847471253,
+      "hits": 1160,
+      "guesses": 1524
+    }
+  },
+  "order_groups": {
+    "all": {
+      "none": 14.853656383725898,
+      "mtp": 22.133318108966044
+    },
+    "none": {
+      "none": 14.84538544437831,
+      "mtp": 22.093048154638797
+    },
+    "mtp": {
+      "none": 14.861936544332467,
+      "mtp": 22.173735134941754
+    }
+  },
+  "scope": "Same persistent pair, all twelve fixed cap128 prompts; prompt_wall_ms is inherited controller prompt-to-first-output boundary, not isolated native prefill kernel time. No cross-binary causal or general-quality claim."
+}

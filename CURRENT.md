@@ -1,6 +1,18 @@
 # Current Workspace State
 
-**October 24, 03:40 EDT — four-card host: combined attention/Q6 model run prepared.**
+**October 24, 03:52 EDT — four-card host: combined engine passes all twelve prompts, measured22.13 MTP tokens/s.**
+Independent readback verifies all24 arms against original baseline tokens/full state.
+This one resident cap128 run measures14.85 target-only /22.13 MTP tokens/s, with similar
+rates in both order groups and unchanged1,160/1,524 draft acceptance. Prompt-to-first-
+output totals28.42s /29.57s for862 input tokens per mode; this includes the first output.
+Earlier separate-binary rates were12.63 /17.98; their difference is a between-run
+observation, not a matched causal speedup or public record. Both owners exited safely,
+target cards are empty, vision unchanged and no new GPU faults. USB has about5.65GB.
+Next is lossless state-file bundling to reduce test overhead, with the exact old oracle,
+RESET/FINISH semantics and one bounded format comparison. No third micro campaign yet.
+[Measured result](experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/RESULT.md).
+
+**October 24, 03:40 EDT — four-card host: combined attention/Q6 model run active.**
 The native build,162 selector checks, ten mocked request/cleanup checks and independent
 reviews pass. One unchanged26-request session will compare all twelve original prompt
 pairs to the baseline with full RESET and full target-state equality. Only the verified
@@ -9,7 +21,8 @@ bound; no third kernel campaign precedes this full-engine measurement.
 Closed attention results are preserved in27 verified archives, freeing56,981 files;
 USB has11.98GB free, root27.43GB, no new NTFS messages. The next run forecasts61,147
 files against an86,156 known-removal capacity estimate, not a hard MFT guarantee.
-Target cards are empty, vision unchanged. Root is completing explicit launch admission.
+One persistent pair started at07:40UTC as `gsq-attention-qkv-p33-a`; vision stays
+unchanged. No extra builds or archival run alongside measurement.
 [Operating recipe](experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/README.md),
 [storage evidence](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/RESULT.md).
 

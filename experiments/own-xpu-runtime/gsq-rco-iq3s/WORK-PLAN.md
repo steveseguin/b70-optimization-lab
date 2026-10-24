@@ -116,3 +116,16 @@ a previous-binary comparison stays explicitly between runs, not a matched causal
 speedup. Do not begin a third micro before measuring this engine. All27 closed
 attention-state archives are verified,56,981 files released, and explicit next-run
 storage admission binds the plan. Byte/file forecasts are monitored, not quotas.
+
+## Combined actual result and iteration-cost work — 07:52 UTC
+
+[Independent full-model readback](qkv-q6-p33/engine/operating/RESULT.md) passes all24
+arms/all12prompts. Measured14.853656 target /22.133318 MTP tokens/s; both order groups
+are close, all1,160accepted/364rejected guesses unchanged. Retain the combined exact
+candidate internally; between-run original-binary comparison remains descriptive.
+Next implement the [narrow state-bundle proposal](state-bundle/PROPOSAL.md): exact
+raw bytes and logical map, independently streamed range hashes, unchangedstate.json,
+explicit repeatedDUMP/RESET/FINISH proof and incomplete-write preservation. It targets
+MFT/file overhead without changing model arithmetic or token timing. Qualify format
+with CPU parity/failure/lifecycle and a bounded real capture; no full26speedrerun solely
+for format. USB byte compression remains necessary before later full suites.
