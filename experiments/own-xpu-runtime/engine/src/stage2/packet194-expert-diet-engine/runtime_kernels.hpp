@@ -65,6 +65,10 @@ struct Spec {
   // Token rows of one launch (batched prefill). sizes[] stay per row; row-major multi-row bindings. Only the
   // generic (ng) and specialised kernels accept tokens > 1; every other path refuses it.
   int tokens = 1;
+  // With tokens > 1 on the single-row SimpleNew kernels: bytes between consecutive rows of each input/output binding
+  // (0 = shared by all rows) and of the per-row temporary in the operator scratch.
+  uint32_t row_bytes[20]{};
+  uint32_t tmp_row_bytes = 0;
 };
 // Bind inputs, outputs, weights, scratch, error, position, active, RoPE in that
 // order.

@@ -1,6 +1,7 @@
 #pragma once
 #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
 #include "gsq-rco-iq3s/dense-packed-block/selection.hpp"
+#include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
 // Included after frozen gsqn definitions. Candidate changes only repeated
 // block half conversion/addressing, never the scalar FP expression boundaries.
 namespace denseblock {
@@ -79,6 +80,37 @@ template<unsigned T,bool F=false> struct DenseBlockOperation final:
 #endif
 };
 
+#ifndef OWN_RT_HOST_ONLY
+// Dense token rows with weight reuse (F32 activations): one subgroup owns one weight row and a tile of R token rows.
+// Each block_element value is decoded once and applied to every token of the tile; each token keeps block_lane_sum's
+// exact (block, group, lane) sequence, product then add, and the adjacent-pair subgroup tree.
+template<unsigned T,unsigned R> class DenseBlockRowsKernel;
+template<unsigned T,unsigned R> struct DenseBlockRows final:ownrt::SyclOperation {
+ Shape s{};
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
+  const auto sh=s;const auto*W=static_cast<const uint8_t*>(p[0]);const auto*X=static_cast<const float*>(p[1]);auto*Y=static_cast<float*>(p[2]);
+  const size_t tiles=(sh.count+R-1)/R;
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<DenseBlockRowsKernel<T,R>>(sycl::nd_range<1>(sh.rows*tiles*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+   constexpr size_t bytes=T==12?144:T==13?176:136;
+   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id();
+   const size_t row=logical/tiles,first=(logical%tiles)*R;const unsigned n=unsigned(std::min<size_t>(R,sh.count-first));
+   const auto*w=W+row*sh.row_bytes;float sums[R];for(unsigned r=0;r<R;++r)sums[r]=0;
+   for(size_t block=0;block<sh.columns/256;++block){
+    const auto*packed=w+block*bytes;const float d=iq3::half(iq3::u16(packed));
+    float dmin=0;if constexpr(T==12||T==13)dmin=iq3::half(iq3::u16(packed+2));
+    for(unsigned group=0;group<8;++group){
+     const size_t k=block*256+group*32+lane;const float weight=block_element<T>(packed,d,dmin,group,lane);
+     for(unsigned r=0;r<R;++r)if(r<n){const float product=weight*X[(first+r)*sh.columns+k];sums[r]=sums[r]+product;}
+    }
+   }
+   for(unsigned r=0;r<R;++r){float sum=sums[r];
+    for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
+    if(lane==0&&r<n)Y[(first+r)*sh.rows+row]=sum;}
+  }));});
+ }
+};
+#endif
 inline const Site& policy(const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
  const auto*s=selected(label,weight);require(s,"dense block exact census site");
  require(unsigned(m.type)==s->type&&m.rows==s->rows&&m.columns==2560&&m.span==m.rows,"dense block exact geometry/type/span");
@@ -87,6 +119,9 @@ inline const Site& policy(const integrated::Matrix&m,std::string_view label,std:
  require(gsq::row_bytes(s->type,m.columns)*m.rows==s->bytes,"dense block exact packed extent");return *s;
 }
 template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.x,m.y};
+#ifndef OWN_RT_HOST_ONLY
+ if(s.f32&&s.row_major&&prefill_switches::weight_reuse_rows()){DenseBlockRows<T,16>op;op.s=s;std::array<ownrt::Allocation,3>rows{m.w,m.x,m.y};auto e=d.compute(op,rows,{});return {e,e,1};}
+#endif
  if(s.f32){DenseBlockOperation<T,true>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
  DenseBlockOperation<T>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
 inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){

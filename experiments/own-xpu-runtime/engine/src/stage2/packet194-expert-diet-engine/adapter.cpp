@@ -25,6 +25,7 @@ struct Bound {
  View in(int j)const{return {p[j],s.sizes[j],s.types[j]};}
  View out(int j)const{int k=s.ni+j;return {p[k],s.sizes[k],s.types[k]};}
  int tail()const{return s.ni+s.no+s.nw;}
+ void* scratch()const{return p[tail()];}
  uint32_t* error()const{return static_cast<uint32_t*>(p[tail()+1]);}
  uint32_t* position()const{return static_cast<uint32_t*>(p[tail()+2]);}
  uint32_t* active()const{return static_cast<uint32_t*>(p[tail()+3]);}
@@ -184,10 +185,21 @@ int simple_work(const Spec& s,int phase){
  if(s.op==Op::expert_gather)return std::max(s.g.top,int(s.sizes[s.ni+2]));
  return s.sizes[s.ni];
 }
-template<Op Code,int Phase,int FixedN=0,int FixedTop=0> void simple_body(Bound b,int index){
+// One token row of a multi-row SimpleNew launch: row-major bindings and the temporary are offset by `row` in the
+// accessors only, so the body below is unchanged and nothing large is copied per work item.
+struct RowBound {
+ const Bound& b;int row;const Spec& s;
+ View in(int j)const{View v=b.in(j);if(s.row_bytes[j])v.p=static_cast<unsigned char*>(v.p)+size_t(row)*s.row_bytes[j];return v;}
+ View out(int j)const{View v=b.out(j);if(s.row_bytes[s.ni+j])v.p=static_cast<unsigned char*>(v.p)+size_t(row)*s.row_bytes[s.ni+j];return v;}
+ void* scratch()const{return static_cast<unsigned char*>(b.scratch())+size_t(row)*s.tmp_row_bytes;}
+ uint32_t* active()const{return b.active();}
+ uint32_t failed()const{return b.failed();}
+ void fail()const{b.fail();}
+};
+template<Op Code,int Phase,int FixedN=0,int FixedTop=0,class B=Bound> void simple_body(B b,int index){
  constexpr int phase=Phase;constexpr bool raw_rank=false;
  if(!*b.active()||b.failed())return;
- auto s=b.s;float* tmp=static_cast<float*>(b.p[b.tail()]);
+ auto s=b.s;float* tmp=static_cast<float*>(b.scratch());
  if constexpr(Code==Op::route){
   int n=FixedN?FixedN:int(b.in(0).n),top=FixedTop?FixedTop:s.site.shape[1],chunks=(n+15)/16;
   // tmp: maxima[chunks], subtree sums[chunks], exponentials[n], probabilities[n].
@@ -220,13 +232,23 @@ template<Op Code,int Phase,int FixedN=0,int FixedTop=0> void simple_body(Bound b
 #ifdef OWN_RT_HOST_ONLY
 template<Op Code,int Phase,int FixedN=0,int FixedTop=0> struct SimpleNew final:HostOperation {
  Spec spec;int work;SimpleNew(Spec s,int n):spec(s),work(n){}
- void run(std::span<void*const> p)const override{Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());packet24::mock_items(work,[&](size_t i){simple_body<Code,Phase,FixedN,FixedTop>(b,int(i));});}
+ void run(std::span<void*const> p)const override{Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());
+  if(spec.tokens==1){packet24::mock_items(work,[&](size_t i){simple_body<Code,Phase,FixedN,FixedTop>(b,int(i));});return;}
+  for(int r=0;r<spec.tokens;++r)packet24::mock_items(work,[&](size_t i){simple_body<Code,Phase,FixedN,FixedTop>(RowBound{b,r,b.s},int(i));});}
 };
 #else
 template<Op Code,int Phase,int FixedN=0,int FixedTop=0> struct SimpleNew final:ownrt::SyclOperation {
  Spec spec;int work;SimpleNew(Spec s,int n):spec(s),work(n){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
   Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());int n=work;
+  if(spec.tokens>1) {
+   // Token rows: one launch for every row of this phase. Row r runs the unchanged single-row body on its own row of
+   // each row-major binding and its own slice of the temporary; shared bindings stay shared.
+   const int per=n,total=n*spec.tokens;
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(total)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){
+    const int r=int(i[0])/per,index=int(i[0])%per;
+    simple_body<Code,Phase,FixedN,FixedTop>(RowBound{b,r,b.s},index);}));});
+  }
   if(spec.implementation==11)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((n+31)/32)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> i)[[sycl::reqd_sub_group_size(32)]]{int j=i.get_global_linear_id();if(j<n)simple_body<Code,Phase,FixedN,FixedTop>(b,j);}));});
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){simple_body<Code,Phase,FixedN,FixedTop>(b,int(i[0]));}));});
  }
@@ -278,8 +300,13 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   bool generic_impl=s.implementation==0||s.implementation==1||s.implementation==11||s.implementation==12;
   if(!ported||!generic_impl)throw std::invalid_argument("implementation "+std::to_string(s.implementation)+" has no exact F32 activation variant");
  }
- if(s.tokens!=1&&(s.special!=Special::normal||(s.implementation>1&&s.implementation!=11)||s.op==Op::route||s.op==Op::expert_gather||s.op==Op::hc_combine&&!s.fused_combine_norm||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate||s.op==Op::qsa_attention||s.op==Op::moe_combine))
-  throw std::invalid_argument("token rows: generic and specialised kernels only");
+ if(s.tokens!=1) {
+  // Token rows run only on kernels that loop rows with single-row arithmetic: the generic/specialised kernels, and the
+  // SimpleNew route/gather/combine kernels through their per-row binding offsets.
+  const bool normal=s.special==Special::normal,simple=normal&&(s.implementation==1||s.implementation==11)&&(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm));
+  const bool generic=normal&&(s.implementation<=1||s.implementation==11)&&!(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm)||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate||s.op==Op::qsa_attention||s.op==Op::moe_combine);
+  if(!simple&&!generic)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
+ }
  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);
  if(s.implementation==2&&s.special==Special::normal&&(s.op==Op::route||s.op==Op::argmax))return round2::submit_simple(d,s,bindings,deps);
  if(s.implementation&&s.special==Special::broadcast)return simple_new_submit<Op::hc_mix>(d,s,bindings,deps);

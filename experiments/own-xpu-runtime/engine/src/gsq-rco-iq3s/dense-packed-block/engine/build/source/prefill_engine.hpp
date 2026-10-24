@@ -85,13 +85,17 @@ const std::vector<ownrt::PreparedCompute>& prefill_commands(const flash::Launch&
 // carry state through the output bank, so every row's state ends in the spare bank). OWNRT_PREFILL_NATIVE=0 replays
 // them per row instead (diagnostic).
 static bool prefill_native_op(const std::string& op) {
-  static const std::set<std::string> ops{"gdn","conv","gdn_norm_gate","qsa_prepare","qsa_append_pool","qsa_select","hc_mix","silu_div4","silu_product","norm"};
+  static const std::set<std::string> ops{"gdn","conv","gdn_norm_gate","qsa_prepare","qsa_append_pool","qsa_select","hc_mix","silu_div4","silu_product","norm",
+                                         "route","expert_gather","hc_combine","check_status"};
   static const bool enabled=[]{const char* e=std::getenv("OWNRT_PREFILL_NATIVE");return !e||e[0]!='0';}();
   return enabled&&ops.count(op);
 }
 bool prefill_native(const flash::Launch& l) const {
   if(!prefill_native_op(l.op))return false;
   const auto& s=prepared.at(&l).spec;
+  if(l.op=="check_status")return s.special==Special::check_status; // any-nonzero over all rows' slot status
+  if(l.op=="route"||l.op=="expert_gather"||l.op=="hc_combine") // SimpleNew kernels with per-row binding offsets
+    return s.special==Special::normal&&(s.implementation==1||s.implementation==11)&&!s.fused_combine_norm;
   return s.special==Special::normal&&(s.implementation<=1||s.implementation==11)&&!s.fused_combine_norm;
 }
 void prefill_native_site(const flash::Launch& l,int P0,int M) {
@@ -101,7 +105,17 @@ void prefill_native_site(const flash::Launch& l,int P0,int M) {
   size_t k=0;
   for(const auto& name:l.inputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(name);++k;}
   for(const auto& name:l.outputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(name);++k;}
-  site.spec.tokens=M;
+  if(l.op=="check_status") {
+    // One status check over every row's slots: the sticky error is set exactly when some row's check would set it.
+    require(prefill_role_of.count(l.inputs[0])&&!prefill_role_of.count("error"),"prefill status rows");site.spec.sizes[0]*=size_t(M);
+  } else {
+    site.spec.tokens=M;
+    for(size_t j=0;j<l.inputs.size()+l.outputs.size();++j){
+      const auto& name=j<l.inputs.size()?l.inputs[j]:l.outputs[j-l.inputs.size()];
+      if(prefill_role_of.count(name))site.spec.row_bytes[j]=uint32_t(prefill_row_bytes(name));
+    }
+    site.spec.tmp_row_bytes=4096*4; // route's per-row temporary (2*32+2*512 floats) and gather's flags fit
+  }
   finish(0,site.submit(dev(0),site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);
 }
 Allocation prefill_shadow(const std::string& name) const {return prefill_shadows.at(prefill_role_of.at(name)).id;}

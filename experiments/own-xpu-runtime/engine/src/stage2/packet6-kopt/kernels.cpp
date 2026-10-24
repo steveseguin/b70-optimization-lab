@@ -4,6 +4,7 @@
 #endif
 #include "stage2/packet6-kopt/kernels.hpp"
 #include "stage2/packet6-kopt/reference.hpp"
+#include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include <algorithm>
 #include <array>
@@ -152,6 +153,67 @@ P26_CASE(F32);P26_CASE(F16);P26_CASE(BF16);P26_CASE(Q8_0);P26_CASE(Q6_K);P26_CAS
 }throw std::invalid_argument("type");
   }
 };
+// Dense token rows with weight reuse: one subgroup owns one weight row and a tile of R token rows. Each weight value
+// is decoded once and applied to every token of the tile; each token keeps Multiply's single-row arithmetic exactly
+// (lane k-ranges, decode, product then add, the adjacent-pair subgroup tree). F32 activations only.
+template<unsigned R> struct MultiplyRows:ownrt::SyclOperation {
+  Descriptor desc{};unsigned subgroup=16;size_t groups=0,local_stride=16;
+  template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+    auto d=desc;auto ng=groups,stride=local_stride;
+    std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt rows capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(ng*SG*rows_per_group),sycl::range<1>(SG*rows_per_group))](sycl::handler& h) {
+      sycl::local_accessor<uint8_t,1> storage(stride*rows_per_group,h);
+      h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id();unsigned row_in_group=sg.get_group_linear_id();
+        const size_t tiles=(d.count+R-1)/R,logical=it.get_group_linear_id()*rows_per_group+row_in_group;
+        const size_t row=logical/tiles,first=(logical%tiles)*R;const bool active=row<d.span;
+        const unsigned n=active?unsigned(std::min<size_t>(R,d.count-first)):0;
+        const uint8_t* source=nullptr;auto local=storage.template get_multi_ptr<sycl::access::decorated::no>().get()+row_in_group*stride;
+        if(active){source=static_cast<const uint8_t*>(pointers[d.w])+row*d.rb;if(layout(T).elements!=1)stage_row<SG>(source,local,d.rb,lane);}
+        it.barrier(sycl::access::fence_space::local_space);
+        const float* x=static_cast<const float*>(pointers[d.x])+first*d.k;
+        float acc[R];for(unsigned r=0;r<R;++r)acc[r]=0;
+        if(active) {
+          if constexpr(layout(T).elements==1) {
+            for(size_t base=size_t(lane)*8;base<d.k;base+=SG*8) {
+              float values[8];
+              if(base+8<=d.k && reinterpret_cast<uintptr_t>(source+base*layout(T).bytes)%16==0) {
+                if constexpr(T==Type::F32) {
+                  auto w=reinterpret_cast<const sycl::vec<uint32_t,4>*>(source+base*4);auto lo=w[0],hi=w[1];
+                  for(unsigned j=0;j<4;++j){values[j]=bits_float(lo[j]);values[j+4]=bits_float(hi[j]);}
+                } else {
+                  auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(source+base*2);
+                  for(unsigned j=0;j<8;++j) {
+                    if constexpr(T==Type::F16)values[j]=half(w[j]);
+                    else {auto bits=uint32_t(w[j])<<16;if((bits&0x7fffffff)>0x7f800000)bits|=0x400000;values[j]=bits_float(bits);}
+                  }
+                }
+              } else for(unsigned j=0;j<8 && base+j<d.k;++j)values[j]=element(T,source,base+j);
+              for(unsigned r=0;r<R;++r)if(r<n)for(unsigned j=0;j<8 && base+j<d.k;++j){float input=x[r*d.k+base+j];float product=values[j]*input;acc[r]=acc[r]+product;}
+            }
+          } else {
+            for(size_t k=size_t(lane)*8;k<d.k;k+=size_t(SG)*8) {
+              float values[8];
+              if(k+8<=d.k)decode8<T>(local,k,values);else for(size_t j=0;j<d.k-k;++j)values[j]=element(T,local,k+j);
+              for(unsigned r=0;r<R;++r)if(r<n)for(unsigned j=0;j<8 && k+j<d.k;++j){float input=x[r*d.k+k+j];float product=values[j]*input;acc[r]=acc[r]+product;}
+            }
+          }
+        }
+        for(unsigned r=0;r<R;++r){float sum=acc[r];
+          for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
+          if(lane==0&&r<n)static_cast<float*>(pointers[d.y])[(first+r)*d.span+row]=sum;}
+      }));
+    });
+  }
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    switch(desc.type){
+#define ROWS_CASE(T) case Type::T:return subgroup==16?run<Type::T,16>(q,p,deps):run<Type::T,32>(q,p,deps)
+ROWS_CASE(F32);ROWS_CASE(F16);ROWS_CASE(BF16);ROWS_CASE(Q8_0);ROWS_CASE(Q6_K);
+#undef ROWS_CASE
+    default:break;}
+    throw std::invalid_argument("kopt token rows: dense F32/F16/BF16/Q8_0/Q6_K only");
+  }
+};
 Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocation>& ids,Matrix m,
                 uint32_t experts,uint32_t count,uint32_t span,ownrt::Allocation r=0,ownrt::Allocation status=0) {
   geometry(m.type,m.activation,m.output_type,m.rows,m.columns,op.subgroup);
@@ -180,7 +242,13 @@ ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation 
 ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
   if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
-  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;return finish(d,op,ids);
+  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;
+  if(a!=Type::F32||o!=Type::F32||tokens==1||!prefill_switches::weight_reuse_rows())return finish(d,op,ids);
+  // F32 token rows: weight-reuse kernel, 16 token rows per subgroup.
+  constexpr unsigned R=16;MultiplyRows<R> rows_op;rows_op.desc=op.desc[0];rows_op.subgroup=sg;rows_op.local_stride=op.local_stride;
+  rows_op.desc.first_group=0;rows_op.groups=(rows*((tokens+R-1)/R)+rows_per_group-1)/rows_per_group;
+  if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+  return d.compute(rows_op,ids,{});
 }
 ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation r,ownrt::Allocation status,uint32_t experts,uint32_t rows,size_t k,uint32_t count,uint32_t span,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   if(!r || !status)throw std::invalid_argument("kopt routing handles required");
