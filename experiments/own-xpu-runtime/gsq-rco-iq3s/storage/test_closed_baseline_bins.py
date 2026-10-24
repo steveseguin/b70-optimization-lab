@@ -1,0 +1,103 @@
+import hashlib,importlib.util,json,os,tempfile,unittest
+from pathlib import Path
+from unittest.mock import patch
+P=Path(__file__).resolve().parent;s=importlib.util.spec_from_file_location('closed_bins',P/'closed_baseline_bins.py');A=importlib.util.module_from_spec(s);s.loader.exec_module(A)
+class Tests(unittest.TestCase):
+ def job(self,tmp,source_parent=None):
+  root=Path(source_parent if source_parent is not None else tmp)/'source';root.mkdir();(root/'state').mkdir();rows={}
+  for name,data in [('state/a.bin',bytes(range(256))*40),('state/b.bin',b'\0'*32768),('state/keep.bin',b'micro')]:
+   p=root/name;p.write_bytes(data);rows[name]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
+  (root/'state/state.json').write_text('{"kept":true}\n')
+  return A.Job(root,Path(tmp)/'archive',rows,{'state/keep.bin'},cap=1024**2,floor=0,authority={'fixture':'closed'})
+ def test_complete_copy_readback_and_separate_prune(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);before={x:(j.source/x).read_bytes() for x in j.rows};copy=j.archive();self.assertTrue(copy['passed']);self.assertTrue(all((j.source/x).is_file() for x in j.rows))
+   prune=j.prune();self.assertEqual(2,prune['removed']);self.assertEqual(43008,prune['removed_bytes']);self.assertEqual(b'micro',(j.source/'state/keep.bin').read_bytes());self.assertTrue((j.source/'state/state.json').exists());self.assertTrue((j.dest/'prune-start.json').exists())
+   with (j.dest/'state-bins.tar.gz').open('rb') as f:self.assertEqual(copy['archive_sha256'],j.verify_archive(f)[0])
+   with self.assertRaisesRegex(ValueError,'retry'):j.prune()
+ def test_source_digest_mismatch_never_qualifies_prune(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);(j.source/'state/a.bin').write_bytes(b'x'*10240)
+   with self.assertRaisesRegex(ValueError,'audited index'):j.archive()
+   self.assertFalse((j.dest/'copy-verified.json').exists());self.assertTrue(all((j.source/x).exists() for x in j.rows))
+ def test_symlink_refused(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);p=j.source/'state/a.bin';data=p.read_bytes();p.unlink();outside=Path(tmp)/'outside';outside.write_bytes(data);p.symlink_to(outside)
+   with self.assertRaises(OSError):j.archive()
+   self.assertTrue(outside.exists())
+ def test_hardlink_refused(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);os.link(j.source/'state/a.bin',Path(tmp)/'alias')
+   with self.assertRaisesRegex(ValueError,'alias'):j.archive()
+ def test_quota_retains_incomplete_archive_and_sources(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);j.cap=16
+   with self.assertRaisesRegex(ValueError,'quota'):j.archive()
+   self.assertTrue((j.dest/'archive-failure.json').exists());self.assertFalse((j.dest/'copy-verified.json').exists());self.assertTrue(all((j.source/x).exists() for x in j.rows))
+ def test_reserve_refused_before_destination_creation(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp)
+   with patch.object(A.shutil,'disk_usage',return_value=type('Space',(),{'free':0})()),self.assertRaisesRegex(ValueError,'reserve'):j.archive()
+   self.assertFalse(j.dest.exists())
+ def test_corrupt_archive_refuses_before_unlink(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);j.archive();p=j.dest/'state-bins.tar.gz';p.write_bytes(b'broken')
+   with self.assertRaises(Exception):j.prune()
+   self.assertTrue(all((j.source/x).exists() for x in j.rows));self.assertFalse((j.dest/'prune-start.json').exists())
+ def test_identical_archive_replacement_refused(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);j.archive();p=j.dest/'state-bins.tar.gz';replacement=j.dest/'replacement';replacement.write_bytes(p.read_bytes());replacement.replace(p)
+   with self.assertRaisesRegex(ValueError,'replacement'):j.prune()
+   self.assertTrue(all((j.source/x).exists() for x in j.rows))
+ def test_changed_source_refuses_before_first_unlink(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);j.archive();(j.source/'state/b.bin').write_bytes(b'bad')
+   with self.assertRaisesRegex(ValueError,'metadata changed'):j.prune()
+   self.assertTrue((j.source/'state/a.bin').exists());self.assertFalse((j.dest/'prune-start.json').exists())
+ def test_partial_unlink_failure_retains_mapping_and_archive(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);j.archive();real=A.os.unlink
+   def unlink(name,**kw):
+    if name=='b.bin':raise OSError('fixture unlink failure')
+    return real(name,**kw)
+   with patch.object(A.os,'unlink',unlink),self.assertRaisesRegex(OSError,'fixture unlink'):j.prune()
+   failure=json.loads((j.dest/'prune-failure.json').read_text());self.assertEqual(1,failure['removed']);self.assertTrue((j.dest/'state-bins.tar.gz').exists());self.assertTrue((j.dest/'prune-start.json').exists());self.assertTrue((j.source/'state/b.bin').exists())
+ def test_marker_durability_failure_prevents_unlink(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   j=self.job(tmp);j.archive();real=A.record
+   def record(path,value):
+    if path.name=='prune-start.json':raise OSError('marker fsync refused')
+    return real(path,value)
+   with patch.object(A,'record',record),self.assertRaisesRegex(OSError,'marker fsync'):j.prune()
+   self.assertTrue(all((j.source/x).exists() for x in j.rows))
+ def test_offload_verified_before_local_release(self):
+  with tempfile.TemporaryDirectory() as tmp,tempfile.TemporaryDirectory(dir='/dev/shm') as remote:
+   self.assertNotEqual(Path(tmp).stat().st_dev,Path(remote).stat().st_dev)
+   j=self.job(tmp,remote);j.archive();j.prune();usb=Path(remote)/'usb.tar.gz'
+   result=j.offload(usb,reserve=0);self.assertTrue(result['passed']);self.assertTrue((j.dest/'state-bins.tar.gz').exists())
+   release=j.release_local(usb);self.assertTrue(release['passed']);self.assertFalse((j.dest/'state-bins.tar.gz').exists());self.assertTrue((j.dest/'source-stat.jsonl.gz').exists());self.assertTrue(usb.exists())
+ def test_changed_usb_retains_local_archive(self):
+  with tempfile.TemporaryDirectory() as tmp,tempfile.TemporaryDirectory(dir='/dev/shm') as remote:
+   j=self.job(tmp,remote);j.archive();j.prune();usb=Path(remote)/'usb.tar.gz';j.offload(usb,reserve=0);usb.write_bytes(b'bad')
+   with self.assertRaises(Exception):j.release_local(usb)
+   self.assertTrue((j.dest/'state-bins.tar.gz').exists())
+ def test_wrong_offload_filesystem_refused_before_creation(self):
+  with tempfile.TemporaryDirectory() as tmp,tempfile.TemporaryDirectory(dir='/dev/shm') as remote:
+   j=self.job(tmp,remote);j.archive();j.prune();wrong=Path(tmp)/'not-usb.tar.gz'
+   with self.assertRaisesRegex(ValueError,'expected source filesystem'):j.offload(wrong,reserve=0)
+   self.assertFalse(wrong.exists());self.assertFalse((j.dest/'offload-start.json').exists());self.assertTrue((j.dest/'state-bins.tar.gz').exists())
+ def test_release_checks_source_device_even_with_rebound_receipt(self):
+  with tempfile.TemporaryDirectory() as tmp,tempfile.TemporaryDirectory(dir='/dev/shm') as remote:
+   j=self.job(tmp,remote);j.archive();j.prune();usb=Path(remote)/'usb.tar.gz';j.offload(usb,reserve=0)
+   wrong=Path(tmp)/'rebound-copy.tar.gz';wrong.write_bytes(usb.read_bytes())
+   receipt=j.dest/'offload-verified.json';r=json.loads(receipt.read_text());r['usb']=str(wrong);r['usb_identity']=A.identity(wrong.stat());receipt.write_text(json.dumps(r))
+   with self.assertRaisesRegex(ValueError,'expected source filesystem'):j.release_local(wrong)
+   self.assertTrue((j.dest/'state-bins.tar.gz').exists());self.assertFalse((j.dest/'local-release-start.json').exists())
+ def test_fixed27_metadata_groups_and_six_preserved_inputs(self):
+  rows=A.all_rows();groups=[A.select_batch(rows,i)[1] for i in range(27)]
+  self.assertEqual(set(rows),set().union(*(set(g) for g in groups)));self.assertEqual(57051,sum(map(len,groups)))
+  self.assertEqual(6,len(A.PRESERVE));self.assertEqual(52224,sum(rows[n]['bytes'] for n in A.PRESERVE));self.assertEqual(A.PRESERVE,set(groups[3])&A.PRESERVE)
+ def test_traversal_and_nonbin_scope_refused(self):
+  for name in ('../x.bin','/x.bin','state/x.json','state/../x.bin','state//x.bin'):
+   with self.assertRaises(ValueError):A.relative(name)
+if __name__=='__main__':unittest.main(verbosity=2)

@@ -1,0 +1,54 @@
+{
+  "schema": "ownrt.gsq.closed-baseline-storage-independent-review.v1",
+  "passed": true,
+  "reviewed_at_utc": "2026-10-24T06:44:53.887596+00:00",
+  "scope": "Finite independent source and retained CPU-test review; not an actual archive, prune, offload, restore, or NTFS durability qualification.",
+  "source_and_evidence_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/closed_baseline_bins.py": "6a86c61fe46b453f7f9516d7b41169f0314cfc2b2716f82aab54b05c8df566ab",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/test_closed_baseline_bins.py": "7edc87b4cdb6026f485cdb9bb1fea89db1351b167e1cb0f0f131ee83be2accfd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/README.md": "5e69f264ae097d516f7b2043a244bfa50d26e7956a898d8f0bce6a3ee81aa8c7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/preparation.json": "9064082e722ddb484ab0b0180646826ec5d2240849206f986ad0e8d0df1cf4a6",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/cpu-tests.log": "9c90eacb19db5153df43b0c925651cf4427b10640c103c437b0be1a0da6c7a37",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/review.json": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/artifact-index.jsonl.gz": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982"
+  },
+  "author_tests": {
+    "passed": true,
+    "count": 17,
+    "independent_reexecution": false,
+    "reason": "Final source/test delta and exact retained test evidence reviewed; no duplicate test campaign requested."
+  },
+  "resolved_finding": {
+    "problem": "Canonical destination path alone did not bind offload to the original external filesystem.",
+    "resolution": "Before offload marker/output creation, destination parent device equals the archived source root device and differs from held local archive device; local release independently checks held remote device against original source and local archive before release marker/unlink.",
+    "regressions": [
+      "Wrong-filesystem offload refuses before marker/create while retaining archive",
+      "Identical rebound remote payload and rewritten receipt on wrong device refuses before local-release marker/unlink"
+    ]
+  },
+  "reviewed_guards": [
+    "Fixed closed baseline authority and exact 27-way partition; only indexed regular .bin files are removable",
+    "All archive members, sizes and SHA256 values verified before pruning, with full archive identity/hash retained",
+    "Held no-follow source root/parent traversal; per-file original hash and identity checked immediately before unlink",
+    "Durable pre-prune incomplete marker and exact archive-relative restore map; no automatic retry",
+    "Six micro input/output files retained and rehashed; JSON, logs, directories, models and candidate run excluded",
+    "Held archive and path identity checked before every source unlink",
+    "External full-copy readback and complete member reverification before local archive removal",
+    "Compressed archive/stat budget 384MiB and 27GB plus64MiB floor; previous batch release required before next batch"
+  ],
+  "limitations": [
+    "No hostile concurrent same-user mutation guarantee; checks detect ordinary identity/metadata/hash changes but are not an atomic filesystem snapshot.",
+    "Directory fsync failure immediately after unlink can leave progress counter one file behind; durable full restore map and verified archive remain, and success is refused.",
+    "Tiny cross-filesystem CPU tests do not establish durability of the actual NTFS mount; root owns actual phase execution and filesystem evidence.",
+    "Archive stores exact bytes and per-file stat metadata; recovery requires separately reviewed restoration of missing paths, with no automatic overwrite."
+  ],
+  "actual_operations_by_reviewer": {
+    "archive": false,
+    "prune": false,
+    "offload": false,
+    "USB_payload_reads": false,
+    "model_reads": false,
+    "device_or_service_calls": false
+  },
+  "remaining_material_findings": []
+}

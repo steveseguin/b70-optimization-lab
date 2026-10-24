@@ -1,0 +1,30 @@
+{
+  "schema": "ownrt.gsq.closed-baseline-storage-preparation.v1",
+  "passed": true,
+  "tests": 17,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/closed_baseline_bins.py": "6a86c61fe46b453f7f9516d7b41169f0314cfc2b2716f82aab54b05c8df566ab",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/test_closed_baseline_bins.py": "7edc87b4cdb6026f485cdb9bb1fea89db1351b167e1cb0f0f131ee83be2accfd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/README.md": "5e69f264ae097d516f7b2043a244bfa50d26e7956a898d8f0bce6a3ee81aa8c7"
+  },
+  "log_sha256": "9c90eacb19db5153df43b0c925651cf4427b10640c103c437b0be1a0da6c7a37",
+  "actual_archive_prune_offload": false,
+  "USB_payload_reads": false,
+  "scope": "tiny temporary-file tests and fixed compressed audit-index metadata only",
+  "batch_count": 27,
+  "files_per_batch": 2113,
+  "bytes_per_batch": 231442500,
+  "preserved_files": 6,
+  "preserved_bytes": 52224,
+  "compressed_write_quota_per_batch": 402653184,
+  "nvme_floor_plus_reserve": 27067108864,
+  "root_execution_review_required": true,
+  "limits": {
+    "nice": 19,
+    "affinity": "8-15,24-31",
+    "threads": 2,
+    "AS_bytes": 4294967296
+  },
+  "filesystem_test_scope": "Positive tiny source/USBmock files on /dev/shm and local archive on NVMe temp; offload/release wrong-device refusal tested. No actual baseline or USB payload reads.",
+  "prior_frozen_checkpoint": "lineage/before-offload-device-binding"
+}

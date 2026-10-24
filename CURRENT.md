@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 24, 02:56 EDT — four-card host: storage capacity restored; candidate remains incomplete.**
+All27 closed baseline state batches are verified in27 archives (2.33GB). Removed57,045
+verified duplicate binaries, preserving all JSON and six micro fixtures. USB has11.2GB free;
+archive creation/readback succeeds and no new NTFS messages appeared. Both target cards
+are empty, vision unchanged and the historical GPU fault baseline unchanged. No reboot,
+reset, setting change or automatic model retry occurred.
+Independent partial readback verifies the candidate's14 completed arms/7pairs against
+baseline. Five prompt pairs remain; do not call the original interrupted suite complete
+or combine separate-session timings into a full resident record. A fixed3-case same-owner
+kernel comparison is in compile-only preparation; root must explicitly admit device work.
+[Storage completion](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/RESULT.md).
+
 **October 24, 02:33 EDT — four-card host: new GPU work held after USB NTFS file-record exhaustion.**
 The Q8 attention candidate stopped after seven exact prompt pairs when NTFS could not
 allocate an MFT record, despite7.2GB free data space. Controller EOF and failed USB

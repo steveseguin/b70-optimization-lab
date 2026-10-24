@@ -58,3 +58,15 @@ Do not promote the partial candidate or start new device work. Preserve failed r
 and source. Complete reviewed, verified per-request lossless archival of closed baseline
 state binaries, preserving six micro fixtures and all JSON; no model or filesystem-setting
 changes. Resolve record capacity before root admits any further bounded device task.
+
+## Storage recovery complete — 06:56 UTC
+
+Verified27 archive chunks preserve every closed baseline state byte.57,045 duplicate
+raw files were removed after verification, with six micro fixtures and all JSON kept.
+USB archive creation/readback succeeds,11.2GB free; no new NTFS messages or GPU faults.
+The storage-capacity hold is resolved for small explicitly admitted tasks, not a blanket
+capacity guarantee for another large run. The original candidate remains incomplete.
+Independent partial readback confirms14 arms/7pairs; next is fixed3-case paired kernel
+latency/byte equality, then deliberate completion of the remaining five prompt pairs
+under a new bounded identity after source/admission review. Preserve the interrupted
+run and do not combine timing sessions into a full resident throughput claim.

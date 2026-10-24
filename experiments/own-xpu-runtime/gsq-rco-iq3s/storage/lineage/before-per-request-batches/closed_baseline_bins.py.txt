@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""Explicit fixed closed-baseline archive, verified prune, and offload phases.
+No model/device/service operations. No automatic phase continuation or retries.
+"""
+import argparse,gzip,hashlib,io,json,os,shutil,stat,tarfile
+from pathlib import Path,PurePosixPath
+P=Path(__file__).resolve().parent;L=P.parent
+SOURCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a')
+DEST=Path('/home/steve/own-xpu-runtime-results/gsq-baseline-bin-archive-a')
+USB=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a-state-bins.tar.gz')
+INDEX=L/'baseline/evidence/independent-a/artifact-index.jsonl.gz';INDEX_SHA='e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982'
+REVIEW=L/'baseline/evidence/independent-a/review.json';REVIEW_SHA='f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb'
+PRESERVE={f'prompt-00-none/rank{rank}/state-2147483647/{name}.bin' for rank,names in [(0,['blk.0.gdn.gated','blk.0.attention','blk.23.qsa.y','blk.23.attention']),(1,['blk.47.qsa.y','blk.47.attention'])] for name in names}
+CAP=384*1024**2;FLOOR=27000000000+64*1024**2
+
+def require(v,msg):
+ if not v:raise ValueError(msg)
+def identity(st):return [st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns,st.st_ctime_ns,st.st_mode,st.st_uid,st.st_gid,st.st_nlink]
+def sha_stream(f):
+ h=hashlib.sha256()
+ while b:=f.read(256*1024):h.update(b)
+ return h.hexdigest()
+def sha(path):
+ fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+ with os.fdopen(fd,'rb') as f:
+  a=identity(os.fstat(f.fileno()));require(stat.S_ISREG(a[5]),'regular file');h=sha_stream(f);require(a==identity(os.fstat(f.fileno())),'changed during hash');return h
+def syncdir(p):
+ fd=os.open(p,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+def record(p,j):
+ data=(json.dumps(j,indent=2)+'\n').encode();require(len(data)<=1024**2,'bounded receipt')
+ fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+ with os.fdopen(fd,'wb') as f:f.write(data);f.flush();os.fsync(f.fileno())
+ syncdir(Path(p).parent)
+def relative(name):
+ p=PurePosixPath(name);require(not p.is_absolute() and p.parts and all(s not in ('','..','.') for s in p.parts) and str(p)==name and name.endswith('.bin'),'relative bin path');return p.parts
+class Budget:
+ def __init__(self,root,cap,floor):self.root=root;self.cap=cap;self.floor=floor;self.written=0
+ def before(self,n):
+  require(self.written+n<=self.cap,'archive quota exceeded');require(shutil.disk_usage(self.root).free>=self.floor+n,'archive filesystem reserve');self.written+=n
+class Limited:
+ def __init__(self,f,b):self.f=f;self.b=b
+ def write(self,data):self.b.before(len(data));return self.f.write(data)
+ def flush(self):return self.f.flush()
+ def tell(self):return self.f.tell()
+class HashReader:
+ def __init__(self,f):self.f=f;self.h=hashlib.sha256();self.n=0
+ def read(self,n=-1):
+  require(0<=n<=1024**2,'bounded tar read');b=self.f.read(n);self.h.update(b);self.n+=len(b);return b
+class Job:
+ """Paths/rows injected only by tiny tests; CLI has no caller path arguments."""
+ def __init__(self,source,dest,rows,preserve,cap=CAP,floor=FLOOR,authority=None):
+  self.source=Path(source);self.dest=Path(dest);self.rows=rows;self.preserve=set(preserve);self.cap=cap;self.floor=floor;self.authority=authority or {};self.root_fd=None
+  require(set(self.preserve)<=set(rows),'preservation subset')
+  for n,r in rows.items():relative(n);require(type(r['bytes'])is int and r['bytes']>=0 and len(r['sha256'])==64,'index entry')
+ def open_root(self):
+  require(self.source.resolve()==self.source and self.source.is_dir(),'canonical source root');self.root_fd=os.open(self.source,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW);self.root_id=identity(os.fstat(self.root_fd))[:2]
+ def close_root(self):
+  if self.root_fd is not None:os.close(self.root_fd);self.root_fd=None
+ def check_root(self):require(identity(os.stat(self.source,follow_symlinks=False))[:2]==self.root_id,'source root changed')
+ def parent(self,name):
+  self.check_root();parts=relative(name);fd=os.dup(self.root_fd)
+  try:
+   for part in parts[:-1]:
+    new=os.open(part,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd);os.close(fd);fd=new
+   return fd,parts[-1]
+  except BaseException:os.close(fd);raise
+ def source_file(self,name):
+  parent,leaf=self.parent(name)
+  try:
+   fd=os.open(leaf,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=parent);st=os.fstat(fd)
+   require(stat.S_ISREG(st.st_mode) and st.st_nlink==1 and st.st_size==self.rows[name]['bytes'],'source type/alias/extent')
+   return os.fdopen(fd,'rb'),identity(st)
+  except BaseException:
+   if 'fd' in locals():os.close(fd)
+   raise
+  finally:os.close(parent)
+ def verify_archive(self,f):
+  start=identity(os.fstat(f.fileno()));f.seek(0);seen=set()
+  with tarfile.open(fileobj=f,mode='r|gz') as tar:
+   for member in tar:
+    require(member.isfile() and not member.issym() and not member.islnk(),'regular tar entries only');relative(member.name)
+    require(member.name in self.rows and member.name not in seen,'unexpected/duplicate tar member');seen.add(member.name)
+    row=self.rows[member.name];require(member.size==row['bytes'],'tar size');stream=tar.extractfile(member);require(stream is not None,'tar payload');h=sha_stream(stream);require(h==row['sha256'],'tar payload digest')
+  require(seen==set(self.rows),'complete tar inventory');require(identity(os.fstat(f.fileno()))==start,'archive modified');f.seek(0);digest=sha_stream(f);require(identity(os.fstat(f.fileno()))==start,'archive modified while hashing');return digest,start
+ def archive(self):
+  require(not os.path.lexists(self.dest),'exclusive archive destination');require(self.dest.parent.resolve()==self.dest.parent,'canonical archive parent')
+  require(shutil.disk_usage(self.dest.parent).free>=self.floor+self.cap,'archive full quota and reserve')
+  self.dest.mkdir(mode=0o700);syncdir(self.dest.parent);self.open_root();budget=Budget(self.dest,self.cap,self.floor)
+  try:
+   record(self.dest/'archive-start.json',{'phase':'copy-only','authority':self.authority,'source':str(self.source),'entries':len(self.rows),'preserve':sorted(self.preserve),'quota':self.cap,'floor':self.floor,'source_root_identity':self.root_id})
+   seen=set()
+   with (self.dest/'state-bins.tar.gz').open('xb') as raw,(self.dest/'source-stat.jsonl.gz').open('xb') as statraw:
+    with gzip.GzipFile(fileobj=Limited(raw,budget),mode='wb',filename='',mtime=0,compresslevel=3) as gz,gzip.GzipFile(fileobj=Limited(statraw,budget),mode='wb',filename='',mtime=0,compresslevel=3) as sz:
+     with tarfile.open(fileobj=gz,mode='w|',format=tarfile.PAX_FORMAT) as tar:
+      for name,row in sorted(self.rows.items()):
+       f,before=self.source_file(name)
+       with f:
+        require(tuple(before[:2]) not in seen,'source alias');seen.add(tuple(before[:2]));reader=HashReader(f)
+        info=tarfile.TarInfo(name);info.size=row['bytes'];info.mode=stat.S_IMODE(before[5]);info.uid=before[6];info.gid=before[7];info.mtime=before[3]//10**9
+        tar.addfile(info,reader);require(reader.n==row['bytes'] and reader.h.hexdigest()==row['sha256'],'source differs from audited index');require(identity(os.fstat(f.fileno()))==before,'source changed during copy')
+        sz.write((json.dumps({'path':name,'stat':before},separators=(',',':'))+'\n').encode())
+    for f in (raw,statraw):f.flush();os.fsync(f.fileno())
+   syncdir(self.dest)
+   with (self.dest/'state-bins.tar.gz').open('rb') as f:digest,archive_id=self.verify_archive(f)
+   receipt={'passed':True,'phase':'all-members-readback-verified','archive_sha256':digest,'archive_identity':archive_id,'archive_bytes':archive_id[2],'source_stat_sha256':sha(self.dest/'source-stat.jsonl.gz'),'entries':len(self.rows),'source_bytes':sum(x['bytes'] for x in self.rows.values()),'source_root_identity':self.root_id,'authority':self.authority,'preserve':sorted(self.preserve),'restore':'Verified archive contains only exact original relative .bin names; restore missing files under the fixed baseline root, checking each SHA against the immutable baseline index. Never overwrite existing files without separate review.'}
+   record(self.dest/'copy-verified.json',receipt);return receipt
+  except BaseException as e:
+   try:record(self.dest/'archive-failure.json',{'passed':False,'error':repr(e),'prune_allowed':False})
+   except BaseException:pass
+   raise
+  finally:self.close_root()
+ def snapshots(self):
+  result={}
+  with gzip.open(self.dest/'source-stat.jsonl.gz','rt') as f:
+   for line in f:
+    require(len(line)<=4096,'bounded stat row');x=json.loads(line);require(x['path'] in self.rows and x['path'] not in result,'stat inventory');result[x['path']]=x['stat']
+  require(set(result)==set(self.rows),'complete source stats');return result
+ def prune(self):
+  require(self.dest.resolve()==self.dest,'canonical archive destination');require(not os.path.lexists(self.dest/'prune-start.json'),'no prune retry')
+  copy=json.loads((self.dest/'copy-verified.json').read_text());require(copy['passed'] and copy['authority']==self.authority and copy['preserve']==sorted(self.preserve),'copy authority');require(sha(self.dest/'source-stat.jsonl.gz')==copy['source_stat_sha256'],'source stat binding');snaps=self.snapshots();self.open_root();removed=0;removed_bytes=0
+  fd=os.open(self.dest/'state-bins.tar.gz',os.O_RDONLY|os.O_NOFOLLOW)
+  try:
+   with os.fdopen(fd,'rb') as arc:
+    digest,aid=self.verify_archive(arc);require(digest==copy['archive_sha256'] and aid==copy['archive_identity'],'archive replacement/change');require(self.root_id==copy['source_root_identity'],'source root replacement')
+    # All metadata/parent permissions before first unlink; per-file hash immediately
+    # before its unlink. A late change yields retained partial-prune evidence.
+    for name in self.rows:
+     parent,leaf=self.parent(name)
+     try:
+      require(identity(os.stat(leaf,dir_fd=parent,follow_symlinks=False))==snaps[name],'source metadata changed')
+      if name not in self.preserve:require(os.access('.',os.W_OK|os.X_OK,dir_fd=parent),'source parent not writable')
+     finally:os.close(parent)
+    record(self.dest/'prune-start.json',{'phase':'incomplete-until-prune-verified','authority':self.authority,'archive_sha256':digest,'source_stat_sha256':copy['source_stat_sha256'],'original_root':str(self.source),'expected_removed':len(self.rows)-len(self.preserve),'preserved':sorted(self.preserve),'restore_map':'Tar member names are exact original relative .bin paths. All JSON files and directories are retained.'})
+    for name,row in sorted(self.rows.items()):
+     if name in self.preserve:continue
+     f,before=self.source_file(name)
+     with f:
+      require(before==snaps[name] and sha_stream(f)==row['sha256'] and identity(os.fstat(f.fileno()))==before,'changed source before unlink')
+      require(identity(os.fstat(arc.fileno()))==aid and identity(os.stat(self.dest/'state-bins.tar.gz',follow_symlinks=False))==aid,'archive no longer held original')
+      parent,leaf=self.parent(name)
+      try:
+       require(identity(os.stat(leaf,dir_fd=parent,follow_symlinks=False))==before,'source replaced before unlink');os.unlink(leaf,dir_fd=parent);os.fsync(parent)
+      finally:os.close(parent)
+     removed+=1;removed_bytes+=row['bytes']
+    for name in self.preserve:
+     f,before=self.source_file(name)
+     with f:require(before==snaps[name] and sha_stream(f)==self.rows[name]['sha256'],'preserved micro changed')
+    result={'passed':True,'phase':'audited-bin-files-pruned','removed':removed,'removed_bytes':removed_bytes,'preserved':sorted(self.preserve),'archive_sha256':digest,'source_json_and_directories_untouched':True,'authority':self.authority}
+    record(self.dest/'prune-verified.json',result);return result
+  except BaseException as e:
+   try:record(self.dest/'prune-failure.json',{'passed':False,'error':repr(e),'removed':removed,'removed_bytes':removed_bytes,'archive_retained':True,'retry_allowed':False})
+   except BaseException:pass
+   raise
+  finally:self.close_root()
+
+def authority():
+ require(sha(INDEX)==INDEX_SHA and sha(REVIEW)==REVIEW_SHA,'immutable audited authority')
+ review=json.loads(REVIEW.read_text());require(review['passed'] and review['all12_exact'] and review['index_sha256']==INDEX_SHA,'closed baseline proof')
+ rows={}
+ with gzip.open(INDEX,'rt') as f:
+  for line in f:
+   require(len(line)<=4096,'bounded index row');x=json.loads(line)
+   if x['root']=='evidence' and x['path'].endswith('.bin'):
+    require(x['path'] not in rows,'duplicate index');rows[x['path']]={'bytes':x['bytes'],'sha256':x['sha256']}
+ require(len(rows)==57051 and sum(x['bytes'] for x in rows.values())==6248947500,'fixed bin census')
+ return Job(SOURCE,DEST,rows,PRESERVE,authority={'index_sha256':INDEX_SHA,'review_sha256':REVIEW_SHA,'helper_sha256':sha(__file__)})
+def main():
+ ap=argparse.ArgumentParser();g=ap.add_mutually_exclusive_group(required=True);g.add_argument('--plan',action='store_true');g.add_argument('--archive',action='store_true');g.add_argument('--prune-verified',action='store_true');a=ap.parse_args();job=authority()
+ if a.plan:print(json.dumps({'source':str(SOURCE),'destination':str(DEST),'entries':len(job.rows),'bytes':sum(x['bytes'] for x in job.rows.values()),'preserved':sorted(PRESERVE),'archive_quota':CAP,'reserve_floor':FLOOR,'operations_performed':False},indent=2));return
+ result=job.archive() if a.archive else job.prune();P.joinpath('evidence').mkdir(exist_ok=True);record(P/'evidence'/('archive-result.json' if a.archive else 'prune-result.json'),result);print(json.dumps(result))
+if __name__=='__main__':main()

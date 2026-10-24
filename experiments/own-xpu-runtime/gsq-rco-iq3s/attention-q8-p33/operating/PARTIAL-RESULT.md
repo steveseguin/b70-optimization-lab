@@ -1,0 +1,9 @@
+# Interrupted candidate: seven pairs verified, five remain
+
+The [partial independent audit](evidence/partial-independent-a/review.json) verifies14 completed arms from the first seven fixed prompts. Every output token and the full retained target-state maps match the original independently audited baseline. Readback covered29,603 indexed files/3,124,418,203 bytes, including3,104,404,352 bytes of raw target state. The failed eighth prompt has only a metadata inventory; no completion is inferred.
+
+Qualification remains `passed:false, incomplete:true`; `audit_passed:true` describes the partial readback only. Native success/ownership receipts were not written because NTFS file records were exhausted. The [incident](evidence/storage-incident-a/README.md) preserves native termination logs and the supervisor's physical drain observation. No clean native success, completed twelve-prompt run, candidate promotion or aggregate speed result is claimed.
+
+The 1.23 MB compressed [artifact index](evidence/partial-independent-a/artifact-index.jsonl.gz) is retained metadata evidence: paths, sizes and hashes permit future reviewers to verify these completed arms without trusting the summary. Raw artifacts remain under `/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a`. Preserve them with the failed run; `audit_partial.py` contains the bounded enumeration/hash procedure needed to reconstruct the index against unchanged originals. It contains no model or state payloads.
+
+After verified storage recovery, the next quality task is the five predetermined missing prompt pairs. Any completion uses a new explicit run identity and reports correctness across separate sessions; do not concatenate timings into one resident benchmark or rerun only favorable cases. The small same-owner kernel diagnostic provides a separate, bounded latency comparison.
