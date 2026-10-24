@@ -1,0 +1,289 @@
+{
+  "initial_commands": [
+    {
+      "command": "python3 tools/validate-repro-guides.py",
+      "exit_code": 0,
+      "seconds": 0.95,
+      "log": "00.log"
+    },
+    {
+      "command": "node --test tools/test_guides_browser.cjs",
+      "exit_code": 0,
+      "seconds": 0.41,
+      "log": "01.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "exit_code": 0,
+      "seconds": 0.9,
+      "log": "02.log"
+    },
+    {
+      "command": "python3 tools/validate-recipe-publication.py",
+      "exit_code": 0,
+      "seconds": 2.8,
+      "log": "03.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "exit_code": 0,
+      "seconds": 0.19,
+      "log": "04.log"
+    },
+    {
+      "command": "python3 tools/sync-public-result-summary.py --check",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "05.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "exit_code": 0,
+      "seconds": 0.04,
+      "log": "06.log"
+    },
+    {
+      "command": "python3 tools/build-family-pages.py --check",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "07.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_family_pages.py",
+      "exit_code": 0,
+      "seconds": 1.25,
+      "log": "08.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "exit_code": 0,
+      "seconds": 0.05,
+      "log": "09.log"
+    },
+    {
+      "command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "10.log"
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "exit_code": 0,
+      "seconds": 0.41,
+      "log": "11.log"
+    },
+    {
+      "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "12.log"
+    },
+    {
+      "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "exit_code": 0,
+      "seconds": 0.91,
+      "log": "13.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "exit_code": 0,
+      "seconds": 0.31,
+      "log": "14.log"
+    },
+    {
+      "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "15.log"
+    },
+    {
+      "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "exit_code": 0,
+      "seconds": 0.11,
+      "log": "16.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "exit_code": 0,
+      "seconds": 0.05,
+      "log": "17.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "exit_code": 0,
+      "seconds": 2.3,
+      "log": "18.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "exit_code": 0,
+      "seconds": 0.06,
+      "log": "19.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "exit_code": 0,
+      "seconds": 1.37,
+      "log": "20.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_model_pages.py",
+      "exit_code": 0,
+      "seconds": 0.09,
+      "log": "21.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "exit_code": 0,
+      "seconds": 0.24,
+      "log": "22.log"
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "exit_code": 0,
+      "seconds": 0.06,
+      "log": "23.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+      "exit_code": 0,
+      "seconds": 0.03,
+      "log": "24.log"
+    },
+    {
+      "command": "python3 tools/extract-fp8-one-launch-prefill.py",
+      "exit_code": 0,
+      "seconds": 0.05,
+      "log": "25.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "log": "26.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "27.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+      "exit_code": 0,
+      "seconds": 0.04,
+      "log": "28.log"
+    },
+    {
+      "command": "python3 tools/build-model-pages.py",
+      "exit_code": 0,
+      "seconds": 0.06,
+      "log": "29.log"
+    },
+    {
+      "command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "exit_code": 0,
+      "seconds": 0.2,
+      "log": "30.log"
+    },
+    {
+      "command": "python3 tools/check-doc-links.py",
+      "exit_code": 0,
+      "seconds": 0.22,
+      "log": "31.log"
+    },
+    {
+      "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "exit_code": 1,
+      "seconds": 5.72,
+      "log": "32.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_check_doc_links.py",
+      "exit_code": 0,
+      "seconds": 0.84,
+      "log": "33.log"
+    },
+    {
+      "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "exit_code": 0,
+      "seconds": 0.49,
+      "log": "34.log"
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "exit_code": 0,
+      "seconds": 0.98,
+      "log": "35.log"
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "exit_code": 0,
+      "seconds": 0.7,
+      "log": "36.log"
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "exit_code": 0,
+      "seconds": 0.15,
+      "log": "37.log"
+    },
+    {
+      "command": "python3 -B tools/test-restore-source-archives.py",
+      "exit_code": 0,
+      "seconds": 0.1,
+      "log": "38.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_xccl_probe.py",
+      "exit_code": 0,
+      "seconds": 0.05,
+      "log": "39.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "40.log"
+    },
+    {
+      "command": "python3 tools/check-manifest-paths.py",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "log": "41.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "exit_code": 0,
+      "seconds": 0.36,
+      "log": "42.log"
+    },
+    {
+      "command": "python3 tools/check-container-packet.py",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "log": "43.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_check_container_packet.py",
+      "exit_code": 0,
+      "seconds": 0.2,
+      "log": "44.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "exit_code": 0,
+      "seconds": 0.12,
+      "log": "45.log"
+    }
+  ],
+  "reruns": [
+    {
+      "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "exit_code": 0,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign63-validation/32-staged.log",
+      "reason": "New linked documents were initially untracked; reran after staging all new evidence and documents."
+    }
+  ],
+  "all_final_checks_pass": true
+}

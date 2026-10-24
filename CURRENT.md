@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 21:25 EDT — two-card host: Campaign 62 audited; bounded earlier-source retrieval is being prepared.**
+Both thinking-on preceding cuts now finish and preserve skipped tickets, but record defects are
+omitted; one observed review invents a task identity, and both cancellation reviews hit the cap.
+Broad gate 0/12; no recipe adoption. Server stopped cleanly at 21:18, cards empty. Campaign 63 adds
+one short literal-query planner and bounded retrieval from physically frozen earlier archive prefixes,
+then reuses the unchanged reviewer. Acquisition coverage and correction quality are separate gates.
+Source code and CPU leakage/bounds checks are being prepared; independent review precedes any launch.
+Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign62-closeout.md`; next registration:
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-source-retrieval.md`.
+
 **October 23, 21:20 EDT — four-card host: batched table publication passes the CPU proof and native build inspection.**
 Both publication methods produce identical bytes across all 144 tables and two generations; 41 checks
 pass and seven CPU owners close safely. The shared helper protects staging and table storage even when

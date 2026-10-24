@@ -14,7 +14,7 @@ Executed after campaign 59, finished October 23 at 12:57 EDT; manually audited a
 
 **Both workflows fail. Take the registered general source-verification branch.** All six distinct
 applied-note texts repeat exactly across the three repeats. None of the 18 meets the broad
-source-grounded notes gate. Thinking stays on in the established recipe for its arithmetic benefit;
+source-grounded notes gate. Thinking stays on in the K32V hostile-history arm for its arithmetic benefit;
 this result does not qualify a new default or a full pi promotion.
 
 | Fixture | Thinking off | Thinking-on workflow |

@@ -1,0 +1,527 @@
+{
+  "schema": "ctxkeeper.campaign62-source-audit.v1",
+  "audited_at": "2026-10-24T01:21:16.122939+00:00",
+  "auditor": "/root/audit_c60 independent source audit; only this artifact written",
+  "raw_result": {
+    "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/c62-K32V-check-s0.json",
+    "sha256": "fd47a24b3667af7e6be4680af0b89d8526435e91a8f899951ae24626ff444b7f"
+  },
+  "prior_audit": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-context-campaign61/source-audit.json",
+    "sha256": "28e1a6bae82974188d348c87350b324787e6b7010c5e60d89ae162c3e39f8d65"
+  },
+  "fixtures_manifest": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-note-evidence-fixtures/manifest.json",
+    "sha256": "01cf38c3393bedcafdf65f09ef3055920bf7dd4c11aad04477812e4053cda9db"
+  },
+  "conditions": 12,
+  "syntactically_valid": 10,
+  "truncated_unapplied": 2,
+  "broad_gate_pass_count": 0,
+  "verdict": "partial benefit on preceding cuts; neither mode qualifies",
+  "registered_branch": "Retain exact partial gains and failures; next diagnostic should test retrieval of original source support for disputed identities rather than another generic cap or prompt-instruction expansion.",
+  "hypothesis_met": false,
+  "stronger_off_reviewer_audit_screen_met": false,
+  "promotion": false,
+  "comparison_with_campaign61": {
+    "preceding_on_completed": {
+      "c61": 0,
+      "c62": 2,
+      "conditions": 2
+    },
+    "preceding_on_core_pending_work_and_identity": {
+      "c61": 0,
+      "c62": 2,
+      "conditions": 2
+    },
+    "observed_on_named_audit_target": {
+      "c61": 2,
+      "c62": 2,
+      "conditions": 2
+    },
+    "observed_off_named_audit_target": {
+      "c61": 0,
+      "c62": 0,
+      "conditions": 2
+    },
+    "cancellation_on_named_target": {
+      "c61": 1,
+      "c62": 0,
+      "conditions": 2,
+      "c62_reason": "Both cut off, no applied notes"
+    },
+    "broad_gate_passes": {
+      "c61": 2,
+      "c62": 0,
+      "conditions": 12
+    },
+    "interpretation": "Projection shifts failures: preceding thinking-on now finishes and restores missed work, but cancellation thinking-on now exhausts the same cap; observed on loses polynomial_eval coverage and one candidate gains an invented41 identity. No general quality improvement established."
+  },
+  "rows": [
+    {
+      "run_index_zero_based": 0,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 364,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "P_ID",
+        "P_PENDING",
+        "P_RECORDS_ALL"
+      ],
+      "explanation": "No main preceding improvement; real repairs preserved but wrong38 identity and pending-work omissions remain.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "f2b86e279379e2f4e15d94645bc78797f37848203291cd601a170f1e15f57ea7"
+    },
+    {
+      "run_index_zero_based": 1,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 6979,
+      "reasoning_tokens": 6357,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": true,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "P_BOGUS39"
+      ],
+      "explanation": "Main preceding identity/pending-work gate improves: correctly retains38/40 pending,39 fixed,41 current, duplicate35/36/convolve. Broad required-record coverage still omits the separate erroneous39/window_size line.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "75730c8fe7acfe2024a1cf311d28362d24fe70e26a12ef90a7e5471197036e32"
+    },
+    {
+      "run_index_zero_based": 2,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 403,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "P_ID",
+        "P_PENDING",
+        "P_RECORDS_ALL"
+      ],
+      "explanation": "No main preceding improvement; same material omissions and wrong identity.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "cb834cf7dfe236930c5be3dbec8afce49283a631f7d2750b68aec5e934e5bc4e"
+    },
+    {
+      "run_index_zero_based": 3,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 7113,
+      "reasoning_tokens": 6547,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": true,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "P_BOGUS39",
+        "P_RECIPE_DUP"
+      ],
+      "explanation": "Main preceding identity/pending-work gate improves; correctly records38/40 pending and39 fixed. Broad record coverage omits bogus39/window_size and duplicate convolve.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "d40144799bc8678b8bb778ae9b6e1fa00f034782bcda09c39a6899baffe91d93"
+    },
+    {
+      "run_index_zero_based": 4,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 555,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": false,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "DENIAL",
+        "DELETE",
+        "POLY_OMIT",
+        "T41_UNCERTAIN",
+        "UNSEEN_CERTAINTY"
+      ],
+      "explanation": "False receipt denials and unsupported cleanup survive.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "a00ac42fa11da37f51ca823d521dc900ca2f3d08b5ca3246c481af047942acff"
+    },
+    {
+      "run_index_zero_based": 5,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 7563,
+      "reasoning_tokens": 6882,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": true,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "T41_REASSIGNED",
+        "POLY_OMIT"
+      ],
+      "explanation": "Corrects43/44 receipt and audit completion, but invents41=unique_in_window from processing order, discredits genuine prior41 obligation, and omits polynomial_eval.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "5533b527cbc01ba2570995a4bc9d533d91772412ae528e86a97c3311b6742307"
+    },
+    {
+      "run_index_zero_based": 6,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 865,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": false,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "DENIAL",
+        "DELETE",
+        "UNSEEN_CERTAINTY"
+      ],
+      "explanation": "False audit denial survives; adds contradictory duplicate38/39 distribute identities and claims unseen receipts.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "7e47a5c2bb21fb77f4f38b6e656ad9ff000ee6e6ed24e71245f3919ee8eb129a"
+    },
+    {
+      "run_index_zero_based": 7,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 7848,
+      "reasoning_tokens": 7257,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": true,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "POLY_OMIT"
+      ],
+      "explanation": "Correct43/44 history and prior41 identity retained, but observed polynomial_eval defect502 omitted; this was retained with uncertainty in C61 row7.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "c64f8f662f70ab3086529031c1853b1f9e96b8a6faa5e14f40ed4bd4db499e4f"
+    },
+    {
+      "run_index_zero_based": 8,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 490,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "issues": [
+        "UNSEEN_CERTAINTY"
+      ],
+      "explanation": "Withdrawal stays pending and observed defects retained; unseen ticket mapping asserted as certain beside unreconciled prior38/distribute.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "d36b4a7e5eb7208ae841d2be18d9b274b88571205db78392ce68ff77988a3149"
+    },
+    {
+      "run_index_zero_based": 9,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 8192,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": false,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "No output; cancellation not applied.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null
+    },
+    {
+      "run_index_zero_based": 10,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 468,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "issues": [
+        "POLY_OMIT",
+        "NUMBER_REASSERTED"
+      ],
+      "explanation": "Correct request/write/withdrawal history, but omitted polynomial_eval and reaffirmed disputed38 label.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "02f88603b90412e80f7b3685a5134f6ccaa2d0d759d3122509421ece55661ad7"
+    },
+    {
+      "run_index_zero_based": 11,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 8153,
+      "source_grounded_broad_gate_pass": false,
+      "core_preceding_pending_work_and_identity_pass": null,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": false,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "Partial new-rule output cut off; correctly not applied.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null
+    }
+  ],
+  "issues": {
+    "P_ID": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_reasserted",
+      "accessible_source": true,
+      "claim": "ticket38 is distribute",
+      "evidence": "Actual receipts464/466 identify polynomial_eval38 and distribute39.",
+      "archive_n": [
+        464,
+        466
+      ]
+    },
+    "P_PENDING": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_omission_retained",
+      "accessible_source": true,
+      "claim": "Only41 pending;38 polynomial_eval and40 unique_in_window absent",
+      "evidence": "Receipts464/472 deliver those BUG tickets and no fix occurs through478.",
+      "archive_n": [
+        464,
+        472,
+        478
+      ]
+    },
+    "P_RECORDS_ALL": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_omission_retained",
+      "accessible_source": true,
+      "claim": "Duplicate/mislabeled required-record defects not retained",
+      "evidence": "Commands455/459 append35 twice;463/465 append36 and convolve twice;471 appends39/distribute with replace window_size description;477 incorrectly appends distribute as38.",
+      "archive_n": [
+        455,
+        459,
+        463,
+        465,
+        471,
+        472,
+        477
+      ]
+    },
+    "P_BOGUS39": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "residual_reviewer_omission",
+      "accessible_source": true,
+      "claim": "Separate bogus39|distribute|window_size artifact line omitted",
+      "evidence": "Command471 chains test, echo of that mislabeled line, and next. Result472 includes next ticket40, establishing that this command chain continued despite displayed test failure. Subsequent source appends37/replace and38/distribute; it never deletes the erroneous39 line. Correctly reporting38/distribute misnumbering does not retain this separate artifact defect.",
+      "archive_n": [
+        471,
+        472,
+        477
+      ],
+      "qualification": "This is a required-record coverage failure, separate from the main skipped-ticket/identity question, which both thinking-on preceding rows fix."
+    },
+    "P_RECIPE_DUP": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "residual_reviewer_omission",
+      "accessible_source": true,
+      "claim": "Duplicate convolve RECIPES.txt entry not retained",
+      "evidence": "Both463 and465 append convolve and advance next (results464/466); row3 says only convolve appended and no STATE/OPEN entry preserves the duplication.",
+      "archive_n": [
+        463,
+        464,
+        465,
+        466
+      ]
+    },
+    "DENIAL": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_retained",
+      "accessible_source": true,
+      "claim": "No43/44 ticket received; audit written without a request",
+      "evidence": "Receipts484/488 explicitly deliver43/44;493/494/496 prove requested audit write.",
+      "archive_n": [
+        484,
+        488,
+        493,
+        494,
+        496
+      ]
+    },
+    "DELETE": {
+      "classes": [
+        "unsupported_action_proposal"
+      ],
+      "origin": "candidate_error_retained",
+      "accessible_source": true,
+      "claim": "Consider removing the spurious/unrequested audit in observed case",
+      "evidence": "This source contains a creation request and successful result, no withdrawal. This is an unsupported proposed action, not a false claim deletion executed.",
+      "archive_n": [
+        488,
+        493,
+        494
+      ]
+    },
+    "POLY_OMIT": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_or_reviewer_omission",
+      "accessible_source": true,
+      "claim": "Observed polynomial_eval defect absent from retained state/open work",
+      "evidence": "Tool502 directly displays inverted if n != 0 guard. A reviewer can retain this defect with unknown ticket identity; unseen ticket receipt is not required to record the observed code.",
+      "archive_n": [
+        502
+      ]
+    },
+    "T41_UNCERTAIN": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_retained",
+      "accessible_source": true,
+      "claim": "Unverified whether41 was ever received",
+      "evidence": "Prior NOTES explicitly establish41 nth_or_last received and pending; code500 shows it remains broken.",
+      "archive_n": [
+        500
+      ],
+      "prior_notes": "ticket41 STATE and OPEN"
+    },
+    "T41_REASSIGNED": {
+      "classes": [
+        "unsupported_correction",
+        "contradiction",
+        "retained_contradiction"
+      ],
+      "origin": "new_reviewer_error",
+      "accessible_source": true,
+      "claim": "41=unique_in_window, FIXES40 likely misnumbered; source sequence contradicts prior41=nth_or_last",
+      "evidence": "No current tool receipt identifies unique_in_window as41. Processing that function immediately before next emits42 does not prove its ticket identity: an agent can process a previously delivered ticket late. Prior explicitly records41=nth_or_last; command481/483/487 and observed FIXES496 consistently label unique_in_window40. Applied notes retain original41/nth_or_last beside newly added41/unique_in_window.",
+      "archive_n": [
+        481,
+        482,
+        483,
+        487,
+        496,
+        500
+      ],
+      "earlier_truth_not_required": "Original receipts472(unique_in_window40) and478(nth_or_last41) exist outside the selected slice and confirm the error to the auditor; failure is already established by unsupported override of available prior/record evidence."
+    },
+    "UNSEEN_CERTAINTY": {
+      "classes": [
+        "unsupported_correction",
+        "retained_contradiction"
+      ],
+      "origin": "candidate_reconstruction_reasserted_as_fact",
+      "accessible_source": false,
+      "claim": "Definite38 polynomial_eval/39 distribute receipt mapping without the original notices in this condition",
+      "evidence": "Observed/cancellation slices start479. Original notices464/466 are only in the separate earlier fixture. Current496 shows disputed artifact labels, not authoritative ticket identity; candidates cannot certify themselves.",
+      "earlier_only_archive_n": [
+        464,
+        466
+      ],
+      "accessible_archive_n": [
+        496,
+        502
+      ]
+    },
+    "NUMBER_REASSERTED": {
+      "classes": [
+        "unsupported_reassertion"
+      ],
+      "origin": "inherited_error_reaffirmed",
+      "accessible_source": false,
+      "claim": "New FIXES summary declares distribute n guard is38",
+      "evidence": "Prior notes and current file contain38/distribute but earlier notices are not supplied to settle their disputed identity. Preserve uncertainty rather than restating historical mapping as freshly verified fact.",
+      "earlier_only_archive_n": [
+        464,
+        466
+      ],
+      "accessible_archive_n": [
+        496
+      ]
+    },
+    "CAP": {
+      "classes": [
+        "incomplete_output"
+      ],
+      "origin": "reviewer",
+      "accessible_source": true,
+      "claim": "8192-token cutoff; no applicable delta",
+      "evidence": "Rows9/11 finish_reason=length. Row9 has no content; row11 has only a partial NEW RULES line. Both correctly remain unapplied."
+    }
+  },
+  "coverage_scoring_note": "Core preceding gains are scored separately from broad required-record coverage. Rows1/3 are not called complete broad passes because the same C61 P_RECORDS criterion requires retaining observed defects in mandated FIXES/RECIPES artifacts, not just the correct ticket-to-function mapping. This does not diminish the preregistered partial gain: both now finish and retain delivered unfinished work.",
+  "source_visibility_and_limits": [
+    "Use C61 partial-source criterion unchanged. Original notices464/466/472/478 are not supplied in observed/cancellation conditions. Explicit uncertainty is acceptable; no requirement to reconstruct unseen truth.",
+    "An inherited wrong38/distribute line is not itself a new error when simply retained without reassertion; fresh confident mappings, contradictory corrections and unsupported overrides are scored separately.",
+    "Opening explicitly authorizes saying job done when next says empty. Bare job-done wording is not independently failed; retention of known unfinished defects is evaluated separately.",
+    "All ten completed deltas and their applied STATE/OPEN effects reviewed; unchanged older claims are checked for preservation, not recertified. Both truncated outputs are retained and unapplied.",
+    "The single lossy source projection removes recorded assistant reasoning fields. New reviewer reasoning remains enabled in the on arm. No whole-history equivalence, general safety, speed or end-to-end quality claim follows.",
+    "One condition per candidate/mode, on one server; results are paired diagnostics, not independent statistical samples.",
+    "Row5 additionally calls FIXES anomalies six duplicate/mislabeled lines without stating its counting convention. Visible groups yield five surplus/spurious lines unless an unconfirmed38-label error is included. This ambiguity is retained as an observation, not used as the decisive failure."
+  ],
+  "recommendation": [
+    "Test bounded retrieval of original task receipts supporting disputed ticket/function identities, including prior-notes claims that a candidate tries to override. Select queries from the candidate/source disagreement, not frozen oracle answers.",
+    "Keep retrieved records exact, numbered, role-tagged and provenance-bound, with source scope explicit. The current processing order cannot establish which ticket a fix belongs to; original delivery receipts can.",
+    "Include supported uncertainty/absence outcomes and real user supersession. Missing retrieval must remain unknown, not become never requested or fabricated.",
+    "Evaluate retrieval completeness and fidelity separately from reviewer judgment: original facts may be correctly retrieved yet omitted or misassigned. Preserve the same all-condition matrix and cap failures.",
+    "No filename/ticket-specific protection, automatic default adoption, or blind longer-cap rerun is warranted."
+  ]
+}
