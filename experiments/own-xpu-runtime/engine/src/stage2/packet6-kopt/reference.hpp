@@ -53,7 +53,8 @@ template<Type T> inline float lane_dot(const uint8_t* row,const uint16_t* x,Type
     if(k+8<=columns)decode8<T>(row,k,values);
     else for(size_t j=0;j<columns-k;++j)values[j]=element(T,row,k+j);
     for(unsigned j=0;j<8 && k+j<columns;++j) {
-      float input=activation==Type::BF16?bits_float(uint32_t(x[k+j])<<16):half(x[k+j]);
+      // F32: exact-mode activations, x reinterpreted as float (already offset in float elements by the caller).
+      float input=activation==Type::BF16?bits_float(uint32_t(x[k+j])<<16):activation==Type::F32?reinterpret_cast<const float*>(x)[k+j]:half(x[k+j]);
       float product=values[j]*input;acc=acc+product;
     }
   }

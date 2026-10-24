@@ -7,7 +7,7 @@ P=Path(__file__).resolve().parent
 LANE=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
 ROOT=Path('/home/steve/llm-optimizations')
 CANDIDATE=LANE/'recurrent-f32'
-SERVICE_BUILD=Path(os.environ.get('SC117_ENGINE_RECEIPT',str(ROOT/'experiments/own-xpu-runtime/engine/receipts/18bc99891147.json')))  # engine/src builds with typed activations
+SERVICE_BUILD=Path(os.environ.get('SC117_ENGINE_RECEIPT',str(ROOT/'experiments/own-xpu-runtime/engine/receipts/32654dfb2fde.json')))  # engine/src builds with typed activations
 ACTIVATIONS=os.environ.get('SC117_ACTIVATIONS','bf16')
 if ACTIVATIONS not in ('bf16','f32'):raise ValueError('SC117_ACTIVATIONS must be bf16 or f32')
 SERVICE_FLAGS=['--reset-dump','none','--finish-dump','none','--token-stream','jsonl','--draft-experts','fp8','--activations',ACTIVATIONS]

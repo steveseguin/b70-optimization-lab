@@ -1,0 +1,157 @@
+{
+  "passed": true,
+  "binary_sha256": "18bc998911470b140ceac5589162a267147b82c1f943f79d54a65dce245919f3",
+  "service_flags": [
+    "--reset-dump",
+    "none",
+    "--finish-dump",
+    "none",
+    "--token-stream",
+    "jsonl",
+    "--draft-experts",
+    "fp8",
+    "--activations",
+    "bf16"
+  ],
+  "oracle": {
+    "state": "launch-b prompt-00-mtp physical state hashes (engine 5926)",
+    "tokens": "launch-b selftest 32 + longer-a incident 512 target-only (engine 5926)"
+  },
+  "rows": [
+    {
+      "name": "selftest-after-reset",
+      "mode": "mtp",
+      "tokens_equal": true,
+      "stream_equal": true,
+      "first_difference": null,
+      "summary": {
+        "request": 1,
+        "label": "selftest-after-reset",
+        "mode": "mtp",
+        "streamed": true,
+        "prompt_tokens": 87,
+        "output_tokens": 32,
+        "mtp": {
+          "guesses": 31,
+          "hits": 26,
+          "misses": 5
+        },
+        "prompt_wall_ms": 46394.036403042264,
+        "decode_wall_ms": 1054.6789329964668,
+        "decode_tok_s": 29.392831344346053,
+        "reset_ms": 107.98026993870735,
+        "released_dump_bytes": 0,
+        "wall_s": 47.565594132989645
+      },
+      "state_equal": true,
+      "state": {
+        "rank0": {
+          "state-index.tsv": "bb29b047b459bf985fb3ed1cc570f7365c2986f030c40f2a67f5a1130e84080c",
+          "state-seal.txt": "3588ea9bb17f926bf53716963b81b80ff8cd60f21cc40c85e55d914f14b212e0",
+          "state.bundle": "3a1dc720a5923bf581cf6fdb8cbe80de8f7df3f12db07fc568f653a6128418ed",
+          "state.json": "0a29c52014d131a87eaa4fb69663d8b9e7786005efa25944d851c9fd17cf3593"
+        },
+        "rank1": {
+          "state-index.tsv": "2d15c2d7a1c711719c477585f191dcd637912555eb16204ba67893a00b3feed7",
+          "state-seal.txt": "8d2c2ec5a8564ab63f60402022b1beed1806acc52b38d311df3e5aa02bfb7810",
+          "state.bundle": "7b19eede9f1be03fda96ffad2bdb13ec22e92a070dc241ea7cff203afee79658",
+          "state.json": "da7fac067507c0012dc7da9390500867189882d3b4c5f03595ca3f0bdd3913bb"
+        }
+      }
+    },
+    {
+      "name": "incident512-target-only",
+      "mode": "none",
+      "tokens_equal": true,
+      "stream_equal": true,
+      "first_difference": null,
+      "summary": {
+        "request": 2,
+        "label": "incident512-target-only",
+        "mode": "none",
+        "streamed": true,
+        "prompt_tokens": 87,
+        "output_tokens": 512,
+        "mtp": {
+          "guesses": 0,
+          "hits": 0,
+          "misses": 0
+        },
+        "prompt_wall_ms": 2147.644105949439,
+        "decode_wall_ms": 26561.922018998303,
+        "decode_tok_s": 19.238065665372762,
+        "reset_ms": 109.56942103803158,
+        "released_dump_bytes": 418052,
+        "wall_s": 28.84935203101486
+      }
+    },
+    {
+      "name": "incident512-mtp",
+      "mode": "mtp",
+      "tokens_equal": true,
+      "stream_equal": true,
+      "first_difference": null,
+      "summary": {
+        "request": 3,
+        "label": "incident512-mtp",
+        "mode": "mtp",
+        "streamed": true,
+        "prompt_tokens": 87,
+        "output_tokens": 512,
+        "mtp": {
+          "guesses": 511,
+          "hits": 404,
+          "misses": 107
+        },
+        "prompt_wall_ms": 2314.4027919042856,
+        "decode_wall_ms": 18992.3765771091,
+        "decode_tok_s": 26.905532223697158,
+        "reset_ms": 108.1221450585872,
+        "released_dump_bytes": 1875124,
+        "wall_s": 21.4574308199808
+      }
+    },
+    {
+      "name": "selftest-after-long",
+      "mode": "mtp",
+      "tokens_equal": true,
+      "stream_equal": true,
+      "first_difference": null,
+      "summary": {
+        "request": 4,
+        "label": "selftest-after-long",
+        "mode": "mtp",
+        "streamed": true,
+        "prompt_tokens": 87,
+        "output_tokens": 32,
+        "mtp": {
+          "guesses": 31,
+          "hits": 26,
+          "misses": 5
+        },
+        "prompt_wall_ms": 2312.357977963984,
+        "decode_wall_ms": 1050.6168840220198,
+        "decode_tok_s": 29.5064742166758,
+        "reset_ms": 131.21981802396476,
+        "released_dump_bytes": 2389614,
+        "wall_s": 3.5160850120009854
+      },
+      "state_equal": true,
+      "state": {
+        "rank0": {
+          "state-index.tsv": "bb29b047b459bf985fb3ed1cc570f7365c2986f030c40f2a67f5a1130e84080c",
+          "state-seal.txt": "3588ea9bb17f926bf53716963b81b80ff8cd60f21cc40c85e55d914f14b212e0",
+          "state.bundle": "3a1dc720a5923bf581cf6fdb8cbe80de8f7df3f12db07fc568f653a6128418ed",
+          "state.json": "0a29c52014d131a87eaa4fb69663d8b9e7786005efa25944d851c9fd17cf3593"
+        },
+        "rank1": {
+          "state-index.tsv": "2d15c2d7a1c711719c477585f191dcd637912555eb16204ba67893a00b3feed7",
+          "state-seal.txt": "8d2c2ec5a8564ab63f60402022b1beed1806acc52b38d311df3e5aa02bfb7810",
+          "state.bundle": "7b19eede9f1be03fda96ffad2bdb13ec22e92a070dc241ea7cff203afee79658",
+          "state.json": "da7fac067507c0012dc7da9390500867189882d3b4c5f03595ca3f0bdd3913bb"
+        }
+      }
+    }
+  ],
+  "utc": "2026-10-24T19:35:36.356027+00:00"
+}

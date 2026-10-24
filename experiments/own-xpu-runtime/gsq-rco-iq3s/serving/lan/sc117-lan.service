@@ -9,6 +9,7 @@ Type=simple
 WorkingDirectory=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan
 ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/service.py --bind 192.168.2.44 --port 18160
 # No restart policy, no SIGKILL: on stop the coordinator FINISHes both ranks and waits for drain.
+Environment=SC117_ACTIVATIONS=f32
 Restart=no
 KillMode=process
 KillSignal=SIGTERM

@@ -28,7 +28,7 @@ void check(ownrt::Device& d,ownrt::Allocation id,size_t bytes) {
 void geometry(Type t,Type a,Type o,size_t rows,size_t k,unsigned sg) {
   auto l=layout(t);
   if(!l.elements || !rows || rows>UINT32_MAX || !k || k>16384 || k%l.elements ||
-     (a!=Type::BF16 && a!=Type::F16) || (o!=Type::BF16 && o!=Type::F16) || (sg!=16 && sg!=32))
+     (!(a==Type::F32 && o==Type::F32) && ((a!=Type::BF16 && a!=Type::F16) || (o!=Type::BF16 && o!=Type::F16))) || (sg!=16 && sg!=32))
     throw std::invalid_argument("kopt geometry/type/subgroup");
 }
 struct Descriptor {
@@ -56,11 +56,12 @@ template<Type T,unsigned SG> inline float dot(const uint8_t* row,const uint16_t*
     // Raw formats bypass SLM; consecutive lanes consume consecutive 16/32 B.
     float acc=0;
     for(size_t base=size_t(lane)*8;base<k;base+=SG*8) {
-      float values[8];uint16_t inputs[8];
+      float values[8];uint16_t inputs[8];float wide[8];const bool f32=a==Type::F32;
       if(base+8<=k && reinterpret_cast<uintptr_t>(row+base*layout(T).bytes)%16==0 &&
          reinterpret_cast<uintptr_t>(x+base)%16==0) {
-        auto xv=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(x+base);
-        for(unsigned j=0;j<8;++j)inputs[j]=xv[j];
+        if(f32){for(unsigned j=0;j<8;++j)wide[j]=reinterpret_cast<const float*>(x)[base+j];}
+        else{auto xv=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(x+base);
+        for(unsigned j=0;j<8;++j)inputs[j]=xv[j];}
         if constexpr(T==Type::F32) {
           auto w=reinterpret_cast<const sycl::vec<uint32_t,4>*>(row+base*4);
           auto lo=w[0],hi=w[1];
@@ -72,9 +73,9 @@ template<Type T,unsigned SG> inline float dot(const uint8_t* row,const uint16_t*
             else {auto bits=uint32_t(w[j])<<16;if((bits&0x7fffffff)>0x7f800000)bits|=0x400000;values[j]=bits_float(bits);}
           }
         }
-      } else for(unsigned j=0;j<8 && base+j<k;++j){values[j]=element(T,row,base+j);inputs[j]=x[base+j];}
+      } else for(unsigned j=0;j<8 && base+j<k;++j){values[j]=element(T,row,base+j);if(f32)wide[j]=reinterpret_cast<const float*>(x)[base+j];else inputs[j]=x[base+j];}
       for(unsigned j=0;j<8 && base+j<k;++j) {
-        float input=a==Type::BF16?bits_float(uint32_t(inputs[j])<<16):half(inputs[j]);
+        float input=f32?wide[j]:a==Type::BF16?bits_float(uint32_t(inputs[j])<<16):half(inputs[j]);
         float product=values[j]*input;acc=acc+product;
       }
     }
@@ -111,7 +112,7 @@ struct Multiply:ownrt::SyclOperation {
           auto local=storage.template get_multi_ptr<sycl::access::decorated::no>().get()+row_in_group*stride;
           if(active) {
             source=static_cast<const uint8_t*>(pointers[d.w])+(size_t(r.expert_id)*d.rows+r.row_begin+row)*d.rb;
-            x=static_cast<const uint16_t*>(pointers[d.x])+slot*d.k;
+            x=d.activation==Type::F32?reinterpret_cast<const uint16_t*>(static_cast<const float*>(pointers[d.x])+slot*d.k):static_cast<const uint16_t*>(pointers[d.x])+slot*d.k;
             if(layout(T).elements!=1)stage_row<SG>(source,local,d.rb,lane);
           }
           // All four rows reach the sole workgroup barrier, including invalid/tail rows.
@@ -126,7 +127,7 @@ struct Multiply:ownrt::SyclOperation {
           }
           if(lane==0 && in_range) {
             float value=active?sum:bits_float(0x7fc00000);
-            static_cast<uint16_t*>(pointers[d.y])[logical]=output_bits(value,d.output);
+            if(d.output==Type::F32)static_cast<float*>(pointers[d.y])[logical]=value;else static_cast<uint16_t*>(pointers[d.y])[logical]=output_bits(value,d.output);
             if(d.diagnostic)static_cast<float*>(pointers[d.fp32])[logical]=value;
           }
         }));
@@ -155,7 +156,8 @@ Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocati
   auto l=layout(m.type);size_t rb=mul(m.columns/l.elements,l.bytes);
   Descriptor v{m.type,m.activation,m.output_type,m.rows,m.columns,rb,op.groups,(mul(count,span)+3)/4,experts,count,span,r!=0,0,0,0,0,0,0,m.fp32!=0};
   auto add=[&](ownrt::Allocation id,size_t bytes){check(d,id,bytes);unsigned index=ids.size();ids.push_back(id);return index;};
-  v.w=add(m.w,mul(mul(experts,m.rows),rb));v.x=add(m.x,mul(mul(count,m.columns),2));v.y=add(m.y,mul(mul(count,span),2));
+  const size_t ab=m.activation==Type::F32?4:2;
+  v.w=add(m.w,mul(mul(experts,m.rows),rb));v.x=add(m.x,mul(mul(count,m.columns),ab));v.y=add(m.y,mul(mul(count,span),ab));
   if(r){v.r=add(r,mul(count,sizeof(Route)));v.status=add(status,mul(count,4));}
   if(m.fp32)v.fp32=add(m.fp32,mul(mul(count,span),4));
   if(l.elements!=1)op.local_stride=std::max(op.local_stride,(rb+15)/16*16);
