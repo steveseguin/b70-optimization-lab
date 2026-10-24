@@ -1,0 +1,20 @@
+{
+  "approved": true,
+  "issues": [],
+  "sha256": {
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/note_evidence_observable_probe.py": "cf553b9c5d600e482e664eaf437798da250a29e15c5d227399b9ff1f7f1e48ca",
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/run_campaign62.py": "cfb2b10055d1d6a856e7d28f651f1a314e770ae3c12f6633c7b5c67337b40435"
+  },
+  "reviewed_at": "2026-10-24T01:04:20.207456+00:00",
+  "scope": "Independent source review plus CPU-only smoke and direct comparison against all 12 actual C61 request bodies; no model-quality verdict.",
+  "checks": [
+    "Pinned C61 reviewer script identity matches actual C61 device receipt.",
+    "All 12 reconstructed unprojected requests exactly equal their C61 device request bodies.",
+    "Projection removes only reasoning_content/reasoning fields from assistant messages under source_turns.",
+    "Inverse restoration exactly reproduces all 12 C61 request bodies; all messages, roles, visible content, tools, prior notes, candidates, opening and reviewer settings retained.",
+    "Both field names, null fields and same-named nonassistant/opening metadata covered by CPU tests.",
+    "Exactly 12 unique conditions with inherited truncation/malformed/tool-call rejection and no fallback/retry.",
+    "Runner retains fresh output, prior-stop, hash-bound review, bounded client, lifecycle guards, shutdown and kernel postflight."
+  ],
+  "cpu_smoke": "/tmp/c62-independent-cpu-check-20261023.json"
+}

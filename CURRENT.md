@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 21:06 EDT — two-card host: Campaign 61 audited: two of twelve pass; one controlled source-view change ready.**
+The neutral reviewer fixes both observed-audit denials with thinking on, but two preceding cuts hit
+the cap and one cancellation case invents the denial again. Only 2/12 meet the broad source gate;
+no mode qualifies. Server stopped cleanly at 21:01, cards empty. Campaign 62 removes only recorded
+assistant reasoning fields from the separate review packet, preserving every visible message, call,
+observation, instruction and candidate. Independent review proves restoring those fields reproduces
+all twelve actual campaign61 requests exactly. CPU checks pass; no production recipe change.
+Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign61-closeout.md`; next registration:
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign62-observable-evidence.md`.
+
 **October 23, 21:03 EDT — four-card host: matched prompt controls and cache cleanup pass CPU checks.**
 The same future binary now contains serial and paired prompt schedules with identical cache policy and
 row storage. Shared traversal and actual CPU cache/copy tests pass 101 checks; ten tiny owners close

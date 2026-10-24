@@ -1,0 +1,542 @@
+{
+  "schema": "ctxkeeper.campaign61-source-audit.v1",
+  "audited_at": "2026-10-24T01:04:02.949156+00:00",
+  "auditor": "/root/audit_c60 independent source audit; only this new artifact written",
+  "raw_result": {
+    "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/c61-K32V-check-s0.json",
+    "sha256": "cc357abb5c7705130a528625c4cbb69d6770c35ee1c27d675957f79bdd4c28d5"
+  },
+  "fixtures_manifest": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-note-evidence-fixtures/manifest.json",
+    "sha256": "01cf38c3393bedcafdf65f09ef3055920bf7dd4c11aad04477812e4053cda9db"
+  },
+  "prior_c60_audit": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-context-campaign60/source-audit.json",
+    "sha256": "cd3270d96a4c62812e9fddf33bbc029454544c1f09d18bb9a261d3786d5d3a63"
+  },
+  "conditions": 12,
+  "syntactically_valid": 10,
+  "truncated_unapplied": 2,
+  "broad_gate_pass_count": 2,
+  "broad_gate_pass_indices_zero_based": [
+    7,
+    9
+  ],
+  "reviewer_modes": {
+    "off": {
+      "broad_pass": 0,
+      "conditions": 6,
+      "observed_named_pass": 0,
+      "observed_conditions": 2,
+      "cancellation_named_pass": 2,
+      "cancellation_conditions": 2
+    },
+    "on": {
+      "broad_pass": 2,
+      "conditions": 6,
+      "observed_named_pass": 2,
+      "observed_conditions": 2,
+      "cancellation_named_pass": 1,
+      "cancellation_conditions": 2,
+      "truncated_preceding_conditions": 2
+    }
+  },
+  "hypothesis_met": false,
+  "verdict": "partial improvement, neither reviewer mode qualified",
+  "registered_branch": "Named audit failure is fixed by the thinking-on reviewer, but broader errors and two truncations remain; target the specific provenance failure next. No fresh-server qualification or full pi transfer promotion from this result.",
+  "promotion": false,
+  "rows": [
+    {
+      "run_index_zero_based": 0,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "source_archive_range": [
+        439,
+        478
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 412,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [
+        "P_ID",
+        "P_OMIT",
+        "P_RECORDS"
+      ],
+      "explanation": "Real fixes/tests preserved, but visible ticket identity and unfinished-work defects remain.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "7e5c628886cf0fce8b35f2ec4411f0c33ad9f85c2862e488e4bfbba9e6ce2160",
+      "inherited_truth_limit": null
+    },
+    {
+      "run_index_zero_based": 1,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "source_archive_range": [
+        439,
+        478
+      ],
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 8192,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "No output; no partial application or retry.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null,
+      "inherited_truth_limit": null
+    },
+    {
+      "run_index_zero_based": 2,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "source_archive_range": [
+        439,
+        478
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 459,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [
+        "P_ID",
+        "P_OMIT",
+        "P_RECORDS"
+      ],
+      "explanation": "Real fixes/tests preserved, but visible ticket identity and unfinished-work defects remain.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "1e088ff5d67df9bf5a6ccaa8eec2d4eee0e5b45641e422da115576425e33490d",
+      "inherited_truth_limit": null
+    },
+    {
+      "run_index_zero_based": 3,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "source_archive_range": [
+        439,
+        478
+      ],
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 8192,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "No output; no partial application or retry.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null,
+      "inherited_truth_limit": null
+    },
+    {
+      "run_index_zero_based": 4,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 620,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": false,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [
+        "DENIAL",
+        "DELETE",
+        "T41_UNCERTAIN",
+        "POLY_OMIT",
+        "UNSEEN_CERTAINTY"
+      ],
+      "explanation": "False absence and unrequested-artifact claims survive; new confident reconstruction is not established by this partial source.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "0ff61c600c3bb077c72fcc2944ad417204e73b1fa61a3254aae883cefc14e5d7",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    },
+    {
+      "run_index_zero_based": 5,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 5644,
+      "reasoning_tokens": 5060,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": true,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [
+        "POLY_OMIT"
+      ],
+      "explanation": "Correctly restores43/44 delivery, requested completed audit, and pending41/43; omits observed polynomial_eval defect502.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "42e4b603f37c9b6639c6706952a5b53aedc412fc4117b0d51fb4d898e2a8c5f2",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    },
+    {
+      "run_index_zero_based": 6,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 803,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": false,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [
+        "DENIAL",
+        "DELETE",
+        "UNSEEN_CERTAINTY"
+      ],
+      "explanation": "Preserves observed code defects but continues denying real43/44 receipts and treats unseen ticket reconstruction as settled.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "13715d9710947e966e45f153effac6748f0eab5f63acb41afe12e93ddbf199e6",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    },
+    {
+      "run_index_zero_based": 7,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 6765,
+      "reasoning_tokens": 5989,
+      "source_grounded_broad_gate_pass": true,
+      "named_observed_audit_target_pass": true,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "explicit_withdrawal_preserved_as_pending": null,
+      "issues": [],
+      "explanation": "Restores43/44 receipts and requested audit; preserves pending41/43 and polynomial_eval defect with ticket number explicitly unconfirmed. Does not need to reconstruct unseen38/39 truth.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "c15f22afbee8275f483f06bca45c2720dbf053a94adcb7393c6c4258c0d41bf4",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    },
+    {
+      "run_index_zero_based": 8,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 478,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "explicit_withdrawal_preserved_as_pending": true,
+      "issues": [
+        "UNSEEN_CERTAINTY"
+      ],
+      "explanation": "Honors withdrawal and preserves observed bugs, but asserts unseen38/39 reconstruction as fact while retaining contradictory prior38/distribute name.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "69fdb9765604ffac909d69e85ab449cb1359337c6fe7dad826e6deeff15bba21",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    },
+    {
+      "run_index_zero_based": 9,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 6938,
+      "reasoning_tokens": 6305,
+      "source_grounded_broad_gate_pass": true,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "explicit_withdrawal_preserved_as_pending": true,
+      "issues": [],
+      "explanation": "Honors withdrawal as pending deletion; preserves41/43 and polynomial_eval defect; expressly marks38/39 reconstruction uncertain and schedules label resolution.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "26f8581571275f2ee80af3471c3ee8eb7e6a53d5372d980c63252baf324804ab",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    },
+    {
+      "run_index_zero_based": 10,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 478,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "explicit_withdrawal_preserved_as_pending": true,
+      "issues": [
+        "POLY_OMIT",
+        "NUMBER_REASSERTED"
+      ],
+      "explanation": "Correct request/write/withdrawal lifecycle and pending41/43; omits observed polynomial_eval defect and reaffirms disputed38 label.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "96493b903d89ccde9a73cec6e9efb024fb04032e4711995e5b7429c0436b2f94",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    },
+    {
+      "run_index_zero_based": 11,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "source_archive_range": [
+        479,
+        502
+      ],
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 5629,
+      "reasoning_tokens": 5224,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": false,
+      "explicit_withdrawal_preserved_as_pending": true,
+      "issues": [
+        "DENIAL",
+        "T43_OMIT",
+        "POLY_OMIT",
+        "NUMBER_REASSERTED"
+      ],
+      "explanation": "Regression from a candidate with correct43/44 receipts: reviewer invents their absence, drops pending43/poly; removal request remains pending but historical audit requirement is falsely denied.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "cc06fdcc0e12b2162616f4e66a8b7894a356a11afee16e716bd301c5f6323fc7",
+      "inherited_truth_limit": "The prior38/distribute entry is historically wrong. Unchanged preservation with explicitly unresolved identity is not scored as a new factual error when original notices464/466 are absent."
+    }
+  ],
+  "issues": {
+    "P_ID": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_reasserted_by_reviewer",
+      "accessible_source": true,
+      "claim": "ticket38(distribute) fixed; OPEN also attributes the distribute test failure/fix to38",
+      "evidence": "Preceding tool464 explicitly delivers polynomial_eval as38, tool466 delivers distribute as39. The fixes/tests are real but the task identity is wrong.",
+      "archive_n": [
+        464,
+        466,
+        475,
+        476,
+        477
+      ]
+    },
+    "P_OMIT": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_omission_retained",
+      "accessible_source": true,
+      "claim": "Only41 remains open; no retained pending state for polynomial_eval38 or unique_in_window40",
+      "evidence": "Tools464/472 deliver those tickets; no fixes occur through478.",
+      "archive_n": [
+        464,
+        472,
+        478
+      ]
+    },
+    "P_RECORDS": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_omission_retained",
+      "accessible_source": true,
+      "claim": "No retained record of duplicate/mislabeled required artifacts",
+      "evidence": "The supplied commands append35 twice,36 and convolve twice, an incorrect39/window_size entry, and incorrect38/distribute label.",
+      "archive_n": [
+        455,
+        459,
+        463,
+        465,
+        471,
+        477
+      ]
+    },
+    "CAP": {
+      "classes": [
+        "incomplete_output"
+      ],
+      "origin": "reviewer",
+      "accessible_source": true,
+      "claim": "No applicable delta returned",
+      "evidence": "finish_reason=length,8192 completion/reasoning tokens,content=None; harness correctly applies nothing."
+    },
+    "DENIAL": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_retained_or_new_reviewer_regression",
+      "accessible_source": true,
+      "claim": "Tickets43/44 were never received; AUDIT.md written without a received ticket",
+      "evidence": "Tool484 delivers43;488 delivers44. Write493 and success494/cat496 prove the requested artifact exists.",
+      "archive_n": [
+        484,
+        488,
+        493,
+        494,
+        496
+      ]
+    },
+    "DELETE": {
+      "classes": [
+        "unsupported_action_proposal"
+      ],
+      "origin": "candidate_error_retained",
+      "accessible_source": true,
+      "claim": "Consider deleting spurious/unrequested AUDIT.md in observed case",
+      "evidence": "No withdrawal exists in this recorded cut. The file is explicitly requested at488 and successfully written. This is a proposed action, not a claim deletion completed or an invented quotation from the user.",
+      "archive_n": [
+        488,
+        493,
+        494
+      ]
+    },
+    "T41_UNCERTAIN": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_retained",
+      "accessible_source": true,
+      "claim": "Unverified whether41 was ever received",
+      "evidence": "Supplied prior STATE and OPEN explicitly record41 received and pending; code500 establishes it remains unfixed.",
+      "archive_n": [
+        500
+      ],
+      "prior_notes": "ticket41 STATE and OPEN"
+    },
+    "POLY_OMIT": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_omission_retained_or_introduced",
+      "accessible_source": true,
+      "claim": "Observed polynomial_eval bug omitted from retained STATE/OPEN",
+      "evidence": "Tool502 directly displays inverted if n != 0 guard. Retaining observed defect does not require certainty about its unseen original ticket number.",
+      "archive_n": [
+        502
+      ]
+    },
+    "T43_OMIT": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "reviewer_regression",
+      "accessible_source": true,
+      "claim": "Drops unique_to_each43 from pending work because reviewer falsely treats it as unreceived",
+      "evidence": "Receipt484 and still-buggy code500 are supplied.",
+      "archive_n": [
+        484,
+        500
+      ]
+    },
+    "UNSEEN_CERTAINTY": {
+      "classes": [
+        "unsupported_correction",
+        "retained_contradiction"
+      ],
+      "origin": "candidate_reconstruction_reasserted_as_fact",
+      "accessible_source": false,
+      "claim": "Confidently asserts polynomial_eval=38/distribute=39 or original receipt464 despite supplied slice starting479; leaves contradictory38/distribute name beside that correction",
+      "evidence": "The original notices464/466 are available to the auditor in the separate preceding fixture but absent from this condition. Current tool496 verifies artifact contents, not the true identity of its questionable labels. Assistant recollection and candidate claims do not supply independent proof. Report uncertainty, not authoritative reconstruction.",
+      "earlier_only_archive_n": [
+        464,
+        466
+      ],
+      "accessible_archive_n": [
+        496,
+        501,
+        502
+      ]
+    },
+    "NUMBER_REASSERTED": {
+      "classes": [
+        "unsupported_reassertion"
+      ],
+      "origin": "inherited_error_reasserted_in_new_review_delta",
+      "accessible_source": false,
+      "claim": "New FIXES summary declares distribute's n guard is ticket38",
+      "evidence": "The prior NOTES and actual FIXES file carry38/distribute, but neither independently settles the disputed task identity; elsewhere assistant recollection disputes it. Preserve unresolved identity rather than affirming it anew. Full earlier notices prove39, but the condition must not be required to infer that unseen answer.",
+      "earlier_only_archive_n": [
+        464,
+        466
+      ],
+      "accessible_archive_n": [
+        496,
+        501
+      ]
+    }
+  },
+  "c60_scoring_clarification": {
+    "prior_label": "off_job_complete / unsupported_completion",
+    "correction": "The original user opening explicitly states: When next says the queue is empty, the job is done. A bare job-done statement following observed queue exhaustion is therefore not independently an unsupported-completion claim. It may summarize the authorized queue lifecycle. Evaluate whether known unfinished defects remain preserved separately.",
+    "impact": "The frozen C60 audit applied that label too broadly. Its overall both-fail result remains supported by independent receipt contradictions, unsupported deletion proposals, identity errors and omissions. Do not rewrite the original evidence; link this clarification.",
+    "additional_accessibility_clarification": "Earlier notices464/466 prove actual38/39 mapping to an auditor with both fixtures, but were not supplied in observed/cancellation conditions. Do not require a reviewer to assert unseen historical truth. Score unsupported new certainty and retained explicit contradictions separately from unchanged prior uncertainty."
+  },
+  "scope_limits": [
+    "Every returned CHANGES/OPEN claim and applied STATE effect reviewed; unchanged pre439 history checked for preservation, not fully recertified.",
+    "Each of12 conditions occurs once. Frozen candidates are six C60 repeat-zero outputs, not independent generated samples; no statistical success-rate or speed claim follows.",
+    "Rows7/9 pass only this partial-source diagnostic: appropriate explicit uncertainty is accepted; neither recovers missing historical evidence nor proves end-to-end quality.",
+    "All cancellation conditions preserve removal as future work; row11 fails because it falsely denies prior audit request and43 receipt, not because it claims removal already executed.",
+    "Two reviewer-on preceding calls reached8192 reasoning tokens with no content and no partial delta applied. No fallback or retry hides them.",
+    "No new completed tool operations are asserted by the reviewer; notes merely describe recorded operations and prospective work."
+  ],
+  "next_diagnostic_recommendation": [
+    "A preregistered ablation removing only recorded assistant reasoning/reasoning_content fields from review source evidence can test whether long conflicting self-recollection causes confusion/truncation.",
+    "Preserve assistant visible content, exact tool calls, exact tool results, original authorized messages, synthetic user correction, prior notes and both candidates. Hash-bound structural comparison must demonstrate this boundary.",
+    "Use the same all12 conditions and existing reviewer instruction/cap, retain failures, and compare whole-note quality. Do not call selective evidence removal output-equivalent or general proof of safety.",
+    "Even if ablation succeeds here, retain role/authority tests and authentic correction cases before any full-agent integration; no blanket tool-text priority rule."
+  ]
+}
