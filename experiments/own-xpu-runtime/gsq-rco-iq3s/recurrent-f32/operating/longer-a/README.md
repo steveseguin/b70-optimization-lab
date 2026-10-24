@@ -1,0 +1,11 @@
+# Three corrected target-only comparisons
+
+Conditional source preparation only. The exact CPU3 reference review hash is deliberately null; authority and operational plan refuse until root binds a successful independent closed readback. Use native5926a247 without rebuild and original numeric prompts00/01/02. Bootstrap max-new128 stays within the unchanged parser guard; actual serialized NativeController requests carry512, target-only, natural EOS. This stage makes no MTP512 or performance claim.
+
+One persistent two-rank pair performs three full RESETs. Every output is saved before its exact CPU token/stop comparison; a divergence stops further requests and is retained as failure. No old BF16-state oracle is used. The next RESET captures the previous target/draft state; an explicit final DUMP and repeat retain the last target, then normal FINISH retains its draft. Closed maps/stamps are checked after FINISH. The raw request result predates added closed state fields; an eventual auditor must join these deliberately, not compare raw and enriched row objects blindly.
+
+Four capture groups contain1,280,254,224 raw bytes/eight target bundles. Five successful acknowledgements credit `(T+D),(T+D),(T+D),T,D` respectively, leaving0 only after FINISH. Initial-only margins require root27GB+256MiB and external3,696,173,328B. Ongoing root27GB+128MiB and external remaining payload+128MiB+2GiB remain unchanged. Initial128MiB extra external allowance is cumulative metadata headroom, not a quota or guaranteed completion. No compression, deletion or storage action is automatic.
+
+Inherited Monitor/Transport/RetainedOwner handling, closed per-rank BDF environments, HOME, immutable source/model/build authority, exact memory ledger and one cooperative shutdown remain. Current device totals31,083,481,994 /29,995,470,740B and initial RAM delta689,696,768B are unchanged from qualified F32-B. Keep CPU-reference and GPU owners disjoint.
+
+Six tiny tests cover pending authority, exact capture budget/refusals, actual inherited512 RPC serialization with128 bootstrap, natural EOS/token divergence and the three-request capture sequence. They invoke no native code/model/device. Root alone binds actual authority, creates the metadata plan and independently admits a run after peer review. No operational plan has been constructed by this source preparation.

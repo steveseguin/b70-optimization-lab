@@ -1,0 +1,26 @@
+--- qualified-f32/adapter.py
++++ longer-a/generated/adapter.py
+@@ -6,8 +6,8 @@
+ P=Path(__file__).resolve().parent
+ LANE=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
+ ROOT=Path('/home/steve/llm-optimizations')
+-CANDIDATE=P.parent.parent
+-LEDGER=P.parent/'candidate-ledger.json'
++CANDIDATE=LANE/'recurrent-f32'
++LEDGER=LANE/'recurrent-f32/operating/candidate-ledger.json'
+ PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
+ PARENT_SHA='4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3'
+ ENV_SOURCE=ROOT/'experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py'
+@@ -69,9 +69,9 @@
+     build=json.loads(receipt.read_text()) if receipt.exists() else None
+     ready=bool(build and build.get('passed') is True and build.get('objects_rebuilt')==21 and build.get('objects_reused')==19)
+     if build:require(ready,'successful matching build required')
+-    plan=dict(schema='ownrt.gsq.rank-adapter-plan.v1',output=str(output),output_parent_identity=[parent.st_dev,parent.st_ino],evidence_output=str(evidence),evidence_parent_identity=[ep.st_dev,ep.st_ino,ep.st_uid,ep.st_gid,ep.st_mode],mini=mini,context=64 if mini else 4096,max_new=max_new,seconds=seconds,wait_seconds=min(seconds,900),binary=build['binary'] if ready else '<pending-full-native-build>' if not mini else '<pending-full-host-build>',binary_sha256=build.get('binary_sha256') if ready else None,build_receipt=str(receipt),build_receipt_sha256=sha(receipt) if ready else None,build_ready=ready,native_admitted=False,source_sha256=source_pins(),environment=environments(output,mini),candidate_bdfs=list(BDFS),request_cap=2,shared_bytes=BASE.SHARED,device_execution_requested=False)
+-    raw_state=0 if mini else 3*(310364224+9699332) # initial blank RESET plus both correctness requests
+-    plan['storage']={'target_state_per_request_bytes':0 if mini else 310364224,'draft_state_per_request_bytes':0 if mini else 9699332,'request_count':2,'raw_state_bytes':raw_state,'evidence_forecast_bytes':raw_state+128*1024**2,'control_cache_forecast_bytes':128*1024**2,'root_floor_bytes':27000000000,'external_floor_bytes':2*1024**3,'hard_bound':False,'scope':'known state payload plus monitored metadata/cache forecast; no pruning'}
++    plan=dict(schema='ownrt.gsq.rank-adapter-plan.v1',output=str(output),output_parent_identity=[parent.st_dev,parent.st_ino],evidence_output=str(evidence),evidence_parent_identity=[ep.st_dev,ep.st_ino,ep.st_uid,ep.st_gid,ep.st_mode],mini=mini,context=64 if mini else 4096,max_new=max_new,seconds=seconds,wait_seconds=min(seconds,900),binary=build['binary'] if ready else '<pending-full-native-build>' if not mini else '<pending-full-host-build>',binary_sha256=build.get('binary_sha256') if ready else None,build_receipt=str(receipt),build_receipt_sha256=sha(receipt) if ready else None,build_ready=ready,native_admitted=False,source_sha256=source_pins(),environment=environments(output,mini),candidate_bdfs=list(BDFS),request_cap=3,shared_bytes=BASE.SHARED,device_execution_requested=False)
++    raw_state=0 if mini else 4*(310364224+9699332) # initial RESET plus three target requests
++    plan['storage']={'target_state_per_request_bytes':0 if mini else 310364224,'draft_state_per_request_bytes':0 if mini else 9699332,'request_count':3,'raw_state_bytes':raw_state,'evidence_forecast_bytes':raw_state+128*1024**2,'control_cache_forecast_bytes':128*1024**2,'root_floor_bytes':27000000000,'external_floor_bytes':2*1024**3,'hard_bound':False,'scope':'known state payload plus monitored metadata/cache forecast; no pruning'}
+     plan['rank_argv']=[command(plan,r,'<channel-fd>','<stop-fd>') for r in range(2)]
+     plan['command_sha256']=hashlib.sha256(json.dumps({'argv':plan['rank_argv'],'environment':plan['environment']},sort_keys=True).encode()).hexdigest()
+     return plan

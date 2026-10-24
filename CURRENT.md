@@ -1,5 +1,22 @@
 # Current Workspace State
 
+**October 24, 10:44 EDT — four-card host: longer comparison finds a numerical mismatch.**
+The first70 outputs match the independent reference; token71 differs. The full
+512-token native response is preserved, and remaining requests were stopped.
+Independent readback confirms safe closure, no new fault and protected vision
+unchanged. Next is one replay of the exact157-token shared prefix using the
+unchanged engine, to capture aligned logits and identify the remaining precision
+difference. No quality or speed promotion. All three CI workflows passed for
+6620499ff. [Result](experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/longer-a/RESULT.md).
+
+**October 24, 10:40 EDT — four-card host: longer corrected-engine comparison is running.**
+One native pair is evaluating the same three fixed CPU reference prompts,
+target-only, with full resets and natural EOS at a 512-token cap. Both target
+GPU contacts are observed, with no monitor fault so far. A token mismatch stops
+further requests and is retained for shared-prefix localization. All prior
+precision and storage evidence is committed and pushed as6620499ff; the prior
+commit passed all three CI workflows. No performance claim or service restore.
+
 **October 24, 10:39 EDT — four-card host: three longer CPU reference outputs passed readback.**
 The first two fixed requests reached 512 tokens; the third ended naturally at
 334. All raw output IDs and probability rows are retained, with no prompt reuse.
