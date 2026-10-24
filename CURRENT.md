@@ -22,6 +22,13 @@ The native target remains occupied; applications are unchanged. The tiny Engine 
 eeacf90ba has all three CI workflows green.
 [Production integration and limits](experiments/own-xpu-runtime/stage2/packet212-production-prefill-integration/README.md).
 
+**October 23, 20:50 EDT — Campaign 61 launched; parent remains active to audit its finish.**
+Unit `ctx-campaign61` is loading one fresh server for twelve source-review conditions. Both scripts
+passed hash-bound independent review and CPU checks; all 46 repository validation commands passed.
+The campaign59/60 closeouts, memo default restoration and campaign61 registration were pushed in
+`03641c819` before launch. No agents/tests/builds beside the server. This launch entry stays local
+until shutdown. Raw status: `context-longrun-20261016/campaign61-note-evidence-review/status.json`.
+
 **October 23, 20:49 EDT — two-card host: Campaigns 59/60 audited; exact counting memo restored, source-verification diagnostic prepared.**
 Both campaigns finished by 12:57 with servers stopped; the agent did not resume after its prior chat
 turn ended, leaving the audit idle until the owner returned at 20:42. Background units do not wake a
