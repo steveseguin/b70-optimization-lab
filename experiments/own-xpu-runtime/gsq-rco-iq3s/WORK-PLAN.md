@@ -1,5 +1,14 @@
 # Continuing SC117 engine work
 
+**Current priority,13:49UTC:** correct recurrent precision before more speed work.
+The nativeFP32 build and522 focused checks pass. The full tiny Host Engine
+lifecycle independently passes initialzeros, RESET, target/MTPstate equality,
+hit/miss rollback and safeclose. A same-weight CPUreference withFP32 recurrence
+matches the first32 historical token IDs, but that short match is not broad
+quality proof. Next is the corrected real-model target32/MTP32 pair, with new
+FP32 state sizes and diagnostic reference comparison; no oldBF16state oracle.
+Earlier dated plans below are historical.
+
 Owner direction, October 24: finish making the downloaded model work in our
 engine, test correctness, then continuously optimize speed without quality
 loss or benchmark shortcuts. Continue until the owner stops the work or a

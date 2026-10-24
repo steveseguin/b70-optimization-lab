@@ -1,17 +1,19 @@
 # Current Workspace State
 
-**October 24, 09:44 EDT — four-card host: FP32 native build passes; independent prefix comparison recorded.**
-The corrected engine5926a247 built with21 affected units rebuilt and19 unchanged
-objects reused. Focused CPU proof passes522checks; a full Host lifecycle build is
-running before device admission. CPU referenceB verified BF16KV/F32 recurrence,
-then produced32 tokens matching the old custom prefix on the same87 inputs.
-Its terminal checker failed on the server's documented temperature-1-to0
-normalization; independent readback qualifies that greedy response without a
-rerun and preserves the failed terminal. This short agreement is not broad
-quality proof. Target GPUs remain idle, vision unchanged, speed work held.
-Public precision qualification2294dce04 is pushed; live checks pending.
-[Reference result](experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/RESULT.md).
+**October 24, 09:50 EDT — four-card host: recurrent precision fix ready for a small model test.**
+The corrected GPU and CPU engines built successfully. The focused state checks
+and full CPU reset, checkpoint and MTP rollback tests passed independent review.
+A separate reference engine loaded the same quantized weights with FP32 recurrent
+state and matched the first 32 output tokens. That short match does not prove
+broad model quality or justify the old BF16 recurrent state. The saved reference
+checker failure and its documented greedy-temperature normalization remain
+recorded. Next: one corrected target-only/MTP pair on the real model, with full
+state comparison and no speed claim. Further speed work stays on hold.
 
+Target GPUs are idle and the protected vision process is unchanged. The public
+precision qualification is live; both package records and the evidence link
+passed cache-busted checks. [Reference result](experiments/own-xpu-runtime/gsq-rco-iq3s/reference-cpu/runtime-b/RESULT.md)
+and [CPU lifecycle result](experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/host/RESULT.md).
 
 **October 24, 09:38 EDT — four-card host: FP32 kernel proof passes; reference logging gate needs correction.**
 The additive FP32 recurrent/history correction passed522 focused CPU checks and

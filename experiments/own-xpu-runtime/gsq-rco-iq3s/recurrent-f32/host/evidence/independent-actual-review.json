@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "scope": "Closed synthetic Host Engine readback, no rerun and no real model/GPU qualification",
+  "actual_lifecycle_sha256": "1bec84f6cfd4f8b2614a122bc0580136262c5fa1be714d2bc59c79838dcad343",
+  "host_build_sha256": "0c70c63ee89f28a4ba000913be601db0c4a82e7bbf8d4323e79d7142ff93aa28",
+  "host_binary_sha256": "27639f389226ce80b330365e8a8df43b383ad72fa84b9f14ecac5a52160260a5",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/host/lifecycle.py": "a81eda47f75cde40bf3c33974059e7bc0f69ee23c4cbfe796befc1c50b999dcd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/adapter.py": "68538b214b7bda9c2fa5cd87534bad2243745b8a1af0dc82b43f01da48b06a01",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py": "5a790a84b65508ccbbadc7f381c804b1dbc0564b5a175a0ae102156905413f2d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/host/evidence/build.json": "0c70c63ee89f28a4ba000913be601db0c4a82e7bbf8d4323e79d7142ff93aa28"
+  },
+  "artifact_index_sha256": "f588a1fdc3b9c00966873a88a67a4613500a7f04e3d78f6d3ce791a36de69f21",
+  "files": 129,
+  "artifact_bytes": 879203,
+  "target_bundles": 6,
+  "target_bundle_payload_bytes": 64584,
+  "counts": {
+    "recurrent_ranges": 24,
+    "non_bf16_f32_words": 288,
+    "kv_ranges": 24
+  },
+  "tokens": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "target_mtp_exact": true,
+  "initial_reset_and_repeat_dump": true,
+  "actual_guesses": 3,
+  "hits": 2,
+  "misses": 1,
+  "snapshot_captures": 3,
+  "snapshot_restores": 1,
+  "completed_redos": 1,
+  "safe_host_owners": 2,
+  "signals": 0,
+  "old_bf16_state_oracle_used": false,
+  "limitations": "Synthetic tiny weights/geometry only. Real native fixed GDN geometry is covered by separate focused CPU proof and compiled source; real-model native F32 qualification remains pending."
+}

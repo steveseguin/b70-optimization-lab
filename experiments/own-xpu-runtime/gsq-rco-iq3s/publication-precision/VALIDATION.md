@@ -21,3 +21,8 @@ catalog status for exceeding700characters. The status was shortened while
 retaining historical record scope and the BF16-oracle/FP32-fidelity limitation.
 All19 browser tests now pass locally; detailed scopes and all numeric evidence
 remain unchanged. No test limit was relaxed.
+
+Cache-busted live checks now confirm the own-runtime precision note, both exact
+current package records in the33-package catalog, the two-card rendered page,
+and a byte-identical source-audit evidence link. See live-check-1346.json and
+live-catalog-1347.json. The full latest-commit CI watch remains separate.
