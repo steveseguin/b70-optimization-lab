@@ -93,3 +93,15 @@ existing p33 variant6/split1, first exact CPU arithmetic and same-owner3-case mi
 GDN-QKV's aggregate profile includes mixed formats; do not label it Q6-only time.
 Before another full model suite, archive verified closed candidate state binaries
 to recover file records; preserve original failed-request and JSON evidence.
+
+## Q6 micro exact and faster — 07:28 UTC
+
+The [Q6 micro](qkv-q6-p33/micro/RESULT.md) independently passes all84 pairs against
+saved baseline bytes. Summed measured event latency is0.30441 of control; both
+orders improve, all72 measured pairs retained. This supports one full-engine
+candidate combining the48 verified attention sites with only22 Q6 GDN-QKV sites.
+The arithmetic proof covers all binary16 patterns and signed scales; three real
+payloads and full output bytes are authenticated. No full22 payload rescan is
+needed merely to repeat that proof. The complete model gate still compares all
+original prompt tokens/full states. Finish closed candidate archival before that
+suite; do not publish micro timing as model speed or merge different sessions.

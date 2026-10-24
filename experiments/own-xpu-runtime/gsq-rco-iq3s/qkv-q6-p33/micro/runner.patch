@@ -1,0 +1,44 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/runner.cpp
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/runner.cpp
+@@ -23,7 +23,7 @@
+  try{struct stat a{},b{},c{};need(!fstat(fd,&a)&&S_ISREG(a.st_mode),"regular input");
+   if(spec)need(uint64_t(a.st_dev)==spec->dev&&uint64_t(a.st_ino)==spec->ino&&uint64_t(a.st_size)==spec->size&&uint64_t(a.st_mtim.tv_sec)*1000000000+a.st_mtim.tv_nsec==spec->mtime&&uint64_t(a.st_ctim.tv_sec)*1000000000+a.st_ctim.tv_nsec==spec->ctime,"model identity");
+   else need(size_t(a.st_size)==bytes&&offset==0,"fixture exact extent");
+-  need(offset<=size_t(a.st_size)&&bytes<=size_t(a.st_size)-offset&&bytes<=16711680,"bounded read");std::vector<uint8_t>v(bytes);size_t done=0;
++  need(offset<=size_t(a.st_size)&&bytes<=size_t(a.st_size)-offset&&bytes<=21504000,"bounded read");std::vector<uint8_t>v(bytes);size_t done=0;
+   while(done<bytes){guard();auto n=pread(fd,v.data()+done,std::min(size_t(1<<20),bytes-done),offset+done);need(n>0,"short fixed read");done+=n;}
+   need(!fstat(fd,&b)&&!lstat(path,&c)&&same(a,b)&&same(a,c)&&sha(v)==digest,"fixed input changed/hash mismatch");::close(fd);return v;
+  }catch(...){::close(fd);throw;}
+@@ -33,14 +33,14 @@
+ struct Harness {
+  Device&d;Allocation slab;size_t &allocated,&transfers,&submissions;unsigned serial=0;
+  Harness(Device&v,size_t&a,size_t&t,size_t&n):d(v),allocated(a),transfers(t),submissions(n){slab=d.arena.allocate("micro:transfer",1048576,Memory::pinned,Category::pinned_slab,Lifetime::transfer);}
+- Allocation alloc(size_t n){guard();allocated+=n;need(allocated<=106481664,"device budget");return d.arena.allocate("micro:"+std::to_string(serial++),n,Memory::device,Category::scratch,Lifetime::transaction);}
++ Allocation alloc(size_t n){guard();allocated+=n;need(allocated<=169466880,"device budget");return d.arena.allocate("micro:"+std::to_string(serial++),n,Memory::device,Category::scratch,Lifetime::transaction);}
+  void complete(Event e){need(d.wait(e,std::chrono::seconds(30))&&d.complete(e)&&d.in_flight()==0,"event incomplete");d.retire_completed_events();guard();}
+- void upload(Allocation id,const std::vector<uint8_t>&v){need(v.size()==d.arena.row(id).bytes,"upload extent");for(size_t off=0;off<v.size();){guard();need(d.in_flight()==0,"restage pending");size_t n=std::min(size_t(1048576),v.size()-off);transfers+=n;need(transfers<=134217728,"transfer budget");std::memcpy(d.arena.row(slab).pointer,v.data()+off,n);CopyEngine cp(d);complete(cp.copy(id,off,slab,0,n,{}));off+=n;}}
+- std::vector<uint8_t> output(Allocation id){guard();need(d.in_flight()==0&&d.arena.row(id).bytes==5120,"output extent/pending");transfers+=5120;need(transfers<=134217728,"transfer budget");CopyEngine cp(d);complete(cp.copy(slab,0,id,0,5120,{}));auto*p=static_cast<uint8_t*>(d.arena.row(slab).pointer);return {p,p+5120};}
++ void upload(Allocation id,const std::vector<uint8_t>&v){need(v.size()==d.arena.row(id).bytes,"upload extent");for(size_t off=0;off<v.size();){guard();need(d.in_flight()==0,"restage pending");size_t n=std::min(size_t(1048576),v.size()-off);transfers+=n;need(transfers<=201326592,"transfer budget");std::memcpy(d.arena.row(slab).pointer,v.data()+off,n);CopyEngine cp(d);complete(cp.copy(id,off,slab,0,n,{}));off+=n;}}
++ std::vector<uint8_t> output(Allocation id){guard();need(d.in_flight()==0&&d.arena.row(id).bytes==20480,"output extent/pending");transfers+=20480;need(transfers<=201326592,"transfer budget");CopyEngine cp(d);complete(cp.copy(slab,0,id,0,20480,{}));auto*p=static_cast<uint8_t*>(d.arena.row(slab).pointer);return {p,p+20480};}
+  Case setup(const Data&v){
+-  Case c{};c.w=alloc(v.w.size());auto ew=alloc(v.expanded.size());c.x=alloc(v.x.size());c.ya=alloc(5120);c.yb=alloc(5120);c.workspace=alloc(81920);upload(c.w,v.w);upload(ew,v.expanded);upload(c.x,v.x);
+-  integrated::Matrix m{};m.type=iq3::Type::Q8_0;m.w=ew;m.x=c.x;m.y=c.yb;m.workspace=c.workspace;m.rows=2560;m.columns=6144;m.experts=1;m.count=1;m.span=2560;m.activation=m.output_type=iq3::Type::BF16;
+-  for(unsigned arm=0;arm<2;++arm){std::vector<PreparedCompute>cmd;d.begin_capture(cmd);try{if(arm==0)iq3::kopt::gemv(d,iq3::Type::Q8_0,c.w,c.x,c.ya,2560,6144,iq3::Type::BF16,iq3::Type::BF16,32,0);else{auto launch=p33::submit(d,{m},"p33.dense.segment",false,6);need(launch.passes==1,"candidate single pass");}d.end_capture();}catch(...){d.end_capture();throw;}need(cmd.size()==1,"exactly one captured kernel");c.cmd[arm]=std::move(cmd[0]);}
++  Case c{};c.w=alloc(v.w.size());auto ew=alloc(v.expanded.size());c.x=alloc(v.x.size());c.ya=alloc(20480);c.yb=alloc(20480);c.workspace=alloc(327680);upload(c.w,v.w);upload(ew,v.expanded);upload(c.x,v.x);
++  integrated::Matrix m{};m.type=iq3::Type::Q6_K;m.w=ew;m.x=c.x;m.y=c.yb;m.workspace=c.workspace;m.rows=10240;m.columns=2560;m.experts=1;m.count=1;m.span=10240;m.activation=m.output_type=iq3::Type::BF16;
++  for(unsigned arm=0;arm<2;++arm){std::vector<PreparedCompute>cmd;d.begin_capture(cmd);try{if(arm==0)iq3::kopt::gemv(d,iq3::Type::Q6_K,c.w,c.x,c.ya,10240,2560,iq3::Type::BF16,iq3::Type::BF16,32,0);else{auto launch=p33::submit(d,{m},"p33.dense.segment",false,6);need(launch.passes==1,"candidate single pass");}d.end_capture();}catch(...){d.end_capture();throw;}need(cmd.size()==1,"exactly one captured kernel");c.cmd[arm]=std::move(cmd[0]);}
+   return c;
+  }
+  EventTiming timed(const PreparedCompute&cmd){guard();++submissions;auto e=d.issue(cmd);need(d.wait(e,std::chrono::seconds(30))&&d.complete(e)&&d.in_flight()==0,"kernel incomplete");auto t=d.timing(e);need(t.start_ns>0&&t.end_ns>t.start_ns,"positive profiling interval");d.retire_completed_events();guard();return t;}
+@@ -49,9 +49,9 @@
+  need(out.is_absolute()&&!fs::exists(out)&&out.parent_path()==fs::canonical(out.parent_path()),"fresh canonical output");need(fs::create_directory(out),"output creation");deadline=std::chrono::steady_clock::now()+std::chrono::minutes(15);
+  bool entered=false,safe=true,passed=false;std::string error,cleanup,teardown;std::unique_ptr<Device>d;Backend*backend=nullptr;size_t pairs=0,allocated=0,transfers=0,submissions=0;
+  std::ofstream samples(out/"samples.jsonl");need(bool(samples),"samples file");
+- auto report=[&]()noexcept{try{std::ofstream f(out/"result.json");f<<"{\"schema\":\"gsq.attention-q8.native-micro.v1\",\"passed\":"<<(passed?"true":"false")<<",\"safe_to_exit\":"<<(safe?"true":"false")<<",\"card\":"<<card<<",\"profiling\":true,\"model_executed\":false,\"device_factory_entered\":"<<(entered?"true":"false")<<",\"completed_exact_pairs\":"<<pairs<<",\"attempted_kernel_submissions\":"<<submissions<<",\"device_bytes\":"<<allocated<<",\"transfer_bytes\":"<<transfers<<",\"warmup_cycles\":4,\"measured_cycles\":24,\"error\":"<<quote(error)<<",\"cleanup_error\":"<<quote(cleanup)<<",\"teardown\":"<<(teardown.empty()?"null":teardown)<<"}\n";f.flush();return bool(f);}catch(...){return false;}};
++ auto report=[&]()noexcept{try{std::ofstream f(out/"result.json");f<<"{\"schema\":\"gsq.qkv-q6.native-micro.v1\",\"passed\":"<<(passed?"true":"false")<<",\"safe_to_exit\":"<<(safe?"true":"false")<<",\"card\":"<<card<<",\"profiling\":true,\"model_executed\":false,\"device_factory_entered\":"<<(entered?"true":"false")<<",\"completed_exact_pairs\":"<<pairs<<",\"attempted_kernel_submissions\":"<<submissions<<",\"device_bytes\":"<<allocated<<",\"transfer_bytes\":"<<transfers<<",\"warmup_cycles\":4,\"measured_cycles\":24,\"error\":"<<quote(error)<<",\"cleanup_error\":"<<quote(cleanup)<<",\"teardown\":"<<(teardown.empty()?"null":teardown)<<"}\n";f.flush();return bool(f);}catch(...){return false;}};
+  try{
+-  std::array<Data,3>data;for(size_t i=0;i<3;++i){auto&s=fixed[i];data[i].x=read(s.x,0,12288,s.x_sha);data[i].expected=read(s.y,0,5120,s.y_sha);data[i].w=read(s.shard,s.offset,16711680,s.weight_sha,&s);data[i].expanded=iq3::expanded::expand(iq3::Type::Q8_0,data[i].w.data(),data[i].w.size(),6144);need(data[i].expanded.size()==18677760,"expanded exact extent");}
++  std::array<Data,3>data;for(size_t i=0;i<3;++i){auto&s=fixed[i];data[i].x=read(s.x,0,5120,s.x_sha);data[i].expected=read(s.y,0,20480,s.y_sha);data[i].w=read(s.shard,s.offset,21504000,s.weight_sha,&s);data[i].expanded=iq3::expanded::expand(iq3::Type::Q6_K,data[i].w.data(),data[i].w.size(),2560);need(data[i].expanded.size()==34611200,"expanded exact extent");}
+   guard();entered=true;safe=false;auto owner=make_sycl_device(card,true);backend=owner.get();d=std::make_unique<Device>(std::move(owner));Harness h(*d,allocated,transfers,submissions);std::array<Case,3>cases;
+   for(size_t i=0;i<3;++i)cases[i]=h.setup(data[i]);
+   for(unsigned phase=0;phase<2;++phase)for(unsigned cycle=0;cycle<(phase?24u:4u);++cycle)for(unsigned j=0;j<3;++j){

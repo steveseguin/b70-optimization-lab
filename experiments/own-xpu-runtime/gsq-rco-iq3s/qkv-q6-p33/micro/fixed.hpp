@@ -1,0 +1,11 @@
+#pragma once
+#include <array>
+#include <cstdint>
+namespace micro {
+struct Fixed { unsigned layer; const char *shard,*weight_sha,*x,*x_sha,*y,*y_sha; uint64_t offset,dev,ino,size,mtime,ctime; };
+inline constexpr std::array<Fixed,3> fixed{{
+{0,"/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf","9e75312b5c9516592495559a9242d458438b13a5e7ae7054cc87b8e6ac0a0979","/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/fixtures/layer-0-input.bin","40bdba6f9ac3c471e5b6e1b1c3069ac804331c3db74d71b270f6b03a6b715699","/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/fixtures/layer-0-expected.bin","0eaf670446a662b7df61357882ccf3ff6105eeed8e4ca7443a3402cae71cc058",892207104,2050ULL,2778523ULL,55063448064ULL,1792814866970869300ULL,1792814960708461300ULL},
+{24,"/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf","a80d48a93b26f6b420f6eadc1e8a7197640be6def0c75e4de268b13acabc1d81","/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/fixtures/layer-24-input.bin","c1793b23fc485ba4024d78482e5c26455ffe940bba2aa983567c8faabc8c8967","/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/fixtures/layer-24-expected.bin","38950bfe8894a99202e3b2130a54839ea9f909dcf184777c16cf3120668cffa2",26635711744,2050ULL,2778523ULL,55063448064ULL,1792814866970869300ULL,1792814960708461300ULL},
+{40,"/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf","461b34e9589efe1b5153a9ea3e07034ffa94f57ca677c2d3a4055a8f4615bd75","/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/fixtures/layer-40-input.bin","024861f91e17823eb0187bd16b80c7edfff2174f51a5ef110c135cf3374ef006","/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/fixtures/layer-40-expected.bin","d382b402be65cc2766c8fdc42dd77f506ffdafc7418d2883e535d24e6c0b81e7",45047689984,2050ULL,2778523ULL,55063448064ULL,1792814866970869300ULL,1792814960708461300ULL},
+}};
+}

@@ -1,0 +1,47 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/once.py
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/once.py
+@@ -17,8 +17,8 @@
+ 
+ P = HERE
+ R = observe.ROOT
+-UNIT = 'gsq-attention-micro-a'
+-STAGE = Path('/home/steve/own-xpu-runtime-results/gsq-attention-micro-a')
++UNIT = 'gsq-qkv-q6-micro-a'
++STAGE = Path('/home/steve/own-xpu-runtime-results/gsq-qkv-q6-micro-a')
+ 
+ 
+ def sha(p):
+@@ -40,6 +40,8 @@
+ def coordination_clear():
+     assert not any(os.path.lexists(p) for p in MARKERS),'coordination marker remains'
+ def build_plan():
++    manifest=json.loads((P/'manifest.json').read_text())
++    for p,h in manifest['authority'].items():assert sha(p)==h,p
+     proof=json.loads(BUILD.read_text());review=json.loads(REVIEW.read_text())
+     assert proof['passed'] and review['passed'] and sha(proof['binary'])==proof['binary_sha256']==review['binary_sha256'] and sha(BUILD)==review['native_build_sha256']
+     for group in ('source_sha256','objects_reused','dependencies'):
+@@ -49,11 +51,11 @@
+     baseline=json.loads(BASELINE.read_text());assert baseline['known_fault_baseline_matches'] and not baseline['identity_races']
+     assert baseline['holders']['3487303']['start_ticks']==63453537
+     for name in ('qwen38-27b-fp8','qwen38-27b-fp8-tp1-test'):assert baseline['units'][name]['ActiveState']=='inactive'
+-    files=[R/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',R/'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py',LANE/'operating/host-before-stop.json',Path(__file__),LANE/'operating/observe.py',LANE/'operating/qualify_once.py',BASELINE,BUILD,REVIEW,P/'manifest.json',storage,LANE/'storage/evidence/post-archive-host.json']
+-    return dict(schema='gsq.attention-micro-once-plan.v1',unit=UNIT,stage=str(STAGE),binary=proof['binary'],binary_sha256=proof['binary_sha256'],source_sha256={str(p):sha(p) for p in files},target_bdf='0000:23:00.0',empty_bdf='0000:47:00.0',expected_vision=[3487303,63453537],safe_properties=SAFE,pairs=84,kernels=168,device_bytes=106481664,pinned_bytes=1048576,root_floor_bytes=27000000000,root_cache_forecast_bytes=134217728,minimum_available_memory=8*1024**3,no_retry=True,native_admitted=False)
++    files=[P.parent/'selection.json',P.parent/'evidence/cpu-proof.json',P.parent/'evidence/three-weight-census.json',P.parent/'evidence/fixture-copy.json',LANE/'attention-q8-p33/micro/once.py',LANE/'attention-q8-p33/micro/evidence/independent-wrapper-review.json',LANE/'attention-q8-p33/micro/evidence/device-a/review.json',R/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',R/'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py',LANE/'operating/host-before-stop.json',Path(__file__),LANE/'operating/observe.py',LANE/'operating/qualify_once.py',BASELINE,BUILD,REVIEW,P/'manifest.json',storage,LANE/'storage/evidence/post-archive-host.json']
++    return dict(schema='gsq.qkv-q6-micro-once-plan.v1',unit=UNIT,stage=str(STAGE),binary=proof['binary'],binary_sha256=proof['binary_sha256'],source_sha256={str(p):sha(p) for p in files},target_bdf='0000:23:00.0',empty_bdf='0000:47:00.0',expected_vision=[3487303,63453537],safe_properties=SAFE,pairs=84,kernels=168,device_bytes=169466880,pinned_bytes=1048576,root_floor_bytes=27000000000,root_cache_forecast_bytes=134217728,minimum_available_memory=8*1024**3,no_retry=True,native_admitted=False)
+ def exact_result(result):
+-    assert result['schema']=='gsq.attention-q8.native-micro.v1' and result['passed'] and result['safe_to_exit']
+-    assert result['completed_exact_pairs']==84 and result['attempted_kernel_submissions']==168 and result['device_bytes']==106481664 and result['transfer_bytes']<=134217728
++    assert result['schema']=='gsq.qkv-q6.native-micro.v1' and result['passed'] and result['safe_to_exit']
++    assert result['completed_exact_pairs']==84 and result['attempted_kernel_submissions']==168 and result['device_bytes']==169466880 and result['transfer_bytes']<=201326592
+     assert result['warmup_cycles']==4 and result['measured_cycles']==24 and not result['error'] and not result['cleanup_error']
+     t=result['teardown'];assert t['safe_to_exit'] and t['exit_code']==0 and t['in_flight']==0 and t['live_bytes']==0
+     manifest=json.loads((P/'manifest.json').read_text());f=STAGE/'result/samples.jsonl';assert f.stat().st_size<=256*1024
+@@ -113,7 +115,7 @@
+         '/usr/bin/env', '-i', *[k+'='+v for k, v in env.items()], '/usr/bin/taskset', '-c', '0-3,16-19',
+         proof['binary'], '--run', '--card', '0', '--output', str(STAGE/'result')]
+     admission = dict(before=before, command=cmd, proof_sha256=sha(evidence), binary_sha256=proof['binary_sha256'],
+-        monitor_sha256=sha(__file__), observer_sha256=sha(observe.__file__), target=target, plan=plan, scope='fixed real-weight isolated attention AB/BA micro; not model throughput', retry=False)
++        monitor_sha256=sha(__file__), observer_sha256=sha(observe.__file__), target=target, plan=plan, scope='fixed real-weight isolated Q6 QKV AB/BA micro; not model throughput', retry=False)
+     (STAGE/'admission.json').write_text(json.dumps(admission, indent=2)+'\n')
+     # From this point a failed/timeout launcher may still have created the unit.
+     # No exception may abandon monitoring or start another owner.

@@ -1,0 +1,35 @@
+{
+  "schema": "ownrt.gsq.qkv-q6-micro-independent-wrapper-review.v1",
+  "passed": true,
+  "scope": "Finite source-only coordinator/manifest review with retained six author CPU checks; no plan invocation/native/device/service/model reads",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/once.py": "6975210baa9b902433e52145340320ad4329161bbf214fd29b62186ea37e1e08",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/once.patch": "83c085b11cdbcbfb7d6e2be27110af012d3273d8d84f46897a82692bcaafeb8c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/OPERATING.md": "2b0561e7a327e0b29e2565c4e8d5762e20d82612ebf7b305e20e9d80fe262ad7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/test_once.py": "90efd030a4338171b9f0cd54b2dd4d98a38e6eff90626db04638ea8401765c24",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/manifest.json": "e8bcdd38127260dbe37ab9a250666853efb626447ed864035a7e75102c07d8a7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/preparation-tests.json": "ab978508d5a735cf0cbe774e6835def83281e3ee257ee81361f822b2f33ee795",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/preparation-tests.log": "b5a75c72453fb737a022fe788befdc467617f4a26bdfc1b5317ac1414f81d070",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/independent-review.json": "9c8566c73c985c6b827597af435fcd5f7f06bd7583ee2ec6ac3a2d7291e73038",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/native-build.json": "6a2ef410d8d8612759cfe18f520f8b50e67b090ae9046e0f9dd1b7315832b3b5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/once.py": "a34e26582ea0f2f8e8e44513bd3ea88997e12c41b464bbd010dc4430d95e965e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/operating/observe.py": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef"
+  },
+  "native_build_sha256": "6a2ef410d8d8612759cfe18f520f8b50e67b090ae9046e0f9dd1b7315832b3b5",
+  "binary_sha256": "bb3bd27ddee85dd7fb26a3628a51c5a58a9f01768a7f5039ed2a196878874ade",
+  "author_cpu_checks": 6,
+  "reviewer_repeated_tests": false,
+  "checks": [
+    "Exact unified patch against admitted attention wrapper independently verified",
+    "Manifest schedule exactly4warmup+24measured cycles times3cases, AB/BA alternating and case rotation unchanged",
+    "Every fixed input/output fixture and tensor digest matches selected layer0/24/40 authority",
+    "Updated result gates require169466880device bytes and transfer<=201326592 with84exactpairs168kernels",
+    "Nice19/closed env/BDF23-only native contact/BDF47empty/vision PIDstart/queues/fault/memory guards unchanged",
+    "Single launch and sticky first error; at most one cooperative SIGTERM; uncertain physical drain retains monitoring; native safe teardown and every full-output oracle hash required"
+  ],
+  "limitations": [
+    "Source-only review is not current host admission or device execution",
+    "Only three fixed Q6 projections are qualified by the forthcoming micro; no full22-site Engine correctness or throughput proof",
+    "Isolated balanced repeated event latency must not be promoted as whole-model speed"
+  ]
+}

@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 24, 03:28 EDT — four-card host: exact Q6 kernel improvement verified.**
+The fixed three-case Q6 comparison passes all84 exact pairs and independent audit.
+Candidate GPU event time is about30.4% of control, with both execution orders improved;
+this is isolated repeated kernel timing, not model throughput. The owner exited safely,
+target cards are empty, vision unchanged and no new GPU faults. Prepare a full-engine
+candidate combining the verified attention change with only22 Q6 GDN-QKV projections.
+Full original prompt correctness remains required. Fourteen closed interrupted-run
+state groups are now losslessly archived; completion-state archival is continuing
+before any full suite to preserve file-record headroom. No model/settings changes.
+[Q6 kernel result](experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/RESULT.md).
+
 **October 24, 03:16 EDT — four-card host: attention candidate passes all twelve prompt pairs.**
 The five remaining pairs pass independent raw readback: every token and full target
 state matches baseline. Together with the seven earlier pairs, all24 arms are exact.

@@ -1,0 +1,68 @@
+{
+  "schema": "ownrt.gsq.qkv-q6-micro-independent-review.v1",
+  "passed": true,
+  "scope": "Source, retained CPU proof and native compile-only artifact review; no native execution by reviewer",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/README.md": "3892b5254b6065ae2c7e8c47e03e56b2f8dde09273ba5beb5db6b841bf465335",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/prepare.py": "fd2be5fbcc75989f0f2e6904186f0961d9fd9f98ea191fb624f823dbb5132c7f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/selection.json": "76d2675edd1ad4051eddd061a463809f5cfe4b558a1e221d778e7b16c2bab3c8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/fixture.cpp": "15be2089385f8a82ccda6a60a69d52f97d5cb463f4edecb9923913febd6b5b1c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/fixture_math.hpp": "0ed6a5e9d43a51a3f3b95622e172a5a6181e50be32931f33b8f462be430bb1f8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/build_cpu.py": "d25d47fcd7f981885ea068f4273384d9fb8e775eb8bbfbfee201cc5c574e09da",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/test_preparation.py": "3f77ac258f5ef46b03302d5c2b5aabc21ad1b78c5d0a9c762bc11f00b5d1a6ee",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/evidence/cpu-proof.json": "e74b4520db0348aaa735a3dbae211747148d72377a4b8fa2e1e7d3bd2701e170",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/evidence/fixture-copy.json": "5fcf544a75d42dd124625834f479d8243cf72cd07c538c937ccf34ec4a06602c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/evidence/three-weight-census.json": "f3579b492bba83efdeaefe697323eb59be84862fd09cd0ecc7eecda2683c8ffe",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/runner.cpp": "1ee6946d5172ddf370528af990df015e2346c072c75ea87b07aedbf55c1ba833",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/runner.patch": "5db874a3550a4dc41a0c1177f73fef14bf7cd6fdb31e7ce2ec14e95203e92eb9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/selected.hpp": "9be7ce5bc767f91904ba58e74f712dc9379d327d5911e332d7296d2b39224ee3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/fixed.hpp": "d5971349f367f9e7de853e9e34900fdb75f45e1880711daa8d1f9738ff2ba8dc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/seal_weights.py": "1bd9997215bfee6fa9e05a5301248e1904b2174b84b0c1c19eb428be0f00ad6a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/copy_fixtures.py": "a3a3450a6029e56e88db722d9712f0d56f96c6cf78f5ed5d636adce43489ec85",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/build.py": "bd3da1be97a223fd301433c60ba28ff50c50eeef0384cb84af3c7a38dbd130b4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/build.patch": "8f35386aaabd19583ef8d59c011552119fde05ae4c9c6106d32d6554d7a5cbe5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/source-pins.json": "b2fdc6ea4bd2b14d7cdc55567e314218ddc92d3286653fed0f37901ccfa0ab0c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/native-build.json": "6a2ef410d8d8612759cfe18f520f8b50e67b090ae9046e0f9dd1b7315832b3b5"
+  },
+  "native_build_sha256": "6a2ef410d8d8612759cfe18f520f8b50e67b090ae9046e0f9dd1b7315832b3b5",
+  "binary_sha256": "bb3bd27ddee85dd7fb26a3628a51c5a58a9f01768a7f5039ed2a196878874ade",
+  "source_pins": 438,
+  "new_dependencies": 34,
+  "objects_reused": 39,
+  "unique_local_files_rehashed": 477,
+  "selected_sites": 22,
+  "qualified_micro_cases": [
+    0,
+    24,
+    40
+  ],
+  "cpu_exact_checks": 17915939,
+  "micro_device_bytes": 169466880,
+  "micro_transfer_cap_bytes": 201326592,
+  "fixture_bytes": 76800,
+  "retained_three_weight_scan_bytes": 64512000,
+  "scan_scale_counts": {
+    "subnormal": 303173,
+    "normal": 4027
+  },
+  "checks": [
+    "Exact22 Q6_K gdn.qkv sites reconstructed from actual graph+new census;14rank0/8rank1; N10240K2560",
+    "Actual p6 decode8 and extracted unmodified p33 dense_lane preserve scale/code products,eight-element lane order,stride256,adjacentSG32 tree,BF16 input/output",
+    "Retained strict GNU full-shape and half/signedscale/code/exceptional bitproof passed without tolerance; all proof inputs rehashed",
+    "Six saved profile input/output fixtures rehashed and bound to profile and baseline indices, unique graph writers and actual scratch allocation source",
+    "Three immutable packed tensor digests and held-stat identities match fixed.hpp authority; model payload not reread by reviewer",
+    "Geometry-only runner diff preserves84pairs168kernels,balanced24measured cycles4warmupcycles,full output oracle per pair,timing before event retirement",
+    "All payload verification before Device; one owner,no retry; incomplete synchronization retains owner and first error; separate backend synchronization precedes safe shutdown",
+    "Actual new micro.d equals34 recorded dependencies;39 old non-entry objects match unchanged control link; compiler/newobject/binary/offline logs rehashed",
+    "Required p6 and p33 Q6K2560Split1 kernel families linked; no changed shared header or object reuse mismatch"
+  ],
+  "native_invoked": false,
+  "model_payload_read_by_reviewer": false,
+  "limitations": [
+    "No native equivalence or performance result yet; fixed full-output native gate remains required",
+    "Only three fixed representative weightpayloads scanned, not all22sites; no full Engine dispatch implementation/admission",
+    "CPU exceptional-value equality does not independently prove device NaN semantics",
+    "Isolated repeated event micro is not model throughput,cold-cache evidence or a speed record",
+    "Future operational wrapper must independently preserve BDF/PID/fault/drain and safe unit policy"
+  ]
+}

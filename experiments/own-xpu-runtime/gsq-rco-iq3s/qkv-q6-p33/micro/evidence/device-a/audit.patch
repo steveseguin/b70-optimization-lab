@@ -1,0 +1,42 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/device-a/audit.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/device-a/audit.py
+@@ -3,8 +3,8 @@
+ from pathlib import Path
+ import hashlib,json,statistics,gzip,collections,stat
+ R=Path('/home/steve/llm-optimizations')
+-P=R/'experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro'
+-S=Path('/home/steve/own-xpu-runtime-results/gsq-attention-micro-a')
++P=R/'experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro'
++S=Path('/home/steve/own-xpu-runtime-results/gsq-qkv-q6-micro-a')
+ D=Path(__file__).resolve().parent
+ index={}
+ def digest(p):
+@@ -37,9 +37,10 @@
+ assert term['passed'] and term['result']==result and not term['single_term_attempted'] and term['first_error'] is None
+ assert term['observed_native_target_fd'] and term['target_descriptors_empty'] and term['qualification_limit'] is None
+ assert term['status']['MainPID']=='0' and term['status']['ActiveState']=='inactive'
++assert result['schema']=='gsq.qkv-q6.native-micro.v1'
+ assert result['passed'] and result['safe_to_exit'] and result['card']==0 and result['profiling'] and not result['model_executed']
+ assert result['completed_exact_pairs']==84 and result['attempted_kernel_submissions']==168
+-assert result['device_bytes']==106481664 and result['transfer_bytes']==107065344
++assert result['device_bytes']==169466880 and result['transfer_bytes']==171801600
+ assert not result['error'] and not result['cleanup_error']
+ t=result['teardown'];assert t['safe_to_exit'] and t['exit_code']==0 and t['idle_marker_complete'] and t['in_flight']==t['live_bytes']==0 and not t['error']
+ before=ad['before'];native=term['native_identity'];seen=0;active=0
+@@ -77,7 +78,7 @@
+ def aggregate(rs):
+  a=[r['A_end_ns']-r['A_start_ns'] for r in rs];b=[r['B_end_ns']-r['B_start_ns'] for r in rs]
+  return dict(pairs=len(rs),A_ns=stats(a),B_ns=stats(b),B_over_A_paired=stats([y/x for x,y in zip(a,b)]),B_over_A_sum=sum(b)/sum(a),A_over_B_sum=sum(a)/sum(b))
+-summary={'all':aggregate(measured),'by_case':{str(layer):{'all_orders':aggregate([r for r in measured if r['layer']==layer]),**{order:aggregate([r for r in measured if r['layer']==layer and r['order']==order]) for order in ('AB','BA')}} for layer in (0,23,47)},'by_order':{order:aggregate([r for r in measured if r['order']==order]) for order in ('AB','BA')}}
++summary={'all':aggregate(measured),'by_case':{str(layer):{'all_orders':aggregate([r for r in measured if r['layer']==layer]),**{order:aggregate([r for r in measured if r['layer']==layer and r['order']==order]) for order in ('AB','BA')}} for layer in (0,24,40)},'by_order':{order:aggregate([r for r in measured if r['order']==order]) for order in ('AB','BA')}}
+ # Retain all small raw run files except regenerable native compiler caches (index those too).
+ for p in sorted(S.rglob('*')):
+  if p.is_file():digest(p)
+@@ -87,6 +88,6 @@
+ with (D/'artifact-index.jsonl.gz').open('xb') as out:
+  with gzip.GzipFile(fileobj=out,mode='wb',mtime=0) as z:
+   for item in sorted(index.values(),key=lambda x:x['path']):z.write((json.dumps(item,sort_keys=True)+'\n').encode())
+-receipt=dict(schema='ownrt.gsq.attention-micro-independent-device-review.v1',passed=True,exact_pairs=84,measured_pairs=72,excluded_warmup_pairs=12,kernel_submissions=168,native_identity=native,observed_target_bdf='0000:23:00.0',observed_contact_samples=seen,active_unit_safe_property_samples=active,physical_drain=True,unchanged_vision_and_fault_baseline=True,cooperative_signals=0,safe_native_teardown=True,terminal_duration_seconds=term['duration'],binary_sha256=ad['binary_sha256'],native_build_sha256=ad['proof_sha256'],source_pins_rehashed=len(index),statistics=summary,source_sha256={str(Path(__file__).relative_to(R)):digest(__file__)},artifact_index_sha256=hashlib.sha256((D/'artifact-index.jsonl.gz').read_bytes()).hexdigest(),limitations=['One continuously owned device and three fixed saved real projection inputs; repeated isolated kernel event latency, not end-to-end model throughput or a speed record','Twelve warmup pairs excluded by preregistration; all72 measured pairs retained with no outlier filter; each case/position/order combination four observations','No model weight reread by auditor: hash-verifying compiled reader and native successful control flow bind the three exact payloads before Device construction','Output equality is recorded full-byte native comparison plus exact per-arm output SHA against rehashed saved baseline output fixtures; successful runtime did not emit separate full output blobs','Final unit is collected: final show fields are default not-found values, not original safe-property or exit-code evidence. Three active samples prove safe properties; native teardown proves safe exit and passive metadata proves physical drain','No new device, service, kernel, inventory or model operation by auditor'])
++receipt=dict(schema='ownrt.gsq.qkv-q6-micro-independent-device-review.v1',passed=True,exact_pairs=84,measured_pairs=72,excluded_warmup_pairs=12,kernel_submissions=168,native_identity=native,observed_target_bdf='0000:23:00.0',observed_contact_samples=seen,active_unit_safe_property_samples=active,physical_drain=True,unchanged_vision_and_fault_baseline=True,cooperative_signals=0,safe_native_teardown=True,terminal_duration_seconds=term['duration'],binary_sha256=ad['binary_sha256'],native_build_sha256=ad['proof_sha256'],source_pins_rehashed=len(index),statistics=summary,source_sha256={str(Path(__file__).relative_to(R)):digest(__file__)},artifact_index_sha256=hashlib.sha256((D/'artifact-index.jsonl.gz').read_bytes()).hexdigest(),limitations=['One continuously owned device and three fixed saved real projection inputs; repeated isolated kernel event latency, not end-to-end model throughput or a speed record','Twelve warmup pairs excluded by preregistration; all72 measured pairs retained with no outlier filter; each case/position/order combination four observations','No model weight reread by auditor: hash-verifying compiled reader and native successful control flow bind the three exact payloads before Device construction','Output equality is recorded full-byte native comparison plus exact per-arm output SHA against rehashed saved baseline output fixtures; successful runtime did not emit separate full output blobs','Final unit is collected: final show fields are default not-found values, not original safe-property or exit-code evidence. Three active samples prove safe properties; native teardown proves safe exit and passive metadata proves physical drain','No new device, service, kernel, inventory or model operation by auditor'])
+ with (D/'review.json').open('x') as f:json.dump(receipt,f,indent=2,ensure_ascii=False);f.write('\n')
+ print(json.dumps({'passed':True,'receipt_sha256':hashlib.sha256((D/'review.json').read_bytes()).hexdigest(),'measured':72,'B_over_A':{k:v['all_orders']['B_over_A_sum'] for k,v in summary['by_case'].items()}}))
