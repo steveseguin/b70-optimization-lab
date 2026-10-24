@@ -13,8 +13,9 @@ The attention projection candidate now matches baseline on all twelve prompt pai
 ([separate-session correctness completion](attention-q8-p33/completion/RESULT.md)).
 Its [same-owner kernel comparison](attention-q8-p33/micro/RESULT.md) reduces measured
 isolated event latency with exact bytes; no full-model speed improvement is claimed.
-The Q6 combination has now passed the full gate linked above; lossless evidence
-bundling is the next iteration-cost task.
+The Q6 combination has now passed the full gate linked above.
+[Lossless evidence bundling](state-bundle/RESULT.md) also passes exact full-state
+qualification. Next is a current-binary kernel-cost profile to select the next change.
 
 ## Model and source
 

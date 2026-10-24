@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 24, 04:24 EDT — four-card host: lossless capture passes independent audit.**
+Both fixed test runs match baseline tokens and every target-state byte. Repeated and
+closed captures pass; both owners exited safely, target cards are empty and vision
+is unchanged. The format reduces6,330 target-state files to24 without changing model
+arithmetic. No speed claim comes from this test. USB has4.87GB free; root27.35GB.
+Next is a short kernel-cost profile of the current faster engine, plus verified
+compression of closed evidence before another full suite. No new kernel chosen yet.
+[Capture result](experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/RESULT.md).
+
 **October 24, 03:52 EDT — four-card host: combined engine passes all twelve prompts, measured22.13 MTP tokens/s.**
 Independent readback verifies all24 arms against original baseline tokens/full state.
 This one resident cap128 run measures14.85 target-only /22.13 MTP tokens/s, with similar

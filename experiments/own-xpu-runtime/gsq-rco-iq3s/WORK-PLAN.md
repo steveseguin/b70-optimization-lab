@@ -129,3 +129,16 @@ explicit repeatedDUMP/RESET/FINISH proof and incomplete-write preservation. It t
 MFT/file overhead without changing model arithmetic or token timing. Qualify format
 with CPU parity/failure/lifecycle and a bounded real capture; no full26speedrerun solely
 for format. USB byte compression remains necessary before later full suites.
+
+## Bundles qualified; refresh current costs — 08:24 UTC
+
+[Independent bundle readback](state-bundle/RESULT.md) passes both prompt00 arms,
+all6,324 original ranges and complete lifecycle checks. Adopt this exact evidence
+format for subsequent internal runs. No further format-only model run is needed.
+Next profile the current combined binary with existing class instrumentation,
+one disjoint eight-output warmup and one exact prompt00 target-only request.
+No rebuild is needed. These counters include prompt processing and decode and
+are diagnostic costs, not throughput. Select the next worthwhile kernel from
+current evidence; mixed-format class totals cannot be assigned by layer counts.
+Compress verified closed combined evidence before another full suite: bundling
+solves file fanout but does not reduce raw payload bytes.
