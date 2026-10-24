@@ -1,0 +1,9 @@
+Four fixed raw bundles only: prompt00 target and MTP, ranks0/1. Potential recovery443,486,336B. Initial/warmup, other prompts, every index/seal/stateJSON/draft remain untouched. No new compressed archive is created.
+
+The private import reuses frozen canonical helper64b4c013 held-descriptor, complete hash/member streaming and durable metadata primitives. The generic Job and prior helper are unchanged. `--plan` shows metadata only. All operations refuse while BINDING_SHA is unset. Final binding must name the completed actual Q6 independent review/index/terminal, require exact physical payload SHA/length equality to the old IQ3 member, and explicitly release these four paths only.
+
+Root runs separate `--verify --batch N` and `--release-verified --batch N` phases after review. Verification reads the full raw bundle, full compressed canonical archive, and its one complete member. It writes a durable raw identity/metadata plus canonical-member restore map before success. Release revalidates both held identities and hashes before unlinking only the raw bundle. No overwrite or automatic retry. A failure is retained. Both source/canonical must be the expected mounted USB device; metadata lives in a separate private NVMe directory with27GB+64MiB floor unchanged.
+
+Restore from the retained canonical archive by validating its compressed SHA, exact member name/size/SHA and the recorded redirect SHA; extract only that member to the original raw path and restore supported original metadata. Original inode/ctime are historical identity and cannot be recreated. Root retains redirects/receipts in tracked evidence after operation.
+
+Preparation uses only retained metadata and tiny temporary NVMe+/dev/shm fixtures. No real payload or release is performed by preparation. A distinct final bound review is required before operations.

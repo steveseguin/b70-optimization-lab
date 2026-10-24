@@ -1,0 +1,69 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/audit.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/audit.py
+@@ -4,15 +4,15 @@
+ """
+ from pathlib import Path
+ import argparse,gzip,hashlib,importlib.util,json,os,resource,stat,time
+-CAND=Path(__file__).resolve().parent;P=CAND/'operating';D=P/'evidence/device-a';L=CAND.parents[1];R=L.parents[2]
++P=Path(__file__).resolve().parent;CAND=P.parent;D=P/'evidence/device-a';L=CAND.parent;R=L.parents[2]
+ BASE=L/'baseline/audit.py';BASE_SHA='43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab'
+ assert hashlib.sha256(BASE.read_bytes()).hexdigest()==BASE_SHA
+ s=importlib.util.spec_from_file_location('completion_baseline_audit_helpers',BASE);B=importlib.util.module_from_spec(s);s.loader.exec_module(B)
+ read,sha,require=B.read,B.sha,B.require
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a')
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-dense-q6-p33-engine-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-p33-engine-a')
+ PRIOR=L/'baseline/evidence/independent-a/review.json';PRIOR_SHA='f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb'
+-BINARY='97348925367e1ad67313cf9863d0c4cba47abea871c386972983965e036ea4b2'
++BINARY='a0f9ffc58de704a276b237cbeec2b338ee873c0872bcae2da2214286aa5cce50'
+ REFERENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/resident-suite.json')
+ PARENT_AUDITOR_SHA='92b47efce21929a4f6f3bf752967cc67f657e9071b2a874001ebef592718598c'
+ BUNDLE_AUDITOR=L/'state-bundle/evidence/device-a/audit.py'
+@@ -21,6 +21,11 @@
+ s=importlib.util.spec_from_file_location('iq3_closed_bundle_stream',BUNDLE_AUDITOR);U=importlib.util.module_from_spec(s);s.loader.exec_module(U)
+ OLD_INDEX=PRIOR.parent/'artifact-index.jsonl.gz'
+ OLD_INDEX_SHA='e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982'
++IMMEDIATE_PARENT=L/'expert-iq3xxs-block/engine/audit.py'
++IMMEDIATE_PARENT_SHA='4ef928677999aa1745afb900ea938dd07e911e1c28b6e29a9461e123c6b2dc3c'
++PLAN_SHA='a173939f134f6b71e9f43f29e32dc77652a4c9a9b2332140234ab9d9e460e507'
++BUILD_SHA='33b6add96c907a24a95b9b3161f96b1b78fb9edc4e9d4a050b11edf8e5f8c6ab'
++require(sha(IMMEDIATE_PARENT)==IMMEDIATE_PARENT_SHA,'frozen qualified fullsuite auditor')
+ 
+ def expected_members(bases):
+  expected={str((base/f'rank{rank}/state-2147483647').relative_to(EVIDENCE)):{} for base in bases for rank in (0,1)}
+@@ -36,10 +41,11 @@
+  return expected
+ 
+ def run(plan_sha):
++ require(plan_sha==PLAN_SHA,'fixed admitted plan')
+  require(os.getpriority(os.PRIO_PROCESS,0)==19,'nice19');require(os.sched_getaffinity(0)<=set(range(8,16))|set(range(24,32)),'helper cores');resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+  D.mkdir(parents=True,exist_ok=True)
+  require(not (D/'review.json').exists() and not (D/'artifact-index.jsonl.gz').exists(),'exclusive audit outputs')
+- start=time.monotonic();receipt=dict(schema='ownrt.gsq.iq3xxs-block-engine-independent-device.v1',passed=False,scope='All24 baseline-exact measured arms in one persistent rank pair; descriptive same-run target/MTP timings',combined_timing_claim=False,device_executed_by_reviewer=False)
++ start=time.monotonic();receipt=dict(schema='ownrt.gsq.dense-q6-engine-independent-device.v1',passed=False,scope='All24 baseline-exact measured arms in one persistent rank pair; descriptive same-run target/MTP timings',combined_timing_claim=False,device_executed_by_reviewer=False)
+  try:
+   require(sha(PRIOR)==PRIOR_SHA,'immutable independent baseline authority');prior=read(PRIOR)
+   require(prior['passed'] and prior['all12_exact'] and sha(REFERENCE)==prior['full_result_sha256'],'baseline authority');baseline=read(REFERENCE);refs={a['name']:a for p in baseline['prompts'] for a in p['arms']}
+@@ -54,7 +60,7 @@
+   require(plan['suite']['baseline_review_sha256']==PRIOR_SHA and plan['suite']['baseline_result_sha256']==prior['full_result_sha256'],'baseline admission')
+   for mapping in (plan['source_sha256'],plan['suite']['source_sha256'],plan['adapter']['source_sha256']):
+    for p,h in mapping.items():require(sha(R/p)==h,'admitted source '+p)
+-  native=read(plan['adapter']['build_receipt']);require(native['passed'] and native['mode']=='native' and sha(plan['adapter']['build_receipt'])==plan['adapter']['build_receipt_sha256'],'native receipt')
++  native=read(plan['adapter']['build_receipt']);require(native['passed'] and native['mode']=='native' and sha(plan['adapter']['build_receipt'])==plan['adapter']['build_receipt_sha256']==BUILD_SHA,'native receipt')
+   require(sha(plan['adapter']['binary'])==native['binary_sha256']==plan['adapter']['binary_sha256']==BINARY,'same candidate binary')
+   for mapping in (native['source_sha256'],native['object_sha256']):
+    for p,h in mapping.items():require(sha(R/p)==h,'native source/object '+p)
+@@ -127,10 +133,10 @@
+   dump_roots=[p.parent for p in EVIDENCE.rglob('state.json') if p.parent.name.startswith('state-')]
+   expected_bases=[EVIDENCE]+[EVIDENCE/w['name'] for w in full['warmup']]+[EVIDENCE/name for name in names]
+   require(len(dump_roots)==54 and {p.parent for p in dump_roots}=={base/f'rank{rank}' for base in expected_bases for rank in (0,1)},'exact27 paired dump groups')
+-  receipt.update(passed=True,bundles=54,bundle_captures=captures,original_index_sha256=OLD_INDEX_SHA,initial_and_warmup_semantic_baseline_required=False,explicit_final_repeat_and_closed_stamps_verified=True,requests=26,measured_arms=24,exact_pairs=12,all12_exact=True,reset_requests=26,paired_state_dump_groups=27,same_persistent_rank_pair=True,baseline_review_sha256=PRIOR_SHA,baseline_result_sha256=prior['full_result_sha256'],plan_sha256=sha(CONTROL/'plan.json'),full_result_sha256=sha(fullpath),native_binary_sha256=BINARY,rank_pids=full['rank_pids'],prompts=checked,descriptive_timing=derived,owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(digests),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Exact same-model original-baseline tokens and target-state qualification; not an external-engine or general model-quality evaluation','All timing samples and early EOS retained; no cross-binary causal speed claim from separate sessions','Original baseline rawfiles may be archived; immutable index lengths/hashes, full-result maps and independent full-readback authority remain bound','Initial/warmup captures have sealed payload/inventory/length verification; their baseline hash differences are reported without claiming deterministic initialization','The micro remains physically unqualified; this full Engine must independently pass both physical-contact gates','Physical ownership/fault findings use retained evidence; reviewer performs no live host/device queries'])
++  receipt.update(passed=True,bundles=54,bundle_captures=captures,original_index_sha256=OLD_INDEX_SHA,initial_and_warmup_semantic_baseline_required=False,explicit_final_repeat_and_closed_stamps_verified=True,requests=26,measured_arms=24,exact_pairs=12,all12_exact=True,reset_requests=26,paired_state_dump_groups=27,same_persistent_rank_pair=True,baseline_review_sha256=PRIOR_SHA,baseline_result_sha256=prior['full_result_sha256'],plan_sha256=sha(CONTROL/'plan.json'),full_result_sha256=sha(fullpath),native_binary_sha256=BINARY,rank_pids=full['rank_pids'],prompts=checked,descriptive_timing=derived,owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(digests),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Exact same-model original-baseline tokens and target-state qualification; not an external-engine or general model-quality evaluation','All timing samples and early EOS retained; no cross-binary causal speed claim from separate sessions','Original baseline rawfiles may be archived; immutable index lengths/hashes, full-result maps and independent full-readback authority remain bound','Initial/warmup captures have sealed payload/inventory/length verification; their baseline hash differences are reported without claiming deterministic initialization','This nineteen-site selector extension uses the existing kernel; this full Engine must independently pass both physical-contact gates','Physical ownership/fault findings use retained evidence; reviewer performs no live host/device queries'])
+  except BaseException as e:receipt['error']=type(e).__name__+': '+str(e);raise
+  finally:
+-  receipt.update(auditor_sha256=sha(__file__),parent_auditor_sha256=BASE_SHA,fullsuite_parent_sha256=PARENT_AUDITOR_SHA,bundle_parser_sha256=BUNDLE_AUDITOR_SHA,elapsed_seconds=time.monotonic()-start)
++  receipt.update(auditor_sha256=sha(__file__),immediate_parent_auditor_sha256=IMMEDIATE_PARENT_SHA,parent_auditor_sha256=BASE_SHA,fullsuite_parent_sha256=PARENT_AUDITOR_SHA,bundle_parser_sha256=BUNDLE_AUDITOR_SHA,elapsed_seconds=time.monotonic()-start)
+   with (D/'review.json').open('x') as f:json.dump(receipt,f,indent=2);f.write('\n')
+  print(json.dumps({'passed':True,'exact_arms':24,'requests':26,'review_sha256':sha(D/'review.json')}))
+ if __name__=='__main__':

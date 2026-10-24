@@ -1,15 +1,16 @@
 # Current Workspace State
 
-**October 24, 06:53 EDT — four-card host: full Q6 extension screen running.**
-Both native owners have verified physical contact and no monitor error. The fixed
-26-request screen checks every measured token and full target state against the
-original baseline; no candidate speed/qualification result yet. Source/build and
-309 selector checks passed. Verified consolidation of41 duplicate archives recovered
-3.59GB, with original member bytes/metadata retained through tracked restore maps.
-USB9.01GB/root27.28GB and114.27GB available RAM passed admission. No concurrent
-compilation or archive/model I/O. Protected vision and prior fault baseline retained.
-[Candidate](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/STATUS.md);
-[archive restore mapping](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/canonical-archives/RESULT.md).
+**October 24, 07:05 EDT — four-card host: qualified Q6 binary class diagnostic running.**
+The full candidate audit passed:16.17 target/23.44 MTP in the internal128-output
+screen,188.7MB added memory. The small MTPdifference is not a causal gain claim;
+priorbinary long-context coverage stays separate. Four exact duplicate bundles
+now use verified canonical restore maps, recovering443MB. Samebinary diagnostic
+uses one excluded8-output warmup and originalprompt00target128, fullstate/physical
+closure gates, sixbundles. No concurrent compile/archive I/O or model/settings
+changes. USB3.13GB/root27.25GB at admission. Protected vision remains unchanged.
+[Qualified result](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/operating/RESULT.md).
+
+
 
 
 

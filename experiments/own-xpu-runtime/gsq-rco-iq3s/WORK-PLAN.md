@@ -244,3 +244,14 @@ actualphysicalcontact, no monitorerror. Fixed26suite runs with originalexactness
 gates. IQ2simpleblockhoist is closed by source appraisal: existingdecode8 already
 amortizes metadata. AfterQ6 result, refresh currentclass attribution before choosing
 next kernel; integerroute-rank earlyexit is a source-supported possibility only.
+
+
+## October24 11:05UTC — Q6 exact pass, current class diagnostic running
+
+Independent54bundle/24arm audit8e9c passes,16.169987target/23.436774MTP,
+188,743,680B extra device allocation. Small MTPdifference is descriptive only;
+priorbinary broadcoverage does not transfer. Fourprompt00bundles now verified
+canonical references,443,486,336B recovered,all8phasesPASS. Samebinary class
+profile f71f started11:05: excluded8warmup+originalprompt00target128,fullstate
+checks,6bundles, no throughputclaim. No additionalnativebuild. Nextclassaudit
+sourcepreparing while root owns GPU. Coach10:56 review retained; next11:26:38.

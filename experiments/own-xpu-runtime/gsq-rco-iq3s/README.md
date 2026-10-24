@@ -9,6 +9,11 @@ passes all24 baseline arms and independent54-bundle readback, measuring15.73 tar
 /23.30 MTP tokens/s. Both ranks and safe closure are verified. This remains an internal
 cap128 resident screen; publication quality/context gaps are explicitly retained.
 
+The [19-site Q6 extension](dense-q6-p33/operating/RESULT.md) also passes all24
+original arms and54 bundles, measuring16.17 /23.44 with188.7MB extra device memory.
+The small MTP difference is descriptive, not a causal or public speed claim.
+The broader coverage below remains bound to the preceding973489 binary.
+
 The [broader coverage screen](coverage/RESULT.md) also passes exact target/MTP
 comparison through512 outputs and a2084-token input. All six requested document
 facts are correct; two capped outputs remain incomplete. Independent14-bundle
