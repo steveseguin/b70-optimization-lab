@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 21:29 EDT — two-card host: Campaign 63 launched with bounded earlier-source retrieval.**
+Unit `ctx-campaign63`: at most six query plans and twelve unchanged reviews. Physical archive-prefix,
+literal-query and output-bound checks passed, including the corrected control-character clipping case;
+independent review confirms only the retrieved evidence field changes from campaign62. Setup/closeout
+commits pushed in `265d5d193` before launch. No agents/tests/builds alongside the model; parent stays
+active for acquisition and quality audit after shutdown. This entry stays local until then. Status:
+`context-longrun-20261016/campaign63-note-source-retrieval/status.json`.
+
 **October 23, 21:25 EDT — two-card host: Campaign 62 audited; bounded earlier-source retrieval is being prepared.**
 Both thinking-on preceding cuts now finish and preserve skipped tickets, but record defects are
 omitted; one observed review invents a task identity, and both cancellation reviews hit the cap.
