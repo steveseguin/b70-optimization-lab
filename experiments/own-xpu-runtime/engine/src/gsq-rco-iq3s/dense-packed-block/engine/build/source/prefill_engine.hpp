@@ -59,6 +59,51 @@ void prefill_allocate() {
     <<",\"sites\":"<<prefill_sites.size()<<",\"shadow_bytes\":"<<total<<"}";
   save(a.output/"prefill-allocation.json",o.str());
 }
+// Captured row replays: the commands an unchanged site issues for one row, captured once under that row's views and
+// issued like the decode path's prepared sites. Keyed by site, row, QSA context extent (0 for other sites) and the
+// recurrent bank pair (active and spare of one banked buffer; all banks swap together). Dropped when the device
+// invalidates prepared commands.
+using PrefillKey=std::tuple<const flash::Launch*,int,int,Allocation,Allocation>;
+std::map<PrefillKey,std::vector<ownrt::PreparedCompute>> prefill_captured;
+uint64_t prefill_generation=0,prefill_captures=0;
+const std::vector<ownrt::PreparedCompute>& prefill_commands(const flash::Launch& l,int row,int extent) {
+  if(dev(0).generation()!=prefill_generation){prefill_captured.clear();prefill_generation=dev(0).generation();}
+  Allocation active=0,spare=0;if(!state_spares.empty()){active=buffers[0].at(state_spares.begin()->first).id;spare=state_spares.begin()->second;}
+  const PrefillKey key{&l,row,extent,active,spare};
+  if(auto found=prefill_captured.find(key);found!=prefill_captured.end())return found->second;
+  auto& out=prefill_captured[key];const int saved_extent=context_extent;auto& d=dev(0);
+  d.view_row=row;preparing_commands=true;d.begin_capture(out);
+  try {
+    if(extent){context_extent=extent;auto site=prepare_site(l);context_extent=saved_extent;site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{});}
+    else execute_site(l);
+    d.end_capture();preparing_commands=false;d.view_row=-1;
+  } catch(...) {d.end_capture();preparing_commands=false;d.view_row=-1;context_extent=saved_extent;prefill_captured.erase(key);throw;}
+  ++prefill_captures;return out;
+}
+// Native multi-row sites: one launch for all M rows with Spec.tokens=M on the M-row buffers. These generic and
+// specialised kernels loop rows inside the launch, each row with its single-row arithmetic (rows of a recurrence
+// carry state through the output bank, so every row's state ends in the spare bank). OWNRT_PREFILL_NATIVE=0 replays
+// them per row instead (diagnostic).
+static bool prefill_native_op(const std::string& op) {
+  static const std::set<std::string> ops{"gdn","conv","gdn_norm_gate","qsa_prepare","qsa_append_pool","qsa_select","hc_mix","silu_div4","silu_product","norm"};
+  static const bool enabled=[]{const char* e=std::getenv("OWNRT_PREFILL_NATIVE");return !e||e[0]!='0';}();
+  return enabled&&ops.count(op);
+}
+bool prefill_native(const flash::Launch& l) const {
+  if(!prefill_native_op(l.op))return false;
+  const auto& s=prepared.at(&l).spec;
+  return s.special==Special::normal&&(s.implementation<=1||s.implementation==11)&&!s.fused_combine_norm;
+}
+void prefill_native_site(const flash::Launch& l,int P0,int M) {
+  const int saved_extent=context_extent;
+  if(l.op=="qsa_select")context_extent=std::min(p.g.context,((P0+M-1+32)/32)*32); // covers the chunk's last row
+  auto site=prepare_site(l);context_extent=saved_extent;
+  size_t k=0;
+  for(const auto& name:l.inputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(name);++k;}
+  for(const auto& name:l.outputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(name);++k;}
+  site.spec.tokens=M;
+  finish(0,site.submit(dev(0),site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);
+}
 Allocation prefill_shadow(const std::string& name) const {return prefill_shadows.at(prefill_role_of.at(name)).id;}
 size_t prefill_row_bytes(const std::string& name) const {const auto& s=buffers[0].at(name);return s.n*flash::scalar_bytes(s.type);}
 // Rank 0 host inputs: per-row lookup rows (embedding, PLE) with the token history advanced row by row.
@@ -105,37 +150,45 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
   const size_t stream=stream_bytes();
   if(rows_in)upload(0,prefill_shadow("streams"),0,rows_in,size_t(M)*stream);
   else prefill_lookups(tokens,M);
-  const int saved_extent=context_extent;
-  std::map<std::pair<const flash::Launch*,int>,Prepared> extent_sites;
   uint64_t drained_at=submitted;
+  bool banks_native=false,banks_replayed=false;
+  // Diagnostic only (OWNRT_PREFILL_PROFILE=1): drain after every site and add its wall time to its op (linear sites
+  // by weight format). Serializes the chunk, so it measures where time goes, never speed. No arithmetic change.
+  static const bool profile=[]{const char* e=std::getenv("OWNRT_PREFILL_PROFILE");return e&&e[0]=='1';}();
+  std::map<std::string,std::pair<int,double>> spent;
   try {
     prefill_set_views(true);
     for(const auto* l:prefill_sites) {
       if(l->op=="lookup")continue; // rows were written by the host above
-      if(l->op=="gemv"||l->op=="routed_gemv"){dev(0).view_row=-1;prefill_linear(*l,M);continue;}
-      const bool qsa=l->op=="qsa_select"||l->op=="qsa_attention";
-      for(int r=0;r<M;++r) {
-        dev(0).view_row=r;
-        if(qsa) {
-          const int bound=std::min(p.g.context,((P0+r+32)/32)*32);
-          auto key=std::make_pair(l,bound);auto found=extent_sites.find(key);
-          if(found==extent_sites.end()){context_extent=bound;found=extent_sites.emplace(key,prepare_site(*l)).first;context_extent=saved_extent;}
-          const auto& bound_site=found->second;
-          finish(0,bound_site.submit(dev(0),bound_site.spec,bound_site.bindings,controls[0],scores[0],probabilities[0],{}),false);
-        } else execute_site(*l);
+      if(profile)drain();
+      const auto site_start=std::chrono::steady_clock::now();
+      bool banked_native=false;
+      if(l->op=="gemv"||l->op=="routed_gemv")prefill_linear(*l,M);
+      else if(prefill_native(*l)){prefill_native_site(*l,P0,M);banked_native=l->op=="gdn"||l->op=="conv";}
+      else {
+        const bool qsa=l->op=="qsa_select"||l->op=="qsa_attention";
+        for(int r=0;r<M;++r) {
+          // Each row's QSA sites use the context extent its own single-row step admits.
+          const int extent=qsa?std::min(p.g.context,((P0+r+32)/32)*32):0;
+          for(const auto& cmd:prefill_commands(*l,r,extent)){auto event=dev(0).issue(cmd);finish(0,{event,event,1},false);}
+        }
       }
-      dev(0).view_row=-1;
+      if(banked_native)banks_native=true;else if(l->op=="gdn"||l->op=="conv")banks_replayed=true;
+      if(profile){drain();auto& entry=spent[l->op=="gemv"||l->op=="routed_gemv"?l->op+":"+w.directory.at(l->weights.at(0)).grid:l->op];++entry.first;entry.second+=ms(site_start);}
       // Owner event ledger holds 16384 events; retire well before it fills.
       if(submitted-drained_at>6000){drain();drained_at=submitted;}
     }
     prefill_set_views(false);
-  } catch(...) {context_extent=saved_extent;prefill_set_views(false);throw;}
-  context_extent=saved_extent;
+  } catch(...) {prefill_set_views(false);throw;}
+  if(profile){std::ofstream o(a.output/"prefill-profile.jsonl",std::ios::app);o<<"{\"position\":"<<P0<<",\"rows\":"<<M<<",\"sites\":{";bool comma=false;
+    for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
   drain();
   require(!integer(0,"error"),"sticky rank error in batched prefill");
   // The position after M single-row steps; banks end where M swaps leave them.
   const uint32_t next=uint32_t(P0+M);put(0,"position",&next,4);
-  if(!state_spares.empty())for(int r=0;r<M%2;++r)swap_state_banks();
+  // Replayed recurrences alternate banks per row (M single-row swaps); native ones leave every row in the spare bank.
+  require(!(banks_native&&banks_replayed),"prefill recurrent sites must all be native or all replayed");
+  if(!state_spares.empty())for(int r=0;r<(banks_native?1:M%2);++r)swap_state_banks();
   if(rows_out){auto raw=readback(0,prefill_shadow("streams"),size_t(M)*stream);std::memcpy(rows_out,raw.data(),raw.size());}
   ++prefill_chunks;prefill_rows_done+=size_t(M);
 }

@@ -181,14 +181,8 @@ Event Device::compute(const Operation& op, std::span<const Allocation> buffers, 
   std::array<void*,64> viewed{};std::span<void*const> pointers(bound->pointers);
   if(view_row>=0&&!row_views.empty()) {
     if(bound->pointers.size()>viewed.size())throw std::length_error("row view binding bound");
-    for(std::size_t i=0;i<bound->pointers.size();++i) {
-      auto found=row_views.find(bound->ids[i]);
-      if(found==row_views.end()){viewed[i]=bound->pointers[i];continue;}
-      const auto& v=found->second;const auto& t=arena.row(v.target);
-      if(!t.live||t.memory!=Memory::device||queue_of(t)!=bound->queue)throw std::logic_error("row view target ownership");
-      if(v.alternate)viewed[i]=(view_row&1)?t.pointer:bound->pointers[i];
-      else {if((std::size_t(view_row)+1)*v.stride>t.bytes)throw std::out_of_range("row view extent");viewed[i]=static_cast<unsigned char*>(t.pointer)+std::size_t(view_row)*v.stride;}
-    }
+    std::copy(bound->pointers.begin(),bound->pointers.end(),viewed.begin());
+    apply_row_views(bound->ids,std::span<void*>(viewed.data(),bound->pointers.size()),bound->queue);
     pointers=std::span<void*const>(viewed.data(),bound->pointers.size());
   }
   if(before_compute)before_compute();
@@ -196,11 +190,21 @@ Event Device::compute(const Operation& op, std::span<const Allocation> buffers, 
     auto e=backend_->compute(op,pointers,chain); events_.push_back(e); remember(e,bound->queue);if(after_compute)after_compute(e);return e;
   } catch(const std::exception& e) {fault_=e.what(); throw;}
 }
+void Device::apply_row_views(std::span<const Allocation> ids,std::span<void*> pointers,int queue) const {
+  for(std::size_t i=0;i<ids.size();++i) {
+    auto found=row_views.find(ids[i]);if(found==row_views.end())continue;
+    const auto& v=found->second;const auto& t=arena.row(v.target);
+    if(!t.live||t.memory!=Memory::device||queue_of(t)!=queue)throw std::logic_error("row view target ownership");
+    if(v.alternate){if(view_row&1)pointers[i]=t.pointer;}
+    else {if((std::size_t(view_row)+1)*v.stride>t.bytes)throw std::out_of_range("row view extent");pointers[i]=static_cast<unsigned char*>(t.pointer)+std::size_t(view_row)*v.stride;}
+  }
+}
 Event Device::capture_operation(const Operation& op,std::shared_ptr<const Operation> owned,std::span<const Allocation> ids) {
   admit();if(!capture_ || ids.empty())throw std::logic_error("invalid capture");
   PreparedCompute item;item.owner=this;item.generation=generation_;item.ids.assign(ids.begin(),ids.end());
   item.queue=queue_of(arena.row(ids.front()));
   for(auto id:ids){const auto& r=arena.row(id);if(!r.live||r.memory!=Memory::device||queue_of(r)!=item.queue)throw std::logic_error("prepared allocation ownership");item.pointers.push_back(r.pointer);}
+  if(view_row>=0&&!row_views.empty())apply_row_views(item.ids,item.pointers,item.queue); // a captured row replay
   item.submit=owned?backend_->prepare_owned(std::move(owned),item.pointers):backend_->prepare(op,item.pointers);
   // Pointer and allocation argument blocks are retained byte-for-byte for CPU parity audit.
   item.argument_bytes.resize(item.ids.size()*sizeof(Allocation)+item.pointers.size()*sizeof(void*));

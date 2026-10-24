@@ -278,6 +278,8 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   bool generic_impl=s.implementation==0||s.implementation==1||s.implementation==11||s.implementation==12;
   if(!ported||!generic_impl)throw std::invalid_argument("implementation "+std::to_string(s.implementation)+" has no exact F32 activation variant");
  }
+ if(s.tokens!=1&&(s.special!=Special::normal||(s.implementation>1&&s.implementation!=11)||s.op==Op::route||s.op==Op::expert_gather||s.op==Op::hc_combine&&!s.fused_combine_norm||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate||s.op==Op::qsa_attention||s.op==Op::moe_combine))
+  throw std::invalid_argument("token rows: generic and specialised kernels only");
  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);
  if(s.implementation==2&&s.special==Special::normal&&(s.op==Op::route||s.op==Op::argmax))return round2::submit_simple(d,s,bindings,deps);
  if(s.implementation&&s.special==Special::broadcast)return simple_new_submit<Op::hc_mix>(d,s,bindings,deps);
@@ -288,7 +290,7 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  case Op::argmax:return simple_new_submit<Op::argmax>(d,s,bindings,deps);
  case Op::ple_add:return simple_new_submit<Op::ple_add>(d,s,bindings,deps);
  default:break;}}
- ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;if(s.f32_activations)shape.flags|=ng::f32_activations_flag;
+ ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;shape.tokens=s.tokens;if(s.f32_activations)shape.flags|=ng::f32_activations_flag;
  if(s.special==Special::normal&&(s.op==Op::gdn||s.op==Op::conv)){
   const int input=s.op==Op::gdn?3:1;
   if(s.ni<=input||s.no!=2)throw std::invalid_argument("recurrent state binding shape");

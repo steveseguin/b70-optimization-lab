@@ -143,14 +143,15 @@ class Device {
   std::function<void(Event)> after_compute;
   std::ostream* argument_audit=nullptr;
   bool audit_prepare_each=false;
-  // Row views: replay an unchanged single-row operation on row `row` of multi-row storage. While row>=0, every
-  // type-erased compute() binding whose allocation has a view is redirected: `stride` views point at
-  // target.pointer+row*stride; `alternate` views point at the target on odd rows and at the allocation itself on even
-  // rows (recurrent bank alternation, as consecutive single-row steps would swap banks). Prepared (captured) commands
-  // are never redirected; callers replay through compute(). The kernel, its arguments and its arithmetic are unchanged.
+  // Row views: replay an unchanged single-row operation on row `view_row` of multi-row storage. While view_row>=0,
+  // every binding whose allocation has a view is redirected: `stride` views point at target.pointer+row*stride;
+  // `alternate` views point at the target on odd rows and at the allocation itself on even rows (recurrent bank
+  // alternation, as consecutive single-row steps would swap banks). Views apply when a command is computed or
+  // captured; a captured command keeps the pointers it was captured with. Kernel, arguments and arithmetic are unchanged.
   struct RowView {Allocation target=0;std::size_t stride=0;bool alternate=false;};
   std::unordered_map<Allocation,RowView> row_views;
   int view_row=-1;
+  void apply_row_views(std::span<const Allocation> ids,std::span<void*> pointers,int queue) const;
   explicit Device(std::unique_ptr<Backend>);
   Device(const Device&) = delete;
   Device& operator=(const Device&) = delete;

@@ -62,6 +62,9 @@ struct Spec {
   bool packed_heads = false;
   // Exact mode: activation/KV buffers are F32 and kernels apply no intra-operator BF16 rounding.
   bool f32_activations = false;
+  // Token rows of one launch (batched prefill). sizes[] stay per row; row-major multi-row bindings. Only the
+  // generic (ng) and specialised kernels accept tokens > 1; every other path refuses it.
+  int tokens = 1;
 };
 // Bind inputs, outputs, weights, scratch, error, position, active, RoPE in that
 // order.

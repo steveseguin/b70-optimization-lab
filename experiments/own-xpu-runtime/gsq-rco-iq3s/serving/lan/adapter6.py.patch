@@ -1,5 +1,5 @@
 --- adapter5.py	2026-10-24 15:38:38.842377091 -0400
-+++ adapter6.py	2026-10-24 17:26:13.882545620 -0400
++++ adapter6.py	2026-10-24 17:58:16.453301379 -0400
 @@ -11,6 +11,14 @@
  ACTIVATIONS=os.environ.get('SC117_ACTIVATIONS','bf16')
  if ACTIVATIONS not in ('bf16','f32'):raise ValueError('SC117_ACTIVATIONS must be bf16 or f32')
@@ -15,7 +15,16 @@
  LEDGER=LANE/'recurrent-f32/operating/candidate-ledger.json'
  PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
  PARENT_SHA='4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3'
-@@ -56,6 +64,7 @@
+@@ -44,6 +52,8 @@
+         e=dict(base)
+         if not mini:e.update(NEOReadDebugKeys='1',FilterBdfPath=bdf,ZE_ENABLE_PCI_ID_DEVICE_ORDER='1',ZE_AFFINITY_MASK='0',ONEAPI_DEVICE_SELECTOR='level_zero:0')
+         for key,sub in [('SYCL_CACHE_DIR','sycl'),('NEO_CACHE_DIR','neo'),('XDG_CACHE_HOME','xdg')]:e[key]=str(output/'cache'/str(rank)/sub)
++        for key in ('OWNRT_PREFILL_PROFILE','OWNRT_PREFILL_NATIVE'):  # prefill diagnostics: per-site wall times; native rows off
++            if key in os.environ:e[key]=os.environ[key]
+         envs.append(e)
+     return envs
+ 
+@@ -56,6 +66,7 @@
          if not plan['mini']:cmd+=['--draft-manifest',str(LANE/'mtp/draft-manifest.tsv'),'--draft-model',str(DRAFT_MODEL)]
      cmd.extend(['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block','--dense-q6-p33','--dense-packed-block','--recurrent-f32'])
      cmd.extend(plan.get('service_flags',[]))
@@ -23,7 +32,7 @@
      return cmd
  
  def build_plan(output,*,mini=False,max_new=4,seconds=1800,evidence_output=None):
-@@ -137,6 +146,13 @@
+@@ -137,6 +148,13 @@
          fd=os.open(self.shared_path,os.O_RDWR|os.O_CREAT|os.O_EXCL,0o600)
          try:os.ftruncate(fd,BASE.SHARED);self.mapping=mmap.mmap(fd,BASE.SHARED)
          finally:os.close(fd)
@@ -37,7 +46,7 @@
          self.stop_read,self.stop_write=os.pipe();self.start_time=time.monotonic()
          save(self.control_output/'admission-plan.json',plan)
          for rank in range(2):
-@@ -236,6 +252,31 @@
+@@ -236,6 +254,31 @@
      require(rows[0]['state']==rows[1]['state'],'MTP final target state mismatch')
      return dict(passed=True,same_rank_processes=True,rank_pids=[p.pid for p in transport.children],requests=2,rows=rows,no_speed_claim=True)
  
