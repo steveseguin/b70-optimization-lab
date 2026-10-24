@@ -1,0 +1,121 @@
+{
+  "passed": true,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/extract.py": "799d30905522a201e8d453571e4fe321e50cc8b9cf5c18f929b62b2cc8d88552",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/extraction-plan.json": "444f0c3ea801186a6772f559b0a04c88c5978f262c90da524ff2a3207067d6e2",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/block.hpp": "66bb0c9936fcd96fed876c525554d35b4d224dbcc0dafd8144e133769732f218",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/arithmetic.hpp": "4fc4e9602a17d229382a143e7a780b9dff5f85c387639b6b03d854238f2a7b74",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.hpp": "138bbd9edd82822a513090d9c54af589ebff11f9eb9119beb2bb3ae2a6cf7c1b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.json": "9e80fc5ccfdd5dd7f09b3501c84e44a3082d3c0edc8cc8067b7fb5898e85ca71",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/evidence/cpu-proof.json": "2693d6e3c0c5fd29fb4780a7fcd79c5f274ede0d5f80999e78e0c49ec6a78777",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixture_schema.hpp": "a439ce434b275e9803b0a439ebc80109e1d8df04f4c2588d255afd3ed579a018"
+  },
+  "cases": [
+    {
+      "label": "blk.0.gdn.z",
+      "rows": 6144,
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 883359744,
+      "tensor_bytes": 8847360,
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.0.hc.a.mix.bin",
+          "bytes": 5120,
+          "sha256": "40bdba6f9ac3c471e5b6e1b1c3069ac804331c3db74d71b270f6b03a6b715699"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.0.gdn.z.bin",
+          "bytes": 12288,
+          "sha256": "f13ade781c77d064a5288027af81bd803a05e0d1fe2dc5b09faffca979912851"
+        },
+        "weights": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.0.attn_gate.weight.bin",
+          "bytes": 8847360,
+          "sha256": "2d591eddd7a04973f8306d8eb937f2c9593b02d558e093a7d3afdd2f85d9ada8"
+        }
+      }
+    },
+    {
+      "label": "blk.1.gdn.qkv",
+      "rows": 10240,
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 2090712960,
+      "tensor_bytes": 18022400,
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.1.hc.a.mix.bin",
+          "bytes": 5120,
+          "sha256": "0f6c1321485816a195d2818e70aad16bca9eb2bc011bc20dc77b528fb5e9c1b9"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.1.gdn.qkv.bin",
+          "bytes": 20480,
+          "sha256": "85b6dd610ff00ff2a0caba147efb1ec24570695fb34c49cf621d1d7643414c9d"
+        },
+        "weights": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.1.attn_qkv.weight.bin",
+          "bytes": 18022400,
+          "sha256": "45014df1968838a460302a49ac12dd1ffae22f47a9fb92452783fa7bc4d295c3"
+        }
+      }
+    },
+    {
+      "label": "blk.2.gdn.z",
+      "rows": 6144,
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 2997788416,
+      "tensor_bytes": 8355840,
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.2.hc.a.mix.bin",
+          "bytes": 5120,
+          "sha256": "962cb4949ae765c49763999f843cba56e9d3426ed29edea20bbc1d0e2633bbd6"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.2.gdn.z.bin",
+          "bytes": 12288,
+          "sha256": "f01b6dcf33b608a8bc4928e3640e2f86475ae6cae7f7fd65ae2509793c77ed99"
+        },
+        "weights": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.2.attn_gate.weight.bin",
+          "bytes": 8355840,
+          "sha256": "a3c19d79a55c9650b2fbbd2e7223250809376262a015b4e242a791e538b5557c"
+        }
+      }
+    }
+  ],
+  "device_executed": false,
+  "model_payload_bytes_read": 35225600,
+  "bundle_bytes_read": 60416,
+  "header_bytes_read": 11024528,
+  "scope": "Only six authenticated bundle ranges and three complete model tensors; no whole-bundle or whole-model rehash claim",
+  "bundle_identity": [
+    2050,
+    2785450,
+    125561972,
+    1792840700730632700,
+    1792840700898081900
+  ],
+  "fixed_header_sha256": "e5306f2528ac6e4bf7ab4f6d36afb818c852428407e19e85421cd807014289c8"
+}

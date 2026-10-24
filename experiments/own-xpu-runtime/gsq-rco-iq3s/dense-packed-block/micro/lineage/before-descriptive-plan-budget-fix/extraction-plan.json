@@ -1,0 +1,234 @@
+{
+  "executed": false,
+  "review_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/launch-b/evidence/device-b/review.json",
+  "review_sha256": "30ed538b78040d04367fe7e99956c8ff2e483cef99194de1445f1476226bd039",
+  "original_baseline_review_sha256": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+  "original_baseline_index_sha256": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982",
+  "profile_artifact_index_sha256": "9714593b8f7c65c66fa6beed26edc831782b83225e05de2e2611896e39898236",
+  "bundle_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-b/prompt-00-none/rank0/state-2147483647/state.bundle",
+  "bundle_metadata_sha256": {
+    "state-seal.txt": "2297e4193c3a839ff792de8696d12ac280af45761c1b9b499e6f18d2a9157b5a",
+    "state-index.tsv": "6f7ce7d6380c23514481f83eb006a98902d08201c294e6e66826f4f305852eb5",
+    "state.json": "5840714f71d40c936bc0dcd1b91acd2a16788c21f270c77d36735ce9e3835e78",
+    "state.bundle": "cc308634f952e4160bb08481b7f8f82ca6f8e25bf5a1341048365f323cba6b5d"
+  },
+  "max_model_payload_bytes": 6635520,
+  "max_header_bytes": 11024528,
+  "unique_bundle_range_bytes": 21128,
+  "copied_payload_bytes": 6656648,
+  "model_reads_permitted": false,
+  "header_checks": "Both fixed held nofollow shard identities and exact bounded raw header prefixes before fixed complete tensor reads; before/after stat and fixed offset extent; no whole-shard hash claim.",
+  "bundle_checks": "Verify reviewed index/seal/state metadata, then only three unique selected ranges against retained original baseline hashes; held regular nofollow FD/stat before/after; no full bundle payload scan.",
+  "publication": "Exclusive fresh fixtures and fixed.hpp; fsync each+directory; receipt passed only after final publication/hash. Failed attempts retained, no automatic retry.",
+  "schedule": {
+    "cases": 2,
+    "warmup_cycles": 4,
+    "measured_cycles": 24,
+    "total_pairs": 56,
+    "total_kernels": 112,
+    "case_order": "((cycle/2)+j)%2",
+    "arm_order": "AB even cycle, BA odd",
+    "measured_pairs_each_case": 24
+  },
+  "memory": {
+    "device_bytes": 6677776,
+    "transfer_bytes": 6712768,
+    "pinned_slab_bytes": 1048576
+  },
+  "allocation_delta_for_future_engine": 0,
+  "schema": "gsq.dense-packed-block.extraction-plan.v1",
+  "cases": [
+    {
+      "label": "blk.0.gdn.z",
+      "layer": 0,
+      "type_id": 12,
+      "rows": 6144,
+      "columns": 2560,
+      "weight": "blk.0.attn_gate.weight",
+      "tensor": {
+        "type": "Q4_K",
+        "type_id": 12,
+        "dimensions": [
+          2560,
+          6144
+        ],
+        "shape": [
+          6144,
+          2560
+        ],
+        "elements": 15728640,
+        "data_offset": 872335360,
+        "bytes": 8847360,
+        "file_offset": 883359744,
+        "reserved_span_bytes": 8847360,
+        "payload_extent_validated": true,
+        "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf"
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "ranges": {
+        "input": {
+          "name": "blk.0.hc.a.mix",
+          "unique_writer": "blk.0.hc.a.mix",
+          "offset": 1880132,
+          "bytes": 5120,
+          "sha256": "40bdba6f9ac3c471e5b6e1b1c3069ac804331c3db74d71b270f6b03a6b715699"
+        },
+        "output": {
+          "name": "blk.0.gdn.z",
+          "unique_writer": "blk.0.gdn.z",
+          "offset": 1846076,
+          "bytes": 12288,
+          "sha256": "f13ade781c77d064a5288027af81bd803a05e0d1fe2dc5b09faffca979912851"
+        }
+      }
+    },
+    {
+      "label": "blk.1.gdn.qkv",
+      "layer": 1,
+      "type_id": 13,
+      "rows": 10240,
+      "columns": 2560,
+      "weight": "blk.1.attn_qkv.weight",
+      "tensor": {
+        "type": "Q5_K",
+        "type_id": 13,
+        "dimensions": [
+          2560,
+          10240
+        ],
+        "shape": [
+          10240,
+          2560
+        ],
+        "elements": 26214400,
+        "data_offset": 2079688576,
+        "bytes": 18022400,
+        "file_offset": 2090712960,
+        "reserved_span_bytes": 18022400,
+        "payload_extent_validated": true,
+        "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf"
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "ranges": {
+        "input": {
+          "name": "blk.1.hc.a.mix",
+          "unique_writer": "blk.1.hc.a.mix",
+          "offset": 3848654,
+          "bytes": 5120,
+          "sha256": "0f6c1321485816a195d2818e70aad16bca9eb2bc011bc20dc77b528fb5e9c1b9"
+        },
+        "output": {
+          "name": "blk.1.gdn.qkv",
+          "unique_writer": "blk.1.gdn.qkv",
+          "offset": 2208966,
+          "bytes": 20480,
+          "sha256": "85b6dd610ff00ff2a0caba147efb1ec24570695fb34c49cf621d1d7643414c9d"
+        }
+      }
+    },
+    {
+      "label": "blk.2.gdn.z",
+      "layer": 2,
+      "type_id": 23,
+      "rows": 6144,
+      "columns": 2560,
+      "weight": "blk.2.attn_gate.weight",
+      "tensor": {
+        "type": "IQ4_XS",
+        "type_id": 23,
+        "dimensions": [
+          2560,
+          6144
+        ],
+        "shape": [
+          6144,
+          2560
+        ],
+        "elements": 15728640,
+        "data_offset": 2986764032,
+        "bytes": 8355840,
+        "file_offset": 2997788416,
+        "reserved_span_bytes": 8355840,
+        "payload_extent_validated": true,
+        "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf"
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "ranges": {
+        "input": {
+          "name": "blk.2.hc.a.mix",
+          "unique_writer": "blk.2.hc.a.mix",
+          "offset": 50006048,
+          "bytes": 5120,
+          "sha256": "962cb4949ae765c49763999f843cba56e9d3426ed29edea20bbc1d0e2633bbd6"
+        },
+        "output": {
+          "name": "blk.2.gdn.z",
+          "unique_writer": "blk.2.gdn.z",
+          "offset": 49971992,
+          "bytes": 12288,
+          "sha256": "f01b6dcf33b608a8bc4928e3640e2f86475ae6cae7f7fd65ae2509793c77ed99"
+        }
+      }
+    }
+  ],
+  "model_payload_bytes": 35225600,
+  "unique_state_bytes": 60416,
+  "scope": "Only six original-baseline-joined ranges and three complete fixed dense tensors. No whole model or whole bundle payload scan."
+}

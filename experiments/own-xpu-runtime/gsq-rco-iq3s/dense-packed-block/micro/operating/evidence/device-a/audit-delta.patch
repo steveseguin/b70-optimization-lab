@@ -1,0 +1,83 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/evidence/device-a/audit.py
++++ dense-packed-block/operating/evidence/device-a/audit.py
+@@ -2,11 +2,12 @@
+ """Explicit closed micro readback; stdlib only, no operational imports."""
+ import argparse,collections,gzip,hashlib,json,os,resource,stat,statistics,time
+ from pathlib import Path
+-R=Path('/home/steve/llm-optimizations');P=R/'experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro';O=P/'operating';S=Path('/home/steve/own-xpu-runtime-results/gsq-hc-bf16-one-sg-micro-a');D=O/'evidence/device-a'
+-PLAN_SHA='ef4d2e8d82eea2c0402772e3510c767a3e1507b5b21cd22b2d6490a5f2fa57b6'
+-BUILD_SHA='396c70c1c78509c9e762db9cc96bc4e75002c231eb6716fe2b14f211b8e5b60d'
+-BINARY_SHA='46ab2be7298bf1a3b306c851201f88ee5e3ebfc6746a8c1afd3e8d9ee331abca'
+-PARENT=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/operating/audit.py');PARENT_SHA='c0a033c846a29805a130a7bbbe067a7691eabf403cf1709580f23e4057523650'
++R=Path('/home/steve/llm-optimizations');P=R/'experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro';O=P/'operating';S=Path('/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a');D=O/'evidence/device-a'
++PLAN_SHA='1e7297d13108dbec368a0162761b445caf706afac7f8432df4a9137181036197'
++PLAN_FILE=Path('/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a-plan.json')
++BUILD_SHA='79b6374fd5862535fbbcca7788374ad3ba4bc988876415273d841d6456c24605'
++BINARY_SHA='526f869210d28c61d8745c8e573c14604bb1b254d0df8aa7d0791a3c20d2461d'
++PARENT=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/evidence/device-a/audit.py');PARENT_SHA='01c8b44723ab8e45efdde748d113fc4ffb6a292428a8cd338c9b2fa8d213b694'
+ index={}
+ def need(v,m):
+  if not v:raise ValueError(m)
+@@ -33,15 +34,15 @@
+   need(row in snap['inventory']['holders'] and snap['drm'][row['node']]['bdf']=='0000:23:00.0','actual target descriptor in accepted sample')
+  return True
+ def samples_check(rows,manifest):
+- expected=[dict(warmup=warm,cycle=cycle,case=((cycle//2)+j)%2,order=['B','A'] if cycle%2 else ['A','B']) for warm,n in ((True,4),(False,24)) for cycle in range(n) for j in range(2)]
+- need(len(rows)==56 and manifest['schedule']==expected,'all56 preregistered pairs')
+- need([(c['label'],c['rows'],c['columns']) for c in manifest['cases']]==[('blk.0.hc.a.low',320,10240),('blk.0.hc.a.inject',4,10240)],'fixed two shapes')
++ expected=[dict(warmup=warm,cycle=cycle,case=((cycle//2)+j)%3,order=['B','A'] if cycle%2 else ['A','B']) for warm,n in ((True,4),(False,24)) for cycle in range(n) for j in range(3)]
++ need(len(rows)==84 and manifest['schedule']==expected,'all84 preregistered pairs')
++ need([(c['label'],c['type_id'],c['rows'],c['columns']) for c in manifest['cases']]==[('blk.0.gdn.z',12,6144,2560),('blk.1.gdn.qkv',13,10240,2560),('blk.2.gdn.z',23,6144,2560)],'fixed three format/shape cases')
+  previous=0
+  for row,want in zip(rows,expected):
+   case=manifest['cases'][want['case']]
+-  need((row['warmup'],row['cycle'],row['layer'],row['order'],row['label'])==(want['warmup'],want['cycle'],0,''.join(want['order']),case['label']),'fixed phase/cycle/case/order')
++  need((row['warmup'],row['cycle'],row['layer'],row['order'],row['label'])==(want['warmup'],want['cycle'],want['case'],''.join(want['order']),case['label']),'fixed phase/cycle/case/order')
+   need(row['exact'] and row['A_sha256']==row['B_sha256']==row['expected_sha256']==case['fixtures']['expected']['sha256'],'exact full output')
+-  need(case['fixtures']['expected']['bytes']==case['rows']*2 and case['fixtures']['input']['bytes']==20480,'full dense output/input extent')
++  need(case['fixtures']['expected']['bytes']==case['rows']*2 and case['fixtures']['input']['bytes']==5120,'full dense output/input extent')
+   first,second=row['order'];need(previous<row[first+'_start_ns']<row[first+'_end_ns']<row[second+'_start_ns']<row[second+'_end_ns'],'strict native event ordering');previous=row[second+'_end_ns']
+  measured=[r for r in rows if not r['warmup']];warm=[r for r in rows if r['warmup']]
+  for case in manifest['cases']:
+@@ -53,25 +54,25 @@
+  a=[r['A_end_ns']-r['A_start_ns'] for r in rows];b=[r['B_end_ns']-r['B_start_ns'] for r in rows]
+  return dict(pairs=len(rows),A_ns=stats(a),B_ns=stats(b),B_over_A_paired=stats([y/x for x,y in zip(a,b)]),B_over_A_sum=sum(b)/sum(a))
+ def per_case(rows):
+- return {label:dict(all=aggregate([r for r in rows if r['label']==label]),by_order={order:aggregate([r for r in rows if r['label']==label and r['order']==order]) for order in ('AB','BA')}) for label in ('blk.0.hc.a.low','blk.0.hc.a.inject')}
++ return {label:dict(all=aggregate([r for r in rows if r['label']==label]),by_order={order:aggregate([r for r in rows if r['label']==label and r['order']==order]) for order in ('AB','BA')}) for label in ('blk.0.gdn.z','blk.1.gdn.qkv','blk.2.gdn.z')}
+ def run():
+  need(os.getpriority(os.PRIO_PROCESS,0)==19 and os.sched_getaffinity(0)<=set(range(8,16))|set(range(24,32)),'helper placement');resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));D.mkdir(parents=True,exist_ok=True);need(not(D/'review.json').exists() and not(D/'artifact-index.jsonl.gz').exists(),'exclusive audit')
+- need(PLAN_SHA is not None,'root actual plan binding pending');need(digest(PARENT)==PARENT_SHA,'qualified parent auditor source')
+- receipt=dict(schema='gsq.hc-bf16-one-sg.closed-review.v1',passed=False,device_executed_by_reviewer=False);start=time.monotonic()
++ need(all(isinstance(h,str) and len(h)==64 and all(c in '0123456789abcdef' for c in h) for h in (PLAN_SHA,BUILD_SHA,BINARY_SHA)),'root actual plan/build/binary binding pending');need(digest(PARENT)==PARENT_SHA,'qualified parent auditor source')
++ receipt=dict(schema='gsq.dense-packed-block.closed-review.v1',passed=False,device_executed_by_reviewer=False);start=time.monotonic()
+  try:
+   ad=read(S/'admission.json');term=read(S/'terminal.json');mon=read(S/'monitor.json');result=read(S/'result/result.json');manifest=read(O/'manifest.json');build=read(P/'evidence/native-build.json')
+-  planfile=S/'plan.json';need(digest(planfile)==PLAN_SHA and read(planfile)==ad['plan'],'admitted fixed plan');pins(ad['plan']['source_sha256']);pins(manifest['authority'])
++  planfile=PLAN_FILE;need(digest(planfile)==PLAN_SHA and read(planfile)==ad['plan'],'admitted fixed plan');pins(ad['plan']['source_sha256']);pins(manifest['authority'])
+   for key in ('source_sha256','objects_reused','dependencies'):pins(build[key])
+   need(digest(build['binary'])==build['binary_sha256']==ad['binary_sha256']==BINARY_SHA,'native binary identity');need(digest(P/'evidence/native-build.json')==ad['proof_sha256']==BUILD_SHA,'native build');need(digest(O/'once.py')==ad['monitor_sha256'],'operating source')
+   review=read(O/'evidence/independent-review.json');need(review['passed'] and review['binary_sha256']==BINARY_SHA and review['native_build_sha256']==BUILD_SHA,'final independent prerequisites');pins(review['source_sha256'])
+-  need(len(manifest['cases'])==2 and (manifest['pairs'],manifest['kernels'],manifest['device_bytes'],manifest['transfer_bytes'],manifest['pinned_bytes'])==(56,112,6677776,6712768,1048576),'fixed schedule/ledger')
++  need(len(manifest['cases'])==3 and (manifest['pairs'],manifest['kernels'],manifest['device_bytes'],manifest['transfer_bytes'],manifest['pinned_bytes'])==(84,168,35331072,37764096,1048576),'fixed schedule/ledger')
+   for c in manifest['cases']:
+    need(digest(c['packed_weights']['path'])==c['packed_weights']['sha256'],'authenticated copied complete tensor')
+    for f in c['fixtures'].values():need(digest(f['path'])==f['sha256'] and Path(f['path']).stat().st_size==f['bytes'],'saved complete fixture bytes')
+   need(term['passed'] and term['result']==result and term['first_error'] is None and not term['single_term_attempted'] and term['observed_native_target_fd'] and term['backend_acknowledged'] and term['target_descriptors_empty'] and term['qualification_limit'] is None,'complete coordinator qualification')
+   need(term['status']['MainPID']=='0' and term['status']['Result']=='success' and term['status']['ExecMainStatus']=='0','unit closed successfully')
+-  need(result['schema']=='gsq.hc-bf16-one-sg.native-micro.v1' and result['passed'] and result['safe_to_exit'] and result['backend_acknowledged'] and result['card']==0 and result['profiling'] and not result['model_executed'],'native result scope')
+-  need((result['completed_exact_pairs'],result['attempted_kernel_submissions'],result['device_bytes'],result['transfer_bytes'],result['warmup_cycles'],result['measured_cycles'])==(56,112,6677776,6712768,4,24),'native exact schedule/bytes')
++  need(result['schema']=='gsq.dense-packed-block.native-micro.v1' and result['passed'] and result['safe_to_exit'] and result['backend_acknowledged'] and result['card']==0 and result['profiling'] and not result['model_executed'],'native result scope')
++  need((result['completed_exact_pairs'],result['attempted_kernel_submissions'],result['device_bytes'],result['transfer_bytes'],result['warmup_cycles'],result['measured_cycles'])==(84,168,35331072,37764096,4,24),'native exact schedule/bytes')
+   need(not result['error'] and not result['cleanup_error'],'no native errors');t=result['teardown'];need(t['safe_to_exit'] and t['exit_code']==0 and t['idle_marker_complete'] and t['in_flight']==t['live_bytes']==0 and not t['error'],'positive native teardown')
+   native=term['native_identity'];contact=read(S/'result/backend-contact.json');ready_path=S/'result/backend-ready.txt';ack_path=S/'result/backend-ack.txt';ready_hash=digest(ready_path);ack_hash=digest(ack_path);ready=ready_path.read_bytes();ack=ack_path.read_bytes();need(hashlib.sha256(ready).hexdigest()==ready_hash and hashlib.sha256(ack).hexdigest()==ack_hash,'challenge reread stable');ack_join(ready,ack,contact,native)
+   need(not(S/'result/backend-ready.partial').exists() and not(S/'result/backend-ack.partial').exists(),'no partial handshake files');need(ready_path.stat().st_mtime_ns<=(S/'result/backend-contact.json').stat().st_mtime_ns<=ack_path.stat().st_mtime_ns,'ready/contact/ACK write order')
+@@ -101,7 +102,7 @@
+    with (D/('raw-'+name.replace('/','-'))).open('xb') as f:f.write((S/name).read_bytes())
+   with (D/'artifact-index.jsonl.gz').open('xb') as f,gzip.GzipFile(fileobj=f,mode='wb',mtime=0,filename='') as z:
+    for item in sorted(index.values(),key=lambda x:x['path']):z.write((json.dumps(item,sort_keys=True)+'\n').encode())
+-  receipt.update(passed=True,qualification_complete=True,exact_pairs=56,exact_output_pairs=56,measured_pairs=48,excluded_warmup_pairs=8,kernel_submissions=112,native_identity=native,observed_target_bdf='0000:23:00.0',backend_ACK=True,contact_record_sha256=digest(S/'result/backend-contact.json'),physical_contact_records_seen=seen,safe_active_property_records=active,physical_drain=True,safe_native_teardown=True,cooperative_signals=0,unchanged_faults_vision_queue=True,statistics=summary,binary_sha256=BINARY_SHA,native_build_sha256=BUILD_SHA,plan_sha256=PLAN_SHA,terminal_duration_seconds=term['duration'],artifact_index_sha256=hashlib.sha256((D/'artifact-index.jsonl.gz').read_bytes()).hexdigest(),indexed_files=len(index),limitations=['Two fixed layer0 HC BF16 shapes; isolated kernel events reported per case, not aggregate or end-to-end model speed','Each case retains all24 measured pairs,12 per order;4 warmup pairs per case excluded by preregistration','Native successful comparisons preserve per-arm hashes/full-byte comparison results; separate successful output blobs were not written','Copied complete two tensors and fixtures independently rehashed; no original model/bundle reread','ACK ordering is source-bound plus actual identity/challenge/sample/files; no claim that filesystem timestamps measure GPU execution','No device/service/process/kernel/model operation by auditor'])
++  receipt.update(passed=True,qualification_complete=True,exact_pairs=84,exact_output_pairs=84,measured_pairs=72,excluded_warmup_pairs=12,kernel_submissions=168,native_identity=native,observed_target_bdf='0000:23:00.0',backend_ACK=True,contact_record_sha256=digest(S/'result/backend-contact.json'),physical_contact_records_seen=seen,safe_active_property_records=active,physical_drain=True,safe_native_teardown=True,cooperative_signals=0,unchanged_faults_vision_queue=True,statistics=summary,binary_sha256=BINARY_SHA,native_build_sha256=BUILD_SHA,plan_sha256=PLAN_SHA,terminal_duration_seconds=term['duration'],artifact_index_sha256=hashlib.sha256((D/'artifact-index.jsonl.gz').read_bytes()).hexdigest(),indexed_files=len(index),limitations=['Three fixed dense Q4_K/Q5_K/IQ4_XS shapes; isolated kernel events reported per case, not aggregate or end-to-end model speed','Each case retains all24 measured pairs,12 per order;4 warmup pairs per case excluded by preregistration','Native successful comparisons preserve per-arm hashes/full-byte comparison results; separate successful output blobs were not written','Copied complete three tensors and fixtures independently rehashed; no original model/bundle reread','ACK ordering is source-bound plus actual identity/challenge/sample/files; no claim that filesystem timestamps measure GPU execution','No device/service/process/kernel/model operation by auditor'])
+  except BaseException as e:receipt['error']=repr(e);raise
+  finally:
+   receipt.update(auditor_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),parent_auditor_sha256=PARENT_SHA,elapsed_seconds=time.monotonic()-start)

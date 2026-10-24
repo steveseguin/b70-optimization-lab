@@ -1,14 +1,15 @@
 # Current Workspace State
 
-**October 24, 07:43 EDT — four-card host: HC geometry exact but too small; expert fusion appraisal next.**
-All56 HC native output pairs match the baseline exactly; independent contact,
-teardown and fault checks pass. Low projection improved only1.2%, inject did not;
-no full-engine integration. Target cards are empty, vision unchanged. Examine
-combining expert gate/up work while preserving each output's exact arithmetic.
-Verified duplicate-capture recovery reclaimed4.43GB on USB; installed tools and
-unique evidence retained. Current qualified engine and its limited16.17/23.44
-internal-screen result are unchanged. No new model-speed or public record claim.
-[HC result](experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/RESULT.md).
+**October 24, 08:12 EDT — four-card host: dense decoder micro exact and faster; full-engine preparation.**
+All84 GPU output comparisons pass independent readback, physical contact and safe
+closure. Fixed Q4_K/Q5_K/IQ4_XS kernels take19–25% of control event time; this is
+not a model-speed result. CPU proof passed223,685 checks. Prepare the exact116-site
+integration with unchanged weights, float order, BF16 KV and resident allocation.
+Target cards empty, vision unchanged. Verified canonical capture recovery and
+repository compaction preserve all evidence/history; USB8.621GB/root27.29GB at
+last check, so fresh build/run admission remains necessary. Previous qualified
+Engine remains the active correctness/performance reference.
+[Dense micro result](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/RESULT.md).
 
 **October 24, 06:12 EDT — four-card host: broader coverage independently passes; next native micro preparing.**
 All6requests/3pairs and14bundles pass, including512-output equality and2084-input

@@ -1,0 +1,34 @@
+{
+  "schema": "gsq.dense-packed-block.independent-cpu-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/arithmetic.hpp": "4fc4e9602a17d229382a143e7a780b9dff5f85c387639b6b03d854238f2a7b74",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/block.hpp": "66bb0c9936fcd96fed876c525554d35b4d224dbcc0dafd8144e133769732f218",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.hpp": "138bbd9edd82822a513090d9c54af589ebff11f9eb9119beb2bb3ae2a6cf7c1b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.json": "9e80fc5ccfdd5dd7f09b3501c84e44a3082d3c0edc8cc8067b7fb5898e85ca71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/proof.cpp": "1f54b380fb009ba0915fbd5b9d542d6f0f73f9b22709293336ab705069536759",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/build_cpu.py": "b4bd96769e9009d5c75492d4e29099adea1688458d43c01a161f30ebecc9382d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/prepare.py": "6840059355c5bc1c76af2596de5ca0242c46d8b56fa37f75a745ec8aa24e81e9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/kernel-delta.patch": "b5d0b783ab7c2d3c4f4e1e7456910a2aaf89a495f865b912cf1b12379b1c8fcc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/source-pins.json": "086f02647cbe20503cca62dfc87ada0a5220b09e6c01b97a0cc62997e66dd387",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/evidence/source-preparation.json": "aa4f502a827cf0c18e6f04c29dfdd604024eb0fcb53b65fe349eda46a471e173"
+  },
+  "checks": {
+    "exact116_selector_graph_census": true,
+    "counts": {
+      "Q4_K": 43,
+      "Q5_K": 31,
+      "IQ4_XS": 42
+    },
+    "kernel_operation_only_names_and_lane_function_changed": true,
+    "lane_order_block_then8groups_matches_k_stride32": true,
+    "float_multiply_offset_subtract_accumulator_tree_boundaries_preserved": true,
+    "independent_exceptional_d_dmin_cross_product": true,
+    "actual_Host_capture_live_bindings_and_refusals": true,
+    "proof_no_native_or_model_dependencies_invoked": true,
+    "gnu_strict_fp_compile_23_inherited_Host_objects": true,
+    "compile_lock_limits_and_failed_attempt_retention": true
+  },
+  "findings": [],
+  "scope": "Clears root-owned bounded CPU proof invocation only. Exact CPU/native numerical outcome remains unproven until actual receipts; no tests/build/payload/device actions by reviewer."
+}

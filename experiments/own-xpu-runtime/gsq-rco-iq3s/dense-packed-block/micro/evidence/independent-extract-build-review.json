@@ -1,0 +1,67 @@
+{
+  "schema": "gsq.dense-packed-block.independent-extract-build-review.v1",
+  "passed": true,
+  "review_scope": "Source, actual CPU artifact pins, extraction metadata and fixed-header reconstruction only; no payload reread, compiler/test replay or Device invocation",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/evidence/independent-cpu-source-review.json": "d9a009322cb391e2c435441b7dd2d6b754f29fd3a87b9365198cb7a56cd8190f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/evidence/source-preparation.json": "aa4f502a827cf0c18e6f04c29dfdd604024eb0fcb53b65fe349eda46a471e173",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/evidence/cpu-proof.json": "2693d6e3c0c5fd29fb4780a7fcd79c5f274ede0d5f80999e78e0c49ec6a78777",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/block.hpp": "66bb0c9936fcd96fed876c525554d35b4d224dbcc0dafd8144e133769732f218",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/arithmetic.hpp": "4fc4e9602a17d229382a143e7a780b9dff5f85c387639b6b03d854238f2a7b74",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.hpp": "138bbd9edd82822a513090d9c54af589ebff11f9eb9119beb2bb3ae2a6cf7c1b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.json": "9e80fc5ccfdd5dd7f09b3501c84e44a3082d3c0edc8cc8067b7fb5898e85ca71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/proof.cpp": "1f54b380fb009ba0915fbd5b9d542d6f0f73f9b22709293336ab705069536759",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/build_cpu.py": "b4bd96769e9009d5c75492d4e29099adea1688458d43c01a161f30ebecc9382d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/extract.py": "799d30905522a201e8d453571e4fe321e50cc8b9cf5c18f929b62b2cc8d88552",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/extraction-plan.json": "444f0c3ea801186a6772f559b0a04c88c5978f262c90da524ff2a3207067d6e2",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/build.py": "7441b8d8d56f8637b6066813f78da23b5c82167971240c1142450a8e3fc11f97",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/runner.cpp": "a7a6ebfc86a91299122324857e92b0e28a1d34cb409e440a3552e010426692dd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/selected.hpp": "88507d1c7088852e50481656c27e432ac5d0ce1ab70df8d9fec72b033c67a7ff",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixture_schema.hpp": "a439ce434b275e9803b0a439ebc80109e1d8df04f4c2588d255afd3ed579a018",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/startup.hpp": "814dc5d00319ab08f8511293907db11880080e179506b06f45e6979771aeae59",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/handshake.py": "54280d58ce56c2ba5401a6fec64784d158dd409866af258f4c2de54ce503566f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/source-pins.json": "e156b8abe241067a40aefdc62fb5d71df65ce7ed5d2951251e62c10c0cde1fa9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/parent-pins.json": "be2dec06d9b2b5eca4b2f939e16ec09fefeb1e1705b3fcf3ff79871bc60173a2",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/input-dataflow.json": "fb94a7430d7f2d41e6c5879637ee18abb3e291ab8150d32997b17afc933f0f2a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixed.hpp": "e5306f2528ac6e4bf7ab4f6d36afb818c852428407e19e85421cd807014289c8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/evidence/extraction.json": "3998678ebb1f22e01f5eac7fa67844826f20b5ab1f9849077ab39deb4836986f"
+  },
+  "cpu_proof": {
+    "sha256": "2693d6e3c0c5fd29fb4780a7fcd79c5f274ede0d5f80999e78e0c49ec6a78777",
+    "passed": true,
+    "checks": 223685,
+    "refusals": 42,
+    "sites": 116,
+    "owners_safe": 3,
+    "source_pins_rehashed": 251,
+    "objects_rehashed": 23,
+    "dependencies_rehashed": 37,
+    "scope": "Actual Host computation with simulated completion markers; not native arithmetic qualification"
+  },
+  "extraction": {
+    "sha256": "3998678ebb1f22e01f5eac7fa67844826f20b5ab1f9849077ab39deb4836986f",
+    "passed": true,
+    "fixed_header_sha256": "e5306f2528ac6e4bf7ab4f6d36afb818c852428407e19e85421cd807014289c8",
+    "fixed_header_reconstructed_exactly": true,
+    "model_bytes": 35225600,
+    "selected_bundle_bytes": 60416,
+    "headers_bytes": 11024528,
+    "reviewer_payload_bytes_read": 0,
+    "scope": "Root executed bounded extraction; receipt, held identity, tensor offsets, lengths and baseline range hashes joined to fixed plan; no full model or bundle rehash claim"
+  },
+  "reviewed_checks": [
+    "Exact three selected formats/shapes/weights and six uniquely-produced input/output ranges against original baseline and closed class-B authority",
+    "Held no-follow exact input extents and before/after identities; both raw header hashes; exclusive copies/readback/fsync; success only after final source/budget checks",
+    "Fixed initializer field order matches fixture_schema.hpp and runner exactly",
+    "84 pairs/168 kernels, four excluded warmup and 24 measured pairs per case; 12 AB/12 BA, joint case-position/order balance",
+    "Actual original PackedOperation and candidate DenseBlockOperation capture; both outputs checked against full saved BF16 oracle every pair; timing read before event retirement",
+    "Device 35331072 bytes; transfers 37764096 bytes; 1048576-byte pinned slab independently reconstructed",
+    "Qualified ACK receipt and directory fsync precede acknowledgement; actual backend created before contact, no allocations/submissions until ACK; original failure retention and full synchronization unchanged",
+    "Native recipe one new entry plus 39 exact original objects; strict inherited compiler flags, source/dependency before/after hashes, compile lock, 64MiB retained bound, six required original/candidate device entries"
+  ],
+  "limits": [
+    "Native build and native execution are not yet reviewed or qualified by this receipt",
+    "Extractor refusal diagnostic says 32MiB but actual enforced reservation is the required 64MiB; cosmetic only"
+  ],
+  "findings": []
+}

@@ -1,0 +1,18 @@
+--- parent/raw_held
++++ adapter/raw_held
+@@ -1,5 +1,5 @@
+ def raw_held(path,size):
+- need(path in {RAW/n for n in NAMES} and path.resolve()==path and C.USB.resolve()==C.USB and C.USB.stat().st_dev==C.USB_DEVICE,'fixed canonical raw path/device')
++ need(str(path) in EXPECTED and path.resolve()==path and C.USB.resolve()==C.USB and C.USB.stat().st_dev==C.USB_DEVICE,'fixed canonical raw path/device')
+  fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+  try:
+   st=os.fstat(fd);need(stat.S_ISREG(st.st_mode) and st.st_nlink==1 and st.st_dev==C.USB_DEVICE and st.st_size==size,'raw inode/extent/device');return fd,C.identity(st),dict(mode=stat.S_IMODE(st.st_mode),uid=st.st_uid,gid=st.st_gid,mtime_ns=st.st_mtime_ns,atime_ns=st.st_atime_ns)
+--- parent/descriptors
++++ adapter/descriptors
+@@ -1,5 +1,5 @@
+ def descriptors(row):
+- raw=RAW/row['relative_path'];fd,stamp,metadata=raw_held(raw,row['bytes']);out=[(fd,raw,stamp)]
++ raw=Path(row['raw_path']);fd,stamp,metadata=raw_held(raw,row['bytes']);out=[(fd,raw,stamp)]
+  try:
+   target=Path(row['canonical_archive']);fd,stamp=C.held(target,row['canonical_archive_bytes']);out.append((fd,target,stamp));need(out[0][2][:2]!=out[1][2][:2],'distinct raw and canonical inode');return out,metadata
+  except BaseException:

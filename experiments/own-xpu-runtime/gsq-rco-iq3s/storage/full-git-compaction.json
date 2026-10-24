@@ -1,0 +1,28 @@
+{
+  "passed": false,
+  "command": [
+    "git",
+    "-c",
+    "pack.threads=2",
+    "-c",
+    "pack.windowMemory=64m",
+    "repack",
+    "-a",
+    "-d",
+    "-k",
+    "-f",
+    "--window=25"
+  ],
+  "head": "138b84dbc9bcb833128bf1796f85fc285843a66b",
+  "refs_sha256": "47c6fb22cce533091fd17d33374339d0642430a44dd7b07832722ad9916a020a",
+  "staged_tree": "d3e10cdad2fbe6a1b1ffbab92268f92f64f957bc",
+  "before_inventory": {
+    "objects": 226548,
+    "sha256": "08ec2902b4462fd2b8bc1deabd30a33e6554ac12220ac0ce68fa7281baba98d6"
+  },
+  "before_count": "count: 403\nsize: 4304\nin-pack: 226228\npacks: 29\nsize-pack: 3567756\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0",
+  "before_free": 27257749504,
+  "scope": "Full delta repack preserving unreachable objects (-k); no expiration, model deletion, working-tree changes or host settings. GPU idle during repository I/O.",
+  "error": "CalledProcessError(128, ['git', '-c', 'pack.threads=2', '-c', 'pack.windowMemory=64m', 'repack', '-a', '-d', '-k', '-f', '--window=25'])",
+  "elapsed_seconds": 14.582252025604248
+}

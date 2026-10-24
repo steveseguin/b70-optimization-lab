@@ -1,0 +1,5 @@
+# Three-format native micro coordinator preparation
+
+This is an unexecuted adaptation of the qualified HC backend-ACK coordinator. Root alone seals the manifest, creates the operational plan and launches the unit. The exact three fixed cases each have four excluded warmup pairs and24 measured pairs:84pairs/168kernels total. Every full BF16 output must equal both original control and saved baseline. Actual native PID/startticks, nonce, passive target-device contact and durable ACK are mandatory before kernel execution; positive backend cleanup and physical drain remain mandatory.
+
+The fixed unit is `gsq-dense-packed-block-micro-a` on physical BDF23, with BDF47 empty and vision unchanged. Nice19, initial root27.25GB, continuous27GB, memory8GiB, no retry/hard kill/settings changes remain inherited. Device35,331,072B, transfer37,764,096B,1MiB pinned staging. No model or full-engine speed claim. No actual extraction/native receipts exist yet; manifest sealing intentionally refuses their absence. The four focused mocks require actual extraction metadata but read no fixture payload.

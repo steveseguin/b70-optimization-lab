@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "command": [
+    "git",
+    "-c",
+    "core.packedGitLimit=128m",
+    "-c",
+    "core.packedGitWindowSize=16m",
+    "-c",
+    "pack.threads=2",
+    "-c",
+    "pack.windowMemory=64m",
+    "-c",
+    "pack.deltaCacheSize=16m",
+    "repack",
+    "-a",
+    "-d",
+    "-k",
+    "-f",
+    "--window=25"
+  ],
+  "incident_sha256": "2bfd214eb0f15ba8b5913e419a9addfb7780d2da4d00e3429910c1db96b861db",
+  "head": "138b84dbc9bcb833128bf1796f85fc285843a66b",
+  "refs_sha256": "47c6fb22cce533091fd17d33374339d0642430a44dd7b07832722ad9916a020a",
+  "staged_tree": "d3e10cdad2fbe6a1b1ffbab92268f92f64f957bc",
+  "before_inventory": {
+    "objects": 226548,
+    "sha256": "08ec2902b4462fd2b8bc1deabd30a33e6554ac12220ac0ce68fa7281baba98d6"
+  },
+  "before_count": "count: 403\nsize: 4304\nin-pack: 226228\npacks: 29\nsize-pack: 3567756\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0",
+  "before_free": 27256881152,
+  "scope": "One explicit corrected repack, bounded pack mmap/delta caches within unchanged4GiB process AS limit; keeps unreachable objects, no expiration/working-tree/model/host-settings change. All GPUs idle except protected vision.",
+  "after_inventory": {
+    "objects": 226548,
+    "sha256": "08ec2902b4462fd2b8bc1deabd30a33e6554ac12220ac0ce68fa7281baba98d6"
+  },
+  "after_count": "count: 0\nsize: 0\nin-pack: 226548\npacks: 1\nsize-pack: 3487662\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0",
+  "after_free": 27343351808,
+  "new_packs": [
+    ".git/objects/pack/pack-386077d8eb7cb1496f60f4a8c9d873440c148c0a.idx"
+  ],
+  "all_object_ids_preserved": true,
+  "refs_head_staged_tree_unchanged": true,
+  "packs_and_connectivity_verified": true,
+  "elapsed_seconds": 314.9296085834503
+}

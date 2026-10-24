@@ -1,0 +1,291 @@
+{
+  "before": {
+    "utc": "2026-10-24T12:10:01.224190+00:00",
+    "metadata_only": true,
+    "device_api_calls": 0,
+    "device_opens": 0,
+    "service_changes": 0,
+    "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "root_free_bytes": 27289890816,
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 114543529984,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "units": {
+      "qwen38-27b-fp8": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-fp8-tp1-test": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8-tp1-test.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-vision": {
+        "Restart": "no",
+        "TimeoutStopUSec": "infinity",
+        "MainPID": "3487303",
+        "KillMode": "process",
+        "SendSIGKILL": "no",
+        "Id": "qwen38-27b-vision.service",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "drm": {
+      "renderD128": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:128",
+        "driver": "xe"
+      },
+      "card3": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:3",
+        "driver": "xe"
+      },
+      "renderD130": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:130",
+        "driver": "xe"
+      },
+      "renderD129": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:129",
+        "driver": "xe"
+      },
+      "card4": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:4",
+        "driver": "xe"
+      },
+      "card2": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:2",
+        "driver": "xe"
+      },
+      "card0": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:0",
+        "driver": "xe"
+      },
+      "renderD131": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:131",
+        "driver": "xe"
+      }
+    },
+    "passive_helper_sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "inventory": {
+      "passed": false,
+      "holders": [
+        {
+          "pid": 3487303,
+          "fd": "3",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "6",
+          "node": "renderD128"
+        },
+        {
+          "pid": 3487303,
+          "fd": "8",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "11",
+          "node": "renderD128"
+        }
+      ],
+      "errors": [],
+      "nodes": {
+        "226:0": "card0",
+        "226:2": "card2",
+        "226:3": "card3",
+        "226:4": "card4",
+        "226:128": "renderD128",
+        "226:129": "renderD129",
+        "226:130": "renderD130",
+        "226:131": "renderD131"
+      },
+      "intel_devices": [
+        "/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0",
+        "/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0",
+        "/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0",
+        "/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0"
+      ],
+      "metadata_only": true,
+      "device_opens": 0
+    },
+    "holders": {
+      "3487303": {
+        "start_ticks": 63453537,
+        "state": "S"
+      }
+    },
+    "identity_races": [],
+    "kernel": {
+      "journal_sha256": "dfd1caadde35d5ae1a956dbad96c14e7ab4a42aebdb437bfa3b04434f17e1e93",
+      "rows": 3610,
+      "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20e5ad6;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9e0632f6b2;t=65e9328fa6b16;x=e92bb7eccf659d10",
+      "faults": [
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+          "timestamp": "42064105058"
+        },
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+          "timestamp": "42064105299"
+        }
+      ]
+    },
+    "known_fault_baseline_matches": true,
+    "queue": {
+      "A": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:31:13.634788+00:00 after the 2026-10-23 packet195 chain window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      },
+      "B": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:42:03.395697+00:00 after the 2026-10-22 packet58-diet-micro window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      }
+    },
+    "endpoints": {
+      "18130": {
+        "unavailable": "URLError"
+      },
+      "18131": {
+        "unavailable": "URLError"
+      }
+    }
+  },
+  "command": [
+    "systemd-run",
+    "--user",
+    "--quiet",
+    "--unit=gsq-dense-packed-block-micro-a",
+    "--property=Nice=19",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=KillMode=process",
+    "--property=TimeoutStopSec=infinity",
+    "--property=LimitAS=infinity",
+    "--property=LimitCORE=0",
+    "--property=UMask=0077",
+    "--property=WorkingDirectory=/home/steve/llm-optimizations",
+    "/usr/bin/env",
+    "-i",
+    "HOME=/home/steve",
+    "PATH=/usr/bin:/bin",
+    "OMP_NUM_THREADS=2",
+    "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "NEOReadDebugKeys=1",
+    "FilterBdfPath=0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER=1",
+    "ZE_AFFINITY_MASK=0",
+    "ONEAPI_DEVICE_SELECTOR=level_zero:0",
+    "SYCL_CACHE_DIR=/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a/sycl",
+    "NEO_CACHE_DIR=/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a/neo",
+    "XDG_CACHE_HOME=/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a/xdg",
+    "/usr/bin/taskset",
+    "-c",
+    "0-3,16-19",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/build/1792843665514798920/dense-packed-block-micro",
+    "--run",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a/result"
+  ],
+  "proof_sha256": "79b6374fd5862535fbbcca7788374ad3ba4bc988876415273d841d6456c24605",
+  "binary_sha256": "526f869210d28c61d8745c8e573c14604bb1b254d0df8aa7d0791a3c20d2461d",
+  "monitor_sha256": "d4035484132fa59d3659c2b6b9e277f28f9b4705db472284c77d4c7a77581d62",
+  "observer_sha256": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef",
+  "target": {
+    "card3": {
+      "bdf": "0000:23:00.0",
+      "dev": "226:3",
+      "driver": "xe"
+    },
+    "renderD130": {
+      "bdf": "0000:23:00.0",
+      "dev": "226:130",
+      "driver": "xe"
+    }
+  },
+  "plan": {
+    "schema": "gsq.dense-packed-block-micro-once-plan.v1",
+    "unit": "gsq-dense-packed-block-micro-a",
+    "stage": "/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a",
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/build/1792843665514798920/dense-packed-block-micro",
+    "binary_sha256": "526f869210d28c61d8745c8e573c14604bb1b254d0df8aa7d0791a3c20d2461d",
+    "source_sha256": {
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/startup.hpp": "814dc5d00319ab08f8511293907db11880080e179506b06f45e6979771aeae59",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/handshake.py": "54280d58ce56c2ba5401a6fec64784d158dd409866af258f4c2de54ce503566f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.json": "9e80fc5ccfdd5dd7f09b3501c84e44a3082d3c0edc8cc8067b7fb5898e85ca71",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/evidence/cpu-proof.json": "2693d6e3c0c5fd29fb4780a7fcd79c5f274ede0d5f80999e78e0c49ec6a78777",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/evidence/extraction.json": "3998678ebb1f22e01f5eac7fa67844826f20b5ab1f9849077ab39deb4836986f",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/extraction-plan.json": "444f0c3ea801186a6772f559b0a04c88c5978f262c90da524ff2a3207067d6e2",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/once.py": "6975210baa9b902433e52145340320ad4329161bbf214fd29b62186ea37e1e08",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/independent-wrapper-review.json": "d543b3884779f21502da504368db5b925fc16272149684b37a61dbe902b449a6",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/device-a/review.json": "549fb99606c00e26a0081534152e431e34b2d169bdeb9d20055a1bf0815c17bf",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/host-before-stop.json": "dd218a7b5b9f16cf927efafc198de67d2ae572c81216c163d1d7523a9d0d5372",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/once.py": "d4035484132fa59d3659c2b6b9e277f28f9b4705db472284c77d4c7a77581d62",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/observe.py": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/qualify_once.py": "96ea50409a990a7de91e9faaf2e6698fa1e3f1aba2a6eae8abcb9aa2397b7608",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/host-after-model-stop.json": "a43073ce7fd3b1e7aaceaf5424b99dcc9ba70efc74c51c05a09da279018db0fe",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/evidence/native-build.json": "79b6374fd5862535fbbcca7788374ad3ba4bc988876415273d841d6456c24605",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/evidence/independent-review.json": "9cadc5622b6d5930203018ebefb24f6d248d9c98c6c656bb3b996db6ad095adc",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/manifest.json": "7fdb23b0fa99b1bd0b6ef3468d1fe581925d86581294cf473cdcf42deb796616",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/complete.json": "8fbac4c1dadf2dc728c49f622f6f1797876b198ab6776ed6095120720d2dbebc",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/post-archive-host.json": "1b2dfd35902643ae68d373eb5bde83979cedfebfa90be9e825a818c4d871f67a"
+    },
+    "target_bdf": "0000:23:00.0",
+    "empty_bdf": "0000:47:00.0",
+    "expected_vision": [
+      3487303,
+      63453537
+    ],
+    "safe_properties": {
+      "Restart": "no",
+      "SendSIGKILL": "no",
+      "KillMode": "process",
+      "TimeoutStopUSec": "infinity",
+      "LimitAS": "infinity",
+      "LimitCORE": "0",
+      "Nice": "19"
+    },
+    "pairs": 84,
+    "kernels": 168,
+    "device_bytes": 35331072,
+    "pinned_bytes": 1048576,
+    "root_floor_bytes": 27000000000,
+    "root_cache_forecast_bytes": 134217728,
+    "minimum_available_memory": 8589934592,
+    "no_retry": true,
+    "native_admitted": false
+  },
+  "scope": "fixed real-weight HC BF16 low/inject one-SG geometry AB/BA micro; not model throughput",
+  "retry": false
+}

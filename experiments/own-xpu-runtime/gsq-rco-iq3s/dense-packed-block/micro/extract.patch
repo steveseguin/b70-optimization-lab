@@ -1,0 +1,72 @@
+--- qualified-HC/extract.py
++++ dense-packed-block/extract.py
+@@ -1,10 +1,10 @@
+ #!/usr/bin/env python3
+-"""Fixed bounded HC extraction; default checks metadata only, never a Device."""
++"""Fixed bounded three-format dense extraction; default checks metadata only, never a Device."""
+ import argparse,gzip,hashlib,json,os,resource,shutil,stat
+ from pathlib import Path
+ P=Path(__file__).resolve().parent;Q=P.parent;L=Q.parent
+ PLAN=P/'extraction-plan.json'
+-PLAN_SHA='f4c2293aa33b6c976014c45d44264e89a78b645cbbdfde76fcc09a9433e935ae'
++PLAN_SHA='444f0c3ea801186a6772f559b0a04c88c5978f262c90da524ff2a3207067d6e2'
+ PREFIX='prompt-00-none/rank0/state-2147483647/'
+ def need(x,m):
+  if not x:raise ValueError(m)
+@@ -57,10 +57,10 @@
+  census=json.loads((L/'metadata/new-census.json').read_text());graph=json.loads((L/'graph/new-plan.json').read_text())
+  pins=json.loads((Q/'source-pins.json').read_text())
+  for rel,h in pins.items():need(sha(L.parents[2]/rel)==h,'source authority '+rel)
+- need([c['label'] for c in p['cases']]==['blk.0.hc.a.low','blk.0.hc.a.inject'],'fixed two cases')
++ need([c['label'] for c in p['cases']]==['blk.0.gdn.z','blk.1.gdn.qkv','blk.2.gdn.z'],'fixed three cases')
+  for c in p['cases']:
+-  need(c['columns']==10240 and c['rows']==(320 if c['label'].endswith('low') else 4),'fixed shapes')
+-  t=census['tensors'][c['weight']];need(t==c['tensor'] and t['type_id']==30 and t['bytes']==c['rows']*20480,'complete BF16 tensor')
++  need(c['columns']==2560 and c['rows']==(10240 if c['layer']==1 else 6144),'fixed shapes')
++  t=census['tensors'][c['weight']];need(t==c['tensor'] and t['type_id']==c['type_id']==(12 if c['layer']==0 else 13 if c['layer']==1 else 23) and t['bytes']==c['rows']*10*{12:144,13:176,23:136}[c['type_id']],'complete fixed packed tensor')
+   s=next(s for s in census['shards'] if Path(s['path']).name==t['shard']);need(s==c['shard'],'fixed shard metadata')
+   for v in c['ranges'].values():
+    n=v['name'];need(entries[n+'.bin']==(v['offset'],v['bytes'],v['sha256']),'selected bundle span')
+@@ -68,7 +68,11 @@
+    need([x['label'] for x in graph['launches'] if n in x['outputs']]==[v['unique_writer']],'unique producer')
+    if n in ranges:need(ranges[n]==v,'shared range identity')
+    ranges[n]=v
+- need(len(ranges)==3 and sum(v['bytes'] for v in ranges.values())==21128,'fixed unique range budget')
++ need(len(ranges)==6 and sum(v['bytes'] for v in ranges.values())==60416,'fixed unique range budget')
++ need(p['max_model_payload_bytes']==p['model_payload_bytes']==sum(c['tensor']['bytes'] for c in p['cases'])==35225600,'plan tensor budget')
++ need(p['unique_bundle_range_bytes']==p['unique_state_bytes']==60416 and p['copied_payload_bytes']==35286016 and p['max_header_bytes']==11024528,'plan bounded copy budgets')
++ need(p['schedule']==dict(cases=3,warmup_cycles=4,measured_cycles=24,total_pairs=84,total_kernels=168,case_order='((cycle/2)+j)%3',arm_order='AB even cycle, BA odd',measured_pairs_each_case=24),'exact three-case schedule')
++ need(p['memory']==dict(device_bytes=35331072,transfer_bytes=37764096,pinned_slab_bytes=1048576),'exact three-case ledger')
+  return p,row,ranges
+ def syncdir(p):
+  fd=os.open(p,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+@@ -79,11 +83,11 @@
+  need(sha(p)==digest(b),'copied readback')
+ def main():
+  ap=argparse.ArgumentParser();ap.add_argument('--extract',action='store_true');a=ap.parse_args();p,row,ranges=authority()
+- if not a.extract:print(json.dumps(dict(passed=True,executed=False,model_payload_bytes=6635520,unique_state_bytes=21128)));return
++ if not a.extract:print(json.dumps(dict(passed=True,executed=False,model_payload_bytes=35225600,unique_state_bytes=60416)));return
+  need(os.getpriority(os.PRIO_PROCESS,0)==19 and os.sched_getaffinity(0)<=set(range(8,16))|set(range(24,32)),'placement');resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+- need(shutil.disk_usage(P).free>=27000000000+32*1024**2,'root floor +32MiB')
++ need(shutil.disk_usage(P).free>=27000000000+64*1024**2,'root floor +32MiB')
+  dest=P/'fixtures';need(not dest.exists() and not (P/'fixed.hpp').exists() and not (P/'evidence/extraction.json').exists(),'one fresh extraction')
+- dest.mkdir();receipt=dict(passed=False,source_sha256={str(f):sha(f) for f in [Path(__file__),PLAN,Q/'one_sg.hpp',Q/'policy.hpp',Q/'evidence/cpu-proof.json',P/'fixture_schema.hpp']},cases=[],device_executed=False,model_payload_bytes_read=0,bundle_bytes_read=0,header_bytes_read=0,scope='Only three authenticated bundle ranges and two complete model tensors; no whole-bundle or whole-model rehash claim')
++ dest.mkdir();receipt=dict(passed=False,source_sha256={str(f):sha(f) for f in [Path(__file__),PLAN,Q/'block.hpp',Q/'arithmetic.hpp',Q/'selection.hpp',Q/'selection.json',Q/'evidence/cpu-proof.json',P/'fixture_schema.hpp']},cases=[],device_executed=False,model_payload_bytes_read=0,bundle_bytes_read=0,header_bytes_read=0,scope='Only six authenticated bundle ranges and three complete model tensors; no whole-bundle or whole-model rehash claim')
+  fds=[]
+  try:
+   bundle=Path(p['bundle_path']);fd,bs=regular(bundle,row['bytes']);fds.append(fd);data={}
+@@ -104,11 +108,11 @@
+    receipt['cases'].append(dict(label=c['label'],rows=c['rows'],source_shard=str(path),shard_identity=ms,tensor_offset=t['file_offset'],tensor_bytes=t['bytes'],files=cf))
+    strings=[c['label'],c['weight'],str(path)]
+    for role in ['input','output','weights']:strings += [cf[role]['path'],cf[role]['sha256']]
+-   initializers.append('{'+','.join(['0',str(c['rows']),*[json.dumps(s) for s in strings],*[str(v)+'ULL' for v in ms]])+'},')
+-  text='#pragma once\n#include "fixture_schema.hpp"\nnamespace micro {\ninline constexpr std::array<Fixed,2> fixed{{\n'+'\n'.join(initializers)+'\n}};\n}\n';durable(P/'fixed.hpp',text.encode());syncdir(dest);syncdir(P)
++   initializers.append('{'+','.join([str(c['layer']),str(c['type_id']),str(c['rows']),*[json.dumps(s) for s in strings],*[str(v)+'ULL' for v in ms]])+'},')
++  text='#pragma once\n#include "fixture_schema.hpp"\nnamespace micro {\ninline constexpr std::array<Fixed,3> fixed{{\n'+'\n'.join(initializers)+'\n}};\n}\n';durable(P/'fixed.hpp',text.encode());syncdir(dest);syncdir(P)
+   held(fd,bundle,bs)
+   for mf,ms,path in models.values():held(mf,path,ms)
+-  need(receipt['model_payload_bytes_read']==6635520 and receipt['bundle_bytes_read']==21128 and receipt['header_bytes_read']<=11024528,'fixed read budgets')
++  need(receipt['model_payload_bytes_read']==35225600 and receipt['bundle_bytes_read']==60416 and receipt['header_bytes_read']<=11024528,'fixed read budgets')
+   for f,h in receipt['source_sha256'].items():need(sha(f)==h,'post extraction source drift')
+   receipt.update(passed=True,fixed_header_sha256=sha(P/'fixed.hpp'))
+  except BaseException as e:receipt.update(passed=False,error=repr(e));raise

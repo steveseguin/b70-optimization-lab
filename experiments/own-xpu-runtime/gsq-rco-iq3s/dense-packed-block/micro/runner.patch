@@ -1,0 +1,68 @@
+--- qualified-HC/runner.cpp
++++ dense-packed-block/runner.cpp
+@@ -23,7 +23,7 @@
+  try{struct stat a{},b{},c{};need(!fstat(fd,&a)&&S_ISREG(a.st_mode),"regular input");
+   if(spec)need(uint64_t(a.st_dev)==spec->dev&&uint64_t(a.st_ino)==spec->ino&&uint64_t(a.st_size)==spec->size&&uint64_t(a.st_mtim.tv_sec)*1000000000+a.st_mtim.tv_nsec==spec->mtime&&uint64_t(a.st_ctim.tv_sec)*1000000000+a.st_ctim.tv_nsec==spec->ctime,"model identity");
+   else need(size_t(a.st_size)==bytes&&offset==0,"fixture exact extent");
+-  need(offset<=size_t(a.st_size)&&bytes<=size_t(a.st_size)-offset&&bytes<=6553600,"bounded read");std::vector<uint8_t>v(bytes);size_t done=0;
++  need(offset<=size_t(a.st_size)&&bytes<=size_t(a.st_size)-offset&&bytes<=18022400,"bounded read");std::vector<uint8_t>v(bytes);size_t done=0;
+   while(done<bytes){guard();auto n=pread(fd,v.data()+done,std::min(size_t(1<<20),bytes-done),offset+done);need(n>0,"short fixed read");done+=n;}
+   need(!fstat(fd,&b)&&!lstat(path,&c)&&same(a,b)&&same(a,c)&&sha(v)==digest,"fixed input changed/hash mismatch");::close(fd);return v;
+  }catch(...){::close(fd);throw;}
+@@ -42,16 +42,17 @@
+ struct Harness {
+  Device&d;Allocation slab;size_t &allocated,&transfers,&submissions;unsigned serial=0;
+  Harness(Device&v,size_t&a,size_t&t,size_t&n):d(v),allocated(a),transfers(t),submissions(n){slab=d.arena.allocate("micro:transfer",1048576,Memory::pinned,Category::pinned_slab,Lifetime::transfer);}
+- Allocation alloc(size_t n){guard();allocated+=n;need(allocated<=6677776,"device budget");return d.arena.allocate("micro:"+std::to_string(serial++),n,Memory::device,Category::scratch,Lifetime::transaction);}
++ Allocation alloc(size_t n){guard();allocated+=n;need(allocated<=35331072,"device budget");return d.arena.allocate("micro:"+std::to_string(serial++),n,Memory::device,Category::scratch,Lifetime::transaction);}
+  void complete(Event e){need(d.wait(e,std::chrono::seconds(30))&&d.complete(e)&&d.in_flight()==0,"event incomplete");d.retire_completed_events();guard();}
+- void upload(Allocation id,const std::vector<uint8_t>&v){need(v.size()==d.arena.row(id).bytes,"upload extent");for(size_t off=0;off<v.size();){guard();need(d.in_flight()==0,"restage pending");size_t n=std::min(size_t(1048576),v.size()-off);transfers+=n;need(transfers<=6712768,"transfer budget");std::memcpy(d.arena.row(slab).pointer,v.data()+off,n);CopyEngine cp(d);complete(cp.copy(id,off,slab,0,n,{}));off+=n;}}
+- std::vector<uint8_t> output(Allocation id){guard();size_t n=d.arena.row(id).bytes;need(d.in_flight()==0&&(n==640||n==8),"output/status extent/pending");transfers+=n;need(transfers<=6712768,"transfer budget");CopyEngine cp(d);complete(cp.copy(slab,0,id,0,n,{}));auto*p=static_cast<uint8_t*>(d.arena.row(slab).pointer);return {p,p+n};}
++ void upload(Allocation id,const std::vector<uint8_t>&v){need(v.size()==d.arena.row(id).bytes,"upload extent");for(size_t off=0;off<v.size();){guard();need(d.in_flight()==0,"restage pending");size_t n=std::min(size_t(1048576),v.size()-off);transfers+=n;need(transfers<=37764096,"transfer budget");std::memcpy(d.arena.row(slab).pointer,v.data()+off,n);CopyEngine cp(d);complete(cp.copy(id,off,slab,0,n,{}));off+=n;}}
++ std::vector<uint8_t> output(Allocation id){guard();size_t n=d.arena.row(id).bytes;need(d.in_flight()==0&&(n==12288||n==20480),"output/status extent/pending");transfers+=n;need(transfers<=37764096,"transfer budget");CopyEngine cp(d);complete(cp.copy(slab,0,id,0,n,{}));auto*p=static_cast<uint8_t*>(d.arena.row(slab).pointer);return {p,p+n};}
+  Case setup(const Data&v,const Fixed&spec){
+   Case c{};c.w=alloc(v.w.size());c.x=alloc(v.x.size());c.ya=alloc(spec.rows*2);c.yb=alloc(spec.rows*2);upload(c.w,v.w);upload(c.x,v.x);
+   for(unsigned arm=0;arm<2;++arm){std::vector<PreparedCompute>cmd;d.begin_capture(cmd);
+    try{auto y=arm?c.yb:c.ya;
+-    if(arm)gsq_hc_one_sg::gemv(d,iq3::Type::BF16,c.w,c.x,y,spec.rows,10240,iq3::Type::BF16,iq3::Type::BF16,32,0);
+-    else iq3::kopt::gemv(d,iq3::Type::BF16,c.w,c.x,y,spec.rows,10240,iq3::Type::BF16,iq3::Type::BF16,32,0);
++    integrated::Matrix m{};m.type=static_cast<iq3::Type>(spec.type);m.rows=spec.rows;m.columns=2560;m.count=m.experts=1;m.span=m.rows;m.w=c.w;m.x=c.x;m.y=y;
++    if(arm)denseblock::submit(d,m,spec.label,spec.weight,gsqn::InputMode::shared);
++    else gsqn::submit(d,m,gsqn::InputMode::shared,gsqn::Storage::packed_direct);
+     d.end_capture();}catch(...){d.end_capture();throw;}
+    need(cmd.size()==1,"one captured original/candidate kernel");c.cmd[arm]=std::move(cmd[0]);}
+   return c;
+@@ -62,16 +63,16 @@
+  need(out.is_absolute()&&!fs::exists(out)&&out.parent_path()==fs::canonical(out.parent_path()),"fresh canonical output");need(fs::create_directory(out),"output creation");deadline=std::chrono::steady_clock::now()+std::chrono::minutes(15);
+  bool entered=false,safe=true,passed=false,acknowledged=false;std::string error,cleanup,teardown;std::unique_ptr<Device>d;Backend*backend=nullptr;size_t pairs=0,allocated=0,transfers=0,submissions=0;
+  std::ofstream samples(out/"samples.jsonl");need(bool(samples),"samples file");
+- auto report=[&]()noexcept{try{std::ofstream f(out/"result.json");f<<"{\"schema\":\"gsq.hc-bf16-one-sg.native-micro.v1\",\"passed\":"<<(passed?"true":"false")<<",\"safe_to_exit\":"<<(safe?"true":"false")<<",\"card\":"<<card<<",\"backend_acknowledged\":"<<(acknowledged?"true":"false")<<",\"profiling\":true,\"model_executed\":false,\"device_factory_entered\":"<<(entered?"true":"false")<<",\"completed_exact_pairs\":"<<pairs<<",\"attempted_kernel_submissions\":"<<submissions<<",\"device_bytes\":"<<allocated<<",\"transfer_bytes\":"<<transfers<<",\"warmup_cycles\":4,\"measured_cycles\":24,\"error\":"<<quote(error)<<",\"cleanup_error\":"<<quote(cleanup)<<",\"teardown\":"<<(teardown.empty()?"null":teardown)<<"}\n";f.flush();return bool(f);}catch(...){return false;}};
++ auto report=[&]()noexcept{try{std::ofstream f(out/"result.json");f<<"{\"schema\":\"gsq.dense-packed-block.native-micro.v1\",\"passed\":"<<(passed?"true":"false")<<",\"safe_to_exit\":"<<(safe?"true":"false")<<",\"card\":"<<card<<",\"backend_acknowledged\":"<<(acknowledged?"true":"false")<<",\"profiling\":true,\"model_executed\":false,\"device_factory_entered\":"<<(entered?"true":"false")<<",\"completed_exact_pairs\":"<<pairs<<",\"attempted_kernel_submissions\":"<<submissions<<",\"device_bytes\":"<<allocated<<",\"transfer_bytes\":"<<transfers<<",\"warmup_cycles\":4,\"measured_cycles\":24,\"error\":"<<quote(error)<<",\"cleanup_error\":"<<quote(cleanup)<<",\"teardown\":"<<(teardown.empty()?"null":teardown)<<"}\n";f.flush();return bool(f);}catch(...){return false;}};
+  try{
+-  std::array<Data,2>data;for(size_t i=0;i<2;++i){auto&s=fixed[i];original_identity(s);need(s.layer==0&&s.rows==(i?4u:320u),"fixed low/inject cases");
+-   auto&v=data[i];v.x=read(s.x,0,20480,s.x_sha);v.expected=read(s.y,0,s.rows*2,s.y_sha);
+-   v.w=read(s.packed,0,size_t(s.rows)*20480,s.weight_sha);original_identity(s);
++  std::array<Data,3>data;for(size_t i=0;i<3;++i){auto&s=fixed[i];original_identity(s);need(s.layer==i&&s.type==(i==0?12u:i==1?13u:23u)&&s.rows==(i==1?10240u:6144u),"fixed three type/shape cases");
++   auto&v=data[i];v.x=read(s.x,0,5120,s.x_sha);v.expected=read(s.y,0,s.rows*2,s.y_sha);
++   v.w=read(s.packed,0,gsq::row_bytes(s.type,2560)*s.rows,s.weight_sha);original_identity(s);
+   }
+-  guard();entered=true;safe=false;auto owner=make_sycl_device(card,true);backend=owner.get();d=std::make_unique<Device>(std::move(owner));await_backend_ack(out);acknowledged=true;Harness h(*d,allocated,transfers,submissions);std::array<Case,2>cases;
+-  for(size_t i=0;i<2;++i)cases[i]=h.setup(data[i],fixed[i]);
+-  for(unsigned phase=0;phase<2;++phase)for(unsigned cycle=0;cycle<(phase?24u:4u);++cycle)for(unsigned j=0;j<2;++j){
+-   unsigned i=((cycle/2)+j)%2;auto&c=cases[i];std::array<EventTiming,2>t;
++  guard();entered=true;safe=false;auto owner=make_sycl_device(card,true);backend=owner.get();d=std::make_unique<Device>(std::move(owner));await_backend_ack(out);acknowledged=true;Harness h(*d,allocated,transfers,submissions);std::array<Case,3>cases;
++  for(size_t i=0;i<3;++i)cases[i]=h.setup(data[i],fixed[i]);
++  for(unsigned phase=0;phase<2;++phase)for(unsigned cycle=0;cycle<(phase?24u:4u);++cycle)for(unsigned j=0;j<3;++j){
++   unsigned i=((cycle/2)+j)%3;auto&c=cases[i];std::array<EventTiming,2>t;
+    for(unsigned k=0;k<2;++k){unsigned arm=cycle%2?1-k:k;t[arm]=h.timed(c.cmd[arm]);}
+    auto a=h.output(c.ya),b=h.output(c.yb);bool exact=a==b&&a==data[i].expected;
+    samples<<"{\"warmup\":"<<(phase?"false":"true")<<",\"cycle\":"<<cycle<<",\"layer\":"<<fixed[i].layer<<",\"label\":"<<quote(fixed[i].label)<<",\"order\":"<<quote(cycle%2?"BA":"AB")<<",\"A_start_ns\":"<<t[0].start_ns<<",\"A_end_ns\":"<<t[0].end_ns<<",\"B_start_ns\":"<<t[1].start_ns<<",\"B_end_ns\":"<<t[1].end_ns<<",\"A_sha256\":"<<quote(sha(a))<<",\"B_sha256\":"<<quote(sha(b))<<",\"expected_sha256\":"<<quote(fixed[i].y_sha)<<",\"exact\":"<<(exact?"true":"false")<<"}\n";samples.flush();need(bool(samples),"samples write");
+@@ -79,7 +80,7 @@
+    if(!exact){for(auto pair:{std::pair{"A",&a},std::pair{"B",&b}}){std::ofstream f(out/(std::string("mismatch-")+pair.first+".bin"),std::ios::binary);f.write(reinterpret_cast<const char*>(pair.second->data()),pair.second->size());}throw std::runtime_error("exact BF16 baseline gate failed; no further pair");}
+    ++pairs;need(report(),"progress receipt");
+   }
+-  guard();backend->synchronize();auto r=d->shutdown(std::chrono::seconds(30));teardown=r.json();safe=r.safe_to_exit;need(safe&&r.exit_code==0&&r.in_flight==0&&r.live_bytes==0,"owner teardown");need(pairs==56&&submissions==112&&allocated==6677776&&transfers==6712768,"complete fixed schedule and byte ledger");passed=true;
++  guard();backend->synchronize();auto r=d->shutdown(std::chrono::seconds(30));teardown=r.json();safe=r.safe_to_exit;need(safe&&r.exit_code==0&&r.in_flight==0&&r.live_bytes==0,"owner teardown");need(pairs==84&&submissions==168&&allocated==35331072&&transfers==37764096,"complete fixed schedule and byte ledger");passed=true;
+  }catch(const std::exception&e){error=e.what();}catch(...){error="non-standard micro failure";}
+  if(!passed){if(!d){if(entered){report();hold_for_supervisor();}safe=true;}else if(teardown.empty()){
+   try{backend->synchronize();}catch(const std::exception&e){cleanup=e.what();report();hold_for_supervisor();}catch(...){cleanup="backend synchronization uncertain";report();hold_for_supervisor();}

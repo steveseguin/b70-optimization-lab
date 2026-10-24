@@ -1,0 +1,32 @@
+{
+  "schema": "gsq.dense-packed-block.independent-audit-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/test_audit.py": "643d8ce64248dbf322e380782dfdd950b150b469a82aacc7a049097ddd5c6d6d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/prepare.py": "48e35621705d85bab1a1bba34c13e288348d5fbb350abec1bd9829f53da9d9d8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/evidence/device-a/audit.py": "69792390e9ac925ebf967cda3c1dcdfd5ce1f05c52d661c4c142c6ca71766dd8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/evidence/device-a/audit-delta.patch": "1e48d065cc2ab8cfb3d5d7660494da57f43d86875364e24a68946e9917a071f9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/evidence/extraction.json": "3998678ebb1f22e01f5eac7fa67844826f20b5ab1f9849077ab39deb4836986f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/evidence/native-build.json": "79b6374fd5862535fbbcca7788374ad3ba4bc988876415273d841d6456c24605",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/evidence/device-a/audit.py": "01c8b44723ab8e45efdde748d113fc4ffb6a292428a8cd338c9b2fa8d213b694",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/evidence/audit-preparation.json": "6bf7f0dedc0c71ecee5c1c83d6db540e8385276310798f46a6d3b66b31f15c69",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/evidence/audit-tests-native-bound.log": "3e6a9aa5034fdc3f44765d3a2a6c5db9c3425eeb960040cf47bd21697e0e7032",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/lineage/auditor-before-plan-bind/audit.py": "9c88f86e52c2ff8d367271c04c3e3ce7a99bcd727267845ab09f4eff9cd02723",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/evidence/independent-review.json": "9cadc5622b6d5930203018ebefb24f6d248d9c98c6c656bb3b996db6ad095adc"
+  },
+  "actual_plan_path": "/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-micro-a-plan.json",
+  "actual_plan_sha256": "1e7297d13108dbec368a0162761b445caf706afac7f8432df4a9137181036197",
+  "scope": "Source, exact plan metadata and retained three-test evidence only; no actual closed-run result or payload reads, no test rerun",
+  "checks": [
+    "Exact derivative of qualified HC auditor, reconstructed full tracked diff",
+    "Three fixed Q4_K/Q5_K/IQ4_XS labels/types/shapes and complete saved BF16 output extents",
+    "All84 ordered pairs168kernels;12 excluded warmup,72 measured;24 percase including12AB12BA; no selected sample filtering",
+    "Per-case/per-order mean median min/max and paired/summed B/A computed from positive monotonic kernel event timestamps; no aggregate model-speed claim",
+    "Actual build79b6374/binary526f, manifest/source/dependency/39object pins joined before closed result acceptance",
+    "Inherited native ACK challenge/PID/starttick/accepted descriptor sample, clean owner and unchanged fault/vision/queue checks retained",
+    "Full copied three-weight and six input/output fixture hashing planned, no model or original bundle reread; raw evidence bounded128MiB/2000files",
+    "Final plan hash/path-only delta exactly reconstructed from retained tested snapshot; actual external plan hash/counts/ledger/binary joined"
+  ],
+  "review_note": "Initial source check raced author plan binding and refused the expected unbound PLAN_SHA assertion before writing a review; final bound snapshot reviewed explicitly, no actual audit invoked.",
+  "findings": []
+}

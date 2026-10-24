@@ -310,3 +310,43 @@ sum1863.916ms/12,582.182ms; preserve per-output arithmetic and all intermediates
 Existing p6 fusion is not a usable drop-in. Independently verified canonical
 recovery of40 closed Q6 measured bundles frees4,434,863,360B; all80 phases pass.
 Root old-download-cache cleanup41.7MB preserves installed tools and model data.
+
+## October24 11:56UTC — select116-site dense block decoding
+
+Defer expert fusion: only17 initial pairs and duplicated work is a subset of class
+time. Retained MTP metadata shows76.12% hits,34.106ms hit/70.072ms miss intervals,
+12.323s correction inside65.026s decode; draft3.072ms wall is not GPU time, and
+rank durations overlap. The0.426ms draft enqueue acknowledgement is not completion.
+Select43Q4_K+31Q5_K+42IQ4_XS dense sites, allK2560, original shared input/SG32
+one row per workgroup. Block256 outer and8 groups preserve k=lane+32*n exactly;
+hoist two/one repeated half conversions without changing scale/product/subtract,
+accumulation or BF16 rounding. Three fixed real cases precede any Engine integration.
+No allocation increase. Existing source,CPU and device gates remain required.
+
+Additional16 closed bundles match canonical archives,1,773,945,344B. Failedclass-A
+is preservation-only and remains failed. Class-B release stays held until required
+new dense fixtures are authenticated. Full Git compaction failed its inherited
+4GiB address-space limit with default pack mappings; all objects/refs/index and
+the reported42.956MB blob remain intact. A separate corrected attempt bounds only
+Git's process-local pack mappings/caches; no history expiration or host-memory
+setting change. No further admission while repository I/O runs.
+
+## October24 12:03UTC — dense CPU proof passes
+
+Actual2693d6e3 passes223,685 checks/42refusals/all116sites and3safeHostowners;
+37dependencies,5,056,973 retained bytes. Original decoder/lane/tree/BF16 bits
+match even for independently chosen exceptional d/dmin values; no NaN waiver.
+No native/realpayload evidence yet. Corrected Git compaction passes identical
+226,548object IDs/refs/index plus pack/connectivity checks, recovering86.5MB.
+Root headroom now supports the35.3MB bounded fixture and native micro build.
+
+## October24 12:12UTC — dense native micro independently passes
+
+Actualeb32 verifies84exactpairs/168kernels,72measured+12warmups,physicalACK and
+safecloseddrain,nofault/signal. Per24means Q4_K255.681→50.430µs (B/A.197236),
+Q5_K466.771→87.222 (.186863), IQ4_XS210.707→53.034 (.251695),bothordersimproved.
+No fullmodel extrapolation. Proceed sourceonly exact116-site additiveintegration
+oncurrenta0f9,zeroallocationdelta,original26suite/fulltargetstate required.
+All16 additional captures verified/canonicalized,1,773,945,344Brecovered;
+classA remainsfailed, classB fixturesauthenticatedbefore rawrelease. USB8.621GB,
+root27.29GB narrowlycovernextfull admission; fresh guardsremainmandatory.

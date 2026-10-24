@@ -1,0 +1,32 @@
+--- native-formats/packed.hpp operation
++++ dense-packed-block/block.hpp operation
+@@ -1,5 +1,5 @@
+-template<unsigned T> class PackedKernel;
+-template<unsigned T> struct PackedOperation final:
++template<unsigned T> class DenseBlockKernel;
++template<unsigned T> struct DenseBlockOperation final:
+ #ifdef OWN_RT_HOST_ONLY
+  integrated::HostOperation
+ #else
+@@ -13,7 +13,7 @@
+   auto b=bind(p);
+   for(unsigned slot=0;slot<s.count;++slot){auto r=b.routes?b.routes[slot]:iq3::Route{0,0,uint32_t(s.rows)};const bool valid=iq3::valid_route(r,s.experts,uint32_t(s.rows),uint32_t(s.rows));
+    if(b.status)b.status[slot]=!valid;
+-   for(size_t row=0;row<s.rows;++row){float sums[32]{};const bool active=valid&&row<r.row_count;if(active)for(unsigned lane=0;lane<32;++lane)sums[lane]=lane_sum<T>(b,r,row,slot,lane);b.y[size_t(slot)*s.rows+row]=iq3::bf16_bits(active?iq3::tree32(sums):iq3::bits_float(0x7fc00000));}
++   for(size_t row=0;row<s.rows;++row){float sums[32]{};const bool active=valid&&row<r.row_count;if(active)for(unsigned lane=0;lane<32;++lane)sums[lane]=block_lane_sum<T>(b,r,row,slot,lane);b.y[size_t(slot)*s.rows+row]=iq3::bf16_bits(active?iq3::tree32(sums):iq3::bits_float(0x7fc00000));}
+   }
+  }
+ #else
+@@ -22,10 +22,10 @@
+   const auto b=bind(p);
+   // Outer command owns by-value pointers/shape/dependencies. No caller span or
+   // operation object survives by reference in the prepared callback.
+-  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<PackedKernel<T>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<DenseBlockKernel<T>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+    const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id(),row=logical%b.s.rows;const unsigned slot=logical/b.s.rows;
+    const auto r=b.routes?b.routes[slot]:iq3::Route{0,0,uint32_t(b.s.rows)};const bool valid=iq3::valid_route(r,b.s.experts,uint32_t(b.s.rows),uint32_t(b.s.rows)),active=valid&&row<r.row_count;
+-   float sum=active?lane_sum<T>(b,r,row,slot,lane):0.f;
++   float sum=active?block_lane_sum<T>(b,r,row,slot,lane):0.f;
+    for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
+    if(lane==0){b.y[logical]=iq3::bf16_bits(active?sum:iq3::bits_float(0x7fc00000));if(row==0&&b.status)b.status[slot]=!valid;}
+   }));});

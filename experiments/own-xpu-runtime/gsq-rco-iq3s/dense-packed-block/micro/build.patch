@@ -1,0 +1,42 @@
+--- qualified-HC/build.py
++++ dense-packed-block/build.py
+@@ -17,18 +17,18 @@
+ def plan(attempt):
+  assert sha(CONTROL)==CONTROL_SHA;c=json.loads(CONTROL.read_text());assert c['passed']
+  compile=list(c['commands'][0]);compile[compile.index('-c')+1]=str(P/'runner.cpp');compile[compile.index('-o')+1]=str(attempt/'micro.o');compile[compile.index('-MF')+1]=str(attempt/'micro.d')
+- link=list(c['commands'][-1]);old=c['commands'][0][c['commands'][0].index('-o')+1];link[link.index(old)]=str(attempt/'micro.o');link[link.index('-o')+1]=str(attempt/'hc-one-sg-micro')
++ link=list(c['commands'][-1]);old=c['commands'][0][c['commands'][0].index('-o')+1];link[link.index(old)]=str(attempt/'micro.o');link[link.index('-o')+1]=str(attempt/'dense-packed-block-micro')
+  objects={p:h for p,h in c['object_sha256'].items() if p!=old};assert len(objects)==39 and all(p in link for p in objects)
+  return c,[compile,link],objects
+ def main():
+  ap=argparse.ArgumentParser();ap.add_argument('--compile-only',action='store_true');a=ap.parse_args();attempt=P/'build'/str(time.time_ns());control,commands,objects=plan(attempt)
+  if not a.compile_only:print(json.dumps({'commands':commands,'objects':objects,'native_invocation':False,'weight_reads':False},indent=2));return
+- parent=P.parent.parent/'iq4nl-down-direct/micro';parents=json.loads((P/'parent-pins.json').read_text())
++ parent=P.parent.parent/'hc-bf16-one-sg/micro';parents=json.loads((P/'parent-pins.json').read_text())
+  for f,h in parents.items():assert sha(f)==h,f
+- actual=json.loads((parent/'evidence/device-a/review.json').read_text());assert actual['passed'],'qualified parent ACK lifecycle'
++ actual=json.loads((parent/'operating/evidence/device-a/review.json').read_text());assert actual['passed'],'qualified parent ACK lifecycle'
+  proof=json.loads((P.parent/'evidence/cpu-proof.json').read_text());extraction=json.loads((P/'evidence/extraction.json').read_text())
+  assert proof['passed'] and proof['proof']['passed'] and extraction['passed']
+- assert extraction['fixed_header_sha256']==sha(P/'fixed.hpp') and len(extraction['cases'])==2
++ assert extraction['fixed_header_sha256']==sha(P/'fixed.hpp') and len(extraction['cases'])==3
+  for p,h in {**proof['source_sha256'],**extraction['source_sha256']}.items():assert sha(p)==h,p
+  for case in extraction['cases']:
+   for f in case['files'].values():assert sha(f['path'])==f['sha256'],'copied sparse fixture drift'
+@@ -49,13 +49,13 @@
+    with turn.turn():run(cmd,f'compile-{i}.log')
+   deps={str(Path(p).resolve()):sha(p) for p in shlex.split((attempt/'micro.d').read_text().replace('\\\n',' ').split(':',1)[1])}
+   for p,h in deps.items():assert bound.get(p)==h,'unbound dependency '+p
+-  binary=attempt/'hc-one-sg-micro';symbols=run(['/usr/bin/nm','-C','--defined-only',str(binary)],'symbols.log')
+-  assert 'micro::run(' in symbols and 'iq3::kopt::gemv(' in symbols,'retained native entry and original p6 control'
++  binary=attempt/'dense-packed-block-micro';symbols=run(['/usr/bin/nm','-C','--defined-only',str(binary)],'symbols.log')
++  assert 'micro::run(' in symbols and 'gsqn::PackedOperation<' in symbols,'retained native entry and original packed control'
+   bundler='/opt/intel/oneapi/compiler/2026.0/bin/compiler/clang-offload-bundler';obj=str(attempt/'micro.o')
+   targets=run([bundler,'-type=o','-list','-input='+obj],'offload-targets.log').splitlines();device=[x for x in targets if x.startswith('sycl-spir64')];assert len(device)==1
+   bc=attempt/'device.bc';run([bundler,'-type=o','-unbundle','-targets='+device[0],'-input='+obj,'-output='+str(bc)],'unbundle.log')
+   run(['/opt/intel/oneapi/compiler/2026.0/bin/compiler/sycl-post-link','-symbols','-split=source','-o',str(attempt/'kernels.table'),str(bc)],'post-link.log')
+-  entries='\n'.join(f.read_text() for f in attempt.glob('kernels*.sym'));assert 'HCKernel' in entries and 'TypeE30ELj32' in entries,'BF16 SG32 one-row candidate device kernel';(attempt/'kernel-entries.log').write_text(entries)
++  entries='\n'.join(f.read_text() for f in attempt.glob('kernels*.sym'));assert all(('DenseBlockKernelILj'+str(t)) in entries and ('PackedKernelILj'+str(t)) in entries for t in (12,13,23)),'all three candidate and original packed kernel entries';(attempt/'kernel-entries.log').write_text(entries)
+   run(['/usr/bin/objdump','-d','--disassemble=main',str(binary)],'main.asm')
+   for p,h in bound.items():assert sha(p)==h,'postbuild drift '+p
+   assert sha(commands[0][0])==receipt['compiler_sha256'];assert sum(f.stat().st_size for f in attempt.iterdir() if f.is_file())<64*1024**2,'retained64MiB bound'
