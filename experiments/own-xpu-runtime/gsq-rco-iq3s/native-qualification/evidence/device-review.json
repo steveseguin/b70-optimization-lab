@@ -1,0 +1,60 @@
+{
+  "schema": "gsq.native-format-independent-device-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-24T05:17:28.289459+00:00",
+  "review_execution": "read-only retained artifacts/source/hash checks; no executable or GPU replay",
+  "checks": {
+    "compile_receipt_and_binary_bound": true,
+    "all_compilation_input_hashes_current": true,
+    "actual_monitor_source_bound": true,
+    "single_explicit_runner_entry": true,
+    "physical_filter_tuple": true,
+    "safe_unit_properties": true,
+    "admitted_target_aliases": true,
+    "native_result_and_terminal_agree": true,
+    "complete_case_inventory": true,
+    "case_geometry_exactness_and_nonvacuous_mutations": true,
+    "bounded_submissions_and_resources": true,
+    "positive_owner_teardown": true,
+    "no_term_or_monitor_incident": true,
+    "native_identity_retained": true,
+    "passive_samples_exact_faults_apps_and_target_contact": true,
+    "final_process_exit_and_descriptor_clearance": true,
+    "final_fault_baseline_exact": true
+  },
+  "compilation_input_counts": {
+    "sources": 246,
+    "objects": 33,
+    "dependencies": 44
+  },
+  "artifacts_sha256": {
+    "/home/steve/own-xpu-runtime-results/gsq-native-formats-a/admission.json": "47918e6373d44b5f3353903f37e98e1ce0a4f5674781e0b00d99758ccf636a57",
+    "/home/steve/own-xpu-runtime-results/gsq-native-formats-a/monitor.json": "ff3150b14a0320e0c1ca932fc6b510fdb2e5d9aa26d7c4529b29008c3513f81c",
+    "/home/steve/own-xpu-runtime-results/gsq-native-formats-a/terminal.json": "8c8980fbce4a86a3131cb89377b0ec5ff689a53715fee93977ee94ba60a958ce",
+    "/home/steve/own-xpu-runtime-results/gsq-native-formats-a/result/result.json": "a00a64f063d621ecc21f0dd87698cc6264b7e85c86899817694b4328c7fc9322",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/native-qualification/evidence/compile-only.json": "650a69e88a92b624b75c6ddeadf0951c0d054367ed0ba6197fe8cbdf1571b56c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/native-qualification/runner.cpp": "551089b9aa7f93ef39f1fb7f27fafb9f50cfaa3c49a8581d7dc0314e0d04fa5b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/native-formats/packed.hpp": "4afcfb8a12bc9704ccb6a1f5b17bc5d315c69c894caaa5fd5e4140e106372c4f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/qualify_once.py": "96ea50409a990a7de91e9faaf2e6698fa1e3f1aba2a6eae8abcb9aa2397b7608",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/observe.py": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/host-before-stop.json": "dd218a7b5b9f16cf927efafc198de67d2ae572c81216c163d1d7523a9d0d5372"
+  },
+  "binary_sha256": "c9588597ab33b4a7812d6c88adbedf3a62d2061472f84f0d211ff1c9aaf5bfa8",
+  "device_image_sha256": "a7c68cb6bfd276b6862833dcebd12f8ce367853d8d2cbe5ed1e49705df18d8c5",
+  "cases": 15,
+  "kernel_submissions": 45,
+  "observed_bdf": "0000:23:00.0",
+  "observed_node": "renderD130",
+  "observed_pid_start_ticks": [
+    3575690,
+    66167707
+  ],
+  "transfer_bytes": 551390,
+  "device_allocation_bytes": 275100,
+  "scope": [
+    "Five packed formats, dense/shared-route/per-slot-route synthetic cases with exact source-bound CPU BF16/status/tail comparison and capture/live-data controls",
+    "Independent audit verifies runtime receipt and retained source equality gates; raw output bytes are not retained, so this audit does not independently recompute their hashes",
+    "One passive active sample observed target FD and a second observed exit/drain; this does not exclude transient unobserved device opens between samples",
+    "No full-model, MTP, target/draft coherence, throughput or peak-fit qualification"
+  ]
+}

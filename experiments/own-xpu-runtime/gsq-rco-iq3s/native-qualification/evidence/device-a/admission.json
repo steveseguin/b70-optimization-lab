@@ -1,0 +1,264 @@
+{
+  "before": {
+    "utc": "2026-10-24T05:16:08.639171+00:00",
+    "metadata_only": true,
+    "device_api_calls": 0,
+    "device_opens": 0,
+    "service_changes": 0,
+    "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "root_free_bytes": 27669663744,
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 106311647232,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "units": {
+      "qwen38-27b-fp8": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-fp8-tp1-test": {
+        "Restart": "no",
+        "TimeoutStopUSec": "infinity",
+        "MainPID": "3485229",
+        "KillMode": "process",
+        "SendSIGKILL": "no",
+        "Id": "qwen38-27b-fp8-tp1-test.service",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qwen38-27b-vision": {
+        "Restart": "no",
+        "TimeoutStopUSec": "infinity",
+        "MainPID": "3487303",
+        "KillMode": "process",
+        "SendSIGKILL": "no",
+        "Id": "qwen38-27b-vision.service",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "drm": {
+      "renderD128": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:128",
+        "driver": "xe"
+      },
+      "card3": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:3",
+        "driver": "xe"
+      },
+      "renderD130": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:130",
+        "driver": "xe"
+      },
+      "renderD129": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:129",
+        "driver": "xe"
+      },
+      "card4": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:4",
+        "driver": "xe"
+      },
+      "card2": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:2",
+        "driver": "xe"
+      },
+      "card0": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:0",
+        "driver": "xe"
+      },
+      "renderD131": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:131",
+        "driver": "xe"
+      }
+    },
+    "passive_helper_sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "inventory": {
+      "passed": false,
+      "holders": [
+        {
+          "pid": 3485328,
+          "fd": "3",
+          "node": "renderD129"
+        },
+        {
+          "pid": 3485927,
+          "fd": "7",
+          "node": "renderD129"
+        },
+        {
+          "pid": 3485927,
+          "fd": "12",
+          "node": "renderD129"
+        },
+        {
+          "pid": 3487303,
+          "fd": "3",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "6",
+          "node": "renderD128"
+        },
+        {
+          "pid": 3487303,
+          "fd": "8",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "11",
+          "node": "renderD128"
+        }
+      ],
+      "errors": [],
+      "nodes": {
+        "226:0": "card0",
+        "226:2": "card2",
+        "226:3": "card3",
+        "226:4": "card4",
+        "226:128": "renderD128",
+        "226:129": "renderD129",
+        "226:130": "renderD130",
+        "226:131": "renderD131"
+      },
+      "intel_devices": [
+        "/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0",
+        "/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0",
+        "/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0",
+        "/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0"
+      ],
+      "metadata_only": true,
+      "device_opens": 0
+    },
+    "holders": {
+      "3485328": {
+        "start_ticks": 63435322,
+        "state": "S"
+      },
+      "3485927": {
+        "start_ticks": 63440067,
+        "state": "S"
+      },
+      "3487303": {
+        "start_ticks": 63453537,
+        "state": "S"
+      }
+    },
+    "identity_races": [],
+    "kernel": {
+      "journal_sha256": "01556539175e0de2f12851399b5638435186db78988fad610c32f3d622903b0b",
+      "rows": 3601,
+      "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20e1fed;b=2cba7160054a4ffeb4c4e252eb956f5f;m=99ffe157ab;t=65e8f22a8cc0f;x=a07d69830cc9f6c9",
+      "faults": [
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+          "timestamp": "42064105058"
+        },
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+          "timestamp": "42064105299"
+        }
+      ]
+    },
+    "known_fault_baseline_matches": true,
+    "queue": {
+      "A": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:31:13.634788+00:00 after the 2026-10-23 packet195 chain window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      },
+      "B": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:42:03.395697+00:00 after the 2026-10-22 packet58-diet-micro window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      }
+    },
+    "endpoints": {
+      "18130": {
+        "unavailable": "URLError"
+      },
+      "18131": {
+        "num_requests_running": [
+          0.0
+        ],
+        "num_requests_waiting": [
+          0.0
+        ]
+      }
+    }
+  },
+  "command": [
+    "systemd-run",
+    "--user",
+    "--quiet",
+    "--unit=gsq-native-formats-a",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=KillMode=process",
+    "--property=TimeoutStopSec=infinity",
+    "--property=LimitAS=infinity",
+    "--property=LimitCORE=0",
+    "--property=UMask=0077",
+    "--property=WorkingDirectory=/home/steve/llm-optimizations",
+    "/usr/bin/env",
+    "-i",
+    "HOME=/home/steve",
+    "PATH=/usr/bin:/bin",
+    "OMP_NUM_THREADS=2",
+    "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "NEOReadDebugKeys=1",
+    "FilterBdfPath=0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER=1",
+    "ZE_AFFINITY_MASK=0",
+    "ONEAPI_DEVICE_SELECTOR=level_zero:0",
+    "SYCL_CACHE_DIR=/home/steve/own-xpu-runtime-results/gsq-native-formats-a/sycl",
+    "NEO_CACHE_DIR=/home/steve/own-xpu-runtime-results/gsq-native-formats-a/neo",
+    "XDG_CACHE_HOME=/home/steve/own-xpu-runtime-results/gsq-native-formats-a/xdg",
+    "/usr/bin/taskset",
+    "-c",
+    "0-3,16-19",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/native-qualification/build/1792817788303878245/qualify-native",
+    "--run",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/own-xpu-runtime-results/gsq-native-formats-a/result"
+  ],
+  "proof_sha256": "650a69e88a92b624b75c6ddeadf0951c0d054367ed0ba6197fe8cbdf1571b56c",
+  "binary_sha256": "c9588597ab33b4a7812d6c88adbedf3a62d2061472f84f0d211ff1c9aaf5bfa8",
+  "monitor_sha256": "96ea50409a990a7de91e9faaf2e6698fa1e3f1aba2a6eae8abcb9aa2397b7608",
+  "observer_sha256": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef",
+  "target": {
+    "card3": {
+      "bdf": "0000:23:00.0",
+      "dev": "226:3",
+      "driver": "xe"
+    },
+    "renderD130": {
+      "bdf": "0000:23:00.0",
+      "dev": "226:130",
+      "driver": "xe"
+    }
+  },
+  "scope": "synthetic format correctness only; no model or benchmark",
+  "retry": false
+}
