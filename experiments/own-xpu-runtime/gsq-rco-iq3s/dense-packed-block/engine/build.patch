@@ -1,0 +1,46 @@
+--- qualified-dense-Q6/build.py
++++ dense-packed-block/engine/build.py
+@@ -33,6 +33,7 @@
+   cpu=json.loads((P/'evidence/cpu-proof.json').read_text());need(cpu['passed'] and cpu['proof']['passed'],'selector CPU proof')
+   for f,h in cpu['source_sha256'].items():need(sha(R/f)==h,'CPU drift '+f)
+   review=json.loads((S/'operating/evidence/device-a/review.json').read_text());need(review['passed'],'qualified parent Engine')
++  micro=json.loads((P.parent/'micro/operating/evidence/device-a/review.json').read_text());need(micro['passed'] and micro['qualification_complete'] and micro['exact_pairs']==84 and micro['backend_ACK'] and micro['physical_drain'],'qualified exact physical dense micro')
+   need(sha(cmds[0][0])==old['compiler_sha256'],'same compiler')
+   pins.update(old['source_sha256'])
+   for o in prep['objects']:
+@@ -41,14 +42,14 @@
+     for f,h in o['dependencies'].items():need(sha(f)==h,'reused dependency drift')
+   need(sha(old['binary'])==old['binary_sha256'],'parent binary drift')
+  files=[P/'build.py',P/'prepare.py',P/'preparation.json',P/'parent-pins.json',P/'policy_fixture.cpp',R/'experiments/own-xpu-runtime/ops/compile_turn.py']
+- if a.mode=='native':files += [P/'evidence/cpu-proof.json',S/'operating/evidence/device-a/review.json']
++ if a.mode=='native':files += [P/'evidence/cpu-proof.json',S/'operating/evidence/device-a/review.json',P.parent/'micro/operating/evidence/device-a/review.json']
+  for f,h in {**json.loads((P/'parent-pins.json').read_text()),**prep['source_sha256']}.items():pins[str(Path(f).relative_to(R))]=h
+  for f in files:pins[str(f.relative_to(R))]=sha(f)
+  d.mkdir(parents=True);(P/'evidence').mkdir(exist_ok=True)
+  for f in [P/'build.py',P/'policy_fixture.cpp',P/'preparation.json'] :shutil.copy2(f,d/f.name)
+  (d/'commands.json').write_text(json.dumps(cmds,indent=2)+'\n')
+  turnpath=R/'experiments/own-xpu-runtime/ops/compile_turn.py';sys.modules['build_engine']=sys.modules[__name__];spec=importlib.util.spec_from_file_location('iq3_engine_turn',turnpath);turn=importlib.util.module_from_spec(spec);spec.loader.exec_module(turn)
+- receipt=dict(schema='gsq.dense-q6.engine.build.v1',passed=False,mode=a.mode,commands=cmds,binary=str(binary),compiler_sha256=sha(cmds[0][0]),source_sha256=pins,native_binary_invoked=False)
++ receipt=dict(schema='gsq.dense-packed-block.engine.build.v1',passed=False,mode=a.mode,commands=cmds,binary=str(binary),compiler_sha256=sha(cmds[0][0]),source_sha256=pins,native_binary_invoked=False)
+  try:
+   for i,cmd in enumerate(cmds):
+    with turn.turn(),(d/f'command-{i}.log').open('x') as log:r=subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,cwd=R,timeout=1200 if a.mode=='native' else 60)
+@@ -59,7 +60,7 @@
+     path=Path(name).resolve();key=str(path.relative_to(R));need(pins.get(key)==sha(path),'unbound dependency '+key);deps[key]=sha(path)
+   receipt.update(dependencies=deps,binary_sha256=sha(binary))
+   if a.mode=='cpu':
+-   receipt['proof']=json.loads((d/'command-1.log').read_text());need(receipt['proof']['passed'],'CPU policy failure');need(len(deps)==2,'two local CPU dependencies')
++   receipt['proof']=json.loads((d/'command-1.log').read_text());need(receipt['proof']['passed'],'CPU policy failure');need(len(deps)==3,'fixture/generated policy/frozen selector dependencies')
+   else:
+    receipt['object_sha256']={o['object']:o['object_sha256'] for o in prep['objects'] if o['reuse']};receipt['object_sha256'][str(d/'entry.o')]=sha(d/'entry.o');receipt['reused_object_provenance']=prep['objects'];receipt['objects_reused']=39
+    symbols=subprocess.check_output(['/usr/bin/nm','-C','--defined-only',str(binary)],text=True,timeout=60);(d/'symbols.log').write_text(symbols);need('packet26_model_entry' in symbols and 'mtp36::DraftRuntime' in symbols,'Engine symbols')
+@@ -67,7 +68,8 @@
+    targets=subprocess.check_output([bundler,'-type=o','-list','-input='+str(obj)],text=True,timeout=60).splitlines();targets=[x for x in targets if x.startswith('sycl-spir64')];need(len(targets)==1,'one device image')
+    bc=d/'entry-device.bc';subprocess.run([bundler,'-type=o','-unbundle','-targets='+targets[0],'-input='+str(obj),'-output='+str(bc)],check=True,timeout=120);subprocess.run([str(compiler/'sycl-post-link'),'-symbols','-split=source','-o',str(d/'kernel.table'),str(bc)],check=True,timeout=120)
+    entries='\n'.join(f.read_text() for f in d.glob('kernel*.sym'));(d/'kernel-entries.log').write_text(entries)
+-   need('BlockKernel' in entries,'candidate device entry')
++   need('BlockKernel' in entries,'preserved IQ3 candidate device entry')
++   for t in (12,13,23):need('DenseBlockKernelILj'+str(t)+'E' in entries,'new dense block device entry')
+    for t in (12,13,18,23,42):need('PackedKernelILj'+str(t)+'E' in entries,'preserved generic format entry')
+    receipt['offline']={'entry_device_sha256':sha(bc),'kernel_entries_sha256':sha(d/'kernel-entries.log'),'symbols_sha256':sha(d/'symbols.log')}
+    receipt['native_qualification_complete']=False

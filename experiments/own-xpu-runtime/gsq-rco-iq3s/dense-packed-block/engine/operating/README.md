@@ -1,0 +1,7 @@
+# Opt-in dense packed block full Engine screen
+
+This source adaptation uses the qualified a0f9 Engine schedule unchanged: all12 frozen original prompts, two disjoint excluded8-token warmups,24 measured target/MTP requests at128 output cap, fullRESET and originalbaseline tokens/state comparison after each arm. The final explicit DUMP, closed bundle stamps, two-owner physical contact, safe exit and passive drain gates remain mandatory.54 target bundles span27 capture groups. Draft captures, all metadata, failed outcomes and raw timing rows remain retained.
+
+Only the native binary receipt and additional `--dense-packed-block` flag change. The dense-Q6 allocation ledger is copied byte-for-byte; the new Engine ledger must prove zero delta. Two ranks remain30,994,676,618/29,966,053,268B. The unchanged cumulative host forecast addition571,473,920B accounts for earlier expansions, not a new allocation. Storage forecasts27×231,442,500 bytes plus128MiB metadata and unchanged2GiB free reserve; root/NVMe reserve and all passive safeguards remain unchanged.
+
+Root alone admits the fresh `gsq-dense-packed-block-engine-a` control/output paths and launches one persistent pair. The source requires the completed physical three-format micro, qualified a0f9 parent, new selector proof/native build and independent operating review. No plan or owner is invoked during source preparation or mocked tests. Result timing is a separate-run internal screen, not a fair same-owner Engine comparison or public speed record.

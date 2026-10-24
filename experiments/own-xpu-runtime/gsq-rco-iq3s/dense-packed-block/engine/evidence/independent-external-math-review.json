@@ -1,0 +1,37 @@
+{
+  "schema": "gsq.dense-packed-block.engine.offline-external-symbol-comparison.v1",
+  "passed": true,
+  "tool": "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-nm",
+  "tool_sha256": "0e6569ff998907a285c2275539f99c907905e6ac5dce0200b8f265bb1fea3b93",
+  "command_template": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-nm",
+    "--undefined-only",
+    "--format=posix",
+    "<entry-device.bc>"
+  ],
+  "inputs": {
+    "dense-q6-p33": {
+      "build_sha256": "33b6add96c907a24a95b9b3161f96b1b78fb9edc4e9d4a050b11edf8e5f8c6ab",
+      "binary_sha256": "a0f9ffc58de704a276b237cbeec2b338ee873c0872bcae2da2214286aa5cce50",
+      "entry_device_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/native-1792838320544370835/entry-device.bc",
+      "entry_device_sha256": "db23dd3c4aba158a9cdfea92d49bf07f7b91df7d527cfe501b6086d4678713cb"
+    },
+    "dense-packed-block/engine": {
+      "build_sha256": "3fe225c3c7076fbf680b3d7e0d1a051e533a34b5ed059da0048b8743323aed95",
+      "binary_sha256": "5aef74d5f803b33758711db352ee5e1a393a364e6c33aa9f8a4cdb4478f5fe6a",
+      "entry_device_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/native-1792844181367660045/entry-device.bc",
+      "entry_device_sha256": "424d020519adf6229618ae5b3770a6e9dd903bf2a1498f36546cce1c3c680ffd"
+    }
+  },
+  "both_returncodes": 0,
+  "both_stderr": "",
+  "both_identical_stdout": "_Z18__spirv_AtomicLoadPU3AS1jii U 0 0\n_Z18__spirv_ocl_printfPU3AS2Kcz U 0 0\n_Z19__spirv_AtomicStorePU3AS1jiij U 0 0\n_Z22__spirv_ControlBarrieriii U 0 0\n_Z25__spirv_BuiltInGlobalSizei U 0 0\n_Z26__spirv_BuiltInWorkgroupIdi U 0 0\n_Z27__spirv_BuiltInGlobalOffseti U 0 0\n_Z28__spirv_SubgroupShuffleINTELfj U 0 0\n_Z28__spirv_SubgroupShuffleINTELjj U 0 0\n_Z29__spirv_AtomicCompareExchangePU3AS1jiiijj U 0 0\n_Z32__spirv_BuiltInLocalInvocationIdi U 0 0\n_Z33__spirv_BuiltInGlobalInvocationIdi U 0 0\n_Z40__spirv_BuiltInSubgroupLocalInvocationIdv U 0 0\n_Z41__spirv_GenericCastToPtrExplicit_ToGlobalPvi U 0 0\nfmaf U 0 0\nsqrtf U 0 0\n",
+  "undefined_symbol_sets_identical": true,
+  "new_undefined_symbols": [],
+  "math_external_symbols": [
+    "fmaf",
+    "sqrtf"
+  ],
+  "conclusion": "Both fmaf and sqrtf are already undefined externals in the exact qualified a0f9 parent device image. The complete16-symbol undefined set is identical. No new external math dependency was introduced by the dense block candidate.",
+  "scope": "Read-only llvm-nm bitcode inspection under nice19/helper affinity; not compilation, linking, binary invocation or GPU execution. This compares external symbol identities, not newly measured runtime resolution."
+}

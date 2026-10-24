@@ -1,0 +1,21 @@
+{
+  "schema": "gsq.blank-draft.canonical.independent-review.v1",
+  "passed": true,
+  "source_sha256": "e54d2ad9f0067445273e08b1501ebe3246abfa747cbbcfabd6b01d764b1c1f05",
+  "restore_map_sha256": "039511f3ca56df9a319d7459aa2034145f8da53aa7dd751f6e3f1214e415dd0b",
+  "closed_review_sha256": "8e9c69ae212a45f1bf2491dd25a75743b01a19395064d52b06d713497f686d14",
+  "index_sha256": "ac8a034fa32ed06b01d847c61e7a14184983631c8548d1f65878df20af034ad6",
+  "review_scope": "Source and existing root-executed verify manifest metadata only; reviewer did not hash/read raw payloads or run verify/release",
+  "checks": [
+    "Exact immutable closed review/index selects28 known4MiB duplicate draft-key/value files;27releasepaths exclude protected canonical",
+    "Root verify manifest binds current helper plus28held-fd fullhashes/stat/mode/uid/gid/mtime; exactinventory rejoined by reviewer",
+    "Release separately rehashes canonical and eachoriginal; matched verified identities required",
+    "Durable exclusive perfile before-receipt includes restore-map hash; canonical and source FD/no-follow path stamps rechecked immediately beforeunlink",
+    "Source parent fsynced afterunlink before successful release append; finalcanonicalhash and durable completion required",
+    "No automaticretry, nooverwrite, no other model/stateJSON/index/seal/fixture paths; both originalhelper/map retained in lineage"
+  ],
+  "canonical_path": "prompt-00-none/rank0/draft-final-state/blk.0.qsa.keys.bin",
+  "release_files": 27,
+  "recoverable_bytes": 113246208,
+  "findings": []
+}

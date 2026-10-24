@@ -1,0 +1,91 @@
+--- qualified-parent/main.cpp
++++ candidate/main.cpp
+@@ -137,13 +137,14 @@
+ 
+ #define GSQN_RUNTIME_HEADERS_PROVIDED
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/upload.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/generic_host.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/admission.hpp"
+ struct Options {
+-  bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false;
++  bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false,dense_packed_block=false;
+   RetainSteps retain_steps;
+   int cancel_launch=-1;
+   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
+@@ -175,7 +176,8 @@
+       require(i + 1 < argc, "missing " + k);
+       return std::string(argv[++i]);
+     };
+-    if(k=="--dense-q6-p33") a.dense_q6_p33=true;
++    if(k=="--dense-packed-block") a.dense_packed_block=true;
++    else if(k=="--dense-q6-p33") a.dense_q6_p33=true;
+     else if(k=="--expert-iq3xxs-block") a.expert_iq3xxs_block=true;
+     else if(k=="--qkv-q6-p33") a.qkv_q6_p33=true;
+     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
+@@ -280,6 +282,7 @@
+   require(getenv("OMP_NUM_THREADS") &&
+               std::string(getenv("OMP_NUM_THREADS")) == "2",
+           "OMP_NUM_THREADS=2 required");
++  if(a.dense_packed_block)require(a.dense_q6_p33&&a.expert_iq3xxs_block&&a.qkv_q6_p33&&a.attention_q8_p33&&a.gsq_packed&&!a.mini,"dense block requires current combined real GSQ mode");
+   if(a.dense_q6_p33)require(a.expert_iq3xxs_block&&a.qkv_q6_p33&&a.attention_q8_p33&&a.gsq_packed&&!a.mini,"dense Q6 requires combined real GSQ mode");
+   if(a.expert_iq3xxs_block)require(a.qkv_q6_p33&&a.attention_q8_p33&&a.gsq_packed&&!a.mini,"IQ3 block requires combined real GSQ mode");
+   if(a.qkv_q6_p33)require(a.attention_q8_p33&&a.gsq_packed&&!a.mini,"QKV requires combined real GSQ mode");
+@@ -454,6 +457,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build/source/policy.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/policy.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/policy.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/policy.hpp"
+ static flash::Plan gsq_build_plan(Weights &w, const Options &a) {
+   auto g =
+       a.mini ? Geometry::tiny() : flash::geometry_from_directory(w.directory);
+@@ -537,7 +541,7 @@
+   return p;
+ }
+ static flash::Plan plan(Weights &w, const Options &a) {
+-  if(a.gsq_packed){auto candidate=gsq_build_plan(w,a);combined_admit(w,a,candidate);iq3_block_admit(w,a,candidate);dense_q6_admit(w,a,candidate);return candidate;}
++  if(a.gsq_packed){auto candidate=gsq_build_plan(w,a);combined_admit(w,a,candidate);iq3_block_admit(w,a,candidate);dense_q6_admit(w,a,candidate);dense_block_admit(w,a,candidate);return candidate;}
+   auto g =
+       a.mini ? Geometry::tiny() : flash::geometry_from_directory(w.directory);
+   g.context = a.mini && !a.pipeline_mini ? 8 : a.context;
+@@ -1006,7 +1010,7 @@
+     std::memcpy(&v, b.data(), 4);
+     return v;
+   }
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/generic_engine.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp"
+   unsigned variant(const flash::Launch& l,size_t projection=0)const {return gemv_choices.at(&l).second.at(projection);}
+   unsigned weight_variant(const std::string& name)const {
+     if(a.gsq_packed)return ((name=="output.weight"&&!a.mini)||(combined_weight(w,a,name)||dense_q6_weight(w,a,name)))?6:0;
+--- qualified-parent/generic_engine.hpp
++++ candidate/generic_engine.hpp
+@@ -33,6 +33,7 @@
+   if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
+   const auto& m=it->second.at(0);
+   require(l.op=="gemv"||l.op=="routed_gemv","GSQ unfused linear operation");
++  if(dense_block_site(w,a,l)){const auto*s=denseblock::selected(l.label,l.weights.at(0));require(s&&variant(l)==0&&dev(c).arena.row(m.w).bytes==s->bytes,"dense block raw storage/variant");finish(c,denseblock::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::shared),true);return;}
+   if(iq3_block_site(w,a,l)){require(m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&!m.fp32&&dev(c).arena.row(m.w).bytes==321126400,"IQ3 block exact matrix storage");finish(c,iq3block::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::per_slot),true);return;}
+   if(dense_q6_site(w,a,l)){dense_q6_matrix(m,l,variant(l),dev(c).arena.row(m.w).bytes);finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+   if(qkv_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&m.rows==10240&&m.columns==2560&&variant(l)==6&&m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==34611200,"QKV Q6 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+--- qualified-parent/entry.cpp
++++ candidate/entry.cpp
+@@ -1,4 +1,4 @@
+ #define main packet26_model_entry
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/main.cpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp"
+ #undef main
+ int main(int argc,char**argv){bool gsq=false,attention=false,qkv=false;for(int i=1;i<argc;++i){std::string_view x(argv[i]);gsq|=x=="--gsq-packed";attention|=x=="--attention-q8-p33";qkv|=x=="--qkv-q6-p33";}if(!gsq||!attention||!qkv)return 64;return packet26_model_entry(argc,argv);}
+--- qualified-parent/block.hpp
++++ candidate/block.hpp
+@@ -1,6 +1,6 @@
+ #pragma once
+-#include "../native-formats/packed.hpp"
+-#include "selection.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.hpp"
+ // Included after frozen gsqn definitions. Candidate changes only repeated
+ // block half conversion/addressing, never the scalar FP expression boundaries.
+ namespace denseblock {

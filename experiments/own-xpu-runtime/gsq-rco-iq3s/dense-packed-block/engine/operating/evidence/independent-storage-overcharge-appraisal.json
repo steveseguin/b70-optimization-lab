@@ -1,0 +1,26 @@
+{
+  "schema": "gsq.dense-packed-block.engine.storage-overcharge-appraisal.v1",
+  "finding_confirmed": true,
+  "launch_readiness_with_current_rounded_capacity": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/generated/suite.py": "cd7d04a1283735026508dfab2a8f79443a0d819115c592caeddc6779140aad34"
+  },
+  "target_capture_bytes": 221743168,
+  "draft_capture_bytes": 9699332,
+  "per_capture_bytes": 231442500,
+  "initial_raw_forecast_bytes": 6248947500,
+  "before_first_measured_mtp": {
+    "completed_requests": 3,
+    "known_raw_already_written": 916070668,
+    "actual_raw_remaining": 5332876832,
+    "current_guard_raw_remaining": 5554620000,
+    "conservative_overcharge": 221743168
+  },
+  "cause": "Each measured arm explicitly dumps target before the next guard; its draft remains pending until next RESET. The inherited remaining formula does not credit this target DUMP. Warmups have no explicit DUMP and do not have this overcharge.",
+  "implication": "Approximately90MB initial free margin is smaller than221743168B conservative overcharge, excluding additional metadata; likely false refusal before prompt00 MTP. Existing source review establishes inherited semantics, not guaranteed completion at the initial threshold.",
+  "options": [
+    "Retain frozen guard and admit sufficient additional free capacity above the overcharge and metadata allowance",
+    "Separately review additive acknowledgement-aware remaining-byte calculation; retain all floors and failed-ACK behavior"
+  ],
+  "actions_performed": "Source arithmetic only; no payload/operational read, edit to launch sources or execution"
+}

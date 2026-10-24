@@ -1,0 +1,15 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/storage/blank-draft-canonical/reuse.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-packed-blank-draft/reuse.py
+@@ -2,9 +2,9 @@
+ from pathlib import Path
+ import argparse,gzip,hashlib,json,os,stat
+ P=Path(__file__).resolve().parent;L=P.parents[1]
+-RAW=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-p33-engine-a')
+-REVIEW=L/'dense-q6-p33/operating/evidence/device-a/review.json'
+-REVIEW_SHA='8e9c69ae212a45f1bf2491dd25a75743b01a19395064d52b06d713497f686d14'
++RAW=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-packed-block-engine-b')
++REVIEW=L/'dense-packed-block/engine/operating/launch-b/evidence/device-b/review.json'
++REVIEW_SHA='ccd77d4456f5c66eb0a64d7456a3abb8a23528ab390924c703b471deece6aced'
+ INDEX=REVIEW.parent/'artifact-index.jsonl.gz'
+ CANON='prompt-00-none/rank0/draft-final-state/blk.0.qsa.keys.bin'
+ ZERO='bb9f8df61474d25e71fa00722318cd387396ca1736605e1248821cc0de3d3af8'

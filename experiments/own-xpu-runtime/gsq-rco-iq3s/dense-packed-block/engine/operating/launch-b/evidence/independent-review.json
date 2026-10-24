@@ -1,0 +1,31 @@
+{
+  "schema": "gsq.dense-packed-block.engine.storage-b.independent-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/budget.py": "a17d28e11fc0fb3db1cba8f75640649bdebb99e1040e7dc9b61f68231eb78608",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/once.py": "cb7d727910e9653d91e8e7dcf057e83d1e6f562395eee77dd2604aa0872fac7b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/test_budget.py": "f71dcd02101018fbfb1872aa0af45a32ab370a14d2187967ef11d29e71202bf7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/README.md": "d0ea2d93707e1824db2e331e1a280196b161454694f42d3c20f1d781f5a22d6d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/parent-pins.json": "9c3e5c562431d3e891b2388dc3848147d31930f0b1857c23826e50c1e59c2a93",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/evidence/preparation.json": "065bf82c6b04b551d89177e0e00daf5acc0721f550110a0e1131461f264ceec3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/evidence/tests.log": "125965da2a5fd22be56f4397164a4113c6d5f6b648739e7ff585782e5f53d982"
+  },
+  "parent_pins_rehashed": 11,
+  "retained_tests": 7,
+  "tests_replayed": false,
+  "checks": [
+    "Same frozen native binary/26request/24measuredarm/54bundle suite, command flags and fullbaseline gates; new B unit/control/evidence identities only",
+    "Initial27PER; first3 successful RESET callbacks eachcreditPER; later23 RESETs eachcreditD;24successful targetDUMPs eachcreditT; explicitfinalrepeatcredits0; normal successful closecreditsfinalD",
+    "Credits occur after underlying callbacks return; failed/partial RESET,DUMP,FINISH receive noassociatedcredit; laterbaseline/stamp failure still haltsrequests",
+    "Exact52acknowledgements,26RESET/24targetDUMP/1repeat/1FINISH, finalremaining0 and lifecycle illegalorder refusal",
+    "Remainingguard uses actual acknowledgedbudget matchingcompletedRESETcount; no arbitrary-file credit or completed>=3 inference",
+    "Full27dump initialforecast,128MiBmetadata,2GiBexternalfloor,27GB+128MiBrootcache and separatefilesystem checks unchanged",
+    "Same private O.S.A RetainedOwner and O/M/Xglobals; no ownerrestart/retry/shutdown policy change",
+    "Seven retained tests cover actual inherited26request loop, simulatedpayloadwrites, onebyteshort everybudgetstage, callback failures, finalrepeat and privateglobals"
+  ],
+  "limitations": [
+    "Exact-threshold tests simulate payload consumption only; metadata/logs still consume additional physical free space while128MiB remains reserved at every stage. Fresh admission headroom remains necessary.",
+    "No plan, native owner, compiler, archival or result payload action by reviewer."
+  ],
+  "findings": []
+}

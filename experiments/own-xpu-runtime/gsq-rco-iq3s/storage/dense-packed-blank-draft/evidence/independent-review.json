@@ -1,0 +1,20 @@
+{
+  "schema": "gsq.dense-packed-blank-draft.independent-review.v1",
+  "passed": true,
+  "source_sha256": "ba4646ff6b5d785a89ee92f929cbbb961e6220406b9ec09821d937411904cf88",
+  "parent_source_sha256": "e54d2ad9f0067445273e08b1501ebe3246abfa747cbbcfabd6b01d764b1c1f05",
+  "parent_review_sha256": "77b4099530ecbb3aa13f391e96a1a01a1e408f5b24ad80cb6b6f72d3c49dbffc",
+  "restore_map_sha256": "703f45a432f92b5419e684f29db44ff2f772534aa0b940e18041c18fa981f110",
+  "closed_review_sha256": "ccd77d4456f5c66eb0a64d7456a3abb8a23528ab390924c703b471deece6aced",
+  "index_sha256": "56855d71b336d9658fc8fbfd1a200ec0cc14b38e71100b02565b81b674970bbe",
+  "review_scope": "Only exact three identity substitutions plus root-existing verify metadata and immutable index joined; no payload reads/verify/release by reviewer",
+  "checks": [
+    "Operation bodies byte-identical to reviewed parent",
+    "All28 root-verified4MiB rows match closed immutable index;27 release paths exclude retained canonical",
+    "Same held FD/no-follow/device/stamp/fullhash gates, durable restore metadata and pre-unlink records, separate release and final canonical hash",
+    "No model/stateJSON/seal/fixture changes"
+  ],
+  "release_files": 27,
+  "recoverable_bytes": 113246208,
+  "findings": []
+}

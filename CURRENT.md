@@ -1,14 +1,37 @@
 # Current Workspace State
 
-**October 24, 08:12 EDT — four-card host: dense decoder micro exact and faster; full-engine preparation.**
+**October 24, 08:43 EDT — four-card host: dense engine qualifies; broader quality next.**
+Independent readback passes all24 original token/state arms and54 bundles. The
+short resident screen measures19.61 target-only /28.14 MTP tokens/s, unchanged
+acceptance, precision and allocation. Both owners closed safely, target cards
+empty, vision and fault baseline unchanged. This is internal screening evidence.
+Preserve closed duplicate evidence to admit the fixed twelve-task512-token
+quality run on this same binary, with additional cumulative-metadata headroom.
+[Actual result](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/operating/launch-b/RESULT.md).
+
+**October 24, 08:33 EDT — four-card host: full dense-kernel engine test running.**
+The new engine is running the original twelve target/MTP prompt pairs with full
+RESET and exact original token/state checks. One persistent pair, unchanged
+weights, BF16 KV, verifier and device allocation. The reviewed launch-B correction
+credits only acknowledged captures; all reserves remain unchanged. Verified
+[duplicate draft preservation](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/blank-draft-canonical/RESULT.md)
+recovered113.25MB before launch. Its canonical draft file is protected as documented.
+The next measured task is expanded512-token quality coverage on this binary if
+this short screen qualifies. Vision remains protected.
+
+**October 24, 08:27 EDT — four-card host: dense decoder ready; correcting storage accounting before full-model test.**
 All84 GPU output comparisons pass independent readback, physical contact and safe
 closure. Fixed Q4_K/Q5_K/IQ4_XS kernels take19–25% of control event time; this is
 not a model-speed result. CPU proof passed223,685 checks. Prepare the exact116-site
 integration with unchanged weights, float order, BF16 KV and resident allocation.
-Target cards empty, vision unchanged. Verified canonical capture recovery and
-repository compaction preserve all evidence/history; USB8.621GB/root27.29GB at
-last check, so fresh build/run admission remains necessary. Previous qualified
-Engine remains the active correctness/performance reference.
+Native engine build and source review pass, with unchanged device allocation.
+A prelaunch review found the inherited storage guard counts221.7MB twice after
+a measured capture; the planned run has not started. A narrow acknowledged-write
+accounting correction is being reviewed with unchanged reserves. Target cards
+remain empty and vision unchanged. USB8.621GB/root27.252GB at the latest check.
+The previous qualified engine remains the correctness/performance reference.
+After the short exactness screen, [expanded task readback](experiments/own-xpu-runtime/gsq-rco-iq3s/quality-expanded/PLAN.md)
+is planned on the same qualified binary. CI for5f077 passes all three workflows.
 [Dense micro result](experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/RESULT.md).
 
 **October 24, 06:12 EDT — four-card host: broader coverage independently passes; next native micro preparing.**

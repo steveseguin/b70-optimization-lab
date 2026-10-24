@@ -1,0 +1,71 @@
+{
+  "schema": "gsq.dense-packed-block.engine.independent-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/prepare.py": "3eb1e1aea257767ef26ee93ece0cffce0d951b7b0cf59e6e39f13a4db0661749",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build.py": "df16b0f15d6e2efd03c06e811c69da15296ced84d20f05471b4513543762dae5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/policy_fixture.cpp": "0f546896e93690b76ef269a2b04e995ea60d8eb4a4067fc56ddc0ba5f84d5e7d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/preparation.json": "20054d812b6e46a1769eb077ec6137c500a363f508c8579c39bf94ff78d623cb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/parent-pins.json": "c3a239fc3358f7d31004d738b28d1aad2d9f671370527477608d9653af700b14",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/overlay.patch": "b7060e5b19fc2b62a47a8b1188b96f226c9af251ea3bd671e030210cf3e5773f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/selection.json": "9e80fc5ccfdd5dd7f09b3501c84e44a3082d3c0edc8cc8067b7fb5898e85ca71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/memory-ledger.json": "c5ea89b9514325c4e9d6df81acd03b75fb1761c57fd6d321010a4fadb1d299ec",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/PROPOSAL.md": "9745f9ba14a0046575fc5f522ee69625474ae4ec0db6e74ebd42e184e7dce41c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp": "fc4d551cfc4d94a1a1a8b9491c74fcca5109fa23c15b87ceca5fa331df241427",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/entry.cpp": "43840e52f581b021924b95b503c28868e452a1aaf1513f4e24a823e749c47a8a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "75c6742b254dc447c5b39b04a4b1446f9cf038918a2b2a6fa7f459b1769ee2ea",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp": "c265e6eff57166965cf7f0a24deeeb9ddbbd73b82ede90d9ece5ed99541c5757",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/engine/build/source/policy.hpp": "87618e87844a026dae71927cb519a3db6a8e49297052aa85b848d92726f0a85f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/block.hpp": "66bb0c9936fcd96fed876c525554d35b4d224dbcc0dafd8144e133769732f218",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/selection.hpp": "138bbd9edd82822a513090d9c54af589ebff11f9eb9119beb2bb3ae2a6cf7c1b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/evidence/device-a/review.json": "eb32d725dc99fb16421405b25ef2324f186c100b537044160ce1f534b219a665"
+  },
+  "preparation_sha256": "20054d812b6e46a1769eb077ec6137c500a363f508c8579c39bf94ff78d623cb",
+  "actual_micro_review_sha256": "eb32d725dc99fb16421405b25ef2324f186c100b537044160ce1f534b219a665",
+  "scope": "Source, actual closed micro receipt metadata and build recipe review only; no compiler, Device, model/archive/state payload reads or test replay",
+  "checks": {
+    "exact_graph_census_sites": 116,
+    "format_counts": {
+      "Q4_K": 43,
+      "Q5_K": 31,
+      "IQ4_XS": 42
+    },
+    "columns": 2560,
+    "original_shared_input_output_names_enforced": true,
+    "label_weight_pair_and_one_occurrence_enforced": true,
+    "routed_and_unselected_formats_unchanged": true,
+    "explicit_new_flag_and_all_parent_flags_required_for_new_mode": true,
+    "actual_matrix_facade_guards_reused": [
+      "exact type/rows/K/span",
+      "count=experts=1",
+      "no routes/status/fp32",
+      "shared BF16 input/output",
+      "actual live extent and alias validation"
+    ],
+    "dispatch_variant0_and_exact_raw_allocation": true,
+    "kernel_body_byte_identical_except_two_includes": true,
+    "allocation_delta_bytes": [
+      0,
+      0
+    ],
+    "device_forecasts": [
+      30994676618,
+      29966053268
+    ],
+    "reused_objects_and_dependencies_rehashed": 39,
+    "changed_entry_header_not_in_reused_dependencies": true,
+    "CPU_fixture_uses_actual_generated_policy_and_frozen_selector": true,
+    "CPU_recipe_GNU_only_and_no_Device": true,
+    "native_recipe_exact_parent_compile_link_replacement": true,
+    "native_recipe_strict_FP_and_source_preposthashes": true,
+    "native_recipe_250MiB_above27GB_and_single_compile_coordinator": true,
+    "native_recipe_requires_actual_micro_physical_qualification": true
+  },
+  "limitations": [
+    "CPU selector execution and actual new native artifact not yet reviewed by this source receipt",
+    "Kernel micro gains are isolated event ratios, not predicted full Engine throughput",
+    "Full original26request/24arm/54bundle qualification and fresh physical/resource admission remain required",
+    "Rounded USB8.621GB and root27.29GB provide narrow headroom; actual admission must use current byte counts and unchanged reserves"
+  ],
+  "findings": []
+}

@@ -9,6 +9,11 @@ passes all24 baseline arms and independent54-bundle readback, measuring15.73 tar
 /23.30 MTP tokens/s. Both ranks and safe closure are verified. This remains an internal
 cap128 resident screen; publication quality/context gaps are explicitly retained.
 
+The [116-site dense decoder](dense-packed-block/engine/operating/launch-b/RESULT.md)
+now passes all24 original arms and54 bundles, measuring19.61 /28.14 tokens/s
+with unchanged memory and acceptance. It is the current short-screen engine;
+[expanded task readback](quality-expanded/PLAN.md) is next on this same binary.
+
 The [19-site Q6 extension](dense-q6-p33/operating/RESULT.md) also passes all24
 original arms and54 bundles, measuring16.17 /23.44 with188.7MB extra device memory.
 The small MTP difference is descriptive, not a causal or public speed claim.

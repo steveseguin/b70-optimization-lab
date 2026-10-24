@@ -350,3 +350,15 @@ oncurrenta0f9,zeroallocationdelta,original26suite/fulltargetstate required.
 All16 additional captures verified/canonicalized,1,773,945,344Brecovered;
 classA remainsfailed, classB fixturesauthenticatedbefore rawrelease. USB8.621GB,
 root27.29GB narrowlycovernextfull admission; fresh guardsremainmandatory.
+
+
+## Prelaunch accounting correction and broader quality — 12:27 UTC
+
+The full dense engine is built with unchanged allocation. Independent review
+found a221,743,168-byte inherited overcharge after measured DUMP acknowledgements;
+no full engine owner has launched. Preserve the original unexecuted plan and
+review a narrow stage-aware correction before launch, with all storage reserves
+unchanged. After the original short suite qualifies the new binary, run the
+[expanded task readback](quality-expanded/PLAN.md) before another speed lever.
+The12:26 coach review agrees this addresses a larger outstanding correctness
+and publication gap. No broad-quality or public-speed claim is implied.

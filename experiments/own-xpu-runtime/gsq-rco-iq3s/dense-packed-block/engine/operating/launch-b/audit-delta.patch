@@ -1,0 +1,69 @@
+--- frozen-unexecuted-a/audit.py
++++ launch-b/audit.py
+@@ -4,15 +4,15 @@
+ """
+ from pathlib import Path
+ import argparse,gzip,hashlib,importlib.util,json,os,resource,stat,time
+-P=Path(__file__).resolve().parent;CAND=P.parent;D=P/'evidence/device-a';L=CAND.parents[1];R=L.parents[2]
++P=Path(__file__).resolve().parent;CAND=P.parents[1];D=P/'evidence/device-b';L=CAND.parents[1];R=L.parents[2]
+ BASE=L/'baseline/audit.py';BASE_SHA='43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab'
+ assert hashlib.sha256(BASE.read_bytes()).hexdigest()==BASE_SHA
+ s=importlib.util.spec_from_file_location('completion_baseline_audit_helpers',BASE);B=importlib.util.module_from_spec(s);s.loader.exec_module(B)
+ read,sha,require=B.read,B.sha,B.require
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-engine-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-packed-block-engine-a')
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-dense-packed-block-engine-b.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-dense-packed-block-engine-b')
+ PRIOR=L/'baseline/evidence/independent-a/review.json';PRIOR_SHA='f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb'
+-BINARY=None
++BINARY='5aef74d5f803b33758711db352ee5e1a393a364e6c33aa9f8a4cdb4478f5fe6a'
+ REFERENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/resident-suite.json')
+ PARENT_AUDITOR_SHA='92b47efce21929a4f6f3bf752967cc67f657e9071b2a874001ebef592718598c'
+ BUNDLE_AUDITOR=L/'state-bundle/evidence/device-a/audit.py'
+@@ -24,8 +24,27 @@
+ IMMEDIATE_PARENT=L/'dense-q6-p33/operating/audit.py'
+ IMMEDIATE_PARENT_SHA='966290e28bd4bcbfdfa5288a1c038f6d5be1a0e724a8a7420fee1772b65feb08'
+ PLAN_SHA=None
+-BUILD_SHA=None
++BUILD_SHA='3fe225c3c7076fbf680b3d7e0d1a051e533a34b5ed059da0048b8743323aed95'
+ require(sha(IMMEDIATE_PARENT)==IMMEDIATE_PARENT_SHA,'frozen qualified fullsuite auditor')
++
++STORAGE_PARENT=P.parent/'audit.py'
++STORAGE_PARENT_SHA='a179cd3bfeb19b592aee4616a943dd82670f4b1bd41ca2c84f5f8dcbdce10f3d'
++require(sha(STORAGE_PARENT)==STORAGE_PARENT_SHA,'frozen unexecuted A auditor')
++
++def validate_capture_budget(got):
++ # Independently construct the fixed successful26-request sequence, without
++ # importing the coordinator's mutable Budget implementation.
++ target=221743168;draft=9699332;per=target+draft;remaining=27*per;events=[]
++ for reset in range(1,27):
++  amount=per if reset<=3 else draft;remaining-=amount
++  events.append(dict(event='reset-'+str(reset),credited_bytes=amount,remaining_payload_bytes=remaining))
++  if reset>=3:
++   remaining-=target;events.append(dict(event='target-'+str(reset),credited_bytes=target,remaining_payload_bytes=remaining))
++ events.append(dict(event='final-repeat',credited_bytes=0,remaining_payload_bytes=remaining))
++ remaining-=draft;events.append(dict(event='finish',credited_bytes=draft,remaining_payload_bytes=remaining))
++ expected=dict(resets=26,target_dumps=24,final_repeats=1,finished=True,remaining_payload_bytes=0,metadata_reserve_bytes=128*1024**2,external_floor_bytes=2*1024**3,events=events)
++ require(remaining==0 and len(events)==52 and got==expected,'exact acknowledged capture budget and unchanged reserves')
++ return expected
+ 
+ def expected_members(bases):
+  expected={str((base/f'rank{rank}/state-2147483647').relative_to(EVIDENCE)):{} for base in bases for rank in (0,1)}
+@@ -64,7 +83,7 @@
+   require(sha(plan['adapter']['binary'])==native['binary_sha256']==plan['adapter']['binary_sha256']==BINARY,'same candidate binary')
+   for mapping in (native['source_sha256'],native['object_sha256']):
+    for p,h in mapping.items():require(sha(R/p)==h,'native source/object '+p)
+-  fullpath=Path(term['result']['full_result_path']);require(fullpath==EVIDENCE/'resident-suite.json' and sha(fullpath)==term['result']['full_result_sha256'],'full result binding');full=read(fullpath)
++  fullpath=Path(term['result']['full_result_path']);require(fullpath==EVIDENCE/'resident-suite.json' and sha(fullpath)==term['result']['full_result_sha256'],'full result binding');full=read(fullpath);capture_budget=validate_capture_budget(full['capture_budget'])
+   manifest=read(L/'baseline/manifest.json');require(full['manifest_sha256']==sha(L/'baseline/manifest.json')==plan['suite']['manifest_sha256'],'original corpus')
+   require(full['passed'] and full['requests']==26 and full['measured_requests']==24 and len(full['prompts'])==12 and len(full['warmup'])==2,'complete full suite')
+   require(full['rank_pids']==[x[0] for x in term['rank_identities']],'same persistent ranks')
+@@ -134,7 +153,7 @@
+   dump_roots=[p.parent for p in EVIDENCE.rglob('state.json') if p.parent.name.startswith('state-')]
+   expected_bases=[EVIDENCE]+[EVIDENCE/w['name'] for w in full['warmup']]+[EVIDENCE/name for name in names]
+   require(len(dump_roots)==54 and {p.parent for p in dump_roots}=={base/f'rank{rank}' for base in expected_bases for rank in (0,1)},'exact27 paired dump groups')
+-  receipt.update(passed=True,bundles=54,bundle_captures=captures,original_index_sha256=OLD_INDEX_SHA,initial_and_warmup_semantic_baseline_required=False,explicit_final_repeat_and_closed_stamps_verified=True,requests=26,measured_arms=24,exact_pairs=12,all12_exact=True,reset_requests=26,paired_state_dump_groups=27,same_persistent_rank_pair=True,baseline_review_sha256=PRIOR_SHA,baseline_result_sha256=prior['full_result_sha256'],plan_sha256=sha(CONTROL/'plan.json'),full_result_sha256=sha(fullpath),native_binary_sha256=BINARY,rank_pids=full['rank_pids'],prompts=checked,descriptive_timing=derived,owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(digests),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Exact same-model original-baseline tokens and target-state qualification; not an external-engine or general model-quality evaluation','All timing samples and early EOS retained; no cross-binary causal speed claim from separate sessions','Original baseline rawfiles may be archived; immutable index lengths/hashes, full-result maps and independent full-readback authority remain bound','Initial/warmup captures have sealed payload/inventory/length verification; their baseline hash differences are reported without claiming deterministic initialization','This116-site dense block implementation must independently pass original full-state and both physical-contact gates; its isolated micro timings do not establish a full-engine speedup','Physical ownership/fault findings use retained evidence; reviewer performs no live host/device queries'])
++  receipt.update(passed=True,capture_budget=capture_budget,storage_parent_auditor_sha256=STORAGE_PARENT_SHA,bundles=54,bundle_captures=captures,original_index_sha256=OLD_INDEX_SHA,initial_and_warmup_semantic_baseline_required=False,explicit_final_repeat_and_closed_stamps_verified=True,requests=26,measured_arms=24,exact_pairs=12,all12_exact=True,reset_requests=26,paired_state_dump_groups=27,same_persistent_rank_pair=True,baseline_review_sha256=PRIOR_SHA,baseline_result_sha256=prior['full_result_sha256'],plan_sha256=sha(CONTROL/'plan.json'),full_result_sha256=sha(fullpath),native_binary_sha256=BINARY,rank_pids=full['rank_pids'],prompts=checked,descriptive_timing=derived,owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(digests),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Exact same-model original-baseline tokens and target-state qualification; not an external-engine or general model-quality evaluation','All timing samples and early EOS retained; no cross-binary causal speed claim from separate sessions','Original baseline rawfiles may be archived; immutable index lengths/hashes, full-result maps and independent full-readback authority remain bound','Initial/warmup captures have sealed payload/inventory/length verification; their baseline hash differences are reported without claiming deterministic initialization','This116-site dense block implementation must independently pass original full-state and both physical-contact gates; its isolated micro timings do not establish a full-engine speedup','Physical ownership/fault findings use retained evidence; reviewer performs no live host/device queries'])
+  except BaseException as e:receipt['error']=type(e).__name__+': '+str(e);raise
+  finally:
+   receipt.update(auditor_sha256=sha(__file__),immediate_parent_auditor_sha256=IMMEDIATE_PARENT_SHA,parent_auditor_sha256=BASE_SHA,fullsuite_parent_sha256=PARENT_AUDITOR_SHA,bundle_parser_sha256=BUNDLE_AUDITOR_SHA,elapsed_seconds=time.monotonic()-start)
