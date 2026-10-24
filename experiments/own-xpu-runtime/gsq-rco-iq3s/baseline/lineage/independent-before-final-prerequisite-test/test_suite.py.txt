@@ -1,0 +1,70 @@
+import copy,importlib.util,json,tempfile,types,unittest
+from pathlib import Path
+from unittest.mock import patch
+P=Path(__file__).resolve().parent
+spec=importlib.util.spec_from_file_location('gsq_baseline_suite',P/'suite.py');S=importlib.util.module_from_spec(spec);spec.loader.exec_module(S)
+class SuiteTests(unittest.TestCase):
+ def fixture(self,root,token_bad=False,state_bad=False,throw_at=None):
+  t=types.SimpleNamespace(out=Path(root),children=[types.SimpleNamespace(pid=11),types.SimpleNamespace(pid=12)],calls=[],resets=[],checks=0)
+  t.check_alive=lambda:setattr(t,'checks',t.checks+1)
+  def reset(t,d):d.mkdir();t.request_output=d;t.resets.append(str(d));t.fresh=True
+  class Controller:
+   def __init__(self,t,draft,*args):self.t=t;self.mode=draft.mode
+   def run(self,prompt,cap,eos):
+    if not self.t.fresh:raise AssertionError('request without full reset')
+    self.t.fresh=False;self.t.calls.append((self.mode,list(prompt),cap,tuple(eos)));self.t.mode=self.mode
+    if len(self.t.calls)==throw_at:raise RuntimeError('original provider error')
+    tokens=[3 if token_bad and self.mode=='mtp' and cap==128 else 2]*cap
+    return dict(tokens=tokens,timing_rows=[dict(generated_index=i+1,token_id=v,completed_monotonic=100+i*.1) for i,v in enumerate(tokens)],decode_wall_ms=(cap-1)*100,decode_intervals=cap-1,prompt_wall_ms=5,stats=dict(guesses=cap-1 if self.mode=='mtp' else 0,hits=cap-1 if self.mode=='mtp' else 0,misses=0))
+  state=lambda t:{'0':{'state':'wrong' if state_bad and t.mode=='mtp' else 'exact'},'1':{'state':'exact'}}
+  return t,reset,Controller,state
+ def run_fake(self,root,**kw):
+  t,reset,controller,state=self.fixture(root,**kw);plan={'lifetime_seconds':7200,'manifest_sha256':S.sha(S.MANIFEST)}
+  with patch.object(S.A,'reset',reset),patch.object(S.A.BASE,'NativeController',controller),patch.object(S.A,'state_hashes',state),patch.object(S,'storage_guard'):
+   return t,S.run_attached(t,plan)
+ def test_frozen_all_twelve_identity(self):
+  m=S.manifest();self.assertEqual(12,len(m['prompts']));self.assertEqual(6,sum(p['order'][0]=='none' for p in m['prompts']));self.assertEqual(10,len(m['tokenizer_authority']['canonical_json_sha256']))
+ def test_changed_token_and_duplicate_warmup_refuse(self):
+  for mutate in (lambda m:m['prompts'][0]['tokens'].__setitem__(0,7),lambda m:m['warmup'][1].update(tokens=m['warmup'][0]['tokens'])):
+   with tempfile.TemporaryDirectory() as tmp:
+    m=S.manifest();mutate(m);path=Path(tmp)/'manifest.json';path.write_text(json.dumps(m))
+    with patch.object(S,'MANIFEST',path),self.assertRaises(ValueError):S.manifest()
+ def test_all_requests_reset_balanced_warmup_excluded(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   t,result=self.run_fake(tmp);self.assertEqual(26,len(t.calls));self.assertEqual(26,len(t.resets));self.assertTrue(result['passed']);self.assertEqual([11,12],result['rank_pids'])
+   self.assertEqual([8,8]+[128]*24,[x[2] for x in t.calls]);self.assertEqual([(),()], [x[3] for x in t.calls[:2]])
+   self.assertTrue(all(x[3]==(248044,248046) for x in t.calls[2:]));self.assertEqual(12,result['summary']['order_groups']['all']['arms']['mtp']['prompts']);self.assertEqual(6,result['summary']['order_groups']['mtp']['arms']['none']['prompts'])
+   with self.assertRaisesRegex(ValueError,'only once'):S.run_attached(t,{'lifetime_seconds':7200,'manifest_sha256':S.sha(S.MANIFEST)})
+ def test_pair_mismatch_halts_before_next_prompt(self):
+  for kwargs in ({'token_bad':True},{'state_bad':True},{'throw_at':3}):
+   with tempfile.TemporaryDirectory() as tmp:
+    t,reset,controller,state=self.fixture(tmp,**kwargs)
+    with patch.object(S.A,'reset',reset),patch.object(S.A.BASE,'NativeController',controller),patch.object(S.A,'state_hashes',state),patch.object(S,'storage_guard'):
+     with self.assertRaises((ValueError,RuntimeError)):S.run_attached(t,{'lifetime_seconds':7200,'manifest_sha256':S.sha(S.MANIFEST)})
+    self.assertLessEqual(len(t.calls),4)
+ def test_eos_short_request_retained_and_invalid_short_refused(self):
+  result=dict(tokens=[2,248046],timing_rows=[dict(generated_index=1,token_id=2,completed_monotonic=1.),dict(generated_index=2,token_id=248046,completed_monotonic=1.1)],decode_wall_ms=100,decode_intervals=1,prompt_wall_ms=1)
+  x=S.metric(result,128);self.assertEqual('eos',x['termination']);self.assertEqual(2,x['output_tokens'])
+  result['tokens'][-1]=2;result['timing_rows'][-1]['token_id']=2
+  with self.assertRaisesRegex(ValueError,'early termination'):S.metric(result,128)
+ def test_nonfinite_or_inconsistent_timing_refused(self):
+  for wall in (float('nan'),1000):
+   r=dict(tokens=[1,2],timing_rows=[dict(generated_index=1,token_id=1,completed_monotonic=1),dict(generated_index=2,token_id=2,completed_monotonic=2)],decode_wall_ms=wall,decode_intervals=0,prompt_wall_ms=1)
+   with self.assertRaises(ValueError):S.metric(r,2)
+ def test_success_returns_compact_bound_terminal(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   class Transport:
+    def __init__(self,*a,**kw):self.out=Path(tmp);self.closed=False
+    def close(self,success):self.closed=success
+   full=dict(passed=True,requests=26,rank_pids=[1,2],manifest_sha256='bound',summary={'kept':True},prompts=[{'large_trace':'x'*10000}])
+   with patch.object(S,'validate_plan',return_value=S.manifest()),patch.object(S,'storage_guard'),patch.object(S.A,'Transport',Transport),patch.object(S,'run_attached',return_value=full):
+    out=S.qualification({'adapter':{}},admit=lambda p:None,check=lambda:None,launch_hook=lambda p:None)
+   self.assertNotIn('prompts',out);self.assertEqual(S.sha(Path(tmp)/'resident-suite.json'),out['full_result_sha256']);self.assertTrue(out['passed'])
+ def test_retained_cleanup_does_not_become_success(self):
+  original=RuntimeError('native owner uncertain');retained=S.A.RetainedOwner(original,object(),[])
+  class Broken:
+   def __init__(self,*a,**kw):raise original
+  with patch.object(S,'validate_plan',return_value=S.manifest()),patch.object(S,'storage_guard'),patch.object(S.A,'Transport',Broken),patch.object(S.A,'cleanup_failure',side_effect=retained) as cleanup:
+   with self.assertRaises(S.A.RetainedOwner) as caught:S.qualification({'adapter':{}},admit=lambda p:None,check=lambda:None,launch_hook=lambda p:None)
+   self.assertIs(caught.exception.original,original);self.assertIs(cleanup.call_args.args[1],original)
+if __name__=='__main__':unittest.main(verbosity=2)

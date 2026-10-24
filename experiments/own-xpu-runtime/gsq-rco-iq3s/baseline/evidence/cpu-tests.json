@@ -1,0 +1,16 @@
+{
+  "schema": "ownrt.gsq.baseline-cpu-preparation.v1",
+  "passed": true,
+  "tests": 9,
+  "source_sha256": {
+    "suite.py": "301347fe701eaaaa1e16e7a3891da2808a956147ae67b9b918dd451b7fe010d4",
+    "test_suite.py": "3383368081b87bef658507968892071eb2d2775ffc4c5ce5ed39ea2e5f28a90a",
+    "manifest.json": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20",
+    "README.md": "892677221dd45e182ac2b974acde4a670707a40dc1f343472f3034c6c27c24c5"
+  },
+  "log_sha256": "9709a5947355121cb0c277722c19e885846f41aeb295f6cb7eaa98a2aadcdc1d",
+  "command": "OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 taskset -c 8-15,24-31 nice -n 19 prlimit --as=4294967296 --core=0 python3 -B -m unittest discover -s experiments/own-xpu-runtime/gsq-rco-iq3s/baseline -p test_suite.py -v",
+  "owner_or_model_execution": false,
+  "device_or_service_actions": false,
+  "outer_once_scope": "syntax checked; operational source review separate"
+}

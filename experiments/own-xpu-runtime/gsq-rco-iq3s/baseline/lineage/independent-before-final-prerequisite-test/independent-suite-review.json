@@ -1,0 +1,31 @@
+{
+  "schema": "ownrt.gsq.resident-suite-independent-source-review.v1",
+  "passed": true,
+  "cpu_tests": 8,
+  "additional_checks": [
+    "actual first-model PASS prerequisite accepted only matching native binary",
+    "27-state initial RESET+26request forecast exact6316056364B"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/suite.py": "301347fe701eaaaa1e16e7a3891da2808a956147ae67b9b918dd451b7fe010d4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/test_suite.py": "e9fc353a9f225427a944316c76989da7152b8655369c489fcf2fde67f1eb7e89",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/manifest.json": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/README.md": "fee40ca0beb83e18ff1a92a75427f790f9f07795ca41fa163f53e7e6dff99eb8"
+  },
+  "no_owner_execution": true,
+  "no_device_or_service_actions": true,
+  "scope": [
+    "all12 original prompt arrays and order",
+    "6+6 balanced arm ordering",
+    "2disjoint excluded warmups and fullRESET before everyrequest",
+    "full tokens/targetstate equality and firstfailure halt",
+    "earlyEOS retained; timestamp-checked N-1 interval aggregation/ordergroups",
+    "compact terminal result with full external result hash",
+    "inherited original-error/retained-owner cleanup"
+  ],
+  "limitations": [
+    "One resident short-prompt run only; first-use costs may remain",
+    "No live operational coordinator review included",
+    "Storage forecast is monitored, not a hard quota"
+  ]
+}
