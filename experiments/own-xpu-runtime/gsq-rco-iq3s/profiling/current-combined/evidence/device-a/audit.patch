@@ -1,0 +1,126 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/audit.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/evidence/device-a/audit.py
+@@ -1,16 +1,16 @@
+ #!/usr/bin/env python3
+-"""Closed bundle qualification readback; invoke only after root drain authorization.
++"""Closed current-class diagnostic readback; invoke only after root drain authorization.
+ 
+ One stream per payload supplies both range and physical-file hashes. No runtime,
+ operational adapter, device API, service query or model payload is imported.
+ """
+ from pathlib import Path
+-import argparse,gzip,hashlib,importlib.util,json,os,re,resource,stat,time
++import argparse,gzip,hashlib,importlib.util,json,math,os,re,resource,stat,time
+ 
+-D=Path(__file__).resolve().parent;P=D.parents[1];L=P.parent;R=L.parents[2]
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-state-bundle-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-state-bundle-a')
+-PLAN_SHA='13897666770be4f6cc7a6c6a21e7d9d833b543c9f76e13ad6d997beb2a217f31'
++D=Path(__file__).resolve().parent;P=D.parents[1];L=P.parents[1];R=L.parents[2]
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-current-class-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-current-class-a')
++PLAN_SHA='8a12f2b92b218b93c66e788b5b802d2fa140a812d9065b85a3dfcb23bd32c298'
+ BINARY='5a8c9d3b58606022e21e2f0347360e4dd9cfdf6a869c8daac145e928fe4d4306'
+ PRIOR=L/'baseline/evidence/independent-a/review.json'
+ PRIOR_SHA='f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb'
+@@ -87,7 +87,7 @@
+  require(os.getpriority(os.PRIO_PROCESS,0)==19 and os.sched_getaffinity(0)<=set(range(8,16))|set(range(24,32)),'helper placement')
+  resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+  require(not (D/'review.json').exists() and not (D/'artifact-index.jsonl.gz').exists(),'exclusive review')
+- start=time.monotonic();receipt=dict(schema='gsq.state-bundle.independent-device.v1',passed=False,no_speed_claim=True,device_executed_by_reviewer=False)
++ start=time.monotonic();receipt=dict(schema='gsq.current-combined.class-independent-device.v1',passed=False,no_speed_claim=True,device_executed_by_reviewer=False)
+  try:
+   require(sha(PRIOR)==PRIOR_SHA and sha(OLD_INDEX)==OLD_INDEX_SHA,'independent original authorities');prior=read(PRIOR)
+   require(prior['passed'] and prior['all12_exact'] and prior['index_sha256']==OLD_INDEX_SHA and sha(REFERENCE)==prior['full_result_sha256'],'baseline receipt/result')
+@@ -97,20 +97,20 @@
+   require(digest(json.dumps(plan,sort_keys=True,separators=(',',':')).encode())==ad['canonical_plan_sha256'],'canonical plan')
+   for k,v in plan['unit_properties'].items():require(ad['unit'][k]==v,'safe unit property')
+   B.validate_passive(ad['before'],terminal['after'],terminal)
+-  require(plan['requests']==plan['suite']['requests']==2 and plan['suite']['retained_state_dumps']==3 and plan['suite']['modes']==['none','mtp'],'fixed two-arm/three-capture scope')
++  require(plan['requests']==plan['suite']['requests']==2 and plan['suite']['retained_state_dumps']==3 and plan['suite']['measured_requests']==1 and plan['suite']['timing']=='class','fixed two-arm/three-capture scope')
+   require(plan['suite']['baseline_review_sha256']==PRIOR_SHA and plan['suite']['baseline_result_sha256']==prior['full_result_sha256'],'baseline admission')
+-  require(plan['adapter']['storage']['raw_state_bytes']==694327500 and plan['adapter']['storage']['evidence_forecast_bytes']==761436364,'three-capture storage forecast')
++  require(plan['adapter']['storage']['raw_state_bytes']==694327500 and plan['adapter']['storage']['evidence_forecast_bytes']==828545228,'three-capture storage forecast')
+   for mapping in (plan['source_sha256'],plan['suite']['source_sha256'],plan['adapter']['source_sha256']):
+    for p,h in mapping.items():require(sha(R/p)==h,'source pin '+p)
+   native=read(plan['adapter']['build_receipt']);require(native['passed'] and native['mode']=='native' and sha(plan['adapter']['build_receipt'])==plan['adapter']['build_receipt_sha256'],'native receipt')
+   require(sha(plan['adapter']['binary'])==native['binary_sha256']==plan['adapter']['binary_sha256']==BINARY,'native binary')
+   for mapping in (native['source_sha256'],native['object_sha256']):
+    for p,h in mapping.items():require(sha(R/p)==h,'compiled source/object '+p)
+-  fullpath=Path(terminal['result']['full_result_path']);require(fullpath==EVIDENCE/'bundle-qualification.json' and sha(fullpath)==terminal['result']['full_result_sha256'],'closed result identity');full=read(fullpath)
++  fullpath=Path(terminal['result']['full_result_path']);require(fullpath==EVIDENCE/'profile-result.json' and sha(fullpath)==terminal['result']['full_result_sha256'],'closed result identity');full=read(fullpath)
+   require(full['passed'] and full['requests']==2 and len(full['rows'])==len(full['capture_snapshots'])==2 and full['no_speed_claim'],'completed qualification')
+-  require(full['first_arm_RESET_redump_verified'] and full['last_arm_explicit_DUMP_repeat_verified'] and full['normal_FINISH_and_closed_payload_verified'],'successful repeat/closure evidence')
++  require(full['warmup_RESET_redump_verified'] and full['last_arm_explicit_DUMP_repeat_verified'] and full['normal_FINISH_and_closed_payload_verified'],'successful repeat/closure evidence')
+   require(full['rank_pids']==[x[0] for x in terminal['rank_identities']],'same two rank owners')
+-  roots=[EVIDENCE,EVIDENCE/'prompt-00-none',EVIDENCE/'prompt-00-mtp'];expected={}
++  roots=[EVIDENCE,EVIDENCE/'warmup-none',EVIDENCE/'prompt-00-none'];expected={}
+   for base in roots:
+    for rank in (0,1):expected[str((base/f'rank{rank}/state-2147483647').relative_to(EVIDENCE))]={}
+   with gzip.open(OLD_INDEX,'rt') as f:
+@@ -138,27 +138,55 @@
+     h=physical[str(p)] if str(p) in physical else sha(p);require(stamp(p.stat())==stamp(before),'artifact changed since inventory')
+     z.write((json.dumps(dict(root=label,path=str(p.relative_to(root)),bytes=before.st_size,sha256=h),separators=(',',':'))+'\n').encode())
+   arms=[]
+-  for i,(row,mode) in enumerate(zip(full['rows'],('none','mtp'))):
+-   name='prompt-00-'+mode;ref=refs[name];base=EVIDENCE/name
+-   require(row['name']==name and row['mode']==mode and row['requested_max_new']==128 and row['prompt_tokens']==plan['suite']['prompt_tokens']==ref['prompt_tokens'],'original prompt identity')
+-   require(row['result']['tokens']==ref['result']['tokens'] and row['state_sha256']==ref['state_sha256'],'original tokens/logical map')
++  for i,(row,name,cap) in enumerate(zip(full['rows'],('warmup-none','prompt-00-none'),(8,128))):
++   base=EVIDENCE/name;measured=name=='prompt-00-none'
++   require(row['name']==name and row['mode']=='none' and row['requested_max_new']==cap and row['excluded']==(not measured),'fixed diagnostic schedule')
++   if measured:
++    ref=refs[name];require(row['prompt_tokens']==plan['suite']['prompt_tokens']==ref['prompt_tokens'] and row['result']['tokens']==ref['result']['tokens'] and row['state_sha256']==ref['state_sha256'],'measured exact original arm')
++   else:require(row['prompt_tokens']==plan['suite']['warmup']['tokens'] and len(row['result']['tokens'])==8,'disjoint excluded warmup')
+    require(read(base/'request-result.json')==row,'raw arm/result join')
+    for rank in (0,1):
+     key=f'{name}/rank{rank}/state-2147483647';got=reconstructed[key]
+     require(got['logical_map']==row['state_sha256'][str(rank)] and got['snapshots']==full['capture_snapshots'][i][str(rank)],'closed payload map/stamp unchanged')
+     reset=read(base/f'rank{rank}/reset.json');require(reset['passed'] and reset['allocation_ids_preserved'],'positive RESET')
+-   B.timing(row['result'],128);consumed=B.confirmed_inputs(row['result'],row['prompt_tokens'])
+-   if mode=='mtp':B.guess_outcomes(row['result'],row['prompt_tokens'],128)
+-   else:require(all(row['result']['stats'][k]==0 for k in ('guesses','hits','misses')),'target-only stats')
+-   arms.append(dict(name=name,mode=mode,tokens=row['result']['tokens'],stats=row['result']['stats'],consumed_positions=consumed,baseline_tokens_exact=True,baseline_state_exact=True))
+-  require(arms[0]['tokens']==arms[1]['tokens'] and full['rows'][0]['state_sha256']==full['rows'][1]['state_sha256'],'same-pair target/MTP exact')
++   B.timing(row['result'],cap,eos=measured);consumed=B.confirmed_inputs(row['result'],row['prompt_tokens'])
++   require(all(row['result']['stats'][k]==0 for k in ('guesses','hits','misses')),'target-only stats')
++   if measured:require(consumed==214 and len(row['prompt_tokens'])==87 and len(row['result']['tokens'])==128,'whole-request214positions')
++   arms.append(dict(name=name,excluded=not measured,mode='none',tokens=row['result']['tokens'],stats=row['result']['stats'],consumed_positions=consumed,baseline_tokens_exact=measured,baseline_state_exact=measured))
++  old_review_path=L/'profiling/evidence/independent-a/review.json';old_index=old_review_path.parent/'artifact-index.jsonl.gz'
++  require(sha(old_review_path)=='17c936481b12453ff0ded93454fbe1ca044a9dff4d1193561b84629882c24e18' and sha(old_index)=='0f14f6f629a6e7d7286b163a4e19d843b9d56be9d9921a4da0081fb7fde8f313','original class authority')
++  old_authority=read(old_review_path);require(old_authority['passed'] and old_authority['consumed_positions']==214,'same original class workload')
++  old_class_hashes={}
++  with gzip.open(old_index,'rt') as f:
++   for line in f:
++    row=json.loads(line)
++    if row['root']=='evidence' and row['path'] in ('profile-none/rank0/class-times.json','profile-none/rank1/class-times.json'):old_class_hashes[row['path']]=row['sha256']
++  require(len(old_class_hashes)==2,'original class report hashes');classes={};joined={};count_deltas={}
++  for rank in (0,1):
++   path=EVIDENCE/f'prompt-00-none/rank{rank}/class-times.json';require(path.stat().st_size<=2*1024**2,'bounded class report');report=read(path);retained=full['classes'][str(rank)]
++   require(retained['path']==str(path) and retained['sha256']==sha(path) and retained['report']==report,'class raw/result binding')
++   require(report['profiling'] is True and report['tokens']==128 and report['classes'],'class scope')
++   names=set()
++   for row in report['classes']:
++    require(type(row['class'])is str and row['class'] not in names,'unique class');names.add(row['class'])
++    require(type(row['device_ms'])in(int,float) and math.isfinite(row['device_ms']) and row['device_ms']>=0 and type(row['launches'])is int and row['launches']>=0 and type(row['groups'])is int and row['groups']>=0,'finite class counters')
++    out=joined.setdefault(row['class'],dict(device_ms=0.,launches=0,groups=0))
++    for k in out:out[k]+=row[k]
++   require(any(row['device_ms']>0 and row['launches']>0 for row in report['classes']),'nonvacuous profile')
++   old_rel=f'profile-none/rank{rank}/class-times.json';old_path=Path(old_authority['roots']['evidence'])/old_rel
++   require(old_path.stat().st_size<=2*1024**2 and sha(old_path)==old_class_hashes[old_rel],'bound original class counts');old_report=read(old_path)
++   old_counts={x['class']:(x['launches'],x['groups']) for x in old_report['classes']};new_counts={x['class']:(x['launches'],x['groups']) for x in report['classes']}
++   count_deltas[str(rank)]={name:dict(old=old_counts.get(name),current=new_counts.get(name)) for name in old_counts.keys()|new_counts.keys() if old_counts.get(name)!=new_counts.get(name)}
++   # Count changes require source attribution; do not silently discard classes.
++   classes[str(rank)]=dict(report_sha256=sha(path),classes=report['classes'],device_ms_sum=sum(x['device_ms'] for x in report['classes']),launches=sum(x['launches'] for x in report['classes']),groups=sum(x['groups'] for x in report['classes']))
++  require(not any(count_deltas.values()),'unexpected original-topology class launch/count delta')
+   ledger=read(L/'qkv-q6-p33/engine/operating/candidate-ledger.json')['scenarios']['split24-24_mtp-rank0']['ranks'];owners=[];memory=[]
+   for rank in (0,1):
+    owner=read(EVIDENCE/f'rank{rank}/receipt.json');require(owner['passed'] and owner['rank']==rank and not owner['error'] and len(owner['teardown'])==1,'clean owner')
+    t=owner['teardown'][0];require(t['safe_to_exit'] and t['in_flight']==t['live_bytes']==t['exit_code']==0,'safe owner teardown');owners.append({k:t[k] for k in ('status','safe_to_exit','in_flight','live_bytes','exit_code')})
+    census=read(EVIDENCE/f'rank{rank}/census.json');amount=sum(a['bytes'] for a in census['allocations'] if a['live'] and a['memory']=='device');require(amount==census['totals']['device']==ledger[rank]['device_logical_bytes'],'unchanged allocation census');memory.append(amount)
+   ownership=read(EVIDENCE/'ownership.json');require(ownership['returncodes']==[0,0] and not ownership['retained_pids'] and ownership['signals_sent']==0 and not ownership['stop_requested'],'clean process closure')
+-  receipt.update(passed=True,requests=2,captures=3,bundles=6,arms=arms,bundle_captures=captures,completed_arm_state_json_bytes_exact=True,all_original_buffer_lengths_exact=True,initial_capture_semantic_baseline_required=False,explicit_repeat_and_closed_stamp_verified=True,baseline_review_sha256=PRIOR_SHA,baseline_index_sha256=OLD_INDEX_SHA,plan_sha256=PLAN_SHA,native_binary_sha256=BINARY,full_result_sha256=sha(fullpath),rank_identities=terminal['rank_identities'],owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(rawpaths),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Initial pre-RESET capture is verified for sealed bytes, full inventory and original buffer lengths; initial hash differences are reported without an unproved deterministic blank-state oracle.','Two fixed prompt00 arms validate evidence format and exact prior-baseline target state, not general model quality or speed.','Closure uses retained successful DUMP/RESET/FINISH and owner/drain evidence; a seal alone is insufficient.','No model weights read or GPU/service operations by reviewer; physical host findings use retained monitor evidence.'])
++  receipt.update(passed=True,requests=2,measured_requests=1,captures=3,bundles=6,arms=arms,class_reports=classes,joined_class_totals=joined,original_class_count_deltas=count_deltas,consumed_positions=214,bundle_captures=captures,measured_arm_state_json_bytes_exact=True,all_original_buffer_lengths_exact=True,initial_capture_semantic_baseline_required=False,explicit_repeat_and_closed_stamp_verified=True,baseline_review_sha256=PRIOR_SHA,baseline_index_sha256=OLD_INDEX_SHA,plan_sha256=PLAN_SHA,native_binary_sha256=BINARY,full_result_sha256=sha(fullpath),rank_identities=terminal['rank_identities'],owners=owners,ownership=ownership,actual_device_bytes=memory,physical_drain=True,kernel_fault_baseline_unchanged=True,artifact_count=len(rawpaths),indexed_bytes=total,index_sha256=sha(D/'artifact-index.jsonl.gz'),limitations=['Initial and warmup capture hashes are informational versus baseline; sealed bytes, full inventory and original buffer lengths remain verified.','One fixed prompt00 target-only class diagnostic, with excluded disjoint warmup; exact prior-baseline state/tokens. Class event totals cover whole request including prefill, not decode-only, per-layer/per-format, copy-completeness, speed or general-quality proof.','Closure uses retained successful DUMP/RESET/FINISH and owner/drain evidence; a seal alone is insufficient.','No model weights read or GPU/service operations by reviewer; physical host findings use retained monitor evidence.'])
+  except BaseException as e:receipt['error']=type(e).__name__+': '+str(e);raise
+  finally:
+   receipt.update(auditor_sha256=sha(__file__),parent_auditor_sha256=BASE_SHA,elapsed_seconds=time.monotonic()-start)

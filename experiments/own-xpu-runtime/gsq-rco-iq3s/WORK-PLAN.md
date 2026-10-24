@@ -142,3 +142,12 @@ are diagnostic costs, not throughput. Select the next worthwhile kernel from
 current evidence; mixed-format class totals cannot be assigned by layer counts.
 Compress verified closed combined evidence before another full suite: bundling
 solves file fanout but does not reduce raw payload bytes.
+
+## Current profile selects expert investigation — 08:34 UTC
+
+[Current class profile](profiling/current-combined/RESULT.md) is independently exact.
+Expert gate/up sum to19.45% of whole-request event time, largest combined area. Use
+existing narrow attribution to join actual layer costs to formats, not proportional
+layer counts. Controller fixtures9–16 sample early generated-token steps. Keep that
+scope explicit; no new native build or general profiling framework. Closed combined
+state archival is underway outside GPU work for future full-suite byte capacity.
