@@ -176,3 +176,16 @@ all original model checks. The next independent qualification is the original26-
 resident suite with positive physical contact required for both ranks, complete
 baseline token/state equality and safe closure. Separate-process timings remain
 descriptive; the short internal corpus is not the public512-token gate.
+
+## Expert full-engine qualification passes — 09:33 UTC
+
+[Independent full result](expert-iq3xxs-block/engine/operating/RESULT.md) verifies all24
+baseline-exact arms and54 closed bundles, both physical contacts and safe teardown.
+Resident target15.732355/MTP23.303290 tokens/s; unchanged acceptance and memory.
+Retain the exact candidate internally. Do not relabel the incomplete micro or infer
+a causal cross-session speedup. Archive only the54 audited bundle payloads after
+verified compression/readback, preserving all other metadata/draft evidence.
+Inspect the largest unchanged measured format, IQ4_NL expert-down, before selecting
+another exact kernel delta. No redundant profiling campaign yet. Keep the explicit
+[broader coverage plan](expert-iq3xxs-block/engine/PUBLICATION-GAPS.md) for publication;
+twelve short prompts do not establish universal model correctness or quality.

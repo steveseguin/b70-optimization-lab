@@ -1,0 +1,41 @@
+{
+  "schema": "gsq.iq3xxs-block.engine.independent-auditor-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/audit.py": "4ef928677999aa1745afb900ea938dd07e911e1c28b6e29a9461e123c6b2dc3c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/test_audit.py": "2b9a1168f059d6818f3d817c34746f9e5068ca92f1d72b1fc6af8f31958fd1b7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/audit-delta.patch": "5989579394dcc8b06277d67c009d2eb2091565abe7ea566017d3e714d8187367",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py": "43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/audit.py": "4013acb3216fe908edda3761089a11377e9513f025c99d0442d9792386b5c594",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/evidence/audit-preparation.json": "f0aff7ab55c4ef7cc1b04f9fdd63683264c36632cd53edc065849b7e26777d48",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/evidence/audit-tests.log": "4e61277aa061f541f319e436f34d83bc9edcc010d24d12e39c2e18dd649d1811"
+  },
+  "retained_tests": 5,
+  "reviewer_test_rerun": false,
+  "actual_readback_run": false,
+  "actual_payload_read": false,
+  "device_executed": false,
+  "expected_requests": 26,
+  "expected_measured_arms": 24,
+  "expected_bundle_captures": 54,
+  "max_raw_bytes": 7516192768,
+  "max_files": 10000,
+  "plan_sha256": "61e2e15a3577ae2d972f922cea8ff4a7e8f22567cf3354f761d4fa94b786359d",
+  "findings": [],
+  "checks": [
+    "Fixed closed control/evidence paths and binary97348925; admitted plan/terminal/fullresult/source/object joins checked before raw readback",
+    "Frozen baseline timing/passive helpers and independent bundle streaming parser hashes required before imports",
+    "Exact54 expected original inventories; every range byte length/name/hash checked, plus wholepayload/seal/index/stateJSON and heldFD stability",
+    "48 measured rankcaptures require original baseline byte equality; initial/warmup captures retain difference reports without unproved blank-state equality",
+    "All24 measured token/state arms,26orderedRESET requests, original balanced order/cap128/EOS and both excluded warmups checked",
+    "Measured capture stamps must match closed rawfiles; explicit finalDUMP and postFINISH closure flags required",
+    "Same persistent ownerPIDs, both positive physical contacts, no firsterror/retry/hardkill, unchanged vision/faultbaseline and targetdrain required",
+    "Native receipts/ownership and exact perrank device census checked; all timing/order aggregates recomputed without sample removal",
+    "Exclusive output guard and failed-review finally preserve incomplete audit; root owns postdrain execution"
+  ],
+  "limitations": [
+    "Source review and five retained tiny temporary fixtures only; actual fullsuite outcome remains pending",
+    "Physical findings derive retained coordinator/owner evidence, not new live queries",
+    "No speed promotion or retroactive micro qualification"
+  ]
+}

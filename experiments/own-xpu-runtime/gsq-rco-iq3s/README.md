@@ -4,6 +4,11 @@ The requested model is downloaded and verified. Our engine now passes exact targ
 requested the SC117 source and our custom engine with MTP. This is a distinct
 modified target, separate from the closed and published Unsloth optimization.
 
+The [exact expert-block engine](expert-iq3xxs-block/engine/operating/RESULT.md) now
+passes all24 baseline arms and independent54-bundle readback, measuring15.73 target-only
+/23.30 MTP tokens/s. Both ranks and safe closure are verified. This remains an internal
+cap128 resident screen; publication quality/context gaps are explicitly retained.
+
 The combined attention/Q6 candidate now matches all twelve original prompt pairs,
 measuring14.85 target-only /22.13 MTP tokens/s in its separately audited resident run
 ([full result and scope](qkv-q6-p33/engine/operating/RESULT.md)). This is a cap128
@@ -16,8 +21,7 @@ isolated event latency with exact bytes; no full-model speed improvement is clai
 The Q6 combination has now passed the full gate linked above.
 [Lossless evidence bundling](state-bundle/RESULT.md) also passes exact full-state
 qualification. The [current expert candidate](expert-iq3xxs-block/STATUS.md) follows measured
-class and format attribution. Its CPU proof and exact kernel observations are retained;
-a full-engine qualification remains required.
+class and format attribution. Its CPU proof, incomplete micro qualification and completed full-engine result are retained.
 
 ## Model and source
 

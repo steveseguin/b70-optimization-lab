@@ -1,0 +1,21 @@
+{
+  "schema": "gsq.iq3xxs-block.engine.audit-preparation.v1",
+  "passed": true,
+  "tests": 5,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/audit.py": "4ef928677999aa1745afb900ea938dd07e911e1c28b6e29a9461e123c6b2dc3c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/test_audit.py": "2b9a1168f059d6818f3d817c34746f9e5068ca92f1d72b1fc6af8f31958fd1b7",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/audit-delta.patch": "5989579394dcc8b06277d67c009d2eb2091565abe7ea566017d3e714d8187367",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py": "43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/audit.py": "4013acb3216fe908edda3761089a11377e9513f025c99d0442d9792386b5c594"
+  },
+  "test_log_sha256": "4e61277aa061f541f319e436f34d83bc9edcc010d24d12e39c2e18dd649d1811",
+  "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest -v test_audit.py",
+  "full_run_audited": false,
+  "device_executed": false,
+  "model_or_actual_state_payload_read": false,
+  "expected_captures": 54,
+  "expected_requests": 26,
+  "actual_run_plan_sha256": "61e2e15a3577ae2d972f922cea8ff4a7e8f22567cf3354f761d4fa94b786359d",
+  "execute_after_root_confirms_drain": "python3 -B audit.py --run --plan-sha256 61e2e15a3577ae2d972f922cea8ff4a7e8f22567cf3354f761d4fa94b786359d"
+}

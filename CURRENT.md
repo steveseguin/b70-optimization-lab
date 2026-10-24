@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 24, 05:33 EDT — four-card host: expert-block engine passes, measured23.30 MTP tokens/s.**
+Independent readback verifies all24 measured arms and54 full-state bundles exactly
+against the original baseline. Target-only15.73/MTP23.30 tokens/s in this resident
+cap128 screen; same acceptance and memory. Both GPU contacts verified, owners safely
+closed, target cards empty, fault baseline/vision unchanged. The incomplete micro
+remains incomplete. Preserve and losslessly archive closed evidence, then inspect
+the next measured bottleneck; broader publication coverage remains outstanding.
+[Full result](experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/RESULT.md).
+
+
 **October 24, 05:24 EDT — four-card host: full expert candidate screen running.**
 Independent native/build/operating review passed. The unchanged34-site packed expert
 kernel is now in a new full-engine qualification: original26 requests,12 balanced
