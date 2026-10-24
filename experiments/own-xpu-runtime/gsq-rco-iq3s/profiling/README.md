@@ -10,7 +10,7 @@ holder, fault, memory, queue, one-stop and retained-owner behavior.
 
 Admission requires the completed, clean all-12 baseline terminal and hash-bound
 full result, matching native binary, original prompt tokens and frozen reviewed
-sources. Prompt 00 is fixed before examining its timing. The sequence uses one
+sources. Prompt00 is selected by its fixed position in the original corpus; its observed throughput is not a selection criterion. The sequence uses one
 pair of owners: full RESET, the existing disjoint target-only warmup (8 outputs,
 EOS disabled), full RESET, then prompt 00 target-only with cap 128 and original
 EOS policy. Every output token and both complete target-state maps must equal

@@ -1,6 +1,6 @@
 # SC117 IQ3_S integration into our own engine
 
-The requested model is downloaded and verified. Our engine passes its first real-model target-only/MTP comparison: identical 32 tokens and complete target plan/alternate state. This is one capped fixture; a fair speed baseline and broader correctness checks are next. The owner explicitly
+The requested model is downloaded and verified. Our engine now passes exact target-only/MTP comparison on all twelve fixed short prompts. The independently audited [resident baseline](baseline/RESULT.md) measures 12.63 tokens/s target-only and 17.98 with MTP, with full target state preserved. This is a short-prompt baseline, not broad quality certification. The owner explicitly
 requested the SC117 source and our custom engine with MTP. This is a distinct
 modified target, separate from the closed and published Unsloth optimization.
 
@@ -36,7 +36,7 @@ and CPU comparison oracles, not an imported inference runtime.
 | Two-shard loader | [Authenticated loader](loader/README.md): ten parser tests and 24 immutable-authority checks pass; real headers are bound separately from payload checks. |
 | Native kernels | [Packed backend](native-formats/README.md): 15 Host cases, 60 checks and 100 refusals pass. Five native kernels pass 15 synthetic GPU cases with 45 exact kernel executions. |
 | Native inference | The [complete native build](integration/README.md) passes. The [tiny native qualification runner](native-qualification/README.md) passed; the [first real-model comparison](serving/evidence/real-model-a/README.md) passes with 25 accepted and six rejected proposals. |
-| Speed | Unmeasured for this model, both target-only and MTP. |
+| Speed | [Resident twelve-prompt baseline](baseline/RESULT.md): 12.63 target-only / 17.98 MTP tokens/s; exact paired tokens/state, both order groups retained. |
 
 The model label does not describe every tensor. New support includes Q2_0,
 Q4_K, Q5_K and IQ4_XS. Existing IQ3_XXS and F16 scalar support must also reach
@@ -52,15 +52,12 @@ one-token MTP and target verification. The P196 one-card record and P201
 streaming front are target-only. Adding a flag to that front is insufficient.
 
 The existing official FP8/BF16 draft tensors are present on local NVMe and
-match the historical manifest's file identities. No new draft payload hash
-has been performed by this intake. The draft loader verifies tensor bytes at
-load and performs its existing draft-only conversion. The SC117 Q8 GGUF head
+match the historical manifest's file identities. The real-model loader verified all 3,101 draft tensor payload hashes and performs its existing draft-only conversion. The SC117 Q8 GGUF head
 is optional and is not a drop-in input to this loader; it was not downloaded.
 
 First qualification uses the full 248,320-token draft head, with target-only
 and MTP token/state comparisons. The old restricted-head calibration is not
-transferred. Only target-verified tokens may be emitted. Neural acceptance,
-rollback ordering and net speed remain to be measured on the new weights.
+transferred. Only target-verified tokens may be emitted. The resident baseline verifies 1,160 accepted and 364 rejected proposals with exact target state; delivered decode speed improves on both order groups.
 
 ## Qualification and operating boundary
 

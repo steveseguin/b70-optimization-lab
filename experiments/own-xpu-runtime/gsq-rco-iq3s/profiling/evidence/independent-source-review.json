@@ -9,7 +9,7 @@
     "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/profile.py": "ec5170d15d50f39f637e16c6bb75ab410f78bcafe4c5c55226a9861113d8c94b",
     "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/once.py": "83e9edd956325288207ab5c5d80595ccbd45d6cb16cf646a8b546a6143377807",
     "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/test_profile.py": "62b7302d42a1e05e24768a7d736ff76d056a1f5ec4f7161566df6a54953756b5",
-    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/README.md": "7b78344fe7724a0101982e7e6cb5552e78269bed20d95cf02f80f4bc54609855"
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/README.md": "8e64860a096b0389b4a998f776a0cba896774187e8e85643127d19cbfa84a441"
   },
   "checks": [
     "Private A.command changes only one --timing value from token to class; environment and binary unchanged",
@@ -25,5 +25,11 @@
     "Whole-request classes include prefill and do not form a complete copy-work census",
     "No active baseline result read and no native/model/service execution",
     "No actual timing/bottleneck claim before separately admitted execution and result audit"
-  ]
+  ],
+  "documentation_update": {
+    "scope": "README-only factual correction: prompt00 selected by corpus position; timing had already been observed, so no pre-observation selection claim.",
+    "prior_review_sha256": "be6fd5ff499c5b4b3380b35de3ddab4c2fcc08e0fe120d1deccf937b9c1546ce",
+    "preserved_directory": "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/lineage/before-prompt-selection-wording",
+    "tests_rerun": false
+  }
 }

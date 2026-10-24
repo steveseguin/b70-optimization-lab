@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 24, 02:07 EDT — four-card host: audited SC117 resident baseline passes; class profiling running.**
+All twelve original target/MTP prompt pairs match exact tokens and full target state.
+Independent readback verifies 57,675 files / 6.34 GB. Decode is 12.6346 target-only and
+17.9772 MTP tokens/s (+42.29%) for this one resident short-prompt/cap128 suite; both
+order groups favor MTP, with residual ordering effects retained. MTP accepts 1,160/1,524
+proposals. This is same-engine equivalence, not an independent broad quality oracle.
+Baseline owners exited safely with target cards drained and unchanged fault/vision state.
+A separately reviewed, bounded class diagnostic is running on BDF23/47 with the same
+binary; it must match the first baseline prompt exactly. No speed claim from profiling.
+Continue measured lossless acceleration and the 30-minute progress/fairness reviews.
+[Baseline result](experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/RESULT.md).
+
 **October 24, 01:47 EDT — four-card host: real SC117 target/MTP comparison passed; fair speed baseline next.**
 Our custom engine loaded the downloaded IQ3_S target and the existing official draft on
 BDF23/47. One persistent pair produced identical 32-token output and all 2,110 target-state
