@@ -1,0 +1,50 @@
+{
+  "schema": "gsq.hc-extractor.independent-review.v1",
+  "passed": true,
+  "scope": "Source and already retained authority metadata only; no extraction invocation or payload reads.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extract.py": "0ea73268527bd41307b4ea65999079e642325fe5b63ee772b6a119eae454d19c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extraction-plan.json": "f4c2293aa33b6c976014c45d44264e89a78b645cbbdfde76fcc09a9433e935ae",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixture_schema.hpp": "07429dfdd31b73d794c206d9f6aa702467e65d13cb3f8dd978fa4acf8e74539b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/build.py": "dbcd796fc74681ee79e9c02803f6614c55cfc933ddbfc729dbbdb72275475da3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/runner.cpp": "92a56d3ed7c53982a193b93fd97332d7861b2ea88dba69fb3d28870f6f9341ef",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/source-pins.json": "788b0240bb73d7229373c28b907dad4ebbcaf6c087ed8f2c8c4a7eb408705b3c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/evidence/cpu-proof.json": "60f2ceeaf8174c2a8c02f50bd8a1bbb4c14f1561fb7b6621064a32645ac84eda",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/evidence/independent-source-review.json": "02bfcbf98c35d3f0f3d2e1a02d1d2567734cd3a721aeeb570f8ef5897da0938a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/launch-b/evidence/device-b/review.json": "30ed538b78040d04367fe7e99956c8ff2e483cef99194de1445f1476226bd039",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/review.json": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b"
+  },
+  "checks": {
+    "fixed_plan_sha256": "f4c2293aa33b6c976014c45d44264e89a78b645cbbdfde76fcc09a9433e935ae",
+    "actual_class_b_closure_schema_matches": true,
+    "baseline_review_and_index_binding": true,
+    "full_contiguous_bundle_index_and_seal_join_before_selected_reads": true,
+    "three_selected_range_hashes_and_original_baseline_lengths": true,
+    "unique_graph_producers": true,
+    "both_header_hashes_and_exact_held_model_stats": true,
+    "selected_full_tensor_offsets_and_extent_bounds": true,
+    "model_payload_bytes": 6635520,
+    "unique_state_bytes": 21128,
+    "header_bytes": 11024528,
+    "no_follow_regular_exact_extent_and_pre_post_stat": true,
+    "exclusive_fixtures_and_fixed_header_fsync_readback": true,
+    "fixed_header_ABI_and_build_receipt_schema_compatible": true,
+    "root_floor": 27000000000,
+    "reserve_bytes": 33554432,
+    "first_failure_preserved_no_retry": true
+  },
+  "findings": [],
+  "execution_status": {
+    "default_metadata_smoke_by_reviewer": false,
+    "extractor_invoked": false,
+    "model_or_state_payload_read": false,
+    "compiler_or_device_invoked": false
+  },
+  "limits": [
+    "Successful extraction requires process exit success together with durable receipt, fixed header digest and local fixture hashes; a late receipt publication/fsync failure is not qualification.",
+    "Only selected ranges and two full tensors are read; no new full-model or whole-bundle hashing claim.",
+    "Native build and operating admission remain separate."
+  ]
+}

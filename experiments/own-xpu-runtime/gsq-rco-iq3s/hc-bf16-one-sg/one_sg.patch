@@ -1,0 +1,86 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp
++++ one_sg.hpp
+@@ -1,3 +1,5 @@
++#pragma once
++#include "policy.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/external/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/kernel_guard.hpp"
+ #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp"
+ #ifndef OWN_RT_HOST_ONLY
+@@ -13,9 +15,13 @@
+ #include <set>
+ #include <sstream>
+ 
+-namespace iq3::kopt {
++namespace gsq_hc_one_sg {
++using namespace iq3;
++using iq3::kopt::Matrix;
++using iq3::kopt::lane_dot;
++template<Type T,unsigned SG> class HCKernel;
+ namespace {
+-constexpr size_t rows_per_group=4;
++constexpr size_t rows_per_group=1;
+ std::string properties="null";
+ size_t mul(size_t a,size_t b) {
+   if(b && a>std::numeric_limits<size_t>::max()/b)throw std::overflow_error("kopt extent");
+@@ -99,7 +105,7 @@
+     std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("packet26 capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+     return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(ng*SG*rows_per_group),sycl::range<1>(SG*rows_per_group))](sycl::handler& h) {
+       sycl::local_accessor<uint8_t,1> storage(stride*rows_per_group,h);
+-      h.parallel_for(p35_range0,
++      h.parallel_for<HCKernel<T,SG>>(p35_range0,
+         packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+           auto group=it.get_group_linear_id();auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id();
+           unsigned row_in_group=sg.get_group_linear_id();
+@@ -116,7 +122,7 @@
+             x=static_cast<const uint16_t*>(pointers[d.x])+slot*d.k;
+             if(layout(T).elements!=1)stage_row<SG>(source,local,d.rb,lane);
+           }
+-          // All four rows reach the sole workgroup barrier, including invalid/tail rows.
++          // Every row reaches the inherited workgroup barrier, including invalid/tail rows.
+           it.barrier(sycl::access::fence_space::local_space);
+           float sum=0;
+           if(active)sum=dot<T,SG>(layout(T).elements==1?source:local,x,d.activation,d.k,lane);
+@@ -143,11 +149,7 @@
+       <<",\"local_mem_bytes\":"<<local<<",\"max_work_group_size\":"<<wg<<",\"subgroup_sizes\":[";
+     for(size_t i=0;i<supported.size();++i)info<<(i?",":"")<<supported[i];
+     properties=info.str()+"],\"occupancy\":\"not measured\"}";
+-    switch(desc[0].type){
+-#define P26_CASE(T) case Type::T:return subgroup==16?run<Type::T,16>(q,p,deps):run<Type::T,32>(q,p,deps)
+-P26_CASE(F32);P26_CASE(F16);P26_CASE(BF16);P26_CASE(Q8_0);P26_CASE(Q6_K);P26_CASE(Q3_K);P26_CASE(IQ3_XXS);P26_CASE(IQ2_S);P26_CASE(IQ3_S);P26_CASE(IQ4_NL);
+-#undef P26_CASE
+-}throw std::invalid_argument("type");
++    return run<Type::BF16,32>(q,p,deps);
+   }
+ };
+ Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocation>& ids,Matrix m,
+@@ -155,7 +157,7 @@
+   geometry(m.type,m.activation,m.output_type,m.rows,m.columns,op.subgroup);
+   if(!experts || !count || !span || span>m.rows)throw std::invalid_argument("kopt routes");
+   auto l=layout(m.type);size_t rb=mul(m.columns/l.elements,l.bytes);
+-  Descriptor v{m.type,m.activation,m.output_type,m.rows,m.columns,rb,op.groups,(mul(count,span)+3)/4,experts,count,span,r!=0,0,0,0,0,0,0,m.fp32!=0};
++  Descriptor v{m.type,m.activation,m.output_type,m.rows,m.columns,rb,op.groups,(mul(count,span)+rows_per_group-1)/rows_per_group,experts,count,span,r!=0,0,0,0,0,0,0,m.fp32!=0};
+   auto add=[&](ownrt::Allocation id,size_t bytes){check(d,id,bytes);unsigned index=ids.size();ids.push_back(id);return index;};
+   v.w=add(m.w,mul(mul(experts,m.rows),rb));v.x=add(m.x,mul(mul(count,m.columns),2));v.y=add(m.y,mul(mul(count,span),2));
+   if(r){v.r=add(r,mul(count,sizeof(Route)));v.status=add(status,mul(count,4));}
+@@ -169,20 +171,9 @@
+   return d.compute(op,ids,{});
+ }
+ }
+-std::string device_properties(){return properties;}
+ ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
++  policy(t,rows,k,a,o,sg,fp32);
+   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},1,1,rows);return finish(d,op,ids);
+ }
+-ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation r,ownrt::Allocation status,uint32_t experts,uint32_t rows,size_t k,uint32_t count,uint32_t span,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
+-  if(!r || !status)throw std::invalid_argument("kopt routing handles required");
+-  Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+-  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},experts,count,span,r,status);return finish(d,op,ids);
+ }
+-ownrt::Event fused_gemv(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg) {
+-  if(matrices.empty() || matrices.size()>4)throw std::invalid_argument("kopt fused matrix count1..4");
+-  Multiply op;op.subgroup=sg;op.matrices=matrices.size();std::vector<ownrt::Allocation> ids;
+-  for(size_t i=0;i<matrices.size();++i)op.desc[i]=bind_matrix(d,op,ids,matrices[i],1,1,matrices[i].rows);
+-  return finish(d,op,ids);
+-}
+-}

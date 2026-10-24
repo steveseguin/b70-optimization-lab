@@ -1,0 +1,166 @@
+{
+  "schema": "gsq.hc-bf16-one-sg.extraction-plan.v1",
+  "executed": false,
+  "review_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/launch-b/evidence/device-b/review.json",
+  "review_sha256": "30ed538b78040d04367fe7e99956c8ff2e483cef99194de1445f1476226bd039",
+  "original_baseline_review_sha256": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+  "original_baseline_index_sha256": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982",
+  "profile_artifact_index_sha256": "9714593b8f7c65c66fa6beed26edc831782b83225e05de2e2611896e39898236",
+  "bundle_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-q6-class-b/prompt-00-none/rank0/state-2147483647/state.bundle",
+  "bundle_metadata_sha256": {
+    "state-seal.txt": "2297e4193c3a839ff792de8696d12ac280af45761c1b9b499e6f18d2a9157b5a",
+    "state-index.tsv": "6f7ce7d6380c23514481f83eb006a98902d08201c294e6e66826f4f305852eb5",
+    "state.json": "5840714f71d40c936bc0dcd1b91acd2a16788c21f270c77d36735ce9e3835e78",
+    "state.bundle": "cc308634f952e4160bb08481b7f8f82ca6f8e25bf5a1341048365f323cba6b5d"
+  },
+  "cases": [
+    {
+      "label": "blk.0.hc.a.low",
+      "layer": 0,
+      "rows": 320,
+      "columns": 10240,
+      "weight": "blk.0.hc_attn_down.weight",
+      "tensor": {
+        "type": "BF16",
+        "type_id": 30,
+        "dimensions": [
+          10240,
+          320
+        ],
+        "shape": [
+          320,
+          10240
+        ],
+        "elements": 3276800,
+        "data_offset": 2022958080,
+        "bytes": 6553600,
+        "file_offset": 2033982464,
+        "reserved_span_bytes": 6553600,
+        "payload_extent_validated": true,
+        "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf"
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "ranges": {
+        "input": {
+          "name": "blk.0.hc.a.norm",
+          "unique_writer": "blk.0.hc.a.norm",
+          "offset": 1885252,
+          "bytes": 20480,
+          "sha256": "ca73f79e3fe38b393558dc8759d5b150de3d4653c93d047bf9f18e2d6ecc6ce7"
+        },
+        "output": {
+          "name": "blk.0.hc.a.low",
+          "unique_writer": "blk.0.hc.a.low",
+          "offset": 1879492,
+          "bytes": 640,
+          "sha256": "802f16689891c978261b10a12a6cd22ef882c21e192f083c1fbf46cc6bd708e4"
+        }
+      }
+    },
+    {
+      "label": "blk.0.hc.a.inject",
+      "layer": 0,
+      "rows": 4,
+      "columns": 10240,
+      "weight": "blk.0.hc_attn_inject.weight",
+      "tensor": {
+        "type": "BF16",
+        "type_id": 30,
+        "dimensions": [
+          10240,
+          4
+        ],
+        "shape": [
+          4,
+          10240
+        ],
+        "elements": 40960,
+        "data_offset": 2029511680,
+        "bytes": 81920,
+        "file_offset": 2040536064,
+        "reserved_span_bytes": 81920,
+        "payload_extent_validated": true,
+        "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf"
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "ranges": {
+        "input": {
+          "name": "blk.0.hc.a.norm",
+          "unique_writer": "blk.0.hc.a.norm",
+          "offset": 1885252,
+          "bytes": 20480,
+          "sha256": "ca73f79e3fe38b393558dc8759d5b150de3d4653c93d047bf9f18e2d6ecc6ce7"
+        },
+        "output": {
+          "name": "blk.0.hc.a.inject",
+          "unique_writer": "blk.0.hc.a.inject",
+          "offset": 1879484,
+          "bytes": 8,
+          "sha256": "ba87d1c539b4f7c86954c9892f7e80978c851ad7201b24e9be06be69911aa774"
+        }
+      }
+    }
+  ],
+  "max_model_payload_bytes": 6635520,
+  "max_header_bytes": 11024528,
+  "unique_bundle_range_bytes": 21128,
+  "copied_payload_bytes": 6656648,
+  "model_reads_permitted": false,
+  "header_checks": "Both fixed held nofollow shard identities and exact bounded raw header prefixes before fixed complete tensor reads; before/after stat and fixed offset extent; no whole-shard hash claim.",
+  "bundle_checks": "Verify reviewed index/seal/state metadata, then only three unique selected ranges against retained original baseline hashes; held regular nofollow FD/stat before/after; no full bundle payload scan.",
+  "publication": "Exclusive fresh fixtures and fixed.hpp; fsync each+directory; receipt passed only after final publication/hash. Failed attempts retained, no automatic retry.",
+  "schedule": {
+    "cases": 2,
+    "warmup_cycles": 4,
+    "measured_cycles": 24,
+    "total_pairs": 56,
+    "total_kernels": 112,
+    "case_order": "((cycle/2)+j)%2",
+    "arm_order": "AB even cycle, BA odd",
+    "measured_pairs_each_case": 24
+  },
+  "memory": {
+    "device_bytes": 6677776,
+    "transfer_bytes": 6712768,
+    "pinned_slab_bytes": 1048576
+  },
+  "allocation_delta_for_future_engine": 0
+}

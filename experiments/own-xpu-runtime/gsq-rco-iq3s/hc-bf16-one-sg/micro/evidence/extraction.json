@@ -1,0 +1,88 @@
+{
+  "passed": true,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extract.py": "0ea73268527bd41307b4ea65999079e642325fe5b63ee772b6a119eae454d19c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extraction-plan.json": "f4c2293aa33b6c976014c45d44264e89a78b645cbbdfde76fcc09a9433e935ae",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/one_sg.hpp": "9850e2df2ab872d49f303748163839e3d4b19a2b65a8ec538cff463eb7461164",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/policy.hpp": "80868492df21c802ccfbf407aef73e9fc58f7d8ffe538ed0222df31c6cf15a55",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/evidence/cpu-proof.json": "60f2ceeaf8174c2a8c02f50bd8a1bbb4c14f1561fb7b6621064a32645ac84eda",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixture_schema.hpp": "07429dfdd31b73d794c206d9f6aa702467e65d13cb3f8dd978fa4acf8e74539b"
+  },
+  "cases": [
+    {
+      "label": "blk.0.hc.a.low",
+      "rows": 320,
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 2033982464,
+      "tensor_bytes": 6553600,
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.norm.bin",
+          "bytes": 20480,
+          "sha256": "ca73f79e3fe38b393558dc8759d5b150de3d4653c93d047bf9f18e2d6ecc6ce7"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.low.bin",
+          "bytes": 640,
+          "sha256": "802f16689891c978261b10a12a6cd22ef882c21e192f083c1fbf46cc6bd708e4"
+        },
+        "weights": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc_attn_down.weight.bin",
+          "bytes": 6553600,
+          "sha256": "0cf47e5bf283e8974c8d24bb3dfc1aef536b7d0daff9ac69f9ae8f214e6aed6a"
+        }
+      }
+    },
+    {
+      "label": "blk.0.hc.a.inject",
+      "rows": 4,
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 2040536064,
+      "tensor_bytes": 81920,
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.norm.bin",
+          "bytes": 20480,
+          "sha256": "ca73f79e3fe38b393558dc8759d5b150de3d4653c93d047bf9f18e2d6ecc6ce7"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.inject.bin",
+          "bytes": 8,
+          "sha256": "ba87d1c539b4f7c86954c9892f7e80978c851ad7201b24e9be06be69911aa774"
+        },
+        "weights": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc_attn_inject.weight.bin",
+          "bytes": 81920,
+          "sha256": "97548dcae39b501c2958bb607d3954b484fce8abe4ae758e8bb09e988d37abc9"
+        }
+      }
+    }
+  ],
+  "device_executed": false,
+  "model_payload_bytes_read": 6635520,
+  "bundle_bytes_read": 21128,
+  "header_bytes_read": 11024528,
+  "scope": "Only three authenticated bundle ranges and two complete model tensors; no whole-bundle or whole-model rehash claim",
+  "bundle_identity": [
+    2050,
+    2785450,
+    125561972,
+    1792840700730632700,
+    1792840700898081900
+  ],
+  "fixed_header_sha256": "d9cdeb6cc07fb32133a6939d93bf81424ae761c96f5359fe215a279449e758e7"
+}

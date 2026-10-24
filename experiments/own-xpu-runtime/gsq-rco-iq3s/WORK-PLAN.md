@@ -299,3 +299,14 @@ AB/BA pairs after4 excluded pairs. Native results are still absent. No engine
 integration before measured benefit. Incremental Git compaction verified refs,
 HEAD, index and connectivity unchanged; remaining exact capture deduplication
 is prepared separately to recover usable headroom without weakening floors.
+
+## October24 11:43UTC — HC geometry closed, next fusion appraisal
+
+Native review9498 passes all56 exact pairs/112 kernels, physicalACK/drain and
+unchangedfault/vision. Low51.7969→51.1587µs (B/A.987679), inject48.9495→49.0451
+(1.001953), all24/case retained. Benefit too small; no engine integration or
+extra run. Appraise fused expert gate/up work next: current device classes
+sum1863.916ms/12,582.182ms; preserve per-output arithmetic and all intermediates.
+Existing p6 fusion is not a usable drop-in. Independently verified canonical
+recovery of40 closed Q6 measured bundles frees4,434,863,360B; all80 phases pass.
+Root old-download-cache cleanup41.7MB preserves installed tools and model data.

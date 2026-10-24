@@ -1,0 +1,79 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/once.py
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/once.py
+@@ -10,19 +10,20 @@
+ import time
+ import argparse, importlib.util, signal
+ HERE=Path(__file__).resolve().parent
+-LANE=HERE.parents[1]
++LANE=HERE.parents[2]
+ assert hashlib.sha256((LANE/"operating/observe.py").read_bytes()).hexdigest()=="fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef"
+ spec=importlib.util.spec_from_file_location("micro_observe",LANE/"operating/observe.py")
+ observe=importlib.util.module_from_spec(spec);spec.loader.exec_module(observe)
+ 
+-P = HERE
++P = HERE.parent
++MANIFEST=HERE/'manifest.json'
+ R = observe.ROOT
+-UNIT = 'gsq-iq4nl-direct-micro-a'
+-STAGE = Path('/home/steve/own-xpu-runtime-results/gsq-iq4nl-direct-micro-a')
++UNIT = 'gsq-hc-bf16-one-sg-micro-a'
++STAGE = Path('/home/steve/own-xpu-runtime-results/gsq-hc-bf16-one-sg-micro-a')
+ 
+ 
+ # Small source-pinned ACK helper; it has no device/process operations.
+-ack_spec=importlib.util.spec_from_file_location("iq4_micro_ack",HERE/"handshake.py")
++ack_spec=importlib.util.spec_from_file_location("hc_micro_ack",P/"handshake.py")
+ ACK=importlib.util.module_from_spec(ack_spec);ack_spec.loader.exec_module(ACK)
+ 
+ 
+@@ -40,12 +41,12 @@
+ MARKERS=tuple(Path('/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1')/n for n in ('active-lane-A.json','active-lane-B.json','hold-lane-B'))
+ BASELINE=LANE/'operating/host-after-model-stop.json'
+ BUILD=P/'evidence/native-build.json'
+-REVIEW=P/'evidence/independent-review.json'
++REVIEW=HERE/'evidence/independent-review.json'
+ SAFE={'Restart':'no','SendSIGKILL':'no','KillMode':'process','TimeoutStopUSec':'infinity','LimitAS':'infinity','LimitCORE':'0','Nice':'19'}
+ def coordination_clear():
+     assert not any(os.path.lexists(p) for p in MARKERS),'coordination marker remains'
+ def build_plan():
+-    manifest=json.loads((P/'manifest.json').read_text())
++    manifest=json.loads((MANIFEST).read_text())
+     for p,h in manifest['authority'].items():assert sha(p)==h,p
+     proof=json.loads(BUILD.read_text());review=json.loads(REVIEW.read_text())
+     assert proof['passed'] and review['passed'] and sha(proof['binary'])==proof['binary_sha256']==review['binary_sha256'] and sha(BUILD)==review['native_build_sha256']
+@@ -56,20 +57,19 @@
+     baseline=json.loads(BASELINE.read_text());assert baseline['known_fault_baseline_matches'] and not baseline['identity_races']
+     assert baseline['holders']['3487303']['start_ticks']==63453537
+     for name in ('qwen38-27b-fp8','qwen38-27b-fp8-tp1-test'):assert baseline['units'][name]['ActiveState']=='inactive'
+-    files=[P/'startup.hpp',P/'handshake.py',P.parent/'selection.json',P.parent/'evidence/cpu-proof.json',P/'evidence/extraction.json',P/'extraction-plan.json',LANE/'qkv-q6-p33/micro/once.py',LANE/'qkv-q6-p33/micro/evidence/independent-wrapper-review.json',LANE/'qkv-q6-p33/micro/evidence/device-a/review.json',R/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',R/'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py',LANE/'operating/host-before-stop.json',Path(__file__),LANE/'operating/observe.py',LANE/'operating/qualify_once.py',BASELINE,BUILD,REVIEW,P/'manifest.json',storage,LANE/'storage/evidence/post-archive-host.json']
+-    return dict(schema='gsq.iq4nl-direct-micro-once-plan.v1',unit=UNIT,stage=str(STAGE),binary=proof['binary'],binary_sha256=proof['binary_sha256'],source_sha256={str(p):sha(p) for p in files},target_bdf='0000:23:00.0',empty_bdf='0000:47:00.0',expected_vision=[3487303,63453537],safe_properties=SAFE,pairs=28,kernels=56,device_bytes=471974600,pinned_bytes=1048576,root_floor_bytes=27000000000,root_cache_forecast_bytes=134217728,minimum_available_memory=8*1024**3,no_retry=True,native_admitted=False)
++    files=[P/'startup.hpp',P/'handshake.py',P.parent/'selection.json',P.parent/'evidence/cpu-proof.json',P/'evidence/extraction.json',P/'extraction-plan.json',LANE/'qkv-q6-p33/micro/once.py',LANE/'qkv-q6-p33/micro/evidence/independent-wrapper-review.json',LANE/'qkv-q6-p33/micro/evidence/device-a/review.json',R/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',R/'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py',LANE/'operating/host-before-stop.json',Path(__file__),LANE/'operating/observe.py',LANE/'operating/qualify_once.py',BASELINE,BUILD,REVIEW,MANIFEST,storage,LANE/'storage/evidence/post-archive-host.json']
++    return dict(schema='gsq.hc-bf16-one-sg-micro-once-plan.v1',unit=UNIT,stage=str(STAGE),binary=proof['binary'],binary_sha256=proof['binary_sha256'],source_sha256={str(p):sha(p) for p in files},target_bdf='0000:23:00.0',empty_bdf='0000:47:00.0',expected_vision=[3487303,63453537],safe_properties=SAFE,pairs=56,kernels=112,device_bytes=6677776,pinned_bytes=1048576,root_floor_bytes=27000000000,root_cache_forecast_bytes=134217728,minimum_available_memory=8*1024**3,no_retry=True,native_admitted=False)
+ def exact_result(result):
+-    assert result['schema']=='gsq.iq4nl-direct.native-micro.v1' and result['passed'] and result['safe_to_exit'] and result['backend_acknowledged']
+-    assert result['completed_exact_pairs']==28 and result['attempted_kernel_submissions']==56 and result['device_bytes']==471974600 and result['transfer_bytes']==474741560
++    assert result['schema']=='gsq.hc-bf16-one-sg.native-micro.v1' and result['passed'] and result['safe_to_exit'] and result['backend_acknowledged']
++    assert result['completed_exact_pairs']==56 and result['attempted_kernel_submissions']==112 and result['device_bytes']==6677776 and result['transfer_bytes']==6712768
+     assert result['warmup_cycles']==4 and result['measured_cycles']==24 and not result['error'] and not result['cleanup_error']
+     t=result['teardown'];assert t['safe_to_exit'] and t['exit_code']==0 and t['in_flight']==0 and t['live_bytes']==0
+-    manifest=json.loads((P/'manifest.json').read_text());f=STAGE/'result/samples.jsonl';assert f.stat().st_size<=256*1024
+-    rows=[json.loads(line) for line in f.read_text().splitlines()];assert len(rows)==28
++    manifest=json.loads((MANIFEST).read_text());f=STAGE/'result/samples.jsonl';assert f.stat().st_size<=256*1024
++    rows=[json.loads(line) for line in f.read_text().splitlines()];assert len(rows)==56
+     for row,expected in zip(rows,manifest['schedule']):
+         case=manifest['cases'][expected['case']];digest=case['fixtures']['expected']['sha256']
+         assert row['warmup']==expected['warmup'] and row['cycle']==expected['cycle'] and row['layer']==case['layer'] and row['label']==case['label'] and row['order']==''.join(expected['order'])
+         assert row['exact'] and row['A_sha256']==row['B_sha256']==row['expected_sha256']==digest
+-        assert row['A_status_sha256']==row['B_status_sha256']==row['expected_status_sha256']==case['fixtures']['status']['sha256']
+         for arm in ('A','B'):assert row[arm+'_end_ns']>row[arm+'_start_ns']>0
+     return True
+ 
+@@ -122,7 +122,7 @@
+         '/usr/bin/env', '-i', *[k+'='+v for k, v in env.items()], '/usr/bin/taskset', '-c', '0-3,16-19',
+         proof['binary'], '--run', '--card', '0', '--output', str(STAGE/'result')]
+     admission = dict(before=before, command=cmd, proof_sha256=sha(evidence), binary_sha256=proof['binary_sha256'],
+-        monitor_sha256=sha(__file__), observer_sha256=sha(observe.__file__), target=target, plan=plan, scope='fixed real-weight isolated IQ4_NL down AB/BA micro; not model throughput', retry=False)
++        monitor_sha256=sha(__file__), observer_sha256=sha(observe.__file__), target=target, plan=plan, scope='fixed real-weight HC BF16 low/inject one-SG geometry AB/BA micro; not model throughput', retry=False)
+     (STAGE/'admission.json').write_text(json.dumps(admission, indent=2)+'\n')
+     # From this point a failed/timeout launcher may still have created the unit.
+     # No exception may abandon monitoring or start another owner.

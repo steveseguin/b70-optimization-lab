@@ -1,0 +1,30 @@
+{
+  "schema": "gsq.hc-extraction.independent-metadata-review.v1",
+  "passed": true,
+  "scope": "Actual root extraction receipt and generated header metadata only; payload hashes not independently reread.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extract.py": "0ea73268527bd41307b4ea65999079e642325fe5b63ee772b6a119eae454d19c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extraction-plan.json": "f4c2293aa33b6c976014c45d44264e89a78b645cbbdfde76fcc09a9433e935ae",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/one_sg.hpp": "9850e2df2ab872d49f303748163839e3d4b19a2b65a8ec538cff463eb7461164",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/policy.hpp": "80868492df21c802ccfbf407aef73e9fc58f7d8ffe538ed0222df31c6cf15a55",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/evidence/cpu-proof.json": "60f2ceeaf8174c2a8c02f50bd8a1bbb4c14f1561fb7b6621064a32645ac84eda",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixture_schema.hpp": "07429dfdd31b73d794c206d9f6aa702467e65d13cb3f8dd978fa4acf8e74539b"
+  },
+  "extraction_receipt_sha256": "9e78fe995f5f6553aab64210a5d7ed7eefbc1435dafae4a6148e38162a8d541f",
+  "fixed_header_sha256": "d9cdeb6cc07fb32133a6939d93bf81424ae761c96f5359fe215a279449e758e7",
+  "source_review_sha256": "7a190b08d5d81c2f1b068621b1e7faa8c87b1bb3435aa8d0fafb1157506e4c57",
+  "checks": {
+    "two_complete_bf16_tensor_offsets_and_shard_identity": true,
+    "three_original_baseline_range_hashes_and_lengths": true,
+    "fixed_header_reconstructed_byte_exact": true,
+    "shared_input_deduplicated": true,
+    "local_unique_files": 5,
+    "local_unique_bytes": 6656648,
+    "model_bytes": 6635520,
+    "state_bytes": 21128,
+    "header_bytes": 11024528
+  },
+  "findings": [],
+  "payload_reread": false,
+  "device_or_build_actions": false
+}

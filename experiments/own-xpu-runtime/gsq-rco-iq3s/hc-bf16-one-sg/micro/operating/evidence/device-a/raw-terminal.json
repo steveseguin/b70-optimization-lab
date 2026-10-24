@@ -1,0 +1,255 @@
+{
+  "passed": true,
+  "result": {
+    "schema": "gsq.hc-bf16-one-sg.native-micro.v1",
+    "passed": true,
+    "safe_to_exit": true,
+    "card": 0,
+    "backend_acknowledged": true,
+    "profiling": true,
+    "model_executed": false,
+    "device_factory_entered": true,
+    "completed_exact_pairs": 56,
+    "attempted_kernel_submissions": 112,
+    "device_bytes": 6677776,
+    "transfer_bytes": 6712768,
+    "warmup_cycles": 4,
+    "measured_cycles": 24,
+    "error": "",
+    "cleanup_error": "",
+    "teardown": {
+      "schema": "own-xpu-runtime.teardown.v1",
+      "backend": "LevelZero:0:Intel(R) Arc(TM) Pro B70 Graphics:driver=1.15.38308+1",
+      "status": "complete",
+      "exit_code": 0,
+      "safe_to_exit": true,
+      "idle_marker_complete": true,
+      "in_flight": 0,
+      "live_bytes": 0,
+      "error": "",
+      "sequence": [
+        "quiesce",
+        "drain",
+        "graphs-released",
+        "free:workspace:micro:0",
+        "free:workspace:micro:1",
+        "free:workspace:micro:2",
+        "free:workspace:micro:3",
+        "free:workspace:micro:4",
+        "free:workspace:micro:5",
+        "free:workspace:micro:6",
+        "free:workspace:micro:7",
+        "free:pinned-copy-slab:micro:transfer",
+        "idle-marker-complete",
+        "events-released",
+        "queue-released",
+        "context-released"
+      ]
+    }
+  },
+  "status": {
+    "Restart": "no",
+    "TimeoutStopUSec": "1min 30s",
+    "MainPID": "0",
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "LimitCORE": "infinity",
+    "LimitAS": "infinity",
+    "Nice": "0",
+    "KillMode": "control-group",
+    "SendSIGKILL": "yes",
+    "LoadState": "not-found",
+    "ActiveState": "inactive",
+    "SubState": "dead"
+  },
+  "target_descriptors_empty": true,
+  "after": {
+    "utc": "2026-10-24T11:40:24.755325+00:00",
+    "metadata_only": true,
+    "device_api_calls": 0,
+    "device_opens": 0,
+    "service_changes": 0,
+    "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "root_free_bytes": 27262709760,
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 114668109824,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "units": {
+      "qwen38-27b-fp8": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-fp8-tp1-test": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8-tp1-test.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-vision": {
+        "Restart": "no",
+        "TimeoutStopUSec": "infinity",
+        "MainPID": "3487303",
+        "KillMode": "process",
+        "SendSIGKILL": "no",
+        "Id": "qwen38-27b-vision.service",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "drm": {
+      "renderD128": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:128",
+        "driver": "xe"
+      },
+      "card3": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:3",
+        "driver": "xe"
+      },
+      "renderD130": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:130",
+        "driver": "xe"
+      },
+      "renderD129": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:129",
+        "driver": "xe"
+      },
+      "card4": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:4",
+        "driver": "xe"
+      },
+      "card2": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:2",
+        "driver": "xe"
+      },
+      "card0": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:0",
+        "driver": "xe"
+      },
+      "renderD131": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:131",
+        "driver": "xe"
+      }
+    },
+    "passive_helper_sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "inventory": {
+      "passed": false,
+      "holders": [
+        {
+          "pid": 3487303,
+          "fd": "3",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "6",
+          "node": "renderD128"
+        },
+        {
+          "pid": 3487303,
+          "fd": "8",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "11",
+          "node": "renderD128"
+        }
+      ],
+      "errors": [],
+      "nodes": {
+        "226:0": "card0",
+        "226:2": "card2",
+        "226:3": "card3",
+        "226:4": "card4",
+        "226:128": "renderD128",
+        "226:129": "renderD129",
+        "226:130": "renderD130",
+        "226:131": "renderD131"
+      },
+      "intel_devices": [
+        "/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0",
+        "/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0",
+        "/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0",
+        "/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0"
+      ],
+      "metadata_only": true,
+      "device_opens": 0
+    },
+    "holders": {
+      "3487303": {
+        "start_ticks": 63453537,
+        "state": "S"
+      }
+    },
+    "identity_races": [],
+    "kernel": {
+      "journal_sha256": "03ec9c2350e7a1cad35a3be20907c86cb7a19c5315c3148dd064d3a6bac710f2",
+      "rows": 3610,
+      "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20e5ad6;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9e0632f6b2;t=65e9328fa6b16;x=e92bb7eccf659d10",
+      "faults": [
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+          "timestamp": "42064105058"
+        },
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+          "timestamp": "42064105299"
+        }
+      ]
+    },
+    "known_fault_baseline_matches": true,
+    "queue": {
+      "A": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:31:13.634788+00:00 after the 2026-10-23 packet195 chain window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      },
+      "B": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:42:03.395697+00:00 after the 2026-10-22 packet58-diet-micro window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      }
+    },
+    "endpoints": {
+      "18130": {
+        "unavailable": "URLError"
+      },
+      "18131": {
+        "unavailable": "URLError"
+      }
+    }
+  },
+  "single_term_attempted": false,
+  "first_error": null,
+  "native_identity": [
+    3641073,
+    68473067
+  ],
+  "observed_native_target_fd": true,
+  "backend_acknowledged": true,
+  "qualification_limit": null,
+  "duration": 2.3920607740292326
+}

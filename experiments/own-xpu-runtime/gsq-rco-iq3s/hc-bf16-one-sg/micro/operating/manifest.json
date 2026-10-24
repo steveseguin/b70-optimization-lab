@@ -1,0 +1,616 @@
+{
+  "schema": "gsq.hc-bf16-one-sg.native-micro-manifest.v1",
+  "cases": [
+    {
+      "layer": 0,
+      "label": "blk.0.hc.a.low",
+      "weight": "blk.0.hc_attn_down.weight",
+      "rows": 320,
+      "columns": 10240,
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.norm.bin",
+          "bytes": 20480,
+          "sha256": "ca73f79e3fe38b393558dc8759d5b150de3d4653c93d047bf9f18e2d6ecc6ce7"
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.low.bin",
+          "bytes": 640,
+          "sha256": "802f16689891c978261b10a12a6cd22ef882c21e192f083c1fbf46cc6bd708e4"
+        }
+      },
+      "packed_weights": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc_attn_down.weight.bin",
+        "bytes": 6553600,
+        "sha256": "0cf47e5bf283e8974c8d24bb3dfc1aef536b7d0daff9ac69f9ae8f214e6aed6a"
+      },
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ]
+    },
+    {
+      "layer": 0,
+      "label": "blk.0.hc.a.inject",
+      "weight": "blk.0.hc_attn_inject.weight",
+      "rows": 4,
+      "columns": 10240,
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.norm.bin",
+          "bytes": 20480,
+          "sha256": "ca73f79e3fe38b393558dc8759d5b150de3d4653c93d047bf9f18e2d6ecc6ce7"
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc.a.inject.bin",
+          "bytes": 8,
+          "sha256": "ba87d1c539b4f7c86954c9892f7e80978c851ad7201b24e9be06be69911aa774"
+        }
+      },
+      "packed_weights": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixtures/blk.0.hc_attn_inject.weight.bin",
+        "bytes": 81920,
+        "sha256": "97548dcae39b501c2958bb607d3954b484fce8abe4ae758e8bb09e988d37abc9"
+      },
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ]
+    }
+  ],
+  "schedule": [
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 20,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 20,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 21,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 21,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 22,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 22,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 23,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 23,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    }
+  ],
+  "authority": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extract.py": "0ea73268527bd41307b4ea65999079e642325fe5b63ee772b6a119eae454d19c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/runner.cpp": "92a56d3ed7c53982a193b93fd97332d7861b2ea88dba69fb3d28870f6f9341ef",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/selected.hpp": "8243d14383483e5922b5d0827110dab7e7a200f1061b9f275f1363db44e4d516",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/startup.hpp": "814dc5d00319ab08f8511293907db11880080e179506b06f45e6979771aeae59",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/handshake.py": "54280d58ce56c2ba5401a6fec64784d158dd409866af258f4c2de54ce503566f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixture_schema.hpp": "07429dfdd31b73d794c206d9f6aa702467e65d13cb3f8dd978fa4acf8e74539b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/fixed.hpp": "d9cdeb6cc07fb32133a6939d93bf81424ae761c96f5359fe215a279449e758e7",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/build.py": "dbcd796fc74681ee79e9c02803f6614c55cfc933ddbfc729dbbdb72275475da3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/source-pins.json": "7d4b78f38cc76c9feb05f761640db3ec39803adef4bec7ecc48557fa6ea2679c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/extraction-plan.json": "f4c2293aa33b6c976014c45d44264e89a78b645cbbdfde76fcc09a9433e935ae",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/evidence/extraction.json": "9e78fe995f5f6553aab64210a5d7ed7eefbc1435dafae4a6148e38162a8d541f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/evidence/independent-extraction-review.json": "c6d8b025ae4fd221e20c0882446bab420e8e2c4811a343ecc3b3de936c7226ca",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/evidence/native-build.json": "396c70c1c78509c9e762db9cc96bc4e75002c231eb6716fe2b14f211b8e5b60d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/one_sg.hpp": "9850e2df2ab872d49f303748163839e3d4b19a2b65a8ec538cff463eb7461164",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/policy.hpp": "80868492df21c802ccfbf407aef73e9fc58f7d8ffe538ed0222df31c6cf15a55",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/selection.json": "719d252b1584be920e66a7a2beb4cf5e3e081e7725f9f70221c8a8b2d8ef3799",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/evidence/cpu-proof.json": "60f2ceeaf8174c2a8c02f50bd8a1bbb4c14f1561fb7b6621064a32645ac84eda",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/once.py": "fa37616ad4a56a511845ce0fe2b2c86be4068fd881decd8ca99d6d01a2877708",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/prepare.py": "d3eb7dd28ea6e37b1153477facda3ad65c02f83c1a7df5a48714797be5e4d8f8",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/test_once.py": "5c566f0032f85511499aa9c10535dc6bd2a68d8df10fa167c32f4d01f2dfea82",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/README.md": "49b2e3f55acc1d5af266c8344f90408c0b2214504b1c23a7808d0078ee055144",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/parent-pins.json": "4bcd04e8aa8f8fb5c8c192872bfd056f77dd1e07874cccea86e092838ba1e1f0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/once.patch": "d1ae4ce6e3deab31c162350a44f6476c01fb8be18617843a1c9871db77fe387e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/device-a/review.json": "f3781981d87bd1ad68a91c83780df5ce8d11e3243b1d560c8ff0844b5087a653"
+  },
+  "pairs": 56,
+  "kernels": 112,
+  "device_bytes": 6677776,
+  "device_cap_bytes": 8388608,
+  "pinned_bytes": 1048576,
+  "transfer_bytes": 6712768,
+  "transfer_cap_bytes": 8388608,
+  "native_build_sha256": "396c70c1c78509c9e762db9cc96bc4e75002c231eb6716fe2b14f211b8e5b60d",
+  "binary_sha256": "46ab2be7298bf1a3b306c851201f88ee5e3ebfc6746a8c1afd3e8d9ee331abca",
+  "startup": {
+    "real_backend_before_ready": true,
+    "deadline_seconds": 60,
+    "actual_native_target_fd_before_ack": true,
+    "positive_contact_and_ack_required": true
+  },
+  "proof_scope": "Two fixed layer0 HC BF16 low/inject shapes; full saved BF16 exactness and isolated balanced AB/BA; no fullmodel throughput claim",
+  "native_admitted": false
+}

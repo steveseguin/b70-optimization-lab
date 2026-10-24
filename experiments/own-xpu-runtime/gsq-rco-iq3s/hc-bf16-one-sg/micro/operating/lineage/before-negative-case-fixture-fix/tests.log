@@ -1,0 +1,18 @@
+test_ack_and_owner_cleanup_required (__main__.Terminal.test_ack_and_owner_cleanup_required) ... ok
+test_actual_metadata_schedule_exact_outputs (__main__.Terminal.test_actual_metadata_schedule_exact_outputs) ... ok
+test_parent_guard_and_ack_source_retained (__main__.Terminal.test_parent_guard_and_ack_source_retained) ... ok
+test_wrong_output_case_order_missing_pair (__main__.Terminal.test_wrong_output_case_order_missing_pair) ... 
+  test_wrong_output_case_order_missing_pair (__main__.Terminal.test_wrong_output_case_order_missing_pair) (bad='case') ... FAIL
+
+======================================================================
+FAIL: test_wrong_output_case_order_missing_pair (__main__.Terminal.test_wrong_output_case_order_missing_pair) (bad='case')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/operating/test_once.py", line 35, in test_wrong_output_case_order_missing_pair
+    with self.subTest(bad=bad),self.assertRaises(AssertionError):once.exact_result(self.result())
+AssertionError: AssertionError not raised
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.013s
+
+FAILED (failures=1)

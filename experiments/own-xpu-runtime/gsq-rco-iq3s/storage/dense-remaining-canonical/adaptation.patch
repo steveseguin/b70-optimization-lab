@@ -1,0 +1,55 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-prompt01-canonical/reuse.py
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/dense-remaining-canonical/reuse.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Four fixed prompt01 raw bundles; canonical verification and separate release."""
++"""Forty fixed prompt02..11 raw bundles; canonical verification and separate release."""
+ from pathlib import Path
+ import argparse,gzip,hashlib,importlib.util,json,os,stat
+ P=Path(__file__).resolve().parent;L=P.parents[1];R=L.parents[2]
+@@ -9,21 +9,21 @@
+  if not v:raise ValueError(m)
+ need(sha(PARENT)==PARENT_SHA,'frozen canonical primitives')
+ s=importlib.util.spec_from_file_location('dense_raw_canonical_private',PARENT);C=importlib.util.module_from_spec(s);s.loader.exec_module(C)
+-C.DEST=Path('/home/steve/own-xpu-runtime-results/gsq-dense-prompt01-canonical-a')
++C.DEST=Path('/home/steve/own-xpu-runtime-results/gsq-dense-remaining-canonical-a')
+ RAW=C.USB/'gsq-dense-q6-p33-engine-a'
+ APPRAISAL=P.parent/'raw-bundle-canonical-appraisal.json';APPRAISAL_SHA='c717e40639eacfae39913fbb4c7b63ab47657d8407092e13871c1b39fb28f2aa'
+-BINDING=P/'closure-binding.json';BINDING_SHA='4dba1ed22b7c084540fdf8c692dd6a7cec0ba648cdd0260565bf8c08d37ec639'
+-NAMES=tuple(f'prompt-01-{mode}/rank{rank}/state-2147483647/state.bundle' for mode in ('none','mtp') for rank in (0,1))
++BINDING=P/'closure-binding.json';BINDING_SHA='480364742fe67d94a8ce567529252036f97a1613cf99d9dc506944b9259b3a8c'
++NAMES=tuple(f'prompt-{prompt:02d}-{mode}/rank{rank}/state-2147483647/state.bundle' for prompt in range(2,12) for mode in ('none','mtp') for rank in (0,1))
+ def mapping():
+- need(sha(APPRAISAL)==APPRAISAL_SHA,'fixed four-bundle appraisal');a=json.loads(APPRAISAL.read_text())
++ need(sha(APPRAISAL)==APPRAISAL_SHA,'fixed fixed original appraisal');a=json.loads(APPRAISAL.read_text())
+  for f,h in a['authority_sha256'].items():need(sha(R/f)==h,'prior canonical authority')
+  rows={x['relative_path']:x for x in a['potential_rows'] if x['relative_path'] in NAMES}
+- need(set(rows)==set(NAMES) and sum(x['bytes'] for x in rows.values())==443486336,'only four fixed bundles')
++ need(set(rows)==set(NAMES) and sum(x['bytes'] for x in rows.values())==4434863360,'only40 fixed bundles')
+  return rows
+ def authority(batch):
+- need(type(batch)is int and 0<=batch<4,'fixed batch0..3')
++ need(type(batch)is int and 0<=batch<40,'fixed batch0..39')
+  need(BINDING_SHA is not None and sha(BINDING)==BINDING_SHA,'actual Q6 closure binding pending')
+- b=json.loads(BINDING.read_text());need(b['passed'] is True and b['released_paths']==list(NAMES),'explicit four-path release')
++ b=json.loads(BINDING.read_text());need(b['passed'] is True and b['released_paths']==list(NAMES),'explicit 40-path release')
+  for key in ('review','index','terminal'):
+   need(sha(R/b[key]['path'])==b[key]['sha256'],'actual '+key+' identity')
+  review=json.loads((R/b['review']['path']).read_text());term=json.loads((R/b['terminal']['path']).read_text())
+@@ -36,7 +36,7 @@
+    need(len(line)<=16384,'bounded index row');x=json.loads(line)
+    if x['root']=='evidence' and x['path'] in NAMES:
+     need(x['path'] not in found,'unique audited raw bundle');found[x['path']]=x
+- rows=mapping();need(set(found)==set(NAMES),'four actual audited payloads')
++ rows=mapping();need(set(found)==set(NAMES),'40 actual audited payloads')
+  for name in NAMES:need(found[name]['bytes']==rows[name]['bytes'] and found[name]['sha256']==rows[name]['raw_sha256'],'exact raw/canonical physical bytes')
+  return rows[NAMES[batch]]
+ def review_pin():
+@@ -92,6 +92,6 @@
+ def main():
+  p=argparse.ArgumentParser(description=__doc__);g=p.add_mutually_exclusive_group(required=True);g.add_argument('--plan',action='store_true');g.add_argument('--verify',action='store_true');g.add_argument('--release-verified',action='store_true');p.add_argument('--batch',type=int);a=p.parse_args()
+  if a.plan:
+-  print(json.dumps(dict(source_only=True,closure_pending=BINDING_SHA is None,rows=mapping(),recoverable_bytes=443486336),indent=2));return
++  print(json.dumps(dict(source_only=True,closure_pending=BINDING_SHA is None,rows=mapping(),recoverable_bytes=4434863360),indent=2));return
+  need(a.batch is not None,'explicit batch');print(json.dumps(verify(a.batch) if a.verify else release(a.batch),indent=2))
+ if __name__=='__main__':main()

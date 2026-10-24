@@ -1,15 +1,14 @@
 # Current Workspace State
 
-**October 24, 07:35 EDT — four-card host: testing exact HC workgroup geometry.**
-The corrected class diagnostic passed token/state checks and safe closure; target
-cards remain empty, vision unchanged. HC low/inject account for11.5% of its device
-event time. A one-subgroup workgroup candidate passed16,666 CPU geometry checks
-and literal arithmetic-source checks; native equality and speed are untested.
-Independent review and bounded fixture preparation are next. Current qualified
-16.17/23.44 internal-screen result retains its188.7MB cost and limited scope.
-Failed class-a remains preserved. Duplicate-capture recovery is being prepared
-without changing storage reserves or deleting unique evidence.
-[Diagnostic](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/launch-b/RESULT.md).
+**October 24, 07:43 EDT — four-card host: HC geometry exact but too small; expert fusion appraisal next.**
+All56 HC native output pairs match the baseline exactly; independent contact,
+teardown and fault checks pass. Low projection improved only1.2%, inject did not;
+no full-engine integration. Target cards are empty, vision unchanged. Examine
+combining expert gate/up work while preserving each output's exact arithmetic.
+Verified duplicate-capture recovery reclaimed4.43GB on USB; installed tools and
+unique evidence retained. Current qualified engine and its limited16.17/23.44
+internal-screen result are unchanged. No new model-speed or public record claim.
+[HC result](experiments/own-xpu-runtime/gsq-rco-iq3s/hc-bf16-one-sg/micro/RESULT.md).
 
 **October 24, 06:12 EDT — four-card host: broader coverage independently passes; next native micro preparing.**
 All6requests/3pairs and14bundles pass, including512-output equality and2084-input
