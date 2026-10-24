@@ -1,0 +1,33 @@
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp: In function ‘int main(int, char**)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp:28:93: error: no matching function for call to ‘find(std::vector<long unsigned int>::iterator, std::vector<long unsigned int>::iterator, size_t&)’
+   28 |   for(auto step:paths[mode]){need(step.index<input.sites.size(),"step index");need(std::find(schedule.final.begin(),schedule.final.end(),step.index)==schedule.final.end(),"final/decode excluded");
+      |                                                                                    ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/13/bits/locale_facets.h:48,
+                 from /usr/include/c++/13/bits/basic_ios.h:37,
+                 from /usr/include/c++/13/ios:46,
+                 from /usr/include/c++/13/istream:40,
+                 from /usr/include/c++/13/fstream:40,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp:4:
+/usr/include/c++/13/bits/streambuf_iterator.h:435:5: note: candidate: ‘template<class _CharT2> typename __gnu_cxx::__enable_if<std::__is_char<_CharT2>::__value, std::istreambuf_iterator<_CharT, std::char_traits<_CharT> > >::__type std::find(istreambuf_iterator<_CharT, char_traits<_CharT> >, istreambuf_iterator<_CharT, char_traits<_CharT> >, const _CharT2&)’
+  435 |     find(istreambuf_iterator<_CharT> __first,
+      |     ^~~~
+/usr/include/c++/13/bits/streambuf_iterator.h:435:5: note:   template argument deduction/substitution failed:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp:28:93: note:   ‘__gnu_cxx::__normal_iterator<long unsigned int*, std::vector<long unsigned int> >’ is not derived from ‘std::istreambuf_iterator<_CharT, std::char_traits<_CharT> >’
+   28 |   for(auto step:paths[mode]){need(step.index<input.sites.size(),"step index");need(std::find(schedule.final.begin(),schedule.final.end(),step.index)==schedule.final.end(),"final/decode excluded");
+      |                                                                                    ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp:32:91: error: ‘all_of’ is not a member of ‘std’
+   32 |   pass("every_original_exactly_twice_mode"+std::to_string(mode),counts.size()==1479&&std::all_of(counts.begin(),counts.end(),[](auto p){return p.second==2;}));
+      |                                                                                           ^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp:39:230: error: no matching function for call to ‘find(std::vector<long unsigned int>::iterator, std::vector<long unsigned int>::iterator, size_t&)’
+   39 |  for(unsigned mode=0;mode<2;++mode)for(auto&layer:schedule.layers)if(!layer.paired){size_t last0=0,first1=paths[mode].size();bool seen0=false,seen1=false;for(size_t i=0;i<paths[mode].size();++i){auto&s=paths[mode][i];if(std::find(layer.sites.begin(),layer.sites.end(),s.index)!=layer.sites.end()){if(s.row==0){last0=i;seen0=true;}if(s.row==1){first1=std::min(first1,i);seen1=true;}}}pass("fallback_causal_mode"+std::to_string(mode)+"_layer"+std::to_string(layer.id),seen0&&seen1&&last0<first1);}
+      |                                                                                                                                                                                                                             ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/13/bits/streambuf_iterator.h:435:5: note: candidate: ‘template<class _CharT2> typename __gnu_cxx::__enable_if<std::__is_char<_CharT2>::__value, std::istreambuf_iterator<_CharT, std::char_traits<_CharT> > >::__type std::find(istreambuf_iterator<_CharT, char_traits<_CharT> >, istreambuf_iterator<_CharT, char_traits<_CharT> >, const _CharT2&)’
+  435 |     find(istreambuf_iterator<_CharT> __first,
+      |     ^~~~
+/usr/include/c++/13/bits/streambuf_iterator.h:435:5: note:   template argument deduction/substitution failed:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp:39:230: note:   ‘__gnu_cxx::__normal_iterator<long unsigned int*, std::vector<long unsigned int> >’ is not derived from ‘std::istreambuf_iterator<_CharT, std::char_traits<_CharT> >’
+   39 |  for(unsigned mode=0;mode<2;++mode)for(auto&layer:schedule.layers)if(!layer.paired){size_t last0=0,first1=paths[mode].size();bool seen0=false,seen1=false;for(size_t i=0;i<paths[mode].size();++i){auto&s=paths[mode][i];if(std::find(layer.sites.begin(),layer.sites.end(),s.index)!=layer.sites.end()){if(s.row==0){last0=i;seen0=true;}if(s.row==1){first1=std::min(first1,i);seen1=true;}}}pass("fallback_causal_mode"+std::to_string(mode)+"_layer"+std::to_string(layer.id),seen0&&seen1&&last0<first1);}
+      |                                                                                                                                                                                                                             ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/schedule_control_fixture.cpp:42:88: error: ‘rotate’ is not a member of ‘std’
+   42 |  pass("same960_chronological_routes",chronological.size()==960);auto wrong=routes;std::rotate(wrong.begin(),wrong.begin()+480,wrong.end());pass("wrong_row_replay_discriminates",p212::chronological_routes(wrong)!=chronological);
+      |                                                                                        ^~~~~~

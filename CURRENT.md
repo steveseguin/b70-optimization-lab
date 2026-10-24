@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 23, 21:03 EDT — four-card host: matched prompt controls and cache cleanup pass CPU checks.**
+The same future binary now contains serial and paired prompt schedules with identical cache policy and
+row storage. Shared traversal and actual CPU cache/copy tests pass 101 checks; ten tiny owners close
+safely, including partial-copy, active-reader, preparation and post-commit logging failures. The cleanup
+tracker follows actual completed cache transitions and retains the first error. Nine independent artifact
+checks pass; the native build compiles, while its public entry still refuses execution. Full-model equality,
+native completion and speed remain untested. Next is examining the existing single-kernel table publisher
+to remove the frozen path's 144 separate publication transfers without changing its cache policy.
+Applications remain unchanged. The previous integration commit 1fc58c749 has all three CI workflows green.
+[Matched controls, cleanup proof and limits](experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/README.md).
+
 **October 23, 20:50 EDT — four-card host: the full production prompt integration compiles; execution remains disabled.**
 The two-row schedule is connected to all 48 layers and the existing quantized expert operators. Its shared
 CPU schedule passes 97 checks, including Q6 pairing, the original Q8 path on layer 2 and causal attention

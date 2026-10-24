@@ -1,0 +1,62 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "nice",
+    "-n",
+    "19",
+    "env",
+    "OMP_NUM_THREADS=2",
+    "MKL_NUM_THREADS=2",
+    "OPENBLAS_NUM_THREADS=2",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/packet213-production-prefill-control/tests",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "device_executed": false,
+  "final_host_owners": 10,
+  "fixture_checks": {
+    "schedule": 38,
+    "transition": 63
+  },
+  "historical_attempts": {
+    "compile_failure": "evidence/cpu-1792803409549099212",
+    "final101pass": "evidence/cpu-1792803596603678486",
+    "fixture_setup_failure": "evidence/cpu-1792803422500583043",
+    "initial88pass": "evidence/cpu-1792803499202513362"
+  },
+  "log": "evidence/authority-tests.log",
+  "log_sha256": "51afd1d5ad636eae3070467640ccdf5410a7fed4b5c6d7a130909ecdc8203196",
+  "model_executed": false,
+  "native_executed": false,
+  "passed": true,
+  "schema": "packet213.authority-tests.v1",
+  "scope": "Read-only retained artifact/source/ELF hashes; no executable invocation during tests. Two CPU fixture binaries executed only by separately retained build helper attempts.",
+  "source_sha256": {
+    "AUTHORITY.md": "e243d532491a295a5c57f499d6f8f9361f6709bcba533c51c7981d89091ee804",
+    "authority-inputs.json": "bbdc22e555bcc629ff320e35c6c98aca022091d8da4955d2ff17c8736e229892",
+    "build_cpu_fixtures.py": "3351576b2fc1f43073e8088c05419554830841cb2a747f6928aed03474d67b29",
+    "cache_interval.hpp": "dd95cd04eb6d64b4f1615be9f22cb2a44883a659b679d47778236e7a74fa1945",
+    "cache_transition.hpp": "b37035170c5e6d9315ae84ae9e493ccf38b15f366637437ba8ec55447d2137a3",
+    "cache_transition_fixture.cpp": "6ba6c4017c89f3ef0fe796da57025c581b415c59ed4d61009fe26074b1abe491",
+    "evidence/build-compile-only.json": "6515b4d9a89b1aafc4f2f335b0bc44a0f661f3281f42a76fc015fcea4d153114",
+    "evidence/cpu-build.json": "eefc1eeb94fad59315b5de0648e2315f435be0b4957a988bbe6c500e51e73834",
+    "evidence/schedule-proof.json": "8b3c97c647fe3bf88dc7330e73bfcca79d99384f6adc5dbb4d9dd80ecb5ce572",
+    "evidence/transition-proof.json": "4f8cb8c3aac747b7090208b7c9495bed9733e561d10f67310ece04943e0078b5",
+    "production_control.hpp": "770ce47a0d2349083de9fb7e2d369ef1ae209a54e41706238462e43fb4f35b7d",
+    "production_runtime.hpp": "e512a6c8801eaa1aaebaa15e33c49df58b354a8342ef6af9834a510a1834ac09",
+    "schedule_control_fixture.cpp": "cf339681f723a7e3b5de41d1b3b5f5cb00f628ec4905042693f91b223391aa1b",
+    "source_overlay.py": "812fc5cc5b1bc02554bf05d9620445f4442d46ef4b3358b948a536e9889439d4",
+    "tests/test_authority.py": "bb432bb124ef45bcb0756ee7843bcd0163947c461f02bc99431b1963eea36f62",
+    "tests/test_native_authority.py": "709be753f312c2946a34258869f03eb268a7959e134caa5ded39c17d0cfef4f3"
+  },
+  "tests": 9
+}
