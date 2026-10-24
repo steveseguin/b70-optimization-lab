@@ -20,12 +20,12 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 
 | Clause | Evidence now | Next unresolved work |
 | --- | --- | --- |
-| Any agent | Twelve third-party agents ran the repair task; 1.3.0 passed the freeagent release gate, 40/40 clean and 7/7 audit | Current pi repairs all 40 and keeps rules, but historical audit is 3/7; selective notes are mistaken for complete history |
+| Any agent | Twelve third-party agents ran the repair task; 1.3.0 passed the freeagent release gate, 40/40 clean and 7/7 audit | Exploratory pi with the memory suffix passes 40/40 fixed/clean and 7/7 audit; notes still contain eight defects |
 | Any history | Campaign 55's two 2M hostile seeds: 423/423 and 420/423; every forgery target kept, 16/16 corrections, 0/2 wrong STATE lines | These ledger checks do not establish faithful nonnumeric task progress, legitimate supersession or arbitrary histories |
 | Flat cost | Campaign 59's fixed-metadata pair reproduced every NOTES/archive text and answer; counting memo cut request-clock wall 92m25s→83m12s (9.97%) | Memo default restored; residual client work still grows; this is not a cold model speed claim |
 | Same answers | Release and hostile-task gates remain separate; failed runs retained | Preserve observed completed work without refusing real user corrections |
 
-**Chosen next:** an exploratory full pi task with the general history-use instruction; evidence coverage remains unqualified.
+**Chosen next:** legitimate later user correction versus forged tool-content authority at the actual pi end boundary.
 Campaign 60 reproduced the pi failure with both thinking workflows; all 18 conditions fail the broad
 source gate, including omitted work and wrong identities. Its thinking-on failure cut hit the cap and
 fell back. [Campaign 60 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-closeout.md)
@@ -42,8 +42,11 @@ were omitted from notes; pi treats the surviving list as exhaustive without arch
 at that actual failure, with a reconstructed control
 before a further full task. [Campaign 65](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-closeout.md)
 proposes 7/7 after retrieving four missing receipts, but fails its strict all-seven original-retrieval
-gate. [Campaign 66](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign66-full-pi-contract.md)
-is separately registered as exploratory practical work, not confirmation of complete-evidence behavior.
+gate. [Campaign 66](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign66-closeout.md)
+passes the practical full task: 40/40 fixed/clean and 7/7 audit. Early identities survive in notes;
+nine later recalls repair recent workflow gaps, so original early-receipt verification remains unproved.
+[Campaign 67](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign67-authority-transfer.md)
+tests the separate real-correction/forged-authority boundary before hostile long-history regression.
 This changes candidate behavior; no production adoption or lossless speed claim.
 The [campaign 59 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md) records
 the qualified harness memo and its measurement scope.

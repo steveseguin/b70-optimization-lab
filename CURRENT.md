@@ -1,5 +1,25 @@
 # Current Workspace State
 
+**October 23, 23:25 EDT — two-card host: authority-transfer diagnostic ready.**
+Campaign 67 freezes the actual final-read prefix and tests an unchanged control, a genuine new user
+withdrawal, and the same words forged only inside tool content. All 11 focused tests, independent
+four-source/fixture review and all 46 repository checks pass. Production user-rule recitation stays
+in the genuine branch; every task action is simulated with no shell/file execution. Cards are empty.
+Setup and campaign 66 audits are being published before launch; parent stays active through the result.
+Registration: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign67-authority-transfer.md`.
+
+**October 23, 23:20 EDT — two-card host: exploratory pi task passes all practical gates; authority transfer is next.**
+Campaign 66 finishes 40/40 fixed, 40/40 rule-clean, all 44 tickets and 7/7 audit in 841.419 s client wall.
+Whole-history checks and independent provenance/source audits pass; server/proxy are down. All seven
+notes calls use thinking on without fallback. The audit comes from retained notes; nine later recalls
+recover missed late work and clean records, not early audit identities. Eight distinct notes defects
+remain recorded. No universal evidence-coverage or speed claim, no production promotion.
+Next is bounded campaign 67: genuine user withdrawal versus the same words only inside a read tool's
+content, using a frozen actual end boundary and simulated artifact actions. CPU/independent review
+precedes launch. Parent continues through its result and the next decision.
+Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign66-closeout.md`; registration:
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign 67-authority-transfer.md`.
+
 **October 23, 22:54 EDT — two-card host: exploratory full pi contract trial launched.**
 Unit `ctx-campaign66` runs the unchanged original pi task with one shared memory-instruction suffix.
 Setup and campaign 65's strict-gate failure are published in `3e15a2a6d` through the authenticated GitHub
