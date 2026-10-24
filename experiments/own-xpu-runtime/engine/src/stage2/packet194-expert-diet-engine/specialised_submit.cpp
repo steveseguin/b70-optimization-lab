@@ -11,7 +11,7 @@ namespace specialised {
 #ifdef OWN_RT_HOST_ONLY
 template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel final:integrated::HostOperation {
  ng::Shape shape;explicit Kernel(ng::Shape s):shape(s){}
- void run(std::span<void*const> p)const override{ng::Args a;std::copy_n(p.begin(),19,a.p.begin());float* scratch=static_cast<float*>(p[19]);packet24::mock_items(work_items(shape,Stage),[&](size_t i){body<Code,Stage,FixedWidth,FixedHeads>(shape,a,i,scratch,HostGuard{});});}
+ void run(std::span<void*const> p)const override{ng::Args a;std::copy_n(p.begin(),19,a.p.begin());a.f32=(shape.flags&ng::f32_activations_flag)!=0;float* scratch=static_cast<float*>(p[19]);packet24::mock_items(work_items(shape,Stage),[&](size_t i){body<Code,Stage,FixedWidth,FixedHeads>(shape,a,i,scratch,HostGuard{});});}
 };
 #else
 struct Guard {
@@ -21,7 +21,7 @@ struct Guard {
 template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel final:ownrt::SyclOperation {
  ng::Shape shape;explicit Kernel(ng::Shape s):shape(s){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
-  ng::Args a;std::copy_n(p.begin(),19,a.p.begin());float* scratch=static_cast<float*>(p[19]);auto s=shape;auto n=work_items(s,Stage);
+  ng::Args a;std::copy_n(p.begin(),19,a.p.begin());float* scratch=static_cast<float*>(p[19]);auto s=shape;a.f32=(s.flags&ng::f32_activations_flag)!=0;auto n=work_items(s,Stage);
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body<Code,Stage,FixedWidth,FixedHeads>(s,a,i[0],scratch,Guard{});}));});
  }
 };

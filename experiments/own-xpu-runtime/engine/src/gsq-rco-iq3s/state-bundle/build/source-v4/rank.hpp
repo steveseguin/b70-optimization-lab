@@ -150,7 +150,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  p150::measure("token_prep_duplicate",request.position,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){
  e.history0=h0;e.history1=h1;e.prepare_token(request.token);}});
  }
- else if(!prepared_inputs){size_t n=4*e.p.g.h*2;require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);}
+ else if(!prepared_inputs){size_t n=e.stream_bytes();require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);}
  }
  double prepare_ms=Engine::ms(prepare_start);auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e.wait_ms;
  std::array<int,48> captured{};size_t captured_count=0,issued=0;
@@ -181,11 +181,11 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(ready?ready->layer_end:ends(l.label,".ffn.combine")) {
    int layer=ready?ready->layer:std::stoi(l.label.substr(4));
    if(e.a.rank==1&&e.a.draft_rank==0&&layer==(e.a.mini?3:47)){
-    auto bytes=e.readback(0,e.buffers[0].at("streams").id,4*e.p.g.h*2);
+    auto bytes=e.readback(0,e.buffers[0].at("streams").id,e.stream_bytes());
     std::memcpy(shared+reverse_offset,bytes.data(),bytes.size());
     __atomic_store_n(&reverse_ready(shared).position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);
    }
-   if(e.a.retain_steps.contains(request.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*4*e.p.g.h*2,e.buffers[0].at("streams").id,0,4*e.p.g.h*2,{});captured.at(captured_count++)=layer;}
+   if(e.a.retain_steps.contains(request.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*e.stream_bytes(),e.buffers[0].at("streams").id,0,e.stream_bytes(),{});captured.at(captured_count++)=layer;}
    if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
   }
  }}catch(const CancelledLaunch&){candidate.cancelled=true;}
@@ -201,10 +201,10 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  else error=e.integer(0,"error");
  require(!error,"sticky rank error (never rolled back)");
  if(e.a.rank==0&&!candidate.cancelled){e.swap_state_banks();candidate.swapped=true;}
- if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*4*e.p.g.h*2);for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=4*e.p.g.h*2;candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}
- if(captured_count){std::vector<uint8_t> zero(48*4*e.p.g.h*2,0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
+ if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*e.stream_bytes());for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=e.stream_bytes();candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}
+ if(captured_count){std::vector<uint8_t> zero(48*e.stream_bytes(),0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
  int token=-1;size_t bytes=0;
- if(e.a.rank==0){if(!e.v3_active)p150::measure("handoff_export",request.position,false,[&]{bytes=4*e.p.g.h*2;auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});}
+ if(e.a.rank==0){if(!e.v3_active)p150::measure("handoff_export",request.position,false,[&]{bytes=e.stream_bytes();auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});}
  else if(request.fixture>0){token=folded?folded_token:e.integer(0,"next_token");auto& confirmed=verification(shared);confirmed.token=token;__atomic_store_n(&confirmed.position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);}
  if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
  if(e.a.rank==1)e.reply_report.begin(request.sequence,request.fixture,request.position);
@@ -282,6 +282,8 @@ static int run_rank(const Options& a) {
   weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
   engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
+  // Exact F32 activation mode is admitted only on the paths that have F32 variants.
+  if(a.f32_activations)require(!engine->v3_active&&!engine->kio_active&&!engine->prepare_async&&!engine->split_head()&&engine->sealed_selection.choices.at("probe")=="off"&&a.gsq_packed&&a.draft_rank==0,"exact F32 activations: unsupported optional path/selection");
   if(engine->split_head())head_runtime=std::make_unique<p105::Runtime>(*engine);
   if(a.rank==0)banks(*engine);else {engine->prepare_plan();engine->prepare_commands();}
   auto& head_box=*reinterpret_cast<p105::Mailbox*>(static_cast<uint8_t*>(mapping)+reverse_offset);

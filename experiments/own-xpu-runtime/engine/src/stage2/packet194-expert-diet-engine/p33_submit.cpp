@@ -10,7 +10,7 @@
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #endif
 namespace p33 {
-template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split=1> struct Kernel final:
+template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split=1,bool F=false> struct Kernel final:
 #ifdef OWN_RT_HOST_ONLY
  integrated::HostOperation
 #else
@@ -35,11 +35,11 @@ template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split=1> struct Kernel fi
       const unsigned source=(r.expert_id*d.rows+r.row_begin+row)*unsigned(d.rb);
       if constexpr(T==iq3::Type::IQ4_NL)sums[0][lane]=down_lane<Mode,K>(d.w+source,d.x+slot*K,lane);
       else if constexpr(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S){auto pair=Mode==2?p42expert::gate_lane<T,K>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane):expert_lane<T,K,true>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane);sums[0][lane]=pair[0];sums[1][lane]=pair[1];}
-      else sums[0][lane]=dense_lane<T,K>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
+      else sums[0][lane]=dense_lane<T,K,F>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
      }
      for(unsigned j=0;j<(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S?2:1);++j)parts[j][part]=iq3::tree32(sums[j]);
     }
-    for(unsigned j=0;j<(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S?2:1);++j){float v=Split==1?parts[j][0]:(parts[j][0]+parts[j][1])+(parts[j][2]+parts[j][3]);(j?d.py:d.y)[slot*d.rows+row]=iq3::bf16_bits(valid?v:iq3::bits_float(0x7fc00000));}
+    for(unsigned j=0;j<(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S?2:1);++j){float v=Split==1?parts[j][0]:(parts[j][0]+parts[j][1])+(parts[j][2]+parts[j][3]);float out=valid?v:iq3::bits_float(0x7fc00000);if constexpr(F)reinterpret_cast<float*>(j?d.py:d.y)[slot*d.rows+row]=out;else (j?d.py:d.y)[slot*d.rows+row]=iq3::bf16_bits(out);}
    }
   }
  }
@@ -55,11 +55,11 @@ template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split=1> struct Kernel fi
    if(valid){const unsigned source=(r.expert_id*d.rows+r.row_begin+row)*unsigned(d.rb);auto range=iq3::kopt2::bounds(K,part,Split);
     if constexpr(T==iq3::Type::IQ4_NL)sums[0]=down_lane<Mode,K>(d.w+source,d.x+slot*K,lane);
     else if constexpr(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S)sums=Mode==2?p42expert::gate_lane<T,K>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane):expert_lane<T,K,true>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane);
-    else sums[0]=dense_lane<T,K>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
+    else sums[0]=dense_lane<T,K,F>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
    }
    constexpr unsigned projections=T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S?2:1;
    for(unsigned j=0;j<projections;++j){for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,sums[j],(lane+width)%32);if(lane%(2*width)==0)sums[j]=sums[j]+rhs;}
-    if(lane==0){float v=valid?sums[j]:iq3::bits_float(0x7fc00000);if constexpr(Split==1)(j?d.py:d.y)[logical]=iq3::bf16_bits(v);else d.scratch[(logical*2+j)*4+part]=v;}}
+    if(lane==0){float v=valid?sums[j]:iq3::bits_float(0x7fc00000);if constexpr(Split==1){if constexpr(F)reinterpret_cast<float*>(j?d.py:d.y)[logical]=v;else (j?d.py:d.y)[logical]=iq3::bf16_bits(v);}else d.scratch[(logical*2+j)*4+part]=v;}}
    if(lane==0&&row==0&&part==0&&d.routes){d.status[slot]=!ok;if constexpr(projections==2)d.ps[slot]=!ok;}
   })));});
  }
@@ -70,8 +70,9 @@ struct Finish final:ownrt::SyclOperation {unsigned n;
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{auto s=static_cast<const float*>(p[0]);auto y=static_cast<uint16_t*>(p[1]);unsigned count=n;return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(count)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked([=](sycl::id<1> id){auto v=s+id[0]*8;y[id[0]]=iq3::bf16_bits((v[0]+v[1])+(v[2]+v[3]));})));});}
 };
  #endif
-template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split> integrated::Launch issue(ownrt::Device& d,const std::vector<integrated::Matrix>& ms){
- const auto& m=ms[0];const auto& peer=ms.size()==2?ms[1]:m;Kernel<Mode,T,K,Split> k;
+template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split,bool F=false> integrated::Launch issue(ownrt::Device& d,const std::vector<integrated::Matrix>& ms){
+ static_assert(!F||(Mode==0&&Split==1&&T!=iq3::Type::IQ4_NL&&T!=iq3::Type::IQ2_S&&T!=iq3::Type::IQ3_S),"exact F32 activations: dense split1 only");
+ const auto& m=ms[0];const auto& peer=ms.size()==2?ms[1]:m;Kernel<Mode,T,K,Split,F> k;
  k.b.rb=integrated::arithmetic::row_bytes(T,K,T==iq3::Type::F32||T==iq3::Type::BF16?(Split==4?4:0):(Split==4?7:(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0?6:2)));k.b.rows=m.rows;k.b.count=m.count;k.b.experts=m.experts;k.b.has_routes=bool(m.routes);
  if(uint64_t(m.experts)*m.rows*k.b.rb>UINT32_MAX)throw std::invalid_argument("p33 32-bit row offset overflow");
  std::array<ownrt::Allocation,9> ids{m.w,peer.w,m.x,m.y,peer.y,m.routes?m.routes:m.x,m.status?m.status:m.y,peer.status?peer.status:peer.y,m.workspace};auto e=d.compute(k,ids,{});integrated::Launch r{e,e,1};
@@ -81,7 +82,9 @@ template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split> integrated::Launch
 #endif
  return r;
 }
-template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){return v==7||v==4?issue<0,T,K,4>(d,m):issue<0,T,K,1>(d,m);}
+template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
+ if(m[0].activation==iq3::Type::F32){if(v==7||v==4)throw std::invalid_argument("p33 exact F32 mode has no split4 variant");return issue<0,T,K,1,true>(d,m);}
+ return v==7||v==4?issue<0,T,K,4>(d,m):issue<0,T,K,1>(d,m);}
 template<iq3::Type T> integrated::Launch dense_shape(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
  switch(m[0].columns){
  case 2560:return dense_issue<T,2560>(d,m,v);

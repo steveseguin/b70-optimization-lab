@@ -28,8 +28,9 @@ for p in manifest['prompts']:
     rows.append(dict(prompt_id=p['prompt_id'], prompt_tokens=len(ids), output_tokens=o['output_tokens'], finish=res['choices'][0]['finish_reason'],
                      mtp=o['mtp'], acceptance=o['mtp']['hits'] / o['mtp']['guesses'] if o['mtp']['guesses'] else None,
                      decode_tok_s=o['decode_tok_s'], prompt_wall_ms=o['prompt_wall_ms'], wall_s=time.time() - t0,
-                     output_sha256=hashlib.sha256(content.encode()).hexdigest()))
-    print(json.dumps(rows[-1]), flush=True)
+                     output_sha256=hashlib.sha256(content.encode()).hexdigest(),
+                     prompt_token_ids=ids, output_token_ids=o.get('output_token_ids'), activations=o.get('activations')))
+    print(json.dumps({k: v for k, v in rows[-1].items() if not k.endswith('token_ids')}), flush=True)
 g = sum(r['mtp']['guesses'] for r in rows); h = sum(r['mtp']['hits'] for r in rows)
 summary = dict(label=a.label, url=a.url, prompts=len(rows), pooled_acceptance=h / g, guesses=g, hits=h,
                median_decode_tok_s=sorted(r['decode_tok_s'] for r in rows)[len(rows) // 2], rows=rows,

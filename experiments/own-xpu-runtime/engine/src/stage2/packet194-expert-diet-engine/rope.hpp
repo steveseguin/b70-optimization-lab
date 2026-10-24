@@ -9,4 +9,7 @@ inline constexpr std::size_t bytes=positions*128;
 inline constexpr char sha256[]="92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390";
 inline float cos(const uint16_t* table,int pos,int j){return std::bit_cast<float>(uint32_t(table[(pos*32+j)*2])<<16);}
 inline float sin(const uint16_t* table,int pos,int j){return std::bit_cast<float>(uint32_t(table[(pos*32+j)*2+1])<<16);}
+// Exact-mode F32 table: same authority (glibc powf/cosf/sinf, f32(pos*powf(1e7f,-2j/64))) without BF16 rounding.
+inline float cos(const float* table,int pos,int j){return table[(pos*32+j)*2];}
+inline float sin(const float* table,int pos,int j){return table[(pos*32+j)*2+1];}
 }

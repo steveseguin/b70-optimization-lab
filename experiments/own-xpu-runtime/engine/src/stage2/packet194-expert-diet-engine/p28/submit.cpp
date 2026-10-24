@@ -25,9 +25,12 @@ void validate(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& 
  std::vector<std::pair<uint64_t,bool>> accesses;
  auto extent=[&](ownrt::Allocation id,size_t bytes,bool write){auto r=d.arena.row(id);if(!r.live||r.memory!=ownrt::Memory::device||bytes>r.bytes||reinterpret_cast<uintptr_t>(r.pointer)%16)throw std::invalid_argument("p28 extent/alignment");accesses.emplace_back(id,write);};
  for(const auto& m:ms){
-  if(m.type!=a.type||m.rows!=a.rows||m.columns!=a.columns||m.count!=a.count||m.experts!=a.experts||m.routes!=a.routes||m.x!=a.x||(m.span&&m.span!=m.rows)||m.activation!=Type::BF16||m.output_type!=Type::BF16||m.fp32)throw std::invalid_argument("p28 matrix identity");
+  // BF16 activations everywhere, or exact-mode F32 activation/output for dense (unrouted) projections.
+  const bool f32=!routed&&a.activation==Type::F32&&a.output_type==Type::F32;
+  if(m.type!=a.type||m.rows!=a.rows||m.columns!=a.columns||m.count!=a.count||m.experts!=a.experts||m.routes!=a.routes||m.x!=a.x||(m.span&&m.span!=m.rows)||m.activation!=a.activation||m.output_type!=a.output_type||m.fp32||!(f32||(m.activation==Type::BF16&&m.output_type==Type::BF16)))throw std::invalid_argument("p28 matrix identity");
+  const size_t ab=f32?4:2;
   extent(m.w,size_t(m.experts)*m.rows*integrated::arithmetic::row_bytes(m.type,m.columns,v),false);
-  extent(m.x,size_t(shared?1:m.count)*m.columns*2,false);extent(m.y,size_t(m.count)*m.rows*2,true);
+  extent(m.x,size_t(shared?1:m.count)*m.columns*ab,false);extent(m.y,size_t(m.count)*m.rows*ab,true);
   if(routed){extent(m.routes,m.count*sizeof(iq3::Route),false);extent(m.status,m.count*4,true);}
  }
  extent(a.workspace,size_t(a.rows)*a.count*8*4,true);

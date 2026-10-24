@@ -69,11 +69,11 @@ static Reply v3_boundary_step(Engine& e,V3Boundary& v,const Request& r,uint8_t* 
   e.enqueue(l,e.logical);
   if(e.issue_sites.at(index).layer_end){
    const int layer=e.issue_sites[index].layer;
-   if(e.a.retain_steps.contains(r.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*4*e.p.g.h*2,e.buffers[0].at("streams").id,0,4*e.p.g.h*2,{});captured.at(captured_count++)=layer;}
+   if(e.a.retain_steps.contains(r.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*e.stream_bytes(),e.buffers[0].at("streams").id,0,e.stream_bytes(),{});captured.at(captured_count++)=layer;}
   }
  }
  e.drain();p150::record("boundary_body",r.position,false,body);
- size_t bytes=4*e.p.g.h*2;require(bytes<=slot_bytes,"V3 export extent");
+ size_t bytes=e.stream_bytes();require(bytes<=slot_bytes,"V3 export extent");
  // packet189 boundary_export: `kernel` (packet188's k3trims path) folds error + exported stream into ONE KioCopy
  // readback (one work-item per byte into pinned host memory, measured 28.9 ns/byte = 0.59 ms for 20,480 B);
  // `copy` (default, V3's record path, packet186/187) reads the 20,480-byte stream back on the copy engine
@@ -84,9 +84,9 @@ static Reply v3_boundary_step(Engine& e,V3Boundary& v,const Request& r,uint8_t* 
  if(export_kernel&&captured_count==0)p150::measure("handoff_export",r.position,false,[&]{folded=e.kio_read_many(0,{{e.buffers[0].at("error").id,4},{e.buffers[0].at("streams").id,bytes}});});
  {int error=0;if(!folded.empty())std::memcpy(&error,folded.data(),4);else error=e.integer(0,"error");
   require(!error,"sticky rank error in the V3 boundary (never rolled back)");}
- if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*4*e.p.g.h*2);const size_t n=4*e.p.g.h*2;
+ if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*e.stream_bytes());const size_t n=e.stream_bytes();
   for(size_t i=0;i<captured_count;++i){int layer=captured[i];fixtures.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}
-  std::vector<uint8_t> zero(48*4*e.p.g.h*2,0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
+  std::vector<uint8_t> zero(48*e.stream_bytes(),0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
  publish(e,fixtures); // non-speculative: the boundary only ever runs on an accepted, verified token
  if(!folded.empty())std::memcpy(shared,folded.data()+4,bytes); // folded = error (4 B) followed by the exported stream (bytes)
  else p150::measure("handoff_export",r.position,false,[&]{auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes,/*copy_engine=*/!export_kernel);std::memcpy(shared,raw.data(),bytes);});

@@ -73,13 +73,15 @@ inline auto expert_lane(const uint8_t* __restrict w,const uint8_t* __restrict pe
 // one scale, exactly as packet33's measured K2560 kernel. Scalar formats retain
 // packet28's unchanged decode/product/add expression. Odd diagnostic bounds
 // use packet28's segmentation, preserving its general range contract.
-template<iq3::Type T,unsigned K>
+template<iq3::Type T,unsigned K,bool F=false>
 inline float dense_lane(const uint8_t* __restrict w,const uint16_t* __restrict x,
  unsigned begin,unsigned end,unsigned lane) {
+ // F: exact-mode F32 activations (x reinterpreted as float); arithmetic sequence otherwise identical.
+ auto input_at=[&](unsigned k){if constexpr(F)return reinterpret_cast<const float*>(x)[k];else return iq3::bits_float(uint32_t(x[k])<<16);};
  static_assert(T==iq3::Type::Q6_K || T==iq3::Type::Q8_0 ||
                T==iq3::Type::F32 || T==iq3::Type::BF16);
  static_assert(K>0 && K<=17408 && K%iq3::layout(T).elements==0);
- if(begin%256)return p28::dense_lane<T,K>(w,x,begin,end,lane);
+ if constexpr(!F){if(begin%256)return p28::dense_lane<T,K>(w,x,begin,end,lane);}
  float sum=0;
  for(unsigned tile=begin+lane*8;tile<end;tile+=256){
   if constexpr(T==iq3::Type::Q6_K || T==iq3::Type::Q8_0){
@@ -88,14 +90,14 @@ inline float dense_lane(const uint8_t* __restrict w,const uint16_t* __restrict x
    #pragma unroll
    for(unsigned j=0;j<8;++j)if(tile+j<end){
     float value=scale*float(iq3::signed8(w[tile+j]));
-    float input=iq3::bits_float(uint32_t(x[tile+j])<<16);
+    float input=input_at(tile+j);
     float product=value*input;sum=sum+product;
    }
   }else{
    #pragma unroll
    for(unsigned j=0;j<8;++j)if(tile+j<end){
     float value=iq3::decode(T,w+(tile+j)*iq3::layout(T).bytes,0);
-    float input=iq3::bits_float(uint32_t(x[tile+j])<<16);
+    float input=input_at(tile+j);
     float product=value*input;sum=sum+product;
    }
   }

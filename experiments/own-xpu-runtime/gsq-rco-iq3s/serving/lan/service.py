@@ -46,7 +46,7 @@ def load(path, name):
     return m
 
 
-ADAPTER_FILE = os.environ.get('SC117_ADAPTER', 'adapter4.py')
+ADAPTER_FILE = os.environ.get('SC117_ADAPTER', 'adapter5.py')
 A = load(P / ADAPTER_FILE, 'sc117_lan_adapter')
 SP = load(LANE / 'service-speed/a-reset-stream/stream_parser.py', 'sc117_stream_parser')
 B0_LAUNCH_B = LANE / 'recurrent-f32/operating/launch-b/evidence/device-b/review.json'
@@ -258,6 +258,10 @@ class Engine:
     def dump_free(self):
         return self.t is not None and '--reset-dump' in getattr(self.t, 'plan', {}).get('service_flags', [])
 
+    def activations(self):
+        flags = getattr(self.t, 'plan', {}).get('service_flags', []) if self.t is not None else []
+        return flags[flags.index('--activations') + 1] if '--activations' in flags else 'bf16'
+
     def streaming(self):
         return self.t is not None and 'jsonl' in getattr(self.t, 'plan', {}).get('service_flags', [])
 
@@ -450,6 +454,7 @@ def make_handler(state, engine, chat, key):
             if path in ('/health', '/v1/health'):
                 code = 200 if state.phase == 'ready' else 503
                 self.reply(code, {'status': state.phase, 'detail': state.detail, 'waiting': state.waiting,
+                                  'activations': engine.activations() if engine.t is not None else None,
                                   'requests_served': engine.count, 'model': CHAT.MODEL_ID})
             elif path == '/v1/models':
                 self.reply(200, {'object': 'list', 'data': [{'id': CHAT.MODEL_ID, 'object': 'model', 'owned_by': 'ownrt',
@@ -516,6 +521,8 @@ def make_handler(state, engine, chat, key):
                     with state.lock:
                         state.waiting -= 1
             summary['ignored_sampling_parameters'] = req['ignored_sampling']
+            summary['output_token_ids'] = list(tokens)  # response only; never written to the request log
+            summary['activations'] = engine.activations()
             summary['decoding'] = 'greedy (target argmax); MTP proposals are verified by the target'
             full = CHAT.completion(req, tokens, summary, chat)
             if not streaming:
@@ -697,7 +704,10 @@ def main():
         st = json.loads((P / 'selftest.json').read_text())
         rows = []
         marker = P / 'evidence' / f"b0-{engine.t.plan['binary_sha256'][:16]}.json"
-        if engine.t.plan['binary_sha256'] != '5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4' and not marker.exists():
+        mode = engine.activations()
+        status['activations'] = mode
+        save(control / 'run.json', status)
+        if mode == 'bf16' and engine.t.plan['binary_sha256'] != '5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4' and not marker.exists():
             state.detail = 'one-time B0 device gate for the new binary (tokens + full state vs engine 5926)'
             gate = b0_gate(engine, st)
             marker.parent.mkdir(exist_ok=True)
@@ -708,8 +718,20 @@ def main():
             state.detail = f'startup self-test {i + 1}/2 (fixed 32-token MTP output)'
             with engine.lock:
                 tokens, summary = engine.generate(st['prompt_tokens'], st['max_new'], f'selftest-{i + 1}')
-            require(tokens == st['expected_tokens'], f'self-test {i + 1} output differs from launch-b: {tokens}')
-            rows.append(summary)
+            if mode == 'bf16':
+                require(tokens == st['expected_tokens'], f'self-test {i + 1} output differs from launch-b: {tokens}')
+            rows.append(dict(summary, tokens=tokens))
+        if mode == 'f32':
+            # Exact mode differs from the BF16 engine by design. Gate: deterministic within the process, and equal to
+            # the pinned record of this binary's first F32 run (whose agreement with the exact reference is checked offline).
+            require(rows[0]['tokens'] == rows[1]['tokens'], 'F32 self-test not deterministic across RESET')
+            record = P / 'evidence' / f"f32-selftest-{engine.t.plan['binary_sha256'][:16]}.json"
+            if record.exists():
+                require(json.loads(record.read_text())['tokens'] == rows[0]['tokens'], 'F32 self-test differs from this binary\'s pinned F32 record')
+            else:
+                record.parent.mkdir(exist_ok=True)
+                save(record, dict(binary_sha256=engine.t.plan['binary_sha256'], prompt_tokens=st['prompt_tokens'], tokens=rows[0]['tokens'],
+                                  status='first F32 run; reference agreement checked offline (service-speed/e-reference)', utc=utc()))
         require(all(monitor.contacts), 'both rank contacts must be observed on their target cards')
         save(control / 'selftest-result.json', dict(passed=True, tokens=tokens, runs=rows))
         summary = rows

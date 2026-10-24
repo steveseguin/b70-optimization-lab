@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <map>
+#include <optional>
 #include <set>
 #include <sstream>
 namespace flash {
@@ -13,6 +14,9 @@ class Builder {
   std::map<std::string, Buffer> bs;
   std::set<std::string> consumed;
   int card = 0;
+  // Storage type of every activation/KV buffer that does not name an explicit type:
+  // BF16 (tuned default) or F32 (exact mode). Recurrent state, ids and controls keep explicit types.
+  Scalar act = Scalar::bf16;
   static std::uint64_t count(const std::vector<int> &s) {
     std::uint64_t n = 1;
     for (int d : s) {
@@ -31,8 +35,15 @@ public:
   explicit Builder(Geometry g, const Directory *d = nullptr) : directory(d) {
     p.g = g;
   }
-  void buffer(std::string n, std::vector<int> s, Scalar t = Scalar::bf16) {
-    bs[n] = {n, s, t, card};
+  Builder &activation(Scalar t) {
+    if (t != Scalar::bf16 && t != Scalar::f32)
+      throw std::invalid_argument("activation storage must be bf16 or f32");
+    act = t;
+    return *this;
+  }
+  void buffer(std::string n, std::vector<int> s,
+              std::optional<Scalar> t = std::nullopt) {
+    bs[n] = {n, s, t.value_or(act), card};
   }
   void node(std::string op, std::string label, std::vector<std::string> in,
             std::vector<std::string> out, std::vector<int> shape,

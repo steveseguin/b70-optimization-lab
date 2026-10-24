@@ -60,6 +60,8 @@ struct Spec {
   iq3::Type grids[4]{};
   size_t weight_elements[4]{};
   bool packed_heads = false;
+  // Exact mode: activation/KV buffers are F32 and kernels apply no intra-operator BF16 rounding.
+  bool f32_activations = false;
 };
 // Bind inputs, outputs, weights, scratch, error, position, active, RoPE in that
 // order.

@@ -106,6 +106,11 @@ class FakeEngine:
     def storage_ok(self):
         return None
 
+    t = None
+
+    def activations(self):
+        return 'bf16'
+
     def generate(self, prompt, max_new, label, on_token=None):
         time.sleep(self.delay)
         if self.fail:

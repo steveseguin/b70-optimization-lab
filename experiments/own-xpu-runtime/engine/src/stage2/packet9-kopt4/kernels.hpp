@@ -12,5 +12,7 @@ Launch expert_gate_up(ownrt::Device&,const Matrix&,const Matrix&,unsigned split=
 Launch expert_down(ownrt::Device&,const Matrix&,unsigned split=1);
 Launch epilogue(ownrt::Device&,ownrt::Allocation down,ownrt::Allocation weights,
                 ownrt::Allocation output,unsigned rows,ownrt::Allocation fp32=0);
+// Exact-mode F32 variant of epilogue (same slot order and arithmetic, no BF16 store).
+Launch epilogue_f32(ownrt::Device&,ownrt::Allocation down,ownrt::Allocation weights,ownrt::Allocation output,unsigned rows);
 Launch multiply_dispatched(ownrt::Device&,const Matrix&);
 }

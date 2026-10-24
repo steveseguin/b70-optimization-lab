@@ -148,6 +148,8 @@ struct Options {
   bool reset_dump=true,finish_dump=true,token_stream=false;
   // Draft-only weight format; target arithmetic is untouched. Default keeps the executed INT8 requantization.
   bool draft_experts_fp8=false;
+  // Target activation/KV storage: false = BF16 (tuned default); true = F32 exact mode (no intra-op BF16 rounding).
+  bool f32_activations=false;
   RetainSteps retain_steps;
   int cancel_launch=-1;
   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
@@ -188,6 +190,10 @@ static Options parse(int argc, char **argv) {
     else if (k == "--reset-dump" || k == "--finish-dump") {
       auto v=value();require(v=="all"||v=="none","dump mode must be all or none");
       (k=="--reset-dump"?a.reset_dump:a.finish_dump)=v=="all";
+    }
+    else if (k == "--activations") {
+      auto v=value();require(v=="bf16"||v=="f32","activations must be bf16 or f32");
+      a.f32_activations=v=="f32";
     }
     else if (k == "--draft-experts") {
       auto v=value();require(v=="int8"||v=="fp8","draft experts must be int8 or fp8");
@@ -488,8 +494,9 @@ static flash::Plan gsq_build_plan(Weights &w, const Options &a) {
     for (int i = 0; i < 48; ++i)
       full.push_back(
           w.directory.count("blk." + std::to_string(i) + ".attn_q.weight"));
-    p = flash::Builder(g, &w.directory).build(full);
+    p = flash::Builder(g, &w.directory).activation(a.f32_activations?Scalar::f32:Scalar::bf16).build(full);
   }
+  require(!a.f32_activations||(!a.mini&&!a.first),"exact F32 activations: production plan only");
   if (a.cards == 1) {
     for (auto &b : p.buffers)
       b.card = 0;
@@ -556,6 +563,7 @@ static flash::Plan gsq_build_plan(Weights &w, const Options &a) {
   return p;
 }
 static flash::Plan plan(Weights &w, const Options &a) {
+  require(a.gsq_packed||!a.f32_activations,"exact F32 activations require the GSQ packed engine");
   if(a.gsq_packed){auto candidate=gsq_build_plan(w,a);combined_admit(w,a,candidate);iq3_block_admit(w,a,candidate);dense_q6_admit(w,a,candidate);dense_block_admit(w,a,candidate);return candidate;}
   auto g =
       a.mini ? Geometry::tiny() : flash::geometry_from_directory(w.directory);
@@ -733,6 +741,11 @@ public:
   std::vector<size_t> owned_bytes;
   std::map<Allocation,std::pair<int,size_t>> allocations;
   std::vector<Allocation> ropes, controls, scores, probabilities, snapshots;
+  // Target RoPE table: the BF16 table (ropes) in the default path; an F32 table in exact mode.
+  // The draft always binds ropes[0] (BF16).
+  std::vector<Allocation> target_ropes;
+  size_t act_bytes()const{return a.f32_activations?4:2;}
+  size_t stream_bytes()const{return size_t(4)*p.g.h*act_bytes();}
   struct Pending { Launch launch; bool gemv; int cls; };
   std::map<std::string,int> class_ids;
   std::vector<std::string> class_names;
@@ -1202,19 +1215,30 @@ public:
       controls.push_back(allocate(c,"parallel-controls:"+std::to_string(c),12,Category::scratch,Lifetime::transaction));
       scores.push_back(allocate(c,"attention-scores:"+std::to_string(c),24*(p.g.budget+3)*4,Category::scratch,Lifetime::transaction));
       probabilities.push_back(allocate(c,"attention-probabilities:"+std::to_string(c),24*(p.g.budget+3)*4,Category::scratch,Lifetime::transaction));
-      snapshots.push_back(allocate(c,"layer-snapshots:"+std::to_string(c),48*4*p.g.h*2,Category::scratch,Lifetime::transaction));
+      snapshots.push_back(allocate(c,"layer-snapshots:"+std::to_string(c),48*stream_bytes(),Category::scratch,Lifetime::transaction));
       buffers.emplace_back();
       weights.emplace_back();selected.emplace_back();loaded_layer.push_back(-1);
       fp32_inputs.push_back(allocate(c,"prepared-fp32-input",174080*4,Category::scratch,Lifetime::transaction));fp32_sources.push_back(0);fp32_extents.push_back(0);
       workspace.push_back(allocate(c,"gemv-workspace",8*1024*1024,Category::scratch,Lifetime::transaction));
       compact_routes.push_back(allocate(c,"compact-routes",p.g.top*sizeof(iq3::Route),Category::scratch,Lifetime::transaction));
-      mixture_out.push_back(allocate(c,"ordered-mixture",p.g.h*2,Category::scratch,Lifetime::transaction));
+      mixture_out.push_back(allocate(c,"ordered-mixture",p.g.h*act_bytes(),Category::scratch,Lifetime::transaction));
       one.push_back(allocate(c,"mixture-one",4,Category::scratch,Lifetime::transaction));
       slab.push_back(allocate(c, "bounded-copy", 4 * 1024 * 1024,
                               Category::pinned_slab, Lifetime::transfer,
                               Memory::pinned));
       ropes.push_back(allocate(c,"rope-v2",rope_constants::bytes,Category::weights,Lifetime::process));
       upload(c,ropes[c],0,rope_bytes.data(),rope_bytes.size());
+      if(a.f32_activations){
+        // Same authority as rope.bf16 (glibc powf/cosf/sinf, f32(pos*powf(1e7f,-2j/64))), without BF16 rounding.
+        static const std::vector<float> table=[]{std::vector<float> t(size_t(rope_constants::positions)*64);
+          for(int pos=0;pos<rope_constants::positions;++pos)for(int j=0;j<32;++j){
+            const float exponent=-float(2*j)/64.f;const float angle=float(pos)*::powf(1e7f,exponent);
+            t[(size_t(pos)*32+j)*2]=::cosf(angle);t[(size_t(pos)*32+j)*2+1]=::sinf(angle);}
+          return t;}();
+        target_ropes.push_back(allocate(c,"rope-f32",table.size()*4,Category::weights,Lifetime::process));
+        upload(c,target_ropes[c],0,table.data(),table.size()*4);
+        if(c==0)save(a.output/"rope-f32.json","{\"sha256\":"+ownrt::quote(hash(std::vector<uint8_t>(reinterpret_cast<const uint8_t*>(table.data()),reinterpret_cast<const uint8_t*>(table.data())+table.size()*4)))+",\"bytes\":"+std::to_string(table.size()*4)+"}");
+      } else target_ropes.push_back(ropes[c]);
       scratch.push_back(allocate(c, "operator-scratch", operator_scratch_bytes,
                                  Category::scratch, Lifetime::transaction));
     }
@@ -1253,7 +1277,7 @@ public:
             upload(c, id, off, zero.data(), std::min(zero.size(), bytes - off));
         }
     for (int c = 0; c < a.cards; ++c) {
-      std::vector<uint8_t> snapshot_zero(48*4*p.g.h*2,0);
+      std::vector<uint8_t> snapshot_zero(48*stream_bytes(),0);
       upload(c,snapshots[c],0,snapshot_zero.data(),snapshot_zero.size());
       if (!buffers[c].count("active"))
         continue;
@@ -1308,13 +1332,40 @@ public:
         }
       }
       lookup_ids[l.label]=std::move(raw);
-      if(staged){require(l.card==0,"packet188 staged lookup card");staged->emplace_back(l.outputs[0],lookup_values(l));}else lookup(l);
+      if(staged){require(l.card==0,"packet188 staged lookup card");require(!a.f32_activations,"staged lookup has no exact F32 variant");staged->emplace_back(l.outputs[0],lookup_values(l));}else lookup(l);
     }
     history0=history1;history1=token;
   }
   void lookup(const flash::Launch &l) {
+    if(a.f32_activations){auto values=lookup_floats(l);put(l.card, l.outputs[0], values.data(), values.size() * 4);return;}
     auto values=lookup_values(l);
     put(l.card, l.outputs[0], values.data(), values.size() * 2);
+  }
+  // Exact mode: the selected embedding/PLE rows decoded to F32 without BF16 rounding.
+  std::vector<float> lookup_floats(const flash::Launch &l) {
+    int c = l.card;
+    auto input = buffers[c].at(l.inputs[0]);
+    auto ids = lookup_ids.at(l.label);
+    auto &t = w.directory.at(l.weights[0]);
+    auto type = flash::grid_type(t.grid);
+    auto fmt = iq3::layout(type);
+    size_t rb = t.shape.back() / fmt.elements * fmt.bytes;
+    std::vector<float> values;
+    for (size_t j = 0; j < input.n; ++j) {
+      int64_t id;
+      if (input.type == Scalar::i64)
+        std::memcpy(&id, ids.data() + j * 8, 8);
+      else {
+        int32_t v;
+        std::memcpy(&v, ids.data() + j * 4, 4);
+        id = v;
+      }
+      require(id >= 0 && id < t.shape[0], "lookup bounds");
+      auto row = w.read(t.name, id * rb, rb);
+      for (int k = 0; k < t.shape.back(); ++k)
+        values.push_back(gsq::element(unsigned(type),row,t.shape.back(),k));
+    }
+    return values;
   }
   std::vector<uint16_t> lookup_values(const flash::Launch &l) {
     int c = l.card;
@@ -1372,6 +1423,7 @@ public:
     const auto& t=w.directory.at(l.weights[projection]);
     if(routed && a.memory=="layer-streaming")load_selected(c,t.name);else load(c,t.name);
     Matrix m{};m.type=flash::grid_type(t.grid);m.w=weights[c].at(t.name);
+    if(a.f32_activations){m.activation=m.output_type=iq3::Type::F32;}
     m.x=buffers[c].at(l.inputs[0]).id;m.y=buffers[c].at(l.outputs[projection*2]).id;
     m.rows=l.shape[1];m.columns=l.shape[2];m.span=m.rows;
     m.workspace=workspace[c];
@@ -1468,6 +1520,7 @@ public:
       s.g = p.g;
       s.extent = (l.op=="qsa_select"||l.op=="qsa_attention")?std::min(p.g.context,context_extent):0;
       s.packed_heads = !a.mini;
+      s.f32_activations = a.f32_activations;
       s.site.parameter = l.parameter;
       std::copy(l.shape.begin(), l.shape.end(), s.site.shape);
       if(l.op=="moe_combine")s.site.shape[0]=1;
@@ -1509,7 +1562,7 @@ public:
       int k = 0;
       for (auto &name : l.inputs) {
         auto b = buffers[c].at(name);
-        if(l.op=="moe_combine" && k==0)b={mixture_out[c],size_t(p.g.h),Scalar::bf16};
+        if(l.op=="moe_combine" && k==0)b={mixture_out[c],size_t(p.g.h),a.f32_activations?Scalar::f32:Scalar::bf16};
         if(l.op=="moe_combine" && k==1)b={one[c],1,Scalar::f32};
         s.sizes[k] = b.n;
         s.types[k++] = b.type;
@@ -1535,7 +1588,7 @@ public:
       bindings.push_back(scratch[c]);
       for (auto name : {"error", "position", "active"})
         bindings.push_back(buffers[c].at(name).id);
-      bindings.push_back(ropes[c]);
+      bindings.push_back(target_ropes[c]);
       if(l.op=="argmax"&&split_head())s.sizes[0]=p105::prefix;
       s.implementation=packet26::dispatch.implementation_for(l.label,s.op);
       // Packet49 arithmetic identity: both verification rows take split32 QSA.
@@ -1587,7 +1640,8 @@ public:
     } else if (l.op == "gemv" || l.op == "routed_gemv" || l.op=="expert_gate_up") {
       linear(l);
     } else {
-      if(l.op=="moe_combine")finish(c,mixture(dev(c),buffers[c].at(l.inputs[0]).id,
+      if(l.op=="moe_combine")finish(c,a.f32_activations?iq3::kopt4::epilogue_f32(dev(c),buffers[c].at(l.inputs[0]).id,
+          buffers[c].at(l.inputs[1]).id,mixture_out[c],p.g.h):mixture(dev(c),buffers[c].at(l.inputs[0]).id,
           buffers[c].at(l.inputs[1]).id,mixture_out[c],p.g.h),false);
       Prepared temporary;
       const Prepared* bound=nullptr;
@@ -1812,7 +1866,8 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
   o << "],\"expert_placement\":\"all experts belong to their layer owner; none "
        "pruned\",\"one_card_full_model\":\"stream one layer at a "
        "time\",\"capture\":false,\"memory_plan\":{";
-  size_t extra=174080*4+rope_constants::bytes+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*2+4+12+2*24*(p.g.budget+3)*4+48*4*p.g.h*2;
+  const size_t ab=a.f32_activations?4:2; // exact mode adds the F32 target RoPE table and widens mixture/snapshots
+  size_t extra=174080*4+rope_constants::bytes*(a.f32_activations?3:1)+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*ab+4+12+2*24*(p.g.budget+3)*4+48*4*p.g.h*ab;
   std::vector<size_t> base(cards,extra),resident(cards,0);
   for(const auto& b:p.buffers)for(int c=0;c<cards;++c)
     if(b.card==-1 || b.card==c)base[c]+=count(b.shape)*flash::scalar_bytes(b.type);
@@ -2001,8 +2056,8 @@ int main(int argc, char **argv) {
           int layer=ready?ready->layer:std::stoi(l.label.substr(4));
           if(capture) {
             ownrt::CopyEngine copy(e->dev(l.card));
-            e->tail=copy.copy(e->snapshots[l.card],size_t(layer)*4*p.g.h*2,
-              e->buffers[l.card].at("streams").id,0,4*p.g.h*2,{});
+            e->tail=copy.copy(e->snapshots[l.card],size_t(layer)*e->stream_bytes(),
+              e->buffers[l.card].at("streams").id,0,e->stream_bytes(),{});
             captured.push_back({layer,l.card});
           }
           if(a.cards==1 && !a.first){e->release_layer(l.card);e->loaded_layer[l.card]=-1;}
@@ -2023,9 +2078,9 @@ int main(int argc, char **argv) {
       require(!status,"sticky device error at token "+std::to_string(token_index)+"; rerun --checked for layer localization");
       if(capture) {
         std::vector<std::vector<uint8_t>> raw(a.cards);
-        for(int c=0;c<a.cards;++c)raw[c]=e->readback(c,e->snapshots[c],48*4*p.g.h*2);
+        for(int c=0;c<a.cards;++c)raw[c]=e->readback(c,e->snapshots[c],48*e->stream_bytes());
         std::ofstream hashes(fixture_dir/"layers.jsonl");
-        for(auto [layer,c]:captured){size_t size=4*p.g.h*2,off=size*layer;
+        for(auto [layer,c]:captured){size_t size=e->stream_bytes(),off=size*layer;
           std::vector<uint8_t> b(raw[c].begin()+off,raw[c].begin()+off+size);
           char name[40];std::snprintf(name,sizeof name,"layer-%02d.bf16",layer);
           std::ofstream f(fixture_dir/name,std::ios::binary);f.write(reinterpret_cast<char*>(b.data()),b.size());
@@ -2040,7 +2095,7 @@ int main(int argc, char **argv) {
           }
         }
       }
-      if(capture)for(int c=0;c<a.cards;++c){std::vector<uint8_t> zero(48*4*p.g.h*2,0);e->upload(c,e->snapshots[c],0,zero.data(),zero.size());}
+      if(capture)for(int c=0;c<a.cards;++c){std::vector<uint8_t> zero(48*e->stream_bytes(),0);e->upload(c,e->snapshots[c],0,zero.data(),zero.size());}
       if(a.cards==1 && !a.first)e->release_layer(0);
       getrusage(RUSAGE_SELF,&process_after);getrusage(RUSAGE_THREAD,&thread_after);
       auto elapsed=Engine::ms(token_start);

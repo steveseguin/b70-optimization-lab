@@ -15,8 +15,10 @@ void check(ownrt::Device& d,ownrt::Allocation id,size_t n) {
 }
 void unique(std::initializer_list<ownrt::Allocation> ids) {if(std::set<ownrt::Allocation>(ids).size()!=ids.size())throw std::invalid_argument("aliased kernel buffers");}
 void types(Type t,Type a,Type o,unsigned sg) {
-  if(!layout(t).elements || (a!=Type::BF16 && a!=Type::F16) || (o!=Type::BF16 && o!=Type::F16) || (sg!=16 && sg!=32))throw std::invalid_argument("kernel type/subgroup");
+  const bool f32=a==Type::F32&&o==Type::F32; // exact mode: both F32, never mixed with 16-bit storage
+  if(!layout(t).elements || (!f32 && ((a!=Type::BF16 && a!=Type::F16) || (o!=Type::BF16 && o!=Type::F16))) || (sg!=16 && sg!=32))throw std::invalid_argument("kernel type/subgroup");
 }
+size_t act_bytes(Type a){return a==Type::F32?4:2;}
 size_t row_size(Type t,size_t k) {auto l=layout(t);if(!l.elements || !k || k%l.elements)throw std::invalid_argument("packed row width");return product(k/l.elements,l.bytes);}
 struct Decode : ownrt::SyclOperation {
   Type type;size_t elements;unsigned subgroup;
@@ -46,7 +48,8 @@ struct Multiply : ownrt::SyclOperation {
         bool valid=valid_route(r,ne,nr,rs),active=valid && row<r.row_count;
         if(is_routed && row==0 && lane==0)status[slot]=valid?0:1;
         float acc=0;
-        if(active)acc=lane_dot(t,bank+(size_t(r.expert_id)*nr+r.row_begin+row)*rb,x+slot*k,a,k,lane);
+        const uint16_t* xs=a==Type::F32?reinterpret_cast<const uint16_t*>(reinterpret_cast<const float*>(x)+slot*k):x+slot*k;
+        if(active)acc=lane_dot(t,bank+(size_t(r.expert_id)*nr+r.row_begin+row)*rb,xs,a,k,lane);
         sums[lane]=acc;it.barrier(sycl::access::fence_space::local_space);
         for(unsigned width=1;width<32;width*=2) {
           if(lane%(2*width)==0)sums[lane]=sums[lane]+sums[lane+width];
@@ -54,7 +57,7 @@ struct Multiply : ownrt::SyclOperation {
         }
         if(lane==0) {
           float value=active?sums[0]:bits_float(0x7fc00000);
-          y[group]=output_bits(value,o);if(fp32)fp32[group]=value;
+          if(o==Type::F32)reinterpret_cast<float*>(y)[group]=value;else y[group]=output_bits(value,o);if(fp32)fp32[group]=value;
         }
       }));
     });
@@ -68,14 +71,14 @@ ownrt::Event dequant(ownrt::Device& d,Type t,ownrt::Allocation input,ownrt::Allo
 }
 ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   types(t,a,o,sg);auto rb=row_size(t,k);if(!rows || rows>UINT32_MAX)throw std::invalid_argument("row count");
-  unique({w,x,y});check(d,w,product(rows,rb));check(d,x,product(k,2));check(d,y,product(rows,2));
+  unique({w,x,y});check(d,w,product(rows,rb));check(d,x,product(k,act_bytes(a)));check(d,y,product(rows,act_bytes(o)));
   Multiply op;op.type=t;op.activation=a;op.output_type=o;op.columns=k;op.row_bytes=rb;op.rows=rows;op.experts=1;op.count=1;op.span=rows;op.subgroup=sg;op.routed=false;
   op.diagnostic=fp32!=0;
   std::vector ids{w,x,y};if(fp32){unique({w,x,y,fp32});check(d,fp32,product(rows,4));ids.push_back(fp32);}return d.compute(op,ids,{});
 }
 ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation r,ownrt::Allocation status,uint32_t experts,uint32_t rows,size_t k,uint32_t count,uint32_t span,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   types(t,a,o,sg);auto rb=row_size(t,k);if(!experts || !rows || !count || !span || span>rows)throw std::invalid_argument("route geometry");
-  unique({w,x,y,r,status});check(d,w,product(product(experts,rows),rb));check(d,x,product(product(count,k),2));check(d,y,product(product(count,span),2));check(d,r,product(count,sizeof(Route)));check(d,status,product(count,4));product(product(count,span),32);
+  unique({w,x,y,r,status});check(d,w,product(product(experts,rows),rb));check(d,x,product(product(count,k),act_bytes(a)));check(d,y,product(product(count,span),act_bytes(o)));check(d,r,product(count,sizeof(Route)));check(d,status,product(count,4));product(product(count,span),32);
   Multiply op;op.type=t;op.activation=a;op.output_type=o;op.columns=k;op.row_bytes=rb;op.rows=rows;op.experts=experts;op.count=count;op.span=span;op.subgroup=sg;op.routed=true;
   op.diagnostic=fp32!=0;
   std::vector ids{w,x,y,r,status};if(fp32){unique({w,x,y,r,status,fp32});check(d,fp32,product(product(count,span),4));ids.push_back(fp32);}return d.compute(op,ids,{});

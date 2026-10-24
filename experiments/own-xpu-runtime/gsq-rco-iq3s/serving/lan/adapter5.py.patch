@@ -1,0 +1,24 @@
+--- adapter4.py	2026-10-24 15:11:45.199079517 -0400
++++ adapter5.py	2026-10-24 15:31:55.469117642 -0400
+@@ -7,8 +7,10 @@
+ LANE=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
+ ROOT=Path('/home/steve/llm-optimizations')
+ CANDIDATE=LANE/'recurrent-f32'
+-SERVICE_BUILD=Path(os.environ.get('SC117_ENGINE_RECEIPT',str(ROOT/'experiments/own-xpu-runtime/engine/receipts/1fb6511ba413.json')))  # consolidated engine/src builds
+-SERVICE_FLAGS=['--reset-dump','none','--finish-dump','none','--token-stream','jsonl','--draft-experts','fp8']
++SERVICE_BUILD=Path(os.environ.get('SC117_ENGINE_RECEIPT',str(ROOT/'experiments/own-xpu-runtime/engine/receipts/18bc99891147.json')))  # engine/src builds with typed activations
++ACTIVATIONS=os.environ.get('SC117_ACTIVATIONS','bf16')
++if ACTIVATIONS not in ('bf16','f32'):raise ValueError('SC117_ACTIVATIONS must be bf16 or f32')
++SERVICE_FLAGS=['--reset-dump','none','--finish-dump','none','--token-stream','jsonl','--draft-experts','fp8','--activations',ACTIVATIONS]
+ LEDGER=LANE/'recurrent-f32/operating/candidate-ledger.json'
+ PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
+ PARENT_SHA='4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3'
+@@ -161,7 +163,7 @@
+                 c=json.loads((self.out/f'rank{rank}/census.json').read_text())
+                 actual=sum(a['bytes'] for a in c['allocations'] if a['live'] and a['memory']=='device')
+                 require(actual==c['totals']['device'] and 0<actual<=30*1024**3,'native census extent/cap')
+-                require(actual<=ledger[rank]['device_logical_bytes'],'native allocations exceed source forecast')
++                require(actual<=(ledger[rank]['device_logical_bytes'] if ACTIVATIONS=='bf16' else 30*1024**3),'native allocations exceed source forecast')  # F32 mode: hard 30 GiB cap; actual census recorded
+                 rows.append(dict(rank=rank,bytes=actual))
+             save(self.out/'logical-memory.json',dict(passed=True,ranks=rows,physical_fit_claimed=False))
+ 

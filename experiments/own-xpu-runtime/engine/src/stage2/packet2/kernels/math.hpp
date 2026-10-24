@@ -138,7 +138,8 @@ inline float lane_dot(Type t,const uint8_t* row,const uint16_t* x,Type activatio
                       size_t columns,unsigned lane) {
   float sum=0;
   for(size_t k=lane;k<columns;k+=32) {
-    float v=activation==Type::BF16?bits_float(uint32_t(x[k])<<16):half(x[k]);
+    // F32 = exact-mode activations: x points at floats (reinterpreted), same product/add order.
+    float v=activation==Type::BF16?bits_float(uint32_t(x[k])<<16):activation==Type::F32?reinterpret_cast<const float*>(x)[k]:half(x[k]);
     float product=element(t,row,k)*v;
     sum=sum+product;
   }

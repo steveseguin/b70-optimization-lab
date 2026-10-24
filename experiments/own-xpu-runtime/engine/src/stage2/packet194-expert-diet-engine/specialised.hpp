@@ -77,12 +77,12 @@ template<class Guard> inline int attention_count(ng::Shape s,ng::Args a,int r,Gu
 }
 template<ng::Op Code> inline float norm_value(ng::Shape s,ng::Args a,int row,int k){
  int w=width(s);if constexpr(Code!=ng::combine_norm)return a.b(0,row*w+k);
- return ng::Args::bf(a.b(0,row*w+k)+a.b(1,(row/s.heads)*w+k)*(2.f*ng::sigmoid(a.b(2,row)/4.f)));
+ return a.rnd(a.b(0,row*w+k)+a.b(1,(row/s.heads)*w+k)*(2.f*ng::sigmoid(a.b(2,row)/4.f)));
 }
-template<class Get> inline float rounded_normalized(Get get,ng::Args a,int gain,int k,int flags,float inv){return ng::Args::bf((get(k)*inv)*(a.weight(gain,k,flags)+float(flags&1)));}
+template<class Get> inline float rounded_normalized(Get get,ng::Args a,int gain,int k,int flags,float inv){return a.rnd((get(k)*inv)*(a.weight(gain,k,flags)+float(flags&1)));}
 template<class Get> inline float rotary(Get get,ng::Args a,int gain,int k,int flags,float inv,int position){
  float v=rounded_normalized(get,a,gain,k,flags,inv);if(k>=64)return v;
- int j=k%32;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,j),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,j);
+ int j=k%32;float c=a.rope_cos(position,j),z=a.rope_sin(position,j);
  float lo=rounded_normalized(get,a,gain,j,flags,inv),hi=rounded_normalized(get,a,gain,j+32,flags,inv);
  return k<32?lo*c-hi*z:hi*c+lo*z;
 }
@@ -154,7 +154,7 @@ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0,class Guard> in
   }
   int per=stage==0?4:32,block=pos/4+int(index)/per,c=int(index)%per;
   if(block>=(pos+s.tokens)/4)return;
-  auto get=[&](int k){float v=0.f;for(int j=0;j<4;++j){int r=block*4+j;v=v+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return ng::Args::bf(v/4.f);};
+  auto get=[&](int k){float v=0.f;for(int j=0;j<4;++j){int r=block*4+j;v=v+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(v/4.f);};
   if(stage==0)scratch[block*4+c]=subtree(128,c,[&](int k){float v=get(k);return v*v;});
   else{float inv=detmath::rsqrt(upper(scratch+block*4,4)/float(128)+1e-6f);for(int k=c*4;k<c*4+4;++k)a.put(7,block*128+k,rotary(get,a,3,k,s.flags,inv,block*4));}
  }else if constexpr(Code==ng::select){
@@ -188,7 +188,7 @@ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0,class Guard> in
   int k=out%256,h=(out/256)%24,r=out/6144,S=slots(s),n=attention_count(s,a,r,guard);if(n<=0)return;
   if(stage==0){if(c>=ceildiv(n,tile))return;
    scratch[size_t(out)*C+c]=subtree(n,c,[&](int j){int id=a.i(4)[r*S+j];return a.f(7)[(r*24+h)*S+j]*a.b(3,(id*2+h/12)*256+k);});
-  }else{float value=upper(scratch+size_t(out)*C,ceildiv(n,tile));a.put(5,out,ng::Args::bf(value)*ng::sigmoid(a.b(1,out)));}
+  }else{float value=upper(scratch+size_t(out)*C,ceildiv(n,tile));a.put(5,out,a.rnd(value)*ng::sigmoid(a.b(1,out)));}
  }
 }
 struct HostGuard {int error(ng::Args a)const{return a.i(15)[0];}void fail(ng::Args a)const{a.i(15)[0]=1;}};

@@ -174,8 +174,8 @@ public:
   add("merge.hidden",4*p.g.h);add("merge.norm",4*p.g.h);add("merge.projected",4*p.g.h);add("merge.embedding_norm",p.g.h);add("merge.embedding_projected",p.g.h);
   scratch=alloc("scratch",8*1024*1024);control=alloc("controls",12);score=alloc("scores",24*(p.g.budget+3)*4);probability=alloc("probabilities",24*(p.g.budget+3)*4);head_workspace=alloc("head-workspace",size_t(p.g.vocab)*8*4);head_fp32=alloc("head-fp32",size_t(p.g.h)*4);
   publication=e.allocate(0,"draft:publication",8,Category::output_ring,Lifetime::request,Memory::pinned);
-  half_staging=e.allocate(0,"draft:half-staging",4+4*p.g.h*2,Category::pinned_slab,Lifetime::transfer,Memory::pinned);
-  std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+4*p.g.h*2);
+  half_staging=e.allocate(0,"draft:half-staging",4+e.stream_bytes(),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
+  std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   uint32_t active=1;e.upload(0,id("active"),0,&active,4);
   for(const auto& l:p.launches)for(size_t j=0;j<l.weights.size();++j){auto n=l.weights[j];if(n=="output.weight")continue;
    if(l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up")load(n,l.shape[1],l.shape[2],false,l.op!="gemv");
@@ -236,7 +236,12 @@ public:
  int compute(int confirmed,int target_position,bool head,bool asynchronous=false){
   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
-  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=e.io_copy(0,id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2);e.drain(); // packet188: kernel when kernel_io=kernel
+  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");
+   if(e.a.f32_activations){ // exact-mode target streams are F32; the draft keeps its BF16 inputs (proposals are target-verified)
+    std::vector<uint16_t> hidden(size_t(4)*p.g.h);auto* f=static_cast<const float*>(reverse_hidden);for(size_t i=0;i<hidden.size();++i)hidden[i]=iq3::bf16_bits(f[i]);
+    e.upload(0,id("merge.hidden"),0,hidden.data(),hidden.size()*2);
+   } else e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);
+   reverse_hidden=nullptr;}else{require(!e.a.f32_activations,"exact F32 activations: draft must take the converted rank-1 reverse streams");e.tail=e.io_copy(0,id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2);}e.drain(); // packet188: kernel when kernel_io=kernel
   // Bounded target embedding row only. No target PLE/history/token preparation.
   auto t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);size_t rb=p.g.h/fmt.elements*fmt.bytes;auto raw=e.w.read(t.name,size_t(confirmed)*rb,rb);std::vector<uint16_t> emb(p.g.h);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));e.upload(0,id("embedding"),0,emb.data(),emb.size()*2);
   if(captured) {
@@ -292,8 +297,8 @@ public:
   // The previous request is fully confirmed before begin(). The draft's first
   // copy captured its target hidden input before these ordered overwrites.
   auto* bytes=static_cast<uint8_t*>(e.dev(0).arena.row(half_staging).pointer);
-  std::memcpy(bytes,&token,4);std::memcpy(bytes+4,streams,4*p.g.h*2);
-  e.tail=e.io_copy(0,{{e.buffers[0].at("token").id,0,half_staging,0,4},{e.buffers[0].at("streams").id,0,half_staging,4,size_t(4*p.g.h*2)}}); // packet188
+  std::memcpy(bytes,&token,4);std::memcpy(bytes+4,streams,e.stream_bytes());
+  e.tail=e.io_copy(0,{{e.buffers[0].at("token").id,0,half_staging,0,4},{e.buffers[0].at("streams").id,0,half_staging,4,e.stream_bytes()}}); // packet188
  }
  // Reset is quiescent and never frees/reallocates a shared-owner allocation.
  void reset_request(const fs::path& output) {
@@ -301,7 +306,7 @@ public:
    std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));
    for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,allocation,off,zero.data(),std::min(zero.size(),bytes-off));}
   uint32_t active=1;e.upload(0,id("active"),0,&active,4);e.drain();position=0;disabled=false;reverse_hidden=nullptr;
-  std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+4*p.g.h*2);
+  std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   publication_event=0;e.progress_pending=false;e.progress_callback={};
   trace.close();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
  }

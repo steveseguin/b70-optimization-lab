@@ -14,7 +14,9 @@ namespace ng {
 enum Op { conv, gdn, norm, activation, mix, combine_norm, route_gather,
           moe_combine, gated_norm, prepare, pool, select, attention_score,
           attention_softmax, attention_value };
-// Activations/KV remain BF16; flag16 selects F32 GDN matrix/conv/PLE histories.
+// Activations/KV are BF16 unless flag64: F32 activation/KV storage, no intra-op BF16 rounding (exact mode),
+// F32 RoPE table in slot 16. flag16 selects F32 GDN matrix/conv/PLE histories.
+constexpr int f32_activations_flag=64;
 // Buffer slots are documented in README. Position/active/error are device data.
 struct Shape { int op, tokens=1, width=2560, heads=4, extra=0, flags=0, capacity=128, budget=2048, extent=0; };
 // extent bounds submitted work only; capacity remains the allocation/ID bound.
@@ -24,10 +26,15 @@ inline int append_pools(Shape s){return (s.tokens+3)/4;}
 inline int position_limit(Shape s){return s.op==select||s.op==attention_score||s.op==attention_softmax||s.op==attention_value?launch_extent(s):s.capacity;}
 struct Args {
   std::array<void*,19> p{};
-  float b(int slot,size_t i) const { return std::bit_cast<float>(uint32_t(static_cast<uint16_t*>(p[slot])[i])<<16); }
+  bool f32=false; // activation storage: false = BF16 (tuned default), true = F32 exact mode
+  float b(int slot,size_t i) const { if(f32)return static_cast<float*>(p[slot])[i]; return std::bit_cast<float>(uint32_t(static_cast<uint16_t*>(p[slot])[i])<<16); }
   static uint16_t bits(float x) { auto u=std::bit_cast<uint32_t>(x); if((u&0x7fffffff)>0x7f800000)return uint16_t((u>>16)|64); return uint16_t((u+0x7fff+((u>>16)&1))>>16); }
   static float bf(float x){return std::bit_cast<float>(uint32_t(bits(x))<<16);}
-  void put(int slot,size_t i,float x) const {static_cast<uint16_t*>(p[slot])[i]=bits(x);}
+  void put(int slot,size_t i,float x) const {if(f32){static_cast<float*>(p[slot])[i]=x;return;}static_cast<uint16_t*>(p[slot])[i]=bits(x);}
+  // Intra-operator storage rounding: BF16 in the default path, none in exact F32 mode.
+  float rnd(float x)const{return f32?x:bf(x);}
+  float rope_cos(int pos,int j)const{return f32?rope_constants::cos(static_cast<const float*>(p[16]),pos,j):rope_constants::cos(static_cast<const uint16_t*>(p[16]),pos,j);}
+  float rope_sin(int pos,int j)const{return f32?rope_constants::sin(static_cast<const float*>(p[16]),pos,j):rope_constants::sin(static_cast<const uint16_t*>(p[16]),pos,j);}
   float weight(int slot,size_t index,int flags)const{return (flags&8)?f(slot)[index]:b(slot,index);}
   float* f(int slot)const{return static_cast<float*>(p[slot]);}
   float recurrent(int slot,size_t i,int flags)const{return (flags&16)?f(slot)[i]:b(slot,i);}
@@ -64,6 +71,7 @@ inline int local_floats(Shape s){
 inline void validate(Shape s){
  if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>87||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>32768||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
+ if(s.flags&~(1|2|4|8|16|f32_activations_flag))throw std::invalid_argument("unknown shape flag");
  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
  if(s.op==conv&&s.extra!=0&&s.extra!=1&&s.extra!=3)throw std::invalid_argument("conv dilation");
  if((s.op==norm||s.op==combine_norm)&&s.width>4096)throw std::invalid_argument("norm width");
@@ -71,9 +79,9 @@ inline void validate(Shape s){
 }
 // Validate allocation extents before submission; no device read is needed.
 inline std::array<size_t,19> required_bytes(Shape s) {
- std::array<size_t,19> n{};n.fill(4);n[15]=4;n[16]=rope_constants::bytes;
+ std::array<size_t,19> n{};n.fill(4);n[15]=4;n[16]=rope_constants::bytes*((s.flags&f32_activations_flag)?2:1);
  size_t T=s.tokens,W=s.width,H=s.heads,C=s.capacity,S=s.budget+3;
- auto b=[&](int slot,size_t values){n[slot]=values*2;};
+ auto b=[&](int slot,size_t values){n[slot]=values*((s.flags&f32_activations_flag)?4:2);};
  auto f=[&](int slot,size_t values){n[slot]=values*4;};
  auto weight=[&](int slot,size_t values){n[slot]=values*((s.flags&8)?4:2);};
  switch(s.op){
@@ -112,11 +120,12 @@ template<class Team,class F> float tree(Team t,int n,F value,int base=0){t.each(
 // Normalized row is BF16 BEFORE rotary; tables themselves round BF16.
 template<class Team,class Get,class Put> void norm_rope(Team t,Get get,Put put,const Args& a,int gain,int width,int position,int flags){
  float inv=detmath::rsqrt(tree(t,width,[&](int j){float v=get(j);return v*v;})/float(width)+1e-6f);
- t.barrier();t.each(width,[&](int j){t.x[j]=Args::bf((get(j)*inv)*(a.weight(gain,j,flags)+float(flags&1)));});t.barrier();
- t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+ t.barrier();t.each(width,[&](int j){t.x[j]=a.rnd((get(j)*inv)*(a.weight(gain,j,flags)+float(flags&1)));});t.barrier();
+ t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=a.rope_cos(position,k),z=a.rope_sin(position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
 }
 template<class Team> void group(Shape s,Args a,int group,Team t){
  // slots 15/17/18 = sticky_error/position/active; slot16 = RoPE; no readback.
+ a.f32=(s.flags&f32_activations_flag)!=0;
  t.each(1,[&](int){t.x[0]=float(!a.i(18)[0]||t.error(a));});t.barrier();
  if(t.x[0])return;
  t.barrier();
@@ -144,11 +153,11 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   t.each(128,[&](int lane){int ch=group*128+lane;if(ch>=s.width)return;int dilation=s.extra?s.extra:1,hist=3*dilation;
    float history[9];for(int j=0;j<hist;++j)history[j]=a.recurrent(1,ch*hist+j,s.flags);
    for(int r=0;r<s.tokens;++r){float x=a.b(0,r*s.width+ch),acc=0;for(int tap=0;tap<4;++tap)acc=acc+(tap==3?x:history[tap*dilation])*a.weight(2,ch*4+tap,s.flags);
-    a.put(3,r*s.width+ch,silu(dilation==3?Args::bf(acc):acc));for(int k=0;k<hist-1;++k)history[k]=history[k+1];history[hist-1]=x;}
+    a.put(3,r*s.width+ch,silu(dilation==3?a.rnd(acc):acc));for(int k=0;k<hist-1;++k)history[k]=history[k+1];history[hist-1]=x;}
    for(int j=0;j<hist;++j)a.put_recurrent(4,ch*hist+j,history[j],s.flags);});
  }else if(s.op==norm||s.op==combine_norm||s.op==gated_norm){
   int width=s.op==gated_norm?128:s.width,stream=group%s.heads,base=group*width;
-  auto value=[&](int k){if(s.op!=combine_norm)return a.b(0,base+k);return Args::bf(a.b(0,base+k)+a.b(1,(group/s.heads)*width+k)*(2.f*sigmoid(a.b(2,group)/4.f)));};
+  auto value=[&](int k){if(s.op!=combine_norm)return a.b(0,base+k);return a.rnd(a.b(0,base+k)+a.b(1,(group/s.heads)*width+k)*(2.f*sigmoid(a.b(2,group)/4.f)));};
   float inv=detmath::rsqrt(tree(t,width,[&](int k){float x=value(k);return x*x;})/float(width)+1e-6f);t.barrier();
   t.each(width,[&](int k){float x=value(k);int wslot=s.op==combine_norm?3:s.op==gated_norm?2:1;
    float y=(x*inv)*(a.weight(wslot,(s.op==gated_norm?0:stream*width)+k,s.flags)+float(unit));
@@ -158,7 +167,7 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   t.each(128,[&](int lane){int idx=group*128+lane;if(idx>=s.tokens*s.width)return;int r=idx/s.width,k=idx%s.width;
    if(s.op==activation){float v=a.b(0,idx);a.put(2,idx,s.extra?silu(v)*a.b(1,idx):detmath::silu_div4(v));}
    else if(s.op==mix){float sum=0;for(int h=0;h<4;++h)sum=sum+sigmoid(a.b(1,(r*4+h)*s.width+k))*a.b(0,(r*4+h)*s.width+k);a.put(2,idx,sum/4.f);}
-   else{float sum=0;for(int e=0;e<s.extra;++e)sum=sum+a.b(0,(r*s.extra+e)*s.width+k)*a.f(1)[r*s.extra+e];a.put(4,idx,Args::bf(sum)+Args::bf(a.b(2,idx)*sigmoid(a.b(3,r))));}
+   else{float sum=0;for(int e=0;e<s.extra;++e)sum=sum+a.b(0,(r*s.extra+e)*s.width+k)*a.f(1)[r*s.extra+e];a.put(4,idx,a.rnd(sum)+a.rnd(a.b(2,idx)*sigmoid(a.b(3,r))));}
   });
  }else if(s.op==route_gather){
   int r=group,n=s.width,top=s.extra;float maximum=-INFINITY;
@@ -182,7 +191,7 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,pos*128+j,a.b(2,j));});}
   else if(pos/4+group<(pos+s.tokens)/4){
    group+=pos/4;
-   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return Args::bf(x/4.f);};
+   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(x/4.f);};
    norm_rope(t,pooled,[&](int k,float v){a.put(7,group*128+k,v);},a,3,128,group*4,s.flags);
   }
  }else if(s.op==select){
@@ -219,7 +228,7 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   auto safe_id=[&](int j){int id=a.i(4)[r*slots+j];if(id<0||id>=s.capacity||id>pos+r){t.fail(a);return 0;}return id;};
   if(n>launch_slots(s)){t.each(1,[&](int){t.fail(a);});return;}
   if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
-  t.each(1,[&](int){a.put(5,group,Args::bf(value)*sigmoid(a.b(1,group)));});
+  t.each(1,[&](int){a.put(5,group,a.rnd(value)*sigmoid(a.b(1,group)));});
  }
 }
 inline void cpu(Shape s,Args a){validate(s);std::vector<float> scratch(local_floats(s));for(int g=0;g<groups(s);++g)group(s,a,g,HostTeam{scratch.data()});}

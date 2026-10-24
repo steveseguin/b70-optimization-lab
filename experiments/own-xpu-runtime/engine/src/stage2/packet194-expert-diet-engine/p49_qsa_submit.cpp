@@ -25,11 +25,11 @@ template<int Stage>struct Attention final:Base {
  }
 #else
  sycl::event submit(sycl::queue&q,std::span<void*const> p,const std::vector<sycl::event>&deps)const override {
-  ng::Args a;std::copy_n(p.begin(),19,a.p.begin());
+  ng::Args a;std::copy_n(p.begin(),19,a.p.begin());a.f32=(s.flags&ng::f32_activations_flag)!=0;
   auto counts=static_cast<int*>(p[19]);auto partial=reinterpret_cast<float*>(static_cast<uint8_t*>(p[19])+16);
   if constexpr(Stage==0)return p47::admit(q,s,a,counts,deps);
-  if constexpr(Stage==1)return p47::tiles<true>(q,s,a,counts,partial,deps);
-  if constexpr(Stage==2)return p47::combine<true>(q,s,a,counts,partial,deps);
+  if constexpr(Stage==1)return a.f32?p47::tiles<true,true>(q,s,a,counts,partial,deps):p47::tiles<true>(q,s,a,counts,partial,deps);
+  if constexpr(Stage==2)return a.f32?p47::combine<true,true>(q,s,a,counts,partial,deps):p47::combine<true>(q,s,a,counts,partial,deps);
  }
 #endif
 };

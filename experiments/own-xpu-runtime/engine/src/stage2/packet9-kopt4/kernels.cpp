@@ -96,6 +96,17 @@ struct Combine:ownrt::SyclOperation {
   }));});
  }
 };
+// Exact mode: F32 routed rows in, F32 mixture out; the same slot order 0..9 and F32 product/add as combine().
+struct CombineF32:ownrt::SyclOperation {
+ unsigned rows;
+ sycl::event submit(sycl::queue& q,std::span<void* const> ptr,const std::vector<sycl::event>& deps)const override {
+  auto y=static_cast<const float*>(ptr[0]);auto w=static_cast<const float*>(ptr[1]);auto out=static_cast<float*>(ptr[2]);auto n=rows;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((n+127)/128)*128,128)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){
+   unsigned row=it.get_global_linear_id();if(row>=n)return;
+   float sum=0;for(unsigned slot=0;slot<10;++slot){float product=y[size_t(slot)*n+row]*w[slot];sum=sum+product;}out[row]=sum;
+  }));});
+ }
+};
 }
 Launch expert_gate_up(ownrt::Device& d,const Matrix& gate,const Matrix& up,unsigned split){return project(d,{gate,up},split,true);}
 Launch expert_down(ownrt::Device& d,const Matrix& down,unsigned split){return project(d,{down},split,false);}
@@ -113,5 +124,14 @@ Launch multiply_dispatched(ownrt::Device& d,const Matrix& m) {
  if(v==0){auto e=kopt::gemv(d,m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,32,m.fp32);return {e,e,1};}
  if(v==1){auto l=kopt2::multiply(d,{m},kopt2::Variant::split4);return {l.first,l.last,l.passes};}
  return kopt3::multiply(d,{m},v==2?kopt3::Variant::constant:v==3?kopt3::Variant::slm:v==4?kopt3::Variant::constant_split4:kopt3::Variant::slm_split4);
+}
+}
+
+namespace iq3::kopt4 {
+Launch epilogue_f32(ownrt::Device& d,ownrt::Allocation down,ownrt::Allocation weights,ownrt::Allocation out,unsigned rows) {
+ if(!rows || rows>32768)throw std::invalid_argument("epilogue rows");
+ check(d,down,size_t(10)*rows*4);check(d,weights,40);check(d,out,size_t(rows)*4);
+ std::vector<std::pair<uint64_t,bool>> accesses{{down,false},{weights,false},{out,true}};kopt3::validate_aliases(accesses);CombineF32 op;op.rows=rows;
+ std::array ids{down,weights,out};auto e=d.compute(op,ids,{});return {e,e,1};
 }
 }

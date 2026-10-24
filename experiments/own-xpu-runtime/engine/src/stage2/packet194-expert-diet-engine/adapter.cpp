@@ -57,20 +57,20 @@ struct Bound {
 // Keep these parallel as well: synthetic integration tests do not silently
 // select the single_task exactness control.
 template<class Team> void tiny(Bound b,int group,Team t) {
- const auto s=b.s;const auto g=s.g;
+ const auto s=b.s;const auto g=s.g;const bool exact=s.f32_activations;
  // Snapshot the guard once per workgroup so another group's fail cannot make
  // lanes diverge around a barrier. The error itself is atomic across groups.
  t.each(1,[&](int){t.x[0]=float(!*b.active()||b.failed());});t.barrier();
  if(t.x[0])return;t.barrier();
  if(s.extent&&(s.op==Op::qsa_select||s.op==Op::qsa_attention)&&*b.position()>=unsigned(s.extent)){t.each(1,[&](int){b.fail();});return;}
- auto bf=[](float x){return ng::Args::bf(x);};
+ auto bf=[exact](float x){return exact?x:ng::Args::bf(x);};
  auto weight=[&](int w,int k){return iq3::element(s.grids[w],static_cast<const uint8_t*>(b.p[s.ni+s.no+w]),k);};
  auto tree=[&](int n,auto value){return ng::tree(t,n,value);};
  auto rope=[&](auto value,auto store,int width,int w,int pos){
   if(g.rotary<=0 || g.rotary%2 || 64%g.rotary || g.rotary>width || pos<0 || pos>=rope_constants::positions){t.each(1,[&](int){b.fail();});return;}
   float inv=detmath::rsqrt(tree(width,[&](int k){float v=value(k);return v*v;})/float(width)+1e-6f);t.barrier();
   t.each(width,[&](int k){t.x[k]=bf((value(k)*inv)*weight(w,k));});t.barrier();
-  t.each(width,[&](int k){float v=t.x[k];if(k<g.rotary){int j=k%(g.rotary/2);auto table=static_cast<const uint16_t*>(b.p[b.tail()+4]);float c=rope_constants::cos(table,pos,j*64/g.rotary),z=rope_constants::sin(table,pos,j*64/g.rotary);v=k<g.rotary/2?t.x[j]*c-t.x[j+g.rotary/2]*z:t.x[j+g.rotary/2]*c+t.x[j]*z;}store(k,v);});t.barrier();
+  t.each(width,[&](int k){float v=t.x[k];if(k<g.rotary){int j=k%(g.rotary/2);float c,z;if(exact){auto table=static_cast<const float*>(b.p[b.tail()+4]);c=rope_constants::cos(table,pos,j*64/g.rotary);z=rope_constants::sin(table,pos,j*64/g.rotary);}else{auto table=static_cast<const uint16_t*>(b.p[b.tail()+4]);c=rope_constants::cos(table,pos,j*64/g.rotary);z=rope_constants::sin(table,pos,j*64/g.rotary);}v=k<g.rotary/2?t.x[j]*c-t.x[j+g.rotary/2]*z:t.x[j+g.rotary/2]*c+t.x[j]*z;}store(k,v);});t.barrier();
  };
  if(s.op==Op::gdn){
   int h=group/g.d,j=group%g.d,key=s.packed_heads?h%g.kh:h/(g.vh/g.kh),qb=key*g.d,kb=qb+g.kh*g.d;
@@ -118,7 +118,7 @@ inline int tiny_local_floats(const Spec& s){return std::max(std::max(8192,s.g.h)
 // Remaining integration sites are direct data-parallel translations of Core.
 // Reduction order is the same adjacent binary tree, including odd zero padding.
 template<class Team> void simple(Bound b,int group,Team t) {
- auto s=b.s;auto bf=[](float x){return ng::Args::bf(x);};
+ auto s=b.s;auto bf=[exact=s.f32_activations](float x){return exact?x:ng::Args::bf(x);};
  t.each(1,[&](int){t.x[0]=float(!*b.active());});t.barrier();
  if(t.x[0])return;t.barrier();
  if(s.special==Special::begin){t.each(1,[&](int){if(*b.position()>=unsigned(s.g.context))b.fail();});return;}
@@ -207,7 +207,7 @@ template<Op Code,int Phase,int FixedN=0,int FixedTop=0> void simple_body(Bound b
    b.out(0).put(0,best);if(bad)b.fail();}
  }
  else if constexpr(Code==Op::hc_mix)b.out(0).put(index,b.in(0).get(index%b.in(0).n)); // dedicated broadcast instantiation
- else if constexpr(Code==Op::ple_add)b.out(0).put(index,b.in(0).get(index)+ng::Args::bf(b.in(1).get(index)+b.in(2).get(index)));
+ else if constexpr(Code==Op::ple_add){float v=b.in(1).get(index)+b.in(2).get(index);b.out(0).put(index,b.in(0).get(index)+(s.f32_activations?v:ng::Args::bf(v)));}
  else if constexpr(Code==Op::hc_combine)b.out(0).put(index,b.in(0).get(index)+b.in(1).get(index%s.site.shape[1])*(2.f*ng::sigmoid(b.in(2).get(index/s.site.shape[1])/4.f)));
  else if constexpr(Code==Op::expert_gather){
   if(phase==1){for(int j=0;j<s.g.top;++j)if(tmp[j])b.fail();return;}
@@ -270,6 +270,14 @@ struct Glue final:ownrt::SyclOperation {
 }
 Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::Allocation> bindings,ownrt::Allocation control,ownrt::Allocation score,ownrt::Allocation probability,std::span<const ownrt::Event> deps){
  if(bindings.size()!=size_t(s.ni+s.no+s.nw+5)||bindings.size()>31)throw std::invalid_argument("adapter binding count");
+ if(s.f32_activations){
+  // Exact mode: no BF16 activation buffer may reach a kernel, and only F32-capable implementations run.
+  for(int j=0;j<s.ni+s.no;++j)if(s.types[j]==Scalar::bf16)throw std::invalid_argument("BF16 activation buffer in exact F32 mode");
+  bool ported=s.special!=Special::normal||s.op==Op::norm||s.op==Op::silu_div4||s.op==Op::silu_product||s.op==Op::hc_mix||s.op==Op::conv||s.op==Op::gdn||s.op==Op::gdn_norm_gate||
+   s.op==Op::moe_combine||s.op==Op::qsa_prepare||s.op==Op::qsa_append_pool||s.op==Op::qsa_select||s.op==Op::qsa_attention||s.op==Op::route||s.op==Op::expert_gather||s.op==Op::hc_combine||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate;
+  bool generic_impl=s.implementation==0||s.implementation==1||s.implementation==11||s.implementation==12;
+  if(!ported||!generic_impl)throw std::invalid_argument("implementation "+std::to_string(s.implementation)+" has no exact F32 activation variant");
+ }
  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);
  if(s.implementation==2&&s.special==Special::normal&&(s.op==Op::route||s.op==Op::argmax))return round2::submit_simple(d,s,bindings,deps);
  if(s.implementation&&s.special==Special::broadcast)return simple_new_submit<Op::hc_mix>(d,s,bindings,deps);
@@ -280,7 +288,7 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  case Op::argmax:return simple_new_submit<Op::argmax>(d,s,bindings,deps);
  case Op::ple_add:return simple_new_submit<Op::ple_add>(d,s,bindings,deps);
  default:break;}}
- ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;
+ ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;if(s.f32_activations)shape.flags|=ng::f32_activations_flag;
  if(s.special==Special::normal&&(s.op==Op::gdn||s.op==Op::conv)){
   const int input=s.op==Op::gdn?3:1;
   if(s.ni<=input||s.no!=2)throw std::invalid_argument("recurrent state binding shape");
