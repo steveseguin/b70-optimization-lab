@@ -1,0 +1,119 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/generated/adapter.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/generated/adapter.py
+@@ -6,7 +6,7 @@
+ P=Path(__file__).resolve().parent
+ LANE=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
+ ROOT=Path('/home/steve/llm-optimizations')
+-CANDIDATE=P.parent
++CANDIDATE=P.parent.parent
+ LEDGER=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/candidate-ledger.json')
+ PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
+ PARENT_SHA='4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3'
+@@ -25,10 +25,10 @@
+     spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+ require(sha(PARENT)==PARENT_SHA,'P195 pipeline source changed')
+ BASE=load(PARENT,'gsq_p195_pipeline')
+-BUNDLE=load(P.parent/'reader.py','gsq_state_bundle_reader')
++BUNDLE=load(Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py'),'gsq_state_bundle_reader')
+ 
+ def source_pins():
+-    files=[Path(__file__).resolve(),P.parent/'prepare.py',P.parent/'preparation.json',P.parent/'reader.py',P.parent/'parent-pins.json',PARENT,ENV_SOURCE,LANE/'loader/bound.hpp',LANE/'loader/bound-authority.json',LANE/'loader/placement.tsv',LANE/'loader/shard-auth.tsv',LANE/'mtp/draft-manifest.tsv',LANE/'mtp/target-bindings.json',LEDGER]
++    files=[Path(__file__).resolve(),P.parent/'prepare.py',P.parent/'preparation.json',Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py'),P.parent/'parent-pins.json',PARENT,ENV_SOURCE,LANE/'loader/bound.hpp',LANE/'loader/bound-authority.json',LANE/'loader/placement.tsv',LANE/'loader/shard-auth.tsv',LANE/'mtp/draft-manifest.tsv',LANE/'mtp/target-bindings.json',LEDGER]
+     history=LANE/'integration/evidence/host-retained-source-map.json'
+     if history.exists():files.append(history)
+     return {str(p.relative_to(ROOT)):sha(p) for p in files}
+@@ -50,7 +50,7 @@
+     if rank==0:
+         cmd+=['--draft-mtp','--draft-fault','none']
+         if not plan['mini']:cmd+=['--draft-manifest',str(LANE/'mtp/draft-manifest.tsv'),'--draft-model',str(DRAFT_MODEL)]
+-    cmd.extend(['--attention-q8-p33','--qkv-q6-p33'])
++    cmd.extend(['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block'])
+     return cmd
+ 
+ def build_plan(output,*,mini=False,max_new=4,seconds=1800,evidence_output=None):
+@@ -69,9 +69,9 @@
+     build=json.loads(receipt.read_text()) if receipt.exists() else None
+     ready=bool(build and build.get('passed') is True and build.get('mode')==('host' if mini else 'native'))
+     if build:require(ready,'successful matching build required')
+-    plan=dict(schema='ownrt.gsq.rank-adapter-plan.v1',output=str(output),output_parent_identity=[parent.st_dev,parent.st_ino],evidence_output=str(evidence),evidence_parent_identity=[ep.st_dev,ep.st_ino,ep.st_uid,ep.st_gid,ep.st_mode],mini=mini,context=64 if mini else 4096,max_new=max_new,seconds=seconds,wait_seconds=min(seconds,900),binary=build['binary'] if ready else '<pending-full-native-build>' if not mini else '<pending-full-host-build>',binary_sha256=build.get('binary_sha256') if ready else None,build_receipt=str(receipt),build_receipt_sha256=sha(receipt) if ready else None,build_ready=ready,native_admitted=False,source_sha256=source_pins(),environment=environments(output,mini),candidate_bdfs=list(BDFS),request_cap=2,shared_bytes=BASE.SHARED,device_execution_requested=False)
+-    raw_state=0 if mini else 3*(221743168+9699332) # initial blank RESET plus two requests
+-    plan['storage']={'target_state_per_request_bytes':0 if mini else 221743168,'draft_state_per_request_bytes':0 if mini else 9699332,'request_count':2,'raw_state_bytes':raw_state,'evidence_forecast_bytes':raw_state+64*1024**2,'control_cache_forecast_bytes':128*1024**2,'root_floor_bytes':27000000000,'external_floor_bytes':2*1024**3,'hard_bound':False,'scope':'known state payload plus monitored metadata/cache forecast; no pruning'}
++    plan=dict(schema='ownrt.gsq.rank-adapter-plan.v1',output=str(output),output_parent_identity=[parent.st_dev,parent.st_ino],evidence_output=str(evidence),evidence_parent_identity=[ep.st_dev,ep.st_ino,ep.st_uid,ep.st_gid,ep.st_mode],mini=mini,context=64 if mini else 4096,max_new=max_new,seconds=seconds,wait_seconds=min(seconds,900),binary=build['binary'] if ready else '<pending-full-native-build>' if not mini else '<pending-full-host-build>',binary_sha256=build.get('binary_sha256') if ready else None,build_receipt=str(receipt),build_receipt_sha256=sha(receipt) if ready else None,build_ready=ready,native_admitted=False,source_sha256=source_pins(),environment=environments(output,mini),candidate_bdfs=list(BDFS),request_cap=26,shared_bytes=BASE.SHARED,device_execution_requested=False)
++    raw_state=0 if mini else 27*(221743168+9699332) # initial blank RESET plus all26 requests
++    plan['storage']={'target_state_per_request_bytes':0 if mini else 221743168,'draft_state_per_request_bytes':0 if mini else 9699332,'request_count':26,'raw_state_bytes':raw_state,'evidence_forecast_bytes':raw_state+128*1024**2,'control_cache_forecast_bytes':128*1024**2,'root_floor_bytes':27000000000,'external_floor_bytes':2*1024**3,'hard_bound':False,'scope':'known state payload plus monitored metadata/cache forecast; no pruning'}
+     plan['rank_argv']=[command(plan,r,'<channel-fd>','<stop-fd>') for r in range(2)]
+     plan['command_sha256']=hashlib.sha256(json.dumps({'argv':plan['rank_argv'],'environment':plan['environment']},sort_keys=True).encode()).hexdigest()
+     return plan
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/generated/suite.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/generated/suite.py
+@@ -13,7 +13,7 @@
+ def load_adapter():
+     p=OPERATING/'generated/adapter.py';s=importlib.util.spec_from_file_location('gsq_resident_adapter',p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+ A=load_adapter()
+-s=importlib.util.spec_from_file_location('gsq_combined_candidate_checks',OPERATING/'checks.py');C=importlib.util.module_from_spec(s);s.loader.exec_module(C)
++s=importlib.util.spec_from_file_location('gsq_iq3_block_checks',OPERATING/'checks.py');C=importlib.util.module_from_spec(s);s.loader.exec_module(C)
+ def manifest():
+     m=json.loads(MANIFEST.read_text());require(len(m['prompts'])==12 and m['total_requests']==CAP and m['measured_requests']==24,'fixed full corpus/count')
+     require(m['max_new']==128 and m['context']==4096,'fixed output/context cap')
+@@ -42,7 +42,7 @@
+     m=manifest();base=A.build_plan(output,mini=False,max_new=128,seconds=7200,evidence_output=evidence_output)
+     prior=first_native_proof(base['binary_sha256'])
+     files=[prior,Path(__file__).resolve(),MANIFEST,L/'serving/adapter.py',L/'serving/evidence/host-pair.json',L/'metadata/compatibility-delta.json',OPERATING.parent/'evidence/native-build.json',OPERATING/'checks.py',OPERATING/'candidate-ledger.json',OPERATING/'preparation.json']
+-    return dict(schema='ownrt.gsq.resident-baseline-plan.v1',adapter=base,baseline_review_sha256=C.REVIEW_SHA,baseline_result_sha256=C.REFERENCE_SHA,manifest_sha256=sha(MANIFEST),source_sha256={str(f):sha(f) for f in files},total_requests=CAP,measured_requests=24,warmup_requests=2,max_output_tokens=24*128+2*8,lifetime_seconds=7200,storage=dict(per_request_state_bytes=PER_REQUEST,retained_state_dumps=CAP+1,evidence_forecast_bytes=(CAP+1)*PER_REQUEST+64*1024**2,root_cache_forecast_bytes=128*1024**2,root_floor_bytes=27000000000,external_floor_bytes=2*1024**3,hard_bound=False),authority='this outer26-request suite owns count/storage policy; inherited adapter2-request comparison helper is not called',native_admitted=False,scope=m['scope'])
++    return dict(schema='ownrt.gsq.resident-baseline-plan.v1',adapter=base,baseline_review_sha256=C.REVIEW_SHA,baseline_result_sha256=C.REFERENCE_SHA,manifest_sha256=sha(MANIFEST),source_sha256={str(f):sha(f) for f in files},total_requests=CAP,measured_requests=24,warmup_requests=2,max_output_tokens=24*128+2*8,lifetime_seconds=7200,storage=dict(per_request_state_bytes=PER_REQUEST,retained_state_dumps=CAP+1,evidence_forecast_bytes=(CAP+1)*PER_REQUEST+128*1024**2,root_cache_forecast_bytes=128*1024**2,root_floor_bytes=27000000000,external_floor_bytes=2*1024**3,hard_bound=False),authority='this outer26-request suite owns count/storage policy; inherited adapter2-request comparison helper is not called',native_admitted=False,scope=m['scope'])
+ def validate_plan(plan):
+     require(plan==build_plan(plan['adapter']['output'],plan['adapter']['evidence_output']),'suite plan/source/parent changed')
+     A.validate_plan(plan['adapter']);return manifest()
+@@ -52,7 +52,7 @@
+     cp=c if started else c.parent;ep=e if started else e.parent
+     require(cp.stat().st_dev!=ep.stat().st_dev,'suite state evidence must use separate external filesystem')
+     require(shutil.disk_usage(cp).free>=b['root_floor_bytes']+b['root_cache_forecast_bytes'],'root cache forecast/floor')
+-    remaining=(CAP-completed+1)*b['per_request_state_bytes']+64*1024**2
++    remaining=(CAP-completed+1)*b['per_request_state_bytes']+128*1024**2
+     require(shutil.disk_usage(ep).free>=b['external_floor_bytes']+remaining,'remaining external state forecast/floor')
+ 
+ def metric(result,requested):
+@@ -86,7 +86,7 @@
+     """Strictly serialized fixed schedule; caller owns admission and normal close."""
+     C.bind_references(plan)
+     m=m or manifest();require(not getattr(t,'resident_suite_started',False),'suite may run only once');t.resident_suite_started=True
+-    count=0;measured=[];warm=[];start=time.monotonic()
++    count=0;measured=[];warm=[];capture_stamps={};start=time.monotonic()
+     def request(name,mode,prompt,cap,measuring):
+         nonlocal count
+         require(sha(MANIFEST)==plan['manifest_sha256'],'manifest changed during suite')
+@@ -95,10 +95,12 @@
+         # Every warmup and measurement begins from a full original RESET. There
+         # is no retained prompt prefix/KV and no benchmark-prompt warmup.
+         destination=t.out/name;A.reset(t,destination);count+=1
++        C.verify_capture_stamps(t.out,capture_stamps)
+         result=A.BASE.NativeController(t,A.BASE.Draft(mode),True,False).run(prompt,cap,(248044,248046) if measuring else ())
+-        result.update(evidence_label='GSQ combined attention/Q6 QKV p33 candidate; every measured arm checked against frozen baseline',decode_tok_s=None)
++        result.update(evidence_label='GSQ IQ3_XXS block candidate; every measured arm checked against frozen baseline',decode_tok_s=None)
+         row=dict(request=count,name=name,mode=mode,prompt_tokens=prompt,requested_max_new=cap,measured=measuring,result=result)
+-        if measuring:row['metric']=metric(result,cap);row['state_sha256']=A.state_hashes(t)
++        if measuring:
++            row['metric']=metric(result,cap);row['state_sha256']=A.state_hashes(t);capture_stamps[name]=C.capture_stamp(destination)
+         else:require(len(result['tokens'])==cap,'incomplete excluded warmup')
+         A.save(destination/'suite-request.json',row)
+         if measuring:
+@@ -114,14 +116,17 @@
+         row=dict(prompt_id=prompt['prompt_id'],order=prompt['order'],exact_tokens=True,exact_final_target_state=True,arms=pair)
+         measured.append(row);A.save(t.out/f'pair-{i:02d}.json',row)
+     require(count==CAP and len(measured)==12,'incomplete suite')
+-    return dict(passed=True,rank_pids=[p.pid for p in t.children],requests=count,measured_requests=24,warmup=warm,prompts=measured,summary=summary(measured),manifest_sha256=sha(MANIFEST),output_cap=128,resident_scope=True,cold_start_speed_claim=False,old_model_record_comparison=False,completed_elapsed_seconds=time.monotonic()-start)
++    final=measured[-1]['arms'][-1]
++    require(A.state_hashes(t)==final['state_sha256'],'final explicit DUMP differs')
++    C.verify_capture_stamps(t.out,capture_stamps)
++    return dict(passed=True,capture_stamps=capture_stamps,final_explicit_DUMP_verified=True,rank_pids=[p.pid for p in t.children],requests=count,measured_requests=24,warmup=warm,prompts=measured,summary=summary(measured),manifest_sha256=sha(MANIFEST),output_cap=128,resident_scope=True,cold_start_speed_claim=False,old_model_record_comparison=False,completed_elapsed_seconds=time.monotonic()-start)
+ 
+ def qualification(plan,*,admit,check,launch_hook):
+     m=validate_plan(plan);storage_guard(plan);admit(plan)
+     t=A.Transport.__new__(A.Transport)
+     try:
+         t.__init__(plan['adapter'],admit=lambda p:A.require(p==plan['adapter'],'adapter binding'),check=check,launch_hook=launch_hook)
+-        result=run_attached(t,plan,m);t.close(True);path=t.out/'resident-suite.json';A.save(path,result)
++        result=run_attached(t,plan,m);t.close(True);C.verify_capture_stamps(t.out,result['capture_stamps']);result['closed_capture_stamps_verified']=True;path=t.out/'resident-suite.json';A.save(path,result)
+         # Full request traces stay on the external evidence filesystem. The
+         # coordinator receives a bounded terminal join, not another multi-MB copy.
+         return dict(passed=True,requests=CAP,measured_requests=24,rank_pids=result['rank_pids'],manifest_sha256=result['manifest_sha256'],summary=result['summary'],full_result_path=str(path),full_result_sha256=sha(path),old_model_record_comparison=False)

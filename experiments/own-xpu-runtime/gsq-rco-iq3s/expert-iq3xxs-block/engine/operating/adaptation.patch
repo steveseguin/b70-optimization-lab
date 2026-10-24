@@ -1,0 +1,108 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/checks.py
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/checks.py
+@@ -66,3 +66,27 @@
+  require(row['mode']==ref['mode'] and row['prompt_tokens']==ref['prompt_tokens'] and row['requested_max_new']==128,'candidate request identity')
+  require(row['result']['tokens']==ref['result']['tokens'],'candidate tokens differ from baseline: '+row['name'])
+  require(row['state_sha256']==ref['state_sha256'],'candidate target state differs from baseline: '+row['name'])
++
++def bundle_and_micro_authority():
++ bundle=read(L/'state-bundle/evidence/device-a/review.json')
++ require(bundle['passed'] is True,'qualified current bundle prerequisite')
++ micro=read(CANDIDATE.parent/'micro/evidence/device-a/review.json')
++ require(micro['audit_passed'] and micro['native_kernel_result_passed'] and micro['exact_pairs']==84 and micro['kernel_submissions']==168,'micro numerical evidence')
++ require(not micro['qualification_complete'] and not micro['coordinator_passed'] and micro['observed_contact_samples']==0,'retain micro physical-attestation failure')
++ return micro
++
++def capture_stamp(destination):
++ out={}
++ for rank in (0,1):
++  path=Path(destination)/f'rank{rank}/state-2147483647'
++  require(path.is_dir() and not path.is_symlink(),'capture directory')
++  rows={}
++  for f in sorted(path.iterdir()):
++   require(f.is_file() and not f.is_symlink(),'regular closed capture member')
++   s=f.stat();rows[f.name]=[s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns]
++  require(set(rows)=={'state.bundle','state-index.tsv','state-seal.txt','state.json'},'exact bundle inventory')
++  out[str(rank)]=rows
++ return out
++
++def verify_capture_stamps(root,expected):
++ for name,stamp in expected.items():require(capture_stamp(Path(root)/name)==stamp,'sealed capture changed after RESET/FINISH: '+name)
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/once.py
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/once.py
+@@ -3,15 +3,15 @@
+ import argparse,hashlib,importlib.util,json
+ from pathlib import Path
+ P=Path(__file__).resolve().parent;L=P.parents[2]
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-attention-qkv-p33-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-attention-qkv-p33-a')
+-UNIT='gsq-attention-qkv-p33-a.service'
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-iq3xxs-block-engine-a')
++UNIT='gsq-iq3xxs-block-engine-a.service'
+ PARENT=L/'baseline/once.py';PARENT_SHA='5e7539962f97cb42da560c8c027fa8a739bef94f8797d5dfc4f448c4e485a9ad'
+ def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+ def load(path,name):
+  s=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+ if sha(PARENT)!=PARENT_SHA:raise RuntimeError('frozen baseline coordinator changed')
+-O=load(PARENT,'gsq_combined_frozen_coordinator');S=load(P/'generated/suite.py','gsq_combined_suite');M=O.M
++O=load(PARENT,'gsq_iq3_block_frozen_coordinator');S=load(P/'generated/suite.py','gsq_iq3_block_suite');M=O.M
+ # Frozen run() resolves these private module globals. RetainedOwner consequently
+ # remains the exact class belonging to the candidate adapter used for startup.
+ O.S=S;O.CONTROL=CONTROL;O.EVIDENCE=EVIDENCE;O.UNIT=UNIT
+@@ -20,9 +20,9 @@
+ def build_plan():
+  S.C.verify_materialization();base=M.build_plan();suite=S.build_plan(CONTROL/'ranks',EVIDENCE)
+  base.pop('prompt',None)
+- base.update(schema='ownrt.gsq.attention-qkv-p33-once.v1',adapter=suite['adapter'],suite=suite,max_new=128,requests=26,unit=UNIT,scope='candidate all12 exact baseline arms; separate-process timings descriptive only')
++ base.update(schema='ownrt.gsq.iq3xxs-block-once.v1',adapter=suite['adapter'],suite=suite,max_new=128,requests=26,unit=UNIT,scope='candidate all12 exact baseline arms; separate-process timings descriptive only')
+  ledger=json.loads((P/'candidate-ledger.json').read_text());base['initial_mem_available_required']+=ledger['initial_mem_available_delta_bytes']
+- files=[PARENT,Path(__file__),P/'checks.py',P/'prepare.py',P/'preparation.json',P/'overlay.patch',P/'candidate-ledger.json',P/'test_operating.py',P/'README.md',P/'generated/adapter.py',P/'generated/suite.py',P/'evidence/independent-review.json',P.parent/'evidence/native-build.json',P.parent/'evidence/cpu-proof.json',L/'attention-q8-p33/evidence/scale-census.json',L/'qkv-q6-p33/evidence/cpu-proof.json',L/'qkv-q6-p33/micro/evidence/device-a/review.json',P/'authority.json',P/'parent-pins.json',P/'adaptation.patch',S.C.REVIEW,S.C.REFERENCE]
++ files=[PARENT,Path(__file__),P/'checks.py',P/'prepare.py',P/'preparation.json',P/'overlay.patch',P/'candidate-ledger.json',P/'test_operating.py',P/'README.md',P/'generated/adapter.py',P/'generated/suite.py',P/'evidence/independent-review.json',P.parent/'evidence/native-build.json',P.parent/'evidence/cpu-proof.json',L/'attention-q8-p33/evidence/scale-census.json',L/'qkv-q6-p33/evidence/cpu-proof.json',L/'qkv-q6-p33/micro/evidence/device-a/review.json',P/'authority.json',P/'parent-pins.json',P/'adaptation.patch',L/'state-bundle/evidence/device-a/review.json',P.parent.parent/'micro/evidence/device-a/review.json',S.C.REVIEW,S.C.REFERENCE]
+  base['source_sha256'].update({str(f):sha(f) for f in files})
+  base['monitor_configuration']=dict(module_sha256=O.MODEL_SHA,coordinator_sha256=PARENT_SHA,CONTROL=str(CONTROL),EVIDENCE=str(EVIDENCE),UNIT=UNIT,initial_ram_delta_bytes=382730240,behavior='unchanged frozen Monitor/run lifecycle; candidate suite and explicit memory admission')
+  return base
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/test_operating.py
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/test_operating.py
+@@ -17,7 +17,7 @@
+   return rows
+  def invoke(self,t,reset,controller,state):
+   plan=dict(lifetime_seconds=7200,manifest_sha256=S.sha(S.MANIFEST))
+-  with patch.object(S.A,'reset',reset),patch.object(S.A.BASE,'NativeController',controller),patch.object(S.A,'state_hashes',state),patch.object(S,'storage_guard'),patch.object(C,'bind_references'),patch.object(C,'REFERENCES',self.refs()):
++  with patch.object(S.A,'reset',reset),patch.object(S.A.BASE,'NativeController',controller),patch.object(S.A,'state_hashes',state),patch.object(S,'storage_guard'),patch.object(C,'bind_references'),patch.object(C,'REFERENCES',self.refs()),patch.object(C,'capture_stamp',return_value={}),patch.object(C,'verify_capture_stamps'):
+    return S.run_attached(t,plan)
+  def test_every_arm_exact_gate_and_full_reset(self):
+   with tempfile.TemporaryDirectory() as root:
+@@ -41,7 +41,7 @@
+  def test_candidate_command_delta_only_flag_binary(self):
+   original=O.M.ADAPTER
+   p=dict(output='/private/control',evidence_output='/external/result',binary='/candidate',context=4096,seconds=7200,max_new=128,mini=False)
+-  for rank in (0,1):self.assertEqual(original.command(p,rank,51,52)+['--attention-q8-p33','--qkv-q6-p33'],S.A.command(p,rank,51,52))
++  for rank in (0,1):self.assertEqual(original.command(p,rank,51,52)+['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block'],S.A.command(p,rank,51,52))
+  def test_materialization_and_memory_authority(self):
+   C.verify_materialization();ledger=json.loads((P/'candidate-ledger.json').read_text())
+   self.assertEqual([30947490698,29824495508],[r['device_logical_bytes'] for r in ledger['scenarios']['split24-24_mtp-rank0']['ranks']])
+@@ -60,4 +60,23 @@
+   with patch.object(S,'validate_plan',return_value=S.manifest()),patch.object(S,'storage_guard'),patch.object(S.A,'Transport',Broken),patch.object(S.A,'cleanup_failure',side_effect=retained):
+    with self.assertRaises(S.A.RetainedOwner) as caught:S.qualification({'adapter':{}},admit=lambda _:None,check=lambda:None,launch_hook=lambda _:None)
+    self.assertIs(caught.exception.original,original)
++ def test_final_dump_mismatch_refuses_completed_suite(self):
++  with tempfile.TemporaryDirectory() as root:
++   t,reset,controller,state=self.fake(root);calls=[]
++   def final_bad(t):
++    calls.append(1)
++    return state(t) if len(calls)<=24 else {'0':{'state':'changed'},'1':{'state':'exact'}}
++   with self.assertRaisesRegex(ValueError,'final explicit DUMP'):self.invoke(t,reset,controller,final_bad)
++   self.assertEqual(26,len(t.calls));self.assertEqual(25,len(calls))
++ def test_closed_stamp_detects_change_and_extra_file(self):
++  with tempfile.TemporaryDirectory() as root:
++   dest=Path(root)/'prompt-00-none'
++   for rank in (0,1):
++    path=dest/f'rank{rank}/state-2147483647';path.mkdir(parents=True)
++    for name in ('state.bundle','state-index.tsv','state-seal.txt','state.json'):(path/name).write_bytes(b'x')
++   stamps={'prompt-00-none':C.capture_stamp(dest)};C.verify_capture_stamps(Path(root),stamps)
++   (dest/'rank0/state-2147483647/state.bundle').write_bytes(b'changed')
++   with self.assertRaisesRegex(ValueError,'sealed capture changed'):C.verify_capture_stamps(Path(root),stamps)
++   (dest/'rank0/state-2147483647/extra').write_bytes(b'partial')
++   with self.assertRaisesRegex(ValueError,'exact bundle inventory'):C.capture_stamp(dest)
+ if __name__=='__main__':unittest.main(verbosity=2)

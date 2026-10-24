@@ -163,3 +163,16 @@ Reuse prior format proofs and validate only the new arithmetic/loop/binding delt
 then bounded native exactness and latency before full-engine adoption. Root's initial
 shared-input assumption was corrected from actual graph before implementation.
 Do not extrapolate sample shares into a promised whole-model gain.
+
+## Expert micro incomplete; qualify the full engine separately — 09:22 UTC
+
+The [fixed-route native micro](expert-iq3xxs-block/micro/RESULT.md) matches all84
+output/status pairs and records shorter candidate events, but its1.366second owner
+ended before passive physical-device observation. Preserve the failed qualification;
+do not retroactively attest its GPU identity or promote its timings. No repeat micro
+is planned. The unchanged34-site block kernel has compiled into the full engine,
+with complete512-expert banks and dynamic routes, unchanged memory/precision and
+all original model checks. The next independent qualification is the original26-request
+resident suite with positive physical contact required for both ranks, complete
+baseline token/state equality and safe closure. Separate-process timings remain
+descriptive; the short internal corpus is not the public512-token gate.

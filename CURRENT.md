@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 24, 05:24 EDT — four-card host: full expert candidate screen running.**
+Independent native/build/operating review passed. The unchanged34-site packed expert
+kernel is now in a new full-engine qualification: original26 requests,12 balanced
+prompt pairs, cap128, every measured arm exact against the original baseline.
+Both ranks must have positive physical contact; the earlier short micro remains
+incompletely qualified. No weight, precision, context or verifier change. No added
+device-memory allocation. USB8.92GB/root27.27GB at admission; vision unchanged.
+[Operating scope](experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/operating/README.md).
+
+
 **October 24, 05:07 EDT — four-card host: expert kernel comparisons exact; physical observation incomplete.**
 All84 native comparisons match complete saved outputs/statuses; candidate event time
 is roughly42% of control across three fixed cases. The native owner exits safely,
