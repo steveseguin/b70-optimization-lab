@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 21:20 EDT — four-card host: batched table publication passes the CPU proof and native build inspection.**
+Both publication methods produce identical bytes across all 144 tables and two generations; 41 checks
+pass and seven CPU owners close safely. The shared helper protects staging and table storage even when
+submission fails before an event is recorded. The native code compiled once; an overly strict symbol check
+was corrected by inspecting that same binary after the compiler inlined the helper. Execution stays disabled;
+native correctness and speed remain untested. Next is a bounded CPU proof of sharing selected expert-weight
+reads between two prompt rows. Actual adjacent-row expert overlap is not recorded in the prior run, so its
+benefit remains unknown. Applications are unchanged; the matched-control commit 98290c145 has all three
+CI workflows green. [Publication proof and limits](experiments/own-xpu-runtime/stage2/packet214-frozen-table-publication/README.md).
+
 **October 23, 21:06 EDT — two-card host: Campaign 61 audited: two of twelve pass; one controlled source-view change ready.**
 The neutral reviewer fixes both observed-audit denials with thinking on, but two preceding cuts hit
 the cap and one cancellation case invents the denial again. Only 2/12 meet the broad source gate;

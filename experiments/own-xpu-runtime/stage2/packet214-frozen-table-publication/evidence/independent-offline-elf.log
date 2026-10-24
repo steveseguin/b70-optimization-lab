@@ -1,0 +1,788 @@
+$ /usr/bin/objdump -d --disassemble=main /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet214-frozen-table-publication/build/native/production-prefill-disabled
+
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet214-frozen-table-publication/build/native/production-prefill-disabled:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000006d6f40 <main>:
+  6d6f40:	50                   	push   %rax
+  6d6f41:	bf 60 7c f9 00       	mov    $0xf97c60,%edi
+  6d6f46:	be f9 9c 7d 00       	mov    $0x7d9cf9,%esi
+  6d6f4b:	ba 55 00 00 00       	mov    $0x55,%edx
+  6d6f50:	e8 fb 2e d3 ff       	call   409e50 <_ZSt16__ostream_insertIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_PKS3_l@plt>
+  6d6f55:	b8 40 00 00 00       	mov    $0x40,%eax
+  6d6f5a:	59                   	pop    %rcx
+  6d6f5b:	c3                   	ret
+
+Disassembly of section .fini:
+
+$ /usr/bin/objdump -d -C --start-address=0x775620 --stop-address=0x77628b /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet214-frozen-table-publication/build/native/production-prefill-disabled
+
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet214-frozen-table-publication/build/native/production-prefill-disabled:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000775620 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)>:
+  775620:	55                   	push   %rbp
+  775621:	41 57                	push   %r15
+  775623:	41 56                	push   %r14
+  775625:	41 55                	push   %r13
+  775627:	41 54                	push   %r12
+  775629:	53                   	push   %rbx
+  77562a:	48 81 ec 88 09 00 00 	sub    $0x988,%rsp
+  775631:	48 89 74 24 50       	mov    %rsi,0x50(%rsp)
+  775636:	49 89 fe             	mov    %rdi,%r14
+  775639:	48 8b 47 48          	mov    0x48(%rdi),%rax
+  77563d:	48 85 c0             	test   %rax,%rax
+  775640:	74 0c                	je     77564e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x2e>
+  775642:	80 b8 d4 00 00 00 00 	cmpb   $0x0,0xd4(%rax)
+  775649:	0f 94 c3             	sete   %bl
+  77564c:	eb 02                	jmp    775650 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x30>
+  77564e:	b3 01                	mov    $0x1,%bl
+  775650:	bf 1f 00 00 00       	mov    $0x1f,%edi
+  775655:	e8 86 3b c9 ff       	call   4091e0 <operator new(unsigned long)@plt>
+  77565a:	4c 8d bc 24 00 05 00 	lea    0x500(%rsp),%r15
+  775661:	00 
+  775662:	48 89 84 24 f0 04 00 	mov    %rax,0x4f0(%rsp)
+  775669:	00 
+  77566a:	48 c7 84 24 00 05 00 	movq   $0x1e,0x500(%rsp)
+  775671:	00 1e 00 00 00 
+  775676:	0f 10 05 4a 94 06 00 	movups 0x6944a(%rip),%xmm0        # 7deac7 <.sycl_offloading.opts.link.0+0x4b9c>
+  77567d:	0f 11 40 0e          	movups %xmm0,0xe(%rax)
+  775681:	0f 10 05 31 94 06 00 	movups 0x69431(%rip),%xmm0        # 7deab9 <.sycl_offloading.opts.link.0+0x4b8e>
+  775688:	0f 11 00             	movups %xmm0,(%rax)
+  77568b:	48 c7 84 24 f8 04 00 	movq   $0x1e,0x4f8(%rsp)
+  775692:	00 1e 00 00 00 
+  775697:	c6 40 1e 00          	movb   $0x0,0x1e(%rax)
+  77569b:	84 db                	test   %bl,%bl
+  77569d:	0f 84 c0 08 00 00    	je     775f63 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x943>
+  7756a3:	48 8b bc 24 f0 04 00 	mov    0x4f0(%rsp),%rdi
+  7756aa:	00 
+  7756ab:	4c 39 ff             	cmp    %r15,%rdi
+  7756ae:	74 10                	je     7756c0 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xa0>
+  7756b0:	48 8b b4 24 00 05 00 	mov    0x500(%rsp),%rsi
+  7756b7:	00 
+  7756b8:	48 ff c6             	inc    %rsi
+  7756bb:	e8 c0 3a c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  7756c0:	49 83 7e 58 00       	cmpq   $0x0,0x58(%r14)
+  7756c5:	74 48                	je     77570f <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xef>
+  7756c7:	49 83 be 08 05 00 00 	cmpq   $0x7,0x508(%r14)
+  7756ce:	07 
+  7756cf:	75 1a                	jne    7756eb <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xcb>
+  7756d1:	49 8b 86 00 05 00 00 	mov    0x500(%r14),%rax
+  7756d8:	b9 6f 76 65 72       	mov    $0x7265766f,%ecx
+  7756dd:	33 08                	xor    (%rax),%ecx
+  7756df:	ba 72 6c 61 70       	mov    $0x70616c72,%edx
+  7756e4:	33 50 03             	xor    0x3(%rax),%edx
+  7756e7:	09 ca                	or     %ecx,%edx
+  7756e9:	74 24                	je     77570f <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xef>
+  7756eb:	49 8b 86 88 0a 00 00 	mov    0xa88(%r14),%rax
+  7756f2:	49 39 86 90 0a 00 00 	cmp    %rax,0xa90(%r14)
+  7756f9:	0f 84 bf 09 00 00    	je     7760be <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xa9e>
+  7756ff:	48 8b 00             	mov    (%rax),%rax
+  775702:	48 83 b8 88 00 00 00 	cmpq   $0x0,0x88(%rax)
+  775709:	00 
+  77570a:	0f 94 c3             	sete   %bl
+  77570d:	eb 02                	jmp    775711 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xf1>
+  77570f:	31 db                	xor    %ebx,%ebx
+  775711:	bf 27 00 00 00       	mov    $0x27,%edi
+  775716:	e8 c5 3a c9 ff       	call   4091e0 <operator new(unsigned long)@plt>
+  77571b:	48 89 84 24 f0 04 00 	mov    %rax,0x4f0(%rsp)
+  775722:	00 
+  775723:	48 c7 84 24 00 05 00 	movq   $0x26,0x500(%rsp)
+  77572a:	00 26 00 00 00 
+  77572f:	0f 10 05 b2 93 06 00 	movups 0x693b2(%rip),%xmm0        # 7deae8 <.sycl_offloading.opts.link.0+0x4bbd>
+  775736:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+  77573a:	0f 10 05 97 93 06 00 	movups 0x69397(%rip),%xmm0        # 7dead8 <.sycl_offloading.opts.link.0+0x4bad>
+  775741:	0f 11 00             	movups %xmm0,(%rax)
+  775744:	48 b9 75 62 6c 69 73 	movabs $0x72656873696c6275,%rcx
+  77574b:	68 65 72 
+  77574e:	48 89 48 1e          	mov    %rcx,0x1e(%rax)
+  775752:	48 c7 84 24 f8 04 00 	movq   $0x26,0x4f8(%rsp)
+  775759:	00 26 00 00 00 
+  77575e:	c6 40 26 00          	movb   $0x0,0x26(%rax)
+  775762:	84 db                	test   %bl,%bl
+  775764:	0f 84 28 08 00 00    	je     775f92 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x972>
+  77576a:	48 8b bc 24 f0 04 00 	mov    0x4f0(%rsp),%rdi
+  775771:	00 
+  775772:	4c 39 ff             	cmp    %r15,%rdi
+  775775:	74 10                	je     775787 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x167>
+  775777:	48 8b b4 24 00 05 00 	mov    0x500(%rsp),%rsi
+  77577e:	00 
+  77577f:	48 ff c6             	inc    %rsi
+  775782:	e8 f9 39 c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  775787:	e8 14 46 c9 ff       	call   409da0 <std::chrono::_V2::steady_clock::now()@plt>
+  77578c:	49 89 c4             	mov    %rax,%r12
+  77578f:	4d 8b 7e 58          	mov    0x58(%r14),%r15
+  775793:	49 8d 9e 70 03 00 00 	lea    0x370(%r14),%rbx
+  77579a:	49 83 be 78 03 00 00 	cmpq   $0x6,0x378(%r14)
+  7757a1:	06 
+  7757a2:	75 1b                	jne    7757bf <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x19f>
+  7757a4:	48 8b 03             	mov    (%rbx),%rax
+  7757a7:	b9 6b 65 72 6e       	mov    $0x6e72656b,%ecx
+  7757ac:	33 08                	xor    (%rax),%ecx
+  7757ae:	0f b7 40 04          	movzwl 0x4(%rax),%eax
+  7757b2:	35 65 6c 00 00       	xor    $0x6c65,%eax
+  7757b7:	09 c8                	or     %ecx,%eax
+  7757b9:	40 0f 94 c5          	sete   %bpl
+  7757bd:	eb 02                	jmp    7757c1 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x1a1>
+  7757bf:	31 ed                	xor    %ebp,%ebp
+  7757c1:	41 80 bf 38 12 00 00 	cmpb   $0x0,0x1238(%r15)
+  7757c8:	00 
+  7757c9:	0f 85 68 07 00 00    	jne    775f37 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x917>
+  7757cf:	41 80 bf 3a 12 00 00 	cmpb   $0x0,0x123a(%r15)
+  7757d6:	00 
+  7757d7:	0f 85 5a 07 00 00    	jne    775f37 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x917>
+  7757dd:	41 80 bf 39 12 00 00 	cmpb   $0x0,0x1239(%r15)
+  7757e4:	00 
+  7757e5:	0f 85 4c 07 00 00    	jne    775f37 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x917>
+  7757eb:	49 83 bf a0 0d 00 00 	cmpq   $0x0,0xda0(%r15)
+  7757f2:	00 
+  7757f3:	0f 85 3e 07 00 00    	jne    775f37 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x917>
+  7757f9:	49 8b 3f             	mov    (%r15),%rdi
+  7757fc:	48 83 bf 88 00 00 00 	cmpq   $0x0,0x88(%rdi)
+  775803:	00 
+  775804:	0f 85 b7 07 00 00    	jne    775fc1 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x9a1>
+  77580a:	e8 11 9b ea ff       	call   61f320 <ownrt::Device::in_flight()>
+  77580f:	48 85 c0             	test   %rax,%rax
+  775812:	0f 85 c8 07 00 00    	jne    775fe0 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x9c0>
+  775818:	4c 89 ff             	mov    %r15,%rdi
+  77581b:	e8 10 2b 00 00       	call   778330 <p214::Publisher::validate() const>
+  775820:	48 8b 4c 24 50       	mov    0x50(%rsp),%rcx
+  775825:	48 8b 01             	mov    (%rcx),%rax
+  775828:	48 8b 49 08          	mov    0x8(%rcx),%rcx
+  77582c:	48 89 ca             	mov    %rcx,%rdx
+  77582f:	48 29 c2             	sub    %rax,%rdx
+  775832:	48 81 fa 00 00 0c 00 	cmp    $0xc0000,%rdx
+  775839:	0f 85 c0 07 00 00    	jne    775fff <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x9df>
+  77583f:	90                   	nop
+  775840:	48 83 38 00          	cmpq   $0x0,(%rax)
+  775844:	0f 84 c1 06 00 00    	je     775f0b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x8eb>
+  77584a:	48 83 78 08 00       	cmpq   $0x0,0x8(%rax)
+  77584f:	0f 84 b6 06 00 00    	je     775f0b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x8eb>
+  775855:	48 83 78 10 00       	cmpq   $0x0,0x10(%rax)
+  77585a:	0f 84 ab 06 00 00    	je     775f0b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x8eb>
+  775860:	48 83 78 18 00       	cmpq   $0x0,0x18(%rax)
+  775865:	0f 84 a0 06 00 00    	je     775f0b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x8eb>
+  77586b:	48 83 c0 20          	add    $0x20,%rax
+  77586f:	48 39 c8             	cmp    %rcx,%rax
+  775872:	75 cc                	jne    775840 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x220>
+  775874:	89 6c 24 1c          	mov    %ebp,0x1c(%rsp)
+  775878:	4c 89 64 24 68       	mov    %r12,0x68(%rsp)
+  77587d:	4c 89 74 24 48       	mov    %r14,0x48(%rsp)
+  775882:	48 89 5c 24 60       	mov    %rbx,0x60(%rsp)
+  775887:	b8 90 00 00 00       	mov    $0x90,%eax
+  77588c:	49 8b 3f             	mov    (%r15),%rdi
+  77588f:	48 01 c7             	add    %rax,%rdi
+  775892:	49 8b 77 10          	mov    0x10(%r15),%rsi
+  775896:	e8 d5 db ea ff       	call   623470 <ownrt::Arena::row(unsigned long) const>
+  77589b:	4c 8b 60 40          	mov    0x40(%rax),%r12
+  77589f:	48 8d 7c 24 70       	lea    0x70(%rsp),%rdi
+  7758a4:	31 ed                	xor    %ebp,%ebp
+  7758a6:	ba 80 04 00 00       	mov    $0x480,%edx
+  7758ab:	31 f6                	xor    %esi,%esi
+  7758ad:	e8 3e 35 03 00       	call   7a8df0 <_intel_fast_memset>
+  7758b2:	49 8d 5f 20          	lea    0x20(%r15),%rbx
+  7758b6:	4d 8d 74 24 38       	lea    0x38(%r12),%r14
+  7758bb:	4c 89 64 24 58       	mov    %r12,0x58(%rsp)
+  7758c0:	4d 8d 6c 24 30       	lea    0x30(%r12),%r13
+  7758c5:	eb 27                	jmp    7758ee <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x2ce>
+  7758c7:	66 0f 1f 84 00 00 00 	nopw   0x0(%rax,%rax,1)
+  7758ce:	00 00 
+  7758d0:	48 ff c5             	inc    %rbp
+  7758d3:	49 81 c6 00 20 00 00 	add    $0x2000,%r14
+  7758da:	49 81 c5 00 20 00 00 	add    $0x2000,%r13
+  7758e1:	48 81 fd 90 00 00 00 	cmp    $0x90,%rbp
+  7758e8:	0f 84 6f 01 00 00    	je     775a5d <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x43d>
+  7758ee:	49 8b 3f             	mov    (%r15),%rdi
+  7758f1:	b8 90 00 00 00       	mov    $0x90,%eax
+  7758f6:	48 01 c7             	add    %rax,%rdi
+  7758f9:	49 89 ec             	mov    %rbp,%r12
+  7758fc:	49 c1 e4 04          	shl    $0x4,%r12
+  775900:	4a 8b 34 23          	mov    (%rbx,%r12,1),%rsi
+  775904:	e8 67 db ea ff       	call   623470 <ownrt::Arena::row(unsigned long) const>
+  775909:	48 8b 40 40          	mov    0x40(%rax),%rax
+  77590d:	48 89 44 ec 70       	mov    %rax,0x70(%rsp,%rbp,8)
+  775912:	42 8b 44 23 08       	mov    0x8(%rbx,%r12,1),%eax
+  775917:	48 8b 4c 24 50       	mov    0x50(%rsp),%rcx
+  77591c:	48 8b 09             	mov    (%rcx),%rcx
+  77591f:	43 8b 54 27 2c       	mov    0x2c(%r15,%r12,1),%edx
+  775924:	48 c1 e0 0e          	shl    $0xe,%rax
+  775928:	85 d2                	test   %edx,%edx
+  77592a:	74 74                	je     7759a0 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x380>
+  77592c:	83 fa 01             	cmp    $0x1,%edx
+  77592f:	0f 85 db 00 00 00    	jne    775a10 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x3f0>
+  775935:	48 01 c8             	add    %rcx,%rax
+  775938:	48 83 c0 78          	add    $0x78,%rax
+  77593c:	31 c9                	xor    %ecx,%ecx
+  77593e:	66 90                	xchg   %ax,%ax
+  775940:	48 8d 14 48          	lea    (%rax,%rcx,2),%rdx
+  775944:	48 83 c2 90          	add    $0xffffffffffffff90,%rdx
+  775948:	48 8b 32             	mov    (%rdx),%rsi
+  77594b:	48 8b 7a 10          	mov    0x10(%rdx),%rdi
+  77594f:	4d 8d 44 0e c8       	lea    -0x38(%r14,%rcx,1),%r8
+  775954:	49 89 30             	mov    %rsi,(%r8)
+  775957:	49 89 78 08          	mov    %rdi,0x8(%r8)
+  77595b:	48 8b 72 20          	mov    0x20(%rdx),%rsi
+  77595f:	48 8b 7a 30          	mov    0x30(%rdx),%rdi
+  775963:	49 89 70 10          	mov    %rsi,0x10(%r8)
+  775967:	49 89 78 18          	mov    %rdi,0x18(%r8)
+  77596b:	48 8b 72 40          	mov    0x40(%rdx),%rsi
+  77596f:	48 8b 7a 50          	mov    0x50(%rdx),%rdi
+  775973:	49 89 70 20          	mov    %rsi,0x20(%r8)
+  775977:	49 89 78 28          	mov    %rdi,0x28(%r8)
+  77597b:	48 8b 72 60          	mov    0x60(%rdx),%rsi
+  77597f:	48 8b 52 70          	mov    0x70(%rdx),%rdx
+  775983:	49 89 70 30          	mov    %rsi,0x30(%r8)
+  775987:	49 89 50 38          	mov    %rdx,0x38(%r8)
+  77598b:	48 83 c1 40          	add    $0x40,%rcx
+  77598f:	48 81 f9 00 20 00 00 	cmp    $0x2000,%rcx
+  775996:	75 a8                	jne    775940 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x320>
+  775998:	e9 33 ff ff ff       	jmp    7758d0 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x2b0>
+  77599d:	0f 1f 00             	nopl   (%rax)
+  7759a0:	48 01 c8             	add    %rcx,%rax
+  7759a3:	48 83 c0 78          	add    $0x78,%rax
+  7759a7:	31 c9                	xor    %ecx,%ecx
+  7759a9:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+  7759b0:	48 8d 14 48          	lea    (%rax,%rcx,2),%rdx
+  7759b4:	48 83 c2 88          	add    $0xffffffffffffff88,%rdx
+  7759b8:	48 8b 32             	mov    (%rdx),%rsi
+  7759bb:	48 8b 7a 18          	mov    0x18(%rdx),%rdi
+  7759bf:	4d 8d 44 0e c8       	lea    -0x38(%r14,%rcx,1),%r8
+  7759c4:	49 89 30             	mov    %rsi,(%r8)
+  7759c7:	49 89 78 08          	mov    %rdi,0x8(%r8)
+  7759cb:	48 8b 72 20          	mov    0x20(%rdx),%rsi
+  7759cf:	48 8b 7a 38          	mov    0x38(%rdx),%rdi
+  7759d3:	49 89 70 10          	mov    %rsi,0x10(%r8)
+  7759d7:	49 89 78 18          	mov    %rdi,0x18(%r8)
+  7759db:	48 8b 72 40          	mov    0x40(%rdx),%rsi
+  7759df:	48 8b 7a 58          	mov    0x58(%rdx),%rdi
+  7759e3:	49 89 70 20          	mov    %rsi,0x20(%r8)
+  7759e7:	49 89 78 28          	mov    %rdi,0x28(%r8)
+  7759eb:	48 8b 72 60          	mov    0x60(%rdx),%rsi
+  7759ef:	48 8b 52 78          	mov    0x78(%rdx),%rdx
+  7759f3:	49 89 70 30          	mov    %rsi,0x30(%r8)
+  7759f7:	49 89 50 38          	mov    %rdx,0x38(%r8)
+  7759fb:	48 83 c1 40          	add    $0x40,%rcx
+  7759ff:	48 81 f9 00 20 00 00 	cmp    $0x2000,%rcx
+  775a06:	75 a8                	jne    7759b0 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x390>
+  775a08:	e9 c3 fe ff ff       	jmp    7758d0 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x2b0>
+  775a0d:	0f 1f 00             	nopl   (%rax)
+  775a10:	48 01 c8             	add    %rcx,%rax
+  775a13:	48 83 c0 70          	add    $0x70,%rax
+  775a17:	31 c9                	xor    %ecx,%ecx
+  775a19:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+  775a20:	0f 10 44 48 a0       	movups -0x60(%rax,%rcx,2),%xmm0
+  775a25:	41 0f 11 44 0d d0    	movups %xmm0,-0x30(%r13,%rcx,1)
+  775a2b:	0f 10 44 48 c0       	movups -0x40(%rax,%rcx,2),%xmm0
+  775a30:	41 0f 11 44 0d e0    	movups %xmm0,-0x20(%r13,%rcx,1)
+  775a36:	0f 10 44 48 e0       	movups -0x20(%rax,%rcx,2),%xmm0
+  775a3b:	41 0f 11 44 0d f0    	movups %xmm0,-0x10(%r13,%rcx,1)
+  775a41:	0f 10 04 48          	movups (%rax,%rcx,2),%xmm0
+  775a45:	41 0f 11 44 0d 00    	movups %xmm0,0x0(%r13,%rcx,1)
+  775a4b:	48 83 c1 40          	add    $0x40,%rcx
+  775a4f:	48 81 f9 00 20 00 00 	cmp    $0x2000,%rcx
+  775a56:	75 c8                	jne    775a20 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x400>
+  775a58:	e9 73 fe ff ff       	jmp    7758d0 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x2b0>
+  775a5d:	80 7c 24 1c 00       	cmpb   $0x0,0x1c(%rsp)
+  775a62:	0f 84 98 00 00 00    	je     775b00 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x4e0>
+  775a68:	41 c6 87 39 12 00 00 	movb   $0x1,0x1239(%r15)
+  775a6f:	01 
+  775a70:	48 8d bc 24 f8 04 00 	lea    0x4f8(%rsp),%rdi
+  775a77:	00 
+  775a78:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+  775a7d:	ba 80 04 00 00       	mov    $0x480,%edx
+  775a82:	e8 a9 32 03 00       	call   7a8d30 <_intel_fast_memcpy>
+  775a87:	48 c7 84 24 f0 04 00 	movq   $0x8b0538,0x4f0(%rsp)
+  775a8e:	00 38 05 8b 00 
+  775a93:	48 c7 84 24 78 09 00 	movq   $0x400,0x978(%rsp)
+  775a9a:	00 00 04 00 00 
+  775a9f:	48 8b 44 24 58       	mov    0x58(%rsp),%rax
+  775aa4:	48 89 84 24 80 09 00 	mov    %rax,0x980(%rsp)
+  775aab:	00 
+  775aac:	49 8b 3f             	mov    (%r15),%rdi
+  775aaf:	49 8d 97 a8 0d 00 00 	lea    0xda8(%r15),%rdx
+  775ab6:	48 8d b4 24 f0 04 00 	lea    0x4f0(%rsp),%rsi
+  775abd:	00 
+  775abe:	b9 91 00 00 00       	mov    $0x91,%ecx
+  775ac3:	45 31 c0             	xor    %r8d,%r8d
+  775ac6:	45 31 c9             	xor    %r9d,%r9d
+  775ac9:	e8 52 ce ea ff       	call   622920 <ownrt::Device::compute(ownrt::Operation const&, std::span<unsigned long const, 18446744073709551615ul>, std::span<unsigned long const, 18446744073709551615ul>)>
+  775ace:	4c 8b 74 24 48       	mov    0x48(%rsp),%r14
+  775ad3:	49 8b 8f a0 0d 00 00 	mov    0xda0(%r15),%rcx
+  775ada:	48 8d 51 01          	lea    0x1(%rcx),%rdx
+  775ade:	49 89 97 a0 0d 00 00 	mov    %rdx,0xda0(%r15)
+  775ae5:	49 89 84 cf 20 09 00 	mov    %rax,0x920(%r15,%rcx,8)
+  775aec:	00 
+  775aed:	41 c6 87 39 12 00 00 	movb   $0x0,0x1239(%r15)
+  775af4:	00 
+  775af5:	41 bf 01 00 00 00    	mov    $0x1,%r15d
+  775afb:	e9 9f 00 00 00       	jmp    775b9f <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x57f>
+  775b00:	49 8b 37             	mov    (%r15),%rsi
+  775b03:	48 8d bc 24 f0 04 00 	lea    0x4f0(%rsp),%rdi
+  775b0a:	00 
+  775b0b:	ba 00 00 00 08       	mov    $0x8000000,%edx
+  775b10:	b9 02 00 00 00       	mov    $0x2,%ecx
+  775b15:	e8 a6 14 eb ff       	call   626fc0 <ownrt::CopyEngine::CopyEngine(ownrt::Device&, unsigned long, unsigned long)>
+  775b1a:	4c 8b 74 24 48       	mov    0x48(%rsp),%r14
+  775b1f:	45 31 ed             	xor    %r13d,%r13d
+  775b22:	48 8d ac 24 f0 04 00 	lea    0x4f0(%rsp),%rbp
+  775b29:	00 
+  775b2a:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+  775b30:	41 c6 87 39 12 00 00 	movb   $0x1,0x1239(%r15)
+  775b37:	01 
+  775b38:	48 8b 33             	mov    (%rbx),%rsi
+  775b3b:	49 8b 4f 10          	mov    0x10(%r15),%rcx
+  775b3f:	0f 57 c0             	xorps  %xmm0,%xmm0
+  775b42:	0f 29 44 24 20       	movaps %xmm0,0x20(%rsp)
+  775b47:	0f 28 44 24 20       	movaps 0x20(%rsp),%xmm0
+  775b4c:	0f 11 04 24          	movups %xmm0,(%rsp)
+  775b50:	41 b9 00 20 00 00    	mov    $0x2000,%r9d
+  775b56:	48 89 ef             	mov    %rbp,%rdi
+  775b59:	31 d2                	xor    %edx,%edx
+  775b5b:	4d 89 e8             	mov    %r13,%r8
+  775b5e:	e8 cd 14 eb ff       	call   627030 <ownrt::CopyEngine::copy(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, std::span<unsigned long const, 18446744073709551615ul>)>
+  775b63:	49 8b 8f a0 0d 00 00 	mov    0xda0(%r15),%rcx
+  775b6a:	48 8d 51 01          	lea    0x1(%rcx),%rdx
+  775b6e:	49 89 97 a0 0d 00 00 	mov    %rdx,0xda0(%r15)
+  775b75:	49 89 84 cf 20 09 00 	mov    %rax,0x920(%r15,%rcx,8)
+  775b7c:	00 
+  775b7d:	41 c6 87 39 12 00 00 	movb   $0x0,0x1239(%r15)
+  775b84:	00 
+  775b85:	49 81 c5 00 20 00 00 	add    $0x2000,%r13
+  775b8c:	48 83 c3 10          	add    $0x10,%rbx
+  775b90:	49 81 fd 00 00 12 00 	cmp    $0x120000,%r13
+  775b97:	75 97                	jne    775b30 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x510>
+  775b99:	41 bf 90 00 00 00    	mov    $0x90,%r15d
+  775b9f:	49 89 86 80 0e 00 00 	mov    %rax,0xe80(%r14)
+  775ba6:	4d 8b 6e 58          	mov    0x58(%r14),%r13
+  775baa:	41 80 bd 39 12 00 00 	cmpb   $0x0,0x1239(%r13)
+  775bb1:	00 
+  775bb2:	0f 85 66 04 00 00    	jne    77601e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x9fe>
+  775bb8:	49 63 86 3c 07 00 00 	movslq 0x73c(%r14),%rax
+  775bbf:	48 69 f0 e8 03 00 00 	imul   $0x3e8,%rax,%rsi
+  775bc6:	4c 89 ef             	mov    %r13,%rdi
+  775bc9:	e8 22 36 00 00       	call   7791f0 <p214::Publisher::wait_known(std::chrono::duration<long, std::ratio<1l, 1000l> >)>
+  775bce:	49 8b 7d 00          	mov    0x0(%r13),%rdi
+  775bd2:	e8 49 97 ea ff       	call   61f320 <ownrt::Device::in_flight()>
+  775bd7:	48 85 c0             	test   %rax,%rax
+  775bda:	0f 85 5a 04 00 00    	jne    77603a <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xa1a>
+  775be0:	49 c7 85 a0 0d 00 00 	movq   $0x0,0xda0(%r13)
+  775be7:	00 00 00 00 
+  775beb:	4c 89 f7             	mov    %r14,%rdi
+  775bee:	e8 0d 3e f9 ff       	call   709a00 <Engine::drain()>
+  775bf3:	f3 41 0f 6f 86 50 03 	movdqu 0x350(%r14),%xmm0
+  775bfa:	00 00 
+  775bfc:	66 41 0f 6e cf       	movd   %r15d,%xmm1
+  775c01:	66 0f c6 0d 46 22 04 	shufpd $0x2,0x42246(%rip),%xmm1        # 7b7e50 <_IO_stdin_used+0xe50>
+  775c08:	00 02 
+  775c0a:	66 0f d4 c8          	paddq  %xmm0,%xmm1
+  775c0e:	f3 41 0f 7f 8e 50 03 	movdqu %xmm1,0x350(%r14)
+  775c15:	00 00 
+  775c17:	e8 84 41 c9 ff       	call   409da0 <std::chrono::_V2::steady_clock::now()@plt>
+  775c1c:	48 2b 44 24 68       	sub    0x68(%rsp),%rax
+  775c21:	0f 57 c0             	xorps  %xmm0,%xmm0
+  775c24:	f2 48 0f 2a c0       	cvtsi2sd %rax,%xmm0
+  775c29:	f2 0f 5e 05 9f 6d 0f 	divsd  0xf6d9f(%rip),%xmm0        # 86c9d0 <typeinfo name for ownrt::BoundSyclSubmission<packet26::p25bridge::Kernel<(iq3::Type)20, (p25::C)4>::submit(sycl::_V1::queue&, std::span<void* const, 18446744073709551615ul>, std::vector<sycl::_V1::event, std::allocator<sycl::_V1::event> > const&) const::{lambda(sycl::_V1::handler&)#1}>::make_callback(ownrt::NativeIssueState) const::{lambda()#1}+0x120>
+  775c30:	00 
+  775c31:	f2 41 0f 58 86 60 03 	addsd  0x360(%r14),%xmm0
+  775c38:	00 00 
+  775c3a:	f2 41 0f 11 86 60 03 	movsd  %xmm0,0x360(%r14)
+  775c41:	00 00 
+  775c43:	48 8d 6c 24 30       	lea    0x30(%rsp),%rbp
+  775c48:	bf 17 00 00 00       	mov    $0x17,%edi
+  775c4d:	e8 8e 35 c9 ff       	call   4091e0 <operator new(unsigned long)@plt>
+  775c52:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+  775c57:	48 c7 44 24 30 16 00 	movq   $0x16,0x30(%rsp)
+  775c5e:	00 00 
+  775c60:	0f 10 05 98 8e 06 00 	movups 0x68e98(%rip),%xmm0        # 7deaff <.sycl_offloading.opts.link.0+0x4bd4>
+  775c67:	0f 11 00             	movups %xmm0,(%rax)
+  775c6a:	48 b9 6f 6e 2e 6a 73 	movabs $0x6c6e6f736a2e6e6f,%rcx
+  775c71:	6f 6e 6c 
+  775c74:	48 89 48 0e          	mov    %rcx,0xe(%rax)
+  775c78:	48 c7 44 24 28 16 00 	movq   $0x16,0x28(%rsp)
+  775c7f:	00 00 
+  775c81:	c6 40 16 00          	movb   $0x0,0x16(%rax)
+  775c85:	4c 8d 64 24 40       	lea    0x40(%rsp),%r12
+  775c8a:	4c 89 e7             	mov    %r12,%rdi
+  775c8d:	e8 ce 34 c9 ff       	call   409160 <std::filesystem::__cxx11::path::_List::_List()@plt>
+  775c92:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  775c97:	e8 64 40 c9 ff       	call   409d00 <std::filesystem::__cxx11::path::_M_split_cmpts()@plt>
+  775c9c:	49 81 c6 a8 07 00 00 	add    $0x7a8,%r14
+  775ca3:	48 8d 7c 24 70       	lea    0x70(%rsp),%rdi
+  775ca8:	4c 89 f6             	mov    %r14,%rsi
+  775cab:	e8 70 cd eb ff       	call   632a20 <std::filesystem::__cxx11::path::path(std::filesystem::__cxx11::path const&)>
+  775cb0:	48 8d 7c 24 70       	lea    0x70(%rsp),%rdi
+  775cb5:	48 8d 74 24 20       	lea    0x20(%rsp),%rsi
+  775cba:	e8 91 37 c9 ff       	call   409450 <std::filesystem::__cxx11::path::operator/=(std::filesystem::__cxx11::path const&)@plt>
+  775cbf:	48 8b 74 24 70       	mov    0x70(%rsp),%rsi
+  775cc4:	48 8d bc 24 f0 04 00 	lea    0x4f0(%rsp),%rdi
+  775ccb:	00 
+  775ccc:	ba 01 00 00 00       	mov    $0x1,%edx
+  775cd1:	e8 8a 37 c9 ff       	call   409460 <std::basic_ofstream<char, std::char_traits<char> >::basic_ofstream(char const*, std::_Ios_Openmode)@plt>
+  775cd6:	4c 8d b4 24 90 00 00 	lea    0x90(%rsp),%r14
+  775cdd:	00 
+  775cde:	48 8b b4 24 90 00 00 	mov    0x90(%rsp),%rsi
+  775ce5:	00 
+  775ce6:	48 85 f6             	test   %rsi,%rsi
+  775ce9:	74 08                	je     775cf3 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x6d3>
+  775ceb:	4c 89 f7             	mov    %r14,%rdi
+  775cee:	e8 3d 34 c9 ff       	call   409130 <std::filesystem::__cxx11::path::_List::_Impl_deleter::operator()(std::filesystem::__cxx11::path::_List::_Impl*) const@plt>
+  775cf3:	49 c7 06 00 00 00 00 	movq   $0x0,(%r14)
+  775cfa:	48 8b 7c 24 70       	mov    0x70(%rsp),%rdi
+  775cff:	4c 8d ac 24 80 00 00 	lea    0x80(%rsp),%r13
+  775d06:	00 
+  775d07:	4c 39 ef             	cmp    %r13,%rdi
+  775d0a:	74 10                	je     775d1c <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x6fc>
+  775d0c:	48 8b b4 24 80 00 00 	mov    0x80(%rsp),%rsi
+  775d13:	00 
+  775d14:	48 ff c6             	inc    %rsi
+  775d17:	e8 64 34 c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  775d1c:	48 8b 74 24 40       	mov    0x40(%rsp),%rsi
+  775d21:	48 85 f6             	test   %rsi,%rsi
+  775d24:	74 08                	je     775d2e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x70e>
+  775d26:	4c 89 e7             	mov    %r12,%rdi
+  775d29:	e8 02 34 c9 ff       	call   409130 <std::filesystem::__cxx11::path::_List::_Impl_deleter::operator()(std::filesystem::__cxx11::path::_List::_Impl*) const@plt>
+  775d2e:	48 c7 44 24 40 00 00 	movq   $0x0,0x40(%rsp)
+  775d35:	00 00 
+  775d37:	48 8b 7c 24 20       	mov    0x20(%rsp),%rdi
+  775d3c:	48 39 ef             	cmp    %rbp,%rdi
+  775d3f:	74 0d                	je     775d4e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x72e>
+  775d41:	48 8b 74 24 30       	mov    0x30(%rsp),%rsi
+  775d46:	48 ff c6             	inc    %rsi
+  775d49:	e8 32 34 c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  775d4e:	48 8b 84 24 f0 04 00 	mov    0x4f0(%rsp),%rax
+  775d55:	00 
+  775d56:	48 8b 40 e8          	mov    -0x18(%rax),%rax
+  775d5a:	8b 9c 04 10 05 00 00 	mov    0x510(%rsp,%rax,1),%ebx
+  775d61:	bf 1f 00 00 00       	mov    $0x1f,%edi
+  775d66:	e8 75 34 c9 ff       	call   4091e0 <operator new(unsigned long)@plt>
+  775d6b:	48 89 44 24 70       	mov    %rax,0x70(%rsp)
+  775d70:	48 c7 84 24 80 00 00 	movq   $0x1e,0x80(%rsp)
+  775d77:	00 1e 00 00 00 
+  775d7c:	0f 10 05 a1 8d 06 00 	movups 0x68da1(%rip),%xmm0        # 7deb24 <.sycl_offloading.opts.link.0+0x4bf9>
+  775d83:	0f 11 40 0e          	movups %xmm0,0xe(%rax)
+  775d87:	0f 10 05 88 8d 06 00 	movups 0x68d88(%rip),%xmm0        # 7deb16 <.sycl_offloading.opts.link.0+0x4beb>
+  775d8e:	0f 11 00             	movups %xmm0,(%rax)
+  775d91:	48 c7 44 24 78 1e 00 	movq   $0x1e,0x78(%rsp)
+  775d98:	00 00 
+  775d9a:	c6 40 1e 00          	movb   $0x0,0x1e(%rax)
+  775d9e:	f6 c3 05             	test   $0x5,%bl
+  775da1:	0f 85 bf 02 00 00    	jne    776066 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xa46>
+  775da7:	48 8b 7c 24 70       	mov    0x70(%rsp),%rdi
+  775dac:	4c 39 ef             	cmp    %r13,%rdi
+  775daf:	74 10                	je     775dc1 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x7a1>
+  775db1:	48 8b b4 24 80 00 00 	mov    0x80(%rsp),%rsi
+  775db8:	00 
+  775db9:	48 ff c6             	inc    %rsi
+  775dbc:	e8 bf 33 c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  775dc1:	48 8d bc 24 f0 04 00 	lea    0x4f0(%rsp),%rdi
+  775dc8:	00 
+  775dc9:	be 35 eb 7d 00       	mov    $0x7deb35,%esi
+  775dce:	ba 08 00 00 00       	mov    $0x8,%edx
+  775dd3:	e8 78 40 c9 ff       	call   409e50 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+  775dd8:	48 8d 7c 24 70       	lea    0x70(%rsp),%rdi
+  775ddd:	48 8b 74 24 60       	mov    0x60(%rsp),%rsi
+  775de2:	e8 c9 96 ea ff       	call   61f4b0 <ownrt::quote(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>
+  775de7:	48 8b 74 24 70       	mov    0x70(%rsp),%rsi
+  775dec:	48 8b 54 24 78       	mov    0x78(%rsp),%rdx
+  775df1:	48 8d bc 24 f0 04 00 	lea    0x4f0(%rsp),%rdi
+  775df8:	00 
+  775df9:	e8 52 40 c9 ff       	call   409e50 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+  775dfe:	48 89 c3             	mov    %rax,%rbx
+  775e01:	be 3e eb 7d 00       	mov    $0x7deb3e,%esi
+  775e06:	ba 3b 00 00 00       	mov    $0x3b,%edx
+  775e0b:	48 89 c7             	mov    %rax,%rdi
+  775e0e:	e8 3d 40 c9 ff       	call   409e50 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+  775e13:	48 89 df             	mov    %rbx,%rdi
+  775e16:	4c 89 fe             	mov    %r15,%rsi
+  775e19:	e8 d2 38 c9 ff       	call   4096f0 <std::ostream& std::ostream::_M_insert<unsigned long>(unsigned long)@plt>
+  775e1e:	48 89 c3             	mov    %rax,%rbx
+  775e21:	be 22 17 7e 00       	mov    $0x7e1722,%esi
+  775e26:	ba 09 00 00 00       	mov    $0x9,%edx
+  775e2b:	48 89 c7             	mov    %rax,%rdi
+  775e2e:	e8 1d 40 c9 ff       	call   409e50 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+  775e33:	be 00 00 12 00       	mov    $0x120000,%esi
+  775e38:	48 89 df             	mov    %rbx,%rdi
+  775e3b:	e8 b0 38 c9 ff       	call   4096f0 <std::ostream& std::ostream::_M_insert<unsigned long>(unsigned long)@plt>
+  775e40:	be 7a eb 7d 00       	mov    $0x7deb7a,%esi
+  775e45:	ba 13 00 00 00       	mov    $0x13,%edx
+  775e4a:	48 89 c7             	mov    %rax,%rdi
+  775e4d:	e8 fe 3f c9 ff       	call   409e50 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+  775e52:	48 8b 7c 24 70       	mov    0x70(%rsp),%rdi
+  775e57:	4c 39 ef             	cmp    %r13,%rdi
+  775e5a:	74 10                	je     775e6c <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x84c>
+  775e5c:	48 8b b4 24 80 00 00 	mov    0x80(%rsp),%rsi
+  775e63:	00 
+  775e64:	48 ff c6             	inc    %rsi
+  775e67:	e8 14 33 c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  775e6c:	48 8d bc 24 f0 04 00 	lea    0x4f0(%rsp),%rdi
+  775e73:	00 
+  775e74:	e8 57 38 c9 ff       	call   4096d0 <std::ostream::flush()@plt>
+  775e79:	48 8b 84 24 f0 04 00 	mov    0x4f0(%rsp),%rax
+  775e80:	00 
+  775e81:	48 8b 40 e8          	mov    -0x18(%rax),%rax
+  775e85:	8b 9c 04 10 05 00 00 	mov    0x510(%rsp,%rax,1),%ebx
+  775e8c:	bf 20 00 00 00       	mov    $0x20,%edi
+  775e91:	e8 4a 33 c9 ff       	call   4091e0 <operator new(unsigned long)@plt>
+  775e96:	48 89 44 24 70       	mov    %rax,0x70(%rsp)
+  775e9b:	48 c7 84 24 80 00 00 	movq   $0x1f,0x80(%rsp)
+  775ea2:	00 1f 00 00 00 
+  775ea7:	0f 10 05 ef 8c 06 00 	movups 0x68cef(%rip),%xmm0        # 7deb9d <.sycl_offloading.opts.link.0+0x4c72>
+  775eae:	0f 11 40 0f          	movups %xmm0,0xf(%rax)
+  775eb2:	0f 10 05 d5 8c 06 00 	movups 0x68cd5(%rip),%xmm0        # 7deb8e <.sycl_offloading.opts.link.0+0x4c63>
+  775eb9:	0f 11 00             	movups %xmm0,(%rax)
+  775ebc:	48 c7 44 24 78 1f 00 	movq   $0x1f,0x78(%rsp)
+  775ec3:	00 00 
+  775ec5:	c6 40 1f 00          	movb   $0x0,0x1f(%rax)
+  775ec9:	f6 c3 05             	test   $0x5,%bl
+  775ecc:	0f 85 c0 01 00 00    	jne    776092 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xa72>
+  775ed2:	48 8b 7c 24 70       	mov    0x70(%rsp),%rdi
+  775ed7:	4c 39 ef             	cmp    %r13,%rdi
+  775eda:	74 10                	je     775eec <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x8cc>
+  775edc:	48 8b b4 24 80 00 00 	mov    0x80(%rsp),%rsi
+  775ee3:	00 
+  775ee4:	48 ff c6             	inc    %rsi
+  775ee7:	e8 94 32 c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  775eec:	48 8d bc 24 f0 04 00 	lea    0x4f0(%rsp),%rdi
+  775ef3:	00 
+  775ef4:	e8 f7 3b c9 ff       	call   409af0 <std::basic_ofstream<char, std::char_traits<char> >::~basic_ofstream()@plt>
+  775ef9:	48 81 c4 88 09 00 00 	add    $0x988,%rsp
+  775f00:	5b                   	pop    %rbx
+  775f01:	41 5c                	pop    %r12
+  775f03:	41 5d                	pop    %r13
+  775f05:	41 5e                	pop    %r14
+  775f07:	41 5f                	pop    %r15
+  775f09:	5d                   	pop    %rbp
+  775f0a:	c3                   	ret
+  775f0b:	bf 10 00 00 00       	mov    $0x10,%edi
+  775f10:	e8 6b 36 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  775f15:	48 89 c3             	mov    %rax,%rbx
+  775f18:	be 36 ec 7d 00       	mov    $0x7dec36,%esi
+  775f1d:	48 89 c7             	mov    %rax,%rdi
+  775f20:	e8 0b 33 c9 ff       	call   409230 <std::invalid_argument::invalid_argument(char const*)@plt>
+  775f25:	be 90 60 e9 00       	mov    $0xe96090,%esi
+  775f2a:	ba c0 94 40 00       	mov    $0x4094c0,%edx
+  775f2f:	48 89 df             	mov    %rbx,%rdi
+  775f32:	e8 99 39 c9 ff       	call   4098d0 <__cxa_throw@plt>
+  775f37:	bf 10 00 00 00       	mov    $0x10,%edi
+  775f3c:	e8 3f 36 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  775f41:	48 89 c3             	mov    %rax,%rbx
+  775f44:	be ae eb 7d 00       	mov    $0x7debae,%esi
+  775f49:	48 89 c7             	mov    %rax,%rdi
+  775f4c:	e8 df 32 c9 ff       	call   409230 <std::invalid_argument::invalid_argument(char const*)@plt>
+  775f51:	be 90 60 e9 00       	mov    $0xe96090,%esi
+  775f56:	ba c0 94 40 00       	mov    $0x4094c0,%edx
+  775f5b:	48 89 df             	mov    %rbx,%rdi
+  775f5e:	e8 6d 39 c9 ff       	call   4098d0 <__cxa_throw@plt>
+  775f63:	bf 10 00 00 00       	mov    $0x10,%edi
+  775f68:	e8 13 36 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  775f6d:	49 89 c6             	mov    %rax,%r14
+  775f70:	48 8d b4 24 f0 04 00 	lea    0x4f0(%rsp),%rsi
+  775f77:	00 
+  775f78:	48 89 c7             	mov    %rax,%rdi
+  775f7b:	e8 50 34 c9 ff       	call   4093d0 <std::runtime_error::runtime_error(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>
+  775f80:	be 10 62 e9 00       	mov    $0xe96210,%esi
+  775f85:	ba 00 9c 40 00       	mov    $0x409c00,%edx
+  775f8a:	4c 89 f7             	mov    %r14,%rdi
+  775f8d:	e8 3e 39 c9 ff       	call   4098d0 <__cxa_throw@plt>
+  775f92:	bf 10 00 00 00       	mov    $0x10,%edi
+  775f97:	e8 e4 35 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  775f9c:	49 89 c6             	mov    %rax,%r14
+  775f9f:	48 8d b4 24 f0 04 00 	lea    0x4f0(%rsp),%rsi
+  775fa6:	00 
+  775fa7:	48 89 c7             	mov    %rax,%rdi
+  775faa:	e8 21 34 c9 ff       	call   4093d0 <std::runtime_error::runtime_error(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>
+  775faf:	be 10 62 e9 00       	mov    $0xe96210,%esi
+  775fb4:	ba 00 9c 40 00       	mov    $0x409c00,%edx
+  775fb9:	4c 89 f7             	mov    %r14,%rdi
+  775fbc:	e8 0f 39 c9 ff       	call   4098d0 <__cxa_throw@plt>
+  775fc1:	bf 10 00 00 00       	mov    $0x10,%edi
+  775fc6:	e8 b5 35 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  775fcb:	48 89 c3             	mov    %rax,%rbx
+  775fce:	be cb eb 7d 00       	mov    $0x7debcb,%esi
+  775fd3:	48 89 c7             	mov    %rax,%rdi
+  775fd6:	e8 55 32 c9 ff       	call   409230 <std::invalid_argument::invalid_argument(char const*)@plt>
+  775fdb:	e9 71 ff ff ff       	jmp    775f51 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x931>
+  775fe0:	bf 10 00 00 00       	mov    $0x10,%edi
+  775fe5:	e8 96 35 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  775fea:	48 89 c3             	mov    %rax,%rbx
+  775fed:	be f4 eb 7d 00       	mov    $0x7debf4,%esi
+  775ff2:	48 89 c7             	mov    %rax,%rdi
+  775ff5:	e8 36 32 c9 ff       	call   409230 <std::invalid_argument::invalid_argument(char const*)@plt>
+  775ffa:	e9 52 ff ff ff       	jmp    775f51 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x931>
+  775fff:	bf 10 00 00 00       	mov    $0x10,%edi
+  776004:	e8 77 35 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  776009:	48 89 c3             	mov    %rax,%rbx
+  77600c:	be 15 ec 7d 00       	mov    $0x7dec15,%esi
+  776011:	48 89 c7             	mov    %rax,%rdi
+  776014:	e8 17 32 c9 ff       	call   409230 <std::invalid_argument::invalid_argument(char const*)@plt>
+  776019:	e9 33 ff ff ff       	jmp    775f51 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0x931>
+  77601e:	bf 10 00 00 00       	mov    $0x10,%edi
+  776023:	e8 58 35 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  776028:	48 89 c3             	mov    %rax,%rbx
+  77602b:	be ab ee 7d 00       	mov    $0x7deeab,%esi
+  776030:	48 89 c7             	mov    %rax,%rdi
+  776033:	e8 f8 31 c9 ff       	call   409230 <std::invalid_argument::invalid_argument(char const*)@plt>
+  776038:	eb 1a                	jmp    776054 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xa34>
+  77603a:	bf 10 00 00 00       	mov    $0x10,%edi
+  77603f:	e8 3c 35 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  776044:	48 89 c3             	mov    %rax,%rbx
+  776047:	be e3 ee 7d 00       	mov    $0x7deee3,%esi
+  77604c:	48 89 c7             	mov    %rax,%rdi
+  77604f:	e8 dc 31 c9 ff       	call   409230 <std::invalid_argument::invalid_argument(char const*)@plt>
+  776054:	be 90 60 e9 00       	mov    $0xe96090,%esi
+  776059:	ba c0 94 40 00       	mov    $0x4094c0,%edx
+  77605e:	48 89 df             	mov    %rbx,%rdi
+  776061:	e8 6a 38 c9 ff       	call   4098d0 <__cxa_throw@plt>
+  776066:	bf 10 00 00 00       	mov    $0x10,%edi
+  77606b:	e8 10 35 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  776070:	49 89 c6             	mov    %rax,%r14
+  776073:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+  776078:	48 89 c7             	mov    %rax,%rdi
+  77607b:	e8 50 33 c9 ff       	call   4093d0 <std::runtime_error::runtime_error(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>
+  776080:	be 10 62 e9 00       	mov    $0xe96210,%esi
+  776085:	ba 00 9c 40 00       	mov    $0x409c00,%edx
+  77608a:	4c 89 f7             	mov    %r14,%rdi
+  77608d:	e8 3e 38 c9 ff       	call   4098d0 <__cxa_throw@plt>
+  776092:	bf 10 00 00 00       	mov    $0x10,%edi
+  776097:	e8 e4 34 c9 ff       	call   409580 <__cxa_allocate_exception@plt>
+  77609c:	49 89 c6             	mov    %rax,%r14
+  77609f:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+  7760a4:	48 89 c7             	mov    %rax,%rdi
+  7760a7:	e8 24 33 c9 ff       	call   4093d0 <std::runtime_error::runtime_error(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>
+  7760ac:	be 10 62 e9 00       	mov    $0xe96210,%esi
+  7760b1:	ba 00 9c 40 00       	mov    $0x409c00,%edx
+  7760b6:	4c 89 f7             	mov    %r14,%rdi
+  7760b9:	e8 12 38 c9 ff       	call   4098d0 <__cxa_throw@plt>
+  7760be:	bf 02 c6 7c 00       	mov    $0x7cc602,%edi
+  7760c3:	31 f6                	xor    %esi,%esi
+  7760c5:	31 d2                	xor    %edx,%edx
+  7760c7:	31 c0                	xor    %eax,%eax
+  7760c9:	e8 a2 2f c9 ff       	call   409070 <std::__throw_out_of_range_fmt(char const*, ...)@plt>
+  7760ce:	e9 45 01 00 00       	jmp    776218 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xbf8>
+  7760d3:	eb 05                	jmp    7760da <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xaba>
+  7760d5:	e9 3e 01 00 00       	jmp    776218 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xbf8>
+  7760da:	48 89 c3             	mov    %rax,%rbx
+  7760dd:	4c 89 f7             	mov    %r14,%rdi
+  7760e0:	e8 ab 3b c9 ff       	call   409c90 <__cxa_free_exception@plt>
+  7760e5:	e9 31 01 00 00       	jmp    77621b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xbfb>
+  7760ea:	eb 00                	jmp    7760ec <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xacc>
+  7760ec:	49 89 c6             	mov    %rax,%r14
+  7760ef:	48 89 df             	mov    %rbx,%rdi
+  7760f2:	e8 99 3b c9 ff       	call   409c90 <__cxa_free_exception@plt>
+  7760f7:	e9 eb 00 00 00       	jmp    7761e7 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xbc7>
+  7760fc:	e9 4d 01 00 00       	jmp    77624e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc2e>
+  776101:	e9 48 01 00 00       	jmp    77624e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc2e>
+  776106:	e9 48 01 00 00       	jmp    776253 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc33>
+  77610b:	e9 43 01 00 00       	jmp    776253 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc33>
+  776110:	e9 3e 01 00 00       	jmp    776253 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc33>
+  776115:	eb 02                	jmp    776119 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xaf9>
+  776117:	eb 05                	jmp    77611e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xafe>
+  776119:	48 89 c3             	mov    %rax,%rbx
+  77611c:	eb 0b                	jmp    776129 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xb09>
+  77611e:	48 89 c3             	mov    %rax,%rbx
+  776121:	4c 89 f7             	mov    %r14,%rdi
+  776124:	e8 67 3b c9 ff       	call   409c90 <__cxa_free_exception@plt>
+  776129:	48 8b bc 24 f0 04 00 	mov    0x4f0(%rsp),%rdi
+  776130:	00 
+  776131:	4c 39 ff             	cmp    %r15,%rdi
+  776134:	0f 84 41 01 00 00    	je     77627b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc5b>
+  77613a:	48 8b b4 24 00 05 00 	mov    0x500(%rsp),%rsi
+  776141:	00 
+  776142:	eb 74                	jmp    7761b8 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xb98>
+  776144:	48 89 c3             	mov    %rax,%rbx
+  776147:	e9 e9 00 00 00       	jmp    776235 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc15>
+  77614c:	48 89 c3             	mov    %rax,%rbx
+  77614f:	e9 e1 00 00 00       	jmp    776235 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc15>
+  776154:	48 89 c3             	mov    %rax,%rbx
+  776157:	e9 d9 00 00 00       	jmp    776235 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc15>
+  77615c:	eb 00                	jmp    77615e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xb3e>
+  77615e:	48 89 c3             	mov    %rax,%rbx
+  776161:	48 8d 7c 24 70       	lea    0x70(%rsp),%rdi
+  776166:	e8 e5 2e ce ff       	call   459050 <std::filesystem::__cxx11::path::~path()>
+  77616b:	eb 03                	jmp    776170 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xb50>
+  77616d:	48 89 c3             	mov    %rax,%rbx
+  776170:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  776175:	e8 d6 2e ce ff       	call   459050 <std::filesystem::__cxx11::path::~path()>
+  77617a:	48 89 df             	mov    %rbx,%rdi
+  77617d:	e8 9e 37 c9 ff       	call   409920 <_Unwind_Resume@plt>
+  776182:	48 89 c3             	mov    %rax,%rbx
+  776185:	48 8b 74 24 40       	mov    0x40(%rsp),%rsi
+  77618a:	48 85 f6             	test   %rsi,%rsi
+  77618d:	74 08                	je     776197 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xb77>
+  77618f:	4c 89 e7             	mov    %r12,%rdi
+  776192:	e8 99 2f c9 ff       	call   409130 <std::filesystem::__cxx11::path::_List::_Impl_deleter::operator()(std::filesystem::__cxx11::path::_List::_Impl*) const@plt>
+  776197:	48 c7 44 24 40 00 00 	movq   $0x0,0x40(%rsp)
+  77619e:	00 00 
+  7761a0:	eb 03                	jmp    7761a5 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xb85>
+  7761a2:	48 89 c3             	mov    %rax,%rbx
+  7761a5:	48 8b 7c 24 20       	mov    0x20(%rsp),%rdi
+  7761aa:	48 39 ef             	cmp    %rbp,%rdi
+  7761ad:	0f 84 c8 00 00 00    	je     77627b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc5b>
+  7761b3:	48 8b 74 24 30       	mov    0x30(%rsp),%rsi
+  7761b8:	48 ff c6             	inc    %rsi
+  7761bb:	e8 c0 2f c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  7761c0:	48 89 df             	mov    %rbx,%rdi
+  7761c3:	e8 58 37 c9 ff       	call   409920 <_Unwind_Resume@plt>
+  7761c8:	e9 81 00 00 00       	jmp    77624e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc2e>
+  7761cd:	48 89 c7             	mov    %rax,%rdi
+  7761d0:	e8 4b 37 c9 ff       	call   409920 <_Unwind_Resume@plt>
+  7761d5:	48 89 c7             	mov    %rax,%rdi
+  7761d8:	e8 43 37 c9 ff       	call   409920 <_Unwind_Resume@plt>
+  7761dd:	48 89 c3             	mov    %rax,%rbx
+  7761e0:	eb 53                	jmp    776235 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc15>
+  7761e2:	eb 6f                	jmp    776253 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc33>
+  7761e4:	49 89 c6             	mov    %rax,%r14
+  7761e7:	4c 89 f7             	mov    %r14,%rdi
+  7761ea:	e8 c1 2e c9 ff       	call   4090b0 <__cxa_begin_catch@plt>
+  7761ef:	41 c6 85 39 12 00 00 	movb   $0x1,0x1239(%r13)
+  7761f6:	01 
+  7761f7:	4c 89 ef             	mov    %r13,%rdi
+  7761fa:	e8 61 27 00 00       	call   778960 <p214::Publisher::poison()>
+  7761ff:	e8 1c 39 c9 ff       	call   409b20 <__cxa_rethrow@plt>
+  776204:	48 89 c3             	mov    %rax,%rbx
+  776207:	e8 d4 38 c9 ff       	call   409ae0 <__cxa_end_catch@plt>
+  77620c:	eb 6d                	jmp    77627b <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc5b>
+  77620e:	48 89 c7             	mov    %rax,%rdi
+  776211:	e8 ba df c9 ff       	call   4141d0 <__clang_call_terminate>
+  776216:	eb 36                	jmp    77624e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc2e>
+  776218:	48 89 c3             	mov    %rax,%rbx
+  77621b:	48 8b 7c 24 70       	mov    0x70(%rsp),%rdi
+  776220:	4c 39 ef             	cmp    %r13,%rdi
+  776223:	74 10                	je     776235 <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc15>
+  776225:	48 8b b4 24 80 00 00 	mov    0x80(%rsp),%rsi
+  77622c:	00 
+  77622d:	48 ff c6             	inc    %rsi
+  776230:	e8 4b 2f c9 ff       	call   409180 <operator delete(void*, unsigned long)@plt>
+  776235:	48 8d bc 24 f0 04 00 	lea    0x4f0(%rsp),%rdi
+  77623c:	00 
+  77623d:	e8 ae 38 c9 ff       	call   409af0 <std::basic_ofstream<char, std::char_traits<char> >::~basic_ofstream()@plt>
+  776242:	48 89 df             	mov    %rbx,%rdi
+  776245:	e8 d6 36 c9 ff       	call   409920 <_Unwind_Resume@plt>
+  77624a:	eb 02                	jmp    77624e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc2e>
+  77624c:	eb 00                	jmp    77624e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc2e>
+  77624e:	49 89 c6             	mov    %rax,%r14
+  776251:	eb 0b                	jmp    77625e <Engine::publish_cache_table(std::vector<p58::Entry, std::allocator<p58::Entry> > const&)+0xc3e>
+  776253:	49 89 c6             	mov    %rax,%r14
+  776256:	48 89 df             	mov    %rbx,%rdi
+  776259:	e8 32 3a c9 ff       	call   409c90 <__cxa_free_exception@plt>
+  77625e:	4c 89 f7             	mov    %r14,%rdi
+  776261:	e8 4a 2e c9 ff       	call   4090b0 <__cxa_begin_catch@plt>
+  776266:	4c 89 ff             	mov    %r15,%rdi
+  776269:	e8 f2 26 00 00       	call   778960 <p214::Publisher::poison()>
+  77626e:	e8 ad 38 c9 ff       	call   409b20 <__cxa_rethrow@plt>
+  776273:	48 89 c3             	mov    %rax,%rbx
+  776276:	e8 65 38 c9 ff       	call   409ae0 <__cxa_end_catch@plt>
+  77627b:	48 89 df             	mov    %rbx,%rdi
+  77627e:	e8 9d 36 c9 ff       	call   409920 <_Unwind_Resume@plt>
+  776283:	48 89 c7             	mov    %rax,%rdi
+  776286:	e8 45 df c9 ff       	call   4141d0 <__clang_call_terminate>
