@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**October 24, 05:52 EDT — four-card host: coverage refused before device initialization.**
+Both ranks rejected native startup max-new512 (native bootstrap bound128), exited
+in2.06seconds, target descriptors empty, fault/vision baseline unchanged. No model
+request ran. Preserve this failed launch unchanged. Inspect the independent native
+request protocol's actual cap before a separately reviewed additive correction;
+no restart loop or native guard relaxation. Qualified expert engine result remains.
+[Incident](experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/evidence/device-a/incident-review.json).
+
+
+**October 24, 05:49 EDT — four-card host: broader sequence/context screen running.**
+Six preregistered requests on the qualified973489 engine, no rebuild:87/512/2084
+input tokens, caps512/512/128, each target/MTP with fullRESET. Exact128-token
+original prefix plus full pair tokens/state required; task quality separately
+recorded. Orders2target-first/1MTP-first, no warmups or aggregate speed claim.
+Same fullBF16KV/context4096. IQ4_NL direct-global candidate remains source-only.
+[Coverage scope](experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/README.md).
+
+
 **October 24, 05:41 EDT — four-card host: exact engine retained; broader coverage next.**
 All54 closed target-state bundles are verified in2.32GB lossless archives; USB6.26GB
 and root27.25GB free. Target cards empty, vision unchanged. Preparing a six-request

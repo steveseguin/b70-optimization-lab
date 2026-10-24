@@ -1,0 +1,21 @@
+# Broader coverage on the qualified SC117 Engine
+
+This is a preregistered six-request source preparation, not a completed result or a new build. Binary `97348925…` and its BF16 state/KV, full-vocabulary head, official draft, normal speculative verification and two-rank split24/24 remain unchanged. Root owns fresh admission and a single persistent owner pair; no reload/restart chain is implemented.
+
+| Case | Input identity | Output cap | Order | Output authority |
+| --- | --- | ---: | --- | --- |
+| prompt00-extended | Original87-token incident-retrospective chat, thinking disabled |512|target then MTP|At least128 outputs required; first128 exactly match the existing qualified SC117 baseline. Later outputs have no old oracle.|
+| historical-reading512 | Exact historical512-token raw real-document prefix, no chat wrapper or special tokens added |512|MTP then target|Same-target token/state comparison only; continuation coherence needs readback, not a reading-answer claim.|
+| document-facts | Fixed2084-token chat; supplied document facts start around input offsets60,1048,2037 |128|target then MTP|Same-target token/state comparison and preregistered exact JSON facts; no independent full-model oracle.|
+
+The two target-first pairs and one MTP-first pair are explicitly unbalanced. There are no excluded warmup requests in this six-request plan. The first request may encounter JIT/initialization effects. Every request begins with full RESET and zero reused prompt/KV state; weight residency and hardware/host caches are not claimed cold. No throughput aggregate or speed promotion is planned.
+
+The CPU preparation verifies the pinned local official tokenizer's entire vocabulary (including GGUF padding) and merges against target GGUF metadata. It uses the exact target GGUF chat template and confirms the original prompt00 text/IDs and historical512 prefix IDs. The raw reading prefix is not silently converted to chat. The new document, expected facts, positions, prompts and caps are fixed in `manifest.json` before inference; no post-result prompt tuning is allowed. Only small tokenizer metadata was read, never model tensors.
+
+Each arm retains every token, all timing and rank traces, full decoded text with special-token spelling, full target-state hashes and a bundle capture. Early EOS remains a result; unexplained short output is refused. Prompt00 must still emit at least128 tokens to satisfy its existing prefix authority. Every pair must have exactly identical target/MTP tokens and full target state before the next case. Actual consumed positions are checked from both ranks' accepted input history and equal prompt length plus emitted tokens minus the final pending token. Maximum consumed counts are598,1023 and2211, within context4096.
+
+Quality is separate from execution/equivalence. The document answer must be a complete JSON object exactly matching the preregistered facts; malformed/truncated/wrong answers are recorded without repair or retry. `quality_qualified` remains false pending complete manual output readback, including text beyond128. A factual rubric failure is retained and reported even if same-target equality passes. The other two cases have explicit manual rubrics. None of this excludes a shared target implementation bug or establishes broad model quality.
+
+The inherited bundle transport and passive coordinator retain their original error/stop/ownership behavior. Both positive physical rank contacts are mandatory. One failure halts new requests; no hard kill, restart or automatic retry exists. Unknown cleanup keeps the retained owner inside the original coordinator's hold loop. Captures are checked after RESETs, an explicit last DUMP and normal FINISH/closure; a seal alone is not success.
+
+Storage forecasts seven capture groups: initial plus six requests,1,620,097,500 raw target+draft bytes plus128MiB metadata, total1,754,315,228 bytes. NVMe floor27GB plus128MiB cache reserve and external floor2GiB remain enforced; this is a monitored forecast, not a writer quota. All evidence remains; no automatic archival. Source preparation can be reviewed without creating operational parents or querying devices. `once.py --plan` additionally requires the independent review and the actual qualified Engine audit; `--run` is root-operated only.

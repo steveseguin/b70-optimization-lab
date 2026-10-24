@@ -1,0 +1,77 @@
+## 0. Operating Principles
+
+Do not start by changing flags or code. Start by making the lane measurable.
+
+The strongest optimization work in this repo came from this loop:
+
+1. Define the quality lane and benchmark identity.
+2. Establish a valid baseline.
+3. Create a repeatable harness.
+4. Use cheap screens to reject bad ideas.
+5. Use realistic cold-suite gates before promotion.
+6. Record every meaningful result, including failures.
+7. Promote only clean, reproducible, quality-preserving wins.
+
+The weakest work came from:
+
+- comparing runs with different model/runtime identity;
+- treating synthetic or warmed prompts as real throughput;
+- changing too many flags at once;
+- losing patches and logs;
+- pushing huge model artifacts or secrets;
+- declaring victory from a smoke test when the bug was intermittent.
+
+## 1. Start With The Workspace
+
+Use the active checkout:
+
+```bash
+cd /home/steve/llm-optimizations
+git status --short --branch
+git log -1 --oneline
+```
+
+Expected policy:
+
+- active workspace: `/home/steve/llm-optimizations`;
+- branch: `main`;
+- no secondary worktree or non-`main` branch;
+- stage explicit files only, not broad `git add -A`;
+- commit focused work regularly;
+- push once useful state is captured.
+
+Before running or editing anything, read:
+
+```text
+AGENTS.md
+AGENT_HANDOFF.md
+CURRENT.md
+docs/model-effort-index.md
+docs/research-workflow-playbook.md
+docs/localmaxxing.md
+docs/local-ops.md
+```
+
+If the repo is dirty:
+
+1. Identify tracked changes, staged changes, and untracked files.
+2. Decide whether each untracked file is valuable evidence, transient output,
+   a secret, a model artifact, or a build artifact.
+3. Track valuable compact artifacts.
+4. Add ignore rules for transient output, secrets, weights, and logs that are
+   too large or not useful.
+5. Do not delete another agent's work unless it is clearly transient and
+   already captured elsewhere.
+
+## 2. Create A Model Lane Packet
+
+Every serious model effort should have a packet under:
+
+```text
+results/<model>-<quant>-<hardware>/
+```
+
+Start with these files:
+
+```text
+results/<

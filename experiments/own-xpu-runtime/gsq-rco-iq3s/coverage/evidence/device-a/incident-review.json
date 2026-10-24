@@ -1,0 +1,93 @@
+{
+  "passed": false,
+  "incident_audit_passed": true,
+  "terminal_sha256": "ea32535606dee6ff5daa23495747a1249362d251963faa72a331ebe47b9d6eca",
+  "plan_sha256": "2de19c110acf56bd83f092ab6d1b7ca8e7722c34bc923e0b1b8d65a268700955",
+  "elapsed_seconds": 2.058612192980945,
+  "original_error": "DeviceOwnerFailure('rank failed with exit 1')",
+  "both_rank_log_text": "bounded generation/context/deadline",
+  "observed_target_contact": [
+    false,
+    false
+  ],
+  "children_exited": true,
+  "target_descriptors_empty": true,
+  "fault_baseline_unchanged": true,
+  "no_request_executed": true,
+  "diagnosis": "Native startup --max-new512 violates unchanged parse bound tokens<=128 before output/weights/device initialization. Independent native request-file protocol has a separate context-bounded generation count; checking full consumers before additive correction.",
+  "original_sources_retained_unchanged": true,
+  "artifacts": [
+    {
+      "root": "control",
+      "path": "admission.json",
+      "bytes": 84406,
+      "sha256": "35b4dc932cae1eaeeaa6e0364a5b8a31408a4280e110434a6d4de1b5719d3c71"
+    },
+    {
+      "root": "control",
+      "path": "monitor.json",
+      "bytes": 5607,
+      "sha256": "5140d7eec1ac1ed1e1905faeb1a9464c0dfaddcb52a950882ee5318de1d6cced"
+    },
+    {
+      "root": "control",
+      "path": "ranks/admission-plan.json",
+      "bytes": 9031,
+      "sha256": "270d7cfcb85efc06ea917058c10db3f1fdb6322ec1ec18352db787b5678ab8a3"
+    },
+    {
+      "root": "control",
+      "path": "ranks/rank0-launch.json",
+      "bytes": 2568,
+      "sha256": "85359a07185731e5ee7f897afd02954d1dbeb0601a59d657f5fbf2503122d032"
+    },
+    {
+      "root": "control",
+      "path": "ranks/rank0.log",
+      "bytes": 36,
+      "sha256": "6f3b2371351c396147db8a35524407bcea63302b72579a1b0c042f92361be9f2"
+    },
+    {
+      "root": "control",
+      "path": "ranks/rank1-launch.json",
+      "bytes": 2316,
+      "sha256": "a8f0d7108bd671a5f3ac1e6008a92c620c286908655dda48f1dcf18d1a5a687f"
+    },
+    {
+      "root": "control",
+      "path": "ranks/rank1.log",
+      "bytes": 36,
+      "sha256": "6f3b2371351c396147db8a35524407bcea63302b72579a1b0c042f92361be9f2"
+    },
+    {
+      "root": "control",
+      "path": "registered-ranks.json",
+      "bytes": 176,
+      "sha256": "c66ee216902afcf438cdf6db7c12dc0b18f6f03dab9b53c81e563146169eab24"
+    },
+    {
+      "root": "control",
+      "path": "terminal.json",
+      "bytes": 5775,
+      "sha256": "ea32535606dee6ff5daa23495747a1249362d251963faa72a331ebe47b9d6eca"
+    },
+    {
+      "root": "evidence",
+      "path": "coverage-incident.json",
+      "bytes": 101,
+      "sha256": "52911b52fc4d7ce173b906ea0395b7039873e5c0dcc22e84b70ca2053ef7f149"
+    },
+    {
+      "root": "evidence",
+      "path": "failure-before-teardown.json",
+      "bytes": 103,
+      "sha256": "970881021018616466b312972fcf3725b86afd521b7af274aeaaf58b66e5abdd"
+    },
+    {
+      "root": "evidence",
+      "path": "ownership.json",
+      "bytes": 137,
+      "sha256": "07a0617b383d4a70712d61b637feb9d4baf62791a429687873e9770b08f48326"
+    }
+  ]
+}

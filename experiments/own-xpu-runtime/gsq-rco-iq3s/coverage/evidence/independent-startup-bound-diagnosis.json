@@ -1,0 +1,51 @@
+{
+  "schema": "gsq.coverage.startup-bound-diagnosis.v1",
+  "passed": true,
+  "diagnosis_only": true,
+  "original_coverage_launch_passed": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/evidence/native-build.json": "ecf34ebc193c59bc8ac4fecfe61bab0b305dc1b56454212d0187acef908613ee",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/suite.py": "0a28aac7f05e229da57fa561a3c6c28c2751506d5211d1580d4c1155cb20dafc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/generated/adapter.py": "3d198a114b4151773d66ac2cf1b25f34c937e988ae6cbd79ccf3cab30a759e3e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/evidence/independent-review.json": "0e24f224a88ad7cfcb8b9a9841e2d1fc0c8b86a87d4e2362075b4dae50bdcce6",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/main.cpp": "0e8e6b85d6da7774740831473a52463e26addc104929377b79eb1e1d6495f27f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "3048c31d11102e3692ac9f5c3276ec342d8b9c2cf5891ec657ae371e4cb9ae71",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/native_controller.hpp": "cbc2c25f2e64a3ff77e2ce4e2d6cfeaf94217a79bb098853588abf66d4cde4c9",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py": "4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3"
+  },
+  "compiled_dependency_scan_count": 122,
+  "startup_tokens_references": [
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/main.cpp",
+      "line": 229,
+      "text": "a.tokens = std::stoi(value());"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/main.cpp",
+      "line": 261,
+      "text": "require(a.tokens > 0 && a.tokens <= 128 && a.context >= 8 &&"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/main.cpp",
+      "line": 1929,
+      "text": "require(input.size() + a.tokens <= size_t(p.g.context),"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/main.cpp",
+      "line": 2054,
+      "text": "if(!a.first)for(int i=0;i<a.tokens;++i){"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/main.cpp",
+      "line": 2058,
+      "text": "if(i+1<a.tokens)next=step(next,i+2);"
+    }
+  ],
+  "root_cause": "Coverage adapter passed request max_new512 to native process --max-new, but compiled parse requires a.tokens<=128 before Device creation.",
+  "rank_path": "main returns run_rank for rank>=0 before standalone input/generation a.tokens uses. No rank/controller a.tokens uses found in exact compiled dependency closure.",
+  "rpc_path": "NativeController.run serializes independent count to native-request.txt. rank op10 reads native38::config with context/vocab; config bounds count>0 and count<=context-prompt_count. Loop uses c.count, not a.tokens.",
+  "proposed_change": "Separate explicit startup_max_new128 from preregistered RPC request caps512/512/128; preserve all failed launch/source/review evidence, new operational identity, unchanged native parser/binary. Do not clamp actual request count or waive parser guard.",
+  "review_miss": "Independent source review0e24 checked wrapper argv consistency but did not inspect compiled native startup bound; that review did not establish actual512 launch admissibility.",
+  "verification": "Read/hash exact source and122 compiler dependencies only; no compiler/native/mock/device/payload execution",
+  "launch_authorized_by_this_receipt": false
+}
