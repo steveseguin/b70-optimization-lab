@@ -1,20 +1,15 @@
 # Current Workspace State
 
-**October 24, 07:12 EDT — four-card host: class diagnostic stopped safely; storage-accounting fix preparing.**
-The first class run completed its excluded8-output warmup, then refused the measured
-prompt because its guard recharged the full forecast after captures had consumed
-space. Both processes cooperatively exited1; backend teardown completed safely,
-target descriptors empty, no new fault and vision unchanged. Preserve failed
-sources/receipts. Additive launch-b accounts for remaining target/draft writes at
-confirmed boundaries with unchanged reserves. Four more exact prompt01 bundles
-were verified/canonicalized, recovering443MB; failed profile evidence is retained.
-The qualified16.17/23.44 Q6 result remains valid. No GPU work currently running.
-[Incident](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/evidence/device-a/incident-review.json).
-
-
-
-
-
+**October 24, 07:35 EDT — four-card host: testing exact HC workgroup geometry.**
+The corrected class diagnostic passed token/state checks and safe closure; target
+cards remain empty, vision unchanged. HC low/inject account for11.5% of its device
+event time. A one-subgroup workgroup candidate passed16,666 CPU geometry checks
+and literal arithmetic-source checks; native equality and speed are untested.
+Independent review and bounded fixture preparation are next. Current qualified
+16.17/23.44 internal-screen result retains its188.7MB cost and limited scope.
+Failed class-a remains preserved. Duplicate-capture recovery is being prepared
+without changing storage reserves or deleting unique evidence.
+[Diagnostic](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/launch-b/RESULT.md).
 
 **October 24, 06:12 EDT — four-card host: broader coverage independently passes; next native micro preparing.**
 All6requests/3pairs and14bundles pass, including512-output equality and2084-input

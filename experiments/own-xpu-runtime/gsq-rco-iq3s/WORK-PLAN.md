@@ -266,3 +266,36 @@ review/mocks missed stateful space consumption; rootowned admission. Incident3ea
 and exactfailed sources preserved. Additive b retains2GiB+128MiB and corrects
 remainingpayload: before request2,T+2D=241,141,832B, notT+D. Fourprompt01bundles
 verified canonical/released,443,486,336B,failedrun retained. No automatic retry.
+
+
+## October24 11:17UTC — corrected class-b running
+
+Actualplan a0a274f5 passes, independentreviewc910 and7focused lifecycle tests pass.
+Samea0f9binary,2requests,fullstate checks. Exact rawbudget stages694327500→462885000
+→241141832→231442500→9699332→0 after confirmedRESET/DUMP/FINISH. Metadata128MiB
+remains headroom at eachstage; payload-only threshold mocks are not a promise of
+physicalcompletion with zero metadataheadroom. Bothphysicalcontacts/nofirsterror.
+Rootowns native run36036; source-only additiveactualauditorBpreparing. FailedA
+unchanged. No settings/precisionchange or automatic retry.
+
+
+## October24 11:20UTC — current class-B audit passes
+
+Actual30ed538b passes6bundles/2requests/428halves/fullbaseline/closedbudgetstage5.
+Whole214-position classsum12,582.182396ms, notwallthroughput orclass-by-phase.
+QKV1320.441,expertDown1094.233,GDNz984.660,expertGate938.435/up925.481,
+route700.988,QSAqgate639.101ms. HClow+injectsum1448.613ms. Source appraisals
+compare smallBF16projection geometry/occupancy to integer-onlyroute ranking;
+no implementation yet. Allownersclosed/drained/nofault. OriginalAfailedpreserved.
+
+## October24 11:35UTC — selected HC geometry discriminator
+
+Select one-SG workgroups for the192 BF16 HC low/inject sites; their combined
+1448.613ms is11.513% of the current diagnostic event sum. Same ordered arithmetic,
+SG32 reduction, BF16 output and unchanged weights/KV. The focused CPU proof passes
+16,666 geometry/address/admission checks plus3 source-identity tests (60f2ceea).
+Two fixed real layer0 shapes N320/N4,K10240 will each receive24 measured balanced
+AB/BA pairs after4 excluded pairs. Native results are still absent. No engine
+integration before measured benefit. Incremental Git compaction verified refs,
+HEAD, index and connectivity unchanged; remaining exact capture deduplication
+is prepared separately to recover usable headroom without weakening floors.

@@ -1,0 +1,55 @@
+{
+  "schema": "gsq.route-earlyexit.source-appraisal.v1",
+  "source_only": true,
+  "implementation_or_build": false,
+  "payload_reads": false,
+  "device_actions": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/adapter.cpp": "f4d1d947107c1d8a8e2b2fc0d05d50216a9fb39e11ae3e4b4c2740f04e70b625",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/dispatch.hpp": "a568caccaa07c325d3fc2494d538ec848ab65f060213139b1486e5e119b6d1f0",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p33_candidates.hpp": "e0b9e9185b973a957acfd9808223a3c5159f297b84d251a2d0d06317c02e38ea",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "5a979519944f617e7d56165851189379ddbb0d15602abda577db8e75b2e08533",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/dense-q6-p33/build/source/main.cpp": "c35f1271033658e6384bf6d8cc1fab62014c2fe5d942f21e238abd2995f2e565",
+    "experiments/own-xpu-runtime/stage2/packet33-codegen/candidate_cpu.cpp": "3abb17b23a13443905ebbf047af36cfc551563a347c71976fc45a7b32d482395",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/dense-q6-class/launch-b/evidence/device-b/review.json": "30ed538b78040d04367fe7e99956c8ff2e483cef99194de1445f1476226bd039"
+  },
+  "observed_whole_request": {
+    "route_device_ms": 700.988,
+    "route_kernel_launches": 51360,
+    "all_class_device_ms": 12582.182396,
+    "route_class_fraction": 0.055712751408122256,
+    "scope": "Whole214-position diagnostic class; no measured Stage3 share or layer-count speed prediction."
+  },
+  "selected_path": [
+    "Engine gsq_packed bypasses sealed_selection.site and uses packet18::submit_parallel. Default route specialised implementation1 selects simple_new_submit<route,512,10>.",
+    "Five unchanged passes0,1,2,3,4. Stage3 alone scans512 probabilities for each512 item; one SYCL range item per expert, default subgroup geometry not explicitly forced."
+  ],
+  "minimal_delta": "Replace only Stage3 full integer-rank loop with exact existing p33::route_rank<512,10>(prob,index), retain its existing rank<top output block and every other pass byte-for-byte.",
+  "identity": [
+    "Each comparison adds0/1; once partial rank>=10 it cannot return to winning rank. Four-comparison blocks may overshoot through13, which is invisible because losers write nothing.",
+    "Every winning item rank0..9 necessarily scans all512 and therefore keeps exact rank, output slot, expert ID and normalized probability bits.",
+    "Equality uses x==v and smaller original expert index; ties including signed zeros and probabilities rounded equal/underflowed tozero retain original order. Do not rank raw logits/exponentials.",
+    "NaN/Inf logits are rejected by unchanged Stage0 sticky error before later pass writes. Finite logits produce exp(max-max)=1 and finite denominator; very negative finite differences may become-inf and unchanged detmath exp returns0.",
+    "An isolated helper applied to a NaN probability returns rank0 in both full and early versions; other comparisons with NaN add0. This does not authorize nonfinite probability pipeline data or claim deterministic overlapping writes in an invalid bypassed Stage3."
+  ],
+  "visible_state": [
+    "Preserve all1088 scratch float slots4352B: maxima32,sums32,exp512,prob512. Stage3 only reads scratch.",
+    "Preserve ten IDs and ten F32 probabilities, untouched canary/output bytes, error/active/position/rope, and optional gate/down route triples if exercising no>=4 ABI. Current unfused GSQ route has separate gather; do not remove or fuse gather.",
+    "Preserve exact adjacent trees and division/exp order in stages0,1,2,4, dependencies/capture and five-launch structure. Inactive/sticky-failed paths leave buffers untouched."
+  ],
+  "work_and_risks": [
+    "Source full loop is262144 comparisons per route. Early loop never exceeds512 comparisons/item and does not reduce the5120 comparisons of10 winners.",
+    "For the synthetic equal/descending case,502 losers can exit after12 comparisons:11144 source comparisons total versus262144. This is an algorithmic example, not a device or workload speed prediction.",
+    "Ten winning items still run the full loop; SIMD execution can retain a whole subgroup until its slowest item finishes. Correlation of winning positions, divergence/branches and compiler codegen may erase savings.",
+    "Compiler may already predicate/vectorize full loop; no evidence here that it synthesizes data-dependent early exit. Existing source alone cannot quantify emitted instruction savings.",
+    "Route class is about5.57% of whole profiled event sum, and Stage3 is an unmeasured subset; do not multiply launch/layer counts or promise end-to-end gain."
+  ],
+  "minimal_proof": [
+    "Reuse prior p33 CPU route-rank tests as precedent, but new focused proof compares actual pinned full-rank loop vs existing helper: exact winners and loser>=10 over ties, monotone/permuted inputs, zero/subnormal/signed-zero, and isolated NaN/Inf probability patterns.",
+    "Use exact current five-pass Host operator/control to compare all scratch/control/output bytes on finite synthetic cases; preserve source-bound invalid/inactive/sticky-error semantics. Do not present concurrent partial-invalid scratch as deterministic native bytes.",
+    "One preregistered real case: first layer0 route from already closed current prompt00 target capture,512 router inputs plus10 IDs/probability outputs; no weights needed. Future bounded extraction verifies immutable bundle range/index/closure.",
+    "One native micro owner: unchanged five-pass control versus only Stage3 early loop with identical strict FP/build policy, full scratch/control/output readback and original saved output oracle; balanced AB/BA28 pairs4excluded+24measured. Keep all5 kernel timings and separate Stage3 timing; no whole-engine claim.",
+    "Use existing positive actual-context contact ACK before measurement and safe teardown. No new native/publication framework. Root must select scope before implementation/extraction/compile/device work."
+  ],
+  "recommendation": "Reasonable low-risk arithmetic candidate but modest measured cost ceiling and material SIMD risk. A single fixed pipeline micro is sufficient to decide whether to integrate; do not launch a broad campaign."
+}
