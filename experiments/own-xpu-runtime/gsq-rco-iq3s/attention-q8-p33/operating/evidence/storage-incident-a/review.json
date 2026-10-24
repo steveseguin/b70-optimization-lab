@@ -1,0 +1,87 @@
+{
+  "schema": "ownrt.gsq.attention-storage-incident-review.v1",
+  "classification": "native state/incident/receipt output write failures; controller observed rank EOF",
+  "candidate_full_qualification_passed": false,
+  "metadata_review_passed": true,
+  "rank_pids": [
+    [
+      3589307,
+      66568926
+    ],
+    [
+      3589315,
+      66568971
+    ]
+  ],
+  "first_controller_error": "DeviceOwnerFailure('rank receive EOF')",
+  "original_controller_error": "DeviceOwnerFailure('rank receive EOF')",
+  "failed_request": "prompt-07-mtp",
+  "failed_rank": 1,
+  "first_reported_write": "prompt-07-mtp/rank1/state-2147483647/state.json",
+  "rank0_response": "cooperative stop; failure.txt and receipt.json writes also failed",
+  "rank1_secondary": "failure.txt and receipt.json writes also failed; uncaught runtime_error/terminate logged",
+  "owners_clean_success_claimed": false,
+  "children_exited_attested": true,
+  "physical_target_drain_attested": true,
+  "new_classified_gpu_fault": false,
+  "boot_and_existing_kernel_fault_dicts_unchanged": true,
+  "unchanged_vision_pid_start_ticks": [
+    3487303,
+    63453537
+  ],
+  "no_hard_kill_retry_service_change": true,
+  "elapsed_seconds": 356.43218737491407,
+  "reported_prior_progress": {
+    "source": "root coordinator message, not independent raw-state rehash",
+    "complete_prompt_pairs": 7,
+    "exact_measured_arms": 14
+  },
+  "root_cause_limit": "Logs report generic write failures without errno. This review does not distinguish filesystem capacity, read-only remount, transport error, or other storage cause.",
+  "scope": "Bounded closed NVMe control/terminal/rank-log evidence only; no USB access, raw state readback, model/device/service/kernel operations or cleanup mutation.",
+  "files": {
+    "plan.json": {
+      "bytes": 28493,
+      "sha256": "35a0dd8c60ca34fcfbeb8a351dabaed82791ae6a500b59b091b204b51fd10c9b",
+      "retained": "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/plan.json"
+    },
+    "admission.json": {
+      "bytes": 35055,
+      "sha256": "8db5aaf03ba0575b431c20a51751ca9796b3872e96e9449a9ff3a70000d6230a",
+      "retained": "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/admission.json"
+    },
+    "terminal.json": {
+      "bytes": 5760,
+      "sha256": "6bedc4c8120c76f407808162531c6b77a19c2ecc9d531bcfd2bd7be5bb4d5f1f",
+      "retained": "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/terminal.json"
+    },
+    "monitor.json": {
+      "bytes": 5600,
+      "sha256": "094036d156fd2f8162c557a02c6739ef9a80fcf1578bfa31dfd674ee4b357242",
+      "retained": "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/monitor.json"
+    },
+    "registered-ranks.json": {
+      "bytes": 176,
+      "sha256": "798753514388dcae76c1853414515dd4079a72b42312a6deda63d754f78a8a50",
+      "retained": "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/registered-ranks.json"
+    },
+    "ranks/rank0.log": {
+      "bytes": 660,
+      "sha256": "0c7da661e65941be62b56179f195bea9af8250cea29f7f8ad06aaaae63380133",
+      "retained": "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/ranks-rank0.log"
+    },
+    "ranks/rank1.log": {
+      "bytes": 844,
+      "sha256": "72940d795ec40f78424d0c648addc9021896eac39cb32558381cb42e3912e651",
+      "retained": "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/ranks-rank1.log"
+    }
+  },
+  "read_bytes": 76588,
+  "operating_plan_sha256": "35a0dd8c60ca34fcfbeb8a351dabaed82791ae6a500b59b091b204b51fd10c9b",
+  "candidate_binary_sha256": "e83469b3a2c1781d6be6241f4c1cd0967379f15ca410c6aed55baf0831b8ac68",
+  "limitations": [
+    "Partial candidate results are not a completed all12 qualification",
+    "No clean native owner receipt can be claimed from these logs: receipt writes failed",
+    "Physical drain and fault conclusions use retained coordinator snapshots, not fresh device/host queries",
+    "Seven earlier exact pairs are root-reported only here; independent full-state audit remains held"
+  ]
+}

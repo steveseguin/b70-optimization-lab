@@ -49,3 +49,12 @@ Preserve the frozen baseline binary and source closure. A dependency-proven one-
 build is preferable to rebuilding39 unchanged objects. Test control/candidate kernels
 within one owner; do not create a fresh-server timing chain. End-to-end candidate
 numbers remain provisional until their control comparison is fair.
+
+## Storage incident hold — 06:33 UTC
+
+The candidate stopped after seven exact pairs because USB NTFS exhausted MFT records,
+not free data bytes. Both owners exited/drained; there is no new classified GPU fault.
+Do not promote the partial candidate or start new device work. Preserve failed receipts
+and source. Complete reviewed, verified per-request lossless archival of closed baseline
+state binaries, preserving six micro fixtures and all JSON; no model or filesystem-setting
+changes. Resolve record capacity before root admits any further bounded device task.

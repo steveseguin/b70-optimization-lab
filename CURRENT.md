@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 24, 02:33 EDT — four-card host: new GPU work held after USB NTFS file-record exhaustion.**
+The Q8 attention candidate stopped after seven exact prompt pairs when NTFS could not
+allocate an MFT record, despite7.2GB free data space. Controller EOF and failed USB
+failure-receipt writes are preserved on NVMe. Both owners exited and target cards are
+drained; no new GPU fault, vision change, retry, reset or settings change occurred.
+Candidate qualification is incomplete and not promoted. The verified original baseline
+(12.63 target-only /17.98 MTP tokens/s) remains the control.
+Prepare verified per-request lossless archival of closed baseline state dumps to release
+file records; keep model weights and six micro fixtures unchanged. No new device launch
+until storage is usable and root explicitly admits the next bounded task.
+[Incident](experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/storage-incident-a/README.md).
+
 **October 24, 02:12 EDT — four-card host: SC117 baseline and profiling audited; one attention candidate in preparation.**
 All twelve original target/MTP prompt pairs match exact tokens and full target state.
 Independent readback verifies 57,675 files / 6.34 GB. Decode is 12.6346 target-only and

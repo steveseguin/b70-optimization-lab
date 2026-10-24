@@ -1,0 +1,716 @@
+{
+  "plan": {
+    "schema": "ownrt.gsq.attention-p33-once.v1",
+    "unit": "gsq-attention-p33-a.service",
+    "adapter": {
+      "schema": "ownrt.gsq.rank-adapter-plan.v1",
+      "output": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks",
+      "output_parent_identity": [
+        66306,
+        51815191
+      ],
+      "evidence_output": "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a",
+      "evidence_parent_identity": [
+        2050,
+        2741193,
+        0,
+        0,
+        16895
+      ],
+      "mini": false,
+      "context": 4096,
+      "max_new": 128,
+      "seconds": 7200,
+      "wait_seconds": 900,
+      "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/build/native-1792822770733629105/gsq-engine",
+      "binary_sha256": "e83469b3a2c1781d6be6241f4c1cd0967379f15ca410c6aed55baf0831b8ac68",
+      "build_receipt": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/evidence/native-build.json",
+      "build_receipt_sha256": "5b1fd444b08c04003a1850758a98def0b75a5942939e514e5754ddb65e3f254c",
+      "build_ready": true,
+      "native_admitted": false,
+      "source_sha256": {
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/generated/adapter.py": "d82c887705eb4fbcb35b1f87b1893eb9819b9df0943edad3ce1b15f75404bc01",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/prepare.py": "89ef8a00a9277c1ac49ab72830fc00fcd8a58573444008ff41e80a9bd2cdbb86",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/preparation.json": "ae478e300151553a2f9d84a75764f871679f2c9fc1694b9557669ae7c967108d",
+        "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py": "4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3",
+        "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/bound.hpp": "bc419a8d8d255133a4bbb180151e5062c3471ad3e6560233c6b8872330631df7",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/bound-authority.json": "c3237c7d1e66d1fb492599c074bcc35f6d3884c867fac7567583232816c99e20",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/target-bindings.json": "2c864b5c8fa2ddf963fbe00cabcaf441f966782697b87b58b688be8fa6621899",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/candidate-ledger.json": "bcbde7f5479e34d99b73f79379d0cede26b061bbb4e8a3940a95a14774c6a5d3",
+        "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/evidence/host-retained-source-map.json": "b65980d849d0520b70e761bdec9a07b382fb93b9956de90b8baaae1b2328df24"
+      },
+      "environment": [
+        {
+          "PATH": "/usr/bin:/bin",
+          "OMP_NUM_THREADS": "2",
+          "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+          "HOME": "/home/steve",
+          "NEOReadDebugKeys": "1",
+          "FilterBdfPath": "0000:23:00.0",
+          "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+          "ZE_AFFINITY_MASK": "0",
+          "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+          "SYCL_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/0/sycl",
+          "NEO_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/0/neo",
+          "XDG_CACHE_HOME": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/0/xdg"
+        },
+        {
+          "PATH": "/usr/bin:/bin",
+          "OMP_NUM_THREADS": "2",
+          "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+          "HOME": "/home/steve",
+          "NEOReadDebugKeys": "1",
+          "FilterBdfPath": "0000:47:00.0",
+          "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+          "ZE_AFFINITY_MASK": "0",
+          "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+          "SYCL_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/1/sycl",
+          "NEO_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/1/neo",
+          "XDG_CACHE_HOME": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/1/xdg"
+        }
+      ],
+      "candidate_bdfs": [
+        "0000:23:00.0",
+        "0000:47:00.0"
+      ],
+      "request_cap": 2,
+      "shared_bytes": 266304,
+      "device_execution_requested": false,
+      "storage": {
+        "target_state_per_request_bytes": 221743168,
+        "draft_state_per_request_bytes": 9699332,
+        "request_count": 2,
+        "raw_state_bytes": 462885000,
+        "evidence_forecast_bytes": 529993864,
+        "control_cache_forecast_bytes": 134217728,
+        "root_floor_bytes": 27000000000,
+        "external_floor_bytes": 2147483648,
+        "hard_bound": false,
+        "scope": "known state payload plus monitored metadata/cache forecast; no pruning"
+      },
+      "rank_argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/build/native-1792822770733629105/gsq-engine",
+          "--gsq-packed",
+          "--rank",
+          "0",
+          "--channel",
+          "<channel-fd>",
+          "--stop-fd",
+          "<stop-fd>",
+          "--shared",
+          "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "7200",
+          "--native-nice",
+          "19",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "0",
+          "--target-split",
+          "24",
+          "--host-path",
+          "prepared",
+          "--plan",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+          "--identity",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+          "--authorized-device-window",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--draft-manifest",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv",
+          "--draft-model",
+          "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+          "--attention-q8-p33"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/build/native-1792822770733629105/gsq-engine",
+          "--gsq-packed",
+          "--rank",
+          "1",
+          "--channel",
+          "<channel-fd>",
+          "--stop-fd",
+          "<stop-fd>",
+          "--shared",
+          "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "7200",
+          "--native-nice",
+          "19",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "0",
+          "--target-split",
+          "24",
+          "--host-path",
+          "prepared",
+          "--plan",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+          "--identity",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+          "--authorized-device-window",
+          "--attention-q8-p33"
+        ]
+      ],
+      "command_sha256": "c9c5ab0f5494e27ae6812dd27f31888c52b7ce8c5dc3da9f22f3269ba219e7f2"
+    },
+    "max_new": 128,
+    "requests": 26,
+    "source_sha256": {
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/model_once.py": "cea4ca122973976e1668954652e98d1590a7a2dfe8e62239d271a32a15153ce1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/observe.py": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/host-after-model-stop.json": "a43073ce7fd3b1e7aaceaf5424b99dcc9ba70efc74c51c05a09da279018db0fe",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/first-model-prompt.json": "81053cd5fa008472e3274104ce5ee1ce9fae348d2c118c2c985129e59cccf661",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/adapter.py": "68538b214b7bda9c2fa5cd87534bad2243745b8a1af0dc82b43f01da48b06a01",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/evidence/host-pair.json": "c12792f42f1936722482233ba66f74f38dac1eec368d9b8e8c41a0608cf075dc",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/memory/engine-accounting.json": "ce43f76e00a81653cd388ba15a6fa134f5db845970419e7794139e66d8a4a582",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/host-before-stop.json": "dd218a7b5b9f16cf927efafc198de67d2ae572c81216c163d1d7523a9d0d5372",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/once.py": "5e7539962f97cb42da560c8c027fa8a739bef94f8797d5dfc4f448c4e485a9ad",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/once.py": "2401e2d8f09c07d5838a21b27054b583754a51188db97f3dcf176e11e0bd54aa",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/checks.py": "f021e6e76d27c79ea5cd689221cc04f018896f65f8fe482c5a1f565f7fc0fc7e",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/prepare.py": "89ef8a00a9277c1ac49ab72830fc00fcd8a58573444008ff41e80a9bd2cdbb86",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/preparation.json": "ae478e300151553a2f9d84a75764f871679f2c9fc1694b9557669ae7c967108d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/overlay.patch": "f93c5de36536e9a2409586179eea5a2d2e3ac3db3b19569b91fdbb8248f61d37",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/candidate-ledger.json": "bcbde7f5479e34d99b73f79379d0cede26b061bbb4e8a3940a95a14774c6a5d3",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/test_operating.py": "6426929e08aac482fa6aea8d698f2bdcef7f1b39c77ff6347fa11d35a6b311a7",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/README.md": "344a6e620fa8a79620afdc79812b5f6b40093b95c36d01ce53fb4973a5cb5f03",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/generated/adapter.py": "d82c887705eb4fbcb35b1f87b1893eb9819b9df0943edad3ce1b15f75404bc01",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/generated/suite.py": "a11d27d1de412c995de47e8103bf2c345feaa0dc3fbba89525ef5c306f543b85",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/independent-review.json": "248aca74e4c024b30ef3348b874244c6a4d4a5543a28729fea7363cb961b90b5",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/evidence/native-build.json": "5b1fd444b08c04003a1850758a98def0b75a5942939e514e5754ddb65e3f254c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/evidence/cpu-proof.json": "f5ad4e5dcd9a9a6efbb2cb736370a2ab20f67bbae0f2cf9a1c45b57937b0be98",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/evidence/scale-census.json": "103fe5152fbd6298371663c28b018846ff69973f015861c4e1be7fd82202fd91",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/review.json": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+      "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/resident-suite.json": "f44b5847c551a8643847f7dc162834d98d5e71db23929faf9e3411611c09723a"
+    },
+    "pause_sha256": {
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/PAUSE-A": "09b02cb8d35c5b7a1dc73879c5d85b557d0aff4bd890e910b22281b0fe3c1a0a",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/PAUSE-B": "54636d9e0b5067e18f3ee5a017191feb59d8fa15ad50298104f9e9d14991cee4"
+    },
+    "baseline_sha256": "a43073ce7fd3b1e7aaceaf5424b99dcc9ba70efc74c51c05a09da279018db0fe",
+    "expected_vision": [
+      3487303,
+      63453537
+    ],
+    "target_bdfs": [
+      "0000:23:00.0",
+      "0000:47:00.0"
+    ],
+    "control_identity": [
+      66306,
+      51815191,
+      1000,
+      16832
+    ],
+    "initial_mem_available_required": 98211415838,
+    "continuous_mem_available_required": 8589934592,
+    "root_floor_bytes": 27000000000,
+    "unit_properties": {
+      "Restart": "no",
+      "SendSIGKILL": "no",
+      "KillMode": "process",
+      "TimeoutStopUSec": "infinity",
+      "LimitAS": "infinity",
+      "LimitCORE": "0"
+    },
+    "nice": 19,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      16,
+      17,
+      18,
+      19
+    ],
+    "native_admitted": false,
+    "storage_mode": "monitored forecast; not hard quota",
+    "no_retry": true,
+    "no_service_changes": true,
+    "suite": {
+      "schema": "ownrt.gsq.resident-baseline-plan.v1",
+      "adapter": {
+        "schema": "ownrt.gsq.rank-adapter-plan.v1",
+        "output": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks",
+        "output_parent_identity": [
+          66306,
+          51815191
+        ],
+        "evidence_output": "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a",
+        "evidence_parent_identity": [
+          2050,
+          2741193,
+          0,
+          0,
+          16895
+        ],
+        "mini": false,
+        "context": 4096,
+        "max_new": 128,
+        "seconds": 7200,
+        "wait_seconds": 900,
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/build/native-1792822770733629105/gsq-engine",
+        "binary_sha256": "e83469b3a2c1781d6be6241f4c1cd0967379f15ca410c6aed55baf0831b8ac68",
+        "build_receipt": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/evidence/native-build.json",
+        "build_receipt_sha256": "5b1fd444b08c04003a1850758a98def0b75a5942939e514e5754ddb65e3f254c",
+        "build_ready": true,
+        "native_admitted": false,
+        "source_sha256": {
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/generated/adapter.py": "d82c887705eb4fbcb35b1f87b1893eb9819b9df0943edad3ce1b15f75404bc01",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/prepare.py": "89ef8a00a9277c1ac49ab72830fc00fcd8a58573444008ff41e80a9bd2cdbb86",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/preparation.json": "ae478e300151553a2f9d84a75764f871679f2c9fc1694b9557669ae7c967108d",
+          "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py": "4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3",
+          "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/bound.hpp": "bc419a8d8d255133a4bbb180151e5062c3471ad3e6560233c6b8872330631df7",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/bound-authority.json": "c3237c7d1e66d1fb492599c074bcc35f6d3884c867fac7567583232816c99e20",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/target-bindings.json": "2c864b5c8fa2ddf963fbe00cabcaf441f966782697b87b58b688be8fa6621899",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/candidate-ledger.json": "bcbde7f5479e34d99b73f79379d0cede26b061bbb4e8a3940a95a14774c6a5d3",
+          "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/evidence/host-retained-source-map.json": "b65980d849d0520b70e761bdec9a07b382fb93b9956de90b8baaae1b2328df24"
+        },
+        "environment": [
+          {
+            "PATH": "/usr/bin:/bin",
+            "OMP_NUM_THREADS": "2",
+            "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+            "HOME": "/home/steve",
+            "NEOReadDebugKeys": "1",
+            "FilterBdfPath": "0000:23:00.0",
+            "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+            "ZE_AFFINITY_MASK": "0",
+            "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+            "SYCL_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/0/sycl",
+            "NEO_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/0/neo",
+            "XDG_CACHE_HOME": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/0/xdg"
+          },
+          {
+            "PATH": "/usr/bin:/bin",
+            "OMP_NUM_THREADS": "2",
+            "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+            "HOME": "/home/steve",
+            "NEOReadDebugKeys": "1",
+            "FilterBdfPath": "0000:47:00.0",
+            "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+            "ZE_AFFINITY_MASK": "0",
+            "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+            "SYCL_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/1/sycl",
+            "NEO_CACHE_DIR": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/1/neo",
+            "XDG_CACHE_HOME": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/cache/1/xdg"
+          }
+        ],
+        "candidate_bdfs": [
+          "0000:23:00.0",
+          "0000:47:00.0"
+        ],
+        "request_cap": 2,
+        "shared_bytes": 266304,
+        "device_execution_requested": false,
+        "storage": {
+          "target_state_per_request_bytes": 221743168,
+          "draft_state_per_request_bytes": 9699332,
+          "request_count": 2,
+          "raw_state_bytes": 462885000,
+          "evidence_forecast_bytes": 529993864,
+          "control_cache_forecast_bytes": 134217728,
+          "root_floor_bytes": 27000000000,
+          "external_floor_bytes": 2147483648,
+          "hard_bound": false,
+          "scope": "known state payload plus monitored metadata/cache forecast; no pruning"
+        },
+        "rank_argv": [
+          [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/build/native-1792822770733629105/gsq-engine",
+            "--gsq-packed",
+            "--rank",
+            "0",
+            "--channel",
+            "<channel-fd>",
+            "--stop-fd",
+            "<stop-fd>",
+            "--shared",
+            "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "0",
+            "--output",
+            "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a/rank0",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "7200",
+            "--native-nice",
+            "19",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "0",
+            "--target-split",
+            "24",
+            "--host-path",
+            "prepared",
+            "--plan",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+            "--identity",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+            "--authorized-device-window",
+            "--draft-mtp",
+            "--draft-fault",
+            "none",
+            "--draft-manifest",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv",
+            "--draft-model",
+            "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+            "--attention-q8-p33"
+          ],
+          [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/build/native-1792822770733629105/gsq-engine",
+            "--gsq-packed",
+            "--rank",
+            "1",
+            "--channel",
+            "<channel-fd>",
+            "--stop-fd",
+            "<stop-fd>",
+            "--shared",
+            "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "0",
+            "--output",
+            "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a/rank1",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "7200",
+            "--native-nice",
+            "19",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "0",
+            "--target-split",
+            "24",
+            "--host-path",
+            "prepared",
+            "--plan",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+            "--identity",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+            "--authorized-device-window",
+            "--attention-q8-p33"
+          ]
+        ],
+        "command_sha256": "c9c5ab0f5494e27ae6812dd27f31888c52b7ce8c5dc3da9f22f3269ba219e7f2"
+      },
+      "baseline_review_sha256": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+      "baseline_result_sha256": "f44b5847c551a8643847f7dc162834d98d5e71db23929faf9e3411611c09723a",
+      "manifest_sha256": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20",
+      "source_sha256": {
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/review.json": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/generated/suite.py": "a11d27d1de412c995de47e8103bf2c345feaa0dc3fbba89525ef5c306f543b85",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/manifest.json": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/adapter.py": "68538b214b7bda9c2fa5cd87534bad2243745b8a1af0dc82b43f01da48b06a01",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/evidence/host-pair.json": "c12792f42f1936722482233ba66f74f38dac1eec368d9b8e8c41a0608cf075dc",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/compatibility-delta.json": "c30d0024ca8a4c748bb81704c2a3f444f8c2693ece7c924f453ca0a967ef2d8e",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/evidence/native-build.json": "5b1fd444b08c04003a1850758a98def0b75a5942939e514e5754ddb65e3f254c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/checks.py": "f021e6e76d27c79ea5cd689221cc04f018896f65f8fe482c5a1f565f7fc0fc7e",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/candidate-ledger.json": "bcbde7f5479e34d99b73f79379d0cede26b061bbb4e8a3940a95a14774c6a5d3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/preparation.json": "ae478e300151553a2f9d84a75764f871679f2c9fc1694b9557669ae7c967108d"
+      },
+      "total_requests": 26,
+      "measured_requests": 24,
+      "warmup_requests": 2,
+      "max_output_tokens": 3088,
+      "lifetime_seconds": 7200,
+      "storage": {
+        "per_request_state_bytes": 231442500,
+        "retained_state_dumps": 27,
+        "evidence_forecast_bytes": 6316056364,
+        "root_cache_forecast_bytes": 134217728,
+        "root_floor_bytes": 27000000000,
+        "external_floor_bytes": 2147483648,
+        "hard_bound": false
+      },
+      "authority": "this outer26-request suite owns count/storage policy; inherited adapter2-request comparison helper is not called",
+      "native_admitted": false,
+      "scope": "same-new-binary resident target/MTP correctness and per-request timing; not old-model record identity"
+    },
+    "scope": "candidate all12 exact baseline arms; separate-process timings descriptive only",
+    "monitor_configuration": {
+      "module_sha256": "cea4ca122973976e1668954652e98d1590a7a2dfe8e62239d271a32a15153ce1",
+      "coordinator_sha256": "5e7539962f97cb42da560c8c027fa8a739bef94f8797d5dfc4f448c4e485a9ad",
+      "CONTROL": "/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control",
+      "EVIDENCE": "/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a",
+      "UNIT": "gsq-attention-p33-a.service",
+      "initial_ram_delta_bytes": 94371840,
+      "behavior": "unchanged frozen Monitor/run lifecycle; candidate suite and explicit memory admission"
+    }
+  },
+  "plan_sha256": "35a0dd8c60ca34fcfbeb8a351dabaed82791ae6a500b59b091b204b51fd10c9b",
+  "canonical_plan_sha256": "5aaf32e62b5889a736aab328fb1abc42143b9ae957ff5663f9a0bcf09967aa81",
+  "before": {
+    "utc": "2026-10-24T06:23:00.730565+00:00",
+    "metadata_only": true,
+    "device_api_calls": 0,
+    "device_opens": 0,
+    "service_changes": 0,
+    "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "root_free_bytes": 27628351488,
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 114530492416,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "units": {
+      "qwen38-27b-fp8": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-fp8-tp1-test": {
+        "Restart": "no",
+        "TimeoutStopUSec": "1min 30s",
+        "MainPID": "0",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "qwen38-27b-fp8-tp1-test.service",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qwen38-27b-vision": {
+        "Restart": "no",
+        "TimeoutStopUSec": "infinity",
+        "MainPID": "3487303",
+        "KillMode": "process",
+        "SendSIGKILL": "no",
+        "Id": "qwen38-27b-vision.service",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "drm": {
+      "renderD128": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:128",
+        "driver": "xe"
+      },
+      "card3": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:3",
+        "driver": "xe"
+      },
+      "renderD130": {
+        "bdf": "0000:23:00.0",
+        "dev": "226:130",
+        "driver": "xe"
+      },
+      "renderD129": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:129",
+        "driver": "xe"
+      },
+      "card4": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:4",
+        "driver": "xe"
+      },
+      "card2": {
+        "bdf": "0000:47:00.0",
+        "dev": "226:2",
+        "driver": "xe"
+      },
+      "card0": {
+        "bdf": "0000:43:00.0",
+        "dev": "226:0",
+        "driver": "xe"
+      },
+      "renderD131": {
+        "bdf": "0000:27:00.0",
+        "dev": "226:131",
+        "driver": "xe"
+      }
+    },
+    "passive_helper_sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+    "inventory": {
+      "passed": false,
+      "holders": [
+        {
+          "pid": 3487303,
+          "fd": "3",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "6",
+          "node": "renderD128"
+        },
+        {
+          "pid": 3487303,
+          "fd": "8",
+          "node": "renderD131"
+        },
+        {
+          "pid": 3487303,
+          "fd": "11",
+          "node": "renderD128"
+        }
+      ],
+      "errors": [],
+      "nodes": {
+        "226:0": "card0",
+        "226:2": "card2",
+        "226:3": "card3",
+        "226:4": "card4",
+        "226:128": "renderD128",
+        "226:129": "renderD129",
+        "226:130": "renderD130",
+        "226:131": "renderD131"
+      },
+      "intel_devices": [
+        "/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0",
+        "/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0",
+        "/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0",
+        "/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0"
+      ],
+      "metadata_only": true,
+      "device_opens": 0
+    },
+    "holders": {
+      "3487303": {
+        "start_ticks": 63453537,
+        "state": "S"
+      }
+    },
+    "identity_races": [],
+    "kernel": {
+      "journal_sha256": "bb2ec3306a902c7422f1ecfd796ad5d88c640a0fb0b2098aa513f574a374cf49",
+      "rows": 3607,
+      "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20e2025;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9a397aa77e;t=65e8f5c421be2;x=77a30ffbdff7a7f6",
+      "faults": [
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+          "timestamp": "42064105058"
+        },
+        {
+          "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+          "timestamp": "42064105299"
+        }
+      ]
+    },
+    "known_fault_baseline_matches": true,
+    "queue": {
+      "A": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:31:13.634788+00:00 after the 2026-10-23 packet195 chain window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      },
+      "B": {
+        "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:42:03.395697+00:00 after the 2026-10-22 packet58-diet-micro window\n",
+        "STOP": null,
+        "queue": "",
+        "inflight": null
+      }
+    },
+    "endpoints": {
+      "18130": {
+        "unavailable": "URLError"
+      },
+      "18131": {
+        "unavailable": "URLError"
+      }
+    }
+  },
+  "unit": {
+    "Restart": "no",
+    "TimeoutStopUSec": "infinity",
+    "MainPID": "3589299",
+    "LimitCORE": "0",
+    "LimitAS": "infinity",
+    "KillMode": "process",
+    "SendSIGKILL": "no",
+    "ActiveState": "active"
+  }
+}
