@@ -1,0 +1,24 @@
+{
+  "schema": "gsq.closed-attention.finish256.independent-review.v1",
+  "passed": true,
+  "scope": "Finite source and CPU metadata/guard review only. No archive/prune/offload/release or source payload reads.",
+  "checks": 12,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/finish_256.py": "1758990d8ebab7c1c52e1e14d3de660c2745e5c92f558268093614149e13b95a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/closed_attention_bins.py": "b652f0b40c55346b10a4044c2c44eef4cadc209128676e9609a5eb77572a3933",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/closed_baseline_bins.py": "6a86c61fe46b453f7f9516d7b41169f0314cfc2b2716f82aab54b05c8df566ab",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/evidence/batch09-admission-refusal.json": "1d80519b0181ac863f5fb580024a3166e735d86f5b5372740cc758da5510064d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/evidence/preparation.json": "cfbe5f85a26beb31c1c7f82d4e4fa23df4d9d697ab19811e8f3197421fd69f36",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/evidence/root-review.json": "cf0593d1f860640217d040965bed72831d2bed7702a421c72f80356ec386cfdc"
+  },
+  "checks_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/evidence/finish-256-independent-checks.json",
+  "checks_sha256": "47a1720e119778351044e1ced03c912d5d166fef0dfa4fc8cef39277492b94f6",
+  "unchanged_floor": 27067108864,
+  "quota": 268435456,
+  "raw_plus_generous_container_allowance": 249800772,
+  "allowance_margin_bytes": 18634684,
+  "prior_passed_archive_receipts": 23,
+  "observed_prior_max_archive_bytes": 90153549,
+  "findings": [],
+  "interpretation": "Only completion9..12 may use the smaller temporary quota. Same frozen Job methods, complete hash readback before prune, per-source rehash and held archive checks, expected-filesystem offload/release, durable receipts and separate explicit phases remain unchanged. Quota refusal remains non-destructive; observed compression is supporting evidence rather than a safety assumption."
+}

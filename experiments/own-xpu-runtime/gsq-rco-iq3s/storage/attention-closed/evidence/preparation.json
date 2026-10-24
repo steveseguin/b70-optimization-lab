@@ -1,0 +1,40 @@
+{
+  "schema": "gsq.attention-closed-storage-preparation.v1",
+  "passed": true,
+  "tests": 6,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/closed_attention_bins.py": "b652f0b40c55346b10a4044c2c44eef4cadc209128676e9609a5eb77572a3933",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/test_closed_attention_bins.py": "d781ae673a90a077f50640dad79e230dddd02527be57d90d2d118da1c6bfba91",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/README.md": "864003d319ed8229d8597b11fc3819370904a22fcac29a6c572caacc137c19dc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/plan.json": "cf2cd4d8698489e4af847492c6c02a3ebdd79ad0f32d434427612ef89e868a0d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/evidence/cpu-tests.log": "7c0f3f27e6e899255721ea370d60f5fe9008640b867190af499559c80aaf5662",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/closed_baseline_bins.py": "6a86c61fe46b453f7f9516d7b41169f0314cfc2b2716f82aab54b05c8df566ab",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/independent-review.json": "44fb73bb88ece10bdd9e84d0808d276f1c88dd28b95ad759791d507029b3e02c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/partial-independent-a/review.json": "663fb5e463b6e9ee6b45f6e55562394522f1f30f593ef5003991ba51c2e887cf",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/partial-independent-a/artifact-index.jsonl.gz": "4f4e6ce9e7922b1ba5e4eff070f808a4d32fdd1104e8e85356ea93b354858ecc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/evidence/device-a/review.json": "068fe237589673cc7ef9545b5bcfbf65d1a51cfe9e8351a727b925bb9f6bd245",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/evidence/device-a/artifact-index.jsonl.gz": "1210bc4eb507378ca9691d90e4eddbf4e7b7bcc70d54c6c3c3302e90b6b9be91"
+  },
+  "filesystem_helper_sha256": "6a86c61fe46b453f7f9516d7b41169f0314cfc2b2716f82aab54b05c8df566ab",
+  "eligible_files": 56981,
+  "eligible_bytes": 6113156852,
+  "profiles": {
+    "prefix": {
+      "files": 29512,
+      "bytes": 3104404352
+    },
+    "completion": {
+      "files": 27469,
+      "bytes": 3008752500
+    }
+  },
+  "actual_storage_operations": false,
+  "testing_scope": "Six CPU-only tests; local audited-index parsing plus tiny NVMe and /dev/shm regular files. No original USB states, model payload, services or Device read.",
+  "fixture_preservation": "Q6 agent confirms six planned files exclusively under profile-a, outside both admitted roots; baseline six originals also excluded",
+  "limitations": [
+    "Prefix covers only14 complete target-state bin sets; unindexed partial failed request, initial/warmup/scratch files remain",
+    "No application-state, model, profile or baseline paths accepted",
+    "Parent filesystem semantics unchanged including historical baseline wording; exact profile source/restore map clarifies destination",
+    "Explicit root phase authorization and independent review still precede actual operations"
+  ]
+}
