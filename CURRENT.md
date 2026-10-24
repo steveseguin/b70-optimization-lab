@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**October 24, 03:40 EDT — four-card host: combined attention/Q6 model run prepared.**
+The native build,162 selector checks, ten mocked request/cleanup checks and independent
+reviews pass. One unchanged26-request session will compare all twelve original prompt
+pairs to the baseline with full RESET and full target-state equality. Only the verified
+48 attention sites and22 Q6 GDN-QKV sites change. Source/arithmetic/weights/KV remain
+bound; no third kernel campaign precedes this full-engine measurement.
+Closed attention results are preserved in27 verified archives, freeing56,981 files;
+USB has11.98GB free, root27.43GB, no new NTFS messages. The next run forecasts61,147
+files against an86,156 known-removal capacity estimate, not a hard MFT guarantee.
+Target cards are empty, vision unchanged. Root is completing explicit launch admission.
+[Operating recipe](experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/README.md),
+[storage evidence](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/attention-closed/RESULT.md).
+
 **October 24, 03:28 EDT — four-card host: exact Q6 kernel improvement verified.**
 The fixed three-case Q6 comparison passes all84 exact pairs and independent audit.
 Candidate GPU event time is about30.4% of control, with both execution orders improved;

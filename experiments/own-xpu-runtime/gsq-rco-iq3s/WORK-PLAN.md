@@ -105,3 +105,14 @@ payloads and full output bytes are authenticated. No full22 payload rescan is
 needed merely to repeat that proof. The complete model gate still compares all
 original prompt tokens/full states. Finish closed candidate archival before that
 suite; do not publish micro timing as model speed or merge different sessions.
+
+## Combined full-engine measurement next — 07:40 UTC
+
+The single-entry native build and independent source/build/operating reviews pass.
+Retain original26request/27dump schedule, all12prompt pairs and unchanged cap128,
+fullRESET, target verifier and BF16KV. Compare every arm to the original baseline
+before another request. Record absolute resident rates and within-run MTP behavior;
+a previous-binary comparison stays explicitly between runs, not a matched causal
+speedup. Do not begin a third micro before measuring this engine. All27 closed
+attention-state archives are verified,56,981 files released, and explicit next-run
+storage admission binds the plan. Byte/file forecasts are monitored, not quotas.

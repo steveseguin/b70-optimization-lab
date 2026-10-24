@@ -1,0 +1,51 @@
+{
+  "schema": "ownrt.gsq.combined-qkv-independent-source-review.v1",
+  "passed": true,
+  "scope": "Source and retained162-check CPU policy proof; native compile/execution not performed by reviewer",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/prepare.py": "6ea998dc75fb76a2953f137b019ee04ad17897b76c01e7c2d8abb629869d5bd4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/parent-pins.json": "5140c9475290269578d6644a4738db8d40788af8b294f1d68015815f70f6d232",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/preparation.json": "42bb4c32272991255c4c7985db88dd319ef14b7a4c4bcb307be29cf8f6b4538a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/overlay.patch": "3946dddfb73fba542fa01737eacdab6e4a2c086b7bfddc353722868eb65a9b43",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build.py": "3e36844d5d532becb3aed24c09000955304ef78e9e7a5c4e91d416f44c3e6a64",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/policy_fixture.cpp": "3a5eee87e693be44f27f0aae950f3e3ae7c826cdae5bd1ee1043a368a3a29f8c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/evidence/cpu-proof.json": "bd979936dec0fdfb3c4d9e18498bbfe7b6ea47a8a46ce8e3ac1a186cf69ea75f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/evidence/native-build-plan.json": "14fc29825ba2d87c23ff9ddf118bb6007815c3e21196ea9ae3bf1ca5091b1f43",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build/source/generic_engine.hpp": "615ac3acf3e4d341508ab81959626bda0bfb70ef0b90e4e066adc7ab16526353",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build/source/entry.cpp": "10a8e7d456ac18444c56dafeb04860ff0c6d80803a0b16c41bc0f3182764adad",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build/source/main.cpp": "63d7a20969aa2952f15698509217170306531f330ff86cd4b5fd712bcb063607",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build/source/policy.hpp": "546bb03b630dc34fab2274414b8f2c57b58706bee6a3f763da190f89075da9be"
+  },
+  "preparation_sha256": "42bb4c32272991255c4c7985db88dd319ef14b7a4c4bcb307be29cf8f6b4538a",
+  "cpu_proof_sha256": "bd979936dec0fdfb3c4d9e18498bbfe7b6ea47a8a46ce8e3ac1a186cf69ea75f",
+  "source_files_rehashed": 425,
+  "policy_checks": 162,
+  "objects_for_reuse": 39,
+  "combined_attention_sites": 48,
+  "added_q6_qkv_sites": 22,
+  "per_rank_delta_vs_attention": [
+    183500800,
+    104857600
+  ],
+  "combined_device_forecast_bytes": [
+    30947490698,
+    29824495508
+  ],
+  "checks": [
+    "Original48attention policy retained byte-for-byte; fixed22newQ6 selectors admit exactname/shape/type/extent and count",
+    "Policy proof compiles actual generated policy; wrong/swapped names,geometry,type,extent,missing/duplicate and disabled/incompatible mode tested",
+    "All weight loading, selected variants, cached Matrix choice and gsq_linear submission use consistent combinedselector; inherited otherformat/head/MTP arithmetic unchanged",
+    "New denseMatrix exactQ6,N10240,K2560,BF16x/y,noFP32/routes/status,count/experts1 and expanded34611200 guard beforeexistingp33variant6Split1",
+    "Actual original per-TU dependency proof unchanged:39 nonentry objects rehashed; only entry includes modifiedmain/generic/newpolicy",
+    "Inherited load expansion includes p183Q6 finite/scale equality census beforeupload; no additional all22payload scan required",
+    "Engine delta only selects existing orderedarithmetic alreadyCPU+3nativefixture qualified; runtime end-to-endtokens/state still required",
+    "Memorydelta recomputed from14rank0/8rank1 expandedrawdifferences and existing attentionledger"
+  ],
+  "limitations": [
+    "No actual fullcombinedEngine result or allocation/capacity qualification yet",
+    "CPU policy uses synthetic metadata with real generated selector, not Engine Matrix/device capture execution",
+    "Three micro weightpayload authorities do not assert all22payload equivalence; runtime guardedload/fullbaselineexactness required",
+    "Forecast remains below30GiB logicalarena but does not prove physicaldevicefit or driveroverhead",
+    "No new native compiler,modelpayload,Device,service operation by reviewer"
+  ]
+}
