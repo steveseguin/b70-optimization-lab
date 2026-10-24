@@ -49,8 +49,12 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
   native loop, but no device run has validated them.
 - **The prompt is processed token by token.** No batched prefill exists, so long prompts take noticeably longer
   before the first output.
-- **No real streaming.** The engine returns at completion. A request with `stream: true` gets SSE keep-alive comments while it waits,
-  then the whole answer in one chunk, then `[DONE]`. A non-streaming request sends nothing until the answer is done.
+- **Real streaming (since 2026-10-24 13:38 EDT).** The service build runs with `--token-stream jsonl`: rank 0 appends
+  each **target-confirmed** token (never a draft guess) to `confirmed-tokens.jsonl` as soon as it is accepted or corrected. The
+  service tails that file and sends SSE text deltas. Deltas hold back an unfinished UTF-8 character and any tail that
+  could start a stop string. The final stream must equal `native-result.json` exactly, or the request fails. The
+  concatenated deltas always equal the non-streaming answer. First text arrived 0.96 s after the request on a short
+  prompt. A non-streaming request sends nothing until the answer is done.
   Long queue waits plus a long generation can therefore exceed a client's timeout (Open WebUI defaults to 300 s).
 - **Text only.** Supported roles are system, user and assistant. Images and tools are rejected with HTTP 400.
   Thinking is off by default, which matches the validated template rendering. Pass
@@ -81,6 +85,21 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
   performs no device resets. A halted service stays down until a person looks at the incident.
 - When storage falls below a floor, the service refuses new requests with HTTP 507. It does not lower any floor.
 - The protected vision server (cards 27:00.0 and 43:00.0) is not touched. Changes to it are only noted.
+
+## Service build (current)
+
+Since 2026-10-24 13:38 EDT the service runs binary `a6da826f…` ([build receipt](../../service-speed/a-reset-stream/build-receipt.json)) through
+[adapter2.py](adapter2.py) with `--reset-dump none --finish-dump none --token-stream jsonl`.
+- **What it is:** an entry-only rebuild of engine 5926 with three default-off options.
+- **What changed:** host code only. Recompiling and relinking the unchanged sources reproduces 5926 byte-for-byte, and
+  all 53 device code images of the new binary are byte-identical to 5926's.
+- **Device gate:** on its first start the service ran a one-time gate against engine 5926
+  ([evidence](evidence/b0-a6da826f58efd2f1.json)). All of these passed:
+  - the selftest after RESET: tokens identical, and the full target state byte-identical on both ranks to the launch-b
+    physical hashes;
+  - the incident prompt, 512 outputs, target-only and MTP: tokens identical to the longer-a run of 5926;
+  - the selftest again after three dump-free RESETs: tokens and full state identical.
+- **Effect:** RESET now takes about 0.11 s instead of 4.1 s, and no per-request dump is written.
 
 ## Storage and retention
 
