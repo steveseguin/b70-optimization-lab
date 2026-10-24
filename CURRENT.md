@@ -10,6 +10,23 @@ and independent review precede launch. Parent stays active through completion an
 Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-closeout.md`; registration:
 `experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-current-pi.md`.
 
+**October 23, 21:48 EDT — four-card host: current arithmetic issue fixed; owner requested closeout and publication.**
+The two-row expert CPU proof passes 100 checks across 17 cases after preserving the selected operator's
+NaN operand priority. All output/status bytes match both controls; the two failed attempts remain recorded.
+Nine read-only authority checks and independent review pass. This remains CPU research, with no native
+speed or serving promotion. The owner asked to finish this optimization round and publish the verified
+Qwen recipe on neural.download. No new lever will start. Next is final recipe/page validation and deployment.
+Applications are unchanged; the latest passive check still finds the vision process on the proposed test card.
+[Final expert proof and limits](experiments/own-xpu-runtime/stage2/packet215-two-row-iq2-expert/README.md).
+
+**October 23, 21:37 EDT — four-card host: expert-sharing CPU proof caught an exactness failure.**
+The original selected operator and separate scalar reference agree, but the new two-row arithmetic differs
+on isolated exceptional half values. The first failed build/run and source are retained; no complete proof
+or speed result is claimed. Next is capturing the first differing bytes before changing the implementation.
+No native owner was launched. A fresh passive check still finds the unchanged vision process holding the
+proposed test card. The table-publication commit 66a28d6d5 has all three CI workflows green.
+[Expert proof scope](experiments/own-xpu-runtime/stage2/packet215-two-row-iq2-expert/README.md).
+
 **October 23, 21:29 EDT — two-card host: Campaign 63 launched with bounded earlier-source retrieval.**
 Unit `ctx-campaign63`: at most six query plans and twelve unchanged reviews. Physical archive-prefix,
 literal-query and output-bound checks passed, including the corrected control-character clipping case;
@@ -27,6 +44,7 @@ then reuses the unchanged reviewer. Acquisition coverage and correction quality 
 Source code and CPU leakage/bounds checks are being prepared; independent review precedes any launch.
 Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign62-closeout.md`; next registration:
 `experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-source-retrieval.md`.
+
 
 **October 23, 21:20 EDT — four-card host: batched table publication passes the CPU proof and native build inspection.**
 Both publication methods produce identical bytes across all 144 tables and two generations; 41 checks

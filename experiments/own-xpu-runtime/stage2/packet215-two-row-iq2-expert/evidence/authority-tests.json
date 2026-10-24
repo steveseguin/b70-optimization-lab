@@ -1,0 +1,62 @@
+{
+  "schema": "packet215.authority-tests.v1",
+  "passed": true,
+  "tests": 9,
+  "elapsed_seconds": 0.04,
+  "command": [
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "nice",
+    "-n",
+    "19",
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/packet215-two-row-iq2-expert/tests",
+    "-p",
+    "test_authority.py",
+    "-v"
+  ],
+  "execution_scope": "Read-only retained artifacts only; no fixture replay, native executable, model, device or service action. Log transcribed exactly from captured tool output.",
+  "source_and_evidence_sha256": {
+    "tests/test_authority.py": "f91d06b4e8022369bcd9e2fe8720f93e63bd6642b8c365d41f812c5c32a3dd11",
+    "AUTHORITY.md": "6d4655d4646956cf3d14ed284bb1af1404646c192fe2b37df0a627426d37fe51",
+    "README.md": "1a7bcfed0182ad08152271b5047f63128044cdc287de798e25151e8ed400b2d3",
+    "paired_iq2.hpp": "a294f4302d3028f201891502d43b1fb5221e3901b40746e7fa03a6e1d8200827",
+    "selected_cpu.hpp": "3c2889020f614f77aafb8a2140dbef33424f31e4980166f486bfe778bb49c74c",
+    "fixture.cpp": "7a2d36c12e6c1ff0d5e6ee50989a50be78680fb709bec2d1faf64c2d7121bd1f",
+    "build_cpu.py": "b7ec36fbfa7277e73d1213d87f9cfa5c5de09aedf6ecb5d3eac8f6fc42df85e0",
+    "parent-pins.json": "c6fcb7ac37138bb83f1be3812d3b457e6ba74dc31f9d20aa3dd31d614d015141",
+    "evidence/cpu-build.json": "004dbc4b734b734f8c6be63ec5e638db8859bb73d1c333cca66cf6b5d318d8a8",
+    "evidence/arithmetic-proof.json": "cfda892a422fabbe9ba6cc79b7fa6da56d40c8e992cf1afb22bd44d52ebab4e3",
+    "evidence/first-failure-retention.json": "af1ffb0e5df0077fff4ce1a1d8435cfec6459e37fac8284d59193065baf9a194",
+    "evidence/diagnostic-failure.json": "771a1c7f5510d578c3585d7c98246b6aee94174dbae3a24f69850ce629b2b948",
+    "evidence/authority-tests.log": "274dd3ebe9a75216ec522e67d5136f408b4100a7e3053fb6556fccfb3c2f707e"
+  },
+  "actual_cpu_proof": {
+    "checks": 100,
+    "cases": 17,
+    "output_bytes_per_case": 51200,
+    "status_error_bytes_per_case": 168,
+    "compiler_dependencies": 53,
+    "reused_host_objects": 23,
+    "parent_pins": 124,
+    "safe_to_exit": true
+  },
+  "failure_lineage": [
+    "cpu-1792805663473210614",
+    "cpu-1792805982161648696"
+  ],
+  "final_attempt": "cpu-1792806179719719049",
+  "limitations": [
+    "Standalone synthetic selected IQ2 CPU arithmetic only; no Engine or native integration.",
+    "Raw-pointer interface does not qualify allocation/alias/lifetime admission.",
+    "NaN-priority fix is selected GNU Host control-specific; native NaN propagation unqualified.",
+    "Decode visit reductions are not measured hardware traffic, serving speed or actual production overlap.",
+    "Ignored binaries remain locally with SHA pins; tracked exact source/recipe/logs support reconstruction."
+  ]
+}
