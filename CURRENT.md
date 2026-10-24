@@ -10,6 +10,13 @@ reads between two prompt rows. Actual adjacent-row expert overlap is not recorde
 benefit remains unknown. Applications are unchanged; the matched-control commit 98290c145 has all three
 CI workflows green. [Publication proof and limits](experiments/own-xpu-runtime/stage2/packet214-frozen-table-publication/README.md).
 
+**October 23, 21:07 EDT — two-card host: Campaign 62 launched; completion audit remains active.**
+Unit `ctx-campaign62` runs the twelve registered reasoning-field ablations on one fresh server.
+CPU inverse checks and independent review passed; all 46 repository validation commands passed.
+Campaign61 closeout and campaign62 setup were pushed in `e60fbf866` before launch. No agents,
+tests or builds beside this server; no resident service restored at the end. This launch entry stays
+local until shutdown. Status: `context-longrun-20261016/campaign62-note-observable-review/status.json`.
+
 **October 23, 21:06 EDT — two-card host: Campaign 61 audited: two of twelve pass; one controlled source-view change ready.**
 The neutral reviewer fixes both observed-audit denials with thinking on, but two preceding cuts hit
 the cap and one cancellation case invents the denial again. Only 2/12 meet the broad source gate;
