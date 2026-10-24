@@ -1,0 +1,60 @@
+{
+  "schema": "ownrt.gsq.attention-completion-independent-review.v1",
+  "passed": true,
+  "scope": "Source and five CPU mocks only; no operational plan, native invocation, Device, model payload, service or host inspection",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/once.py": "ce9578582f3e23493eac0db51424897154ef1f85944cd129930d035130cd27d0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/checks.py": "115213811013a438dd2ce3ad9b415f7a7bf4184ca14271a734679d3c28fcf77f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/test_completion.py": "ed16d47f0b7d30889dd8b80c71aead48a414874eee8a9ff16229d2abe4536c29",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/prepare.py": "b95de86a8f16be219714f1096abcec0a183771a6647aa7cc552ed655b76e5d90",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/manifest.json": "a77140c1ebe30488d6604b3ecead06b31ecd0e1b6c9cc5e10e27b7089b3904c5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/preparation.json": "73ca05069cd548dcb3b9d67b516cc4e48eb20504480264d78ba1f4c029a279b7",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/overlay.patch": "e46e397c788303740b8513a52678fff29e2e36a7e010706113d353a49a444325",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/generated/suite.py": "2e24289c8f74c6f9e3de778b15f6a23c893ec9cb2a45885adf9831f477bcdb55",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/README.md": "1fd78954bf7cc2554152c855e4881ef153d503f6231369ed80467ac43453cce5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/evidence/cpu-tests.log": "cee216b200a8da2ba9231e71697488ceb4b5c0df46d0e2840d04335fb2ad63b6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/once.py": "2401e2d8f09c07d5838a21b27054b583754a51188db97f3dcf176e11e0bd54aa",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/checks.py": "f021e6e76d27c79ea5cd689221cc04f018896f65f8fe482c5a1f565f7fc0fc7e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/generated/suite.py": "a11d27d1de412c995de47e8103bf2c345feaa0dc3fbba89525ef5c306f543b85",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/generated/adapter.py": "d82c887705eb4fbcb35b1f87b1893eb9819b9df0943edad3ce1b15f75404bc01",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/preparation.json": "ae478e300151553a2f9d84a75764f871679f2c9fc1694b9557669ae7c967108d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/evidence/cpu-preparation.json": "7f275f126cf5c8459eed4f75178a871e3238782842f4998de2ddcfa0656b5795",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion/evidence/independent-tests.log": "cee216b200a8da2ba9231e71697488ceb4b5c0df46d0e2840d04335fb2ad63b6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/partial-independent-a/review.json": "663fb5e463b6e9ee6b45f6e55562394522f1f30f593ef5003991ba51c2e887cf",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/device-a/review.json": "61abfcb999ddf213f8559c0b99734c1ef85baaffbf9d7dffa70acaec0155280d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/complete.json": "8fbac4c1dadf2dc728c49f622f6f1797876b198ab6776ed6095120720d2dbebc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/manifest.json": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20"
+  },
+  "tests": 5,
+  "test_command": [
+    "/home/steve/.venvs/vllm-xpu/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/completion",
+    "-p",
+    "test_completion.py",
+    "-v"
+  ],
+  "checks": [
+    "Exact narrow patch against frozen candidate suite; arithmetic, adapter and Monitor lifecycle unchanged",
+    "Same e834 candidate bound to audited incomplete14-arm prefix, exact prompts7..11 from unchanged original manifest",
+    "Two excluded disjoint8-output warmups and ten measured arms;full RESET before every one of12 requests; cap128 retains earlyEOS",
+    "Each raw arm is saved then must match corresponding independently audited original baseline tokens/full target state before next request; first mismatch stops",
+    "Original indices preserve MTP-first7/9/11,target-first8/10; no selection or timing filtering",
+    "Private coordinator globals and exact S.A.RetainedOwner class propagated through both inherited coordinator layers",
+    "13 dumps3,075,861,364B forecast,27,469bin files plus4,096 metadata allowance against57,045 released records; external2GiB/root27GB guards retained",
+    "Original failed owner outcome remains incomplete; separate-session correctness only and no combined resident timing/speed promotion"
+  ],
+  "candidate_binary_sha256": "e83469b3a2c1781d6be6241f4c1cd0967379f15ca410c6aed55baf0831b8ac68",
+  "prior_verified_arms": 14,
+  "completion_measured_arms": 10,
+  "completion_requests": 12,
+  "limitations": [
+    "No current host admission or completed completion result is asserted",
+    "Storage bytes/file counts are monitored forecasts, not hard MFT quotas",
+    "Prefix and completion may be joined only for disjoint exact correctness coverage, never as one continuous timing run"
+  ]
+}
