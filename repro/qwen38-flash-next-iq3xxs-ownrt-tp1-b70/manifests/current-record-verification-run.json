@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "returncode": 0,
+  "helper_sha256": "f4816605f36465e1479de8df6df8c0e872f3bfcd36f2c750f83654cbade96c0a",
+  "receipt_sha256": "f85fdc22a36b4c2cc050cfc844dca4131e47f4330027fe763cbc7b813ccf576e",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "placement_check_sha256": "f475b337c7f6b7cc3610a5b43ef50641da8123c0d91c02a263144bbd5b4b2fc7",
+  "prior_helper_sha256": "50963daf44868000094b5d0aa6607cd8eae3b2c317a085661de0ac337618abb8",
+  "process_limits": {
+    "nice": 19,
+    "allowed_cpus_before": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "selected_cpus": [
+      8,
+      9
+    ],
+    "threads": 2,
+    "address_space_bytes": 4294967296,
+    "deadline_seconds": 120
+  },
+  "primary_metric": 37.59560460827345,
+  "prompt_count": 12,
+  "token_cap": 128,
+  "command": "OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 taskset -c 8-15,24-31 nice -n 19 /home/steve/.venvs/vllm-xpu/bin/python -B repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts/verify-current-record.py"
+}

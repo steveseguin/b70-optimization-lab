@@ -1,0 +1,94 @@
+{
+  "schema": "qwen38-ownrt-p196.read-only-record-verification.v1",
+  "passed": true,
+  "verification": "pinned packet58_submission.replay_result; full derived result equality",
+  "process_limits": {
+    "nice": 19,
+    "allowed_cpus_before": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "selected_cpus": [
+      8,
+      9
+    ],
+    "threads": 2,
+    "address_space_bytes": 4294967296,
+    "deadline_seconds": 120
+  },
+  "source_sha256": "f4816605f36465e1479de8df6df8c0e872f3bfcd36f2c750f83654cbade96c0a",
+  "input_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/packet58_submission.py": "81d8b22a718bbadc3b5ad391c8cda62a10c4aa75b989376ab49fe9cc0099aa73",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/suite_metrics.py": "4eef50d1272c759904b64947297c865b71b683a52c5590fb822301bcdc7f04aa",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/composition.py": "b12c1a3ed605308275101998c8b56f3da0ffe58c91ae3b824fa858a00290c4da",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/submission-policy.json": "f615a12c0bcfbcfe2f3102ac75b5b73805893af58f5b98b99245c6c4ad94bc23",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/submission-pins.json": "ea4ecda79c2974b51f43822873ec8d9a79f24e19de1d41e50e4f98a02d06f4c6",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/submission/prepared-a/result.json": "1d457535852ab0b8bccab207122bf8983ca5960bb3ae7dde0a26f424ab904ba4",
+    "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/submission/prepared-a/evidence.json.gz": "76b5f58346f36417fe83a002e0b28a1599138008747bd46ee5fc078e8f5db8f9",
+    "scripts/packet58_onecard_record_threshold.json": "895c3d83e1bc4f535542f2e9b2d7e9c5da28c23ae72006eb0ca4046aab755dc8"
+  },
+  "current_local_record_id": "cmvl5k4p9004nng01z5xtanw5",
+  "packet": "packet196-onecard-diet-chain",
+  "model": "Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF)",
+  "gpu_count": 1,
+  "promotion_identity": {
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "runtime_revision": "a0420fc55605f38d01234a29fc859d7dffd75f3a",
+    "optimization_identity": "packet196-onecard-diet-chain-resident-tile16-overlap-tp1-plain-lru23.05gb-max23-c4096-zero-copy-seal-535af06cb7f9136228373ee669c2bc9da22430238f7925cac5d8fe4b36cac02e",
+    "arithmetic": "iq3-p49-split32-v1",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+  },
+  "primary_metric": {
+    "name": "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft",
+    "value_tok_s": 37.59560460827345,
+    "class_medians": {
+      "analysis": 39.149695612797125,
+      "code": 37.112612123833216,
+      "documentation": 37.920914479724566,
+      "operations": 36.48301731964943,
+      "prose": 37.27029473682232,
+      "structured-writing": 38.93966248203501
+    },
+    "accounting": "99 / (t100 - t1)",
+    "aggregation": "median-of-prompt-class-medians"
+  },
+  "requested_max_new": 128,
+  "exact_prompts": 12,
+  "exact_output_tokens": 1536,
+  "prompt_ids": [
+    "incident-retrospective",
+    "code-review",
+    "customer-email",
+    "sql-debugging",
+    "release-plan",
+    "benchmark-analysis",
+    "architecture-tradeoff",
+    "bug-report-synthesis",
+    "technical-guide",
+    "risk-register",
+    "performance-hypotheses",
+    "decision-memo"
+  ],
+  "strict_512_gate_passed": false,
+  "fresh_timing_repeat_passed": false,
+  "device_executed": false,
+  "model_executed": false,
+  "network_used": false,
+  "new_submission": false,
+  "new_measurement": false,
+  "scope": "Retained capped evidence replay and pinned local record identity; no current global leaderboard claim or new device qualification."
+}

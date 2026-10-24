@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 23, 21:54 EDT — four-card host: Flash-Next optimization closed at the owner's request; publication updated.**
+The current arithmetic issue is resolved: 100 CPU checks across 17 cases and nine independent artifact
+checks pass, with both failures preserved. The updated neural.download sources and recipe identify the
+37.595605 tok/s one-card capped record, the separate full-512 source-build profile, and the sixteen-turn
+streaming/checkpoint result. The new read-only verifier reproduces all twelve exact record prompts and
+its submitted metric. Later prefill candidates remain unqualified research and are not promoted into the
+measured recipe. No new device run or application change was made for this closeout; no new optimization
+lever will start. [Updated recipe and remaining qualification limits](repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/LATEST.md).
+
 **October 23, 21:50 EDT — two-card host: retrieval replay closed; full pi task being prepared.**
 Campaign 63 passes no complete quality condition (0/12). Retrieval corrects one mistaken identity,
 but another review misreads the original receipt and completed notes still omit work. The server
@@ -9,6 +18,7 @@ original task and grader are preserved; large history validation waits until GPU
 and independent review precede launch. Parent stays active through completion and audit.
 Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-closeout.md`; registration:
 `experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-current-pi.md`.
+
 
 **October 23, 21:48 EDT — four-card host: current arithmetic issue fixed; owner requested closeout and publication.**
 The two-row expert CPU proof passes 100 checks across 17 cases after preserving the selected operator's

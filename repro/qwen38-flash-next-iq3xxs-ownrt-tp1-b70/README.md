@@ -1,5 +1,10 @@
 # Flash-Next UD-IQ3_XXS: our Xe runtime on one B70
 
+**Updated October 23:** the separate capped record is now **37.595605 tok/s**,
+and a bounded streaming/checkpoint pilot has passed. See [current recipes,
+verification commands and limits](LATEST.md). The source build and full-512
+replay below retain their measured identity.
+
 **Candidate · expert lab replay · full BF16 KV · one user.** These are Unsloth's
 quantized compressed weights, a separate model from official Flash-Next FP8.
 The measured full-512 profile uses packet58aj through packet165c, target-only
@@ -23,9 +28,10 @@ prompts. The reading prompt has repeat agreement but no independent oracle.
 
 **The performance workload passed; full-output quality promotion remains
 pending.** The records explicitly keep `submission_eligible=false` and
-`no_quality_loss_decision=false`. The separate packet58as bounded-spin profile
-has an approved **34.573038 tok/s** result under the older 128-token cap;
-its speed is not substituted into this full-512 profile. No actual
+`no_quality_loss_decision=false`. The separate packet196 diet/max23 profile
+has an approved **37.595605 tok/s** result under the older 128-token cap;
+its speed is not substituted into this full-512 profile. The completed record,
+exact configuration and read-only verifier are in [LATEST.md](LATEST.md). No actual
 prompt-length curve or multi-user measurement exists for either one-card
 identity. The native controller handles one request at a time; simultaneous
 users are not a supported measured mode.
@@ -75,12 +81,12 @@ new [clean-source build recipe](BUILD.md) compiles all translation units from
 a hash-pinned source archive, without inherited object files. Its commands
 require no model weights or GPU execution. A relocated or newly compiled
 binary needs new arithmetic, repeat and device gates; never replace its hash
-in old receipts. Portable model admission and clean-host device replay remain
-pending.
+in old receipts. The one-card portable rebuild passed two device runs on October 22, with
+complete outputs equal to this sealed line; see the [rebuild evidence](../../results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261022.json).
+Portable model admission and clean-host replay remain pending.
 
-During this closeout, this host's standing stability rules permit only CPU
-build and preflight work for this native lane. No native device benchmark was
-run. The replay below is for an explicitly admitted compatible host and does
+The October 23 publication closeout performed CPU verification only. No new
+native device benchmark was run for that closeout. The replay below is for an explicitly admitted compatible host and does
 not authorize automatic benchmark execution on the current host.
 
 From the repository root, these commands only check retained files and plan

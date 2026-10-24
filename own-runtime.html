@@ -32,7 +32,7 @@
 <meta name="twitter:image" content="https://neural.download/og-image.png">
 <meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"The own runtime: a custom Xe engine for Qwen3.8 Flash-Next","description":"What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.","url":"https://neural.download/own-runtime.html","dateModified":"2026-10-22","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","custom inference engine","Qwen3.8 Flash-Next"]}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"The own runtime: a custom Xe engine for Qwen3.8 Flash-Next","description":"What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.","url":"https://neural.download/own-runtime.html","dateModified":"2026-10-23","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","custom inference engine","Qwen3.8 Flash-Next"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"The own runtime","item":"https://neural.download/own-runtime.html"}]}
@@ -57,7 +57,7 @@
   <p class="breadcrumb"><a href="index.html">Home</a> / The own runtime</p>
   <p class="eyebrow">Lab engine · SYCL/Xe · Intel Arc Pro B70</p>
   <h1>The own runtime, in plain terms</h1>
-  <p>A custom inference engine the lab built for Qwen3.8 Flash-Next on Arc Pro B70 cards. It exists to prove two things at once: speed (sealed records) and exactness (every published output byte-identical to its oracle, with receipts). This page is the honest version: what is measured, what is capped, and what the engine refuses to claim.</p>
+  <p>A custom inference engine the lab built for Qwen3.8 Flash-Next on Arc Pro B70 cards. Its published results retain measured speed, exact output comparisons and the limits of each test. The October 23 closeout updates the one-card record and streaming results while keeping the experimental prefill work separate.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose">
@@ -65,13 +65,18 @@
   <div class="tldr">
     <h2>The short version</h2>
     <ul>
-      <li><strong>It is a research engine, not a product.</strong> There is nothing to download and install today; the reproducible artifacts are the lab's recipes and evidence, linked below.</li>
+      <li><strong>It is a research engine, not a product.</strong> Source archives, build recipes and verification tools are available; a portable service installer and production certification remain open.</li>
       <li><strong>It is fast where measured:</strong> 58.557–58.632 tok/s decode on two B70s and 31.510–31.782 tok/s on one, with prompt reading at 75.884–75.973 and 32.595–32.752 tok/s respectively — every figure from sealed, receipted runs.</li>
       <li><strong>Exactness is a gate, not a hope.</strong> A run that cannot prove itself byte-identical does not publish.</li>
       <li><strong>Checkpoint/restore works on one card:</strong> on 2026-10-22 a one-card session was saved at 256 tokens, restored in a fresh process and continued; the merged output matched an uninterrupted run byte for byte, twice. Restore took 0.46 s where re-reading the prompt took 36.75 s. Later the same day a second engine revision passed the harder test: restore a saved session, add a new 126-token turn, and the answer matched a fresh one-shot run byte for byte; saving again after a restore and resuming from that second save matched too.</li>
       <li><strong>The gaps are declared, not hidden:</strong> 128-token oracle caps, a two-card rebuilt-binary qualification still pending (the one-card rebuild passed on 2026-10-22), no sampler, no multi-user controller, no context curve beyond 4,096 tokens.</li>
     </ul>
   </div>
+
+  <h2>October 23 closeout</h2>
+  <p>The latest one-card capped record is <strong>37.595605 tok/s</strong>, with all twelve 128-token answers exact. The separate two-card capped record is <strong>63.611824 tok/s</strong>. These are different tests from the full-512 measurements below. The <a href="repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/LATEST.md">updated recipe</a> provides exact settings, source-build guidance and a read-only record verifier.</p>
+  <p>A separate <a href="experiments/own-xpu-runtime/stage2/packet201-streaming-serving/RESULT.md">streaming and checkpoint test</a> completed sixteen turns and 1,484 tokens in one loaded owner: seven SSE replies and nine ordinary JSON replies, with matching outputs and retained final state. It is a bounded experimental serving result, not a new speed record or a portable server installer.</p>
+  <p>The later prefill and expert-sharing candidates remain research-only. The final CPU arithmetic proof passed 100 checks across 17 cases after an exact NaN-sign fix; both failures are retained. No native speed improvement is claimed, and none of that work replaces the measured recipe. This optimization round is closed at the owner's request.</p>
 
   <h2>What the engine is</h2>
   <p>The own runtime (own-xpu-runtime) is a custom SYCL/Xe inference engine for Qwen3.8 hybrid-architecture models on Intel Arc Pro B70 GPUs, built and validated in this lab under a fail-closed packet campaign. Qwen3.8 Flash-Next is a hybrid: 48 layers made of 36 GDN (gated delta net, linear attention) layers and 12 QSA full-attention layers, a 512-expert top-10 mixture-of-experts, and a PLE early layer. The engine is designed around that exact structure — per-layer plans, a resident expert cache, snapshot banks — instead of inheriting generic kernels from a general-purpose runtime.</p>
@@ -127,7 +132,7 @@
       <tr>
         <td>Flash-Next records (approved on LocalMaxxing)</td>
         <td>128-token capped suites</td>
-        <td class="num">63.611824 two-card (2026-10-23, packet195 diet chain; was 62.345282) · 36.602512 one-card (2026-10-23, packet58-onecard-cache23 chain; was 35.926720)</td>
+        <td class="num">63.611824 two-card (packet195) · 37.595605 one-card (packet196 diet/max23; was 36.602512), both October 23</td>
         <td class="num">—</td>
         <td>Capped-record scope stated on the package pages</td>
       </tr>
@@ -136,28 +141,28 @@
         <td>K1a, K1b, then one load max/max23/max/max23/max, 12×128 each</td>
         <td class="num">max 35.892/35.929/35.925; max23 36.546/36.569 (+1.72 %)</td>
         <td class="num">—</td>
-        <td>Every view exact, drift 0.01 %. Screen win: 1.5 GB more admitted device expert cache (21.55 → 23.05 GB, plan re-partitioned from the record run's own lifetime receipts, DRM guard unchanged) removes 12.9 % of the per-token fills. Chain bar missed by 0.2 %; record chain in preparation.</td>
+        <td>Every view exact, drift 0.01 %. Screen win: 1.5 GB more admitted device expert cache (21.55 → 23.05 GB, plan re-partitioned from the record run's own lifetime receipts, DRM guard unchanged) removes 12.9 % of the per-token fills. The subsequent cache23 record reached 36.602512 tok/s; the diet/max23 successor reached 37.595605.</td>
       </tr>
       <tr>
         <td>Flash-Next one-card expert kernel, 1×B70 micro (packet58-onecard-diet-micro, 2026-10-23)</td>
         <td>exact instruction diet of the one-card halfcache gate/up kernel against production: cold and warm, both orders, fresh production control</td>
         <td class="num">0.78× cold (57.2 vs 73.2 µs), 0.75× warm (36.9 vs 48.9 µs)</td>
         <td class="num">—</td>
-        <td>Bit-identical on every claimed stratum on device; 12–16 µs saved per layer on a line where 11.4 µs is worth +2 %. Engine integration in preparation.</td>
+        <td>Bit-identical on every claimed stratum on device; 12–16 µs saved per layer on a line where 11.4 µs is worth +2 %. The integrated one-card diet/max23 line subsequently qualified at 37.595605 tok/s (packet196).</td>
       </tr>
       <tr>
         <td>Flash-Next UD-IQ3_XXS, 2×B70, exact expert instruction diet in the record engine (packet194, 2026-10-23)</td>
         <td>one load k3x / k3x+diet / k3x / k3x+diet / k3x, 12×128 + incident64 per view</td>
         <td class="num">k3x 62.168/62.155/62.193; k3x+diet 63.474/63.413 (+1.96 %)</td>
         <td class="num">—</td>
-        <td>Every view exact, drift 0.06 %. The bit-identical gate/up instruction diet saves 10.8–11.8 µs per layer on both ranks (hit cycle 13.54 → 13.28 ms). Record bundle in preparation.</td>
+        <td>Every view exact, drift 0.06 %. The bit-identical gate/up instruction diet saves 10.8–11.8 µs per layer on both ranks (hit cycle 13.54 → 13.28 ms). The subsequent record chain is retained separately; see the approved-record row above.</td>
       </tr>
       <tr>
         <td>Flash-Next expert kernels, one-card micro (packet192 + packet193, 2026-10-23)</td>
         <td>issue-floor decomposition (cold / L2-warm / no-load) of the record gate/up and down kernels, then exact instruction-diet candidates against production in both orders</td>
         <td class="num">gate/up 73.8 / 46.4 / 44.7 µs, down 45.9 / 33.8 / 33.3; exp-diet 0.78× cold, 0.77× warm</td>
         <td class="num">—</td>
-        <td>Both record expert kernels are instruction-issue bound. The exact gate/up instruction diet (same arithmetic order, bit-identical on every claimed stratum) saves 11–16 µs per layer; it is being integrated into the record engine next. The epilogue and down-kernel variants did not clear the bar.</td>
+        <td>Both record expert kernels are instruction-issue bound. The exact gate/up instruction diet (same arithmetic order, bit-identical on every claimed stratum) saves 11–16 µs per layer; it was subsequently qualified in the two-card packet195 and one-card packet196 record chains. The epilogue and down-kernel variants did not clear the bar.</td>
       </tr>
       <tr>
         <td>Flash-Next UD-IQ3_XXS, 2×B70, per-class attribution on the record line (packet191, 2026-10-23)</td>
@@ -171,7 +176,7 @@
         <td>one load, V3/k3x/V3/k3x/V3, 12×128 + incident64 per view; fresh V3 reference from packet188</td>
         <td class="num">V3 60.615/60.444/60.498 (fresh 60.505); k3x 62.242/62.225 (+2.66 %)</td>
         <td class="num">—</td>
-        <td>Every view exact, drift 0.28 %; chain rule met. k3x is packet188's third boundary layer plus the rank-0 trims with the 20,480-byte handoff export back on the copy engine (0.053 ms instead of 0.592). Hit cycle 14.06 → 13.53 ms; no kill rule fired. Record bundle in preparation.</td>
+        <td>Every view exact, drift 0.28 %; chain rule met. k3x is packet188's third boundary layer plus the rank-0 trims with the 20,480-byte handoff export back on the copy engine (0.053 ms instead of 0.592). Hit cycle 14.06 → 13.53 ms; no kill rule fired. The subsequent record chain is retained separately; see the approved-record row above.</td>
       </tr>
       <tr>
         <td>Flash-Next UD-IQ3_XXS, 2×B70, k3 + trims screen (packet188, 2026-10-22)</td>
@@ -192,7 +197,7 @@
         <td>one load, un-split/V3/un-split/V3/un-split, 12×128 + incident64 per view, plus two fresh split-head controls</td>
         <td class="num">un-split 57.83/57.80/57.84; V3 60.57/60.53; split-head controls 58.60/58.44</td>
         <td class="num">—</td>
-        <td>Every view exact, draft proposals identical, drift 0.26 %. +3.3 % over the record line; chain rule met. V3 = full target head on rank 1 plus layers 24–25 run on rank 0 for the verified token plus the static snapshot. Record bundle in preparation.</td>
+        <td>Every view exact, draft proposals identical, drift 0.26 %. +3.3 % over the record line; chain rule met. V3 = full target head on rank 1 plus layers 24–25 run on rank 0 for the verified token plus the static snapshot. The subsequent record chain is retained separately; see the approved-record row above.</td>
       </tr>
       <tr>
         <td>Flash-Next UD-IQ3_XXS, 2×B70, un-split target head measurement (packet185, 2026-10-22)</td>

@@ -1,5 +1,22 @@
 # Qwen3.8 Flash-Next UD-IQ3_XXS — quantized compressed version
 
+## October 23 optimization closeout
+
+The one-card capped record is now **37.595605 tok/s**: twelve prompts, 128 output
+tokens each, all 1,536 token IDs exact. The independent audit and approved result
+are in the [completed packet196 record](../../experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/RESULT.md).
+This is a separate identity from the full-512 profiles below.
+
+The separate [streaming pilot](../../experiments/own-xpu-runtime/stage2/packet201-streaming-serving/RESULT.md)
+completed sixteen turns and 1,484 tokens in one loaded owner, with seven SSE and
+nine JSON responses, exact prior outputs and retained checkpoint state, and safe
+exit. It establishes bounded serving correctness, not a new speed record.
+
+[Updated recipes and read-only verification](../../repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/LATEST.md)
+keep record, source-build and serving identities explicit. Later prefill and
+expert-sharing work is retained as CPU/compile-only research and is not promoted
+into these measured recipes. Further optimization is closed at the owner's request.
+
 ## One-card rebuild and checkpoint results, October 22
 
 One lane-A window (runner unit `lanequeue-A34`, 2026-10-22 02:13–02:55 UTC,
@@ -69,10 +86,11 @@ raw receipts therefore have sample count 1 and are not twelve-prompt medians.
 The separately approved capped records are two-card **63.611824 tok/s**
 (packet195 diet chain: packet190's k3x line + the bit-identical instruction diet of
 the IQ2_S expert gate/up kernel, October 23, `cmvkniuvp003gng017f0s68rn`; supersedes packet190
-62.345282, packet187 60.659520 and packet136 58.798109) and one-card **36.602512
-tok/s** (packet58-onecard-cache23-chain: the packet182c line (packet58as bounded spin +
-packet176 kernel foreground token I/O) with a 23.05 GB admitted device expert cache,
-October 23, `cmvkcqznb002lng01fsrhjn7t`; supersedes packet182c 35.926720 and packet58as 34.573038). They use the older 128-token cap. Those record
+62.345282, packet187 60.659520 and packet136 58.798109) and one-card **37.595605
+tok/s** (packet196 diet/max23: exact expert gate/up instruction diet,
+23,049,601,024-byte expert cache, spin wait and kernel foreground I/O;
+October 23, `cmvl5k4p9004nng01z5xtanw5`; supersedes cache23 36.602512,
+packet182c 35.926720 and packet58as 34.573038). They use the older 128-token cap. Those record
 packets do not have the full-512/prefill measurements above; packet58aj does. See the [submission ledger](../localmaxxing-submissions.md).
 
 Actual prompt-length scaling and concurrency remain unmeasured on these exact

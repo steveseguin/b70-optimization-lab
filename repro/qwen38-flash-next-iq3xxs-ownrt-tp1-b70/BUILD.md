@@ -93,5 +93,10 @@ final manifest, and the strengthened dependency checks were rerun on all
 42 compiler dependency files afterward. The two-card build and source-only
 preparation used the final helper directly.
 
-This verifies compilation from the packaged sources. Device execution,
-arithmetic correctness and portable performance remain unqualified.
+This section records the October 20 compile-only validation. The later
+[October 22 one-card rebuild qualification](../../results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261022.json)
+passed two device runs at 31.827 / 31.813 tok/s with complete outputs identical
+to the sealed line. That qualifies the tested rebuilt artifact, not every new
+build or a clean-host installation. The two-card rebuild remains unqualified
+on device. This archive does not build the newer diet/max23 record or streaming
+engine; see [current identity boundaries](LATEST.md).

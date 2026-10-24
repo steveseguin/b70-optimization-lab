@@ -12510,7 +12510,7 @@
         "model_family": "Qwen3.8 Flash-Next UD-IQ3_XXS",
         "publisher": "Unsloth (quantized Qwen weights)",
         "variant": "UD-IQ3_XXS quantized weights",
-        "summary": "One B70, target-only full-512 lab replay: writing 31.51–31.78 tok/s; reading a new 512-token prompt 32.59–32.75 tok/s. Full-output quality and portable replay pending.",
+        "summary": "One B70: approved 37.595605 tok/s record with a 128-token cap. Separate full-512 lab replay: writing 31.51–31.78 tok/s and reading 32.59–32.75 tok/s. Updated source-build and experimental streaming guidance; full-output quality and portable admission remain pending.",
         "quantization": "UD-IQ3_XXS",
         "runtime_label": "Own Xe runtime (packet58aj / packet165c)",
         "operating_systems": [
@@ -12536,9 +12536,9 @@
           "target-only",
           "lab replay"
         ],
-        "published_at": "2026-10-19",
+        "published_at": "2026-10-23",
         "featured_metric": null,
-        "benchmark_status": "Two fresh full-512 suites: 31.510–31.782 tok/s, 512-input reading 32.595–32.752 tok/s. Oracle checks first 128 only; longer outputs repeat-exact. Separate approved capped one-card record 36.602512 (packet58-onecard-cache23 chain, 2026-10-23; was 35.926720) is not this profile."
+        "benchmark_status": "Full-512 profile: 31.510–31.782 tok/s, 512-input reading 32.595–32.752 tok/s; oracle checks first 128 only, longer outputs repeat-exact. Separate approved 128-token record: 37.595605 tok/s (packet196 diet/max23, October 23), superseding 36.602512. Streaming/checkpoint correctness is separately qualified on the P198/P201 identity, with no new speed claim."
       },
       "hardware": {
         "accelerator": "Intel Arc Pro B70 32 GiB",
@@ -12592,7 +12592,10 @@
         "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261022.json",
         "experiments/own-xpu-runtime/stage2/packet178-onecard-portable/one-card/evidence",
         "experiments/own-xpu-runtime/stage2/packet179-session-swap/one-card/evidence",
-        "notes/2026-10-21-own-runtime-window-pin-guard-refusal.md"
+        "notes/2026-10-21-own-runtime-window-pin-guard-refusal.md",
+        "repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/LATEST.md",
+        "experiments/own-xpu-runtime/stage2/packet196-onecard-diet-chain/RESULT.md",
+        "experiments/own-xpu-runtime/stage2/packet201-streaming-serving/RESULT.md"
       ],
       "contributors": [
         {
