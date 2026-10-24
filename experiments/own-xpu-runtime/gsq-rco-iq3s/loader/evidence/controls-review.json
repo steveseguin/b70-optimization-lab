@@ -1,0 +1,31 @@
+{
+  "schema": "ownrt.gsq.controls-source-review.v1",
+  "passed": true,
+  "independent_test_replay": false,
+  "device_executed": false,
+  "checks": [
+    "All293 unique primitive controls independently derived from actual graph weight consumers",
+    "Every source extent/type/elements and upload F32 extent matched census",
+    "No control shares a matrix/lookup use",
+    "Compiler receipt sources/dependencies and retained binary hashes exact",
+    "Source finite F16/Inf/signed-zero reference uses independent ldexp; BF16 exact shift; half NaN classification-only accurately disclosed",
+    "Source conversion uses selected inherited scalar half; no target payload or gain changes"
+  ],
+  "controls": 293,
+  "source_bytes": 10145280,
+  "upload_bytes": 10227200,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/upload.hpp": "06faa21c3d2b5bf2c73613fc64f32395099f07c4d16d488e59204c1b1ac69848",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/test_upload.cpp": "20366a1bac0efb54301a6d3abfe98e57b2d031c1da9b5fd9f83b6c73647d9393",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/cpu-proof.json": "d56b0d3a764010610055c220470366d6f32f0f4775332b0d5dbe3b30336fbcb7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/manifest.json": "d43ca3847d8e0442fb237f8426bac461a5bb7fc39b37f5a6e3205603877b60b9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/README.md": "6fe24d50cef1d7766131ea909b13ca636e6089e7c11a21d8c90de9d49f8cdf12",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1"
+  },
+  "limitations": [
+    "Review and retained evidence verification only; no independent executable replay",
+    "Primitive graph classification does not prove selected fused native Engine lowering",
+    "Half NaN payload/sign equality not claimed"
+  ]
+}

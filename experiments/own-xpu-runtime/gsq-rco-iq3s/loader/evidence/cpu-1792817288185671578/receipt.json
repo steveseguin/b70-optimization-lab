@@ -1,0 +1,183 @@
+{
+  "schema": "ownrt.gsq.loader-cpu.v1",
+  "passed": true,
+  "native_admitted": false,
+  "device_executed": false,
+  "numeric_execution": false,
+  "real_model_header_bytes_read": 0,
+  "real_model_payload_bytes_read": 0,
+  "source_sha256": {
+    "prepare_overlay.py": "9b347442c5b0c8cc97c4b64b2a705490519fb19636efecd41e1fde0a92035105",
+    "prepare_inputs.py": "c1aec04c2d401c0b5e67dfa0323d4450035822f62206b0dfdbdcb7bbb8616307",
+    "probe.cpp": "83ab22b3edf50b4b8ab6889a601c86208c5308b53a613022a6dcb45122b789e4",
+    "test_loader.py": "e12c5ce2e6e08cccd7b9cc636f20b5e5f773ba6a9eb1d81c0a08c59a583a1e08",
+    "build_cpu.py": "010465a31e7af14ea71d14900b83f91a1799fc9d82737f51ddb1297d46c29c9d",
+    "parent-pins.json": "05c43440a7917c0a8e115eec0bdb336c117f12b004bb8918f648529471306b4f"
+  },
+  "attempt": "evidence/cpu-1792817288185671578",
+  "compiler_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+  "overlay": {
+    "schema": "ownrt.gsq.loader-overlay.v1",
+    "private_sha256": {
+      "gguf.hpp": "a80b5512195cf683877e8c8823534b08678aede3053498f6adf7c2b5d59cbd15",
+      "gguf.cpp": "e33b9e4b67e73cbf009f8325bb88ef557dbc2b17ca4eb0d62f24c20554867c67",
+      "math.hpp": "b3746af233798260d7692b04fbe051925c23571392866d4f2b7cc14e98ad7356",
+      "grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b"
+    },
+    "p195_compatibility": {
+      "gguf.hpp": {
+        "body_identical": true,
+        "patched_body_identical": true,
+        "p195_sha256": "a79490868a5108c4d725dd93f59161337140866a56841604a34ac0c3efe7f5e3"
+      },
+      "gguf.cpp": {
+        "body_identical": true,
+        "patched_body_identical": true,
+        "p195_sha256": "982aca9578d6f5fa801052dac54e558a1eda35e53700281f244f68ea12f39934"
+      }
+    },
+    "native_admitted": false
+  },
+  "inputs": {
+    "schema": "ownrt.gsq.loader-inputs.v1",
+    "native_admitted": false,
+    "tensor_count": 1224,
+    "placement_sha256": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253",
+    "stat_auth_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "shards": [
+      {
+        "basename": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "bytes": 55063448064,
+        "dev": 2050,
+        "ino": 2778523,
+        "mtime_ns": 1792814866970869300,
+        "ctime_ns": 1792814960708461300,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36"
+      },
+      {
+        "basename": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00002-of-00002.gguf",
+        "bytes": 28800138432,
+        "dev": 2050,
+        "ino": 2778524,
+        "mtime_ns": 1792815392152874700,
+        "ctime_ns": 1792815445694827300,
+        "header_sha256": "49f992d94de7d687ab0042f54d72fbabb4fec16e6860181f1b5bd91e46c89a96"
+      }
+    ],
+    "mask_counts": {
+      "0": 2,
+      "1": 516,
+      "2": 512,
+      "3": 194
+    },
+    "bytes_card0_card1_host": [
+      26381702400,
+      29604404480,
+      29137853440
+    ],
+    "replica_BF16_count": 194,
+    "source_sha256": {
+      "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+      "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+      "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "experiments/own-xpu-runtime/stage2/packet3/step/main.cpp": "60f75e845e040f22db5bc08afc9a1846c2179fe20b94f7a39f02fd6afbe8aacc",
+      "experiments/own-xpu-runtime/stage2/packet3/model/plan.py": "ac0b5f30e9cbad06e26af6c38dff5f36873c695a3af1eaed677201b809a9014a",
+      "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c",
+      "experiments/own-xpu-runtime/ops/compile_turn.py": "c9528d50e0b424753359f8dbf8a0198267d10afd203a3ede4f812e41264057ca",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/census.py": "753abbe6ee01f1f3fd53576e858f05533997e2d2f97ddac2cdf443018e5b44ec",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/old-census.json": "8f8b76de87399da77cfc0324239f8ad12c5f4f90a7a280b44ecc39798bfdcebf",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/receipt.json": "63f066de7523958ddfef25e6289655179bda0c8adebe7bc696ab590144384528",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/compatibility-delta.json": "c30d0024ca8a4c748bb81704c2a3f444f8c2693ece7c924f453ca0a967ef2d8e",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/summary.json": "f4dc37c828a8ad49ae4339c291403b8cfe289a4803985ea6f3e805cdace35aa3",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build-receipt.json": "5a3960450b81241396c7da87bc0ccca0c3d34f9792c1dd18621d407723bca9e0",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet2/kernels/math.hpp": "b3746af233798260d7692b04fbe051925c23571392866d4f2b7cc14e98ad7356",
+      "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+      "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+      "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+      "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "a79490868a5108c4d725dd93f59161337140866a56841604a34ac0c3efe7f5e3",
+      "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "982aca9578d6f5fa801052dac54e558a1eda35e53700281f244f68ea12f39934"
+    },
+    "model_reads": "lstat only; existing census reused, zero model header/payload reads",
+    "trust": "Admission inputs must be independently hash-admitted by coordinator. Stat identity does not defend against hostile same-user mutation; source/header/download provenance remains external."
+  },
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/probe.d",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/probe.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/probe.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/gguf.d",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private/gguf.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/gguf.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-Wl,--gc-sections",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/probe.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/gguf.o",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/loader-probe"
+    ]
+  ],
+  "repository_dependencies": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/probe.cpp": "83ab22b3edf50b4b8ab6889a601c86208c5308b53a613022a6dcb45122b789e4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private/gguf.hpp": "a80b5512195cf683877e8c8823534b08678aede3053498f6adf7c2b5d59cbd15",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private/math.hpp": "b3746af233798260d7692b04fbe051925c23571392866d4f2b7cc14e98ad7356",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/build/private/gguf.cpp": "e33b9e4b67e73cbf009f8325bb88ef557dbc2b17ca4eb0d62f24c20554867c67"
+  },
+  "binary_sha256": "909cbdd3cd115626f74faa08e46f8952fe1ffd1165a8e5e234c18cf90cd6be37",
+  "object_sha256": {
+    "probe.o": "43c635309477e5fb4d2041b0e656b20dee7199204f7cb9bc7b2314afa7248779",
+    "gguf.o": "0f2bf0ce75bff4287a2c3dcba45e1eb1d50126a65eedbe2996c74fd2c1df10f6"
+  },
+  "tests": 10,
+  "artifact_sha256": {
+    "placement.tsv": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253",
+    "shard-auth.tsv": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "inputs.json": "2fbe659efac3d8a895d57984305452e145f894662e9aedb95bef68f04e0c3f1a",
+    "overlay.patch": "ba21b1463db8c06aec714a2187a3694b1e4b6fcb53caff397819ea2abbfe01ab",
+    "p195-loader.patch": "2adc5220fe61be25ee50aa82723a5632bd6c30d8e1ee8dff2a2df9578de9f92f",
+    "overlay.json": "635cd48ef17c35116aa252ee58cd0dd41a7163ebfc30982da5f77a794579c5fa",
+    "evidence/cpu-1792817288185671578/tests.log": "220cae9307c9b030cd4dc5ed3d27e948f038d8829739a777f937538c892465ed",
+    "evidence/cpu-1792817288185671578/build_cpu.py": "010465a31e7af14ea71d14900b83f91a1799fc9d82737f51ddb1297d46c29c9d",
+    "evidence/cpu-1792817288185671578/probe.cpp": "83ab22b3edf50b4b8ab6889a601c86208c5308b53a613022a6dcb45122b789e4",
+    "evidence/cpu-1792817288185671578/parent-pins.json": "05c43440a7917c0a8e115eec0bdb336c117f12b004bb8918f648529471306b4f",
+    "evidence/cpu-1792817288185671578/prepare_inputs.py": "c1aec04c2d401c0b5e67dfa0323d4450035822f62206b0dfdbdcb7bbb8616307",
+    "evidence/cpu-1792817288185671578/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/cpu-1792817288185671578/test_loader.py": "e12c5ce2e6e08cccd7b9cc636f20b5e5f773ba6a9eb1d81c0a08c59a583a1e08",
+    "evidence/cpu-1792817288185671578/prepare_overlay.py": "9b347442c5b0c8cc97c4b64b2a705490519fb19636efecd41e1fde0a92035105"
+  }
+}

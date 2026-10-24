@@ -34,7 +34,9 @@ and CPU comparison oracles, not an imported inference runtime.
 | Weight arithmetic | [Decoder proof](formats/README.md): 6,780 cases and twelve real rows pass exact CPU comparisons; no GPU equivalence yet. |
 | Full graph | CPU graph construction passes eight tests: 1,873 launches and 2,065 buffers preserve topology. Raw weights plus logical buffers use 25.84/29.07 GB across ranks, excluding expansion, scratch and draft costs; no fit claim. |
 | Primitive coefficients | [Upload conversion](controls/README.md) passes exhaustive half/BF16 checks; actual graph needs only F16 PLE widening, adding 81,920 bytes. |
-| Native inference | Not admitted; format dispatch, loading and changed primitive weights still need integration and device qualification. |
+| Two-shard loader | [Authenticated loader](loader/README.md): ten parser tests and 24 immutable-authority checks pass; real headers are bound separately from payload checks. |
+| Native kernels | [Packed backend](native-formats/README.md): 15 Host cases, 60 checks and 100 refusals pass. Five native kernels compile; device execution remains pending. |
+| Native inference | Complete engine overlay is being built and reviewed. The [tiny native qualification runner](native-qualification/README.md) compiles but has not run. |
 | Speed | Unmeasured for this model, both target-only and MTP. |
 
 The model label does not describe every tensor. New support includes Q2_0,
@@ -76,7 +78,4 @@ helpers use bounded memory, helper cores and low priority. Model payloads,
 binaries and temporary row samples stay outside tracked artifacts. Existing
 frozen runtime packets and failed attempts remain unchanged.
 
-Next steps are to implement the additive native loading/dispatch changes
-outlined in the [source audit](native-integration-audit.md), qualify target-only
-output, then qualify MTP
-against that same target before measuring any speed benefit.
+The additive loading/dispatch changes described in the [source audit](native-integration-audit.md) are under integration review. The frozen preparation receipts pass an [independent source/artifact rehash](native-preparation-review.json). Full Engine build and tiny native kernel qualification precede target-only output, then MTP equality against that same target before measuring any speed benefit.

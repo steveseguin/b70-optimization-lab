@@ -1,0 +1,126 @@
+--- a/stage2/packet2/loader/gguf.hpp
++++ b/stage2/packet2/loader/gguf.hpp
+@@ -18,6 +18,11 @@
+   std::string name; std::vector<uint64_t> dimensions;
+   Type type; uint64_t offset,bytes;
+ };
++// The caller must independently authenticate this complete admission; never derive
++// expected entries from the candidate plan or from just-read model headers.
++struct ShardIdentity {
++  std::string basename; uint64_t bytes,dev,ino,mtime_ns,ctime_ns;
++};
+ struct File;
+ class Slice {
+   std::shared_ptr<File> file_; void* mapping_=nullptr; size_t length_=0,delta_=0,size_=0;
+@@ -34,7 +39,7 @@
+   uint64_t file_bytes=0,header_bytes=0,data_start=0,read_bytes=0;
+   std::map<std::string,Meta> metadata;
+   std::map<std::string,Tensor> tensors;
+-  explicit Shard(const std::filesystem::path&);
++  explicit Shard(const std::filesystem::path&,const ShardIdentity* expected=nullptr);
+   Slice slice(const Tensor&,uint64_t relative,size_t bytes) const;
+ };
+ void validate_splits(const std::vector<Shard>&);
+@@ -44,11 +49,17 @@
+   uint64_t offset,bytes; int layer,mask; // mask0 host,1 card0,2 card1,3 both
+ };
+ std::vector<Planned> read_plan(const std::filesystem::path&);
++struct Admission {
++  std::vector<ShardIdentity> shards;
++  std::vector<Planned> expected;
++};
+ class Model {
++  Model(const std::vector<std::filesystem::path>&,std::vector<Planned>,const Admission*);
+  public:
+   std::vector<Shard> shards;
+   std::vector<Planned> plan;
+   Model(const std::vector<std::filesystem::path>&,std::vector<Planned>);
++  Model(const std::vector<std::filesystem::path>&,std::vector<Planned>,const Admission&);
+   std::array<uint64_t,3> census() const; // card0, card1, host file backing
+   Slice slice(const std::string&,uint64_t relative,size_t bytes) const;
+   // Reservation only, no automatic full-model launch/upload. All device
+--- a/stage2/packet2/loader/gguf.cpp
++++ b/stage2/packet2/loader/gguf.cpp
+@@ -39,10 +39,17 @@
+ struct File {
+   int fd=-1; uint64_t bytes=0;
+   explicit File(const std::filesystem::path& path) {
+-    fd=open(path.c_str(),O_RDONLY|O_CLOEXEC);if(fd<0)throw std::runtime_error("open read-only failed");
++    fd=open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)throw std::runtime_error("open read-only failed");
+     struct stat st{};
+     if(fstat(fd,&st) || !S_ISREG(st.st_mode) || st.st_size<0) {close(fd);throw std::runtime_error("regular file required");}
+     bytes=st.st_size;
++  }
++  void verify(const ShardIdentity& e) const {
++    struct stat s{};
++    require(!fstat(fd,&s) && S_ISREG(s.st_mode) && s.st_size>=0,"held shard stat unavailable");
++    require(uint64_t(s.st_size)==e.bytes && uint64_t(s.st_dev)==e.dev && uint64_t(s.st_ino)==e.ino &&
++      uint64_t(s.st_mtim.tv_sec)*1000000000ULL+uint64_t(s.st_mtim.tv_nsec)==e.mtime_ns &&
++      uint64_t(s.st_ctim.tv_sec)*1000000000ULL+uint64_t(s.st_ctim.tv_nsec)==e.ctime_ns,"held shard identity differs");
+   }
+   ~File() {if(fd>=0)close(fd);}
+ };
+@@ -87,7 +94,8 @@
+   }
+ };
+ }
+-Shard::Shard(const std::filesystem::path& path):file(std::make_shared<File>(path)),basename(path.filename()) {
++Shard::Shard(const std::filesystem::path& path,const ShardIdentity* expected):file(std::make_shared<File>(path)),basename(path.filename()) {
++  if(expected){require(expected->basename==basename,"admitted shard basename differs");file->verify(*expected);}
+   file_bytes=file->bytes;Reader r{*file};char magic[4];r.read(magic,4);
+   require(std::memcmp(magic,"GGUF",4)==0 && r.number(4)==3,"GGUF v3 LE required");
+   auto nt=r.number(8),nm=r.number(8);require(nt<=count_limit && nm<=count_limit,"count bound");
+@@ -119,6 +127,7 @@
+   std::vector<const Tensor*> ordered;for(auto& [name,t]:tensors)ordered.push_back(&t);
+   std::sort(ordered.begin(),ordered.end(),[](auto a,auto b){return a->offset<b->offset;});uint64_t end=0;
+   for(auto t:ordered) {require(t->offset>=end,"overlapping tensors");end=add(t->offset,t->bytes);require(add(data_start,end)<=file_bytes,"tensor out of file");}
++  if(expected)file->verify(*expected);
+ }
+ void validate_splits(const std::vector<Shard>& shards) {
+   require(!shards.empty(),"no shards");std::set<std::string> names;std::set<uint64_t> ordinals;uint64_t total=0;
+@@ -198,8 +207,30 @@
+   require(p.mask==mask,"placement mask differs from census rule");
+ }
+ }
+-Model::Model(const std::vector<std::filesystem::path>& paths,std::vector<Planned> p):plan(std::move(p)) {
+-  for(auto& path:paths)shards.emplace_back(path);validate_splits(shards);
++Model::Model(const std::vector<std::filesystem::path>& paths,std::vector<Planned> p):Model(paths,std::move(p),nullptr) {}
++Model::Model(const std::vector<std::filesystem::path>& paths,std::vector<Planned> p,const Admission& a):Model(paths,std::move(p),&a) {}
++Model::Model(const std::vector<std::filesystem::path>& paths,std::vector<Planned> p,const Admission* admission):plan(std::move(p)) {
++  std::map<std::string,const ShardIdentity*> admitted;
++  if(admission) {
++    require(paths.size()==2 && admission->shards.size()==2,"exact two admitted shards required");
++    for(auto& s:admission->shards) {
++      require(!s.basename.empty() && s.basename==std::filesystem::path(s.basename).filename() && s.basename!="." && s.basename!="..","unsafe admitted basename");
++      require(admitted.emplace(s.basename,&s).second,"duplicate admitted shard");
++    }
++    std::set<std::string> seen;
++    for(auto& path:paths)require(admitted.contains(path.filename()) && seen.insert(path.filename()).second,"candidate shard identity set differs");
++    require(plan.size()==admission->expected.size() && !plan.empty(),"admitted tensor coverage differs");
++    std::map<std::string,const Planned*> expected;
++    const std::set<unsigned> supported={0,1,8,12,13,14,18,20,21,22,23,30,42};
++    for(auto& e:admission->expected)require(expected.emplace(e.name,&e).second,"duplicate admitted tensor");
++    seen.clear();
++    for(auto& row:plan) {
++      require(seen.insert(row.name).second && expected.contains(row.name),"admitted tensor names differ");
++      const auto& e=*expected.at(row.name);
++      require(supported.contains(unsigned(row.type)) && row.shard==e.shard && row.type==e.type && row.dimensions==e.dimensions && row.offset==e.offset && row.bytes==e.bytes && row.layer==e.layer && row.mask==e.mask && row.component==e.component,"admitted descriptor differs");
++    }
++  }
++  for(auto& path:paths)shards.emplace_back(path,admission?admitted.at(path.filename()):nullptr);validate_splits(shards);
+   std::map<std::string,const Shard*> byfile;size_t n=0;
+   for(auto& s:shards){require(byfile.emplace(s.basename,&s).second,"duplicate shard filename");n+=s.tensors.size();}
+   require(n==plan.size(),"census tensor coverage");std::set<std::string> names;
+@@ -211,10 +242,11 @@
+     bool host=row.component=="embedding" || row.component=="ple_lookup";
+     require(host?(row.mask==0):(row.mask>0),"host lookup residency violation");
+     if(!host && row.mask!=3)require(row.mask==(row.layer>=0 && row.layer<24?1:2),"layer ownership violation");
+-    if(row.mask==3)require(row.component=="hyperconnections" && row.type==Type::Q8_0,"unexpected replica");
++    if(row.mask==3)require(row.component=="hyperconnections" && (row.type==Type::Q8_0 || (admission && row.type==Type::BF16)),"unexpected replica");
+     auto& t=byfile.at(row.shard)->tensors.at(row.name);
+     require(t.type==row.type && t.dimensions==row.dimensions && t.offset==row.offset && t.bytes==row.bytes,"census descriptor mismatch");
+   }
++  if(admission)for(auto& s:shards)s.file->verify(*admitted.at(s.basename));
+ }
+ std::array<uint64_t,3> Model::census() const {
+   std::array<uint64_t,3> totals{};for(auto& p:plan) {if(!p.mask)totals[2]=add(totals[2],p.bytes);for(int card=0;card<2;++card)if(p.mask&(1<<card))totals[card]=add(totals[card],p.bytes);}return totals;

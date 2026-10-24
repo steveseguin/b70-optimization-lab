@@ -1,0 +1,338 @@
+{
+  "schema": "gsq.draft-weight-planning.v1",
+  "source_only": true,
+  "model_payload_reads": 0,
+  "device_executed": false,
+  "fit_qualified": false,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/mtp.hpp": "cf349f5dd87b088eaf46d2feb0183b727c2768c12545aa44f32eb6ee53259a49",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/mtp-manifest.tsv": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/selection.json": "eb417ec915821def1ccfa9ecaf87851ee81846097d489ba52196f63d551a50ac",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/p83_head.hpp": "0792da91456e2ac2a9b56fa2dcd994d2e7a56c205218a88d06320807cdc59754",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/memory/draft_weight_accounting.py": "f35ac92adf8f38425085ab88be294398daeae0e972ae38dbe679ca25069eb592"
+  },
+  "manifest_tensors": 3101,
+  "expert_weight_tensors": 1536,
+  "source_fp8_expert_bytes": 2516582400,
+  "source_fp8_scale_bytes": 307200,
+  "device_expert_int8_g16_bytes": 3145728000,
+  "expert_groups": {
+    "gate": {
+      "experts": 512,
+      "rows": 640,
+      "columns": 2560,
+      "bytes": 1048576000
+    },
+    "up": {
+      "experts": 512,
+      "rows": 640,
+      "columns": 2560,
+      "bytes": 1048576000
+    },
+    "down": {
+      "experts": 512,
+      "rows": 2560,
+      "columns": 640,
+      "bytes": 1048576000
+    }
+  },
+  "dense_and_gain_source_bytes": 181136896,
+  "dense_and_gain_device_bytes": 181225472,
+  "gain_source_bytes": 88576,
+  "gain_device_bytes": 177152,
+  "nonexpert_tensors": [
+    {
+      "name": "mtp.fc_embedding.weight",
+      "source_bytes": 13107200,
+      "dtype": "BF16",
+      "rows": 2560,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 13107200
+    },
+    {
+      "name": "mtp.fc_hidden.weight",
+      "source_bytes": 13107200,
+      "dtype": "BF16",
+      "rows": 2560,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 13107200
+    },
+    {
+      "name": "mtp.hyper_connection_mixer.hc_norm.weight",
+      "source_bytes": 20480,
+      "dtype": "BF16",
+      "rows": 10240,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 40960
+    },
+    {
+      "name": "mtp.hyper_connection_mixer.input_mix_weight_down.weight",
+      "source_bytes": 6553600,
+      "dtype": "BF16",
+      "rows": 320,
+      "columns": 10240,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 6553600
+    },
+    {
+      "name": "mtp.hyper_connection_mixer.input_mix_weight_up.weight",
+      "source_bytes": 6553600,
+      "dtype": "BF16",
+      "rows": 10240,
+      "columns": 320,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 6553600
+    },
+    {
+      "name": "mtp.layers.0.attn_hyper_connection.block_inject_weight.weight",
+      "source_bytes": 81920,
+      "dtype": "BF16",
+      "rows": 4,
+      "columns": 10240,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 81920
+    },
+    {
+      "name": "mtp.layers.0.attn_hyper_connection.hc_norm.weight",
+      "source_bytes": 20480,
+      "dtype": "BF16",
+      "rows": 10240,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 40960
+    },
+    {
+      "name": "mtp.layers.0.attn_hyper_connection.input_mix_weight_down.weight",
+      "source_bytes": 6553600,
+      "dtype": "BF16",
+      "rows": 320,
+      "columns": 10240,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 6553600
+    },
+    {
+      "name": "mtp.layers.0.attn_hyper_connection.input_mix_weight_up.weight",
+      "source_bytes": 6553600,
+      "dtype": "BF16",
+      "rows": 10240,
+      "columns": 320,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 6553600
+    },
+    {
+      "name": "mtp.layers.0.mlp.gate.weight",
+      "source_bytes": 2621440,
+      "dtype": "BF16",
+      "rows": 512,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 2621440
+    },
+    {
+      "name": "mtp.layers.0.mlp.shared_expert.down_proj.weight",
+      "source_bytes": 3276800,
+      "dtype": "BF16",
+      "rows": 2560,
+      "columns": 640,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 3276800
+    },
+    {
+      "name": "mtp.layers.0.mlp.shared_expert.gate_proj.weight",
+      "source_bytes": 3276800,
+      "dtype": "BF16",
+      "rows": 640,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 3276800
+    },
+    {
+      "name": "mtp.layers.0.mlp.shared_expert.up_proj.weight",
+      "source_bytes": 3276800,
+      "dtype": "BF16",
+      "rows": 640,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 3276800
+    },
+    {
+      "name": "mtp.layers.0.mlp.shared_expert_gate.weight",
+      "source_bytes": 5120,
+      "dtype": "BF16",
+      "rows": 1,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 5120
+    },
+    {
+      "name": "mtp.layers.0.mlp_hyper_connection.block_inject_weight.weight",
+      "source_bytes": 81920,
+      "dtype": "BF16",
+      "rows": 4,
+      "columns": 10240,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 81920
+    },
+    {
+      "name": "mtp.layers.0.mlp_hyper_connection.hc_norm.weight",
+      "source_bytes": 20480,
+      "dtype": "BF16",
+      "rows": 10240,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 40960
+    },
+    {
+      "name": "mtp.layers.0.mlp_hyper_connection.input_mix_weight_down.weight",
+      "source_bytes": 6553600,
+      "dtype": "BF16",
+      "rows": 320,
+      "columns": 10240,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 6553600
+    },
+    {
+      "name": "mtp.layers.0.mlp_hyper_connection.input_mix_weight_up.weight",
+      "source_bytes": 6553600,
+      "dtype": "BF16",
+      "rows": 10240,
+      "columns": 320,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 6553600
+    },
+    {
+      "name": "mtp.layers.0.self_attn.indexer.index_qk_proj.weight",
+      "source_bytes": 3276800,
+      "dtype": "BF16",
+      "rows": 640,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 3276800
+    },
+    {
+      "name": "mtp.layers.0.self_attn.indexer.k_layernorm.weight",
+      "source_bytes": 256,
+      "dtype": "BF16",
+      "rows": 128,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 512
+    },
+    {
+      "name": "mtp.layers.0.self_attn.indexer.q_layernorm.weight",
+      "source_bytes": 256,
+      "dtype": "BF16",
+      "rows": 128,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 512
+    },
+    {
+      "name": "mtp.layers.0.self_attn.k_norm.weight",
+      "source_bytes": 512,
+      "dtype": "BF16",
+      "rows": 256,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 1024
+    },
+    {
+      "name": "mtp.layers.0.self_attn.k_proj.weight",
+      "source_bytes": 2621440,
+      "dtype": "BF16",
+      "rows": 512,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 2621440
+    },
+    {
+      "name": "mtp.layers.0.self_attn.o_proj.weight",
+      "source_bytes": 31457280,
+      "dtype": "BF16",
+      "rows": 2560,
+      "columns": 6144,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 31457280
+    },
+    {
+      "name": "mtp.layers.0.self_attn.q_norm.weight",
+      "source_bytes": 512,
+      "dtype": "BF16",
+      "rows": 256,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 1024
+    },
+    {
+      "name": "mtp.layers.0.self_attn.q_proj.weight",
+      "source_bytes": 62914560,
+      "dtype": "BF16",
+      "rows": 12288,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 62914560
+    },
+    {
+      "name": "mtp.layers.0.self_attn.v_proj.weight",
+      "source_bytes": 2621440,
+      "dtype": "BF16",
+      "rows": 512,
+      "columns": 2560,
+      "gain_widened_with_plus_one": false,
+      "device_bytes": 2621440
+    },
+    {
+      "name": "mtp.pre_fc_norm_embedding.weight",
+      "source_bytes": 5120,
+      "dtype": "BF16",
+      "rows": 2560,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 10240
+    },
+    {
+      "name": "mtp.pre_fc_norm_hidden.weight",
+      "source_bytes": 20480,
+      "dtype": "BF16",
+      "rows": 10240,
+      "columns": 1,
+      "gain_widened_with_plus_one": true,
+      "device_bytes": 40960
+    }
+  ],
+  "index_projection_split": {
+    "source_bytes": 3276800,
+    "q_rows": 512,
+    "k_rows": 128,
+    "q_device_bytes": 2621440,
+    "k_device_bytes": 655360,
+    "single_source_counted_once": true
+  },
+  "base_draft_device_weight_bytes": 3326953472,
+  "base_weight_allocations": 33,
+  "head": {
+    "target_q6_expanded_row_bytes": 3380,
+    "required_new_policy": "full248320 draft vocabulary required; historical prefix excluded",
+    "rows": 248320,
+    "extra_bytes": 839321600,
+    "rank0_no_local_head_weight_total": 4166275072,
+    "historical_excluded_prefix_rows": 80128,
+    "historical_excluded_prefix_bytes": 270832640,
+    "rank1_already_expanded_target_head_weight_total": 3326953472,
+    "packed_or_missing_local_head_requires_extra_full_head": true,
+    "shared_target_head_counted_by_target_only": true
+  },
+  "excluded": [
+    "all draft mutable buffers/KV/scratch/control/head workspaces",
+    "backend/runtime allocations and compilation caches",
+    "allocator alignment/fragmentation",
+    "temporary host FP8 requantization buffers",
+    "target weights and state",
+    "actual available device memory or measured peak"
+  ],
+  "rank_placement": "Rank0 costs an extra839321600-byte full head if it lacks local expanded head; prefer it only when target rank0 headroom exceeds rank1 by more than that overhead. It can avoid concentrating a3.32695GB draft on the rank carrying the larger target/head placement. Reverse hidden handoff and existing draft-rank admission must also be preserved."
+}
