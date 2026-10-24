@@ -1,0 +1,766 @@
+{
+  "schema": "ctxkeeper.campaign63-source-audit.v1",
+  "audited_at": "2026-10-24T01:44:56.206212+00:00",
+  "auditor": "/root/audit_c60 independent source audit; only this new artifact written",
+  "raw_result": {
+    "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/c63-K32V-check-s0.json",
+    "sha256": "a6d9e3228cb4cf60953b81a5c00892c87f72fd83155834890ffa2f82388a655a"
+  },
+  "prior_audit": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-context-campaign62/source-audit.json",
+    "sha256": "7f51ae736509451567f1d6e4b99c470ca238ac04db8b2034b16d6604535c3c12"
+  },
+  "prefixes_manifest": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-note-evidence-archive-prefixes/manifest.json",
+    "sha256": "b8cd70cb3d969873dac3c9fdf6b204cf1e2f770e49026f88dd16caf0f4260281"
+  },
+  "conditions": 12,
+  "plans": [
+    {
+      "plan_index": 0,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": false,
+      "valid": true,
+      "queries": [],
+      "available_through": 438,
+      "results": [],
+      "coverage_judgment": "Empty plan is permitted; relevant38/39/40/41 notices and artifact changes already occur in current439–478 slice. Earlier acquisition is not necessary for these targets.",
+      "dependent_run_indices": [
+        0,
+        1
+      ]
+    },
+    {
+      "plan_index": 1,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": true,
+      "valid": true,
+      "queries": [],
+      "available_through": 438,
+      "results": [],
+      "coverage_judgment": "Same permitted no-acquisition outcome. Final failures cannot be blamed on missing earlier support for already-visible preceding-cut facts.",
+      "dependent_run_indices": [
+        2,
+        3
+      ]
+    },
+    {
+      "plan_index": 2,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": false,
+      "valid": true,
+      "queries": [
+        "TICKET 41/44",
+        "TICKET 43/44",
+        "TICKET 44/44"
+      ],
+      "available_through": 478,
+      "results": [
+        {
+          "query": "TICKET 41/44",
+          "returned_archive_n": [
+            478
+          ],
+          "text": "message 478 (tool): TICKET 41/44 (BUG) `nth_or_last` in more_itertools/more.py gives wrong results.",
+          "raw_result_characters": 99,
+          "raw_result_sha256": "b8cffe5071577c853f23d507881121298aa17d1bbeea3a604ee5f0c62aefc0a7",
+          "host_clipped": false,
+          "meaning": "Exact attributed earlier receipt excerpt."
+        },
+        {
+          "query": "TICKET 43/44",
+          "returned_archive_n": [],
+          "text": "recall: nothing in the archive matches 'TICKET\\\\ 43/44' at or before message 478",
+          "raw_result_characters": 80,
+          "raw_result_sha256": "68d95cd698334126bd3f17c118c1ce9a3c537365aeacee9782230d2799a30452",
+          "host_clipped": false,
+          "meaning": "No literal match at or before cutoff only; not evidence of absence in current or future source."
+        },
+        {
+          "query": "TICKET 44/44",
+          "returned_archive_n": [],
+          "text": "recall: nothing in the archive matches 'TICKET\\\\ 44/44' at or before message 478",
+          "raw_result_characters": 80,
+          "raw_result_sha256": "84c42218a87bdc32efca14b71d0d8f9b8af62b0f98c3982c032bd79b79f87b39",
+          "host_clipped": false,
+          "meaning": "No literal match at or before cutoff only; not evidence of absence in current or future source."
+        }
+      ],
+      "coverage_judgment": "Acquires original41=nth_or_last. Does not query38 or39. Two queries seek43/44 outside frozen earlier cutoff even though both receipts are already in current source.",
+      "dependent_run_indices": [
+        4,
+        5
+      ]
+    },
+    {
+      "plan_index": 3,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": true,
+      "valid": true,
+      "queries": [
+        "TICKET 38",
+        "TICKET 41",
+        "TICKET 43"
+      ],
+      "available_through": 478,
+      "results": [
+        {
+          "query": "TICKET 38",
+          "returned_archive_n": [
+            464
+          ],
+          "text": "message 464 (tool, \"------------------------------------------------------------\"): TICKET 38/44 (BUG) `polynomial_eval` in more_itertools/recipes.py gives wrong results.",
+          "raw_result_characters": 170,
+          "raw_result_sha256": "e587919effb444fdebc61969687a8c696f6cd30225bb90d1891dfdfb2c72ab1e",
+          "host_clipped": false,
+          "meaning": "Exact attributed earlier receipt excerpt."
+        },
+        {
+          "query": "TICKET 41",
+          "returned_archive_n": [
+            478
+          ],
+          "text": "message 478 (tool): TICKET 41/44 (BUG) `nth_or_last` in more_itertools/more.py gives wrong results.",
+          "raw_result_characters": 99,
+          "raw_result_sha256": "b8cffe5071577c853f23d507881121298aa17d1bbeea3a604ee5f0c62aefc0a7",
+          "host_clipped": false,
+          "meaning": "Exact attributed earlier receipt excerpt."
+        },
+        {
+          "query": "TICKET 43",
+          "returned_archive_n": [],
+          "text": "recall: nothing in the archive matches 'TICKET\\\\ 43' at or before message 478",
+          "raw_result_characters": 77,
+          "raw_result_sha256": "fc25535a740538826d15524327702b8622b21ad47b9d283218e26a365a49a041",
+          "host_clipped": false,
+          "meaning": "No literal match at or before cutoff only; not evidence of absence in current or future source."
+        }
+      ],
+      "coverage_judgment": "Acquires38=polynomial_eval and41=nth_or_last; does not acquire39=distribute.43 query correctly yields no earlier match; current484 remains authoritative receipt.",
+      "dependent_run_indices": [
+        6,
+        7
+      ]
+    },
+    {
+      "plan_index": 4,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": false,
+      "valid": true,
+      "queries": [
+        "TICKET 38/44",
+        "TICKET 41/44",
+        "TICKET 43/44"
+      ],
+      "available_through": 478,
+      "results": [
+        {
+          "query": "TICKET 38/44",
+          "returned_archive_n": [
+            464
+          ],
+          "text": "message 464 (tool, \"------------------------------------------------------------\"): TICKET 38/44 (BUG) `polynomial_eval` in more_itertools/recipes.py gives wrong results.",
+          "raw_result_characters": 170,
+          "raw_result_sha256": "e587919effb444fdebc61969687a8c696f6cd30225bb90d1891dfdfb2c72ab1e",
+          "host_clipped": false,
+          "meaning": "Exact attributed earlier receipt excerpt."
+        },
+        {
+          "query": "TICKET 41/44",
+          "returned_archive_n": [
+            478
+          ],
+          "text": "message 478 (tool): TICKET 41/44 (BUG) `nth_or_last` in more_itertools/more.py gives wrong results.",
+          "raw_result_characters": 99,
+          "raw_result_sha256": "b8cffe5071577c853f23d507881121298aa17d1bbeea3a604ee5f0c62aefc0a7",
+          "host_clipped": false,
+          "meaning": "Exact attributed earlier receipt excerpt."
+        },
+        {
+          "query": "TICKET 43/44",
+          "returned_archive_n": [],
+          "text": "recall: nothing in the archive matches 'TICKET\\\\ 43/44' at or before message 478",
+          "raw_result_characters": 80,
+          "raw_result_sha256": "68d95cd698334126bd3f17c118c1ce9a3c537365aeacee9782230d2799a30452",
+          "host_clipped": false,
+          "meaning": "No literal match at or before cutoff only; not evidence of absence in current or future source."
+        }
+      ],
+      "coverage_judgment": "Acquires38=polynomial_eval and41=nth_or_last;39 remains unacquired.43 current receipt is not searchable in earlier prefix.",
+      "dependent_run_indices": [
+        8,
+        9
+      ]
+    },
+    {
+      "plan_index": 5,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": true,
+      "valid": true,
+      "queries": [
+        "TICKET 41/44",
+        "nth_or_last",
+        "TICKET 43/44"
+      ],
+      "available_through": 478,
+      "results": [
+        {
+          "query": "TICKET 41/44",
+          "returned_archive_n": [
+            478
+          ],
+          "text": "message 478 (tool): TICKET 41/44 (BUG) `nth_or_last` in more_itertools/more.py gives wrong results.",
+          "raw_result_characters": 99,
+          "raw_result_sha256": "b8cffe5071577c853f23d507881121298aa17d1bbeea3a604ee5f0c62aefc0a7",
+          "host_clipped": false,
+          "meaning": "Exact attributed earlier receipt excerpt."
+        },
+        {
+          "query": "nth_or_last",
+          "returned_archive_n": [
+            478
+          ],
+          "text": "message 478 (tool): TICKET 41/44 (BUG) `nth_or_last` in more_itertools/more.py gives wrong results.",
+          "raw_result_characters": 99,
+          "raw_result_sha256": "b8cffe5071577c853f23d507881121298aa17d1bbeea3a604ee5f0c62aefc0a7",
+          "host_clipped": false,
+          "meaning": "Exact attributed earlier receipt excerpt."
+        },
+        {
+          "query": "TICKET 43/44",
+          "returned_archive_n": [],
+          "text": "recall: nothing in the archive matches 'TICKET\\\\ 43/44' at or before message 478",
+          "raw_result_characters": 80,
+          "raw_result_sha256": "68d95cd698334126bd3f17c118c1ce9a3c537365aeacee9782230d2799a30452",
+          "host_clipped": false,
+          "meaning": "No literal match at or before cutoff only; not evidence of absence in current or future source."
+        }
+      ],
+      "coverage_judgment": "Queries41 and nth_or_last duplicate the same receipt478. Third query43 has no match before478;38/39 ambiguity remains unsearched.",
+      "dependent_run_indices": [
+        10,
+        11
+      ]
+    }
+  ],
+  "valid_plan_count": 6,
+  "empty_plan_count": 2,
+  "query_count": 12,
+  "positive_query_results": 7,
+  "negative_query_results": 5,
+  "distinct_retrieved_archive_n": [
+    464,
+    478
+  ],
+  "host_clipped_results": 0,
+  "acquisition_audit": {
+    "verified_prefixes": [
+      {
+        "cutoff": 438,
+        "records": 436,
+        "first_n": 3,
+        "last_n": 438,
+        "sha256": "1e1a32750077bc8560ee87cc029d8d122013fd0996b37e8912306f51b6a2fa2c"
+      },
+      {
+        "cutoff": 478,
+        "records": 476,
+        "first_n": 3,
+        "last_n": 478,
+        "sha256": "d1a40a03337c50c522e2dd13f7c1b79db239dec0ecfaac32ac910f64d8d9d897"
+      }
+    ],
+    "checks": [
+      "Each prefix file matches manifest hash and physical last message equals cutoff438/478.",
+      "Every positive returned ID exists in its prefix and its record text matches the literal query.",
+      "Every negative result independently checked: no literal match anywhere in that frozen prefix.",
+      "All12 C63 current-source packets exactly equal matching C62 packets after removing only retrieved_source. Reviewer system messages also equal.",
+      "Every final packet uses its recorded planner retrieval unchanged."
+    ],
+    "coverage": "Original41 delivery acquired in both observed plans and both cancellation plans. Original38 delivery acquired in only observed-on-candidate and cancellation-off-candidate plans. Original39 delivery never queried or acquired. Five queries seek43/44 outside earlier cutoff; their actual receipts remain in current source. Plan5 spends two queries on the same41 receipt.",
+    "failure_scope": "No fabrication or future leakage found in returned support. Acquisition is partial; final semantic failures include both missing support and misuse/omission despite available support."
+  },
+  "syntactically_valid_count": 8,
+  "truncated_unapplied_count": 4,
+  "truncated_indices_zero_based": [
+    1,
+    3,
+    7,
+    9
+  ],
+  "broad_gate_pass_count": 0,
+  "individual_broad_passes": [],
+  "reviewer_modes": {
+    "off": {
+      "broad_pass": 0,
+      "conditions": 6,
+      "observed_named_pass": 1,
+      "observed_conditions": 2,
+      "cancellation_named_pass": 2,
+      "cancellation_conditions": 2
+    },
+    "on": {
+      "broad_pass": 0,
+      "conditions": 6,
+      "observed_named_pass": 1,
+      "observed_conditions": 2,
+      "cancellation_named_pass": 1,
+      "cancellation_conditions": 2,
+      "cutoffs": 4
+    }
+  },
+  "hypothesis_met": false,
+  "verdict": "Partial acquisition and isolated semantic repairs; no qualified reviewer mode or individual broad pass",
+  "promotion": false,
+  "useful_measured_changes": [
+    "Row5 acquired41=nth_or_last and uses it correctly; C62 row5's invented41=unique_in_window disappears. This is a paired diagnostic improvement, not proof that retrieval alone guarantees identity safety.",
+    "Row6 thinking-off now preserves current43/44 receipt and requested audit, unlike C62 row6; however it misreads retrieved38 as39 and fails broad identity consistency.",
+    "Row11 thinking-on cancellation now completes (C62 cutoff), preserving withdrawal as pending and41/43 pending; broader polynomial_eval omission remains.",
+    "Both preceding thinking-on conditions regress from completed C62 notes to cutoffs even though plans are empty. Extra retrieval metadata changes input; do not call empty-result augmentation behavior-neutral."
+  ],
+  "rows": [
+    {
+      "run_index_zero_based": 0,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "plan_index": 0,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 364,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "P_ID",
+        "P_PENDING",
+        "P_RECORDS"
+      ],
+      "explanation": "No earlier query needed for visible facts; reviewer-off repeats errors.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "f2b86e279379e2f4e15d94645bc78797f37848203291cd601a170f1e15f57ea7"
+    },
+    {
+      "run_index_zero_based": 1,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "plan_index": 0,
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 7890,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "Both preceding on reviews truncate again although preceding plan was empty.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null
+    },
+    {
+      "run_index_zero_based": 2,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "plan_index": 1,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 403,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "P_ID",
+        "P_PENDING",
+        "P_RECORDS"
+      ],
+      "explanation": "No earlier query needed for visible facts; reviewer-off repeats errors.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "cb834cf7dfe236930c5be3dbec8afce49283a631f7d2750b68aec5e934e5bc4e"
+    },
+    {
+      "run_index_zero_based": 3,
+      "fixture": "pi-preceding-cut",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "plan_index": 1,
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 8162,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "Partial correction begins but no completed notes applied.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null
+    },
+    {
+      "run_index_zero_based": 4,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "plan_index": 2,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 555,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": false,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "DENIAL",
+        "DELETE",
+        "POLY_OMIT",
+        "T41_DOUBT",
+        "UNSEEN_38_39"
+      ],
+      "explanation": "Newly acquired41 receipt is ignored; false current43/44 denial persists.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "a00ac42fa11da37f51ca823d521dc900ca2f3d08b5ca3246c481af047942acff"
+    },
+    {
+      "run_index_zero_based": 5,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "plan_index": 2,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 7133,
+      "reasoning_tokens": 6436,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": true,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "POLY_OMIT"
+      ],
+      "explanation": "Useful repair: retrieved41 receipt is used; prior C62 false41=unique_in_window disappears and40 is retained correctly.43/44/audit history correct; ticket39 identity explicitly unknown. Still omits directly observed polynomial_eval defect.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "ad2fdd2608d954be3beee130d5074de45dcd4a4852a92a052c2061c8826b1064"
+    },
+    {
+      "run_index_zero_based": 6,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "plan_index": 3,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 750,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": true,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "MISREAD_POLY39",
+        "REASSERT38_DESPITE_RECEIPT",
+        "UNSEEN39"
+      ],
+      "explanation": "Named audit denial fixed in this off reviewer, but retrieved464 is misread as39 polynomial_eval; contradictory38/distribute and38/poly claims coexist.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "4f41dd1aada42dc2956b299af384f48a38b30e7d7e77c2a346f913faab62a25c"
+    },
+    {
+      "run_index_zero_based": 7,
+      "fixture": "pi-observed-audit",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "plan_index": 3,
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 7889,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": false,
+      "named_cancellation_history_and_pending_action_pass": null,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "Retrieved38 receipt appears correctly used in partial text, but no full output and no applied verdict.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null
+    },
+    {
+      "run_index_zero_based": 8,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": false,
+      "reviewer_thinking": false,
+      "plan_index": 4,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 542,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "issues": [
+        "REASSERT38_DESPITE_RECEIPT",
+        "UNSEEN39"
+      ],
+      "explanation": "Honors pending withdrawal and records all three observed bugs, but reasserts contradicted prior38/distribute despite retrieved38/poly receipt.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "72318fd3b8f8a81557e807a6ef9e184e2c148c1bef99133edfd0ee1bcc44a3f8"
+    },
+    {
+      "run_index_zero_based": 9,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": false,
+      "reviewer_thinking": true,
+      "plan_index": 4,
+      "syntactically_valid": false,
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "reasoning_tokens": 7504,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": false,
+      "issues": [
+        "CAP"
+      ],
+      "explanation": "Substantial partial response includes38 correction and withdrawal, but length cutoff means no application or semantic pass.",
+      "standing_rules_preserved": null,
+      "applied_notes_sha256": null
+    },
+    {
+      "run_index_zero_based": 10,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": true,
+      "reviewer_thinking": false,
+      "plan_index": 5,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 492,
+      "reasoning_tokens": 0,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "issues": [
+        "POLY_OMIT",
+        "NUMBER_REASSERTED"
+      ],
+      "explanation": "Honors withdrawal and41/43 progress; fails broader visible-defect coverage and affirms disputed38 identity.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "10d8e8010717d33073bac1ac678187282d43cf754c76d0953599404ad2c35f4b"
+    },
+    {
+      "run_index_zero_based": 11,
+      "fixture": "pi-explicit-cancellation",
+      "candidate_thinking": true,
+      "reviewer_thinking": true,
+      "plan_index": 5,
+      "syntactically_valid": true,
+      "finish_reason": "stop",
+      "completion_tokens": 5379,
+      "reasoning_tokens": 4811,
+      "source_grounded_broad_gate_pass": false,
+      "named_observed_audit_target_pass": null,
+      "named_cancellation_history_and_pending_action_pass": true,
+      "issues": [
+        "POLY_OMIT",
+        "NUMBER_REASSERTED"
+      ],
+      "explanation": "Now completes and preserves requested audit then withdrawal and41/43 pending; still omits polynomial_eval and repeats disputed38 label.",
+      "standing_rules_preserved": true,
+      "applied_notes_sha256": "2110ae49446bb9cdf05d0e65228204ff42a9f5a84d03e9a82110d4dfea1fb700"
+    }
+  ],
+  "issues": {
+    "P_ID": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_retained",
+      "available_evidence": "current source",
+      "claim": "ticket38(distribute) fixed",
+      "support": "Current tool464 explicitly identifies38 as polynomial_eval;466 identifies39 as distribute.",
+      "source_archive_n": [
+        464,
+        466
+      ]
+    },
+    "P_PENDING": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_omission_retained",
+      "available_evidence": "current source",
+      "claim": "Pending received38 polynomial_eval and40 unique_in_window omitted",
+      "support": "Current receipts464/472 and no fix through478.",
+      "source_archive_n": [
+        464,
+        472,
+        478
+      ]
+    },
+    "P_RECORDS": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_omission_retained",
+      "available_evidence": "current source",
+      "claim": "Required-record duplication/mislabeling absent from retained notes",
+      "support": "35 appended twice;36 and convolve appended twice;bogus39/distribute/window_size and misnumbered38/distribute appended.",
+      "source_archive_n": [
+        455,
+        459,
+        463,
+        465,
+        471,
+        472,
+        477
+      ]
+    },
+    "CAP": {
+      "classes": [
+        "incomplete_output"
+      ],
+      "origin": "reviewer",
+      "available_evidence": "response",
+      "claim": "8192-token length cutoff; partial delta not applied",
+      "support": "Rows1,3,7,9 finish_reason=length and syntactically_valid=false. All emitted partial content; none is a completed result."
+    },
+    "DENIAL": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "candidate_error_retained",
+      "available_evidence": "current source",
+      "claim": "No43/44 delivery; audit unrequested/spurious",
+      "support": "Current tool484/488 explicitly delivers43/44,493/494 and496 prove requested write. Negative search limited to478 cannot refute these later current-source observations.",
+      "source_archive_n": [
+        484,
+        488,
+        493,
+        494,
+        496
+      ]
+    },
+    "DELETE": {
+      "classes": [
+        "unsupported_action_proposal"
+      ],
+      "origin": "candidate_error_retained",
+      "available_evidence": "current source",
+      "claim": "Consider removing spurious AUDIT.md in observed case",
+      "support": "No withdrawal exists in this recorded case;488 requests creation and494 confirms success. This is an unsupported proposal, not a false claim removal already executed.",
+      "source_archive_n": [
+        488,
+        494
+      ]
+    },
+    "POLY_OMIT": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "candidate_or_reviewer_omission",
+      "available_evidence": "current source",
+      "claim": "Observed polynomial_eval defect not retained in STATE/OPEN",
+      "support": "Tool502 directly shows inverted if n != 0 guard. It can be preserved as observed defect with unknown task identity when receipt464 was not retrieved.",
+      "source_archive_n": [
+        502
+      ]
+    },
+    "T41_DOUBT": {
+      "classes": [
+        "contradiction",
+        "evidence_use_failure"
+      ],
+      "origin": "candidate_error_retained_despite_retrieval",
+      "available_evidence": "prior plus retrieved source",
+      "claim": "Unverified whether41 was received",
+      "support": "Prior says received/pending and newly retrieved tool478 explicitly delivers41 nth_or_last.",
+      "source_archive_n": [
+        478
+      ]
+    },
+    "UNSEEN_38_39": {
+      "classes": [
+        "unsupported_correction",
+        "retained_contradiction"
+      ],
+      "origin": "candidate_claim_reasserted",
+      "available_evidence": "not acquired in this plan",
+      "claim": "Confident38/39 mapping without original supporting notices, alongside prior38/distribute",
+      "support": "Observed/cancellation source starts479; original464/466 must be retrieved to establish disputed identities. Candidate assertions do not supply independent proof.",
+      "earlier_unretrieved_archive_n": [
+        464,
+        466
+      ]
+    },
+    "MISREAD_POLY39": {
+      "classes": [
+        "contradiction",
+        "evidence_use_failure"
+      ],
+      "origin": "new_reviewer_error",
+      "available_evidence": "retrieved source",
+      "claim": "ticket39(polynomial_eval), received at464",
+      "support": "Retrieved464 literally says TICKET38/44 polynomial_eval. Row6 falsely calls it39 in STATE and OPEN; it simultaneously retains a FIXES note saying38=polynomial_eval/39=distribute.",
+      "source_archive_n": [
+        464
+      ]
+    },
+    "REASSERT38_DESPITE_RECEIPT": {
+      "classes": [
+        "contradiction",
+        "retained_contradiction",
+        "evidence_use_failure"
+      ],
+      "origin": "inherited_error_reasserted_after_direct_correction_evidence",
+      "available_evidence": "retrieved source",
+      "claim": "New CHANGES repeats ticket38(distribute) fixed despite acquired38=polynomial_eval",
+      "support": "Receipt464 now directly contradicts prior38/distribute. Rows6/8 repeat it instead of replacing or explicitly correcting exact existing STATE identity; row8 also records38 polynomial_eval in OPEN.",
+      "source_archive_n": [
+        464
+      ]
+    },
+    "UNSEEN39": {
+      "classes": [
+        "unsupported_correction"
+      ],
+      "origin": "candidate_identity_reasserted",
+      "available_evidence": "not retrieved",
+      "claim": "Definite39=distribute",
+      "support": "No planner requested or returned original466. Acquiring38=polynomial_eval invalidates prior38/distribute but does not independently establish distribute's actual number39.",
+      "earlier_unretrieved_archive_n": [
+        466
+      ]
+    },
+    "NUMBER_REASSERTED": {
+      "classes": [
+        "unsupported_reassertion"
+      ],
+      "origin": "inherited_error_reaffirmed",
+      "available_evidence": "unresolved prior/file label",
+      "claim": "Fresh FIXES summary affirms distribute n guard belongs to38",
+      "support": "Plan5 returns only41 nth_or_last; original38/39 notices not acquired. Prior/file labels may be retained as unresolved, but fresh certainty is not a verified correction.",
+      "earlier_unretrieved_archive_n": [
+        464,
+        466
+      ]
+    }
+  },
+  "scoring_limits": [
+    "Only current projected source, supplied prior notes and actually returned snippets establish reviewer-accessible evidence. Full prefix is available to auditor but not assumed visible to reviewer.",
+    "A search miss before478 is not evidence that43/44 were never received: their receipts484/488 are already in current source. Do not conflate limited archive absence with global absence.",
+    "Explicit uncertainty about unacquired39 identity is appropriate (row5). Retaining observed polynomial_eval code defect does not require knowing its ticket number.",
+    "C61 strict required-record coverage criterion unchanged; no artifacts or unfinished-work omissions waived for a named audit repair.",
+    "Opening allows saying job done after queue exhaustion. Bare wording is not independently scored as unsupported completion; known remaining defects must still be represented.",
+    "Four partial replies are not scored as applied successes even when fragments contain accurate corrections. No fallback or selective retry occurred.",
+    "One condition per frozen candidate/mode; six extra planner calls plus12 reviews. No statistical guarantee, lossless-history claim, speed result or end-to-end agent score."
+  ],
+  "next_work_recommendation": [
+    "Close this bounded replay sequence without adopting the reviewer, source projection or planner. Retain both acquisition limitations and evidence-use failures.",
+    "Proceed to the current pi full task with ordinary thinking-on keeper behavior as a transfer measurement, explicitly separate from checker adoption.",
+    "Use actual new full-task trajectories to determine whether historical failure still occurs in current execution and where original task receipts become lost; do not keep enlarging prompts or replay caps."
+  ]
+}

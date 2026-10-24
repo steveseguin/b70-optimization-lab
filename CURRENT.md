@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 23, 21:50 EDT — two-card host: retrieval replay closed; full pi task being prepared.**
+Campaign 63 passes no complete quality condition (0/12). Retrieval corrects one mistaken identity,
+but another review misreads the original receipt and completed notes still omit work. The server
+stopped cleanly at 21:41; cards are empty. No experimental reviewer is adopted. Next is the unchanged
+full pi repair task on current ctxkeeper, with notes thinking explicitly on. Its exact existing image,
+original task and grader are preserved; large history validation waits until GPU shutdown. CPU tests
+and independent review precede launch. Parent stays active through completion and audit.
+Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-closeout.md`; registration:
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-current-pi.md`.
+
 **October 23, 21:29 EDT — two-card host: Campaign 63 launched with bounded earlier-source retrieval.**
 Unit `ctx-campaign63`: at most six query plans and twelve unchanged reviews. Physical archive-prefix,
 literal-query and output-bound checks passed, including the corrected control-character clipping case;

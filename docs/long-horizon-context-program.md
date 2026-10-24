@@ -25,15 +25,19 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 | Flat cost | Campaign 59's fixed-metadata pair reproduced every NOTES/archive text and answer; counting memo cut request-clock wall 92m25s→83m12s (9.97%) | Memo default restored; residual client work still grows; this is not a cold model speed claim |
 | Same answers | Release and hostile-task gates remain separate; failed runs retained | Preserve observed completed work without refusing real user corrections |
 
-**Chosen next:** bounded retrieval of earlier original observations before neutral source review.
+**Chosen next:** the full pi repair task with current ctxkeeper and explicit notes thinking on.
 Campaign 60 reproduced the pi failure with both thinking workflows; all 18 conditions fail the broad
 source gate, including omitted work and wrong identities. Its thinking-on failure cut hit the cap and
 fell back. [Campaign 60 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-closeout.md)
 and [campaign 61 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign61-closeout.md): the
 neutral reviewer passes 2/12 individual conditions, no complete mode. [Campaign 62](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign62-closeout.md)
 repairs the preceding-cut cap and core omissions but passes 0/12 broader conditions; identities are still
-inferred without original receipts. [Campaign 63](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-source-retrieval.md)
-separately measures whether the missing evidence is acquired and whether the reviewer uses it correctly.
+inferred without original receipts. [Campaign 63](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign63-closeout.md)
+acquires some original receipts but still passes 0/12; a reviewer even misreads a retrieved ticket number.
+The replay sequence is closed without adopting its reviewer, projection or planner.
+[Campaign 64](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-current-pi.md)
+measures actual task completion and notes fidelity with the existing keeper; the new trajectory will
+choose the next practical lever.
 The [campaign 59 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md) records
 the qualified harness memo and its measurement scope.
 The [campaign 58 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign58-closeout.md) preserves
