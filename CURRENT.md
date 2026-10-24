@@ -9,6 +9,14 @@ its submitted metric. Later prefill candidates remain unqualified research and a
 measured recipe. No new device run or application change was made for this closeout; no new optimization
 lever will start. [Updated recipe and remaining qualification limits](repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/LATEST.md).
 
+**October 23, 21:51 EDT — two-card host: full pi task launched; parent remains active.**
+Campaign 64 runs the original pi image/task on ctxkeeper 1.3.0 with explicit notes thinking on.
+All ten focused CPU tests, exact-image/task preflight, independent review and 46 repository checks
+passed. Setup and campaign63 closeout pushed in `53f854a71` before launch. Unit `ctx-campaign64`;
+status `context-longrun-20261016/campaign64-current-pi/status.json`. No agents/tests/builds beside
+the GPU server. Original whole-history checking follows confirmed shutdown; quality is audited
+separately. This launch entry stays local until the server is down.
+
 **October 23, 21:50 EDT — two-card host: retrieval replay closed; full pi task being prepared.**
 Campaign 63 passes no complete quality condition (0/12). Retrieval corrects one mistaken identity,
 but another review misreads the original receipt and completed notes still omit work. The server
