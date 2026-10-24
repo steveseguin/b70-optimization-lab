@@ -1,0 +1,38 @@
+{
+  "approved": true,
+  "issues": [],
+  "sha256": {
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/main_history_contract_probe.py": "cba9c2e7828e834bbf2ed846c2cdf33c3229abd0fb22a13145689eb0bc4f2b34",
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/run_campaign65.py": "8b342ffe4421ccba47c27e237f9748d846406e929c1f4da7002c129d9d5ad855",
+    "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-history-fixture/manifest.json": "43949f1f84fa2b0057536bca2ef53dd8e1fb81e635b12629d5e92926d244669d"
+  },
+  "reviewed_at": "2026-10-24T02:37:03.043557+00:00",
+  "reviewer": "independent audit_c59_final",
+  "checks": {
+    "seven_cpu_tests": "pass",
+    "original_client_request_289_byte_identity": true,
+    "original_message_count": 601,
+    "archive_exact_original_messages": "3 through 585 inclusive, 583 records",
+    "saved_state_cut_plus_head": 585,
+    "future_archive_and_notes_excluded": true,
+    "source_and_fixture_hashes_verified": true,
+    "production_capture_messages": 19,
+    "capture_only_system_suffix_delta": true,
+    "no_notes_cut_restart_during_capture": true,
+    "expected_answers_not_model_input": true,
+    "external_task_tools_never_executed": true,
+    "control_gate": "exact original three-line write; no recall; one call; 6026 prompt tokens; 19 messages",
+    "original_c64_call_receipt_prompt_tokens": 6026,
+    "production_recall_limit_cpu_exercise": "16 served recall rounds then 17th terminal call",
+    "production_recall_and_empty_retry_unchanged": true,
+    "candidate_screen_requires_manual_source_coverage_audit": true,
+    "review_binds_probe_runner_and_fixture_manifest": true,
+    "lifecycle": "existing one-launch driver, SIGINT client cap, graceful stop verification, no restore or automatic retry"
+  },
+  "limitations": [
+    "Reconstructed final saved state uses later counters and token-ratio estimate; historical upstream wire identity is not asserted.",
+    "Production max_recalls=16 bounds rounds; multiple recall tools may be returned in one round.",
+    "No GPU or network calls were made for this review; actual control reproduction and prompt count remain device gates.",
+    "A seven-line proposed write does not establish full-task or transfer quality."
+  ]
+}

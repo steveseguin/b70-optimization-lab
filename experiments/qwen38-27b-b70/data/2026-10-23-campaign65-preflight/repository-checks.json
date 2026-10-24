@@ -1,0 +1,292 @@
+{
+  "commands": [
+    {
+      "command": "python3 tools/validate-repro-guides.py",
+      "exit_code": 0,
+      "seconds": 0.853,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/00.log"
+    },
+    {
+      "command": "node --test tools/test_guides_browser.cjs",
+      "exit_code": 0,
+      "seconds": 0.416,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/01.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "exit_code": 0,
+      "seconds": 1.024,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/02.log"
+    },
+    {
+      "command": "python3 tools/validate-recipe-publication.py",
+      "exit_code": 0,
+      "seconds": 2.808,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/03.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "exit_code": 0,
+      "seconds": 0.185,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/04.log"
+    },
+    {
+      "command": "python3 tools/sync-public-result-summary.py --check",
+      "exit_code": 0,
+      "seconds": 0.023,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/05.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "exit_code": 0,
+      "seconds": 0.037,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/06.log"
+    },
+    {
+      "command": "python3 tools/build-family-pages.py --check",
+      "exit_code": 0,
+      "seconds": 0.26,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/07.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_family_pages.py",
+      "exit_code": 0,
+      "seconds": 1.243,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/08.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "exit_code": 0,
+      "seconds": 0.052,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/09.log"
+    },
+    {
+      "command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "exit_code": 0,
+      "seconds": 0.023,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/10.log"
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "exit_code": 0,
+      "seconds": 0.411,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/11.log"
+    },
+    {
+      "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "exit_code": 0,
+      "seconds": 0.024,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/12.log"
+    },
+    {
+      "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "exit_code": 0,
+      "seconds": 0.92,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/13.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "exit_code": 0,
+      "seconds": 0.309,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/14.log"
+    },
+    {
+      "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/15.log"
+    },
+    {
+      "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "exit_code": 0,
+      "seconds": 0.106,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/16.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "exit_code": 0,
+      "seconds": 0.051,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/17.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "exit_code": 0,
+      "seconds": 2.304,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/18.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "exit_code": 0,
+      "seconds": 0.065,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/19.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "exit_code": 0,
+      "seconds": 1.376,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/20.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_build_model_pages.py",
+      "exit_code": 0,
+      "seconds": 0.087,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/21.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "exit_code": 0,
+      "seconds": 0.243,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/22.log"
+    },
+    {
+      "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "exit_code": 0,
+      "seconds": 0.062,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/23.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+      "exit_code": 0,
+      "seconds": 0.032,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/24.log"
+    },
+    {
+      "command": "python3 tools/extract-fp8-one-launch-prefill.py",
+      "exit_code": 0,
+      "seconds": 0.048,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/25.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+      "exit_code": 0,
+      "seconds": 0.08,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/26.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+      "exit_code": 0,
+      "seconds": 0.065,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/27.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+      "exit_code": 0,
+      "seconds": 0.039,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/28.log"
+    },
+    {
+      "command": "python3 tools/build-model-pages.py",
+      "exit_code": 0,
+      "seconds": 0.056,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/29.log"
+    },
+    {
+      "command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "exit_code": 0,
+      "seconds": 0.208,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/30.log"
+    },
+    {
+      "command": "python3 tools/check-doc-links.py",
+      "exit_code": 0,
+      "seconds": 0.224,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/31.log"
+    },
+    {
+      "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "exit_code": 1,
+      "seconds": 5.542,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/32.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_check_doc_links.py",
+      "exit_code": 0,
+      "seconds": 0.832,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/33.log"
+    },
+    {
+      "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "exit_code": 0,
+      "seconds": 0.545,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/34.log"
+    },
+    {
+      "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "exit_code": 0,
+      "seconds": 0.972,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/35.log"
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "exit_code": 0,
+      "seconds": 0.706,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/36.log"
+    },
+    {
+      "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "exit_code": 0,
+      "seconds": 0.144,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/37.log"
+    },
+    {
+      "command": "python3 -B tools/test-restore-source-archives.py",
+      "exit_code": 0,
+      "seconds": 0.082,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/38.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_xccl_probe.py",
+      "exit_code": 0,
+      "seconds": 0.051,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/39.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "exit_code": 0,
+      "seconds": 0.07,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/40.log"
+    },
+    {
+      "command": "python3 tools/check-manifest-paths.py",
+      "exit_code": 0,
+      "seconds": 0.071,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/41.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "exit_code": 0,
+      "seconds": 0.36,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/42.log"
+    },
+    {
+      "command": "python3 tools/check-container-packet.py",
+      "exit_code": 0,
+      "seconds": 0.071,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/43.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_check_container_packet.py",
+      "exit_code": 0,
+      "seconds": 0.2,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/44.log"
+    },
+    {
+      "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "exit_code": 0,
+      "seconds": 0.118,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/45.log"
+    }
+  ],
+  "passed": 46,
+  "total": 46,
+  "initial_passed": 45,
+  "reruns": [
+    {
+      "command_index": 32,
+      "reason": "review receipt arrived and was staged after initial link inventory; no source change",
+      "exit_code": 0,
+      "seconds": 5.012,
+      "log": "/mnt/fast-ai/bench-results/context-longrun-20261016/campaign65-validation/32-staged-review.log"
+    }
+  ]
+}

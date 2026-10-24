@@ -1,10 +1,19 @@
 # Current Workspace State
 
+**October 23, 22:38 EDT — two-card host: history-coverage replay ready after independent review.**
+Campaign 65 freezes the actual failed pi audit request and its earlier archive; the production keeper
+prepares 19 messages with no extra cut. Only a general memory-instruction suffix differs between arms.
+The original three-line/no-recall control and its 6,026 prompt tokens must reproduce before the candidate
+runs. Seven focused tests, independent source/fixture review and all 46 repository checks pass (the
+link check was rerun after the review receipt was staged). No task tools execute in the replay.
+Cards remain empty until launch; parent stays active through the audit and next full-task decision.
+Registration: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-history-coverage.md`.
+
 **October 23, 22:28 EDT — two-card host: pi repairs all code, but its historical audit is incomplete.**
 Campaign 64 finishes with 40/40 fixed and rule-clean, all 44 tickets, but only 3/7 audit entries.
 The server and proxy are down; whole-history checking passes. Early completed work vanished from
 selective notes, then pi treated the surviving list as complete instead of recalling the originals.
-Independent source/provenance audits are finishing. The complete calls log also exposes an internal
+Independent source/provenance audits are complete. The complete calls log also exposes an internal
 thinking-off fallback and a capped rewrite that the headline counters hide. No quality promotion.
 Next: test a general history-use instruction at the actual failed audit turn, requiring original
 evidence for exhaustive historical lists. A reconstructed control must reproduce the failure first.

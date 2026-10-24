@@ -81,7 +81,7 @@ Raw receipts remain under `context-longrun-20261016/campaign64-current-pi/`,
 ## When to revisit
 
 Do not repeat the unchanged full task or return to reviewer prompt/cap sweeps. The next specific
-lever is the main agent's history-use contract: selective notes are not an exhaustive event list;
+lever is the main agent's [history-use contract](2026-10-23-campaign65-history-coverage.md): selective notes are not an exhaustive event list;
 exhaustive historical requests need original archive coverage. Test that behavior at this actual
 failure with a matched reconstructed control before spending another full-task run. Any changed
 prompt is a candidate quality intervention, not a lossless speed optimization or production default.

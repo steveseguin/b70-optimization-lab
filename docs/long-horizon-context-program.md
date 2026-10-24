@@ -38,7 +38,8 @@ The replay sequence is closed without adopting its reviewer, projection or plann
 [Campaign 64](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign64-closeout.md)
 repairs all 40 and keeps all rules but writes only 3/7 historical audit entries. Early completed tasks
 were omitted from notes; pi treats the surviving list as exhaustive without archive recall. Next is
-one general main-agent history-use instruction at that actual failure, with a reconstructed control
+[one general main-agent history-use instruction](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-history-coverage.md)
+at that actual failure, with a reconstructed control
 before any fresh full-task confirmation. This changes candidate behavior; no lossless speed claim.
 The [campaign 59 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md) records
 the qualified harness memo and its measurement scope.
