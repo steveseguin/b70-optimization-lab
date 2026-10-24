@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 22:54 EDT — two-card host: exploratory full pi contract trial launched.**
+Unit `ctx-campaign66` runs the unchanged original pi task with one shared memory-instruction suffix.
+Setup and campaign 65's strict-gate failure are published in `3e15a2a6d` through the authenticated GitHub
+app, with exact file-tree verification and no force update. All 17 focused tests, five-source review,
+read-only image/task preflight and all 46 repository checks pass. No agents/tests/builds beside the
+server; parent stays active through task completion, shutdown and source audit. No production adoption.
+This entry stays local until shutdown. Status: `context-longrun-20261016/campaign66-current-pi-contract/status.json`.
+
 **October 23, 22:53 EDT — two-card host: exploratory full pi trial ready.**
 Campaign 66 retains the failed complete-evidence gate from campaign 65 and tests practical task quality
 with the same general memory suffix. Exact original image, task hashes and four task-driver changes
