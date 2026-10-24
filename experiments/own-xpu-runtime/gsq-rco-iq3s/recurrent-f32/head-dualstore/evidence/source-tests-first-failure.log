@@ -1,0 +1,23 @@
+test_exact_selected_arithmetic_and_two_stores (test_source.Tests.test_exact_selected_arithmetic_and_two_stores) ... ok
+test_finite_rounding_order_and_ties (test_source.Tests.test_finite_rounding_order_and_ties) ... ok
+test_selected_frozen_sources (test_source.Tests.test_selected_frozen_sources) ... ERROR
+
+======================================================================
+ERROR: test_selected_frozen_sources (test_source.Tests.test_selected_frozen_sources)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/head-dualstore/test_source.py", line 12, in test_selected_frozen_sources
+    for p,h in pins.items():self.assertEqual(hashlib.sha256((R/p).read_bytes()).hexdigest(),h,p)
+                                                            ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/build/source-v2/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p33_candidates.hpp'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+FAILED (errors=1)

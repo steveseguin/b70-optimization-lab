@@ -1,0 +1,90 @@
+--- frozen-longer-a/suite.py
++++ prefix-replay-a/suite.py
+@@ -1,4 +1,4 @@
+-"""Three corrected target512 requests against independent fixed CPU references."""
++"""One existing-binary replay at the audited first divergent shared prefix."""
+ import hashlib,importlib.util,json,shutil
+ from pathlib import Path
+ P=Path(__file__).resolve().parent;BASE=P.parent;CAND=BASE.parent;L=CAND.parent;R=L.parents[2]
+@@ -11,26 +11,25 @@
+ Q=load(L/'state-bundle/qualification.py','longer_bundle_helpers')
+ A=load(P/'generated/adapter.py','longer_f32_adapter');Q.A=A
+ BUDGET=load(P/'budget.py','longer_capture_budget')
+-RAW=4*(BUDGET.T+BUDGET.D);EOS=(248044,248046)
++RAW=2*(BUDGET.T+BUDGET.D);EOS=(248044,248046)
+ def authority():
+- a=json.loads((P/'authority.json').read_text());require(a['reference_review_sha256'] is not None,'actual CPU3 closed authority pending')
+- f=Path(a['reference_review_path']);require(sha(f)==a['reference_review_sha256'],'CPU3 review bytes');ref=json.loads(f.read_text())
+- require(ref['evidence_review_passed'] and ref['plan_sha256']==a['reference_plan_sha256'] and ref['owner_exited'] and ref['returncode']==0,'CPU3 clean closed reference')
+- fixed=json.loads((L/'reference-cpu/runtime-longer-a/requests.json').read_text())['cases'];require(len(ref['cases'])==3,'exact three references')
+- for i,(c,x) in enumerate(zip(ref['cases'],fixed)):
+-  require(c['index']==i and c['id']==x['id'] and c['prompt_tokens']==x['request']['prompt'] and 0<len(c['tokens'])<=512 and c['stop_type'] in ('eos','limit'),'fixed reference case')
+-  require(sha(c['response_path'])==c['response_sha256'],'raw CPU response binding')
+-  require((c['stop_type']=='eos')==(c['tokens'][-1] in EOS) and (c['stop_type']!='limit' or len(c['tokens'])==512),'CPU natural EOS/cap identity')
+- old=Path(a['corrected32_review_path']);require(sha(old)==a['corrected32_review_sha256'],'corrected32 authority');o=json.loads(old.read_text());require(o['passed'] and o['corrected_target_mtp_exact'] and o['physical_drain'],'corrected actual baseline')
+- rp=P/'evidence/independent-review.json';review=json.loads(rp.read_text());require(review['passed'],'independent source review')
+- for f,h in review['source_sha256'].items():require(sha(Path(f) if Path(f).is_absolute() else R/f)==h,'reviewed source drift')
+- return ref,fixed,rp
++ a=json.loads((P/'authority.json').read_text());f=Path(a['failure_review_path']);require(sha(f)==a['failure_review_sha256'],'closed failure authority')
++ failure=json.loads(f.read_text());require(failure['native_binary_sha256']=='5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4','unchanged native binary authority');require(failure['evidence_review_passed'] and not failure['run_qualification_passed'] and failure['classification']=='numerical_mismatch_safely_closed' and failure['closed_safety_checks_passed'],'safe failed original remains unqualified')
++ require(len(failure['rows'])==1 and failure['rows'][0]['first_difference']==a['index']==70,'fixed first divergence')
++ loc=failure['rows'][0]['localization'];require(loc['native_token']==a['expected_native_token']==220 and loc['reference_token']==a['expected_reference_token']==264 and loc['shared_input_length']==157,'fixed diagnostic tokens/prefix')
++ rp=Path(a['reference_review_path']);require(sha(rp)==a['reference_review_sha256']==failure['reference_review_sha256'],'closed CPU authority');ref=json.loads(rp.read_text());require(ref['evidence_review_passed'] and ref['owner_exited'] and ref['returncode']==0,'CPU closed')
++ c=ref['cases'][0];prefix=c['prompt_tokens']+c['tokens'][:70];require(prefix==loc['shared_input_tokens'] and len(prefix)==157 and c['tokens'][70]==264,'exact shared prefix from independent reference')
++ require(failure['rows'][0]['tokens'][:70]==c['tokens'][:70],'matched prior generated prefix')
++ case=dict(index=0,id='prompt00-first-divergence70',prompt_tokens=prefix,tokens=[264],stop_type='limit',native_expected=[220],original_output_index=70,conditional_position=156)
++ review=P/'evidence/independent-review.json';v=json.loads(review.read_text());require(v['passed'],'independent replay source review')
++ for f,h in v['source_sha256'].items():require(sha(Path(f) if Path(f).is_absolute() else R/f)==h,'reviewed source drift')
++ return [case],review
+ 
+ def build_plan(output,evidence_output):
+- ref,fixed,review=authority();a=A.build_plan(output,mini=False,max_new=128,seconds=3600,evidence_output=evidence_output)
+- require(a['request_cap']==3 and a['max_new']==128 and a['storage']['raw_state_bytes']==RAW,'bootstrap/capture forecast')
+- files=[Path(__file__),P/'once.py',P/'budget.py',P/'generated/adapter.py',P/'authority.json',P/'parent-pins.json',P/'source-preparation.json',review,L/'reference-cpu/runtime-longer-a/requests.json',Path(json.loads((P/'authority.json').read_text())['reference_review_path'])]
+- return dict(schema='gsq.recurrent-f32.longer-three-target.v1',adapter=a,requests=3,cases=ref['cases'],max_new=512,startup_max_new=128,modes=['none']*3,retained_state_dumps=4,initial_extra_metadata_bytes=BUDGET.INITIAL_EXTRA,initial_root_free_required_bytes=BUDGET.ROOT_FLOOR+2*BUDGET.ROOT_CACHE,initial_external_required_bytes=RAW+BUDGET.META+BUDGET.EXTERNAL_FLOOR+BUDGET.INITIAL_EXTRA,source_sha256={str(f):sha(f) for f in files},scope='Three fixed corrected target/CPU token comparisons; no MTP512, speed or broad quality claim',historical_bf16_state_oracle=False)
++ cases,review=authority();a=A.build_plan(output,mini=False,max_new=128,seconds=3600,evidence_output=evidence_output)
++ require(a['binary_sha256']=='5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4','same native replay binary');require(a['request_cap']==1 and a['max_new']==128 and a['storage']['raw_state_bytes']==RAW,'bootstrap/capture forecast')
++ files=[Path(__file__),P/'once.py',P/'budget.py',P/'generated/adapter.py',P/'authority.json',P/'parent-pins.json',P/'source-preparation.json',review,L/'reference-cpu/runtime-longer-a/requests.json',Path(json.loads((P/'authority.json').read_text())['reference_review_path']),Path(json.loads((P/'authority.json').read_text())['failure_review_path'])]
++ return dict(schema='gsq.recurrent-f32.first-divergence-replay.v1',adapter=a,requests=1,cases=cases,max_new=1,startup_max_new=128,modes=['none'],retained_state_dumps=2,initial_extra_metadata_bytes=BUDGET.INITIAL_EXTRA,initial_root_free_required_bytes=BUDGET.ROOT_FLOOR+2*BUDGET.ROOT_CACHE,initial_external_required_bytes=RAW+BUDGET.META+BUDGET.EXTERNAL_FLOOR+BUDGET.INITIAL_EXTRA,source_sha256={str(f):sha(f) for f in files},scope='Existing5926 shared-prefix reproduction of native220 versus CPU264; diagnostic only, no quality/speed claim',historical_bf16_state_oracle=False)
+ def validate_plan(p):
+  require(p==build_plan(p['adapter']['output'],p['adapter']['evidence_output']),'plan/source binding');A.validate_plan(p['adapter'])
+ def storage_guard(plan,budget=None,initial=False):
+@@ -50,16 +49,16 @@
+   t.check_alive();storage_guard(plan,budget);dest=t.out/f'prompt-{i:02d}-none';A.reset(t,dest)
+   budget.advance(f'reset_{i:02d}');storage_guard(plan,budget)
+   if rows:capture(t,rows[-1])
+-  result=A.BASE.NativeController(t,A.BASE.Draft('none'),True,False).run(case['prompt_tokens'],512,EOS);result.update(decode_tok_s=None,evidence_label='Corrected target512 independent token comparison only')
+-  require(0<len(result['tokens'])<=512 and all(result['stats'][k]==0 for k in ('guesses','hits','misses')),'target-only output bounds/stats')
+-  request_text=(t.shared_path.parent/'native-request.txt').read_text();expected=[0,512,1,0,len(case['prompt_tokens']),0,len(EOS),*case['prompt_tokens'],*EOS]
+-  require(list(map(int,request_text.split()))==expected,'actual native RPC512 identity')
+-  row=dict(name=dest.name,prompt_id=case['id'],mode='none',prompt_tokens=case['prompt_tokens'],requested_max_new=512,result=result,reference_comparison=comparison(result['tokens'],case),native_request=request_text)
++  result=A.BASE.NativeController(t,A.BASE.Draft('none'),True,False).run(case['prompt_tokens'],1,EOS);result.update(decode_tok_s=None,evidence_label='Same-prefix first-divergence replay only')
++  require(len(result['tokens'])==1 and all(result['stats'][k]==0 for k in ('guesses','hits','misses')),'target-only output bounds/stats')
++  request_text=(t.shared_path.parent/'native-request.txt').read_text();expected=[0,1,1,0,len(case['prompt_tokens']),0,len(EOS),*case['prompt_tokens'],*EOS]
++  require(list(map(int,request_text.split()))==expected,'actual native RPC1 identity')
++  row=dict(name=dest.name,prompt_id=case['id'],mode='none',prompt_tokens=case['prompt_tokens'],requested_max_new=1,result=result,native_reproduction=result['tokens']==case['native_expected'],reference_comparison=comparison(result['tokens'],case),native_request=request_text)
+   A.save(dest/'request-result.json',row);rows.append(row)
+-  require(row['reference_comparison']['equal'],'corrected target differs from independent CPU reference; stop remaining requests')
++  require(row['native_reproduction'],'replay does not reproduce audited native220 divergence; preserve failure, no logit attribution')
+  A.state_hashes(t);budget.advance('last_dump');storage_guard(plan,budget);capture(t,rows[-1])
+  require(A.state_hashes(t)==rows[-1]['state_sha256'] and Q.snapshots(t.out/rows[-1]['name'])==rows[-1]['capture_snapshot'],'last explicit DUMP repeat changed')
+- return dict(passed=True,requests=3,rows=rows,rank_pids=[p.pid for p in t.children],all3_reference_exact=True,capture_budget=budget.report(),no_speed_claim=True,mtp512_qualified=False)
++ return dict(passed=True,requests=1,rows=rows,rank_pids=[p.pid for p in t.children],native_divergence_reproduced=True,reference_equal=False,diagnostic_only=True,capture_budget=budget.report(),no_speed_claim=True,quality_qualified=False)
+ def qualification(plan,*,admit,check,launch_hook):
+  validate_plan(plan);storage_guard(plan,initial=True);admit(plan);t=A.Transport.__new__(A.Transport)
+  try:
+@@ -68,11 +67,11 @@
+   t.__init__(plan['adapter'],admit=lambda p:require(p==plan['adapter'],'adapter identity'),check=check,launch_hook=launch_hook)
+   result=run_attached(t,plan);t.close(True);t.capture_budget.advance('finish');storage_guard(plan,t.capture_budget)
+   for row in result['rows']:require(Q.closed_map(t.out/row['name'])==row['state_sha256'] and Q.snapshots(t.out/row['name'])==row['capture_snapshot'],'post-FINISH capture changed')
+-  result['capture_budget']=t.capture_budget.report();result['normal_FINISH_and_closed_payload_verified']=True;f=t.out/'f32-longer-correctness.json';A.save(f,result)
+-  return dict(passed=True,requests=3,rank_pids=result['rank_pids'],all3_reference_exact=True,full_result_path=str(f),full_result_sha256=sha(f),scope=plan['scope'],no_speed_claim=True)
++  result['capture_budget']=t.capture_budget.report();result['normal_FINISH_and_closed_payload_verified']=True;f=t.out/'f32-prefix-replay.json';A.save(f,result)
++  return dict(passed=True,requests=1,rank_pids=result['rank_pids'],native_divergence_reproduced=True,reference_equal=False,diagnostic_only=True,full_result_path=str(f),full_result_sha256=sha(f),scope=plan['scope'],no_speed_claim=True)
+  except BaseException as error:
+   secondary=A.cleanup_failure(t,error)
+   if hasattr(t,'out') and t.out.exists():
+-   try:A.save(t.out/'f32-longer-incident.json',dict(passed=False,error=repr(error),secondary=secondary,capture_budget=t.capture_budget.report() if hasattr(t,'capture_budget') else None))
++   try:A.save(t.out/'f32-prefix-incident.json',dict(passed=False,error=repr(error),secondary=secondary,capture_budget=t.capture_budget.report() if hasattr(t,'capture_budget') else None))
+    except BaseException:pass
+   raise

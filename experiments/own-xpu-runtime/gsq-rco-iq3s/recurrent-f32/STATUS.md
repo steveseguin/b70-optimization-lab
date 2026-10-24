@@ -1,8 +1,11 @@
-**Current: native build, full CPU lifecycle, and the bounded real-model pair pass.**
-See [the independent GPU result](operating/launch-b/RESULT.md). Target-only/MTP
-state and 32 tokens match; all 32 also match the independent CPU reference.
-No broad quality or speed qualification follows yet. Longer comparisons are next.
-The source-preparation descriptions below are retained as historical context.
+**Current: wrapped up at the owner’s request; numerical fidelity remains open.**
+The [short corrected target/MTP pair](operating/launch-b/RESULT.md) passes full
+state and32-token equality. The [longer comparison](operating/longer-a/RESULT.md)
+diverges at output71. A [shared-prefix replay](operating/prefix-replay-a/RESULT.md)
+reproduces that choice and shows final BF16 rounding alone cannot explain it.
+Earlier precision and arithmetic differences remain unlocalized; no new speed
+or broad quality qualification. Owners closed safely, recurring coaching retired,
+and no further run/build is queued. The source notes below are historical.
 
 # Correction checkpoint
 

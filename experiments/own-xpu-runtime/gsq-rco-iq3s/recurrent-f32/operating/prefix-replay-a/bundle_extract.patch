@@ -1,0 +1,40 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py
++++ prefix-replay-a/bundle_extract.py
+@@ -17,9 +17,9 @@
+ def logical_name(s):
+  require(type(s)is str,'buffer key');name=('alternate-'+s[len('alternate:'):] if s.startswith('alternate:') else s)+'.bin'
+  require(len(name)<=240 and re.fullmatch('[A-Za-z0-9_.:-]+',name) is not None,'buffer filename');return name
+-def read_state(directory):
++def read_selected(directory,wanted):
+  """Caller must first have a successful DUMP reply; closure remains RESET/FINISH."""
+- path=Path(directory);d=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC);fds={};stamps={}
++ path=Path(directory);require(path.resolve()==path,"canonical capture path");d=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC);fds={};stamps={}
+  try:
+   ds=os.fstat(d);require(stat.S_ISDIR(ds.st_mode),'directory');require(set(os.listdir(d))==FILES,'incomplete/unexpected files')
+   for name in sorted(FILES):
+@@ -40,18 +40,22 @@
+    name=logical_name(key);require(name not in expected and hexhash(h),'state names/hash');expected[name]=h
+   require(0<len(expected)<=ROWS,'state inventory bound')
+   text=index.decode('ascii');require(text.endswith('\n'),'index newline');lines=text[:-1].split('\n');require(lines[0]=='GSQ_STATE_BUNDLE_V1' and len(lines)==len(expected)+1,'index inventory count')
+-  offset=0;result={};whole=hashlib.sha256();fd=fds['state.bundle']
++  offset=0;result={};whole=hashlib.sha256();captured={};fd=fds['state.bundle']
+   for line in lines[1:]:
+    fields=line.split('\t');require(len(fields)==4,'index row fields');name,a,b,h=fields
+    require(name in expected and name not in result and hexhash(h) and expected[name]==h,'missing/duplicate/unknown buffer or hash');start=number(a);length=number(b)
+-   require(start==offset and length<=size-offset,'gap/overlap/out-of-range');part=hashlib.sha256();left=length
++   require(start==offset and length<=size-offset,'gap/overlap/out-of-range');part=hashlib.sha256();left=length;selected=bytearray() if name in wanted else None
++   if selected is not None:require(length==wanted[name],'selected range extent')
+    while left:
+     data=os.read(fd,min(65536,left));require(data,'truncated payload');part.update(data);whole.update(data);left-=len(data)
++    if selected is not None:selected.extend(data)
+    require(part.hexdigest()==h,'buffer bytes differ');result[name]=h;offset+=length
++   if selected is not None:captured[name]=bytes(selected)
+   require(offset==size and not os.read(fd,1) and whole.hexdigest()==payload_sha,'trailing/full payload hash');require(set(result)==set(expected),'complete original inventory');result['state.json']=state_sha
+   for name,fd in fds.items():require(identity(os.fstat(fd))==stamps[name]==identity(os.stat(name,dir_fd=d,follow_symlinks=False)),'file changed/replaced')
+   now=os.stat(path,follow_symlinks=False);require(stat.S_ISDIR(now.st_mode) and (now.st_dev,now.st_ino)==(ds.st_dev,ds.st_ino) and set(os.listdir(d))==FILES,'directory changed')
+-  return result
++  require(set(captured)==set(wanted),'all selected ranges present')
++  return dict(logical_map=result,captured=captured,whole_sha256=whole.hexdigest(),payload_bytes=size,range_count=len(expected),snapshots={n:[v[0],v[1],v[2],v[5],v[6]] for n,v in stamps.items()})
+  finally:
+   for fd in fds.values():os.close(fd)
+   os.close(d)

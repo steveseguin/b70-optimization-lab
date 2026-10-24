@@ -1,0 +1,25 @@
+--- frozen-longer-a/once.py
++++ prefix-replay-a/once.py
+@@ -1,10 +1,10 @@
+ #!/usr/bin/env python3
+-"""Root-only corrected F32 correctness pair; frozen monitor/cleanup."""
++"""Root-only single shared-prefix diagnostic; frozen monitor/cleanup."""
+ import argparse,hashlib,importlib.util,json
+ from pathlib import Path
+ P=Path(__file__).resolve().parent;L=P.parents[2]
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-longer-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a');UNIT='gsq-recurrent-f32-longer-a.service'
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a');UNIT='gsq-recurrent-f32-prefix-a.service'
+ def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+ def load(p,n):
+  s=importlib.util.spec_from_file_location(n,p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+@@ -16,7 +16,7 @@
+ 
+ def build_plan():
+  base=M.build_plan();suite=S.build_plan(CONTROL/'ranks',EVIDENCE);base.pop('prompt',None)
+- base.update(schema='gsq.recurrent-f32.longer-once.v1',adapter=suite['adapter'],suite=suite,max_new=512,requests=3,unit=UNIT,scope=suite['scope'])
++ base.update(schema='gsq.recurrent-f32.prefix-once.v1',adapter=suite['adapter'],suite=suite,max_new=1,requests=1,unit=UNIT,scope=suite['scope'])
+  ledger=P.parent/'candidate-ledger.json';delta=json.loads(ledger.read_text())['initial_mem_available_delta_bytes'];base['initial_mem_available_required']+=delta
+  base['source_sha256'].update({str(f):sha(f) for f in [Path(__file__),PARENT,P/'suite.py',P/'budget.py',ledger,P/'authority.json',P/'source-preparation.json',P/'evidence/independent-review.json']})
+  base['startup_max_new']=128; base['initial_extra_metadata_bytes']=S.BUDGET.INITIAL_EXTRA

@@ -1,5 +1,24 @@
 # Current Workspace State
 
+**October 24, 10:57 EDT — four-card host: current work wrapped up at the owner's request.**
+The shared-prefix replay passed independent readback and reproduced the longer
+comparison's token71 difference. Native logits21.0 versus20.625 rule out final
+BF16 head rounding alone; earlier precision/arithmetic remains unresolved.
+The corrected32-token target/MTP result remains valid, but broader fidelity and
+corrected-engine speed are unqualified. All experiment owners closed safely,
+protected vision is unchanged, and recurring coaching is retired. No further
+model run, build or quality-qualified SC117 publication is queued. Partial
+source and complete failed/successful evidence remain preserved.
+[Final replay result](experiments/own-xpu-runtime/gsq-rco-iq3s/recurrent-f32/operating/prefix-replay-a/RESULT.md).
+
+**October 24, 10:51 EDT — four-card host: shared-prefix replay is running.**
+The unchanged corrected binary is replaying the exact157 shared input IDs and
+one output token. It must reproduce the earlier native space token before
+aligned logits can be interpreted. The reference prefers another token; this
+run explicitly preserves that disagreement and makes no quality/speed claim.
+Both target contacts are observed and the monitor has no new fault. Head
+instrumentation remains deferred until the replay indicates it is useful.
+
 **October 24, 10:44 EDT — four-card host: longer comparison finds a numerical mismatch.**
 The first70 outputs match the independent reference; token71 differs. The full
 512-token native response is preserved, and remaining requests were stopped.

@@ -1,16 +1,18 @@
 # SC117 IQ3_S integration into our own engine
 
-**Recurrent precision corrected; broader fidelity checks continue.** The old
-engine rounded GDN recurrent state to BF16 each token; the compatible reference
-keeps FP32. The corrected engine now passes an independently audited
-[target-only/MTP pair](recurrent-f32/operating/launch-b/RESULT.md): full state
-matches, all 32 tokens match the same-weight CPU reference, and real captures
-confirm FP32 recurrent storage. BF16 attention KV is unchanged. This short test
-does not establish broad quality. Further speed work stays on hold for same-prefix
-logit checks and longer comparisons. Earlier rates below describe the historical
-BF16-state engine and internal optimization parity, not reference fidelity.
+**Work wrapped up at the owner's request; fidelity remains unresolved.**
+The recurrent state correction passes the independently audited
+[32-token target-only/MTP pair](recurrent-f32/operating/launch-b/RESULT.md),
+including exact full target state and agreement with the independent CPU prefix.
+A longer comparison diverges at output71. The
+[shared-prefix replay](recurrent-f32/operating/prefix-replay-a/RESULT.md)
+reproduces that choice and rules out final BF16 head rounding alone as its cause.
+Earlier activation precision and differing arithmetic remain unresolved.
+No corrected-engine speed or broad no-added-quality-loss claim is made.
+Experiments and recurring coaching are stopped; partial diagnostics are preserved.
+Earlier rates below describe the historical BF16-state engine.
 
-The requested model is downloaded and verified. Our engine now passes exact target-only/MTP comparison on all twelve fixed short prompts. The independently audited [resident baseline](baseline/RESULT.md) measures 12.63 tokens/s target-only and 17.98 with MTP, with full target state preserved. This is a short-prompt baseline, not broad quality certification. The owner explicitly
+The requested model is downloaded and verified. Before the recurrent correction, the historical engine passed exact internal target-only/MTP comparison on all twelve fixed short prompts. The independently audited [resident baseline](baseline/RESULT.md) measures 12.63 tokens/s target-only and 17.98 with MTP, with full target state preserved. This is a short-prompt baseline, not broad quality certification. The owner explicitly
 requested the SC117 source and our custom engine with MTP. This is a distinct
 modified target, separate from the closed and published Unsloth optimization.
 
