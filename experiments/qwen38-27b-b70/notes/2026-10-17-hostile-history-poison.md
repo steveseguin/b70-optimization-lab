@@ -2353,6 +2353,18 @@ withdrawn from the default pending a matched off/on comparison. Public wall numb
 Both servers stopped, cards empty. [Closeout](2026-10-23-campaign58-closeout.md),
 [audits and receipts](../data/2026-10-23-context-campaign58/).
 
+## Campaign 59: matched seed-2 control qualifies the harness memo; audited October 23, 20:42 EDT
+
+Fixing only sandbox-root mtime to campaign 55's observed minute, memo off/on produces identical
+152 NOTES versions, 2,578 archived texts and all 423 graded answers. Both score 420/423 with the
+same two wrong STATE lines, all 97 forgery targets kept, all 16 corrections applied, both audits PASS.
+The pair also reproduces campaign 55. Request-clock wall falls **92m25s→83m12s (9.97%)**; model time
+4,487→4,490 s, between-step residual 790→234 s. Runner walls are separately 93m01s→83m47s.
+`COUNT_MEMO=1` is restored as the harness default; `0` restores upstream. This controlled timestamp
+fixture and cache-enabled agent wall are explicitly named; no cold model speed claim or overwrite of
+campaign 58's failed gate. [Closeout](2026-10-23-campaign59-closeout.md),
+[comparisons and hashes](../data/2026-10-23-context-campaign59/comparison.json).
+
 ## Development review: bare-number checks and release separation (2026-10-20)
 
 The interrupted 1.2.2.dev0 implementation is reviewed and remains **unreleased development**. It asks for

@@ -35,7 +35,7 @@ summarize_results.py adds them.
 Note: baselines rebind clm_harness.clm_agent.harness._SYSTEM_TEMPLATE when they run, so do
 not mix ClmAgent and a baseline inside one Harbor job process.
 
-Exact incremental token counting (2026-10-23, COUNT_MEMO=0 by default, 1 = opt in):
+Exact incremental token counting (2026-10-23, COUNT_MEMO=1 by default, 0 restores upstream):
 when enabled, importing this module replaces clm_harness.utils.tokens.count_tokens with a version
 that remembers each message's count and re-encodes a message only when any of its text
 pieces is a different string object. The harness counts the whole retained history four
@@ -148,9 +148,9 @@ def _install_count_memo() -> None:
     estimate is used unchanged. The memo keeps only the messages of the latest call.
     """
     global _MEMO_PATCHED
-    # Campaign 58 seed 2 diverged from the registered control. Keep upstream as
-    # the default until the divergence is explained; preserve the opt-in path.
-    if _MEMO_PATCHED or not _as_bool(os.environ.get("COUNT_MEMO", "0")):
+    # Campaign 59's fixed-metadata pair has identical NOTES, archived text and
+    # answers, with passing quality audits. COUNT_MEMO=0 restores upstream.
+    if _MEMO_PATCHED or not _as_bool(os.environ.get("COUNT_MEMO", "1")):
         return
     orig = tk.count_tokens
     cache: dict[int, tuple[tuple[Any, ...], int]] = {}

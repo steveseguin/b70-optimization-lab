@@ -22,12 +22,16 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 | --- | --- | --- |
 | Any agent | Twelve third-party agents ran the repair task; 1.3.0 passed the freeagent release gate, 40/40 clean and 7/7 audit | A pi run deleted a correct artifact after notes promoted mistaken assistant recollection over tool evidence |
 | Any history | Campaign 55's two 2M hostile seeds: 423/423 and 420/423; every forgery target kept, 16/16 corrections, 0/2 wrong STATE lines | These ledger checks do not establish faithful nonnumeric task progress, legitimate supersession or arbitrary histories |
-| Flat cost | Campaign 58's exact seed-0 text took 81m15s vs 92m40s; most saved time was client counting | Seed 2 had a timestamp confound; campaign 59 is the fixed-metadata off/on control, currently running |
+| Flat cost | Campaign 59's fixed-metadata pair reproduced every NOTES/archive text and answer; counting memo cut request-clock wall 92m25s→83m12s (9.97%) | Memo default restored; residual client work still grows; this is not a cold model speed claim |
 | Same answers | Release and hostile-task gates remain separate; failed runs retained | Preserve observed completed work without refusing real user corrections |
 
-**Chosen next:** a short, source-grounded diagnostic of that recorded pi failure, using the existing
-thinking switch and a legitimate-cancellation control. It starts after campaign 59, without changing
-the live campaign or public defaults. [Campaign 60 registration](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-note-evidence.md).
+**Chosen next:** a neutral second-pass review of proposed notes against original role-tagged sources.
+Campaign 60 reproduced the pi failure with both thinking workflows; all 18 conditions fail the broad
+source gate, including omitted work and wrong identities. Its thinking-on failure cut hit the cap and
+fell back. [Campaign 60 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-closeout.md)
+and [campaign 61 registration](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign61-note-evidence-review.md).
+The [campaign 59 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md) records
+the qualified harness memo and its measurement scope.
 The [campaign 58 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign58-closeout.md) preserves
 its failed gate. More ledger tuning, a 10M scaling run, and duplicate-snapshot optimization are deferred
 behind this practical correctness question; none is claimed closed by this priority choice.

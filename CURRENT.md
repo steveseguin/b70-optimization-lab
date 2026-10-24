@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 23, 20:49 EDT — Campaigns 59/60 audited; exact counting memo restored, source-verification diagnostic prepared.**
+Both campaigns finished by 12:57 with servers stopped; the agent did not resume after its prior chat
+turn ended, leaving the audit idle until the owner returned at 20:42. Background units do not wake a
+finished turn. Campaign 59 reproduces all NOTES/archive text and answers (420/423); counting memo
+cuts request-clock wall 92m25s→83m12s, with model time unchanged and both quality audits passing.
+COUNT_MEMO=1 is restored; 0 still restores upstream. Campaign 60 fails both thinking workflows:
+notes deny observed work; thinking-on hits its cap and falls back. All 18 fail broader source checks.
+Campaign 61 prepares a separate neutral source review with no fallback; CPU and independent review
+must pass before launch. Cards empty now; no other lane on this host. No public figures changed.
+Evidence: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md`,
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-closeout.md`, and campaign61 registration beside them.
+
 **October 23, 20:28 EDT — the tiny Engine passes the populated expert-cache proof.**
 All 48 requests match across direct execution, cached serial execution and cached paired execution,
 including saved state, continuation and prompt boundaries. Both cached modes produce the same routes,

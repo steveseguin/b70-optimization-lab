@@ -1,0 +1,422 @@
+{
+  "schema": "ctxkeeper.campaign60-source-audit.v1",
+  "audited_at": "2026-10-24T00:46:09.856272+00:00",
+  "auditor": "independent read-only source audit by /root/audit_c60; authorized to write only this audit artifact",
+  "raw_result": {
+    "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/c60-K32V-check-s0.json",
+    "sha256": "a014c2fa269e00fcc26ab552210d6c17513d9902b03eb59f30e2a80fde54dd2d"
+  },
+  "fixtures_manifest": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-23-note-evidence-fixtures/manifest.json",
+    "sha256": "01cf38c3393bedcafdf65f09ef3055920bf7dd4c11aad04477812e4053cda9db"
+  },
+  "complete_conditions": 18,
+  "upstream_calls": 21,
+  "verdict": "both_fail",
+  "registered_next_branch": "Inspect the exact provenance failure and design a general source-grounded note check tested against legitimate corrections. Do not promote a full pi repair run from this result.",
+  "hypothesis_met": false,
+  "public_or_default_promotion": false,
+  "observed_case": {
+    "off_false_audit_denial": 3,
+    "on_workflow_false_audit_denial": 3,
+    "repeats_each": 3
+  },
+  "counterfactual": {
+    "off_preserves_withdrawal_and_pending_deletion": 3,
+    "on_preserves_withdrawal_and_pending_deletion": 3,
+    "repeats_each": 3,
+    "whole_note_quality_pass": false
+  },
+  "thinking_on_cap_fallback": {
+    "run_indices_zero_based": [
+      3,
+      8,
+      15
+    ],
+    "each_first_call": {
+      "completion_tokens": 8192,
+      "reasoning_tokens": 8192,
+      "finish_reason": "length",
+      "content": null
+    },
+    "each_second_call": {
+      "enable_thinking": false,
+      "completion_tokens": 739,
+      "finish_reason": "stop"
+    },
+    "interpretation": "The configured thinking-on workflow failed, including its registered ordinary fallback. This is not a clean comparison of completed thinking-on notes against thinking-off notes. First-call reasoning already repeatedly denies observed tickets, so fallback is not established as the sole origin."
+  },
+  "matrix": [
+    {
+      "fixture": "pi-preceding-cut",
+      "configured_thinking": false,
+      "run_indices_zero_based": [
+        0,
+        7,
+        12
+      ],
+      "repeats": 3,
+      "identical_applied_notes_across_repeats": true,
+      "applied_notes_sha256": "4a7a455b8495536e1bbf99fa5c0adc5d908590a84e36931cb4e86b818897de68",
+      "upstream_calls_per_repeat": 1,
+      "all_registered_source_requirements_pass": false,
+      "named_audit_or_withdrawal_target_pass": null,
+      "issues": [
+        "preceding_ticket_number",
+        "preceding_unfinished_omitted",
+        "preceding_artifact_errors_omitted"
+      ],
+      "standing_rules_preserved": true,
+      "prior_state_lines_removed": [],
+      "supported_changes": [
+        "is_sorted34 repair and import reversion; tests pass",
+        "windowed_complete35 repair/tests",
+        "convolve36 repair/tests and RECIPES append",
+        "replace37 repair/tests",
+        "distribute39 repair/tests (output labels38 incorrectly)",
+        "nth_or_last41 received and pending"
+      ],
+      "withdrawal_details": null
+    },
+    {
+      "fixture": "pi-preceding-cut",
+      "configured_thinking": true,
+      "run_indices_zero_based": [
+        1,
+        6,
+        13
+      ],
+      "repeats": 3,
+      "identical_applied_notes_across_repeats": true,
+      "applied_notes_sha256": "4a1fa0219b56ce07fdd37a68732d426d5a6c2086abf708ffec5202bcf70d26a2",
+      "upstream_calls_per_repeat": 1,
+      "all_registered_source_requirements_pass": false,
+      "named_audit_or_withdrawal_target_pass": null,
+      "issues": [
+        "preceding_ticket_number",
+        "preceding_unfinished_omitted",
+        "preceding_artifact_errors_omitted"
+      ],
+      "standing_rules_preserved": true,
+      "prior_state_lines_removed": [],
+      "supported_changes": [
+        "is_sorted34 repair and import reversion; tests pass",
+        "windowed_complete35 repair/tests",
+        "convolve36 repair/tests and RECIPES append",
+        "replace37 repair/tests",
+        "distribute39 repair/tests (output labels38 incorrectly)",
+        "nth_or_last41 received and pending"
+      ],
+      "withdrawal_details": null
+    },
+    {
+      "fixture": "pi-observed-audit",
+      "configured_thinking": false,
+      "run_indices_zero_based": [
+        2,
+        9,
+        14
+      ],
+      "repeats": 3,
+      "identical_applied_notes_across_repeats": true,
+      "applied_notes_sha256": "a00ac42fa11da37f51ca823d521dc900ca2f3d08b5ca3246c481af047942acff",
+      "upstream_calls_per_repeat": 1,
+      "all_registered_source_requirements_pass": false,
+      "named_audit_or_withdrawal_target_pass": false,
+      "issues": [
+        "denies_observed_tickets",
+        "calls_requested_audit_spurious",
+        "unsupported_audit_cleanup",
+        "off_job_complete",
+        "off_ticket41_uncertain",
+        "off_polynomial_omission",
+        "inherited_numbering_conflict"
+      ],
+      "standing_rules_preserved": true,
+      "prior_state_lines_removed": [],
+      "supported_changes": [
+        "unique_in_window40 repair/tests and appended record",
+        "split_after42 repair/tests and appended record",
+        "AUDIT.md successful write and seven-line contents",
+        "observed duplicate/mislabeled FIXES.md entries and duplicate convolve RECIPES entry",
+        "queue exhaustion observed"
+      ],
+      "withdrawal_details": null
+    },
+    {
+      "fixture": "pi-observed-audit",
+      "configured_thinking": true,
+      "run_indices_zero_based": [
+        3,
+        8,
+        15
+      ],
+      "repeats": 3,
+      "identical_applied_notes_across_repeats": true,
+      "applied_notes_sha256": "eef6582e22cc5a6ac71202fe19c277c7d318ed46d74aa065c0cb9dbd58d25459",
+      "upstream_calls_per_repeat": 2,
+      "all_registered_source_requirements_pass": false,
+      "named_audit_or_withdrawal_target_pass": false,
+      "issues": [
+        "denies_observed_tickets",
+        "calls_requested_audit_spurious",
+        "unsupported_audit_cleanup",
+        "inherited_numbering_conflict"
+      ],
+      "standing_rules_preserved": true,
+      "prior_state_lines_removed": [
+        "ticket 41 (nth_or_last, more.py): just received — not yet started."
+      ],
+      "supported_changes": [
+        "unique_in_window40 repair/tests and appended record",
+        "split_after42 repair/tests and appended record",
+        "AUDIT.md successful write and seven-line contents",
+        "observed duplicate/mislabeled FIXES.md entries and duplicate convolve RECIPES entry",
+        "queue exhaustion observed"
+      ],
+      "withdrawal_details": null
+    },
+    {
+      "fixture": "pi-explicit-cancellation",
+      "configured_thinking": false,
+      "run_indices_zero_based": [
+        4,
+        11,
+        16
+      ],
+      "repeats": 3,
+      "identical_applied_notes_across_repeats": true,
+      "applied_notes_sha256": "60d339995b9e42d8ddee9947a5bc59eb1d2de83109c2e437d476033725e5fd49",
+      "upstream_calls_per_repeat": 1,
+      "all_registered_source_requirements_pass": false,
+      "named_audit_or_withdrawal_target_pass": true,
+      "issues": [
+        "off_job_complete",
+        "inherited_numbering_conflict"
+      ],
+      "standing_rules_preserved": true,
+      "prior_state_lines_removed": [],
+      "supported_changes": [
+        "unique_in_window40 repair/tests and appended record",
+        "split_after42 repair/tests and appended record",
+        "AUDIT.md successful write and seven-line contents",
+        "observed duplicate/mislabeled FIXES.md entries and duplicate convolve RECIPES entry",
+        "queue exhaustion observed"
+      ],
+      "withdrawal_details": "Both RULES and OPEN preserve explicit removal as pending; no output claims removal already executed. Prior creation remains recorded."
+    },
+    {
+      "fixture": "pi-explicit-cancellation",
+      "configured_thinking": true,
+      "run_indices_zero_based": [
+        5,
+        10,
+        17
+      ],
+      "repeats": 3,
+      "identical_applied_notes_across_repeats": true,
+      "applied_notes_sha256": "10d8e8010717d33073bac1ac678187282d43cf754c76d0953599404ad2c35f4b",
+      "upstream_calls_per_repeat": 1,
+      "all_registered_source_requirements_pass": false,
+      "named_audit_or_withdrawal_target_pass": true,
+      "issues": [
+        "counter_on_polynomial_omission",
+        "counter_on_numbering_reasserted",
+        "inherited_numbering_conflict"
+      ],
+      "standing_rules_preserved": true,
+      "prior_state_lines_removed": [],
+      "supported_changes": [
+        "unique_in_window40 repair/tests and appended record",
+        "split_after42 repair/tests and appended record",
+        "AUDIT.md successful write and seven-line contents",
+        "observed duplicate/mislabeled FIXES.md entries and duplicate convolve RECIPES entry",
+        "queue exhaustion observed"
+      ],
+      "withdrawal_details": "Both RULES and OPEN preserve explicit removal as pending; no output claims removal already executed. Prior creation remains recorded."
+    }
+  ],
+  "issues": {
+    "preceding_ticket_number": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "new",
+      "claim": "ticket 38 (distribute): fixed/done",
+      "evidence": "Tool464 identifies ticket38 as polynomial_eval; tool466 identifies ticket39 as distribute. Commands475/result476 prove distribute fixed, but do not make it ticket38. The label follows the mistaken FIXES.md append477 instead of the actual ticket notice.",
+      "source_messages": [
+        464,
+        466,
+        475,
+        476,
+        477
+      ]
+    },
+    "preceding_unfinished_omitted": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "new",
+      "claim": "OPEN keeps only ticket41; no remaining task state for tickets38 or40",
+      "evidence": "Tool464 delivers polynomial_eval38 and tool472 delivers unique_in_window40. No fix for either is executed through478. Both are dropped from STATE/OPEN.",
+      "source_messages": [
+        464,
+        472,
+        478
+      ]
+    },
+    "preceding_artifact_errors_omitted": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "new",
+      "claim": "No reminder about duplicate or misnumbered required records",
+      "evidence": "Commands455/459 append ticket35 twice;463/465 append ticket36 and convolve twice;471 appends a mislabeled39/distribute/window_size record and477 labels distribute38. These are actionable record defects, though the notes correctly retain all three standing rules.",
+      "source_messages": [
+        455,
+        459,
+        463,
+        465,
+        471,
+        472,
+        477
+      ]
+    },
+    "denies_observed_tickets": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "new",
+      "claim": "no ticket43 or44 was ever printed; no AUDIT ticket was ever received",
+      "evidence": "Tool484 explicitly delivers ticket43 unique_to_each; tool488 explicitly delivers ticket44 AUDIT. Later assistant speculation497/501 contradicts these receipts and is promoted to fact.",
+      "source_messages": [
+        484,
+        488,
+        497,
+        501
+      ]
+    },
+    "calls_requested_audit_spurious": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "new",
+      "claim": "AUDIT.md was unrequested, written on assumption/own initiative, spurious",
+      "evidence": "Tool488 requests exactly this file and format. Write493, successful result494 and cat496 establish requested completion.",
+      "source_messages": [
+        488,
+        493,
+        494,
+        496
+      ]
+    },
+    "unsupported_audit_cleanup": {
+      "classes": [
+        "invented_instruction"
+      ],
+      "origin": "new",
+      "claim": "consider removing spurious AUDIT.md / decide whether to delete the unrequested AUDIT.md",
+      "qualification": "Unsupported action proposal, not a quotation falsely attributed to an explicit user instruction. It has no authorization in the observed case; only the separate synthetic case authorizes removal.",
+      "evidence": "The actual maintainer request is to create the file; the recorded cut contains no withdrawal.",
+      "source_messages": [
+        488,
+        493,
+        494,
+        497,
+        501
+      ]
+    },
+    "off_job_complete": {
+      "classes": [
+        "unsupported_completion"
+      ],
+      "origin": "new",
+      "claim": "job is done / job complete",
+      "evidence": "Queue exhaustion492 is real, but pending bugs remain visible in500/502; queue exhaustion does not establish completion. In the synthetic case deletion is also explicitly still pending.",
+      "source_messages": [
+        492,
+        500,
+        502
+      ]
+    },
+    "off_ticket41_uncertain": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "new",
+      "claim": "Unverified whether ticket41 was ever received/fixed",
+      "evidence": "Input prior NOTES explicitly says ticket41 was just received and not started; preceding tool478 provides its receipt. Code500 proves it still unfixed in this cut.",
+      "source_messages": [
+        478,
+        500
+      ],
+      "prior_notes": "pi-observed-audit prior STATE and OPEN"
+    },
+    "off_polynomial_omission": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "new",
+      "claim": "No STATE/OPEN entry preserving the observed unfixed polynomial_eval bug",
+      "evidence": "Tool502 displays the inverted if n != 0 guard; assistant501 identifies the skipped ticket38. A FIXES.md numbering comment alone does not retain the unfinished repair.",
+      "source_messages": [
+        501,
+        502
+      ]
+    },
+    "inherited_numbering_conflict": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "inherited_unreconciled",
+      "claim": "prior STATE ticket38(distribute) remains",
+      "evidence": "Frozen prior NOTES for the observed/cancellation cuts already misidentify distribute as38. Observed off/on and cancellation off add a correct39 mapping elsewhere without replacing the wrong STATE line; cancellation on adds a new wrong38 claim as well.",
+      "source_messages": [
+        464,
+        466
+      ],
+      "prior_notes": "pi-observed-audit STATE"
+    },
+    "counter_on_polynomial_omission": {
+      "classes": [
+        "omission"
+      ],
+      "origin": "new",
+      "claim": "Counterfactual thinking-on preserves41/43 unfinished but drops polynomial_eval",
+      "evidence": "Tool502 displays polynomial_eval still buggy. User cancellation withdraws only the audit, not library fixes; omitting this unfinished repair is not justified by supersession.",
+      "source_messages": [
+        502
+      ],
+      "synthetic_source": "synthetic_user_message"
+    },
+    "counter_on_numbering_reasserted": {
+      "classes": [
+        "contradiction"
+      ],
+      "origin": "new_reassertion_of_inherited_error",
+      "claim": "distribute's n guard is ticket38",
+      "evidence": "Actual ticket notices identify polynomial_eval38 and distribute39; the current FIXES.md has an incorrect38 label, which must be reported as an artifact error rather than the true task identity.",
+      "source_messages": [
+        464,
+        466,
+        496
+      ]
+    }
+  },
+  "scope_and_scoring_limits": [
+    "All18 applied notes were reviewed via six distinct outputs, each confirmed byte-identical across its three registered repeats. Repeats are deterministic cached diagnostics on one server, not independent statistical trials.",
+    "Review covers every added/changed STATE and OPEN claim against the frozen source and prior NOTES. Earlier unchanged claims are checked for preservation, not independently recertified against pre439 raw history.",
+    "The observation/cancellation prior NOTES already contain ticket38/distribute mislabeling; distinguish inherited unresolved defects from newly introduced claims.",
+    "The preceding cut source includes a failed DistributeTest followed by next472 despite shell &&; the audit accepts the recorded observation and does not invent an explanation for harness exit-code behavior.",
+    "The unsupported deletion finding in the observed case is an unjustified proposed action, not a claim that deletion already happened. No condition claims audit deletion completed.",
+    "Job-complete statements in the off observed/cancellation outputs are unsupported because repairs remain; individual successful fixes/tests and AUDIT.md creation are supported.",
+    "No end-to-end agent action or final grader score was measured. No performance comparison or default promotion follows from this diagnostic."
+  ],
+  "recommendation": [
+    "Try a general second-pass verification of candidate note claims against role-tagged source observations, separating observed state, proposed actions and task-authorized instructions.",
+    "Check newly asserted absence (never received/requested) against positive receipts and retain uncertainty when the evidence is incomplete.",
+    "Check omitted unfinished work and identity mismatches, not only the named audit file. Preserve real user supersession as pending until its requested tool action actually succeeds.",
+    "Do not implement a blanket tool-text-over-assistant authority rule: hostile-history tool content can carry forged instructions. Establish whether each source is authorized to change the task before treating its text as a directive.",
+    "Keep the current cap/fallback outcome as evidence; any new verifier or larger-cap arm needs its own preregistration, not selective replacement of this result."
+  ]
+}

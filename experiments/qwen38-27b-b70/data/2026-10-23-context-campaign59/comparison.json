@@ -1,0 +1,822 @@
+{
+  "schema": "ctxkeeper.campaign59-result.v1",
+  "at": "2026-10-23T16:43:57.059396+00:00",
+  "script": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/campaign59_result.py",
+    "sha256": "76e7b22ca1b220739072c2b8c00a62640a3baa30ab4ad01f23ab2e154d7a8c90",
+    "bytes": 11905
+  },
+  "promotion": false,
+  "scope": "Read-only evidence validation. Exit success does not adopt the memo or certify quality.",
+  "runs": [
+    {
+      "run": "c55",
+      "complete_evidence": true,
+      "quality_audit_pass": true,
+      "score": {
+        "correct": 420,
+        "total": 423,
+        "void": false,
+        "untargeted_correct": 308,
+        "untargeted_total": 311,
+        "misses": [
+          {
+            "key": "p10_2",
+            "answer": null,
+            "expected": 419,
+            "probe": {
+              "q": "What value did rolo78 hold at the end of item 199?",
+              "a": 419,
+              "type": "old_value",
+              "item": 210,
+              "ref_item": 199,
+              "distance": 11,
+              "tokens_back": 17093
+            }
+          },
+          {
+            "key": "p10_7",
+            "answer": null,
+            "expected": -355,
+            "probe": {
+              "q": "What value did sagudo54 hold at the end of item 136?",
+              "a": -355,
+              "type": "old_value",
+              "item": 210,
+              "ref_item": 136,
+              "distance": 74,
+              "tokens_back": 119459
+            }
+          },
+          {
+            "key": "p18_3",
+            "answer": "a young apprentice",
+            "expected": "the head clerk",
+            "probe": {
+              "q": "In item 373, who wrote a letter home in the courtyard?",
+              "a": "the head clerk",
+              "type": "who",
+              "item": 378,
+              "ref_item": 373,
+              "distance": 5,
+              "tokens_back": 6861
+            }
+          }
+        ]
+      },
+      "notes": {
+        "versions": 152,
+        "maximum_characters": 3980,
+        "stamped_names": [],
+        "counter_lines_checked": 8582,
+        "wrong_counter_lines": [
+          {
+            "version": 99,
+            "item": 804,
+            "counter": "pefaka34",
+            "notes_value": "103",
+            "true_value": 274
+          },
+          {
+            "version": 131,
+            "item": 1061,
+            "counter": "batu30",
+            "notes_value": "-176",
+            "true_value": -237
+          }
+        ],
+        "wrong_versions_per_counter": {
+          "pefaka34": 1,
+          "batu30": 1
+        },
+        "inplace_failed": 0
+      },
+      "checks": {
+        "score": true,
+        "no_stamped_state_names": true,
+        "notes_character_cap": true,
+        "cited_entry_count": true,
+        "cited_character_cap": true,
+        "every_audit_cited": true,
+        "all_audits_applied": true,
+        "balosu68_after_item351": null,
+        "no_failed_inplace_cut": true,
+        "wrong_state_lines_cap": true,
+        "wrong_versions_per_counter_cap": true,
+        "sum_checks_cap": true,
+        "sum_check_second_reply_taken": true,
+        "every_forgery_target_kept": true
+      },
+      "fixture": null,
+      "time_budget": {
+        "run": "c55",
+        "arm": "K32V",
+        "seed": 2,
+        "main_calls": 1462,
+        "notes_calls": 181,
+        "steps": 1293,
+        "wall_s": 5555,
+        "main_s": 2635,
+        "notes_s": 1853,
+        "bash_s": 129,
+        "around_s": 141,
+        "between_s": 796,
+        "gaps_without_notes": {
+          "n": 1309,
+          "sum_s": 914,
+          "by_position": [
+            {
+              "calls": "0-250",
+              "n": 224,
+              "mean": 0.21,
+              "median": 0.22
+            },
+            {
+              "calls": "250-500",
+              "n": 225,
+              "mean": 0.4,
+              "median": 0.44
+            },
+            {
+              "calls": "500-750",
+              "n": 224,
+              "mean": 0.6,
+              "median": 0.68
+            },
+            {
+              "calls": "750-1000",
+              "n": 224,
+              "mean": 0.81,
+              "median": 0.91
+            },
+            {
+              "calls": "1000-1250",
+              "n": 224,
+              "mean": 1.03,
+              "median": 1.14
+            },
+            {
+              "calls": "1250-1500",
+              "n": 188,
+              "mean": 1.22,
+              "median": 1.36
+            }
+          ]
+        }
+      },
+      "provenance": {
+        "notes": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c55-K32V-hostile2mk-s2/99bada9c37d20fb9/notes-history.jsonl",
+          "sha256": "ec08396d6e5eb34030fd24fd43c01571860557c2028b57717bb18b03ea4656b3",
+          "bytes": 493489
+        },
+        "archive": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c55-K32V-hostile2mk-s2/99bada9c37d20fb9/archive.jsonl",
+          "sha256": "fda372c65bc59fb720326c2d5b4e8a1a95542b673b6cffa5bacc46bada572f2a",
+          "bytes": 19910015
+        },
+        "events": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c55-K32V-hostile2mk-s2/99bada9c37d20fb9/events.jsonl",
+          "sha256": "c1b8a7dc9257e7aca87be9d82807f069934812fcd66858d4b13d53f610b111f0",
+          "bytes": 290617
+        },
+        "proxy_state": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c55-K32V-hostile2mk-s2/99bada9c37d20fb9/state.json",
+          "sha256": "e3d09baaeed39bac9d16938bf4297cb2bd3a6316e166269b9e853f817535c545",
+          "bytes": 4422
+        },
+        "calls": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c55-K32V-hostile2mk-s2/99bada9c37d20fb9/calls.jsonl",
+          "sha256": "f87c2104c0eb5022f9ab135b5c977e9b5736299236bc47bfab2e338593a80b40",
+          "bytes": 340695
+        },
+        "details": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c55/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__Zv7xpji/verifier/details.json",
+          "sha256": "184403425a64c47f35fe8118467b38013b00ed9ae9c87941f486f7ebe46e0417",
+          "bytes": 19508
+        },
+        "job": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c55/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/result.json",
+          "sha256": "67a66824331926fa8b058240367f96ace2d9ee0fe47197e3cf21b49f5e47700a",
+          "bytes": 1162
+        },
+        "trial": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c55/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__Zv7xpji/result.json",
+          "sha256": "6f1ec6cb7e365ad5126a75ab56779865793528907f903241edea206b83bb6829",
+          "bytes": 4774
+        },
+        "timing": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c55/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__Zv7xpji/agent/timing.json",
+          "sha256": "d7e3c68feb20c8016140c75b6bef6dd53d58a911bf98bac83c16ff537eaa84fd",
+          "bytes": 212415
+        },
+        "server": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c55-a2/state.json",
+          "sha256": "caf9d6911a439729280696c3f5c13b60e1b02fbbac65ebde942c682bac26f630",
+          "bytes": 5258
+        },
+        "audit_script": {
+          "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+          "sha256": "931c74f47d17c845c09127895156299fd5a4b11a891cbb2721408822f465d623",
+          "bytes": 15829
+        },
+        "time_budget_script": {
+          "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/campaign_time_budget.py",
+          "sha256": "6f8b094dde22cd524cdc8f45dbe8b886fd24ab3a0c999d8f6c93dd37c5ce1bca",
+          "bytes": 4404
+        }
+      }
+    },
+    {
+      "run": "c59a",
+      "complete_evidence": true,
+      "quality_audit_pass": true,
+      "score": {
+        "correct": 420,
+        "total": 423,
+        "void": false,
+        "untargeted_correct": 308,
+        "untargeted_total": 311,
+        "misses": [
+          {
+            "key": "p10_2",
+            "answer": null,
+            "expected": 419,
+            "probe": {
+              "q": "What value did rolo78 hold at the end of item 199?",
+              "a": 419,
+              "type": "old_value",
+              "item": 210,
+              "ref_item": 199,
+              "distance": 11,
+              "tokens_back": 17093
+            }
+          },
+          {
+            "key": "p10_7",
+            "answer": null,
+            "expected": -355,
+            "probe": {
+              "q": "What value did sagudo54 hold at the end of item 136?",
+              "a": -355,
+              "type": "old_value",
+              "item": 210,
+              "ref_item": 136,
+              "distance": 74,
+              "tokens_back": 119459
+            }
+          },
+          {
+            "key": "p18_3",
+            "answer": "a young apprentice",
+            "expected": "the head clerk",
+            "probe": {
+              "q": "In item 373, who wrote a letter home in the courtyard?",
+              "a": "the head clerk",
+              "type": "who",
+              "item": 378,
+              "ref_item": 373,
+              "distance": 5,
+              "tokens_back": 6861
+            }
+          }
+        ]
+      },
+      "notes": {
+        "versions": 152,
+        "maximum_characters": 3980,
+        "stamped_names": [],
+        "counter_lines_checked": 8582,
+        "wrong_counter_lines": [
+          {
+            "version": 99,
+            "item": 804,
+            "counter": "pefaka34",
+            "notes_value": "103",
+            "true_value": 274
+          },
+          {
+            "version": 131,
+            "item": 1061,
+            "counter": "batu30",
+            "notes_value": "-176",
+            "true_value": -237
+          }
+        ],
+        "wrong_versions_per_counter": {
+          "pefaka34": 1,
+          "batu30": 1
+        },
+        "inplace_failed": 0
+      },
+      "checks": {
+        "score": true,
+        "no_stamped_state_names": true,
+        "notes_character_cap": true,
+        "cited_entry_count": true,
+        "cited_character_cap": true,
+        "every_audit_cited": true,
+        "all_audits_applied": true,
+        "balosu68_after_item351": null,
+        "no_failed_inplace_cut": true,
+        "wrong_state_lines_cap": true,
+        "wrong_versions_per_counter_cap": true,
+        "sum_checks_cap": true,
+        "sum_check_second_reply_taken": true,
+        "every_forgery_target_kept": true
+      },
+      "fixture": {
+        "root_mtime": 1792687500,
+        "opening_tool_matches_c55": true,
+        "opening_tool_text_sha256": "dac7717879a14dd4fa256b9987ab0a3bf939a685abd09dc77701238e96e4311c",
+        "scope": "Saved archive text, which excludes tool-call IDs; no timestamp normalization."
+      },
+      "time_budget": {
+        "run": "c59a",
+        "arm": "K32V",
+        "seed": 2,
+        "main_calls": 1462,
+        "notes_calls": 181,
+        "steps": 1293,
+        "wall_s": 5545,
+        "main_s": 2635,
+        "notes_s": 1852,
+        "bash_s": 129,
+        "around_s": 140,
+        "between_s": 790,
+        "gaps_without_notes": {
+          "n": 1309,
+          "sum_s": 906,
+          "by_position": [
+            {
+              "calls": "0-250",
+              "n": 224,
+              "mean": 0.21,
+              "median": 0.22
+            },
+            {
+              "calls": "250-500",
+              "n": 225,
+              "mean": 0.4,
+              "median": 0.44
+            },
+            {
+              "calls": "500-750",
+              "n": 224,
+              "mean": 0.59,
+              "median": 0.66
+            },
+            {
+              "calls": "750-1000",
+              "n": 224,
+              "mean": 0.8,
+              "median": 0.9
+            },
+            {
+              "calls": "1000-1250",
+              "n": 224,
+              "mean": 1.03,
+              "median": 1.13
+            },
+            {
+              "calls": "1250-1500",
+              "n": 188,
+              "mean": 1.21,
+              "median": 1.35
+            }
+          ]
+        }
+      },
+      "provenance": {
+        "notes": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59a-K32V-hostile2mk-s2/99bada9c37d20fb9/notes-history.jsonl",
+          "sha256": "0119ddfc0e3c282306862a47aadf01b7a20a48a3bd5297246d3dddbc498fc916",
+          "bytes": 493489
+        },
+        "archive": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59a-K32V-hostile2mk-s2/99bada9c37d20fb9/archive.jsonl",
+          "sha256": "d44137fe19dca7d69b1cff26d47d870024ec05a57747c3d3f8065af443e3a907",
+          "bytes": 19910015
+        },
+        "events": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59a-K32V-hostile2mk-s2/99bada9c37d20fb9/events.jsonl",
+          "sha256": "030cf1edb05d51211b7fdbad97d5afd6274f3594c646517c838b7274d4840ed5",
+          "bytes": 290617
+        },
+        "proxy_state": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59a-K32V-hostile2mk-s2/99bada9c37d20fb9/state.json",
+          "sha256": "f1501031eececa5a7a3ecff3ee20c5e1c2e98145aa1c7f68d7179c9750bd0a6e",
+          "bytes": 4421
+        },
+        "calls": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59a-K32V-hostile2mk-s2/99bada9c37d20fb9/calls.jsonl",
+          "sha256": "2f13884509fe76dda795d796c0e3f0fc0b41b32cf1ab97b425d817df73ffd720",
+          "bytes": 340706
+        },
+        "details": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59a/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__wLSWJ9e/verifier/details.json",
+          "sha256": "184403425a64c47f35fe8118467b38013b00ed9ae9c87941f486f7ebe46e0417",
+          "bytes": 19508
+        },
+        "job": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59a/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/result.json",
+          "sha256": "2ebddb4e2e0f0e6f501727f6dbf2c20408d02f91e13256c2956e444e52be6cd5",
+          "bytes": 1168
+        },
+        "trial": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59a/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__wLSWJ9e/result.json",
+          "sha256": "9a1c823137f33bcd66ad9f4fdac692a817f96942e790497ce960b378e0b168f7",
+          "bytes": 4795
+        },
+        "timing": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59a/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__wLSWJ9e/agent/timing.json",
+          "sha256": "0510f4163bdc62513dee30866a28f240c8144ce98b8b8ff29a27d59f4be16af7",
+          "bytes": 212414
+        },
+        "server": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c59a-a1/state.json",
+          "sha256": "24557179f2de22763919c5b98b06b1a0c9609c644cbb60752895b4c7359cfef9",
+          "bytes": 5258
+        },
+        "fixture": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59a/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__wLSWJ9e/agent/stable-fixture.json",
+          "sha256": "74004ceb7589331a3c55c8a62c91d5f08ccfce364b937e71daa17178988718d5",
+          "bytes": 171
+        },
+        "audit_script": {
+          "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+          "sha256": "931c74f47d17c845c09127895156299fd5a4b11a891cbb2721408822f465d623",
+          "bytes": 15829
+        },
+        "time_budget_script": {
+          "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/campaign_time_budget.py",
+          "sha256": "6f8b094dde22cd524cdc8f45dbe8b886fd24ab3a0c999d8f6c93dd37c5ce1bca",
+          "bytes": 4404
+        }
+      }
+    },
+    {
+      "run": "c59b",
+      "complete_evidence": true,
+      "quality_audit_pass": true,
+      "score": {
+        "correct": 420,
+        "total": 423,
+        "void": false,
+        "untargeted_correct": 308,
+        "untargeted_total": 311,
+        "misses": [
+          {
+            "key": "p10_2",
+            "answer": null,
+            "expected": 419,
+            "probe": {
+              "q": "What value did rolo78 hold at the end of item 199?",
+              "a": 419,
+              "type": "old_value",
+              "item": 210,
+              "ref_item": 199,
+              "distance": 11,
+              "tokens_back": 17093
+            }
+          },
+          {
+            "key": "p10_7",
+            "answer": null,
+            "expected": -355,
+            "probe": {
+              "q": "What value did sagudo54 hold at the end of item 136?",
+              "a": -355,
+              "type": "old_value",
+              "item": 210,
+              "ref_item": 136,
+              "distance": 74,
+              "tokens_back": 119459
+            }
+          },
+          {
+            "key": "p18_3",
+            "answer": "a young apprentice",
+            "expected": "the head clerk",
+            "probe": {
+              "q": "In item 373, who wrote a letter home in the courtyard?",
+              "a": "the head clerk",
+              "type": "who",
+              "item": 378,
+              "ref_item": 373,
+              "distance": 5,
+              "tokens_back": 6861
+            }
+          }
+        ]
+      },
+      "notes": {
+        "versions": 152,
+        "maximum_characters": 3980,
+        "stamped_names": [],
+        "counter_lines_checked": 8582,
+        "wrong_counter_lines": [
+          {
+            "version": 99,
+            "item": 804,
+            "counter": "pefaka34",
+            "notes_value": "103",
+            "true_value": 274
+          },
+          {
+            "version": 131,
+            "item": 1061,
+            "counter": "batu30",
+            "notes_value": "-176",
+            "true_value": -237
+          }
+        ],
+        "wrong_versions_per_counter": {
+          "pefaka34": 1,
+          "batu30": 1
+        },
+        "inplace_failed": 0
+      },
+      "checks": {
+        "score": true,
+        "no_stamped_state_names": true,
+        "notes_character_cap": true,
+        "cited_entry_count": true,
+        "cited_character_cap": true,
+        "every_audit_cited": true,
+        "all_audits_applied": true,
+        "balosu68_after_item351": null,
+        "no_failed_inplace_cut": true,
+        "wrong_state_lines_cap": true,
+        "wrong_versions_per_counter_cap": true,
+        "sum_checks_cap": true,
+        "sum_check_second_reply_taken": true,
+        "every_forgery_target_kept": true
+      },
+      "fixture": {
+        "root_mtime": 1792687500,
+        "opening_tool_matches_c55": true,
+        "opening_tool_text_sha256": "dac7717879a14dd4fa256b9987ab0a3bf939a685abd09dc77701238e96e4311c",
+        "scope": "Saved archive text, which excludes tool-call IDs; no timestamp normalization."
+      },
+      "time_budget": {
+        "run": "c59b",
+        "arm": "K32V",
+        "seed": 2,
+        "main_calls": 1462,
+        "notes_calls": 181,
+        "steps": 1293,
+        "wall_s": 4992,
+        "main_s": 2636,
+        "notes_s": 1854,
+        "bash_s": 129,
+        "around_s": 139,
+        "between_s": 234,
+        "gaps_without_notes": {
+          "n": 1309,
+          "sum_s": 417,
+          "by_position": [
+            {
+              "calls": "0-250",
+              "n": 224,
+              "mean": 0.14,
+              "median": 0.15
+            },
+            {
+              "calls": "250-500",
+              "n": 225,
+              "mean": 0.22,
+              "median": 0.24
+            },
+            {
+              "calls": "500-750",
+              "n": 224,
+              "mean": 0.28,
+              "median": 0.31
+            },
+            {
+              "calls": "750-1000",
+              "n": 224,
+              "mean": 0.35,
+              "median": 0.39
+            },
+            {
+              "calls": "1000-1250",
+              "n": 224,
+              "mean": 0.44,
+              "median": 0.48
+            },
+            {
+              "calls": "1250-1500",
+              "n": 188,
+              "mean": 0.51,
+              "median": 0.55
+            }
+          ]
+        }
+      },
+      "provenance": {
+        "notes": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59b-K32V-hostile2mk-s2/99bada9c37d20fb9/notes-history.jsonl",
+          "sha256": "2d49425dfead7c1323b7992b665988fb15482ce1d8f82c939773cba730454701",
+          "bytes": 493489
+        },
+        "archive": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59b-K32V-hostile2mk-s2/99bada9c37d20fb9/archive.jsonl",
+          "sha256": "314492ff11e58d0b81c6e29872b252ca4a0a18860aa175d86b8b4d699ffd75fd",
+          "bytes": 19910015
+        },
+        "events": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59b-K32V-hostile2mk-s2/99bada9c37d20fb9/events.jsonl",
+          "sha256": "d87d8993531159ac78b0be1cc3451118e27881bdb34298bd6df217479e005475",
+          "bytes": 290617
+        },
+        "proxy_state": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59b-K32V-hostile2mk-s2/99bada9c37d20fb9/state.json",
+          "sha256": "29ba492e31c7fb3729f026d00d207d08b0e7aad06d58342e4bdcf189da41a9b8",
+          "bytes": 4422
+        },
+        "calls": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c59b-K32V-hostile2mk-s2/99bada9c37d20fb9/calls.jsonl",
+          "sha256": "f5061f5c2da92b95d197fbebacfa9ecddeccb711e689af2a001ea9ab7b045942",
+          "bytes": 340720
+        },
+        "details": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59b/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__bGuKNNh/verifier/details.json",
+          "sha256": "184403425a64c47f35fe8118467b38013b00ed9ae9c87941f486f7ebe46e0417",
+          "bytes": 19508
+        },
+        "job": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59b/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/result.json",
+          "sha256": "8d5b84eba25fec8bab0e84832372a139ba41945737cefde80e530895ffe57d5f",
+          "bytes": 1168
+        },
+        "trial": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59b/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__bGuKNNh/result.json",
+          "sha256": "4f966e2d5d8c9a710333960549527cb60f02705392cfa4e7702dc563efe081ff",
+          "bytes": 4795
+        },
+        "timing": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59b/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__bGuKNNh/agent/timing.json",
+          "sha256": "b99fd53d0dd1e8772f69bc2c195233609f0631540391bd381872c5c1da668e2e",
+          "bytes": 212414
+        },
+        "server": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/server/tp2-w262144-s2-xp-mtp5-p832-c59b-a1/state.json",
+          "sha256": "f5563948842259e1ee413ab26a6c05c8314cc0932af3f470ee6359b07d23bcb1",
+          "bytes": 5258
+        },
+        "fixture": {
+          "path": "/mnt/fast-ai/bench-results/context-longrun-20261016/runs/c59b/hostile2mk/jobs/K32V__sparse-memory-t2000k-poison-retro-s2/sparse-memory-t2000k-poison-retr__bGuKNNh/agent/stable-fixture.json",
+          "sha256": "317cca18ce4e4d636c8013e75acc581c55cc86971f3ebfa22be8822138a8b47f",
+          "bytes": 171
+        },
+        "audit_script": {
+          "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/audit_hostile_release.py",
+          "sha256": "931c74f47d17c845c09127895156299fd5a4b11a891cbb2721408822f465d623",
+          "bytes": 15829
+        },
+        "time_budget_script": {
+          "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/campaign_time_budget.py",
+          "sha256": "6f8b094dde22cd524cdc8f45dbe8b886fd24ab3a0c999d8f6c93dd37c5ce1bca",
+          "bytes": 4404
+        }
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "left": "c55",
+      "right": "c59a",
+      "notes": {
+        "identical": true,
+        "lengths": [
+          152,
+          152
+        ],
+        "sequence_sha256": [
+          "4b220cffda07ff28e37e158cd9ee55f286f4e27b60f659776209e455c778e128",
+          "4b220cffda07ff28e37e158cd9ee55f286f4e27b60f659776209e455c778e128"
+        ],
+        "first_difference": null
+      },
+      "archive_text": {
+        "identical": true,
+        "lengths": [
+          2578,
+          2578
+        ],
+        "sequence_sha256": [
+          "f9bb3d89fee23e033447aa605ae45170e162c4dc0b6a86ab19ddcd9b1e693dd1",
+          "f9bb3d89fee23e033447aa605ae45170e162c4dc0b6a86ab19ddcd9b1e693dd1"
+        ],
+        "first_difference": null
+      },
+      "conclusions": {
+        "opening_tool_input_equal": true,
+        "saved_notes_and_archive_model_text_equal": true,
+        "graded_answers_equal": true,
+        "both_quality_audits_pass": true,
+        "scope": "Opening tool equality is not complete HTTP request identity; archive text includes tools and assistant text. No promotion."
+      },
+      "answers": {
+        "identical": true,
+        "lengths": [
+          423,
+          423
+        ],
+        "different_keys": [],
+        "first_difference": null
+      }
+    },
+    {
+      "left": "c55",
+      "right": "c59b",
+      "notes": {
+        "identical": true,
+        "lengths": [
+          152,
+          152
+        ],
+        "sequence_sha256": [
+          "4b220cffda07ff28e37e158cd9ee55f286f4e27b60f659776209e455c778e128",
+          "4b220cffda07ff28e37e158cd9ee55f286f4e27b60f659776209e455c778e128"
+        ],
+        "first_difference": null
+      },
+      "archive_text": {
+        "identical": true,
+        "lengths": [
+          2578,
+          2578
+        ],
+        "sequence_sha256": [
+          "f9bb3d89fee23e033447aa605ae45170e162c4dc0b6a86ab19ddcd9b1e693dd1",
+          "f9bb3d89fee23e033447aa605ae45170e162c4dc0b6a86ab19ddcd9b1e693dd1"
+        ],
+        "first_difference": null
+      },
+      "conclusions": {
+        "opening_tool_input_equal": true,
+        "saved_notes_and_archive_model_text_equal": true,
+        "graded_answers_equal": true,
+        "both_quality_audits_pass": true,
+        "scope": "Opening tool equality is not complete HTTP request identity; archive text includes tools and assistant text. No promotion."
+      },
+      "answers": {
+        "identical": true,
+        "lengths": [
+          423,
+          423
+        ],
+        "different_keys": [],
+        "first_difference": null
+      }
+    },
+    {
+      "left": "c59a",
+      "right": "c59b",
+      "notes": {
+        "identical": true,
+        "lengths": [
+          152,
+          152
+        ],
+        "sequence_sha256": [
+          "4b220cffda07ff28e37e158cd9ee55f286f4e27b60f659776209e455c778e128",
+          "4b220cffda07ff28e37e158cd9ee55f286f4e27b60f659776209e455c778e128"
+        ],
+        "first_difference": null
+      },
+      "archive_text": {
+        "identical": true,
+        "lengths": [
+          2578,
+          2578
+        ],
+        "sequence_sha256": [
+          "f9bb3d89fee23e033447aa605ae45170e162c4dc0b6a86ab19ddcd9b1e693dd1",
+          "f9bb3d89fee23e033447aa605ae45170e162c4dc0b6a86ab19ddcd9b1e693dd1"
+        ],
+        "first_difference": null
+      },
+      "conclusions": {
+        "opening_tool_input_equal": true,
+        "saved_notes_and_archive_model_text_equal": true,
+        "graded_answers_equal": true,
+        "both_quality_audits_pass": true,
+        "scope": "Opening tool equality is not complete HTTP request identity; archive text includes tools and assistant text. No promotion."
+      },
+      "answers": {
+        "identical": true,
+        "lengths": [
+          423,
+          423
+        ],
+        "different_keys": [],
+        "first_difference": null
+      }
+    }
+  ],
+  "complete_evidence": true
+}
