@@ -1,0 +1,12 @@
+#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
+#pragma once
+#include <bit>
+#include <cstddef>
+#include <cstdint>
+namespace rope_constants {
+inline constexpr int positions=32768;
+inline constexpr std::size_t bytes=positions*128;
+inline constexpr char sha256[]="92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390";
+inline float cos(const uint16_t* table,int pos,int j){return std::bit_cast<float>(uint32_t(table[(pos*32+j)*2])<<16);}
+inline float sin(const uint16_t* table,int pos,int j){return std::bit_cast<float>(uint32_t(table[(pos*32+j)*2+1])<<16);}
+}

@@ -1,0 +1,20 @@
+--- adapter3.py	2026-10-24 13:52:21.156220423 -0400
++++ adapter4.py	2026-10-24 15:11:45.199079517 -0400
+@@ -7,7 +7,7 @@
+ LANE=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
+ ROOT=Path('/home/steve/llm-optimizations')
+ CANDIDATE=LANE/'recurrent-f32'
+-SERVICE_BUILD=LANE/'service-speed/d-mtp-fp8/build-receipt.json'
++SERVICE_BUILD=Path(os.environ.get('SC117_ENGINE_RECEIPT',str(ROOT/'experiments/own-xpu-runtime/engine/receipts/1fb6511ba413.json')))  # consolidated engine/src builds
+ SERVICE_FLAGS=['--reset-dump','none','--finish-dump','none','--token-stream','jsonl','--draft-experts','fp8']
+ LEDGER=LANE/'recurrent-f32/operating/candidate-ledger.json'
+ PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
+@@ -70,7 +70,7 @@
+     require(not mini,'candidate adapter is native-only; no synthetic override')
+     receipt=SERVICE_BUILD
+     build=json.loads(receipt.read_text()) if receipt.exists() else None
+-    ready=bool(build and build.get('passed') is True and build.get('base_binary_sha256')=='a6da826f58efd2f1a4b05201172f2ddf557d5c26e22b1430c90cad657f3ebdd2' and build.get('objects_rebuilt')==2 and build.get('objects_reused')==38)
++    ready=bool(build and build.get('passed') is True and build.get('schema')=='ownrt.engine.build.v1' and build.get('root_binary_sha256')=='5926a24746c62c6b0ecdc5c3e4895f310145e0f9d74a90a5d657035b9a8151f4')
+     if build:require(ready,'successful matching build required')
+     plan=dict(schema='ownrt.gsq.rank-adapter-plan.v1',output=str(output),output_parent_identity=[parent.st_dev,parent.st_ino],evidence_output=str(evidence),evidence_parent_identity=[ep.st_dev,ep.st_ino,ep.st_uid,ep.st_gid,ep.st_mode],mini=mini,context=64 if mini else 4096,max_new=max_new,seconds=seconds,wait_seconds=min(seconds,900),binary=build['binary'] if ready else '<pending-full-native-build>' if not mini else '<pending-full-host-build>',binary_sha256=build.get('binary_sha256') if ready else None,build_receipt=str(receipt),build_receipt_sha256=sha(receipt) if ready else None,build_ready=ready,native_admitted=False,source_sha256=source_pins(),environment=environments(output,mini),candidate_bdfs=list(BDFS),request_cap=None,service_retention='each RESET dump (and its request directory) is removed by the service once the next request has run; per-request summaries live in the control requests.jsonl',shared_bytes=BASE.SHARED,device_execution_requested=False)
+     raw_state=0 if mini else 310364224+9699332 # one transient RESET dump; removed after it is written
