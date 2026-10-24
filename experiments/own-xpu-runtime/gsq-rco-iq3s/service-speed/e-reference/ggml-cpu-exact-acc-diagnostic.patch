@@ -1,0 +1,19 @@
+--- /dev/shm/exactref/ggml-cpu.c.f64-only	2026-10-24 16:50:08.081616404 -0400
++++ ggml/src/ggml-cpu/ggml-cpu.c	2026-10-24 16:50:08.092376491 -0400
+@@ -1189,6 +1189,16 @@
+     memcpy(&f, &u, 4); return f;
+ }
+ static double ggml_cpu_exact_dot(const float * a, const float * b, int64_t n) {
++    // Diagnostic only (GGML_CPU_EXACT_ACC=f32lane): F32 accumulation in the own engine's packed-GEMV order:
++    // 32 lane-strided float sums (k = lane, lane+32, ...), then the subgroup tree (lane += lane+width).
++    static int f32lane = -1;
++    if (f32lane < 0) { const char * e = getenv("GGML_CPU_EXACT_ACC"); f32lane = (e && strcmp(e, "f32lane") == 0) ? 1 : 0; }
++    if (f32lane) {
++        float l[32] = {0};
++        for (int64_t i = 0; i < n; ++i) { const float p = a[i] * b[i]; l[i % 32] = l[i % 32] + p; }
++        for (int w = 1; w < 32; w *= 2) for (int j = 0; j < 32; j += 2*w) l[j] = l[j] + l[j + w];
++        return (double) l[0];
++    }
+     double s = 0.0;
+     for (int64_t i = 0; i < n; ++i) s += (double) a[i] * (double) b[i];
+     return s;

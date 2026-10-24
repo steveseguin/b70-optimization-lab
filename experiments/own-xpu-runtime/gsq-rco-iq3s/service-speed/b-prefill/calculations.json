@@ -1,0 +1,100 @@
+{
+  "scope": "Read-only derived-value verification. No build, device execution, inference or service interaction.",
+  "all_checks_passed": true,
+  "kernel_sites_sha256": "81290d54788e8f4e0995ea63d11ecec642c630f4e455099b360667e489c99780",
+  "source_references": [
+    "kernel-sites.tsv:1-1872",
+    "source-audit.json:1-8",
+    "timing-memory-summary.json:1"
+  ],
+  "site_counts": {
+    "rank0": 938,
+    "rank1": 933
+  },
+  "target_body_addressed_bytes_per_rank": {
+    "0": 2649294080,
+    "1": 2678017280
+  },
+  "target_body_total_bytes": 5327311360,
+  "expert_bytes": 982272000,
+  "common_bytes": 4345039360,
+  "first_stage": {
+    "qkv_sites": 22,
+    "q8_output_sites": 48,
+    "addressed_bytes": 1570242560,
+    "fraction_of_target_bytes": 0.2947532918368789,
+    "B8_whole_target_byte_ceiling": 1.347543866806279
+  },
+  "roofline_uniform_routes": [
+    {
+      "B": 4,
+      "M_note": "B is actual sharing tile, not necessarily logical M",
+      "expected_distinct_experts_uniform_model": 38.84330928325653,
+      "bytes_per_position": 2040127217.407074,
+      "byte_ceiling": 2.6112642949643186,
+      "work_speed_f03_c025": 1.7603483581220045,
+      "work_speed_f03_c05": 1.5384615384615388
+    },
+    {
+      "B": 8,
+      "M_note": "B is actual sharing tile, not necessarily logical M",
+      "expected_distinct_experts_uniform_model": 74.7397383398046,
+      "bytes_per_position": 1460814323.2314568,
+      "byte_ceiling": 3.6468093687741874,
+      "work_speed_f03_c025": 2.032732634450891,
+      "work_speed_f03_c05": 1.5384615384615388
+    },
+    {
+      "B": 16,
+      "M_note": "B is actual sharing tile, not necessarily logical M",
+      "expected_distinct_experts_uniform_model": 138.56926479073724,
+      "bytes_per_position": 1122269390.403294,
+      "byte_ceiling": 4.746909615066308,
+      "work_speed_f03_c025": 2.1052631578947367,
+      "work_speed_f03_c05": 1.5384615384615388
+    },
+    {
+      "B": 32,
+      "M_note": "B is actual sharing tile, not necessarily logical M",
+      "expected_distinct_experts_uniform_model": 239.63571484583883,
+      "bytes_per_position": 871368270.2907869,
+      "byte_ceiling": 6.113731176167577,
+      "work_speed_f03_c025": 2.1052631578947367,
+      "work_speed_f03_c05": 1.5384615384615388
+    },
+    {
+      "B": 64,
+      "M_note": "B is actual sharing tile, not necessarily logical M",
+      "expected_distinct_experts_uniform_model": 367.11268783684136,
+      "bytes_per_position": 631335793.2919841,
+      "byte_ceiling": 8.438158293262159,
+      "work_speed_f03_c025": 2.1052631578947367,
+      "work_speed_f03_c05": 1.5384615384615388
+    }
+  ],
+  "memory_proposed_budgets": [
+    {
+      "M": 16,
+      "activation_bytes": 19275936,
+      "provisional_full_bytes": 296100000,
+      "generalized_qsa_scratch_bytes": 25758784
+    },
+    {
+      "M": 32,
+      "activation_bytes": 38551872,
+      "provisional_full_bytes": 315375936,
+      "generalized_qsa_scratch_bytes": 51517568
+    },
+    {
+      "M": 64,
+      "activation_bytes": 77103744,
+      "provisional_full_bytes": 353927808,
+      "generalized_qsa_scratch_bytes": 103035136
+    }
+  ],
+  "serialization_penalty_illustrative": 1.9731898022445993,
+  "source_derived_physical_prefill_launches_per_position": {
+    "0": 1143,
+    "1": 1130
+  }
+}

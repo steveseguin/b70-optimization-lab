@@ -1,0 +1,837 @@
+{
+  "schema": "b-prefill-readonly-analysis.v1",
+  "scope": "Existing plain-file evidence only; no build, model execution or device contact",
+  "sources": {
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/rank0/census.json": {
+      "sha256": "55c7bf00dea2feb752a010db6436ae1298fd11da8ecde69cb0741cb055345edf",
+      "bytes": 252630,
+      "lines": 1
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-packed-class-a/prompt-00-none/rank0/class-times.json": {
+      "sha256": "8498606bafa3c9a5194cebac17ef05d35255a9cc6ac04397b031a256efb6db2b",
+      "bytes": 8177,
+      "lines": 1
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-none/rank0/timings.jsonl": {
+      "sha256": "7e6afd2678d0b130f8604b4e38479de6441ce72f40fd4812c75da3681b5633b1",
+      "bytes": 261403,
+      "lines": 1299
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/rank1/census.json": {
+      "sha256": "1119de7782e6a0513c2d9f40126a9ca85b9591b90e2be1a458b82f967693a762",
+      "bytes": 230983,
+      "lines": 1
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-dense-packed-class-a/prompt-00-none/rank1/class-times.json": {
+      "sha256": "3d664c9c1c28db7edef36e62eba5da44a9d323efb7ecc35cf6fcd637f141abfc",
+      "bytes": 4100,
+      "lines": 1
+    },
+    "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-none/rank1/timings.jsonl": {
+      "sha256": "1093e8ff5ad9bc6998253195ba5dc6500ab1619980b4c7a3d87bf2175ecb77d9",
+      "bytes": 89553,
+      "lines": 118
+    },
+    "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261024T170537Z/requests.jsonl": {
+      "sha256": "f0219c5b413c7a8d019e2a19ee3388f37f72a39233cf831f7656840e9a3448a0",
+      "bytes": 2973,
+      "lines": 8
+    }
+  },
+  "memory": {
+    "rank0": {
+      "totals": {
+        "device": 31083481994,
+        "host-pinned": 4280332,
+        "host-shadow": 0
+      },
+      "categories": {
+        "workspace": 304776290,
+        "weights": 30187873536,
+        "recurrent-state": 118407184,
+        "KV": 67895296,
+        "runtime-overhead": 404529688
+      },
+      "layer_workspace_bytes": 8136504,
+      "layer_workspaces": {
+        "card0:blk.0": 334218,
+        "card0:blk.1": 467466,
+        "card0:blk.10": 334218,
+        "card0:blk.11": 331222,
+        "card0:blk.12": 334218,
+        "card0:blk.13": 334218,
+        "card0:blk.14": 334218,
+        "card0:blk.15": 331222,
+        "card0:blk.16": 334218,
+        "card0:blk.17": 334218,
+        "card0:blk.18": 334218,
+        "card0:blk.19": 331222,
+        "card0:blk.2": 334218,
+        "card0:blk.20": 334218,
+        "card0:blk.21": 334218,
+        "card0:blk.22": 334218,
+        "card0:blk.23": 331222,
+        "card0:blk.3": 331222,
+        "card0:blk.4": 334218,
+        "card0:blk.5": 334218,
+        "card0:blk.6": 334218,
+        "card0:blk.7": 331222,
+        "card0:blk.8": 334218,
+        "card0:blk.9": 334218
+      },
+      "decimal32GB_minus_logical": 916518006,
+      "GiB32_minus_logical": 3276256374,
+      "driver_shadow_bytes": null,
+      "library_pool_bytes": null
+    },
+    "rank1": {
+      "totals": {
+        "device": 29995470740,
+        "host-pinned": 4259840,
+        "host-shadow": 0
+      },
+      "categories": {
+        "workspace": 287470228,
+        "weights": 29590904064,
+        "recurrent-state": 58834944,
+        "KV": 58195968,
+        "runtime-overhead": 65536
+      },
+      "layer_workspace_bytes": 8003256,
+      "layer_workspaces": {
+        "card0:blk.24": 334218,
+        "card0:blk.25": 334218,
+        "card0:blk.26": 334218,
+        "card0:blk.27": 331222,
+        "card0:blk.28": 334218,
+        "card0:blk.29": 334218,
+        "card0:blk.30": 334218,
+        "card0:blk.31": 331222,
+        "card0:blk.32": 334218,
+        "card0:blk.33": 334218,
+        "card0:blk.34": 334218,
+        "card0:blk.35": 331222,
+        "card0:blk.36": 334218,
+        "card0:blk.37": 334218,
+        "card0:blk.38": 334218,
+        "card0:blk.39": 331222,
+        "card0:blk.40": 334218,
+        "card0:blk.41": 334218,
+        "card0:blk.42": 334218,
+        "card0:blk.43": 331222,
+        "card0:blk.44": 334218,
+        "card0:blk.45": 334218,
+        "card0:blk.46": 334218,
+        "card0:blk.47": 331222
+      },
+      "decimal32GB_minus_logical": 2004529260,
+      "GiB32_minus_logical": 4364267628,
+      "driver_shadow_bytes": null,
+      "library_pool_bytes": null
+    }
+  },
+  "classes_historical_bf16": {
+    "begin.0": {
+      "device_ms": 2.5201000000000002,
+      "launches": 428
+    },
+    "embedding": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "streams": {
+      "device_ms": 2.19385,
+      "launches": 214
+    },
+    "hc.a.norm": {
+      "device_ms": 70.2936,
+      "launches": 20544
+    },
+    "hc.a.low": {
+      "device_ms": 364.574,
+      "launches": 10272
+    },
+    "hc.a.act": {
+      "device_ms": 35.044399999999996,
+      "launches": 10272
+    },
+    "hc.a.gate": {
+      "device_ms": 246.49599999999998,
+      "launches": 10272
+    },
+    "hc.a.mix": {
+      "device_ms": 80.1401,
+      "launches": 10272
+    },
+    "hc.a.inject": {
+      "device_ms": 356.496,
+      "launches": 10272
+    },
+    "gdn.qkv": {
+      "device_ms": 536.7270000000001,
+      "launches": 7704
+    },
+    "gdn.z": {
+      "device_ms": 315.702,
+      "launches": 7704
+    },
+    "gdn.a": {
+      "device_ms": 83.5515,
+      "launches": 7704
+    },
+    "gdn.b": {
+      "device_ms": 81.3523,
+      "launches": 7704
+    },
+    "gdn.conv": {
+      "device_ms": 49.1742,
+      "launches": 7704
+    },
+    "gdn.recurrence": {
+      "device_ms": 377.48199999999997,
+      "launches": 7704
+    },
+    "gdn.gated": {
+      "device_ms": 50.8988,
+      "launches": 7704
+    },
+    "attention": {
+      "device_ms": 416.582,
+      "launches": 10272
+    },
+    "attn.combine": {
+      "device_ms": 116.1449,
+      "launches": 10272
+    },
+    "hc.f.norm": {
+      "device_ms": 69.99029999999999,
+      "launches": 20544
+    },
+    "hc.f.low": {
+      "device_ms": 369.678,
+      "launches": 10272
+    },
+    "hc.f.act": {
+      "device_ms": 45.2375,
+      "launches": 10272
+    },
+    "hc.f.gate": {
+      "device_ms": 246.712,
+      "launches": 10272
+    },
+    "hc.f.mix": {
+      "device_ms": 79.4385,
+      "launches": 10272
+    },
+    "hc.f.inject": {
+      "device_ms": 357.45000000000005,
+      "launches": 10272
+    },
+    "router": {
+      "device_ms": 121.40129999999999,
+      "launches": 10272
+    },
+    "route": {
+      "device_ms": 700.8820000000001,
+      "launches": 51360
+    },
+    "gather": {
+      "device_ms": 236.429,
+      "launches": 20544
+    },
+    "expsgate": {
+      "device_ms": 935.249,
+      "launches": 10272
+    },
+    "expsgate.check": {
+      "device_ms": 41.3173,
+      "launches": 10272
+    },
+    "expsup": {
+      "device_ms": 922.951,
+      "launches": 10272
+    },
+    "expsup.check": {
+      "device_ms": 31.647799999999997,
+      "launches": 10272
+    },
+    "expsact": {
+      "device_ms": 41.6245,
+      "launches": 10272
+    },
+    "expsdown": {
+      "device_ms": 1093.83,
+      "launches": 10272
+    },
+    "expsdown.check": {
+      "device_ms": 32.2188,
+      "launches": 10272
+    },
+    "shexpgate": {
+      "device_ms": 140.1017,
+      "launches": 10272
+    },
+    "shexpup": {
+      "device_ms": 129.2386,
+      "launches": 10272
+    },
+    "shexpact": {
+      "device_ms": 36.3491,
+      "launches": 10272
+    },
+    "shexpdown": {
+      "device_ms": 190.14460000000003,
+      "launches": 10272
+    },
+    "shared_gate": {
+      "device_ms": 119.4576,
+      "launches": 10272
+    },
+    "moe": {
+      "device_ms": 55.2253,
+      "launches": 20544
+    },
+    "ffn.combine": {
+      "device_ms": 113.75319999999999,
+      "launches": 10272
+    },
+    "ple.hash": {
+      "device_ms": 2.33323,
+      "launches": 214
+    },
+    "ple.lookup": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "ple.key": {
+      "device_ms": 23.3121,
+      "launches": 214
+    },
+    "ple.value": {
+      "device_ms": 6.74479,
+      "launches": 214
+    },
+    "ple.kn": {
+      "device_ms": 1.79312,
+      "launches": 428
+    },
+    "ple.qn": {
+      "device_ms": 1.5224,
+      "launches": 428
+    },
+    "ple.gated": {
+      "device_ms": 4.75053,
+      "launches": 214
+    },
+    "ple.cn": {
+      "device_ms": 1.51135,
+      "launches": 428
+    },
+    "ple.conv": {
+      "device_ms": 1.78553,
+      "launches": 214
+    },
+    "ple.add": {
+      "device_ms": 2.2475,
+      "launches": 214
+    },
+    "qsa.qgate": {
+      "device_ms": 211.687,
+      "launches": 2568
+    },
+    "qsa.k": {
+      "device_ms": 45.6547,
+      "launches": 2568
+    },
+    "qsa.v": {
+      "device_ms": 41.9908,
+      "launches": 2568
+    },
+    "qsa.iq": {
+      "device_ms": 31.3228,
+      "launches": 2568
+    },
+    "qsa.ik": {
+      "device_ms": 29.9392,
+      "launches": 2568
+    },
+    "qsa.prepare": {
+      "device_ms": 19.72833,
+      "launches": 2568
+    },
+    "qsa.pool": {
+      "device_ms": 11.41988,
+      "launches": 2568
+    },
+    "qsa.select": {
+      "device_ms": 167.3469,
+      "launches": 2568
+    },
+    "qsa.attention": {
+      "device_ms": 122.21549999999999,
+      "launches": 7704
+    },
+    "commit.final": {
+      "device_ms": 2.095722,
+      "launches": 428
+    },
+    "draft.merge.embedding_norm": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.merge.hidden_norm": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.merge.embedding_projected": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.merge.projected": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.merge.add": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.begin.0": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.a.norm": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.a.low": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.a.act": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.a.gate": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.a.mix": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.a.inject": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.qgate": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.k": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.v": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.iq": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.ik": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.prepare": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.pool": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.select": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.qsa.attention": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.attention": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.attn.combine": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.f.norm": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.f.low": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.f.act": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.f.gate": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.f.mix": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.hc.f.inject": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.router": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.route": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.gather": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.expsgate": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.expsgate.check": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.expsup.check": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.expsact": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.expsdown": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.expsdown.check": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.shexpgate": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.shexpup": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.shexpact": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.shexpdown": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.shared_gate": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.moe": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.blk.0.ffn.combine": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.final.norm": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.final.low": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.final.act": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.final.gate": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.final.mix": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.logits": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.argmax": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "draft.commit.final": {
+      "device_ms": 0.0,
+      "launches": 0
+    },
+    "final.norm": {
+      "device_ms": 1.39947,
+      "launches": 256
+    },
+    "final.low": {
+      "device_ms": 4.75,
+      "launches": 128
+    },
+    "final.act": {
+      "device_ms": 0.698749,
+      "launches": 128
+    },
+    "final.gate": {
+      "device_ms": 3.04501,
+      "launches": 128
+    },
+    "final.mix": {
+      "device_ms": 1.02896,
+      "launches": 128
+    },
+    "logits": {
+      "device_ms": 174.932,
+      "launches": 128
+    },
+    "argmax": {
+      "device_ms": 38.1148,
+      "launches": 256
+    }
+  },
+  "corrected_token_timings": {
+    "rank0": {
+      "positions": "1..85; exclude position0 startup and position86 final prompt/head",
+      "n": 85,
+      "means": {
+        "half_completion_ms": 24.417091764705884,
+        "enqueue_loop_ms": 4.979331294117647,
+        "wait_ms": 18.671388235294117,
+        "prepare_ms": 0.5277090588235294,
+        "launches_issued": 1143
+      },
+      "first_position_ms": 19466.9
+    },
+    "rank1": {
+      "positions": "1..85; exclude position0 startup and position86 final prompt/head",
+      "n": 85,
+      "means": {
+        "half_completion_ms": 23.76246470588235,
+        "enqueue_loop_ms": 4.3292641176470585,
+        "wait_ms": 19.416337647058825,
+        "prepare_ms": 0.02310615294117647,
+        "launches_issued": 1130
+      },
+      "first_position_ms": 19318.3
+    }
+  },
+  "corrected_missing_profiles": [
+    {
+      "run": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a",
+      "files": [
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/rank1/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/prompt-00-none/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/prompt-00-none/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/prompt-00-none/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-a/prompt-00-none/rank1/sites.jsonl",
+          "bytes": 0
+        }
+      ],
+      "class_times_found": false
+    },
+    {
+      "run": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b",
+      "files": [
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/rank1/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-mtp/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-mtp/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-mtp/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-mtp/rank1/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-none/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-none/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-none/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-b/prompt-00-none/rank1/sites.jsonl",
+          "bytes": 0
+        }
+      ],
+      "class_times_found": false
+    },
+    {
+      "run": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a",
+      "files": [
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/rank1/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/prompt-00-none/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/prompt-00-none/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/prompt-00-none/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-longer-a/prompt-00-none/rank1/sites.jsonl",
+          "bytes": 0
+        }
+      ],
+      "class_times_found": false
+    },
+    {
+      "run": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a",
+      "files": [
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/rank1/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/prompt-00-none/rank0/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/prompt-00-none/rank0/sites.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/prompt-00-none/rank1/prefill-timings.jsonl",
+          "bytes": 0
+        },
+        {
+          "path": "/mnt/usb-models/own-xpu-runtime-results/gsq-recurrent-f32-prefix-a/prompt-00-none/rank1/sites.jsonl",
+          "bytes": 0
+        }
+      ],
+      "class_times_found": false
+    }
+  ],
+  "service_long_prompt": {
+    "source_line": 8,
+    "receipt": {
+      "utc": "2026-10-24T17:10:10.432214+00:00",
+      "request": 8,
+      "label": "client",
+      "prompt_tokens": 1756,
+      "output_tokens": 512,
+      "mtp": {
+        "guesses": 511,
+        "hits": 380,
+        "misses": 131
+      },
+      "prompt_wall_ms": 63475.563649088144,
+      "decode_wall_ms": 27064.625901984982,
+      "decode_tok_s": 18.880733908925823,
+      "reset_ms": 4097.10533102043,
+      "released_dump_bytes": 320550847,
+      "wall_s": 94.78161696298048
+    },
+    "prompt_tok_s": 27.6641891627413
+  }
+}

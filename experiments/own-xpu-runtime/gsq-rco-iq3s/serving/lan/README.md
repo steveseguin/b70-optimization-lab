@@ -88,18 +88,31 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-24 13:38 EDT the service runs binary `a6da826f…` ([build receipt](../../service-speed/a-reset-stream/build-receipt.json)) through
-[adapter2.py](adapter2.py) with `--reset-dump none --finish-dump none --token-stream jsonl`.
-- **What it is:** an entry-only rebuild of engine 5926 with three default-off options.
-- **What changed:** host code only. Recompiling and relinking the unchanged sources reproduces 5926 byte-for-byte, and
-  all 53 device code images of the new binary are byte-identical to 5926's.
-- **Device gate:** on its first start the service ran a one-time gate against engine 5926
-  ([evidence](evidence/b0-a6da826f58efd2f1.json)). All of these passed:
-  - the selftest after RESET: tokens identical, and the full target state byte-identical on both ranks to the launch-b
-    physical hashes;
-  - the incident prompt, 512 outputs, target-only and MTP: tokens identical to the longer-a run of 5926;
-  - the selftest again after three dump-free RESETs: tokens and full state identical.
-- **Effect:** RESET now takes about 0.11 s instead of 4.1 s, and no per-request dump is written.
+Since 2026-10-24 ~15:38 EDT the service runs engine `32654dfb2fde` (receipt
+[../../../engine/receipts/32654dfb2fde.json](../../../engine/receipts/32654dfb2fde.json)), built from the canonical
+source tree [../../../engine/](../../../engine/), through [adapter5.py](adapter5.py) with `SC117_ACTIVATIONS=f32`
+(set in [sc117-lan.service](sc117-lan.service)).
+- **Exact 32-bit mode (owner's choice: quality first).**
+  - Activations, router and expert outputs, HC streams and the attention KV cache are all F32. There is no intermediate
+    BF16 rounding, and RoPE uses an F32 table.
+  - The GDN recurrent state was already F32.
+  - The weights are unchanged.
+  - The MTP draft keeps its own BF16 arithmetic. It only proposes tokens, and the target verifies every token.
+- **Same binary, two modes.** Without `SC117_ACTIVATIONS=f32`, the same binary runs the tuned BF16 kernels. That BF16
+  mode has passed the one-time device gate against engine 5926: tokens and full engine state byte-identical
+  ([evidence](evidence/)).
+- **F32 startup check.** On its first F32 start, the service records the selftest tokens, which are identical from fresh
+  state and after RESET, in `evidence/f32-selftest-<binary>.json`. Every later start must reproduce them.
+- **Fidelity.** Against our exact CPU reference, the engine agrees at 99.90% of positions on the 12-prompt suite. All 6
+  disagreements are near-ties, and their source is still open
+  ([result](../../service-speed/e-reference/RESULT-F32.md)).
+- **Cost.**
+  - Decode median: 23.2 tok/s, against 24.0 in BF16 mode.
+  - Memory: rank 0 30.68 GB, rank 1 30.07 GB.
+- **Earlier service steps that still apply:**
+  - RESET takes 0.11 s instead of 4.1 s;
+  - there are no per-request dumps;
+  - every target-confirmed token is streamed ([a-reset-stream](../../service-speed/a-reset-stream/)).
 
 ## Storage and retention
 
@@ -127,23 +140,22 @@ A stop/start of the unit begins a fresh file. Then the old run directory can be 
 |---|---|
 | Target | `/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a` (hashes in `../../model-identity.json`) |
 | Draft | official Qwen3.8-Flash-Next-FP8 MTP head, `/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8` rev `bcd9f01d` |
-| Engine | `/mnt/usb-models/own-xpu-runtime-builds/gsq-recurrent-f32-native-a/gsq-recurrent-f32`, SHA256 `5926a247…51f4`, `--recurrent-f32` and the five GSQ kernel flags |
+| Engine | `/mnt/usb-models/own-xpu-runtime-builds/own-engine-32654dfb2fde/sc117-engine` (receipt above), `--recurrent-f32`, the five GSQ kernel flags and `--activations f32`. The original engine is 5926a247…51f4. |
 | Placement | split 24/24, rank 0 on `0000:23:00.0` with the draft, rank 1 on `0000:47:00.0`, context 4096 |
-| Adapter | [adapter.py](adapter.py), a copy of the prefix-replay-a generated adapter. [adapter.py.patch](adapter.py.patch) holds the only deltas: lifetime bound, no request cap, service storage forecast. |
+| Adapter | [adapter5.py](adapter5.py), the latest of the chain adapter.py → adapter2–5. Each step's delta is in its `.patch` file: lifetime/storage, dump-free reset and streaming, FP8 draft option, engine receipts, activation mode. |
 | Tokenizer | pinned `tokenizer.json` plus the GGUF chat template, verified by `../../coverage/tokenizer.py` |
 
-Startup self-test: the first two requests after load (fresh state, then RESET plus retention) must each reproduce the launch-b 32-token MTP output exactly
-([selftest.json](selftest.json)). That output equals target-only and the independent CPU reference. The service does
-not open for requests if the self-test fails.
+Startup self-test: the first two requests after load (fresh state, then RESET) must produce the same 32 tokens. In BF16
+mode, that output must be the launch-b output ([selftest.json](selftest.json)). In F32 mode, it must be the pinned
+`evidence/f32-selftest-<binary>.json`. The service does not open for requests if the self-test fails.
 
-## Fidelity status (unchanged by this service)
+## Fidelity status
 
-The engine keeps GDN recurrent state and history in F32. Attention KV and ordinary activations, router and expert
-outputs, and final logits round to BF16. On the incident prompt it matched the independent CPU reference for the
-first 70 outputs. At output 70 it chose token 220 and the CPU chose 264. The native logit gap was 0.375; the CPU
-log-probability gap was 0.062. Rounding the final store alone cannot reverse the order (see
-`../../recurrent-f32/operating/prefix-replay-a/RESULT.md`).
+History: the original engine 5926 kept only the GDN state in F32. Everything else rounded to BF16, and it agreed with
+our exact reference at 98.2% of positions on the incident sequence. Every miss was a near-tie, and BF16 rounding
+explained them ([RESULT.md](../../service-speed/e-reference/RESULT.md)). The owner then chose full 32-bit precision.
 
-No measured quality loss has been established, and none has been ruled out. The engine is not a qualified
-"no degradation beyond the weight quantization" engine. Treat outputs as experimental. MTP adds no deviation of its
-own: target-only and MTP give the same tokens.
+Now, in F32 mode, the engine agrees at 99.90% of positions on the 12-prompt suite. The 6 remaining misses are near-ties
+of at most 0.1 logit. F32 summation order and the RoPE formula have been ruled out as their cause, and localization is
+open ([RESULT-F32.md](../../service-speed/e-reference/RESULT-F32.md)). MTP adds no deviation of its own, because every
+token is target-verified. Treat the service as experimental until the residual is explained.

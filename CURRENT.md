@@ -1,24 +1,29 @@
 # Current Workspace State
 
-**October 24, 13:40 EDT — four-card host: SC117 LAN chat service is running at the owner's request.**
-The owner asked to host the SC117 IQ3_S model on our own engine for LAN computers. The model is now served at
+**October 24, 17:20 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode.**
+The owner asked to host the SC117 IQ3_S model on our own engine for LAN computers. The model is served at
 `http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0; the vision server on 27/43 is
 untouched).
-- It handles one request at a time, has MTP on and uses greedy decoding with a 4096-token context.
-- It is experimental: the fidelity question above is still open.
-- The current build skips the per-request state dump (a reset takes 0.1 s instead of 4.1 s) and streams each
-  target-confirmed token.
-- Before serving, it passed a one-time GPU gate against engine 5926: tokens identical and full engine state
-  byte-identical on both cards.
+- It handles one request at a time, uses greedy decoding with MTP, and has a 4096-token context.
+- The owner chose quality over speed: activations and the KV cache are now 32-bit (`--activations f32`, engine
+  `32654dfb2fde`).
+- Against our exact CPU reference, the engine picks the reference's top token at 5,959 of 5,965 positions of the
+  12-prompt suite (99.90%). The other 6 are near-ties (at most 0.1 logit), and their cause is not yet found. The 16-bit
+  engine agreed at 98.2%.
+- Decode costs about 3% (23.2 tok/s median, against 24.0).
+- A reset takes 0.1 s, and every target-confirmed token is streamed.
 - Stop it with `systemctl --user stop sc117-lan`. It never restarts by itself and stops at 47 h.
 
-Next, as the owner asked:
-- faster prompt reading that stays bit-identical;
-- original-FP8 draft experts for better MTP acceptance;
-- full-F32 precision qualification against our own reference.
+Next:
+- batched prompt reading (prefill), built on the 32-bit kernels and gated on identical tokens and state;
+- localizing the 6 near-ties with a per-layer comparison.
 
-Root disk is about 180 MB above its 27 GB floor; an old scratch virtualenv was deleted to make room.
-[Service](experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/README.md), [speed work](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/).
+The original-FP8 draft experts were tried and closed: acceptance went from 77.6% to 77.5%.
+
+Root disk is close to its 27 GB floor.
+[Service](experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/README.md),
+[speed work](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/),
+[32-bit fidelity result](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/RESULT-F32.md).
 
 **October 24, 10:57 EDT — four-card host: current work wrapped up at the owner's request.**
 The shared-prefix replay passed independent readback and reproduced the longer

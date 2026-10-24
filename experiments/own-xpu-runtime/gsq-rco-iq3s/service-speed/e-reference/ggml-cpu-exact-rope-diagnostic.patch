@@ -1,0 +1,72 @@
+--- /dev/shm/exactref/ops.cpp.orig	2026-10-24 17:03:37.579618965 -0400
++++ ggml/src/ggml-cpu/ops.cpp	2026-10-24 17:05:24.125434922 -0400
+@@ -6200,10 +6200,34 @@
+     *sin_theta = sinf(theta) * mscale;
+ }
+ 
++static thread_local float ggml_exact_rope_base = 0.0f;
++static thread_local int ggml_exact_rope_ndims = 0;
++static int ggml_exact_rope_mode(void) {
++    static int m = -1;
++    if (m < 0) { const char * e = getenv("GGML_CPU_EXACT_ROPE"); m = !e ? 0 : strcmp(e, "powf") == 0 ? 1 : strcmp(e, "f64") == 0 ? 2 : 0; }
++    return m;
++}
++static void ggml_exact_rope_pair(int mode, float base_pos, int64_t i0, float sin_sign, float * c) {
++    if (mode == 1) {
++        const float angle = base_pos * powf(ggml_exact_rope_base, -(float) i0 / (float) ggml_exact_rope_ndims);
++        c[0] = cosf(angle); c[1] = sinf(angle) * sin_sign;
++    } else {
++        const double angle = (double) base_pos * pow((double) ggml_exact_rope_base, -(double) i0 / (double) ggml_exact_rope_ndims);
++        c[0] = (float) cos(angle); c[1] = (float) sin(angle) * sin_sign;
++    }
++}
+ static void ggml_rope_cache_init(
+      float theta_base, float freq_scale, const float * freq_factors, float corr_dims[2], int64_t ne0, float ext_factor, float mscale,
+      float * cache, float sin_sign, float theta_scale) {
+     // ref: https://github.com/jquesnelle/yarn/blob/master/scaled_rope/LlamaYaRNScaledRotaryEmbedding.py
++    // Diagnostic only (GGML_CPU_EXACT_ROPE=powf|f64): per-pair angle computed directly instead of the cumulative
++    // theta *= theta_scale product. powf: f32(pos*powf(base,-i0/n_dims)) with cosf/sinf (the own engine's table);
++    // f64: angle, cos and sin in double, rounded once. Only for plain rope (no YaRN, freq factors or scaling).
++    if (ggml_exact_rope_mode() && ggml_exact_rope_ndims > 0) {
++        GGML_ASSERT(ext_factor == 0.0f && freq_scale == 1.0f && mscale == 1.0f && freq_factors == NULL);
++        for (int64_t i0 = 0; i0 < ne0; i0 += 2) ggml_exact_rope_pair(ggml_exact_rope_mode(), theta_base, i0, sin_sign, cache + i0);
++        return;
++    }
+     float theta = theta_base;
+     for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
+         const float ff = freq_factors ? freq_factors[i0/2] : 1.0f;
+@@ -6229,6 +6253,18 @@
+     int sec_w = sections[1] + sections[0];
+     int sec_e = sections[2] + sec_w;
+     GGML_ASSERT(sect_dims <= ne0);
++    if (ggml_exact_rope_mode() && ggml_exact_rope_ndims > 0) {
++        // Same section selection as below, exact per-pair angle (diagnostic; see ggml_rope_cache_init).
++        GGML_ASSERT(!indep_sects && ext_factor == 0.0f && freq_scale == 1.0f && mscale == 1.0f && freq_factors == NULL);
++        for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
++            const int sector = (i0 / 2) % sect_dims;
++            float b;
++            if (is_imrope) b = sector % 3 == 1 && sector < 3 * sections[1] ? theta_base_h : sector % 3 == 2 && sector < 3 * sections[2] ? theta_base_w : sector % 3 == 0 && sector < 3 * sections[0] ? theta_base_t : theta_base_e;
++            else b = sector >= sections[0] && sector < sec_w ? theta_base_h : sector >= sec_w && sector < sec_w + sections[2] ? theta_base_w : sector >= sec_w + sections[2] ? theta_base_e : theta_base_t;
++            ggml_exact_rope_pair(ggml_exact_rope_mode(), b, i0, sin_sign, cache + i0);
++        }
++        return;
++    }
+ 
+     for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
+         const float ff = freq_factors ? freq_factors[i0/2] : 1.0f;
+@@ -6412,6 +6448,7 @@
+                 if (last_i2 != i2) {
+                     if (!mrope_used) {
+                         const int64_t p = pos[i2];
++                        ggml_exact_rope_base = freq_base; ggml_exact_rope_ndims = n_dims;
+                         ggml_rope_cache_init(p, freq_scale, freq_factors, corr_dims, ne0, ext_factor, attn_factor, cache, sin_sign, theta_scale);
+                     }
+                     else {
+@@ -6419,6 +6456,7 @@
+                         const int64_t p_h = pos[i2 + ne2];
+                         const int64_t p_w = pos[i2 + ne2 * 2];
+                         const int64_t p_e = pos[i2 + ne2 * 3];
++                        ggml_exact_rope_base = freq_base; ggml_exact_rope_ndims = n_dims;
+                         ggml_mrope_cache_init(
+                             p_t, p_h, p_w, p_e, sections, is_imrope, is_vision,
+                             freq_scale, freq_factors, corr_dims, ne0, ext_factor, attn_factor, cache, sin_sign, theta_scale);
