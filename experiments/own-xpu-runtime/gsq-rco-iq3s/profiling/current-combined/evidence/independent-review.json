@@ -1,0 +1,43 @@
+{
+  "schema": "gsq.current-combined.class-independent-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/profile.py": "fb68fc65a9f565f025f46e7fafe585759e88dcf2ffced3cb384f49742e9a1a13",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/once.py": "eedfdf4f3fa6c477cc092fd339b803b64f434bd5cc62583953bfe06f43bf11f3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/test_profile.py": "0a3a84cc8600e5e9913049837cf9de2c489702b5c304e18a6191a730a370a40a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/README.md": "fb49711fbb399b3d558b11c04b618c7e9d31cf86e11ecd044b682a6bbf542295",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/profile.py.patch": "3c77591b011dee41b0d6d8d40d55d0b953ddc0a72c1472a9f8ce1d0888f72629",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/once.py.patch": "20e101ec395ec2e0f33ddd5c058e309df766d009d504f93480157ffb37716808",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/qualification.py": "98e55149be798ce8294c3774dec531f96870ecac14ce34f9f454c3c14f1bd184",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/once.py": "c678f97b23552d23a8efc22219b54d994fb46392fad246e727b443650b7162dd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/generated/adapter.py": "461d75d9285820d3f39a7d1f611c27a8ab9cd3e787cfa0e5e881a3b0fbe0ef06",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/review.json": "1c41b70d7b13f149ad8642b5de055937be3301488228e47120fd8bab6e21b82e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/evidence/preparation.json": "fac8db5b3c0bea06fa8df55d7e4d0c0e4489b45d9a8d16788b9a9c0367b15531",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/evidence/cpu-tests.log": "80b5fb05cb1fc4c9b25b1f23f9262bd809e79db1c53af93660ddb96895cdeba1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/evidence/independent-tests.log": "b27a2571e4fb6284a6365f6040094df8e0de1be4f2f94b22c3c0671be5a682c0",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/independent-review.json": "2d7ed7b58ccb33161a3187ba703697b67172cb87589ed1a6aee6092f5e56c0b5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/native-build.json": "3cd7aeb2a5ccce8f4fb029b2a22528ce1001e9f6519c8978b8c23cc2868e5e92",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py": "5a790a84b65508ccbbadc7f381c804b1dbc0564b5a175a0ae102156905413f2d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/once.py": "5e7539962f97cb42da560c8c027fa8a739bef94f8797d5dfc4f448c4e485a9ad",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/suite.py": "301347fe701eaaaa1e16e7a3891da2808a956147ae67b9b918dd451b7fe010d4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/manifest.json": "c8ad4665ddad4cff54961181679d402525c19381af855434d046508840180e20",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/review.json": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/operating/model_once.py": "cea4ca122973976e1668954652e98d1590a7a2dfe8e62239d271a32a15153ce1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/candidate-ledger.json": "e6e08fea32d95b3700ba0d2b5b40590c089a952bfd9f5af1c0235d07345d8917",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/request_reset.hpp": "0e718893e0bae5434b37fc9d329c9480d7ea5fb823cb9511b4a4e73ea1d79ab8"
+  },
+  "independent_tests": 7,
+  "seconds": 0.004,
+  "native_binary_sha256": "5a8c9d3b58606022e21e2f0347360e4dd9cfdf6a869c8daac145e928fe4d4306",
+  "findings": [],
+  "checks": [
+    "Both native command arrays differ only by timing token to class at function level. Whole launch paths/unit differ explicitly; rank1 queue profiling property and event-query overhead are disclosed.",
+    "Private qualified bundle adapter owns command/build-plan overrides; its validate_plan dynamically reproduces class argv and128MiB metadata forecast. Wrong binary refuses.",
+    "One disjoint original8-token target warmup and one original prompt00 target128, each fullRESET. Actual inherited request_reset clears class counters before measured request.",
+    "Measured token/full logical target state must match independently audited baseline; warmup capture reverified afterRESET, explicit finalDUMP repeated and maps/stamps checked after ownerclose.",
+    "Both frozen coordinator/Monitor globals fixed to current-class paths and unit; inherited run uses exact S.A.RetainedOwner. No retry/restart/pruning/settings change.",
+    "Compact terminal hash-binds full result; class counters bounded finite/nonnegative, measured reports obtained after normalFINISH.",
+    "Three capture raw694327500B plus128MiB metadata=828545228B;2GiB external reserve,128MiB root cache and27GB floor preserved. Combined resident ledger/RAMdelta unchanged."
+  ],
+  "scope": "Source and seven mocked tests only; no operational plan, native owner, device/service query or state/model payload read. Class totals include prefill across the entire measured request; no per-layer/per-format/decode-only/speed claim."
+}

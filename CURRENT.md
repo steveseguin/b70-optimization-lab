@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 24, 04:29 EDT — four-card host: current-engine kernel profile active.**
+One pair runs a disjoint eight-output warmup, full RESET and original prompt00
+with128 target-only outputs. Existing class instrumentation measures whole-request
+GPU costs; exact baseline tokens/full state and clean capture closure are required.
+No new binary or arithmetic change. Unit:`gsq-current-class-a`; vision remains
+protected. Archival waits for owner drain. The diagnostic has no speed claim.
+[Bounded profile](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/README.md).
+
+
 **October 24, 04:24 EDT — four-card host: lossless capture passes independent audit.**
 Both fixed test runs match baseline tokens and every target-state byte. Repeated and
 closed captures pass; both owners exited safely, target cards are empty and vision

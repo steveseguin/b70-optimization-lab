@@ -1,0 +1,30 @@
+{
+  "schema": "gsq.current-combined.class-preparation.v1",
+  "passed": true,
+  "tests": 7,
+  "command": "OPENBLAS_NUM_THREADS=2 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 taskset -c 8-15,24-31 nice -n 19 python3 -B -m unittest test_profile -v",
+  "working_directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined",
+  "log_sha256": "80b5fb05cb1fc4c9b25b1f23f9262bd809e79db1c53af93660ddb96895cdeba1",
+  "log_scope": "Exact test names/outcomes transcribed from tool output; verbose class prefixes omitted",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/profile.py": "fb68fc65a9f565f025f46e7fafe585759e88dcf2ffced3cb384f49742e9a1a13",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/once.py": "eedfdf4f3fa6c477cc092fd339b803b64f434bd5cc62583953bfe06f43bf11f3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/test_profile.py": "0a3a84cc8600e5e9913049837cf9de2c489702b5c304e18a6191a730a370a40a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/README.md": "fb49711fbb399b3d558b11c04b618c7e9d31cf86e11ecd044b682a6bbf542295",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/profile.py.patch": "3c77591b011dee41b0d6d8d40d55d0b953ddc0a72c1472a9f8ce1d0888f72629",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/once.py.patch": "20e101ec395ec2e0f33ddd5c058e309df766d009d504f93480157ffb37716808"
+  },
+  "parent_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/qualification.py": "98e55149be798ce8294c3774dec531f96870ecac14ce34f9f454c3c14f1bd184",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/once.py": "c678f97b23552d23a8efc22219b54d994fb46392fad246e727b443650b7162dd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/generated/adapter.py": "461d75d9285820d3f39a7d1f611c27a8ab9cd3e787cfa0e5e881a3b0fbe0ef06",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/review.json": "1c41b70d7b13f149ad8642b5de055937be3301488228e47120fd8bab6e21b82e"
+  },
+  "native_binary_sha256": "5a8c9d3b58606022e21e2f0347360e4dd9cfdf6a869c8daac145e928fe4d4306",
+  "raw_state_bytes": 694327500,
+  "metadata_forecast_bytes": 134217728,
+  "evidence_forecast_bytes": 828545228,
+  "native_execution": false,
+  "plan_invoked": false,
+  "initial_pre_test_setup_failure": "First file-writing command used repo-relative paths with packet cwd; no tests/source created; unittest import refused. Corrected paths; seven tests then passed. No owner/native execution."
+}
