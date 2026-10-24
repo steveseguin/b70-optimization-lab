@@ -41,3 +41,6 @@ The format is adopted for subsequent internal diagnostics. It changes neither mo
 arithmetic nor target verification. Bundling reduces file count, not payload size;
 future full suites still need enough storage. Next is a current-binary class profile,
 with exact baseline checking and no speed claim, to select a worthwhile model change.
+
+The raw bundle payloads are now preserved in [verified archives](../storage/closed-bundles/RESULT.md); original
+indices/seals/JSON remain in place. Restore a missing bundle before rerunning raw readback.

@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 24, 04:50 EDT — four-card host: packed expert candidate passes CPU equality.**
+The proposed decoding loop passes7.88million exact CPU checks, including full outputs,
+lane sums, exceptional scales, invalid routes and live input changes. It preserves
+all ten gathered expert inputs and original arithmetic; native timing is still pending.
+All27 closed full-run state archives and twelve closed diagnostic bundle archives
+are verified; USB has8.43GB free. Current attribution fixtures stay protected. Target cards
+are empty, vision unchanged. Next is authenticated fixture extraction and a bounded
+native control/candidate comparison, then full-model checking if it earns promotion.
+[Candidate scope](experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/README.md),
+[completed full-run archival](experiments/own-xpu-runtime/gsq-rco-iq3s/storage/combined-closed/RESULT.md).
+
+
 **October 24, 04:40 EDT — four-card host: exact trace selects packed expert decoding.**
 Independent audit verifies original tokens/full state and all6,912 sampled events.
 IQ3_XXS gate/up is the largest combined format cost in the eight sampled generated

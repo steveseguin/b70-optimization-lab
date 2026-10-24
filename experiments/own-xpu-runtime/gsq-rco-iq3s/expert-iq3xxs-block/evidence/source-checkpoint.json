@@ -1,0 +1,33 @@
+{
+  "schema": "gsq.iq3xxs-block.source-checkpoint.v1",
+  "source_preparation_passed": true,
+  "arithmetic_proof_passed": false,
+  "cpu_compiled": false,
+  "native_compiled": false,
+  "payload_read": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/README.md": "988c0a8891d3567fe905f12965e0af54ff4022bc7bb3d78e331fb7c5f36d7939",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/block.hpp": "99c32706cefe5a3cd850ed3ef74eb577e439335fd99fc1d9bb595c48ed718cff",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/proof.cpp": "12ab865784b5b5d63c4356b84226c2ebaf594eeb3b93d65a8c73474ee85e07fe",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/selection.hpp": "b049fe7e982bcf012a59bfdaf983b9cab9ce425bf248dd7222e3940123476591",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/selection.json": "457bba214c9f0380b854312a334456f35fad5ae86b004c9aa6fab86b23c672b1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro-plan.json": "98b442bb66887d877f1aac13ee58c9698a84acfb73a7bbd805d02594ca257549",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/source-pins.json": "08763e4fe822f4ca1860a5d61780ad2b8f204f826df44fb56ada27d9708d49d6",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/kernel-delta.patch": "5af2767ec6842e39a78df15888a70e143a65965f0d96e82c3350b897efdf2127"
+  },
+  "static_checks": {
+    "exact_original_command_route_tree_capture_body": true,
+    "all32_lane_index_sequences_identical": true,
+    "selected_sites": 34,
+    "selected_layers": 17,
+    "span640_from_actual_matrix": true,
+    "all_source_authority_hashes_match": true
+  },
+  "actual_attribution_review_sha256": "469fe156e317fc1aa93a56cf2a803d8d0c1cf786e13fe6d391d7eb50c883c7aa",
+  "pending": [
+    "Root-admitted CPU compile and exact scalar/Host-operation proof",
+    "Root-admitted bounded fixture/slice extraction and complete concrete native micro review",
+    "Root-only native qualification; no Engine integration yet"
+  ],
+  "preparation_note": "Source pin generation initially referred to native-build.json; corrected to existing frozen native-compile.json before receipt. No compiler, payload or native action."
+}

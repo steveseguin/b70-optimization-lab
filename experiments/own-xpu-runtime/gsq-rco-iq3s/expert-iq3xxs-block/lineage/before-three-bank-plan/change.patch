@@ -1,0 +1,26 @@
+--- one-bank proposal
++++ three-bank proposal
+@@ -83,17 +83,20 @@
+       "max_real_weight_slice_bytes": 6272000
+     }
+   ],
+-  "case_choice": "fixed first/middle/last selected layer, alternating gate/up; no timing selection",
++  "case_choice": "fixed first selected layer0gate, last selected rank0 layer22up, last selected rank1 layer46gate; no timing selection",
+   "per_case_device_weight_bank_bytes": 321126400,
+   "source_weight_reads_upper_bound_bytes": 18816000,
+   "fixture_bytes": 192480,
+   "layout": "unchanged512-expert direct packed bank; only authenticated routed expert slices populated, every consumed slice required",
+-  "memory_strategy": "one fixed321126400B bank reused only after completed case; control and candidate share exact allocation; upload excluded; 3case orders balanced across24cycles; cache state not flushed",
++  "memory_strategy": "Three fixed direct321126400B banks; upload/authenticate consumed slices once before warmup. No per-pair uploads or cache flushing. Shared original/candidate weight bank percase; disjoint output/status.24cycles rotate3cases andAB/BA evenly.",
+   "warmup_cycles": 4,
+   "measured_cycles": 24,
+   "pairs": 84,
+   "kernels": 168,
+   "scope": "source plan only; no extraction/read/build/device performed; final concrete runner requires root source review",
+   "proof": "all6400 BF16 outputs and10 status words equal saved bundle and originalPackedOperation<18> on everypair; timingbefore eventretirement",
+-  "authority": "Use closed current attribution bundle/index and original baseline logical hashes; read only named ranges after authorization. Weight spans via held authenticated loader/header identity; hash and retain exact consumed packed slices. No allbank expansion or uncheckedroute slice."
++  "authority": "Use closed current attribution bundle/index and original baseline logical hashes; read only named ranges after authorization. Weight spans via held authenticated loader/header identity; hash and retain exact consumed packed slices. No allbank expansion or uncheckedroute slice.",
++  "device_array_bytes": 963610200,
++  "proposed_device_cap_bytes": 1073741824,
++  "transfer_forecast": "at most three full packed banks plus small input/oracle/readback arrays; concrete runner accounting required before compile"
+ }

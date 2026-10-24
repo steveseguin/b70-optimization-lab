@@ -61,3 +61,6 @@ files at `/mnt/usb-models/own-xpu-runtime-results/gsq-current-class-a`; use the
 Coordinator receipts are at
 `/home/steve/own-xpu-runtime-results/gsq-current-class-a.control`.
 The coordinator took115.945seconds including loading/evidence, not an inference rate.
+
+The raw bundle payloads are now preserved in [verified archives](../../storage/closed-bundles/RESULT.md); original
+indices/seals/JSON remain in place. Restore a missing bundle before rerunning raw readback.

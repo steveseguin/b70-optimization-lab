@@ -1,0 +1,99 @@
+{
+  "schema": "gsq.iq3xxs-block.micro-source-plan.v1",
+  "cases": [
+    {
+      "label": "blk.0.expsgate",
+      "weight": "blk.0.ffn_gate_exps.weight",
+      "input": "blk.0.expert_input",
+      "routes": "blk.0.routes",
+      "output": "blk.0.expsgate",
+      "status": "blk.0.expsgate.status",
+      "unique_writers": {
+        "blk.0.expert_input": [
+          "blk.0.gather"
+        ],
+        "blk.0.routes": [
+          "blk.0.gather"
+        ],
+        "blk.0.expsgate": [
+          "blk.0.expsgate"
+        ],
+        "blk.0.expsgate.status": [
+          "blk.0.expsgate"
+        ]
+      },
+      "input_bytes": 51200,
+      "route_bytes": 120,
+      "output_bytes": 12800,
+      "status_bytes": 40,
+      "max_real_weight_slice_bytes": 6272000
+    },
+    {
+      "label": "blk.22.expsup",
+      "weight": "blk.22.ffn_up_exps.weight",
+      "input": "blk.22.expert_input",
+      "routes": "blk.22.routes",
+      "output": "blk.22.expsup",
+      "status": "blk.22.expsup.status",
+      "unique_writers": {
+        "blk.22.expert_input": [
+          "blk.22.gather"
+        ],
+        "blk.22.routes": [
+          "blk.22.gather"
+        ],
+        "blk.22.expsup": [
+          "blk.22.expsup"
+        ],
+        "blk.22.expsup.status": [
+          "blk.22.expsup"
+        ]
+      },
+      "input_bytes": 51200,
+      "route_bytes": 120,
+      "output_bytes": 12800,
+      "status_bytes": 40,
+      "max_real_weight_slice_bytes": 6272000
+    },
+    {
+      "label": "blk.46.expsgate",
+      "weight": "blk.46.ffn_gate_exps.weight",
+      "input": "blk.46.expert_input",
+      "routes": "blk.46.routes",
+      "output": "blk.46.expsgate",
+      "status": "blk.46.expsgate.status",
+      "unique_writers": {
+        "blk.46.expert_input": [
+          "blk.46.gather"
+        ],
+        "blk.46.routes": [
+          "blk.46.gather"
+        ],
+        "blk.46.expsgate": [
+          "blk.46.expsgate"
+        ],
+        "blk.46.expsgate.status": [
+          "blk.46.expsgate"
+        ]
+      },
+      "input_bytes": 51200,
+      "route_bytes": 120,
+      "output_bytes": 12800,
+      "status_bytes": 40,
+      "max_real_weight_slice_bytes": 6272000
+    }
+  ],
+  "case_choice": "fixed first/middle/last selected layer, alternating gate/up; no timing selection",
+  "per_case_device_weight_bank_bytes": 321126400,
+  "source_weight_reads_upper_bound_bytes": 18816000,
+  "fixture_bytes": 192480,
+  "layout": "unchanged512-expert direct packed bank; only authenticated routed expert slices populated, every consumed slice required",
+  "memory_strategy": "one fixed321126400B bank reused only after completed case; control and candidate share exact allocation; upload excluded; 3case orders balanced across24cycles; cache state not flushed",
+  "warmup_cycles": 4,
+  "measured_cycles": 24,
+  "pairs": 84,
+  "kernels": 168,
+  "scope": "source plan only; no extraction/read/build/device performed; final concrete runner requires root source review",
+  "proof": "all6400 BF16 outputs and10 status words equal saved bundle and originalPackedOperation<18> on everypair; timingbefore eventretirement",
+  "authority": "Use closed current attribution bundle/index and original baseline logical hashes; read only named ranges after authorization. Weight spans via held authenticated loader/header identity; hash and retain exact consumed packed slices. No allbank expansion or uncheckedroute slice."
+}
