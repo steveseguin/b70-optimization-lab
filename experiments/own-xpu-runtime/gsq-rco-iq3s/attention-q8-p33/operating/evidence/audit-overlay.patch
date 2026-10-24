@@ -1,0 +1,83 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/audit.py
+@@ -4,9 +4,11 @@
+ """
+ import argparse,gzip,hashlib,json,math,os,resource,stat,statistics,time
+ from pathlib import Path
+-P=Path(__file__).resolve().parent;L=P.parent;R=P.parents[3]
+-CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-baseline-a.control')
+-EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a')
++P=Path(__file__).resolve().parent;L=P.parent.parent;R=L.parents[2]
++PARENT_AUDITOR=L/'baseline/audit.py'
++PARENT_AUDITOR_SHA='43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab'
++CONTROL=Path('/home/steve/own-xpu-runtime-results/gsq-attention-p33-a.control')
++EVIDENCE=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-attention-p33-a')
+ EOS=(248044,248046)
+ 
+ def require(v,msg):
+@@ -108,9 +110,17 @@
+     require(os.getpriority(os.PRIO_PROCESS,0)==19,'nice19');require(os.sched_getaffinity(0)<=set(range(8,16))|set(range(24,32)),'helper affinity')
+     resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+     dest=P/'evidence/independent-a';dest.mkdir(parents=True,exist_ok=False)
+-    started=time.monotonic();receipt={'schema':'ownrt.gsq.resident-baseline-independent.v1','passed':False,'device_executed_by_reviewer':False,'scope':'same-engine target/MTP correctness on all12 fixed short prompts; resident timing, not external-engine quality or cold-start proof'}
++    started=time.monotonic();receipt={'schema':'ownrt.gsq.attention-candidate-independent.v1','passed':False,'device_executed_by_reviewer':False,'scope':'candidate vs independently audited original baseline exact tokens/full target state on all12 pairs; separate-process timings descriptive only, no speed promotion'}
+     try:
+-        plan=read(CONTROL/'plan.json');admission=read(CONTROL/'admission.json');terminal=read(CONTROL/'terminal.json');manifest=read(P/'manifest.json')
++        require(sha(PARENT_AUDITOR)==PARENT_AUDITOR_SHA,'frozen parent auditor changed')
++        baseline_review=L/'baseline/evidence/independent-a/review.json'
++        require(sha(baseline_review)=='f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb','independent baseline review authority')
++        prior_audit=read(baseline_review);require(prior_audit['passed'] and prior_audit['all12_exact'] and prior_audit['source_and_binary_pins_verified'],'baseline authority incomplete')
++        baseline_path=Path('/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/resident-suite.json')
++        require(sha(baseline_path)==prior_audit['full_result_sha256'],'audited original full result')
++        baseline=read(baseline_path);require(baseline['passed'] and len(baseline['prompts'])==12,'baseline corpus')
++        references={arm['name']:arm for pair in baseline['prompts'] for arm in pair['arms']};require(len(references)==24,'baseline unique arms')
++        plan=read(CONTROL/'plan.json');admission=read(CONTROL/'admission.json');terminal=read(CONTROL/'terminal.json');manifest=read(L/'baseline/manifest.json')
+         require(terminal['plan_sha256']==admission['plan_sha256']==sha(CONTROL/'plan.json'),'plan binding')
+         require(admission['plan']==plan,'admitted plan')
+         for key,value in plan['unit_properties'].items():require(admission['unit'][key]==value,'coordinator safe unit property')
+@@ -118,8 +128,9 @@
+         validate_passive(admission['before'],terminal['after'],terminal)
+         full_path=Path(terminal['result']['full_result_path']);require(full_path==EVIDENCE/'resident-suite.json','fixed full result')
+         require(sha(full_path)==terminal['result']['full_result_sha256'],'full result hash');full=read(full_path)
++        require(plan['suite']['baseline_review_sha256']==sha(baseline_review) and plan['suite']['baseline_result_sha256']==sha(baseline_path),'candidate baseline plan binding')
+         require(full['passed'] and full['requests']==26 and full['measured_requests']==24,'complete fixed suite')
+-        require(full['manifest_sha256']==sha(P/'manifest.json')==plan['suite']['manifest_sha256'],'manifest')
++        require(full['manifest_sha256']==sha(L/'baseline/manifest.json')==plan['suite']['manifest_sha256'],'manifest')
+         require(full['rank_pids']==[x[0] for x in terminal['rank_identities']],'same ranks')
+         require(len(full['warmup'])==2 and len(full['prompts'])==12,'complete corpus')
+         corpus=read(R/'experiments/own-xpu-runtime/stage2/suite-inputs-20261012-cap128/suite-manifest.json')['prompts']
+@@ -172,6 +183,11 @@
+                 number+=1;require(arm['request']==number and arm['mode']==mode and arm['measured'],'arm schedule')
+                 require(arm['prompt_tokens']==prompt['tokens'] and arm['requested_max_new']==128,'unchanged prompt/cap')
+                 base=EVIDENCE/arm['name'];require(read(base/'suite-request.json')==arm,'raw request copy')
++                reference=references[arm['name']]
++                require(reference['mode']==mode and reference['prompt_tokens']==arm['prompt_tokens'] and reference['requested_max_new']==128,'corresponding original baseline arm')
++                require(arm['result']['tokens']==reference['result']['tokens'],'candidate tokens differ from original baseline')
++                require(arm['state_sha256']==reference['state_sha256'],'candidate target state map differs from original baseline')
++                exact=read(base/'baseline-exact.json');require(exact['passed'] and exact['reference_sha256']==sha(baseline_path),'per-arm live exact gate receipt')
+                 metric=timing(arm['result'],128);consumed=confirmed_inputs(arm['result'],arm['prompt_tokens'])
+                 for key in ('output_tokens','decode_intervals','termination'):require(metric[key]==arm['metric'][key],'metric identity')
+                 near(arm['metric']['decode_wall_ms'],metric['decode_wall_ms'],'stored metric elapsed')
+@@ -186,7 +202,7 @@
+             checked.append(dict(prompt_id=prompt['prompt_id'],order=prompt['order'],arms=arms))
+         require(number==26,'all26 verified')
+         derived=aggregate(checked);compare_summary(derived,full['summary']['order_groups']);compare_summary(derived,terminal['result']['summary']['order_groups'])
+-        ledger=read(L/'memory/engine-accounting.json')['scenarios']['split24-24_mtp-rank0']['ranks'];owners=[];memory=[]
++        ledger=read(P/'candidate-ledger.json')['scenarios']['split24-24_mtp-rank0']['ranks'];owners=[];memory=[]
+         for rank in (0,1):
+             owner=read(EVIDENCE/f'rank{rank}/receipt.json');require(owner['passed'] and owner['rank']==rank and owner['error']=='','rank receipt')
+             require(len(owner['teardown'])==1,'teardown count');t=owner['teardown'][0]
+@@ -194,11 +210,11 @@
+             census=read(EVIDENCE/f'rank{rank}/census.json');actual=sum(a['bytes'] for a in census['allocations'] if a['live'] and a['memory']=='device')
+             require(actual==census['totals']['device']==ledger[rank]['device_logical_bytes'],'memory forecast exact');memory.append(actual)
+         ownership=read(EVIDENCE/'ownership.json');require(ownership['returncodes']==[0,0] and ownership['retained_pids']==[] and ownership['signals_sent']==0 and not ownership['stop_requested'],'process cleanup')
+-        receipt.update(passed=True,requests=26,measured_requests=24,warmups_excluded=2,all12_exact=True,rank_pids=full['rank_pids'],prompts=checked,recomputed_order_groups=derived,owners=owners,ownership=ownership,actual_device_bytes=memory,passive_drain_scope='retained complete afterinventory shows only unchanged vision27/43; no fresh process/kernel/service query',kernel_fault_baseline_unchanged=True,source_and_binary_pins_verified=True,native_binary_sha256=native['binary_sha256'],full_result_sha256=sha(full_path),artifact_count=count,indexed_bytes=total,index_sha256=sha(dest/'artifact-index.jsonl.gz'),roots=dict(control=str(CONTROL),evidence=str(EVIDENCE)),originals_retained=True,limitations=['Same-engine target/MTP exactness, not external-engine or broad semantic quality','Short fixed60-90token prompts with cap128; allEOS/short outputs retained','Resident one-run balanced ordering; first-use effects may remain','No cold-start, long-context or old-model record claim','Physicaldrain based on retained observations, not fresh reviewer host/device operations'])
++        receipt.update(candidate_vs_original_baseline_exact=True,baseline_review_sha256=sha(baseline_review),baseline_result_sha256=sha(baseline_path),no_speed_promotion=True,code_identity='attention Q8 p33 variant6 split1 only48 projections; candidate native build and per-rank expanded memory ledger',passed=True,requests=26,measured_requests=24,warmups_excluded=2,all12_exact=True,rank_pids=full['rank_pids'],prompts=checked,recomputed_order_groups=derived,owners=owners,ownership=ownership,actual_device_bytes=memory,passive_drain_scope='retained complete afterinventory shows only unchanged vision27/43; no fresh process/kernel/service query',kernel_fault_baseline_unchanged=True,source_and_binary_pins_verified=True,native_binary_sha256=native['binary_sha256'],full_result_sha256=sha(full_path),artifact_count=count,indexed_bytes=total,index_sha256=sha(dest/'artifact-index.jsonl.gz'),roots=dict(control=str(CONTROL),evidence=str(EVIDENCE)),originals_retained=True,limitations=['Same-engine target/MTP exactness, not external-engine or broad semantic quality','Short fixed60-90token prompts with cap128; allEOS/short outputs retained','Separate candidate process versus prior baseline; timing descriptive, no speed promotion; first-use/order effects may remain','No cold-start, long-context or old-model record claim','Physicaldrain based on retained observations, not fresh reviewer host/device operations'])
+     except BaseException as error:
+         receipt['error']=type(error).__name__+': '+str(error);raise
+     finally:
+-        receipt.update(auditor_sha256=sha(__file__),elapsed_seconds=time.monotonic()-started)
++        receipt.update(auditor_sha256=sha(__file__),parent_auditor_sha256=sha(PARENT_AUDITOR),elapsed_seconds=time.monotonic()-started)
+         with (dest/'review.json').open('x') as f:json.dump(receipt,f,indent=2);f.write('\n')
+     print(json.dumps({'passed':True,'review':str(dest/'review.json'),'sha256':sha(dest/'review.json')}))
+ 

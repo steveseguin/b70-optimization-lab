@@ -1,0 +1,43 @@
+{
+  "schema": "ownrt.gsq.attention-independent-build-review.v1",
+  "passed": true,
+  "native_executed": false,
+  "build_receipt_sha256": "5b1fd444b08c04003a1850758a98def0b75a5942939e514e5754ddb65e3f254c",
+  "binary_sha256": "e83469b3a2c1781d6be6241f4c1cd0967379f15ca410c6aed55baf0831b8ac68",
+  "source_pins": 416,
+  "entry_dependencies": 118,
+  "linked_objects": 40,
+  "reused_objects": 39,
+  "actual_depfiles_reparsed": 40,
+  "changed_shared_dependency_intersections_in_reused_objects": 0,
+  "unique_files_rehashed": 506,
+  "cpu_proof_sha256": "f5ad4e5dcd9a9a6efbb2cb736370a2ab20f67bbae0f2cf9a1c45b57937b0be98",
+  "scale_census_sha256": "103fe5152fbd6298371663c28b018846ff69973f015861c4e1be7fd82202fd91",
+  "scale_totals": {
+    "normal": 23591732,
+    "subnormal": 1228,
+    "positive_zero": 0,
+    "negative_zero": 0,
+    "infinity": 0,
+    "nan": 0
+  },
+  "checks": [
+    "Exactly one native compilation/link; oldentry0 excluded and39 original objects retained",
+    "Build/source/dependency/object/compiler/binary/prerequisite and offline artifact hashes independently match",
+    "All40 actual retained depfiles reparsed: onlyentry0 intersects changed Engine/main or generic_engine",
+    "Q8K6144Split1 p33 kernel family linked; original p33 object retained",
+    "Exact48 policy with variant6/shape/BF16/no-routes/fp32/extent Matrix guards source-reviewed",
+    "P6/P33 tile8-stride256 adjacentSG32 arithmetic and exact expanded Q8 representation source-reviewed"
+  ],
+  "limitations": [
+    "No candidate native execution by reviewer; CPU exceptional results and actual finite weight census do not establish arbitrary activationNaN semantics on GPU",
+    "Runtime correctness still requires per-arm baseline token/state gates; no speed promotion",
+    "Object reuse applies only to this exact source delta/dependency closure"
+  ],
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/prepare.py": "7da0ce761f74938d7150ee6498834fe3010d5ee10fcb0c6d77c7219d8d2d8287",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/preparation.json": "6557cf5cb42f2e0a8869159f4be3bb29379f135e7ec73dc7e473d575402cca2a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/overlay.patch": "9c32b30799adfebc0e038fab14dfd5ceb3bb820ad60e8ed4d122956274239ef1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/operating/evidence/build_review.py": "12870349ef700aee5c47f527a30fae83184105f495c0b4c70b414bfd10584f96"
+  }
+}
