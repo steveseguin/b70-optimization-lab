@@ -12510,7 +12510,7 @@
         "model_family": "Qwen3.8 Flash-Next UD-IQ3_XXS",
         "publisher": "Unsloth (quantized Qwen weights)",
         "variant": "UD-IQ3_XXS quantized weights",
-        "summary": "One B70: approved 37.595605 tok/s record with a 128-token cap. Separate full-512 lab replay: writing 31.51–31.78 tok/s and reading 32.59–32.75 tok/s. Updated source-build and experimental streaming guidance; full-output quality and portable admission remain pending.",
+        "summary": "One B70: approved 37.595605 tok/s record with a 128-token cap. Separate full-512 lab replay: writing 31.51–31.78 tok/s and reading 32.59–32.75 tok/s. Updated source-build and experimental streaming guidance; full-output quality and portable admission remain pending. Reference-FP32 recurrent fidelity is unqualified.",
         "quantization": "UD-IQ3_XXS",
         "runtime_label": "Own Xe runtime (packet58aj / packet165c)",
         "operating_systems": [
@@ -12538,7 +12538,7 @@
         ],
         "published_at": "2026-10-23",
         "featured_metric": null,
-        "benchmark_status": "Full-512 profile: 31.510–31.782 tok/s, 512-input reading 32.595–32.752 tok/s; oracle checks first 128 only, longer outputs repeat-exact. Separate approved 128-token record: 37.595605 tok/s (packet196 diet/max23, October 23), superseding 36.602512. Streaming/checkpoint correctness is separately qualified on the P198/P201 identity, with no new speed claim."
+        "benchmark_status": "Full-512 profile: 31.510–31.782 tok/s, 512-input reading 32.595–32.752 tok/s; oracle checks first 128 only, longer outputs repeat-exact. Separate approved 128-token record: 37.595605 tok/s (packet196 diet/max23, October 23), superseding 36.602512. Streaming/checkpoint correctness is separately qualified on the P198/P201 identity, with no new speed claim. The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified."
       },
       "hardware": {
         "accelerator": "Intel Arc Pro B70 32 GiB",
@@ -12604,7 +12604,7 @@
           "kind": "lab",
           "status": "integrated",
           "contribution": "Model-specific Xe runtime, packet49 deterministic CPU oracle, native measurement and full request-state reset.",
-          "validated_effect": "Two fresh full-512 workload passes; first 128 output tokens oracle-exact, complete output repeat agreement; full-output quality remains pending.",
+          "validated_effect": "Two fresh full-512 workload passes; first 128 output tokens oracle-exact, complete output repeat agreement; full-output quality remains pending. The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified.",
           "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
           "profile": "https://github.com/steveseguin/b70-optimization-lab"
         }
@@ -12619,7 +12619,7 @@
         "Public release assets and clean-host replay; no starter/production certification"
       ],
       "text_measurements": {
-        "scope": "Each fresh load runs twelve cold suite prompts and one distinct 512-input-token prompt, with one user and a 4096-token context allocation. Decode is the class-balanced first-100-token generation rate across the twelve suite prompts. Each reading row measures one 512-input-token request on the warm runtime; native TTFT includes first-token work. One-card TTFT includes the request-state reset. The independent oracle covers only the first 128 output tokens; full-output quality remains pending.",
+        "scope": "Each fresh load runs twelve cold suite prompts and one distinct 512-input-token prompt, with one user and a 4096-token context allocation. Decode is the class-balanced first-100-token generation rate across the twelve suite prompts. Each reading row measures one 512-input-token request on the warm runtime; native TTFT includes first-token work. One-card TTFT includes the request-state reset. The independent oracle covers only the first 128 output tokens; full-output quality remains pending. The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified.",
         "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
         "rows": [
           {
@@ -12665,7 +12665,7 @@
         "model_family": "Qwen3.8 Flash-Next UD-IQ3_XXS",
         "publisher": "Unsloth (quantized Qwen weights)",
         "variant": "UD-IQ3_XXS quantized weights",
-        "summary": "Two B70 cards, target-verified MTP full-512 lab replay: writing 58.56–58.63 tok/s; reading a new 512-token prompt 75.88–75.97 tok/s. Full-output quality and portable replay pending.",
+        "summary": "Two B70 cards, target-verified MTP full-512 lab replay: writing 58.56–58.63 tok/s; reading a new 512-token prompt 75.88–75.97 tok/s. Full-output quality and portable replay pending. Reference-FP32 recurrent fidelity is unqualified.",
         "quantization": "UD-IQ3_XXS",
         "runtime_label": "Own Xe runtime (bundle 8 / packet165)",
         "operating_systems": [
@@ -12693,7 +12693,7 @@
         ],
         "published_at": "2026-10-19",
         "featured_metric": null,
-        "benchmark_status": "Two fresh full-512 suites: 58.557–58.632 tok/s, 512-input reading 75.884–75.973 tok/s. Oracle checks first 128 only; longer outputs repeat-exact. Approved 63.611824 record (packet195 diet chain, 2026-10-23; was 62.345282) has a 128-token cap. Strict quality promotion pending."
+        "benchmark_status": "Two fresh full-512 suites: 58.557–58.632 tok/s, 512-input reading 75.884–75.973 tok/s. Oracle checks first 128 only; longer outputs repeat-exact. Approved 63.611824 record (packet195 diet chain, 2026-10-23; was 62.345282) has a 128-token cap. Strict quality promotion pending. The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified."
       },
       "hardware": {
         "accelerator": "Intel Arc Pro B70 32 GiB",
@@ -12752,7 +12752,7 @@
           "kind": "lab",
           "status": "integrated",
           "contribution": "Model-specific Xe runtime, packet49 deterministic CPU oracle, native measurement and full request-state reset.",
-          "validated_effect": "Two fresh full-512 workload passes; first 128 output tokens oracle-exact, complete output repeat agreement; full-output quality remains pending.",
+          "validated_effect": "Two fresh full-512 workload passes; first 128 output tokens oracle-exact, complete output repeat agreement; full-output quality remains pending. The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified.",
           "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
           "profile": "https://github.com/steveseguin/b70-optimization-lab"
         }
@@ -12767,7 +12767,7 @@
         "Public release assets and clean-host replay; no starter/production certification"
       ],
       "text_measurements": {
-        "scope": "Each fresh load runs twelve cold suite prompts and one distinct 512-input-token prompt, with one user and a 4096-token context allocation. Decode is the class-balanced first-100-token generation rate across the twelve suite prompts. Each reading row measures one 512-input-token request on the warm runtime; native TTFT includes first-token work. Two-card TTFT starts after the request-state reset. The independent oracle covers only the first 128 output tokens; full-output quality remains pending.",
+        "scope": "Each fresh load runs twelve cold suite prompts and one distinct 512-input-token prompt, with one user and a 4096-token context allocation. Decode is the class-balanced first-100-token generation rate across the twelve suite prompts. Each reading row measures one 512-input-token request on the warm runtime; native TTFT includes first-token work. Two-card TTFT starts after the request-state reset. The independent oracle covers only the first 128 output tokens; full-output quality remains pending. The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified.",
         "evidence": "results/qwen38-flash-next-ud-iq3xxs-b70/ownrt-measurements-20261019.json",
         "rows": [
           {

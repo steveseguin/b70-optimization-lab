@@ -1,5 +1,7 @@
 # Flash-Next UD-IQ3_XXS: our Xe runtime on one B70
 
+**October 24 precision qualification:** The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified. This finding establishes the shared oracle limitation; the exact retained one-card header-to-object precision audit is still incomplete. See the [source audit](../../experiments/own-xpu-runtime/gsq-rco-iq3s/candidate-appraisals/published-unsloth-recurrent-state.md).
+
 **Updated October 23:** the separate capped record is now **37.595605 tok/s**,
 and a bounded streaming/checkpoint pilot has passed. See [current recipes,
 verification commands and limits](LATEST.md). The source build and full-512

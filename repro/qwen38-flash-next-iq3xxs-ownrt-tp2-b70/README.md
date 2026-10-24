@@ -1,5 +1,7 @@
 # Flash-Next UD-IQ3_XXS: our Xe runtime on two B70 cards
 
+**October 24 precision qualification:** The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified. Retained P195/P165 two-card sources confirm rounding of the recurrent matrix state to BF16 on every token. See the [source audit](../../experiments/own-xpu-runtime/gsq-rco-iq3s/candidate-appraisals/published-unsloth-recurrent-state.md).
+
 **Candidate · expert lab replay · full BF16 KV · one user.** This is Unsloth's
 quantized compressed version, a separate model from official Flash-Next FP8.
 The current full-512 profile is bundle 8 (packet136), through packet165's
@@ -62,7 +64,7 @@ Do not change swap, page-cache, power or memory settings to gain admission.
 `bcd9f01ddc9cff2316eb84281bebcd5b058bddce`. Allow 81,961,823,936 target bytes
 and 30,047,461,616 draft bytes, plus build/output space. The official draft
 uses the recorded draft-only quantization and 80,128-row prefix; target
-weights and full-precision caches remain unchanged.
+weights, BF16 attention KV and the custom BF16 recurrent-state contract remain unchanged relative to that historical baseline.
 
 Download only the pinned files, then compare their SHA-256 values with the
 manifest before any model read:

@@ -62,12 +62,14 @@
 
 <main id="main"><div class="wrap"><div class="col prose">
 
+  <p><strong>October 24 precision qualification:</strong> The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified. Retained P195/P165 two-card sources confirm BF16 rounding of recurrent state on each token; the exact one-card source-to-object audit remains incomplete. <a href="experiments/own-xpu-runtime/gsq-rco-iq3s/candidate-appraisals/published-unsloth-recurrent-state.md">Source audit and scope</a>.</p>
+
   <div class="tldr">
     <h2>The short version</h2>
     <ul>
       <li><strong>It is a research engine, not a product.</strong> Source archives, build recipes and verification tools are available; a portable service installer and production certification remain open.</li>
       <li><strong>It is fast where measured:</strong> 58.557–58.632 tok/s decode on two B70s and 31.510–31.782 tok/s on one, with prompt reading at 75.884–75.973 and 32.595–32.752 tok/s respectively — every figure from sealed, receipted runs.</li>
-      <li><strong>Exactness is a gate, not a hope.</strong> A run that cannot prove itself byte-identical does not publish.</li>
+      <li><strong>Internal exactness has a defined scope.</strong> These runs preserve the custom baseline; matching it does not establish reference-FP32 recurrent fidelity.</li>
       <li><strong>Checkpoint/restore works on one card:</strong> on 2026-10-22 a one-card session was saved at 256 tokens, restored in a fresh process and continued; the merged output matched an uninterrupted run byte for byte, twice. Restore took 0.46 s where re-reading the prompt took 36.75 s. Later the same day a second engine revision passed the harder test: restore a saved session, add a new 126-token turn, and the answer matched a fresh one-shot run byte for byte; saving again after a restore and resuming from that second save matched too.</li>
       <li><strong>The gaps are declared, not hidden:</strong> 128-token oracle caps, a two-card rebuilt-binary qualification still pending (the one-card rebuild passed on 2026-10-22), no sampler, no multi-user controller, no context curve beyond 4,096 tokens.</li>
     </ul>

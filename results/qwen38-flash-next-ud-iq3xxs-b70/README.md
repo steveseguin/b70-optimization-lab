@@ -1,5 +1,7 @@
 # Qwen3.8 Flash-Next UD-IQ3_XXS — quantized compressed version
 
+**October 24 precision qualification:** The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified. The exact two-card P195/P165 source proof is retained in the [audit](../../experiments/own-xpu-runtime/gsq-rco-iq3s/candidate-appraisals/published-unsloth-recurrent-state.md); it is not a proof of every one-card binary.
+
 ## October 23 optimization closeout
 
 The one-card capped record is now **37.595605 tok/s**: twelve prompts, 128 output
