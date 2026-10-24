@@ -26,6 +26,7 @@ load weights, access a GPU, start a service or rerun a benchmark. The evidence
 bundle is about 42 MB compressed; allow memory for its decoded members. The
 [retained verification](manifests/current-record-verification.json) reproduces
 the exact record metric and all twelve oracle comparisons.
+The [recipe checksum manifest](manifest.sha256) binds the guide, build inputs and verification receipts.
 
 The measured record uses Unsloth revision
 `766911a6b7369840a91dbcd95f9f997acaab6cd6`, target-only greedy decoding,
