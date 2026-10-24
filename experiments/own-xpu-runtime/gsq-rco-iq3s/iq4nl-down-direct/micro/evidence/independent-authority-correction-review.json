@@ -1,0 +1,26 @@
+{
+  "schema": "gsq.iq4nl-direct.independent-authority-correction-review.v1",
+  "passed": true,
+  "source_only": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/extract.py": "b1255bbd6c5db4c22cd6474e2f1cb1cd8a031ba656478ef4b9ee7acea5a97d3e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/build.py": "773ff4f9330745fd18d7dd803e51905c2741c5f6948c4a7c3670e1439cd84409",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/source-pins.json": "002d77712b345ff56f71c71a0ddcd154715484d8253e9b0fa783ca8ff5b7b635",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/authority-smoke.json": "57d6d17cec4b93a9b70539cc139e17e0e725e0fa590ab914537c194ad6343bcf",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/authority-smoke-1792837186524354865/stdout.log": "338f35b45e93203de55aeb42ed021d78c86b1be1aa3eddc2734b98afcf6d7355",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/authority-smoke-1792837186524354865/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/lineage/before-baseline-authority-schema-fix/extract.py": "9fc5d6658924aeb161cb81bbe7a30418ade4e9c30ddadef13c1498117abd2fb2",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/independent-extract-build-review.json": "a72dc2a6b21821dcd66c8634089ab991cc807b453a6885196edfc90134347dc7"
+  },
+  "prior_review_missed_schema_key": true,
+  "prior_extraction_pre_payload_failed": true,
+  "actual_default_plan_smoke_passed": true,
+  "payload_reads_by_reviewer": false,
+  "tests_rerun": false,
+  "findings": [],
+  "correction": "Only authority() baseline schema gate changed: exact f662 passed/all12/source+fault verified, both complete safe owners, normal zero-return process closure and exact retained passive drain scope. No invented physical_drain field. All extraction arithmetic/read bounds/publication and build recipe unchanged.",
+  "limitations": [
+    "Actual extraction and native compilation have not been qualified by this review.",
+    "Prior pre-payload failure and old source/review retained; no claim that original invocation passed."
+  ]
+}

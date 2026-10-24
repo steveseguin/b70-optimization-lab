@@ -1,0 +1,20 @@
+{
+  "schema": "gsq.iq4nl-direct.closed-auditor-preparation.v1",
+  "passed": true,
+  "tests": 4,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/operating/audit.py": "c0a033c846a29805a130a7bbbe067a7691eabf403cf1709580f23e4057523650",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/operating/test_audit.py": "8c2e6d3140ead6d205b45973605305be37447c3c63cc6036da4f14d710b499dd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/operating/evidence/audit-tests.log": "f16a9c29f10e78b73ecb713a1f0904f6c62bdde07aa61c5595ecc180f67714d8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/manifest.json": "e51910c74a9a366da369edd68abb4283cc89d3796a8f62bae918954fb74a4981",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/once.py": "d2b0225f559092c81ab31909b5b3ab0fe3376e8e2174e9beaa60d5bee90b78eb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/handshake.py": "54280d58ce56c2ba5401a6fec64784d158dd409866af258f4c2de54ce503566f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/startup.hpp": "814dc5d00319ab08f8511293907db11880080e179506b06f45e6979771aeae59",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/runner.cpp": "6dcfd1cee006d6e3ae07184421617684da30d9d64de672c698bd898b2c24d1f5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/native-build.json": "d1c5e5d02b674c7b2531559b721e35a7fa1322dcb21970e4b86840f239abb95e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/independent-review.json": "9dfd2bf9ee3526419211b6d364c787a69628f7334f39d0cfaf7f09a46a6e4593"
+  },
+  "command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/operating -p test_audit.py -v",
+  "scope": "Synthetic schedule/ACK/refusal tests only; no actual run payload, model, device, service or audit invocation",
+  "actual_plan_sha256": "46b7823b6f3ce76534f3ab5ce6916a68c19a73c509c6d4bc0f5aecb36d728ca7"
+}

@@ -214,3 +214,13 @@ all GPU work. No predicted speed gain or model integration yet. Root27.35GB afte
 141MB old npm download-cache cleanup; USB4.56GB. Micro fits, but another full26suite
 requires additional verified evidence capacity first. Do not lower reserves or use
 the faulty RAID. Broader closed captures remain raw pending any explicit archival.
+
+
+## October24 10:36UTC — IQ4 decision and next dense candidate
+
+IQ4 direct-global passes28 exact pairs and actual physical/closure qualification,
+but all24 measured pairs show1.67855 times original latency. Reject it without
+Engine integration or a tuning detour; [result](iq4nl-down-direct/micro/RESULT.md).
+Prepare the [19-site Q6 extension](dense-q6-p33/PROPOSAL.md), reusing qualified
+arithmetic and testing only new selector/geometry/storage behavior before native
+qualification. A future full suite first needs verified evidence capacity.

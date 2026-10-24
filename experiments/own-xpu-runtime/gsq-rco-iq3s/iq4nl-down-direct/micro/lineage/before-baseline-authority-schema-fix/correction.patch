@@ -1,0 +1,15 @@
+--- retained/extract.py
++++ extract.py
+@@ -27,7 +27,11 @@
+  plan=json.loads(PLAN.read_text())
+  for name,h in plan['authority'].items():need(sha(name)==h,'fixed authority drift')
+  need(plan['case']['label']=='blk.0.expsdown' and plan['case']['weight']=='blk.0.ffn_down_exps.weight','fixed single case')
+- review=json.loads((L/'baseline/evidence/independent-a/review.json').read_text());need(review['passed'] and review['all12_exact'] and review['physical_drain'],'closed original baseline')
++ review=json.loads((L/'baseline/evidence/independent-a/review.json').read_text())
++ need(review['passed'] is True and review['all12_exact'] is True and review['source_and_binary_pins_verified'] is True and review['kernel_fault_baseline_unchanged'] is True,'verified original baseline')
++ need(len(review['owners'])==2 and all(o['status']=='complete' and o['safe_to_exit'] is True and o['in_flight']==0 and o['live_bytes']==0 and o['exit_code']==0 for o in review['owners']),'both original owners safely closed')
++ ownership=review['ownership'];need(ownership['returncodes']==[0,0] and ownership['retained_pids']==[] and ownership['signals_sent']==0 and ownership['stop_requested'] is False and ownership['diagnostic_errors']==[],'original processes closed normally')
++ need(review['passive_drain_scope']=='retained complete afterinventory shows only unchanged vision27/43; no fresh process/kernel/service query','fixed independently audited passive drain scope')
+  rows={}
+  with gzip.open(INDEX,'rt') as f:
+   for line in f:

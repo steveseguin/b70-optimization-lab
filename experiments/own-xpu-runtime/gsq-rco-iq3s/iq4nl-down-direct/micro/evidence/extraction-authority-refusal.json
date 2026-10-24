@@ -1,0 +1,16 @@
+{
+  "passed": false,
+  "stage": "authority metadata before destination creation or payload reads",
+  "command": "OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 taskset -c 8-15,24-31 nice -n19 python3 -B micro/extract.py --extract",
+  "exit_code": 1,
+  "error": "KeyError: 'physical_drain'",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/extract.py": "9fc5d6658924aeb161cb81bbe7a30418ade4e9c30ddadef13c1498117abd2fb2"
+  },
+  "review_sha256": "a72dc2a6b21821dcd66c8634089ab991cc807b453a6885196edfc90134347dc7",
+  "fixtures_created": false,
+  "extraction_receipt_created": false,
+  "archive_or_model_payload_read": false,
+  "device_executed": false,
+  "reason": "Original baseline independent review uses owners/ownership/passive_drain_scope, not later physical_drain boolean. Metadata default-plan path would also detect it; preserve then correct the exact schema join."
+}

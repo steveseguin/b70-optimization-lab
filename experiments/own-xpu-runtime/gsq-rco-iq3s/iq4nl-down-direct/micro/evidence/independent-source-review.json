@@ -1,0 +1,48 @@
+{
+  "schema": "gsq.iq4nl-direct.micro-independent-source-review.v1",
+  "passed": true,
+  "source_only": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/startup.hpp": "814dc5d00319ab08f8511293907db11880080e179506b06f45e6979771aeae59",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/selected.hpp": "352324cfe936b413593f8c280e952a09545a235475efe57e53c79f4448786ca4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/once.py": "d2b0225f559092c81ab31909b5b3ab0fe3376e8e2174e9beaa60d5bee90b78eb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/runner.patch": "3dffb26c51573ae85fcd56e684e5d03f841388de816e9eb242b72252936b078e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/parent-pins.json": "31a0d2384afd904abcfaea7c1fb2c1c857ab5ceb129251674a7f706d3d5488be",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/extraction-plan.json": "48feaf84c2cfe522a31b1ad8c4e089f9c8b91cc6be328e3fcd096acc51277a93",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/once.patch": "f5b204bea65429fe4c58d05aaba324a86bd00c621ef61d64bd2adf632b31ec76",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/README.md": "dfdd321613a53e24c42b973bcbfc007692871d2d4157d1fc681abc4651cdbb61",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/handshake.py": "b588d8cc5388a34ad4b1fa934280bdcd14fb2544928c8d856db54c148aba0f26",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/runner.cpp": "6dcfd1cee006d6e3ae07184421617684da30d9d64de672c698bd898b2c24d1f5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/prepare.py": "9a8da86424832ce7a9ad71949060ae6fc0e8d8fc7a82b57bf41bb3fbe459dcfd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/test_startup.py": "e8468dec0eda7d59beead0646c017e80659ca5d78b7a6c3c494f48eb29402c7d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/startup-tests.json": "ed0d6cf9554e41c76fb67e905cc3d016081186428ff0b10727f0c59ff5d2f537",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/startup-1792836449287125954/tests.log": "9bd91a443d12395d5f96ca5057114403a2b43a646f87d1eff9ddce51ef7aad83",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/micro/evidence/source-checkpoint.json": "9a1ea01dcdf70d89af1cde06c98df81bbe4605fe8ce1bed0c9fd9f635d53c8b2",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/direct.hpp": "cbbf92b9a79c322dbf448801e6a4defeccf8944e6b162240bbf069811609035a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/direct.patch": "2d74569ba71fe4462518e1c7735e85ed95cf9054a9e5257afbc56943fad8d0a5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/policy.hpp": "2f8501e723a0308df409363cadde97f6af70b67e7dbfd306771c47b934a6493c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/selection.json": "bdb0d7ab5742dd4bb04308455186d1aa0e7ee8e317d8439a60090eae9a2c7b9c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/evidence/cpu-proof.json": "a096abdc8686477c82474d332a0bdf8a5522abb8221703eb7fc38bc0f5dfff24"
+  },
+  "retained_ack_tests": 8,
+  "tests_rerun": false,
+  "compiler_invoked": false,
+  "device_invoked": false,
+  "payload_read": false,
+  "findings": [],
+  "review": [
+    "Actual SYCL backend is constructed and retained in Device before readiness; ACK precedes pinned/device allocation, upload, capture and kernels. No unrelated DRM descriptor is opened.",
+    "Nonce/PID/starttick-bound ACK is issued only after complete accepted passive sample and saved evidence; target nodes and same native identity required. Both native result and terminal require acknowledged=true and positive physical contact.",
+    "60-second cooperative wait calls existing stop/deadline guard; timeout/error reaches actual backend synchronize and owner shutdown. Uncertain factory/sync/teardown retains owner rather than retry/hard kill.",
+    "Direct IQ4_NL candidate removes row SLM staging/barrier only; uses unchanged p6 lane_dot, adjacent subgroup tree, per-slot inputs, Route/status/tail semantics and BF16 conversion. Strict fixed512x2560x640/top10/span2560/BF16/SG32/noFP32 policy and original p6 control preserved.",
+    "All28pairs/56kernels compare full51200B output and40B status with stored original oracle, four warmup cycles excluded,24cycles balanced AB/BA, event timing read before event retirement.",
+    "Ledger independently checked:471974600 device bytes +1048576 pinned;474741560 transfer bytes. Sparse full expert address space stays512, only authenticated consumed slices populated; duplicate route slots retained.",
+    "Proposed fixed archived baseline four members total64160B and at most10*921600B expert slices are bounded; actual extractor implementation and authenticated reads remain pending."
+  ],
+  "scope_limits": [
+    "No native compile/artifact or GPU execution qualification in this receipt.",
+    "C++ readiness/timeout lifecycle checked from source, not exercised by Python ACK tests.",
+    "Extractor implementation, actual extraction, native artifact closure and final operating manifest require later review.",
+    "One fixed layer0 route set only; GPU event ratios cannot establish whole-model speed."
+  ]
+}

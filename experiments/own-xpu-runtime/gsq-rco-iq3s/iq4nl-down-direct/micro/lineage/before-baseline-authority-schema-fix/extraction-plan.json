@@ -1,0 +1,113 @@
+{
+  "schema": "gsq.iq4nl-direct.micro-extraction-plan.v1",
+  "executed": false,
+  "case": {
+    "layer": 0,
+    "label": "blk.0.expsdown",
+    "weight": "blk.0.ffn_down_exps.weight",
+    "type_id": 20,
+    "rows": 2560,
+    "columns": 640,
+    "experts": 512,
+    "count": 10,
+    "span": 2560,
+    "inputs": "per_slot",
+    "input_bytes": 12800,
+    "route_bytes": 120,
+    "output_bytes": 51200,
+    "status_bytes": 40
+  },
+  "archive": {
+    "batch": 3,
+    "name": "prompt-00-none",
+    "source_bytes": 231442500,
+    "archive_bytes": 90040912,
+    "archive_sha256": "a9b2a2e5238df9bf069ced56e1a6a818ac75df49c3f261c8a5aa3e759c32cbd6",
+    "archive": "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a-state-bins-03.tar.gz",
+    "removed_files": 2107,
+    "removed_bytes": 231390276,
+    "preserved": [
+      "prompt-00-none/rank0/state-2147483647/blk.0.attention.bin",
+      "prompt-00-none/rank0/state-2147483647/blk.0.gdn.gated.bin",
+      "prompt-00-none/rank0/state-2147483647/blk.23.attention.bin",
+      "prompt-00-none/rank0/state-2147483647/blk.23.qsa.y.bin",
+      "prompt-00-none/rank1/state-2147483647/blk.47.attention.bin",
+      "prompt-00-none/rank1/state-2147483647/blk.47.qsa.y.bin"
+    ],
+    "metadata_path": "/home/steve/own-xpu-runtime-results/gsq-baseline-bin-archive-a/chunk-03"
+  },
+  "required_original_members": {
+    "prompt-00-none/rank0/state-2147483647/blk.0.expsact.bin": {
+      "root": "evidence",
+      "path": "prompt-00-none/rank0/state-2147483647/blk.0.expsact.bin",
+      "bytes": 12800,
+      "sha256": "0835593250ae1d154aa93219610feafd4127e830dd5f42804d78fd2a80fc8f2e"
+    },
+    "prompt-00-none/rank0/state-2147483647/blk.0.expsdown.bin": {
+      "root": "evidence",
+      "path": "prompt-00-none/rank0/state-2147483647/blk.0.expsdown.bin",
+      "bytes": 51200,
+      "sha256": "d270a98910e8ef15cc9d687ecfb9cc59a2b5ab96ed2c02b58b3a43225f1d20d9"
+    },
+    "prompt-00-none/rank0/state-2147483647/blk.0.expsdown.status.bin": {
+      "root": "evidence",
+      "path": "prompt-00-none/rank0/state-2147483647/blk.0.expsdown.status.bin",
+      "bytes": 40,
+      "sha256": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb"
+    },
+    "prompt-00-none/rank0/state-2147483647/blk.0.routes.down.bin": {
+      "root": "evidence",
+      "path": "prompt-00-none/rank0/state-2147483647/blk.0.routes.down.bin",
+      "bytes": 120,
+      "sha256": "a460d0e95a8aec3c298bd15c1b81fb4f4746b5ccac4065ff6e4bc53081c32145"
+    }
+  },
+  "unique_graph_writers": {
+    "blk.0.expsact": [
+      "blk.0.expsact"
+    ],
+    "blk.0.routes.down": [
+      "blk.0.gather"
+    ],
+    "blk.0.expsdown": [
+      "blk.0.expsdown"
+    ],
+    "blk.0.expsdown.status": [
+      "blk.0.expsdown"
+    ]
+  },
+  "authority": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/complete.json": "8fbac4c1dadf2dc728c49f622f6f1797876b198ab6776ed6095120720d2dbebc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/artifact-index.jsonl.gz": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/review.json": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1"
+  },
+  "read_proposal": {
+    "archive_compressed_bytes": 90040912,
+    "uncompressed_stream_bound": 231442500,
+    "retained_fixture_bytes": 64160,
+    "maximum_weight_slices": 10,
+    "expert_slice_bytes": 921600,
+    "maximum_weight_payload_bytes": 9216000,
+    "model_headers": "held exact two-shard header/stat authority; only the containing shard prefix required"
+  },
+  "gates": [
+    "Root authorizes extraction separately after GPU drain",
+    "Open fixed compressed archive O_NOFOLLOW held regular FD; require fixed compressed size/hash and stable identity; stream only fixed2113-entry archive, reject duplicate/nonregular/path escape/size disagreement",
+    "Retain only four exact required members; verify each original baseline index length/hash; never unpack arbitrary paths",
+    "Decode all ten original Route triples, preserve duplicate slots, deduplicate consumed experts only; validate exact actual tensor/header/stat and every requested slice at original expert offset",
+    "Sparse bank size471859200 with authenticated used slices at originalIDs, zeros elsewhere; all consumed expert ranges must be present before Device",
+    "Fresh exclusive fixtures/header/receipt; fsync/readback; passed=true only after all outputs durable; preserve partials on error"
+  ],
+  "native_ledger": {
+    "device_bytes": 471974600,
+    "pinned_bytes": 1048576,
+    "transfer_bytes": 474741560,
+    "warmup_cycles": 4,
+    "measured_cycles": 24,
+    "pairs": 28,
+    "kernels": 56
+  },
+  "scope": "One fixed layer0 real rowset; source-derived input/output writer identity, no payload read. Original artifact metadata immutable after verified archival; new micro still requires root admission and exact full output/status every pair."
+}
