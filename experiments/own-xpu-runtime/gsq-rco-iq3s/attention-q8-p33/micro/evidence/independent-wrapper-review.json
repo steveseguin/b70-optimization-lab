@@ -1,0 +1,44 @@
+{
+  "schema": "ownrt.gsq.attention-micro-independent-wrapper-review.v1",
+  "passed": true,
+  "scope": "Finite source-only coordinator review; no plan invocation, passive host query, unit operation, native execution or model payload read",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/once.py": "a34e26582ea0f2f8e8e44513bd3ea88997e12c41b464bbd010dc4430d95e965e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/once.patch": "db12efd1db2c146ac2b286dee5fc0afbc1295ae153043ce5612b7533f65df74e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/OPERATING.md": "b6674e2e9b1448e36ce35470e2fe13efcb5fe22caa817fcb17b3c775141d30df",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/test_once.py": "491a433d346b095b7d871a4af756f761b4f297b810de65bbcdd3fda1ec1a4bbd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/manifest.json": "a0e3a0527f305f4243a52fc8015a9389780e8f395ce1153085984d16b0fc1038",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/once-preparation.json": "c31f262717c4198b6d9762fa0d0c08f7b348c686446e081221210c4050a025bc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/once-tests.log": "060adc36a7bc1f77740c6791054b88a697e89c316d8a66eedec91f1c221c0941",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/independent-review.json": "2f78b51c964e843fbc099e02f8fd005ca9ecc072431ac152ef193127117e191a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/native-build.json": "2344144cf959b9c67c26e6a89bcca0507bee73158be3970aac7d7cace21ad5cd",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/operating/observe.py": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/operating/qualify_once.py": "96ea50409a990a7de91e9faaf2e6698fa1e3f1aba2a6eae8abcb9aa2397b7608",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/operating/host-after-model-stop.json": "a43073ce7fd3b1e7aaceaf5424b99dcc9ba70efc74c51c05a09da279018db0fe",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/complete.json": "8fbac4c1dadf2dc728c49f622f6f1797876b198ab6776ed6095120720d2dbebc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/storage/evidence/post-archive-host.json": "1b2dfd35902643ae68d373eb5bde83979cedfebfa90be9e825a818c4d871f67a"
+  },
+  "reviewed_wrapper_sha256": "a34e26582ea0f2f8e8e44513bd3ea88997e12c41b464bbd010dc4430d95e965e",
+  "native_build_sha256": "2344144cf959b9c67c26e6a89bcca0507bee73158be3970aac7d7cace21ad5cd",
+  "binary_sha256": "36f486b8c9d722b0ae03d048e3dd7fc1b8d3943bdf0fe11cf13522a50e9541af",
+  "checks": [
+    "Exact retained qualify_once unified patch verified",
+    "Nice19 in both requested unit properties and continuous property admission",
+    "Final independent source/build receipt and binary identity required; all recorded build sources/dependencies/reused objects rehashed at admission",
+    "Both text units inactive and exact vision identity/holders preserved; BDF23 only native contact, BDF47 empty and no other new holder",
+    "Fresh boot/fault/queue/coordination/memory/disk admission and continuous passive identity-race checks",
+    "Single launch, sticky first error, at most one cooperative SIGTERM; uncertain observation cannot prove drain and monitoring is retained",
+    "Success requires unit success/exit0 plus complete passive physical drain and observed admitted native PID/starttick target contact",
+    "All84 raw ordered comparison records match fixed schedule and full baseline output hashes;168 attempts and clean native teardown required"
+  ],
+  "author_mock_tests": {
+    "count": 2,
+    "independently_read": true,
+    "rerun_by_reviewer": false
+  },
+  "limitations": [
+    "Source-only wrapper review does not establish current host admission or native execution success",
+    "Raw events are isolated repeated-projection diagnostics, not full-model throughput or a completed earlier candidate suite",
+    "Backend synchronization safety remains the separately reviewed native child responsibility; no injected live failure tested here"
+  ]
+}

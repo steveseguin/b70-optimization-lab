@@ -1,0 +1,123 @@
+{
+  "passed": true,
+  "source_only": true,
+  "fixture_hashes_verified": true,
+  "graph_sha256": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+  "main_sha256": "eeff4395e1712968f6f0c389493d460a975e5bdc2db365dd94dc98443b71da5f",
+  "sites": [
+    {
+      "layer": 0,
+      "input": "blk.0.gdn.gated",
+      "output": "blk.0.attention",
+      "input_writers": [
+        {
+          "index": 16,
+          "label": "blk.0.gdn.gated",
+          "op": "gdn_norm_gate"
+        }
+      ],
+      "input_readers": [
+        {
+          "index": 17,
+          "label": "blk.0.attention",
+          "op": "gemv"
+        }
+      ],
+      "output_writers": [
+        {
+          "index": 17,
+          "label": "blk.0.attention",
+          "op": "gemv"
+        }
+      ],
+      "output_readers": [
+        {
+          "index": 18,
+          "label": "blk.0.attn.combine",
+          "op": "hc_combine"
+        }
+      ]
+    },
+    {
+      "layer": 23,
+      "input": "blk.23.qsa.y",
+      "output": "blk.23.attention",
+      "input_writers": [
+        {
+          "index": 912,
+          "label": "blk.23.qsa.attention",
+          "op": "qsa_attention"
+        }
+      ],
+      "input_readers": [
+        {
+          "index": 913,
+          "label": "blk.23.attention",
+          "op": "gemv"
+        }
+      ],
+      "output_writers": [
+        {
+          "index": 913,
+          "label": "blk.23.attention",
+          "op": "gemv"
+        }
+      ],
+      "output_readers": [
+        {
+          "index": 914,
+          "label": "blk.23.attn.combine",
+          "op": "hc_combine"
+        }
+      ]
+    },
+    {
+      "layer": 47,
+      "input": "blk.47.qsa.y",
+      "output": "blk.47.attention",
+      "input_writers": [
+        {
+          "index": 1837,
+          "label": "blk.47.qsa.attention",
+          "op": "qsa_attention"
+        }
+      ],
+      "input_readers": [
+        {
+          "index": 1838,
+          "label": "blk.47.attention",
+          "op": "gemv"
+        }
+      ],
+      "output_writers": [
+        {
+          "index": 1838,
+          "label": "blk.47.attention",
+          "op": "gemv"
+        }
+      ],
+      "output_readers": [
+        {
+          "index": 1839,
+          "label": "blk.47.attn.combine",
+          "op": "hc_combine"
+        }
+      ]
+    }
+  ],
+  "allocation_source": [
+    {
+      "line": 1217,
+      "source": "          auto id = allocate(c, b.name, bytes, cat, life);"
+    },
+    {
+      "line": 1218,
+      "source": "          buffers[c][b.name] = {id, n, b.type};"
+    },
+    {
+      "line": 2059,
+      "source": "        auto slot = e->buffers[c].at(b.name);"
+    }
+  ],
+  "limitation": "Source-defined single writers/distinct named allocations support matching retained x/y. Actual native whole-output equality is still mandatory; no execution claimed."
+}

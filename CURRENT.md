@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 24, 03:12 EDT — four-card host: exact attention kernel improvement verified.**
+All 84 paired kernel tests match complete saved baseline outputs. Across three fixed
+real projection cases, candidate GPU event time is about 21.4% of control, with the
+advantage in both execution orders. This is isolated repeated kernel latency, not
+model throughput. Independent review confirms safe exit, empty target cards,
+unchanged vision and no new GPU faults. The next admitted task completes only the
+five missing model prompt pairs after verified storage recovery. Keep separate-run
+timings separate; full candidate correctness remains pending those pairs.
+[Kernel result](experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/RESULT.md).
+
 **October 24, 02:56 EDT — four-card host: storage capacity restored; candidate remains incomplete.**
 All27 closed baseline state batches are verified in27 archives (2.33GB). Removed57,045
 verified duplicate binaries, preserving all JSON and six micro fixtures. USB has11.2GB free;

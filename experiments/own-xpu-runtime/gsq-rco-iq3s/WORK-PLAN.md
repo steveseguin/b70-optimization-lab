@@ -70,3 +70,14 @@ Independent partial readback confirms14 arms/7pairs; next is fixed3-case paired 
 latency/byte equality, then deliberate completion of the remaining five prompt pairs
 under a new bounded identity after source/admission review. Preserve the interrupted
 run and do not combine timing sessions into a full resident throughput claim.
+
+## Exact kernel result — 07:12 UTC
+
+The [paired kernel test](attention-q8-p33/micro/RESULT.md) passed independently:
+84/84 pairs exact, all72 measured pairs retained, summed candidate/control event
+latency0.21412 with both orders improved. Owner exited cleanly and target card drained.
+This supports finishing the unchanged candidate's five missing correctness pairs,
+not an end-to-end speed claim. New completion identity retains original indices7–11,
+12requests/13dumps, original arm ordering and exact baseline comparisons. Its file
+forecast is below57,045 records released by verified archival; monitor capacity and
+retain any failure. Do not rerun the seven passed pairs or merge timing sessions.

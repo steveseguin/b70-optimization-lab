@@ -1,0 +1,48 @@
+{
+  "schema": "ownrt.gsq.attention-micro-independent-source-review.v1",
+  "passed": true,
+  "compile_or_native_execution_by_reviewer": false,
+  "model_or_USB_payload_reads": false,
+  "preparation_sha256": "e3079a60d08c554674b213d2720e3b99cf07cb9a5d4be381c529ddb80f337996",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/runner.cpp": "8c4b534f3df7a58d0b3887cc45b5d1d06b60d2aeee5c67b927c71ce81cd7de5d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/build.py": "2e2a2de91b27fe6bd44b72081170372076a6e8a8bd43d0545ec1e614143f9329",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/prepare.py": "8e9f6967b84824fbbce1f0afb4a8ef48b4ca0db3bc5a0dbb51d92fd600a6cfda",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/manifest.json": "a0e3a0527f305f4243a52fc8015a9389780e8f395ce1153085984d16b0fc1038",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/fixed.hpp": "23b5b815863f95f50a02e6ac07d830d7171bb7a0c7145ec22377532a41a9d6e7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/selected.hpp": "9be7ce5bc767f91904ba58e74f712dc9379d327d5911e332d7296d2b39224ee3",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/test_prep.py": "2028de6f86ca150b9c371aff76e89d3fdba575cec71e4dc8b5ee053657cb1adc",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/README.md": "9b99980550511c955e66916990a3de6a83deae08a935dc8615d8265eaac7876f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/source-pins.json": "dd55f7ab294bf074ccf3ec70c86ddd916e347a10cb884e88ef2c15b472bcf230",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/input-output-source.json": "bdd0583450d814f018476f5ff82c9dc1a1080c26698a9ce1016d266003ce2550",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/evidence/preparation.json": "e3079a60d08c554674b213d2720e3b99cf07cb9a5d4be381c529ddb80f337996"
+  },
+  "closure_files_rehashed": 430,
+  "fixtures_bytes": 52224,
+  "schedule": {
+    "pairs": 84,
+    "kernels": 168,
+    "excluded_warmup_cycles": 4,
+    "measured_cycles": 24,
+    "each_measured_case_position_order_combination": 4
+  },
+  "checks": [
+    "Actual frozen p6 and p33 submitted through captured Device operations, no arithmetic replacement",
+    "Both output byte arrays equal saved full BF16 oracle after every pair; first mismatch halts subsequent pairs",
+    "Timing wait/complete precedes timing query, which precedes retirement",
+    "Fixed three tensors authenticated and expanded before owner construction; bounded read50,135,040B planned only",
+    "Exact retained Backend synchronization precedes shutdown after submission exceptions; uncertain factory/sync/shutdown holds for supervisor",
+    "Pending copy staging blocked; transfer/device budgets source-derived",
+    "One new micro TU plus39 unchanged non-entry objects; strict FP flags and dependency/compiler hashes checked by compile recipe",
+    "Actual graph input/output single-writer/readers independently rederived",
+    "All6 copied fixtures match immutable manifest hashes; no model payload opened"
+  ],
+  "limitations": [
+    "Compile-only clearance is not GPU operational admission",
+    "Program relies on root coordinator for exact BDF/environment/fault/drain admission",
+    "No injected native failure or actual DMA/completion proof performed",
+    "Isolated repeated projections and naturally resulting cache state; not full-engine throughput or cold-cache behavior",
+    "Saved scratch input/output provenance is source-supported; actual native full-output equality remains mandatory",
+    "Incomplete earlier candidate suite is not a full qualification or speed result"
+  ]
+}

@@ -1,0 +1,870 @@
+{
+  "schema": "gsq.attention-q8.micro-preparation.v1",
+  "copied_bytes": 52224,
+  "weight_payload_reads": false,
+  "device_execution": false,
+  "cases": [
+    {
+      "layer": 0,
+      "weight": {
+        "weight": "blk.0.ssm_out.weight",
+        "file_offset": 2061098880,
+        "bytes": 16711680,
+        "payload_sha256": "d6255a7089c51a87f187c809833ba14619c96654f0c47f0b0a2b658096e8638b",
+        "scale_words": 491520,
+        "categories": {
+          "normal": 491520,
+          "subnormal": 0,
+          "positive_zero": 0,
+          "negative_zero": 0,
+          "infinity": 0,
+          "nan": 0
+        },
+        "distinct_half_patterns": 762
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/fixtures/layer-0-input.bin",
+          "bytes": 12288,
+          "sha256": "d14d45d7761ef2682ab6818b194ec9ae0eb1bd0960d351c0656330047219ffcd",
+          "original_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/prompt-00-none/rank0/state-2147483647/blk.0.gdn.gated.bin",
+          "original_stat": [
+            2050,
+            2789318,
+            12288,
+            1792821464206702500,
+            1792821464206702500
+          ]
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/fixtures/layer-0-expected.bin",
+          "bytes": 5120,
+          "sha256": "79404a477e4e14bc15919bb39986828510a6a9835969987ddb34334c0a3c3434",
+          "original_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/prompt-00-none/rank0/state-2147483647/blk.0.attention.bin",
+          "original_stat": [
+            2050,
+            2789306,
+            5120,
+            1792821464202914600,
+            1792821464202914600
+          ]
+        }
+      }
+    },
+    {
+      "layer": 23,
+      "weight": {
+        "weight": "blk.23.attn_output.weight",
+        "file_offset": 25537782016,
+        "bytes": 16711680,
+        "payload_sha256": "c2771712cf5d2f822d77ed5c6361a7deeeb1b03d414743123c4d988c3e609b39",
+        "scale_words": 491520,
+        "categories": {
+          "normal": 491520,
+          "subnormal": 0,
+          "positive_zero": 0,
+          "negative_zero": 0,
+          "infinity": 0,
+          "nan": 0
+        },
+        "distinct_half_patterns": 736
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/fixtures/layer-23-input.bin",
+          "bytes": 12288,
+          "sha256": "e618ffcfae6b11e36bfeb4b1ba2244aa994c6fbb6acc92ce676445fcccbb6905",
+          "original_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/prompt-00-none/rank0/state-2147483647/blk.23.qsa.y.bin",
+          "original_stat": [
+            2050,
+            2790028,
+            12288,
+            1792821464851386500,
+            1792821464851386500
+          ]
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/fixtures/layer-23-expected.bin",
+          "bytes": 5120,
+          "sha256": "092e347fb876368b0fc31f5898973998e512f198a83113c2e9d6eb17550be0a0",
+          "original_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/prompt-00-none/rank0/state-2147483647/blk.23.attention.bin",
+          "original_stat": [
+            2050,
+            2789990,
+            5120,
+            1792821464767235000,
+            1792821464767235000
+          ]
+        }
+      }
+    },
+    {
+      "layer": 47,
+      "weight": {
+        "weight": "blk.47.attn_output.weight",
+        "file_offset": 53620553216,
+        "bytes": 16711680,
+        "payload_sha256": "8ce74f416b47b185cf840c13a6b6d20a180628fdb52c049628d2d3307620685c",
+        "scale_words": 491520,
+        "categories": {
+          "normal": 491520,
+          "subnormal": 0,
+          "positive_zero": 0,
+          "negative_zero": 0,
+          "infinity": 0,
+          "nan": 0
+        },
+        "distinct_half_patterns": 644
+      },
+      "shard": {
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "stat_identity": [
+          2050,
+          2778523,
+          55063448064,
+          1792814866970869300,
+          1792814960708461300
+        ],
+        "file_bytes": 55063448064,
+        "header_bytes_read": 11024355,
+        "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+        "data_start": 11024384,
+        "tensor_count": 1223,
+        "split": {
+          "split.no": 0,
+          "split.count": 2,
+          "split.tensors.count": 1224
+        }
+      },
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/fixtures/layer-47-input.bin",
+          "bytes": 12288,
+          "sha256": "9d242e67548421916868edad4788c519607d6777dac6b038a27915ce167f6450",
+          "original_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/prompt-00-none/rank1/state-2147483647/blk.47.qsa.y.bin",
+          "original_stat": [
+            2050,
+            2791396,
+            12288,
+            1792821467168592100,
+            1792821467168592100
+          ]
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/micro/fixtures/layer-47-expected.bin",
+          "bytes": 5120,
+          "sha256": "f3d68fca809b91eb40ffdfa40fe93e383de34f619b2c197f99c4cfb00c3ce352",
+          "original_path": "/mnt/usb-models/own-xpu-runtime-results/gsq-baseline-a/prompt-00-none/rank1/state-2147483647/blk.47.attention.bin",
+          "original_stat": [
+            2050,
+            2791358,
+            5120,
+            1792821467084881800,
+            1792821467084881800
+          ]
+        }
+      }
+    }
+  ],
+  "schedule": [
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    }
+  ],
+  "allocation_bytes": 106481664,
+  "pinned_transfer_bytes": 1048576,
+  "authority": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/artifact-index.jsonl.gz": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/attention-q8-p33/evidence/scale-census.json": "103fe5152fbd6298371663c28b018846ff69973f015861c4e1be7fd82202fd91",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/review.json": "f662fcecf93c92f90006c09c05d4a4c02e71e84ae9d8c82dbff3fdfc39ebb5bb",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/evidence/full-native-build.json": "5d4643615ad94c0805de75ac7a01806dbb784c7fc09052f90ee04deafc5abd6d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/native-qualification/runner.cpp": "551089b9aa7f93ef39f1fb7f27fafb9f50cfaa3c49a8581d7dc0314e0d04fa5b"
+  }
+}
