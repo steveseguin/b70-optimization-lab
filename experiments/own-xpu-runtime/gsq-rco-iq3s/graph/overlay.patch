@@ -1,0 +1,60 @@
+--- a/packet3/model/directory.hpp
++++ b/packet3/model/directory.hpp
+@@ -23,13 +23,19 @@
+     return "IQ3_S";
+   case Type::IQ4_NL:
+     return "IQ4_NL";
++  case Type::F16: return "F16";
++  case Type::IQ3_XXS: return "IQ3_XXS";
++  case Type::Q4_K: return "Q4_K";
++  case Type::Q5_K: return "Q5_K";
++  case Type::IQ4_XS: return "IQ4_XS";
++  case Type::Q2_0: return "Q2_0";
+   default:
+     throw std::invalid_argument("grid absent from IQ3 census");
+   }
+ }
+ inline Type grid_type(const std::string &name) {
+   for (auto t : {Type::F32, Type::BF16, Type::Q8_0, Type::Q6_K, Type::IQ2_S,
+-                 Type::IQ3_S, Type::IQ4_NL})
++                 Type::IQ3_S, Type::IQ4_NL, Type::F16, Type::IQ3_XXS, Type::Q4_K, Type::Q5_K, Type::IQ4_XS, Type::Q2_0})
+     if (grid_name(t) == name)
+       return t;
+   throw std::invalid_argument("unknown grid");
+--- a/packet2/kernels/math.hpp
++++ b/packet2/kernels/math.hpp
+@@ -1,5 +1,6 @@
+ #pragma once
+ #include <bit>
++#include <stdexcept>
+ #include <cstddef>
+ #include <cstdint>
+ #include "grids.hpp"
+@@ -7,14 +8,16 @@
+ // Original scalar equations from the lab's FORMAT.md, not ggml kernels.
+ // The generated tables are credited normative GGUF format data.
+ namespace iq3 {
+-enum class Type : uint32_t { F32=0,F16=1,Q8_0=8,Q3_K=11,Q6_K=14,
+-                            IQ3_XXS=18,IQ4_NL=20,IQ3_S=21,IQ2_S=22,BF16=30 };
++enum class Type : uint32_t { F32=0,F16=1,Q8_0=8,Q3_K=11,Q4_K=12,Q5_K=13,Q6_K=14,
++                            IQ3_XXS=18,IQ4_NL=20,IQ3_S=21,IQ2_S=22,IQ4_XS=23,BF16=30,Q2_0=42 };
+ struct Layout { uint32_t elements, bytes; };
+ inline constexpr Layout layout(Type t) {
+   switch(t) {
+     case Type::F32:return {1,4};
+     case Type::F16:case Type::BF16:return {1,2};
+     case Type::Q8_0:return {32,34}; case Type::Q3_K:case Type::IQ3_S:return {256,110};
++    case Type::Q4_K:return {256,144}; case Type::Q5_K:return {256,176};
++    case Type::IQ4_XS:return {256,136}; case Type::Q2_0:return {64,18};
+     case Type::Q6_K:return {256,210}; case Type::IQ3_XXS:return {256,98};
+     case Type::IQ4_NL:return {32,18}; case Type::IQ2_S:return {256,82};
+   }
+@@ -54,6 +57,8 @@
+   return uint16_t(sign|value);
+ }
+ inline float decode(Type t,const uint8_t* b,uint32_t i) {
++  if(t==Type::Q4_K||t==Type::Q5_K||t==Type::IQ4_XS||t==Type::Q2_0)
++    throw std::logic_error("graph-only added format: numeric execution forbidden");
+   // Build contract: no FMA contraction, reassociation, fast math or FTZ.
+   if(t==Type::F32) return bits_float(u32(b));
+   if(t==Type::F16) return half(u16(b));

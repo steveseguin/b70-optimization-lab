@@ -33,13 +33,14 @@ and CPU comparison oracles, not an imported inference runtime.
 | MTP control | [CPU bridge](mtp/README.md): 17 tests of inherited controller and metadata compatibility pass. Proposals and target recurrence are synthetic. |
 | Weight arithmetic | [Decoder proof](formats/README.md): 6,780 cases and twelve real rows pass exact CPU comparisons; no GPU equivalence yet. |
 | Full graph | CPU graph construction passes eight tests: 1,873 launches and 2,065 buffers preserve topology. Raw weights plus logical buffers use 25.84/29.07 GB across ranks, excluding expansion, scratch and draft costs; no fit claim. |
+| Primitive coefficients | [Upload conversion](controls/README.md) passes exhaustive half/BF16 checks; actual graph needs only F16 PLE widening, adding 81,920 bytes. |
 | Native inference | Not admitted; format dispatch, loading and changed primitive weights still need integration and device qualification. |
 | Speed | Unmeasured for this model, both target-only and MTP. |
 
 The model label does not describe every tensor. New support includes Q2_0,
 Q4_K, Q5_K and IQ4_XS. Existing IQ3_XXS and F16 scalar support must also reach
 the selected runtime paths. Expert gate/up mixes four formats, expert down
-includes Q2_0, HC projections and many controls are now BF16, and PLE
+includes Q2_0, HC projections and many small projection matrices are now BF16, and PLE
 convolution is F16. The old Q8/F32 HC fusion and IQ4_NL-only expert-down
 specialization cannot be reused unchanged. The new target has two shards;
 the existing authenticated loader expects three.
@@ -75,6 +76,7 @@ helpers use bounded memory, helper cores and low priority. Model payloads,
 binaries and temporary row samples stay outside tracked artifacts. Existing
 frozen runtime packets and failed attempts remain unchanged.
 
-Next steps are to finish decoder and graph checks, implement the additive
-native loading/dispatch changes, qualify target-only output, then qualify MTP
+Next steps are to implement the additive native loading/dispatch changes
+outlined in the [source audit](native-integration-audit.md), qualify target-only
+output, then qualify MTP
 against that same target before measuring any speed benefit.

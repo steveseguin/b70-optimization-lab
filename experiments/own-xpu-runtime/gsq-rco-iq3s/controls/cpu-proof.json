@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "half_encodings": 65536,
+  "bf16_encodings": 65536,
+  "f32_bytes_preserved": 262144,
+  "refusals": 5,
+  "device_executed": false,
+  "command": [
+    "/usr/bin/g++",
+    "-std=c++20",
+    "-O2",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-MMD",
+    "-MF",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/controls/build/20261024T044313499400Z/deps.d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/controls/test_upload.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/controls/build/20261024T044313499400Z/test-upload"
+  ],
+  "compiler_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+  "sources": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/upload.hpp": "06faa21c3d2b5bf2c73613fc64f32395099f07c4d16d488e59204c1b1ac69848",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/test_upload.cpp": "20366a1bac0efb54301a6d3abfe98e57b2d031c1da9b5fd9f83b6c73647d9393",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/build_cpu.py": "dac39d39817df5ad49840d512f42c988f15670c784443b94c89b0cc07720863b",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4"
+  },
+  "dependencies": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/test_upload.cpp": "20366a1bac0efb54301a6d3abfe98e57b2d031c1da9b5fd9f83b6c73647d9393",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/upload.hpp": "06faa21c3d2b5bf2c73613fc64f32395099f07c4d16d488e59204c1b1ac69848",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9"
+  },
+  "binary_sha256": "273818cb35e3f11396de34f9a5d21007e43b7cd72d2e554c9da4a08ede876215",
+  "manifest_sha256": "d43ca3847d8e0442fb237f8426bac461a5bb7fc39b37f5a6e3205603877b60b9",
+  "attempt": "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/build/20261024T044313499400Z",
+  "native_integrated": false
+}

@@ -1,0 +1,29 @@
+--- a/build_cpu.py
++++ b/build_cpu.py
+@@ -1,14 +1,16 @@
+ """One bounded host conversion test; no devices, services or model payloads."""
+-import hashlib, importlib.util, json, os, resource, shutil, subprocess
++import hashlib, importlib.util, json, os, resource, shutil, subprocess, sys
+ from datetime import datetime, timezone
+ from pathlib import Path
+ P=Path(__file__).resolve().parent
+ R=P.parents[3]
+ def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+-def main():
++def limits():
+     assert os.getpriority(os.PRIO_PROCESS,0)==19
+     assert set(os.sched_getaffinity(0)) <= set(range(8,16))|set(range(24,32))
+     assert shutil.disk_usage('/').free > 27_000_000_000+20*1024**2
++def main():
++    limits()
+     resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+     resource.setrlimit(resource.RLIMIT_CPU,(120,120))
+     source=[P/'upload.hpp',P/'test_upload.cpp',P/'build_cpu.py',R/'experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp']
+@@ -32,6 +34,7 @@
+     spec=importlib.util.spec_from_file_location('controls_compile_turn',path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+     command=['/usr/bin/g++','-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-MMD','-MF',str(b/'deps.d'),str(P/'test_upload.cpp'),'-o',str(b/'test-upload')]
+     compiler=sha(Path(command[0]).resolve())
++    sys.modules["build_engine"]=sys.modules[__name__]
+     with m.turn(),(b/'compile.log').open('w') as log:
+         subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=120)
+     run=subprocess.run([str(b/'test-upload')],capture_output=True,text=True,check=True,timeout=30)

@@ -1,0 +1,121 @@
+{
+  "schema": "ownrt.gsq-rco.graph-cpu.v1",
+  "passed": true,
+  "native_admitted": false,
+  "device_executed": false,
+  "numeric_execution": false,
+  "source_sha256": {
+    "prepare_overlay.py": "0ffe11685ac387a84bc18deb9b6c851fd94d6d9951e43a88b562524a2c0cdce5",
+    "bridge.py": "703e8443224ce1b343779d8617631964d60692d6898de7b3bf856e9be790260d",
+    "bridge.cpp": "e511c23bf28d9d1a5971cf77342de43331e589f541b9b1abc4e5c557d6a43a65",
+    "build_engine.py": "33808510e6d93aa71cb25aef4f6201dea0bb055e4589c0b0ec199914d73d7f08",
+    "test_bridge.py": "2554f47dd1d6818e513d4ee01563414336e0825d92ac492beffc34d1538169a1",
+    "parent-pins.json": "650f1d6fde54b3dc28a9705292c21e509ce9c93b41c7e8dbd2a2ee491e30eab4"
+  },
+  "attempt": "evidence/cpu-1792816700397341547",
+  "compiler_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+  "overlay": {
+    "schema": "ownrt.gsq-rco.graph-overlay.v1",
+    "native_admitted": false,
+    "numeric_execution": false,
+    "parent_sha256": {
+      "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+      "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+      "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "experiments/own-xpu-runtime/stage2/packet3/step/main.cpp": "60f75e845e040f22db5bc08afc9a1846c2179fe20b94f7a39f02fd6afbe8aacc",
+      "experiments/own-xpu-runtime/stage2/packet3/model/plan.py": "ac0b5f30e9cbad06e26af6c38dff5f36873c695a3af1eaed677201b809a9014a",
+      "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c",
+      "experiments/own-xpu-runtime/ops/compile_turn.py": "c9528d50e0b424753359f8dbf8a0198267d10afd203a3ede4f812e41264057ca",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/census.py": "753abbe6ee01f1f3fd53576e858f05533997e2d2f97ddac2cdf443018e5b44ec",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/old-census.json": "8f8b76de87399da77cfc0324239f8ad12c5f4f90a7a280b44ecc39798bfdcebf",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/receipt.json": "63f066de7523958ddfef25e6289655179bda0c8adebe7bc696ab590144384528",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/compatibility-delta.json": "c30d0024ca8a4c748bb81704c2a3f444f8c2693ece7c924f453ca0a967ef2d8e"
+    },
+    "private_sha256": {
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet3/model/directory.hpp": "003753617249165632e5a3cd46fc9631a008d084670ac02023c589217cb8e6a9",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet2/kernels/math.hpp": "b3746af233798260d7692b04fbe051925c23571392866d4f2b7cc14e98ad7356",
+      "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9"
+    },
+    "patch_sha256": "0d904b4940e94fadfee91b6106d0bb55ec25985e22ca0d0559d3e5613147e2b8",
+    "scope": "Only type enum/layout/name admission changes; added decoder paths explicitly throw. Actual packet3 graph topology/geometry untouched."
+  },
+  "compile_command": [
+    "/usr/bin/g++",
+    "-std=c++20",
+    "-O2",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-MMD",
+    "-MF",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/graph-bridge.d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/bridge.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/graph-bridge"
+  ],
+  "compile_returncode": 0,
+  "repository_dependencies": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/bridge.cpp": "e511c23bf28d9d1a5971cf77342de43331e589f541b9b1abc4e5c557d6a43a65",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet3/model/directory.hpp": "003753617249165632e5a3cd46fc9631a008d084670ac02023c589217cb8e6a9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet2/kernels/math.hpp": "b3746af233798260d7692b04fbe051925c23571392866d4f2b7cc14e98ad7356",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/private/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9"
+  },
+  "binary_sha256": "2340b4c24ef992c6acda4222279a881afe5153dac5298217a612813b94c3b9d1",
+  "old_command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/graph-bridge",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/old-directory.tsv",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/old-directory.tsv",
+    "4096"
+  ],
+  "new_command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/build/graph-bridge",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-directory.tsv",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-directory.tsv",
+    "4096"
+  ],
+  "topology_identical": true,
+  "tests": 8,
+  "launches": 1873,
+  "buffers": 2065,
+  "tensor_count": 1224,
+  "per_card": [
+    {
+      "card": 0,
+      "raw_resident_weight_bytes": 25739449600,
+      "logical_buffer_bytes": 95960180,
+      "raw_weights_plus_logical_buffers": 25835409780
+    },
+    {
+      "card": 1,
+      "raw_resident_weight_bytes": 28975258880,
+      "logical_buffer_bytes": 96181196,
+      "raw_weights_plus_logical_buffers": 29071440076
+    }
+  ],
+  "host_file_backed_bytes": 29137853440,
+  "artifact_sha256": {
+    "overlay.patch": "0d904b4940e94fadfee91b6106d0bb55ec25985e22ca0d0559d3e5613147e2b8",
+    "overlay.json": "c2963baeb6c6d577f3e3577608c8b2afd53b1e6756ad5339f1a363d531719044",
+    "old-directory.tsv": "8352dc77cdb0e584068274b388b14bfba716ff315ff613bbe4ba67f62fd58507",
+    "new-directory.tsv": "bd3c0878081aabbbb5d5457be3f9d33d3e745f29e713aa0eb57eb65462a43ae0",
+    "old-plan.json": "bf2815e0536955398cb93bf691f6d341ba9ed4278b543f4622ce5e77a0979c2c",
+    "new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+    "accounting.json": "850a6ae8b5f8d0037507fb8dcd3ad78433f7fa4e3aeed32928c79bcbdf3ceac7",
+    "evidence/cpu-1792816700397341547/old-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/cpu-1792816700397341547/test_bridge.py": "2554f47dd1d6818e513d4ee01563414336e0825d92ac492beffc34d1538169a1",
+    "evidence/cpu-1792816700397341547/tests.log": "ae54c1074089de4c18a0a69dfedcd4cc1e61f27cff23a635fd04d272dac8753e",
+    "evidence/cpu-1792816700397341547/build_engine.py": "33808510e6d93aa71cb25aef4f6201dea0bb055e4589c0b0ec199914d73d7f08",
+    "evidence/cpu-1792816700397341547/bridge.cpp": "e511c23bf28d9d1a5971cf77342de43331e589f541b9b1abc4e5c557d6a43a65",
+    "evidence/cpu-1792816700397341547/parent-pins.json": "650f1d6fde54b3dc28a9705292c21e509ce9c93b41c7e8dbd2a2ee491e30eab4",
+    "evidence/cpu-1792816700397341547/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/cpu-1792816700397341547/bridge.py": "703e8443224ce1b343779d8617631964d60692d6898de7b3bf856e9be790260d",
+    "evidence/cpu-1792816700397341547/prepare_overlay.py": "0ffe11685ac387a84bc18deb9b6c851fd94d6d9951e43a88b562524a2c0cdce5",
+    "evidence/cpu-1792816700397341547/new-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
