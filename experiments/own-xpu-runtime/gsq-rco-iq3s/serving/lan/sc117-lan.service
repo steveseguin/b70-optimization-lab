@@ -1,0 +1,20 @@
+# SC117 Qwen3.8 Flash-Next IQ3_S on the corrected own-runtime engine, LAN chat API.
+# Installed copy: ~/.config/systemd/user/sc117-lan.service (not enabled: never starts at boot).
+# Start: systemctl --user start sc117-lan   Stop: systemctl --user stop sc117-lan
+[Unit]
+Description=SC117 Flash-Next IQ3_S own-runtime LAN chat API (cards 23:00.0 + 47:00.0)
+
+[Service]
+Type=simple
+WorkingDirectory=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan
+ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/service.py --bind 192.168.2.44 --port 18160
+# No restart policy, no SIGKILL: on stop the coordinator FINISHes both ranks and waits for drain.
+Restart=no
+KillMode=process
+KillSignal=SIGTERM
+SendSIGKILL=no
+TimeoutStopSec=infinity
+LimitAS=infinity
+LimitCORE=0
+Nice=19
+CPUAffinity=0-3 16-19
