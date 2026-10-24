@@ -52,18 +52,18 @@ template<bool F=false> struct BlockOperation final:
   // Outer command owns by-value pointers/shape/dependencies. No caller span or
   // operation object survives by reference in the prepared callback.
   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<BlockKernel<F>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
-   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id(),row=logical%b.s.rows;const unsigned slot=logical/b.s.rows;
+   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id();const auto rs=gsqn::row_slot(b.s,logical);const size_t row=rs.first;const unsigned slot=rs.second;
    const auto r=b.routes?b.routes[slot]:iq3::Route{0,0,uint32_t(b.s.rows)};const bool valid=iq3::valid_route(r,b.s.experts,uint32_t(b.s.rows),uint32_t(b.s.rows)),active=valid&&row<r.row_count;
    float sum=active?block_lane_sum<F>(b,r,row,slot,lane):0.f;
    for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
-   if(lane==0){gsqn::act_out<F>(b.y,logical,active?sum:iq3::bits_float(0x7fc00000));if(row==0&&b.status)b.status[slot]=!valid;}
+   if(lane==0){gsqn::act_out<F>(b.y,size_t(slot)*b.s.rows+row,active?sum:iq3::bits_float(0x7fc00000));if(row==0&&b.status)b.status[slot]=!valid;}
   }));});
  }
 #endif
 };
 inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
  require(selected(label,weight),"IQ3 block exact gate/up site identity");
- require(unsigned(m.type)==18&&m.rows==640&&m.columns==2560&&m.count==10&&m.experts==512&&m.span==640&&m.routes&&m.status,"IQ3 block exact routed geometry");
+ require(unsigned(m.type)==18&&m.rows==640&&m.columns==2560&&m.count%10==0&&m.count>=10&&m.count<=10*gsqn::max_tokens&&m.tokens==1&&m.experts==512&&m.span==640&&m.routes&&m.status,"IQ3 block exact routed geometry");
  require(input==gsqn::InputMode::per_slot,"IQ3 block requires original gathered per-slot input");
  const auto shape=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
  std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes,m.status};

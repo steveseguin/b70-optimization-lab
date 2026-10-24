@@ -178,9 +178,22 @@ Event Device::compute(const Operation& op, std::span<const Allocation> buffers, 
   if(!events_.empty())storage[n++]=events_.back();
   std::span<const Event> chain(storage.data(),n);
   assert_local_dependencies(chain,bound->queue);
+  std::array<void*,64> viewed{};std::span<void*const> pointers(bound->pointers);
+  if(view_row>=0&&!row_views.empty()) {
+    if(bound->pointers.size()>viewed.size())throw std::length_error("row view binding bound");
+    for(std::size_t i=0;i<bound->pointers.size();++i) {
+      auto found=row_views.find(bound->ids[i]);
+      if(found==row_views.end()){viewed[i]=bound->pointers[i];continue;}
+      const auto& v=found->second;const auto& t=arena.row(v.target);
+      if(!t.live||t.memory!=Memory::device||queue_of(t)!=bound->queue)throw std::logic_error("row view target ownership");
+      if(v.alternate)viewed[i]=(view_row&1)?t.pointer:bound->pointers[i];
+      else {if((std::size_t(view_row)+1)*v.stride>t.bytes)throw std::out_of_range("row view extent");viewed[i]=static_cast<unsigned char*>(t.pointer)+std::size_t(view_row)*v.stride;}
+    }
+    pointers=std::span<void*const>(viewed.data(),bound->pointers.size());
+  }
   if(before_compute)before_compute();
   try {
-    auto e=backend_->compute(op,bound->pointers,chain); events_.push_back(e); remember(e,bound->queue);if(after_compute)after_compute(e);return e;
+    auto e=backend_->compute(op,pointers,chain); events_.push_back(e); remember(e,bound->queue);if(after_compute)after_compute(e);return e;
   } catch(const std::exception& e) {fault_=e.what(); throw;}
 }
 Event Device::capture_operation(const Operation& op,std::shared_ptr<const Operation> owned,std::span<const Allocation> ids) {

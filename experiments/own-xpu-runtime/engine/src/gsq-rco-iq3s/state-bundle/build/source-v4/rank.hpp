@@ -264,6 +264,7 @@ static void pipeline_cancel_check() {
 }
 #include "stage2/packet194-expert-diet-engine/rank_canary.hpp"
 #include "stage2/packet194-expert-diet-engine/request_reset.hpp"
+#include "gsq-rco-iq3s/state-bundle/build/source-v4/prefill_wire.hpp"
 #include "stage2/packet194-expert-diet-engine/native_controller.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/bracket_boundary.hpp"
@@ -273,6 +274,7 @@ static int run_rank(const Options& a) {
  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
  std::unique_ptr<p105::Runtime> head_runtime;bool native_active=false;
  int fd=-1;void* mapping=MAP_FAILED;std::string error,selection_observed_sha256;std::vector<std::string> teardown;
+ int prefill_fd=-1;void* prefill_map=MAP_FAILED;size_t prefill_map_bytes=0;uint8_t* prefill_base=nullptr;
  pipeline_stop_fd=a.stop_fd;
  try {
   require(a.channel>=0&&a.stop_fd>=0&&!a.shared.empty(),"rank IPC arguments required");
@@ -286,6 +288,16 @@ static int run_rank(const Options& a) {
   if(a.f32_activations)require(!engine->v3_active&&!engine->kio_active&&!engine->prepare_async&&!engine->split_head()&&engine->sealed_selection.choices.at("probe")=="off"&&a.gsq_packed&&a.draft_rank==0,"exact F32 activations: unsupported optional path/selection");
   if(engine->split_head())head_runtime=std::make_unique<p105::Runtime>(*engine);
   if(a.rank==0)banks(*engine);else {engine->prepare_plan();engine->prepare_commands();}
+  if(a.prefill_rows) {
+   engine->prefill_allocate();
+   require(!a.prefill_shared.empty(),"batched prefill requires --prefill-shared");
+   prefill_map_bytes=prefill::bytes(size_t(a.prefill_rows),engine->stream_bytes());
+   prefill_fd=::open(a.prefill_shared.c_str(),O_RDWR|O_NOFOLLOW);require(prefill_fd>=0,"prefill shared open");struct stat pst{};
+   require(!fstat(prefill_fd,&pst)&&size_t(pst.st_size)==prefill_map_bytes,"prefill shared extent");
+   prefill_map=mmap(nullptr,prefill_map_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,prefill_fd,0);require(prefill_map!=MAP_FAILED,"prefill shared mmap");
+   prefill_base=static_cast<uint8_t*>(prefill_map);const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
+   require(h.magic==prefill::magic&&h.version==prefill::version&&h.rows==uint32_t(a.prefill_rows)&&h.stream_bytes==engine->stream_bytes(),"prefill shared header");
+  }
   auto& head_box=*reinterpret_cast<p105::Mailbox*>(static_cast<uint8_t*>(mapping)+reverse_offset);
   static_assert(sizeof(p105::Mailbox)<=slot_bytes);
   if(head_runtime&&a.rank==1){
@@ -350,6 +362,14 @@ static int run_rank(const Options& a) {
     require(engine->correction_exchange_calls==((completing_redo&&engine->sealed_selection.choices.at("probe")=="xchg")?96:0),"p149 corrected-half exchange census");
     if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
    }
+   else if(r.op==prefill::op){
+    require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture==0||r.fixture==1)&&!r.speculative,"prefill command");
+    const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
+    const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
+    if(a.rank==0)engine->prefill_chunk(r.position,h.tokens,r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
+    else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S),prefill::reverse(prefill_base,r.fixture,R,S));
+    response.busy_ms=Engine::ms(before);response.bytes=int32_t(size_t(r.token)*S);
+   }
    else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;v3_accepted(*engine,v3state,c);c={};}
    else if(r.op==v3::boundary_op){response=v3_boundary_step(*engine,v3state,r,static_cast<uint8_t*>(mapping),c);}
    else if(r.op==rollback){
@@ -392,6 +412,7 @@ static int run_rank(const Options& a) {
      else {
       auto cfg=native38::config(a.shared.parent_path()/"native-request.txt",engine->p.g.context,engine->p.g.vocab);cfg.draft_rank=a.draft_rank;
       native38::Backend backend(mailbox,bytes,a.seconds,execute,cancel);
+      backend.prefill=prefill_base;backend.prefill_rows=a.prefill_rows;backend.prefill_stream=a.prefill_rows?engine->stream_bytes():0;
       backend.split_replay=engine->sealed_selection.choices.at("probe")=="split";
       backend.correction_probe=engine->sealed_selection.choices.at("probe")=="xchg";
       if(head_runtime)backend.before_remote_wait=[&](const Request& req){if(req.op==half&&req.fixture>0)head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,[&]{cancel();require(!native38::load(mailbox.abort),"p105 native peer failed");});};
@@ -428,6 +449,7 @@ static int run_rank(const Options& a) {
  provider.reset();
  if(engine){try{teardown=engine->shutdown();}catch(const std::exception& ex){error+=(error.empty()?"":"; ")+std::string(ex.what());}engine.reset();}
  weights.reset();if(mapping!=MAP_FAILED)munmap(mapping,shared_bytes);if(fd>=0)::close(fd);
+ if(prefill_map!=MAP_FAILED)munmap(prefill_map,prefill_map_bytes);if(prefill_fd>=0)::close(prefill_fd);
  std::ostringstream o;o<<"{\"schema\":\"packet32.rank.v1\",\"passed\":"<<(error.empty()?"true":"false")<<",\"rank\":"<<a.rank<<",\"error\":"<<ownrt::quote(error)<<",\"arithmetic\":"<<ownrt::quote(arithmetic::version)<<",\"device_executed\":"
 #ifdef OWN_RT_HOST_ONLY
  <<"false"

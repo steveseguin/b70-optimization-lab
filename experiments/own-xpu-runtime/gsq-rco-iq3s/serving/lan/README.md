@@ -88,10 +88,21 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-24 ~15:38 EDT the service runs engine `32654dfb2fde` (receipt
-[../../../engine/receipts/32654dfb2fde.json](../../../engine/receipts/32654dfb2fde.json)), built from the canonical
-source tree [../../../engine/](../../../engine/), through [adapter5.py](adapter5.py) with `SC117_ACTIVATIONS=f32`
-(set in [sc117-lan.service](sc117-lan.service)).
+Since 2026-10-24 17:32 EDT the service runs engine `6fd6eaa7c622` (receipt
+[../../../engine/receipts/6fd6eaa7c622.json](../../../engine/receipts/6fd6eaa7c622.json)), built from the canonical
+source tree [../../../engine/](../../../engine/). It goes through [adapter6.py](adapter6.py) with
+`SC117_ACTIVATIONS=f32` and `SC117_PREFILL_ROWS=16`, both set in [sc117-lan.service](sc117-lan.service).
+- **Batched prefill.**
+  - Prompts are read in 16-row chunks on both cards, with the last two prompt tokens read token by token.
+  - A one-time startup gate showed batched and token-by-token runs identical: tokens, MTP guesses and the full target
+    state on both cards ([evidence](evidence/prefill-6fd6eaa7c622047d-rows16.json),
+    [result](../../service-speed/b-prefill/RESULT.md)).
+  - A 581-token prompt reads in 11.9 s instead of 16.1 s.
+  - If the gate fails, requests fall back to token-by-token prefill.
+  - The binary and its objects are in `/dev/shm/engine-build-pf1`; a reboot loses them, and `engine/build.py`
+    rebuilds them from the tree.
+- The token-by-token path of this binary reproduces engine 32654dfb exactly: the same F32 self-test and the same suite
+  outputs, checked by the gate.
 - **Exact 32-bit mode (owner's choice: quality first).**
   - Activations, router and expert outputs, HC streams and the attention KV cache are all F32. There is no intermediate
     BF16 rounding, and RoPE uses an F32 table.

@@ -6,16 +6,23 @@
 #endif
 #include "device_formats.hpp"
 #include <array>
+#include <utility>
 namespace gsqn {
 enum class InputMode {shared,per_slot};
 enum class Storage {packed_direct};
 inline void require(bool b,const char*s){if(!b)throw std::invalid_argument(s);}
 inline size_t multiply(size_t a,size_t b){require(!b||a<=SIZE_MAX/b,"GSQ extent overflow");return a*b;}
-struct Shape {size_t rows,columns,row_bytes;uint32_t count,experts;bool routed,per_slot,f32=false;};
+// row_major: dense token rows (count = tokens, per-slot input), work-groups ordered so tokens sharing a weight row
+// run together. Output index is always slot*rows+row, so the original slot-major mapping is unchanged.
+struct Shape {size_t rows,columns,row_bytes;uint32_t count,experts;bool routed,per_slot,f32=false,row_major=false;};
+// Inverse of the work-group order: {row, slot}.
+inline std::pair<size_t,unsigned> row_slot(const Shape& s,size_t logical){if(s.row_major)return {logical/s.count,unsigned(logical%s.count)};return {logical%s.rows,unsigned(logical/s.rows)};}
 // Activation storage helpers shared by every packed GEMV family. F=false: BF16 (tuned default); F=true: F32
 // exact mode. Pointers keep their BF16 declared type; F32 reinterprets and indexes in float elements.
 template<bool F> inline float act_in(const uint16_t*x,size_t i){if constexpr(F)return reinterpret_cast<const float*>(x)[i];else return iq3::bits_float(uint32_t(x[i])<<16);}
 template<bool F> inline void act_out(uint16_t*y,size_t i,float v){if constexpr(F)reinterpret_cast<float*>(y)[i]=v;else y[i]=iq3::bf16_bits(v);}
+// Upper bound on token rows per launch (batched prefill chunk); routed sites carry 10 slots per token.
+inline constexpr uint32_t max_tokens=64;
 struct Bound {Shape s;const uint8_t*w;const uint16_t*x;uint16_t*y;const iq3::Route*routes;uint32_t*status;};
 template<unsigned T,bool F=false> inline float lane_sum(const Bound&b,const iq3::Route&r,size_t row,unsigned slot,unsigned lane){
  constexpr size_t elements=T==42?64:256;constexpr size_t bytes=T==42?18:T==12?144:T==13?176:T==23?136:98;
@@ -49,11 +56,11 @@ template<unsigned T,bool F=false> struct PackedOperation final:
   // Outer command owns by-value pointers/shape/dependencies. No caller span or
   // operation object survives by reference in the prepared callback.
   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<PackedKernel<T,F>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
-   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id(),row=logical%b.s.rows;const unsigned slot=logical/b.s.rows;
+   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id();const auto rs=row_slot(b.s,logical);const size_t row=rs.first;const unsigned slot=rs.second;
    const auto r=b.routes?b.routes[slot]:iq3::Route{0,0,uint32_t(b.s.rows)};const bool valid=iq3::valid_route(r,b.s.experts,uint32_t(b.s.rows),uint32_t(b.s.rows)),active=valid&&row<r.row_count;
    float sum=active?lane_sum<T,F>(b,r,row,slot,lane):0.f;
    for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
-   if(lane==0){act_out<F>(b.y,logical,active?sum:iq3::bits_float(0x7fc00000));if(row==0&&b.status)b.status[slot]=!valid;}
+   if(lane==0){act_out<F>(b.y,size_t(slot)*b.s.rows+row,active?sum:iq3::bits_float(0x7fc00000));if(row==0&&b.status)b.status[slot]=!valid;}
   }));});
  }
 #endif
@@ -63,12 +70,12 @@ inline Shape validate(ownrt::Device&d,const integrated::Matrix&m,InputMode input
  require(storage==Storage::packed_direct,"GSQ packed direct storage only");const auto t=unsigned(m.type);require(t==12||t==13||t==18||t==23||t==42,"GSQ unsupported packed type");
  const bool f32=m.activation==iq3::Type::F32;
  require(!m.fp32&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(f32&&m.output_type==iq3::Type::F32)),"GSQ activation/output must be both BF16 or both F32");
- require(m.rows&&m.rows<=248320&&m.columns&&m.columns<=10240&&m.count&&m.count<=10&&m.experts&&m.experts<=512,"GSQ geometry bound");
+ require(m.rows&&m.rows<=248320&&m.columns&&m.columns<=10240&&m.count&&m.count<=10*max_tokens&&m.experts&&m.experts<=512&&m.tokens&&m.tokens<=max_tokens,"GSQ geometry bound");
  require(!m.span||m.span==m.rows,"GSQ full route span only");
- const bool routed=bool(m.routes);require(routed?bool(m.status):(m.count==1&&m.experts==1&&!m.status&&input==InputMode::shared),"GSQ routes/status identity");
- const size_t rb=gsq::row_bytes(t,m.columns);Shape s{m.rows,m.columns,rb,m.count,m.experts,routed,input==InputMode::per_slot,f32};const size_t ab=f32?4:2;
+ const bool routed=bool(m.routes);require(routed?bool(m.status)&&m.tokens==1:(m.count==1&&m.experts==1&&!m.status&&(m.tokens==1?input==InputMode::shared:input==InputMode::per_slot)),"GSQ routes/status identity");
+ const size_t rb=gsq::row_bytes(t,m.columns);Shape s{m.rows,m.columns,rb,routed?m.count:m.tokens,m.experts,routed,input==InputMode::per_slot,f32,!routed&&m.tokens>1};const size_t ab=f32?4:2;
  std::array<ownrt::Allocation,5> ids{m.w,m.x,m.y,m.routes,m.status};
- const size_t sizes[]{multiply(multiply(m.rows,m.experts),rb),multiply(multiply(m.columns,s.per_slot?m.count:1),ab),multiply(multiply(m.rows,m.count),ab),multiply(m.count,sizeof(iq3::Route)),multiply(m.count,4)};
+ const size_t sizes[]{multiply(multiply(m.rows,m.experts),rb),multiply(multiply(m.columns,s.per_slot?s.count:1),ab),multiply(multiply(m.rows,s.count),ab),multiply(m.count,sizeof(iq3::Route)),multiply(m.count,4)};
  const size_t alignment[]{1,ab,ab,alignof(iq3::Route),4};
  for(size_t i=0;i<(routed?5:3);++i){require(ids[i]!=0,"GSQ null binding");const auto&r=d.arena.row(ids[i]);require(r.live&&r.memory==ownrt::Memory::device&&r.bytes>=sizes[i]&&uintptr_t(r.pointer)%alignment[i]==0,"GSQ live extent/alignment");for(size_t j=0;j<i;++j)require(ids[i]!=ids[j],"GSQ distinct operand allocations required");}
  return s;

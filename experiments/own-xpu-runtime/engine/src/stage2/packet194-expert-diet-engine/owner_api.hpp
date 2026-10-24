@@ -1,5 +1,6 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #pragma once
+#include <unordered_map>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -142,6 +143,14 @@ class Device {
   std::function<void(Event)> after_compute;
   std::ostream* argument_audit=nullptr;
   bool audit_prepare_each=false;
+  // Row views: replay an unchanged single-row operation on row `row` of multi-row storage. While row>=0, every
+  // type-erased compute() binding whose allocation has a view is redirected: `stride` views point at
+  // target.pointer+row*stride; `alternate` views point at the target on odd rows and at the allocation itself on even
+  // rows (recurrent bank alternation, as consecutive single-row steps would swap banks). Prepared (captured) commands
+  // are never redirected; callers replay through compute(). The kernel, its arguments and its arithmetic are unchanged.
+  struct RowView {Allocation target=0;std::size_t stride=0;bool alternate=false;};
+  std::unordered_map<Allocation,RowView> row_views;
+  int view_row=-1;
   explicit Device(std::unique_ptr<Backend>);
   Device(const Device&) = delete;
   Device& operator=(const Device&) = delete;

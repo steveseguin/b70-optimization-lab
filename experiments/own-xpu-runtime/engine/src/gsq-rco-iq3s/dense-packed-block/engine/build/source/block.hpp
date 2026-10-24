@@ -69,11 +69,11 @@ template<unsigned T,bool F=false> struct DenseBlockOperation final:
   // Outer command owns by-value pointers/shape/dependencies. No caller span or
   // operation object survives by reference in the prepared callback.
   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<DenseBlockKernel<T,F>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
-   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id(),row=logical%b.s.rows;const unsigned slot=logical/b.s.rows;
+   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id();const auto rs=gsqn::row_slot(b.s,logical);const size_t row=rs.first;const unsigned slot=rs.second;
    const auto r=b.routes?b.routes[slot]:iq3::Route{0,0,uint32_t(b.s.rows)};const bool valid=iq3::valid_route(r,b.s.experts,uint32_t(b.s.rows),uint32_t(b.s.rows)),active=valid&&row<r.row_count;
    float sum=active?block_lane_sum<T,F>(b,r,row,slot,lane):0.f;
    for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
-   if(lane==0){gsqn::act_out<F>(b.y,logical,active?sum:iq3::bits_float(0x7fc00000));if(row==0&&b.status)b.status[slot]=!valid;}
+   if(lane==0){gsqn::act_out<F>(b.y,size_t(slot)*b.s.rows+row,active?sum:iq3::bits_float(0x7fc00000));if(row==0&&b.status)b.status[slot]=!valid;}
   }));});
  }
 #endif
@@ -82,7 +82,7 @@ template<unsigned T,bool F=false> struct DenseBlockOperation final:
 inline const Site& policy(const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
  const auto*s=selected(label,weight);require(s,"dense block exact census site");
  require(unsigned(m.type)==s->type&&m.rows==s->rows&&m.columns==2560&&m.span==m.rows,"dense block exact geometry/type/span");
- require(m.count==1&&m.experts==1&&!m.routes&&!m.status&&input==gsqn::InputMode::shared,"dense block original dense shared input");
+ require(m.count==1&&m.experts==1&&!m.routes&&!m.status&&(m.tokens==1?input==gsqn::InputMode::shared:input==gsqn::InputMode::per_slot),"dense block dense input: shared, or per-slot token rows");
  require(!m.fp32&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32)),"dense block activation/output both BF16 or both F32");
  require(gsq::row_bytes(s->type,m.columns)*m.rows==s->bytes,"dense block exact packed extent");return *s;
 }

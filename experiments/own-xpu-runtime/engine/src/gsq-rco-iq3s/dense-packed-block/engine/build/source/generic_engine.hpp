@@ -28,12 +28,18 @@ void gsq_load(int c, const std::string& name) {
   }
 }
 void gsq_linear(const flash::Launch& l) {
-  const int c=l.card;
   auto it=matrices.find(&l);
   if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
-  const auto& m=it->second.at(0);
+  gsq_linear_matrix(l,it->second.at(0));
+}
+// One site-selected dispatch for a single row (m.tokens==1, m.count = expert slots) and for batched prefill rows
+// (dense: m.tokens rows of per-slot input; routed: m.count = rows*top slots). Kernel choice, weights and per-row
+// arithmetic are the same in both cases.
+void gsq_linear_matrix(const flash::Launch& l,const Matrix& m) {
+  const int c=l.card;
   require(l.op=="gemv"||l.op=="routed_gemv","GSQ unfused linear operation");
-  if(dense_block_site(w,a,l)){const auto*s=denseblock::selected(l.label,l.weights.at(0));require(s&&variant(l)==0&&dev(c).arena.row(m.w).bytes==s->bytes,"dense block raw storage/variant");finish(c,denseblock::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::shared),true);return;}
+  const auto dense_input=m.tokens>1?gsqn::InputMode::per_slot:gsqn::InputMode::shared;
+  if(dense_block_site(w,a,l)){const auto*s=denseblock::selected(l.label,l.weights.at(0));require(s&&variant(l)==0&&dev(c).arena.row(m.w).bytes==s->bytes,"dense block raw storage/variant");finish(c,denseblock::submit(dev(c),m,l.label,l.weights.at(0),dense_input),true);return;}
   if(iq3_block_site(w,a,l)){require(((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&dev(c).arena.row(m.w).bytes==321126400,"IQ3 block exact matrix storage");finish(c,iq3block::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::per_slot),true);return;}
   if(dense_q6_site(w,a,l)){dense_q6_matrix(m,l,variant(l),dev(c).arena.row(m.w).bytes);finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
   if(qkv_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&m.rows==10240&&m.columns==2560&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==34611200,"QKV Q6 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
@@ -44,16 +50,17 @@ void gsq_linear(const flash::Launch& l) {
   }
   switch(unsigned(m.type)) {
     case 12:case 13:case 18:case 23:case 42:
-      finish(c,gsqn::submit(dev(c),m,l.op=="gemv"?gsqn::InputMode::shared:gsqn::InputMode::per_slot,gsqn::Storage::packed_direct),true);return;
+      finish(c,gsqn::submit(dev(c),m,l.op=="gemv"?dense_input:gsqn::InputMode::per_slot,gsqn::Storage::packed_direct),true);return;
     default:break;
   }
 #ifdef OWN_RT_HOST_ONLY
   // Original Host variant0 executes the same kopt lane/tree arithmetic.
   // performance::experts would instead select variant2, so call multiply.
+  require(m.tokens==1,"GSQ host generic: one token row");
   finish(c,gsq_integration::host_generic(dev(c),m),true);
 #else
   ownrt::Event event;
-  if(l.op=="gemv")event=iq3::kopt::gemv(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,32);
+  if(l.op=="gemv")event=m.tokens>1?iq3::kopt::gemv_tokens(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.tokens,m.activation,m.output_type,32):iq3::kopt::gemv(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,32);
   else event=iq3::kopt::routed_gemv(dev(c),m.type,m.w,m.x,m.y,m.routes,m.status,m.experts,m.rows,m.columns,m.count,m.rows,m.activation,m.output_type,32);
   finish(c,event);
 #endif

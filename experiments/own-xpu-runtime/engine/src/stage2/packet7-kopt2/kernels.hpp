@@ -5,6 +5,9 @@
 namespace iq3::kopt2 {
 struct Matrix : kopt::Matrix {
   uint32_t experts=1,count=1,span=0;
+  // Dense (unrouted) matrices only: number of independent token rows. x is [tokens][columns] and y is
+  // [tokens][rows]; each row keeps the single-token arithmetic. Routed matrices express tokens through count.
+  uint32_t tokens=1;
   ownrt::Allocation routes=0,status=0,workspace=0;
 };
 // Both passes are owned events. Timing MUST include first through last, with gap.

@@ -29,6 +29,8 @@ struct Backend {
  std::function<void(const Request&)> before_remote_wait;
  bool correction_probe=false,split_replay=false;
  uint32_t seq;bool pending[2]={false,false};Reply local{};Request commands[2]{};double sent[2]={};std::vector<Trace> trace;size_t stream_bytes=0;
+ // Batched prefill transport (pipeline::prefill layout); null when the rank runs without --prefill-rows.
+ uint8_t* prefill=nullptr;int prefill_rows=0;size_t prefill_stream=0;
  Backend(Mailbox& box,uint8_t* mem,int timeout,std::function<Reply(const Request&)> fn,std::function<void()> stop):m(box),shared(mem),seconds(timeout),execute(fn),cancel(stop),seq(load(m.request_sequence)){}
  void start(int rank,int op,int token=0,int position=0,int fixture=0,int speculative=0){
   require(!pending[rank],"native double pending");cancel();require(!load(m.abort),"native peer failed");Request r{op,token,position,fixture,speculative,0,{0,0}};commands[rank]=r;sent[rank]=clock_now();pending[rank]=true;
@@ -49,12 +51,15 @@ inline void worker(Mailbox& m,int seconds,const std::function<Reply(const Reques
   m.reply=execute(r);publish(m.reply_sequence,next);if(published)published(r);seen=next;
  }
 }
-struct Config {int draft_rank=1,mode=0,count=0,overlap=1,dumps=0,vocab=31;std::vector<int> prompt,script,eos;};
+// prefill: rows per batched-prefill chunk requested for this request (0 = token-by-token prompt).
+struct Config {int draft_rank=1,mode=0,count=0,overlap=1,dumps=0,vocab=31,prefill=0;std::vector<int> prompt,script,eos;};
 inline Config config(const fs::path& path,int context,int vocab){
  std::ifstream f(path);Config c;c.vocab=vocab;size_t np=0,ns=0,ne=0;require(bool(f>>c.mode>>c.count>>c.overlap>>c.dumps>>np>>ns>>ne),"native config header");
  require(c.mode>=0&&c.mode<=3&&c.count>0&&np>0&&np<=size_t(context)&&size_t(c.count)<=size_t(context)-np&&ns<=size_t(context)&&ne<=16&&(c.overlap==0||c.overlap==1)&&(c.dumps==0||c.dumps==1),"native config bounds");
  for(auto pair:{std::pair{&c.prompt,np},std::pair{&c.script,ns},std::pair{&c.eos,ne}}){pair.first->resize(pair.second);for(int& x:*pair.first){require(bool(f>>x),"native config tokens");require(x>=((pair.first==&c.script)?-1:0)&&x<vocab,"native config token bounds");}}
- std::string extra;require(!(f>>extra),"native config trailing data");return c;
+ // Optional trailer "prefill <rows>"; any other trailing data is refused.
+ std::string extra;if(f>>extra){require(extra=="prefill"&&bool(f>>c.prefill)&&c.prefill>=0&&c.prefill<=64,"native config prefill trailer");require(!(f>>extra),"native config trailing data");}
+ return c;
 }
 struct Row {int token;double stamp;};
 struct Guess {int position,guess,actual;bool hit;double cycle_ms;};
@@ -102,8 +107,46 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
  Result out;out.start=clock_now();std::vector<int> history;bool draft_pending=false;double issued_draft_at=0;uint32_t pending_draft_sequence=0;size_t script_index=0;int length=int(c.prompt.size());
  auto fixture=[&](int p){return std::max(0,p-length+2);};
  auto half_start=[&](int rank,int token,int p,bool spec=false){b.start(rank,half,token,p,fixture(p),spec);};
- half_start(0,c.prompt[0],0);b.wait(0);b.call(0,accept);
- for(int p=0;p<length+c.count-1;++p){
+ // Batched prefill bulk: target positions 0..N-1 (N = length-2) in chunks on both ranks, then the original scalar
+ // loop resumes at p=N in exactly the state its iteration N-1 leaves: rank 0 has run and accepted HALF(N), rank 1
+ // is committed through N-1, and the draft has consumed confirmed positions 1..N with its publication for N+1 pending.
+ const int rows=b.prefill&&c.prefill>0?std::min(c.prefill,b.prefill_rows):0;
+ const int bulk=rows&&c.draft_rank==0&&c.overlap==1&&(c.mode==0||c.mode==3)&&length-2>=rows?length-2:0;
+ int first=0;
+ if(bulk) {
+  auto* header=reinterpret_cast<pipeline::prefill::Header*>(b.prefill);
+  require(header->magic==pipeline::prefill::magic&&header->rows==uint32_t(b.prefill_rows)&&header->stream_bytes==b.prefill_stream,"native prefill header");
+  const int chunks=(bulk+rows-1)/rows;
+  auto count=[&](int k){return std::min(rows,bulk-k*rows);};
+  auto rank0_chunk=[&](int k){std::memcpy(header->tokens,c.prompt.data()+k*rows,size_t(count(k))*4);b.call(0,pipeline::prefill::op,count(k),k*rows,k%2);};
+  // Draft replay for chunk k: confirmed position q+1 takes rank 1's final row of position q, in order.
+  auto drafts=[&](int k){if(c.mode!=3)return;
+   const auto* rev=pipeline::prefill::reverse(b.prefill,k%2,size_t(b.prefill_rows),b.prefill_stream);
+   for(int r=0;r<count(k);++r){const int q=k*rows+r;if(q+1>=bulk)break;
+    std::memcpy(b.shared+reverse_offset,rev+size_t(r)*b.prefill_stream,b.prefill_stream);
+    __atomic_store_n(&reverse_ready(b.shared).position_plus_one,uint32_t(q+1),__ATOMIC_RELEASE);
+    b.call(0,draft,c.prompt[q+1],q+1,0,0);}};
+  rank0_chunk(0);
+  for(int k=0;k<chunks;++k){
+   b.start(1,pipeline::prefill::op,count(k),k*rows,k%2);
+   if(k>0)drafts(k-1);
+   if(k+1<chunks)rank0_chunk(k+1);
+   b.wait(1);
+  }
+  drafts(chunks-1);
+  for(int q=0;q<bulk;++q)history.push_back(c.prompt[q]);
+  // Seam: iteration N-1's rank-0 HALF(N), its draft for confirmed position N, then rank 0's accept.
+  half_start(0,c.prompt[bulk],bulk);b.wait(0);
+  if(c.mode==3){
+   const auto* rev=pipeline::prefill::reverse(b.prefill,(chunks-1)%2,size_t(b.prefill_rows),b.prefill_stream);
+   std::memcpy(b.shared+reverse_offset,rev+size_t(count(chunks-1)-1)*b.prefill_stream,b.prefill_stream);
+   __atomic_store_n(&reverse_ready(b.shared).position_plus_one,uint32_t(bulk),__ATOMIC_RELEASE);
+   b.start(c.draft_rank,draft,c.prompt[bulk],bulk,int(bulk+1>=length),1);pending_draft_sequence=b.seq;issued_draft_at=b.sent[c.draft_rank];b.wait(0);draft_pending=true;
+  }
+  b.call(0,accept);
+  first=bulk;
+ } else {half_start(0,c.prompt[0],0);b.wait(0);b.call(0,accept);}
+ for(int p=first;p<length+c.count-1;++p){
   double cycle=clock_now();int token=p<length?c.prompt[p]:out.tokens.back();history.push_back(token);int draft_guess=-1;
   uint32_t expected_draft=0;double draft_started=0;
   if(draft_pending){expected_draft=c.draft_rank==0?uint32_t(p):pending_draft_sequence;draft_started=issued_draft_at;if(c.draft_rank==1&&b.pending[1])b.wait(1);draft_pending=false;}

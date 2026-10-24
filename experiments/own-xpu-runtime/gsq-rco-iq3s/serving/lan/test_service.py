@@ -107,6 +107,7 @@ class FakeEngine:
         return None
 
     t = None
+    prefill_rows = 0
 
     def activations(self):
         return 'bf16'

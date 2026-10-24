@@ -16,6 +16,7 @@ void validate(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& 
  const auto& a=ms[0];if(a.type!=Type::Q6_K&&a.type!=Type::Q8_0&&a.type!=Type::F32&&a.type!=Type::BF16&&a.type!=Type::IQ2_S&&a.type!=Type::IQ3_S&&a.type!=Type::IQ4_NL)throw std::invalid_argument("p28 unsupported type");auto names=candidates(a.type);
  if(std::find(names.begin(),names.end(),name)==names.end())throw std::invalid_argument("p28 candidate/type");
  if(!a.rows||a.rows>248320||!a.columns||a.columns>17408||!a.count||a.count>10||!a.experts||a.experts>512||a.columns%iq3::layout(a.type).elements)throw std::invalid_argument("p28 geometry");
+ if(!a.tokens||a.tokens>p28_max_tokens||(a.tokens>1&&(expert(a.type)||ms.size()!=1)))throw std::invalid_argument("p28 token rows: dense only, 1..max");
  bool routed=expert(a.type);
  const bool output_pair=a.type==Type::IQ2_S||a.type==Type::IQ3_S;
  if(routed&&(ms.size()!=(output_pair?2u:1u)||shared!=output_pair))throw std::invalid_argument("p28 expert projection cardinality");
@@ -27,10 +28,10 @@ void validate(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& 
  for(const auto& m:ms){
   // BF16 activations everywhere, or exact-mode F32 activation/output for dense (unrouted) projections.
   const bool f32=!routed&&a.activation==Type::F32&&a.output_type==Type::F32;
-  if(m.type!=a.type||m.rows!=a.rows||m.columns!=a.columns||m.count!=a.count||m.experts!=a.experts||m.routes!=a.routes||m.x!=a.x||(m.span&&m.span!=m.rows)||m.activation!=a.activation||m.output_type!=a.output_type||m.fp32||!(f32||(m.activation==Type::BF16&&m.output_type==Type::BF16)))throw std::invalid_argument("p28 matrix identity");
+  if(m.type!=a.type||m.rows!=a.rows||m.columns!=a.columns||m.count!=a.count||m.tokens!=a.tokens||m.experts!=a.experts||m.routes!=a.routes||m.x!=a.x||(m.span&&m.span!=m.rows)||m.activation!=a.activation||m.output_type!=a.output_type||m.fp32||!(f32||(m.activation==Type::BF16&&m.output_type==Type::BF16)))throw std::invalid_argument("p28 matrix identity");
   const size_t ab=f32?4:2;
   extent(m.w,size_t(m.experts)*m.rows*integrated::arithmetic::row_bytes(m.type,m.columns,v),false);
-  extent(m.x,size_t(shared?1:m.count)*m.columns*ab,false);extent(m.y,size_t(m.count)*m.rows*ab,true);
+  extent(m.x,size_t(shared?1:m.count)*m.tokens*m.columns*ab,false);extent(m.y,size_t(m.count)*m.tokens*m.rows*ab,true);
   if(routed){extent(m.routes,m.count*sizeof(iq3::Route),false);extent(m.status,m.count*4,true);}
  }
  extent(a.workspace,size_t(a.rows)*a.count*8*4,true);
@@ -126,7 +127,7 @@ template<Type T> Launch select_k(ownrt::Device& d,const std::vector<Matrix>& m,c
  case 640:if constexpr(T!=Type::Q6_K)return typed<T,640>(d,m,n,v);break;
  }}throw std::invalid_argument("p28 uncompiled K");
 }
-Launch submit(ownrt::Device& d,const std::vector<Matrix>& m,const std::string& name,bool shared,unsigned v){validate(d,m,name,shared,v);
+Launch submit(ownrt::Device& d,const std::vector<Matrix>& m,const std::string& name,bool shared,unsigned v){validate(d,m,name,shared,v);if(m[0].tokens!=1)throw std::invalid_argument("p28 kernels take one token row; token rows use p33");
  switch(m[0].type){
 #define CASE(T) case Type::T:return select_k<Type::T>(d,m,name,v)
  CASE(Q6_K);CASE(Q8_0);CASE(F32);CASE(BF16);CASE(IQ2_S);CASE(IQ3_S);CASE(IQ4_NL);

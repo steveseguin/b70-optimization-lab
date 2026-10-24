@@ -8,7 +8,7 @@ stops intake, sends the single cooperative stop, waits for physical drain and
 exits. It never retries, restarts, resets a device or kills a rank.
 """
 import argparse, hashlib, http.server, importlib.util, ipaddress, json, os, resource, shutil, signal, socket, subprocess
-import sys, threading, time, traceback
+import re, sys, threading, time, traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -231,6 +231,8 @@ class Engine:
         self.previous = None
         self.log = control / 'requests.jsonl'
         self.log_bytes = 0
+        self.prefill_rows = 0      # batched prefill rows for requests; set only after this binary's prefill gate passed
+        self.last_result = None    # last native result (gate use only; never logged)
 
     def start(self):
         plan = A.build_plan(self.control / 'ranks', mini=False, max_new=128, seconds=NATIVE_SECONDS,
@@ -310,7 +312,17 @@ class Engine:
             shutil.rmtree(d)
         return out
 
-    def generate(self, prompt, max_new, label, on_token=None, mode='mtp', force_reset=False):
+    def dump_buffers(self):
+        """Explicit full target-state DUMP on both ranks; per-buffer content hashes; dump removed after hashing."""
+        t, out = self.t, {}
+        for rank in (0, 1):
+            t.call(rank, A.BASE.DUMP, position=2147483647)
+            d = t.request_output / f'rank{rank}' / 'state-2147483647'
+            out[f'rank{rank}'] = {k: v for k, v in A.BUNDLE.read_state(d).items() if k != 'state.json'}
+            shutil.rmtree(d)
+        return out
+
+    def generate(self, prompt, max_new, label, on_token=None, mode='mtp', force_reset=False, prefill=None):
         """Caller holds self.lock. Returns (tokens, result-summary).
 
         With the streaming build, rank0 appends each target-confirmed token to
@@ -345,7 +357,13 @@ class Engine:
                 self.pump(stream)
             t.check = check
         try:
-            r = A.BASE.NativeController(t, A.BASE.Draft(mode), True, False).run(prompt, max_new, CHAT.EOS)
+            if prefill is None:
+                prefill = self.prefill_rows
+            if hasattr(A, 'NativeController'):  # adapter6+: optional batched prefill rows per request
+                r = A.NativeController(t, A.BASE.Draft(mode), True, False, prefill=prefill).run(prompt, max_new, CHAT.EOS)
+            else:
+                require(not prefill, 'adapter has no batched prefill')
+                r = A.BASE.NativeController(t, A.BASE.Draft(mode), True, False).run(prompt, max_new, CHAT.EOS)
         finally:
             if stream is not None:
                 t.check = original_check
@@ -356,13 +374,14 @@ class Engine:
             require(streamed == list(r['tokens']), 'stream/result mismatch')
         # Retention: the dump RESET just wrote is not needed; drop it before the next RESET.
         released = self.release(stale)
+        self.last_result = r
         tokens = list(r['tokens'])
         require(0 < len(tokens) <= max_new and all(0 <= x < 248320 for x in tokens), 'native output bounds')
         stats = r['stats']
         summary = dict(request=self.count, label=label, mode=mode, streamed=stream is not None, prompt_tokens=len(prompt), output_tokens=len(tokens),
                        mtp=dict(guesses=stats['guesses'], hits=stats['hits'], misses=stats['misses']),
                        prompt_wall_ms=r.get('prompt_wall_ms'), decode_wall_ms=r.get('decode_wall_ms'),
-                       decode_tok_s=r.get('decode_tok_s'), reset_ms=reset_ms, released_dump_bytes=released,
+                       decode_tok_s=r.get('decode_tok_s'), reset_ms=reset_ms, released_dump_bytes=released, prefill_rows=prefill or 0,
                        wall_s=time.monotonic() - started)
         line = json.dumps(dict(utc=utc(), **summary)) + '\n'
         if self.log_bytes < 50 * 1024**2:
@@ -413,6 +432,61 @@ def b0_gate(engine, selftest):
                 rows=rows, utc=utc())
 
 
+PREFILL_SUITE = P.parent.parent / 'service-speed/e-reference/runs/f32suite/inputs'
+PREFILL_SCALAR = P.parent.parent / 'service-speed/e-reference/runs/f32-suite.json'
+PERSISTENT = re.compile(r'(^alternate-|\.(keys|values|raw|pooled|state)\.bin$|history\.bin$|^position\.bin$|^token_history\.bin$)')
+
+
+def prefill_gate(engine, rows):
+    """One-time device gate for batched prefill on this binary, in F32 mode.
+
+    1. The binary's token-by-token path still reproduces the serving engine 32654dfb's F32 suite output.
+    2. For each case, the same request runs token-by-token and then batched (each after a RESET): every emitted
+       token, every MTP guess and every persistent target state buffer (KV, pooled/raw keys, both recurrent banks,
+       histories, position) must be identical. Other buffers are reported, not gated.
+    Returns the evidence dict; passed is False on any mismatch (device errors raise).
+    """
+    suite = {r['prompt_id']: r for r in json.loads(PREFILL_SCALAR.read_text())['rows']}
+    def source(pid):
+        return json.loads((PREFILL_SUITE / f'in-{pid}.json').read_text())['tokens']
+    report, passed = [], True
+    # 1. Unchanged token-by-token path: first 64 outputs of two suite prompts.
+    for pid in ('code-review', 'customer-email'):
+        r = suite[pid]
+        with engine.lock:
+            tokens, summary = engine.generate(r['prompt_token_ids'], 64, f'prefill-gate-scalar-{pid}', force_reset=True, prefill=0)
+        first = next((i for i, (a, b) in enumerate(zip(tokens, r['output_token_ids'])) if a != b), None)
+        # A changed token-by-token path is not a prefill problem: refuse to serve this binary at all.
+        require(tokens == r['output_token_ids'][:64], f'new binary token-by-token output differs from engine 32654dfb ({pid}, output {first})')
+        report.append(dict(case=f'scalar-vs-32654dfb-{pid}', passed=True))
+    # 2. Batched against token-by-token. (source, prompt length, outputs, mode, rows per chunk)
+    long_text = source('technical-guide')
+    cases = [('code-review', rows + 2, 24, 'mtp', rows), ('code-review', rows + 3, 24, 'mtp', rows),
+             ('sql-debugging', 2 * rows + 2, 24, 'mtp', rows), ('sql-debugging', 35, 24, 'mtp', rows),
+             ('decision-memo', 66, 24, 'none', rows), ('decision-memo', 67, 24, 'mtp', rows),
+             ('risk-register', 53, 24, 'mtp', 13), ('risk-register', 40, 24, 'mtp', 7),
+             ('release-plan', None, 32, 'mtp', rows), ('incident-retrospective', None, 32, 'none', rows),
+             ('technical-guide', 600, 32, 'mtp', rows)]
+    for pid, length, n, mode, chunk in cases:
+        prompt = suite[pid]['prompt_token_ids'] if length is None else (long_text if pid == 'technical-guide' else source(pid))[:length]
+        runs = []
+        for pf in (0, chunk):
+            with engine.lock:
+                tokens, summary = engine.generate(prompt, n, f'prefill-gate-{pid}-{len(prompt)}-{pf}', mode=mode, force_reset=True, prefill=pf)
+                guesses = list(engine.last_result.get('guess_sequence') or [])
+                state = engine.dump_buffers()
+            runs.append(dict(tokens=tokens, guesses=guesses, state=state, prompt_wall_ms=summary['prompt_wall_ms']))
+        a, b = runs
+        differ = {rank: sorted(k for k in a['state'][rank] if a['state'][rank][k] != b['state'][rank].get(k)) for rank in a['state']}
+        persistent = {rank: [k for k in names if PERSISTENT.search(k)] for rank, names in differ.items()}
+        ok = a['tokens'] == b['tokens'] and a['guesses'] == b['guesses'] and not any(persistent.values())
+        passed &= ok
+        report.append(dict(case=f'{pid}-{len(prompt)}-{mode}-rows{chunk}', passed=ok, prompt_tokens=len(prompt), tokens_equal=a['tokens'] == b['tokens'],
+                           guesses_equal=a['guesses'] == b['guesses'], persistent_differences=persistent, other_differences=differ,
+                           prompt_wall_ms=dict(token_by_token=a['prompt_wall_ms'], batched=b['prompt_wall_ms'])))
+    return dict(passed=passed, binary_sha256=engine.t.plan['binary_sha256'], rows=rows, cases=report, utc=utc())
+
+
 def make_handler(state, engine, chat, key):
     class Handler(http.server.BaseHTTPRequestHandler):
         protocol_version = 'HTTP/1.1'
@@ -455,6 +529,7 @@ def make_handler(state, engine, chat, key):
                 code = 200 if state.phase == 'ready' else 503
                 self.reply(code, {'status': state.phase, 'detail': state.detail, 'waiting': state.waiting,
                                   'activations': engine.activations() if engine.t is not None else None,
+                                  'prefill_rows': engine.prefill_rows,
                                   'requests_served': engine.count, 'model': CHAT.MODEL_ID})
             elif path == '/v1/models':
                 self.reply(200, {'object': 'list', 'data': [{'id': CHAT.MODEL_ID, 'object': 'model', 'owned_by': 'ownrt',
@@ -732,6 +807,19 @@ def main():
                 record.parent.mkdir(exist_ok=True)
                 save(record, dict(binary_sha256=engine.t.plan['binary_sha256'], prompt_tokens=st['prompt_tokens'], tokens=rows[0]['tokens'],
                                   status='first F32 run; reference agreement checked offline (service-speed/e-reference)', utc=utc()))
+        rows_wanted = getattr(A, 'PREFILL_ROWS', 0)
+        if rows_wanted and mode == 'f32':
+            marker = P / 'evidence' / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}.json"
+            if not marker.exists():
+                state.detail = f'one-time batched-prefill gate ({rows_wanted} rows): tokens, guesses and persistent state vs token-by-token'
+                gate = prefill_gate(engine, rows_wanted)
+                marker.parent.mkdir(exist_ok=True)
+                save(marker, gate)
+                save(control / 'prefill-gate.json', gate)
+            gate = json.loads(marker.read_text())
+            engine.prefill_rows = rows_wanted if gate['passed'] else 0
+            status['prefill_rows'] = engine.prefill_rows
+            (control / 'run.json').write_text(json.dumps(status, indent=2) + '\n')
         require(all(monitor.contacts), 'both rank contacts must be observed on their target cards')
         save(control / 'selftest-result.json', dict(passed=True, tokens=tokens, runs=rows))
         summary = rows

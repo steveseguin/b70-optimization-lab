@@ -22,7 +22,7 @@ template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split=1,bool F=false> str
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const> p)const override {
   auto d=bind(p);
-  for(unsigned slot=0;slot<d.count;++slot){
+  for(unsigned slot=0;slot<d.count*d.tokens;++slot){
    auto r=d.routes?d.routes[slot]:iq3::Route{0,0,d.rows};
    bool ok=iq3::valid_route(r,d.experts,d.rows,d.rows);
    if(d.routes){d.status[slot]=!ok;if constexpr(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S)d.ps[slot]=!ok;}
@@ -35,7 +35,7 @@ template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split=1,bool F=false> str
       const unsigned source=(r.expert_id*d.rows+r.row_begin+row)*unsigned(d.rb);
       if constexpr(T==iq3::Type::IQ4_NL)sums[0][lane]=down_lane<Mode,K>(d.w+source,d.x+slot*K,lane);
       else if constexpr(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S){auto pair=Mode==2?p42expert::gate_lane<T,K>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane):expert_lane<T,K,true>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane);sums[0][lane]=pair[0];sums[1][lane]=pair[1];}
-      else sums[0][lane]=dense_lane<T,K,F>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
+      else sums[0][lane]=dense_lane<T,K,F>(d.w+source,d.x+size_t(slot)*K*(F?2:1),unsigned(range.first),unsigned(range.second),lane);
      }
      for(unsigned j=0;j<(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S?2:1);++j)parts[j][part]=iq3::tree32(sums[j]);
     }
@@ -46,20 +46,20 @@ template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split=1,bool F=false> str
 #else
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
   auto d=bind(p);
-  const size_t groups=size_t(d.rows)*d.count*Split;
+  const size_t groups=size_t(d.rows)*d.count*d.tokens*Split;
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(groups*32,32)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
    auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),item=unsigned(it.get_group_linear_id()),logical=item/Split,part=item%Split;
-   const unsigned row=logical%d.rows,slot=logical/d.rows;
+   const unsigned row=d.tokens>1?logical/d.tokens:logical%d.rows,slot=d.tokens>1?logical%d.tokens:logical/d.rows;
    iq3::Route r{0,0,d.rows};if(d.routes)r=d.routes[slot];const bool ok=iq3::valid_route(r,d.experts,d.rows,d.rows),valid=ok&&row<r.row_count;
    std::array<float,2> sums{};
    if(valid){const unsigned source=(r.expert_id*d.rows+r.row_begin+row)*unsigned(d.rb);auto range=iq3::kopt2::bounds(K,part,Split);
     if constexpr(T==iq3::Type::IQ4_NL)sums[0]=down_lane<Mode,K>(d.w+source,d.x+slot*K,lane);
     else if constexpr(T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S)sums=Mode==2?p42expert::gate_lane<T,K>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane):expert_lane<T,K,true>(d.w+source,d.peer+source,d.x,unsigned(range.first),unsigned(range.second),lane);
-    else sums[0]=dense_lane<T,K,F>(d.w+source,d.x,unsigned(range.first),unsigned(range.second),lane);
+    else sums[0]=dense_lane<T,K,F>(d.w+source,d.x+size_t(slot)*K*(F?2:1),unsigned(range.first),unsigned(range.second),lane);
    }
    constexpr unsigned projections=T==iq3::Type::IQ2_S||T==iq3::Type::IQ3_S?2:1;
    for(unsigned j=0;j<projections;++j){for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,sums[j],(lane+width)%32);if(lane%(2*width)==0)sums[j]=sums[j]+rhs;}
-    if(lane==0){float v=valid?sums[j]:iq3::bits_float(0x7fc00000);if constexpr(Split==1){if constexpr(F)reinterpret_cast<float*>(j?d.py:d.y)[logical]=v;else (j?d.py:d.y)[logical]=iq3::bf16_bits(v);}else d.scratch[(logical*2+j)*4+part]=v;}}
+    if(lane==0){float v=valid?sums[j]:iq3::bits_float(0x7fc00000);if constexpr(Split==1){const unsigned out=slot*d.rows+row;if constexpr(F)reinterpret_cast<float*>(j?d.py:d.y)[out]=v;else (j?d.py:d.y)[out]=iq3::bf16_bits(v);}else d.scratch[(logical*2+j)*4+part]=v;}}
    if(lane==0&&row==0&&part==0&&d.routes){d.status[slot]=!ok;if constexpr(projections==2)d.ps[slot]=!ok;}
   })));});
  }
@@ -73,7 +73,8 @@ struct Finish final:ownrt::SyclOperation {unsigned n;
 template<unsigned Mode,iq3::Type T,unsigned K,unsigned Split,bool F=false> integrated::Launch issue(ownrt::Device& d,const std::vector<integrated::Matrix>& ms){
  static_assert(!F||(Mode==0&&Split==1&&T!=iq3::Type::IQ4_NL&&T!=iq3::Type::IQ2_S&&T!=iq3::Type::IQ3_S),"exact F32 activations: dense split1 only");
  const auto& m=ms[0];const auto& peer=ms.size()==2?ms[1]:m;Kernel<Mode,T,K,Split,F> k;
- k.b.rb=integrated::arithmetic::row_bytes(T,K,T==iq3::Type::F32||T==iq3::Type::BF16?(Split==4?4:0):(Split==4?7:(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0?6:2)));k.b.rows=m.rows;k.b.count=m.count;k.b.experts=m.experts;k.b.has_routes=bool(m.routes);
+ k.b.rb=integrated::arithmetic::row_bytes(T,K,T==iq3::Type::F32||T==iq3::Type::BF16?(Split==4?4:0):(Split==4?7:(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0?6:2)));k.b.rows=m.rows;k.b.count=m.count;k.b.experts=m.experts;k.b.has_routes=bool(m.routes);k.b.tokens=m.tokens;
+ if(m.tokens!=1&&(Mode!=0||Split!=1||m.routes||m.count!=1||ms.size()!=1))throw std::invalid_argument("p33 token rows: dense split1 only");
  if(uint64_t(m.experts)*m.rows*k.b.rb>UINT32_MAX)throw std::invalid_argument("p33 32-bit row offset overflow");
  std::array<ownrt::Allocation,9> ids{m.w,peer.w,m.x,m.y,peer.y,m.routes?m.routes:m.x,m.status?m.status:m.y,peer.status?peer.status:peer.y,m.workspace};auto e=d.compute(k,ids,{});integrated::Launch r{e,e,1};
 
@@ -95,6 +96,7 @@ template<iq3::Type T> integrated::Launch dense_shape(ownrt::Device& d,const std:
  }throw std::invalid_argument("p33 dense uncompiled shape");
 }
 integrated::Launch submit(ownrt::Device& d,const std::vector<integrated::Matrix>& m,const std::string& name,bool shared,unsigned variant){
+ if(m.at(0).tokens!=1&&name!="p33.dense.segment")throw std::invalid_argument("p33 token rows: dense segment only");
  if(name=="p33.down.bank"||name=="p33.down.select"){
   p29::validate(d,m,"p29.down.wg32",shared,variant);
   return name=="p33.down.bank"?issue<0,iq3::Type::IQ4_NL,640,1>(d,m):issue<1,iq3::Type::IQ4_NL,640,1>(d,m);

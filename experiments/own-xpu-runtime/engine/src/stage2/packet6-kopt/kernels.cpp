@@ -35,6 +35,8 @@ struct Descriptor {
   Type type,activation,output;size_t rows,k,rb,first_group,groups;
   uint32_t experts,count,span;bool routed;
   unsigned w,x,y,r,status,fp32;bool diagnostic;
+  // Dense token rows (gemv_tokens): slots are tokens, ordered row-major so tokens sharing a weight row run together.
+  bool row_major=false;
 };
 // A fully aligned interior is read exactly once in 16-byte chunks per row.
 // Edges are scalar and bounded to that row. No block-start alignment fiction.
@@ -103,7 +105,7 @@ struct Multiply:ownrt::SyclOperation {
           auto group=it.get_group_linear_id();auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id();
           unsigned row_in_group=sg.get_group_linear_id();
           auto d=description;size_t logical=(group-d.first_group)*rows_per_group+row_in_group;
-          size_t slot=logical/d.span,row=logical%d.span;bool in_range=slot<d.count;
+          size_t slot=d.row_major?logical%d.count:logical/d.span,row=d.row_major?logical/d.count:logical%d.span;bool in_range=d.row_major?row<d.span:slot<d.count;
           Route r{0,0,uint32_t(d.rows)};
           if(d.routed && in_range)r=static_cast<const Route*>(pointers[d.r])[slot];
           bool valid=in_range && valid_route(r,d.experts,d.rows,d.span),active=valid && row<r.row_count;
@@ -127,8 +129,9 @@ struct Multiply:ownrt::SyclOperation {
           }
           if(lane==0 && in_range) {
             float value=active?sum:bits_float(0x7fc00000);
-            if(d.output==Type::F32)static_cast<float*>(pointers[d.y])[logical]=value;else static_cast<uint16_t*>(pointers[d.y])[logical]=output_bits(value,d.output);
-            if(d.diagnostic)static_cast<float*>(pointers[d.fp32])[logical]=value;
+            const size_t out=slot*d.span+row; // == logical for the slot-major mapping
+            if(d.output==Type::F32)static_cast<float*>(pointers[d.y])[out]=value;else static_cast<uint16_t*>(pointers[d.y])[out]=output_bits(value,d.output);
+            if(d.diagnostic)static_cast<float*>(pointers[d.fp32])[out]=value;
           }
         }));
     });
@@ -173,6 +176,11 @@ std::string device_properties(){return properties;}
 ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},1,1,rows);return finish(d,op,ids);
+}
+ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
+  if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
+  Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;return finish(d,op,ids);
 }
 ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation r,ownrt::Allocation status,uint32_t experts,uint32_t rows,size_t k,uint32_t count,uint32_t span,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   if(!r || !status)throw std::invalid_argument("kopt routing handles required");

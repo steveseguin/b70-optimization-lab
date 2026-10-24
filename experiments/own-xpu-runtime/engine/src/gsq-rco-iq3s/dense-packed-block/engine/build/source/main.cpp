@@ -150,6 +150,9 @@ struct Options {
   bool draft_experts_fp8=false;
   // Target activation/KV storage: false = BF16 (tuned default); true = F32 exact mode (no intra-op BF16 rounding).
   bool f32_activations=false;
+  // Batched prefill: up to prefill_rows prompt rows per chunk (0 = off, the original token-by-token prefill).
+  // Rows travel through prefill_shared, a separate versioned map; the original shared map is unchanged.
+  int prefill_rows=0; fs::path prefill_shared;
   RetainSteps retain_steps;
   int cancel_launch=-1;
   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
@@ -195,6 +198,10 @@ static Options parse(int argc, char **argv) {
       auto v=value();require(v=="bf16"||v=="f32","activations must be bf16 or f32");
       a.f32_activations=v=="f32";
     }
+    else if (k == "--prefill-rows") {
+      a.prefill_rows=std::stoi(value());require(a.prefill_rows>=0&&a.prefill_rows<=64,"prefill rows must be 0..64");
+    }
+    else if (k == "--prefill-shared") a.prefill_shared=value();
     else if (k == "--draft-experts") {
       auto v=value();require(v=="int8"||v=="fp8","draft experts must be int8 or fp8");
       a.draft_experts_fp8=v=="fp8";
@@ -287,6 +294,7 @@ static Options parse(int argc, char **argv) {
           "bounded generation/context/deadline");
   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
+  require(!a.prefill_rows||(a.f32_activations&&a.gsq_packed&&a.memory=="resident"),"batched prefill: F32 exact GSQ resident engine only");
   require(a.nongemv=="core" || a.nongemv=="parallel", "nongemv mode");
   require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
   require(a.stage=="first-token" || a.stage=="decode", "stage");
@@ -1039,6 +1047,7 @@ public:
     return v;
   }
 #include "gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp"
+#include "gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp"
   unsigned variant(const flash::Launch& l,size_t projection=0)const {return gemv_choices.at(&l).second.at(projection);}
   unsigned weight_variant(const std::string& name)const {
     if(a.gsq_packed)return ((name=="output.weight"&&!a.mini)||(combined_weight(w,a,name)||dense_q6_weight(w,a,name)))?6:0;
@@ -1316,6 +1325,13 @@ public:
   void prepare_token(int token,std::vector<std::pair<std::string,std::vector<uint16_t>>>* staged=nullptr) {
     lookup_ids.clear();
     for(const auto& l:p.launches)if(l.op=="lookup") {
+      lookup_ids[l.label]=lookup_input(l,token);
+      if(staged){require(l.card==0,"packet188 staged lookup card");require(!a.f32_activations,"staged lookup has no exact F32 variant");staged->emplace_back(l.outputs[0],lookup_values(l));}else lookup(l);
+    }
+    history0=history1;history1=token;
+  }
+  // Host lookup input for one token at the current (history0, history1): the token id itself, or the PLE hash ids.
+  std::vector<uint8_t> lookup_input(const flash::Launch& l,int token) const {
       auto input=buffers[l.card].at(l.inputs[0]);
       std::vector<uint8_t> raw(input.n*flash::scalar_bytes(input.type));
       if(input.type==Scalar::i32)std::memcpy(raw.data(),&token,4);
@@ -1331,10 +1347,7 @@ public:
             int64_t id=(v%size+size)%size+metadata[19+i];std::memcpy(raw.data()+i*8,&id,8);}
         }
       }
-      lookup_ids[l.label]=std::move(raw);
-      if(staged){require(l.card==0,"packet188 staged lookup card");require(!a.f32_activations,"staged lookup has no exact F32 variant");staged->emplace_back(l.outputs[0],lookup_values(l));}else lookup(l);
-    }
-    history0=history1;history1=token;
+      return raw;
   }
   void lookup(const flash::Launch &l) {
     if(a.f32_activations){auto values=lookup_floats(l);put(l.card, l.outputs[0], values.data(), values.size() * 4);return;}

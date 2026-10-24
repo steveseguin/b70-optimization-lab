@@ -1,0 +1,71 @@
+--- adapter5.py	2026-10-24 15:38:38.842377091 -0400
++++ adapter6.py	2026-10-24 17:26:13.882545620 -0400
+@@ -11,6 +11,14 @@
+ ACTIVATIONS=os.environ.get('SC117_ACTIVATIONS','bf16')
+ if ACTIVATIONS not in ('bf16','f32'):raise ValueError('SC117_ACTIVATIONS must be bf16 or f32')
+ SERVICE_FLAGS=['--reset-dump','none','--finish-dump','none','--token-stream','jsonl','--draft-experts','fp8','--activations',ACTIVATIONS]
++# Batched prefill (engine --prefill-rows): rows per chunk, 0 = off. Requires the F32 exact engine. The rows travel
++# through prefill.bin next to shared.bin (engine prefill_wire.hpp layout: header page, forward[2], reverse[2]).
++PREFILL_ROWS=int(os.environ.get('SC117_PREFILL_ROWS','0'))
++if not 0<=PREFILL_ROWS<=64:raise ValueError('SC117_PREFILL_ROWS must be 0..64')
++if PREFILL_ROWS and ACTIVATIONS!='f32':raise ValueError('batched prefill requires SC117_ACTIVATIONS=f32')
++PREFILL_STREAM=4*2560*4  # four F32 HC streams of width 2560
++PREFILL_HEADER=4096
++def prefill_bytes(rows):return PREFILL_HEADER+4*rows*PREFILL_STREAM
+ LEDGER=LANE/'recurrent-f32/operating/candidate-ledger.json'
+ PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
+ PARENT_SHA='4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3'
+@@ -56,6 +64,7 @@
+         if not plan['mini']:cmd+=['--draft-manifest',str(LANE/'mtp/draft-manifest.tsv'),'--draft-model',str(DRAFT_MODEL)]
+     cmd.extend(['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block','--dense-q6-p33','--dense-packed-block','--recurrent-f32'])
+     cmd.extend(plan.get('service_flags',[]))
++    if PREFILL_ROWS:cmd+=['--prefill-rows',str(PREFILL_ROWS),'--prefill-shared',str(o/'prefill.bin')]
+     return cmd
+ 
+ def build_plan(output,*,mini=False,max_new=4,seconds=1800,evidence_output=None):
+@@ -137,6 +146,13 @@
+         fd=os.open(self.shared_path,os.O_RDWR|os.O_CREAT|os.O_EXCL,0o600)
+         try:os.ftruncate(fd,BASE.SHARED);self.mapping=mmap.mmap(fd,BASE.SHARED)
+         finally:os.close(fd)
++        if PREFILL_ROWS:
++            import struct
++            fd=os.open(self.control_output/'prefill.bin',os.O_RDWR|os.O_CREAT|os.O_EXCL,0o600)
++            try:
++                os.ftruncate(fd,prefill_bytes(PREFILL_ROWS))
++                os.pwrite(fd,struct.pack('<4I',0x31465050,1,PREFILL_ROWS,PREFILL_STREAM),0)
++            finally:os.close(fd)
+         self.stop_read,self.stop_write=os.pipe();self.start_time=time.monotonic()
+         save(self.control_output/'admission-plan.json',plan)
+         for rank in range(2):
+@@ -236,6 +252,31 @@
+     require(rows[0]['state']==rows[1]['state'],'MTP final target state mismatch')
+     return dict(passed=True,same_rank_processes=True,rank_pids=[p.pid for p in transport.children],requests=2,rows=rows,no_speed_claim=True)
+ 
++class NativeController(BASE.NativeController):
++    """BASE.NativeController plus the optional "prefill <rows>" request trailer (engine native_controller.hpp)."""
++    def __init__(self,backend,draft,overlap=True,dumps=False,prefill=None):
++        super().__init__(backend,draft,overlap,dumps);self.prefill=PREFILL_ROWS if prefill is None else prefill
++        require(0<=self.prefill<=PREFILL_ROWS,'request prefill rows exceed the engine allocation')
++    def run(self,prompt,count,eos=()):
++        if not self.prefill:return super().run(prompt,count,eos)
++        # BASE.NativeController.run with the trailer; everything after the request write is the parent's code path.
++        b=self.b;mode={"none":0,"ngram":1,"script":2,"mtp":3}[self.draft.mode]
++        values=[mode,count,int(self.overlap),int(self.dumps),len(prompt),len(self.draft.script),len(eos),*prompt,*self.draft.script,*eos]
++        if self.prefill:values+=['prefill',self.prefill]
++        (b.shared_path.parent/"native-request.txt").write_text(" ".join(map(str,values))+"\n")
++        trace_start=len(b.trace)
++        b.start(1,BASE.NATIVE);b.start(0,BASE.NATIVE)
++        b.wait(0);b.wait(1)
++        r=json.loads((b.shared_path.parent/"native-result.json").read_text())
++        b.trace[trace_start:]=r["rank_trace"]
++        b.work_start=r["work_start"];b.work_end=r["work_end"]
++        b.metrics=[dict(busy_ms=0.,handover_ms=0.,calls=0,gpu_ms=0.) for _ in range(2)]
++        for row in b.trace:
++            m=b.metrics[row["rank"]];m["busy_ms"]+=row.get("busy_ms",0);m["gpu_ms"]+=row.get("gpu_ms",0);m["calls"]+=1
++        r.update(diagnostic=False,prompt_overlap=self.overlap,prefill_rows=self.prefill,acceptance=r["stats"]["hits"]/r["stats"]["guesses"] if r["stats"]["guesses"] else None,
++                 decode_tok_s=(r["decode_intervals"]*1000/r["decode_wall_ms"] if r["decode_wall_ms"] else None) if b.device else None)
++        return r
++
+ def qualification(plan,prompt,count,*,admit,check,launch_hook):
+     """Trusted coordinator API, not a CLI. Keeps uncertain owner handle reachable."""
+     t=Transport.__new__(Transport)
