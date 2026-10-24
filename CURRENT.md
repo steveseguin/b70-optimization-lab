@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 24, 18:45 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode with batched prompt reading.**
+**October 24, 19:40 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode with batched prompt reading.**
 The owner asked to host the SC117 IQ3_S model on our own engine for LAN computers. The model is served at
 `http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0; the vision server on 27/43 is
 untouched).
@@ -14,7 +14,7 @@ untouched).
 - A reset takes 0.1 s, and every target-confirmed token is streamed.
 - Stop it with `systemctl --user stop sc117-lan`. It never restarts by itself and stops at 47 h.
 
-- Prompts are read in batches of 16 tokens (engine `e88234864be3` since 18:38). Each new binary's startup gate on the
+- Prompts are read in batches of 16 tokens (engine `afdfa33a9200` since 19:38). Each new binary's startup gate on the
   cards showed the batched reading identical to token-by-token reading: tokens, guesses and full engine state. A
   581-token prompt now takes 9.7 s instead of 16.2 s.
 
@@ -24,7 +24,8 @@ Next:
 
 The original-FP8 draft experts were tried and closed: acceptance went from 77.6% to 77.5%.
 
-Root disk is close to its 27 GB floor.
+Root disk is close to its 27 GB floor. The USB evidence disk sits about 20 MB above the service's start floor, and
+each service restart leaves a 4 MB run directory.
 [Service](experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/README.md),
 [speed work](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/),
 [32-bit fidelity result](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/RESULT-F32.md).

@@ -88,18 +88,18 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-24 19:06 EDT the service runs engine `8a76e3cedbe4` (receipt
-[../../../engine/receipts/8a76e3cedbe4.json](../../../engine/receipts/8a76e3cedbe4.json)), built from the canonical
+Since 2026-10-24 19:38 EDT the service runs engine `afdfa33a9200` (receipt
+[../../../engine/receipts/afdfa33a9200.json](../../../engine/receipts/afdfa33a9200.json)), built from the canonical
 source tree [../../../engine/](../../../engine/). It goes through [adapter6.py](adapter6.py) with
 `SC117_ACTIVATIONS=f32` and `SC117_PREFILL_ROWS=16`, both set in [sc117-lan.service](sc117-lan.service).
 - **Batched prefill.**
   - Prompts are read in 16-row chunks on both cards, with the last two prompt tokens read token by token.
   - A one-time startup gate per binary showed batched and token-by-token runs identical: tokens, MTP guesses and the
-    full target state on both cards ([evidence](evidence/prefill-8a76e3cedbe42f7f-rows16.json),
+    full target state on both cards ([evidence](evidence/prefill-afdfa33a9200ac96-rows16.json),
     [result](../../service-speed/b-prefill/RESULT.md)).
   - A 581-token prompt reads in 9.7 s instead of 16.2 s.
   - If the gate fails, requests fall back to token-by-token prefill.
-  - The binary and its objects are in `/dev/shm/engine-build-pf10`; a reboot loses them, and `engine/build.py`
+  - The binary and its objects are in `/dev/shm/engine-build-pf11`; a reboot loses them, and `engine/build.py`
     rebuilds them from the tree.
 - The token-by-token path of this binary reproduces engine 32654dfb exactly: the same F32 self-test and the same suite
   outputs, checked by the gate.

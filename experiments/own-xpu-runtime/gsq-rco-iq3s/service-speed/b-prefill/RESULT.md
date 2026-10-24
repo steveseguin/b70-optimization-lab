@@ -1,6 +1,6 @@
 # Batched prefill: lossless on device, 1.67× on a 581-token prompt (2026-10-24)
 
-The serving engine is `8a76e3cedbe4` ([receipt](../../../engine/receipts/8a76e3cedbe4.json)), in F32 exact mode
+The serving engine is `afdfa33a9200` ([receipt](../../../engine/receipts/afdfa33a9200.json)), in F32 exact mode
 with `--prefill-rows 16`. It serves the LAN endpoint through [adapter6.py](../../serving/lan/adapter6.py) with
 `SC117_PREFILL_ROWS=16`. The first lossless stage was `6fd6eaa7c622`, and the progression table below lists each
 binary.
@@ -68,7 +68,9 @@ On the 581-token prompt, one 16-row chunk takes about 278 ms on each rank, about
 | `43043ce7` | SimpleNew route/gather/combine multi-row by copying the binding struct per item | 31.3 s (register spill) |
 | `e8823486` | the same through `RowBound` accessor offsets; status checks once over all rows | 9.7 s (1.67×) |
 | `dae4f85b` | tiled kopt dense kernel: 16 weight rows per work-group, activations staged in local memory | 18.7 s (exact; slower, most likely accumulator spills; now opt-in, `OWNRT_PREFILL_TILED=1`) |
-| **`8a76e3ce`** | tiled kernel off by default; `simple_body` reads its Spec by reference (no speed change) | **9.7 s (1.67×)** |
+| `8a76e3ce` | tiled kernel off by default; `simple_body` reads its Spec by reference (no speed change) | 9.7 s (1.67×) |
+| `afdfa33a` + `OWNRT_PREFILL_TILED=1` | tiled kernel v2: transposed local-memory tile, 16 unrolled tokens, 2 rows per subgroup | 11.0 s (exact). Per family: kopt Q8_0 0.85 → 0.73 ms/row, but 16-bit-weight sites 2.16 → 4.52 ms/row, because their matrices are mostly small-row (1–512 rows) or K=320 |
+| **`afdfa33a`** | default (tiled off) | **9.7 s (1.67×)** |
 
 Per-op profiles (`OWNRT_PREFILL_PROFILE=1`, drains after every site) are in [profiles/](profiles/). For `e8823486`, of
 14.8 ms per row on rank 0:
@@ -82,7 +84,10 @@ reuse alone (`8feaa684`) lost parallelism without removing the activation traffi
 
 ## Next
 
-1. Tiled matrix-multiply kernels. A work-group computes a block of output rows × tokens, with the activation slice
+1. Faster matrix-multiply kernels for the batched shapes. Two tiled attempts were exact but not faster overall
+   (table above). The next attempt needs kernel-level measurement (a GPU profiler, or an isolated microbenchmark on a
+   free card) rather than whole-service A/B runs. Then pick a kernel by shape.
+   Original design idea: tiled matrix-multiply kernels. A work-group computes a block of output rows × tokens, with the activation slice
    staged once and each weight decoded once. Every output keeps its lane k-order, product then add, and its subgroup
    tree. Dense rows reuse across tokens; expert rows reuse the slot's activations across the expert's rows. The same
    tiling cuts F32 activation re-reads in single-token decode.
