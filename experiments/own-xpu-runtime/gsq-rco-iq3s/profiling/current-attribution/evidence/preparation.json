@@ -1,0 +1,53 @@
+{
+  "schema": "gsq.current-attribution.preparation.v1",
+  "passed": true,
+  "tests": 9,
+  "command": "OPENBLAS_NUM_THREADS=2 OMP_NUM_THREADS=2 taskset -c 8-15,24-31 nice -n19 python3 -B -m unittest test_profile -v",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/profile.py": "dc2cce7925aba377e00d50b20db8470a5943a2242dd2f13fdbc939194e6e7cd5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/once.py": "bd129f2f7b95e3cb43157c3314214bfaa9bd3155b603e052f55f05323ab4b952",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/events.py": "b1999d4f126fac29b8fdea14e31b443c90151db8854ada13dc79f06aec1f66a0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/test_profile.py": "81d0187d80d9862918fd2e9bb32cbe2df8c302ab896add3b7a91f9af691ecb67",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/README.md": "28ab2b7ec3365b5c9797454590f92a6cd5b5b8e65da4d6d2a486f2e036401d4a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/source-pins.json": "f400b78c57a0c8765bc49aad380a3c104e4a79a25923f0a61a3d66232236b4a6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/profile.py.patch": "d6092559c4720319db6ff2348c211c5042308f82223666cb2ab74a48eb15bdd5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/once.py.patch": "fcbf429e60844bfff64ecf38eac8f84cda27575b10662f28f6a2c9f5a47f4719",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/evidence/cpu-tests.log": "ed37255ac36d5eb919fe4c9a7e50a01508b5147210b59c41dc604a354c588f68"
+  },
+  "parent_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/profile.py": "fb68fc65a9f565f025f46e7fafe585759e88dcf2ffced3cb384f49742e9a1a13",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/once.py": "eedfdf4f3fa6c477cc092fd339b803b64f434bd5cc62583953bfe06f43bf11f3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-combined/evidence/independent-review.json": "621a6582ea43be7c7d7251cf9a5a58c48a3bce1b2183168f0a0a18f9944e48e7"
+  },
+  "sample": {
+    "prompt_length": 87,
+    "fixture": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "absolute_position": [
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101
+    ],
+    "warmup_outputs": 8,
+    "scope": "early generated target steps; not prefill or representative entire decode"
+  },
+  "raw_state_bytes": 694327500,
+  "metadata_forecast_bytes": 134217728,
+  "plan_invoked": false,
+  "native_execution": false,
+  "initial_setup_refusal": "First test/doc-writing shell used repo-relative names from packet cwd; writes refused and unittest could not import absent test module. Corrected cwd-relative paths before successful9 tests. Final cross-rank aggregation check then added and final9rerun captured verbatim.",
+  "scope": "Source and bounded synthetic mocks/closed source metadata only; no native build/device/payload reads"
+}

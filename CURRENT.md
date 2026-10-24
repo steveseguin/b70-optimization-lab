@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 24, 04:37 EDT — four-card host: narrow expert format trace active.**
+The existing diagnostic samples eight early generated-token steps of originalprompt00,
+with exact full-state checks and unchanged model arithmetic. It will separate expert
+costs by actual tensor format. Unit:`gsq-current-attribution-a`; vision remains
+protected. Nine closed evidence groups have been archived and verified, USB5.56GB;
+remaining archival waits for this owner pair to drain. No kernel candidate adopted.
+[Trace scope](experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/README.md).
+
+
 **October 24, 04:34 EDT — four-card host: current profile passes, expert work is next.**
 Independent audit confirms exact baseline tokens/full state, unchanged class counts,
 clean owners and empty target cards. Vision is unchanged. Expert gate/up projections
