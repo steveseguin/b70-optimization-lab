@@ -1,0 +1,67 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/rank.hpp
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v2/rank.hpp
+@@ -249,12 +249,12 @@
+ }
+ static void state_dump(Engine& e,int sequence) {
+  std::ostringstream o;o<<"{\"history0\":"<<e.history0<<",\"history1\":"<<e.history1<<",\"buffers\":{";bool comma=false;
+- fs::path dir=e.a.output/("state-"+std::to_string(sequence));fs::create_directories(dir);
++ fs::path dir=e.a.output/("state-"+std::to_string(sequence));fs::create_directories(dir);gsq_bundle::Writer bundle(dir);
+  // Full bytes of every plan allocation, including overwrite-only intermediates.
+- for(auto& [name,s]:e.buffers[0]){auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));std::ofstream f(dir/(name+".bin"),std::ios::binary);f.write(reinterpret_cast<char*>(b.data()),b.size());
++ for(auto& [name,s]:e.buffers[0]){auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));bundle.append(name+".bin",b.data(),b.size());
+   o<<(comma?",":"")<<ownrt::quote(name)<<":"<<ownrt::quote(hash(b));comma=true;}
+- for(auto& [name,id]:e.state_spares){auto b=e.readback(0,id,e.dev(0).arena.row(id).bytes);std::ofstream f(dir/("alternate-"+name+".bin"),std::ios::binary);f.write(reinterpret_cast<char*>(b.data()),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
+- o<<"},\"fp32_cache_valid\":"<<(e.fp32_sources[0]?"true":"false")<<",\"fp32_extent\":"<<e.fp32_extents[0]<<"}";save(dir/"state.json",o.str());
++ for(auto& [name,id]:e.state_spares){auto b=e.readback(0,id,e.dev(0).arena.row(id).bytes);bundle.append("alternate-"+name+".bin",b.data(),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
++ o<<"},\"fp32_cache_valid\":"<<(e.fp32_sources[0]?"true":"false")<<",\"fp32_extent\":"<<e.fp32_extents[0]<<"}";bundle.finish(o.str());
+ }
+ } // namespace pipeline
+ static void pipeline_cancel_check() {
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build/source/main.cpp
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v2/main.cpp
+@@ -1826,7 +1826,8 @@
+      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/p105_runtime.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/rank.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/bundle.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v2/rank.hpp"
+ 
+ // SPEED6_SCRATCH_POLICY_BEGIN
+ // Scope the footprint reduction to the previously refused split23/dr1 arm.
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/generated/adapter.py
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/generated/adapter.py
+@@ -6,8 +6,8 @@
+ P=Path(__file__).resolve().parent
+ LANE=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
+ ROOT=Path('/home/steve/llm-optimizations')
+-CANDIDATE=P.parent.parent
+-LEDGER=P.parent/"candidate-ledger.json"
++CANDIDATE=P.parent
++LEDGER=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/operating/candidate-ledger.json')
+ PARENT=ROOT/'experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py'
+ PARENT_SHA='4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3'
+ ENV_SOURCE=ROOT/'experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py'
+@@ -25,9 +25,10 @@
+     spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+ require(sha(PARENT)==PARENT_SHA,'P195 pipeline source changed')
+ BASE=load(PARENT,'gsq_p195_pipeline')
++BUNDLE=load(P.parent/'reader.py','gsq_state_bundle_reader')
+ 
+ def source_pins():
+-    files=[Path(__file__).resolve(),P.parent/'prepare.py',P.parent/'preparation.json',PARENT,ENV_SOURCE,LANE/'loader/bound.hpp',LANE/'loader/bound-authority.json',LANE/'loader/placement.tsv',LANE/'loader/shard-auth.tsv',LANE/'mtp/draft-manifest.tsv',LANE/'mtp/target-bindings.json',LEDGER]
++    files=[Path(__file__).resolve(),P.parent/'prepare.py',P.parent/'preparation.json',P.parent/'reader.py',P.parent/'parent-pins.json',PARENT,ENV_SOURCE,LANE/'loader/bound.hpp',LANE/'loader/bound-authority.json',LANE/'loader/placement.tsv',LANE/'loader/shard-auth.tsv',LANE/'mtp/draft-manifest.tsv',LANE/'mtp/target-bindings.json',LEDGER]
+     history=LANE/'integration/evidence/host-retained-source-map.json'
+     if history.exists():files.append(history)
+     return {str(p.relative_to(ROOT)):sha(p) for p in files}
+@@ -189,9 +190,7 @@
+     for rank in (0,1):
+         transport.call(rank,BASE.DUMP,position=2147483647)
+         path=transport.request_output/f'rank{rank}/state-2147483647'
+-        files=sorted(path.rglob('*'));require(files and all(not f.is_symlink() for f in files),'state evidence missing/symlink')
+-        result[str(rank)]={str(f.relative_to(path)):sha(f) for f in files if f.is_file()}
+-        require(result[str(rank)],'empty target state')
++        result[str(rank)]=BUNDLE.read_state(path)
+     return result
+ 
+ def reset(transport,destination):

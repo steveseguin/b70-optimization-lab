@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/bundle.hpp": "64eee8d66268f7457611580d9f7a805382b80adbb132d5ecb358c0edf817e96a",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/fixture.cpp": "f6ba04e53c7e38086b9b00b1d92849a85724ee85cadc48d427c1b513d814b052",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py": "5a790a84b65508ccbbadc7f381c804b1dbc0564b5a175a0ae102156905413f2d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/test_bundle.py": "73e3d8dc65d770ca7dc9650bc83fe5d5478badfbad186f1e206f63debbba79db",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build_cpu.py": "75acf779228063e709b725516c6f21740dda2590c032b629e7999eb1264f9a60",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/preparation.json": "debbbbb95b09cc885426a8c666cc28cb7f1cf4ba17ba5c0f58bba74160e53bb7",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/parent-pins.json": "27d52cb84f88255d93a341495322d1c755ed2df18567984076441269cafee80f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/generated/adapter.py": "ab8c785f039daec8baed1cf543946db41ffa5fe414e8abf5c69f82af755fdf7e"
+  },
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=gnu++20",
+      "-O2",
+      "-g0",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/cpu-1792828770024624748/fixture.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/fixture.cpp",
+      "-lcrypto",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/cpu-1792828770024624748/fixture"
+    ],
+    [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "unittest",
+      "test_bundle",
+      "-v"
+    ]
+  ],
+  "compiler_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+  "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/cpu-1792828770024624748/fixture",
+  "compile_turn_sha256": "c9528d50e0b424753359f8dbf8a0198267d10afd203a3ede4f812e41264057ca",
+  "scope": "Actual native-writer header in GNU CPU fixture plus independent reader and adapter/synthetic RPC tests; no Engine/Device/model",
+  "dependencies": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/fixture.cpp": "f6ba04e53c7e38086b9b00b1d92849a85724ee85cadc48d427c1b513d814b052",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/bundle.hpp": "64eee8d66268f7457611580d9f7a805382b80adbb132d5ecb358c0edf817e96a"
+  },
+  "binary_sha256": "e964042c0d8ae89082305395c3f9afdd176d59a3c6589bdc78d13a426bf0971d",
+  "tests": 9,
+  "test_log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/cpu-1792828770024624748/tests.log",
+  "test_log_sha256": "c7ce572b682c929282ed58a938d159aeb6cc7075a185abc79737e7d71cf7446d"
+}

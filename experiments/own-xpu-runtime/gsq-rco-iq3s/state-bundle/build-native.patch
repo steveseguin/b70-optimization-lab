@@ -1,0 +1,54 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/engine/build.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build_native.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Compile the generated policy CPU fixture or one full native entry; never run native."""
++"""One evidence-only entry compile/link, 39 unchanged objects; never invoke native."""
+ import argparse,hashlib,importlib.util,json,os,resource,shutil,subprocess,sys,time
+ from pathlib import Path
+ import prepare as M
+@@ -12,9 +12,8 @@
+  resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));resource.setrlimit(resource.RLIMIT_CORE,(0,0))
+  require(shutil.disk_usage(R).free>=27000000000+250*1024**2,'root floor+250MiB')
+ def admission():
+- old,parent=M.parent();prep=json.loads((P/'preparation.json').read_text())
++ old=M.authority();prep=json.loads((P/'preparation.json').read_text())
+  for f,h in prep['source_sha256'].items():require(sha(f)==h,'prepared source drift')
+- require(prep['objects']==parent['objects'] and prep['sites']==M.selected(),'fixed source/dependency selection')
+  return old,prep
+ def recipe(mode,d,old,prep):
+  source=Path(prep['materialized_directory'])
+@@ -23,18 +22,19 @@
+  link=list(old['commands'][-1]);link[link.index(old['commands'][0][-1])]=str(d/'entry.o');link[link.index('-o')+1]=str(d/'gsq-engine')
+  return [cmd,link],d/'gsq-engine'
+ def main():
+- ap=argparse.ArgumentParser();ap.add_argument('--mode',choices=('cpu','native'),required=True);group=ap.add_mutually_exclusive_group(required=True);group.add_argument('--plan',action='store_true');group.add_argument('--build',action='store_true');args=ap.parse_args()
++ ap=argparse.ArgumentParser();ap.add_argument('--mode',choices=('native',),required=True);group=ap.add_mutually_exclusive_group(required=True);group.add_argument('--plan',action='store_true');group.add_argument('--build',action='store_true');args=ap.parse_args()
+  old,prep=admission();d=P/'build'/('preview-'+args.mode if args.plan else args.mode+'-'+str(time.time_ns()));commands,binary=recipe(args.mode,d,old,prep)
+  if args.plan:print(json.dumps(dict(commands=commands,mode=args.mode,objects_reused=39 if args.mode=='native' else 0,compiler_invoked=False),indent=2));return
+  limits()
+  if args.mode=='native':
+-  cpu=json.loads((P/'evidence/cpu-proof.json').read_text());require(cpu['passed'] and cpu['preparation_sha256']==sha(P/'preparation.json'),'actual policy CPU proof')
+-  require(json.loads((P.parent/'evidence/cpu-proof.json').read_text())['passed'],'Q6 arithmetic proof')
+-  require(json.loads((P.parent/'micro/evidence/device-a/review.json').read_text())['passed'],'Q6 actual native micro proof')
++  cpu=json.loads((P/'evidence/cpu-proof.json').read_text());require(cpu['passed'],'actual writer/reader CPU proof')
++  for f,h in cpu['source_sha256'].items():require(sha(f)==h,'CPU source drift')
++  fs=json.loads((P/'evidence/fs-pilot.json').read_text());require(fs['passed'] and fs['filesystem_device']==2050 and fs['payload_bytes']==261,'actual NTFS pilot')
++  for name in ('bundle.hpp','reader.py','fixture.cpp'):require(fs['source_sha256'][str(P/name)]==sha(P/name),'pilot writer/reader drift')
+   require(sha(commands[0][0])==old['compiler_sha256'],'same native compiler')
+  d.mkdir(parents=True);pins=dict(old['source_sha256'])
+  for f,h in {**json.loads((P/'parent-pins.json').read_text()),**prep['source_sha256']}.items():pins[str(Path(f).relative_to(R))]=h
+- for f in [P/'build.py',P/'policy_fixture.cpp',P/'preparation.json']:
++ for f in [P/'build_native.py',P/'preparation.json',P/'evidence/cpu-proof.json',P/'evidence/fs-pilot.json']:
+   pins[str(f.relative_to(R))]=sha(f);shutil.copy2(f,d/f.name)
+  turnpath=R/'experiments/own-xpu-runtime/ops/compile_turn.py';pins[str(turnpath.relative_to(R))]=sha(turnpath)
+  sys.modules['build_engine']=sys.modules[__name__];spec=importlib.util.spec_from_file_location('combined_compile_turn',turnpath);turn=importlib.util.module_from_spec(spec);spec.loader.exec_module(turn)
+@@ -59,7 +59,7 @@
+    entries='\n'.join(f.read_text() for f in d.glob('kernel*.sym'));(d/'kernel-entries.log').write_text(entries)
+    for t in (12,13,18,23,42):require('PackedKernelILj'+str(t)+'E' in entries,'generic format entry')
+    receipt['offline']={'entry_device_sha256':sha(bc),'kernel_entries_sha256':sha(d/'kernel-entries.log'),'symbols_sha256':sha(d/'symbols.log'),'p33_object_reused_unchanged':True}
+-   receipt['prerequisite_sha256']={str(f):sha(f) for f in [P/'evidence/cpu-proof.json',P.parent/'evidence/cpu-proof.json',P.parent/'micro/evidence/device-a/review.json']}
++   receipt['prerequisite_sha256']={str(f):sha(f) for f in [P/'evidence/cpu-proof.json',P/'evidence/fs-pilot.json']}
+   admission()
+   for f,h in pins.items():require(sha(R/f)==h,'final source drift '+f)
+   require(sha(commands[0][0])==receipt['compiler_sha256'],'compiler drift');receipt['passed']=True
