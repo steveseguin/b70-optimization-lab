@@ -1,0 +1,24 @@
+{
+  "schema": "gsq.coverage.launch-b.audit-preparation.v1",
+  "passed": true,
+  "tests": 4,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/audit.py": "f28162c948d353966277dc9a12bed2dfd3995052b12cbef03476db644e230430",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/test_audit.py": "9ed473d41f64b0c18aeeec4147b0fcb37a4f58071e14129e61d78344fc7b7ea4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/audit-delta.patch": "9ec1b0daaa59cf67471744511c9d0a24e7c937d6554d9a1b673d287a64f2183d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/audit-tests.log": "213dd8509df7a70a0570655ed141b7fb7a6e4eac9912289cd70f35aea29808d4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/device-b/plan.json": "9d80a1d2fc29cef4444a555ca2f033952adf8250f8a052bb2d1eadc08b7429ac",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/manifest.json": "90f8bf9f86ba5b4c8e082393509db0fde4111411ef9062417054ee60fa22dcd5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/tokenizer.py": "c22937e549718f68c7892e188f05fcff581343677207484782d506f50935f6ab",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/lineage/unexecuted-auditor-a/audit.py": "0b47af4942bd9936bb3ac3ac528622f1da7a5d7c85c08ca19c8dbc97c3b20eeb"
+  },
+  "actual_readback_run": false,
+  "model_payload_read": false,
+  "native_execution": false,
+  "scope": "Source and tiny synthetic joins only. Closed audit fixed to coverage-b plan; 14 bundles/7 captures, all six raw/enriched output joins, full same-target state equivalence and honest quality readback. Initial state extent/hash only, no unproved old blank-state oracle.",
+  "bounds": {
+    "raw_bytes": 2147483648,
+    "files": 3000
+  },
+  "run_command": "nice -n 19 taskset -c 8-15,24-31 python3 experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/audit.py --run --plan-sha256 9d80a1d2fc29cef4444a555ca2f033952adf8250f8a052bb2d1eadc08b7429ac"
+}

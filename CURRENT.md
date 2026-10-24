@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 24, 06:12 EDT — four-card host: broader coverage independently passes; next native micro preparing.**
+All6requests/3pairs and14bundles pass, including512-output equality and2084-input
+fact retrieval (all six facts correct,84outputs/EOS). Capped retrospective remains
+incomplete; no broadquality/publicspeed claim. Both owners closed/drained; vision
+and fault baseline unchanged. Target cards empty. IQ4_NL direct-global micro source
+and extractor review pending; no native candidate execution. Old npm download-cache
+payloads141MB removed (installed tools/models untouched); root27.35GB, USB4.56GB.
+A future full26screen needs additional evidence capacity; the next micro fits.
+[Broader result](experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/RESULT.md).
+
+
 **October 24, 05:59 EDT — four-card host: corrected broader coverage running.**
 Additive launch-b distinguishes native startup128 from actualRPC caps512/512/128;
 five focused tests and independent review pass. Qualified binary unchanged. Original

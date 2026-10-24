@@ -201,3 +201,16 @@ sequence/context/task coverage but is not an independent full-model reference.
 The next source-only kernel candidate removes local staging/barrier from IQ4_NL
 expert-down while preserving original decode8/lane sum/tree/BF16. No assumed speedup;
 one actual-case AB/BA discriminator is needed after focused new-address checks.
+
+## Broader coverage passes; next micro and capacity boundary — 10:12 UTC
+
+[Coverage-b](coverage/RESULT.md) independently passes all6 requests/14bundles.
+Two512-output pairs exact;2084-input fact task exact84/EOS and all six facts right.
+Full-text readback retains cap-limited incomplete outputs. Coverage-a startup refusal
+is preserved; additive startup128/RPC512 distinction fixes transport only.
+ContinueIQ4_NL direct-global one-case discriminator after reviewed exact fixture
+extraction and native build. CPU13,193checks pass; backend-contact ACK must precede
+all GPU work. No predicted speed gain or model integration yet. Root27.35GB after
+141MB old npm download-cache cleanup; USB4.56GB. Micro fits, but another full26suite
+requires additional verified evidence capacity first. Do not lower reserves or use
+the faulty RAID. Broader closed captures remain raw pending any explicit archival.

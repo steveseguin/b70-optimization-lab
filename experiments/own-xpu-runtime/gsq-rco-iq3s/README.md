@@ -9,6 +9,11 @@ passes all24 baseline arms and independent54-bundle readback, measuring15.73 tar
 /23.30 MTP tokens/s. Both ranks and safe closure are verified. This remains an internal
 cap128 resident screen; publication quality/context gaps are explicitly retained.
 
+The [broader coverage screen](coverage/RESULT.md) also passes exact target/MTP
+comparison through512 outputs and a2084-token input. All six requested document
+facts are correct; two capped outputs remain incomplete. Independent14-bundle
+readback and safe closure pass. This is limited coverage, not broad certification.
+
 The combined attention/Q6 candidate now matches all twelve original prompt pairs,
 measuring14.85 target-only /22.13 MTP tokens/s in its separately audited resident run
 ([full result and scope](qkv-q6-p33/engine/operating/RESULT.md)). This is a cap128

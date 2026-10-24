@@ -1,0 +1,44 @@
+{
+  "review_completed": true,
+  "reviewer": "Codex root full-text readback, not an external human evaluation",
+  "independent_audit_sha256": "9ab6bfce305ecb82816bc36b50092a434a1faa4cd2b24eb3f99bbffbb031d2ed",
+  "all_three_unique_outputs_read_in_full": true,
+  "quality_qualified": false,
+  "scope": "Three fixed cases only; two capped outputs remain incomplete, one factual task passes. No independent same-weight full-model oracle or universal quality claim.",
+  "cases": [
+    {
+      "case": "prompt00-extended",
+      "target_decoded_file_sha256": "cd8d43cf16d39b9f5ef31a9338d776135fd82dbad326602ab40038faafab6e91",
+      "both_modes_identical_verified_by_audit": true,
+      "output_tokens": 512,
+      "termination": "cap",
+      "word_count": 273,
+      "observed_coherence": true,
+      "complete_requested_task": false,
+      "reason": "512-token cap truncates after 273 words mid contributing-factors sentence. Impact/timeline/cause are present; detection gaps/remediation/prevention/owner handoff are not completed. No full 450\u2013550-word compliance claim.",
+      "invented_scenario_scope": "Prompt asks for a retrospective without supplying incident facts; generated names/dates/counts are illustrative, not verified operational facts."
+    },
+    {
+      "case": "historical-reading512",
+      "target_decoded_file_sha256": "950cbb849e1fc4eedf0ab50c03ba377c4afe10c73c2ed15a80eb3c83a1b989fc",
+      "both_modes_identical_verified_by_audit": true,
+      "output_tokens": 512,
+      "termination": "cap",
+      "word_count": 204,
+      "observed_coherence": true,
+      "complete_requested_task": null,
+      "reason": "Continues the input cutoff results/< with model>-... and readable lane-documentation sections. Ends mid list at output cap. This is raw text continuation, not question-answer evaluation; generated paths are examples, not verified repository facts."
+    },
+    {
+      "case": "document-facts",
+      "target_decoded_file_sha256": "399932ffa55f003f5c211ebfea81b9cad38b94a07362e0ded5ab3da762271fe3",
+      "both_modes_identical_verified_by_audit": true,
+      "output_tokens": 84,
+      "termination": "eos",
+      "word_count": 23,
+      "observed_coherence": true,
+      "complete_requested_task": true,
+      "reason": "All six requested fields exactly match early/middle/late document facts, including integer73 and ordered pressure/checksum checks; no extra keys, valid complete JSON, natural EOS at84 outputs."
+    }
+  ]
+}

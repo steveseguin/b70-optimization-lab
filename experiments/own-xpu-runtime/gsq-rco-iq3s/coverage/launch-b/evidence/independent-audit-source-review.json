@@ -1,0 +1,42 @@
+{
+  "schema": "gsq.coverage.launch-b.audit-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/audit.py": "f28162c948d353966277dc9a12bed2dfd3995052b12cbef03476db644e230430",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/test_audit.py": "9ed473d41f64b0c18aeeec4147b0fcb37a4f58071e14129e61d78344fc7b7ea4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/audit-delta.patch": "9ec1b0daaa59cf67471744511c9d0a24e7c937d6554d9a1b673d287a64f2183d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/audit-tests.log": "213dd8509df7a70a0570655ed141b7fb7a6e4eac9912289cd70f35aea29808d4",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/device-b/plan.json": "9d80a1d2fc29cef4444a555ca2f033952adf8250f8a052bb2d1eadc08b7429ac",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/manifest.json": "90f8bf9f86ba5b4c8e082393509db0fde4111411ef9062417054ee60fa22dcd5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/tokenizer.py": "c22937e549718f68c7892e188f05fcff581343677207484782d506f50935f6ab",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/lineage/unexecuted-auditor-a/audit.py": "0b47af4942bd9936bb3ac3ac528622f1da7a5d7c85c08ca19c8dbc97c3b20eeb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/audit-preparation.json": "d3bb1cced973048bbe01d6ecfe505b178ef2e4f553cbce1f39fd7c076be3c8d8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/audit.py": "43154e5b8101fb879eb08bbbebc29714443dd083cb90df6fbbb7e269d522d0ab",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/evidence/device-a/audit.py": "4013acb3216fe908edda3761089a11377e9513f025c99d0442d9792386b5c594",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/evidence/independent-review.json": "a5e8df16b2e3dfaa7af25cbbdd988111c7325bdddbab967630eb265dde6bdf60"
+  },
+  "findings": [],
+  "scope": "Finite source/delta/retained four-test review only; no raw captures, model payloads, compile, test rerun or native invocation.",
+  "checks": [
+    "Exact admitted b plan and explicit startup128/request512-512-128 at all layers plus actual argv/env comparison",
+    "14 fixed bundle paths/7 captures; full contiguous inventories and original lengths via frozen independent stream_bundle parser",
+    "Initial/newlong states no old semantic oracle claimed; all measured states reconstructed from raw bytes and compared between target/MTP",
+    "Raw request JSON before decode enrichment joined exactly to separate decoded-output and full result",
+    "Original first128 prefix only, full output tokenization/decode and strict preregistered JSON rubric recomputed",
+    "All6 scheduling/caps/context/confirmed-input/acceptance checks; no short nonEOS filtering",
+    "Positive RESET, explicit repeat/closed stamps, owner receipts, memory ledger, physical contacts and fault/drain guards",
+    "Full artifact index bounded2GiB/3000files, no native or operating imports",
+    "EarlyEOS/cap/quality failures retained; no speed or independent-reference claim"
+  ],
+  "retained_tests": {
+    "passed": true,
+    "count": 4,
+    "rerun_by_reviewer": false
+  },
+  "actual_readback_passed": null,
+  "limitations": [
+    "Actual execution of auditor remains root-only after confirmed drain",
+    "Manual full-text quality readback remains separate; cap512 may truncate original450\u2013550-word instruction",
+    "Baseline first128 equality does not establish independent same-weight full-model correctness"
+  ]
+}

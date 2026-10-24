@@ -1,9 +1,9 @@
 # Broader coverage status
 
-The separately reviewed [launch-b correction](launch-b/README.md) is running as
-`gsq-coverage-b` from09:59UTC, with explicit startup128 and unchanged request
-caps512/512/128. Five focused tests and independent review pass. No completed
-broader-coverage or quality result is claimed yet.
+The separately reviewed [launch-b correction](launch-b/README.md) [passes the completed broader screen](RESULT.md) as
+`gsq-coverage-b`, with explicit startup128 and unchanged requestcaps512/512/128.
+All three pairs and14bundles pass independent readback. The long-document facts
+pass; two capped outputs remain incomplete and overall quality is not certified.
 
 The first launch, `gsq-coverage-a`, was refused before model/device initialization.
 Both native rank commands passed startup`--max-new512`, while the unchanged parser
