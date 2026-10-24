@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 24, 05:59 EDT — four-card host: corrected broader coverage running.**
+Additive launch-b distinguishes native startup128 from actualRPC caps512/512/128;
+five focused tests and independent review pass. Qualified binary unchanged. Original
+coverage-a refusal/source/artifacts preserved. Six fixed requests87/512/2084 inputs,
+fullRESET, prefix128 and pair token/state checks; quality assessed separately.
+IQ4_NL address proof13,193checks passes CPU; native micro preparation remains source-only.
+[Correction scope](experiments/own-xpu-runtime/gsq-rco-iq3s/coverage/launch-b/README.md).
+
+
 **October 24, 05:52 EDT — four-card host: coverage refused before device initialization.**
 Both ranks rejected native startup max-new512 (native bootstrap bound128), exited
 in2.06seconds, target descriptors empty, fault/vision baseline unchanged. No model

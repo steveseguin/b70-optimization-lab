@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "cpu_build_ready": true,
+  "native_qualified": false,
+  "reviewer": "root independent of candidate author",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/direct.hpp": "cbbf92b9a79c322dbf448801e6a4defeccf8944e6b162240bbf069811609035a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/direct.patch": "2d74569ba71fe4462518e1c7735e85ed95cf9054a9e5257afbc56943fad8d0a5",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/policy.hpp": "2f8501e723a0308df409363cadde97f6af70b67e7dbfd306771c47b934a6493c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/proof.cpp": "ee1132613da38124cae6aac871fe9151fcda0cd5b625ca99ba80df8143e8b19a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/build_cpu.py": "2a17e370b143d43f6b8044c50c6da6204178b4dc3a0b787e2e54a63da23f9e63",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/test_source.py": "fbbd7a2acc430ea2741903ee7845da2d2a921b4fe124dec87df60dd5aa38b25a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/source-pins.json": "66b00bc9b1434342b9e73d9ffa759fbbf48df3f3ddd14d65ba9af25f2df40201",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/selection.json": "bdb0d7ab5742dd4bb04308455186d1aa0e7ee8e317d8439a60090eae9a2c7b9c"
+  },
+  "checks": [
+    "Patch removes only staging/local accessor/barrier in selected arithmetic path; original source address, per-slot input pointer, decode8/lane_dot, four SG32 subgroups, adjacent tree, status/tail/output preserved",
+    "Narrow type/geometry facade and original device admission retained; no actual Engine integration yet",
+    "CPU test exercises all16 alignments, representative exceptional scales, staged byte equality, lane/tree/BF16 equality, compact invalid/duplicate/zero/tail routes and policy refusals",
+    "CPU helper GNU-only single TU, no runtime objects/Device, strict source+compiler/dependency hashes, bounded memory/time/disk and no automatic rerun"
+  ],
+  "limitations": [
+    "CPU tests cannot establish SYCL global address-space behavior or native NaN behavior",
+    "Native actual-byte output/status equality and matched timing remain mandatory"
+  ],
+  "device_calls": 0,
+  "model_payload_read": false
+}

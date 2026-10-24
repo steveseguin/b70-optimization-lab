@@ -1,0 +1,57 @@
+{
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-g0",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DOWN_RT_HOST_ONLY",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/build/1792835261970389672/proof.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/proof.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/build/1792835261970389672/proof"
+    ],
+    [
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/build/1792835261970389672/proof"
+    ]
+  ],
+  "executed": false,
+  "synthetic_only": true,
+  "schema": "gsq.iq4nl-direct.cpu-plan.v1",
+  "compiler_invoked": false,
+  "objects": [],
+  "proof_scope": "Changed staged/global row address and inherited arithmetic parity; not native behavior",
+  "launch": [
+    "env",
+    "OMP_NUM_THREADS=2",
+    "OPENBLAS_NUM_THREADS=2",
+    "MKL_NUM_THREADS=2",
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/iq4nl-down-direct/build_cpu.py",
+    "--build"
+  ],
+  "requires": "Root authorization after coverage owners drain; no compiler during GPU work",
+  "source_sha256": {
+    ".gitignore": "c7cd0fc55d4b88bc4ed87b1cdc33670d9046174ab762188a0f2ce10290bb56e0",
+    "build_cpu.py": "2a17e370b143d43f6b8044c50c6da6204178b4dc3a0b787e2e54a63da23f9e63",
+    "direct.patch": "2d74569ba71fe4462518e1c7735e85ed95cf9054a9e5257afbc56943fad8d0a5",
+    "policy.hpp": "2f8501e723a0308df409363cadde97f6af70b67e7dbfd306771c47b934a6493c",
+    "selection.json": "bdb0d7ab5742dd4bb04308455186d1aa0e7ee8e317d8439a60090eae9a2c7b9c",
+    "README.md": "1f92126699262f8363b8e4e594e2137b73ae372194e64eee338530d10ff35c73",
+    "proof.cpp": "ee1132613da38124cae6aac871fe9151fcda0cd5b625ca99ba80df8143e8b19a",
+    "direct.hpp": "cbbf92b9a79c322dbf448801e6a4defeccf8944e6b162240bbf069811609035a",
+    "source-pins.json": "66b00bc9b1434342b9e73d9ffa759fbbf48df3f3ddd14d65ba9af25f2df40201",
+    "prepare.py": "f5ba4cebff220cde7b9f9acfbce2c8f4798f4d433edd71eba91c4692d584167c",
+    "test_source.py": "fbbd7a2acc430ea2741903ee7845da2d2a921b4fe124dec87df60dd5aa38b25a"
+  }
+}

@@ -1,0 +1,5 @@
+This additive wrapper preserves coverage-a's failed sources and plan. The native parser admits startup `--max-new` only through 128. All consumers of that option after parsing are in standalone execution, after the persistent-rank return. Persistent requests instead read their own count from `native-request.txt`, bounded by context minus prompt length.
+
+Launch-b sets `startup_max_new=128` explicitly. The original suite still sends 512, 512, and 128 for the three pairs; `max_new=512` remains its request ceiling. Every plan layer pins this correction and records both meanings. No native guard, binary, request, storage forecast, RESET, exactness or quality rule changes. The independent dependency scan and failed launch incident are pinned in parent-pins.json.
+
+Fresh identity: gsq-coverage-b, with separate control and evidence roots. Root alone admits and launches it after independent review. There is no automatic retry, restart, or claim that coverage-a passed. The original Monitor, RetainedOwner class and safe closure remain in use.

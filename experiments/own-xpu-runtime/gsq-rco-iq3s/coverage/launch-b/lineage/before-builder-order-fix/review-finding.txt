@@ -1,0 +1,1 @@
+Independent source review found original adapter builder calls patched command before new plan fields are added. Four initial mocks passed but omitted that actual builder call order. Fix command uses fixed startup128 during construction and validates explicit fields when present; final plan validation still requires all fields. No native or plan invocation occurred.
