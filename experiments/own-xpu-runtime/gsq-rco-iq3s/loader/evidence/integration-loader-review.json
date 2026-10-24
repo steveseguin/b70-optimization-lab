@@ -1,0 +1,44 @@
+{
+  "schema": "ownrt.gsq.integration-loader-source-review.v1",
+  "passed": true,
+  "scope": "Independent source/materialization admission review, no new compile or executable invocation",
+  "native_admitted": false,
+  "model_reads": 0,
+  "device_executed": false,
+  "closure_counts": {
+    "source_sha256": 135,
+    "private_sha256": 129,
+    "additional_source_sha256": 1
+  },
+  "preparation_sha256": "198a41954e1d1843a160116c61faf5999e2414469ae7385432004bc6ec85c927",
+  "checks": [
+    "All preparation source/private/additional hashes verified",
+    "Every quoted physical include resolves inside private materialization",
+    "New Weights branch authenticates compiled exact plan/stat/header authority with checked SHA256 provider and32-byte result",
+    "No read_plan/ifstream inside new branch: compiled candidate+expected supplied only after fixed-input hashes",
+    "Model exact2shard set and heldfd before/after/final stats preserved",
+    "BF16 HC replicas allowed only admitted constructor; old unbound3shard branch remains unchanged",
+    "Private bound.hpp byte-identical to frozen24-check helper",
+    "All architecture/tokenizer/header directory bytes bound by compiled raw prefix hashes"
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/prepare.py": "d822fe630b134b46647401f0336e235530084c3096621cd8a28464796b0d467d",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/preparation.json": "198a41954e1d1843a160116c61faf5999e2414469ae7385432004bc6ec85c927",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/overlay.patch": "409dc6e088b001c30c0ae637cb1806325632cc706fde74933d85e70405f7855a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/main.cpp": "fd0c3454383d5257caaf93c162a3e3fae8551b4c0c638e0cc3e57d34ef6d25db",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "2fc6680d7702d648627d42a4903bcd114669cdd35cec4105b0b974eace05940e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "cc59608a535339f29e4dd2e24e5858ae2d1714007784fd83a5b140db37ea397e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/admission.hpp": "00944cb802e9823617eaed85b15d8099748bdbcc2e1f566e67f9f64d59e5fe40",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/bound.hpp": "bc419a8d8d255133a4bbb180151e5062c3471ad3e6560233c6b8872330631df7",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/bound-authority.json": "c3237c7d1e66d1fb492599c074bcc35f6d3884c867fac7567583232816c99e20",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/bound-proof.json": "e11b4fd2ca24721e1d1967f4b6edb6a6b739094b009e40b3d1e0cabe23908522",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/BOUND.md": "63a58ebae290fb8c1a2ba472e8781d406bf916ce51be66acd325383f8d8e970a"
+  },
+  "limitations": [
+    "Not a native arithmetic or complete Engine dispatch audit",
+    "No actual model header preflight executed by reviewer",
+    "SHA callback source reviewed, not fault-injected EVP provider test",
+    "File-stat authority assumes trusted local coordinator/user; no malicious mutation defense or postconstruction immutability claim",
+    "Separate integration compile/preflight evidence remains author-owned"
+  ]
+}

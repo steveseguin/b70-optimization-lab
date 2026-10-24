@@ -1,0 +1,57 @@
+{
+  "schema": "gsq.integration-independent-execution-source-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-24T05:20:47.680167+00:00",
+  "source_only": true,
+  "device_invocations": 0,
+  "model_payload_reads": 0,
+  "compiles": 0,
+  "preparation_counts": {
+    "source_sha256": 202,
+    "private_sha256": 196,
+    "additional_source_sha256": 3
+  },
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/preparation.json": "75cd8b2af34b12e32834bab00f12db9aae3ec53b53eb96fd8a61ef8f0c09437c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/generic_engine.hpp": "1f60fc2c7f5d4626a9f59a0f5291fe731e306831d31612745af8c12b2513af8e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/generic_host.hpp": "1b34dd82b64bc38bb833fc8589c93a046ab66c51f73fdcdfad5ec1faab3abcd8",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/prepare.py": "b7287b1ed8df736d68e83421f26f8e9e8431db789bbab513a41c8d73aca583d9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/main.cpp": "eeff4395e1712968f6f0c389493d460a975e5bdc2db365dd94dc98443b71da5f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp": "deaa729573f2bb0304a9882ccede5267f6d272b5736a45a9dd6057eb0f0df542",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/rank.hpp": "bdd2955e31eddb821565c8a7b59e49dfa837986715d5469b2765297cf0588a7c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp": "40c5faa0e318b8e1e3d90196c8f01e268f9c5677a8d1ca66fb579c2e6c8ef7de",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp": "08f249a46ae60aed5b5fdb139a5a38b5d4a512c5090e35d93200fa007829fc5e",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "e27efad0b87b2c4e845265d98b6ff26cda458c582f146510276821db7e232f33",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/source/diet-native/native-base/experiments/own-xpu-runtime/stage2/packet194-expert-diet-engine/adapter.cpp": "f4d1d947107c1d8a8e2b2fc0d05d50216a9fb39e11ae3e4b4c2740f04e70b625",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/private/additive/admission.hpp": "211d198b040a9de3c71f454ca18720dd30f1c86d9cdf09f02e1e38934e5961eb",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/controls/manifest.json": "d43ca3847d8e0442fb237f8426bac461a5bb7fc39b37f5a6e3205603877b60b9",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/native-formats/packed.hpp": "4afcfb8a12bc9704ccb6a1f5b17bc5d315c69c894caaa5fd5e4140e106372c4f"
+  },
+  "resolved_finding": {
+    "file": "generic_engine.hpp",
+    "problem": "Native old-format routed fallback reversed output and routes arguments; Host-only path did not exercise this forwarding. Actual bind would refuse the undersized route allocation as output.",
+    "fix": "Forward exact inherited signature w,x,y,routes,status. Verified final generated source and original kopt definition.",
+    "host_branch_changed": false
+  },
+  "reviewed_paths": [
+    "Raw target packed allocation and selected full Q6 expanded head exception",
+    "Complete nongemv control manifest coverage; F16/BF16 widening and effective F32 Spec grid/adapter flag8",
+    "New gsqn and inherited kopt dense/routed facade signature, per-slot gathered input, slot-major output/status and extent handling",
+    "Prepared command value captures; same-queue reused owner allocation lifetimes",
+    "Rank0 full248320 Q6 draft head variant6 and private head storage; complete draft production defaults",
+    "Confirmed reverse hidden copy before draft work; target speculative image begin/rollback/accept and bank-swap ordering retained"
+  ],
+  "checks": {
+    "all_preparation_pins_match": true,
+    "native_routed_forwarding_corrected": true,
+    "nongemv_weight_set_equals_controls": true,
+    "all_target_dense_gemvs_single_batch": true,
+    "rank0_full_vocabulary_admitted": true
+  },
+  "limitations": [
+    "Source review and retained metadata checks only; does not prove full-shape native Engine execution or fit",
+    "Different generic arithmetic schedules are not asserted bit-identical to the historical selected P195 record kernels",
+    "Standalone native packed-format qualification does not qualify inherited fallback routing integration or complete MTP correctness"
+  ]
+}

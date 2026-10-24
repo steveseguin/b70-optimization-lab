@@ -1,0 +1,62 @@
+{
+  "schema": "ownrt.gsq.integration-preparation-complete.v1",
+  "passed": true,
+  "source_and_evidence_sha256": {
+    "prepare.py": "b7287b1ed8df736d68e83421f26f8e9e8431db789bbab513a41c8d73aca583d9",
+    "generic_engine.hpp": "1f60fc2c7f5d4626a9f59a0f5291fe731e306831d31612745af8c12b2513af8e",
+    "generic_host.hpp": "1b34dd82b64bc38bb833fc8589c93a046ab66c51f73fdcdfad5ec1faab3abcd8",
+    "preflight.cpp": "372286c2c1ba88957797282dcd77039f8286a37630d2d0da098eedffd0240155",
+    "build_cpu.py": "a0c8c6a97e1d819f488aa19489e7d7b59f3f57b6b2256646c53cdcf0965eb639",
+    "native_main.cpp": "ff3b832d173327ef4fc431994053fa2610284a2fde5f791ffb1654af37228010",
+    "build_full.py": "b5e265c9656954bc9852a523ab181f25ade915853fc8196354c806b3a4292105",
+    "host_lifecycle.py": "a664eeeeec293647e2d44817f15af6714d10d71df0af1d5f1a638abe5097f1e4",
+    "host-support/device_validation.hpp": "400d2e558e289af632382327512b37619020fe8628cb350f660bd1a75e37ee90",
+    "preparation.json": "75cd8b2af34b12e32834bab00f12db9aae3ec53b53eb96fd8a61ef8f0c09437c",
+    "overlay.patch": "463b94c285ea954c3f3193354dd297cb87c93b96e351f7dc3b2def0dca00510a",
+    "README.md": "ca03f3e0fe227da2dafb5169fd0b45befa7a378b5fecee84469f565b0519aac8",
+    "evidence/header-check.json": "4e537d3132839fc45518b12a89ad71d3a1d0fa414788b3f6269b03d9bca7efc1",
+    "evidence/full-host-build.json": "9d352dcbb78011a79b5b6b28c9532afd5273abcd6b0ef45a19b547bcf53b2139",
+    "evidence/host-lifecycle.json": "6dd4941374db9efbe6a2cc6a8f0b9d30c6c87a8a855add92bf0bc0ee628a1b53",
+    "evidence/host-build-attempts.json": "978e853c8d0b83f0786335b93a28958494c160fa8ae11f8aa473e47986263d0a",
+    "evidence/host-native-source-delta.json": "2dab7d765adda2890f3a550aa360cc79c6df6f83615599b614e3c2f9be007a36",
+    "evidence/host-retained-source-map.json": "b65980d849d0520b70e761bdec9a07b382fb93b9956de90b8baaae1b2328df24",
+    "evidence/full-native-build.json": "5d4643615ad94c0805de75ac7a01806dbb784c7fc09052f90ee04deafc5abd6d",
+    "evidence/native-offline-notes.json": "8e0ae72b94c60437c59ee2f7952bd13b9d89be6ce33393d265f32fd586cd7f8f",
+    "evidence/independent-execution-source-review.json": "19b6babf249837e53ba3b014bd93c9f05bb70212d775a917520c5c3593a73a47"
+  },
+  "header_preflight": {
+    "real_tensors": 1224,
+    "actual_graph_launches": 1869,
+    "device_constructed": false,
+    "tensor_payload_read": false
+  },
+  "host": {
+    "fresh_translation_units": 32,
+    "rank_processes": 4,
+    "target_tokens": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "mtp_guesses": 3,
+    "hits": 2,
+    "misses": 1,
+    "exact_final_target_state": true,
+    "safe_owners": 4,
+    "backend_events": "existing simulated Host backend"
+  },
+  "native": {
+    "fresh_translation_units": 40,
+    "compiler_dependencies": 195,
+    "binary_sha256": "16ce5bbda43e9d3d39c2446fc3037ea352d345f62161453f1ab0539330046ea2",
+    "invoked": false,
+    "full_model_qualified": false,
+    "offline_unlinked_math_warnings": [
+      "fmaf",
+      "sqrtf"
+    ]
+  },
+  "source_scope": "native-only routed argument-order correction after Host proof; exact historical source map retained",
+  "settings_or_services_changed": false
+}

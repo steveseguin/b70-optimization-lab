@@ -1,0 +1,35 @@
+{
+  "schema": "gsq.serving-independent-source-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-24T05:25:43.736386+00:00",
+  "scope": "Finite source review of exact pinned current adapter; CPU adapter miniature and operational admission remain author/coordinator work",
+  "device_invocations": 0,
+  "process_launches": 0,
+  "tests_run": "AST parse and source assertions only; no adapter main/qualification invocation",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/serving/adapter.py": "68538b214b7bda9c2fa5cd87534bad2243745b8a1af0dc82b43f01da48b06a01",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/serving/PLAN.md": "699303e7a14fc9e7a273f48165cd1953387ee7ee56ebb7ddbfad677238a89e2e",
+    "experiments/own-xpu-runtime/stage2/packet195-record-bundle-diet/pipeline.py": "4abadf40aa7bdab9400707f0dc9bbb13b104c1278f56b126bf767716459b63e3",
+    "experiments/own-xpu-runtime/stage2/packet181-session-swap-v3/one-card/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364"
+  },
+  "resolved_findings": [
+    "Unknown-spawn branch now cooperatively stops and raises retained ownership before inherited close can unmap/unlink/close shared resources",
+    "Two-request full state payload has explicit forecast and disk-floor admission; private control and alternate evidence output paths are separated"
+  ],
+  "reviewed": [
+    "Partially initialized Transport remains reachable through __new__ and cleanup wrapper; no automatic retry/restart/hardkill",
+    "Known-live or uncertain spawn retains transport through RetainedOwner; original error retained",
+    "Inherited stop pipe and FINISH both idle ranks; safe teardown receipts required for successful close",
+    "RESET metadata placed in original per-rank output while new request evidence follows Engine output; both ranks reset before shared mailbox clears",
+    "Complete generated token sequences and exact target plan-buffer/alternate-state hashes compared between target-only and MTP requests in the same processes",
+    "Closed per-rank exact BDF filters with card0, unchanged HOME, private cache paths and pinned compiler binary/source identity",
+    "Bounded requests/context/token caps/lifetime and storage forecast (not hard writer quota)"
+  ],
+  "limits": [
+    "Caller must catch RetainedOwner and stay alive holding admission/locks until independent physical drain; keeping Python references does not itself keep an exiting coordinator alive",
+    "Physical device identity, faults, protected applications, external output path admission and continuous storage monitoring belong to trusted coordinator hooks",
+    "State equality covers state-2147483647 plan/alternate files and state.json; standalone mutable inventory is retained separately, not included in that equality claim",
+    "Current review does not claim CPU miniature execution success or native model/MTP qualification",
+    "Any later adapter change requires review of its delta"
+  ]
+}

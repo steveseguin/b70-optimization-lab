@@ -1,0 +1,35 @@
+{
+  "schema": "ownrt.gsq.engine-accounting-review.v1",
+  "passed": true,
+  "scope": "source-only arithmetic and exact retained source binding; no runtime fit admission",
+  "source_pins": 22,
+  "source_snapshots": 15,
+  "internal_checks": {
+    "six_scenarios_partition_all1222_nonlookup_weights_once": true,
+    "all_weight_bytes_match_retained_census": true,
+    "only_weight_deltas_fullQ6head_and_F16control": true,
+    "unique_device_allocation_labels_per_rank": true,
+    "category_and_allocation_totals_equal": true,
+    "MTPincrement4193685814_exact": true,
+    "actual4096_QSA_shapes": true,
+    "flattened_plan_count_matches_actual_header_preflight": true,
+    "private_and_original_Builder_bodies_identical": true
+  },
+  "scenarios": 6,
+  "actual_context": 4096,
+  "fit_qualified": false,
+  "native_admitted": false,
+  "artifact_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/memory/engine-accounting.py": "98258e0054c1923bf3c34ee80fa2c21361924e078cd3830e40b7ecf2b3eb8d94",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/memory/engine-accounting.json": "ce43f76e00a81653cd388ba15a6fa134f5db845970419e7794139e66d8a4a582",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/memory/engine-accounting.sources.json": "f3f85239526cd502b5c0269ee3e8e2c8d5f42cbe9b9195bc33cb7980288051fe",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/memory/engine-accounting.md": "f077d964a8e1e79e7a744cf36076f197c55d4c05fad784a3e8f2f38e29c81c56"
+  },
+  "full_generated_ledger": {
+    "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/integration/build/memory-ledger-full.json",
+    "sha256": "14314159fff7333588c2655b93156e877d6afb771f9a206703e402c855a8708c",
+    "bytes": 5386021,
+    "retention": "ignored local generated output; reproducible from pinned recipe/source snapshots",
+    "full_details_tracked_for": "split24-24_mtp-rank0"
+  }
+}
