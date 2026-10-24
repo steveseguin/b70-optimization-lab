@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 23, 22:42 EDT — two-card host: history-coverage diagnostic launched.**
+Unit `ctx-campaign65` runs the frozen control first; the candidate is gated on exact original behavior
+and prompt count. Setup and campaign64 audit are published in `bbc612b5d`, with byte-identical file
+trees, through the authenticated GitHub app after the local CLI credential failed. No force update.
+Seven CPU tests, frozen production captures, independent review and 46 repository checks pass.
+No agents/tests/builds alongside the server. Parent remains active through shutdown and source audit;
+this entry stays local until shutdown. Status: `context-longrun-20261016/campaign65-history-coverage/status.json`.
+
 **October 23, 22:38 EDT — two-card host: history-coverage replay ready after independent review.**
 Campaign 65 freezes the actual failed pi audit request and its earlier archive; the production keeper
 prepares 19 messages with no extra cut. Only a general memory-instruction suffix differs between arms.
