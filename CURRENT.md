@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 24, 17:45 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode with batched prompt reading.**
+**October 24, 18:45 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode with batched prompt reading.**
 The owner asked to host the SC117 IQ3_S model on our own engine for LAN computers. The model is served at
 `http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0; the vision server on 27/43 is
 untouched).
@@ -14,12 +14,12 @@ untouched).
 - A reset takes 0.1 s, and every target-confirmed token is streamed.
 - Stop it with `systemctl --user stop sc117-lan`. It never restarts by itself and stops at 47 h.
 
-- Since 17:32, prompts are read in batches of 16 tokens (engine `6fd6eaa7c622`). A startup gate on the cards showed
-  the batched reading identical to token-by-token reading: tokens, guesses and full engine state. A 581-token prompt
-  now takes 11.9 s instead of 16.1 s.
+- Prompts are read in batches of 16 tokens (engine `e88234864be3` since 18:38). Each new binary's startup gate on the
+  cards showed the batched reading identical to token-by-token reading: tokens, guesses and full engine state. A
+  581-token prompt now takes 9.7 s instead of 16.2 s.
 
 Next:
-- making batched reading much faster (submission overhead dominates; capture the per-row replays);
+- making batched reading much faster: matrix multiplies are now about 75% of it, and tiled kernels are next;
 - localizing the 6 near-ties with a per-layer comparison.
 
 The original-FP8 draft experts were tried and closed: acceptance went from 77.6% to 77.5%.

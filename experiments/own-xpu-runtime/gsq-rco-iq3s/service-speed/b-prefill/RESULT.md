@@ -1,8 +1,9 @@
-# Batched prefill, stage 1: lossless on device, 1.36× on a 581-token prompt (2026-10-24)
+# Batched prefill: lossless on device, 1.67× on a 581-token prompt (2026-10-24)
 
-Engine `6fd6eaa7c622` ([receipt](../../../engine/receipts/6fd6eaa7c622.json)) in F32 exact mode, with
-`--prefill-rows 16`. It serves the LAN endpoint through [adapter6.py](../../serving/lan/adapter6.py) with
-`SC117_PREFILL_ROWS=16`.
+The serving engine is `e88234864be3` ([receipt](../../../engine/receipts/e88234864be3.json)), in F32 exact mode
+with `--prefill-rows 16`. It serves the LAN endpoint through [adapter6.py](../../serving/lan/adapter6.py) with
+`SC117_PREFILL_ROWS=16`. The first lossless stage was `6fd6eaa7c622`, and the progression table below lists each
+binary.
 
 ## How it works (reusable parts)
 
@@ -44,7 +45,7 @@ Evidence: [prefill-6fd6eaa7c622047d-rows16.json](../../serving/lan/evidence/pref
    In every case, all emitted tokens and all MTP guesses were identical. **Every buffer of the full target state dump
    on both ranks was byte-identical**, not just the persistent ones.
 
-## Speed (same process, same prompts, prompt wall time)
+## Stage 1 speed (`6fd6eaa7`, same process, same prompts, prompt wall time)
 
 | Prompt tokens | Token-by-token | Batched (16 rows) |
 |---:|---:|---:|
@@ -55,11 +56,35 @@ Evidence: [prefill-6fd6eaa7c622047d-rows16.json](../../serving/lan/evidence/pref
 On the 581-token prompt, one 16-row chunk takes about 278 ms on each rank, about 17 ms per row (token-by-token: about
 24 ms per token per rank). The two ranks overlap fully, and the draft replay adds about 2 ms per row on rank 0.
 
+## Progression (all lossless: each binary passed the same startup gate, full target state byte-identical)
+
+| Binary | Change | 581-token prompt |
+|---|---|---:|
+| token-by-token | none | 16.2 s |
+| `6fd6eaa7` | token-row linear kernels; every other op replayed per row through row views | 11.9 s |
+| `c73aeffc` | per-row replays captured as prepared commands | 11.9 s (submission was not the bottleneck) |
+| `a8790dd5` | generic/specialised ops (GDN, conv, norms, QSA prepare/pool/select, HC mix, activations) run once per chunk | 10.9 s |
+| `8feaa684` | dense kernels decode each weight once for 16 tokens | 12.0 s (slower; now opt-in, `OWNRT_PREFILL_REUSE=1`) |
+| `43043ce7` | SimpleNew route/gather/combine multi-row by copying the binding struct per item | 31.3 s (register spill) |
+| **`e8823486`** | the same through `RowBound` accessor offsets; status checks once over all rows | **9.7 s (1.67×)** |
+
+Per-op profiles (`OWNRT_PREFILL_PROFILE=1`, drains after every site) are in [profiles/](profiles/). For `e8823486`, of
+14.8 ms per row on rank 0:
+- dense matrix multiplies take 5.3 ms;
+- expert matrix multiplies take 6.0 ms;
+- GDN 0.8, expert gather 0.5, attention 0.5 and HC combine 0.45 make up most of the rest.
+
+The matrix-multiply kernels are not weight-bandwidth bound at 16 rows. Each (row, token) work-group re-decodes its
+weight row and re-reads its F32 activation vector, and the work runs at a few percent of the card's FP32 peak. Weight
+reuse alone (`8feaa684`) lost parallelism without removing the activation traffic.
+
 ## Next
 
-Most of a row's time is host submission. Every non-linear op is replayed through the direct (unprepared) submission
-path, about 600 ops per row. Next steps:
-1. Capture the per-row replays as prepared commands, as the decode path already does.
-2. Then give the hot ops native multi-row launches, keeping each one's arithmetic unchanged.
+1. Tiled matrix-multiply kernels. A work-group computes a block of output rows × tokens, with the activation slice
+   staged once and each weight decoded once. Every output keeps its lane k-order, product then add, and its subgroup
+   tree. Dense rows reuse across tokens; expert rows reuse the slot's activations across the expert's rows. The same
+   tiling cuts F32 activation re-reads in single-token decode.
+2. The draft replay, about 2 ms per prompt row on rank 0, as a multi-row draft step.
+3. Remaining replayed ops: QSA attention (p49 counts header for more than 4 rows), MoE combine epilogue, PLE.
 
 Each step is gated by the same startup gate.
