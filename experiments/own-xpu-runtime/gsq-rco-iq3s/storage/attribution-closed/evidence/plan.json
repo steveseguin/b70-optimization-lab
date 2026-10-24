@@ -1,0 +1,68 @@
+{
+  "schema": "gsq.attribution-closed.plan.v1",
+  "source": "/mnt/usb-models/own-xpu-runtime-results/gsq-current-attribution-a",
+  "destination": "/home/steve/own-xpu-runtime-results/gsq-attribution-bundle-archive-a",
+  "files": 6,
+  "bytes": 665229504,
+  "batches": [
+    {
+      "batch": 0,
+      "name": "rank0/state-2147483647/state.bundle",
+      "files": 1,
+      "bytes": 125561972,
+      "sha256": "6a2cc1668f612282bc07dd0100895bb29b9114695a2a4864d657c85e27af65a0",
+      "usb": "/mnt/usb-models/own-xpu-runtime-results/gsq-attribution-state-bundle-00.tar.gz"
+    },
+    {
+      "batch": 1,
+      "name": "rank1/state-2147483647/state.bundle",
+      "files": 1,
+      "bytes": 96181196,
+      "sha256": "756a5f85217ee9779466128d0d27cd396a17bbf065823990b5a00d3e331eaaba",
+      "usb": "/mnt/usb-models/own-xpu-runtime-results/gsq-attribution-state-bundle-01.tar.gz"
+    },
+    {
+      "batch": 2,
+      "name": "warmup-none/rank0/state-2147483647/state.bundle",
+      "files": 1,
+      "bytes": 125561972,
+      "sha256": "771a41833a8cdcc63c92fe65e20a8c94fa6b5e33f32d6dedacd9d2f49d445711",
+      "usb": "/mnt/usb-models/own-xpu-runtime-results/gsq-attribution-state-bundle-02.tar.gz"
+    },
+    {
+      "batch": 3,
+      "name": "warmup-none/rank1/state-2147483647/state.bundle",
+      "files": 1,
+      "bytes": 96181196,
+      "sha256": "6d7f2608966771ec0ee7eafe4090a0e6dc23a65684da67608777fa3403eb31d8",
+      "usb": "/mnt/usb-models/own-xpu-runtime-results/gsq-attribution-state-bundle-03.tar.gz"
+    },
+    {
+      "batch": 4,
+      "name": "prompt-00-none/rank0/state-2147483647/state.bundle",
+      "files": 1,
+      "bytes": 125561972,
+      "sha256": "cc308634f952e4160bb08481b7f8f82ca6f8e25bf5a1341048365f323cba6b5d",
+      "usb": "/mnt/usb-models/own-xpu-runtime-results/gsq-attribution-state-bundle-04.tar.gz"
+    },
+    {
+      "batch": 5,
+      "name": "prompt-00-none/rank1/state-2147483647/state.bundle",
+      "files": 1,
+      "bytes": 96181196,
+      "sha256": "e5c142a1d7c2f318db1a9f3ee1f21977214bdb2767f8ef7274bf8cdb2d06ca5a",
+      "usb": "/mnt/usb-models/own-xpu-runtime-results/gsq-attribution-state-bundle-05.tar.gz"
+    }
+  ],
+  "archive_quota_per_batch": 134217728,
+  "reserve_floor": 27067108864,
+  "initial_nvme_free_required": 27201326592,
+  "usb_reserve": 2147483648,
+  "release_sha256": "c209e3f7c4a12fa278f81d229654be8473c7addceddf8a23db78e7cca36fb7e5",
+  "parent_adapter_sha256": "23733bff9dc4261a88e1b45a6589f7d4707ea1ae2edc345d64c02c2eb37d52be",
+  "filesystem_helper_sha256": "6a86c61fe46b453f7f9516d7b41169f0314cfc2b2716f82aab54b05c8df566ab",
+  "operations_performed": false,
+  "payload_bytes_read": 0,
+  "scope": "Only six released audited attribution state.bundle files. All JSON/index/seal/draft/other files and retained micro15fixtures preserved; no model paths.",
+  "restore": "Tar members retain exact original relative state.bundle paths. Restore a missing bundle under its authority.source root; verify its byte count/SHA against the bound independent index. Preserve existing state-index.tsv/state-seal.txt/state.json. Never overwrite an existing path without separate review. Generic inherited .bin wording does not change these exact member names."
+}

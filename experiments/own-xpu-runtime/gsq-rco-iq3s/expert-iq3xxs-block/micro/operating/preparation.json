@@ -1,0 +1,22 @@
+{
+  "schema": "gsq.iq3xxs-block.micro-operating-preparation.v1",
+  "passed": true,
+  "utc": "2026-10-24T09:04:59.038749+00:00",
+  "commands": [
+    "nice -n 19 taskset -c 8-15,24-31 python3 -B prepare.py --seal-manifest",
+    "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest -v test_once.py"
+  ],
+  "tests": 3,
+  "test_seconds": 0.014,
+  "native_or_device_execution": false,
+  "payload_reads": false,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/once.py": "4f897fc813e0eaa117712fe3a65a4f106ca6e8208ce66fc6c61771276784430c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/prepare.py": "4ba036baca901586debeb4fb47e8443f15a09527065bc74e81a5a3ddb928650c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/test_once.py": "bddc8cc081af23fd8c9577b1014776038bdc3291d35aa142213a4d2e50a6d26d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/manifest.json": "19f9f7cfbe0f086b83d9a1b38b8ce6cf485597bebdf046519be942c47db58afe"
+  },
+  "native_build_sha256": "50a6fe7ab35a9688ad291c78679e54991dca8c946f9388a2d420a2e1bd4ed39a",
+  "log_sha256": "35d489cca310c4322b984bdecb9265093f190bd0337d8dd4251ff6643b548618",
+  "log_provenance": "Exact unittest output retained from tool response; no second test execution."
+}

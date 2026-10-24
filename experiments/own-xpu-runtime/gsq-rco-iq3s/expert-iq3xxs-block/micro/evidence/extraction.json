@@ -1,0 +1,645 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "label": "blk.0.expsgate",
+      "layer": 0,
+      "weight": "blk.0.ffn_gate_exps.weight",
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 1387311104,
+      "tensor_bytes": 321126400,
+      "routes": [
+        [
+          125,
+          0,
+          640
+        ],
+        [
+          57,
+          0,
+          640
+        ],
+        [
+          225,
+          0,
+          640
+        ],
+        [
+          230,
+          0,
+          640
+        ],
+        [
+          428,
+          0,
+          640
+        ],
+        [
+          204,
+          0,
+          640
+        ],
+        [
+          150,
+          0,
+          640
+        ],
+        [
+          474,
+          0,
+          640
+        ],
+        [
+          142,
+          0,
+          640
+        ],
+        [
+          313,
+          0,
+          640
+        ]
+      ],
+      "consumed_experts": [
+        57,
+        125,
+        142,
+        150,
+        204,
+        225,
+        230,
+        313,
+        428,
+        474
+      ],
+      "slices": [
+        {
+          "expert_id": 57,
+          "source_offset": 1423061504,
+          "bytes": 627200,
+          "sha256": "5c501a7b94ad4ccb4e71b01d55ecf92bc4b3caee9ee94beeea84aa1c1560e663"
+        },
+        {
+          "expert_id": 125,
+          "source_offset": 1465711104,
+          "bytes": 627200,
+          "sha256": "543ff7b2cb4f46c36ee44338b813a7fe0db8a7021a673d02651664d2e80fbce8"
+        },
+        {
+          "expert_id": 142,
+          "source_offset": 1476373504,
+          "bytes": 627200,
+          "sha256": "ad3cd9c3ec53f0fcca962a752468b2614c78c2815edfe14281b0a11dfc8f02dd"
+        },
+        {
+          "expert_id": 150,
+          "source_offset": 1481391104,
+          "bytes": 627200,
+          "sha256": "6507051c9569c3879f89f0fecdb92b16201827b29495f7e990a36467f2d7ebe9"
+        },
+        {
+          "expert_id": 204,
+          "source_offset": 1515259904,
+          "bytes": 627200,
+          "sha256": "ce486021b7e080ac52bd55cf0de8bc476504aa4815fc2339a5bcdc638981e55d"
+        },
+        {
+          "expert_id": 225,
+          "source_offset": 1528431104,
+          "bytes": 627200,
+          "sha256": "91652f175054070b0bffc162633e2917a25e0a8026f0fd28b344b159f1aeca1e"
+        },
+        {
+          "expert_id": 230,
+          "source_offset": 1531567104,
+          "bytes": 627200,
+          "sha256": "2222471635441ae82070af8800a4a80c31b2858714564582fd3f01cf95857210"
+        },
+        {
+          "expert_id": 313,
+          "source_offset": 1583624704,
+          "bytes": 627200,
+          "sha256": "b6d933f0ff91d3a65b6eaeec14fda1ba1fb824fd3fcb2c9479880d4d14e1d9b5"
+        },
+        {
+          "expert_id": 428,
+          "source_offset": 1655752704,
+          "bytes": 627200,
+          "sha256": "ef9bbe9e77d6f1a7217f4c9374234dfba6fb438a76003fab92529eaef0b0fe3e"
+        },
+        {
+          "expert_id": 474,
+          "source_offset": 1684603904,
+          "bytes": 627200,
+          "sha256": "6ae028a9ba46d4ad69300dcf6549fc94024cae3f769f889663942d23d6138130"
+        }
+      ],
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-input.bin",
+          "offset": 5124,
+          "bytes": 51200,
+          "sha256": "8e86c20b6ebd5b6d83db969b872a29de4c9ed3ff4a0ead35070cadd31ea8cc85",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.expert_input.bin"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-output.bin",
+          "offset": 120364,
+          "bytes": 12800,
+          "sha256": "9503c7d4f210b0662d0b76262d988dc426ad94aac9cfbde5a8fffc9ea0e9737b",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.expsgate.bin"
+        },
+        "status": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-status.bin",
+          "offset": 133164,
+          "bytes": 40,
+          "sha256": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.expsgate.status.bin"
+        },
+        "routes": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-routes.bin",
+          "offset": 1959324,
+          "bytes": 120,
+          "sha256": "83f4c2783605fbbc94bb09028c27fe18308fd9941a25ba2e614683191d9399b0",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.routes.bin"
+        },
+        "slices": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-slices.bin",
+          "bytes": 6272000,
+          "sha256": "83ea1ccff9cc6fc977560c9608701f25723ff35eb9d39fa974aa275c9e8cb982"
+        }
+      },
+      "bundle_directory": "/mnt/usb-models/own-xpu-runtime-results/gsq-current-attribution-a/prompt-00-none/rank0/state-2147483647",
+      "bundle_stamps": {
+        "state-index.tsv": [
+          2050,
+          2765719,
+          106407,
+          1792831162535027500,
+          1792831162555306500
+        ],
+        "state.json": [
+          2050,
+          2765720,
+          91717,
+          1792831162537582500,
+          1792831162555660500
+        ],
+        "state-seal.txt": [
+          2050,
+          2765721,
+          223,
+          1792831162539651300,
+          1792831162557401600
+        ],
+        "state.bundle": [
+          2050,
+          2765718,
+          125561972,
+          1792831162377153300,
+          1792831162541499800
+        ]
+      },
+      "audited_whole_bundle_sha256": "cc308634f952e4160bb08481b7f8f82ca6f8e25bf5a1341048365f323cba6b5d"
+    },
+    {
+      "label": "blk.22.expsup",
+      "layer": 22,
+      "weight": "blk.22.ffn_up_exps.weight",
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 25170880896,
+      "tensor_bytes": 321126400,
+      "routes": [
+        [
+          294,
+          0,
+          640
+        ],
+        [
+          177,
+          0,
+          640
+        ],
+        [
+          419,
+          0,
+          640
+        ],
+        [
+          141,
+          0,
+          640
+        ],
+        [
+          138,
+          0,
+          640
+        ],
+        [
+          107,
+          0,
+          640
+        ],
+        [
+          163,
+          0,
+          640
+        ],
+        [
+          430,
+          0,
+          640
+        ],
+        [
+          58,
+          0,
+          640
+        ],
+        [
+          174,
+          0,
+          640
+        ]
+      ],
+      "consumed_experts": [
+        58,
+        107,
+        138,
+        141,
+        163,
+        174,
+        177,
+        294,
+        419,
+        430
+      ],
+      "slices": [
+        {
+          "expert_id": 58,
+          "source_offset": 25207258496,
+          "bytes": 627200,
+          "sha256": "73fdaf711c80bd6eaa45f027bb12d603fea8ce5c11fc2c7fea31d94a641b07ac"
+        },
+        {
+          "expert_id": 107,
+          "source_offset": 25237991296,
+          "bytes": 627200,
+          "sha256": "95e67aecceb65549ce1cbfaf0b6681e6ff07ab23c4f3785fe01e8ceb3f3ea61f"
+        },
+        {
+          "expert_id": 138,
+          "source_offset": 25257434496,
+          "bytes": 627200,
+          "sha256": "071787887d1b7ae714844c13873726f40289b59fd51ead4175ed326753bd4b76"
+        },
+        {
+          "expert_id": 141,
+          "source_offset": 25259316096,
+          "bytes": 627200,
+          "sha256": "28c45f7223e9a82d34993c9f590ca4b17652202fdc4c049429ef710cb9b05987"
+        },
+        {
+          "expert_id": 163,
+          "source_offset": 25273114496,
+          "bytes": 627200,
+          "sha256": "a15f1f65483e5aab5aa0fabd5b0ba23bf2c7920ea713fd9e9c82ab20e9c5e6d6"
+        },
+        {
+          "expert_id": 174,
+          "source_offset": 25280013696,
+          "bytes": 627200,
+          "sha256": "d0bc9e6af4d610189dbdc332dd560008180b2d7d4d716eb23d840c76cc4835f5"
+        },
+        {
+          "expert_id": 177,
+          "source_offset": 25281895296,
+          "bytes": 627200,
+          "sha256": "55c9de2dba3aa2eea850239ce7ddbfeb5be14cc892ce7f6dd5680724028d25cd"
+        },
+        {
+          "expert_id": 294,
+          "source_offset": 25355277696,
+          "bytes": 627200,
+          "sha256": "62bf34a5b476efb867b3013793ee7a68dcc4471166f998ddb71d73a5c1d7fd9b"
+        },
+        {
+          "expert_id": 419,
+          "source_offset": 25433677696,
+          "bytes": 627200,
+          "sha256": "778d8688c8b899a8b71c7e4d134c4a1e973050e023a7327d2d43d0768f24ba0e"
+        },
+        {
+          "expert_id": 430,
+          "source_offset": 25440576896,
+          "bytes": 627200,
+          "sha256": "05193f56d42dd0ac3f94d24ee2172c51ed6de9f2f75f6610ccf5e4852e481053"
+        }
+      ],
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-input.bin",
+          "offset": 54036606,
+          "bytes": 51200,
+          "sha256": "59d325585edd5a85d6855ed3f0c4fc942ff13b4564fbbe791abcdc2a135afe27",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.expert_input.bin"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-output.bin",
+          "offset": 54164686,
+          "bytes": 12800,
+          "sha256": "e6e57d6c9aacb210b674d28815a5105be8a4019d594be2b1415641abfbd3b324",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.expsup.bin"
+        },
+        "status": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-status.bin",
+          "offset": 54177486,
+          "bytes": 40,
+          "sha256": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.expsup.status.bin"
+        },
+        "routes": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-routes.bin",
+          "offset": 55990806,
+          "bytes": 120,
+          "sha256": "0f1239ead1d934c5695f59850b1dc1ef6ff98f13fbe78b6fe77e752456d192b9",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.routes.bin"
+        },
+        "slices": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-slices.bin",
+          "bytes": 6272000,
+          "sha256": "636f3efb979136c8dcc4529cba7c8e45cb5ec6de91bd7235a540e4e229a28a15"
+        }
+      },
+      "bundle_directory": "/mnt/usb-models/own-xpu-runtime-results/gsq-current-attribution-a/prompt-00-none/rank0/state-2147483647",
+      "bundle_stamps": {
+        "state-index.tsv": [
+          2050,
+          2765719,
+          106407,
+          1792831162535027500,
+          1792831162555306500
+        ],
+        "state.json": [
+          2050,
+          2765720,
+          91717,
+          1792831162537582500,
+          1792831162555660500
+        ],
+        "state-seal.txt": [
+          2050,
+          2765721,
+          223,
+          1792831162539651300,
+          1792831162557401600
+        ],
+        "state.bundle": [
+          2050,
+          2765718,
+          125561972,
+          1792831162377153300,
+          1792831162541499800
+        ]
+      },
+      "audited_whole_bundle_sha256": "cc308634f952e4160bb08481b7f8f82ca6f8e25bf5a1341048365f323cba6b5d"
+    },
+    {
+      "label": "blk.46.expsgate",
+      "layer": 46,
+      "weight": "blk.46.ffn_gate_exps.weight",
+      "source_shard": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ],
+      "tensor_offset": 52928503936,
+      "tensor_bytes": 321126400,
+      "routes": [
+        [
+          397,
+          0,
+          640
+        ],
+        [
+          45,
+          0,
+          640
+        ],
+        [
+          464,
+          0,
+          640
+        ],
+        [
+          506,
+          0,
+          640
+        ],
+        [
+          431,
+          0,
+          640
+        ],
+        [
+          265,
+          0,
+          640
+        ],
+        [
+          417,
+          0,
+          640
+        ],
+        [
+          339,
+          0,
+          640
+        ],
+        [
+          412,
+          0,
+          640
+        ],
+        [
+          445,
+          0,
+          640
+        ]
+      ],
+      "consumed_experts": [
+        45,
+        265,
+        339,
+        397,
+        412,
+        417,
+        431,
+        445,
+        464,
+        506
+      ],
+      "slices": [
+        {
+          "expert_id": 45,
+          "source_offset": 52956727936,
+          "bytes": 627200,
+          "sha256": "af2ce969a93e951edeb02cb3e1267bc0ac14e60fbd6cfc18a2f09febe3ace928"
+        },
+        {
+          "expert_id": 265,
+          "source_offset": 53094711936,
+          "bytes": 627200,
+          "sha256": "a26db3b3c53be9a489d2abddd5e515211a556d5be72469ea26bde283f84bb23b"
+        },
+        {
+          "expert_id": 339,
+          "source_offset": 53141124736,
+          "bytes": 627200,
+          "sha256": "d91f419a9b98a537cb17ce5651b40075a1a34f974822e2d9474a9bbc20036e11"
+        },
+        {
+          "expert_id": 397,
+          "source_offset": 53177502336,
+          "bytes": 627200,
+          "sha256": "c9760a9261644ea9976084c7f72fc05c75ad71e6217bc7470ae1f5e936156c7f"
+        },
+        {
+          "expert_id": 412,
+          "source_offset": 53186910336,
+          "bytes": 627200,
+          "sha256": "ee056ef66f3528b24157064b5b6a0f813538351e4efc0781be0b13e5abe8ad73"
+        },
+        {
+          "expert_id": 417,
+          "source_offset": 53190046336,
+          "bytes": 627200,
+          "sha256": "66ff9ce24c0222c954aa60da5b0574e6bd8937a77954ec9dbe10fc8c34d53c74"
+        },
+        {
+          "expert_id": 431,
+          "source_offset": 53198827136,
+          "bytes": 627200,
+          "sha256": "8d5ea861564169c677bc5a645d8a2226b5999e88568fc0155aa71ad54acc39b7"
+        },
+        {
+          "expert_id": 445,
+          "source_offset": 53207607936,
+          "bytes": 627200,
+          "sha256": "f574aa571ad1407538ce55f7c3fbac3f7f91b1c74a7f942aac2545071e5c9c64"
+        },
+        {
+          "expert_id": 464,
+          "source_offset": 53219524736,
+          "bytes": 627200,
+          "sha256": "a11275d624848e4f822cc0fcc2a2078f89e85b1b1d14b67d09af1767776e8cd2"
+        },
+        {
+          "expert_id": 506,
+          "source_offset": 53245867136,
+          "bytes": 627200,
+          "sha256": "6722bce5d5f5f0efb96cd0ed6c74138227d4b9a791966d6366ef65620dfb7076"
+        }
+      ],
+      "files": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-input.bin",
+          "offset": 83622748,
+          "bytes": 51200,
+          "sha256": "83d932b2b29dcf4968f0638a91641d974b2532e8379d94ebc54a91e7e1e9027d",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.expert_input.bin"
+        },
+        "output": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-output.bin",
+          "offset": 83737988,
+          "bytes": 12800,
+          "sha256": "ef153ec66428d68e8b19af2dd99de7438421c292616ae57eea50e8e4bfb6386c",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.expsgate.bin"
+        },
+        "status": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-status.bin",
+          "offset": 83750788,
+          "bytes": 40,
+          "sha256": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.expsgate.status.bin"
+        },
+        "routes": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-routes.bin",
+          "offset": 85576948,
+          "bytes": 120,
+          "sha256": "8d399348f6b7f848ca344e88ab5938c062085b414901cd6c2337a50fe3d3c515",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.routes.bin"
+        },
+        "slices": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-slices.bin",
+          "bytes": 6272000,
+          "sha256": "6a194dbd44974d4dd0b3417f5f1d7592c92c1fd43ab8825693b7686034f7f703"
+        }
+      },
+      "bundle_directory": "/mnt/usb-models/own-xpu-runtime-results/gsq-current-attribution-a/prompt-00-none/rank1/state-2147483647",
+      "bundle_stamps": {
+        "state-index.tsv": [
+          2050,
+          2765727,
+          101934,
+          1792831164478788800,
+          1792831164496634600
+        ],
+        "state.json": [
+          2050,
+          2765728,
+          87964,
+          1792831164481356900,
+          1792831164496982000
+        ],
+        "state-seal.txt": [
+          2050,
+          2765730,
+          222,
+          1792831164483461300,
+          1792831164498655400
+        ],
+        "state.bundle": [
+          2050,
+          2765726,
+          96181196,
+          1792831164368259400,
+          1792831164485306500
+        ]
+      },
+      "audited_whole_bundle_sha256": "e5c142a1d7c2f318db1a9f3ee1f21977214bdb2767f8ef7274bf8cdb2d06ca5a"
+    }
+  ],
+  "payload_bytes_read": 18816000,
+  "header_bytes_read": 11024355,
+  "bundle_bytes_read": 192480,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/extract.py": "d403800b7b12821efc6c758ee4eb0f52d074e097319c1f4b7915acf993d7cc9f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/block.hpp": "99c32706cefe5a3cd850ed3ef74eb577e439335fd99fc1d9bb595c48ed718cff",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/selection.json": "457bba214c9f0380b854312a334456f35fad5ae86b004c9aa6fab86b23c672b1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro-plan.json": "98b442bb66887d877f1aac13ee58c9698a84acfb73a7bbd805d02594ca257549",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/source-pins.json": "08763e4fe822f4ca1860a5d61780ad2b8f204f826df44fb56ada27d9708d49d6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/evidence/device-a/review.json": "469fe156e317fc1aa93a56cf2a803d8d0c1cf786e13fe6d391d7eb50c883c7aa",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/artifact-index.jsonl.gz": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1"
+  },
+  "device_executed": false,
+  "scope": "Only four named bundle ranges and consumed expert slices percase; no wholebundle/model/tensor rehash claim",
+  "fixed_header_sha256": "37bc1508ea744d0783fa7daaaa17b30a912b9d2b34fb7963cb227075b253ab1e"
+}

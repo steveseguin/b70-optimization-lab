@@ -1,0 +1,967 @@
+{
+  "schema": "gsq.iq3xxs-block.native-micro-manifest.v1",
+  "cases": [
+    {
+      "layer": 0,
+      "label": "blk.0.expsgate",
+      "weight": "blk.0.ffn_gate_exps.weight",
+      "consumed_experts": [
+        57,
+        125,
+        142,
+        150,
+        204,
+        225,
+        230,
+        313,
+        428,
+        474
+      ],
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-input.bin",
+          "offset": 5124,
+          "bytes": 51200,
+          "sha256": "8e86c20b6ebd5b6d83db969b872a29de4c9ed3ff4a0ead35070cadd31ea8cc85",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.expert_input.bin"
+        },
+        "routes": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-routes.bin",
+          "offset": 1959324,
+          "bytes": 120,
+          "sha256": "83f4c2783605fbbc94bb09028c27fe18308fd9941a25ba2e614683191d9399b0",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.routes.bin"
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-output.bin",
+          "offset": 120364,
+          "bytes": 12800,
+          "sha256": "9503c7d4f210b0662d0b76262d988dc426ad94aac9cfbde5a8fffc9ea0e9737b",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.expsgate.bin"
+        },
+        "status": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-status.bin",
+          "offset": 133164,
+          "bytes": 40,
+          "sha256": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.0.expsgate.status.bin"
+        }
+      },
+      "sparse_weights": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.0.expsgate-slices.bin",
+        "bytes": 6272000,
+        "sha256": "83ea1ccff9cc6fc977560c9608701f25723ff35eb9d39fa974aa275c9e8cb982"
+      },
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ]
+    },
+    {
+      "layer": 22,
+      "label": "blk.22.expsup",
+      "weight": "blk.22.ffn_up_exps.weight",
+      "consumed_experts": [
+        58,
+        107,
+        138,
+        141,
+        163,
+        174,
+        177,
+        294,
+        419,
+        430
+      ],
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-input.bin",
+          "offset": 54036606,
+          "bytes": 51200,
+          "sha256": "59d325585edd5a85d6855ed3f0c4fc942ff13b4564fbbe791abcdc2a135afe27",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.expert_input.bin"
+        },
+        "routes": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-routes.bin",
+          "offset": 55990806,
+          "bytes": 120,
+          "sha256": "0f1239ead1d934c5695f59850b1dc1ef6ff98f13fbe78b6fe77e752456d192b9",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.routes.bin"
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-output.bin",
+          "offset": 54164686,
+          "bytes": 12800,
+          "sha256": "e6e57d6c9aacb210b674d28815a5105be8a4019d594be2b1415641abfbd3b324",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.expsup.bin"
+        },
+        "status": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-status.bin",
+          "offset": 54177486,
+          "bytes": 40,
+          "sha256": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+          "original_baseline_path": "prompt-00-none/rank0/state-2147483647/blk.22.expsup.status.bin"
+        }
+      },
+      "sparse_weights": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.22.expsup-slices.bin",
+        "bytes": 6272000,
+        "sha256": "636f3efb979136c8dcc4529cba7c8e45cb5ec6de91bd7235a540e4e229a28a15"
+      },
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ]
+    },
+    {
+      "layer": 46,
+      "label": "blk.46.expsgate",
+      "weight": "blk.46.ffn_gate_exps.weight",
+      "consumed_experts": [
+        45,
+        265,
+        339,
+        397,
+        412,
+        417,
+        431,
+        445,
+        464,
+        506
+      ],
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-input.bin",
+          "offset": 83622748,
+          "bytes": 51200,
+          "sha256": "83d932b2b29dcf4968f0638a91641d974b2532e8379d94ebc54a91e7e1e9027d",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.expert_input.bin"
+        },
+        "routes": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-routes.bin",
+          "offset": 85576948,
+          "bytes": 120,
+          "sha256": "8d399348f6b7f848ca344e88ab5938c062085b414901cd6c2337a50fe3d3c515",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.routes.bin"
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-output.bin",
+          "offset": 83737988,
+          "bytes": 12800,
+          "sha256": "ef153ec66428d68e8b19af2dd99de7438421c292616ae57eea50e8e4bfb6386c",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.expsgate.bin"
+        },
+        "status": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-status.bin",
+          "offset": 83750788,
+          "bytes": 40,
+          "sha256": "2c34ce1df23b838c5abf2a7f6437cca3d3067ed509ff25f11df6b11b582b51eb",
+          "original_baseline_path": "prompt-00-none/rank1/state-2147483647/blk.46.expsgate.status.bin"
+        }
+      },
+      "sparse_weights": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixtures/blk.46.expsgate-slices.bin",
+        "bytes": 6272000,
+        "sha256": "6a194dbd44974d4dd0b3417f5f1d7592c92c1fd43ab8825693b7686034f7f703"
+      },
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ]
+    }
+  ],
+  "schedule": [
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 0,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 1,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 2,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": true,
+      "cycle": 3,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 0,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 1,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 2,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 3,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 4,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 5,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 6,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 7,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 8,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 9,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 10,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 11,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 12,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 13,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 14,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 15,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 16,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 17,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 18,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 19,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 20,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 20,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 20,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 21,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 21,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 21,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 22,
+      "case": 1,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 22,
+      "case": 2,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 22,
+      "case": 0,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 23,
+      "case": 2,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 23,
+      "case": 0,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "warmup": false,
+      "cycle": 23,
+      "case": 1,
+      "order": [
+        "B",
+        "A"
+      ]
+    }
+  ],
+  "authority": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/extract.py": "d403800b7b12821efc6c758ee4eb0f52d074e097319c1f4b7915acf993d7cc9f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/prepare.py": "4ba036baca901586debeb4fb47e8443f15a09527065bc74e81a5a3ddb928650c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/runner.cpp": "f87697291de05d56b336609a8b93382e16512b39313071a39f9790b3cf2fcd10",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/selected.hpp": "88507d1c7088852e50481656c27e432ac5d0ce1ab70df8d9fec72b033c67a7ff",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/fixed.hpp": "37bc1508ea744d0783fa7daaaa17b30a912b9d2b34fb7963cb227075b253ab1e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/build.py": "b52541be0821352010f3698b89b1418c0c7bc292aeb3d16d72fcd297ab968055",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/once.py": "4f897fc813e0eaa117712fe3a65a4f106ca6e8208ce66fc6c61771276784430c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/source-pins.json": "cc76fadeacd3e09fc8ce4aed00f08690eb05a48bf3db042f6d29a8709184f484",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/test_once.py": "bddc8cc081af23fd8c9577b1014776038bdc3291d35aa142213a4d2e50a6d26d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/evidence/extraction.json": "075c0e5591d8dc2d874d0f1f583c3104d3fc9e9e1c06eb130f34a4cd39815fcc",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/block.hpp": "99c32706cefe5a3cd850ed3ef74eb577e439335fd99fc1d9bb595c48ed718cff",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/selection.hpp": "b049fe7e982bcf012a59bfdaf983b9cab9ce425bf248dd7222e3940123476591",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro-plan.json": "98b442bb66887d877f1aac13ee58c9698a84acfb73a7bbd805d02594ca257549",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/evidence/cpu-proof.json": "210c2f3dd6bff2eceb81a968b50fac81e837a38f65d6bb9cf2e1c9ad75f7a68f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/device-a/review.json": "549fb99606c00e26a0081534152e431e34b2d169bdeb9d20055a1bf0815c17bf",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/evidence/device-a/review.json": "469fe156e317fc1aa93a56cf2a803d8d0c1cf786e13fe6d391d7eb50c883c7aa"
+  },
+  "pairs": 84,
+  "kernels": 168,
+  "device_bytes": 963610200,
+  "device_cap_bytes": 1073741824,
+  "pinned_bytes": 1048576,
+  "transfer_bytes": 965690280,
+  "transfer_cap_bytes": 1073741824,
+  "proof_scope": "Three sparse real-route cases, exact fullsavedBF16+status, isolatedAB/BAeventtiming; notfullmodel throughput",
+  "native_admitted": false
+}

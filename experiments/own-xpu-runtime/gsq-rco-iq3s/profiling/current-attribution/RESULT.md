@@ -66,3 +66,7 @@ receipts are at `/home/steve/own-xpu-runtime-results/gsq-current-attribution-a.c
 The [bundle reader](../../state-bundle/reader.py) reconstructs all logical hashes.
 Initial and warmup semantic comparisons remain informational. Orchestration took
 116.821seconds including loading and evidence; this is not an inference rate.
+
+Raw bundle payloads are now preserved in [verified archives](../../storage/attribution-closed/RESULT.md),
+after independent extraction of the required micro fixtures. Indices/seals/JSON
+remain in place; restore a missing bundle before repeating raw readback.

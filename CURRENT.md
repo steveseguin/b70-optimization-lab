@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 24, 05:07 EDT — four-card host: expert kernel comparisons exact; physical observation incomplete.**
+All84 native comparisons match complete saved outputs/statuses; candidate event time
+is roughly42% of control across three fixed cases. The native owner exits safely,
+no new fault appears and target descriptors are empty. The1.366second process ended
+before the passive monitor observed its GPU descriptor, so the coordinator result
+remains failed/incomplete; this is not a fully qualified device or speed record.
+Prepare the unchanged34-site kernel's full-engine integration as source only while
+independent audit determines the remaining qualification. No micro retry is queued.
+USB8.92GB/root27.31GB after verified archival; vision unchanged. Target cards empty.
+[CPU proof](experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/CPU-RESULT.md).
+
+
 **October 24, 04:50 EDT — four-card host: packed expert candidate passes CPU equality.**
 The proposed decoding loop passes7.88million exact CPU checks, including full outputs,
 lane sums, exceptional scales, invalid routes and live input changes. It preserves

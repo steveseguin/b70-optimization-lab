@@ -15,7 +15,9 @@ Its [same-owner kernel comparison](attention-q8-p33/micro/RESULT.md) reduces mea
 isolated event latency with exact bytes; no full-model speed improvement is claimed.
 The Q6 combination has now passed the full gate linked above.
 [Lossless evidence bundling](state-bundle/RESULT.md) also passes exact full-state
-qualification. Next is a current-binary kernel-cost profile to select the next change.
+qualification. The [current expert candidate](expert-iq3xxs-block/STATUS.md) follows measured
+class and format attribution. Its CPU proof and exact kernel observations are retained;
+a full-engine qualification remains required.
 
 ## Model and source
 

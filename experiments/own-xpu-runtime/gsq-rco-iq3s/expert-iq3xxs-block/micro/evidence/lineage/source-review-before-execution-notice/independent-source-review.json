@@ -1,0 +1,49 @@
+{
+  "schema": "gsq.iq3xxs-block.micro-independent-source-review.v1",
+  "passed": true,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/extract.py": "b469f25178abb14e564fcd2fb7d654a5cdfacf2bc8d7aef9c146cd511bd68c9a",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/runner.cpp": "f87697291de05d56b336609a8b93382e16512b39313071a39f9790b3cf2fcd10",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/build.py": "b52541be0821352010f3698b89b1418c0c7bc292aeb3d16d72fcd297ab968055",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/selected.hpp": "90305f818a848a03b552abbde14b915092db4572f9370ef44fe5233461838b97",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/source-pins.json": "cc76fadeacd3e09fc8ce4aed00f08690eb05a48bf3db042f6d29a8709184f484",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/runner.patch": "e8b4929bf6f59c4304f263d83212285ac70f58bbee3b5a574638d7b956093d07",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/build.patch": "419275fb6f3a4b10f9bb6831dbdb33d94e017fcd1058c6a09a50eccc6698bd8f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/evidence/extractor-preparation.json": "bcdf1b89f4c4b0d5ac1a995463e511437c9e7de949d10d21ae255260238c6d5c",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/block.hpp": "99c32706cefe5a3cd850ed3ef74eb577e439335fd99fc1d9bb595c48ed718cff",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/selection.hpp": "b049fe7e982bcf012a59bfdaf983b9cab9ce425bf248dd7222e3940123476591",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/selection.json": "457bba214c9f0380b854312a334456f35fad5ae86b004c9aa6fab86b23c672b1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro-plan.json": "98b442bb66887d877f1aac13ee58c9698a84acfb73a7bbd805d02594ca257549",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/proof.cpp": "12ab865784b5b5d63c4356b84226c2ebaf594eeb3b93d65a8c73474ee85e07fe",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/evidence/cpu-proof.json": "210c2f3dd6bff2eceb81a968b50fac81e837a38f65d6bb9cf2e1c9ad75f7a68f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/evidence/cpu-root-review.json": "234866c6e21276d3659d00d82da47da0470c8a70fba87566b6ed7deead98aa08",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/native-formats/packed.hpp": "4afcfb8a12bc9704ccb6a1f5b17bc5d315c69c894caaa5fd5e4140e106372c4f",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/native-formats/device_formats.hpp": "59a03eb73a63741a4405de6b364808e1ee5ce5676d8dd7d6389e60ab2347c726",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/graph/new-plan.json": "4d37ea499b0994a69664309d8f3c88aefc908e5034ac441b63f02e02151cf78b",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/profiling/current-attribution/evidence/device-a/review.json": "469fe156e317fc1aa93a56cf2a803d8d0c1cf786e13fe6d391d7eb50c883c7aa",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/baseline/evidence/independent-a/artifact-index.jsonl.gz": "e8137dddb0929d5476d27a8a774539a77d595aeb296e9d0ec778ceec066a6982",
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/build/source-v4/main.cpp": "1591e923f10ca40950eb282758d18c6aaace66bacf075f81144f74f9e25c9f8b"
+  },
+  "payload_reads": false,
+  "native_build_by_reviewer": false,
+  "device_executed": false,
+  "cpu_proof_replayed": false,
+  "findings": [],
+  "resolved_findings": [
+    "Exclusive fixed.hpp output/fsync and freshness gate added before extraction.",
+    "Success flag moved after fixed header/directory durability/hash; exceptions force passedfalse. Prior source/preparation retained."
+  ],
+  "checks": [
+    "block.hpp preserves original lane order block*256+group*32+lane, multiply sequence, per-slot BF16 input, orderedSG32 tree, full outputs/status, valid zero-count/invalid tail NaNs. Actual Engine matrix() sets span=rows640; strictfacade type18/count10/experts512/span640 and original gathered inputs retained.",
+    "All34 selected IQ3_XXS gate/up sites joined exact graph/census; consumed_matrix_inputs distinguished from graph active/error operands. CPU7,878,100 exact checks retained; no repeated run, publicfacade/native evidence not claimed by CPU proof.",
+    "Extractor binds immutable closed attributionreview469... and originalbaselineindex/newcensus; parses full audited contiguous bundle metadata, reads only4named ranges/case and checks each originalbaseline length/SHA.",
+    "Model files openedcanonical/NOFOLLOW regularsinglelink; held stat exactly matches census before bounded rawheaderSHA, then referenced tensor extent and deduplicated valid nonzero route expert slices. Slice offsets retain original512expert IDs, full627200Bperexpert; no fulltensor/bank/model hash claim.",
+    "Fresh exclusive fixtures and fixedheader, retained failure receipt/no retry, source/destinationreadbackSHA+fsync. Maximum18,816,000 modelpayload and192,480 bundlebytes plus separatelycountedheaders;27GBfloor+32MiBwrite reservation.",
+    "Native runner beforeDevice authenticates copiedfixture/slice hashes and source modelstat, builds3zero-filled full512banks with only demanded slices and requires loadedset exactlyconsumedset. Control andcandidate sharebank/input/routes, disjointoutput/status; exact6400BF16+10status againstsavedoracle everypair.",
+    "Actual originalgsqn::submit andcandidate strictfacade captured once; events waited/completed,timingqueriedbefore retirement. Fixed4excludedwarmup+24measured balancedcycles across3cases=84pairs168kernels; no perpairuploads/cacheflush.",
+    "Exact device963610200B and transfer965690280B assertions,1MiBpinnedslab separately. Firsterror, stop/no new submissions, fullbackend sync and safeowner shutdown, uncertainowner hold inheritedfrom reviewed Q6micro.",
+    "Native compile recipe one new runnerTU+39 originalobjects, originalstrictFPflags and sourcehashclosure, offlinedeviceimage bothkernelentry checks, no artifact invocation. Final native artifact and operational wrapper remain pending separate review."
+  ],
+  "scope": "Finite source clearance for root-authorized bounded extraction and later compile-only preparation. No payload/model/device operations by reviewer; not native correctness/performance admission."
+}

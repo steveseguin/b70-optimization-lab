@@ -1,0 +1,84 @@
+--- experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro/evidence/device-a/audit.py
++++ experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro/evidence/device-a/audit.py
+@@ -3,8 +3,8 @@
+ from pathlib import Path
+ import hashlib,json,statistics,gzip,collections,stat
+ R=Path('/home/steve/llm-optimizations')
+-P=R/'experiments/own-xpu-runtime/gsq-rco-iq3s/qkv-q6-p33/micro'
+-S=Path('/home/steve/own-xpu-runtime-results/gsq-qkv-q6-micro-a')
++P=R/'experiments/own-xpu-runtime/gsq-rco-iq3s/expert-iq3xxs-block/micro'
++S=Path('/home/steve/own-xpu-runtime-results/gsq-iq3xxs-block-micro-a')
+ D=Path(__file__).resolve().parent
+ index={}
+ def digest(p):
+@@ -30,17 +30,23 @@
+ assert digest(P/'evidence/native-build.json')==ad['proof_sha256']
+ assert digest(P/'once.py')==ad['monitor_sha256']
+ checkpins(manifest['authority'])
++plan_path=Path('/home/steve/own-xpu-runtime-results/gsq-iq3xxs-block-micro-a.plan.json')
++assert digest(plan_path)=='38c8cc86c52f220fce53cb7267b4c1053c93722efe1f48337bbbc74a8e7e24eb'
++assert read(plan_path)==ad['plan']
++assert (manifest['device_bytes'],manifest['transfer_bytes'],manifest['pinned_bytes'])==(963610200,965690280,1048576)
+ for c in manifest['cases']:
++ assert digest(c['sparse_weights']['path'])==c['sparse_weights']['sha256']
+  for f in c['fixtures'].values():assert digest(f['path'])==f['sha256'] and Path(f['path']).stat().st_size==f['bytes']
+-for name in ('independent-review.json','independent-wrapper-review.json'):
++for name in ('independent-review.json',):
+  d=read(P/'evidence'/name);assert d['passed'];checkpins(d['source_sha256'])
+-assert term['passed'] and term['result']==result and not term['single_term_attempted'] and term['first_error'] is None
+-assert term['observed_native_target_fd'] and term['target_descriptors_empty'] and term['qualification_limit'] is None
++assert term['passed'] is False and term['result']==result and not term['single_term_attempted'] and term['first_error'] is None
++assert not term['observed_native_target_fd'] and term['target_descriptors_empty']
++assert term['qualification_limit']=='Native target FD not observed; short-run physical identity is not independently attested.'
+ assert term['status']['MainPID']=='0' and term['status']['ActiveState']=='inactive'
+-assert result['schema']=='gsq.qkv-q6.native-micro.v1'
++assert result['schema']=='gsq.iq3xxs-block.native-micro.v1'
+ assert result['passed'] and result['safe_to_exit'] and result['card']==0 and result['profiling'] and not result['model_executed']
+ assert result['completed_exact_pairs']==84 and result['attempted_kernel_submissions']==168
+-assert result['device_bytes']==169466880 and result['transfer_bytes']==171801600
++assert result['device_bytes']==963610200 and result['transfer_bytes']==965690280
+ assert not result['error'] and not result['cleanup_error']
+ t=result['teardown'];assert t['safe_to_exit'] and t['exit_code']==0 and t['idle_marker_complete'] and t['in_flight']==t['live_bytes']==0 and not t['error']
+ before=ad['before'];native=term['native_identity'];seen=0;active=0
+@@ -58,7 +64,7 @@
+  if state and state['ActiveState']=='active':
+   active+=1
+   for k,v in ad['plan']['safe_properties'].items():assert state[k]==v
+-assert seen>=1 and active>=1
++assert seen==0 and active>=1
+ assert all(x['observation_complete'] and x['first_error'] is None for x in mon['samples'])
+ assert not mon['single_term_attempted'] and mon['first_error'] is None
+ assert not any(term['after']['drm'][h['node']]['bdf']=='0000:23:00.0' for h in term['after']['inventory']['holders'])
+@@ -68,6 +74,9 @@
+  case=manifest['cases'][expect['case']]
+  assert (row['warmup'],row['cycle'],row['layer'],row['order'])==(expect['warmup'],expect['cycle'],case['layer'],''.join(expect['order']))
+  assert row['exact'] and row['A_sha256']==row['B_sha256']==row['expected_sha256']==case['fixtures']['expected']['sha256']
++ assert row['label']==case['label']
++ assert row['A_status_sha256']==row['B_status_sha256']==row['expected_status_sha256']==case['fixtures']['status']['sha256']
++ assert case['fixtures']['expected']['bytes']==12800 and case['fixtures']['status']['bytes']==40
+  first,second=row['order']
+  assert previous<row[first+'_start_ns']<row[first+'_end_ns']<row[second+'_start_ns']<row[second+'_end_ns']
+  previous=row[second+'_end_ns']
+@@ -78,16 +87,17 @@
+ def aggregate(rs):
+  a=[r['A_end_ns']-r['A_start_ns'] for r in rs];b=[r['B_end_ns']-r['B_start_ns'] for r in rs]
+  return dict(pairs=len(rs),A_ns=stats(a),B_ns=stats(b),B_over_A_paired=stats([y/x for x,y in zip(a,b)]),B_over_A_sum=sum(b)/sum(a),A_over_B_sum=sum(a)/sum(b))
+-summary={'all':aggregate(measured),'by_case':{str(layer):{'all_orders':aggregate([r for r in measured if r['layer']==layer]),**{order:aggregate([r for r in measured if r['layer']==layer and r['order']==order]) for order in ('AB','BA')}} for layer in (0,24,40)},'by_order':{order:aggregate([r for r in measured if r['order']==order]) for order in ('AB','BA')}}
++summary={'all':aggregate(measured),'by_case':{str(layer):{'all_orders':aggregate([r for r in measured if r['layer']==layer]),**{order:aggregate([r for r in measured if r['layer']==layer and r['order']==order]) for order in ('AB','BA')}} for layer in (0,22,46)},'by_order':{order:aggregate([r for r in measured if r['order']==order]) for order in ('AB','BA')}}
+ # Retain all small raw run files except regenerable native compiler caches (index those too).
+-for p in sorted(S.rglob('*')):
+- if p.is_file():digest(p)
++raw_paths=sorted(p for p in S.rglob('*') if p.is_file())
++assert len(raw_paths)<=2000 and sum(p.stat().st_size for p in raw_paths)<=64*1024**2
++for p in raw_paths:digest(p)
+ for name in ('admission.json','terminal.json','monitor.json','result/result.json','result/samples.jsonl'):
+  p=S/name;dst=D/('raw-'+name.replace('/','-'))
+  with dst.open('xb') as f:f.write(p.read_bytes())
+ with (D/'artifact-index.jsonl.gz').open('xb') as out:
+  with gzip.GzipFile(fileobj=out,mode='wb',mtime=0) as z:
+   for item in sorted(index.values(),key=lambda x:x['path']):z.write((json.dumps(item,sort_keys=True)+'\n').encode())
+-receipt=dict(schema='ownrt.gsq.qkv-q6-micro-independent-device-review.v1',passed=True,exact_pairs=84,measured_pairs=72,excluded_warmup_pairs=12,kernel_submissions=168,native_identity=native,observed_target_bdf='0000:23:00.0',observed_contact_samples=seen,active_unit_safe_property_samples=active,physical_drain=True,unchanged_vision_and_fault_baseline=True,cooperative_signals=0,safe_native_teardown=True,terminal_duration_seconds=term['duration'],binary_sha256=ad['binary_sha256'],native_build_sha256=ad['proof_sha256'],source_pins_rehashed=len(index),statistics=summary,source_sha256={str(Path(__file__).relative_to(R)):digest(__file__)},artifact_index_sha256=hashlib.sha256((D/'artifact-index.jsonl.gz').read_bytes()).hexdigest(),limitations=['One continuously owned device and three fixed saved real projection inputs; repeated isolated kernel event latency, not end-to-end model throughput or a speed record','Twelve warmup pairs excluded by preregistration; all72 measured pairs retained with no outlier filter; each case/position/order combination four observations','No model weight reread by auditor: hash-verifying compiled reader and native successful control flow bind the three exact payloads before Device construction','Output equality is recorded full-byte native comparison plus exact per-arm output SHA against rehashed saved baseline output fixtures; successful runtime did not emit separate full output blobs','Final unit is collected: final show fields are default not-found values, not original safe-property or exit-code evidence. Three active samples prove safe properties; native teardown proves safe exit and passive metadata proves physical drain','No new device, service, kernel, inventory or model operation by auditor'])
++receipt=dict(schema='ownrt.gsq.iq3xxs-block-micro-independent-device-review.v1',passed=False,audit_passed=True,native_kernel_result_passed=True,coordinator_passed=False,qualification_complete=False,qualification_limit=term['qualification_limit'],exact_output_and_status_pairs=84,exact_pairs=84,measured_pairs=72,excluded_warmup_pairs=12,kernel_submissions=168,native_identity=native,observed_target_bdf=None,intended_target_bdf='0000:23:00.0',observed_contact_samples=seen,active_unit_safe_property_samples=active,physical_drain=True,unchanged_vision_and_fault_baseline=True,cooperative_signals=0,safe_native_teardown=True,terminal_duration_seconds=term['duration'],binary_sha256=ad['binary_sha256'],native_build_sha256=ad['proof_sha256'],source_pins_rehashed=len(index),statistics=summary,source_sha256={str(Path(__file__).relative_to(R)):digest(__file__)},artifact_index_sha256=hashlib.sha256((D/'artifact-index.jsonl.gz').read_bytes()).hexdigest(),limitations=['One continuously owned device and three fixed saved real projection inputs; repeated isolated kernel event latency, not end-to-end model throughput or a speed record','Twelve warmup pairs excluded by preregistration; all72 measured pairs retained with no outlier filter; each case/position/order combination four observations','No original model/header/bundle reread by auditor: local copied sparse slices and saved fixtures rehashed; compiled reader authenticates these before Device construction; no full-tensor hash claim','Output and status equality is recorded full-byte native comparison plus exact per-arm SHA against rehashed saved baseline output/status fixtures; successful runtime did not emit separate full output blobs','Final unit is collected: final show fields are default not-found values, not original safe-property or exit-code evidence. One active sample proves safe properties; native teardown proves safe exit and passive metadata proves physical drain, but no sample observed the native target descriptor','Coordinator remains failed: no positive independent physical BDF ownership attestation. A later full Engine qualification can independently attest its own owner/device and exact results; it cannot retrospectively make this micro passed or prove where these timestamps were measured','No new device, service, kernel, inventory or model operation by auditor'])
+ with (D/'review.json').open('x') as f:json.dump(receipt,f,indent=2,ensure_ascii=False);f.write('\n')
+-print(json.dumps({'passed':True,'receipt_sha256':hashlib.sha256((D/'review.json').read_bytes()).hexdigest(),'measured':72,'B_over_A':{k:v['all_orders']['B_over_A_sum'] for k,v in summary['by_case'].items()}}))
++print(json.dumps({'audit_passed':True,'passed':False,'receipt_sha256':hashlib.sha256((D/'review.json').read_bytes()).hexdigest(),'measured':72,'B_over_A':{k:v['all_orders']['B_over_A_sum'] for k,v in summary['by_case'].items()}}))
