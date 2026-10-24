@@ -1786,6 +1786,12 @@ request state and one loaded pair throughout. After correctness, continue lossle
 the progress/fairness reviewer is active on a 30-minute schedule. The old Unsloth lane remains
 closed and published. [Real-model evidence](experiments/own-xpu-runtime/gsq-rco-iq3s/serving/evidence/real-model-a/README.md).
 
+**October 23, 23:30 EDT — two-card host: authority diagnostic launched.**
+Unit `ctx-campaign67` tests the frozen control, genuine user withdrawal and forged tool-content
+withdrawal. Setup and the full pi audit are published in `bbd75585c`; all eleven focused tests,
+independent review and 46 repository checks pass. Actions are simulated; no task files execute.
+No agents/tests/builds beside the server. Parent stays active through shutdown and semantic audit.
+This entry stays local until shutdown. Status: `context-longrun-20261016/campaign67-authority-transfer/status.json`.
 
 **October 23, 23:25 EDT — two-card host: authority-transfer diagnostic ready.**
 Campaign 67 freezes the actual final-read prefix and tests an unchanged control, a genuine new user
