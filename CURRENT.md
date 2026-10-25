@@ -1,5 +1,21 @@
 # Current Workspace State
 
+**October 25, 12:30 EDT — SC117 LAN service is down, waiting on the owner; exact TP measured.**
+- **The service will not start, by design.** Its admission guard refuses because this boot's kernel fault list grew
+  with the 11:44 incident lines. Re-baselining that guard (`gsq-rco-iq3s/operating/host-before-stop.json`) is the
+  owner's call, and it was not done. The health probe after the incident passed
+  ([evidence](experiments/own-xpu-runtime/research/tp/incident-2026-10-25/)).
+- **Exact tensor parallelism on two cards works, bitwise.** Rank 1's state equals the one-card run with:
+  - everything replicated;
+  - dense rows split across the cards;
+  - experts placed by id.
+- **It gains almost nothing.** Rank 1 half-step: 17.02 ms versus 16.73 on one card.
+  - The exactness rule (no split sums) needs a copy after every split matrix, and the copy costs about what the split
+    saves.
+  - Experts split unevenly per token.
+  - Revised four-card estimate: about 1.05–1.1×, not 1.4×. Details are in the
+    [design note](experiments/own-xpu-runtime/research/2026-10-24-exact-multicard-design.md).
+
 **October 25, 12:15 EDT — GPU fault on cards 23/47 from a TP test; recovered without a reboot.**
 - **What happened.** At 11:44 the first two-card run with the device profiler on (`OWNRT_DECODE_PROFILE=2` plus
   `--tp-replicate`) hit a copy-engine memory fault while loading, first on 47:00.0 and then on 23:00.0 (CAT error,
