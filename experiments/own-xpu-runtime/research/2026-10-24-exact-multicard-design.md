@@ -138,3 +138,55 @@ Feasibility blockers to solve before building:
   - GDN split by heads;
   - expert placement with a fixed-order gather before the combine;
   - a four-rank controller, with prefill and MTP draft placement.
+
+## Host-RAM shadow of multi-card contexts (measured 2026-10-25)
+
+Tool: [p2p/mem_shadow.cpp](p2p/mem_shadow.cpp). It allocates and fills 4 GiB per card and reads `/proc/meminfo`.
+
+| Context | `GPUActive` | `MemAvailable` |
+|---|---:|---:|
+| One card | +0.00 GiB | −0.01 GiB |
+| Two cards (one SYCL context) | **+8.00 GiB** | −8.75 GiB |
+
+`NEOReadDebugKeys=1` with any of `EnableMultiStorageResources=0`, `UseKmdMigration=0` or
+`OverrideMultiStoragePlacement=0` leaves the shadow unchanged. Peer copies still work with the first one. The cost
+appears to come from the kernel driver's placement for multi-device buffers.
+
+Consequence for TP2×PP2 on four cards:
+- each two-card stage process holds about a quarter of the model per card (about 13–15 GB);
+- so each process shadows about 28 GB of host RAM, about 56 GB for both, out of about 101 GB available.
+
+That fits, but it is a real cost; record it in `CURRENT.md` if deployed. The alternative is single-card processes with
+Level Zero IPC memory and events, at higher engineering cost.
+
+## Implementation plan (engine), 2026-10-25
+
+**Approach: plan rewriting, not new executors.** The engine already keeps per-card buffers, weights and devices
+(`buffers[c]`, `weights[c]`, `dev(c)`), and a launch carries `l.card`. For a TP2 stage, the plan is rewritten:
+- **Split matrix launches.** Each large dense GEMV becomes two launches, card 0 on rows [0, n/2) and card 1 on
+  [n/2, n), each with its own row-sliced weight. GGUF rows are contiguous, so a slice is an offset and a row count.
+- **Routed experts.** Each card holds experts with `id % 2 == c`. Its routed launch computes only the slots whose expert
+  it holds and leaves the other slots for the peer.
+- **Gathers.** A new `gather` op peer-copies the peer's half (or its expert slots) into the local full buffer, waiting
+  on the producer's device event.
+- **Replicated launches.** Every other launch is duplicated for card 0 and card 1, each on its own full buffers. That
+  covers norms, HC glue, GDN (first replicated, later split by heads), QSA, route, combine and status checks; the same
+  arithmetic runs on both cards.
+- **Exactness.** Every output row and every expert output is computed whole by one card, and copies are bitwise. The
+  F32 oracle comparison and the prefill gate apply unchanged (the state is compared on card 0 plus the gathered
+  buffers).
+
+**Development steps.** Each is verified on today's two cards as TP2×PP1 (one stage holding all 48 layers, about 26 GB
+per card, about 52 GB of host shadow), against the F32 oracle:
+1. one process driving two cards in rank mode, everything replicated (no split): it must reproduce the oracle;
+2. dense GEMV row splits plus gathers;
+3. expert placement plus the slot gather;
+4. GDN split by heads (optional);
+5. the controller and adapter for TP2×PP2, plus prefill and MTP draft placement. Deployment needs cards 27/43.
+
+Expected per stage (rank 0's 23 layers today):
+- matrix 10.1 → about 5.6 ms (experts unbalanced: the busiest card holds about 6.2 of the 10 selected);
+- small ops 3.9 ms (replicated);
+- gathers about 1.45 ms (about 9 per layer at about 7 µs).
+
+That is about 11 ms, or 12.4 ms with stage 0's draft, against 17.4 ms: about 1.4×, i.e. about 66 tok/s on the suite.
