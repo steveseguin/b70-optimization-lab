@@ -122,6 +122,11 @@ class DraftStateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'device position'):
             self.load_candidate()
 
+    def test_native_unsigned_position_is_valid_but_still_compared_by_type(self):
+        self.state['layouts']['card0:draft:position']['dtype'] = 'U32'
+        self.load_candidate()
+        self.assertFalse(self.result()['passed'])
+
     def test_pair_sequence_must_match_even_with_identical_state(self):
         data = json.loads(self.b.read_text())
         data['input_identity']['pair_sequence_sha256'] = 'd'*64

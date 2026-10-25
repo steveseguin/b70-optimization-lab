@@ -73,7 +73,7 @@ draft host state. EOS/cap drains rejected descendants before final dumps.
 4. Compare the new `ownrt.draft-state.v1` sealed dumps with
    `engine/tools/compare_draft_state.py`: every device allocation, scratch byte,
    pinned publication/half-staging byte, layout and host field is included.
-   Bind the sealed I32 draft position to the host and manifest position. Require
+   Bind the sealed I32/U32 draft position to the host and manifest position. Require
    no disabled provider, async operation, reverse pointer or queued depth probe.
 
 CPU tests cover 2/4/6-stage socket scheduling, fragmented replies, proposal

@@ -3,8 +3,8 @@
 October 25, 2026. The current two-B70 engine is substantially faster, with
 unchanged outputs on the retained twelve-prompt comparison. It remains a
 research engine: independent-reference fidelity and a complete portable
-release are unfinished. Four-card target-only execution now passes a bounded state comparison;
-a faster four-card speculative service remains unfinished.
+release are unfinished. Four-card target-only and live-draft execution now pass bounded complete-state
+comparisons; a faster four-card speculative service remains unfinished.
 
 ## What the evidence establishes
 
@@ -195,3 +195,28 @@ source tree built successfully using that generated authority. Its
 records binary `517268ab9044`, profile and local binding hashes. No GPU executed
 in this build qualification; portable runtime qualification remains pending.
 The earlier 228-file download remains available with its original checksum.
+
+
+## Live draft and standalone deployment qualification
+
+The [live four-card proof](../experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
+uses the existing draft weights and the same 87-token prompt/32-output bound.
+All 2,065 target buffers and all 73 draft allocations (27,451,714 bytes), layouts
+and host metadata match the sequential two-card reference. All 117 true-pair
+hidden inputs and all 32 comparable legacy draft proposals match. The run
+observed 25 proposal hits, six misses and twelve complete byte-verified stage
+restorations. All processes exited cleanly; no new fault signatures appeared.
+Byte verification is deliberately expensive: this is no throughput claim.
+The rejected pre-device pinned-buffer implementation and corrected CPU fixtures
+are retained with their exact source hashes.
+
+The [standalone portable launcher](../experiments/own-xpu-runtime/engine/deployment/README.md)
+now passed bounded [two-card](../experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp2-proof/RESULT.md)
+and [four-card](../experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md)
+target-only replays using extracted source f6079c380 and its generated local
+model configuration. Each matched all 32 tokens and 2,065 target buffers.
+These runs use explicit independent launch plans, a complete privileged passive
+observer and plan-bound admissions; they do not import recorded lab rank commands.
+This validates the deployment split on the lab host, not a new-host installation,
+portable HTTP service, all model variants or other GPU configurations.
+Raw proof archives are retained with independently rehashed durable copies.

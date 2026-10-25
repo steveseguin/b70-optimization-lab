@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-portable-pp2-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/controller.py",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp2-plan.json",
+    "--plan-sha256",
+    "974dcfe054c9145aa54c5aca7814d8b436aeeaf0d75ddd3fdfc4c256a02a4ea0",
+    "--profile-sha256",
+    "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a",
+    "--binding-sha256",
+    "bfd016aa02b31f6183cd9c739d6d30e5449704268a8f4b136d3ff45302805fdf",
+    "--build-receipt",
+    "/dev/shm/engine-build-portable-20261025/build-receipt.json",
+    "--build-receipt-sha256",
+    "611187c89139923c61e3762907dba335eba1344d8379f39ab00a1d423e75ac79",
+    "--run",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp2-admission.json",
+    "--unit",
+    "sc117-portable-pp2-20261025.service"
+  ]
+}

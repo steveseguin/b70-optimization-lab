@@ -1,11 +1,21 @@
 # Prepare the current SC117 model at a new local path
 
-This CPU-only recipe authenticates the **existing SC117 IQ3_S target** and,
+The CPU-only preparation step authenticates the **existing SC117 IQ3_S target** and,
 optionally, the existing official FP8 draft. It creates a separate local build
 authority without editing canonical engine source. It does not train a draft,
 download weights, install software, launch an engine, or certify output quality.
-The implementation has synthetic CPU and native authority tests; a complete
-relocated-model build and runtime replay remain pending.
+The implementation has synthetic CPU and native authority tests. The current
+model was fully authenticated once and built from the frozen `f6079c380` source
+archive with its generated authority on the existing host; see the retained
+[authentication and build receipts](../../research/continuation-2026-10-25/portable/).
+The standalone launcher subsequently passed bounded
+[two-card](../../research/continuation-2026-10-25/portable/pp2-proof/RESULT.md) and
+[four-card](../../research/continuation-2026-10-25/portable/pp4-proof/RESULT.md)
+target-only replays: the same 87-token prompt, 32 exact outputs and all 2,065
+canonical target buffers/layouts matched the retained baseline. A clean-host
+installation, changed model-file location, portable chat service and performance
+qualification remain open. These runs do not resolve the six independent CPU
+reference disagreements.
 
 The immutable [profile](../profiles/sc117-iq3s/profile.json) identifies:
 
@@ -182,16 +192,63 @@ settings. The planner itself changes neither.
 
 The resulting `ownrt.portable-launch-plan.v1` has `stages[].argv`, `environment`,
 `native_output`, `bdf`, `first`, `final`, `begin` and `end`, plus hash pins and
-protocol identity. It explicitly reports `run_authorized=false` and
-`portable_observer_available=false`. **A plan is not runtime admission.** The
-guarded portable controller/observer still needs integration; do not pass this
-artifact to the lab pipeline driver's differently scoped schema or execute its
-command templates without the independent controller gates listed in the plan.
-No local credential path or fault baseline is embedded. The controller must
-require explicit run admission bound to the plan, complete passive physical
-ownership inventory, fault/resource preflight, cooperative stop coordination and
-postflight. Missing permission to inspect other users' GPU holders must fail
-closed, not become an empty inventory.
+protocol identity. Its `run_authorized=false` remains correct: **a plan is not
+runtime admission**. The foundation plan's `portable_observer_available=false`
+records that release's scope. The separate experimental
+[controller](controller.py) and [passive observer](observer.py) now provide a
+target-only execution path with CPU tests and the bounded two/four-card replay
+evidence above. They
+regenerate the commands from the trusted generator and reject changed commands,
+environments, profile/binding/build inputs, runtime assets or local shard stats.
+The MTP templates are not accepted by this controller.
+
+Validate a target-only plan without opening GPUs:
+
+```bash
+PLAN_SHA=the_recorded_launch_plan_digest
+python3 "$ENGINE/deployment/controller.py" \
+  --plan /path/to/launch-plan.json --plan-sha256 "$PLAN_SHA" \
+  --profile-sha256 "$PROFILE_SHA" --binding-sha256 "$BINDING_SHA" \
+  --build-receipt "$BUILD_RECEIPT" --build-receipt-sha256 "$RECEIPT_SHA"
+```
+
+Execution additionally requires explicit `--run --admission /path/to/admission.json`
+and either `--coordinator-stop-fd FD` or the name of the controller's own user
+systemd unit via `--unit NAME`. The unit must have `Restart=no`,
+`KillMode=process`, `SendSIGKILL=no` and matching invocation/PID. Run the controller
+at nice level 19. It launches each stage once, tracks PID/start-time identity
+before further work, uses cooperative stop pipes, and reports surviving processes
+instead of killing, resetting or restarting them. A fault, unknown inventory,
+changed hardware identity, resource-floor breach or deadline halts new commands.
+The replay dumps final state and records postflight; it makes no speed claim.
+
+Admission has schema `ownrt.portable-run-admission.v1`, `owner_authorized:true`,
+`plan_sha256`, independent `controller_sha256` and `observer_sha256`, a timezone-
+qualified `expires_utc`, reviewed `baseline` path and `baseline_sha256`, an
+`observer_backend`, and `limits` containing integer `memory_start_bytes`,
+`memory_floor_bytes`, `root_floor_bytes`, `evidence_floor_bytes`, `grace_seconds`.
+Set floors for the actual host and workload; the tool's minimums are not a memory-
+fit estimate. Baseline creation does not authorize accepting a new hardware fault.
+Review any historical faults before explicitly binding that baseline in admission.
+
+The standalone observer only reads `/proc`, sysfs, device-node metadata and the
+kernel journal. It never opens a DRM node or invokes a GPU API. It records PCI
+vendor/device/subsystem/revision identities, card/render aliases and process
+start ticks. This establishes the observed PCI identity and ownership, not a
+marketing-name or capacity certification. Process/FD census and kernel-journal
+reads have count, size and time limits; missing other-user FD permissions or
+truncated/unavailable evidence fail closed.
+
+Select `direct-root` only when the controller already has the needed privileges,
+or `sudo-n` for a preconfigured noninteractive observer invocation. No password
+file or privilege configuration is provided. An explicit local credential broker
+can instead use `external-wrapper`: admission must pin an absolute
+`observer_wrapper` and its `observer_wrapper_sha256`. The wrapper receives exactly
+one argument, the packaged observer script path, and must emit only that root
+observer's JSON to stdout. Keep such a broker outside the source package and
+protect its credentials locally. Helper failure never falls back to an empty
+inventory, interactive prompt or alternate privilege method. Privilege policy is
+an operator prerequisite; this recipe does not modify sudoers.
 
 New deployment runs must establish token and full-state parity before reporting
 performance. The current native capability remains the existing

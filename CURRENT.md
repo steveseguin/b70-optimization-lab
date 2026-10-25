@@ -2,20 +2,27 @@
 
 **October 25, continuation — quad overlap and portable deployment; no draft training.**
 The owner approved the next work and explicitly excluded draft-model training.
-The two-card service drained cleanly once at 14:59 EDT after 45 requests. The
-four-card overlap proof passed: all 32 tokens and all 2,065 canonical state
-buffers match the earlier two-card run. Six deliberately wrong scripted guesses
-were rejected, with 13 complete stage restorations independently byte-verified.
-All four processes exited cleanly and no new fault signatures appeared. This
-is correctness evidence, not a speed benchmark. Live existing-draft integration
-is now running its two-card sequential reference before a matched four-card test.
-Independent review caught and fixed missing pinned-buffer checkpoint coverage
-before GPU execution; the rejected build and exact source are retained. The
-portable authentication and generated-configuration source build both passed,
-with no download or training. CPU reference analysis narrowed
-untested arithmetic differences but has not explained the six disagreements.
-Preserve the 47.97 tok/s baseline; no host power/memory settings changed.
-[Continuation evidence](experiments/own-xpu-runtime/research/continuation-2026-10-25/wavefront-proof-a/RESULT.md).
+The two-card service drained cleanly once at 14:59 EDT after 45 requests. Four-card
+live drafting now passes the bounded correctness proof: all 32 outputs, 2,065
+target buffers and 73 draft allocations match the sequential two-card reference.
+All 117 true-pair inputs and 32 retained legacy draft guesses agree; 25 hits,
+six misses and 12 complete byte-verified stage restorations were observed.
+This is not a four-card speed result. No new fault signatures appeared.
+
+The portable model authentication, extracted-source generated-configuration build,
+and standalone two/four-card target-only replays also passed all 32 outputs and
+2,065 target buffers. Their raw proof archives are saved and rehashed on USB.
+GitHub/neural.download carry the research source; the new 253-file archive is
+live and checksum-verified. SkinDeep remote access remains unavailable; its local
+updates are preserved. Clean-host installation and portable serving remain open.
+
+Now building the cold multi-request path so a larger suite can reuse loaded
+engines. Initial qualification will compare two short requests with complete
+reset/state checks before any twelve-prompt timing run. Explicit target/draft
+state ownership is opt-in groundwork for deeper overlap. The established two-card
+speed remains 47.97 tok/s; draft training is prohibited. No host power or memory
+settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
+and [portable proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md).
 
 
 **October 25, review session — owner authorizes all four cards; reusable engine and publication work active.**

@@ -1,0 +1,6 @@
+{
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/observer.py\", line 194, in <module>\n    print(json.dumps(observe(),sort_keys=True))\n                     ^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/observer.py\", line 152, in observe\n    kernel=kernel_faults(boot)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/observer.py\", line 128, in kernel_faults\n    raw=bounded_command(['/usr/bin/journalctl','--quiet','--kernel','--boot','--no-pager','--output=json'])\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/observer.py\", line 44, in bounded_command\n    require(p.wait(timeout=max(.01, deadline-time.monotonic()))==0, 'passive helper refused or failed')\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/observer.py\", line 23, in require\n    raise ValueError(message)\nValueError: passive helper refused or failed\n",
+  "device_opened": false
+}

@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+"""Passive Linux admission evidence. Never opens DRM nodes or calls a GPU API.
+
+Run as root, directly or through an explicitly selected noninteractive sudo -n
+backend. No password files, baseline mutation, service changes or recovery.
+"""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import selectors
+import shutil
+import stat
+import subprocess
+import time
+
+FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|GPU HANG|GuC.*reset|coredump|timed.?out job|job[^\n]*timed\s*out|wedged|hard LOCKUP|soft lockup|Hardware Error', re.I)
+
+
+def require(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def bounded_command(argv, cap=32*1024**2, seconds=20):
+    """Bound the observer helper's output and lifetime; never an engine child."""
+    p = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, env={'PATH':'/usr/bin:/bin','LC_ALL':'C'})
+    data = bytearray()
+    deadline = time.monotonic()+seconds
+    try:
+        with selectors.DefaultSelector() as selector:
+            selector.register(p.stdout, selectors.EVENT_READ)
+            while selector.get_map():
+                require(time.monotonic()<deadline, 'passive helper timeout')
+                for key, _ in selector.select(min(.2, max(0, deadline-time.monotonic()))):
+                    piece=os.read(key.fd, 65536)
+                    if not piece:
+                        selector.unregister(key.fileobj)
+                        continue
+                    require(len(data)+len(piece)<=cap, 'passive helper output cap')
+                    data.extend(piece)
+        require(p.wait(timeout=max(.01, deadline-time.monotonic()))==0, 'passive helper refused or failed')
+        return bytes(data)
+    finally:
+        if p.poll() is None:
+            p.terminate()
+            try:p.wait(timeout=2)
+            except subprocess.TimeoutExpired:p.kill();p.wait(timeout=2)
+        p.stdout.close()
+
+
+def bounded_entries(directory, maximum, deadline):
+    # Path.iterdir uses os.listdir on supported Python versions: stream instead.
+    with os.scandir(directory) as entries:
+        for count,entry in enumerate(entries,1):
+            require(count<=maximum and time.monotonic()<deadline,'bounded directory inventory count/deadline')
+            yield Path(entry.path)
+
+
+def process_identity(pid, proc=Path('/proc')):
+    try:
+        raw=(proc/str(pid)/'stat').read_text()
+    except FileNotFoundError:
+        return None
+    fields=raw[raw.rfind(')')+2:].split()
+    require(len(fields)>19, 'malformed process stat')
+    return {'start_ticks':int(fields[19])}
+
+
+def drm_inventory(root=Path('/sys/class/drm'), dev=Path('/dev/dri')):
+    rows=[]
+    for node in bounded_entries(root,4096,time.monotonic()+2):
+        if not re.fullmatch(r'(card[0-9]+|renderD[0-9]+)',node.name):continue
+        device=(node/'device').resolve(strict=True)
+        bdf=device.name
+        require(re.fullmatch(r'[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]', bdf), 'ambiguous DRM PCI mapping')
+        rdev=(node/'dev').read_text().strip()
+        major,minor=map(int,rdev.split(':'))
+        node_stat=(dev/node.name).stat()
+        require(stat.S_ISCHR(node_stat.st_mode) and node_stat.st_rdev==os.makedev(major,minor), 'DRM sysfs/device identity differs')
+        rows.append(dict(node=str(dev/node.name), bdf=bdf, rdev=node_stat.st_rdev,
+                         driver=(device/'driver').resolve(strict=True).name,
+                         vendor=(device/'vendor').read_text().strip(),
+                         device=(device/'device').read_text().strip(),
+                         subsystem_vendor=(device/'subsystem_vendor').read_text().strip(),
+                         subsystem_device=(device/'subsystem_device').read_text().strip(),
+                         revision=(device/'revision').read_text().strip()))
+    require(rows and len({r['node'] for r in rows})==len(rows), 'empty or duplicate DRM inventory')
+    return sorted(rows,key=lambda row:row['node'])
+
+
+def holder_inventory(drm, proc=Path('/proc'), deadline=None, max_processes=32768, max_fds=262144):
+    deadline=time.monotonic()+10 if deadline is None else deadline
+    processes=0;fd_count=0
+    devices={r['rdev']:r['node'] for r in drm}
+    holders=[];identities={};errors=[];races=[]
+    for entry in bounded_entries(proc,max_processes+1024,deadline):
+        require(time.monotonic()<deadline,'bounded process inventory deadline')
+        if not entry.name.isdecimal():continue
+        processes+=1
+        require(processes<=max_processes,'bounded process inventory count')
+        pid=int(entry.name)
+        try:
+            before=process_identity(pid,proc)
+            if before is None:continue
+            found=[]
+            for fd in bounded_entries(entry/'fd',max_fds+1,deadline):
+                fd_count+=1
+                require(time.monotonic()<deadline and fd_count<=max_fds,'bounded FD inventory deadline/count')
+                try:row=fd.stat()
+                except FileNotFoundError:continue
+                if stat.S_ISCHR(row.st_mode) and row.st_rdev in devices:
+                    found.append(dict(pid=pid,node=devices[row.st_rdev],fd=int(fd.name)))
+            after=process_identity(pid,proc)
+            if found:
+                if before!=after:races.append(pid)
+                else:identities[str(pid)]=before;holders.extend(found)
+        except FileNotFoundError:
+            continue
+        except OSError as error:
+            errors.append(dict(pid=pid,error=type(error).__name__))
+    return dict(holders=sorted(holders,key=lambda h:(h['pid'],h['fd'])),errors=errors,processes_scanned=processes,fds_scanned=fd_count),identities,races
+
+
+def kernel_faults(boot):
+    raw=bounded_command(['/usr/bin/journalctl','--quiet','--kernel','--boot','--no-pager','--output=json'])
+    require(raw.strip(), 'kernel journal unavailable/empty')
+    faults=[];count=0
+    for line in raw.splitlines():
+        row=json.loads(line);count+=1
+        require(row.get('_BOOT_ID')==boot.replace('-',''), 'kernel journal boot identity')
+        message=row.get('MESSAGE')
+        require(isinstance(message,str), 'nontext kernel journal message')
+        if FAULT.search(message) and 'coredump has been deleted' not in message.lower():
+            require(row.get('__CURSOR') and row.get('__MONOTONIC_TIMESTAMP'), 'kernel journal lacks stable record identity')
+            faults.append(dict(cursor=row['__CURSOR'],monotonic=row['__MONOTONIC_TIMESTAMP'],message=message))
+    require(count>0,'no kernel records')
+    return dict(faults=faults,records=count)
+
+
+def observe():
+    require(os.geteuid()==0, 'complete other-user FD inventory requires root observer or explicit sudo-n backend')
+    boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    drm=drm_inventory()
+    inventory,holders,races=holder_inventory(drm,deadline=time.monotonic()+10)
+    memory={}
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        parts=line.split()
+        if len(parts)==3 and parts[2]=='kB':memory[parts[0].rstrip(':')]=int(parts[1])*1024
+    kernel=kernel_faults(boot)
+    require(boot==Path('/proc/sys/kernel/random/boot_id').read_text().strip() and drm==drm_inventory(),'boot/DRM changed during observation')
+    return dict(schema='ownrt.portable-observation.v1',boot=boot,drm=drm,inventory=inventory,
+                holders=holders,identity_races=races,memory=memory,kernel=kernel,
+                root_free_bytes=shutil.disk_usage('/').free,device_opened=False,observer_euid=os.geteuid())
+
+
+def target_nodes(baseline,bdf):
+    rows=[r for r in baseline['drm'] if r['bdf']==bdf]
+    require(len(rows)==2 and all(r['driver']=='xe' and r['vendor']=='0x8086' for r in rows), 'target must have exactly one Intel xe card/render pair')
+    require(sum(Path(r['node']).name.startswith('card') for r in rows)==1 and
+            sum(Path(r['node']).name.startswith('renderD') for r in rows)==1,'target card/render aliases incomplete')
+    return {r['node'] for r in rows}
+
+
+class Backend:
+    def __init__(self,mode,wrapper=None,wrapper_sha256=None):
+        require(mode in ('direct-root','sudo-n','external-wrapper'), 'explicit observer backend required')
+        self.mode=mode;self.wrapper=wrapper;self.wrapper_sha256=wrapper_sha256
+        if mode=='external-wrapper':self.check_wrapper()
+    def check_wrapper(self):
+        try:
+            from . import launch_plan
+        except ImportError:
+            import launch_plan
+        require(self.wrapper and Path(self.wrapper).is_absolute(),'absolute external observer wrapper required')
+        require(launch_plan.hash_file(self.wrapper,2*1024**2)==self.wrapper_sha256,'external observer wrapper digest mismatch')
+    def observe(self):
+        if self.mode=='direct-root':return observe()
+        if self.mode=='external-wrapper':
+            self.check_wrapper()
+            argv=[self.wrapper,str(Path(__file__).resolve())]
+        else:argv=['/usr/bin/sudo','-n','--','/usr/bin/python3',str(Path(__file__).resolve())]
+        result=json.loads(bounded_command(argv,seconds=35))
+        if self.mode=='external-wrapper':self.check_wrapper()
+        return result
+    process_identity=staticmethod(process_identity)
+    target_nodes=staticmethod(target_nodes)
+
+
+if __name__=='__main__':
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    print(json.dumps(observe(),sort_keys=True))

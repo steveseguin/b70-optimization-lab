@@ -1,0 +1,45 @@
+{
+  "schema": "ownrt.pipeline-state-set.v2",
+  "mode": "verified-wavefront",
+  "require_byte_verified_restores": true,
+  "layer_count": 48,
+  "input_identity": {
+    "model_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "prompt_token_sha256": "0e8aeaa6723fb6ba0d7a0511d0053781d770bb5c8b941784347f2f0708fb9f65",
+    "output_token_sha256": "951774340f8d1d33c5cd3ffd2e18c1cc647276131ab34573a3f50af68b9a8da2",
+    "arithmetic": "F32",
+    "position": 118
+  },
+  "provenance": {
+    "plan": {
+      "path": "/dev/shm/sc117-wavefront-20261025/live-pp2-reference/plan.json",
+      "bytes": 13164,
+      "sha256": "41df85cd34de6000be7a90c6af21f0b4f09f856278636502c53ce519cfb89102"
+    },
+    "result": {
+      "path": "/dev/shm/sc117-wavefront-20261025/live-pp2-reference/result.json",
+      "bytes": 4292,
+      "sha256": "3cc253e463a803a0271407db61cf35550fc8e61b5951392f6435bc75c1625485"
+    }
+  },
+  "stages": [
+    {
+      "id": 0,
+      "begin": 0,
+      "end": 23,
+      "dump": "/dev/shm/sc117-wavefront-20261025/live-pp2-reference/stage0/native/state-2147483647",
+      "plan": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp2-proof/stage0/launch-plan.json",
+      "metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp2-proof/stage0/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-wavefront-20261025/live-pp2-reference/stage0/native/state-2147483647.wavefront-state.json"
+    },
+    {
+      "id": 1,
+      "begin": 23,
+      "end": 48,
+      "dump": "/dev/shm/sc117-wavefront-20261025/live-pp2-reference/stage1/native/state-2147483647",
+      "plan": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp2-proof/stage1/launch-plan.json",
+      "metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp2-proof/stage1/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-wavefront-20261025/live-pp2-reference/stage1/native/state-2147483647.wavefront-state.json"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "ownrt.portable-controller-cpu-review.v1",
+  "timestamp_utc": "2026-10-25T19:24:40.809606+00:00",
+  "device_executed": false,
+  "model_payload_reread": false,
+  "sources": {
+    "engine/deployment/controller.py": "6c6e930089d2136f891798ae87df4b18861c7db7e301c1406a7e7ea36ed50abf",
+    "engine/deployment/observer.py": "b39c6197177b49e65d6a5e1e492e01337a9d8387c046765c502591fa33078c4c",
+    "engine/deployment/test_controller.py": "0db3b81499a962660a745d90cf6831b83b5de65d6febaf7f3f2e39e9fa863e49",
+    "engine/deployment/launch_plan.py": "5bf4cd6394b622d03726fe90aa20453a20db49be9d3c6713c16b2f9c4b3b56c5",
+    "engine/deployment/prepare.py": "49f10ad6a42f7796613d553440c6c5503a721a250acedbf558a44123589323b6",
+    "engine/deployment/README.md": "faadfa32e309f6c3854a6d7130a1b9a30224f27668653e54456a18da6be867a1"
+  },
+  "checks": [
+    {
+      "command": "python3 -m unittest discover -s experiments/own-xpu-runtime/engine/deployment -p 'test_*.py'",
+      "passed": true,
+      "tests": 48
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/own-xpu-runtime/engine/release -p 'test_*.py'",
+      "passed": true,
+      "tests": 13
+    }
+  ],
+  "independent_review": "evidence_review: complete scoped controller/observer review; requested bounded streaming census and PCI device identity, both fixed and rechecked.",
+  "scope": "CPU tests only. Target-only two/four stage controller; independent explicit run admission required. Legacy MTP templates not accepted. No clean-host installation/runtime or speed certification.",
+  "corrections": [
+    "Explicit pinned external observer wrapper, no packaged credential path or privilege-policy mutation.",
+    "Streaming os.scandir with count/deadline bounds, no eager Path.iterdir/listdir inventory.",
+    "PCI vendor/device/subsystem/revision identities compared against independently admitted baseline.",
+    "Missing other-user FD permissions, PID identity race, new fault, changed resource/hardware or unknown observer fails closed.",
+    "Stage tracked immediately after Popen, cooperative stop once, no kill/reset/retry path.",
+    "Fault snapshot retained before validation; passive postflight retained after success or failure."
+  ]
+}

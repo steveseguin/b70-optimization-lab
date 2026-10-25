@@ -112,7 +112,7 @@ def load_set(path):
         require(label in layouts and layouts[label]['memory'] == 'pinned', 'missing pinned draft state: ' + label)
     require(layouts['card0:draft:publication']['bytes'] == 8, 'draft publication extent')
     position = canonical.get('card0:draft:position')
-    require(position is not None and position['layout'].get('dtype') == 'I32'
+    require(position is not None and position['layout'].get('dtype') in ('I32', 'U32')
             and position['layout'].get('shape') == [1]
             and position['sha256'] == digest(struct.pack('<i', host['position'])),
             'draft sealed device position differs from host identity')
