@@ -145,6 +145,9 @@ struct RetainSteps {
 #include "gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
 #include "gsq-rco-iq3s/integration/build/private/additive/admission.hpp"
 struct Options {
+  // --tp-replicate (2026-10-25, TP development): one rank process on two cards of one shared context, every launch
+  // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
+  bool tp_replicate=false;
   bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false,dense_packed_block=false;
   // Evidence/notification only. Defaults preserve the executed engine behavior.
   bool reset_dump=true,finish_dump=true,token_stream=false;
@@ -192,6 +195,7 @@ static Options parse(int argc, char **argv) {
     else if(k=="--qkv-q6-p33") a.qkv_q6_p33=true;
     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
     else if(k=="--gsq-packed") a.gsq_packed=true;
+    else if(k=="--tp-replicate") a.tp_replicate=true;
     else if (k == "--reset-dump" || k == "--finish-dump") {
       auto v=value();require(v=="all"||v=="none","dump mode must be all or none");
       (k=="--reset-dump"?a.reset_dump:a.finish_dump)=v=="all";
@@ -301,7 +305,9 @@ static Options parse(int argc, char **argv) {
   require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
   require(a.stage=="first-token" || a.stage=="decode", "stage");
   require(!a.output.empty(), "--output required");
-  require(a.cards==1 && (a.memory=="layer-streaming" || (a.rank>=0 && a.memory=="resident")), "single-device process required");
+  require((a.cards==1 && (a.memory=="layer-streaming" || (a.rank>=0 && a.memory=="resident"))) ||
+          (a.cards==2 && a.tp_replicate && a.rank==1 && a.memory=="resident" && a.gsq_packed), "single-device process required (two cards only with --tp-replicate on rank 1)");
+  require(!a.tp_replicate||a.cards==2,"--tp-replicate needs --cards 2");
   require(a.rank>=-1 && a.rank<=1,"rank range");
 #ifdef OWN_RT_HOST_ONLY
   require(!a.authorized, "host binary cannot authorize device execution");
@@ -1028,8 +1034,8 @@ public:
             "cooperative deadline");
   }
   ownrt::Device &dev(int c) {
-    if(c!=0)throw std::logic_error("rank-local device only");
-    return *devices.at(0);
+    if(c!=0&&!(a.tp_replicate&&c==1))throw std::logic_error("rank-local device only");
+    return *devices.at(size_t(c));
   }
   std::set<Allocation> head_auxiliary; // private p105 scratch, never target/draft state
   std::function<void(int,int,int)> head_export,head_merge;
@@ -1265,6 +1271,11 @@ public:
 #ifdef OWN_RT_HOST_ONLY
     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
 #else
+    if(a.tp_replicate) {
+      // One shared context over the two visible cards (the launcher sets ZE_AFFINITY_MASK to both).
+      auto group=ownrt::make_sycl_device_group({0,1},profile_events||std::getenv("OWNRT_DECODE_PROFILE"));
+      for(auto& b:group)devices.push_back(std::make_unique<ownrt::Device>(std::move(b)));
+    } else
     devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.rank==0||a.mtp||!a.draft_capture.empty()||std::getenv("OWNRT_DECODE_PROFILE"))));
     save(a.output/"device-contact.json","{\"device_contact\":true}");
 #endif

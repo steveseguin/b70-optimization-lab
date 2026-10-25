@@ -143,14 +143,14 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  auto prepare_start=std::chrono::steady_clock::now();
  if(staged)p150::measure("token_prep",request.position,false,[&]{e.stage_half_inputs(request.token);});
  else {
- if(!prepared_inputs)e.put(0,"token",&request.token,4);
+ if(!prepared_inputs){e.put(0,"token",&request.token,4);if(e.a.tp_replicate)e.put(1,"token",&request.token,4);}
  if(e.a.rank==0){
  const auto h0=e.history0,h1=e.history1;
  p150::measure("token_prep",request.position,false,[&]{e.prepare_token(request.token);});
  p150::measure("token_prep_duplicate",request.position,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){
  e.history0=h0;e.history1=h1;e.prepare_token(request.token);}});
  }
- else if(!prepared_inputs){size_t n=e.stream_bytes();require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);}
+ else if(!prepared_inputs){size_t n=e.stream_bytes();require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);if(e.a.tp_replicate)e.put(1,"streams",shared+slot_bytes,n);}
  }
  double prepare_ms=Engine::ms(prepare_start);auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e.wait_ms;
  std::array<int,48> captured{};size_t captured_count=0,issued=0;
@@ -230,14 +230,14 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(request.fixture>0&&e.head_merge)e.head_merge(request.sequence,request.position,request.fixture);
  int error=0,folded_token=-1;bool folded=false;
  if(e.a.rank==1&&request.fixture>0&&e.kio_active){auto both=e.read_error_and_token();error=both.first;folded_token=both.second;folded=true;} // packet188: one kernel readback
- else error=e.integer(0,"error");
+ else {error=e.integer(0,"error");if(e.a.tp_replicate)error=error||e.integer(1,"error");}
  require(!error,"sticky rank error (never rolled back)");
  if(e.a.rank==0&&!candidate.cancelled){e.swap_state_banks();candidate.swapped=true;}
  if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*e.stream_bytes());for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=e.stream_bytes();candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}
  if(captured_count){std::vector<uint8_t> zero(48*e.stream_bytes(),0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
  int token=-1;size_t bytes=0;
  if(e.a.rank==0){if(!e.v3_active)p150::measure("handoff_export",request.position,false,[&]{bytes=e.stream_bytes();auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});}
- else if(request.fixture>0){token=folded?folded_token:e.integer(0,"next_token");auto& confirmed=verification(shared);confirmed.token=token;__atomic_store_n(&confirmed.position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);}
+ else if(request.fixture>0){token=folded?folded_token:e.integer(0,"next_token");if(e.a.tp_replicate)require(e.integer(1,"next_token")==token,"tp-replicate: card 1 next token differs from card 0");auto& confirmed=verification(shared);confirmed.token=token;__atomic_store_n(&confirmed.position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);}
  if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
  if(e.a.rank==1)e.reply_report.begin(request.sequence,request.fixture,request.position);
  getrusage(RUSAGE_SELF,&after);getrusage(RUSAGE_THREAD,&thread_after);
@@ -301,6 +301,15 @@ static void pipeline_cancel_check() {
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/bracket_boundary.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/probe_exchange.hpp"
+// --tp-replicate gate: every non-weight buffer of card 1 must equal card 0 bitwise after the same steps.
+static void tp_compare(Engine& e,const fs::path& path) {
+ e.drain();std::ostringstream o;o<<"{\"buffers\":";size_t n=0;std::vector<std::string> differ;
+ for(const auto& [name,slot]:e.buffers[0]){auto other=e.buffers[1].find(name);if(other==e.buffers[1].end()){differ.push_back(name+" (missing on card 1)");continue;}
+  const size_t bytes=slot.n*flash::scalar_bytes(slot.type);if(!bytes)continue;++n;
+  if(e.readback(0,slot.id,bytes)!=e.readback(1,other->second.id,bytes))differ.push_back(name);}
+ o<<n<<",\"differ\":[";for(size_t i=0;i<differ.size();++i)o<<(i?",":"")<<ownrt::quote(differ[i]);o<<"],\"passed\":"<<(differ.empty()?"true":"false")<<"}";
+ save(path,o.str());
+}
 static int run_rank(const Options& a) {
  using namespace pipeline;
  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
@@ -315,6 +324,11 @@ static int run_rank(const Options& a) {
   if(a.pipeline_canary){int rc=run_pipe_canary(a,static_cast<uint8_t*>(mapping));munmap(mapping,shared_bytes);::close(fd);return rc;}
   weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
+  if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
+   std::vector<flash::Launch> both;both.reserve(p.launches.size()*2);
+   for(const auto& l:p.launches){both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));}
+   p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
+  }
   engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
   // Exact F32 activation mode is admitted only on the paths that have F32 variants.
   if(a.f32_activations)require(!engine->v3_active&&!engine->kio_active&&!engine->prepare_async&&!engine->split_head()&&engine->sealed_selection.choices.at("probe")=="off"&&a.gsq_packed&&a.draft_rank==0,"exact F32 activations: unsupported optional path/selection");
@@ -416,7 +430,7 @@ static int run_rank(const Options& a) {
     require(a.rank==1&&native_active&&!c.pending&&engine->sealed_selection.choices.at("probe")=="xchg","p149 miss responder ownership");
     require(bool(probe),"p149 probe absent");probe->serve_correction([&]{if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();});
    }
-   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
+   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(engine->a.tp_replicate)tp_compare(*engine,a.output/"tp-replicate-compare.json");if(r.position==2147483647)request_state_inventory(*engine);}
    else if(r.op==11){image.boundary();v3state.reset();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
    else if(r.op==13){require(!async_half_ready,"pending half");v3state.reset();bracket_boundary(*engine,c,provider.get(),image,a.output/("bracket-"+std::to_string(r.sequence)+".txt"),accepted);async_half_position=async_half_token=-1;}
    #ifdef OWN_RT_HOST_ONLY

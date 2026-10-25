@@ -50,16 +50,17 @@ void gsq_prepare_fusion() {
   static const bool enabled=[]{const char* e=std::getenv("OWNRT_DECODE_FUSE");return !e||e[0]!='0';}();
   if(!enabled||a.mini)return;
   static const std::array<std::pair<const char*,const char*>,5> pairs{{{".hc.a.low",".hc.a.inject"},{".hc.f.low",".hc.f.inject"},{".gdn.a",".gdn.b"},{".qsa.iq",".qsa.ik"},{"router","shared_gate"}}};
-  std::map<std::string,const flash::Launch*> by_label;for(const auto& l:p.launches)by_label[l.label]=&l;
+  // Keyed by label and card: under --tp-replicate every label exists once per card, and pairs never cross cards.
+  std::map<std::string,const flash::Launch*> by_label;for(const auto& l:p.launches)by_label[l.label+"@"+std::to_string(l.card)]=&l;
   for(size_t i=0;i<p.launches.size();++i) {
     const auto& first=p.launches[i];if(!first.label.starts_with("blk."))continue;
     for(const auto& [x,y]:pairs) {
       if(!ends(first.label,x))continue;
-      auto found=by_label.find(first.label.substr(0,first.label.size()-std::strlen(x))+y);if(found==by_label.end())continue;
+      auto found=by_label.find(first.label.substr(0,first.label.size()-std::strlen(x))+y+"@"+std::to_string(first.card));if(found==by_label.end())continue;
       const auto& second=*found->second;size_t j=size_t(&second-p.launches.data());
       if(j<=i||second.inputs.at(0)!=first.inputs.at(0)||!gsq_kopt_site(first)||!gsq_kopt_site(second))continue;
       if(w.directory.at(first.weights.at(0)).grid!=w.directory.at(second.weights.at(0)).grid)continue;
-      bool written=false;for(size_t k=i+1;k<j&&!written;++k)for(const auto& out:p.launches[k].outputs)written|=out==first.inputs.at(0);
+      bool written=false;for(size_t k=i+1;k<j&&!written;++k)if(p.launches[k].card==first.card)for(const auto& out:p.launches[k].outputs)written|=out==first.inputs.at(0);
       if(written)continue;
       gsq_partner[&first]=&second;gsq_follower.insert(&second);
     }
@@ -70,11 +71,11 @@ void gsq_prepare_fusion() {
   if(mix_enabled&&a.f32_activations)for(size_t i=0;i<p.launches.size();++i) {
     const auto& gate=p.launches[i];
     if(gate.op!="gemv"||!(ends(gate.label,".hc.a.gate")||ends(gate.label,".hc.f.gate"))||!gsq_kopt_site(gate)||gsq_partner.count(&gate)||gsq_follower.count(&gate))continue;
-    auto found=by_label.find(gate.label.substr(0,gate.label.size()-4)+"mix");if(found==by_label.end())continue;
+    auto found=by_label.find(gate.label.substr(0,gate.label.size()-4)+"mix@"+std::to_string(gate.card));if(found==by_label.end())continue;
     const auto& mix=*found->second;const size_t j=size_t(&mix-p.launches.data());
     if(j<=i||mix.op!="hc_mix"||mix.card!=gate.card||mix.inputs.size()<2||mix.inputs.at(1)!=gate.outputs.at(0)||mix.outputs.size()!=1)continue;
     if(gate.shape.size()<3||mix.shape.size()<2||size_t(gate.shape[1])!=size_t(mix.shape[1])*4)continue;
-    bool written=false;for(size_t k=i+1;k<j&&!written;++k)for(const auto& out:p.launches[k].outputs)written|=out==mix.inputs.at(0)||out==gate.outputs.at(0);
+    bool written=false;for(size_t k=i+1;k<j&&!written;++k)if(p.launches[k].card==gate.card)for(const auto& out:p.launches[k].outputs)written|=out==mix.inputs.at(0)||out==gate.outputs.at(0);
     if(written)continue;
     gsq_mix_partner[&gate]=&mix;gsq_mix_follower.insert(&mix);
   }

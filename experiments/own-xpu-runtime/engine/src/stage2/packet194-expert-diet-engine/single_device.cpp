@@ -37,7 +37,10 @@ class SyclDevice final : public Backend, public OrderedQueue {
   std::vector<NativeTracked> events_;int allocation_card_=0;
   sycl::event& event(Event e){auto it=std::lower_bound(events_.begin(),events_.end(),e,[](const auto& v,Event h){return v.handle<h;});if(it==events_.end()||it->handle!=e)throw std::logic_error("foreign native event");return it->event;}
   void capacity(){if(events_.size()>=events_.capacity())throw std::length_error("native event capacity");}
-  Event record(sycl::event e){auto id=next_handle();events_.push_back({id,std::move(e),0});return id;}
+  // events_ is appended by this card's submission thread and read (back()) by a peer card's thread in peer_copy /
+  // peer_wait; the mutex orders those two (uncontended on a one-card process).
+  mutable std::mutex events_mutex_;
+  Event record(sycl::event e){auto id=next_handle();std::lock_guard lock(events_mutex_);events_.push_back({id,std::move(e),0});return id;}
   std::mutex error_mutex_;
   std::exception_ptr error_;
   void check_error() { std::lock_guard lock(error_mutex_); if(error_) std::rethrow_exception(error_); }
@@ -66,7 +69,7 @@ class SyclDevice final : public Backend, public OrderedQueue {
   }
   bool shares(const SyclDevice& o) const {return group_&&group_==o.group_;}
   // The latest submission on this in-order queue (none when every tracked event has been retired).
-  bool last_native(sycl::event& out) const {if(events_.empty())return false;out=events_.back().event;return true;}
+  bool last_native(sycl::event& out) const {std::lock_guard lock(events_mutex_);if(events_.empty())return false;out=events_.back().event;return true;}
   Event peer_copy(void* d,const void* s,std::size_t n,Backend& source) override {
     check_error();capacity();auto& src=dynamic_cast<SyclDevice&>(source);
     if(!shares(src)||&src==this)throw std::logic_error("peer copy needs two cards of one shared context");
@@ -160,7 +163,7 @@ class SyclDevice final : public Backend, public OrderedQueue {
     event(e).wait_and_throw(); check_error(); return true;
   }
   void synchronize() override {queue_->wait_and_throw(); check_error();}
-  void clear_events() override {events_.clear();}
+  void clear_events() override {std::lock_guard lock(events_mutex_);events_.clear();}
   void close_queue() override {queue_.reset();}
   void close_context() override {
     context_.reset();
