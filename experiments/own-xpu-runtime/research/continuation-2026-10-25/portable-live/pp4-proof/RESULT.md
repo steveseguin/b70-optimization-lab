@@ -16,4 +16,9 @@ tensor-manifest model identity needed by the common comparator.
 
 This qualifies this generated portable live recipe against the accepted local
 reference. It does not certify clean-host installation or performance. No model
-payload was reread. Original raw states remain external pending durable archive.
+payload was reread. Original raw states remain external and are durably archived.
+
+Full controller/native logs and all six raw target/draft bundles are now retained
+in the independently verified [durable archive](../../portable-live-durable-archive.json);
+[raw-member verification](../../portable-live-archive-verification.json) checked each
+archive payload against its original native seal. Original files remain untouched.

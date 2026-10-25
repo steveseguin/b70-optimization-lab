@@ -12,9 +12,10 @@ This is not a four-card speed result. No new fault signatures appeared.
 The portable model authentication, extracted-source generated-configuration build,
 and standalone two/four-card target-only replays also passed all 32 outputs and
 2,065 target buffers. Their raw proof archives are saved and rehashed on USB.
-GitHub/neural.download carry the research source; the new 253-file archive is
-live and checksum-verified. SkinDeep remote access remains unavailable; its local
-updates are preserved. Clean-host installation and portable serving remain open.
+GitHub/neural.download carry the research source; the new 294-file archive is
+live and checksum-verified after successful publication checks. SkinDeep remote
+write access remains unavailable; its latest local update is committed as
+`f2e6dde`. Clean-host installation and portable serving remain open.
 
 The cold multi-request path passed two complete reset/state comparisons: both
 requests match all 2,065 target buffers, 73 draft allocations and output tokens.
