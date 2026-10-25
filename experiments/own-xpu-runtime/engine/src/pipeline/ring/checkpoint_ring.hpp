@@ -116,6 +116,7 @@ public:
   if(live){auto emit=[&](const auto& rows){bool comma=false;for(const auto& item:rows){o<<(comma?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"memory\":"<<ownrt::quote(item.memory==Memory::pinned?"pinned":"device")<<"}";comma=true;}};o<<",\"independent_draft_allocations\":[";emit(independent);o<<"],\"provider_private_allocations\":[";emit(independent_private);o<<"]";}
   o<<"}";save(path,o.str());
  }
+ void borrow_boundary(size_t pending){idle();inventory();size_t active=0;for(const auto& slot:slots)active+=slot.active?1:0;require(pending<=2&&active==pending,"provider borrow target checkpoint count");}
  void boundary(){idle();inventory();for(const auto& slot:slots)require(!slot.active,"ring active slot at boundary");}
  uint64_t releases()const{return releases_;}
  size_t slot_bytes()const{return bytes_;}uint64_t captures()const{return captures_;}uint64_t restores()const{return restores_;}uint64_t byte_checks()const{return byte_checks_;}

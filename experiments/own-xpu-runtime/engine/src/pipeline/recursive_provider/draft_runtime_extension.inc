@@ -3,6 +3,7 @@
 struct RecursiveRow {
  Allocation id{};size_t bytes=0,offset=0;Memory memory=Memory::device;std::string label;
  std::vector<uint8_t> pinned_before;
+ bool operator==(const RecursiveRow&)const=default;
 };
 struct RecursiveHost {
  int position=0,extent=0,pending_confirmed=0,queued_probe=0,queued_confirmed=0,depth=0;

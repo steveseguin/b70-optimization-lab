@@ -8,6 +8,8 @@ struct ProviderOwner:FixtureOwner {
 // arithmetic entry points below are synthetic; no model kernels/GPU are invoked.
 class FixtureDraft {
  ProviderOwner& e;
+ struct FixturePrepared {Spec spec;std::vector<Allocation> bindings;p49d::Submit submit=nullptr;};std::map<const flash::Launch*,FixturePrepared> prepared;
+ struct Site {std::vector<ownrt::PreparedCompute> commands;bool gemv=false;int cls=0;bool head=false;};std::vector<Site> issue_sites;uint64_t shared_copy_count=0;
  struct Plan {struct Geometry{int context=64,vocab=97;}g;}p;
  std::set<Allocation> mutable_ids;std::map<std::string,Allocation> names;
  Allocation publication{},half_staging{};size_t allocated=0;int position=0,context_extent=32;
@@ -28,11 +30,24 @@ class FixtureDraft {
 public:
  using DraftRuntime=FixtureDraft;
 #include "pipeline/recursive_provider/draft_runtime_extension.inc"
+#include "pipeline/recursive_provider/pending_survival.inc"
  bool corrupt_target=false;std::map<Allocation,std::vector<uint8_t>> canonical_bytes;RecursiveHost canonical_host;
  explicit FixtureDraft(ProviderOwner& owner):e(owner){
   for(int i=0;i<71;++i){std::string name=i==0?"error":i==1?"position":"scratch"+std::to_string(i);const size_t bytes=i<2?4:size_t(17+i);auto allocation=e.allocate(0,"draft:"+name,bytes,Category::scratch,Lifetime::transaction);names[name]=allocation;mutable_ids.insert(allocation);allocated+=bytes;}
   publication=e.allocate(0,"draft:publication",8,Category::output_ring,Lifetime::request,Memory::pinned);half_staging=e.allocate(0,"draft:half-staging",4+e.stream_bytes(),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
   prepare_recursive_depth2();
+  prepared[nullptr].spec.extent=32;prepared[nullptr].bindings={id("position")};issue_sites.resize(1);issue_sites[0].commands.resize(1);auto& command=issue_sites[0].commands[0];command.ids={id("position")};command.pointers={e.dev(0).arena.row(id("position")).pointer};command.argument_bytes={1,2,3};command.operation_bytes={4,5};command.copy_counter=&shared_copy_count;
+ }
+
+ void mutation_checks(const ownrt::recursive_provider_next::Sequence& sequence){
+  auto baseline=capture_survival(sequence);
+  for(auto allocation:{id("scratch2"),publication,half_staging,recursive_image}){auto* data=static_cast<uint8_t*>(e.dev(0).arena.row(allocation).pointer);data[0]^=1;refusal([&]{verify_survival(baseline,sequence);});data[0]^=1;}
+  auto mutation=[&](auto& value){const auto old=value;++value;refusal([&]{verify_survival(baseline,sequence);});value=old;};
+  mutation(context_extent);probe_reverse_hidden[0]^=1;refusal([&]{verify_survival(baseline,sequence);});probe_reverse_hidden[0]^=1;
+  mutation(pending_confirmed);mutation(recursive_host.extent);mutation(recursive_target.history0);mutation(recursive_rows[0].offset);mutation(recursive_rows.back().pinned_before[0]);mutation(recursive_captures);
+  mutation(prepared.at(nullptr).spec.extent);mutation(prepared.at(nullptr).bindings[0]);mutation(issue_sites[0].commands[0].ids[0]);mutation(issue_sites[0].commands[0].operation_bytes[0]);
+  ownrt::ring_next::wire::Context context{0,{},0,4,16,97};ownrt::recursive_provider_next::Sequence fresh(context);refusal([&]{verify_survival(baseline,fresh);});
+  ++shared_copy_count;++e.drains;verify_survival(baseline,sequence); // shared evidence counters are explicitly excluded
  }
  std::vector<Allocation> canonical_devices()const{return {mutable_ids.begin(),mutable_ids.end()};}
  std::vector<Allocation> pins()const{return {publication,half_staging};}
@@ -47,7 +62,7 @@ static void options_gate(){
  auto admitted=check(ring);assert(admitted.pipeline_ring&&admitted.pipeline_ring_verify&&admitted.pipeline_ring_request_sha256==std::string(64,'a'));
  for(const auto& extra:std::vector<std::vector<std::string>>{{"--pipeline-ring"},{"--pipeline-ring-verify-restore"},{"--pipeline-ring-request-sha256",std::string(64,'a')},{"--pipeline-ring","--pipeline-ring-request-sha256",std::string(64,'A')}})refusal([&]{check(extra);});
  for(const auto& extra:std::vector<std::vector<std::string>>{{"--pipeline-wavefront"},{"--pipeline-live-draft"},{"--pipeline-draft-partition"},{"--pipeline-persistent-requests"},{"--draft-mtp"},{"--retain-steps","1"},{"--pipeline-ring-trace-limit","100001"}}){auto args=ring;args.insert(args.end(),extra.begin(),extra.end());refusal([&]{check(args);});}
- auto live=ring;live.insert(live.end(),{"--pipeline-ring-live-draft","--draft-mtp","--pipeline-ring-final-shared","/not-created/final-shared","--pipeline-ring-recursive-verify-restore"});auto admitted_live=check(live);assert(admitted_live.pipeline_ring_live_draft&&admitted_live.pipeline_live_draft&&admitted_live.pipeline_draft_partition&&admitted_live.pipeline_ring_recursive_verify);
+ auto live=ring;live.insert(live.end(),{"--pipeline-ring-live-draft","--draft-mtp","--pipeline-ring-final-shared","/not-created/final-shared","--pipeline-ring-recursive-verify-restore"});auto admitted_live=check(live);auto pending=live;pending.insert(pending.end(),{"--pipeline-ring-pending-provider","--pipeline-ring-verify-provider-survival"});auto admitted_pending=check(pending);assert(admitted_pending.pipeline_ring_pending_provider&&admitted_pending.pipeline_ring_verify_provider_survival);auto missing=pending;missing.pop_back();refusal([&]{check(missing);});auto unexpected=live;unexpected.push_back("--pipeline-ring-verify-provider-survival");refusal([&]{check(unexpected);});assert(admitted_live.pipeline_ring_live_draft&&admitted_live.pipeline_live_draft&&admitted_live.pipeline_draft_partition&&admitted_live.pipeline_ring_recursive_verify);
  auto middle=ring;middle.insert(middle.end(),{"--pipeline-ring-live-draft","--pipeline-stage","1","--rank","1"});auto admitted_middle=check(middle);assert(admitted_middle.pipeline_ring_live_draft&&!admitted_middle.mtp&&admitted_middle.pipeline_ring_final_shared.empty());
  auto wrong=middle;wrong.insert(wrong.end(),{"--pipeline-ring-recursive-verify-restore"});refusal([&]{check(wrong);});wrong=middle;wrong.insert(wrong.end(),{"--pipeline-ring-final-shared","/unexpected-peer"});refusal([&]{check(wrong);});wrong=ring;wrong.push_back("--pipeline-ring-live-draft");refusal([&]{check(wrong);});
 
@@ -70,9 +85,24 @@ int main(int argc,char** argv){options_gate();assert(argc==2);fs::path root=argv
  auto admit=[&](const auto& frame,const auto& header){return pipeline::recursive_provider::admit_batch(request,context,seed,event,{reinterpret_cast<const uint8_t*>(&frame),sizeof frame},{reinterpret_cast<const uint8_t*>(&header),sizeof header},hidden,1);};
  auto wrong=record.hidden;++wrong.commit_sequence;refusal([&]{admit(meta,wrong);});auto wrong_meta=meta;++wrong_meta.id;refusal([&]{admit(wrong_meta,record.hidden);});auto admitted=admit(meta,record.hidden);
  std::map<Allocation,std::vector<uint8_t>> target_before;for(auto id:before)target_before[id]=owner.readback(0,id,owner.dev(0).arena.row(id).bytes);
+ pipeline::ring_next::CheckpointRingFor<ProviderOwner> target_ring(owner,true,partition);std::array<uint8_t,65536> target_shared{};
+ const int first_slot=target_ring.capture(target_shared.data());owner.put("position",3);std::memset(owner.dev(0).arena.row(target).pointer,61,257);owner.history0=3;target_shared[0]=1;
+ const int second_slot=target_ring.capture(target_shared.data());owner.put("position",4);std::memset(owner.dev(0).arena.row(target).pointer,62,257);owner.history0=4;target_shared[0]=2;target_ring.borrow_boundary(2);
  ownrt::recursive_provider_next::Sequence sequence(context);auto result=draft.live_recursive_depth2(sequence,admitted.input,admitted.expected,true);assert(result.available_depth==2&&result.restored_position==1&&draft.recursive_captures==1&&draft.recursive_restores==1&&draft.recursive_verified_restores==1&&!draft.recursive_active);
+ auto survival=draft.capture_survival(sequence);target_ring.restore(first_slot);target_ring.release(first_slot);target_ring.release(second_slot);draft.verify_survival(survival,sequence);target_ring.borrow_boundary(0);assert(owner.integer(0,"position")==2&&owner.history0==0&&target_shared[0]==0);draft.mutation_checks(sequence);
+ // Releasing the older image must not rewind physical target progress. A later
+ // suffix restore preserves all newly advanced provider bytes and descriptors.
+ const int older=target_ring.capture(target_shared.data());owner.put("position",3);owner.history0=3;target_shared[0]=3;const int newer=target_ring.capture(target_shared.data());owner.put("position",4);owner.history0=4;target_shared[0]=4;target_ring.release(older);target_ring.borrow_boundary(1);assert(owner.integer(0,"position")==4);
+ // A newly accepted seed keeps its original tentative bit. Independently bind
+ // its final parent event, then advance canonical provider while one target
+ // image still predates it. This is the one-pending rollback regression.
+ auto record2=record;record2.published_sequence=11;record2.row.id=seed.id;record2.row.parent=seed.parent;record2.row.position=1;record2.row.token=seed.token;record2.row.fixture=1;record2.row.before=seed.before;record2.row.after=seed.after;record2.row.publication_ticket=10;record2.hidden.position=1;record2.hidden.row_ticket=10;record2.hidden.commit_sequence=11;record2.hidden.input_token=seed.token;record2.hidden.head=1;record2.hidden.next_token=19;ownrt::recursive_provider::publish(map,record2);auto event2=peer.capture(context,root/"peer.json");
+ auto seed2=seed;seed2.id=3;seed2.parent=seed.id;seed2.ticket=13;seed2.position=2;seed2.token=19;seed2.fixture=2;seed2.tentative=true;seed2.before=seed.after;seed2.after=ownrt::ring_next::extend(seed2.before,2,19);
+ auto meta2=meta;meta2.flags=wire::tentative;meta2.id=seed2.id;meta2.parent=seed2.parent;meta2.position=2;meta2.token=19;meta2.fixture=2;meta2.before=seed2.before;meta2.after=seed2.after;pipeline::Request request2{27,19,2,1,2,15,{0,0}};
+ auto pair2=pipeline::recursive_provider::admit_batch(request2,context,seed2,event2,{reinterpret_cast<const uint8_t*>(&meta2),sizeof meta2},{reinterpret_cast<const uint8_t*>(&record2.hidden),sizeof record2.hidden},hidden,2);
+ draft.live_recursive_depth2(sequence,pair2.input,pair2.expected,true);assert(sequence.serial()==2&&draft.recursive_host_state().position==2);auto one_pending=draft.capture_survival(sequence);target_ring.restore(newer);target_ring.release(newer);draft.verify_survival(one_pending,sequence);assert(owner.integer(0,"position")==3&&owner.history0==3&&target_shared[0]==3);owner.put("position",2);owner.history0=0;
  assert(draft.read_canonical()==draft.canonical_bytes&&draft.recursive_host_state()==draft.canonical_host);for(auto [id,bytes]:target_before)assert(owner.readback(0,id,bytes.size())==bytes);assert(owner.history0==0&&owner.current_cls==9);
  ownrt::recursive_provider::invalidate(map);refusal([&]{peer.capture(context,root/"peer.json");});ownrt::recursive_provider::publish(map,record);map[ownrt::live_draft::hidden_offset]^=1;refusal([&]{peer.capture(context,root/"peer.json");});
  {ProviderOwner failed(root/"failed-owner");failed.a.pipeline_live_draft=failed.a.pipeline_draft_partition=failed.a.mtp=true;for(auto name:{"error","position"})failed.buffers[0][name]={failed.allocate(0,name,4,Category::graph_static,Lifetime::graph)};failed.put("position",2);FixtureDraft broken(failed);broken.corrupt_target=true;ownrt::recursive_provider_next::Sequence seq(context);refusal([&]{broken.live_recursive_depth2(seq,admitted.input,admitted.expected,true);});assert(seq.poisoned()&&broken.recursive_captures==1&&!broken.recursive_restores&&failed.history0==999);failed.close();}
- ::munmap(map,pipeline::shared_bytes);::close(fd);owner.close();std::cout<<"PASS actual recursive member snapshot/CopyEngine transport71device+2pinned, private census, exact op27 accepted-seed/independent-peer binding, lazy readonly peer, marker/SHA refusal, complete canonical restoration and unchanged target bytes/host; synthetic arithmetic only\n";
+ ::munmap(map,pipeline::shared_bytes);::close(fd);owner.close();std::cout<<"PASS actual recursive member snapshot/CopyEngine transport71device+2pinned, private census, exact op27 accepted-seed/independent-peer binding, lazy readonly peer, marker/SHA refusal, complete canonical restoration, pending depth2/depth1 target rollback survival, corruption refusals for device/pinned/private/host/Sequence/prepared bindings, and unchanged target bytes/host; synthetic arithmetic only\n";
 }

@@ -180,6 +180,7 @@ class DraftRuntime {
  }
 public:
 #include "pipeline/recursive_provider/draft_runtime_extension.inc"
+#include "pipeline/recursive_provider/pending_survival.inc"
  int live_position()const{return position;}
  int live_extent()const{return context_extent;}
  void live_reset_admission(){

@@ -156,6 +156,7 @@ struct Options {
   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
   std::vector<int> pipeline_boundaries;int pipeline_stage=-1;
   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
+  bool pipeline_ring_pending_provider=false,pipeline_ring_verify_provider_survival=false;
   bool pipeline_ring_live_draft=false,pipeline_ring_recursive_verify=false;fs::path pipeline_ring_final_shared;
   bool pipeline_ring=false,pipeline_ring_verify=false;std::string pipeline_ring_request_sha256;int pipeline_ring_trace_limit=4096;
   bool pipeline_enabled()const{return pipeline_stage>=0;}
@@ -209,6 +210,8 @@ static Options parse(int argc, char **argv) {
     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
     else if(k=="--gsq-packed") a.gsq_packed=true;
     else if(k=="--tp-replicate") a.tp_replicate=true;
+    else if(k=="--pipeline-ring-pending-provider")a.pipeline_ring_pending_provider=true;
+    else if(k=="--pipeline-ring-verify-provider-survival")a.pipeline_ring_verify_provider_survival=true;
     else if(k=="--pipeline-ring-live-draft")a.pipeline_ring_live_draft=true;
     else if(k=="--pipeline-ring-recursive-verify-restore")a.pipeline_ring_recursive_verify=true;
     else if(k=="--pipeline-ring-final-shared")a.pipeline_ring_final_shared=value();
@@ -341,6 +344,9 @@ static Options parse(int argc, char **argv) {
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
+  require(!a.pipeline_ring_pending_provider||a.pipeline_ring_live_draft,"pending-provider gate requires ring-live mode");
+  require(a.pipeline_ring_verify_provider_survival==(a.pipeline_ring_pending_provider&&a.pipeline_first()),"pending-provider first stage requires explicit survival verification");
+  require(!a.pipeline_ring_pending_provider||(a.pipeline_ring_verify&&a.pipeline_ring_trace_limit>0),"pending-provider gate requires target restore verification and bounded trace");
   require(!a.pipeline_ring_live_draft||(a.pipeline_ring&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests),"ring live draft requires exclusive ring owner");
   require(!a.pipeline_ring_recursive_verify||(a.pipeline_ring_live_draft&&a.pipeline_first()),"recursive restore verification belongs to first ring-live stage");
   require((a.pipeline_ring_live_draft&&a.pipeline_first())==!a.pipeline_ring_final_shared.empty(),"ring-live first stage requires final shared peer path");

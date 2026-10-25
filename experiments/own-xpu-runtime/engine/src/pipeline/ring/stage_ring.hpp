@@ -78,6 +78,7 @@ public:
    pending_.push_back({row,slot,std::move(result)});last_id_=row.id;++rows;if(row.tentative)++tentative_rows;max_pending=std::max(max_pending,pending_.size());
   });return pending_.back().result;
  }
+ std::vector<Row> completed_tentative_rows()const{std::vector<Row> rows;for(const auto& p:pending_){need(p.row.tentative&&p.slot>=0,"provider borrow contains unresolved verified target row");rows.push_back(p.row);}return rows;}
  const Row& last_accepted()const{need(accepted_row_.has_value(),"ring has no accepted seed");return *accepted_row_;}
  const typename Backend::Result& oldest_result(const Row& row){return oldest(row).result;}
  Resolution accept(int command_sequence,const Row& row,int verified_token){

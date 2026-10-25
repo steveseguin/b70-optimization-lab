@@ -2,6 +2,7 @@
 // Opt-in canonical draft advancement and restored recursive proposal transaction.
 #include "pipeline/ring/wire.hpp"
 #include "pipeline/live_draft.hpp"
+#include "pipeline/recursive_provider/survival_identity.hpp"
 #include <span>
 #include <chrono>
 namespace ownrt::recursive_provider_next {
@@ -43,6 +44,12 @@ class Sequence {
 public:
  explicit Sequence(ring_next::wire::Context context):context_(context){ring_next::wire::context(context);need(context.stage==0,"depth2 provider must belong to first stage");}
  const Result& last_result()const{return last_result_;}
+ std::string survival_identity()const{
+  using ownrt::provider_survival::quote;using ownrt::provider_survival::row_json;
+  const auto& r=last_result_;need(std::isfinite(r.canonical_ms)&&std::isfinite(r.capture_ms)&&std::isfinite(r.recursive_ms)&&std::isfinite(r.restore_ms),"finite provider result timings");
+  std::ostringstream out;out<<std::setprecision(17)<<"{\"epoch\":"<<context_.epoch<<",\"request\":"<<quote(hex(context_.request))<<",\"stage\":"<<context_.stage<<",\"stages\":"<<context_.stages<<",\"stream_bytes\":"<<context_.stream_bytes<<",\"vocab\":"<<context_.vocab<<",\"next_position\":"<<next_position_<<",\"last_sequence\":"<<last_sequence_<<",\"last_commit\":"<<last_commit_<<",\"serial\":"<<serial_<<",\"last_seed\":"<<row_json(last_seed_)<<",\"poisoned\":"<<(poisoned_?"true":"false")<<",\"last_result\":{\"position\":"<<r.position<<",\"guesses\":[";
+  for(size_t i=0;i<r.guesses.size();++i)out<<(i?",":"")<<r.guesses[i];out<<"],\"byte_verified\":"<<(r.byte_verified?"true":"false")<<",\"snapshot_bytes\":"<<r.snapshot_bytes<<",\"canonical_ms\":"<<r.canonical_ms<<",\"capture_ms\":"<<r.capture_ms<<",\"recursive_ms\":"<<r.recursive_ms<<",\"restore_ms\":"<<r.restore_ms<<"}}";return out.str();
+ }
  uint64_t serial()const{return serial_;}bool poisoned()const{return poisoned_;}
  void admit(const Input& in,const ExpectedPair& expected)const{
   need(!poisoned_&&in.sequence>last_sequence_&&serial_!=UINT64_MAX,"depth2 stale/failed command");
