@@ -1,0 +1,31 @@
+{
+  "utc": "2026-10-25T22:08:46.798536+00:00",
+  "source_commit": "f30087882ab7cdd420b82858236d81a6489296ab",
+  "archive_sha256": "2ab0893e39c2f658d05b6415d3e647c1eca31a90591aff97629b7cfcd3447c17",
+  "source": "/dev/shm/ownrt-source-f30087882-extracted/own-xpu-runtime-source",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-portable-f300-build-20261025",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--working-directory=/dev/shm/ownrt-source-f30087882-extracted/own-xpu-runtime-source",
+    "/usr/bin/ionice",
+    "-c",
+    "3",
+    "/usr/bin/python3",
+    "build.py",
+    "/dev/shm/engine-build-portable-f30087882",
+    "--jobs",
+    "4",
+    "--generated-include",
+    "/dev/shm/sc117-portable-deployment-20261025/include",
+    "--profile-sha256",
+    "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a",
+    "--deployment-sha256",
+    "bfd016aa02b31f6183cd9c739d6d30e5449704268a8f4b136d3ff45302805fdf"
+  ],
+  "tmpfs_free_bytes": 47346122752,
+  "planned_build_bytes": 2147483648,
+  "device_execution_requested": false
+}

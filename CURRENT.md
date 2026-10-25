@@ -43,8 +43,15 @@ gate also passes: all 32 outputs, 2,065 target buffers and 73 draft allocations
 match, and both forced target rollbacks preserve the newer draft state and its
 private snapshot. Provider calls covered two, two and one pending target rows;
 all four workers exited cleanly without new faults. Binary `8e03d3cd67fc` uses
-the existing weights, with no training. All GPUs are idle. Actual rolling
-proposal consumption and a cold performance suite are next. Deployment also now accepts a separately trusted
+the existing weights, with no training. Actual rolling inference now also passes:
+35 draft-predicted target rows were used, and all 32 outputs, 2,065 target buffers
+and 73 draft allocations match. Both miss depths occurred; seven first-stage
+rollbacks preserved draft state (five after advancement, two without it).
+All four workers exited cleanly, with no new faults. The full evidence is
+durable and restore-tested. All GPUs are idle. Persistent requests and a
+separate timing mode are next; the checked rolling run is not a speed result.
+The complete 424-file source export passes hashes and isolated imports; its
+extracted portable build is running on CPU. Deployment also now accepts a separately trusted
 launch-policy path/hash; its 42 CPU checks pass, with current capabilities retained. Draft training is prohibited. No host power or
 memory settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
 and [portable proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md).
@@ -59,6 +66,8 @@ separates reusable interfaces from current model/topology capability limits.
 The [pending-target proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-pending-provider-proof/RESULT.md)
 records exact draft survival through both forced target rejection cases; it is
 not a rolling speed result.
+The [actual rolling proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/RESULT.md)
+records real proposal consumption and full independent v6 validation.
 
 
 **October 25, review session — owner authorizes all four cards; reusable engine and publication work active.**

@@ -1,0 +1,474 @@
+{
+  "schema": "ownrt.rolling-provider-proof.v1",
+  "passed": true,
+  "source_run": "/dev/shm/sc117-ring-20261025/rolling-depth2-a",
+  "target_state_exact": true,
+  "draft_state_exact": true,
+  "output_tokens_exact": true,
+  "legacy_proposals_exact": true,
+  "target_buffer_count": 2065,
+  "draft_allocation_count": 73,
+  "output_tokens": 32,
+  "input_rows": 118,
+  "boundaries": [
+    0,
+    13,
+    25,
+    37,
+    48
+  ],
+  "provider_pairs": 117,
+  "recursive_depth2_pairs": 32,
+  "pending_borrows": {
+    "0": 94,
+    "1": 23,
+    "2": 0
+  },
+  "provider_survival_passed": true,
+  "provider_survival_checks": 7,
+  "provider_survival_discarded_rows": 11,
+  "provider_survival_advanced_checks": 5,
+  "actual_proposal_rows": 35,
+  "observed_miss_depths": [
+    1,
+    2
+  ],
+  "provenance_passed": true,
+  "provider_audit": {
+    "passed": true,
+    "pairs": 117,
+    "depth2_pairs": 32,
+    "pending_borrows": [
+      [
+        88,
+        1
+      ],
+      [
+        89,
+        1
+      ],
+      [
+        91,
+        1
+      ],
+      [
+        92,
+        1
+      ],
+      [
+        93,
+        1
+      ],
+      [
+        95,
+        1
+      ],
+      [
+        96,
+        1
+      ],
+      [
+        97,
+        1
+      ],
+      [
+        98,
+        1
+      ],
+      [
+        99,
+        1
+      ],
+      [
+        100,
+        1
+      ],
+      [
+        101,
+        1
+      ],
+      [
+        102,
+        1
+      ],
+      [
+        103,
+        1
+      ],
+      [
+        104,
+        1
+      ],
+      [
+        105,
+        1
+      ],
+      [
+        106,
+        1
+      ],
+      [
+        108,
+        1
+      ],
+      [
+        109,
+        1
+      ],
+      [
+        110,
+        1
+      ],
+      [
+        111,
+        1
+      ],
+      [
+        113,
+        1
+      ],
+      [
+        114,
+        1
+      ]
+    ],
+    "pair_sequence_sha256": "e83e418b189598df0852656a71abab9ae33826e99bfcfd96f46790bdd60d7fe3"
+  },
+  "survival_audit": {
+    "passed": true,
+    "checks": 7,
+    "discarded_rows": 11,
+    "frontiers": [
+      {
+        "provider_position": 86,
+        "current_extent": 96,
+        "saved_extent": 96,
+        "discarded_rows": 2,
+        "captured_provider_position": 86,
+        "abort_sequence": 263
+      },
+      {
+        "provider_position": 89,
+        "current_extent": 96,
+        "saved_extent": 96,
+        "discarded_rows": 2,
+        "captured_provider_position": 88,
+        "abort_sequence": 275
+      },
+      {
+        "provider_position": 93,
+        "current_extent": 96,
+        "saved_extent": 96,
+        "discarded_rows": 1,
+        "captured_provider_position": 92,
+        "abort_sequence": 289
+      },
+      {
+        "provider_position": 106,
+        "current_extent": 128,
+        "saved_extent": 128,
+        "discarded_rows": 1,
+        "captured_provider_position": 105,
+        "abort_sequence": 330
+      },
+      {
+        "provider_position": 111,
+        "current_extent": 128,
+        "saved_extent": 128,
+        "discarded_rows": 2,
+        "captured_provider_position": 110,
+        "abort_sequence": 348
+      },
+      {
+        "provider_position": 114,
+        "current_extent": 128,
+        "saved_extent": 128,
+        "discarded_rows": 1,
+        "captured_provider_position": 113,
+        "abort_sequence": 359
+      },
+      {
+        "provider_position": 115,
+        "current_extent": 128,
+        "saved_extent": 128,
+        "discarded_rows": 2,
+        "captured_provider_position": 115,
+        "abort_sequence": 365
+      }
+    ]
+  },
+  "native_command_audits": [
+    {
+      "stage": 0,
+      "passed": true,
+      "commands": 254,
+      "accepted_input_rows": 118,
+      "peak_pending": 2,
+      "counters": {
+        "rows": 129,
+        "tentative_rows": 35,
+        "commits": 118,
+        "abort_count": 7,
+        "discarded_rows": 11,
+        "accepted_tentative_rows": 24
+      },
+      "suffix_restores": [
+        {
+          "sequence": 263,
+          "position": 87,
+          "row_ids": [
+            88,
+            89
+          ]
+        },
+        {
+          "sequence": 275,
+          "position": 90,
+          "row_ids": [
+            93,
+            94
+          ]
+        },
+        {
+          "sequence": 289,
+          "position": 94,
+          "row_ids": [
+            99
+          ]
+        },
+        {
+          "sequence": 330,
+          "position": 107,
+          "row_ids": [
+            113
+          ]
+        },
+        {
+          "sequence": 348,
+          "position": 112,
+          "row_ids": [
+            119,
+            120
+          ]
+        },
+        {
+          "sequence": 359,
+          "position": 115,
+          "row_ids": [
+            124
+          ]
+        },
+        {
+          "sequence": 365,
+          "position": 116,
+          "row_ids": [
+            126,
+            127
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 1,
+      "passed": true,
+      "commands": 251,
+      "accepted_input_rows": 118,
+      "peak_pending": 2,
+      "counters": {
+        "rows": 126,
+        "tentative_rows": 32,
+        "commits": 118,
+        "abort_count": 7,
+        "discarded_rows": 8,
+        "accepted_tentative_rows": 24
+      },
+      "suffix_restores": [
+        {
+          "sequence": 176,
+          "position": 87,
+          "row_ids": [
+            88
+          ]
+        },
+        {
+          "sequence": 185,
+          "position": 90,
+          "row_ids": [
+            93,
+            94
+          ]
+        },
+        {
+          "sequence": 195,
+          "position": 94,
+          "row_ids": [
+            99
+          ]
+        },
+        {
+          "sequence": 223,
+          "position": 107,
+          "row_ids": [
+            113
+          ]
+        },
+        {
+          "sequence": 235,
+          "position": 112,
+          "row_ids": [
+            119
+          ]
+        },
+        {
+          "sequence": 243,
+          "position": 115,
+          "row_ids": [
+            124
+          ]
+        },
+        {
+          "sequence": 247,
+          "position": 116,
+          "row_ids": [
+            126
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "passed": true,
+      "commands": 246,
+      "accepted_input_rows": 118,
+      "peak_pending": 2,
+      "counters": {
+        "rows": 123,
+        "tentative_rows": 24,
+        "commits": 118,
+        "abort_count": 5,
+        "discarded_rows": 5,
+        "accepted_tentative_rows": 19
+      },
+      "suffix_restores": [
+        {
+          "sequence": 182,
+          "position": 90,
+          "row_ids": [
+            93
+          ]
+        },
+        {
+          "sequence": 192,
+          "position": 94,
+          "row_ids": [
+            99
+          ]
+        },
+        {
+          "sequence": 220,
+          "position": 107,
+          "row_ids": [
+            113
+          ]
+        },
+        {
+          "sequence": 232,
+          "position": 112,
+          "row_ids": [
+            119
+          ]
+        },
+        {
+          "sequence": 240,
+          "position": 115,
+          "row_ids": [
+            124
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "passed": true,
+      "commands": 236,
+      "accepted_input_rows": 118,
+      "peak_pending": 1,
+      "counters": {
+        "rows": 118,
+        "tentative_rows": 0,
+        "commits": 118,
+        "abort_count": 0,
+        "discarded_rows": 0,
+        "accepted_tentative_rows": 0
+      },
+      "suffix_restores": []
+    }
+  ],
+  "raw_bundles": [
+    {
+      "path": "/dev/shm/sc117-ring-20261025/rolling-depth2-a/stage0/native/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "68d08d89fc5b0cfb1f89b565a8921f73e0fd4b37a237da4de907420fdf9f2cb7",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/stage0/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/rolling-depth2-a/stage0/native/state-2147483647.draft/state.bundle",
+      "bytes": 27451714,
+      "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/stage0/state-2147483647.draft",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/rolling-depth2-a/stage1/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "7b46fe09c96a06095bafbb23598f29fb3d9d808814e64905632fa0c3504d4063",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/stage1/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/rolling-depth2-a/stage2/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "f4c7e4791a65bf25da09de93be773a36e6013e68c362b467853981d6a8ae37ce",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/stage2/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/rolling-depth2-a/stage3/native/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "503ded24366842efb7bcb9b64aa9556a0eb9afbe8b691ac96c4cbf66770d42e5",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/stage3/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    }
+  ],
+  "raw_bytes": 444751114,
+  "actual_provider": true,
+  "actual_proposals_consumed": true,
+  "scripted_oracle_assisted": false,
+  "scripted_tentative_inputs": false,
+  "speed_claim": false,
+  "original_plan": {
+    "path": "/dev/shm/sc117-ring-20261025/rolling-depth2-a/plan.json",
+    "bytes": 24502,
+    "sha256": "487f8d71c344e0053e602379fb9284006bd3c282c38de881a39519d19e58cdd6"
+  },
+  "qualified_termination": "matched-full-cap-reference",
+  "early_eos_qualified": false,
+  "cancellation_qualified": false,
+  "original_result": {
+    "path": "/dev/shm/sc117-ring-20261025/rolling-depth2-a/rolling-ring-live-result.json",
+    "bytes": 374186,
+    "sha256": "68f1f3422e6085dbab707f0a8e249eab7c2d5c9c31635e960e76737fa15e2260"
+  },
+  "finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_rolling_provider_proof.py",
+    "bytes": 18528,
+    "sha256": "a13eb9d7a35611e8debeafd72ad64b5895abed79770a594aabcd8c9edf369b24"
+  },
+  "comparator": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py",
+    "bytes": 38887,
+    "sha256": "d5cf2a97e04043b3ca0260ecf1c3331605177a1013134cbfe944e59d7395a0c3"
+  },
+  "scope": "Actual depth-two MTP proposals consumed by target rows; exact final target/draft parity and complete native rollback/provider survival accounting. Coverage is observed, not forced. No speed, portability or independent CPU arithmetic claim."
+}
