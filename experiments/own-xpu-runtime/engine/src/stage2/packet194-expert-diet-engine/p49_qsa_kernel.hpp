@@ -129,6 +129,32 @@ inline sycl::event tiles_pipelined(sycl::queue&q,ng::Shape s,ng::Args a,const in
 // Measured slower (3K context, rank 0 tiles pass: 914 -> 1079 us per step; 64 K floats per lane held in registers);
 // OWNRT_ATTN_PIPELINE=1 opts in.
 inline bool tiles_pipelined_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_ATTN_PIPELINE");return e&&e[0]=='1';}();return on;}
+// Split-softmax tiles, wide: 256 lanes per (row, head, tile). Each of the 8 subgroups forms 4 of the tile's 32 scores
+// (score<F32>() unchanged), and in the value phase each lane owns one of the 256 dimensions instead of two. Max,
+// exponentials, denominator tree and every dimension's 32-token tree are tiles<true,F32>'s; partial slots unchanged.
+template<bool F32=false>inline sycl::event tiles_wide(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
+ int C=splits(s);return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*24*C*256,256)](sycl::handler& handler){sycl::local_accessor<float,1>local(66,handler);
+ handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+ int g=it.get_group_linear_id(),c=g%C,h=(g/C)%24,r=g/(C*24),lid=it.get_local_linear_id(),n=counts[r],S=s.budget+3;
+ if(n<=0||blocked(a))return;int start=c*32;if(start>=n)return;auto sg=it.get_sub_group();int lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32;
+ float* p=partial+size_t(g)*258;
+ for(int j=sub;j<32;j+=8){float x=-INFINITY;if(start+j<n)x=score<F32>(sg,a,r,h,a.i(4)[r*S+start+j]);if(lane==0)local[j]=x;}
+ it.barrier(sycl::access::fence_space::local_space);
+ if(lid==0){float m=-INFINITY;for(int j=0;j<32&&start+j<n;++j)m=std::max(m,local[j]);local[64]=m;p[256]=m;}
+ it.barrier(sycl::access::fence_space::local_space);
+ if(lid<32){float x=start+lid<n?detmath::exp(local[lid]-local[64]):0.f;local[32+lid]=x;float den=lane_tree(sg,x);if(lid==0)p[257]=den;}
+ it.barrier(sycl::access::fence_space::local_space);
+ float vals[32];
+ #pragma unroll
+ for(int j=0;j<32;++j){vals[j]=0.f;if(start+j<n){int id=a.i(4)[r*S+start+j];
+  if constexpr(F32)vals[j]=local[32+j]*static_cast<const float*>(a.p[3])[(id*2+h/12)*256+lid];
+  else vals[j]=local[32+j]*bf(static_cast<const uint16_t*>(a.p[3])[(id*2+h/12)*256+lid]);}}
+ for(int z=1;z<32;z*=2)for(int j=0;j<32;j+=2*z)vals[j]=vals[j]+vals[j+z];
+ p[lid]=vals[0];
+ }));});
+}
+// Measured slower (3K context, rank 0 tiles pass 914 -> 1597 us per step); OWNRT_ATTN_WIDE=1 opts in.
+inline bool tiles_wide_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_ATTN_WIDE");return e&&e[0]=='1';}();return on;}
 // Split-softmax tiles with grouped heads: one work-group per (row, KV head, tile) runs the 12 query heads that share
 // the KV head in turn, each with tiles<true>'s unchanged per-head body and the same partial slot, so each K/V row
 // is fetched from memory once per tile instead of once per query head (later heads hit the cache). Exact.
