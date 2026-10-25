@@ -1,0 +1,19 @@
+{
+  "schema": "ownrt.independent-ring-coordinator-cpu-review.v1",
+  "passed": true,
+  "cases": 500,
+  "seed": 919919,
+  "stage_cases": {
+    "2": 166,
+    "4": 170,
+    "6": 164
+  },
+  "sources": {
+    "engine/planning/ring_coordinator.py": "0103f69f8905125fbb6f3938b302e93d7706e8de3d1d452ede896c3da9f6ecfd",
+    "engine/planning/test_ring_coordinator.py": "3ef49c328b57fd5abb4622cec79b046b00782cb2212825d9d36e4bc2900a7e4d",
+    "engine/planning/ring_contract.py": "3cf6a0b713bb0e87ae2be75cd57913237ea62de1a4c6651f53f68c159c84e1b7",
+    "engine/planning/wavefront_ring.py": "a3fadf01f90caa977013ee93aa3bda3ec584ca45659c21fcd6523cc65d9c9449",
+    "research/continuation-2026-10-25/ring-review/run_coordinator_review.py": "eba85a2583ea30e018c5fee2a6a49fa347b2383c5fcdf542dea7da1c94903f4a"
+  },
+  "scope": "Exact synthetic Ring physical state and outputs versus sequential gold with randomized reply ordering, prompt/cap/EOS/miss shapes and immutable fresh proposal disagreement. Not native transport, actual model, GPU concurrency or performance qualification."
+}

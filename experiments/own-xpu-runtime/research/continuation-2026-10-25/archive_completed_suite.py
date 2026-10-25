@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Archive a completed cold suite or portable-live proof, checking sealed raw members."""
+"""Archive a completed suite, portable-live or scripted-ring sealed proof."""
 import argparse
 from datetime import datetime, timezone
 import json
@@ -22,14 +22,15 @@ def main():
     assert summary['passed'] is True
     suite=summary['schema']=='ownrt.persistent-suite-audit.v1' and summary['requests']==12
     portable=summary['schema']=='ownrt.portable-live-proof.v1' and summary['source_run']==str(run)
-    assert suite or portable,'supported passed suite or portable-live proof required'
+    ring=summary['schema']=='ownrt.scripted-ring-proof.v1' and summary['source_run']==str(run)
+    assert suite or portable or ring,'supported passed suite/portable-live/scripted-ring proof required'
     expected={}
     for bundle in sorted(run.rglob('state.bundle')):
         compare.BUNDLE.read_state(bundle.parent)
         seal=(bundle.parent/'state-seal.txt').read_text().splitlines()
         expected[str(Path(run.name)/bundle.relative_to(run))]=dict(bytes=int(seal[1]),sha256=seal[2],
             source_seal=identity(bundle.parent/'state-seal.txt'))
-    assert len(expected)==6,'expected four terminal target and two terminal draft bundles'
+    assert len(expected)==(4 if ring else 6),'expected four terminal target and optional two terminal draft bundles'
     sources=[(run,run.name),(proof,'proof/'+proof.name)]
     for name in ('archive_completed_suite.py','archive_live_proofs.py','audit_persistent_suite.py',
                  'finalize_persistent_proof.py','finalize_live_proof.py','finalize_wavefront_proof.py',
@@ -39,6 +40,17 @@ def main():
         for name in ('finalize_portable_live_proof.py','test_finalize_portable_live_proof.py','finalize_portable_proof.py',
                      'live-draft-legacy-prefix.json'):
             sources.append((HERE/name,'proof/'+name))
+    if ring:
+        plan=json.loads((run/'plan.json').read_text());config=Path(plan['config'])
+        config_data=json.loads(config.read_text());receipt=Path(config_data['build_receipt'])
+        sources += [(config,'proof/run-config.json'),(receipt,'proof/build-receipt.json'),
+                    (OWNRT/'engine/src/pipeline/ring','source/engine/src/pipeline/ring')]
+        for name in ('finalize_ring_proof.py','test_finalize_ring_proof.py'):
+            sources.append((HERE/name,'proof/'+name))
+        for name in ('ring_driver.py','ring_wire.py','test_ring_driver.py','test_ring_wire.py','test_compare_ring_state.py'):
+            sources.append((OWNRT/'engine/tools'/name,'source/engine/tools/'+name))
+        for name in ('ring_coordinator.py','ring_contract.py','test_ring_coordinator.py'):
+            sources.append((OWNRT/'engine/planning'/name,'source/engine/planning/'+name))
     for path in (OWNRT/'engine/tools/compare_pipeline_state.py',OWNRT/'engine/tools/compare_draft_state.py',
                  OWNRT/'gsq-rco-iq3s/state-bundle/reader.py'):
         sources.append((path,'source/'+str(path.relative_to(OWNRT))))

@@ -27,15 +27,25 @@ observation layers remain disclosed; this is no promoted record. The initial
 The complete extracted portable live recipe now also passes: all 32 tokens,
 2,065 target buffers, 73 draft allocations and 117 true-pair inputs match the
 accepted live reference. Build `6eff23e4cd8a` uses the generated local binding;
-all four workers exited cleanly. Deeper overlap remains
-the speed work; its isolated two-slot checkpoint and scheduler proposals are under
-CPU review. No GPU model is currently loaded. Draft training is prohibited. No host power or memory
-settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
+all four workers exited cleanly. The scripted two-guess ring proof also passed:
+all 32 outputs and 2,065 target buffers match, with both rejection depths and a
+byte-verified two-row suffix restore. Binary `9be365880262` exited cleanly on all
+four cards. This qualifies rollback, not live recursive drafting or speed.
+Its lossless evidence packet is durable and restore-tested, reusing the exact
+raw state payloads already present in the durable portable-live archive.
+All GPUs are now idle. Next is an opt-in existing-MTP recursive provider proof:
+actual two-step guesses with exact private restoration, initially while target
+stages are quiescent. Pending-target overlap and a cold performance suite follow
+only after their own state gates. Draft training is prohibited. No host power or
+memory settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
 and [portable proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md).
 The [full four-card suite audit](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md)
 retains the negative speed result and per-stage timings.
 The [portable live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable-live/pp4-proof/RESULT.md)
 qualifies the 294-file source snapshot's standalone controller on this host.
+The [scripted ring proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-scripted-proof/RESULT.md)
+records the new rollback gate; the [onboarding audit](experiments/own-xpu-runtime/engine/planning/reusable-onboarding-audit.md)
+separates reusable interfaces from current model/topology capability limits.
 
 
 **October 25, review session — owner authorizes all four cards; reusable engine and publication work active.**

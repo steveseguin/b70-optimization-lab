@@ -1,0 +1,24 @@
+{
+  "schema": "ownrt.ring-source-review.v1",
+  "scope": "Independent source/CPU prototype review, before target-only native opt-in integration; no GPU qualification.",
+  "sources": {
+    "engine/planning/ring_coordinator.py": "0103f69f8905125fbb6f3938b302e93d7706e8de3d1d452ede896c3da9f6ecfd",
+    "engine/planning/ring_contract.py": "3cf6a0b713bb0e87ae2be75cd57913237ea62de1a4c6651f53f68c159c84e1b7",
+    "engine/planning/ring-native-next/stage_ring.hpp": "be47a215a4d56967cab7e9b290c307ccc1e3becd538d13db70b3155a8cd8dbc4",
+    "engine/planning/ring-native-next/wire.hpp": "9f5c3688af51d6092ec7018c6e85d2918b5443e326f789e3598f881a61a48eea",
+    "engine/planning/ring-native-next/dispatcher.hpp": "d11b008c969acad97c1668533b9bda4eb6489ed3584244b6d1e72842ec72e72a",
+    "engine/planning/ring-native-next/checkpoint_ring.hpp": "b201c0d843748bd1c75af0d7a442c0a8587b95dfee1284e3c2f2daf1a65ce1ab",
+    "engine/planning/ring-native-next/engine_backend.hpp": "961487eb581c5d9369786157e03b0b88e4ece8eadad58a18b45e080e3b4de623"
+  },
+  "coordinator_tests": 13,
+  "additional_randomized_cases": 500,
+  "native_wire_test": "independently compiled C++20 -O1 and passed",
+  "closed_finding": "Native proposal validation lacked exact seed row, parent row, final commit and provider serial. Owner added BatchIdentity exact comparisons and individual mutation refusals.",
+  "remaining_integration_requirements": [
+    "Target-only24-26 bridge must check expected exact pending/physical/committed cursors and required full restore-byte flag.",
+    "Payloads copied/hashed before owner slot reuse; lineage/prefix/global row versus local ticket must remain distinct.",
+    "All-owner drain before suffix rollback, all abort ACKs before corrected work.",
+    "New ring attestations and full target state proof; existing wavefront v1 proof cannot be relabeled.",
+    "Provider/op27 transport and real canonical draft state interaction are excluded from first target-only integration."
+  ]
+}

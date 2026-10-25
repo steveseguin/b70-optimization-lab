@@ -1,0 +1,66 @@
+{
+  "schema": "ownrt.completed-suite-archive-verification.v1",
+  "passed": true,
+  "verified_utc": "2026-10-25T20:40:08.805914+00:00",
+  "archive": {
+    "path": "/dev/shm/sc117-ring-scripted-proof-20261025.tar.gz",
+    "bytes": 177984173,
+    "sha256": "517435b7915088b42b32b65c1bf35f595e3c215dfee6bb6ca00939bd57b2bc62",
+    "durable": false
+  },
+  "archive_members": 234,
+  "raw_state_members": [
+    {
+      "member": "scripted-a/stage0/native/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "68d08d89fc5b0cfb1f89b565a8921f73e0fd4b37a237da4de907420fdf9f2cb7",
+      "source_seal": {
+        "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage0/native/state-2147483647/state-seal.txt",
+        "bytes": 223,
+        "sha256": "686d66a08fbe4b234c3909699361383f3499dff748a66092f32816d3767a5033"
+      },
+      "passed": true
+    },
+    {
+      "member": "scripted-a/stage1/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "7b46fe09c96a06095bafbb23598f29fb3d9d808814e64905632fa0c3504d4063",
+      "source_seal": {
+        "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage1/native/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "3110a3620466bdb0ad3b8bd4a1b149f51b199356e642b7eea6262ee81766c9a8"
+      },
+      "passed": true
+    },
+    {
+      "member": "scripted-a/stage2/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "f4c7e4791a65bf25da09de93be773a36e6013e68c362b467853981d6a8ae37ce",
+      "source_seal": {
+        "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage2/native/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "b07b235c29561c8571f0037020955e37b83afe75e7ef3ab02580401cc8c12163"
+      },
+      "passed": true
+    },
+    {
+      "member": "scripted-a/stage3/native/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "503ded24366842efb7bcb9b64aa9556a0eb9afbe8b691ac96c4cbf66770d42e5",
+      "source_seal": {
+        "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage3/native/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "290c62d501b790971774dcaa7cc9b4f1d1d30796b3c6e05ed4963ceaf8c38f1e"
+      },
+      "passed": true
+    }
+  ],
+  "raw_state_bytes": 417299400,
+  "script": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/archive_completed_suite.py",
+    "bytes": 5365,
+    "sha256": "61b1604a9483541c5e7a15cc8b2455c0ce65beb332d2055e492902e5ecefac42"
+  },
+  "method": "Native sealed reader, completed archive SHA256, then independent streaming member hashes against native seals.",
+  "scope": "All completed run controller/native logs and final target/draft raw state plus compact audit. Original files remain untouched."
+}

@@ -1,0 +1,189 @@
+{
+  "schema": "ownrt.scripted-ring-proof.v1",
+  "passed": true,
+  "source_run": "/dev/shm/sc117-ring-20261025/scripted-a",
+  "output_tokens_exact": true,
+  "target_state_exact": true,
+  "target_buffer_count": 2065,
+  "input_rows": 118,
+  "output_tokens": 32,
+  "boundaries": [
+    0,
+    13,
+    25,
+    37,
+    48
+  ],
+  "native_command_audits": [
+    {
+      "stage": 0,
+      "passed": true,
+      "commands": 243,
+      "accepted_input_rows": 118,
+      "peak_pending": 2,
+      "counters": {
+        "rows": 122,
+        "tentative_rows": 32,
+        "commits": 118,
+        "abort_count": 3,
+        "discarded_rows": 4,
+        "accepted_tentative_rows": 28
+      },
+      "suffix_restores": [
+        {
+          "sequence": 176,
+          "position": 87,
+          "row_ids": [
+            88
+          ]
+        },
+        {
+          "sequence": 181,
+          "position": 88,
+          "row_ids": [
+            90,
+            91
+          ]
+        },
+        {
+          "sequence": 187,
+          "position": 90,
+          "row_ids": [
+            94
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 1,
+      "passed": true,
+      "commands": 240,
+      "accepted_input_rows": 118,
+      "peak_pending": 2,
+      "counters": {
+        "rows": 120,
+        "tentative_rows": 25,
+        "commits": 118,
+        "abort_count": 2,
+        "discarded_rows": 2,
+        "accepted_tentative_rows": 23
+      },
+      "suffix_restores": [
+        {
+          "sequence": 178,
+          "position": 88,
+          "row_ids": [
+            90
+          ]
+        },
+        {
+          "sequence": 184,
+          "position": 90,
+          "row_ids": [
+            94
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "passed": true,
+      "commands": 238,
+      "accepted_input_rows": 118,
+      "peak_pending": 2,
+      "counters": {
+        "rows": 119,
+        "tentative_rows": 16,
+        "commits": 118,
+        "abort_count": 1,
+        "discarded_rows": 1,
+        "accepted_tentative_rows": 15
+      },
+      "suffix_restores": [
+        {
+          "sequence": 182,
+          "position": 90,
+          "row_ids": [
+            94
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "passed": true,
+      "commands": 236,
+      "accepted_input_rows": 118,
+      "peak_pending": 1,
+      "counters": {
+        "rows": 118,
+        "tentative_rows": 0,
+        "commits": 118,
+        "abort_count": 0,
+        "discarded_rows": 0,
+        "accepted_tentative_rows": 0
+      },
+      "suffix_restores": []
+    }
+  ],
+  "required_miss_depths": [
+    1,
+    2
+  ],
+  "observed_miss_depths": [
+    1,
+    2
+  ],
+  "stage0_two_row_restores": 1,
+  "comparison": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-scripted-proof/comparison.json.gz",
+    "bytes": 211434,
+    "sha256": "50d187afadac7244a5ccf7b1c56c14cc426d60ccaa4829bd855aef61a5a49523",
+    "uncompressed_sha256": "bd6b3f2b9c71b8f5188b9b261a50f45070a4338fc5d5aeb43d33bf01fdfb588f"
+  },
+  "raw_bundles": [
+    {
+      "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage0/native/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "68d08d89fc5b0cfb1f89b565a8921f73e0fd4b37a237da4de907420fdf9f2cb7",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-scripted-proof/stage0/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage1/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "7b46fe09c96a06095bafbb23598f29fb3d9d808814e64905632fa0c3504d4063",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-scripted-proof/stage1/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage2/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "f4c7e4791a65bf25da09de93be773a36e6013e68c362b467853981d6a8ae37ce",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-scripted-proof/stage2/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/scripted-a/stage3/native/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "503ded24366842efb7bcb9b64aa9556a0eb9afbe8b691ac96c4cbf66770d42e5",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-scripted-proof/stage3/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    }
+  ],
+  "raw_bytes": 417299400,
+  "scripted_oracle_assisted": true,
+  "live_draft": false,
+  "speed_claim": false,
+  "scope": "Exact target state and token identity after real native scripted one-/two-row rollback. No recursive provider, live drafting, speed or portability claim.",
+  "finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_ring_proof.py",
+    "bytes": 16084,
+    "sha256": "78dc605d0eda1ad64d16d954987a47fc14b137a38901baef27eb14c7ede7135d"
+  },
+  "comparator": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py",
+    "bytes": 30735,
+    "sha256": "1dbdbb5277b0ec8dbdd5231575aac6262f71f35cff0b389324d72bd85ebd9af6"
+  }
+}

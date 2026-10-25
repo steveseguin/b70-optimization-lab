@@ -1,0 +1,52 @@
+{
+  "schema": "ownrt.ring-integrated-source-cpu-review.v1",
+  "passed": true,
+  "native_gpu_qualification": "pending; owned by parent",
+  "native_owner_cpu_receipt": {
+    "path": "engine/planning/evidence/native-ring-cpu.json",
+    "bytes": 2740,
+    "sha256": "41b5adc450d44a1d470956c9ef058af7d6e722fb04dba5fc1f5e2e89257ee77a"
+  },
+  "independently_rerun_wire_driver_coordinator_tests": 27,
+  "strict_state_comparator_tests": 35,
+  "wire_owner_cpu_receipt": {
+    "path": "engine/planning/evidence/ring-wire-cpu.json",
+    "bytes": 2224,
+    "sha256": "52d1a707c06fdfe010241873d36311adfa3695ef0849a9609e7b8e9d2a96743e"
+  },
+  "reviewed_sources": [
+    {
+      "path": "engine/tools/ring_driver.py",
+      "bytes": 18035,
+      "sha256": "3f545dcfd77d1610e27f77630e117068889c87da535712507d74dedfe2a8558b"
+    },
+    {
+      "path": "engine/tools/ring_wire.py",
+      "bytes": 5377,
+      "sha256": "16e7c7d3bc1a6c41e32d92e4df495144321b72d79feb88cf2a8bfc569ab6323b"
+    },
+    {
+      "path": "engine/planning/ring_coordinator.py",
+      "bytes": 20222,
+      "sha256": "84b7d6970dd3f1c357c674760739e577c2f2be1d0577405b240abf9003a0690f"
+    },
+    {
+      "path": "engine/src/pipeline/ring/dispatcher.hpp",
+      "bytes": 10976,
+      "sha256": "7ad1139359c379c5c49dc6c2888e3ff40879d15ca10abe88d33d407c60d6737b"
+    },
+    {
+      "path": "engine/tools/compare_pipeline_state.py",
+      "bytes": 30735,
+      "sha256": "1dbdbb5277b0ec8dbdd5231575aac6262f71f35cff0b389324d72bd85ebd9af6"
+    }
+  ],
+  "findings_closed": [
+    "Exact expected canonical proposal seed/parent/final-commit/provider-serial binding.",
+    "Original tentative ROW flag preserved in both ACCEPT and ABORT_SUFFIX metadata.",
+    "Final drained model event flushed into schedule trace.",
+    "Bounded stable native attestation reads and exclusive non-symlink creation.",
+    "Bounded completed tensor retention; immutable row lineage retained."
+  ],
+  "scope": "No remaining source or CPU-test blocker for scripted target-only24-26 qualification. No op27/provider interleave, persistent ring RESET, real model/GPU state parity or performance claim. Root owns build/device/process actions."
+}
