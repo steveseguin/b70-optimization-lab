@@ -308,6 +308,9 @@ static Options parse(int argc, char **argv) {
   require((a.cards==1 && (a.memory=="layer-streaming" || (a.rank>=0 && a.memory=="resident"))) ||
           (a.cards==2 && a.tp_replicate && a.rank==1 && a.memory=="resident" && a.gsq_packed), "single-device process required (two cards only with --tp-replicate on rank 1)");
   require(!a.tp_replicate||a.cards==2,"--tp-replicate needs --cards 2");
+  // 2026-10-25 incident: the first --tp-replicate run with OWNRT_DECODE_PROFILE=2 (profiling queues in the shared
+  // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
+  require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
 #ifdef OWN_RT_HOST_ONLY
   require(!a.authorized, "host binary cannot authorize device execution");
@@ -1389,7 +1392,7 @@ public:
   void prepare_plan() {
     if(a.memory!="resident")return;
     for(const auto& l:p.launches) {
-      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather")continue;
+      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select")continue;
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
         std::vector<Matrix> values{matrix(l)};
         if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
@@ -1737,6 +1740,15 @@ public:
       auto remote=dev(c).peer_copy(dev(peer),y.id,size_t(peer)*half,buffers[peer].at(l.inputs.at(0)).id,0,half);finish(c,{remote,remote,1},false);
     } else if (l.op == "tp_route_mask") {
       finish(c,iq3::kopt::route_mask(dev(c),buffers[c].at(l.outputs.at(0)).id,buffers[c].at(l.outputs.at(1)).id,uint32_t(p.g.top),uint32_t(l.parameter)));
+    } else if (l.op == "tp_push") {
+      const auto& y=buffers[c].at(l.inputs.at(0));const size_t bytes=y.n*flash::scalar_bytes(y.type);
+      auto e=dev(c).peer_push(dev(1-c),buffers[1-c].at(l.outputs.at(0)).id,0,y.id,0,bytes);finish(c,{e,e,1},false);
+    } else if (l.op == "tp_wait") {
+      auto e=dev(c).peer_wait(dev(1-c),c);finish(c,{e,e,1},false);
+    } else if (l.op == "tp_select") {
+      const auto& y=buffers[c].at(l.outputs.at(0));const size_t bytes=y.n*flash::scalar_bytes(y.type);
+      require(y.type==flash::Scalar::f32&&bytes%(size_t(p.g.top)*4)==0,"TP expert select: F32 slot rows");
+      finish(c,iq3::kopt::slot_select(dev(c),y.id,buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,uint32_t(p.g.top),uint32_t(bytes/(size_t(p.g.top)*4)),uint32_t(l.parameter)));
     } else if (l.op == "tp_expert_gather") {
       // The peer's routed output (all its own slots computed) into y#tp, then this card's non-owned slots from it.
       const int peer=1-c;const auto& y=buffers[c].at(l.outputs.at(0));const size_t bytes=y.n*flash::scalar_bytes(y.type);

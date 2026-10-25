@@ -341,9 +341,26 @@ Event Device::peer_copy(Device& source,Allocation dst,std::size_t off,Allocation
   try {auto e=backend_->peer_copy(dp,sp,n,*source.backend_);events_.push_back(e);remember(e,q);++counter;return e;}
   catch(const std::exception& e){fault_=e.what();throw;}
 }
-Event Device::peer_wait(Device& peer) {
+Event Device::peer_push(Device& dest,Allocation dst,std::size_t off,Allocation src,std::size_t soff,std::size_t n) {
+  admit();dest.admit();if(&dest==this)throw std::invalid_argument("peer push within one device");
+  const auto& d=dest.arena.row(dst);const auto& s=arena.row(src);
+  if(!n||!d.live||!s.live||d.memory!=Memory::device||s.memory!=Memory::device||off>d.bytes||n>d.bytes-off||soff>s.bytes||n>s.bytes-soff)
+    throw std::out_of_range("peer push extent/lifetime");
+  void* dp=static_cast<std::byte*>(d.pointer)+off;const void* sp=static_cast<const std::byte*>(s.pointer)+soff;
+  const int q=std::max(queue_of(s),0);auto& counter=fast_owners.at(this).copies.peer[q];
+  if(capture_) {
+    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=q;item.copy_counter=&counter;
+    item.ids={dst,src};item.pointers={dp,const_cast<void*>(sp)};item.submit=backend_->prepare_copy(dp,sp,n);
+    item.argument_bytes.resize(sizeof(Allocation)*2+sizeof(std::size_t)*3);
+    auto* bytes=item.argument_bytes.data();std::memcpy(bytes,item.ids.data(),sizeof(Allocation)*2);std::size_t extents[]{off,soff,n};std::memcpy(bytes+sizeof(Allocation)*2,extents,sizeof extents);
+    capture_->push_back(std::move(item));return capture_->size();
+  }
+  try {auto e=backend_->copy(dp,sp,n,{});events_.push_back(e);remember(e,q);++counter;return e;}
+  catch(const std::exception& e){fault_=e.what();throw;}
+}
+Event Device::peer_wait(Device& peer,int queue) {
   admit();peer.admit();if(&peer==this)throw std::invalid_argument("peer wait within one device");
-  const int q=events_.empty()?0:event_card(events_.back());
+  const int q=queue>=0?queue:(events_.empty()?0:event_card(events_.back()));
   if(capture_) {
     PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=q;
     Backend* self=backend_.get();Backend* other=peer.backend_.get();item.submit=[self,other]{return self->peer_wait(*other);};

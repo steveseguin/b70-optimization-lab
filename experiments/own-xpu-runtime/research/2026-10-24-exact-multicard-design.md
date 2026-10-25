@@ -347,3 +347,38 @@ Fixes on the way:
 
 The expected saving was about 1.5 ms of expert time. Next: per-site device profile of card 0
 (`OWNRT_DECODE_PROFILE=2`) to see whether the gathers stall card 0.
+
+## Step 4b: push/wait/select gather, and what exact TP is worth here (2026-10-25, pf90)
+
+**Change.** The expert gather now pushes instead of pulls:
+1. each card pushes its routed output into the peer's scratch, on its own queue;
+2. card 1 waits for card 0's latest work, and card 0 for card 1's;
+3. each card takes its non-owned slots from the scratch.
+
+Before, each peer copy waited on the peer's latest event, so the two cards' copies chained.
+
+Rank 1 half-step medians, 16 steps:
+
+| Setup | Median |
+|---|---:|
+| one card | 16.73 ms |
+| replicated | 17.08 ms |
+| gather only (all slots computed) | 17.73 ms (pull: 18.15) |
+| full placement | **17.02 ms** (pull: 17.25) |
+
+Full placement is exact: 954 of 954 model-state buffers equal the one-card run.
+- The gather costs about 26 µs per layer (pull: about 43).
+- Masking saves about 0.9 ms of rank 1's roughly 3.9 ms of expert time. With parity placement the busier card holds
+  about 6 of the 10 selected experts on average, and masked slots are not free.
+
+**Revised estimate.** Exact TP may not split a sum across cards, so every split GEMV needs a gather:
+- **Dense row splits:** each split site saves about as much as its gather costs. Neutral (step 3).
+- **Experts:** they split naturally, with one gather per layer. The best case, with the mask folded into the route
+  gather and the select folded into `moe_combine`, is about −7% per stage.
+- **TP2×PP2 on four cards:** therefore about 1.05–1.1× rather than the 1.4× written above. The earlier estimate
+  assumed about 7 µs gathers and an even split of matrix work; the measured costs are higher.
+
+Options that could change this:
+- gathers fused into the producing kernel's epilogue (a direct peer write, plus one flag wait);
+- expert replicas chosen per token for balance;
+- a different four-card use: PP4 with deeper speculation, or two PP2 replicas for throughput.

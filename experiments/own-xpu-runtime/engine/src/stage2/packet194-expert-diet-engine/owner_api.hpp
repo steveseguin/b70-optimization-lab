@@ -204,7 +204,10 @@ class Device {
   // peer_copy: copy source's allocation bytes into this Device's allocation, after all work submitted to `source`.
   // peer_wait: a marker on this queue after all work submitted to `peer` (protects a buffer the peer still reads).
   Event peer_copy(Device& source, Allocation dst, std::size_t dst_offset, Allocation src, std::size_t src_offset, std::size_t bytes);
-  Event peer_wait(Device& peer);
+  Event peer_wait(Device& peer, int queue = -1); // queue: this Device's queue index (card<N>: allocations), -1 = infer
+  // peer_push: copy this Device's allocation bytes into `dest`'s allocation, on this queue (ordered after this card's
+  // own work only; the receiver orders its readers with peer_wait).
+  Event peer_push(Device& dest, Allocation dst, std::size_t dst_offset, Allocation src, std::size_t src_offset, std::size_t bytes);
   void invalidate_prepared() { if(in_flight())throw std::logic_error("invalidate while pending");generation_=next_handle(); }
   uint64_t generation() const noexcept {return generation_;}
   // Packet4 eager segments only: retire completed events, preserving allocations.

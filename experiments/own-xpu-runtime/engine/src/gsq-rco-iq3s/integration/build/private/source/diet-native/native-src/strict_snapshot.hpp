@@ -138,7 +138,7 @@ struct SnapshotWriteSet {
   else if(op=="qsa_select")bytes=p.g.h==2560?ceil(size_t(p.g.context),4)*4:0;
   else if(op=="qsa_attention")bytes=p.g.h==2560?16+24*258*ceil(size_t(std::min(p.g.context,p.g.budget+3)),32)*4:0;
   else {
-   static const std::set<std::string> no_global_scratch={"tp_gather","tp_route_mask","tp_expert_gather","begin","commit","broadcast","ple_hash","check_status","lookup","handoff","handoff_result","gemv","routed_gemv","expert_gate_up","silu_div4","silu_product","hc_mix","conv","moe_combine","ple_gate","ple_add"};
+   static const std::set<std::string> no_global_scratch={"tp_gather","tp_route_mask","tp_expert_gather","tp_push","tp_wait","tp_select","begin","commit","broadcast","ple_hash","check_status","lookup","handoff","handoff_result","gemv","routed_gemv","expert_gate_up","silu_div4","silu_product","hc_mix","conv","moe_combine","ple_gate","ple_add"};
    if(!no_global_scratch.count(op))return allocation;
   }
   if((op=="route"||op=="argmax")&&!n)return allocation;
