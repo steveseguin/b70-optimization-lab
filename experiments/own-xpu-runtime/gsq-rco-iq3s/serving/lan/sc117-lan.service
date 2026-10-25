@@ -11,7 +11,7 @@ ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-x
 # No restart policy, no SIGKILL: on stop the coordinator FINISHes both ranks and waits for drain.
 Environment=SC117_ACTIVATIONS=f32
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/3453bbbf3135.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/3619d8eb492d.json
 Environment=SC117_PREFILL_ROWS=16
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -21,6 +21,12 @@ Environment=OWNRT_DRAFT_PREFIX_ROWS=91392
 # 2026-10-25: 24/24 39.42 tok/s, 23/25 40.60, 22/26 41.26 (after the bounded 8 MiB scratch; rank 1 30.0 GiB resident of
 # 31.89), outputs identical; 21/27 would exceed the 30 GiB per-card plan cap.
 Environment=SC117_TARGET_SPLIT=22
+# Speculation-miss machinery from the BF16 record line, admitted for F32 state (redo-bank proof): rotate recurrent banks,
+# batch the snapshot copies, capture only written KV rows. Suite 2026-10-25: control 41.56 tok/s (102 MB copied per
+# speculative step, rollback 3.3-4 ms), banks-batch+static 42.26 (46 MB in one submission, rollback 2.4 ms),
+# banks-batch-overlap 42.18; outputs identical, oracle zero differences, prefill gate with misses 13/13.
+Environment=OWNRT_MISS=banks-batch
+Environment=OWNRT_SNAPSHOT_HOST=static
 Restart=no
 KillMode=process
 KillSignal=SIGTERM

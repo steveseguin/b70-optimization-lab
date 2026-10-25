@@ -897,7 +897,14 @@ public:
                  std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
     if(!a.selection.empty()){require(!a.selection_sha256.empty(),"selection requires sealed --selection-sha256");sealed_selection.load(a.selection.string(),a.selection_sha256);}
     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
-    if(a.gsq_packed)gsq_integration::baseline_selection(sealed_selection);
+    if(a.gsq_packed){gsq_integration::baseline_selection(sealed_selection);
+      // Speculation-miss machinery validated on the BF16 record line, opt-in for GSQ: OWNRT_MISS selects how rank 0
+      // protects state across a speculative half (control: copy every protected buffer; banks*: rotate recurrent banks,
+      // batch the copies), OWNRT_SNAPSHOT_HOST=static captures only the written KV rows. Every combination is gated on
+      // the device (the self-test and prefill cases include misses and compare the full state).
+      if(const char* v=std::getenv("OWNRT_MISS")){const std::string m=v;require(m=="control"||m=="banks"||m=="banks-batch"||m=="banks-batch-overlap","OWNRT_MISS choice");sealed_selection.choices["miss"]=m;}
+      if(const char* v=std::getenv("OWNRT_SNAPSHOT_HOST")){const std::string m=v;require(m=="production"||m=="static","OWNRT_SNAPSHOT_HOST choice");sealed_selection.choices["snapshot_host"]=m;}
+    }
     const auto down_choice=sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production";
     if(down_choice.find("down-interleave")!=std::string::npos||down_choice.find("down-tile16")!=std::string::npos)
       require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");

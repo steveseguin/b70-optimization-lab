@@ -169,7 +169,8 @@ struct RedoBankProof {
   for(const auto& l:p.launches)if(std::find(l.outputs.begin(),l.outputs.end(),name)!=l.outputs.end()){
    if(writer)return {};writer=&l;
   }
-  if(!buffer||!writer||buffer->type!=flash::Scalar::bf16||writer->outputs.size()!=2||writer->outputs[1]!=name)return {};
+  // BF16 or F32 (recurrent-f32) state: the same full-row writers; bytes follow the buffer's type.
+  if(!buffer||!writer||(buffer->type!=flash::Scalar::bf16&&buffer->type!=flash::Scalar::f32)||writer->outputs.size()!=2||writer->outputs[1]!=name)return {};
   size_t elements=0;
   if(writer->op=="gdn"){
    if(writer->inputs.size()<4||writer->inputs[3]!=name||p.g.vh<=0||p.g.d<=0||
