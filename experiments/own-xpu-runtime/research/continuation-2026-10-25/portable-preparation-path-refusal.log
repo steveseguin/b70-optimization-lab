@@ -1,0 +1,16 @@
+Oct 25 15:03:50 steve-b70s systemd[3258]: Started sc117-portable-prepare-20261025.service - /usr/bin/ionice -c 3 /usr/bin/python3 experiments/own-xpu-runtime/engine/deployment/prepare.py --profile experiments/own-xpu-runtime/engine/profiles/sc117-iq3s/profile.json --profile-sha256 369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a --model-root /mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S_eec4e10a --draft-root /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8 --tokenizer-root /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8 --output /dev/shm/sc117-portable-deployment-20261025 --seconds 7200.
+Oct 25 15:03:50 steve-b70s ionice[4094985]: Traceback (most recent call last):
+Oct 25 15:03:50 steve-b70s ionice[4094985]:   File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/prepare.py", line 432, in <module>
+Oct 25 15:03:50 steve-b70s ionice[4094985]:     main()
+Oct 25 15:03:50 steve-b70s ionice[4094985]:   File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/prepare.py", line 425, in main
+Oct 25 15:03:50 steve-b70s ionice[4094985]:     result = prepare(a.profile, a.profile_sha256, a.model_root, a.output,
+Oct 25 15:03:50 steve-b70s ionice[4094985]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Oct 25 15:03:50 steve-b70s ionice[4094985]:   File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/prepare.py", line 299, in prepare
+Oct 25 15:03:50 steve-b70s ionice[4094985]:     roots = {'target': stack.enter_context(Directory(model_root))}
+Oct 25 15:03:50 steve-b70s ionice[4094985]:                                            ^^^^^^^^^^^^^^^^^^^^^
+Oct 25 15:03:50 steve-b70s ionice[4094985]:   File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment/prepare.py", line 69, in __init__
+Oct 25 15:03:50 steve-b70s ionice[4094985]:     child = os.open(part, flags, dir_fd=self.fd)
+Oct 25 15:03:50 steve-b70s ionice[4094985]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Oct 25 15:03:50 steve-b70s ionice[4094985]: FileNotFoundError: [Errno 2] No such file or directory: 'SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S_eec4e10a'
+Oct 25 15:03:50 steve-b70s systemd[3258]: sc117-portable-prepare-20261025.service: Main process exited, code=exited, status=1/FAILURE
+Oct 25 15:03:50 steve-b70s systemd[3258]: sc117-portable-prepare-20261025.service: Failed with result 'exit-code'.

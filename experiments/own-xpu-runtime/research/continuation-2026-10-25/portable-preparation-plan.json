@@ -1,0 +1,53 @@
+{
+  "schema": "ownrt.deployment-preparation-plan.v1",
+  "profile_sha256": "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a",
+  "locations": [
+    {
+      "kind": "target",
+      "root": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+      "dev": 2050,
+      "available_bytes": 2583375872,
+      "shard_count": 2,
+      "full_file_bytes": 83863586496
+    },
+    {
+      "kind": "draft",
+      "root": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+      "dev": 66306,
+      "available_bytes": 27263868928,
+      "shard_count": 28,
+      "full_file_bytes": 30047461616
+    },
+    {
+      "kind": "tokenizer",
+      "root": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+      "dev": 66306,
+      "full_file_bytes": 12809320
+    }
+  ],
+  "destination": {
+    "parent": "/dev/shm",
+    "dev": 29,
+    "available_bytes": 58579218432
+  },
+  "output": "/dev/shm/sc117-portable-deployment-20261025",
+  "artifacts": [
+    "profile.json",
+    "placement.tsv",
+    "draft-tensors.tsv",
+    "shard-auth.tsv",
+    "chat-template.jinja",
+    "include/gsq-rco-iq3s/integration/build/private/additive/bound.hpp",
+    "binding.json",
+    "draft-manifest.tsv"
+  ],
+  "full_file_hash_bytes": 113923857432,
+  "additional_prefix_and_payload_hash_bytes": 2709051024,
+  "planned_read_bytes": 116632908456,
+  "read_chunk_bytes": 4194304,
+  "model_payload_bytes_read": 0,
+  "full_content_authenticated": false,
+  "device_executed": false,
+  "output_created": false,
+  "large_preparation_requires": "nice -n 19; schedule one bounded pass; no automatic retries"
+}

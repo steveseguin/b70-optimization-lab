@@ -104,6 +104,13 @@ This is a correctness foundation; the existing two-card speculative service
 remains the faster established path. The [next scheduling design](../experiments/own-xpu-runtime/engine/planning/wavefront-next.md)
 separates tentative completion from verified commit and restores rejected suffixes.
 
+The subsequent [overlap and forced-miss proof](../experiments/own-xpu-runtime/research/continuation-2026-10-25/wavefront-proof-a/RESULT.md)
+also passes: all 32 outputs and 2,065 canonical buffers match after six deliberately
+wrong proposals, including consecutive misses. The affected stages performed 13
+complete byte-verified restorations and all four processes exited cleanly. This
+uses scripted proposals to test correctness; it establishes no speed gain. Live
+integration uses the existing draft weights. The owner has excluded draft training.
+
 Before a four-card speculative service result, require:
 
 - general stage boundaries with exact layer/tensor coverage;
@@ -156,11 +163,15 @@ separate extracted directory with oneAPI 2026.0. The [build evidence](../experim
 records archive and binary hashes. This is a clean extracted-source build on the
 same host, not a clean-host runtime or portable service qualification.
 
-The [portable-profile audit](../experiments/own-xpu-runtime/engine/planning/portable-profile-next.md)
-identifies compiled absolute paths and filesystem identities as concrete launch
-blockers. Immutable model/quant identities must remain separate from each
-deployment's local paths and file metadata. The existing draft loader requires
-30.05 GB of source shards, even though its selected tensors total 2.70 GB.
+The [portable deployment preparation](../experiments/own-xpu-runtime/engine/deployment/README.md)
+now separates immutable model/quant identities from local paths and file metadata.
+It verifies complete model hashes, generates a separate authenticated build header,
+and produces explicit two/four-card command plans. The installed target, existing
+draft and tokenizer passed one complete authentication pass. CPU validation covers
+25 preparation/launch checks and 13 source-bundle checks. A clean generated-header
+build, guarded portable controller, runtime parity and clean-host installation
+remain qualification work. The existing draft loader requires 30.05 GB of source
+shards even though its selected tensors total 2.70 GB.
 
 After the quad proof, the normal two-card service was restored on engine
 `51ebe7496793`. Its F32-state, batched-prefill and continuation gates passed.

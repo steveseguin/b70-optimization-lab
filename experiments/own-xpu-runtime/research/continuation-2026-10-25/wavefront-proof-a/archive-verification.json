@@ -1,0 +1,41 @@
+{
+  "schema": "ownrt.wavefront-archive-verification.v1",
+  "passed": true,
+  "verified_utc": "2026-10-25T19:05:42.919864+00:00",
+  "archive": {
+    "path": "/dev/shm/sc117-wavefront-forced-miss-20261025.tar.gz",
+    "bytes": 176351937,
+    "sha256": "23d94697e77de9ec8e130efbfd9c743374535580a47f601acc50f878f907b567",
+    "durable": false
+  },
+  "archive_members": 195,
+  "raw_state_members": [
+    {
+      "member": "forced-miss-a/stage0/native/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "68d08d89fc5b0cfb1f89b565a8921f73e0fd4b37a237da4de907420fdf9f2cb7",
+      "passed": true
+    },
+    {
+      "member": "forced-miss-a/stage1/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "7b46fe09c96a06095bafbb23598f29fb3d9d808814e64905632fa0c3504d4063",
+      "passed": true
+    },
+    {
+      "member": "forced-miss-a/stage2/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "f4c7e4791a65bf25da09de93be773a36e6013e68c362b467853981d6a8ae37ce",
+      "passed": true
+    },
+    {
+      "member": "forced-miss-a/stage3/native/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "503ded24366842efb7bcb9b64aa9556a0eb9afbe8b691ac96c4cbf66770d42e5",
+      "passed": true
+    }
+  ],
+  "raw_state_bytes": 417299400,
+  "method": "Separate completed-archive SHA256 pass and independent streaming tar member hash pass against retained native seals; no original inputs deleted.",
+  "retention": "Verified tmpfs archive ready for later durable copy; USB full-model authentication currently owns disk IO."
+}
