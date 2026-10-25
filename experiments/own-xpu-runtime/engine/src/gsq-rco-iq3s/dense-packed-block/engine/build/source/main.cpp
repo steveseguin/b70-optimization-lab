@@ -1739,7 +1739,7 @@ public:
       auto own=local.copy(y.id,size_t(c)*half,buffers[c].at(l.inputs.at(0)).id,0,half,{});finish(c,{own,own,1},false);
       auto remote=dev(c).peer_copy(dev(peer),y.id,size_t(peer)*half,buffers[peer].at(l.inputs.at(0)).id,0,half);finish(c,{remote,remote,1},false);
     } else if (l.op == "tp_route_mask") {
-      finish(c,iq3::kopt::route_mask(dev(c),buffers[c].at(l.outputs.at(0)).id,buffers[c].at(l.outputs.at(1)).id,uint32_t(p.g.top),uint32_t(l.parameter)));
+      finish(c,iq3::kopt::route_mask(dev(c),buffers[c].at(l.outputs.at(0)).id,buffers[c].at(l.outputs.at(1)).id,uint32_t(p.g.top),uint32_t(l.parameter&1),(l.parameter&2)!=0));
     } else if (l.op == "tp_push") {
       const auto& y=buffers[c].at(l.inputs.at(0));const size_t bytes=y.n*flash::scalar_bytes(y.type);
       auto e=dev(c).peer_push(dev(1-c),buffers[1-c].at(l.outputs.at(0)).id,0,y.id,0,bytes);finish(c,{e,e,1},false);
@@ -1748,7 +1748,7 @@ public:
     } else if (l.op == "tp_select") {
       const auto& y=buffers[c].at(l.outputs.at(0));const size_t bytes=y.n*flash::scalar_bytes(y.type);
       require(y.type==flash::Scalar::f32&&bytes%(size_t(p.g.top)*4)==0,"TP expert select: F32 slot rows");
-      finish(c,iq3::kopt::slot_select(dev(c),y.id,buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,uint32_t(p.g.top),uint32_t(bytes/(size_t(p.g.top)*4)),uint32_t(l.parameter)));
+      finish(c,iq3::kopt::slot_select(dev(c),y.id,buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,uint32_t(p.g.top),uint32_t(bytes/(size_t(p.g.top)*4)),uint32_t(l.parameter&1),(l.parameter&2)!=0));
     } else if (l.op == "tp_expert_gather") {
       // The peer's routed output (all its own slots computed) into y#tp, then this card's non-owned slots from it.
       const int peer=1-c;const auto& y=buffers[c].at(l.outputs.at(0));const size_t bytes=y.n*flash::scalar_bytes(y.type);

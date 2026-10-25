@@ -340,8 +340,10 @@ static int run_rank(const Options& a) {
    // OWNRT_TP_EXPERTS=1: placement (mask + gather). Timing-only diagnostics, outputs NOT exact: =mask (mask, no gather),
    // =gather (gather on unmasked routes; exact, measures the gather's cost).
    const std::string tp_experts=[]{const char* v=std::getenv("OWNRT_TP_EXPERTS");return std::string(v?v:"");}();
-   const bool experts=tp_experts=="1"||tp_experts=="mask"||tp_experts=="gather";
-   const bool mask_routes=tp_experts=="1"||tp_experts=="mask",gather_rows=tp_experts=="1"||tp_experts=="gather";
+   // =slot: every card holds every expert (replicated weights); the 10 slots split by position (5/5), exact.
+   const bool experts=tp_experts=="1"||tp_experts=="mask"||tp_experts=="gather"||tp_experts=="slot";
+   const bool mask_routes=tp_experts=="1"||tp_experts=="mask"||tp_experts=="slot",gather_rows=tp_experts=="1"||tp_experts=="gather"||tp_experts=="slot";
+   const int by_slot=tp_experts=="slot"?2:0; // carried in Launch::parameter bit 1
    for(const auto& l:p.launches){
     if(split_site(l)){
      const int R=l.shape.at(1);require(R>0&&R%2==0,"TP split needs an even row count");
@@ -354,7 +356,7 @@ static int run_rank(const Options& a) {
     // OWNRT_TP_EXPERTS=1: card c computes only the slots whose expert id has parity c (routes masked after the
     // gather), and takes the other slots' expsdown rows from the peer before the unchanged in-order moe_combine.
     if(mask_routes&&l.op=="expert_gather"&&l.outputs.size()>=2)for(int c=0;c<2;++c){flash::Launch m;m.op="tp_route_mask";m.label=l.label+".tp_mask";m.card=c;
-     m.inputs={l.outputs[0],l.outputs[1]};m.outputs={l.outputs[0],l.outputs[1]};m.parameter=c;both.push_back(std::move(m));}
+     m.inputs={l.outputs[0],l.outputs[1]};m.outputs={l.outputs[0],l.outputs[1]};m.parameter=c|by_slot;both.push_back(std::move(m));}
     if(gather_rows&&l.op=="routed_gemv"&&ends(l.label,".expsdown")){
      const std::string y=l.outputs.at(0),part=y+"#tp",ids=l.label.substr(0,l.label.size()-9)+".ids";
      if(halves.insert(part).second){auto it=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const flash::Buffer& b){return b.name==y;});
@@ -364,7 +366,7 @@ static int run_rank(const Options& a) {
      // its non-owned slots from y#tp. Only true data dependencies cross cards.
      for(int c=0;c<2;++c){flash::Launch g;g.op="tp_push";g.label=l.label+".tp_push";g.card=c;g.inputs={y};g.outputs={part};both.push_back(std::move(g));}
      for(int c:{1,0}){flash::Launch g;g.op="tp_wait";g.label=l.label+".tp_wait";g.card=c;both.push_back(std::move(g));}
-     for(int c=0;c<2;++c){flash::Launch g;g.op="tp_select";g.label=l.label+".tp_select";g.card=c;g.inputs={part,ids};g.outputs={y};g.parameter=c;both.push_back(std::move(g));}
+     for(int c=0;c<2;++c){flash::Launch g;g.op="tp_select";g.label=l.label+".tp_select";g.card=c;g.inputs={part,ids};g.outputs={y};g.parameter=c|by_slot;both.push_back(std::move(g));}
     }
    }
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;

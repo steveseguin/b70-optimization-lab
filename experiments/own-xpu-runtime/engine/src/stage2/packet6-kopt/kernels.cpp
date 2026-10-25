@@ -515,20 +515,22 @@ MIX_CASE(F32);MIX_CASE(F16);MIX_CASE(BF16);MIX_CASE(Q8_0);MIX_CASE(Q6_K);MIX_CAS
 // parity: RouteMask sets row_count=0 on the other slots (every routed kernel then skips them; the route stays valid).
 // SlotSelect replaces the other slots' rows of the routed output with the peer card's (a bitwise copy).
 struct RouteMask:ownrt::SyclOperation {
-  uint32_t top=0,parity=0;
+  // by_slot: split by slot position (every card holds every expert: exact 5/5 balance) instead of expert-id parity.
+  uint32_t top=0,parity=0;bool by_slot=false;
   sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
-    auto* a=static_cast<Route*>(p[0]);auto* b=static_cast<Route*>(p[1]);const uint32_t n=top,par=parity;
+    auto* a=static_cast<Route*>(p[0]);auto* b=static_cast<Route*>(p[1]);const uint32_t n=top,par=parity;const bool slot=by_slot;
     return ownrt::prepared_submit(q,[=,range=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(range,packet26::checked([=](sycl::id<1> i){
-      if(a[i].expert_id%2u!=par)a[i].row_count=0;if(b[i].expert_id%2u!=par)b[i].row_count=0;}));});
+      const uint32_t key_a=slot?uint32_t(i[0]):a[i].expert_id,key_b=slot?uint32_t(i[0]):b[i].expert_id;
+      if(key_a%2u!=par)a[i].row_count=0;if(key_b%2u!=par)b[i].row_count=0;}));});
   }
 };
 struct SlotSelect:ownrt::SyclOperation {
-  uint32_t top=0,rows=0,parity=0;
+  uint32_t top=0,rows=0,parity=0;bool by_slot=false;
   sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
     auto* y=static_cast<uint32_t*>(p[0]);const auto* peer=static_cast<const uint32_t*>(p[1]);const auto* ids=static_cast<const int32_t*>(p[2]);
-    const uint32_t n=top,r=rows,par=parity;
+    const uint32_t n=top,r=rows,par=parity;const bool by=by_slot;
     return ownrt::prepared_submit(q,[=,range=sycl::range<1>(size_t(n)*r)](sycl::handler& h){h.parallel_for(range,packet26::checked([=](sycl::id<1> i){
-      const size_t slot=i[0]/r;if(uint32_t(ids[slot])%2u!=par)y[i[0]]=peer[i[0]];}));});
+      const size_t slot=i[0]/r;const uint32_t key=by?uint32_t(slot):uint32_t(ids[slot]);if(key%2u!=par)y[i[0]]=peer[i[0]];}));});
   }
 };
 inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_KOPT_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
@@ -569,14 +571,14 @@ ownrt::Event gemv_mix(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocat
   if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
   return d.compute(fused,ids,{});
 }
-ownrt::Event route_mask(ownrt::Device& d,ownrt::Allocation routes,ownrt::Allocation routes_down,uint32_t top,uint32_t parity) {
+ownrt::Event route_mask(ownrt::Device& d,ownrt::Allocation routes,ownrt::Allocation routes_down,uint32_t top,uint32_t parity,bool by_slot) {
   check(d,routes,size_t(top)*sizeof(Route));check(d,routes_down,size_t(top)*sizeof(Route));if(routes==routes_down)throw std::invalid_argument("route mask aliases");
-  RouteMask op;op.top=top;op.parity=parity;std::vector<ownrt::Allocation> ids{routes,routes_down};return d.compute(op,ids,{});
+  RouteMask op;op.top=top;op.parity=parity;op.by_slot=by_slot;std::vector<ownrt::Allocation> ids{routes,routes_down};return d.compute(op,ids,{});
 }
-ownrt::Event slot_select(ownrt::Device& d,ownrt::Allocation y,ownrt::Allocation peer,ownrt::Allocation expert_ids,uint32_t top,uint32_t rows,uint32_t parity) {
+ownrt::Event slot_select(ownrt::Device& d,ownrt::Allocation y,ownrt::Allocation peer,ownrt::Allocation expert_ids,uint32_t top,uint32_t rows,uint32_t parity,bool by_slot) {
   check(d,y,size_t(top)*rows*4);check(d,peer,size_t(top)*rows*4);check(d,expert_ids,size_t(top)*4);
   if(y==peer||y==expert_ids||peer==expert_ids)throw std::invalid_argument("slot select aliases");
-  SlotSelect op;op.top=top;op.rows=rows;op.parity=parity;std::vector<ownrt::Allocation> ids{y,peer,expert_ids};return d.compute(op,ids,{});
+  SlotSelect op;op.top=top;op.rows=rows;op.parity=parity;op.by_slot=by_slot;std::vector<ownrt::Allocation> ids{y,peer,expert_ids};return d.compute(op,ids,{});
 }
 ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
   if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
