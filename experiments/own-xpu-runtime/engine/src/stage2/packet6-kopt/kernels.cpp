@@ -399,7 +399,7 @@ ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
   if(!r || !status)throw std::invalid_argument("kopt routing handles required");
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},experts,count,span,r,status);
-  if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&(t==Type::IQ2_S||t==Type::IQ3_S||t==Type::IQ4_NL||t==Type::Q8_0||t==Type::Q6_K)) {
+  if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&(t==Type::IQ2_S||t==Type::IQ3_S||t==Type::Q8_0||t==Type::Q6_K)) { // not IQ4_NL: K=640 loses parallelism (153 vs ~107 us/layer)
     // F32 routed rows: 4 rows per subgroup, decoded from global memory (OWNRT_KOPT_BLOCK_ROWS=0 keeps one row each).
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
     MultiplyBlockRows<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});

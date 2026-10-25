@@ -156,8 +156,13 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  std::array<int,48> captured{};size_t captured_count=0,issued=0;
  // Diagnostic only (OWNRT_DECODE_PROFILE=1): drain after every site and add its wall time to its op (linear sites by
  // weight format), one line per HALF. Serializes the step, so it shows where time goes, never speed. No arithmetic change.
- static const bool decode_profile=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v&&v[0]=='1';}();
+ // OWNRT_DECODE_PROFILE=2: device timestamps instead. Per site, the summed kernel durations and the idle gap between
+ // the previous kernel's end and this site's first start, with no drain between sites (events stay in the ledger
+ // until the half's final drain).
+ static const int decode_profile_mode=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v?std::atoi(v):0;}();
+ static const bool decode_profile=decode_profile_mode==1;
  std::map<std::string,std::pair<int,double>> decode_spent;
+ struct SiteEvents{std::string key;std::vector<ownrt::Event> events;};std::vector<SiteEvents> device_sites;
  auto cancel_at_boundary=[&](){
   if(!request.speculative)return false;
   if(e.a.cancel_launch>=0)return issued==size_t(e.a.cancel_launch);
@@ -170,7 +175,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  e.dev(0).before_compute=[&](){if(cancel_at_boundary())throw CancelledLaunch{};};
  // A multi-pass legacy site may be cancelled before finish() sees its last
  // event. Record each actual submission so drain still covers its whole prefix.
- e.dev(0).after_compute=[&](ownrt::Event event){e.tail=event;++issued;};
+ e.dev(0).after_compute=[&](ownrt::Event event){e.tail=event;++issued;if(decode_profile_mode==2&&!device_sites.empty())device_sites.back().events.push_back(event);};
  try {for(auto& l:e.p.launches) {
   if(e.v3_skip_half[size_t(&l-e.p.launches.data())])continue; // packet186: moved layers run in the boundary (rank 0) or not at all (rank 1, V3)
   if(cancel_at_boundary()){candidate.cancelled=true;break;}
@@ -179,6 +184,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(l.label=="logits"&&e.head_export)e.head_export(request.sequence,request.position,request.fixture);
   if(decode_profile)e.drain();
+  if(decode_profile_mode==2){std::string key=l.op;if(l.op=="gemv"||l.op=="routed_gemv"){auto role=l.label;if(role.starts_with("blk.")){auto dot=role.find('.',4);if(dot!=std::string::npos)role=role.substr(dot+1);}key+=":"+e.w.directory.at(l.weights.at(0)).grid+":"+role;}device_sites.push_back({key,{}});}
   const auto site_start=std::chrono::steady_clock::now();
   e.enqueue(l,e.logical);
   if(decode_profile){e.drain();
@@ -203,6 +209,19 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  e.dev(0).before_compute={};e.dev(0).after_compute={};
  if(cancel_at_boundary())candidate.cancelled=true;
  double enqueue_ms=Engine::ms(enqueue_start)-(e.wait_ms-enqueue_wait);
+ if(decode_profile_mode==2&&e.tail){
+  // Read every site's device timestamps before the final drain retires the events.
+  // Mid-half drains (rank 1 exports its final rows) retire earlier events; those sites are skipped, never waited on.
+  ownrt::Event last=0;for(const auto& site:device_sites)if(!site.events.empty())last=site.events.back();
+  try{if(last)e.dev(0).wait(last,std::chrono::milliseconds(10000));}catch(const std::exception&){}
+  std::map<std::string,std::array<double,3>> spent;uint64_t previous_end=0,first_start=0,last_end=0;
+  for(const auto& site:device_sites){if(site.events.empty())continue;auto& v=spent[site.key];v[2]+=1;
+   for(size_t i=0;i<site.events.size();++i){ownrt::EventTiming t{};try{t=e.dev(0).timing(site.events[i]);}catch(const std::exception&){previous_end=0;continue;}if(!first_start)first_start=t.start_ns;
+    if(i==0&&previous_end&&t.start_ns>previous_end)v[1]+=double(t.start_ns-previous_end)/1000.0;
+    v[0]+=double(t.end_ns-t.start_ns)/1000.0;previous_end=t.end_ns;last_end=std::max(last_end,t.end_ns);}}
+  std::ofstream o(e.a.output/"decode-device-profile.jsonl",std::ios::app);o<<"{\"position\":"<<request.position<<",\"fixture\":"<<request.fixture<<",\"speculative\":"<<(request.speculative?"true":"false")<<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<",\"span_us\":"<<double(last_end-first_start)/1000.0<<",\"sites\":{";bool comma=false;
+  for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v[2]<<",\"busy_us\":"<<v[0]<<",\"gap_us\":"<<v[1]<<"}";comma=true;}o<<"}}\n";
+ }
  e.drain();if(e.a.rank==0)p150::record("layer_body",request.position,false,enqueue_start);
  if(decode_profile){std::ofstream o(e.a.output/"decode-profile.jsonl",std::ios::app);o<<"{\"position\":"<<request.position<<",\"fixture\":"<<request.fixture<<",\"speculative\":"<<(request.speculative?"true":"false")<<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<",\"sites\":{";bool comma=false;
   for(const auto& [k,v]:decode_spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}

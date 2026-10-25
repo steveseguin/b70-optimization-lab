@@ -79,3 +79,5 @@ MTP hits are identical (4568/5954). Decode is the 12-prompt suite median.
 | idea 3 (part), IQ4_NL codebook packed into registers (`63ab006a`) | 28.00 | neutral; the compiler already kept the table in registers |
 | route in one launch: five `simple_body` phases per work-group (`de89717e`) | 27.67 | neutral; opt-in (`OWNRT_ROUTE_GROUP=1`) |
 | routed kopt with 4 rows per subgroup, read from global memory with no staging (`623cd3d4`) | **28.29** | +1%; kept. Expert kernels are decode/ALU bound, as Strata found on the B70 |
+| device-timestamp profile (`OWNRT_DECODE_PROFILE=2`): rank 0 busy 22.07 of 22.21 ms per step, gaps 0.12 ms, so kernel time (not launches) is the cost | | |
+| exact fast route: same softmax code, top 10 by ten integer-key work-group maxima (idea 5); IQ4_NL down back to one row per subgroup (`d63f7e2d`) | **30.15 (+6.6%)** | route 68.8 → 25.1 µs/layer, IQ4_NL 153 → 127 µs/layer |

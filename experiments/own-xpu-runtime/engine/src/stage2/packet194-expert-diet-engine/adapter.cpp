@@ -275,6 +275,45 @@ template<int FixedN,int FixedTop> struct RouteGroup final:ownrt::SyclOperation {
   }));});
  }
 };
+// Route, fast and exact: one work-group per row. The softmax is the five-phase form's (same max, the same exp, the same
+// subtree<16> chunk sums and subtree<256> denominator, the same division). The top ten come from ten work-group
+// maxima of an integer key (probability bits, then the lower expert id), which is exactly the five-phase rank order
+// (larger probability first, ties to the lower id). The selected probabilities are normalised by the same
+// subtree<32>. OWNRT_ROUTE_FAST=0 keeps the five-phase form.
+template<int N,int Top> struct RouteFast final:ownrt::SyclOperation {
+ Spec spec;explicit RouteFast(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int rows=spec.tokens;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(rows)*N,N)](sycl::handler& h){
+   sycl::local_accessor<float,1> ex(N,h),prob(N,h),sums(N/16,h);sycl::local_accessor<int,1> bad(1,h);
+   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){
+    const int r=int(it.get_group_linear_id()),j=int(it.get_local_linear_id());const RowBound rb{b,r,b.s};auto g=it.get_group();
+    if(!*rb.active()||rb.failed())return; // uniform across the work-group
+    if(j==0)bad[0]=0;it.barrier(sycl::access::fence_space::local_space);
+    const float x=rb.in(0).get(j);if(!std::isfinite(x))sycl::atomic_ref<int,sycl::memory_order::relaxed,sycl::memory_scope::work_group,sycl::access::address_space::local_space>(bad[0]).store(1);
+    it.barrier(sycl::access::fence_space::local_space);
+    if(bad[0]){if(j==0)rb.fail();return;}
+    const float maximum=sycl::reduce_over_group(g,x,sycl::maximum<float>());
+    ex[j]=detmath::exp(x-maximum);it.barrier(sycl::access::fence_space::local_space);
+    constexpr int chunks=(N+15)/16;
+    if(j<chunks)sums[j]=subtree<16>(N,j*16,[&](int i){return ex[i];});
+    it.barrier(sycl::access::fence_space::local_space);
+    const float den=subtree<256>(chunks,0,[&](int i){return sums[i];});
+    prob[j]=ex[j]/den;it.barrier(sycl::access::fence_space::local_space);
+    bool taken=false;
+    for(int rank=0;rank<Top;++rank){
+     // Bit 63 marks a candidate; non-negative float bits order like the values; N-1-j puts the lower id first on ties.
+     const uint64_t key=taken?0:((uint64_t(1)<<63)|(uint64_t(sycl::bit_cast<uint32_t>(prob[j]))<<32)|uint64_t(uint32_t(N-1-j)));
+     const uint64_t best=sycl::reduce_over_group(g,key,sycl::maximum<uint64_t>());const int index=N-1-int(uint32_t(best));
+     if(j==index)taken=true;
+     if(j==0){const float v=prob[index];rb.out(0).put(rank,index);rb.out(1).put(rank,v);
+      if(rb.s.no>=4)for(int k=0;k<3;++k){rb.out(2).put(rank*3+k,k==0?index:k==1?0:rb.s.g.mid);rb.out(3).put(rank*3+k,k==0?index:k==1?0:rb.s.g.h);}}
+    }
+    if(j==0){float sum=subtree<32>(Top,0,[&](int i){return rb.out(1).get(i);});for(int i=0;i<Top;++i)rb.out(1).put(i,rb.out(1).get(i)/sum);}
+   }));});
+ }
+};
+inline bool route_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_FAST");return !e||e[0]!='0';}();return on;}
 inline bool route_group(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_GROUP");return e&&e[0]=='1';}();return on;}
 #endif
 template<Op Code,int FixedN=0,int FixedTop=0> Launch simple_new_submit(ownrt::Device& d,const Spec& s,std::span<const ownrt::Allocation> bindings,std::span<const ownrt::Event> deps){
@@ -336,6 +375,7 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  if(s.implementation&&s.special==Special::normal){switch(s.op){
  case Op::route:if(s.sizes[0]==512&&s.site.shape[1]==10){
 #ifndef OWN_RT_HOST_ONLY
+  if(route_fast()){RouteFast<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
   if(route_group()){RouteGroup<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
 #endif
   return simple_new_submit<Op::route,512,10>(d,s,bindings,deps);}

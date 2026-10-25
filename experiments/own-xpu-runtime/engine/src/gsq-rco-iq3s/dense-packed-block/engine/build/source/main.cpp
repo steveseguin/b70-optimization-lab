@@ -1212,7 +1212,7 @@ public:
 #ifdef OWN_RT_HOST_ONLY
     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
 #else
-    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.rank==0||a.mtp||!a.draft_capture.empty())));
+    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.rank==0||a.mtp||!a.draft_capture.empty()||std::getenv("OWNRT_DECODE_PROFILE"))));
     save(a.output/"device-contact.json","{\"device_contact\":true}");
 #endif
     if(a.argument_audit){argument_log.open(a.output/"argument-equivalence.jsonl");dev(0).argument_audit=&argument_log;dev(0).audit_prepare_each=a.audit_prepare_each;}
