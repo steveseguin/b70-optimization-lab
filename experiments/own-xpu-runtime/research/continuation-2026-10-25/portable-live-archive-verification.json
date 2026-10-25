@@ -1,0 +1,88 @@
+{
+  "schema": "ownrt.completed-suite-archive-verification.v1",
+  "passed": true,
+  "verified_utc": "2026-10-25T20:19:08.507077+00:00",
+  "archive": {
+    "path": "/dev/shm/sc117-portable-live-pp4-20261025.tar.gz",
+    "bytes": 180255399,
+    "sha256": "98fd47013b09807f9f6deb292b95e8853f1bb6b6eb14dacf25214fea9eeb2c3d",
+    "durable": false
+  },
+  "archive_members": 257,
+  "raw_state_members": [
+    {
+      "member": "pp4/stage0/native/draft-final-state-sealed/state.bundle",
+      "bytes": 27451714,
+      "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+      "source_seal": {
+        "path": "/dev/shm/sc117-portable-live-20261025/pp4/stage0/native/draft-final-state-sealed/state-seal.txt",
+        "bytes": 222,
+        "sha256": "20def73adba1fd400edbae178c63d6b02d72290d7f4090ca0357a70e1d0edbe5"
+      },
+      "passed": true
+    },
+    {
+      "member": "pp4/stage0/native/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "68d08d89fc5b0cfb1f89b565a8921f73e0fd4b37a237da4de907420fdf9f2cb7",
+      "source_seal": {
+        "path": "/dev/shm/sc117-portable-live-20261025/pp4/stage0/native/state-2147483647/state-seal.txt",
+        "bytes": 223,
+        "sha256": "686d66a08fbe4b234c3909699361383f3499dff748a66092f32816d3767a5033"
+      },
+      "passed": true
+    },
+    {
+      "member": "pp4/stage0/native/state-2147483647.draft/state.bundle",
+      "bytes": 27451714,
+      "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+      "source_seal": {
+        "path": "/dev/shm/sc117-portable-live-20261025/pp4/stage0/native/state-2147483647.draft/state-seal.txt",
+        "bytes": 222,
+        "sha256": "20def73adba1fd400edbae178c63d6b02d72290d7f4090ca0357a70e1d0edbe5"
+      },
+      "passed": true
+    },
+    {
+      "member": "pp4/stage1/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "7b46fe09c96a06095bafbb23598f29fb3d9d808814e64905632fa0c3504d4063",
+      "source_seal": {
+        "path": "/dev/shm/sc117-portable-live-20261025/pp4/stage1/native/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "3110a3620466bdb0ad3b8bd4a1b149f51b199356e642b7eea6262ee81766c9a8"
+      },
+      "passed": true
+    },
+    {
+      "member": "pp4/stage2/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "f4c7e4791a65bf25da09de93be773a36e6013e68c362b467853981d6a8ae37ce",
+      "source_seal": {
+        "path": "/dev/shm/sc117-portable-live-20261025/pp4/stage2/native/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "b07b235c29561c8571f0037020955e37b83afe75e7ef3ab02580401cc8c12163"
+      },
+      "passed": true
+    },
+    {
+      "member": "pp4/stage3/native/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "503ded24366842efb7bcb9b64aa9556a0eb9afbe8b691ac96c4cbf66770d42e5",
+      "source_seal": {
+        "path": "/dev/shm/sc117-portable-live-20261025/pp4/stage3/native/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "290c62d501b790971774dcaa7cc9b4f1d1d30796b3c6e05ed4963ceaf8c38f1e"
+      },
+      "passed": true
+    }
+  ],
+  "raw_state_bytes": 472202828,
+  "script": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/archive_completed_suite.py",
+    "bytes": 4343,
+    "sha256": "dbb3ffe2b1835fe882c29591d7159e559b6ba8fa64ad847ec17a1328dc69c302"
+  },
+  "method": "Native sealed reader, completed archive SHA256, then independent streaming member hashes against native seals.",
+  "scope": "All completed run controller/native logs and final target/draft raw state plus compact audit. Original files remain untouched."
+}

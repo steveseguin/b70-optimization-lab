@@ -1,0 +1,88 @@
+{
+  "schema": "ownrt.completed-suite-archive-verification.v1",
+  "passed": true,
+  "verified_utc": "2026-10-25T20:12:31.946030+00:00",
+  "archive": {
+    "path": "/dev/shm/sc117-persistent-suite-b-20261025.tar.gz",
+    "bytes": 219640702,
+    "sha256": "3a6caf8b5875ec3c24965a315d29a2ec0e4c5e8b98dbee9f401f3f95987c3b46",
+    "durable": false
+  },
+  "archive_members": 1068,
+  "raw_state_members": [
+    {
+      "member": "persistent-pp4-suite-b/stage0/native/requests/request-11-decision-memo/draft-final-state-sealed/state.bundle",
+      "bytes": 27451714,
+      "sha256": "5f71de692638d793d67a3018444a1ef1374e171c63d027002c7a1ef98149235e",
+      "source_seal": {
+        "path": "/dev/shm/sc117-wavefront-20261025/persistent-pp4-suite-b/stage0/native/requests/request-11-decision-memo/draft-final-state-sealed/state-seal.txt",
+        "bytes": 222,
+        "sha256": "5e492d4c9a69e12bcddb21b2d03437cba4db0ffef912514009605ce4a57b98b9"
+      },
+      "passed": true
+    },
+    {
+      "member": "persistent-pp4-suite-b/stage0/native/requests/request-11-decision-memo/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "e0487175850a65ee5fa319e7495619a53bb90a695e59e3fe93e00405eabe56ff",
+      "source_seal": {
+        "path": "/dev/shm/sc117-wavefront-20261025/persistent-pp4-suite-b/stage0/native/requests/request-11-decision-memo/state-2147483647/state-seal.txt",
+        "bytes": 223,
+        "sha256": "98ae15b6c2bbada13e27c03a14cb8535f5bc1c6e9867ddaeb1dc112f161424d3"
+      },
+      "passed": true
+    },
+    {
+      "member": "persistent-pp4-suite-b/stage0/native/requests/request-11-decision-memo/state-2147483647.draft/state.bundle",
+      "bytes": 27451714,
+      "sha256": "5f71de692638d793d67a3018444a1ef1374e171c63d027002c7a1ef98149235e",
+      "source_seal": {
+        "path": "/dev/shm/sc117-wavefront-20261025/persistent-pp4-suite-b/stage0/native/requests/request-11-decision-memo/state-2147483647.draft/state-seal.txt",
+        "bytes": 222,
+        "sha256": "5e492d4c9a69e12bcddb21b2d03437cba4db0ffef912514009605ce4a57b98b9"
+      },
+      "passed": true
+    },
+    {
+      "member": "persistent-pp4-suite-b/stage1/native/requests/request-11-decision-memo/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "ed5081943cec91b0f41444f7a6eeccfee59577d976cabfdd10d284489b6e1bc5",
+      "source_seal": {
+        "path": "/dev/shm/sc117-wavefront-20261025/persistent-pp4-suite-b/stage1/native/requests/request-11-decision-memo/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "21d38816c1e6d7ca8cd62ef9c5e316b54e902008e561ce1212b061a3fcfe9584"
+      },
+      "passed": true
+    },
+    {
+      "member": "persistent-pp4-suite-b/stage2/native/requests/request-11-decision-memo/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "3ee73494947fe78fee3c329df7cdbde97a61b86ad4501f0d434a9a8fd06f19c1",
+      "source_seal": {
+        "path": "/dev/shm/sc117-wavefront-20261025/persistent-pp4-suite-b/stage2/native/requests/request-11-decision-memo/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "57184cbb5c7eb237c2434fe65365d84da6d03ba73ea4964252302275c8a3f7d2"
+      },
+      "passed": true
+    },
+    {
+      "member": "persistent-pp4-suite-b/stage3/native/requests/request-11-decision-memo/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "09fd71e372cd1d9d3872a5886c6e1dd005df9fe99b17e6ec88eb0d39dedf7d7e",
+      "source_seal": {
+        "path": "/dev/shm/sc117-wavefront-20261025/persistent-pp4-suite-b/stage3/native/requests/request-11-decision-memo/state-2147483647/state-seal.txt",
+        "bytes": 222,
+        "sha256": "7bfb7282c5a30bce1bd8d45a6fb6bdfc97c55526d8c56eb2a2f0ca2666725227"
+      },
+      "passed": true
+    }
+  ],
+  "raw_state_bytes": 472202828,
+  "script": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/archive_completed_suite.py",
+    "bytes": 3837,
+    "sha256": "a99d904981e12273d465e078d7d549757e58766d063aa4405ca16b4d6a5687c2"
+  },
+  "method": "Native sealed reader, completed archive SHA256, then independent streaming member hashes against native seals.",
+  "scope": "All completed suite controller/native logs and final target/draft raw state plus compact audit. Original files remain untouched."
+}

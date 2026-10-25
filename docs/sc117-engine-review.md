@@ -220,3 +220,52 @@ observer and plan-bound admissions; they do not import recorded lab rank command
 This validates the deployment split on the lab host, not a new-host installation,
 portable HTTP service, all model variants or other GPU configurations.
 Raw proof archives are retained with independently rehashed durable copies.
+
+## Full cold four-card suite: correct, slower
+
+The [persistent suite audit](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md)
+checks all twelve cold requests and 5,965 output IDs against the retained normal
+two-card service. Every output matches. Native resets, executed prompt rows,
+monotonic wire sequences and canonical draft inputs also pass; all four processes
+exit cleanly. A separate two-request qualification compared all 2,065 target
+buffers and 73 draft allocations after each reset. The full suite did not repeat
+those complete state dumps for every request.
+
+Median full-response decode is **42.3119 tok/s**, versus the retained two-card
+service's **47.9706 tok/s**. This is a negative speed result, retained as research
+evidence. Both rates use output-count minus one over first-to-last token time;
+the candidate observes coordinator COMMIT replies, whereas the service records
+native completion aggregates. Neither this comparison nor the earlier service
+observations are certified benchmark promotions. Restore byte verification was
+disabled for the timing run after the bounded correctness proof passed.
+
+The first full-suite attempt refused 512 tokens before opening a GPU because of
+a legacy 128-token parser bound. The corrected bound allows 512 only in explicit
+pipeline mode, keeps legacy behavior, and passed four pre-device parser checks.
+Both the refusal and exact source change are preserved. No hardware fault or
+automatic retry occurred.
+
+Next is continuous deeper overlap with the existing draft weights. The
+[common-cohort analysis](../experiments/own-xpu-runtime/research/continuation-2026-10-25/recursive-common-cohort.md)
+rejoins recursive proposals on equal observable positions; it does not predict
+throughput. Separate model profiles, local file bindings and stage ownership
+remain the reusable interfaces. No draft-model training is planned or permitted.
+
+## Downloadable standalone live recipe
+
+The [294-file source archive](../downloads/own-engine/ownrt-source-9d6320c1b.tar.gz)
+at commit `9d6320c1b` includes the live controller and its full Python import
+closure, model profile, preparer and native sources. SHA256:
+`e6a61c628da59bb02d92ac83329a78d8f41f0d1259e5a7ea8d1955820d0c8208`.
+A separate extracted tree built with the authenticated generated header, yielding
+binary `6eff23e4cd8a`. Its standalone four-card live replay passes all 32 output
+IDs, 2,065 target buffers, 73 draft allocations and 117 actual true-pair inputs
+against the accepted live reference. All full restore checks and clean exits pass.
+
+The [portable live proof](../experiments/own-xpu-runtime/research/continuation-2026-10-25/portable-live/pp4-proof/RESULT.md)
+keeps the model profile, local binding, generated header and original tensor
+manifest identities separate. The [recipe](../experiments/own-xpu-runtime/engine/deployment/LIVE.md)
+does not import the lab launcher or its host snapshots. Weights, tokenizer and
+Intel platform dependencies remain separately supplied. This is bounded same-host
+runtime qualification, not portable speed, a multi-request HTTP service,
+clean-host installation, or general support for every model/quant/card count.

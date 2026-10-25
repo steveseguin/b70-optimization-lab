@@ -1,0 +1,30 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-portable-live-pp4-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/dev/shm/sc117-portable-source-9d6320c1b/own-xpu-runtime-source",
+    "/usr/bin/python3",
+    "/dev/shm/sc117-portable-source-9d6320c1b/own-xpu-runtime-source/deployment/portable_live.py",
+    "run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/portable-live/pp4-plan.json",
+    "--plan-sha256",
+    "8719258cf19f37ecf481bb1326db60e11c730b2fe9792237650c0637ae0bdfc9",
+    "--profile-sha256",
+    "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a",
+    "--binding-sha256",
+    "bfd016aa02b31f6183cd9c739d6d30e5449704268a8f4b136d3ff45302805fdf",
+    "--build-receipt-sha256",
+    "666f0b2703626a466d6f24203a0fc03e3212ac4810bfc30819ef4d9ce7e29326",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/portable-live/pp4-admission.json",
+    "--unit",
+    "sc117-portable-live-pp4-20261025.service"
+  ]
+}

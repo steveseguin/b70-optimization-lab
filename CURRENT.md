@@ -18,15 +18,23 @@ updates are preserved. Clean-host installation and portable serving remain open.
 
 The cold multi-request path passed two complete reset/state comparisons: both
 requests match all 2,065 target buffers, 73 draft allocations and output tokens.
-The first twelve-prompt launch refused its 512-token cap before opening a GPU.
-The pipeline-only bound is corrected (legacy remains 128); four parser checks
-passed. The complete cold suite is now running once on all four cards under
-`sc117-persistent-pp4-suite-b-20261025`, with reset before every request and full
-output comparison. Native build `10f22c6f5f63` is frozen for this run. Explicit target/draft
-state ownership is opt-in groundwork for deeper overlap. The established two-card
-speed remains 47.97 tok/s; draft training is prohibited. No host power or memory
+The complete four-card cold suite passed all twelve outputs (5,965 tokens) and
+request reset checks; all workers exited cleanly. Median decode was **42.31 tok/s**,
+below the established **47.97 tok/s** two-card service observation. Different timing
+observation layers remain disclosed; this is no promoted record. The initial
+128-token parser refusal happened before device access and its narrow fix is retained.
+The complete extracted portable live recipe now also passes: all 32 tokens,
+2,065 target buffers, 73 draft allocations and 117 true-pair inputs match the
+accepted live reference. Build `6eff23e4cd8a` uses the generated local binding;
+all four workers exited cleanly. Deeper overlap remains
+the speed work; its isolated two-slot checkpoint and scheduler proposals are under
+CPU review. No GPU model is currently loaded. Draft training is prohibited. No host power or memory
 settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
 and [portable proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md).
+The [full four-card suite audit](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md)
+retains the negative speed result and per-stage timings.
+The [portable live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable-live/pp4-proof/RESULT.md)
+qualifies the 294-file source snapshot's standalone controller on this host.
 
 
 **October 25, review session — owner authorizes all four cards; reusable engine and publication work active.**

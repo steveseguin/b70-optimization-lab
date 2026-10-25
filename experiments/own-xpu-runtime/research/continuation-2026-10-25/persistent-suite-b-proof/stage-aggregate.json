@@ -1,0 +1,55 @@
+{
+  "scope": "Descriptive per-request decode-window measurements only; no estimated benefit from different boundaries.",
+  "total_tuning_span_seconds": 138.79340096982196,
+  "stages": [
+    {
+      "stage": 0,
+      "layers": 13,
+      "rows": 7345,
+      "aborted_rows": 1413,
+      "median_of_request_ROW_noncapture_medians_ms": 8.146640000000001,
+      "capture_ms": 10426.75616,
+      "restore_ms": 2481.8414000000002,
+      "wasted_row_ms": 14009.22985,
+      "canonical_draft_native_ms": 12410.003768999999,
+      "controller_roundtrip_minus_native_wall_ms": 1398.7237480794975
+    },
+    {
+      "stage": 1,
+      "layers": 12,
+      "rows": 7048,
+      "aborted_rows": 1116,
+      "median_of_request_ROW_noncapture_medians_ms": 7.5420955,
+      "capture_ms": 4913.045118,
+      "restore_ms": 1016.304319,
+      "wasted_row_ms": 9517.88789,
+      "canonical_draft_native_ms": 0,
+      "controller_roundtrip_minus_native_wall_ms": 1629.3539949487156
+    },
+    {
+      "stage": 2,
+      "layers": 12,
+      "rows": 6765,
+      "aborted_rows": 831,
+      "median_of_request_ROW_noncapture_medians_ms": 7.47222,
+      "capture_ms": 3267.709636,
+      "restore_ms": 738.858456,
+      "wasted_row_ms": 6875.18663,
+      "canonical_draft_native_ms": 0,
+      "controller_roundtrip_minus_native_wall_ms": 2783.0956082997122
+    },
+    {
+      "stage": 3,
+      "layers": 11,
+      "rows": 5941,
+      "aborted_rows": 0,
+      "median_of_request_ROW_noncapture_medians_ms": 8.8824525,
+      "capture_ms": 0,
+      "restore_ms": 0,
+      "wasted_row_ms": 0,
+      "canonical_draft_native_ms": 0,
+      "controller_roundtrip_minus_native_wall_ms": 1433.1548064638996
+    }
+  ],
+  "aggregation": "Sum durations and counts across disjoint request windows. ROW median column is median of twelve per-request ROW medians, not a pooled-event median. Cross-stage times overlap."
+}
