@@ -141,3 +141,20 @@ p+1 has run on rank 0's GPU, so the cycle is rank 0's half plus the draft. Two e
 
 Rank 1 is now the slower stage. Further balance needs rank-1 memory: the 522 MB target head, KV, or the cap itself.
 Reducing either stage's work, or the ~2 ms per-position hand-off and host overhead, now pays off directly.
+
+## Later results (2026-10-25, all exact: outputs identical, F32 oracle zero differences, prefill gate 13/13)
+
+| Change | Suite tok/s |
+|---|---:|
+| bounded 8 MiB operator scratch (SPEED6's plan-derived proof, now for GSQ) → split 22/26 fits rank 1 | 41.26 |
+| argmax in one 1024-lane work-group per row (target head argmax was 0.30 ms per token) | 41.56 |
+| banked speculation + static KV-row snapshots (control copied 102 MB, the whole KV, each speculative step) | 42.26 |
+| round2 GDN in F32 (it had never set the accessor's F32 flag) + route with 32-bit reductions | 43.46 |
+| rebalanced split 23/25 | **44.13** |
+
+Negatives: Q4 draft head (40.15 vs 40.60), IQ4_NL levels by shuffle (54 → 85 µs), small-K rows per subgroup
+(neutral), head-shared and specialised GDN (slower than round2).
+
+Four cards: settle on one estimate, **~1.4×** for the hybrid (2 stages × exact 2-way split). Matrix work, now about
+70% of each stage's busy time, splits two ways; small ops are replicated; there are about 1–2 ms of
+synchronizations. It needs cards 27/43.
