@@ -313,7 +313,7 @@ static Options parse(int argc, char **argv) {
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
-  require(a.tokens > 0 && a.tokens <= 128 && a.context >= 8 &&
+  require(a.tokens > 0 && a.tokens <= (a.pipeline_enabled() ? 512 : 128) && a.context >= 8 &&
               a.context <= 32768 && a.seconds > 0 && a.seconds <= 172800,
           "bounded generation/context/deadline");
   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");

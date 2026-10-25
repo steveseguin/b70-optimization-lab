@@ -14,10 +14,11 @@ reference manifests remain unchanged.
 
 This is target-only execution/state qualification for the generated local
 deployment, not portable MTP or throughput certification. Raw state bundles
-remain external with retained seals and hashes; preserve originals pending
-durable archival. No model payload was reread by this evidence audit.
+remain external with retained seals and hashes and in the verified durable
+archive. No model payload was reread by this evidence audit.
 
 The two/four-stage runs and their proof metadata are in a verified
 379,574,314-byte tmpfs archive. The [archive receipt](../../portable-archive-verification.json)
 records the SHA256 and independent checks of all 860,665,704 raw bundle bytes.
-Durable copy is pending; originals are preserved.
+The [durable copy receipt](../../portable-durable-archive.json) records the
+independently rehashed USB copy; originals are preserved.

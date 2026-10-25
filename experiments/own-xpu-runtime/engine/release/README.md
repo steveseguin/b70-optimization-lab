@@ -12,7 +12,7 @@ python3 -B -m unittest discover -s experiments/own-xpu-runtime/engine/release -p
 ```
 
 The archive includes tracked `src/`, `build.py`, the engine README and committed
-`planning/` and `release/` files when present. Required inputs must match `HEAD`;
+`planning/`, `release/`, `profiles/` and `deployment/` files when present. Required inputs must match `HEAD`;
 uncommitted changes are refused. A deterministic generated build manifest retains
 the compiler, translation units, compile flags, link order and link flags. It omits
 historical binary/object locations and consolidation metadata, whose original
@@ -23,8 +23,8 @@ supplemental input: its committed bytes are included as `src/device_validation.h
 and separately hash-bound. It is not misclassified as a system header.
 
 `SOURCE-MANIFEST.json` records the Git commit, all original input hashes, all
-exported payload hashes, local include edges, external system headers and toolchain
-requirements. A companion `*.tar.gz.manifest.json` additionally records the archive
+exported payload hashes, local include edges, external system headers, literal
+Python import edges, standard-library modules and toolchain requirements. A companion `*.tar.gz.manifest.json` additionally records the archive
 hash and size. Archive names, ordering, permissions, ownership and timestamps are
 fixed. Repeated exports of the same inputs yield identical bytes in the same Python
 and zlib environment. Existing output files are refused.
@@ -37,6 +37,18 @@ not compiled or certified. Unknown project headers fail closed even with angle
 brackets. The manifest's historical file hashes
 describe consolidation; current committed source hashes are the exported identity.
 
+When the committed portable live adapter is present, the exporter explicitly
+requires its shared `tools/pipeline_driver.py`, `wavefront_driver.py`,
+`live_wavefront_driver.py`, `persistent_live_suite.py` and
+`persistent_wavefront_driver.py`, plus the dynamically loaded
+`planning/wavefront.py` and `live_draft.py`. This includes lazy imports even when
+a one-shot path does not call them. Literal Python imports throughout the selected
+corpus must resolve to packaged local modules or the Python standard library;
+untracked/missing modules and undeclared external packages fail export. Tests
+also check the portable adapter imports from an isolated extracted layout.
+See [the portable live research recipe](../deployment/LIVE.md) for its scope;
+packaging shared tools does not make their historical lab launchers portable.
+
 The compiler is Intel oneAPI 2026.0 at the path in the build manifest. C++20 system
 headers, OpenSSL and Level Zero development libraries are also required. The
 bundler does not validate their installation or modify them.
@@ -44,7 +56,9 @@ bundler does not validate their installation or modify them.
 Model weights, tokenizer inputs, external loader authority files, service adapters,
 host admission snapshots, receipts, objects and executable binaries are excluded.
 Existing hardcoded runtime defaults remain in the source and their locations are
-listed in the manifest. Those dependencies still need a portable runtime recipe,
-followed by a clean-source build, runtime smoke, independent quality qualification,
+listed in the manifest. The profile/preparer and portable target/live recipes
+provide separate generated deployment paths; their actual build/runtime evidence
+is distinct from source export. A new deployment still needs clean-source build,
+runtime smoke, independent quality qualification,
 public asset upload and remote hash verification. Packaging source closes none of
 those gates and supplies no new performance result.

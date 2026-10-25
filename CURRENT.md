@@ -18,9 +18,11 @@ updates are preserved. Clean-host installation and portable serving remain open.
 
 The cold multi-request path passed two complete reset/state comparisons: both
 requests match all 2,065 target buffers, 73 draft allocations and output tokens.
-The twelve-prompt timing launch then refused its 512-token cap before opening a
-GPU because of a legacy 128-token argument bound; that narrow fix is in progress.
-No workers remain from the refused launch. Explicit target/draft
+The first twelve-prompt launch refused its 512-token cap before opening a GPU.
+The pipeline-only bound is corrected (legacy remains 128); four parser checks
+passed. The complete cold suite is now running once on all four cards under
+`sc117-persistent-pp4-suite-b-20261025`, with reset before every request and full
+output comparison. Native build `10f22c6f5f63` is frozen for this run. Explicit target/draft
 state ownership is opt-in groundwork for deeper overlap. The established two-card
 speed remains 47.97 tok/s; draft training is prohibited. No host power or memory
 settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)

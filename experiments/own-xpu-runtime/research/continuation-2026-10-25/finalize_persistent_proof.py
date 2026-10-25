@@ -31,7 +31,7 @@ def audit_request(run, plan, request, row, index, previous_final):
     for stage in plan['stages']:
         sid=stage['id'];native=Path(stage['native_output'])/'requests'/request.name
         reset=json.loads((native/'wavefront-reset.json').read_text())
-        expected_sequence=1 if previous_final is None else previous_final[sid]+2 # per-request DUMP then RESET
+        expected_sequence=1 if previous_final is None else previous_final[sid]+1+int(plan['dump_each'])
         expected=dict(schema='ownrt.pipeline-reset.v1',passed=True,stage_id=sid,global_sequence=expected_sequence,
             target_position=0,draft_position=0 if stage['first'] else None,pending_ticket=False,sticky_error=0,
             allocation_ids_preserved=True,context_extent=32,alternate_extent=32,counters_reset=True,trace_reset=True)

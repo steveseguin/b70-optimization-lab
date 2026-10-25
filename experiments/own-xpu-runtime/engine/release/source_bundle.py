@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Export committed canonical engine sources without building or running them."""
 import argparse
+import ast
 import gzip
 import hashlib
 import io
@@ -8,6 +9,7 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
+import sys
 import tarfile
 
 
@@ -38,6 +40,47 @@ def safe_relative(name):
     return path
 
 
+# Shared protocol modules are source, not copied lab launch artifacts. Include
+# even the lazy persistent import so the archive has a complete literal closure.
+PORTABLE_LIVE_RUNTIME=(
+    'tools/pipeline_driver.py','tools/wavefront_driver.py','tools/live_wavefront_driver.py',
+    'tools/persistent_live_suite.py','tools/persistent_wavefront_driver.py',
+    'planning/wavefront.py','planning/live_draft.py')
+
+
+def python_closure(contents):
+    edges=[];external=set()
+    for name,data in sorted(contents.items()):
+        if not name.endswith('.py'):continue
+        try:tree=ast.parse(data,filename=name)
+        except SyntaxError as error:raise BundleError('Invalid Python source: '+name) from error
+        parent=PurePosixPath(name).parent
+        def dependency(module,level=0):
+            top=module.split('.')[0]
+            if not level and top in sys.stdlib_module_names:
+                external.add(top);return
+            roots=[parent,PurePosixPath('.'),PurePosixPath('tools'),PurePosixPath('deployment'),PurePosixPath('planning'),PurePosixPath('release')]
+            if level:
+                root=parent
+                for _ in range(level-1):root=root.parent
+                roots=[root]
+            relative=PurePosixPath(*module.split('.'))
+            for root in roots:
+                stem=root/relative
+                for candidate in (str(stem)+'.py',str(stem/'__init__.py')):
+                    if candidate in contents:
+                        edges.append({'from':name,'to':candidate});return
+            raise BundleError('Missing/untracked Python dependency in '+name+': '+module)
+        for node in ast.walk(tree):
+            if isinstance(node,ast.Import):
+                for alias in node.names:dependency(alias.name)
+            elif isinstance(node,ast.ImportFrom):
+                if node.module:dependency(node.module,node.level)
+                else:
+                    for alias in node.names:dependency(alias.name,node.level)
+    return sorted(edges,key=lambda row:(row['from'],row['to'])),sorted(external)
+
+
 def prepare(engine):
     engine = Path(engine).resolve()
     root = Path(git(engine, "rev-parse", "--show-toplevel").decode().strip())
@@ -50,6 +93,8 @@ def prepare(engine):
                       for folder in ("planning", "release", "deployment", "profiles")))
     if b"from deployment.prepare import" in (engine / "build.py").read_bytes():
         required += [prefix + "/deployment/" + name for name in ("prepare.py", "bound.hpp.in")]
+    if prefix+'/deployment/portable_live.py' in tracked:
+        required += [prefix+'/'+name for name in PORTABLE_LIVE_RUNTIME]
     selected = sorted(set(source_names + required + optional))
     contents, inputs = {}, []
     if not source_names:
@@ -140,6 +185,7 @@ def prepare(engine):
                 system_headers.add(target)
             else:
                 raise BundleError("Unknown angle include is not an admitted system header: " + target)
+    python_edges,python_system=python_closure(contents)
     # build.py consumes only these keys. Historical object locations and
     # consolidation provenance are not build dependencies or release inputs.
     manifest = {"schema": "ownrt.engine.source-build.v1",
@@ -174,12 +220,14 @@ def prepare(engine):
         "schema": "ownrt.engine.source-bundle.v1", "source_commit": commit,
         "engine_repository_path": prefix, "status": "research-source-only",
         "validation": {"tracked_committed_inputs": True, "literal_local_include_closure": True,
-                       "clean_source_build": False, "runtime_smoke": False,
+                       "literal_python_import_closure": True, "clean_source_build": False, "runtime_smoke": False,
                        "quality_gate": False, "portable_runtime": False},
         "inputs": inputs,
         "files": [{"path": name, "sha256": digest(data), "bytes": len(data)}
                   for name, data in sorted(contents.items())],
         "include_edges": local_edges, "external_system_headers": sorted(system_headers),
+        "python_import_edges": python_edges, "python_standard_library_modules": python_system,
+        "explicit_dynamic_python_dependencies": list(PORTABLE_LIVE_RUNTIME) if "deployment/portable_live.py" in contents else [],
         "supplemental_source_inputs": supplemental,
         "toolchain_prerequisites": {"python": ">=3.10", "compiler": manifest["compiler"],
                                     "link_compiler": manifest["link"]["compiler"],

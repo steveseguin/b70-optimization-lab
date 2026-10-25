@@ -169,5 +169,43 @@ class SourceBundleTests(unittest.TestCase):
             bundle.prepare(self.engine)
 
 
+
+class PythonClosureTests(unittest.TestCase):
+    setUp=SourceBundleTests.setUp
+    git=SourceBundleTests.git
+    write=SourceBundleTests.write
+    save_manifest=SourceBundleTests.save_manifest
+    commit=SourceBundleTests.commit
+    def install_live_fixture(self):
+        (self.engine/'deployment').mkdir(exist_ok=True)
+        self.write('deployment/portable_live.py','import live_wavefront_driver\n')
+        for name in bundle.PORTABLE_LIVE_RUNTIME:
+            path=self.engine/name;path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_text('# runtime fixture\n')
+        self.write('tools/live_wavefront_driver.py','import wavefront_driver\nfrom persistent_live_suite import helper\n')
+        self.write('tools/wavefront_driver.py','import pipeline_driver\n')
+        self.write('tools/persistent_wavefront_driver.py','import persistent_live_suite\n')
+    def test_explicit_runtime_and_lazy_import_closure_exported(self):
+        self.install_live_fixture();self.commit()
+        contents,report=bundle.prepare(self.engine)
+        self.assertTrue(all(name in contents for name in bundle.PORTABLE_LIVE_RUNTIME))
+        self.assertTrue(report['validation']['literal_python_import_closure'])
+        self.assertIn(dict(**{'from':'tools/live_wavefront_driver.py','to':'tools/persistent_live_suite.py'}),report['python_import_edges'])
+        self.assertEqual(bundle.archive_bytes(contents),bundle.archive_bytes(bundle.prepare(self.engine)[0]))
+    def test_untracked_lazy_runtime_refuses_complete_bundle_claim(self):
+        self.install_live_fixture()
+        lazy=self.engine/'tools/persistent_live_suite.py';raw=lazy.read_bytes();lazy.unlink();self.commit();lazy.write_bytes(raw)
+        with self.assertRaisesRegex(bundle.BundleError,'Untracked required input'):
+            bundle.prepare(self.engine)
+    def test_new_untracked_python_import_refused(self):
+        self.install_live_fixture();self.write('tools/pipeline_driver.py','import untracked_local_helper\n');self.commit()
+        self.write('tools/untracked_local_helper.py','# not tracked\n')
+        with self.assertRaisesRegex(bundle.BundleError,'Missing/untracked Python dependency'):
+            bundle.prepare(self.engine)
+    def test_unknown_external_package_not_silently_system(self):
+        self.write('build.py','import external_package_not_in_stdlib\n');self.commit()
+        with self.assertRaisesRegex(bundle.BundleError,'Missing/untracked Python dependency'):
+            bundle.prepare(self.engine)
+
 if __name__ == "__main__":
     unittest.main()

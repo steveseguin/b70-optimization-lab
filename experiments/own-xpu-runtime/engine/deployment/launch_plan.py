@@ -64,6 +64,7 @@ def make_plan(deployment, profile_sha, binding_sha, receipt_path, receipt_sha,
                  'two/four distinct canonical PCI BDFs required')
     prep.require(mode!='mtp' or len(bdfs)==2,'current MTP controller requires two ranks')
     prep.require(type(max_new)is int and 1<=max_new<=512 and type(seconds)is int and 30<=seconds<=172800,'bounded output/lifetime')
+    prep.require(mode!='mtp' or max_new<=128,'legacy MTP native output cap is 128; portable legacy controller unavailable')
     prep.require(isinstance(prompt_tokens,list) and prompt_tokens
                  and all(type(t)is int and 0<=t<policy['vocab'] for t in prompt_tokens)
                  and len(prompt_tokens)+max_new-1<=policy['context'],'prompt/output context bounds')

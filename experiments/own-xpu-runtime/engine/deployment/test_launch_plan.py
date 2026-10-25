@@ -37,10 +37,10 @@ class LaunchPlanTests(unittest.TestCase):
         self.lib=self.root/'runtime-libs';self.lib.mkdir()
         self.run=self.root/'run'
 
-    def generate(self, mode='target-only', count=2):
+    def generate(self, mode='target-only', count=2, max_new=32):
         return launch.make_plan(self.out,self.sha,self.binding_sha,self.receipt_path,prep.digest(self.receipt_path.read_bytes()),
             ['0000:23:00.0','0000:47:00.0','0000:27:00.0','0000:43:00.0'][:count],
-            [self.lib],self.run,[1,2,3],mode)
+            [self.lib],self.run,[1,2,3],mode,max_new=max_new)
 
     def test_two_four_stage_templates_match_protocol_and_local_binding(self):
         for count in (2,4):
@@ -71,6 +71,12 @@ class LaunchPlanTests(unittest.TestCase):
         self.assertNotIn('--pipeline-stage',first['argv'])
         self.assertEqual(result['prefill_rows'],0)
         with self.assertRaisesRegex(ValueError,'two ranks'):self.generate('mtp',4)
+
+    def test_legacy_mtp_cap_remains_128_while_pipeline_templates_allow_512(self):
+        self.assertEqual(self.generate('mtp',max_new=128)['max_new'],128)
+        with self.assertRaisesRegex(ValueError,'legacy MTP native output cap'):
+            self.generate('mtp',max_new=129)
+        self.assertEqual(self.generate('target-only',max_new=512)['max_new'],512)
 
     def test_hash_and_binding_changes_prevent_planning(self):
         self.binary.write_bytes(b'tampered')

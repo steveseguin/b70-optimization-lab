@@ -1,0 +1,36 @@
+{
+  "schema": "ownrt.portable-live-cpu-review.v1",
+  "timestamp_utc": "2026-10-25T20:05:20.143134+00:00",
+  "passed": true,
+  "source_sha256": {
+    "engine/deployment/portable_live.py": "aa772dce091a6067c814651631721ca2accdc843acb5e2169c5e17434829547d",
+    "engine/deployment/test_portable_live.py": "a81803bfa310e00a826e56d2bddd778ea50dc5c1d21a6eacbc60d6d347324287",
+    "engine/deployment/LIVE.md": "da0cd78cd86ab298bfb7a3403312f62e5a2d7cdaf168282eff8df1667b7577b0",
+    "engine/deployment/README.md": "4f63cc23c51c17ec3ea088dfba1abcbef8617cb170f1c0a062a7549eb74ff8a7",
+    "engine/deployment/launch_plan.py": "330487d28b210df1c78d174910d0af4211eaece5ec2f4059a6281c29cc8d5dbc",
+    "engine/deployment/test_launch_plan.py": "668fbe12440bcfba0135c6311fc4f7f61dc6e633231c0dfd273354628b4dbd65",
+    "engine/release/source_bundle.py": "85703ea5c43eb98b2769a941516ebdf5911efd6a02467804a98582a6e900dfb0",
+    "engine/release/test_source_bundle.py": "b5ddbd92d367832247af75ae40ee376e7c5f254f9d82dc5bf45094b65fd976ca",
+    "engine/release/README.md": "57d7c35476e869be28000a1b3b7adfcb8ae42564e1f8d4dc4c940494c411c81a"
+  },
+  "checks": [
+    {
+      "directory": "engine/deployment",
+      "pattern": "test_*.py",
+      "tests": 57
+    },
+    {
+      "directory": "engine/release",
+      "pattern": "test_*.py",
+      "tests": 17
+    }
+  ],
+  "independent_review": [
+    "engine_audit: portable planner/controller wiring no blocker",
+    "evidence_review: portable/live source closure no blocker; independently7live+17bundle tests passed"
+  ],
+  "device_executed": false,
+  "generated_live_build_qualified": false,
+  "source_archive_created": false,
+  "scope": "CPU planning/lifecycle/extracted-import tests only. New portable live adapter uses portable Guard; lab planners/Guard/observer/lifecycle trapped in tests. Deterministic source exporter requires explicit shared tools/dynamic planning closure and literal Python imports. Legacy MTP template cap128 preserved; newer pipeline512 parser/version must be separately qualified."
+}

@@ -177,6 +177,11 @@ python3 "$ENGINE/deployment/launch_plan.py" \
 
 Supply four distinct BDFs for four target stages. `--mode mtp` selects the
 existing two-rank protocol and requires a fully authenticated draft binding.
+That legacy template is capped at 128 generated tokens and has no shipped portable
+controller. For the separate live pipeline protocol, use the experimental
+[LIVE.md recipe](LIVE.md); its default qualification request is 32 tokens.
+A 512-token pipeline template requires the newer pipeline-capable native parser,
+not an older executable merely receiving a larger Python setting.
 It uses one shared pair region; target-only stages use separate shared regions.
 Each stage's native output is the initially absent `stageN/native` child, distinct
 from the controller's IPC/cache/log directory. Environments are assembled from
