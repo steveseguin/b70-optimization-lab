@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare sealed target-only pipeline dumps after identical input/output tokens.
+"""Compare sealed committed pipeline dumps after identical input/output tokens.
 
 Usage: compare_pipeline_state.py --reference SET.json --candidate SET.json
 Each ownrt.pipeline-state-set.v1 JSON declares mode="target-only", layer_count,
@@ -7,12 +7,16 @@ input_identity (model_sha256, prompt_token_sha256, output_token_sha256,
 arithmetic, position), and stages [{id, begin, end, dump, plan, metadata}]. Paths
 are relative to the set JSON. Plans need buffer {name, bytes, dtype, shape}
 entries; metadata is the engine-emitted pipeline-stage.json sidecar.
+Version v2 declares mode="verified-wavefront", require_byte_verified_restores
+(boolean), and a quiescence path on every stage pointing to the dump's sibling
+<dump-name>.wavefront-state.json. Native quiescence and exact seal binding are
+mandatory; v1 still admits target-only/no-speculation dumps only.
 
 All canonical layer buffers compare exactly by absolute layer name. Physical
 spares are excluded only with the engine's explicit inactive-bank inventory
-and target-only/no-speculation declaration. Legacy service MTP oracle hashes
-lack layout/committed-bank identity;
-they are not sufficient input for this target-only topology gate.
+and either target-only/no-speculation metadata or a validated sealed wavefront
+quiescence attestation. Legacy service MTP oracle hashes lack layout/committed-
+bank identity; they are not sufficient input for this topology gate.
 """
 import argparse
 import hashlib
@@ -21,6 +25,7 @@ import json
 import math
 from pathlib import Path
 import re
+import struct
 
 LANE = Path(__file__).resolve().parents[2]
 READER_PATH = LANE / 'gsq-rco-iq3s/state-bundle/reader.py'
@@ -50,12 +55,96 @@ def source(path):
     return data, {'path': str(path), 'sha256': sha(data), 'bytes': len(data)}
 
 
+def wavefront_attestation(path, stage, dump, metadata, identity, seal_source, hashes, lengths,
+                          require_verified):
+    declared = path.parent / stage['quiescence']
+    require(not declared.is_symlink(), 'wavefront attestation symlink refused')
+    attestation_path = declared.resolve()
+    require(attestation_path == dump.with_name(dump.name + '.wavefront-state.json'),
+            'wavefront attestation must be the explicit dump sibling')
+    require(0 < attestation_path.stat().st_size <= 1024 * 1024, 'wavefront attestation size bound')
+    raw, receipt = source(attestation_path)
+    att = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
+    require(att['schema'] == 'ownrt.wavefront-state.v1' and att['mode'] == 'verified-wavefront',
+            'unsupported wavefront attestation schema/mode')
+    marker = re.fullmatch(r'state-(0|[1-9][0-9]*)', dump.name)
+    require(marker is not None and type(att['dump_marker']) is int
+            and att['dump_marker'] == int(marker[1]), 'wavefront dump marker differs')
+    require(type(att['stage_id']) is int and att['stage_id'] == stage['id'], 'wavefront stage id differs')
+    require(att['state_seal_sha256'] == seal_source['sha256'], 'wavefront state seal SHA256 differs')
+    require(att['pending_ticket'] is False and type(att['pending_tickets']) is int
+            and att['pending_tickets'] == 0 and att['checkpoint_active'] is False,
+            'wavefront state is not quiescent: pending ticket/checkpoint')
+    require(type(att['sticky_error']) is int and att['sticky_error'] == 0,
+            'wavefront sticky error must be zero')
+    for key in ('actual_position', 'committed_position', 'rows', 'tentative_rows', 'commits', 'aborts',
+                'snapshot_captures', 'snapshot_commits', 'snapshot_aborts', 'abort_count',
+                'byteverified_restore_count', 'abort_byte_checks', 'saved_bytes',
+                'full_mutable_checkpoint_bytes', 'bank_parity'):
+        require(type(att[key]) is int and 0 <= att[key] <= 2**64-1,
+                'wavefront bounded nonnegative integer required: ' + key)
+    position = identity['position']
+    require(position <= 2**31-1 and att['actual_position'] == att['committed_position'] == position,
+            'wavefront committed/actual position differs from set identity')
+    # The bundle reader already authenticated every raw buffer; compare the
+    # expected exact scalar encoding, without reopening a potentially changed payload.
+    require(lengths.get('position.bin') == 4 and hashes.get('position.bin') == sha(struct.pack('<I', position)),
+            'wavefront sealed state position differs from attestation/set identity')
+    require(lengths.get('error.bin') == 4 and hashes.get('error.bin') == sha(bytes(4)),
+            'wavefront sealed sticky error differs from zero')
+    require(att['rows'] == att['commits'] + att['aborts'] and att['commits'] == position,
+            'wavefront ledger row/commit/abort accounting differs')
+    require(att['tentative_rows'] == att['snapshot_captures'] <= att['rows']
+            and att['snapshot_captures'] == att['snapshot_commits'] + att['snapshot_aborts']
+            and att['snapshot_commits'] <= att['commits']
+            and att['snapshot_aborts'] == att['aborts'] == att['abort_count'],
+            'wavefront snapshot/ledger accounting differs')
+    require(0 < att['full_mutable_checkpoint_bytes'] <= 512 * 1024**2
+            and att['saved_bytes'] == att['full_mutable_checkpoint_bytes'] * att['snapshot_captures'],
+            'wavefront saved-byte accounting differs')
+    require(type(att['restore_verification_enabled']) is bool
+            and type(att['all_aborts_byte_verified']) is bool
+            and att['byteverified_restore_count'] == att['abort_byte_checks'] <= att['abort_count']
+            and att['all_aborts_byte_verified'] is (att['abort_count'] == att['abort_byte_checks']),
+            'wavefront restore verification accounting differs')
+    if require_verified:
+        require(att['restore_verification_enabled'] is True and att['all_aborts_byte_verified'] is True
+                and att['abort_count'] == att['byteverified_restore_count'],
+                'wavefront proof requires byte-verified restoration of every abort')
+    if att['restore_verification_enabled']:
+        require(att['abort_count'] == att['abort_byte_checks'], 'enabled wavefront verification missed an abort')
+    else:
+        require(att['abort_byte_checks'] == 0, 'disabled wavefront verification cannot report byte checks')
+    require(att['bank_parity'] == (position % 2 if stage['id'] == 0 else 0),
+            'wavefront canonical bank parity differs')
+    inactive = metadata['inactive_alternate_banks']
+    require(isinstance(att['inactive_alternate_banks'], list)
+            and len(att['inactive_alternate_banks']) == len(inactive)
+            and set(att['inactive_alternate_banks']) == set(inactive),
+            'wavefront inactive-bank inventory differs from initial metadata')
+    mapping = att['canonical_bank_mapping']
+    require(isinstance(mapping, dict) and set(mapping) == set(inactive), 'wavefront canonical bank mapping coverage')
+    allocations = []
+    for name, row in mapping.items():
+        require(isinstance(row, dict) and set(row) == {'active_allocation', 'inactive_allocation'}
+                and all(type(v) is int and 0 < v <= 2**64-1 for v in row.values()),
+                'wavefront canonical bank allocation identity: ' + name)
+        allocations.extend(row.values())
+    require(len(allocations) == len(set(allocations)), 'wavefront canonical/inactive banks alias')
+    return att, receipt
+
+
 def load_set(path):
     path = Path(path).resolve()
     raw, receipt = source(path)
     spec = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
-    require(spec['schema'] == 'ownrt.pipeline-state-set.v1' and spec['mode'] == 'target-only',
-            'only declared target-only pipeline state sets are supported')
+    mode = spec['mode']
+    wavefront = spec['schema'] == 'ownrt.pipeline-state-set.v2' and mode == 'verified-wavefront'
+    require((spec['schema'] == 'ownrt.pipeline-state-set.v1' and mode == 'target-only') or wavefront,
+            'unsupported pipeline state set schema/mode; v1 target-only or v2 verified-wavefront required')
+    if wavefront:
+        require(type(spec.get('require_byte_verified_restores')) is bool,
+                'wavefront proof must explicitly declare require_byte_verified_restores')
     total = spec['layer_count']
     require(type(total) is int and total > 0, 'positive layer_count required')
     identity = spec['input_identity']
@@ -65,7 +154,7 @@ def load_set(path):
     require(type(identity.get('position')) is int and identity['position'] >= 0, 'position identity required')
     stages = spec['stages']
     require(isinstance(stages, list) and bool(stages), 'stage list required')
-    canonical, excluded, sources = {}, [], [receipt]
+    canonical, excluded, sources, attestations = {}, [], [receipt], []
     cursor = 0
     boundaries = [stage['begin'] for stage in stages] + [stages[-1]['end']]
     first_history = None
@@ -79,8 +168,12 @@ def load_set(path):
         metadata_path = (path.parent / stage['metadata']).resolve()
         metadata_raw, metadata_source = source(metadata_path)
         metadata = json.loads(metadata_raw, object_pairs_hook=BUNDLE.pairs)
-        require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == 'target-only'
-                and metadata['speculation_enabled'] is False, 'engine target-only/no-speculation metadata required')
+        if wavefront:
+            require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == 'wavefront'
+                    and metadata['speculation_enabled'] is True, 'engine wavefront/speculation metadata required')
+        else:
+            require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == 'target-only'
+                    and metadata['speculation_enabled'] is False, 'engine target-only/no-speculation metadata required')
         require(metadata['stage_id'] == ordinal and metadata['stage_count'] == len(stages)
                 and metadata['begin'] == begin and metadata['end'] == end
                 and metadata['first'] is (ordinal == 0) and metadata['final'] is (ordinal == len(stages) - 1)
@@ -102,6 +195,11 @@ def load_set(path):
                 'metadata changed after sealed read')
         sources += [state_source, index_source, seal_source]
         lengths = {parts[0]: int(parts[2]) for parts in (line.split('\t') for line in index_raw.decode().splitlines()[1:])}
+        if wavefront:
+            att, att_source = wavefront_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
+                                                   lengths, spec['require_byte_verified_restores'])
+            attestations.append({'stage': ordinal, 'attestation': att, 'source': att_source})
+            sources.append(att_source)
         plan_raw, plan_source = source(plan_path)
         plan = json.loads(plan_raw, object_pairs_hook=BUNDLE.pairs)
         sources.append(plan_source)
@@ -126,6 +224,10 @@ def load_set(path):
         require(base_names == set(layouts), 'plan/state base buffer inventory differs')
         require('streams.bin' in layouts and layouts['streams.bin']['dtype'] == 'f32'
                 and layouts['streams.bin']['bytes'] == metadata['stream_bytes'], 'stage boundary metadata/layout mismatch')
+        if wavefront:
+            require(all(layouts.get(name, {}).get('dtype') in {'i32', 'u32'}
+                        and layouts[name]['shape'] == [1] for name in ('position.bin', 'error.bin')),
+                    'wavefront position/error require scalar integer layouts')
         require({k for k in hashes if k.startswith('alternate-')} == {'alternate-' + name + '.bin' for name in inactive},
                 'actual alternate-bank inventory differs from engine declaration')
         seen_layers = set()
@@ -144,7 +246,8 @@ def load_set(path):
                 if key.startswith('alternate-'):
                     require(base in base_names, 'inactive bank has no canonical committed buffer')
                     excluded.append({'stage': ordinal, 'source_key': key, 'sha256': digest,
-                                     'reason': 'engine-declared inactive physical spare; target-only execution with speculation disabled',
+                                     'reason': ('engine-declared inactive physical spare; sealed quiescent wavefront canonical bank attested'
+                                                if wavefront else 'engine-declared inactive physical spare; target-only execution with speculation disabled'),
                                      'metadata_source': str(metadata_path), **layouts[base]})
                     continue
                 role = 'persistent-layer' if PERSISTENT.search(key) else 'layer-intermediate'
@@ -182,7 +285,9 @@ def load_set(path):
         if ordinal == len(stages) - 1:
             require({'logits.bin', 'next_token.bin', 'streams.bin'} <= base_names, 'last-stage head/output buffers required')
     require(cursor == total, 'stage ranges do not cover all layers')
-    return {'input_identity': identity, 'layer_count': total, 'canonical': canonical,
+    return {'mode': mode, 'input_identity': identity, 'layer_count': total, 'canonical': canonical,
+            'require_byte_verified_restores': spec.get('require_byte_verified_restores') if wavefront else None,
+            'quiescence_attestations': attestations,
             'first_stage_host_history': first_history, 'excluded': excluded, 'sources': sources}
 
 
@@ -200,7 +305,7 @@ def compare(reference, candidate):
         if mismatch:
             errors.append({'source_key': key, 'fields': mismatch, 'reference': a[key], 'candidate': b[key]})
     return {'schema': 'ownrt.pipeline-state-comparison.v1', 'passed': not errors,
-            'scope': 'sealed target-only state/layout equality for identical declared input/output identities; not performance or CPU model fidelity',
+            'scope': 'sealed committed state/layout equality for identical declared input/output identities; wavefront inputs require native quiescence attestations; not performance or CPU model fidelity',
             'compared_source_keys': sorted(a.keys() & b.keys()), 'errors': errors,
             'reference': reference, 'candidate': candidate,
             'comparator_sha256': sha(Path(__file__).read_bytes()), 'sealed_reader_sha256': sha(READER_PATH.read_bytes())}

@@ -145,12 +145,14 @@ struct RetainSteps {
 #include "gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
 #include "gsq-rco-iq3s/integration/build/private/additive/admission.hpp"
 #include "pipeline/layout.hpp"
+#include "pipeline/wavefront.hpp"
 struct Options {
   // --tp-replicate (2026-10-25, TP development): one rank process on two cards of one shared context, every launch
   // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
   bool tp_replicate=false;
   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
   std::vector<int> pipeline_boundaries;int pipeline_stage=-1;
+  bool pipeline_wavefront=false,pipeline_wavefront_verify=false;int pipeline_wavefront_trace_limit=4096;
   bool pipeline_enabled()const{return pipeline_stage>=0;}
   bool pipeline_first()const{return pipeline_enabled()?pipeline_stage==0:rank==0;}
   bool pipeline_final()const{return pipeline_enabled()?size_t(pipeline_stage+2)==pipeline_boundaries.size():rank==1;}
@@ -202,6 +204,9 @@ static Options parse(int argc, char **argv) {
     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
     else if(k=="--gsq-packed") a.gsq_packed=true;
     else if(k=="--tp-replicate") a.tp_replicate=true;
+    else if(k=="--pipeline-wavefront")a.pipeline_wavefront=true;
+    else if(k=="--pipeline-wavefront-verify-restore"||k=="--pipeline-wavefront-verify")a.pipeline_wavefront_verify=true;
+    else if(k=="--pipeline-wavefront-trace-limit")a.pipeline_wavefront_trace_limit=std::stoi(value());
     else if(k=="--pipeline-boundaries")a.pipeline_boundaries=ownrt::pipeline_layout::parse(value());
     else if(k=="--pipeline-stage")a.pipeline_stage=std::stoi(value());
     else if (k == "--reset-dump" || k == "--finish-dump") {
@@ -320,6 +325,9 @@ static Options parse(int argc, char **argv) {
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
+  require(!a.pipeline_wavefront||a.pipeline_enabled(),"wavefront requires explicit pipeline stages");
+  require(!a.pipeline_wavefront_verify||a.pipeline_wavefront,"wavefront restore check requires wavefront mode");
+  require(a.pipeline_wavefront_trace_limit>=0&&a.pipeline_wavefront_trace_limit<=100000,"bounded wavefront trace limit");
   require(a.pipeline_stage>=-1,"pipeline stage must be nonnegative");
   require(a.pipeline_enabled()==!a.pipeline_boundaries.empty(),"pipeline stage and boundaries must be supplied together");
   if(a.pipeline_enabled()){

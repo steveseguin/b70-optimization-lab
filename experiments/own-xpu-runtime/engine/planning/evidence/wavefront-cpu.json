@@ -1,0 +1,66 @@
+{
+  "schema": "ownrt.wavefront.cpu-validation.v1",
+  "passed": true,
+  "device_executed": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/engine/src/pipeline/wavefront.hpp": "fba7f9f5b767a49c30f286428f5065a58817817ee3678c0eb4f1af8dd89d7250",
+    "experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp": "8ee8ab7ef3a99db63367ae6c2d9d1e01fda59ce2d4f9a296c319ba855f268c25",
+    "experiments/own-xpu-runtime/engine/planning/test_wavefront.cpp": "b38fe6c2579b140a043d5e0a962b241658b5ebedb9e53d54ee70e9db1fecfbea",
+    "experiments/own-xpu-runtime/engine/planning/test_wavefront_checkpoint.cpp": "1e9c5c64b2db1de3fff6f562afcaf3890166de8bc827ee376c757084eb8b4c1c"
+  },
+  "binary_sha256": {
+    "/dev/shm/ownrt-test-wavefront": "5ac39a6a01a68db225cfd1714a149cb2393baa0420fb3fefa8ca6c694258de0a",
+    "/dev/shm/ownrt-test-wavefront-checkpoint": "f69db65e4360ead68faaf2a365989171ebff0fa5a6ba2d4ad243f39be60bdcbd"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-wavefront"
+      ],
+      "returncode": 0,
+      "log": "experiments/own-xpu-runtime/engine/planning/evidence/wavefront-cpu-0.log",
+      "log_sha256": "cdac6372d633902f53e8a173c2064983cbe1d54ba1312b1a4474d2048118f95e"
+    },
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-wavefront-checkpoint",
+        "/dev/shm/ownrt-wavefront-checkpoint-cpu-d"
+      ],
+      "returncode": 0,
+      "log": "experiments/own-xpu-runtime/engine/planning/evidence/wavefront-cpu-1.log",
+      "log_sha256": "f0397539dab36d3d7c8801dbd0900cce3cd404260ad9768d70d711766f779d47"
+    }
+  ],
+  "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "checkpoint_compile": [
+    "nice",
+    "-n",
+    "19",
+    "g++",
+    "-std=c++20",
+    "-O1",
+    "-DOWN_RT_HOST_ONLY",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I",
+    "experiments/own-xpu-runtime/engine/src",
+    "experiments/own-xpu-runtime/engine/planning/test_wavefront_checkpoint.cpp",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp",
+    "-Wl,--gc-sections",
+    "-lcrypto",
+    "-pthread",
+    "-o",
+    "/dev/shm/ownrt-test-wavefront-checkpoint"
+  ],
+  "scope": "Actual checked CopyEngine/SnapshotFlat on Host backend with injected small owner metadata; production StageCheckpointFor instantiation. No model math, model files, driver/device API or performance qualification.",
+  "earlier_fixture_failures": [
+    {
+      "kind": "CPU fixture construction only",
+      "detail": "First fixture gave graph_static Lifetime::request and scratch Lifetime::request; allocator correctly rejected category lifetime violation. Corrected to Lifetime::graph and Lifetime::transaction. No production change."
+    },
+    {
+      "kind": "CPU fixture compile only",
+      "detail": "Seal-binding extension reused local name original for allocation vector and receipt string. Renamed receipt text attested; no production change."
+    }
+  ]
+}

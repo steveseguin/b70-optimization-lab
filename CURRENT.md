@@ -1,5 +1,20 @@
 # Current Workspace State
 
+**October 25, continuation — quad overlap and portable deployment; no draft training.**
+The owner approved the next work and explicitly excluded draft-model training.
+The two-card service drained cleanly once at 14:59 EDT after 45 requests. The
+four-card overlap proof passed: all 32 tokens and all 2,065 canonical state
+buffers match the earlier two-card run. Six deliberately wrong scripted guesses
+were rejected, with 13 complete stage restorations independently byte-verified.
+All four processes exited cleanly and no new fault signatures appeared. This
+is correctness evidence, not a speed benchmark; live existing-draft integration
+is next. The portable model authentication pass is running once at low process
+priority, with no GPU use, download or training. CPU reference analysis narrowed
+untested arithmetic differences but has not explained the six disagreements.
+Preserve the 47.97 tok/s baseline; no host power/memory settings changed.
+[Continuation evidence](experiments/own-xpu-runtime/research/continuation-2026-10-25/wavefront-proof-a/RESULT.md).
+
+
 **October 25, review session — owner authorizes all four cards; reusable engine and publication work active.**
 The owner asked for the complete engine/recipe on GitHub and neural.download,
 updated skindeep.ai links, and faster SC117 on two/four B70s while preserving

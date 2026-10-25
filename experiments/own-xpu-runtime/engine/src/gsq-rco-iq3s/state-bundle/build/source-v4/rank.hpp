@@ -1,6 +1,7 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #pragma once
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp"
+#include "pipeline/checkpoint.hpp"
 #include <poll.h>
 #include <functional>
 #include <sys/mman.h>
@@ -403,6 +404,13 @@ static int run_rank(const Options& a) {
   // two-rank V3 state gate runs without it. Full-shape construction order is unchanged.
   std::optional<p149::Exchange> probe;if(!a.mini)probe.emplace(*engine,static_cast<uint8_t*>(mapping));
   SpeculativeImage image(*engine);
+  std::optional<ownrt::wavefront::Ledger> wave_ledger;
+  std::unique_ptr<StageCheckpoint> wave_checkpoint;std::ofstream wave_trace;size_t wave_trace_rows=0,wave_trace_omitted=0;int wave_output=-1;
+  if(a.pipeline_wavefront){
+   wave_ledger.emplace(a.pipeline_final(),engine->p.g.context,engine->p.g.vocab);
+   wave_checkpoint=std::make_unique<StageCheckpoint>(*engine,a.pipeline_wavefront_verify);
+   wave_trace.open(a.output/"wavefront.jsonl");require(bool(wave_trace),"wavefront trace open");
+  }
 #ifndef OWN_RT_HOST_ONLY
   if(a.rank==0&&!a.gsq_packed)weights->warm_lookups();
   else if(a.rank==0&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups();}
@@ -420,7 +428,7 @@ static int run_rank(const Options& a) {
     <<",\"begin\":"<<a.pipeline_boundaries[a.pipeline_stage]<<",\"end\":"<<a.pipeline_boundaries[a.pipeline_stage+1]
     <<",\"first\":"<<(a.pipeline_first()?"true":"false")<<",\"final\":"<<(a.pipeline_final()?"true":"false")
     <<",\"activation_dtype\":\"F32\",\"stream_bytes\":"<<engine->stream_bytes()<<",\"boundaries\":[";
-   for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":\"target-only\",\"speculation_enabled\":false,\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]}";save(a.output/"pipeline-stage.json",o.str());
+   for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":"<<ownrt::quote(a.pipeline_wavefront?"wavefront":"target-only")<<",\"speculation_enabled\":"<<(a.pipeline_wavefront?"true":"false")<<",\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]}";save(a.output/"pipeline-stage.json",o.str());
   }
   Reply ready{};ready.rank=a.rank;if(a.pipeline_enabled()){ready.reserved[0]=a.pipeline_stage;ready.reserved[1]=a.pipeline_final();ready.bytes=int32_t(engine->stream_bytes());}transfer(a.channel,&ready,sizeof ready,true,a.seconds);
   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;V3Boundary v3state;
@@ -428,7 +436,39 @@ static int run_rank(const Options& a) {
    if(a.rank==1)engine->reply_report.before(r.op);
    auto received=std::chrono::steady_clock::now();
    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
-   bool completing_redo=image.before_command(r.op==half&&!r.speculative,r.position,r.token);
+   if(a.pipeline_wavefront&&(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op)){
+    auto& ledger=*wave_ledger;auto& checkpoint=*wave_checkpoint;auto started=std::chrono::steady_clock::now();double checkpoint_ms=0;int ticket=r.sequence;bool tentative=false;
+    if(r.op==ownrt::wavefront::row_op){
+     require(r.speculative==0||r.speculative==1,"wavefront tentative flag");
+     ledger.begin({r.sequence,r.token,r.position,r.fixture,r.speculative==1});tentative=r.speculative==1;
+     require(!c.pending,"wavefront row overwrites candidate");
+     if(tentative){auto before=std::chrono::steady_clock::now();checkpoint.begin(static_cast<uint8_t*>(mapping));checkpoint_ms=Engine::ms(before);}
+     Request actual=r;actual.op=half;actual.speculative=0; // independent checkpoint owns speculation; legacy image stays inert
+     response=half_step(*engine,c,actual,static_cast<uint8_t*>(mapping),image);
+     require(!c.cancelled&&!c.speculative,"wavefront legacy speculation unexpectedly active");wave_output=response.token;
+    }else{
+     ticket=r.speculative;ledger.match(ticket,r.token,r.position,r.fixture);tentative=ledger.candidate().tentative;
+     require(c.pending&&!c.cancelled&&!c.speculative&&c.position==r.position&&c.fixture==r.fixture,"wavefront candidate identity");
+     if(r.op==ownrt::wavefront::commit_op){
+      require(checkpoint.active()==tentative,"wavefront checkpoint commit identity");
+      if(tentative){auto before=std::chrono::steady_clock::now();checkpoint.commit();checkpoint_ms=Engine::ms(before);}
+      publish(*engine,c);ledger.commit(ticket,r.token,r.position,r.fixture,wave_output);if(c.fixture>0)++accepted;
+     }else{
+      require(tentative&&checkpoint.active(),"wavefront abort requires tentative checkpoint");
+      auto before=std::chrono::steady_clock::now();checkpoint.abort();checkpoint_ms=Engine::ms(before);
+      require(engine->integer(0,"position")==r.position,"wavefront aborted device position");ledger.abort(ticket,r.token,r.position,r.fixture);
+     }
+     c={};wave_output=-1;
+    }
+    response.sequence=r.sequence;response.rank=a.rank;response.reserved[0]=a.pipeline_stage;response.reserved[1]=a.pipeline_final();response.busy_ms=Engine::ms(started);
+    response.redo_ms=std::chrono::duration<double>(received.time_since_epoch()).count();response.reserved_ms=std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    if(wave_trace_rows<size_t(a.pipeline_wavefront_trace_limit)){
+     wave_trace<<"{\"schema\":\"ownrt.wavefront-row.v1\",\"stage\":"<<a.pipeline_stage<<",\"sequence\":"<<r.sequence<<",\"ticket\":"<<ticket<<",\"op\":"<<r.op<<",\"position\":"<<r.position<<",\"token\":"<<r.token<<",\"fixture\":"<<r.fixture<<",\"tentative\":"<<(tentative?"true":"false")<<",\"output\":"<<response.token<<",\"bytes\":"<<response.bytes<<",\"checkpoint_ms\":"<<checkpoint_ms<<",\"wall_ms\":"<<response.busy_ms<<",\"committed_position\":"<<ledger.position()<<",\"pending\":"<<(ledger.pending()?"true":"false")<<"}\n";wave_trace.flush();require(bool(wave_trace),"wavefront trace write");++wave_trace_rows;
+    }else ++wave_trace_omitted;
+    return response;
+   }
+   if(a.pipeline_wavefront){wave_ledger->boundary();require(!c.pending&&!wave_checkpoint->active(),"wavefront boundary unresolved candidate");wave_checkpoint->attest(*wave_ledger);}
+   bool completing_redo=a.pipeline_wavefront?false:image.before_command(r.op==half&&!r.speculative,r.position,r.token);
    if(r.op==draft){
     require(a.rank==a.draft_rank&&provider&&r.position>0,"draft command ownership/confirmation");
     if(a.rank==1){require(!c.pending&&engine->integer(0,"position")==r.position,"draft target not confirmed");}
@@ -486,7 +526,7 @@ static int run_rank(const Options& a) {
     require(a.rank==1&&native_active&&!c.pending&&engine->sealed_selection.choices.at("probe")=="xchg","p149 miss responder ownership");
     require(bool(probe),"p149 probe absent");probe->serve_correction([&]{if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();});
    }
-   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();if(provider)provider->flush_depth_probe();state_dump(*engine,r.position);if(engine->a.tp_replicate)tp_compare(*engine,a.output/"tp-replicate-compare.json");if(r.position==2147483647)request_state_inventory(*engine);}
+   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();if(provider)provider->flush_depth_probe();state_dump(*engine,r.position);if(a.pipeline_wavefront)wave_checkpoint->attest(*wave_ledger,engine->a.output/("state-"+std::to_string(r.position)+".wavefront-state.json"),r.position);if(engine->a.tp_replicate)tp_compare(*engine,a.output/"tp-replicate-compare.json");if(r.position==2147483647)request_state_inventory(*engine);}
    else if(r.op==11){image.boundary();v3state.reset();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
    else if(r.op==13){require(!async_half_ready,"pending half");v3state.reset();bracket_boundary(*engine,c,provider.get(),image,a.output/("bracket-"+std::to_string(r.sequence)+".txt"),accepted);async_half_position=async_half_token=-1;}
    #ifdef OWN_RT_HOST_ONLY
@@ -506,9 +546,10 @@ static int run_rank(const Options& a) {
   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
    if(a.pipeline_enabled()){
     require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
-    require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
+    if(a.pipeline_wavefront)require(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op||((r.op==dump||r.op==finish)&&!r.speculative),"wavefront command admission");
+    else require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
    }
-   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
+   if(r.op==finish){if(a.pipeline_wavefront){wave_checkpoint->attest(*wave_ledger);save(a.output/"wavefront-trace-summary.json","{\"records\":"+std::to_string(wave_trace_rows)+",\"omitted\":"+std::to_string(wave_trace_omitted)+"}");}if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
    Reply response{};
    if(r.op==10){
     require(!c.pending,"native entry unresolved candidate");
@@ -540,7 +581,7 @@ static int run_rank(const Options& a) {
     response.sequence=r.sequence;response.rank=a.rank;
    }else response=execute(r);
    transfer(a.channel,&response,sizeof response,true,a.seconds);
-   if(a.rank==1&&r.op==half)engine->reply_report.published();
+   if(a.rank==1&&(r.op==half||(a.pipeline_wavefront&&r.op==ownrt::wavefront::row_op)))engine->reply_report.published();
   }
   engine->dump_classes(engine->a.output/"class-times.json",accepted);
  }catch(const std::exception& ex){
