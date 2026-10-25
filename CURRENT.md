@@ -15,7 +15,7 @@ and standalone two/four-card target-only replays also passed all 32 outputs and
 GitHub/neural.download carry the research source; the new 294-file archive is
 live and checksum-verified after successful publication checks. SkinDeep remote
 write access remains unavailable; its latest local update is committed as
-`f2e6dde`. Clean-host installation and portable serving remain open.
+`6955a43`. Clean-host installation and portable serving remain open.
 
 The cold multi-request path passed two complete reset/state comparisons: both
 requests match all 2,065 target buffers, 73 draft allocations and output tokens.
@@ -51,7 +51,9 @@ All four workers exited cleanly, with no new faults. The full evidence is
 durable and restore-tested. All GPUs are idle. Persistent requests and a
 separate timing mode are next; the checked rolling run is not a speed result.
 The complete 424-file source export passes hashes and isolated imports; its
-extracted portable build is running on CPU. Deployment also now accepts a separately trusted
+extracted portable build passed (binary `8ba3e562e175`), including all 225 native
+source hashes and generated local model configuration. This newer build has not
+yet run on GPUs. Deployment also now accepts a separately trusted
 launch-policy path/hash; its 42 CPU checks pass, with current capabilities retained. Draft training is prohibited. No host power or
 memory settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
 and [portable proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md).

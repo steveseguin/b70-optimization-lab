@@ -5,12 +5,16 @@ same live MTP wire protocol and scheduler used by the pipeline research lane.
 It uses existing official draft weights. It performs no training, installation,
 service changes, device resets or automatic restart/retry.
 
-This is a research recipe with CPU planning/lifecycle/import tests. A generated
-portable **target-only** engine has passed the retained two-card token/state
-proof. That proof does not qualify this live-MTP adapter, a new generated build,
-or its performance. A new live deployment must compare target and canonical
-draft state, true-pair handoffs and output IDs before making speed claims.
-The existing CPU-reference discrepancy remains outside this recipe's scope.
+This research recipe now has a bounded four-card live-MTP proof from the
+separately extracted `9d6320c1b` source snapshot, using generated local model
+configuration. All 32 output tokens, 2,065 target buffers, 73 draft allocations
+and 117 true-pair inputs match accepted replay. See the
+[portable live proof](../../research/continuation-2026-10-25/portable-live/pp4-proof/RESULT.md).
+This qualifies that exact build and recipe on the lab host, not a newer build,
+portable speed, clean-host installation or a chat service. The newer rolling
+scheduler has a separate lab proof and is not this portable adapter. A new live
+deployment must repeat its target/draft and handoff checks. The existing
+CPU-reference discrepancy remains outside this recipe's scope.
 
 ## Inputs and source closure
 

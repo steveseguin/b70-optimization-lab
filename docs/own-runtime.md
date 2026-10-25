@@ -11,7 +11,17 @@ The SC117 IQ3_S F32 service observations improved from **27.92 to 47.89 tok/s**
 using the conventional all-prompt median. All twelve retained output token
 arrays match. This is not the certified class-balanced benchmark. Six of 5,965
 teacher-forced CPU-reference positions still disagree; no broad bit-faithful or
-no-added-quality-loss claim follows. Four-card performance is unmeasured.
+no-added-quality-loss claim follows. The first complete four-card live-draft
+suite measured **42.31 tok/s**, below the later two-card **47.97 tok/s** service
+observation; their timestamp sources differ. All 5,965 output IDs match.
+
+The newer two-step rolling scheduler passes the bounded correctness gate:
+all 32 outputs, 2,065 target buffers and 73 draft allocations match while
+consuming 35 actual speculative target rows. Both miss depths occurred, and
+seven first-stage rollbacks preserved draft state. Diagnostic checks were
+enabled, so this is not a speed result. Existing draft weights were used;
+training is prohibited. See the [actual rolling proof](../experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/RESULT.md)
+and [measured four-card suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md).
 
 Start with the [evidence review and release direction](sc117-engine-review.md),
 [canonical engine](../experiments/own-xpu-runtime/engine/README.md) and

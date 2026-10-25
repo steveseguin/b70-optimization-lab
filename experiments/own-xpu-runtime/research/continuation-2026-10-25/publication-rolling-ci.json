@@ -1,0 +1,337 @@
+{
+  "schema": "ownrt.publication-ci-lines.v1",
+  "started_source_commit": "e5e2cbedc444342d6244b1b535ae8e2875b3988d",
+  "checks": [
+    {
+      "job": "validate",
+      "command": "python3 tools/validate-repro-guides.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/0.log",
+      "log_sha256": "901094b0bd774e3a440ffc65b931fcc8b2e50b26f9d0e0b39e7c44b95ca7c57f"
+    },
+    {
+      "job": "validate",
+      "command": "node --test tools/test_guides_browser.cjs",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/1.log",
+      "log_sha256": "9241a4214fafb4dacc8cc2a59ce0743a371552ea3c4e475d39b013f7db602b18"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/2.log",
+      "log_sha256": "6bc142280ed8e5b2e332adfd00109b54c963b4a0f2776a5279e0978e0ba39447"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/validate-recipe-publication.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/3.log",
+      "log_sha256": "b9f6fd46dbff81f3ad130fc1dbc7ab7590be71f57fc56aa3cfa64c0321992c5c"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_validate_recipe_publication.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/4.log",
+      "log_sha256": "32810d2dfc357429a2064d9e722118650d4062e1108f83875dfa5d42bb1c0d48"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/sync-public-result-summary.py --check",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/5.log",
+      "log_sha256": "677316f98761dbd1d4777f96cccea5c8cd8300a115d148be37af33bb3761cf29"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_sync_public_result_summary.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/6.log",
+      "log_sha256": "2dafd1d796c7e941bca66274ad8b3e9ddc0654d156c15cd85391cbd22924eae9"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/build-family-pages.py --check",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/7.log",
+      "log_sha256": "97050c4f8c5356cd8b3f5b5f7b544c1901e5edbc7f6bcbf0d4bd6e50f336156e"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_build_family_pages.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/8.log",
+      "log_sha256": "79762cc10a9a7e65b4c4e6f49a0a8ab1273c0b8ce70986240a68931cb350f535"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_measured_opt_contract.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/9.log",
+      "log_sha256": "d696f1c26f2015b17a696a05a08857ceb721833bf50f2085fe7a7b172670ab76"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/sync-short-prefill-profiles.py --check",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/10.log",
+      "log_sha256": "de730c72db8744031323349bda32eb09c8e3ff1458e4eef7929915f9bbcfbc45"
+    },
+    {
+      "job": "validate",
+      "command": "python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/11.log",
+      "log_sha256": "0e5fb3f57c7677f18d08d94847cf66f78dd293abad2232912ffd79702d492712"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/sync-prefill-followup-profiles.py --check",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/12.log",
+      "log_sha256": "fd2c91c82ed037c70cebf128806df86177e6f8bf7f05ca4b034c6cf269e35231"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/replay_fp8_prefill_source_drift.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/13.log",
+      "log_sha256": "a1bac5f05e4128f325f5071b806b38dcec2173e2f70b3fd582e4398323e6a007"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_source_drift_proofs.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/14.log",
+      "log_sha256": "7c3397c286152b8a2af61da71cce59f24c62e76a1ac3602692337a96b66d4a07"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/sync-fp8-prefill-focus-profile.py --check",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/15.log",
+      "log_sha256": "7f7ce2d6d214eec7b49687731ee2265f6d4042f95ef46cc52dba5d2a9bc7c63b"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/sync-amd-transfer-prefill-profile.py --check",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/16.log",
+      "log_sha256": "a7818084c7abc58db9ed92e7fc32b089e4e8e314dbde7c510e1312e9e4d5b3f9"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/17.log",
+      "log_sha256": "3b805d17722b8f7c5d741d81382b7b0e946d83432bd698e885327e01d8d3974f"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*fp8_prefill*.py\"",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/18.log",
+      "log_sha256": "60d7d2bc1ff764634c1cc45ba52e30d12764218508bba810bcf8b6756faa10e4"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_sync_prefill_followup_profiles.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/19.log",
+      "log_sha256": "dae97527feaa5f4404b7cf8a367c36b5834935509ab9babacf648b1bb8476a3b"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_*prefill_followup.py\"",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/20.log",
+      "log_sha256": "b679e3ceac161d2ae6389bfa32ef22a4576985b9fa4c2948d7ed12298952de01"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_build_model_pages.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/21.log",
+      "log_sha256": "1800239262ea27b940bc2d76c3b70587f21e2a5bf1e86ff7e0867864cab662b7"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_tp2_acceptance_evidence.py tools/test_fp8_tp2_acceptance_session.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/22.log",
+      "log_sha256": "3ec0f1f6e4a32c3871b1ed0b6a581b741b3d9b302d7a339611f25f407d52b58d"
+    },
+    {
+      "job": "validate",
+      "command": "python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/23.log",
+      "log_sha256": "a3f056fce09dbeecf25731b0a948cc7a7b1faf8cbd276482782b7b45d2ebebaa"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_gemma_sweep_to_package.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/24.log",
+      "log_sha256": "d094b1bd2c8318c96097f80c50da282add5b2972970a77046de8db6c8935f6ca"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/extract-fp8-one-launch-prefill.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/25.log",
+      "log_sha256": "c06de16848ac01ddfed08afdb49531442132e264292d675abb43513290951f9e"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_extract_fp8_one_launch_prefill.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/26.log",
+      "log_sha256": "7b86291b37cb634af5195202c0758a163d4a9c13965b0604b083e8d0d77f781a"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p \"test_one_launch_prefill_screen.py\"",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/27.log",
+      "log_sha256": "e9dbc1a31936475165af55356b566005547a03914ab93e4739e4aa9949799201"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest discover -s repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/scripts -p \"test_build_native.py\"",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/28.log",
+      "log_sha256": "1f11b6e880045ee35de832b81b45d06257342e13b5c79bbf0034379d4ca220b9"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/build-model-pages.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/29.log",
+      "log_sha256": "5a0831d0f5703ea80e6cefc9c794ccc5f944375d484101a58f2ecd63b895c389"
+    },
+    {
+      "job": "validate",
+      "command": "git diff --exit-code -- index.html learn/hardware.html models",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/30.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/check-doc-links.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/31.log",
+      "log_sha256": "b351bf73b52a2f821492c7c0abfc032632b4ed21987e0edc84e5d32a45bbc950"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/check-doc-links.py --all-tracked --baseline audits/repository-cleanup/2026-10-10/link-baseline.json",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/32.log",
+      "log_sha256": "86a3aef843a04526bdba9e8611b7348965277217a90f78bf4dba57f5b06a5689"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_check_doc_links.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/33.log",
+      "log_sha256": "0f43587b488b40df92dd85e48295ac35a4a42ad6e4a3c66e2a541eed87303591"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -B tools/check-pinned-hashes.py --historical-manifest audits/repository-cleanup/2026-10-10/pin-audit.json",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/34.log",
+      "log_sha256": "8df0c8f503c843b8f162632b6b296f292f49c5946ceefa7cab17b6f8aeb177e5"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -B -m unittest tools/test_pinned_hashes.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/35.log",
+      "log_sha256": "5f224f1e8806e8da49c65ecb12dc7308ca7abcc56095c793065fe974decff5b6"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -B tools/restore-source-archives.py patches/laguna-s-2.1-xpu-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/36.log",
+      "log_sha256": "0045ad6c0f78115bb21c71d15bc67f587a0efc0ba3c0516b21cce985666caaa4"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -B tools/restore-source-archives.py patches/gemma4-26b-a4b-q8-b70/source-archive-manifest.json",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/37.log",
+      "log_sha256": "99bb7c2ba572236ba40a5692565de1e43ce0d59dd449fe2788a0c5e54398fd42"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -B tools/test-restore-source-archives.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/38.log",
+      "log_sha256": "3e8357f2186bdd230050a0c605287cd9c997071ccf517dee8154f5426eff14c9"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_xccl_probe.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/39.log",
+      "log_sha256": "d22bdced0d932251dd606f8166dd48d1e9f500fbdd51c544c63764b97a322109"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_pr45_gpu_review.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/40.log",
+      "log_sha256": "5f05ceb14916c6e9d49da84899d7bde6b2c1502dbe88bc5ca8fabf5ad6d660b6"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/check-manifest-paths.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/41.log",
+      "log_sha256": "82400af72eec88d32108f08586678cdd0974bd7930e21c8e459843ffd646603f"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_container_packet_smoke.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/42.log",
+      "log_sha256": "7800e6f57faa45c499aee837d7eb32d07ac3c3d72904ecb2f7fbc9f8c731c0ec"
+    },
+    {
+      "job": "validate",
+      "command": "pip install --quiet pyyaml",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/43.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "job": "validate",
+      "command": "python3 tools/check-container-packet.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/44.log",
+      "log_sha256": "d3699c0c4fa38a6dcb69cc9ba83c7032c99504b01af86475a8896cb6289302b3"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_check_container_packet.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/45.log",
+      "log_sha256": "c33d57e40bf6a23175b6aea6044c092cc8f44f2a337f6617ee98313e1b583678"
+    },
+    {
+      "job": "validate",
+      "command": "python3 -m unittest tools/test_audit_launcher_env_implemented.py tools/test_flash_next_frozen_verifiers.py tools/test_flash_next_replay_cleanup.py",
+      "returncode": 0,
+      "log": "/dev/shm/sc117-publication-ci-rolling-20261025/46.log",
+      "log_sha256": "be0ab10d7f86c6e23770619743a766cd59bad3f188ce3508c018d43e93048981"
+    }
+  ],
+  "passed": true,
+  "utc": "2026-10-25T22:12:23.111176+00:00"
+}
