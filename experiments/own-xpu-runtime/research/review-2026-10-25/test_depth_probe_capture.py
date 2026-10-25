@@ -33,7 +33,10 @@ class CaptureTests(unittest.TestCase):
         (self.ranks / 'native-request.txt').write_text('3 512 1 0 2 0 1 10 11 99 prefill 32\n')
         self.native = json.dumps({'tokens': [12, 13], 'draft_rows': [{'position': 2}]})
         (self.ranks / 'native-result.json').write_text(self.native)
-        (self.evidence / 'req-000005/rank0/draft-depth-probe.jsonl').write_text('{"depth":3}\n')
+        (self.evidence / 'rank0').mkdir()
+        self.probe_row = {'request_output': str(self.evidence / 'req-000005/rank0'), 'depth': 3}
+        (self.evidence / 'rank0/draft-depth-probe.jsonl').write_text(
+            json.dumps({'request_output': 'earlier-request'}) + '\n' + json.dumps(self.probe_row) + '\n')
 
     def write_plan(self):
         (self.control / 'plan.json').write_text(json.dumps(self.plan))
@@ -46,6 +49,8 @@ class CaptureTests(unittest.TestCase):
         saved = json.loads((dest / 'test-prompt/capture.json').read_text())
         self.assertEqual(saved['native_result_source'], str(self.ranks / 'native-result.json'))
         self.assertEqual(saved['request'], 5)
+        self.assertFalse(saved['probe_complete'])
+        self.assertEqual(json.loads((dest / 'test-prompt/rank0/draft-depth-probe-partial.jsonl').read_text()), self.probe_row)
         self.assertEqual(json.loads((dest / 'test-prompt/prompt-token-ids.json').read_text()), [10, 11])
 
     def test_latest_request_must_match_http(self):

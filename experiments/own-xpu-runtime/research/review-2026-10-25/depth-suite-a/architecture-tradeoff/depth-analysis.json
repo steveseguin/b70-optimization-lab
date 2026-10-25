@@ -1,0 +1,57 @@
+{
+  "schema": "ownrt.draft-depth.analysis.v1",
+  "diagnostic_only": true,
+  "qualifying": false,
+  "alignment": "controller-and-output",
+  "request_output": "/dev/shm/sc117-lan-evidence/run-20261025T174204Z/req-000034/rank0",
+  "prompt_tokens": 67,
+  "generated_tokens": 512,
+  "cycles": 512,
+  "mutable_bytes_verified_cycles": 512,
+  "conditional_depth": {
+    "1": {
+      "eligible": 512,
+      "accepted": 421,
+      "prior_rejected": 0,
+      "censored": 0,
+      "unavailable": 0,
+      "conditional_acceptance": 0.822265625
+    },
+    "2": {
+      "eligible": 420,
+      "accepted": 326,
+      "prior_rejected": 91,
+      "censored": 1,
+      "unavailable": 0,
+      "conditional_acceptance": 0.7761904761904762
+    },
+    "3": {
+      "eligible": 326,
+      "accepted": 258,
+      "prior_rejected": 184,
+      "censored": 2,
+      "unavailable": 0,
+      "conditional_acceptance": 0.7914110429447853
+    }
+  },
+  "extra_pass_wall_ms_mean": {
+    "2": 1.98144060546875,
+    "3": 1.97523763671875
+  },
+  "target_tokens_sha256": "251fe49e2f7d9b396a937f20c927e0a488f919f97a2239b22c5cb0e3dd1f0a5c",
+  "limitation": "Acceptance and perturbed diagnostic costs only; no PP4 speed, general quality, or losslessness claim.",
+  "prompt_id": "architecture-tradeoff",
+  "request": 34,
+  "reference_output_ids_exact": true,
+  "reference_text_hash_exact": true,
+  "partial_cycles": 511,
+  "final_cycles": 512,
+  "sources_sha256": {
+    "prompt_ids": "e10f0f55da27c2e4619e5d851b329391b3b78d54cd1503d14aee321cbfb66727",
+    "native_result": "ba07e923dbec99eb46c01fb29f0c61205c572ff6cac2413df2e7f094002e2df3",
+    "partial_trace": "feff7d5d8a1754553cbc4b8923fb61876e2773f611e298763a55aa8eae06d799",
+    "final_trace": "0e6aec5998263d35ebfb88fede021eb17af6debe1e9ac6cc78beccfd14603259",
+    "baseline_suite": "07ce79b07849e30ee0669e2b30589dda9884bddf218dac982540189e1f7643f9"
+  },
+  "analyzer_sha256": "b5d29943da3a4dcc9ad164c4fe38a2bac222f9f83172214e3eb0b7078b7d59a4"
+}

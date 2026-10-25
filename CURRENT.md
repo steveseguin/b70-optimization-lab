@@ -10,17 +10,25 @@ support for other quants/models and future 1/2/4/6-card profiles.
   The startup fault baseline is now reviewed, with its original bytes preserved
   and an [authorization receipt](experiments/own-xpu-runtime/research/review-2026-10-25/incident-owner-review.json).
   Fault matching remains enabled. No reboot/reset/settings change.
-- SC117 service remains stopped while an opt-in recursive draft-depth probe is
-  prepared. Vision still holds 27/43; it may be stopped gracefully when the quad
-  test is ready. No new GPU run has started in this review session.
+- The recursive depth-3 session completed: all twelve answers (5,965 tokens)
+  match the retained baseline, all 5,965 probe restorations passed, and the
+  service drained cleanly. Vision was stopped gracefully, freeing 27/43.
+  The matched target-only two/four-stage proof passed: all 32 output IDs and
+  2,065 canonical state buffers agree; no new faults. Serial PP4 target steps
+  are 24.50% slower, so speculative overlap remains the speed work.
+  Engine `51ebe7496793` is now running the normal two-card service startup gates.
+  A receipt-format mistake was refused before device launch and corrected with
+  the existing receipt generator; its evidence is retained.
 - Audit corrects the ordinary service median to **27.92 → 47.89 tok/s** with all
   twelve output arrays identical. These are uncertified service observations;
-  six CPU-reference disagreements remain. Current four-card speed is unmeasured.
+  six CPU-reference disagreements remain. Four-card speculative speed is unmeasured.
 - Added reusable metadata-driven placement planning and tightened service suite
-  cache evidence. Public descriptions are being corrected; a source-only bundle
-  is being prepared, not labeled a complete portable release.
-- Next: current-model recursive depth-2/3 acceptance and full-state preservation,
-  then an evidence-driven four-stage pipeline. Preserve the old failed depth-two
+  cache evidence. GitHub and neural.download are updated (`baccc3613`, all CI
+  green). SkinDeep updates are local commits `017179e` and `ac45f76`; remote write credentials
+  are unavailable. A 224-file source bundle from `d882b4df4` rebuilt independently
+  in an extracted directory; this is not a complete portable runtime release.
+- Next: asynchronous speculative overlap informed by measured recursive
+  acceptance, plus deployment profiles that remove compiled host-file identities. Preserve the old failed depth-two
   design and the break-even tensor-split result. [Review and plan](docs/sc117-engine-review.md).
 
 

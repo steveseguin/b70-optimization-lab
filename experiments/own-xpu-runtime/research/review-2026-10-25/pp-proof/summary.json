@@ -1,0 +1,141 @@
+{
+  "schema": "ownrt.pp2-pp4-proof.v1",
+  "passed": true,
+  "engine_sha256": "51ebe749679333ba235e036e6dbe39d44ead4675a37ff42431a774a1e8574af8",
+  "reference_topology": [
+    0,
+    23,
+    48
+  ],
+  "candidate_topology": [
+    0,
+    13,
+    25,
+    37,
+    48
+  ],
+  "prompt_tokens": 87,
+  "output_tokens": 32,
+  "input_position": 118,
+  "canonical_buffers": 2065,
+  "buffer_roles": {
+    "replicated-global": 4,
+    "layer-intermediate": 1929,
+    "persistent-layer": 121,
+    "first-stage-global": 3,
+    "last-stage-global": 8
+  },
+  "exact_output_ids_vs_297b388764e9": {
+    "pp2": true,
+    "pp4": true
+  },
+  "baseline_suite": {
+    "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-297b388764e9.json",
+    "sha256": "07ce79b07849e30ee0669e2b30589dda9884bddf218dac982540189e1f7643f9"
+  },
+  "excluded_buffers": {
+    "pp2": 39,
+    "pp4": 27
+  },
+  "comparison_report": {
+    "path": "comparison.json.gz",
+    "gzip_sha256": "6cc9810bdadb5ab2863a15c53727dccaabf5e99e5ae08335554b60d4ed64789f",
+    "expanded_sha256": "9c8d00f7f889ea4abe699e2a2e2407ec2d49c1c585dd5f8792ac2b416f274847",
+    "expanded_bytes": 2008535,
+    "gzip_bytes": 209620,
+    "exact_roundtrip_verified": true
+  },
+  "timing_diagnostic": {
+    "pp2": {
+      "schema": "ownrt.pipeline-step-diagnostic.v1",
+      "qualifying": false,
+      "speed_claim": false,
+      "output_tokens": 32,
+      "prompt_tokens": 87,
+      "mode": "target-only",
+      "window": "one elapsed target half-chain per generated token, including first output; not first-99 inter-token timestamps",
+      "step_ms_mean": 31.893540908640716,
+      "step_ms_median": 31.667970528360456,
+      "stage_ms_mean": [
+        14.12359875,
+        16.99883384375
+      ],
+      "wall_seconds_including_startup": 162.1585412750719,
+      "limitations": "One 87-token prompt and 32-token answer; serial target-only stages, no MTP, no full suite or independent repeat."
+    },
+    "pp4": {
+      "schema": "ownrt.pipeline-step-diagnostic.v1",
+      "qualifying": false,
+      "speed_claim": false,
+      "output_tokens": 32,
+      "prompt_tokens": 87,
+      "mode": "target-only",
+      "window": "one elapsed target half-chain per generated token, including first output; not first-99 inter-token timestamps",
+      "step_ms_mean": 39.70660997583764,
+      "step_ms_median": 39.65142398374155,
+      "stage_ms_mean": [
+        9.843125125,
+        9.69855503125,
+        9.40742646875,
+        9.65939834375
+      ],
+      "wall_seconds_including_startup": 171.06025667500217,
+      "limitations": "One 87-token prompt and 32-token answer; serial target-only stages, no MTP, no full suite or independent repeat."
+    }
+  },
+  "serial_step_mean_time_increase_percent": 24.49733972649044,
+  "qualifying_benchmark": false,
+  "pp4_speedup_claim": false,
+  "raw_arrays": {
+    "bytes": 860665704,
+    "archive_status": "verified durable archive; all6 raw state members independently streamed and matched retained seal hashes",
+    "archive_receipt": "../durable-archives.json",
+    "verification": "archive-verification.json",
+    "durable_archive_path": "/home/steve/own-xpu-runtime-results/review-2026-10-25/sc117-pp-proof-20261025.tar.gz",
+    "durable_archive_sha256": "bd0d8a26fd8663fa4fae0dda05a3c373b9ad59d7c6a1708a37341fd417610d6c"
+  },
+  "limits": [
+    "One prompt and32 generated tokens; target-only F32 path; no speculative scheduling, serving qualification, concurrency validation or measured six-card run.",
+    "Matched PP2/PP4 compares same runtime arithmetic; independent CPU-reference disagreement remains unresolved.",
+    "Full canonical state equality excludes only registered boundary/unused output buffers and engine-declared inactive temporal spares; every exclusion with hash is retained in comparison report."
+  ],
+  "host_receipts": [
+    {
+      "path": "../host-after-pp2.json",
+      "sha256": "6718c4608fe96fd1cba3e627a8cd0a5e8452e45b0e7a027106c50803def1a05f"
+    },
+    {
+      "path": "../host-after-pp4.json",
+      "sha256": "20951334285f44551f2b3b19a4257aadf2a9bdf6d18e28a896a164105a575dd6"
+    }
+  ],
+  "identity_audit": {
+    "passed": true,
+    "checked": "topology from actual plans/state sets; counts/position from actual result; timing statistics recomputed from token rows; buffer/exclusion counts from complete comparator report",
+    "runs": [
+      {
+        "mode": "pp2",
+        "boundaries": [
+          0,
+          23,
+          48
+        ],
+        "plan_sha256": "c9009f238d5b40d4ebab44ce52f06287828d74a17a4060d9b5baa88afc5d8ea6",
+        "passed": true
+      },
+      {
+        "mode": "pp4",
+        "boundaries": [
+          0,
+          13,
+          25,
+          37,
+          48
+        ],
+        "plan_sha256": "dd4f629e1715cfa72236a94ff5f85cd4466beffee67bae33cce01586b9711d60",
+        "passed": true
+      }
+    ],
+    "correction": "Initial prose/summary PP4 boundary transcription0/12/24/36/48 corrected to actual0/13/25/37/48; original state-set and comparator inputs were already correct."
+  }
+}

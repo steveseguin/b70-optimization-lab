@@ -1,0 +1,74 @@
+{
+  "schema": "ownrt.pp-archive-independent-verification.v1",
+  "passed": true,
+  "verified_utc": "2026-10-25T18:09:08.533989+00:00",
+  "method": "Read durable compressed archive once through tarfile stream mode; hash every raw state.bundle member and compare bytes/SHA256 to retained engine seals; hash every compressed archive byte; reject duplicate member names.",
+  "receipt_sha256": "2f7946ac6b1d8f56621ee78f5f6aac0fe6f658b9547d58c06de3bf56a7f5c687",
+  "archive": {
+    "source": "/dev/shm/sc117-pp-proof-20261025.tar.gz",
+    "durable_path": "/home/steve/own-xpu-runtime-results/review-2026-10-25/sc117-pp-proof-20261025.tar.gz",
+    "bytes": 375778869,
+    "sha256": "bd0d8a26fd8663fa4fae0dda05a3c373b9ad59d7c6a1708a37341fd417610d6c",
+    "copy_rehashed": true
+  },
+  "archive_members": 229,
+  "raw_state_members": [
+    {
+      "member": "pp2-v2/stage1/native/state-2147483647/state.bundle",
+      "source_path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage1/native/state-2147483647/state.bundle",
+      "bytes": 212355044,
+      "sha256": "bfc2da70462f7ece73913ef4776c56f21d035cb3405345b8c55f233219c23ae5",
+      "retained_metadata": "pp2/stage1/state-2147483647",
+      "passed": true
+    },
+    {
+      "member": "pp2-v2/stage0/native/state-2147483647/state.bundle",
+      "source_path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state.bundle",
+      "bytes": 231011260,
+      "sha256": "b6c5e688053593a62c7e5336813b5e3be71238e750f3963c769a8d8b6bf28c06",
+      "retained_metadata": "pp2/stage0/state-2147483647",
+      "passed": true
+    },
+    {
+      "member": "pp4-v2/stage3/native/state-2147483647/state.bundle",
+      "source_path": "/dev/shm/sc117-pipeline-review-20261025/pp4-v2/stage3/native/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "503ded24366842efb7bcb9b64aa9556a0eb9afbe8b691ac96c4cbf66770d42e5",
+      "retained_metadata": "pp4/stage3/state-2147483647",
+      "passed": true
+    },
+    {
+      "member": "pp4-v2/stage2/native/state-2147483647/state.bundle",
+      "source_path": "/dev/shm/sc117-pipeline-review-20261025/pp4-v2/stage2/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "f4c7e4791a65bf25da09de93be773a36e6013e68c362b467853981d6a8ae37ce",
+      "retained_metadata": "pp4/stage2/state-2147483647",
+      "passed": true
+    },
+    {
+      "member": "pp4-v2/stage1/native/state-2147483647/state.bundle",
+      "source_path": "/dev/shm/sc117-pipeline-review-20261025/pp4-v2/stage1/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "7b46fe09c96a06095bafbb23598f29fb3d9d808814e64905632fa0c3504d4063",
+      "retained_metadata": "pp4/stage1/state-2147483647",
+      "passed": true
+    },
+    {
+      "member": "pp4-v2/stage0/native/state-2147483647/state.bundle",
+      "source_path": "/dev/shm/sc117-pipeline-review-20261025/pp4-v2/stage0/native/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "68d08d89fc5b0cfb1f89b565a8921f73e0fd4b37a237da4de907420fdf9f2cb7",
+      "retained_metadata": "pp4/stage0/state-2147483647",
+      "passed": true
+    }
+  ],
+  "raw_state_bytes_verified": 860665704,
+  "source_archive_hash_verified": {
+    "source": "/dev/shm/ownrt-source-d882b4df4.tar.gz",
+    "durable_path": "/home/steve/own-xpu-runtime-results/review-2026-10-25/ownrt-source-d882b4df4.tar.gz",
+    "bytes": 1963891,
+    "sha256": "b4b3a103d0681ad3c0bbb546f63da17f254a8b3fed62fd8bdc68264b55ba192a",
+    "copy_rehashed": true
+  },
+  "limits": "Raw PP state members and compressed archive identities verified independently. Other archived log members were enumerated but not compared to individual source-file hashes; source archive compressed identity only, not a fresh build."
+}

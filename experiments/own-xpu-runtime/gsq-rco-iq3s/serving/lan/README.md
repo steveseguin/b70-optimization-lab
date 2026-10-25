@@ -43,12 +43,11 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
   identical tokens and an identical full target state.
 - **Greedy decoding only.** `temperature`, `top_p` and similar parameters are accepted and ignored. Each
   response lists them under `ownrt.ignored_sampling_parameters`.
-- **Context: 4096 tokens** (prompt plus output). This is the only admitted configuration for the split-24/24 engine
+- **Context: 4096 tokens** (prompt plus output). This is the only admitted configuration for the configured split engine
   with the draft on rank 0. `max_tokens` defaults to 512. A larger request is clamped to whatever room the context has
   left. Device runs have validated up to 512 output tokens. Longer outputs, up to the context limit, use the same
   native loop, but no device run has validated them.
-- **The prompt is processed token by token.** No batched prefill exists, so long prompts take noticeably longer
-  before the first output.
+- **Batched prompt reading.** The configured 32-row batches must pass the full-state comparison against token-by-token reading before use. Long prompts still have a substantial first-token wait.
 - **Real streaming (since 2026-10-24 13:38 EDT).** The service build runs with `--token-stream jsonl`: rank 0 appends
   each **target-confirmed** token (never a draft guess) to `confirmed-tokens.jsonl` as soon as it is accepted or corrected. The
   service tails that file and sends SSE text deltas. Deltas hold back an unfinished UTF-8 character and any tail that
@@ -88,10 +87,11 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-25 the service runs engine `5de85b4aadfd` (receipt
-[../../../engine/receipts/5de85b4aadfd.json](../../../engine/receipts/5de85b4aadfd.json)), built from the canonical
+The tracked unit selects engine `51ebe7496793` (receipt
+[../../../engine/receipts/51ebe7496793.json](../../../engine/receipts/51ebe7496793.json)), built from the canonical
 source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.py). Its configuration lives in
 [sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it.
+A controlled research override may select another receipt. [CURRENT.md](../../../../../CURRENT.md) owns live state; the unit alone does not prove that a build is running or has passed its startup gates.
 - **Exact 32-bit mode (owner's choice: quality first).** Activations, router and expert outputs, HC streams and the
   attention KV cache are all F32. The weights are unchanged. The MTP draft keeps its own BF16 arithmetic; it only
   proposes tokens, and the target verifies every token.
@@ -121,7 +121,7 @@ source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.
   - `OWNRT_DRAFT_KERNELS`: packet59 draft kernels where faster.
   - `OWNRT_MERGE_CHECKS=1`: one expert status check per layer.
 - **Speed (2026-10-25):**
-  - 47.5 tok/s median on the 12-prompt suite;
+  - about 48 tok/s in the retained 12-prompt service observations (ordinary median 47.89; not the certified benchmark);
   - 3,000-token prompt: read in about 31 s, then about 45–49 tok/s;
   - 1,000-token prompt: about 10 s, then about 49–50 tok/s.
 
@@ -131,7 +131,7 @@ source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.
   disagreements are near-ties, and their source is still open
   ([result](../../service-speed/e-reference/RESULT-F32.md)). Every speed change since then is byte-identical, so that
   figure still holds.
-- The binary and its objects are in `/dev/shm/engine-build-pf77`. A reboot loses them; `engine/build.py` rebuilds them
+- The binary and objects are located by the selected build receipt. RAM-backed build paths do not survive reboot; `engine/build.py` rebuilds them
   from the tree.
 - `engine/tools/service-cycle.sh` performs one controlled reload for an experiment (an application reload, never a
   host restart) and prints the gate summary.
@@ -156,7 +156,10 @@ A stop/start of the unit begins a fresh file. Then the old run directory can be 
 - Rank evidence (USB disk): `/mnt/usb-models/own-xpu-runtime-results/sc117-lan/run-<UTC>/`. It holds launch
   metadata, about 13 MB per run after a clean stop. This includes the 9.7 MB draft state that FINISH writes.
 
-## Identity
+## Historical commissioning identity
+
+This table records the original commissioning build. Current launch settings and
+receipts are in the tracked unit and the live-state note above.
 
 | | |
 |---|---|

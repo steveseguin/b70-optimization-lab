@@ -1,0 +1,38 @@
+{
+  "schema": "ownrt.depth-probe-suite-plan.v1",
+  "question": "Measure current-model conditional recursive MTP depth-2/3 accuracy before building PP4 speculation.",
+  "engine_binary_sha256": "c13fae74c18433056b720b3d5bf1fb806637df0708eb98e17439e33632cf5305",
+  "source_commit": "d882b4df421faf3a4590bcd47a6d0d028dd9c908",
+  "service_control": "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261025T174204Z",
+  "gpus": [
+    "0000:23:00.0",
+    "0000:47:00.0"
+  ],
+  "flags": {
+    "OWNRT_DRAFT_DEPTH_PROBE": "3",
+    "OWNRT_DRAFT_DEPTH_VERIFY": "1",
+    "OWNRT_EARLY_RANK1": "0",
+    "SC117_CONTINUE": "0"
+  },
+  "workload": "All twelve frozen realistic suite prompts once; greedy; natural EOS at 512 output cap; explicit cached_tokens=0",
+  "gates_before_client": [
+    "F32 selftest repeat",
+    "target state matches pinned F32 engine",
+    "batched prompt persistent state equals tokenwise"
+  ],
+  "halt": [
+    "new kernel fault",
+    "native or service failure",
+    "state restoration failure",
+    "missing or nonzero cache metadata",
+    "capture mismatch"
+  ],
+  "comparisons": [
+    "output IDs against retained 297b388764e9 suite",
+    "actual recursive proposal prefix conditional acceptance and censoring",
+    "every mutable draft byte restored each probe cycle"
+  ],
+  "timing_scope": "Probe and restoration checks perturb latency; no speed claim or record submission.",
+  "retention": "Per-prompt native result captured before following request; deferred final probes extracted from persistent original rank0 trace after graceful FINISH.",
+  "quad_scope": "Precursor measurement only; no four-card speed claim."
+}

@@ -1,6 +1,16 @@
 # SC117 IQ3_S integration into our own engine
 
-**Work wrapped up at the owner's request; fidelity remains unresolved.**
+**Current direction, October 25:** optimization and publication work resumed at
+the owner's request. The two-card F32 service observations reach about 48 tok/s
+with unchanged retained outputs; six independent-reference disagreements remain.
+The owner authorized all four cards. Recursive draft acceptance and generic
+stage placement are being developed before a four-card speed claim.
+See the [current review](../../../docs/sc117-engine-review.md),
+[canonical engine](../engine/README.md), and repository [live state](../../../CURRENT.md).
+
+## Earlier October 24 closeout
+
+**Work wrapped up at the owner's request at that time; fidelity remained unresolved.**
 The recurrent state correction passes the independently audited
 [32-token target-only/MTP pair](recurrent-f32/operating/launch-b/RESULT.md),
 including exact full target state and agreement with the independent CPU prefix.

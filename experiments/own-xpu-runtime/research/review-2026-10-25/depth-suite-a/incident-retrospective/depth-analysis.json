@@ -1,0 +1,57 @@
+{
+  "schema": "ownrt.draft-depth.analysis.v1",
+  "diagnostic_only": true,
+  "qualifying": false,
+  "alignment": "controller-and-output",
+  "request_output": "/dev/shm/sc117-lan-evidence/run-20261025T174204Z/req-000028/rank0",
+  "prompt_tokens": 87,
+  "generated_tokens": 512,
+  "cycles": 512,
+  "mutable_bytes_verified_cycles": 512,
+  "conditional_depth": {
+    "1": {
+      "eligible": 512,
+      "accepted": 384,
+      "prior_rejected": 0,
+      "censored": 0,
+      "unavailable": 0,
+      "conditional_acceptance": 0.75
+    },
+    "2": {
+      "eligible": 384,
+      "accepted": 289,
+      "prior_rejected": 127,
+      "censored": 1,
+      "unavailable": 0,
+      "conditional_acceptance": 0.7526041666666666
+    },
+    "3": {
+      "eligible": 289,
+      "accepted": 213,
+      "prior_rejected": 221,
+      "censored": 2,
+      "unavailable": 0,
+      "conditional_acceptance": 0.7370242214532872
+    }
+  },
+  "extra_pass_wall_ms_mean": {
+    "2": 1.9875366015625,
+    "3": 1.974256484375
+  },
+  "target_tokens_sha256": "1c1dfae333b07f38067ebab7376ca2cf97d5e65ff6cd39992b313678bf574b19",
+  "limitation": "Acceptance and perturbed diagnostic costs only; no PP4 speed, general quality, or losslessness claim.",
+  "prompt_id": "incident-retrospective",
+  "request": 28,
+  "reference_output_ids_exact": true,
+  "reference_text_hash_exact": true,
+  "partial_cycles": 511,
+  "final_cycles": 512,
+  "sources_sha256": {
+    "prompt_ids": "5a7a876f8d858f426cb36b2ba5d3166613a48c8e3118ce7e007fb47b04dff154",
+    "native_result": "f8967bee5774aea8a9084e7fac5262aa01ed6ef7cd411c552ee98a029d90c852",
+    "partial_trace": "26706d8df1ea7c2528267512303eefa16e93237faaf4c2bc97c7a7309fde53f0",
+    "final_trace": "27987e9ce17fba5585dd75a18aa356a5c0559ee9bc1987bb1b4ff6de8eef4b03",
+    "baseline_suite": "07ce79b07849e30ee0669e2b30589dda9884bddf218dac982540189e1f7643f9"
+  },
+  "analyzer_sha256": "b5d29943da3a4dcc9ad164c4fe38a2bac222f9f83172214e3eb0b7078b7d59a4"
+}

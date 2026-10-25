@@ -100,7 +100,9 @@ class Capture:
         require(len(native['tokens']) == row['output_tokens'], 'native output count differs')
         require(isinstance(native.get('draft_rows'), list) and bool(native['draft_rows']), 'native controller draft rows required')
         request_dir = self.runtime_evidence if number == 1 else self.runtime_evidence / f'req-{number:06d}'
-        probe_path = request_dir / 'rank0/draft-depth-probe.jsonl'
+        # Native probe trace persists at the original rank directory across RESET.
+        # This capture may lack the deferred final proposal; finalize after FINISH.
+        probe_path = self.runtime_evidence / 'rank0/draft-depth-probe.jsonl'
         probe_bytes = probe_path.read_bytes()
         require(bool(probe_bytes) and probe_bytes.endswith(b'\n'), 'depth probe trace empty or incomplete')
         # Refuse concurrent request replacement rather than attaching mismatched artifacts.
@@ -115,7 +117,9 @@ class Capture:
         dest = self.destination / prompt
         (dest / 'rank0').mkdir(parents=True, exist_ok=False)
         (dest / 'rank0/native-result.json').write_bytes(native_bytes)
-        (dest / 'rank0/draft-depth-probe.jsonl').write_bytes(probe_bytes)
+        request_probe_bytes = b'\n'.join(line for line in probe_bytes.splitlines()
+                                      if json.loads(line).get('request_output') == str(request_dir / 'rank0')) + b'\n'
+        (dest / 'rank0/draft-depth-probe-partial.jsonl').write_bytes(request_probe_bytes)
         (dest / 'native-request.txt').write_bytes(config_bytes)
         save_json(dest / 'prompt-token-ids.json', row['prompt_token_ids'])
         save_json(dest / 'http-response.json', response)
@@ -124,7 +128,10 @@ class Capture:
             'request_log_last_row': latest, 'request_log_sha256': sha(log_bytes),
             'native_result_source': str(native_path), 'native_result_sha256': sha(native_bytes),
             'native_request_sha256': sha(config_bytes), 'probe_source': str(probe_path),
-            'probe_sha256': sha(probe_bytes), 'tokens_match_http': True,
+            'probe_sha256': sha(probe_bytes), 'request_output': str(request_dir / 'rank0'),
+            'partial_probe_sha256': sha(request_probe_bytes), 'probe_complete': False,
+            'pending': 'Deferred final proposal requires RESET/DUMP/FINISH and a final trace extraction.',
+            'tokens_match_http': True,
             'prompt_tokens': np, 'output_tokens': len(native['tokens'])})
         self.last_request = number
 
