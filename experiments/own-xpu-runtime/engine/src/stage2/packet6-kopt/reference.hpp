@@ -37,10 +37,13 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
   } else if constexpr(T==Type::IQ4_NL || T==Type::Q8_0) {
     auto b=row+(k/32)*l.bytes;unsigned i=k%32;
     float scale=half(u16(b));
-    constexpr int levels[]={-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113};
+    // The 16 IQ4_NL levels {-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113} as signed bytes in two words:
+    // byte extraction keeps the codebook in registers (an indexed local array lowers to private memory on the GPU).
+    // The integer levels, and so every value, are unchanged.
+    constexpr uint64_t low=0xf6eaddcfbfad9881ull,high=0x7159453526190d01ull;
     for(unsigned j=0;j<8;++j) {
       if constexpr(T==Type::Q8_0)v[j]=scale*float(signed8(b[2+i+j]));
-      else v[j]=scale*float(levels[(b[2+(i+j)%16]>>(4*((i+j)/16)))&15]);
+      else {const unsigned q=(b[2+(i+j)%16]>>(4*((i+j)/16)))&15;v[j]=scale*float(int(int8_t(uint8_t(((q<8?low:high)>>(8*(q&7)))&255))));}
     }
   } else {
     for(unsigned j=0;j<8;++j)v[j]=element(T,row,k+j);

@@ -64,3 +64,16 @@ SIMD16 retune of decode kernels; `joint_matrix` fused dequant GEMM; XMX for deco
 4. MoE in about 3 launches (idea 4) and HC glue fusion (idea 7).
 5. GDN verify without writes plus commit replay (idea 6), for MTP decode.
 6. Guarded large allocations and bounded spins (hazards), as a safety audit.
+
+## Results on SC117 so far (2026-10-24)
+
+Every row below is exact: the full target state after the self-test matches the pinned F32 oracle byte for byte, and
+MTP hits are identical (4568/5954). Decode is the 12-prompt suite median.
+
+| Change | Decode tok/s | Note |
+|---|---:|---|
+| baseline `de4b2aa4` | 26.25 | |
+| idea 1, small token tiles, prefill only (`b6c23147`) | n/a | 581-token prompt 9.7 → 9.3 s |
+| hoisted loads in the raw kopt GEMV (latency guess) | 20.70 | exact but slower; reverted |
+| sibling fusion: HC low+inject, GDN a+b, indexer q+k, router+shared gate (`37879adf`) | **27.82 (+6%)** | the few-row member was latency-bound: HC inject 4×10240 cost 52.7 µs, the same as 320-row HC low |
+| idea 3 (part), IQ4_NL codebook packed into registers (`63ab006a`) | 28.00 | neutral; the compiler already kept the table in registers |
