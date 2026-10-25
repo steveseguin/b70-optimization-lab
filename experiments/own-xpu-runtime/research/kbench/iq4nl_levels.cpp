@@ -15,7 +15,18 @@ using iq3::Type;
 constexpr unsigned K=640,ROWS=2560,SLOTS=10,RB=K/32*18,R=2,SG=32;
 template<int V> struct KK;
 // SHUFFLE=false: production decode8<IQ4_NL>. SHUFFLE=true: same word reads and scale, level by shuffle.
-template<int V,bool SHUFFLE>
+// Branchless word read (same 8 bytes): base = qp rounded down to 4 bytes (qp is 2-byte aligned), two words there and
+// the u16 at qp+6 (inside the 8 needed bytes), then select by the alignment. Lanes no longer diverge on alignment.
+inline void decode8_branchless(const uint8_t* row,uint32_t k,float* v){
+  const uint8_t* b=row+(k/32)*18;const unsigned e=k%32;const float scale=iq3::kopt::half_scale(iq3::u16(b));
+  const uint8_t* qp=b+2+(e&15);const uintptr_t at=reinterpret_cast<uintptr_t>(qp);const bool odd=(at&2)!=0;
+  const uint32_t* w=reinterpret_cast<const uint32_t*>(qp-(at&2));const uint32_t a=w[0],c=w[1];
+  const uint32_t tail=*reinterpret_cast<const uint16_t*>(qp+6);
+  const uint32_t lo=odd?(a>>16)|(c<<16):a,hi=odd?(c>>16)|(tail<<16):c;const unsigned shift=(e/16)*4;
+  #pragma unroll
+  for(unsigned j=0;j<8;++j){const unsigned n=((((j<4?lo:hi)>>(8*(j&3)))&255)>>shift)&15;v[j]=scale*float(iq3::iq4_level(n));}
+}
+template<int V,bool SHUFFLE,bool BRANCHLESS=false>
 sycl::event run(sycl::queue& q,const uint8_t* w,const int* expert,const float* x,float* y){
   constexpr size_t blocks=ROWS/R,total=size_t(SLOTS)*blocks,groups=(total+3)/4;
   return q.parallel_for<KK<V>>(sycl::nd_range<1>(groups*SG*4,SG*4),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
@@ -34,7 +45,8 @@ sycl::event run(sycl::queue& q,const uint8_t* w,const int* expert,const float* x
       #pragma unroll
       for(unsigned i=0;i<R;++i){
         float values[8];
-        if constexpr(!SHUFFLE)iq3::kopt::decode8<Type::IQ4_NL>(rows[i],k,values);
+        if constexpr(BRANCHLESS)decode8_branchless(rows[i],k,values);
+        else if constexpr(!SHUFFLE)iq3::kopt::decode8<Type::IQ4_NL>(rows[i],k,values);
         else {
           const uint8_t* b=rows[i]+(k/32)*18;const unsigned e=k%32;const float scale=iq3::kopt::half_scale(iq3::u16(b));
           const uint8_t* qp=b+2+(e&15);const uintptr_t at=reinterpret_cast<uintptr_t>(qp);uint32_t lo,hi;
@@ -70,5 +82,6 @@ int main(){
   std::printf("IQ4_NL down, 10 x 2560 x 640, 2 rows/subgroup (%.1f MB)\n",SLOTS*ROWS*RB/1e6);
   time([&]{return run<0,false>(q,w,e,x,y);},"production decode8 (warm-up)");
   time([&]{return run<0,false>(q,w,e,x,y);},"production decode8");
-  time([&]{return run<1,true>(q,w,e,x,y);},"levels by subgroup shuffle");
+  time([&]{return run<2,false,true>(q,w,e,x,y);},"branchless word read");
+  time([&]{return run<0,false>(q,w,e,x,y);},"production decode8 (again)");
 }
