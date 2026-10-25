@@ -1,0 +1,319 @@
+{
+  "schema": "ownrt.persistent-rolling-independent-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-25T22:55:26.098912+00:00",
+  "run": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a",
+  "proof": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof",
+  "sources": [
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/plan.json",
+      "bytes": 26266,
+      "sha256": "78cc0a4f0ba44e9b6c62ec4670c7d2cd1e1cba43d666489cb7517e8ed5c76f39"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/persistent-rolling-result.json",
+      "bytes": 33925,
+      "sha256": "0ab4cd1f54bcc1e2252680d2d356224defeb930a2b58a9f7052e56e6b14c461d"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/observations.jsonl",
+      "bytes": 477256,
+      "sha256": "1449b04806657c94e881e9c29dad28a6e7ff834af4af0f925febef57c055d291"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/summary.json",
+      "bytes": 30692,
+      "sha256": "e24c51375ceecadda13fdddfa001a78c4a03dad733c06f4fe57ce7a5b040dc5d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-full-archive.json",
+      "bytes": 123561,
+      "sha256": "66ea481efb5e711f5931eae9d9424e0ea910ac13e816ced51bdb51e049048260"
+    }
+  ],
+  "check_policy": "measured",
+  "qualified_policy_execution_closure": {
+    "passed": true,
+    "native_binary": {
+      "path": "/dev/shm/engine-build-ring-persistent-20261025/own-engine",
+      "bytes": 21213688,
+      "sha256": "02a47c059444af0e9179612461a8078e4308f3357fb54e370421a2ba1b7788aa"
+    },
+    "build_receipt": {
+      "path": "/dev/shm/engine-build-ring-persistent-20261025/build-receipt.json",
+      "bytes": 252316,
+      "sha256": "0752a776cec88496a82ff4f1c3fd36dc3c791324e7fd363714be08d9ef37b0a1"
+    },
+    "execution_pin_count": 32,
+    "changed_source_paths": [],
+    "planner_transition": null,
+    "allowed_run_differences": [
+      "config/suite paths and hashes",
+      "output/cache paths",
+      "request SHA",
+      "seconds/cap",
+      "qualification vs measured fixed checks",
+      "explicit trace limit"
+    ]
+  },
+  "qualified_reference": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-qualified-proof/summary.json",
+    "bytes": 33631,
+    "sha256": "60188d3099803692173d6ded3d60eea0cc8a904828974669b9d4db9cd1d8ac9e"
+  },
+  "native_binary_sha256": "02a47c059444af0e9179612461a8078e4308f3357fb54e370421a2ba1b7788aa",
+  "runtime_pins_verified": 34,
+  "native_source_pins_verified": 228,
+  "small_state_source_hashes_verified": 68,
+  "raw_bundles_bound_to_comparison": 10,
+  "raw_state_reread": false,
+  "requests": [
+    {
+      "index": 0,
+      "epoch": 1,
+      "outputs": 32,
+      "input_rows": 118,
+      "target_buffers_exact": 2065,
+      "draft_allocations_exact": 73,
+      "actual_proposal_rows": 34,
+      "pending_borrows": {
+        "0": 94,
+        "1": 23,
+        "2": 0
+      },
+      "survival_checks": 0,
+      "advanced_survival_checks": 0,
+      "miss_depths": [
+        1,
+        2
+      ],
+      "mandatory_counters": [
+        {
+          "stage_id": 0,
+          "rows": 128,
+          "commits": 118,
+          "abort_count": 7,
+          "discarded_rows": 10,
+          "target_snapshot_restores": 7,
+          "target_host_restore_checks": 7,
+          "byteverified_restore_count": 0
+        },
+        {
+          "stage_id": 1,
+          "rows": 125,
+          "commits": 118,
+          "abort_count": 6,
+          "discarded_rows": 7,
+          "target_snapshot_restores": 6,
+          "target_host_restore_checks": 6,
+          "byteverified_restore_count": 0
+        },
+        {
+          "stage_id": 2,
+          "rows": 125,
+          "commits": 118,
+          "abort_count": 6,
+          "discarded_rows": 7,
+          "target_snapshot_restores": 6,
+          "target_host_restore_checks": 6,
+          "byteverified_restore_count": 0
+        },
+        {
+          "stage_id": 3,
+          "rows": 118,
+          "commits": 118,
+          "abort_count": 0,
+          "discarded_rows": 0,
+          "target_snapshot_restores": 0,
+          "target_host_restore_checks": 0,
+          "byteverified_restore_count": 0
+        }
+      ],
+      "reset_post_sequences": [
+        372,
+        251,
+        251,
+        238
+      ],
+      "provider_mandatory_counters": {
+        "canonical_commands_checked": 117,
+        "snapshot_captures": 32,
+        "snapshot_restores": 32,
+        "host_restore_checks": 32,
+        "byteverified_restore_count": 0,
+        "all_restores_byte_verified": false,
+        "survival_records": 0
+      }
+    },
+    {
+      "index": 1,
+      "epoch": 2,
+      "outputs": 32,
+      "input_rows": 118,
+      "target_buffers_exact": 2065,
+      "draft_allocations_exact": 73,
+      "actual_proposal_rows": 35,
+      "pending_borrows": {
+        "0": 94,
+        "1": 23,
+        "2": 0
+      },
+      "survival_checks": 0,
+      "advanced_survival_checks": 0,
+      "miss_depths": [
+        1,
+        2
+      ],
+      "mandatory_counters": [
+        {
+          "stage_id": 0,
+          "rows": 129,
+          "commits": 118,
+          "abort_count": 7,
+          "discarded_rows": 11,
+          "target_snapshot_restores": 7,
+          "target_host_restore_checks": 7,
+          "byteverified_restore_count": 0
+        },
+        {
+          "stage_id": 1,
+          "rows": 127,
+          "commits": 118,
+          "abort_count": 7,
+          "discarded_rows": 9,
+          "target_snapshot_restores": 7,
+          "target_host_restore_checks": 7,
+          "byteverified_restore_count": 0
+        },
+        {
+          "stage_id": 2,
+          "rows": 125,
+          "commits": 118,
+          "abort_count": 7,
+          "discarded_rows": 7,
+          "target_snapshot_restores": 7,
+          "target_host_restore_checks": 7,
+          "byteverified_restore_count": 0
+        },
+        {
+          "stage_id": 3,
+          "rows": 118,
+          "commits": 118,
+          "abort_count": 0,
+          "discarded_rows": 0,
+          "target_snapshot_restores": 0,
+          "target_host_restore_checks": 0,
+          "byteverified_restore_count": 0
+        }
+      ],
+      "reset_post_sequences": [
+        745,
+        505,
+        503,
+        476
+      ],
+      "provider_mandatory_counters": {
+        "canonical_commands_checked": 117,
+        "snapshot_captures": 32,
+        "snapshot_restores": 32,
+        "host_restore_checks": 32,
+        "byteverified_restore_count": 0,
+        "all_restores_byte_verified": false,
+        "survival_records": 0
+      }
+    }
+  ],
+  "terminal": {
+    "returncodes": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "live_pids": []
+  },
+  "passive": {
+    "samples": 88,
+    "first_utc": "2026-10-25T22:47:46.703638+00:00",
+    "last_utc": "2026-10-25T22:52:46.449917+00:00",
+    "same_boot": true,
+    "new_fault_entries": 0,
+    "historical_fault_entries": 14,
+    "all_holders_match_launched_pid_and_start_ticks": true,
+    "last_sample_holders": {
+      "4149628": {
+        "start_ticks": 81117157,
+        "state": "R"
+      }
+    },
+    "post_exit_sample_present": false
+  },
+  "limits": [
+    "Two repeated 87-token prompts with 32 outputs each; not a twelve-prompt performance result.",
+    "State equality relies on authenticated frozen comparator receipts and sealed source identities; this review did not reread 889 MB of raw allocation payloads.",
+    "Both requests exercised target two-row suffix rollback, but actual provider pending-depth2 borrowing was zero; provider depth1 borrowing was observed.",
+    "Cold reset bytes were not individually read back; native cold metadata, actual reset chain and exact per-request terminal states were checked.",
+    "Measured policy disables per-operation target/provider byte checks and provider-abort survival readbacks; zeros/false/empty evidence explicitly checked. Exact terminal target/draft parity holds against both accepted baseline and qualified policy. No speed, early-EOS, cancellation or portable-deployment claim.",
+    "Final passive sample predates last worker exit; clean exit is independently reported by terminal process return codes.",
+    "Archive helper receipt checked; independent archive decompression/durable restore belongs to parent archive gate."
+  ],
+  "review_script": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/review_persistent_rolling_measured.py",
+    "bytes": 9844,
+    "sha256": "c88a6357b764b9d17b90ba15050460ec66ffddd93a391555c09347b126256065"
+  },
+  "review_helpers": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent_rolling_suite_audit.py",
+      "bytes": 23058,
+      "sha256": "ebd74c763475090c1a0a315423a80e157e0a91b7ca859d4b12bdd76fdc9e122b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_persistent_rolling_proof.py",
+      "bytes": 28334,
+      "sha256": "5d2dbd6294bb73d0a672d61e50cdcf37b45f4514acc54fa31f58897295e5cd6e"
+    }
+  ],
+  "qualified_comparison_receipts": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/target-comparison.json.gz",
+      "bytes": 213792,
+      "sha256": "6296856d629761bc0ccf0b15bc274e1986a249e896d7cabebca617503c529c83"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/draft-comparison.json.gz",
+      "bytes": 5856,
+      "sha256": "1a53afe83fa7e4a28a5d4569509e30eca60e190ea83399df6752faac99e5636b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/qualified-target-comparison.json.gz",
+      "bytes": 215354,
+      "sha256": "79fbb88af1b71f1a736cf58e0303e9df52952898e9873bba3d06aa64bf840fdd"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/qualified-draft-comparison.json.gz",
+      "bytes": 5649,
+      "sha256": "c4346f5be2cb0fdcb7ed8f5c2c4953dc75e73eb22bdbb098795fef547e55d662"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-01-cold-repeat-2/target-comparison.json.gz",
+      "bytes": 213780,
+      "sha256": "42a6bccb812bd6c2a139b52927fc3ef9aaaa709e77b9f4624c6a6bfc73e4bf18"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-01-cold-repeat-2/draft-comparison.json.gz",
+      "bytes": 5857,
+      "sha256": "f9165c9bdd3ea60a0649cc76e6cd03131f46ab7ee53671219edd7951802c329c"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-01-cold-repeat-2/qualified-target-comparison.json.gz",
+      "bytes": 215315,
+      "sha256": "8c385ce8154d17d74de87b260c51be267c6dbf3fed19685ba659a7500a4bea99"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-01-cold-repeat-2/qualified-draft-comparison.json.gz",
+      "bytes": 5650,
+      "sha256": "c7c6f097038520f5b278433942d3bea98e848fb96959df630c88655dc39387ee"
+    }
+  ]
+}

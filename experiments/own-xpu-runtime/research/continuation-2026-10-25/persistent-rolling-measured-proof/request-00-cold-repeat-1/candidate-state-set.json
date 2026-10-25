@@ -1,0 +1,72 @@
+{
+  "schema": "ownrt.pipeline-state-set.v7",
+  "mode": "persistent-rolling",
+  "controller_mode": "persistent-rolling",
+  "actual_proposals_only": true,
+  "verification_policy": "measured",
+  "layer_count": 48,
+  "require_byte_verified_restores": false,
+  "require_provider_byte_verified_restores": false,
+  "provider_borrow_mode": "pending-target",
+  "require_provider_survival_checks": false,
+  "required_provider_pending_depths": [],
+  "draft_input_identity": {
+    "model_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "draft_model_sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+    "pair_sequence_sha256": "e83e418b189598df0852656a71abab9ae33826e99bfcfd96f46790bdd60d7fe3",
+    "position": 117,
+    "arithmetic": "F32-target/BF16-draft",
+    "context": 4096,
+    "vocab": 248320,
+    "draft_experts": "fp8"
+  },
+  "ring_request_sha256": "abe051ff6433834deb71e28bec543d815d93cd6e677a246cf14b0689a2265d16",
+  "ring_epoch": 1,
+  "input_identity": {
+    "model_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "prompt_token_sha256": "0e8aeaa6723fb6ba0d7a0511d0053781d770bb5c8b941784347f2f0708fb9f65",
+    "output_token_sha256": "951774340f8d1d33c5cd3ffd2e18c1cc647276131ab34573a3f50af68b9a8da2",
+    "arithmetic": "F32",
+    "position": 118
+  },
+  "stages": [
+    {
+      "id": 0,
+      "begin": 0,
+      "end": 13,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage0/native/requests/request-00-cold-repeat-1/state-2000000000",
+      "plan": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage0/launch-plan.json",
+      "metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage0/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage0/native/requests/request-00-cold-repeat-1/state-2000000000.ring-state.json",
+      "draft_state_set": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/draft-state-set.json",
+      "provider_survival": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage0/native/requests/request-00-cold-repeat-1/ring-provider-survival.jsonl"
+    },
+    {
+      "id": 1,
+      "begin": 13,
+      "end": 25,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage1/native/requests/request-00-cold-repeat-1/state-2000000000",
+      "plan": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage1/launch-plan.json",
+      "metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage1/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage1/native/requests/request-00-cold-repeat-1/state-2000000000.ring-state.json"
+    },
+    {
+      "id": 2,
+      "begin": 25,
+      "end": 37,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage2/native/requests/request-00-cold-repeat-1/state-2000000000",
+      "plan": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage2/launch-plan.json",
+      "metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage2/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage2/native/requests/request-00-cold-repeat-1/state-2000000000.ring-state.json"
+    },
+    {
+      "id": 3,
+      "begin": 37,
+      "end": 48,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage3/native/requests/request-00-cold-repeat-1/state-2000000000",
+      "plan": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage3/launch-plan.json",
+      "metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-measured-proof/request-00-cold-repeat-1/stage3/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-measured-a/stage3/native/requests/request-00-cold-repeat-1/state-2000000000.ring-state.json"
+    }
+  ]
+}

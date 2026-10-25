@@ -1,0 +1,26 @@
+{
+  "utc": "2026-10-25T22:47:43.066183+00:00",
+  "source_commit": "22cc9ff443af3be7504719f6a6b11b92b35fed09",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-ring-persistent-measured-proof-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "--run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-measured-plan.json",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-measured-admission.json",
+    "--unit",
+    "sc117-ring-persistent-measured-proof-20261025.service"
+  ],
+  "qualified_reference": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-qualified-proof/summary.json",
+  "qualified_durable_archive": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-qualified-durable-archive.json"
+}
