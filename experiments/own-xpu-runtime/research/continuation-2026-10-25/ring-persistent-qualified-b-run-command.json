@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-25T22:37:29.571269+00:00",
+  "source_commit": "bcffecb25b1245c37a83503e5e837aea73ea7a34",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-ring-persistent-qualified-b-proof-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "--run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-qualified-b-plan.json",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-qualified-b-admission.json",
+    "--unit",
+    "sc117-ring-persistent-qualified-b-proof-20261025.service"
+  ],
+  "prior_failure_archived": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-qualified-a-failure-archive.json",
+  "native_binary_unchanged": true,
+  "controller_fix_independently_reviewed": true
+}
