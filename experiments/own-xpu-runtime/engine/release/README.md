@@ -58,6 +58,16 @@ untracked package members are refused even if another source tree happens to
 make an import work locally. Older source trees without these entrypoints retain
 the earlier portable-live requirements.
 
+The opt-in persistent rolling entrypoint additionally requires
+`tools/persistent_rolling_driver.py` and `tools/persistent_rolling_suite.py`, with
+the whole rolling and shared live timing/receipt helper dependency chain. Missing
+or untracked persistent helpers fail export. Committed persistent socket fixtures
+are included too. The native reset parser's standard `<charconv>` header is
+explicitly inventoried; unknown angle headers still fail closed. Persistent
+source inclusion does not certify native reset, measured policy, long-suite
+trace coverage, or a portable persistent controller. Those remain separate
+run/evidence/admission gates.
+
 The ring CPU test helpers used by committed planning/review modules are also
 included when tracked. An import of an untracked fixture still fails export;
 there is no fallback to the developer's working tree. The tests cover package

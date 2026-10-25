@@ -278,5 +278,49 @@ class PythonClosureTests(unittest.TestCase):
         with self.assertRaisesRegex(bundle.BundleError,'Missing/untracked Python dependency'):
             bundle.prepare(self.engine)
 
+    def install_persistent_fixture(self):
+        self.install_rolling_fixture()
+        self.write('tools/persistent_rolling_suite.py',
+            'import rolling_ring_driver\nimport persistent_live_suite\nCAPACITY=rolling_ring_driver.transport.CAPACITY\n')
+        self.write('tools/persistent_rolling_driver.py','from persistent_rolling_suite import CAPACITY\n')
+
+    def test_persistent_complete_dependency_chain_imports_from_extracted_archive(self):
+        self.install_persistent_fixture();self.commit()
+        contents,report=bundle.prepare(self.engine)
+        self.assertTrue(set(bundle.PERSISTENT_ROLLING_RUNTIME)<=set(contents))
+        self.assertTrue(set(bundle.PERSISTENT_ROLLING_RUNTIME)<=set(report['explicit_dynamic_python_dependencies']))
+        raw=bundle.archive_bytes(contents)
+        self.assertEqual(raw,bundle.archive_bytes(bundle.prepare(self.engine)[0]))
+        extracted=self.root/'persistent-extracted';extracted.mkdir()
+        with tarfile.open(fileobj=io.BytesIO(raw),mode='r:gz') as archive:
+            for member in archive.getmembers():
+                self.assertTrue(member.isfile())
+                target=extracted/member.name
+                self.assertTrue(target.resolve().is_relative_to(extracted))
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_bytes(archive.extractfile(member).read())
+        snapshot=extracted/'own-xpu-runtime-source'
+        code='import sys;sys.path[:0]=sys.argv[1:];import persistent_rolling_driver;assert persistent_rolling_driver.CAPACITY==2'
+        subprocess.run([sys.executable,'-I','-c',code,str(snapshot/'tools'),str(snapshot/'planning')],
+                       check=True,capture_output=True,text=True,timeout=10)
+
+    def test_untracked_or_missing_persistent_helper_refused(self):
+        self.install_persistent_fixture()
+        path=self.engine/'tools/persistent_rolling_suite.py';raw=path.read_bytes()
+        path.unlink();self.commit();path.write_bytes(raw)
+        with self.assertRaisesRegex(bundle.BundleError,'Untracked required input'):
+            bundle.prepare(self.engine)
+        self.commit();path.unlink()
+        with self.assertRaisesRegex(bundle.BundleError,'Missing or non-regular input'):
+            bundle.prepare(self.engine)
+
+    def test_standard_charconv_for_reset_parser_preserves_unknown_header_refusal(self):
+        self.write('src/main.cpp','#include <charconv>\n#include "local.hpp"\n');self.commit()
+        _,report=bundle.prepare(self.engine)
+        self.assertIn('charconv',report['external_system_headers'])
+        self.write('src/main.cpp','#include <charconv-private.hpp>\n');self.commit()
+        with self.assertRaisesRegex(bundle.BundleError,'Unknown angle include'):
+            bundle.prepare(self.engine)
+
 if __name__ == "__main__":
     unittest.main()

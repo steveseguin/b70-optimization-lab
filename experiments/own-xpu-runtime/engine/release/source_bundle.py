@@ -17,7 +17,7 @@ class BundleError(ValueError):
     pass
 
 
-SYSTEM_HEADERS = set("algorithm array atomic bit cassert cctype cerrno cfenv chrono cmath condition_variable csignal cstddef cstdint cstdio cstdlib cstring deque filesystem fstream functional iomanip iostream limits map memory mutex numeric optional ostream random set span sstream stdexcept string string_view thread tuple type_traits typeinfo unordered_map unordered_set utility variant vector fcntl.h poll.h sched.h unistd.h".split())
+SYSTEM_HEADERS = set("algorithm array atomic bit cassert cctype cerrno cfenv charconv chrono cmath condition_variable csignal cstddef cstdint cstdio cstdlib cstring deque filesystem fstream functional iomanip iostream limits map memory mutex numeric optional ostream random set span sstream stdexcept string string_view thread tuple type_traits typeinfo unordered_map unordered_set utility variant vector fcntl.h poll.h sched.h unistd.h".split())
 SYSTEM_PREFIXES = ("sycl/", "openssl/", "level_zero/", "sys/", "linux/")
 
 
@@ -60,19 +60,22 @@ ROLLING_RUNTIME=PENDING_RING_RUNTIME+(
     'tools/rolling_ring_driver.py','planning/rolling_provider/__init__.py',
     'planning/rolling_provider/arbiter.py','planning/rolling_provider/coordinator.py',
     'planning/rolling_provider/transport.py')
+PERSISTENT_ROLLING_RUNTIME=ROLLING_RUNTIME+(
+    'tools/persistent_rolling_driver.py','tools/persistent_rolling_suite.py')
 DYNAMIC_RUNTIME_GROUPS=(
     ('deployment/portable_live.py',PORTABLE_LIVE_RUNTIME),
     ('tools/ring_driver.py',RING_RUNTIME),
     ('tools/ring_live_driver.py',RING_LIVE_RUNTIME),
     ('tools/pending_ring_live_driver.py',PENDING_RING_RUNTIME),
-    ('tools/rolling_ring_driver.py',ROLLING_RUNTIME))
+    ('tools/rolling_ring_driver.py',ROLLING_RUNTIME),
+    ('tools/persistent_rolling_driver.py',PERSISTENT_ROLLING_RUNTIME))
 # Planning research/tests import these CPU fixtures. Include only committed
 # fixtures; an import of an untracked/missing fixture still fails closed below.
 RING_TEST_SUPPORT=(
     'tools/test_wavefront_driver.py','tools/test_ring_driver.py','tools/test_ring_wire.py',
     'tools/test_ring_live_driver.py','tools/test_ring_live_wire.py',
     'tools/test_pending_ring_live_driver.py','tools/test_rolling_ring_driver.py',
-    'tools/test_rolling_ring_socket.py')
+    'tools/test_rolling_ring_socket.py','tools/test_persistent_rolling.py')
 
 
 def python_closure(contents):
