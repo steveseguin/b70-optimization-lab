@@ -1,0 +1,26 @@
+{
+  "utc": "2026-10-25T23:05:24.600795+00:00",
+  "source_commit": "de9b4356f8304ed8d60c319b821f30ab94ef9452",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-ring-persistent-suite-proof-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "--run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-suite-plan.json",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-suite-admission.json",
+    "--unit",
+    "sc117-ring-persistent-suite-proof-20261025.service"
+  ],
+  "planner_transition_sha256": "9a495b6bfcda7d53cc080fd061aecf559583eda28b7dab696763493c53424774",
+  "other_local_builds_or_tests_running": false
+}

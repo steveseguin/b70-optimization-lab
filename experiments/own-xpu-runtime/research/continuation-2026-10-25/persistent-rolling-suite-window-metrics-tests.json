@@ -1,0 +1,26 @@
+{
+  "schema": "ownrt.persistent-rolling-window-metrics-tests.v1",
+  "passed": true,
+  "tests": 3,
+  "cwd": "/home/steve/llm-optimizations",
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "test_review_persistent_rolling_suite_run",
+    "-q"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/review_persistent_rolling_suite_run.py": "606e1c9e89880c39fc6cb7c772de7bc36b46efe441dda4233a352bc9f7368219",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/test_review_persistent_rolling_suite_run.py": "99aa0980879b387722b26253fa892bf6eb85039edf39296ed50138fe82eb3ef0",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-run-review.json": "f5d056c7c7b672706b83a011f58787bf852842477de8b1307e94f88e70f33162",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-window-metrics.json": "97ac949f86145c6b471dfcdb597deebb18cc8a9fab57c633ebe721734974aa40"
+  },
+  "checks": [
+    "100events produce99intervals with exact0/99 timestamp endpoints",
+    "TTFT excludes RESET; pureprefill timestamp absent",
+    "Short responses, changed tokenIDs, reorderedtimestamps and eventcount-as-numerator refused",
+    "Fixed6class median differs from ordinary12prompt median"
+  ],
+  "no_gpu_or_service_actions": true
+}

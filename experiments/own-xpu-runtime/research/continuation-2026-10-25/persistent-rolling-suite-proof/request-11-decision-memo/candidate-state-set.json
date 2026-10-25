@@ -1,0 +1,72 @@
+{
+  "schema": "ownrt.pipeline-state-set.v7",
+  "mode": "persistent-rolling",
+  "controller_mode": "persistent-rolling",
+  "actual_proposals_only": true,
+  "verification_policy": "measured",
+  "layer_count": 48,
+  "require_byte_verified_restores": false,
+  "require_provider_byte_verified_restores": false,
+  "provider_borrow_mode": "pending-target",
+  "require_provider_survival_checks": false,
+  "required_provider_pending_depths": [],
+  "draft_input_identity": {
+    "model_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "draft_model_sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+    "pair_sequence_sha256": "ba242471734b0f205173e0ab4abfd7bba72de012929eb353a73fa72f9bdf28ab",
+    "position": 570,
+    "arithmetic": "F32-target/BF16-draft",
+    "context": 4096,
+    "vocab": 248320,
+    "draft_experts": "fp8"
+  },
+  "ring_request_sha256": "3e99fca8c6f1308180f0a8606fb37c8289333e562fcfe86ea8cb261d58f3736b",
+  "ring_epoch": 12,
+  "input_identity": {
+    "model_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "arithmetic": "F32",
+    "prompt_token_sha256": "675381fb5feed4030c25b74a7d368da547087a4c90207cb91ebd81eabf567381",
+    "output_token_sha256": "28ae84bf7c6d2d0db725e7a2657bb5ad9c3036f28614e0230a3f52a6e76d8a69",
+    "position": 571
+  },
+  "stages": [
+    {
+      "id": 0,
+      "begin": 0,
+      "end": 13,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage0/native/requests/request-11-decision-memo/state-2147483647",
+      "plan": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage0/launch-plan.json",
+      "metadata": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage0/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage0/native/requests/request-11-decision-memo/state-2147483647.ring-state.json",
+      "draft_state_set": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/draft-state-set.json",
+      "provider_survival": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage0/native/requests/request-11-decision-memo/ring-provider-survival.jsonl"
+    },
+    {
+      "id": 1,
+      "begin": 13,
+      "end": 25,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage1/native/requests/request-11-decision-memo/state-2147483647",
+      "plan": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage1/launch-plan.json",
+      "metadata": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage1/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage1/native/requests/request-11-decision-memo/state-2147483647.ring-state.json"
+    },
+    {
+      "id": 2,
+      "begin": 25,
+      "end": 37,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage2/native/requests/request-11-decision-memo/state-2147483647",
+      "plan": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage2/launch-plan.json",
+      "metadata": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage2/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage2/native/requests/request-11-decision-memo/state-2147483647.ring-state.json"
+    },
+    {
+      "id": 3,
+      "begin": 37,
+      "end": 48,
+      "dump": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage3/native/requests/request-11-decision-memo/state-2147483647",
+      "plan": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage3/launch-plan.json",
+      "metadata": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/request-11-decision-memo/stage3/pipeline-stage.json",
+      "quiescence": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage3/native/requests/request-11-decision-memo/state-2147483647.ring-state.json"
+    }
+  ]
+}

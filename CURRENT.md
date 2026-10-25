@@ -61,10 +61,18 @@ exited zero with no new fault signatures. Its complete/compact evidence is durab
 and restore-tested. The native binary is unchanged. The measured-policy gate also passed both
 requests against baseline and qualification, with mandatory checks retained and
 omitted byte/survival diagnostics honestly reported as zero. Its archive is
-durable and restore-tested. The twelve-prompt timing experiment is next; all
-GPUs are currently idle. The earlier checked rolling run is not a speed result.
+durable and restore-tested. The twelve-prompt cold rolling benchmark also passed
+all 5,965 output IDs, every reset/provenance audit and the final 2,065 target
+buffers. All workers exited zero with no new faults; GPUs are idle. Its median
+full-response decode observation is **41.57 tok/s**, so deeper rolling guesses
+have not improved speed. The six-class first99 metric is **42.68 tok/s**, a
+different metric from the old service observation. Full journals and raw state
+are durable and restore-tested; public metadata retains the exact hashes.
+Next: rebalance target layers away from the first card, which also owns draft
+work. No training or arithmetic change. See the
+[complete rolling suite result](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-proof/RESULT.md).
 The latest 450-file source export (`4b74995e2`) passes hashes and isolated imports;
-it is not built or published as a new qualified download. The earlier 424-file its
+it is not built or published as a new qualified download. The earlier 424-file
 extracted portable build passed (binary `8ba3e562e175`), including all 225 native
 source hashes and generated local model configuration. This newer build has not
 yet run on GPUs. Deployment also now accepts a separately trusted
