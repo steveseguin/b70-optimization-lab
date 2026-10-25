@@ -93,6 +93,42 @@ template<bool SplitSoftmax,bool F32=false>inline sycl::event tiles(sycl::queue&q
  p[lid*2]=vals[0][0];p[lid*2+1]=vals[0][1];
  }));});
 }
+// Split-softmax tiles, F32, with the tile's 32 slot ids staged once in local memory, the query row loaded once per
+// subgroup, and each subgroup's 8 K rows requested before its 8 scores are formed. Every score is score<true>()'s
+// products, 8-leaf tree, lane tree and division; softmax and V accumulation are tiles<true,true>'s. Exact.
+inline sycl::event tiles_pipelined(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
+ int C=splits(s);return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*24*C*128,128)](sycl::handler& handler){sycl::local_accessor<float,1>local(66,handler);sycl::local_accessor<int,1>slot(32,handler);
+ handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+ int g=it.get_group_linear_id(),c=g%C,h=(g/C)%24,r=g/(C*24),lid=it.get_local_linear_id(),n=counts[r],S=s.budget+3;
+ if(n<=0||blocked(a))return;int start=c*32;if(start>=n)return;auto sg=it.get_sub_group();int lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32;
+ float* p=partial+size_t(g)*258;
+ if(lid<32)slot[lid]=start+lid<n?a.i(4)[r*S+start+lid]:-1;
+ it.barrier(sycl::access::fence_space::local_space);
+ const float* K=static_cast<const float*>(a.p[2]);
+ sycl::vec<float,8> qv;qv.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(static_cast<const float*>(a.p[0])+(r*24+h)*256+lane*8));
+ sycl::vec<float,8> kv[8];
+ #pragma unroll
+ for(int t=0;t<8;++t){const int j=sub+4*t;kv[t]=sycl::vec<float,8>(0.f);if(start+j<n)kv[t].load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(K+(slot[j]*2+h/12)*256+lane*8));}
+ #pragma unroll
+ for(int t=0;t<8;++t){const int j=sub+4*t;float x=-INFINITY;
+  if(start+j<n){float v[8];for(int e=0;e<8;++e)v[e]=kv[t][e]*qv[e];for(int z=1;z<8;z*=2)for(int e=0;e<8;e+=2*z)v[e]=v[e]+v[e+z];x=lane_tree(sg,v[0])/detmath::sqrt(256.f);}
+  if(lane==0)local[j]=x;}
+ it.barrier(sycl::access::fence_space::local_space);
+ if(lid==0){float m=-INFINITY;for(int j=0;j<32&&start+j<n;++j)m=std::max(m,local[j]);local[64]=m;p[256]=m;}
+ it.barrier(sycl::access::fence_space::local_space);
+ if(lid<32){float x=start+lid<n?detmath::exp(local[lid]-local[64]):0.f;local[32+lid]=x;float den=lane_tree(sg,x);if(lid==0)p[257]=den;}
+ it.barrier(sycl::access::fence_space::local_space);
+ const float* V=static_cast<const float*>(a.p[3]);
+ sycl::vec<float,2> vals[32];
+ #pragma unroll
+ for(int j=0;j<32;++j){vals[j]=sycl::vec<float,2>(0.f);if(start+j<n){sycl::vec<float,2>v;v.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(V+(slot[j]*2+h/12)*256+lid*2));for(int d=0;d<2;++d)vals[j][d]=local[32+j]*v[d];}}
+ for(int z=1;z<32;z*=2)for(int j=0;j<32;j+=2*z)vals[j]=vals[j]+vals[j+z];
+ p[lid*2]=vals[0][0];p[lid*2+1]=vals[0][1];
+ }));});
+}
+// Measured slower (3K context, rank 0 tiles pass: 914 -> 1079 us per step; 64 K floats per lane held in registers);
+// OWNRT_ATTN_PIPELINE=1 opts in.
+inline bool tiles_pipelined_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_ATTN_PIPELINE");return e&&e[0]=='1';}();return on;}
 // Split-softmax tiles with grouped heads: one work-group per (row, KV head, tile) runs the 12 query heads that share
 // the KV head in turn, each with tiles<true>'s unchanged per-head body and the same partial slot, so each K/V row
 // is fetched from memory once per tile instead of once per query head (later heads hit the cache). Exact.
