@@ -1,0 +1,41 @@
+{
+  "command": "cd engine/tools && PYTHONPATH=../planning python3 -m unittest test_ring_wire test_ring_driver test_ring_coordinator -q",
+  "coverage": [
+    "canonical C++ Python byte agreement and request prefix",
+    "all224 publication bytes and all128 ACK bytes mutation refused",
+    "2/4/6 fragmented socket workers",
+    "depth1 and depth2 forced rejection",
+    "two-row stage0 suffix restore",
+    "stale/truncated replies",
+    "required bytecheck and physical/logical cursor validation",
+    "initial tentative flag retained for ACCEPT/ABORT",
+    "bounded completed stream retention",
+    "hash-bound truthful ring result wrapper",
+    "complete final drained event retained in schedule trace"
+  ],
+  "development_observation": {
+    "misses": [
+      4,
+      7
+    ],
+    "result": "correct rollback but only depth1 rejections; coverage gate refused. Adjacent+deeper [4,5,7] exercises depths1/2 and two-row restore in the CPU workers."
+  },
+  "device_execution_requested": false,
+  "mode": "scripted-target-only-ring",
+  "passed": true,
+  "schema": "ownrt.ring-wire-cpu.v1",
+  "scope": "CPU wire/controller simulation only; native GPU execution and full-state comparison pending. Oracle-assisted proposals are not live drafting.",
+  "source_sha256": {
+    "planning/ring_contract.py": "3cf6a0b713bb0e87ae2be75cd57913237ea62de1a4c6651f53f68c159c84e1b7",
+    "planning/ring_coordinator.py": "84b7d6970dd3f1c357c674760739e577c2f2be1d0577405b240abf9003a0690f",
+    "planning/test_ring_coordinator.py": "582b407158ca11a9f6d31d545efad5aa0a28137dee9441446f1d3cd4951ff672",
+    "src/pipeline/ring/stage_ring.hpp": "f87cd76ccb6f3010b3a6d98d841f1d71a9a220978ccfb38aa29ee6b73d3c3fe2",
+    "src/pipeline/ring/wire.hpp": "9f5c3688af51d6092ec7018c6e85d2918b5443e326f789e3598f881a61a48eea",
+    "tools/ring_driver.py": "3f545dcfd77d1610e27f77630e117068889c87da535712507d74dedfe2a8558b",
+    "tools/ring_wire.py": "16e7c7d3bc1a6c41e32d92e4df495144321b72d79feb88cf2a8bfc569ab6323b",
+    "tools/test_ring_driver.py": "72a0af099c56de45d15b99c689d672fd6275274f6c95f92ac6d34fa7d3e4ab3f",
+    "tools/test_ring_wire.py": "3280aecbf7f93e95c8ac9a18a27db80be8df6caa9bbc67e177ebac2fd7760b4f"
+  },
+  "speed_claim": false,
+  "tests": 27
+}

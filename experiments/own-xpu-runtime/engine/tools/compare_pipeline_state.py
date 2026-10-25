@@ -11,6 +11,9 @@ Version v2 declares mode="verified-wavefront", require_byte_verified_restores
 (boolean), and a quiescence path on every stage pointing to the dump's sibling
 <dump-name>.wavefront-state.json. Native quiescence and exact seal binding are
 mandatory; v1 still admits target-only/no-speculation dumps only.
+Version v3 explicitly admits mode="verified-ring", ring_request_sha256 and
+ring_epoch. A sibling <dump-name>.ring-state.json and hash-bound native
+ring-checkpoint-layout.json must attest a fully resolved target-only ring.
 
 All canonical layer buffers compare exactly by absolute layer name. Physical
 spares are excluded only with the engine's explicit inactive-bank inventory
@@ -134,17 +137,114 @@ def wavefront_attestation(path, stage, dump, metadata, identity, seal_source, ha
     return att, receipt
 
 
+def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes, lengths, spec):
+    declared = path.parent / stage['quiescence']
+    require(not declared.is_symlink(), 'ring attestation symlink refused')
+    att_path = declared.resolve()
+    require(att_path == dump.with_name(dump.name + '.ring-state.json'), 'ring attestation must be exact dump sibling')
+    require(0 < att_path.stat().st_size <= 1024 * 1024, 'ring attestation size bound')
+    raw, receipt = source(att_path)
+    att = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
+    require(att['schema'] == 'ownrt.ring-state.v1' and att['mode'] == 'verified-ring', 'unsupported ring attestation schema/mode')
+    marker = re.fullmatch(r'state-(0|[1-9][0-9]*)', dump.name)
+    require(marker is not None and type(att['dump_marker']) is int and att['dump_marker'] == int(marker[1]), 'ring dump marker differs')
+    require(type(att['stage_id']) is int and att['stage_id'] == stage['id'], 'ring stage identity differs')
+    require(att['state_seal_sha256'] == seal_source['sha256'], 'ring dump seal SHA differs')
+    require(att['ring_request_sha256'] == spec['ring_request_sha256']
+            and type(att['ring_epoch']) is int and att['ring_epoch'] == spec['ring_epoch'], 'ring request/epoch identity differs')
+    for key in ('ring_capacity','depth','actual_position','committed_position','pending_tickets','active_slots','sticky_error',
+                'rows','tentative_rows','commits','accepted_tentative_rows','abort_count','discarded_rows',
+                'snapshot_captures','snapshot_releases','byteverified_restore_count','saved_bytes',
+                'target_mutable_checkpoint_bytes','bank_parity','max_pending','trace_records','trace_omitted'):
+        require(type(att[key]) is int and 0 <= att[key] <= 2**64-1, 'ring bounded nonnegative integer required: '+key)
+    require(att['ring_capacity'] == att['depth'] == 2, 'ring depth/capacity must be explicit two')
+    require(att['pending_tickets'] == att['active_slots'] == att['sticky_error'] == 0, 'ring is not quiescent/error-free')
+    position = identity['position']
+    require(position <= 2**31-1 and att['actual_position'] == att['committed_position'] == att['commits'] == position,
+            'ring physical/committed position differs')
+    require(lengths.get('position.bin') == 4 and hashes.get('position.bin') == sha(struct.pack('<I',position))
+            and lengths.get('error.bin') == 4 and hashes.get('error.bin') == sha(bytes(4)), 'ring sealed position/error differs')
+    require(att['rows'] == att['commits'] + att['discarded_rows']
+            and att['snapshot_captures'] == att['tentative_rows'] == att['snapshot_releases']
+            == att['accepted_tentative_rows'] + att['discarded_rows']
+            and att['accepted_tentative_rows'] <= att['commits'], 'ring capture/release/row conservation differs')
+    require((att['abort_count'] == att['discarded_rows'] == 0) or
+            (0 < att['abort_count'] <= att['discarded_rows'] <= 2*att['abort_count']), 'ring suffix abort/discard accounting differs')
+    require(att['trace_records'] + att['trace_omitted'] == att['rows'] + att['commits'] + att['abort_count']
+            and (att['max_pending'] == 0 if att['rows'] == 0 else 1 <= att['max_pending'] <= (1 if metadata['final'] else 2)),
+            'ring trace/maximum pending accounting differs')
+    require(type(att['restore_verification_enabled']) is bool and type(att['all_aborts_byte_verified']) is bool
+            and att['byteverified_restore_count'] <= att['abort_count']
+            and att['all_aborts_byte_verified'] is (att['byteverified_restore_count'] == att['abort_count']),
+            'ring restore verification accounting differs')
+    require(att['byteverified_restore_count'] == (att['abort_count'] if att['restore_verification_enabled'] else 0),
+            'ring declared restore policy differs from checks')
+    if spec['require_byte_verified_restores']:
+        require(att['restore_verification_enabled'] is True and att['all_aborts_byte_verified'] is True,
+                'ring proof requires every restore byte-verified')
+    if metadata['final']:
+        require(att['tentative_rows'] == att['abort_count'] == att['discarded_rows'] == 0,
+                'ring final stage must not speculate')
+    size = att['target_mutable_checkpoint_bytes']
+    require(0 < size <= 256*1024**2 and att['saved_bytes'] == size*att['snapshot_captures'], 'ring snapshot byte accounting differs')
+    layout_path = dump.parent/'ring-checkpoint-layout.json'
+    require(not layout_path.is_symlink() and 0 < layout_path.stat().st_size <= 4*1024**2, 'ring layout regular bounded file required')
+    layout_raw, layout_source = source(layout_path)
+    require(layout_source['sha256'] == att['checkpoint_layout_sha256'], 'ring checkpoint layout SHA differs')
+    layout = json.loads(layout_raw, object_pairs_hook=BUNDLE.pairs)
+    require(layout['schema'] == 'ownrt.ring-checkpoint-layout.v1'
+            and layout['complete_target_owned_mutable_allocations'] is True and layout['provider_present'] is False
+            and type(layout['ring_capacity']) is int and layout['ring_capacity'] == 2
+            and type(layout['slot_bytes']) is int and layout['slot_bytes'] == size, 'ring complete target-only layout required')
+    allocations, labels = set(), set()
+    for key in ('allocations','excluded_private_runtime_allocations','checkpoint_private_allocations'):
+        require(isinstance(layout[key],list), 'ring layout allocation list required')
+        for row in layout[key]:
+            require(type(row['id']) is int and 0 < row['id'] <= 2**64-1 and row['id'] not in allocations
+                    and isinstance(row['label'],str) and bool(row['label']) and row['label'] not in labels
+                    and type(row['bytes']) is int and 0 < row['bytes'] <= 256*1024**2,
+                    'ring layout overlapping/invalid allocation identity')
+            allocations.add(row['id']);labels.add(row['label'])
+    require(layout['allocations'] and sum(row['bytes'] for row in layout['allocations']) == size,
+            'ring target allocation extent differs')
+    legacy = {'card0:speculative-private-image','card0:speculative-copy-table','card0:speculative-static-copy-table'}
+    require({r['label'] for r in layout['excluded_private_runtime_allocations']} <= legacy,
+            'ring unregistered private-state exclusion')
+    private = layout['checkpoint_private_allocations']
+    require({r['label'] for r in private} == {f'card0:ring:{i}:{kind}' for i in (0,1) for kind in ('image','capture','restore')}
+            and all(r['bytes'] == size for r in private if r['label'].endswith(':image'))
+            and sum(r['bytes'] for r in private) <= 512*1024**2, 'ring two-slot private inventory differs')
+    require(att['bank_parity'] == (position % 2 if stage['id'] == 0 else 0), 'ring canonical bank parity differs')
+    inactive = metadata['inactive_alternate_banks']
+    require(isinstance(att['inactive_alternate_banks'],list) and len(att['inactive_alternate_banks']) == len(inactive)
+            and set(att['inactive_alternate_banks']) == set(inactive), 'ring inactive-bank inventory differs')
+    mapping = att['canonical_bank_mapping']
+    require(isinstance(mapping,dict) and set(mapping) == set(inactive), 'ring canonical-bank coverage differs')
+    banks = []
+    for name,row in mapping.items():
+        require(isinstance(row,dict) and set(row) == {'active_allocation','inactive_allocation'}
+                and all(type(v) is int and 0 < v <= 2**64-1 for v in row.values()), 'ring bank allocation identity: '+name)
+        banks.extend(row.values())
+    require(len(banks) == len(set(banks)) and set(banks) <= {r['id'] for r in layout['allocations']},
+            'ring canonical/inactive banks alias or are absent from target inventory')
+    return att, receipt, layout_source
+
+
 def load_set(path):
     path = Path(path).resolve()
     raw, receipt = source(path)
     spec = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
     mode = spec['mode']
     wavefront = spec['schema'] == 'ownrt.pipeline-state-set.v2' and mode == 'verified-wavefront'
-    require((spec['schema'] == 'ownrt.pipeline-state-set.v1' and mode == 'target-only') or wavefront,
-            'unsupported pipeline state set schema/mode; v1 target-only or v2 verified-wavefront required')
-    if wavefront:
+    ring = spec['schema'] == 'ownrt.pipeline-state-set.v3' and mode == 'verified-ring'
+    require((spec['schema'] == 'ownrt.pipeline-state-set.v1' and mode == 'target-only') or wavefront or ring,
+            'unsupported pipeline state set schema/mode; v1 target-only, v2 verified-wavefront or v3 verified-ring required')
+    if wavefront or ring:
         require(type(spec.get('require_byte_verified_restores')) is bool,
-                'wavefront proof must explicitly declare require_byte_verified_restores')
+                'speculative proof must explicitly declare require_byte_verified_restores')
+    if ring:
+        require(BUNDLE.hexhash(spec.get('ring_request_sha256')) and type(spec.get('ring_epoch')) is int
+                and 0 <= spec['ring_epoch'] <= 2**64-1, 'ring request/epoch identity required')
     total = spec['layer_count']
     require(type(total) is int and total > 0, 'positive layer_count required')
     identity = spec['input_identity']
@@ -168,7 +268,15 @@ def load_set(path):
         metadata_path = (path.parent / stage['metadata']).resolve()
         metadata_raw, metadata_source = source(metadata_path)
         metadata = json.loads(metadata_raw, object_pairs_hook=BUNDLE.pairs)
-        if wavefront:
+        if ring:
+            require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == 'verified-ring'
+                    and metadata['speculation_enabled'] is True
+                    and type(metadata['ring_capacity']) is int and metadata['ring_capacity'] == 2
+                    and type(metadata['depth']) is int and metadata['depth'] == 2
+                    and metadata['ring_request_sha256'] == spec['ring_request_sha256']
+                    and type(metadata['ring_epoch']) is int and metadata['ring_epoch'] == spec['ring_epoch'],
+                    'engine ring/speculation metadata required')
+        elif wavefront:
             require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == 'wavefront'
                     and metadata['speculation_enabled'] is True, 'engine wavefront/speculation metadata required')
         else:
@@ -200,6 +308,10 @@ def load_set(path):
                                                    lengths, spec['require_byte_verified_restores'])
             attestations.append({'stage': ordinal, 'attestation': att, 'source': att_source})
             sources.append(att_source)
+        if ring:
+            att, att_source, layout_source = ring_attestation(path,stage,dump,metadata,identity,seal_source,hashes,lengths,spec)
+            attestations.append({'stage':ordinal,'attestation':att,'source':att_source,'layout_source':layout_source})
+            sources += [att_source,layout_source]
         plan_raw, plan_source = source(plan_path)
         plan = json.loads(plan_raw, object_pairs_hook=BUNDLE.pairs)
         sources.append(plan_source)
@@ -224,10 +336,10 @@ def load_set(path):
         require(base_names == set(layouts), 'plan/state base buffer inventory differs')
         require('streams.bin' in layouts and layouts['streams.bin']['dtype'] == 'f32'
                 and layouts['streams.bin']['bytes'] == metadata['stream_bytes'], 'stage boundary metadata/layout mismatch')
-        if wavefront:
+        if wavefront or ring:
             require(all(layouts.get(name, {}).get('dtype') in {'i32', 'u32'}
                         and layouts[name]['shape'] == [1] for name in ('position.bin', 'error.bin')),
-                    'wavefront position/error require scalar integer layouts')
+                    'speculative position/error require scalar integer layouts')
         require({k for k in hashes if k.startswith('alternate-')} == {'alternate-' + name + '.bin' for name in inactive},
                 'actual alternate-bank inventory differs from engine declaration')
         seen_layers = set()
@@ -246,8 +358,8 @@ def load_set(path):
                 if key.startswith('alternate-'):
                     require(base in base_names, 'inactive bank has no canonical committed buffer')
                     excluded.append({'stage': ordinal, 'source_key': key, 'sha256': digest,
-                                     'reason': ('engine-declared inactive physical spare; sealed quiescent wavefront canonical bank attested'
-                                                if wavefront else 'engine-declared inactive physical spare; target-only execution with speculation disabled'),
+                                     'reason': (f'engine-declared inactive physical spare; sealed quiescent {mode} canonical bank attested'
+                                                if wavefront or ring else 'engine-declared inactive physical spare; target-only execution with speculation disabled'),
                                      'metadata_source': str(metadata_path), **layouts[base]})
                     continue
                 role = 'persistent-layer' if PERSISTENT.search(key) else 'layer-intermediate'
@@ -286,7 +398,7 @@ def load_set(path):
             require({'logits.bin', 'next_token.bin', 'streams.bin'} <= base_names, 'last-stage head/output buffers required')
     require(cursor == total, 'stage ranges do not cover all layers')
     return {'mode': mode, 'input_identity': identity, 'layer_count': total, 'canonical': canonical,
-            'require_byte_verified_restores': spec.get('require_byte_verified_restores') if wavefront else None,
+            'require_byte_verified_restores': spec.get('require_byte_verified_restores') if wavefront or ring else None,
             'quiescence_attestations': attestations,
             'first_stage_host_history': first_history, 'excluded': excluded, 'sources': sources}
 
@@ -305,7 +417,7 @@ def compare(reference, candidate):
         if mismatch:
             errors.append({'source_key': key, 'fields': mismatch, 'reference': a[key], 'candidate': b[key]})
     return {'schema': 'ownrt.pipeline-state-comparison.v1', 'passed': not errors,
-            'scope': 'sealed committed state/layout equality for identical declared input/output identities; wavefront inputs require native quiescence attestations; not performance or CPU model fidelity',
+            'scope': 'sealed committed state/layout equality for identical declared input/output identities; speculative inputs require native quiescence attestations; not performance or CPU model fidelity',
             'compared_source_keys': sorted(a.keys() & b.keys()), 'errors': errors,
             'reference': reference, 'candidate': candidate,
             'comparator_sha256': sha(Path(__file__).read_bytes()), 'sealed_reader_sha256': sha(READER_PATH.read_bytes())}

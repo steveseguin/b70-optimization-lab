@@ -1,0 +1,9 @@
+{
+  "schema": "ownrt.ring-coordinator-prototype-defect.v1",
+  "source_sha256": "146f4f054850810578fb247b0b6bb806aeb96552563de030a1749087dff11989",
+  "test_source_sha256": "aa9638b5f6c15ae3b366906b157d8a4a512faa4cc58326b62ddd8acaacddb381",
+  "failure": "38 subcases failed among8 tests: every miss path completed all abort ACKs but commands returned empty after clearing drain phase, so event loop reported deadlock instead of admitting corrected row.",
+  "fix": "After final abort/drain acknowledgment barrier, immediately enter ordinary admission on the same poll when request remains active.",
+  "device_executed": false,
+  "scope": "Superseded CPU-only prototype; not imported by any live controller."
+}

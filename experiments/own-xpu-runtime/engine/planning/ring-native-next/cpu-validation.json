@@ -1,0 +1,58 @@
+{
+  "schema": "ownrt.unpromoted-ring-cpu.v2",
+  "scope": "CPU-only synthetic control and strict wire tests; actual Host checked checkpoint transport; native Engine adapter/24-26 dispatcher compiled, not model-kernel or socket executed; no GPU",
+  "checks": [
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-stage-ring-next"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-ring-wire-next"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-checked-ring-next",
+        "/dev/shm/ownrt-checked-ring-next-wire-final"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "experiments/own-xpu-runtime/engine/planning",
+        "-p",
+        "test_ring_*.py"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "sources": {
+    "README.md": "dda669b1938687a776e01a23c4b390f3124e0e20a5742abbc0ff15ba7f41ab07",
+    "checkpoint_ring.hpp": "b201c0d843748bd1c75af0d7a442c0a8587b95dfee1284e3c2f2daf1a65ce1ab",
+    "dispatcher.hpp": "d11b008c969acad97c1668533b9bda4eb6489ed3584244b6d1e72842ec72e72a",
+    "engine_backend.hpp": "961487eb581c5d9369786157e03b0b88e4ece8eadad58a18b45e080e3b4de623",
+    "stage_ring.hpp": "be47a215a4d56967cab7e9b290c307ccc1e3becd538d13db70b3155a8cd8dbc4",
+    "test_checked_checkpoint_ring.cpp": "d35832fb8bf288e5bf2a9f5781ab9e8517b3cf6e3da5a8c37a12d827f21efe28",
+    "test_stage_ring.cpp": "c899d70e9134631e724d4fb1fcaebe5c2764160462f85a01a5d0eca7b37102ab",
+    "test_wire.cpp": "7149c58139e6c2124638e677e009573aa221fd1e70c454b8110e261004249e66",
+    "wire.hpp": "9f5c3688af51d6092ec7018c6e85d2918b5443e326f789e3598f881a61a48eea"
+  },
+  "native_source_tree_sha256": "11074ac370089a7a187dee5faf2d171d3d524c7996d307ba442fea7fed17fc00",
+  "binaries": {
+    "/dev/shm/ownrt-test-stage-ring-next": "8f8bb9e3913edfab6b878fdb1256c82ca442b9b5768c811d0900935ee73ef3bd",
+    "/dev/shm/ownrt-test-ring-wire-next": "2a1174db336133e6d069a7374405ed46951c7731b89a57d5f75240a5e618b9c6",
+    "/dev/shm/ownrt-test-checked-ring-next": "766af6e29f02e75c54ffa44387d0d7b1d951d0d51b7be8e9d2fcbcf4b3e4c82a"
+  },
+  "log_sha256": "d4107a7a801d942b119e54736f78c95e776e317e6eb9c314bcb14a81d73d4ffe",
+  "supersedes": "cpu-control-v1.json",
+  "host_compile": "nice -n 19 g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I experiments/own-xpu-runtime/engine/src experiments/own-xpu-runtime/engine/planning/ring-native-next/test_checked_checkpoint_ring.cpp experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /dev/shm/ownrt-test-checked-ring-next"
+}

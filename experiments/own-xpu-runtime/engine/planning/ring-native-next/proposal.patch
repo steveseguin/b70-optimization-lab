@@ -1,0 +1,675 @@
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/README.md
+@@ -0,0 +1,104 @@
++# Unpromoted native two-slot ring proposal
++
++Separate source proposal only. No active native/controller file is modified or
++imports this directory. It is not an executable pipeline or a speed result.
++
++- `stage_ring.hpp`: templated native control component with immutable Row lineage,
++  two completed tentative records, oldest-only resolution, ACCEPT with no physical
++  rewind, one oldest-snapshot restoration for a whole rejected suffix, explicit
++  independent draft borrowing, sticky/partial-failure poisoning and cold RESET
++  with monotonic socket sequence/request epoch.
++- `checkpoint_ring.hpp`: proposed actual Engine-compatible checked transport.
++  One target/provider partition and one device census serve two backup regions
++  and four copy tables. All six private allocations precede census freezing;
++  snapshots never include each other's storage. Each slot retains target bank,
++  attention, history/cache metadata and shared output bytes. Independent provider
++  device/pinned bytes remain excluded by explicit validated ownership.
++- `engine_backend.hpp`: thin adapter to the existing `half_step`, `Candidate`
++  and `publish`, not another model executor. It requires retained steps disabled,
++  owns complete row output bytes, and requires an explicit checked reset callback.
++- `wire.hpp`: exact little-endian 224-byte row, 128-byte resolution ACK and
++  192-byte future proposal header; checks stage/request/epoch, original ticket,
++  prefix and payload hashes, complete stream size, padding and cursor ownership.
++  Proposal validation requires exact expected seed row, parent, final commit and
++  provider serial, rather than accepting nonzero identities.
++- `dispatcher.hpp`: concrete, unpromoted handlers for operations 24–26 using the
++  existing native Request/Reply, half_step, Candidate and final raw-hidden handoff.
++- `test_wire.cpp`: layout, hash, ownership, publication, cursor and proposal
++  identity refusal tests, compiled and passed.
++- `test_stage_ring.cpp`: lightweight adversarial CPU control test, compiled/run.
++- `test_checked_checkpoint_ring.cpp`: heavier host-only actual copy-transport and
++  adapter/dispatcher compile test. **Compiled and passed on the host backend.**
++  It includes the existing full-main host fixture; no GPU was opened.
++
++The lightweight test covers both rejection depths, capacities/parent/epoch/prefix
++refusal,31/32/33 extent and bank history, an older ACCEPT while newer work is fully
++executed, preservation of independent newer draft state, no rollback after sticky
++or partial-submission failure, final-stage verified-input gating, and RESET without
++reusing the global socket sequence.
++
++The manager and adapter are concrete code proposals, but their integration remains
++unqualified until independent review closes, a native opt-in outer dispatcher
++admits these handlers, and matched GPU state proofs pass. The actual host transport
++test exercises checkpoint copying; it only compiles the Engine adapter and
++wire dispatcher, and does not execute model HALF kernels or native socket traffic. StageRing assumes the owning socket has separately enforced
++contiguous command sequence; it enforces strictly increasing sequence across its
++operations, allowing other admitted operations to consume intervening sequences.
++The callback must perform actual request/provider reset before the manager rebuilds
++tables; no caller should zero the owner before StageRing admits the boundary.
++
++Still missing: full request-scoped ring attestation and counters, command 27
++recursive draft execution, per-row trace retention, outer socket-loop admission,
++and a Python-to-native wire bridge exercised over real sockets. Preserve current
++20–23 behavior and default full snapshots. Future promotion must be opt-in and
++must not reinterpret current v1 quiescence evidence as ring qualification.
++
++Actual host validation command (CPU only; avoid concurrent GPU timing):
++
++```sh
++nice -n 19 g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections \
++  -I experiments/own-xpu-runtime/engine/src \
++  experiments/own-xpu-runtime/engine/planning/ring-native-next/test_checked_checkpoint_ring.cpp \
++  experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp \
++  -Wl,--gc-sections -lcrypto -pthread -o /dev/shm/ownrt-test-checked-ring-next
++```
++
++Integration requirements:
++
++- Construct the provider and validated ownership partition before this manager.
++  Do not construct the old StageCheckpoint alongside it. All ring images and
++  checked descriptors are allocated together before the census is frozen.
++- The outer socket loop must preserve its contiguous wire sequence checks, call
++  this dispatcher only for operations 24–26, and call `reply_published(op)` after
++  the complete ROW reply is written. Existing operations 20–23 stay unchanged.
++- ROW input is copied into owned host storage before its SHA is checked. The
++  adapter uploads those same bytes using the existing prepared-input HALF path,
++  avoiding a second read from mutable shared memory. This preparation path still
++  requires matched GPU state qualification; CPU compilation does not establish it.
++- Final ACCEPT retains the existing 112-byte canonical true-pair Handoff. The
++  controller must bind its ticket, commit, position, input, head mask, output and
++  raw-hidden SHA to the accepted final row before admitting a draft operation.
++- The native ACK validator checks structural cursor relationships. The controller
++  must also compare expected physical/committed/pending values and require a
++  successful byte-restore flag when its qualification policy requested one.
++- RESET parsing remains owned by the outer checked boundary. The supplied reset
++  callback must reset target and provider state before rebuilding ring descriptors;
++  it must preserve wire sequence and advance request epoch exactly once.
++
++`cpu-validation.json` and its log record the final proposal's CPU-only checks.
++The earlier control-only patch and receipt remain as `proposal-control-v1.patch`
++and `cpu-control-v1.json`; `proposal.patch` is the current exact source snapshot.
++
++See `../ring-wire-next.md` for the proposed wire contract and
++`../wavefront-ring-next.md` for ownership and cost assumptions. No training,
++restart, GPU action or active benchmark-source mutation is part of this proposal.
++
++The later [common-cohort rejoin](../../../research/continuation-2026-10-25/recursive-common-cohort.json)
++provides a better diagnostic prior than mixing the earlier censored denominators:
++depth2 uses5,953 eligible seeds with correct-prefix buckets0/1/2 of
++1,420/1,220/3,313 (mean1.31799); depth3 uses5,941 seeds with buckets0/1/2/3 of
++1,417/1,216/918/2,390 (mean1.72059). These describe discarded diagnostic seed
++probes, not realized rolling acceptance, useful work, or throughput. A rolling
++scheduler can consume different proposal ages/branches and incur contention,
++checkpoint and recovery costs. Preserve per-prompt distributions and raw trace
++identity when using these statistics in a design model.
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/checkpoint_ring.hpp
+@@ -0,0 +1,107 @@
++#pragma once
++// Unpromoted transport, included after Engine, SnapshotFlat and
++// pipeline/operator_state.hpp. Two slots share one inventory and frozen census.
++namespace pipeline::ring_next {
++template<class Owner> class CheckpointRingFor {
++ Owner& e;bool verify;
++ struct Item {Allocation id;size_t bytes,offset;std::string label;};
++ struct Independent {Allocation id;size_t bytes;Memory memory;std::string label;};
++ std::vector<Item> items;std::vector<Independent> independent;
++ size_t bytes_=0,table_rows=0,tiles=0,allocation_count=0;
++ struct Metadata {
++  unsigned parity=0;int active=0,spare=1,extent=32,alternate=32;int64_t history0=0,history1=0;
++  decltype(e.lookup_ids) lookup;decltype(e.selected) selected;decltype(e.loaded_layer) loaded;
++  decltype(e.fp32_sources) sources;decltype(e.fp32_extents) extents;
++ };
++ struct Slot {
++  Allocation image=0,capture_table=0,restore_table=0;std::vector<Allocation> capture_ids,restore_ids;
++  bool active=false;Metadata metadata;std::array<uint8_t,65536> output{};uint8_t* shared=nullptr;
++ };
++ std::array<Slot,2> slots;
++ uint64_t captures_=0,restores_=0,byte_checks_=0;
++ void idle(){
++  e.drain();require(!e.poisoned&&!e.integer(0,"error"),"ring snapshot sticky failure");
++  require(!e.progress_pending&&!e.progress_callback&&!e.correction_exchange&&!e.reply_report.pending()&&!e.dev(0).before_compute&&!e.dev(0).after_compute,
++          "ring snapshot exclusive drained owner");
++  require(!e.prepare_async&&!e.head_export&&!e.head_publish&&!e.head_merge,"ring snapshot unsupported callback owner");
++ }
++ void inventory(){
++  require(e.allocations.size()==allocation_count,"ring allocation census changed");
++  for(const auto& item:items){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==Memory::device&&r.bytes==item.bytes&&r.label==item.label,"ring target allocation changed");}
++  for(const auto& item:independent){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==item.memory&&r.bytes==item.bytes&&r.label==item.label,"ring independent draft allocation changed");}
++ }
++ void prepare(Slot& slot,bool reverse){
++  ownrt::CopyEngine copy(e.dev(0));std::vector<ownrt::PreparedCompute> checked;std::vector<size_t> lengths;
++  e.dev(0).begin_capture(checked);
++  try{for(const auto& item:items)for(size_t offset=0;offset<item.bytes;offset+=SnapshotBatch::limit){const size_t n=std::min(item.bytes-offset,SnapshotBatch::limit);
++    if(reverse)copy.copy(item.id,offset,slot.image,item.offset+offset,n,{});
++    else copy.copy(slot.image,item.offset+offset,item.id,offset,n,{});
++    lengths.push_back(n);
++   }e.dev(0).end_capture();}catch(...){e.dev(0).end_capture();throw;}
++  require(!checked.empty()&&checked.size()==lengths.size()&&checked.size()==table_rows,"ring checked descriptor count");
++  auto& ids=reverse?slot.restore_ids:slot.capture_ids;const auto table=reverse?slot.restore_table:slot.capture_table;ids={table};
++  std::vector<SnapshotFlat::Item> rows;size_t total=0;
++  for(size_t i=0;i<checked.size();++i){const auto& command=checked[i];require(command.ids.size()==2&&command.pointers.size()==2,"ring checked copy ABI");
++   total+=(lengths[i]+SnapshotFlat::tile-1)/SnapshotFlat::tile;
++   rows.push_back({static_cast<uint8_t*>(command.pointers[0]),static_cast<const uint8_t*>(command.pointers[1]),lengths[i],total});
++   ids.insert(ids.end(),command.ids.begin(),command.ids.end());
++  }
++  if(tiles)require(tiles==total,"ring slot copy geometry mismatch");else tiles=total;
++  e.upload(0,table,0,rows.data(),rows.size()*sizeof(rows[0]));e.drain();
++ }
++ void copy(Slot& slot,bool reverse){inventory();SnapshotFlat op;op.count=table_rows;op.tiles=tiles;e.tail=e.dev(0).compute(op,reverse?slot.restore_ids:slot.capture_ids,{});e.drain();}
++ void save_metadata(Slot& slot){auto& m=slot.metadata;m.parity=e.bank_parity;m.active=e.active_bank;m.spare=e.spare_bank;m.extent=e.context_extent;m.alternate=e.alternate_context_extent;
++  m.history0=e.history0;m.history1=e.history1;m.lookup=e.lookup_ids;m.selected=e.selected;m.loaded=e.loaded_layer;m.sources=e.fp32_sources;m.extents=e.fp32_extents;}
++ void restore_metadata(const Slot& slot){const auto& m=slot.metadata;
++  if(e.bank_parity!=m.parity){require(e.a.pipeline_first(),"ring unexpected middle-stage bank parity");e.swap_state_banks();}
++  require(e.bank_parity==m.parity&&e.active_bank==m.active&&e.spare_bank==m.spare,"ring saved physical bank identity");
++  if(e.context_extent!=m.extent)e.admit_position(m.extent-1);
++  if(e.a.pipeline_first()&&e.alternate_context_extent!=m.alternate){e.swap_state_banks();e.admit_position(m.alternate-1);e.swap_state_banks();}
++  require(e.context_extent==m.extent&&e.alternate_context_extent==m.alternate,"ring saved attention metadata");
++  e.history0=m.history0;e.history1=m.history1;e.lookup_ids=m.lookup;e.selected=m.selected;e.loaded_layer=m.loaded;e.fp32_sources=m.sources;e.fp32_extents=m.extents;
++  for(auto id:e.fp32_sources)if(id)require(e.dev(0).arena.row(id).live,"ring restored cache references dead allocation");
++ }
++public:
++ CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition):e(owner),verify(full_byte_verification){
++  idle();require(e.resident&&e.a.pipeline_enabled()&&!e.a.prefill_rows,"ring resident scalar owner");
++  require(!e.a.mtp||partition.enabled,"ring provider needs independent state partition");
++  std::set<Allocation> draft(partition.draft_device.begin(),partition.draft_device.end()),target(partition.target_device.begin(),partition.target_device.end());
++  require(!partition.enabled||(!draft.empty()&&draft.size()==partition.draft_device.size()&&target.size()==partition.target_device.size()),"ring explicit complete ownership");
++  for(auto id:partition.draft_device){const auto& row=e.dev(0).arena.row(id);require(e.allocations.count(id)&&row.live&&row.memory==Memory::device&&row.category!=Category::weights&&!target.count(id),"ring draft device identity");independent.push_back({id,row.bytes,row.memory,row.label});}
++  std::set<Allocation> pinned;
++  for(auto id:partition.draft_pinned){const auto& row=e.dev(0).arena.row(id);require(pinned.insert(id).second&&!e.allocations.count(id)&&row.live&&row.memory==Memory::pinned,"ring draft pinned identity");independent.push_back({id,row.bytes,row.memory,row.label});}
++  require(!partition.enabled||pinned.size()==2,"ring pinned provider inventory");
++  for(const auto& [id,where]:e.allocations){const auto& row=e.dev(where.first).arena.row(id);require(where.first==0&&row.live&&row.memory==Memory::device,"ring owner census");if(row.category==Category::weights)continue;
++   if(partition.enabled){require(target.count(id)!=draft.count(id),"ring overlapping/unassigned mutable allocation");if(draft.count(id))continue;}
++   if(row.label=="card0:speculative-private-image"||row.label=="card0:speculative-copy-table"||row.label=="card0:speculative-static-copy-table"){require(row.category==Category::runtime_overhead,"ring legacy private identity");continue;}
++   require(!row.label.starts_with("card0:wavefront-")&&!row.label.starts_with("card0:ring:"),"ring cannot coexist with another snapshot owner");
++   require(row.bytes>0&&row.bytes<=256ull*1024*1024&&bytes_<=256ull*1024*1024-row.bytes,"ring aggregate two-slot backup bound");
++   items.push_back({id,row.bytes,bytes_,row.label});bytes_+=row.bytes;table_rows+=(row.bytes+SnapshotBatch::limit-1)/SnapshotBatch::limit;
++  }
++  require(bytes_&&table_rows&&table_rows<=4096,"ring target snapshot census");
++  require(2*bytes_+4*table_rows*sizeof(SnapshotFlat::Item)<=512ull*1024*1024,"ring total backup/table reserve");
++  // Allocate EVERY slot before preparing/freezing. No snapshot ever includes
++  // another slot's private image, descriptors or mutable host bookkeeping.
++  for(size_t i=0;i<slots.size();++i){auto& s=slots[i];const auto label="ring:"+std::to_string(i);
++   s.image=e.allocate(0,label+":image",bytes_,Category::runtime_overhead,Lifetime::process);
++   s.capture_table=e.allocate(0,label+":capture",table_rows*sizeof(SnapshotFlat::Item),Category::runtime_overhead,Lifetime::process);
++   s.restore_table=e.allocate(0,label+":restore",table_rows*sizeof(SnapshotFlat::Item),Category::runtime_overhead,Lifetime::process);
++  }
++  for(auto& s:slots){prepare(s,false);prepare(s,true);}allocation_count=e.allocations.size();inventory();
++ }
++ bool active(int index)const{require(index>=0&&index<2,"ring slot index");return slots[size_t(index)].active;}
++ int capture(uint8_t* shared){idle();inventory();require(shared,"ring output mapping");int index=-1;for(int i=0;i<2;++i)if(!slots[size_t(i)].active){index=i;break;}require(index>=0,"ring checkpoint full");
++  auto& slot=slots[size_t(index)];save_metadata(slot);slot.shared=shared;std::memcpy(slot.output.data(),shared,slot.output.size());copy(slot,false);slot.active=true;++captures_;return index;}
++ void restore(int index){idle();inventory();require(active(index),"ring restore inactive slot");auto& slot=slots[size_t(index)];restore_metadata(slot);copy(slot,true);require(slot.shared,"ring saved output mapping");std::memcpy(slot.shared,slot.output.data(),slot.output.size());
++  if(verify){const auto expected=e.readback(0,slot.image,bytes_);for(const auto& item:items){const auto actual=e.readback(0,item.id,item.bytes);require(std::equal(actual.begin(),actual.end(),expected.begin()+item.offset),"ring full target restore bytes differ");}
++   require(std::equal(slot.output.begin(),slot.output.end(),slot.shared),"ring output restore differs");++byte_checks_;}
++  require(!e.integer(0,"error"),"ring restore sticky error");++restores_;
++ }
++ void release(int index){idle();inventory();require(active(index),"ring double slot release");slots[size_t(index)].active=false;slots[size_t(index)].shared=nullptr;}
++ void reset_after_owner_zero(){idle();inventory();for(const auto& s:slots)require(!s.active,"ring reset pending slot");require(e.integer(0,"position")==0&&e.bank_parity==0,"ring cold reset position/banks");
++  e.admit_position(0);if(e.a.pipeline_first()&&e.alternate_context_extent!=32){e.swap_state_banks();e.admit_position(0);e.swap_state_banks();}
++  for(auto& s:slots){prepare(s,false);prepare(s,true);s.shared=nullptr;s.output.fill(0);s.metadata={};}inventory();captures_=restores_=byte_checks_=0;
++ }
++ size_t slot_bytes()const{return bytes_;}uint64_t captures()const{return captures_;}uint64_t restores()const{return restores_;}uint64_t byte_checks()const{return byte_checks_;}
++};
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/dispatcher.hpp
+@@ -0,0 +1,66 @@
++#pragma once
++#include "wire.hpp"
++#include "checkpoint_ring.hpp"
++#include "engine_backend.hpp"
++// Unpromoted concrete command24..26 handler. Include after existing native
++// Request/Reply,half_step,publish,reverse_ready. Existing handlers20..23 untouched.
++namespace pipeline::ring_next {
++class Dispatcher {
++ Engine& e;uint8_t* shared;size_t mapped_bytes;bool verify;
++ ownrt::ring_next::wire::Context context;
++ CheckpointRingFor<Engine> checkpoints;
++ EngineBackend backend;
++ ownrt::ring_next::StageRing<EngineBackend> ring;
++ std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
++ void final_hidden(const ownrt::ring_next::Row& row,int commit_sequence,int next_token,Reply& reply){
++  if(!e.a.pipeline_live_draft)return;
++  require(e.a.pipeline_final()&&reverse_ready(shared).position_plus_one==uint32_t(row.position+1),"ring final raw hidden ownership");
++  ownrt::live_draft::Handoff h;h.bytes=int32_t(e.stream_bytes());h.position=row.position;h.final_stage=e.a.pipeline_stage;h.stages=int32_t(e.a.pipeline_boundaries.size()-1);
++  h.row_ticket=row.ticket;h.commit_sequence=commit_sequence;h.input_token=row.token;h.head=row.fixture>0;h.next_token=h.head?next_token:-1;
++  const auto raw=area(ownrt::live_draft::hidden_offset,h.bytes);const auto bytes=std::vector<uint8_t>(raw.begin(),raw.end());const auto sha=hash(bytes);require(sha.size()==h.hidden_sha256.size(),"ring hidden SHA length");std::memcpy(h.hidden_sha256.data(),sha.data(),sha.size());
++  ownrt::live_draft::validate(h,context.stream_bytes,context.stages,context.vocab);std::memcpy(area(ownrt::live_draft::header_offset,sizeof h).data(),&h,sizeof h);reply.bytes=h.bytes;reply.token=h.next_token;
++ }
++public:
++ Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,std::function<void()> reset_owner={})
++  :e(owner),shared(mapping),mapped_bytes(mapping_bytes),verify(full_byte_verify),
++   context{epoch,request,owner.a.pipeline_stage,int(owner.a.pipeline_boundaries.size()-1),int(owner.stream_bytes()),owner.p.g.vocab},
++   checkpoints(owner,full_byte_verify,partition),backend(owner,legacy,checkpoints,mapping,std::move(reset_owner)),
++   ring(backend,owner.a.pipeline_final(),partition.enabled,owner.p.g.context,owner.p.g.vocab,epoch,request,ownrt::ring_next::request_prefix(request,epoch)){
++  require(shared&&mapped_bytes==shared_bytes&&owner.a.pipeline_enabled(),"ring dispatcher mapping/mode");ownrt::ring_next::wire::context(context);legacy.boundary();
++ }
++ static bool handles(int op){return op==24||op==25||op==26;}
++ Reply execute(const Request& r){
++  namespace wire=ownrt::ring_next::wire;require(handles(r.op),"ring dispatcher only owns24..26");
++  const auto started=std::chrono::steady_clock::now();const double gpu_before=e.gemv_ms+e.nongemv_ms;
++  wire::Command command{r.op,r.token,r.position,r.fixture,r.speculative,r.sequence,r.reserved[0],r.reserved[1]};
++  const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
++  Reply reply{};reply.sequence=r.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=context.stage==context.stages-1;
++  if(r.op==wire::row_op){
++   const auto bytes=e.a.pipeline_first()?std::span<uint8_t>{}:area(slot_bytes,context.stream_bytes);std::vector<uint8_t> owned(bytes.begin(),bytes.end());
++   const auto row=wire::row(meta,command,context,owned);backend.stage_input(std::move(owned));const auto& completed=ring.execute(row);
++   reply.token=completed.token;reply.bytes=int32_t(completed.stream.size());
++   require(completed.stream.empty()||completed.stream.size()==size_t(context.stream_bytes),"ring complete native stream result");
++   if(!completed.stream.empty())std::memcpy(area(0,completed.stream.size()).data(),completed.stream.data(),completed.stream.size());
++   const auto publication=wire::publication(meta,r.sequence,completed.stream);wire::write(area(wire::row_offset,sizeof publication),publication);
++  }else{
++   const auto row=wire::resolution(meta,command,context);const auto prior_checks=checkpoints.byte_checks();
++   const int next_token=ring.oldest_result(row).token;
++   const auto resolved=r.op==wire::accept_op?ring.accept(r.sequence,row,r.token):ring.abort_suffix(r.sequence,row);
++   const auto acknowledgment=wire::acknowledgment(context,r.sequence,row,resolved,checkpoints.byte_checks()>prior_checks);
++   wire::write(area(wire::ack_offset,sizeof acknowledgment),acknowledgment);
++   if(r.op==wire::accept_op&&e.a.pipeline_final())final_hidden(row,r.sequence,next_token,reply);
++  }
++  reply.busy_ms=Engine::ms(started);reply.gpu_ms=e.gemv_ms+e.nongemv_ms-gpu_before;
++  return reply;
++ }
++ // Wire RESET parsing/epoch authority and ring attestation are not implemented
++ // by this proposal. The checked outer request boundary supplies the new scope.
++ void reset_boundary(int sequence,uint64_t epoch,ownrt::ring_next::Digest request){
++  ring.reset(sequence,epoch,request,ownrt::ring_next::request_prefix(request,epoch));context.epoch=epoch;context.request=request;
++  std::memset(area(ownrt::ring_next::wire::row_offset,sizeof(ownrt::ring_next::wire::RowMeta)).data(),0,sizeof(ownrt::ring_next::wire::RowMeta));
++  std::memset(area(ownrt::ring_next::wire::ack_offset,sizeof(ownrt::ring_next::wire::Ack)).data(),0,sizeof(ownrt::ring_next::wire::Ack));
++ }
++ void reply_published(int op){if(op==ownrt::ring_next::wire::row_op&&e.a.rank==1)e.reply_report.published();}
++ void boundary(){ring.boundary();}
++};
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/engine_backend.hpp
+@@ -0,0 +1,34 @@
++#pragma once
++// Unpromoted adapter: include after existing pipeline::half_step/publish and
++// the proposal's StageRing/CheckpointRing headers. No copied model executor.
++namespace pipeline::ring_next {
++class EngineBackend {
++ Engine& e;SpeculativeImage& inactive_legacy;CheckpointRingFor<Engine>& snapshots;uint8_t* shared;std::function<void()> reset_owner;std::vector<uint8_t> input;bool input_ready=false;
++public:
++ struct Result {int token=-1;Candidate candidate;std::vector<uint8_t> stream;};
++ EngineBackend(Engine& owner,SpeculativeImage& legacy,CheckpointRingFor<Engine>& ring,uint8_t* map,std::function<void()> cold_reset={}):e(owner),inactive_legacy(legacy),snapshots(ring),shared(map),reset_owner(std::move(cold_reset)){
++  require(shared&&e.a.retain_steps.ranges.empty(),"ring native backend retain_steps none");
++ }
++ int position(){return e.integer(0,"position");}int error(){return e.integer(0,"error");}
++ bool retention_disabled()const{return e.a.retain_steps.ranges.empty();}
++ void quiescent(){e.drain();if(e.a.rank==1)e.reply_report.flush();require(!e.progress_pending&&!e.progress_callback&&!e.poisoned,"ring native unresolved owner");}
++ void stage_input(std::vector<uint8_t> bytes){require(!input_ready&&bytes.size()==(e.a.pipeline_first()?0:e.stream_bytes()),"ring owned input extent/lifetime");input=std::move(bytes);input_ready=true;}
++ int capture(const ownrt::ring_next::Row&){return snapshots.capture(shared);}
++ Result execute(const ownrt::ring_next::Row& row){
++  Request request{half,row.token,row.position,row.fixture,0,row.ticket,{e.a.pipeline_stage,int(e.a.pipeline_final())}};
++  require(input_ready,"ring missing owned input");e.verify_configuration();e.guard();
++  // Existing rank-one prepared-input path consumes private uploaded bytes.
++  // This avoids re-reading a shared slot after its hash was checked.
++  if(!e.a.pipeline_first()){e.put(0,"token",&row.token,4);e.put(0,"streams",input.data(),input.size());}
++  Result result;auto reply=half_step(e,result.candidate,request,shared,inactive_legacy,!e.a.pipeline_first());input_ready=false;input.clear();
++  require(result.candidate.pending&&!result.candidate.cancelled&&!result.candidate.speculative,"ring native row completion");
++  result.token=reply.token;if(!e.a.pipeline_final()){require(reply.bytes==int(e.stream_bytes()),"ring full native output extent");result.stream.assign(shared,shared+reply.bytes);}
++  else require(!reply.bytes,"ring final stage stream ownership");return result;
++ }
++ void publish(const Result& result){require(retention_disabled(),"ring retained evidence not admitted");pipeline::publish(e,result.candidate);}
++ void restore(int slot){snapshots.restore(slot);}void release(int slot){snapshots.release(slot);}
++ // The checked request/provider reset is invoked only after StageRing has
++ // admitted an empty canonical boundary, then descriptors are rebuilt in place.
++ void reset(){require(bool(reset_owner),"ring cold reset callback not bound");reset_owner();snapshots.reset_after_owner_zero();}
++};
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/stage_ring.hpp
+@@ -0,0 +1,116 @@
++#pragma once
++// Unpromoted native control component. No imports from active engine/src.
++#include <array>
++#include <algorithm>
++#include <cstdint>
++#include <deque>
++#include <limits>
++#include <openssl/sha.h>
++#include <stdexcept>
++#include <utility>
++#include <vector>
++namespace ownrt::ring_next {
++inline void need(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
++using Digest=std::array<uint8_t,32>;
++inline Digest extend(const Digest& before,uint32_t position,uint32_t token){
++ constexpr char domain[]="ownrt.ring-prefix.v1";
++ std::array<uint8_t,sizeof(domain)+32+8> raw{};std::copy_n(reinterpret_cast<const uint8_t*>(domain),sizeof(domain),raw.begin());
++ std::copy(before.begin(),before.end(),raw.begin()+sizeof(domain));
++ for(unsigned i=0;i<4;++i){raw[sizeof(domain)+32+i]=uint8_t(position>>(i*8));raw[sizeof(domain)+36+i]=uint8_t(token>>(i*8));}
++ Digest result{};SHA256(raw.data(),raw.size(),result.data());return result;
++}
++inline Digest request_prefix(const Digest& request,uint64_t epoch){
++ constexpr char domain[]="ownrt.ring-request.v1";std::array<uint8_t,sizeof(domain)+32+8> raw{};
++ std::copy_n(reinterpret_cast<const uint8_t*>(domain),sizeof(domain),raw.begin());std::copy(request.begin(),request.end(),raw.begin()+sizeof(domain));
++ for(unsigned i=0;i<8;++i)raw[sizeof(domain)+32+i]=uint8_t(epoch>>(8*i));Digest out{};SHA256(raw.data(),raw.size(),out.data());return out;
++}
++struct Row {
++ uint64_t epoch=0,id=0,parent=0;int ticket=0,position=0,token=0,fixture=0;bool tentative=false;
++ Digest request{},before{},after{};
++ bool operator==(const Row&)const=default;
++};
++struct Resolution {int physical=0,committed=0,pending=0;std::vector<uint64_t> discarded;};
++// Backend contract: exactly one synchronous device owner. Result owns immutable
++// row output and Candidate metadata. Checkpoint slots are preallocated together.
++// No result/slot is borrowed after ACCEPT/ABORT/reset returns.
++template<class Backend> class StageRing {
++ Backend& backend;bool final_,partitioned_,poisoned_=false;
++ int context_,vocab_,committed_=0,last_fixture_=0,last_sequence_=0,last_output_=-1;
++ uint64_t epoch_,last_id_=0,accepted_id_=0;
++ Digest request_,accepted_prefix_;
++ struct Pending {Row row;int slot=-1;typename Backend::Result result;};
++ std::deque<Pending> pending_;
++ void healthy(){need(!poisoned_&&!backend.error(),"ring sticky/partial failure");backend.quiescent();}
++ void sequence(int n)const{need(n>last_sequence_,"ring stale command sequence");}
++ Pending& oldest(const Row& row){need(!pending_.empty()&&pending_.front().row==row,"ring oldest exact ticket/lineage required");return pending_.front();}
++ template<class F>auto mutate(int sequence,F&& fn){last_sequence_=sequence;try{return fn();}catch(...){poisoned_=true;throw;}}
++ Resolution receipt(std::vector<uint64_t> discarded={})const{return {backend.position(),committed_,int(pending_.size()),std::move(discarded)};}
++public:
++ StageRing(Backend& b,bool final_stage,bool explicit_partition,int context,int vocab,uint64_t epoch,Digest request,Digest initial_prefix,int starting_sequence=0)
++  :backend(b),final_(final_stage),partitioned_(explicit_partition),context_(context),vocab_(vocab),last_sequence_(starting_sequence),epoch_(epoch),request_(request),accepted_prefix_(initial_prefix){
++  need(context>0&&vocab>0&&starting_sequence>=0&&backend.position()==0,"ring geometry/cold admission");
++  need(backend.retention_disabled(),"ring requires retain_steps none");healthy();
++ }
++ int committed()const{return committed_;}int physical()const{return backend.position();}size_t pending()const{return pending_.size();}
++ uint64_t accepted_id()const{return accepted_id_;}int last_sequence()const{return last_sequence_;}
++ const typename Backend::Result& execute(const Row& row){
++  healthy();sequence(row.ticket);
++  need(row.epoch==epoch_&&row.request==request_&&row.id>last_id_,"ring stale request/global row identity");
++  need(row.position==backend.position()&&row.position>=0&&row.position<context_&&row.token>=0&&row.token<vocab_,"ring physical position/token bounds");
++  const auto parent=pending_.empty()?accepted_id_:pending_.back().row.id;
++  const auto prefix=pending_.empty()?accepted_prefix_:pending_.back().row.after;
++  const int prior_fixture=pending_.empty()?last_fixture_:pending_.back().row.fixture;
++  need(row.parent==parent&&row.before==prefix&&row.after==extend(prefix,uint32_t(row.position),uint32_t(row.token)),"ring causal parent/prefix mismatch");
++  need(row.fixture>=0&&(prior_fixture?row.fixture==prior_fixture+1:(row.fixture==0||row.fixture==1)),"ring fixture sequence");
++  need(pending_.size()<2,"ring two completed-row capacity");
++  need(pending_.empty()||(row.tentative&&std::all_of(pending_.begin(),pending_.end(),[](const auto& p){return p.row.tentative;})),"ring unresolved verified predecessor");
++  need(!final_||(!row.tentative&&pending_.empty()),"ring final stage must verify each input");
++  if(final_&&last_output_>=0)need(row.token==last_output_,"ring final input differs from committed target output");
++  mutate(row.ticket,[&]{
++   const int slot=row.tentative?backend.capture(row): -1;
++   need(!row.tentative||(slot>=0&&slot<2),"ring checkpoint slot bound");
++   if(slot>=0)for(const auto& p:pending_)need(p.slot!=slot,"ring checkpoint overwrite");
++   auto result=backend.execute(row);
++   need(backend.position()==row.position+1&&!backend.error(),"ring physical row completion");
++   need((final_&&row.fixture>0)?result.token>=0&&result.token<vocab_:result.token==-1,"ring target output ownership");
++   pending_.push_back({row,slot,std::move(result)});last_id_=row.id;
++  });return pending_.back().result;
++ }
++ const typename Backend::Result& oldest_result(const Row& row){return oldest(row).result;}
++ Resolution accept(int command_sequence,const Row& row,int verified_token){
++  healthy();sequence(command_sequence);auto& entry=oldest(row);
++  need(row.position==committed_&&row.token==verified_token,"ring verified contiguous acceptance");
++  const int physical_before=backend.position();
++  return mutate(command_sequence,[&]{
++   backend.publish(entry.result);if(entry.slot>=0)backend.release(entry.slot);
++   if(final_&&row.fixture>0)last_output_=entry.result.token;
++   accepted_id_=row.id;accepted_prefix_=row.after;last_fixture_=row.fixture;++committed_;pending_.pop_front();
++   need(backend.position()==physical_before,"ring ACCEPT rewound physical execution");return receipt();
++  });
++ }
++ Resolution abort_suffix(int command_sequence,const Row& row){
++  healthy();sequence(command_sequence);auto& entry=oldest(row);
++  need(row.tentative&&row.position==committed_&&entry.slot>=0,"ring only unresolved tentative suffix can abort");
++  for(const auto& p:pending_)need(p.row.tentative&&p.slot>=0,"ring suffix contains verified input");
++  return mutate(command_sequence,[&]{
++   backend.restore(entry.slot);need(backend.position()==committed_&&!backend.error(),"ring rollback cursor/error");
++   std::vector<uint64_t> discarded;for(const auto& p:pending_){discarded.push_back(p.row.id);backend.release(p.slot);}pending_.clear();return receipt(std::move(discarded));
++  });
++ }
++ template<class F>auto draft(int command_sequence,F&& operation){
++  healthy();sequence(command_sequence);need(partitioned_&&!final_,"ring draft requires explicit independent partition");
++  for(const auto& p:pending_)need(p.row.tentative,"ring draft cannot bypass verified publication");
++  const int position=backend.position();return mutate(command_sequence,[&]{
++   auto result=operation();healthy();need(backend.position()==position,"ring draft changed target position");return result;
++  });
++ }
++ void reset(int command_sequence,uint64_t epoch,Digest request,Digest initial_prefix){
++  healthy();sequence(command_sequence);need(pending_.empty()&&backend.position()==committed_,"ring reset needs canonical boundary");
++  need(epoch_!=std::numeric_limits<uint64_t>::max()&&epoch==epoch_+1,"ring reset epoch must advance once without wrapping");
++  mutate(command_sequence,[&]{backend.reset();need(backend.position()==0&&!backend.error(),"ring reset cold state");
++   epoch_=epoch;request_=request;accepted_prefix_=initial_prefix;accepted_id_=last_id_=0;committed_=last_fixture_=0;last_output_=-1;
++  });
++ }
++ void boundary(){healthy();need(pending_.empty()&&backend.position()==committed_,"ring uncommitted boundary");}
++};
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/test_checked_checkpoint_ring.cpp
+@@ -0,0 +1,40 @@
++// Deferred heavier CPU validation: includes actual checked Device/CopyEngine/
++// SnapshotFlat via the existing full-main host fixture. Do not run during GPU timing.
++#include "../checkpoint_fixture.hpp"
++#include "stage_ring.hpp"
++#include "checkpoint_ring.hpp"
++#include "engine_backend.hpp"
++#include "dispatcher.hpp"
++int main(int argc,char** argv){assert(argc==2);fs::path root=argv[1];fs::create_directory(root);FixtureOwner e(root/"owner");
++ e.a.pipeline_live_draft=e.a.pipeline_draft_partition=e.a.mtp=true;
++ for(auto name:{"error","position"})e.buffers[0][name]={e.allocate(0,name,4,Category::graph_static,Lifetime::graph)};
++ auto active=e.allocate(0,"state",4097,Category::recurrent,Lifetime::request),spare=e.allocate(0,"alternate:state",4097,Category::recurrent,Lifetime::request),scratch=e.allocate(0,"scratch",8193,Category::scratch,Lifetime::transaction);
++ e.buffers[0]["state"]={active};e.state_spares["state"]=spare;
++ std::set<Allocation> before;for(const auto& [id,owner]:e.allocations)before.insert(id);
++ auto draft=e.allocate(0,"draft:state",257,Category::scratch,Lifetime::transaction);
++ std::vector<Allocation> pins{e.allocate(0,"draft:publication",8,Category::output_ring,Lifetime::request,Memory::pinned),e.allocate(0,"draft:half-staging",20,Category::pinned_slab,Lifetime::transfer,Memory::pinned)};
++ const auto partition=pipeline::admit_operator_partition(e,before,{draft},pins);
++ pipeline::ring_next::CheckpointRingFor<FixtureOwner> ring(e,true,partition);const auto frozen=e.allocations.size();assert(frozen==before.size()+1+6);
++ std::array<uint8_t,65536> shared{};shared.fill(1);e.put("position",31);e.history0=31;e.context_extent=e.alternate_context_extent=32;
++ const int first=ring.capture(shared.data());
++ e.put("position",32);std::memset(e.dev(0).arena.row(scratch).pointer,2,8193);e.swap_state_banks();e.history0=32;shared.fill(2);
++ std::map<Allocation,std::vector<uint8_t>> after_first;for(auto id:before)after_first[id]=e.readback(0,id,e.dev(0).arena.row(id).bytes);
++ const int second=ring.capture(shared.data());assert(first!=second);refusal([&]{ring.capture(shared.data());});
++ e.put("position",33);std::memset(e.dev(0).arena.row(scratch).pointer,3,8193);e.swap_state_banks();e.history0=33;e.context_extent=64;shared.fill(3);
++ auto after_second=e.readback(0,scratch,8193);ring.release(first);assert(e.integer(0,"position")==33&&e.history0==33&&e.readback(0,scratch,8193)==after_second&&shared[0]==3);
++ // Canonical draft advanced after both target snapshots; target restore must
++ // not copy it backward. Include pinned IDs absent from the device registry.
++ for(auto id:{draft,pins[0],pins[1]})std::memset(e.dev(0).arena.row(id).pointer,77,e.dev(0).arena.row(id).bytes);
++ ring.restore(second);ring.release(second);assert(e.integer(0,"position")==32&&e.history0==32&&e.bank_parity==1&&e.context_extent==32&&shared[0]==2);
++ for(auto [id,bytes]:after_first)assert(e.readback(0,id,bytes.size())==bytes);
++ for(auto id:{draft,pins[0],pins[1]}){auto bytes=e.readback(0,id,e.dev(0).arena.row(id).bytes);assert(std::all_of(bytes.begin(),bytes.end(),[](auto x){return x==77;}));}
++ assert(ring.captures()==2&&ring.restores()==1&&ring.byte_checks()==1);refusal([&]{ring.release(second);});
++ if(e.bank_parity)e.swap_state_banks();for(auto& [id,owner]:e.allocations)std::memset(e.dev(0).arena.row(id).pointer,0,e.dev(0).arena.row(id).bytes);
++ e.history0=e.history1=0;e.context_extent=e.alternate_context_extent=64;ring.reset_after_owner_zero();assert(e.allocations.size()==frozen);
++ const int a=ring.capture(shared.data());e.put("position",1);std::memset(e.dev(0).arena.row(scratch).pointer,4,8193);e.swap_state_banks();
++ const int b=ring.capture(shared.data());e.put("position",2);std::memset(e.dev(0).arena.row(scratch).pointer,5,8193);e.swap_state_banks();
++ ring.restore(a);ring.release(a);ring.release(b);assert(e.integer(0,"position")==0&&e.bank_parity==0&&ring.restores()==1&&ring.byte_checks()==1);
++ const auto zero=e.readback(0,scratch,8193);assert(std::all_of(zero.begin(),zero.end(),[](auto x){return !x;}));
++ e.allocate(0,"unexpected",4,Category::scratch,Lifetime::transaction);refusal([&]{ring.capture(shared.data());});
++ e.close();std::cout<<"PASS actual checked two-slot transport: immutable shared inventory, ACCEPT no rewind, oldest suffix restore once, newer draft survives, zeroed table rebuild, census refusal; CPU only\n";
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/test_stage_ring.cpp
+@@ -0,0 +1,61 @@
++#include "stage_ring.hpp"
++#include <cassert>
++#include <iostream>
++#include <map>
++using namespace ownrt::ring_next;
++struct Backend {
++ struct State {int position=0,error=0,extent=32,parity=0;std::vector<int> tokens;std::array<std::vector<int>,2> banks;std::vector<uint8_t> scratch;bool operator==(const State&)const=default;};
++ struct Result {int token=-1;std::vector<uint8_t> stream;};
++ State target;std::array<State,2> snapshots;std::array<bool,2> active{};std::vector<int> draft_state;
++ bool retained=false,final=false;int restored=0,captured=0,published=0,resets=0;bool fail_execute=false;
++ int position()const{return target.position;}int error()const{return target.error;}bool retention_disabled()const{return !retained;}void quiescent(){}
++ int capture(const Row&){for(int i=0;i<2;++i)if(!active[i]){snapshots[i]=target;active[i]=true;++captured;return i;}throw std::runtime_error("test full ring");}
++ Result execute(const Row& r){target.extent=((r.position+32)/32)*32;target.tokens.push_back(r.token);target.parity^=1;target.banks[target.parity]=target.tokens;target.scratch={uint8_t(r.position),uint8_t(r.token),0xab};++target.position;if(fail_execute)throw std::runtime_error("partial submission");return {final&&r.fixture?((r.token*7+r.position)%97):-1,{uint8_t(r.token)}};}
++ void restore(int s){assert(active[s]);target=snapshots[s];++restored;}void release(int s){assert(active[s]);active[s]=false;}void publish(const Result&){++published;}
++ void reset(){assert(!active[0]&&!active[1]);target={};draft_state.clear();++resets;}
++};
++struct Driver {
++ Backend b;Digest request{},seed{};StageRing<Backend> ring;
++ int sequence=0;uint64_t next_id=1;std::deque<Row> pending;Row accepted{};
++ Driver(bool final=false,bool partition=true):ring(b,final,partition,128,97,0,request,seed){b.final=final;}
++ Row row(int token,bool tentative,int fixture=-1){Row r;r.epoch=0;r.request=request;r.id=next_id++;r.ticket=++sequence;r.position=b.position();r.token=token;r.tentative=tentative;
++  const Row& parent=pending.empty()?accepted:pending.back();r.parent=parent.id;r.before=parent.id?parent.after:seed;r.after=extend(r.before,r.position,token);r.fixture=fixture<0?(parent.fixture?parent.fixture+1:1):fixture;
++  ring.execute(r);pending.push_back(r);return r;
++ }
++ Resolution accept(int actual){auto r=pending.front();auto done=ring.accept(++sequence,r,actual);accepted=r;pending.pop_front();return done;}
++ Resolution abort(){auto r=pending.front();auto done=ring.abort_suffix(++sequence,r);pending.clear();return done;}
++ void verified(int token,int fixture=0){row(token,false,fixture);accept(token);}
++};
++template<class F>void refusal(F f){bool refused=false;try{f();}catch(const std::exception&){refused=true;}assert(refused);}
++int main(){
++ // All-hit older ACCEPT releases one slot without changing any newer bytes.
++ {Driver d;d.verified(3);auto a=d.row(7,true),b=d.row(9,true);auto physical=d.b.target;auto r=d.accept(7);assert(r.physical==3&&r.committed==2&&r.pending==1&&d.b.target==physical);d.accept(9);d.ring.boundary();assert(d.b.target==physical&&d.b.restored==0);}
++ // Every rejection depth restores the whole dependent suffix exactly once,
++ // including31/32/33 extent crossings, bank parity and overwrite-only scratch.
++ for(int miss=0;miss<2;++miss){Driver d,reference;for(int p=0;p<31;++p){d.verified(p%9);reference.verified(p%9);}const int truth[2]={7,9};
++  auto a=d.row(miss==0?8:7,true),b=d.row(miss==1?10:9,true);
++  for(int i=0;i<miss;++i){d.accept(truth[i]);reference.verified(truth[i],i+1);}
++  d.ring.draft(++d.sequence,[&]{d.b.draft_state.push_back(51);return 0;});
++  auto ack=d.abort();assert(ack.discarded==(miss==0?std::vector<uint64_t>{a.id,b.id}:std::vector<uint64_t>{b.id}));assert(ack.physical==31+miss&&ack.committed==31+miss&&ack.pending==0&&d.b.restored==1);assert(d.b.target==reference.b.target&&d.b.draft_state==std::vector<int>{51});
++  refusal([&]{d.ring.accept(++d.sequence,b,9);});
++  for(int i=miss;i<2;++i){d.verified(truth[i],i+1);reference.verified(truth[i],i+1);}assert(d.b.target==reference.b.target);
++ }
++ // Row provenance checks happen before any capture or mutable execution.
++ {Driver d;d.verified(3);auto a=d.row(7,true);Row bad=a;bad.ticket=++d.sequence;bad.id=d.next_id++;bad.position=d.b.position();bad.parent=999;bad.before=a.after;bad.after=extend(bad.before,bad.position,bad.token);auto state=d.b.target;
++  refusal([&]{d.ring.execute(bad);});assert(d.b.target==state&&d.b.captured==1);bad.parent=a.id;bad.epoch=1;refusal([&]{d.ring.execute(bad);});bad.epoch=0;bad.after[0]^=1;refusal([&]{d.ring.execute(bad);});d.abort();
++ }
++ // Cannot bypass oldest ticket, exceed slots, or borrow draft around verified work.
++ {Driver d;auto v=d.row(3,false);refusal([&]{d.ring.draft(++d.sequence,[]{return 0;});});d.accept(3);auto a=d.row(7,true),b=d.row(9,true);
++  refusal([&]{d.ring.accept(++d.sequence,b,9);});refusal([&]{d.row(11,true);});d.abort();
++ }
++ {Driver d(false,false);d.row(3,true);refusal([&]{d.ring.draft(++d.sequence,[]{return 0;});});d.abort();}
++ // A partially submitted row or sticky fault never triggers automatic rollback.
++ {Driver d;d.row(3,true);d.b.target.error=1;auto before=d.b.target;refusal([&]{d.abort();});assert(d.b.target==before&&d.b.restored==0);}
++ {Driver d;d.b.fail_execute=true;refusal([&]{d.row(3,true);});d.b.fail_execute=false;refusal([&]{d.ring.boundary();});assert(d.b.target.position==1&&d.b.restored==0);}
++ // Final owner sees only the input implied by its last committed target output.
++ {Driver d(true);refusal([&]{d.row(3,true);});auto r=d.row(3,false,1);const int next=(r.token*7+r.position)%97;d.accept(3);refusal([&]{d.row((next+1)%97,false);});d.row(next,false);d.accept(next);d.ring.boundary();}
++ // Empty cold reset preserves monotonic socket sequence and rejects old epoch.
++ {Driver d;d.verified(3);auto a=d.row(7,true);refusal([&]{d.ring.reset(++d.sequence,1,d.request,d.seed);});d.abort();const int reset_sequence=++d.sequence;d.ring.reset(reset_sequence,1,d.request,d.seed);assert(d.b.resets==1&&d.ring.last_sequence()==reset_sequence&&d.ring.physical()==0&&d.ring.committed()==0);a.ticket=++d.sequence;a.position=0;refusal([&]{d.ring.execute(a);});}
++ {Backend b;Digest digest{};StageRing<Backend> ring(b,false,true,4096,97,std::numeric_limits<uint64_t>::max(),digest,digest);refusal([&]{ring.reset(1,0,digest,digest);});assert(!b.resets);}
++ std::cout<<"PASS native StageRing two-slot causality, ACCEPT no rewind, single suffix restore, independent draft survival, stale lineage/refusal, sticky failure and reset; synthetic CPU backend only\n";
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/test_wire.cpp
+@@ -0,0 +1,26 @@
++#include "wire.hpp"
++#include <cassert>
++#include <iostream>
++using namespace ownrt::ring_next;
++namespace w=ownrt::ring_next::wire;
++template<class F>void refusal(F f){bool failed=false;try{f();}catch(const std::exception&){failed=true;}assert(failed);}
++int main(){
++ w::Context c{2,{},1,4,16,97};c.request.fill('r');std::vector<uint8_t> input(16,7);
++ w::RowMeta m;m.epoch=2;m.id=12;m.parent=11;m.position=2;m.token=7;m.fixture=1;m.owner=1;m.source=0;m.source_ticket=21;m.payload_bytes=16;m.flags=w::tentative;m.request=c.request;m.before=request_prefix(c.request,c.epoch);m.after=extend(m.before,m.position,m.token);m.payload_sha=w::digest(input);
++ w::Command command{24,7,2,1,1,41,1,0};auto row=w::row(m,command,c,input);assert(row.id==12&&row.parent==11&&row.ticket==41&&row.tentative);
++ auto bytes=std::array<uint8_t,sizeof(m)>{};w::write(std::span<uint8_t>(bytes),m);auto copy=w::read<w::RowMeta>(bytes);assert(copy.payload_sha==m.payload_sha);
++ refusal([&]{w::read<w::RowMeta>({bytes.data(),bytes.size()-1});});
++ for(int which=0;which<10;++which){auto bad=m;switch(which){case 0:bad.version=2;break;case 1:bad.flags|=2;break;case 2:bad.reserved[0]=1;break;case 3:bad.owner=2;break;case 4:bad.source_ticket=0;break;case 5:bad.payload_bytes=12;break;case 6:bad.payload_sha[0]^=1;break;case 7:bad.after[0]^=1;break;case 8:bad.epoch=1;break;case 9:bad.parent=bad.id;break;}refusal([&]{w::row(bad,command,c,input);});}
++ auto output=std::vector<uint8_t>(16,9);auto publication=w::publication(m,41,output);assert(publication.flags==3&&publication.publication_ticket==41&&publication.payload_sha==w::digest(output));
++ w::validate_publication(publication,m,41,c,output);auto badpub=publication;badpub.parent=10;refusal([&]{w::validate_publication(badpub,m,41,c,output);});badpub=publication;badpub.publication_ticket=40;refusal([&]{w::validate_publication(badpub,m,41,c,output);});
++ auto resolution=m;resolution.source=-1;resolution.source_ticket=0;resolution.payload_bytes=0;resolution.payload_sha=w::digest({});
++ w::Command accept{25,7,2,1,41,42,1,0};assert(w::resolution(resolution,accept,c)==row);
++ auto bad=resolution;bad.source_ticket=21;refusal([&]{w::resolution(bad,accept,c);});accept.speculative=42;refusal([&]{w::resolution(resolution,accept,c);});accept.speculative=41;
++ auto ack=w::acknowledgment(c,42,row,{4,3,1,{}},false);w::validate_ack(ack,c,42,row,{});assert(ack.physical==4&&ack.committed==3);auto wrongcursor=ack;wrongcursor.physical=5;refusal([&]{w::validate_ack(wrongcursor,c,42,row,{});});ack.flags=1;refusal([&]{w::validate_ack(ack,c,42,row,{});});
++ auto aborted=w::acknowledgment(c,43,row,{2,2,0,{12,13}},true);w::validate_ack(aborted,c,43,row,{12,13});auto forged=aborted;forged.discarded1=14;refusal([&]{w::validate_ack(forged,c,43,row,{12,13});});forged=aborted;forged.physical=3;refusal([&]{w::validate_ack(forged,c,43,row,{12,13});});
++ w::ProposalMeta batch;batch.epoch=2;batch.ticket=44;batch.seed_row=12;batch.parent_row=11;batch.final_commit=40;batch.provider_serial=2;batch.seed_position=batch.restored_position=2;batch.available_depth=2;batch.guess0=12;batch.guess1=13;batch.flags=3;batch.restored=1;batch.request=c.request;batch.seed_prefix=m.after;batch.hidden_sha=m.payload_sha;
++ w::BatchIdentity identity{12,11,40,2};
++ for(int which=0;which<4;++which){auto wrong=batch;switch(which){case 0:++wrong.seed_row;break;case 1:--wrong.parent_row;break;case 2:++wrong.final_commit;break;case 3:++wrong.provider_serial;break;}refusal([&]{w::validate_batch(wrong,c,44,2,m.after,m.payload_sha,identity);});}
++ w::validate_batch(batch,c,44,2,m.after,m.payload_sha,identity);batch.available_depth=1;batch.guess1=-1;w::validate_batch(batch,c,44,2,m.after,m.payload_sha,identity);batch.restored=0;refusal([&]{w::validate_batch(batch,c,44,2,m.after,m.payload_sha,identity);});
++ std::cout<<"PASS exact224/192/128B wire layout, SHA/prefix/stage/ticket/padding/extent checks, exact suffix ACKs and canonical restored batch contract; CPU only\n";
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/ring-native-next/wire.hpp
+@@ -0,0 +1,94 @@
++#pragma once
++#include "stage_ring.hpp"
++#include <bit>
++#include <cstddef>
++#include <cstring>
++#include <span>
++namespace ownrt::ring_next::wire {
++static_assert(std::endian::native==std::endian::little,"ring wire requires admitted little-endian host");
++constexpr size_t slot=65536,row_offset=2*slot+1024,proposal_offset=2*slot+1536,ack_offset=2*slot+2048;
++constexpr int row_op=24,accept_op=25,abort_op=26,batch_op=27;
++constexpr uint32_t tentative=1,published=2;
++struct RowMeta {
++ uint32_t magic=0x52494e47,version=1,bytes=224,flags=0;
++ uint64_t epoch=0,id=0,parent=0;
++ int32_t position=0,token=0,fixture=0,owner=0,final=0,source=-1,source_ticket=0,publication_ticket=0,payload_bytes=0,dtype=1;
++ Digest request{},before{},after{},payload_sha{};std::array<uint8_t,16> reserved{};
++};
++struct Ack {
++ uint32_t magic=0x5241434b,version=1,bytes=128,flags=0;
++ uint64_t epoch=0,id=0,discarded0=0,discarded1=0;
++ int32_t owner=0,sequence=0,row_ticket=0,physical=0,committed=0,discard_count=0,pending=0,error=0;
++ std::array<uint8_t,48> reserved{};
++};
++struct ProposalMeta {
++ uint32_t magic=0x44525032,version=1,bytes=192,flags=0;
++ uint64_t epoch=0,ticket=0,seed_row=0,parent_row=0,final_commit=0,provider_serial=0;
++ int32_t seed_position=0,restored_position=0,requested_depth=2,available_depth=0,guess0=-1,guess1=-1,error=0,restored=0;
++ Digest request{},seed_prefix{},hidden_sha{};
++};
++static_assert(sizeof(RowMeta)==224&&offsetof(RowMeta,epoch)==16&&offsetof(RowMeta,position)==40&&offsetof(RowMeta,request)==80&&offsetof(RowMeta,payload_sha)==176);
++static_assert(sizeof(Ack)==128&&offsetof(Ack,epoch)==16&&offsetof(Ack,owner)==48);
++static_assert(sizeof(ProposalMeta)==192&&offsetof(ProposalMeta,epoch)==16&&offsetof(ProposalMeta,seed_position)==64&&offsetof(ProposalMeta,request)==96);
++static_assert(row_offset+sizeof(RowMeta)<=proposal_offset&&proposal_offset+sizeof(ProposalMeta)<=ack_offset&&ack_offset+sizeof(Ack)<2*slot+4096);
++struct Command {int op=0,token=0,position=0,fixture=0,speculative=0,sequence=0,stage=0,final=0;};
++struct Context {uint64_t epoch=0;Digest request{};int stage=0,stages=0,stream_bytes=0,vocab=0;};
++inline Digest digest(std::span<const uint8_t> bytes){Digest out{};SHA256(bytes.data(),bytes.size(),out.data());return out;}
++template<class T>T read(std::span<const uint8_t> bytes){need(bytes.size()==sizeof(T),"ring exact wire extent");T out;std::memcpy(&out,bytes.data(),sizeof out);return out;}
++template<class T>void write(std::span<uint8_t> bytes,const T& value){need(bytes.size()==sizeof(T),"ring exact publication extent");std::memcpy(bytes.data(),&value,sizeof value);}
++inline void context(const Context& c){need(c.stages>0&&c.stage>=0&&c.stage<c.stages&&c.stream_bytes>0&&c.stream_bytes<=int(slot)&&c.stream_bytes%4==0&&c.vocab>0,"ring wire context");}
++inline void base(const RowMeta& m,const Command& command,const Context& c){
++ context(c);need(m.magic==0x52494e47&&m.version==1&&m.bytes==sizeof m&&(m.flags&~tentative)==0&&m.dtype==1,"ring wire header version/flags/type");
++ need(std::all_of(m.reserved.begin(),m.reserved.end(),[](auto x){return x==0;}),"ring wire reserved padding");
++ need(m.epoch==c.epoch&&m.request==c.request&&m.id>0&&m.id>m.parent,"ring wire request/global lineage");
++ need(command.sequence>0&&command.stage==c.stage&&command.final==int(c.stage==c.stages-1)&&m.owner==c.stage&&m.final==command.final,"ring wire stage/sequence identity");
++ need(m.position==command.position&&m.position>=0&&m.token==command.token&&m.token>=0&&m.token<c.vocab&&m.fixture==command.fixture&&m.fixture>=0&&m.publication_ticket==0,"ring wire row identity");
++ need(m.after==extend(m.before,uint32_t(m.position),uint32_t(m.token)),"ring wire token prefix hash");
++}
++inline Row row(const RowMeta& m,const Command& command,const Context& c,std::span<const uint8_t> payload){
++ base(m,command,c);need(command.op==row_op&&(command.speculative==0||command.speculative==1)&&m.flags==uint32_t(command.speculative),"ring row operation/tentative flag");
++ if(c.stage==0)need(m.source==-1&&m.source_ticket==0&&m.payload_bytes==0&&payload.empty(),"ring first-stage input ownership");
++ else need(m.source==c.stage-1&&m.source_ticket>0&&m.payload_bytes==c.stream_bytes&&payload.size()==size_t(c.stream_bytes),"ring full upstream stream ownership");
++ need(m.payload_sha==digest(payload),"ring input stream SHA256");
++ return {m.epoch,m.id,m.parent,command.sequence,m.position,m.token,m.fixture,bool(m.flags&tentative),m.request,m.before,m.after};
++}
++inline Row resolution(const RowMeta& m,const Command& command,const Context& c){
++ base(m,command,c);need((command.op==accept_op||command.op==abort_op)&&command.speculative>0&&command.speculative<command.sequence,"ring resolution original ROW ticket");
++ need(m.source==-1&&m.source_ticket==0&&m.payload_bytes==0&&m.payload_sha==digest({}),"ring resolution has no input payload");
++ return {m.epoch,m.id,m.parent,command.speculative,m.position,m.token,m.fixture,bool(m.flags&tentative),m.request,m.before,m.after};
++}
++inline RowMeta publication(RowMeta input,int sequence,std::span<const uint8_t> output){need(sequence>0&&output.size()<=slot,"ring publication bound");input.flags|=published;input.publication_ticket=sequence;input.payload_bytes=int32_t(output.size());input.payload_sha=digest(output);return input;}
++inline void validate_publication(const RowMeta& actual,const RowMeta& submitted,int sequence,const Context& c,std::span<const uint8_t> output){
++ context(c);need(output.size()==size_t(c.stage==c.stages-1?0:c.stream_bytes),"ring complete publication extent");
++ const auto expected=publication(submitted,sequence,output);
++ need(std::memcmp(&actual,&expected,sizeof actual)==0,"ring exact output publication owner/lineage/ticket/SHA");
++}
++inline Ack acknowledgment(const Context& c,int sequence,const Row& row,const Resolution& r,bool byte_checked){
++ need(sequence>row.ticket&&r.discarded.size()<=2&&r.pending>=0&&r.pending<=2&&r.physical>=r.committed,"ring resolution acknowledgment bounds");
++ Ack a;a.epoch=c.epoch;a.id=row.id;a.owner=c.stage;a.sequence=sequence;a.row_ticket=row.ticket;a.physical=r.physical;a.committed=r.committed;a.pending=r.pending;
++ a.discard_count=int32_t(r.discarded.size());if(a.discard_count)a.discarded0=r.discarded[0];if(a.discard_count==2)a.discarded1=r.discarded[1];a.flags=byte_checked?1:0;
++ if(a.discard_count)need(a.discarded0==row.id&&a.physical==a.committed&&a.pending==0,"ring suffix acknowledgment identity");return a;
++}
++inline void validate_ack(const Ack& a,const Context& c,int sequence,const Row& row,const std::vector<uint64_t>& expected_discarded){
++ context(c);need(a.magic==0x5241434b&&a.version==1&&a.bytes==sizeof a&&(a.flags&~1u)==0&&std::all_of(a.reserved.begin(),a.reserved.end(),[](auto x){return !x;}),"ring ACK header");
++ need(a.epoch==c.epoch&&a.id==row.id&&a.owner==c.stage&&a.sequence==sequence&&a.row_ticket==row.ticket&&a.sequence>row.ticket&&!a.error,"ring ACK owner/ticket");
++ need(a.discard_count>=0&&a.discard_count<=2&&size_t(a.discard_count)==expected_discarded.size()&&a.pending>=0&&a.pending<=2&&a.committed>=0&&a.physical>=a.committed,"ring ACK cursors/count");
++ need(a.discarded0==(expected_discarded.empty()?0:expected_discarded[0])&&a.discarded1==(expected_discarded.size()<2?0:expected_discarded[1]),"ring ACK exact suffix IDs");
++ need(a.discard_count||a.flags==0,"ring ACCEPT cannot claim a restore check");
++ if(!a.discard_count)need(a.committed==row.position+1&&a.pending<=1&&a.physical==a.committed+a.pending,"ring ACK exact accept cursors");
++ else need(expected_discarded[0]==row.id&&(expected_discarded.size()<2||expected_discarded[1]>row.id),"ring ACK expected suffix lineage");
++ if(c.stage==c.stages-1)need(!a.discard_count&&!a.pending,"ring final ACK cannot restore or retain suffix");
++ if(a.discard_count)need(a.physical==row.position&&a.committed==row.position&&a.pending==0,"ring ACK restored frontier");
++}
++struct BatchIdentity {uint64_t seed_row=0,parent_row=0,final_commit=0,provider_serial=0;};
++inline void validate_batch(const ProposalMeta& b,const Context& c,int expected_ticket,int seed_position,const Digest& seed,const Digest& hidden,const BatchIdentity& expected){
++ context(c);need(b.magic==0x44525032&&b.version==1&&b.bytes==sizeof b&&(b.flags&~3u)==0,"ring proposal header");
++ need(b.epoch==c.epoch&&b.request==c.request&&b.ticket==uint64_t(expected_ticket)&&expected_ticket>0&&b.seed_row>b.parent_row&&b.parent_row>0&&b.final_commit>0&&b.provider_serial>0,"ring proposal owner/seed identity");
++ need(b.seed_row==expected.seed_row&&b.parent_row==expected.parent_row&&b.final_commit==expected.final_commit&&b.provider_serial==expected.provider_serial,"ring proposal exact canonical handoff/provider identity");
++ need(b.seed_position==seed_position&&seed_position>0&&b.restored_position==seed_position&&b.seed_prefix==seed&&b.hidden_sha==hidden,"ring proposal canonical seed");
++ need(b.requested_depth==2&&b.available_depth>=0&&b.available_depth<=2&&!b.error&&b.restored==1&&(b.flags&2),"ring proposal restoration/depth");
++ need((b.flags&1)?b.available_depth>=1:b.available_depth==0,"ring proposal head mask");
++ need(b.available_depth>0?(b.guess0>=0&&b.guess0<c.vocab):b.guess0==-1,"ring first guess bounds");
++ need(b.available_depth>1?(b.guess1>=0&&b.guess1<c.vocab):b.guess1==-1,"ring second guess bounds");
++}
++}
