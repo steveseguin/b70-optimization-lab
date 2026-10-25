@@ -17,6 +17,11 @@ for kv in "$@"; do
   if [[ $kv == *= ]]; then systemctl --user unset-environment "${kv%=}"; else systemctl --user set-environment "$kv"; fi
 done
 systemctl --user stop sc117-lan
+# Disk floors: the service refuses to start near them. Prune this campaign's superseded run directories (USB evidence:
+# keep the newest; root control: keep the newest three; summaries live in the repo).
+usb=/mnt/usb-models/own-xpu-runtime-results/sc117-lan; ctl=$HOME/own-xpu-runtime-results/sc117-lan
+for d in $(ls -td "$usb"/run-* 2>/dev/null | tail -n +2); do rm -rf -- "$d"; done
+for d in $(ls -td "$ctl"/run-2026102[5-9]T* 2>/dev/null | tail -n +4); do rm -rf -- "$d"; done
 start=$(date +%H:%M:%S)
 systemctl --user start sc117-lan
 end=$((SECONDS+1200))
@@ -30,7 +35,7 @@ ev=$lane/gsq-rco-iq3s/serving/lan/evidence
 python3 - "$ev" "$binary" <<'EOF'
 import glob, json, sys
 ev, b = sys.argv[1:]
-f = glob.glob(f'{ev}/f32-state-{b}.json')
+f = glob.glob(f"{ev}/f32-state-{b}.json") + glob.glob(f"{ev}/f32-state-{b}-split*.json")
 print('oracle differences:', json.load(open(f[0]))['differences'] if f else 'missing')
 for g in sorted(glob.glob(f'{ev}/prefill-{b}-*.json')):
     d = json.load(open(g)); print('prefill gate', g.rsplit('/', 1)[1], 'passed', d['passed'], len(d['cases']))

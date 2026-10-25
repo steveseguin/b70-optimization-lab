@@ -11,15 +11,16 @@ ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-x
 # No restart policy, no SIGKILL: on stop the coordinator FINISHes both ranks and waits for drain.
 Environment=SC117_ACTIVATIONS=f32
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/a6c0c01e9d21.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/0f478d44798b.json
 Environment=SC117_PREFILL_ROWS=16
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
 # 80128 39.13 (4489), 91392 39.42 (4527), 122880 39.22 (4556); outputs byte-identical in every case.
 Environment=OWNRT_DRAFT_PREFIX_ROWS=91392
-# Layers 0-22 on rank 0 (with the draft), 23-47 on rank 1: rank 0 carries the draft on its critical path. Suite
-# 2026-10-25: 24/24 39.42 tok/s, 23/25 40.50, outputs identical; 22/26 exceeds the 30 GiB per-card plan cap.
-Environment=SC117_TARGET_SPLIT=23
+# Layers 0-21 on rank 0 (with the draft), 22-47 on rank 1: rank 0 carries the draft on its critical path. Suite
+# 2026-10-25: 24/24 39.42 tok/s, 23/25 40.60, 22/26 41.26 (after the bounded 8 MiB scratch; rank 1 30.0 GiB resident of
+# 31.89), outputs identical; 21/27 would exceed the 30 GiB per-card plan cap.
+Environment=SC117_TARGET_SPLIT=22
 Restart=no
 KillMode=process
 KillSignal=SIGTERM

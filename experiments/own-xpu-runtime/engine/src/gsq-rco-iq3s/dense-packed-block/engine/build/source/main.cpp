@@ -1934,8 +1934,11 @@ static void record_host_memory(const fs::path& output,const char* phase) {
 // Unknown writers fail closed, rather than silently using an understated ledger.
 static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
  constexpr size_t legacy=256ull*1024*1024, bounded=8ull*1024*1024;
- if(a.target_split!=23||a.draft_rank!=1||a.nongemv!="parallel"||
-    (!a.mini&&a.context!=4096))return legacy;
+ // GSQ resident ranks use the same plan-derived bound (the writer union below must fit 8 MiB); binding-time extent
+ // guards in every scratch-using kernel stay on, so a short scratch refuses instead of writing out of bounds.
+ const bool gsq=a.gsq_packed&&!a.mini&&a.context==4096&&a.memory=="resident";
+ if(!gsq&&(a.target_split!=23||a.draft_rank!=1||a.nongemv!="parallel"||
+    (!a.mini&&a.context!=4096)))return legacy;
  require((a.mini||p.g.h==2560)&&p.g.context==a.context&&
          p.g.context>0&&p.g.context<=32768&&p.g.budget>0&&p.g.budget<=2048,
          "unproved bounded scratch geometry");

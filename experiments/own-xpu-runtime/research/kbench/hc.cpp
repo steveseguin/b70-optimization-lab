@@ -62,6 +62,29 @@ sycl::event run(sycl::queue& q,const uint16_t* w,const float* x,float* y,int row
       if(lane==0&&row0+r<rows)y[row0+r]=sum;}
   });
 }
+// Engine's current lean path (F32 activations, aligned): fixed-trip unrolled 8-column chunks, 32-bit index. QUIET=false
+// drops the explicit NaN-quieting test: for finite weights the bits are unchanged, and a NaN weight still gives the same
+// quiet-NaN product. UNROLL issues that many chunks' loads per iteration (the arithmetic order is unchanged).
+template<int V,bool QUIET,int UNROLL>
+sycl::event run_lean(sycl::queue& q,const uint16_t* w,const float* x,float* y,int rows,int k){
+  constexpr int SG=32,SGS=4;const size_t groups=(rows+SGS-1)/SGS;
+  return q.parallel_for<K<V,1>>(sycl::nd_range<1>(groups*SG*SGS,SG*SGS),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const int row=it.get_group_linear_id()*SGS+sg.get_group_linear_id();
+    if(row>=rows)return;const uint16_t* src=w+size_t(row)*k;const uint32_t k32=uint32_t(k);float acc=0;uint32_t base=lane*8u;
+    #pragma unroll UNROLL
+    for(;base+8u<=k32;base+=SG*8u){
+      float wide[8],values[8];
+      #pragma unroll
+      for(int j=0;j<8;++j)wide[j]=x[base+j];
+      auto wv=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(src+base);
+      #pragma unroll
+      for(int j=0;j<8;++j){if constexpr(QUIET)values[j]=bf(wv[j]);else values[j]=sycl::bit_cast<float>(uint32_t(wv[j])<<16);}
+      #pragma unroll
+      for(int j=0;j<8;++j){float product=values[j]*wide[j];acc=acc+product;}
+    }
+    for(int width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,acc,(lane+width)%SG);if(lane%(2*width)==0)acc=acc+rhs;}
+    if(lane==0)y[row]=acc;});
+}
 int main(int argc,char** argv){
   sycl::queue q(sycl::gpu_selector_v,{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}});
   std::printf("%s\n",q.get_device().get_info<sycl::info::device::name>().c_str());
@@ -81,6 +104,11 @@ int main(int argc,char** argv){
       std::printf("  %-28s warm %8.2f us  cold %8.2f us  %s\n",label,t[t.size()/2],cold[cold.size()/2],same?"bitwise-equal":"DIFFERS");};
     std::printf("%s (%.1f MB weights)\n",s.name,hw.size()*2/1e6);
     run<0,1>(q,w,x,y,s.rows,s.k).wait();q.memcpy(ref.data(),y,s.rows*4).wait();
+    time([&]{return run_lean<20,true,1>(q,w,x,y,s.rows,s.k);},"lean (engine now)");
+    time([&]{return run_lean<21,false,1>(q,w,x,y,s.rows,s.k);},"lean, no NaN-quiet test");
+    time([&]{return run_lean<22,true,2>(q,w,x,y,s.rows,s.k);},"lean, unroll 2");
+    time([&]{return run_lean<23,false,2>(q,w,x,y,s.rows,s.k);},"lean, no quiet, unroll 2");
+    time([&]{return run_lean<24,false,4>(q,w,x,y,s.rows,s.k);},"lean, no quiet, unroll 4");
     time([&]{return run<0,1>(q,w,x,y,s.rows,s.k);},"v0 1 row/subgroup");
     time([&]{return run_engine<true>(q,w,x,y,s.rows,s.k);},"engine replica (barrier)");
     time([&]{return run_engine<false>(q,w,x,y,s.rows,s.k);},"engine replica, no barrier");

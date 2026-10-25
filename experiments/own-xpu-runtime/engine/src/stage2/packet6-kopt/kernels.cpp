@@ -63,6 +63,7 @@ template<Type T,unsigned SG> inline float dot(const uint8_t* row,const uint16_t*
     // index, then the ragged chunk exactly as below. Same values, same order.
     if(a==Type::F32 && reinterpret_cast<uintptr_t>(row)%16==0 && reinterpret_cast<uintptr_t>(x)%16==0) {
       const float* xf=reinterpret_cast<const float*>(x);const uint32_t k32=uint32_t(k);uint32_t base=lane*8u;
+      #pragma unroll 2
       for(;base+8u<=k32;base+=SG*8u) {
         float values[8],wide[8];
         #pragma unroll
@@ -76,8 +77,10 @@ template<Type T,unsigned SG> inline float dot(const uint8_t* row,const uint16_t*
           auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(row+size_t(base)*2);
           #pragma unroll
           for(unsigned j=0;j<8;++j) {
+            // BF16: no explicit NaN-quieting here. Finite weights are bit-identical; a NaN weight's product below is the
+            // same quiet NaN either way (the multiply quiets it). HC low+inject microbench, cold: 24.9 -> 23.1 us.
             if constexpr(T==Type::F16)values[j]=half(w[j]);
-            else {auto bits=uint32_t(w[j])<<16;if((bits&0x7fffffff)>0x7f800000)bits|=0x400000;values[j]=bits_float(bits);}
+            else values[j]=bits_float(uint32_t(w[j])<<16);
           }
         }
         #pragma unroll

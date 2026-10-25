@@ -66,7 +66,11 @@ class DraftRuntime {
  std::chrono::steady_clock::time_point pending_start;
  // Profiling remains owned by Engine::pending and is consumed once by drain().
 
- bool q4_head()const{return e.sealed_selection.draft.at("head_format")=="q4-g32";}
+ // GSQ: OWNRT_DRAFT_HEAD_Q4=1 selects the draft-only symmetric Q4 head (packet83 q4-g32, quantized at load from the
+ // target's head rows; the draft runs BF16, and target verification keeps every output exact).
+ bool q4_head()const{
+  if(e.a.gsq_packed){static const bool q4=[]{const char* v=std::getenv("OWNRT_DRAFT_HEAD_Q4");return v&&v[0]=='1';}();if(q4)return !e.a.mini;}
+  return e.sealed_selection.draft.at("head_format")=="q4-g32";}
  // GSQ: the draft head scores the first OWNRT_DRAFT_PREFIX_ROWS token ids (a multiple of 256; default the full
  // vocabulary). Draft-only: the target head and every target output are unchanged, guesses outside the prefix miss.
  unsigned prefix_rows()const{
