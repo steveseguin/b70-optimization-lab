@@ -7,6 +7,9 @@ static void request_reset(Engine& e,Candidate& candidate,mtp36::DraftRuntime* pr
                           const fs::path& metadata,int accepted) {
  require(!candidate.pending,"reset with unresolved candidate");
  e.drain();require(!e.poisoned && !e.integer(0,"error"),"reset cannot clear target failure");
+ // A deferred diagnostic still owns the previous draft state. Flush before
+ // any allocation (including its backup) is zeroed, even with reset_dump off.
+ if(provider)provider->flush_depth_probe();
  std::ifstream input(metadata);std::string output,oracle;
  require(bool(std::getline(input,output))&&bool(std::getline(input,oracle)),"reset metadata");
  fs::path destination(output);require(destination.is_absolute()&&!output.empty(),"reset output absolute");
@@ -52,6 +55,7 @@ static void request_reset(Engine& e,Candidate& candidate,mtp36::DraftRuntime* pr
 // bank, history, counter or draft state is touched.
 static void request_redirect(Engine& e,mtp36::DraftRuntime* provider,const fs::path& metadata) {
  e.drain();require(!e.poisoned && !e.integer(0,"error"),"redirect after target failure");
+ if(provider)provider->flush_depth_probe();
  std::ifstream input(metadata);std::string output;
  require(bool(std::getline(input,output)),"redirect metadata");
  fs::path destination(output);require(destination.is_absolute()&&!output.empty(),"redirect output absolute");

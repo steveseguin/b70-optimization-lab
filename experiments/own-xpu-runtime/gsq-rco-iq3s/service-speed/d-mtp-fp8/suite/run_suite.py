@@ -47,9 +47,9 @@ def summarize(rows, label, url):
                 scope='one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark')
 
 
-def main():
+def main(on_result=None, argv=None):
     ap = argparse.ArgumentParser(); ap.add_argument('--url', default='http://192.168.2.44:18160/v1/chat/completions'); ap.add_argument('--label', required=True); ap.add_argument('--out', type=Path, required=True)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     C = load(L / 'serving/lan/chat.py', 'suite_chat'); chat = C.Chat()
     manifest = json.loads((SUITE / 'suite-manifest.json').read_text())
     rows = []
@@ -67,7 +67,10 @@ def main():
         t0 = time.monotonic()
         with urllib.request.urlopen(urllib.request.Request(a.url, data=body, headers={'Content-Type': 'application/json'}), timeout=900) as r:
             res = json.load(r)
-        rows.append(response_row(res, p['prompt_id'], ids, time.monotonic() - t0))
+        row = response_row(res, p['prompt_id'], ids, time.monotonic() - t0)
+        if on_result is not None:
+            on_result(row, res)
+        rows.append(row)
         print(json.dumps({k: v for k, v in rows[-1].items() if not k.endswith('token_ids')}), flush=True)
     summary = summarize(rows, a.label, a.url)
     a.out.write_text(json.dumps(summary, indent=1) + '\n'); print(json.dumps({k: v for k, v in summary.items() if k != 'rows'}))

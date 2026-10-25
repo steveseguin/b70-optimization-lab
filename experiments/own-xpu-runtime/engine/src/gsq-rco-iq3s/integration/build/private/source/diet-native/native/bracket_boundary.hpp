@@ -6,6 +6,7 @@ static void bracket_boundary(Engine& e,Candidate& candidate,mtp36::DraftRuntime*
  require(!provider||!provider->submitting(),"bracket draft publication pending");
  image.boundary();e.drain();
  require(!e.poisoned&&!e.integer(0,"error"),"bracket cannot erase target error");
+ if(provider)provider->flush_depth_probe();
  std::ifstream input(metadata);std::string selection,digest,reset_file,receipt;
  require(bool(std::getline(input,selection))&&bool(std::getline(input,digest))&&
          bool(std::getline(input,reset_file))&&bool(std::getline(input,receipt)),"bracket metadata");

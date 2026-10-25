@@ -64,6 +64,11 @@ class DraftRuntime {
  Allocation publication{},half_staging{};ownrt::Event publication_event=0;
  bool async_pending=false,pending_head=false;int pending_confirmed=0;
  std::chrono::steady_clock::time_point pending_start;
+ // Discarded recursive lookahead diagnostic; packet66 mechanism, generalized to depth 2/3.
+ int depth_probe=0,queued_probe=-1,queued_confirmed=-1;bool verify_depth_restore=false;
+ Allocation probe_backup{};size_t probe_bytes=0;
+ std::ofstream probe_trace;fs::path probe_output;
+ std::vector<uint8_t> probe_reverse_hidden; // owned target input across deferred diagnostic work
  // Profiling remains owned by Engine::pending and is consumed once by drain().
 
  // GSQ: OWNRT_DRAFT_HEAD_Q4=1 selects the draft-only symmetric Q4 head (packet83 q4-g32, quantized at load from the
@@ -173,8 +178,24 @@ class DraftRuntime {
   a.push_back(scratch);a.push_back(id("error"));a.push_back(id("position"));a.push_back(id("active"));a.push_back(e.ropes[0]);return {s,a};
  }
 public:
- void set_reverse_hidden(const void* bytes){require(!async_pending,"reverse handoff while draft pending");reverse_hidden=bytes;}
+ void set_reverse_hidden(const void* bytes){require(!async_pending,"reverse handoff while draft pending");
+  if(depth_probe){require(bytes,"depth probe reverse hidden input missing");probe_reverse_hidden.resize(e.stream_bytes());
+   std::memcpy(probe_reverse_hidden.data(),bytes,probe_reverse_hidden.size());reverse_hidden=probe_reverse_hidden.data();
+  }else reverse_hidden=bytes;
+ }
  DraftRuntime(Engine& target):e(target),trace(e.a.output/"draft-rows.jsonl"){
+  if(const char* value=std::getenv("OWNRT_DRAFT_DEPTH_PROBE")){
+   const std::string v=value;require(v=="0"||v=="2"||v=="3","OWNRT_DRAFT_DEPTH_PROBE must be 0, 2 or 3");depth_probe=std::stoi(v);
+   if(depth_probe){
+    require(e.a.draft_fault=="none"&&!e.a.tp_replicate,"depth probe requires normal draft and no TP");
+    const char* early=std::getenv("OWNRT_EARLY_RANK1");
+    require(early&&std::string(early)=="0","depth probe requires OWNRT_EARLY_RANK1=0 to protect reverse hidden ownership");
+   }
+  }
+  if(const char* value=std::getenv("OWNRT_DRAFT_DEPTH_VERIFY")){
+   const std::string v=value;require(v=="0"||v=="1","OWNRT_DRAFT_DEPTH_VERIFY must be 0 or 1");verify_depth_restore=v=="1";
+   require(!verify_depth_restore||depth_probe,"depth restore verification requires the probe");
+  }
   require(e.a.rank==e.a.draft_rank||!e.a.draft_capture.empty(),"draft placement/capture");if(!e.a.mini)store=std::make_unique<Store>(e.a.draft_manifest,e.a.draft_model);
   p=flash::Builder(e.p.g).build({true});std::erase_if(p.launches,[](const auto& l){return l.op=="lookup"||l.op=="broadcast";});
   // Keep plan shape/ops, pair routed gate/up at the same schedule point.
@@ -227,11 +248,20 @@ public:
   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
   prepare_commands();
+  if(depth_probe){
+   for(auto allocation:mutable_ids)probe_bytes+=e.dev(0).arena.row(allocation).bytes;
+   require(probe_bytes<=32ull*1024*1024,"depth probe mutable backup exceeds 32 MiB reserve");
+   probe_backup=e.allocate(0,"draft:depth-probe-backup",probe_bytes,Category::runtime_overhead,Lifetime::process);
+   allocated+=probe_bytes;probe_output=e.a.output;
+   probe_trace.open(probe_output/"draft-depth-probe.jsonl");require(bool(probe_trace),"depth probe trace open");
+   save(e.a.output/"draft-depth-probe-config.json","{\"schema\":\"ownrt.draft-depth.config.v1\",\"depth\":"+std::to_string(depth_probe)+",\"backup_bytes\":"+std::to_string(probe_bytes)+",\"diagnostic_only\":true,\"discards_proposals\":true}");
+  }
   save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2)+",\"head_weight_shared\":"+(!q4_head()&&e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")?"true":"false")+"}");
  }
- void admit_position() {
+ void admit_position(int restored_extent=0) {
   require(position>=0&&position<p.g.context,"draft capacity position admission");
-  int bound=std::min(p.g.context,((position+32)/32)*32);
+  int bound=restored_extent?restored_extent:std::min(p.g.context,((position+32)/32)*32);
+  require(bound>0&&bound<=p.g.context,"draft restored extent bound");
   if(bound==context_extent)return;
   e.drain();context_extent=bound;
   for(size_t i=0;i<p.launches.size();++i){const auto& l=p.launches[i];
@@ -243,10 +273,13 @@ public:
    catch(...){e.dev(0).end_capture();e.preparing_commands=false;throw;}
   }
  }
- int compute(int confirmed,int target_position,bool head,bool asynchronous=false){
+ int compute(int confirmed,int target_position,bool head,bool asynchronous=false,bool recursive=false){
+  if(!recursive)flush_depth_probe();
   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
-  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");
+  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);if(recursive){
+   e.tail=e.io_copy(0,id("merge.hidden"),0,id("streams"),0,4*p.g.h*2);
+  }else if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");
    if(e.a.f32_activations){ // exact-mode target streams are F32; the draft keeps its BF16 inputs (proposals are target-verified)
     std::vector<uint16_t> hidden(size_t(4)*p.g.h);auto* f=static_cast<const float*>(reverse_hidden);for(size_t i=0;i<hidden.size();++i)hidden[i]=iq3::bf16_bits(f[i]);
     e.upload(0,id("merge.hidden"),0,hidden.data(),hidden.size()*2);
@@ -289,6 +322,8 @@ public:
   }
   e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);if(status){disabled=true;return -1;}
   ++position;if(e.a.draft_fault=="late-error")throw ProviderError("injected provider failure after cache append");int token=-1;if(head){auto b=e.readback(0,id("next_token"),4);std::memcpy(&token,b.data(),4);}
+  if(recursive)return token;
+  if(depth_probe&&head&&token>=0&&token<p.g.vocab){queued_probe=token;queued_confirmed=confirmed;}
   trace<<"{\"draft_position\":"<<position-1<<",\"confirmed_token\":"<<confirmed<<",\"guess\":"<<token<<",\"head\":"<<(head?"true":"false")<<",\"wall_ms\":"<<Engine::ms(start)<<"}\n";trace.flush();if(e.a.draft_fault=="suppress")return -1;if(e.a.draft_fault=="garbage")return p.g.vocab;return e.a.draft_fault=="wrong"&&head?(token+1)%p.g.vocab:token;
  }
  int run(int confirmed,int target_position,bool head){try{return compute(confirmed,target_position,head);}catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return -1;}}
@@ -314,6 +349,8 @@ public:
   if(e.a.draft_fault=="garbage")token=p.g.vocab;
   if(e.a.draft_fault=="wrong"&&pending_head&&token>=0)token=(token+1)%p.g.vocab;
   done.token=token;
+  // Completion can run inside Engine::wait: queue only, never submit/drain here.
+  if(depth_probe&&pending_head&&token>=0&&token<p.g.vocab){queued_probe=token;queued_confirmed=pending_confirmed;}
   trace<<"{\"draft_position\":"<<position-1<<",\"confirmed_token\":"<<pending_confirmed<<",\"guess\":"<<token<<",\"head\":"<<(pending_head?"true":"false")<<",\"wall_ms\":"<<done.wall_ms<<",\"nonblocking\":true}\n";trace.flush();return done;
  }
  void queue_half_inputs(int token,const void* streams){
@@ -325,8 +362,9 @@ public:
  }
  // Reset is quiescent and never frees/reallocates a shared-owner allocation.
  // Conversation continuation: only the row trace moves to the new request directory; the draft state stays.
- void redirect(const fs::path& output){require(!async_pending,"redirect with pending draft publication");trace.close();trace.clear();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft redirect trace");}
+ void redirect(const fs::path& output){require(!async_pending,"redirect with pending draft publication");flush_depth_probe();trace.close();trace.clear();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft redirect trace");if(depth_probe)probe_output=output;}
  void reset_request(const fs::path& output) {
+  flush_depth_probe();
   require(!async_pending,"reset with pending draft publication");e.drain();for(auto allocation:mutable_ids){auto bytes=e.dev(0).arena.row(allocation).bytes;
    std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));
    for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,allocation,off,zero.data(),std::min(zero.size(),bytes-off));}
@@ -334,9 +372,58 @@ public:
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   publication_event=0;e.progress_pending=false;e.progress_callback={};
   trace.close();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
+  if(depth_probe)probe_output=output;
+ }
+ void flush_depth_probe(){
+  if(queued_probe<0)return;
+  require(depth_probe&&probe_backup&&!async_pending&&!e.progress_pending,"depth probe requires quiescent draft publication");
+  const int d1=queued_probe,confirmed=queued_confirmed;queued_probe=-1;queued_confirmed=-1;
+  require(!disabled&&d1>=0&&d1<p.g.vocab,"depth probe draft state invalid");
+  e.drain();const auto total_start=std::chrono::steady_clock::now();
+  const int saved_position=position,saved_extent=context_extent,saved_class=e.current_cls;
+  const bool saved_disabled=disabled;const void* saved_reverse=reverse_hidden;
+  auto copy_state=[&](bool restore){ownrt::CopyEngine copy(e.dev(0));size_t offset=0;
+   for(auto allocation:mutable_ids){const size_t bytes=e.dev(0).arena.row(allocation).bytes;
+    e.tail=restore?copy.copy(allocation,0,probe_backup,offset,bytes,{}):copy.copy(probe_backup,offset,allocation,0,bytes,{});offset+=bytes;}
+   require(offset==probe_bytes,"depth probe mutable allocation inventory changed");e.drain();
+  };
+  copy_state(false);const double snapshot_ms=Engine::ms(total_start);
+  std::vector<int> guesses{d1};std::vector<double> pass_ms;
+  try {
+   for(int depth=2;depth<=depth_probe&&position<p.g.context;++depth){
+    auto start=std::chrono::steady_clock::now();int token=compute(guesses.back(),position+1,true,false,true);
+    require(token>=0&&token<p.g.vocab&&!disabled,"recursive draft returned invalid token");
+    guesses.push_back(token);pass_ms.push_back(Engine::ms(start));
+   }
+  }catch(const std::exception& ex){
+   // Do not submit recovery copies after a device fault or continue with altered state.
+   throw std::runtime_error(std::string("discarded depth probe failed; engine must halt: ")+ex.what());
+  }
+  auto restore_start=std::chrono::steady_clock::now();copy_state(true);
+  position=saved_position;disabled=saved_disabled;reverse_hidden=saved_reverse;
+  if(position<p.g.context)admit_position(saved_extent);
+  else require(context_extent==saved_extent,"depth probe capacity extent changed");
+  e.current_cls=saved_class;
+  if(verify_depth_restore){
+   const auto saved=e.readback(0,probe_backup,probe_bytes);size_t offset=0;
+   for(auto allocation:mutable_ids){const auto bytes=e.readback(0,allocation,e.dev(0).arena.row(allocation).bytes);
+    require(std::equal(bytes.begin(),bytes.end(),saved.begin()+offset),"depth probe mutable bytes differ after restore");offset+=bytes.size();}
+   require(offset==saved.size()&&position==saved_position&&context_extent==saved_extent&&disabled==saved_disabled&&reverse_hidden==saved_reverse,"depth probe metadata restore mismatch");
+  }
+  probe_trace<<"{\"schema\":\"ownrt.draft-depth.cycle.v1\",\"request_output\":"<<ownrt::quote(probe_output.string())
+   <<",\"rank\":"<<e.a.rank<<",\"confirmed_position\":"<<saved_position<<",\"confirmed_token\":"<<confirmed
+   <<",\"d1_position\":"<<saved_position+1<<",\"requested_depth\":"<<depth_probe<<",\"guesses\":[";
+  for(size_t i=0;i<guesses.size();++i)probe_trace<<(i?",":"")<<guesses[i];
+  probe_trace<<"],\"extra_pass_wall_ms\":[";for(size_t i=0;i<pass_ms.size();++i)probe_trace<<(i?",":"")<<pass_ms[i];
+  probe_trace<<"],\"snapshot_ms\":"<<snapshot_ms<<",\"restore_ms\":"<<Engine::ms(restore_start)
+   <<",\"probe_total_ms\":"<<Engine::ms(total_start)<<",\"snapshot_bytes\":"<<probe_bytes
+   <<",\"restored_position\":"<<position<<",\"restored_extent\":"<<context_extent
+   <<",\"mutable_bytes_verified\":"<<(verify_depth_restore?"true":"false")
+   <<",\"discarded\":true,\"diagnostic_only\":true}\n";probe_trace.flush();require(bool(probe_trace),"depth probe trace write failed");
  }
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/draft_bracket.hpp"
  void dump_all_state(const fs::path& path) {
+  flush_depth_probe();
   dump(path);std::ostringstream out;out<<"{\"position\":"<<position<<",\"disabled\":"<<(disabled?"true":"false")<<",\"mutable_sha256\":{";
   bool comma=false;for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);
    auto bytes=e.readback(0,allocation,row.bytes);out<<(comma?",":"")<<ownrt::quote(row.label)<<":"<<ownrt::quote(hash(bytes));comma=true;}
