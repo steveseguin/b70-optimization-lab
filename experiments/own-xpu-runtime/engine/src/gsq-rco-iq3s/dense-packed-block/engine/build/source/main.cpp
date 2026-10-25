@@ -595,7 +595,24 @@ static flash::Plan gsq_build_plan(Weights &w, const Options &a) {
 }
 static flash::Plan plan(Weights &w, const Options &a) {
   require(a.gsq_packed||!a.f32_activations,"exact F32 activations require the GSQ packed engine");
-  if(a.gsq_packed){auto candidate=gsq_build_plan(w,a);combined_admit(w,a,candidate);iq3_block_admit(w,a,candidate);dense_q6_admit(w,a,candidate);dense_block_admit(w,a,candidate);return candidate;}
+  if(a.gsq_packed){auto candidate=gsq_build_plan(w,a);combined_admit(w,a,candidate);iq3_block_admit(w,a,candidate);dense_q6_admit(w,a,candidate);dense_block_admit(w,a,candidate);
+    // OWNRT_GSQ_FUSE_NORM=1 (2026-10-25): HC combine followed by the next HC norm on the same card runs as the existing
+    // fused_combine_norm launch (same arithmetic; both outputs written). Off by default until the gates pass.
+    if(const char* v=std::getenv("OWNRT_GSQ_FUSE_NORM");v&&std::string(v)=="1"&&a.nongemv=="parallel") {
+      std::vector<flash::Launch> fused;
+      for(size_t i=0;i<candidate.launches.size();++i) {
+        auto l=candidate.launches[i];
+        if(l.op=="hc_combine"&&i+1<candidate.launches.size()) {
+          const auto& next=candidate.launches[i+1];
+          if(next.op=="norm"&&next.card==l.card&&next.inputs.size()>=1&&l.outputs.size()==1&&next.inputs.at(0)==l.outputs.at(0)&&p60::stage(next.label)==0) {
+            l.outputs.insert(l.outputs.end(),next.outputs.begin(),next.outputs.end());l.weights=next.weights;l.parameter=next.parameter;++i;
+          }
+        }
+        fused.push_back(std::move(l));
+      }
+      candidate.launches=std::move(fused);
+    }
+    return candidate;}
   auto g =
       a.mini ? Geometry::tiny() : flash::geometry_from_directory(w.directory);
   g.context = a.mini && !a.pipeline_mini ? 8 : a.context;

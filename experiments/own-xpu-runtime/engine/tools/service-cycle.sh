@@ -41,9 +41,12 @@ print('oracle differences:', json.load(open(f[0]))['differences'] if f else 'mis
 for g in sorted(glob.glob(f'{ev}/prefill-{b}-*.json')):
     d = json.load(open(g)); print('prefill gate', g.rsplit('/', 1)[1], 'passed', d['passed'], len(d['cases']))
 EOF
-run=$(ls -td /mnt/usb-models/own-xpu-runtime-results/sc117-lan/run-* | head -1)
+run=$(ls -td /dev/shm/sc117-lan-evidence/run-* /mnt/usb-models/own-xpu-runtime-results/sc117-lan/run-* 2>/dev/null | head -1)
 cat "$run"/rank*/failure.txt 2>/dev/null | head -c 400 || true
 if systemctl --user show-environment | grep -q '^OWNRT_DECODE_PROFILE=2'; then
-  cp "$run/rank0/decode-device-profile.jsonl" "$lane/gsq-rco-iq3s/service-speed/b-prefill/profiles/$label-decode-device-rank0.jsonl"
-  echo "profile: profiles/$label-decode-device-rank0.jsonl"
+  for r in 0 1; do
+    test -f "$run/rank$r/decode-device-profile.jsonl" || continue
+    cp "$run/rank$r/decode-device-profile.jsonl" "$lane/gsq-rco-iq3s/service-speed/b-prefill/profiles/$label-decode-device-rank$r.jsonl"
+    echo "profile: profiles/$label-decode-device-rank$r.jsonl"
+  done
 fi

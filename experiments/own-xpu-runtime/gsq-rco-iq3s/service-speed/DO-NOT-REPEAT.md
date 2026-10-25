@@ -20,3 +20,5 @@ under `b-prefill/profiles/`; patches for removed code are kept there too.
 | Attention tiles: grouped KV heads / pipelined K loads / 256-lane work-groups | 914 → 2913 / 1079 / 1597 µs at 3K (opt-in switches) | `p49_qsa_kernel.hpp` comments |
 | 22/26 layer split (after the small-op kernels) | 43.46 vs 44.13 at 23/25 | unit comment |
 | 32-row prefill chunks | about 2% (kept) | unit |
+| IQ3_XXS expert kernel: FMA accumulate / lane-contiguous 8 weights / 1–8 rows per subgroup / 32–256-lane work-groups / grid in local memory | 62 / 69 / 60–74 / 60–61 / 55 µs vs 60 (warm 56; adjacent experts 60; no grid read at all 51.5): instruction-bound in the per-weight decode, no single cause | `research/kbench/iq3xxs_rows.cpp` |
+| GSQ HC combine+norm fusion (`OWNRT_GSQ_FUSE_NORM=1`, opt-in) | rank 0 state exact, rank 1 differs from layer 23 KV on; cause not localized; worth ≤2% | `main.cpp` plan() |
