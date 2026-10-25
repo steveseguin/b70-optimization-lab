@@ -158,3 +158,32 @@ Negatives: Q4 draft head (40.15 vs 40.60), IQ4_NL levels by shuffle (54 → 85 �
 Four cards: settle on one estimate, **~1.4×** for the hybrid (2 stages × exact 2-way split). Matrix work, now about
 70% of each stage's busy time, splits two ways; small ops are replicated; there are about 1–2 ms of
 synchronizations. It needs cards 27/43.
+
+## Long context (2026-10-25)
+
+Measured on a summary request over these notes (prompt plus 256 generated tokens):
+
+| Prompt | Before | After |
+|---:|---|---|
+| 1,027 tokens | decode 41.2 tok/s, prefill 17.4 s | decode 48.6 tok/s, prefill 11.2 s |
+| 3,027 tokens | decode 36.4 tok/s, prefill 45.7 s | decode 45.4 tok/s, prefill 34.3 s |
+
+The per-pass device profile (`OWNRT_DECODE_PROFILE=3`) at 3K context, rank 0, showed:
+- the QSA attention's admit pass: one work item per row scanning up to 2051 slots, 998 µs per step;
+- the select: O(n) serial scans per block item, 945 µs.
+
+The fixes:
+- parallel exact admit (18 µs);
+- subgroup select stages (371 µs).
+
+Exact but slower, kept opt-in:
+- grouped-head attention tiles (12× fewer work-groups);
+- pipelined tiles (register pressure).
+
+The tiles pass (about 900 µs per step at 3K) needs a GQA-aware redesign that shares K/V without serializing heads.
+
+Prefill per 16-row chunk (rank 0, profiled at 3K): about 155–167 ms. The largest parts are BF16 GEMVs (29 ms), expert
+GEMVs (about 45 ms), other dense GEMVs (about 36 ms), and attention per row (18.7 ms at late positions).
+- 32-row chunks: about 2% faster (3K: 33.5 s); now the service default.
+- Microbench [kbench/prefill_bf16.cpp](kbench/prefill_bf16.cpp): 2 rows × 4 tokens per subgroup is 1.3–1.5× on the
+  BF16 prefill GEMVs, exact. Exact F32 allows no fused multiply-add, so these kernels stay ALU-bound.

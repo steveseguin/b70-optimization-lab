@@ -12,7 +12,7 @@ ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-x
 Environment=SC117_ACTIVATIONS=f32
 Environment=SC117_ADAPTER=adapter6.py
 Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/e12de6ea4596.json
-Environment=SC117_PREFILL_ROWS=16
+Environment=SC117_PREFILL_ROWS=32
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
 # 80128 39.13 (4489), 91392 39.42 (4527), 122880 39.22 (4556); outputs byte-identical in every case.
