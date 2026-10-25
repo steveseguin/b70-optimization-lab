@@ -1,0 +1,9 @@
+$ /dev/shm/ownrt-test-native-ring-control
+PASS native StageRing two-slot causality, ACCEPT no rewind, single suffix restore, independent draft survival, stale lineage/refusal, sticky failure and reset; synthetic CPU backend only
+
+$ /dev/shm/ownrt-test-native-ring-wire
+PASS exact224/192/128B wire layout, SHA/prefix/stage/ticket/padding/extent checks, exact suffix ACKs and canonical restored batch contract; CPU only
+
+$ /dev/shm/ownrt-test-native-ring-checkpoint /dev/shm/ownrt-native-ring-checkpoint-final
+PASS actual checked two-slot transport: immutable shared inventory, ACCEPT no rewind, oldest suffix restore once, newer draft survives, zeroed table rebuild, census refusal; CPU only
+context lifetime PASS: 10 destructions, native release last, zero late destructions

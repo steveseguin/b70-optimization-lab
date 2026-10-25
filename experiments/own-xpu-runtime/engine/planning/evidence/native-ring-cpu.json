@@ -1,0 +1,46 @@
+{
+  "schema": "ownrt.native-ring-cpu.v1",
+  "scope": "Target-only opt-in ring24-26; CPU parser/control/wire/actual Host checked transport; dispatcher compiled, no model kernel/socket/GPU proof",
+  "checks": [
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-native-ring-control"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-native-ring-wire"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-native-ring-checkpoint",
+        "/dev/shm/ownrt-native-ring-checkpoint-final"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "sources": {
+    "src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "e5f41e738e055012330fdc49c03defba02a6f515594eb0de1478a9f128c1f40e",
+    "src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "a85d6d68fb69eb34078e43655b3c8cf2ae994d2cb7928f088d1e4edf9b54b3fb",
+    "src/pipeline/ring/checkpoint_ring.hpp": "2e8296fc679c80cbb52bab940e2c17eb9c4bdbe3077148d76d130f95f0c9e7c3",
+    "src/pipeline/ring/dispatcher.hpp": "7ad1139359c379c5c49dc6c2888e3ff40879d15ca10abe88d33d407c60d6737b",
+    "src/pipeline/ring/engine_backend.hpp": "961487eb581c5d9369786157e03b0b88e4ece8eadad58a18b45e080e3b4de623",
+    "src/pipeline/ring/stage_ring.hpp": "f87cd76ccb6f3010b3a6d98d841f1d71a9a220978ccfb38aa29ee6b73d3c3fe2",
+    "src/pipeline/ring/wire.hpp": "9f5c3688af51d6092ec7018c6e85d2918b5443e326f789e3598f881a61a48eea",
+    "planning/test_native_ring_checkpoint.cpp": "650b7b904dd7f855d8927fc2918e441182006bb551763dbc1c8480ef90562460",
+    "planning/test_native_ring_control.cpp": "724abdcb91d7dd996c4f430c954df0f863da0cdfc4f4080eea98a33ff4ba2796",
+    "planning/test_native_ring_wire.cpp": "75daaebb3e72bc1275b8f98e25cefaf15c6a6a293b147a92c3fc318caf6a053c",
+    "planning/native-ring.md": "d8cc30f8b36fb6d04c1caafc99256c5491f6e25999b78709409d59a68b70e05b"
+  },
+  "binaries": {
+    "/dev/shm/ownrt-test-native-ring-control": "15e498f682c3cb4f0de3d82de4f57b5055a4ad1abf5a6723d0d070822fb89810",
+    "/dev/shm/ownrt-test-native-ring-wire": "11f16f93034213f564e66ca3ef3c1cbee191fb7757e3b1e2f80d5775ca6e208a",
+    "/dev/shm/ownrt-test-native-ring-checkpoint": "6c0f599ef9860ae7420cf7736443c34f000b77a857df41fdbca75f1618c6432e"
+  },
+  "log_sha256": "8b864aac9f9b823bf4811e2576dad495eec4a0d681b5ff10572fd80b6fffda81",
+  "host_compile": "nice -n 19 g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I experiments/own-xpu-runtime/engine/src experiments/own-xpu-runtime/engine/planning/test_native_ring_checkpoint.cpp experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /dev/shm/ownrt-test-native-ring-checkpoint",
+  "gpu_qualification": "pending"
+}
