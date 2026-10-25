@@ -1,7 +1,7 @@
 # Current Workspace State
 
 **October 25, 08:45 EDT — SC117 service: new text no longer decodes slower; conversations continue without re-reading.**
-Engine `7649fc43d0fc` (same code as `297b388764e9` plus an opt-in switch) serves at `http://192.168.2.44:18160/v1` (same unit and cards).
+Engine `5de85b4aadfd` (same default path as `297b388764e9`, plus exact opt-in switches) serves at `http://192.168.2.44:18160/v1` (same unit and cards).
 - **New text was 30% slower than the suite showed.** The first request with unseen text decoded at about 33 tok/s,
   because each token read 16 rows of a 28.8 GB per-layer embedding table from the USB disk (ntfs-3g). Every earlier
   suite number was warm.
