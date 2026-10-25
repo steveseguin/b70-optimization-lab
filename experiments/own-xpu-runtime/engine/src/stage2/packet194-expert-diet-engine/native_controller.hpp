@@ -52,6 +52,7 @@ inline void worker(Mailbox& m,int seconds,const std::function<Reply(const Reques
  }
 }
 // prefill: rows per batched-prefill chunk requested for this request (0 = token-by-token prompt).
+inline bool early_rank1(){static const bool on=[]{const char* e=std::getenv("OWNRT_EARLY_RANK1");return !e||e[0]!='0';}();return on;}
 struct Config {int draft_rank=1,mode=0,count=0,overlap=1,dumps=0,vocab=31,prefill=0;std::vector<int> prompt,script,eos;};
 inline Config config(const fs::path& path,int context,int vocab){
  std::ifstream f(path);Config c;c.vocab=vocab;size_t np=0,ns=0,ne=0;require(bool(f>>c.mode>>c.count>>c.overlap>>c.dumps>>np>>ns>>ne),"native config header");
@@ -107,6 +108,8 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
  Result out;out.start=clock_now();std::vector<int> history;bool draft_pending=false;double issued_draft_at=0;uint32_t pending_draft_sequence=0;size_t script_index=0;int length=int(c.prompt.size());
  auto fixture=[&](int p){return std::max(0,p-length+2);};
  auto half_start=[&](int rank,int token,int p,bool spec=false){b.start(rank,half,token,p,fixture(p),spec);};
+ double rank1_started_at=0; // >0: rank 1's half for the coming position was already issued
+ bool defer_draft=false;     // a decode miss: the draft is issued after rank 0's redo
  // Batched prefill bulk: target positions 0..N-1 (N = length-2) in chunks on both ranks, then the original scalar
  // loop resumes at p=N in exactly the state its iteration N-1 leaves: rank 0 has run and accepted HALF(N), rank 1
  // is committed through N-1, and the draft has consumed confirmed positions 1..N with its publication for N+1 pending.
@@ -150,7 +153,9 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
   double cycle=clock_now();int token=p<length?c.prompt[p]:out.tokens.back();history.push_back(token);int draft_guess=-1;
   uint32_t expected_draft=0;double draft_started=0;
   if(draft_pending){expected_draft=c.draft_rank==0?uint32_t(p):pending_draft_sequence;draft_started=issued_draft_at;if(c.draft_rank==1&&b.pending[1])b.wait(1);draft_pending=false;}
-  p150::measure("handoff_host",p,false,[&]{b.handover();});half_start(1,token,p);double half_started=clock_now();
+  double half_started;
+  if(rank1_started_at>0){half_started=rank1_started_at;rank1_started_at=0;} // started at the end of the last iteration
+  else{p150::measure("handoff_host",p,false,[&]{b.handover();});half_start(1,token,p);half_started=clock_now();}
   if(expected_draft){double waiting=clock_now();uint32_t seen=load(b.m.draft_sequence);p150::measure("draft_wait",p,false,[&]{if(seen!=expected_draft)wait_change(b.m.draft_sequence,seen,b.m,b.seconds,b.cancel);});p150::measure("draft_zero_wait",p,true,[&]{if(b.split_replay)require(load(b.m.draft_sequence)==expected_draft,"p150 satisfied draft wait");});
    require(load(b.m.draft_sequence)==expected_draft,"native draft publication sequence");
    struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};Publication v{};std::memcpy(&v,b.shared+2*slot_bytes,sizeof v);
@@ -172,9 +177,18 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
   bool early_accept=false;
   if(c.mode==3){int confirmed=known?c.prompt[p+1]:out.tokens.back();
    if(c.draft_rank==0&&pending){b.wait(0);if(known||guess==confirmed){b.call(0,accept);early_accept=true;}}
-   b.start(c.draft_rank,draft,confirmed,p+1,int(p+2>=length),1);pending_draft_sequence=b.seq;issued_draft_at=b.sent[c.draft_rank];if(c.draft_rank==0)b.wait(0);draft_pending=true;}
+   // Rank 1's next half needs only rank 0's accepted half, the draft only rank 1's last result: start rank 1 first,
+   // since rank 0's draft submission runs synchronously here (about 0.4 ms). Same commands, earlier rank-1 issue.
+   if(early_accept&&c.draft_rank==0&&!c.dumps&&early_rank1()){p150::measure("handoff_host",p+1,false,[&]{b.handover();});half_start(1,confirmed,p+1);rank1_started_at=clock_now();}
+   // A decode miss: rank 1 waits for rank 0's redo, while the draft is needed only by the next speculative half. Run
+   // rollback and redo first, start rank 1, then issue the draft (same commands; the draft takes rank 1's rows from
+   // host memory at submission).
+   defer_draft=c.draft_rank==0&&pending&&!early_accept&&!known&&!b.correction_probe&&!c.dumps&&early_rank1();
+   if(!defer_draft){b.start(c.draft_rank,draft,confirmed,p+1,int(p+2>=length),1);pending_draft_sequence=b.seq;issued_draft_at=b.sent[c.draft_rank];if(c.draft_rank==0)b.wait(0);draft_pending=true;}}
   if(known){if(!pending)half_start(0,c.prompt[p+1],p+1);if(b.pending[0])b.wait(0);if(!early_accept)b.call(0,accept);}
-  else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;if(!early_accept)b.call(0,accept);}else{++out.misses;double redo=clock_now();if(b.correction_probe){if(b.pending[1])b.wait(1);b.start(1,14,actual,p+1,fixture(p+1));}b.call(0,rollback,actual,p+1,fixture(p+1),1);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);if(b.correction_probe)b.wait(1);out.redo_ms+=(clock_now()-redo)*1000;}out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
+  else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;if(!early_accept)b.call(0,accept);}else{++out.misses;double redo=clock_now();if(b.correction_probe){if(b.pending[1])b.wait(1);b.start(1,14,actual,p+1,fixture(p+1));}b.call(0,rollback,actual,p+1,fixture(p+1),1);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);if(b.correction_probe)b.wait(1);out.redo_ms+=(clock_now()-redo)*1000;
+    if(defer_draft){p150::measure("handoff_host",p+1,false,[&]{b.handover();});half_start(1,actual,p+1);rank1_started_at=clock_now();
+     b.start(0,draft,actual,p+1,int(p+2>=length),1);pending_draft_sequence=b.seq;issued_draft_at=b.sent[0];b.wait(0);draft_pending=true;defer_draft=false;}}out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
    else{half_start(0,actual,p+1);b.wait(0);b.call(0,accept);}}
    // Both ranks have accepted, or the miss has rolled back and been corrected.
    // Publish only the target output, never the next-token draft or speculative half.
