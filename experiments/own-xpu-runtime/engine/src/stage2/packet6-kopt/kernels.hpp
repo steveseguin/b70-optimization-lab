@@ -15,6 +15,9 @@ ownrt::Event routed_gemv(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation
 // Dense matrix applied to `tokens` independent rows (x [tokens][k], y [tokens][rows]); per-row arithmetic unchanged.
 ownrt::Event gemv_tokens(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,size_t,size_t,uint32_t,
                          Type=Type::BF16,Type=Type::BF16,unsigned=16);
+// HC gate (rows = 4*width) plus its mix epilogue: also writes mix[width] from norm[4*width] (see kernels.cpp).
+ownrt::Event gemv_mix(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,size_t,size_t,Type,Type,unsigned,
+                      ownrt::Allocation,ownrt::Allocation,uint32_t);
 // Independent inputs only: this does not fuse across real activation dependencies.
 ownrt::Event fused_gemv(ownrt::Device&,const std::vector<Matrix>&,unsigned=16);
 // Populated only inside a coordinator-authorized submit; never enumerates.

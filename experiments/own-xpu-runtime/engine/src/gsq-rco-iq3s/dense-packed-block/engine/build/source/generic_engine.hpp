@@ -34,6 +34,8 @@ void gsq_load(int c, const std::string& name) {
 // OWNRT_DECODE_FUSE=0 turns it off.
 std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_partner;
 std::unordered_set<const flash::Launch*> gsq_follower;
+std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_mix_partner;
+std::unordered_set<const flash::Launch*> gsq_mix_follower;
 bool gsq_fusion_ready=false;
 bool gsq_kopt_site(const flash::Launch& l) const {
   if(l.op!="gemv"||dense_block_site(w,a,l)||iq3_block_site(w,a,l)||dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
@@ -62,7 +64,21 @@ void gsq_prepare_fusion() {
       gsq_partner[&first]=&second;gsq_follower.insert(&second);
     }
   }
-  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+"}");
+  // HC gate + mix (OWNRT_FUSE_MIX=1): the gate GEMV (4*width rows) also writes its hc_mix output; the mix site then
+  // issues nothing in decode. Prefill runs both sites unfused (gsq_linear_matrix and row replays).
+  static const bool mix_enabled=[]{const char* e=std::getenv("OWNRT_FUSE_MIX");return e&&e[0]=='1';}();
+  if(mix_enabled&&a.f32_activations)for(size_t i=0;i<p.launches.size();++i) {
+    const auto& gate=p.launches[i];
+    if(gate.op!="gemv"||!(ends(gate.label,".hc.a.gate")||ends(gate.label,".hc.f.gate"))||!gsq_kopt_site(gate)||gsq_partner.count(&gate)||gsq_follower.count(&gate))continue;
+    auto found=by_label.find(gate.label.substr(0,gate.label.size()-4)+"mix");if(found==by_label.end())continue;
+    const auto& mix=*found->second;const size_t j=size_t(&mix-p.launches.data());
+    if(j<=i||mix.op!="hc_mix"||mix.card!=gate.card||mix.inputs.size()<2||mix.inputs.at(1)!=gate.outputs.at(0)||mix.outputs.size()!=1)continue;
+    if(gate.shape.size()<3||mix.shape.size()<2||size_t(gate.shape[1])!=size_t(mix.shape[1])*4)continue;
+    bool written=false;for(size_t k=i+1;k<j&&!written;++k)for(const auto& out:p.launches[k].outputs)written|=out==mix.inputs.at(0)||out==gate.outputs.at(0);
+    if(written)continue;
+    gsq_mix_partner[&gate]=&mix;gsq_mix_follower.insert(&mix);
+  }
+  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+"}");
 }
 void gsq_linear(const flash::Launch& l) {
   if(!gsq_fusion_ready)gsq_prepare_fusion();
@@ -77,6 +93,12 @@ void gsq_linear(const flash::Launch& l) {
     require(m.tokens==1&&n.tokens==1&&m.x==n.x&&m.type==n.type,"fused sibling matrices");
     std::vector<iq3::kopt::Matrix> pair{{m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,0},{n.type,n.w,n.x,n.y,n.rows,n.columns,n.activation,n.output_type,0}};
     finish(l.card,iq3::kopt::fused_gemv(dev(l.card),pair,32));return;
+  }
+  if(auto mixed=gsq_mix_partner.find(&l);mixed!=gsq_mix_partner.end()) {
+    const auto& m=it->second.at(0);const auto& mix=*mixed->second;const int c=l.card;
+    require(m.tokens==1&&m.rows==size_t(mix.shape[1])*4,"fused gate+mix matrix");
+    finish(c,iq3::kopt::gemv_mix(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,32,
+      buffers[c].at(mix.inputs.at(0)).id,buffers[c].at(mix.outputs.at(0)).id,uint32_t(mix.shape[1])));return;
   }
 #endif
   gsq_linear_matrix(l,it->second.at(0));

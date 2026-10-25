@@ -22,3 +22,4 @@ under `b-prefill/profiles/`; patches for removed code are kept there too.
 | 32-row prefill chunks | about 2% (kept) | unit |
 | IQ3_XXS expert kernel: FMA accumulate / lane-contiguous 8 weights / 1–8 rows per subgroup / 32–256-lane work-groups / grid in local memory | 62 / 69 / 60–74 / 60–61 / 55 µs vs 60 (warm 56; adjacent experts 60; no grid read at all 51.5): instruction-bound in the per-weight decode, no single cause | `research/kbench/iq3xxs_rows.cpp` |
 | GSQ HC combine+norm fusion (`OWNRT_GSQ_FUSE_NORM=1`, opt-in) | rank 0 state exact, rank 1 differs from layer 23 KV on; cause not localized; worth ≤2% | `main.cpp` plan() |
+| HC gate+mix fused launch (`OWNRT_FUSE_MIX=1`, opt-in, exact): 4 strided rows per work-group / 8 indices × 4 streams per 1024-lane work-group | suite 0.982× / 1.003×: the removed 7.7 µs mix launch reappears as a slower gate kernel; per-launch profile times overstate fusion savings | `packet6-kopt/kernels.cpp` MultiplyMix |

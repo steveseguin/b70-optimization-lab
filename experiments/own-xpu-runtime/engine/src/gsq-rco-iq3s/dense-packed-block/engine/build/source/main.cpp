@@ -1695,6 +1695,7 @@ public:
   }
 #include "stage2/packet194-expert-diet-engine/engine_fusion.hpp"
   void execute_site(const flash::Launch& l) {int c=l.card;
+    if(a.gsq_packed&&dev(c).view_row<0&&gsq_mix_follower.count(&l)) { /* written by the fused HC gate launch */ } else
     if(!a.gsq_packed&&other_fused_site(l)) { /* Preserve BF16 writer invalidation. */ } else
     if(!a.gsq_packed&&fused_hc(l)) { /* Preserve the common BF16-writer invalidation below. */ }
     else if (l.op == "lookup") { fp32_sources[c]=0; /* Prepared once at token boundary from known input/history. */ }

@@ -5,6 +5,7 @@
 #include "stage2/packet6-kopt/kernels.hpp"
 #include "stage2/packet6-kopt/reference.hpp"
 #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
+#include "stage2/packet194-expert-diet-engine/detmath.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include <algorithm>
 #include <array>
@@ -466,6 +467,50 @@ BLOCK_CASE(Q8_0);BLOCK_CASE(Q6_K);BLOCK_CASE(IQ2_S);BLOCK_CASE(IQ3_S);BLOCK_CASE
     throw std::invalid_argument("kopt block rows: decode8 formats only");
   }
 };
+// HC gate + mix in one launch (2026-10-25, single-row decode). Work-group j runs the gate rows h*width+j (h=0..3) of
+// hidden index j, one per subgroup, with Multiply's unchanged single-row code (dot, staging, adjacent-pair tree), and
+// writes them. One lane then forms mix[j] exactly as the generic mix kernel (ng::mix): sum=0, sum=sum+sigmoid(gate)*norm
+// for h=0..3, sum/4, with ng::sigmoid's 1/(1+detmath::exp(-x)). The separate hc_mix launch is skipped.
+struct MultiplyMix:ownrt::SyclOperation {
+  // J consecutive hidden indices per work-group: subgroup s runs row (s/J)*width + j0 + s%J, so each stream's J rows are
+  // contiguous (as in Multiply's consecutive-row groups); lanes 0..J-1 of subgroup 0 then form the J mixes in parallel.
+  static constexpr unsigned J=8;
+  Descriptor desc{};size_t local_stride=16;uint32_t width=0;unsigned norm=0,mix=0;
+  template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+    auto d=desc;const uint32_t W=width;const unsigned ni=norm,mi=mix;const size_t stride=local_stride;
+    if(W%J)throw std::invalid_argument("kopt gate+mix width");
+    std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt gate+mix capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+    return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(sycl::range<1>(size_t(W/J)*SG*4*J),sycl::range<1>(SG*4*J))](sycl::handler& h) {
+      sycl::local_accessor<uint8_t,1> storage(layout(T).elements==1?16:stride*4*J,h);sycl::local_accessor<float,1> gates(4*J,h);
+      h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),s=sg.get_group_linear_id(),stream=s/J,jj=s%J;
+        const size_t j0=it.get_group_linear_id()*J,row=size_t(stream)*W+j0+jj;
+        const uint8_t* source=static_cast<const uint8_t*>(pointers[d.w])+row*d.rb;
+        const uint16_t* x=reinterpret_cast<const uint16_t*>(static_cast<const float*>(pointers[d.x]));
+        auto local=storage.template get_multi_ptr<sycl::access::decorated::no>().get()+(layout(T).elements==1?0:s*stride);
+        if(layout(T).elements!=1)stage_row<SG>(source,local,d.rb,lane);
+        it.barrier(sycl::access::fence_space::local_space);
+        float sum=dot<T,SG>(layout(T).elements==1?source:local,x,d.activation,d.k,lane);
+        for(unsigned w=1;w<SG;w*=2){float rhs=sycl::select_from_group(sg,sum,(lane+w)%SG);if(lane%(2*w)==0)sum=sum+rhs;}
+        if(lane==0){static_cast<float*>(pointers[d.y])[row]=sum;gates[s]=sum;}
+        it.barrier(sycl::access::fence_space::local_space);
+        if(s==0&&lane<J){
+          const size_t j=j0+lane;const float* n=static_cast<const float*>(pointers[ni]);float m=0;
+          for(unsigned g=0;g<4;++g)m=m+(1.f/(1.f+detmath::exp(-gates[g*J+lane])))*n[size_t(g)*W+j];
+          static_cast<float*>(pointers[mi])[j]=m/4.f;
+        }
+      }));
+    });
+  }
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    switch(desc.type){
+#define MIX_CASE(T) case Type::T:return run<Type::T,32>(q,p,deps)
+MIX_CASE(F32);MIX_CASE(F16);MIX_CASE(BF16);MIX_CASE(Q8_0);MIX_CASE(Q6_K);MIX_CASE(IQ4_NL);
+#undef MIX_CASE
+    default:break;}
+    throw std::invalid_argument("kopt gate+mix type");
+  }
+};
 inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_KOPT_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
 Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocation>& ids,Matrix m,
                 uint32_t experts,uint32_t count,uint32_t span,ownrt::Allocation r=0,ownrt::Allocation status=0) {
@@ -493,6 +538,16 @@ std::string device_properties(){return properties;}
 ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},1,1,rows);return finish(d,op,ids);
+}
+ownrt::Event gemv_mix(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation norm,ownrt::Allocation mix,uint32_t width) {
+  if(a!=Type::F32||o!=Type::F32||sg!=32||!width||rows!=size_t(width)*4)throw std::invalid_argument("kopt gate+mix: F32, 32 lanes, four stream rows per index");
+  Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+  auto desc=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,1,rows);
+  check(d,norm,mul(rows,4));check(d,mix,mul(width,4));
+  MultiplyMix fused;fused.desc=desc;fused.local_stride=op.local_stride;fused.width=width;
+  fused.norm=unsigned(ids.size());ids.push_back(norm);fused.mix=unsigned(ids.size());ids.push_back(mix);
+  if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+  return d.compute(fused,ids,{});
 }
 ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
   if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
