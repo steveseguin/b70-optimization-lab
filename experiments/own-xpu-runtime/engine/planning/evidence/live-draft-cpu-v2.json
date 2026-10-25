@@ -1,0 +1,21 @@
+{
+  "schema": "ownrt.live-draft-cpu-validation.v2",
+  "supersedes": "live-draft-cpu.json",
+  "defect": "Independent review found Engine::allocate tracks only device allocations; v1 checkpoint pinned enumeration was unreachable for real provider. The v1 fake-owner test incorrectly tracked pinned memory in that registry.",
+  "fix": "Provider supplies explicit two-ID pinned inventory; default device-only registry unchanged. Corrected fake owner mirrors device-only registration. Missing/duplicate/device pinned IDs refused; expected pinned bytes and actual complete restoration verified.",
+  "scope": "CPU only; host-only whole-main compile and real checked snapshot transport, no GPU operation",
+  "command": [
+    "/dev/shm/ownrt-test-live-draft-checkpoint-v2",
+    "/dev/shm/ownrt-live-draft-checkpoint-cpu-v2"
+  ],
+  "exit_code": 0,
+  "log": "experiments/own-xpu-runtime/engine/planning/evidence/live-draft-cpu-v2.log",
+  "log_sha256": "3d981660c5dd6590987fd162b6c7b8f81ea016d1f33c08403e78c61146d952fd",
+  "sources": {
+    "experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp": "8e7c53ab332100b00230a02a1ac1161d342ed9e6584cc10c96b8542c2f7ed4f7",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "ba74a46746dc2726a4685abe47f0c1b1e0f2b4eb044926dacc3f5aa501d11ff6",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp": "e5df2d25bc531a5c09a49da3d8e076157419878677a7e7e33a295f2cd1265993",
+    "experiments/own-xpu-runtime/engine/planning/test_wavefront_checkpoint.cpp": "4a90c20a40d5f2f77d39d0d2cd72f9aa5fa7d87f26aad1a4950b287bd4a806c3"
+  },
+  "binary_sha256": "3d3f9634a264b6ba6f566df45df5807e346880ca3caf597d337ddf93bc980e02"
+}

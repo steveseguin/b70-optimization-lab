@@ -7,9 +7,12 @@ four-card overlap proof passed: all 32 tokens and all 2,065 canonical state
 buffers match the earlier two-card run. Six deliberately wrong scripted guesses
 were rejected, with 13 complete stage restorations independently byte-verified.
 All four processes exited cleanly and no new fault signatures appeared. This
-is correctness evidence, not a speed benchmark; live existing-draft integration
-is next. The portable model authentication pass is running once at low process
-priority, with no GPU use, download or training. CPU reference analysis narrowed
+is correctness evidence, not a speed benchmark. Live existing-draft integration
+is now running its two-card sequential reference before a matched four-card test.
+Independent review caught and fixed missing pinned-buffer checkpoint coverage
+before GPU execution; the rejected build and exact source are retained. The
+portable authentication and generated-configuration source build both passed,
+with no download or training. CPU reference analysis narrowed
 untested arithmetic differences but has not explained the six disagreements.
 Preserve the 47.97 tok/s baseline; no host power/memory settings changed.
 [Continuation evidence](experiments/own-xpu-runtime/research/continuation-2026-10-25/wavefront-proof-a/RESULT.md).

@@ -115,10 +115,13 @@ class AsyncStage(base.Stage):
                 # Own the entire output before another command can overwrite it.
                 stream = bytes(self.shared[:self.stream_bytes])
         else:
-            base.require(reply[3] == 0, 'resolution reply must have no stream payload')
+            self.resolution_reply(command, reply)
         self.command_pending = None
         self.received.clear()
         return command, reply, token, stream
+
+    def resolution_reply(self, command, reply):
+        base.require(reply[3] == 0, 'resolution reply must have no stream payload')
 
 
 def drive(stages, plan, guard, output):
@@ -189,7 +192,8 @@ def drive(stages, plan, guard, output):
                 events=model.events)
 
 
-def execute(plan, admission, unit):
+def execute(plan, admission, unit, *, stage_type=AsyncStage, driver=drive,
+            scripted_proposals=True):
     base.require(admission.get('schema') == 'ownrt.pipeline-admission.v1'
                  and admission.get('owner_authorized') is True, 'explicit admission required')
     base.require(datetime.fromisoformat(admission['expires_utc']) > datetime.now(timezone.utc),
@@ -211,12 +215,12 @@ def execute(plan, admission, unit):
         guard.thread.start()
         for spec in plan['stages']:
             guard.check()
-            stage = AsyncStage(spec, plan, guard)
+            stage = stage_type(spec, plan, guard)
             stages.append(stage)
             stage.receive(ready=True)
         base.require(len({s.stream_bytes for s in stages}) == 1, 'stage boundary shape mismatch')
         guard.validate(guard.obs.observe())
-        result = drive(stages, plan, guard, output)
+        result = driver(stages, plan, guard, output)
         for stage in stages:
             stage.command(4, position=2147483647)
         guard.validate(guard.obs.observe())
@@ -249,7 +253,7 @@ def execute(plan, admission, unit):
         base.save(output / 'result.json', dict(result, schema='ownrt.wavefront-driver-result.v1',
                   passed=failure is None, error=failure, live_pids=alive, returncodes=codes,
                   wall_seconds=time.monotonic() - start, mode='verified-wavefront',
-                  diagnostic_only=True, speed_claim=False, scripted_proposals=True))
+                  diagnostic_only=True, speed_claim=False, scripted_proposals=scripted_proposals))
     base.require(failure is None, str(failure))
 
 

@@ -5,13 +5,13 @@
 #undef main
 #include <cassert>
 struct FixtureOwner {
- struct Options {bool pipeline_wavefront=true,mtp=false;int prefill_rows=0,pipeline_stage=0;fs::path output;bool pipeline_enabled()const{return true;}bool pipeline_first()const{return pipeline_stage==0;}} a;
+ struct Options {bool pipeline_wavefront=true,mtp=false,pipeline_live_draft=false;int prefill_rows=0,pipeline_stage=0;fs::path output;bool pipeline_enabled()const{return true;}bool pipeline_first()const{return pipeline_stage==0;}} a;
  struct Buffer {Allocation id;};
  std::unique_ptr<ownrt::Device> device=std::make_unique<ownrt::Device>(std::make_unique<Host>());
  bool resident=true,poisoned=false,progress_pending=false,prepare_async=false;
  std::function<void()> progress_callback,correction_exchange,head_export,head_publish,head_merge;
  struct Reports {bool pending()const{return false;}} reply_report;
- std::map<Allocation,std::pair<int,size_t>> allocations;
+ std::map<Allocation,std::pair<int,size_t>> allocations;std::vector<Allocation> all_owned;
  std::vector<std::map<std::string,Buffer>> buffers{1};std::map<std::string,Allocation> state_spares;
  unsigned bank_parity=0;int active_bank=0,spare_bank=1,context_extent=32,alternate_context_extent=32;
  int64_t history0=0,history1=0;
@@ -21,7 +21,8 @@ struct FixtureOwner {
  ownrt::Event tail=0;
  explicit FixtureOwner(const fs::path& output){a.output=output;fs::create_directory(output);}
  ownrt::Device& dev(int c){assert(c==0);return *device;}
- Allocation allocate(int c,const std::string& name,size_t n,Category category,Lifetime life){auto id=dev(c).arena.allocate("card0:"+name,n,Memory::device,category,life);allocations[id]={c,n};std::memset(dev(c).arena.row(id).pointer,0,n);return id;}
+ Allocation allocate(int c,const std::string& name,size_t n,Category category,Lifetime life,Memory memory=Memory::device){auto id=dev(c).arena.allocate("card0:"+name,n,memory,category,life);if(memory==Memory::device)allocations[id]={c,n};all_owned.push_back(id);std::memset(dev(c).arena.row(id).pointer,0,n);return id;}
+ size_t stream_bytes()const{return 16;}
  void upload(int c,Allocation id,size_t offset,const void* source,size_t n){auto& row=dev(c).arena.row(id);assert(offset+n<=row.bytes);std::memcpy(static_cast<uint8_t*>(row.pointer)+offset,source,n);}
  void drain(){if(tail){assert(dev(0).wait(tail,std::chrono::seconds(5)));tail=0;}}
  std::vector<uint8_t> readback(int c,Allocation id,size_t n){drain();auto& row=dev(c).arena.row(id);assert(n<=row.bytes);auto p=static_cast<uint8_t*>(row.pointer);return {p,p+n};}
@@ -29,7 +30,7 @@ struct FixtureOwner {
  void put(const std::string& name,int n){upload(0,buffers[0].at(name).id,0,&n,4);}
  void admit_position(int n){context_extent=((n+32)/32)*32;}
  void swap_state_banks(){for(auto& [name,id]:state_spares)std::swap(buffers[0].at(name).id,id);std::swap(active_bank,spare_bank);std::swap(context_extent,alternate_context_extent);bank_parity^=1;fp32_sources[0]=0;fp32_extents[0]=0;}
- void close(){drain();for(auto& [id,owner]:allocations)dev(0).arena.release(id);auto receipt=dev(0).shutdown(std::chrono::seconds(5));assert(receipt.safe_to_exit);}
+ void close(){drain();for(auto id:all_owned)dev(0).arena.release(id);auto receipt=dev(0).shutdown(std::chrono::seconds(5));assert(receipt.safe_to_exit);}
 };
 template<class F>void refusal(F f){bool got=false;try{f();}catch(const std::exception&){got=true;}assert(got);}
 int main(int argc,char** argv){assert(argc==2);fs::path root=argv[1];fs::create_directory(root);
@@ -40,11 +41,24 @@ int main(int argc,char** argv){assert(argc==2);fs::path root=argv[1];fs::create_
   auto scratch=e.allocate(0,"scratch",8193,Category::scratch,Lifetime::transaction);
   auto kv=e.allocate(0,"kv",16385,Category::kv,Lifetime::request);
   auto weight=e.allocate(0,"weight",64,Category::weights,Lifetime::process);
+  std::vector<Allocation> pinned;
+  if(stage==0){e.a.pipeline_live_draft=true;e.a.mtp=true;
+   pinned.push_back(e.allocate(0,"draft:publication",8,Category::output_ring,Lifetime::request,Memory::pinned));
+   pinned.push_back(e.allocate(0,"draft:half-staging",20,Category::pinned_slab,Lifetime::transfer,Memory::pinned));
+   assert(!e.allocations.count(pinned[0])&&!e.allocations.count(pinned[1])); // actual Engine::allocate contract
+  }
   std::vector<Allocation> original;std::map<Allocation,std::vector<uint8_t>> expected;
-  for(auto& [id,owner]:e.allocations){if(id==weight)continue;auto& row=e.dev(0).arena.row(id);auto p=static_cast<uint8_t*>(row.pointer);if(id!=e.buffers[0]["error"].id&&id!=e.buffers[0]["position"].id)for(size_t j=0;j<row.bytes;++j)p[j]=uint8_t(j*13+id);original.push_back(id);expected[id]=e.readback(0,id,row.bytes);}
+  for(auto id:e.all_owned){if(id==weight)continue;auto& row=e.dev(0).arena.row(id);auto p=static_cast<uint8_t*>(row.pointer);if(id!=e.buffers[0]["error"].id&&id!=e.buffers[0]["position"].id)for(size_t j=0;j<row.bytes;++j)p[j]=uint8_t(j*13+id);original.push_back(id);expected[id]=e.readback(0,id,row.bytes);}
   e.put("position",32);expected[e.buffers[0]["position"].id]=e.readback(0,e.buffers[0]["position"].id,4);
   e.history0=7;e.history1=8;e.lookup_ids={{"lookup",{3,4,5}}};e.fp32_sources[0]=scratch;e.fp32_extents[0]=2;
-  pipeline::StageCheckpointFor<FixtureOwner> checkpoint(e,true);std::array<uint8_t,65536> shared{};shared.fill(42);
+  if(stage==0){
+   refusal([&]{pipeline::StageCheckpointFor<FixtureOwner> rejected(e,true);});
+   refusal([&]{pipeline::StageCheckpointFor<FixtureOwner> rejected(e,true,{pinned[0],pinned[0]});});
+   refusal([&]{pipeline::StageCheckpointFor<FixtureOwner> rejected(e,true,{pinned[0],weight});});
+  }
+  pipeline::StageCheckpointFor<FixtureOwner> checkpoint(e,true,pinned);std::array<uint8_t,65536> shared{};shared.fill(42);
+  {std::ifstream f(e.a.output/"wavefront-checkpoint-layout.json");std::string layout((std::istreambuf_iterator<char>(f)),{});
+   assert(layout.find(stage==0?"\"pinned_bytes\":28":"\"pinned_bytes\":0")!=std::string::npos);}
   checkpoint.begin(shared.data());refusal([&]{checkpoint.begin(shared.data());});
   for(auto id:original){if(id==e.buffers[0]["error"].id)continue;auto& row=e.dev(0).arena.row(id);std::memset(row.pointer,0x9b,row.bytes);}
   if(stage==0)e.swap_state_banks();e.context_extent=64;e.history0=101;e.history1=102;e.lookup_ids.clear();e.selected={{9}};e.loaded_layer={8};e.fp32_sources[0]=0;e.fp32_extents[0]=99;shared.fill(9);

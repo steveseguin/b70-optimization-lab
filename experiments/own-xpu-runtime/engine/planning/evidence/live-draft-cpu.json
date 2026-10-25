@@ -1,0 +1,74 @@
+{
+  "schema": "ownrt.live-draft-cpu-validation.v1",
+  "scope": "CPU only: wire ABI, owned/hashed hidden, true-pair sequence/bootstrap head, actual checkpoint pinned/device/metadata restore; no GPU arithmetic or performance claim",
+  "results": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "experiments/own-xpu-runtime/engine/planning",
+        "-p",
+        "test_live_draft.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "log": "experiments/own-xpu-runtime/engine/planning/evidence/live-draft-cpu-0.log",
+      "sha256": "f40c434c8172a48fa450f52b47f320f172d72d1677dfc29e6f3852b6ede11aad"
+    },
+    {
+      "command": [
+        "/dev/shm/ownrt-test-live-draft"
+      ],
+      "exit_code": 0,
+      "log": "experiments/own-xpu-runtime/engine/planning/evidence/live-draft-cpu-1.log",
+      "sha256": "b0a8b25933c08181b38429a76f59066429abf07c1f15954e69738dbf8f7c4705"
+    },
+    {
+      "command": [
+        "/dev/shm/ownrt-test-live-draft-checkpoint",
+        "/dev/shm/ownrt-live-draft-checkpoint-cpu-b"
+      ],
+      "exit_code": 0,
+      "log": "experiments/own-xpu-runtime/engine/planning/evidence/live-draft-cpu-2.log",
+      "sha256": "3d981660c5dd6590987fd162b6c7b8f81ea016d1f33c08403e78c61146d952fd"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/engine/src/pipeline/live_draft.hpp": "99b3f138a8fc77fa90ce81fabaf7b7fb74cc619a6f16eb5a3c5503a8aae2680b",
+    "experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp": "63e7652778d52fbc1f4b7c4f42ee0565a3789b7c772a4e26fa301b92f0b79cae",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "89021b6eb59b353c9b859ca2f3499c8fcdad6a4c3d547bb9dc78fcba9e8a22cc",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "24da4c81d2d66bd4e384d10bda34d807334cdc9840a807bcad40818014c145f1",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp": "3b7089dd207eaaf82b0045a9f0ee8292fad9b8d167de198648f6af17a19167d0",
+    "experiments/own-xpu-runtime/engine/planning/live_draft.py": "58e86748fb2799a3ddc1951893a3f82efb6072736b01c53d71532ec1be3aad4d",
+    "experiments/own-xpu-runtime/engine/planning/test_live_draft.py": "efd352e8508dde131c2c827a9da3986e9698c8f15053494931f192bbd736bd31",
+    "experiments/own-xpu-runtime/engine/planning/test_live_draft.cpp": "41d33d6a1682de0c70791334278ed2870f1af1ae2402ebcb258cc38b4c4bc0b7",
+    "experiments/own-xpu-runtime/engine/planning/test_wavefront_checkpoint.cpp": "32b7b05921fe83dfb3db78e070403d29702114a0677263bb7cc484dcd9e634e6"
+  },
+  "binaries": {
+    "/dev/shm/ownrt-test-live-draft": "73c1a39e2f37ed0ee6f19832965a6182161ffd755cc6fd19ca84b08cae212dcb",
+    "/dev/shm/ownrt-test-live-draft-checkpoint": "ae6d78e2d32583cb72080b3e4be211129119f8194b2b875ae0157caca1dd6c0c"
+  },
+  "checkpoint_build": [
+    "nice",
+    "-n",
+    "19",
+    "g++",
+    "-std=c++20",
+    "-O1",
+    "-DOWN_RT_HOST_ONLY",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I",
+    "experiments/own-xpu-runtime/engine/src",
+    "experiments/own-xpu-runtime/engine/planning/test_wavefront_checkpoint.cpp",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp",
+    "-Wl,--gc-sections",
+    "-lcrypto",
+    "-pthread",
+    "-o",
+    "/dev/shm/ownrt-test-live-draft-checkpoint"
+  ]
+}

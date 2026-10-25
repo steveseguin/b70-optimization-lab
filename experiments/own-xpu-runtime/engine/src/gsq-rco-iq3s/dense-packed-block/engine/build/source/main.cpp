@@ -146,13 +146,14 @@ struct RetainSteps {
 #include "gsq-rco-iq3s/integration/build/private/additive/admission.hpp"
 #include "pipeline/layout.hpp"
 #include "pipeline/wavefront.hpp"
+#include "pipeline/live_draft.hpp"
 struct Options {
   // --tp-replicate (2026-10-25, TP development): one rank process on two cards of one shared context, every launch
   // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
   bool tp_replicate=false;
   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
   std::vector<int> pipeline_boundaries;int pipeline_stage=-1;
-  bool pipeline_wavefront=false,pipeline_wavefront_verify=false;int pipeline_wavefront_trace_limit=4096;
+  bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false;int pipeline_wavefront_trace_limit=4096;
   bool pipeline_enabled()const{return pipeline_stage>=0;}
   bool pipeline_first()const{return pipeline_enabled()?pipeline_stage==0:rank==0;}
   bool pipeline_final()const{return pipeline_enabled()?size_t(pipeline_stage+2)==pipeline_boundaries.size():rank==1;}
@@ -205,6 +206,7 @@ static Options parse(int argc, char **argv) {
     else if(k=="--gsq-packed") a.gsq_packed=true;
     else if(k=="--tp-replicate") a.tp_replicate=true;
     else if(k=="--pipeline-wavefront")a.pipeline_wavefront=true;
+    else if(k=="--pipeline-live-draft")a.pipeline_live_draft=true;
     else if(k=="--pipeline-wavefront-verify-restore"||k=="--pipeline-wavefront-verify")a.pipeline_wavefront_verify=true;
     else if(k=="--pipeline-wavefront-trace-limit")a.pipeline_wavefront_trace_limit=std::stoi(value());
     else if(k=="--pipeline-boundaries")a.pipeline_boundaries=ownrt::pipeline_layout::parse(value());
@@ -325,6 +327,7 @@ static Options parse(int argc, char **argv) {
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
+  require(!a.pipeline_live_draft||a.pipeline_wavefront,"live draft requires wavefront mode");
   require(!a.pipeline_wavefront||a.pipeline_enabled(),"wavefront requires explicit pipeline stages");
   require(!a.pipeline_wavefront_verify||a.pipeline_wavefront,"wavefront restore check requires wavefront mode");
   require(a.pipeline_wavefront_trace_limit>=0&&a.pipeline_wavefront_trace_limit<=100000,"bounded wavefront trace limit");
@@ -336,8 +339,12 @@ static Options parse(int argc, char **argv) {
    require(a.rank==(a.pipeline_first()?0:1),"pipeline legacy rank role differs from stage identity");
    require(a.gsq_packed&&a.f32_activations&&a.cards==1&&a.memory=="resident"&&!a.mini,
            "pipeline stages initially require one-card resident GSQ F32 path");
-   require(!a.mtp&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
-           "pipeline stages are target-only scalar HALF/ACCEPT; MTP/TP/prefill/canary/cancel refused");
+   require((!a.mtp||(a.pipeline_live_draft&&a.pipeline_first()&&a.draft_rank==0))&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
+           "pipeline unsupported MTP/TP/prefill/canary/cancel mode");
+   if(a.pipeline_live_draft){
+    require(a.mtp==a.pipeline_first()&&a.draft_rank==0&&a.draft_fault=="none","live draft belongs only to first stage");
+    require(!std::getenv("OWNRT_DRAFT_DEPTH_PROBE")&&!std::getenv("OWNRT_DRAFT_DEPTH_VERIFY"),"live draft refuses diagnostic recursive probe environment");
+   }
   }
 #ifdef OWN_RT_HOST_ONLY
   require(!a.authorized, "host binary cannot authorize device execution");

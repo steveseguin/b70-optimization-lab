@@ -1,0 +1,10 @@
+{
+  "schema": "ownrt.pre-device-review-refusal.v1",
+  "binary": "/dev/shm/engine-build-live-wavefront-20261025/own-engine",
+  "binary_sha256": "2672a29be49dcaa0fbdaeceebc1c7d255bd8f47e00ab17d2adbaec311f1f2d44",
+  "build_receipt": "/dev/shm/engine-build-live-wavefront-20261025/build-receipt.json",
+  "build_receipt_sha256": "e6dff4f1c1f673b69196e919cea7da49a23573c47f222251b4d2a182e94c3f68",
+  "device_executed": false,
+  "reason": "StageCheckpoint pinned-memory branch iterated Engine.allocations, which contains device allocations only. Actual provider pinned publication/staging were omitted. Independent review refused GPU execution before any launch.",
+  "next": "Register explicit provider-owned pinned inventory; test with actual device-only allocation registration; rebuild into new directory."
+}

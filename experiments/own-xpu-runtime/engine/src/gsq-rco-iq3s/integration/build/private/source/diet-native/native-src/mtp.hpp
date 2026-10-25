@@ -1,5 +1,6 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #pragma once
+#include "gsq-rco-iq3s/state-bundle/bundle.hpp"
 #include "stage2/packet194-expert-diet-engine/mtp_kernels.hpp"
 #include "stage2/packet194-expert-diet-engine/p59_draft.hpp"
 #include "stage2/packet194-expert-diet-engine/p59_hc.hpp"
@@ -178,6 +179,20 @@ class DraftRuntime {
   a.push_back(scratch);a.push_back(id("error"));a.push_back(id("position"));a.push_back(id("active"));a.push_back(e.ropes[0]);return {s,a};
  }
 public:
+ int live_position()const{return position;}
+ std::vector<Allocation> live_pinned_inventory()const{require(e.a.pipeline_live_draft,"live draft pinned inventory mode");return {publication,half_staging};}
+ int live_step(int confirmed,int target_position,bool head,const void* hidden,size_t bytes){
+  require(e.a.pipeline_live_draft&&e.a.pipeline_first()&&e.a.mtp&&e.a.draft_rank==0,"live draft owner");
+  require(!depth_probe&&!async_pending&&!disabled&&queued_probe==-1&&hidden&&bytes==e.stream_bytes(),"live draft quiescent handoff");
+  probe_reverse_hidden.resize(bytes);std::memcpy(probe_reverse_hidden.data(),hidden,bytes);
+  reverse_hidden=probe_reverse_hidden.data();
+  // Fail closed; unlike the legacy optional provider, a broken live owner must
+  // not return a plausible proposal or continue with a partially advanced cache.
+  int token=compute(confirmed,target_position,head);
+  require(!disabled&&position==target_position&&!reverse_hidden&&!async_pending,"live draft canonical completion");
+  require(head?(token>=0&&token<p.g.vocab):token==-1,"live draft proposal bounds");
+  return token;
+ }
  void set_reverse_hidden(const void* bytes){require(!async_pending,"reverse handoff while draft pending");
   if(depth_probe){require(bytes,"depth probe reverse hidden input missing");probe_reverse_hidden.resize(e.stream_bytes());
    std::memcpy(probe_reverse_hidden.data(),bytes,probe_reverse_hidden.size());reverse_hidden=probe_reverse_hidden.data();
@@ -422,6 +437,30 @@ public:
    <<",\"discarded\":true,\"diagnostic_only\":true}\n";probe_trace.flush();require(bool(probe_trace),"depth probe trace write failed");
  }
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/draft_bracket.hpp"
+ void live_dump(const fs::path& path){
+  require(e.a.pipeline_live_draft&&!disabled&&!async_pending&&!e.progress_pending&&!reverse_hidden&&queued_probe==-1&&queued_confirmed==-1,"live draft dump quiescence");
+  e.drain();require(!e.integer(0,"error"),"live draft dump target error");
+  std::map<std::string,Allocation> all;for(auto id:mutable_ids)all.emplace(e.dev(0).arena.row(id).label,id);
+  all.emplace(e.dev(0).arena.row(publication).label,publication);all.emplace(e.dev(0).arena.row(half_staging).label,half_staging);
+  std::map<Allocation,std::string> typed;for(const auto& [name,s]:buffers)typed.emplace(s.id,name);
+  fs::create_directories(path);gsq_bundle::Writer bundle(path);std::ostringstream states,layouts;
+  bool comma=false;for(const auto& [name,id]:all){const auto& row=e.dev(0).arena.row(id);std::vector<uint8_t> raw;
+   if(row.memory==Memory::pinned){auto* first=static_cast<const uint8_t*>(row.pointer);raw.assign(first,first+row.bytes);}
+   else {require(row.memory==Memory::device,"live draft dump allocation memory");raw=e.readback(0,id,row.bytes);}
+   bundle.append(name+".bin",raw.data(),raw.size());states<<(comma?",":"")<<ownrt::quote(name)<<":"<<ownrt::quote(hash(raw));
+   layouts<<(comma?",":"")<<ownrt::quote(name)<<":{\"bytes\":"<<row.bytes<<",\"category\":"<<int(row.category)<<",\"memory\":"<<ownrt::quote(row.memory==Memory::pinned?"pinned":"device");
+   auto found=typed.find(id);if(found!=typed.end()){const auto& slot=buffers.at(found->second);
+    auto type=slot.type;layouts<<",\"semantic\":\"typed-buffer\",\"dtype\":"<<ownrt::quote(type==flash::Scalar::bf16?"BF16":type==flash::Scalar::f32?"F32":type==flash::Scalar::i32?"I32":type==flash::Scalar::u32?"U32":"I64")<<",\"shape\":[";
+    auto plan_buffer=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const auto& b){return b.name==found->second;});
+    if(plan_buffer==p.buffers.end())layouts<<slot.n;else for(size_t k=0;k<plan_buffer->shape.size();++k)layouts<<(k?",":"")<<plan_buffer->shape[k];layouts<<"]";
+   }else layouts<<",\"semantic\":\"opaque-mutable-scratch\"";
+   layouts<<"}";comma=true;
+  }
+  std::ostringstream out;out<<"{\"schema\":\"ownrt.draft-state.v1\",\"buffers\":{"<<states.str()<<"},\"layouts\":{"<<layouts.str()<<"},\"host\":{\"position\":"<<position<<",\"context_extent\":"<<context_extent
+   <<",\"disabled\":"<<(disabled?"true":"false")<<",\"async_pending\":"<<(async_pending?"true":"false")<<",\"pending_head\":"<<(pending_head?"true":"false")<<",\"pending_confirmed\":"<<pending_confirmed
+   <<",\"reverse_hidden_present\":"<<(reverse_hidden?"true":"false")<<",\"queued_probe\":"<<queued_probe<<",\"queued_confirmed\":"<<queued_confirmed<<",\"depth_probe\":"<<depth_probe<<"}}";
+  bundle.finish(out.str());
+ }
  void dump_all_state(const fs::path& path) {
   flush_depth_probe();
   dump(path);std::ostringstream out;out<<"{\"position\":"<<position<<",\"disabled\":"<<(disabled?"true":"false")<<",\"mutable_sha256\":{";

@@ -1,0 +1,18 @@
+{
+  "schema": "ownrt.rejected-live-source.v1",
+  "status": "rejected-before-GPU",
+  "reason": "Pinned draft allocations are absent from Engine::allocations; unreachable pinned checkpoint branch. Original fake owner incorrectly inserted pinned allocations into device-only registry.",
+  "base_commit": "612c4dd8c12eda87e35ea0406b775e567b35c7c3",
+  "binary_sha256": "2672a29be49dcaa0fbdaeceebc1c7d255bd8f47e00ab17d2adbaec311f1f2d44",
+  "reconstructed_sources": {
+    "pipeline/checkpoint.hpp": "63e7652778d52fbc1f4b7c4f42ee0565a3789b7c772a4e26fa301b92f0b79cae",
+    "gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "24da4c81d2d66bd4e384d10bda34d807334cdc9840a807bcad40818014c145f1",
+    "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp": "3b7089dd207eaaf82b0045a9f0ee8292fad9b8d167de198648f6af17a19167d0",
+    "pipeline/live_draft.hpp": "99b3f138a8fc77fa90ce81fabaf7b7fb74cc619a6f16eb5a3c5503a8aae2680b",
+    "gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "89021b6eb59b353c9b859ca2f3499c8fcdad6a4c3d547bb9dc78fcba9e8a22cc"
+  },
+  "fixture_sha256": "32b7b05921fe83dfb3db78e070403d29702114a0677263bb7cc484dcd9e634e6",
+  "fixture_reference": "engine/planning/evidence/live-draft-cpu.json",
+  "corrected_receipt": "engine/planning/evidence/live-draft-cpu-v2.json",
+  "reconstruction": "Exact hashes verified against original retained native build receipt and CPU fixture receipt; canonical native source untouched."
+}

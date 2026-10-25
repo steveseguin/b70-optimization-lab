@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-live-wavefront-build-v2-20261025",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--property=IOSchedulingClass=idle",
+    "--working-directory=/home/steve/llm-optimizations",
+    "/usr/bin/python3",
+    "experiments/own-xpu-runtime/engine/build.py",
+    "/dev/shm/engine-build-live-wavefront-v2-20261025",
+    "--jobs",
+    "4"
+  ],
+  "device_executed": false,
+  "reason": "Explicit provider pinned inventory fixes independent pre-device review finding"
+}

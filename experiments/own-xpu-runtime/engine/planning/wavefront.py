@@ -83,7 +83,7 @@ class Wavefront:
             self.rows[position] = Row(self.counter, position, token,
                                       max(0, position - len(self.prompt) + 2), verified)
 
-    def commands(self):
+    def commands(self, *, block_rows=()):
         """Reserve ready commands; the caller must send each exactly once."""
         self._ensure_rows()
         result = []
@@ -100,6 +100,8 @@ class Wavefront:
                     continue
                 speculative = stage.pending.sequence
             else:
+                if index in block_rows:
+                    continue
                 row = self.rows.get(stage.position)
                 if not row or row.cancelled or index in row.committed:
                     continue
