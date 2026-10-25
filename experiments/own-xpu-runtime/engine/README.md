@@ -45,5 +45,9 @@ Qwen-like models and 1/2/4/6 B70 configurations. Separate model geometry,
 per-tensor formats, topology and tuning profiles. Existing optimized paths stay
 available. DeepSeek 4 Flash is a possible later architecture adapter, not claimed
 support. The [CPU placement planner](planning/README.md) produces hash-bound
-stage candidates; the current executor still has model and two-rank restrictions.
+stage candidates. The opt-in [contiguous pipeline](tools/pipeline-driver.md) now
+has a bounded native two/four-card target-state proof; the default speculative
+service remains two-card, and model/quant admission is still restricted.
+See the [overlap design](planning/wavefront-next.md) and
+[portable profile work](planning/portable-profile-next.md).
 See the [current evidence and release review](../../../docs/sc117-engine-review.md).

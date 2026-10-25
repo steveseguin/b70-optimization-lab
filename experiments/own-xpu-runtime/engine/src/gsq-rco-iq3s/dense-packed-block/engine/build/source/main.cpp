@@ -144,10 +144,16 @@ struct RetainSteps {
 #include "gsq-rco-iq3s/integration/build/private/additive/generic_host.hpp"
 #include "gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
 #include "gsq-rco-iq3s/integration/build/private/additive/admission.hpp"
+#include "pipeline/layout.hpp"
 struct Options {
   // --tp-replicate (2026-10-25, TP development): one rank process on two cards of one shared context, every launch
   // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
   bool tp_replicate=false;
+  // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
+  std::vector<int> pipeline_boundaries;int pipeline_stage=-1;
+  bool pipeline_enabled()const{return pipeline_stage>=0;}
+  bool pipeline_first()const{return pipeline_enabled()?pipeline_stage==0:rank==0;}
+  bool pipeline_final()const{return pipeline_enabled()?size_t(pipeline_stage+2)==pipeline_boundaries.size():rank==1;}
   bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false,dense_packed_block=false;
   // Evidence/notification only. Defaults preserve the executed engine behavior.
   bool reset_dump=true,finish_dump=true,token_stream=false;
@@ -196,6 +202,8 @@ static Options parse(int argc, char **argv) {
     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
     else if(k=="--gsq-packed") a.gsq_packed=true;
     else if(k=="--tp-replicate") a.tp_replicate=true;
+    else if(k=="--pipeline-boundaries")a.pipeline_boundaries=ownrt::pipeline_layout::parse(value());
+    else if(k=="--pipeline-stage")a.pipeline_stage=std::stoi(value());
     else if (k == "--reset-dump" || k == "--finish-dump") {
       auto v=value();require(v=="all"||v=="none","dump mode must be all or none");
       (k=="--reset-dump"?a.reset_dump:a.finish_dump)=v=="all";
@@ -312,6 +320,17 @@ static Options parse(int argc, char **argv) {
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
+  require(a.pipeline_stage>=-1,"pipeline stage must be nonnegative");
+  require(a.pipeline_enabled()==!a.pipeline_boundaries.empty(),"pipeline stage and boundaries must be supplied together");
+  if(a.pipeline_enabled()){
+   ownrt::pipeline_layout::validate_fusion(std::getenv("OWNRT_GSQ_FUSE_NORM"));
+   require(size_t(a.pipeline_stage+1)<a.pipeline_boundaries.size(),"pipeline stage out of bounds");
+   require(a.rank==(a.pipeline_first()?0:1),"pipeline legacy rank role differs from stage identity");
+   require(a.gsq_packed&&a.f32_activations&&a.cards==1&&a.memory=="resident"&&!a.mini,
+           "pipeline stages initially require one-card resident GSQ F32 path");
+   require(!a.mtp&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
+           "pipeline stages are target-only scalar HALF/ACCEPT; MTP/TP/prefill/canary/cancel refused");
+  }
 #ifdef OWN_RT_HOST_ONLY
   require(!a.authorized, "host binary cannot authorize device execution");
   // CPU full-model execution is an explicit packet18 gate.

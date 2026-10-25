@@ -1,0 +1,32 @@
+name: Own engine CPU checks
+
+on:
+  push:
+    paths:
+      - 'experiments/own-xpu-runtime/engine/**'
+      - '.github/workflows/own-engine-cpu.yml'
+  pull_request:
+    paths:
+      - 'experiments/own-xpu-runtime/engine/**'
+      - '.github/workflows/own-engine-cpu.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Placement, protocol, evidence and source packaging
+        run: |
+          python3 -m unittest discover -s experiments/own-xpu-runtime/engine/planning -p 'test_*.py'
+          python3 -m unittest discover -s experiments/own-xpu-runtime/engine/tools -p 'test_*.py'
+          python3 -m unittest discover -s experiments/own-xpu-runtime/engine/release -p 'test_*.py'
+      - name: Native stage ownership without device access
+        working-directory: experiments/own-xpu-runtime
+        run: |
+          g++ -std=c++20 -O0 -DOWN_RT_HOST_ONLY -I engine/src engine/planning/test_pipeline_layout.cpp -o /tmp/ownrt-pipeline-layout
+          /tmp/ownrt-pipeline-layout gsq-rco-iq3s/loader/placement.tsv

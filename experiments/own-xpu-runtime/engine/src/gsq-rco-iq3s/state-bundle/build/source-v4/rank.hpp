@@ -64,7 +64,7 @@ static std::string strings(const std::vector<std::string>& values) {
 }
 static void dump_plan(const fs::path& path,const flash::Plan& p) {
  std::ostringstream o;o<<"{\"buffers\":[";bool comma=false;
- for(auto& b:p.buffers){o<<(comma?",":"")<<"{\"name\":"<<ownrt::quote(b.name)<<",\"bytes\":"<<count(b.shape)*flash::scalar_bytes(b.type)<<"}";comma=true;}
+ for(auto& b:p.buffers){o<<(comma?",":"")<<"{\"name\":"<<ownrt::quote(b.name)<<",\"bytes\":"<<count(b.shape)*flash::scalar_bytes(b.type)<<",\"dtype\":"<<ownrt::quote(b.type==flash::Scalar::bf16?"BF16":b.type==flash::Scalar::f32?"F32":b.type==flash::Scalar::i32?"I32":b.type==flash::Scalar::u32?"U32":"I64")<<",\"shape\":[";for(size_t i=0;i<b.shape.size();++i)o<<(i?",":"")<<b.shape[i];o<<"]}";comma=true;}
  o<<"],\"launches\":[";comma=false;
  for(auto& l:p.launches){o<<(comma?",":"")<<"{\"label\":"<<ownrt::quote(l.label)<<",\"op\":"<<ownrt::quote(l.op)<<",\"inputs\":"<<strings(l.inputs)<<",\"outputs\":"<<strings(l.outputs)<<"}";comma=true;}
  o<<"]}";save(path,o.str());
@@ -128,6 +128,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  require(!prepared_inputs||e.a.rank==1,"prepared half inputs rank ownership");
  require(request.token>=0&&request.token<e.p.g.vocab,"half token bound");
  require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
+ require(!e.a.pipeline_enabled()||!request.speculative,"general pipeline is target-only");
  e.verify_configuration();e.guard();
  if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);
  // Snapshot the prior launch extents before admitting a speculative bucket.
@@ -196,7 +197,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(ready?ready->layer_end:ends(l.label,".ffn.combine")) {
    int layer=ready?ready->layer:std::stoi(l.label.substr(4));
-   if(e.a.rank==1&&e.a.draft_rank==0&&layer==(e.a.mini?3:47)){
+   if(!e.a.pipeline_enabled()&&e.a.rank==1&&e.a.draft_rank==0&&layer==(e.a.mini?3:47)){
     auto bytes=e.readback(0,e.buffers[0].at("streams").id,e.stream_bytes());
     std::memcpy(shared+reverse_offset,bytes.data(),bytes.size());
     __atomic_store_n(&reverse_ready(shared).position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);
@@ -236,7 +237,11 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*e.stream_bytes());for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=e.stream_bytes();candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}
  if(captured_count){std::vector<uint8_t> zero(48*e.stream_bytes(),0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
  int token=-1;size_t bytes=0;
- if(e.a.rank==0){if(!e.v3_active)p150::measure("handoff_export",request.position,false,[&]{bytes=e.stream_bytes();auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});}
+ if(e.a.pipeline_enabled()){
+  if(!e.a.pipeline_final()){bytes=e.stream_bytes();require(bytes>0&&bytes<=slot_bytes,"pipeline stream export extent");auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);}
+  else if(request.fixture>0)token=e.integer(0,"next_token");
+ }
+ else if(e.a.rank==0){if(!e.v3_active)p150::measure("handoff_export",request.position,false,[&]{bytes=e.stream_bytes();auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);});}
  else if(request.fixture>0){token=folded?folded_token:e.integer(0,"next_token");if(e.a.tp_replicate)require(e.integer(1,"next_token")==token,"tp-replicate: card 1 next token differs from card 0");auto& confirmed=verification(shared);confirmed.token=token;__atomic_store_n(&confirmed.position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);}
  if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
  if(e.a.rank==1)e.reply_report.begin(request.sequence,request.fixture,request.position);
@@ -326,7 +331,8 @@ static int run_rank(const Options& a) {
   if(a.pipeline_canary){int rc=run_pipe_canary(a,static_cast<uint8_t*>(mapping));munmap(mapping,shared_bytes);::close(fd);return rc;}
   // --tp-replicate: the plan is the one-card rank plan; the card-1 twins are added after write_plan.
   Options one_card=a;one_card.cards=1;
-  weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,one_card),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
+  weights=std::make_unique<Weights>(a);auto full_plan=plan(*weights,one_card);
+  auto p=a.pipeline_enabled()?ownrt::pipeline_layout::slice(std::move(full_plan),a.pipeline_boundaries,a.pipeline_stage):split(std::move(full_plan),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
    // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
@@ -408,7 +414,15 @@ static int run_rank(const Options& a) {
   save(a.output/"census.json",engine->dev(0).arena.census());
   engine->bracket_weights_locked=true;
   save(a.output/"loaded-arena-descriptors.txt",engine->bracket_arena_descriptors());
-  Reply ready{};ready.rank=a.rank;transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+  if(a.pipeline_enabled()){
+   require(engine->stream_bytes()>0&&engine->stream_bytes()<=slot_bytes,"pipeline stream slot extent");
+   std::ostringstream o;o<<"{\"schema\":\"ownrt.pipeline-stage.v1\",\"stage_id\":"<<a.pipeline_stage<<",\"stage_count\":"<<a.pipeline_boundaries.size()-1
+    <<",\"begin\":"<<a.pipeline_boundaries[a.pipeline_stage]<<",\"end\":"<<a.pipeline_boundaries[a.pipeline_stage+1]
+    <<",\"first\":"<<(a.pipeline_first()?"true":"false")<<",\"final\":"<<(a.pipeline_final()?"true":"false")
+    <<",\"activation_dtype\":\"F32\",\"stream_bytes\":"<<engine->stream_bytes()<<",\"boundaries\":[";
+   for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":\"target-only\",\"speculation_enabled\":false,\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]}";save(a.output/"pipeline-stage.json",o.str());
+  }
+  Reply ready{};ready.rank=a.rank;if(a.pipeline_enabled()){ready.reserved[0]=a.pipeline_stage;ready.reserved[1]=a.pipeline_final();ready.bytes=int32_t(engine->stream_bytes());}transfer(a.channel,&ready,sizeof ready,true,a.seconds);
   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;V3Boundary v3state;
   auto execute=[&](const Request& r)->Reply {
    if(a.rank==1)engine->reply_report.before(r.op);
@@ -486,9 +500,14 @@ static int run_rank(const Options& a) {
    response.redo_ms=std::chrono::duration<double>(received.time_since_epoch()).count();
    response.reserved_ms=std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
    if(a.rank==0&&(r.op==pipeline::accept||r.op==rollback))p150::record(r.op==pipeline::accept?"accept":"rollback",r.position,false,received);
+   if(a.pipeline_enabled()){response.reserved[0]=a.pipeline_stage;response.reserved[1]=a.pipeline_final();}
    return response;
   };
   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+   if(a.pipeline_enabled()){
+    require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
+    require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
+   }
    if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
    Reply response{};
    if(r.op==10){
