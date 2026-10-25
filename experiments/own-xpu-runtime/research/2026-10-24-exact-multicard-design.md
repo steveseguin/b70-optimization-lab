@@ -301,3 +301,24 @@ Tokens, all 1,079 buffers and the dump are bitwise-identical
 ([one-card](tp/evidence/step2b-pf84-one-card-summary.json), [TP](tp/evidence/step2b-pf84-tp-replicate-summary.json)).
 One thread submitting both cards (about 7.4 ms of enqueue) stays below the GPU time, so per-card submission threads
 are not needed yet.
+
+## Step 3 result: dense row split plus gathers (2026-10-25, pf87)
+
+Setup: rank 1 replicated on two cards, with the 33 rank-1 sites of Q8_0 `attention` and Q6_K `gdn.qkv` row-split
+(`OWNRT_TP_SPLIT=.attention,.gdn.qkv`). Card c computes rows [cR/2, (c+1)R/2) into `y#tp`, then `tp_gather` makes a
+local copy of its own half and a `peer_copy` of the peer's.
+
+- **Exact:** the 16 tokens are identical, card 1 equals card 0 on all 1,079 buffers, and the dump equals the one-card
+  run ([evidence](tp/evidence/step3-pf87-card1-vs-card0.json)).
+- **Speed:** 17.04 ms per half, against 17.08 replicated and 16.73 on one card. This is neutral: each split saves
+  about half of a 41–72 µs GEMV, and the two copies per card cost about as much.
+- **Consequence:** dense row splits pay only for large GEMVs, or once the gather copies get cheaper. Two ways to make
+  them cheaper:
+  - the kernel writes straight into its half of `y` at a row offset, which drops the local copy;
+  - several gathers combine into one copy.
+- **Next, step 4, experts:** about 3.6 ms per rank-0 step is expert GEMVs, against about 0.1 ms for one 100 KB gather
+  per layer.
+
+Fixes on the way:
+- split only sites with row-major expanded rows (dense-block Q4_K/Q5_K sites refuse);
+- peer copies use the Device's own queue index (`card1:` allocations map to queue 1).

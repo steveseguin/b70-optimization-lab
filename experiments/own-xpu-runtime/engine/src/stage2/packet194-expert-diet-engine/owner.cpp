@@ -327,26 +327,29 @@ Event Device::peer_copy(Device& source,Allocation dst,std::size_t off,Allocation
   if(!n||!d.live||!s.live||d.memory!=Memory::device||s.memory!=Memory::device||off>d.bytes||n>d.bytes-off||soff>s.bytes||n>s.bytes-soff)
     throw std::out_of_range("peer copy extent/lifetime");
   void* dp=static_cast<std::byte*>(d.pointer)+off;const void* sp=static_cast<const std::byte*>(s.pointer)+soff;
-  auto& counter=fast_owners.at(this).copies.peer[0];
+  // The queue index this Device tracks its own work under (allocation label card<N>:), as compute and copies do.
+  const int q=std::max(queue_of(d),0);
+  auto& counter=fast_owners.at(this).copies.peer[q];
   if(capture_) {
-    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=0;item.copy_counter=&counter;
+    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=q;item.copy_counter=&counter;
     item.ids={dst,src};item.pointers={dp,const_cast<void*>(sp)};
     item.submit=backend_->prepare_peer_copy(dp,sp,n,*source.backend_);
     item.argument_bytes.resize(sizeof(Allocation)*2+sizeof(std::size_t)*3);
     auto* bytes=item.argument_bytes.data();std::memcpy(bytes,item.ids.data(),sizeof(Allocation)*2);std::size_t extents[]{off,soff,n};std::memcpy(bytes+sizeof(Allocation)*2,extents,sizeof extents);
     capture_->push_back(std::move(item));return capture_->size();
   }
-  try {auto e=backend_->peer_copy(dp,sp,n,*source.backend_);events_.push_back(e);remember(e,0);++counter;return e;}
+  try {auto e=backend_->peer_copy(dp,sp,n,*source.backend_);events_.push_back(e);remember(e,q);++counter;return e;}
   catch(const std::exception& e){fault_=e.what();throw;}
 }
 Event Device::peer_wait(Device& peer) {
   admit();peer.admit();if(&peer==this)throw std::invalid_argument("peer wait within one device");
+  const int q=events_.empty()?0:event_card(events_.back());
   if(capture_) {
-    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=0;
+    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=q;
     Backend* self=backend_.get();Backend* other=peer.backend_.get();item.submit=[self,other]{return self->peer_wait(*other);};
     capture_->push_back(std::move(item));return capture_->size();
   }
-  try {auto e=backend_->peer_wait(*peer.backend_);events_.push_back(e);remember(e,0);return e;}
+  try {auto e=backend_->peer_wait(*peer.backend_);events_.push_back(e);remember(e,q);return e;}
   catch(const std::exception& e){fault_=e.what();throw;}
 }
 Event CopyEngine::copy(Allocation dst,std::size_t off,Allocation src,std::size_t soff,std::size_t n,std::span<const Event> deps) {

@@ -334,7 +334,8 @@ static int run_rank(const Options& a) {
    // card assembles y from its own half (local copy) and the peer's half (peer copy). Order L0, L1, G0, G1.
    std::vector<std::string> roles;if(const char* v=std::getenv("OWNRT_TP_SPLIT")){std::string s=v;size_t at=0;
     while(at<=s.size()){auto end=s.find(',',at);if(end==std::string::npos)end=s.size();if(end>at)roles.push_back(s.substr(at,end-at));at=end+1;}}
-   auto split_site=[&](const flash::Launch& l){if(l.op!="gemv"||!l.label.starts_with("blk."))return false;for(const auto& r:roles)if(ends(l.label,r))return true;return false;};
+   // Only the p33 dense paths with row-major expanded rows (Q6_K qkv, Q8_0 attention) are split today.
+   auto split_site=[&](const flash::Launch& l){if(l.op!="gemv"||!l.label.starts_with("blk.")||!(qkv_q6_site(*weights,a,l)||attention_q8_site(*weights,a,l)))return false;for(const auto& r:roles)if(ends(l.label,r))return true;return false;};
    std::vector<flash::Launch> both;both.reserve(p.launches.size()*2);std::set<std::string> halves;
    for(const auto& l:p.launches){
     if(split_site(l)){
