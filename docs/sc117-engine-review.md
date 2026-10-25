@@ -168,3 +168,9 @@ The [new cold twelve-prompt service check](../experiments/own-xpu-runtime/resear
 measured **47.9706 tok/s** ordinary median, with explicit `cached_tokens=0` on
 every request and all 5,965 output IDs plus twelve text hashes unchanged. This
 confirms the earlier roughly 48 tok/s observation; it is not a new certified record.
+
+The [downloadable 228-file source snapshot](../downloads/own-engine/ownrt-source-1cab4a1e5.tar.gz)
+from `1cab4a1e5` also passed a fresh extracted-source build; its
+[receipt](../experiments/own-xpu-runtime/research/review-2026-10-25/source-1cab-rebuild.json)
+binds the public archive checksum and resulting binary. It preserves the same
+research-source-only boundary: this was not a clean-host runtime qualification.

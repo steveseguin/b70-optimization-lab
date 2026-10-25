@@ -20,7 +20,7 @@ support for other quants/models and future 1/2/4/6-card profiles.
   and continuation gates passed. A fresh 12-prompt suite measured **47.97 tok/s**
   ordinary median with explicit zero cached tokens; all 5,965 output IDs and
   all twelve text hashes match the earlier baseline. Vision remains stopped;
-  27/43 are free for future quad scheduling work. No experiment/client is active.
+  27/43 are free for future quad scheduling work. No GPU experiment or benchmark client is active.
   A receipt-format mistake was refused before device launch and corrected with
   the existing receipt generator; its evidence is retained.
 - Audit corrects the ordinary service median to **27.92 → 47.89 tok/s** with all
@@ -29,8 +29,8 @@ support for other quants/models and future 1/2/4/6-card profiles.
 - Added reusable metadata-driven placement planning and tightened service suite
   cache evidence. GitHub and neural.download carry the audited results and pinned research
   source download. SkinDeep updates are local commits `017179e` and `ac45f76`; remote write credentials
-  are unavailable. A 224-file source bundle from `d882b4df4` rebuilt independently
-  in an extracted directory; this is not a complete portable runtime release.
+  are unavailable. The downloadable 228-file source archive from `1cab4a1e5` rebuilt in a fresh
+  extracted directory; this is not a complete portable runtime release.
 - Next: asynchronous speculative overlap informed by measured recursive
   acceptance, plus deployment profiles that remove compiled host-file identities. Preserve the old failed depth-two
   design and the break-even tensor-split result. [Review and plan](docs/sc117-engine-review.md).
