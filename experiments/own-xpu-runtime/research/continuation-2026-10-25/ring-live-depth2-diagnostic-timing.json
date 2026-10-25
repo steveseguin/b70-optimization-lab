@@ -1,0 +1,36 @@
+{
+  "schema": "ownrt.recursive-provider-diagnostic-timing.v1",
+  "source": "experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-live-depth2-proof/stage0/ring-draft-batches.jsonl",
+  "source_sha256": "b98de2c7f17a29b0d500e7e0b1390a0060814a18f2189600e4a0240cf04e7a4c",
+  "pairs": 117,
+  "head_pairs": 32,
+  "full_restore_byte_verification": true,
+  "speed_claim": false,
+  "scope": "Native host wall times in the correctness gate. Restore includes full byte readbacks; canonical timings include a large first-head outlier. Neither is a production throughput estimate.",
+  "head_timings": {
+    "canonical_ms": {
+      "median_ms": 2.04512,
+      "minimum_ms": 2.03476,
+      "maximum_ms": 1377.44,
+      "total_ms": 1441.1235900000001
+    },
+    "capture_ms": {
+      "median_ms": 0.465003,
+      "minimum_ms": 0.457879,
+      "maximum_ms": 10.0767,
+      "total_ms": 24.818455
+    },
+    "recursive_ms": {
+      "median_ms": 2.006565,
+      "minimum_ms": 1.99876,
+      "maximum_ms": 2.38453,
+      "total_ms": 64.89498
+    },
+    "restore_ms": {
+      "median_ms": 10.050699999999999,
+      "minimum_ms": 9.93418,
+      "maximum_ms": 13.6994,
+      "total_ms": 327.18058
+    }
+  }
+}
