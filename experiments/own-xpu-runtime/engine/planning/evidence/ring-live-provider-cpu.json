@@ -1,0 +1,31 @@
+{
+  "command": "cd engine/tools && python3 -m unittest test_ring_live_wire test_ring_live_driver -q",
+  "development_refusal": {
+    "phase": "metadata-only CPU smoke before GPU",
+    "reason": "Initial prompt digest used uint32LE; retained reference builder hashes compact JSON. Validator and fixture corrected; real retained reference revalidated."
+  },
+  "device_execution_requested": false,
+  "draft_training": false,
+  "passed": true,
+  "retained_reference_smoke": {
+    "canonical_pairs": 117,
+    "depth2_pairs": 32,
+    "model_payload_read": false,
+    "passed": true,
+    "path": "research/continuation-2026-10-25/recursive-provider-reference-v2.json",
+    "prompt_tokens": 87,
+    "sha256": "9e23267bb971b02f0c879ed24b1c3f36e574551ee2a003472c647dfed7f73559",
+    "target_outputs": 32
+  },
+  "schema": "ownrt.ring-live-provider-cpu.v1",
+  "scope": "CPU wire/controller tests only. Actual native canonical73 draft/target/private snapshot qualification remains required.",
+  "source_sha256": {
+    "tools/ring_live_driver.py": "b82f8a0e7798e0727db8133e5061178e825de2d5c00b6f0f40aaa747bdb41ef7",
+    "tools/ring_live_wire.py": "c687b2cf3b1343222513dd7b39e0337a9f44eff4695134c15f0c49b93e8984c4",
+    "tools/test_ring_live_driver.py": "bb461dbfb007a83879cf42607ccd4ef60f1b757f32852bd9dd7b17955153057d",
+    "tools/test_ring_live_wire.py": "bf8e7630b58b9da7dc973cd91b0493bec3f53f33f5ebf0097ce2628ca9b8152e"
+  },
+  "speculative_target_use": false,
+  "speed_claim": false,
+  "tests": 10
+}

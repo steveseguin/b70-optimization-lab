@@ -51,3 +51,10 @@ jobs:
           /tmp/ownrt-ring-wire
           g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I engine/src engine/planning/test_native_ring_checkpoint.cpp engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /tmp/ownrt-ring-checkpoint
           /tmp/ownrt-ring-checkpoint /tmp/ownrt-ring-checkpoint-output
+      - name: Native recursive provider ownership without device access
+        working-directory: experiments/own-xpu-runtime
+        run: |
+          g++ -std=c++20 -O1 -I engine/src engine/planning/test_recursive_provider.cpp -lcrypto -o /tmp/ownrt-recursive-provider
+          /tmp/ownrt-recursive-provider
+          g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I engine/src engine/planning/test_recursive_provider_native.cpp engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /tmp/ownrt-recursive-provider-native
+          /tmp/ownrt-recursive-provider-native /tmp/ownrt-recursive-provider-output

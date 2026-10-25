@@ -1,0 +1,356 @@
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/recursive-provider-next/batch.hpp
+@@ -0,0 +1,70 @@
++#pragma once
++// Isolated proposal; no active native file includes this header.
++#include "pipeline/ring/wire.hpp"
++#include "pipeline/live_draft.hpp"
++#include <span>
++namespace ownrt::recursive_provider_next {
++using ring_next::Digest;using ring_next::Row;using ring_next::need;
++template<class Admitted,class Drain> void quiesce(Admitted admitted,Drain drain){
++ need(admitted(),"depth2 exclusive owner before drain");drain();need(admitted(),"depth2 owner changed while draining");
++}
++struct Input {
++ Row seed;live_draft::Handoff parent;int sequence=0;bool head=false;
++ std::vector<uint8_t> hidden;
++};
++// Construct this from the independently retained verified seed and final COMMIT
++// record, not by decoding the Input a second time. The seed is a verified INPUT;
++// its own target row need not have executed. The coordinator owns these input
++// identities and parent final tickets; native admission checks the causal chain.
++struct ExpectedPair {Row seed;live_draft::Handoff parent;uint64_t provider_serial=0;};
++struct Result {int position=0;std::vector<int> guesses;bool byte_verified=false;size_t snapshot_bytes=0;};
++// Provider owns a complete post-canonical checkpoint. No exception path submits
++// recovery copies: an invalid/failed branch poisons this owner and publishes none.
++template<class Provider> Result depth2(Provider& p,const Input& input,bool verify){
++ p.idle();need(p.healthy()&&p.position()+1==input.seed.position,"depth2 canonical position");
++ need(input.seed.token>=0&&input.seed.token<p.vocab(),"depth2 confirmed token");
++ const int first=p.canonical(input.seed.token,input.seed.position,input.head,input.hidden);
++ p.idle();need(p.healthy()&&p.position()==input.seed.position,"depth2 canonical advancement");
++ need(input.head?(first>=0&&first<p.vocab()):first==-1,"depth2 canonical proposal bound");
++ Result result;result.position=p.position();if(input.head)result.guesses.push_back(first);
++ if(!input.head||p.position()>=p.context())return result;
++ p.capture();result.snapshot_bytes=p.snapshot_bytes();
++ const int second=p.recursive(first);
++ p.idle();need(p.healthy()&&p.position()==input.seed.position+1&&second>=0&&second<p.vocab(),"depth2 hypothetical branch failure");
++ p.restore(verify);p.idle();need(p.healthy()&&p.position()==result.position,"depth2 post-canonical restore");
++ result.guesses.push_back(second);result.byte_verified=verify;return result;
++}
++class Sequence {
++ ring_next::wire::Context context_;int next_position_=1,last_sequence_=0,last_commit_=0;
++ uint64_t serial_=0;Row last_seed_{};bool poisoned_=false;Result last_result_{};
++ static std::string hex(const Digest& value){constexpr char digits[]="0123456789abcdef";std::string out;for(auto v:value){out+=digits[v>>4];out+=digits[v&15];}return out;}
++public:
++ explicit Sequence(ring_next::wire::Context context):context_(context){ring_next::wire::context(context);need(context.stage==0,"depth2 provider must belong to first stage");}
++ const Result& last_result()const{return last_result_;}
++ uint64_t serial()const{return serial_;}bool poisoned()const{return poisoned_;}
++ void admit(const Input& in,const ExpectedPair& expected)const{
++  need(!poisoned_&&in.sequence>last_sequence_&&serial_!=UINT64_MAX,"depth2 stale/failed command");
++  const auto& row=in.seed;const auto& h=in.parent;
++  need(row==expected.seed&&std::memcmp(&h,&expected.parent,sizeof h)==0&&expected.provider_serial==serial_+1,"depth2 retained verified seed/final commit binding");
++  need(row.fixture>=0&&in.head==(row.fixture>0),"depth2 canonical seed head mask");
++  live_draft::validate(h,context_.stream_bytes,context_.stages,context_.vocab);
++  need(in.hidden.size()==size_t(context_.stream_bytes)&&hex(ring_next::wire::digest(in.hidden))==std::string(h.hidden_sha256.data(),h.hidden_sha256.size()),"depth2 owned raw hidden SHA");
++  need(row.epoch==context_.epoch&&row.request==context_.request&&row.id>row.parent&&row.parent>0&&row.position==next_position_&&row.token>=0&&row.token<context_.vocab,"depth2 request/seed identity");
++  need(h.position==row.position-1&&h.commit_sequence>last_commit_&&(!h.head||h.next_token==row.token),"depth2 final canonical parent");
++  need(row.after==ring_next::extend(row.before,uint32_t(row.position),uint32_t(row.token)),"depth2 seed prefix");
++  if(serial_)need(row.parent==last_seed_.id&&row.before==last_seed_.after&&h.input_token==last_seed_.token,"depth2 exact canonical ancestry");
++  else need(row.position==1&&row.before==ring_next::extend(ring_next::request_prefix(context_.request,context_.epoch),0,uint32_t(h.input_token)),"depth2 first canonical parent prefix");
++ }
++ template<class Provider> ring_next::wire::ProposalMeta run(Provider& provider,const Input& input,const ExpectedPair& expected,bool verify){
++  admit(input,expected);last_sequence_=input.sequence;
++  try{
++   const auto result=depth2(provider,input,verify);need(result.guesses.size()<=2&&result.position==input.seed.position,"depth2 result extent");
++   ring_next::wire::ProposalMeta out;out.flags=(input.head?1u:0u)|2u;out.epoch=context_.epoch;out.ticket=input.sequence;out.seed_row=input.seed.id;out.parent_row=input.seed.parent;out.final_commit=input.parent.commit_sequence;out.provider_serial=serial_+1;
++   out.seed_position=out.restored_position=result.position;out.available_depth=int32_t(result.guesses.size());out.guess0=result.guesses.empty()?-1:result.guesses[0];out.guess1=result.guesses.size()<2?-1:result.guesses[1];out.restored=1;
++   out.request=context_.request;out.seed_prefix=input.seed.after;out.hidden_sha=ring_next::wire::digest(input.hidden);
++   ring_next::wire::validate_batch(out,context_,input.sequence,input.seed.position,input.seed.after,out.hidden_sha,{input.seed.id,input.seed.parent,uint64_t(input.parent.commit_sequence),serial_+1});
++   last_result_=result;++serial_;last_seed_=input.seed;last_commit_=input.parent.commit_sequence;++next_position_;return out;
++  }catch(...){poisoned_=true;throw;}
++ }
++};
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/recursive-provider-next/draft_runtime_extension.inc
+@@ -0,0 +1,95 @@
++// PROPOSAL ONLY: include inside mtp36::DraftRuntime after its public: label.
++// Include batch.hpp outside the class first. No current source imports this file.
++// Calls existing live_step/compute; it contains no model arithmetic executor.
++struct RecursiveRow {
++ Allocation id{};size_t bytes=0,offset=0;Memory memory=Memory::device;std::string label;
++ std::vector<uint8_t> pinned_before;
++};
++struct RecursiveHost {
++ int position=0,extent=0,pending_confirmed=0,queued_probe=0,queued_confirmed=0,depth=0;
++ bool disabled=false,async_pending=false,pending_head=false,reverse_present=false,captured=false;
++ ownrt::Event publication_event=0;std::chrono::steady_clock::time_point pending_start;
++ std::vector<uint8_t> reverse_bytes;
++ bool operator==(const RecursiveHost&)const=default;
++};
++struct RecursiveTarget {
++ decltype(e.fp32_sources) sources;decltype(e.fp32_extents) extents;
++ decltype(e.lookup_ids) lookup;decltype(e.selected) selected;decltype(e.loaded_layer) loaded;
++ int64_t history0=0,history1=0;unsigned parity=0;int active=0,spare=0,extent=0,alternate=0;
++ bool operator==(const RecursiveTarget&)const=default;
++};
++uint64_t recursive_captures=0,recursive_restores=0,recursive_verified_restores=0;
++Allocation recursive_image{};size_t recursive_bytes=0;bool recursive_active=false;
++std::vector<RecursiveRow> recursive_rows;RecursiveHost recursive_host;RecursiveTarget recursive_target;int recursive_class=0;
++RecursiveHost recursive_host_state()const{
++ return {position,context_extent,pending_confirmed,queued_probe,queued_confirmed,depth_probe,disabled,async_pending,pending_head,reverse_hidden!=nullptr,captured,publication_event,pending_start,probe_reverse_hidden};
++}
++RecursiveTarget recursive_target_state()const{
++ return {e.fp32_sources,e.fp32_extents,e.lookup_ids,e.selected,e.loaded_layer,e.history0,e.history1,e.bank_parity,e.active_bank,e.spare_bank,e.context_extent,e.alternate_context_extent};
++}
++void recursive_idle(){
++ auto admitted=[&](){return !disabled&&!e.poisoned&&!async_pending&&!publication_event&&!e.progress_pending&&!e.progress_callback&&!e.preparing_commands&&!e.draft_timing&&!reverse_hidden&&!depth_probe&&queued_probe==-1&&queued_confirmed==-1&&!e.dev(0).before_compute&&!e.dev(0).after_compute&&!e.correction_exchange&&!e.head_export&&!e.head_publish&&!e.head_merge&&!e.reply_report.pending();};
++ // drain() can invoke Engine progress callbacks. Refuse borrowers BEFORE it.
++ ownrt::recursive_provider_next::quiesce(admitted,[&](){e.drain();});
++}
++bool recursive_healthy(){
++ if(disabled||e.poisoned)return false;const auto raw=e.readback(0,id("error"),4);int error=0;std::memcpy(&error,raw.data(),4);return !error&&!e.integer(0,"error");
++}
++void recursive_inventory(){
++ require(recursive_image&&recursive_rows.size()==mutable_ids.size()+2,"recursive exact canonical inventory count");
++ std::set<Allocation> observed;for(const auto& item:recursive_rows){const auto& row=e.dev(0).arena.row(item.id);
++  require(observed.insert(item.id).second&&row.live&&row.label==item.label&&row.memory==item.memory&&row.bytes==item.bytes,"recursive allocation identity changed");
++  if(item.memory==Memory::device)require(mutable_ids.count(item.id)&&e.allocations.count(item.id),"recursive canonical device membership");
++  else require(item.memory==Memory::pinned&&!e.allocations.count(item.id)&&(item.id==publication||item.id==half_staging),"recursive explicit pinned membership");
++ }
++ require(observed.count(publication)&&observed.count(half_staging),"recursive pinned inventory incomplete");
++ const auto& backup=e.dev(0).arena.row(recursive_image);require(backup.live&&backup.memory==Memory::device&&backup.category==Category::runtime_overhead&&backup.bytes==recursive_bytes&&backup.label=="card0:draft:recursive-private-image"&&e.allocations.count(recursive_image)&&!mutable_ids.count(recursive_image),"recursive private image identity");
++}
++void prepare_recursive_depth2(){
++ recursive_idle();require(e.a.pipeline_live_draft&&e.a.pipeline_draft_partition&&e.a.pipeline_first()&&e.a.mtp&&!recursive_image&&!recursive_active,"recursive initialization owner");
++ for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);require(row.live&&row.memory==Memory::device&&row.category!=Category::weights&&row.bytes>0&&row.bytes<=32ull*1024*1024&&recursive_bytes<=32ull*1024*1024-row.bytes,"recursive canonical reserve bound");
++  recursive_rows.push_back({allocation,row.bytes,recursive_bytes,row.memory,row.label,{}});recursive_bytes+=row.bytes;
++ }
++ for(auto allocation:{publication,half_staging}){const auto& row=e.dev(0).arena.row(allocation);require(row.live&&row.memory==Memory::pinned&&row.bytes==(allocation==publication?8:4+e.stream_bytes())&&row.category==(allocation==publication?Category::output_ring:Category::pinned_slab),"recursive exact pinned extent/category");recursive_rows.push_back({allocation,row.bytes,0,row.memory,row.label,std::vector<uint8_t>(row.bytes)});}
++ require(recursive_bytes>0,"recursive empty canonical snapshot");
++ recursive_image=e.allocate(0,"draft:recursive-private-image",recursive_bytes,Category::runtime_overhead,Lifetime::process);allocated+=recursive_bytes;recursive_inventory();
++}
++// A NEW explicit ownership class is required at integration: these are provider
++// rollback storage, NOT canonical draft buffers and NOT target-owned storage.
++std::vector<Allocation> live_private_recursive_inventory()const{return recursive_image?std::vector<Allocation>{recursive_image}:std::vector<Allocation>{};}
++void recursive_copy(bool restore){
++ recursive_inventory();ownrt::CopyEngine copy(e.dev(0));
++ for(auto& item:recursive_rows){const auto& row=e.dev(0).arena.row(item.id);
++  if(item.memory==Memory::pinned){if(restore)std::memcpy(row.pointer,item.pinned_before.data(),item.bytes);else std::memcpy(item.pinned_before.data(),row.pointer,item.bytes);}
++  else e.tail=restore?copy.copy(item.id,0,recursive_image,item.offset,item.bytes,{}):copy.copy(recursive_image,item.offset,item.id,0,item.bytes,{});
++ }e.drain();
++}
++void recursive_capture(){
++ recursive_idle();require(!recursive_active&&recursive_healthy(),"recursive capture admission");
++ recursive_host=recursive_host_state();recursive_target=recursive_target_state();recursive_class=e.current_cls;
++ recursive_copy(false);recursive_active=true;++recursive_captures;
++}
++void recursive_restore(bool verify){
++ recursive_idle();require(recursive_active&&recursive_healthy(),"recursive failure cannot be rolled back");
++ require(recursive_target_state()==recursive_target,"recursive branch mutated target metadata");
++ recursive_copy(true);position=recursive_host.position;disabled=recursive_host.disabled;async_pending=recursive_host.async_pending;pending_head=recursive_host.pending_head;pending_confirmed=recursive_host.pending_confirmed;
++ publication_event=recursive_host.publication_event;pending_start=recursive_host.pending_start;queued_probe=recursive_host.queued_probe;queued_confirmed=recursive_host.queued_confirmed;
++ require(!recursive_host.reverse_present&&depth_probe==recursive_host.depth&&captured==recursive_host.captured,"recursive immutable/queued metadata changed");reverse_hidden=nullptr;probe_reverse_hidden=recursive_host.reverse_bytes;
++ if(position<p.g.context)admit_position(recursive_host.extent);else require(context_extent==recursive_host.extent,"recursive capacity extent mismatch");e.current_cls=recursive_class;
++ require(recursive_host_state()==recursive_host&&recursive_target_state()==recursive_target,"recursive complete host restoration mismatch");
++ if(verify){const auto saved=e.readback(0,recursive_image,recursive_bytes);
++  for(const auto& item:recursive_rows){const auto& row=e.dev(0).arena.row(item.id);if(item.memory==Memory::pinned)require(!std::memcmp(row.pointer,item.pinned_before.data(),item.bytes),"recursive pinned restore mismatch");else{const auto bytes=e.readback(0,item.id,item.bytes);require(std::equal(bytes.begin(),bytes.end(),saved.begin()+item.offset),"recursive canonical bytes mismatch");}}
++ }
++ recursive_idle();require(recursive_healthy(),"recursive post-restore error");recursive_active=false;++recursive_restores;if(verify)++recursive_verified_restores;
++}
++struct RecursiveAdapter {
++ DraftRuntime& d;void idle(){d.recursive_idle();}bool healthy(){return d.recursive_healthy();}
++ int position()const{return d.position;}int context()const{return d.p.g.context;}int vocab()const{return d.p.g.vocab;}
++ int canonical(int confirmed,int position,bool head,const std::vector<uint8_t>& hidden){return d.live_step(confirmed,position,head,hidden.data(),hidden.size());}
++ void capture(){d.recursive_capture();}size_t snapshot_bytes()const{return d.recursive_bytes;}
++ int recursive(int first){return d.compute(first,d.position+1,true,false,true);}
++ void restore(bool verify){d.recursive_restore(verify);}
++};
++ownrt::ring_next::wire::ProposalMeta live_recursive_depth2(ownrt::recursive_provider_next::Sequence& sequence,const ownrt::recursive_provider_next::Input& input,const ownrt::recursive_provider_next::ExpectedPair& expected,bool verify){
++ require(recursive_image&&!recursive_active,"recursive provider not initialized/idle");RecursiveAdapter adapter{*this};return sequence.run(adapter,input,expected,verify);
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/recursive-provider-next/test_batch.cpp
+@@ -0,0 +1,39 @@
++#include "batch.hpp"
++#include <cassert>
++#include <iostream>
++using namespace ownrt;using namespace recursive_provider_next;
++template<class F>void refusal(F f){bool failed=false;try{f();}catch(const std::exception&){failed=true;}assert(failed);}
++struct Provider {
++ struct State {int position=0,extent=32;int pending=0;uint64_t event=0;std::vector<uint8_t> hidden;std::vector<std::vector<uint8_t>> allocations;bool operator==(const State&)const=default;} state,saved;
++ int limit=64;bool error=false,fail_branch=false,fail_restore=false;int captures=0,restores=0,full_reads=0,canonical_calls=0,recursive_calls=0;
++ Provider(){for(size_t i=0;i<73;++i)state.allocations.emplace_back(1+i%17,uint8_t(i));}
++ void idle(){}bool healthy()const{return !error;}int position()const{return state.position;}int context()const{return limit;}int vocab()const{return 97;}
++ void update(int token){++state.position;state.extent=((state.position+31)/32)*32;for(size_t i=0;i<state.allocations.size();++i)for(auto& x:state.allocations[i])x=uint8_t(x+token+state.position+i);state.pending+=token;state.event+=state.position;state.hidden.assign(16,uint8_t(token));}
++ int canonical(int token,int position,bool head,const std::vector<uint8_t>& hidden){assert(position==state.position+1&&hidden.size()==16);++canonical_calls;update(token);return head?(token+position*7)%97:-1;}
++ void capture(){saved=state;++captures;}size_t snapshot_bytes()const{size_t n=0;for(auto& a:state.allocations)n+=a.size();return n;}
++ int recursive(int first){++recursive_calls;update(first);if(fail_branch){error=true;throw std::runtime_error("partial provider branch");}return (first+state.position*7)%97;}
++ void restore(bool verify){assert(!error);++restores;state=saved;if(fail_restore)state.allocations.back()[0]^=1;if(verify){full_reads+=int(state.allocations.size());assert(state.allocations.size()==73);need(state==saved,"all canonical/pinned/host bytes restored");}}
++};
++std::string hex(const ring_next::Digest& bytes){const char*d="0123456789abcdef";std::string out;for(auto b:bytes){out+=d[b>>4];out+=d[b&15];}return out;}
++struct Fixture {
++ ring_next::wire::Context context{0,{},0,4,16,97};Sequence sequence{context};Provider provider;Row last;int ticket=0;
++ Input next(bool head=true){Input in;auto& r=in.seed;r.epoch=0;r.request=context.request;r.parent=last.id?last.id:1;r.id=r.parent+1;r.position=provider.position()+1;r.token=(r.position*3+4)%97;r.fixture=head?std::max(1,last.fixture+1):0;r.ticket=100+r.position;r.tentative=true;
++  const int parent_token=last.id?last.token:7;r.before=last.id?last.after:ring_next::extend(ring_next::request_prefix(context.request,0),0,parent_token);r.after=ring_next::extend(r.before,r.position,r.token);
++  in.sequence=++ticket;in.head=head;in.hidden.assign(16,uint8_t(r.position));auto& h=in.parent;h.bytes=16;h.position=r.position-1;h.final_stage=3;h.stages=4;h.row_ticket=2*r.position;h.commit_sequence=h.row_ticket+1;h.input_token=parent_token;h.head=last.fixture>0;h.next_token=h.head?r.token:-1;const auto sha=hex(ring_next::wire::digest(in.hidden));std::copy(sha.begin(),sha.end(),h.hidden_sha256.begin());return in;
++ }
++ ExpectedPair expected(const Input& in){return {in.seed,in.parent,sequence.serial()+1};}
++ auto run(Input in,bool verify){auto out=sequence.run(provider,in,expected(in),verify);last=in.seed;return out;}
++};
++int main(){
++ {bool callback=true;int drains=0;refusal([&]{quiesce([&]{return !callback;},[&]{++drains;});});assert(!drains);callback=false;quiesce([&]{return !callback;},[&]{++drains;});assert(drains==1);refusal([&]{quiesce([&]{return !callback;},[&]{++drains;callback=true;});});assert(drains==2);}
++
++ for(bool verify:{false,true}){Fixture f;Provider reference;for(int position=1;position<=64;++position){auto input=f.next(position>=3);auto expected=f.expected(input);auto before=f.provider.state;const int canonical=reference.canonical(input.seed.token,position,input.head,input.hidden);auto out=f.sequence.run(f.provider,input,expected,verify);f.last=input.seed;
++  assert(f.provider.state==reference.state&&f.provider.position()==position&&out.restored_position==position&&out.guess0==canonical&&out.provider_serial==uint64_t(position));
++  assert(out.available_depth==(!input.head?0:position<64?2:1));assert(f.sequence.last_result().byte_verified==(verify&&input.head&&position<64));assert(bool(f.sequence.last_result().snapshot_bytes)==(input.head&&position<64));if(position==31||position==32||position==33)assert(f.provider.state.extent==reference.state.extent);
++ }
++ assert(f.provider.captures==61&&f.provider.restores==61&&f.provider.recursive_calls==61&&f.provider.full_reads==(verify?61*73:0));}
++ for(int mutation=0;mutation<10;++mutation){Fixture f;auto in=f.next();auto expected=f.expected(in);switch(mutation){case 0:++in.seed.id;break;case 1:++in.seed.parent;break;case 2:++in.parent.row_ticket;break;case 3:++in.parent.commit_sequence;break;case 4:++expected.provider_serial;break;case 5:in.hidden[0]^=1;break;case 6:in.seed.after[0]^=1;break;case 7:in.head=false;break;case 8:in.seed.epoch=1;break;case 9:in.seed.request[0]=1;break;}refusal([&]{f.sequence.run(f.provider,in,expected,false);});assert(!f.provider.canonical_calls&&!f.sequence.poisoned());}
++ {Fixture f;auto first=f.next();f.run(first,false);auto second=f.next();auto wrong=f.expected(second);wrong.seed.parent=77;second.seed=wrong.seed;refusal([&]{f.sequence.run(f.provider,second,wrong,false);});assert(f.provider.canonical_calls==1);}
++ for(bool restore_failure:{false,true}){Fixture f;auto in=f.next();auto expected=f.expected(in);f.provider.fail_branch=!restore_failure;f.provider.fail_restore=restore_failure;refusal([&]{f.sequence.run(f.provider,in,expected,true);});assert(f.sequence.poisoned()&&f.sequence.serial()==0&&f.provider.canonical_calls==1&&f.provider.restores==int(restore_failure));refusal([&]{f.sequence.run(f.provider,in,expected,true);});assert(f.provider.canonical_calls==1);}
++ std::cout<<"PASS post-canonical depth2 restore of 73 synthetic mutable allocations/host state, 31/32/33 extents, no-head/capacity censoring, default no full readback, exact lineage/commit/serial/head binding and no recovery after partial failure; CPU only\n";
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/recursive-provider-next/make_compile_overlay.py
+@@ -0,0 +1,17 @@
++#!/usr/bin/env python3
++"""Create one fresh temporary include overlay; never edit canonical source."""
++import argparse, hashlib, json
++from pathlib import Path
++p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args()
++here=Path(__file__).resolve().parent;engine=here.parent.parent
++relative=Path('gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp')
++source=engine/'src'/relative;fragment=here/'draft_runtime_extension.inc'
++a.output.mkdir(parents=True,exist_ok=False)
++text=source.read_text();assert text.count('\npublic:\n')==1
++text=text.replace('namespace mtp36 {','#include "'+str(here/'batch.hpp')+'"\nnamespace mtp36 {',1)
++text=text.replace('\npublic:\n','\npublic:\n'+fragment.read_text()+'\n',1)
++target=a.output/relative;target.parent.mkdir(parents=True);target.write_text(text)
++(a.output/'syntax.cpp').write_text('#include "'+str(engine/'planning/checkpoint_fixture.hpp')+'"\n')
++sha=lambda path:hashlib.sha256(path.read_bytes()).hexdigest()
++(a.output/'overlay.json').write_text(json.dumps({'schema':'ownrt.recursive-provider-syntax-overlay.v1','source':str(source),'source_sha256':sha(source),'fragment_sha256':sha(fragment),'batch_sha256':sha(here/'batch.hpp'),'generated_sha256':sha(target),'purpose':'CPU syntax only; does not call preparation or execute models'},indent=2)+'\n')
++print(a.output)
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/recursive-provider-next/README.md
+@@ -0,0 +1,120 @@
++# Isolated command 27 provider proposal
++
++No active engine or controller imports this directory. The current scripted ring
++proof remains target-only. This proposal reuses the existing trained MTP weights
++and existing `DraftRuntime::live_step` and `compute(..., recursive=true)` paths;
++it introduces no training or model arithmetic executor.
++
++`batch.hpp` owns causal admission and the canonical/recursive transaction.
++`draft_runtime_extension.inc` is an actual class-member extension for the existing
++DraftRuntime, compiled through a temporary include overlay. `test_batch.cpp`
++executes the generic transaction with synthetic provider storage. The tests do
++not run the real model kernels; actual draft-state parity remains a device gate.
++
++## Position and ownership contract
++
++A parent final COMMIT belongs to input position p. Its raw final-layer hidden
++state and the confirmed input token at p+1 advance canonical draft state once.
++The seed row is that verified INPUT at p+1; its own target ROW or COMMIT need not
++have executed. An immutable seed originally issued tentatively can keep that
++historical flag after its token is verified. The boolean flag alone does not
++establish verification.
++
++ExpectedPair comes from the coordinator's retained verified-input identity and
++independently retained parent final COMMIT, never from decoding the same incoming
++payload twice. It binds the complete seed and 112-byte Handoff plus the next
++provider serial. Native sequence admission also checks request/epoch, contiguous
++canonical positions, exact seed ancestry/prefix, head mask, final input/output,
++monotonic final commit, and complete owned raw-hidden SHA256. For the first seed,
++the parent prefix is derived from request identity and the parent's input token.
++The draft head mask equals `seed.fixture > 0`; it can be true while the parent's
++target head mask is false near the end of prompt priming.
++
++After `live_step`, d1 and canonical draft state are retained. Only then is a
++checkpoint captured. One existing recursive `compute` predicts d2 from d1 and
++its draft hidden stream. The hypothetical state is restored to the post-canonical
++checkpoint before returning either proposal. No-head priming advances canonically
++without a checkpoint. At capacity, d1 can remain available while d2 is censored.
++A branch error or failed restoration poisons the transaction; no recovery copy or
++partial proposal is published after a failure.
++
++## Snapshot scope
++
++The native extension enumerates the real mutable device inventory and both
++provider-owned pinned allocations: publication is exactly 8 bytes/output_ring;
++half-staging is exactly `4 + stream_bytes`/pinned_slab. Geometry comes from the
++runtime, not an assumed allocation count. The current model has 73 canonical
++allocations; the synthetic test exercises all 73, including the final pinned-like
++rows, but this count is not hardcoded into native admission.
++
++The host snapshot includes canonical position, attention extent, disabled and
++async flags, pending-head/confirmed metadata, publication event and start time,
++queued probe metadata, owned reverse-hidden bytes and captured-plan status.
++Active callback or async ownership is refused BEFORE draining because drain can
++invoke callbacks. Restored attention extents rebind existing prepared commands.
++Target bank/history/lookup/selected-layer/FP32-cache metadata is checked unchanged,
++and the prior profiling class is restored. Submission/timing/read counters are
++cumulative evidence and are not model state.
++
++Default operation performs the required device snapshot/restore and metadata
++checks, without full byte readbacks. Qualification enables byte comparison of
++every canonical device and pinned allocation against the post-canonical snapshot.
++The existing compute path still performs its ordinary scalar error/token reads.
++The provider retains capture/restore/verified-restore counters; Sequence exposes
++the last successful result with snapshot bytes and verification status so a future
++bounded command trace can bind those checks to the exact batch serial. A censored
++or no-head batch is canonical without claiming a byte-verified restore.
++
++The image is explicitly provider-private runtime storage, outside mutable_ids
++and outside the canonical sealed draft dump. It must be allocated before owner
++partition admission and target-ring census freezing. A separate validated private
++inventory is REQUIRED at integration: hiding the image from Engine allocations,
++adding it to canonical mutable_ids, or treating it as target-owned would each
++break the ownership/parity contract.
++
++## Proposed wire and integration gates
++
++Existing operations 20–26 stay unchanged. Future operation 27 should receive the
++immutable seed metadata, the parent Handoff and a complete owned raw-hidden
++payload. Request token/position identify the confirmed seed; fixture carries the
++requested draft head mask, not the parent's target head mask. Its 192-byte reply
++is ProposalMeta with exact request/epoch/seed/parent/final-commit/provider-serial,
++canonical restored position, seed prefix, raw-hidden digest and d1/d2 availability.
++The caller validates every field against its retained records before issuing rows.
++The proposal helper does not implement this socket adapter.
++
++Required source integration, after the scripted ring gate:
++
++1. Add an opt-in depth-two provider flag and include the helper outside the class
++   and extension inside DraftRuntime. Prepare its private image before final
++   ownership census. Preserve default two-card and existing live-step behavior.
++2. Extend OperatorStatePartition with explicit provider-private device IDs. Require
++   exact, disjoint classification of target mutable, canonical draft, pinned draft
++   and private runtime IDs; include those roles in sealed inventory evidence.
++3. Admit a synchronous op27 first at a quiescent target boundary. Preserve raw
++   final hidden and complete final ticket identities before shared slots can be
++   reused. Qualify d1 and all canonical draft bytes/host state against sequential
++   live_step replay on identical true pairs and head masks.
++4. Separately admit op27 while completed tentative target rows are pending only
++   under the independent partition. No target command, callback, snapshot or
++   suffix restore may run during the draft transaction. After it completes,
++   target abort must leave the newer canonical draft state and its private image
++   unchanged. Qualify that forced-rejection scenario before continuous overlap.
++5. Keep recursive proposal ancestry immutable. A fresh canonical guess may differ
++   from an already issued recursive guess without invalidating a correct parent;
++   a wrong parent invalidates all its descendants. Require every discarded target
++   suffix ACK before issuing corrected work.
++
++## Validation
++
++The lightweight test covers post-canonical restoration, 31/32/33 extent changes,
++no-head/capacity censoring, no default full readbacks, independent identity
++rebinding refusals, callback refusal before drain, and failure poisoning without
++recovery. The overlay script creates a fresh temporary source tree containing
++only the modified draft include, leaving canonical files untouched. A host-only
++`-fsyntax-only` compile checks the actual extension against the current full Engine
++and DraftRuntime definitions. It does not execute their kernels or initializer.
++
++The CPU receipt, source hashes and exact proposal patch are stored beside these
++files. These are implementation evidence, not measured rolling acceptance or a
++throughput result.

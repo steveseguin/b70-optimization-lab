@@ -72,6 +72,7 @@ template<class Owner> class StageCheckpointFor {
  }
 public:
  explicit StageCheckpointFor(Owner& engine,bool verify,const std::vector<Allocation>& pinned={},const OperatorStatePartition& partition={}):e(engine),verify_(verify){
+  require(partition.draft_private.empty(),"legacy wavefront refuses recursive provider-private ownership");
   require(e.a.pipeline_enabled()&&e.a.pipeline_wavefront&&e.resident&&(!e.a.mtp||e.a.pipeline_live_draft)&&!e.a.prefill_rows,"wavefront checkpoint mode");quiescent();
   partitioned=partition.enabled;require(partitioned==bool(e.a.pipeline_draft_partition&&e.a.mtp),"checkpoint partition mode mismatch");
   std::set<Allocation> excluded(partition.draft_device.begin(),partition.draft_device.end());

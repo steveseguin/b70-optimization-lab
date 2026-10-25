@@ -179,6 +179,7 @@ class DraftRuntime {
   a.push_back(scratch);a.push_back(id("error"));a.push_back(id("position"));a.push_back(id("active"));a.push_back(e.ropes[0]);return {s,a};
  }
 public:
+#include "pipeline/recursive_provider/draft_runtime_extension.inc"
  int live_position()const{return position;}
  int live_extent()const{return context_extent;}
  void live_reset_admission(){
@@ -277,6 +278,7 @@ public:
   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
   prepare_commands();
+  if(e.a.pipeline_ring_live_draft)prepare_recursive_depth2();
   if(depth_probe){
    for(auto allocation:mutable_ids)probe_bytes+=e.dev(0).arena.row(allocation).bytes;
    require(probe_bytes<=32ull*1024*1024,"depth probe mutable backup exceeds 32 MiB reserve");

@@ -1,0 +1,879 @@
+diff --git a/.github/workflows/own-engine-cpu.yml b/.github/workflows/own-engine-cpu.yml
+index bbe1d58d1..5aa6bd096 100644
+--- a/.github/workflows/own-engine-cpu.yml
++++ b/.github/workflows/own-engine-cpu.yml
+@@ -51,3 +51,10 @@ jobs:
+           /tmp/ownrt-ring-wire
+           g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I engine/src engine/planning/test_native_ring_checkpoint.cpp engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /tmp/ownrt-ring-checkpoint
+           /tmp/ownrt-ring-checkpoint /tmp/ownrt-ring-checkpoint-output
++      - name: Native recursive provider ownership without device access
++        working-directory: experiments/own-xpu-runtime
++        run: |
++          g++ -std=c++20 -O1 -I engine/src engine/planning/test_recursive_provider.cpp -lcrypto -o /tmp/ownrt-recursive-provider
++          /tmp/ownrt-recursive-provider
++          g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I engine/src engine/planning/test_recursive_provider_native.cpp engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /tmp/ownrt-recursive-provider-native
++          /tmp/ownrt-recursive-provider-native /tmp/ownrt-recursive-provider-output
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+index 3591cfbb8..4a57af65f 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -147,6 +147,7 @@ struct RetainSteps {
+ #include "pipeline/layout.hpp"
+ #include "pipeline/wavefront.hpp"
+ #include "pipeline/live_draft.hpp"
++#include "pipeline/recursive_provider/batch.hpp"
+ #include "pipeline/operator_state.hpp"
+ struct Options {
+   // --tp-replicate (2026-10-25, TP development): one rank process on two cards of one shared context, every launch
+@@ -155,6 +156,7 @@ struct Options {
+   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
+   std::vector<int> pipeline_boundaries;int pipeline_stage=-1;
+   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
++  bool pipeline_ring_live_draft=false,pipeline_ring_recursive_verify=false;fs::path pipeline_ring_final_shared;
+   bool pipeline_ring=false,pipeline_ring_verify=false;std::string pipeline_ring_request_sha256;int pipeline_ring_trace_limit=4096;
+   bool pipeline_enabled()const{return pipeline_stage>=0;}
+   bool pipeline_first()const{return pipeline_enabled()?pipeline_stage==0:rank==0;}
+@@ -207,6 +209,9 @@ static Options parse(int argc, char **argv) {
+     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
+     else if(k=="--gsq-packed") a.gsq_packed=true;
+     else if(k=="--tp-replicate") a.tp_replicate=true;
++    else if(k=="--pipeline-ring-live-draft")a.pipeline_ring_live_draft=true;
++    else if(k=="--pipeline-ring-recursive-verify-restore")a.pipeline_ring_recursive_verify=true;
++    else if(k=="--pipeline-ring-final-shared")a.pipeline_ring_final_shared=value();
+     else if(k=="--pipeline-ring")a.pipeline_ring=true;
+     else if(k=="--pipeline-ring-verify-restore")a.pipeline_ring_verify=true;
+     else if(k=="--pipeline-ring-request-sha256")a.pipeline_ring_request_sha256=value();
+@@ -306,6 +311,7 @@ static Options parse(int argc, char **argv) {
+     else
+       throw std::runtime_error("unknown option " + k);
+   }
++  if(a.pipeline_ring_live_draft){a.pipeline_live_draft=true;a.pipeline_draft_partition=true;}
+   if (a.canary && !seconds_supplied) a.seconds = 600;
+   require(a.cancel_launch>=-1,"cancel launch bound");
+ #ifndef OWN_RT_HOST_ONLY
+@@ -335,17 +341,21 @@ static Options parse(int argc, char **argv) {
+   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
+   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
+   require(a.rank>=-1 && a.rank<=1,"rank range");
++  require(!a.pipeline_ring_live_draft||(a.pipeline_ring&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests),"ring live draft requires exclusive ring owner");
++  require(!a.pipeline_ring_recursive_verify||(a.pipeline_ring_live_draft&&a.pipeline_first()),"recursive restore verification belongs to first ring-live stage");
++  require((a.pipeline_ring_live_draft&&a.pipeline_first())==!a.pipeline_ring_final_shared.empty(),"ring-live first stage requires final shared peer path");
++  require(a.pipeline_ring_final_shared.empty()||a.pipeline_ring_final_shared.is_absolute(),"ring final peer path must be absolute");
+   require(!a.pipeline_ring_verify||a.pipeline_ring,"ring restore verification requires ring mode");
+   require(a.pipeline_ring_trace_limit>=0&&a.pipeline_ring_trace_limit<=100000,"bounded ring trace limit");
+   require(a.pipeline_ring==!a.pipeline_ring_request_sha256.empty(),"ring mode requires explicit request SHA256 identity");
+   if(a.pipeline_ring){
+-   require(a.pipeline_enabled()&&!a.pipeline_wavefront&&!a.pipeline_live_draft&&!a.pipeline_draft_partition&&!a.pipeline_persistent_requests&&!a.mtp,"initial ring requires exclusive target-only pipeline owner");
++   require(a.pipeline_enabled()&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests&&(a.pipeline_ring_live_draft? (a.pipeline_live_draft&&a.pipeline_draft_partition&&a.mtp==a.pipeline_first()):(!a.pipeline_live_draft&&!a.pipeline_draft_partition&&!a.mtp)),"ring requires exclusive admitted target/provider owner");
+    require(a.retain_steps.ranges.empty()&&a.draft_rank==0,"ring requires retain-steps none and canonical target roles");
+    require(a.pipeline_ring_request_sha256.size()==64&&std::all_of(a.pipeline_ring_request_sha256.begin(),a.pipeline_ring_request_sha256.end(),[](char c){return(c>='0'&&c<='9')||(c>='a'&&c<='f');}),"ring request identity must be lowercase SHA256");
+   }
+   require(!a.pipeline_draft_partition||a.pipeline_live_draft,"draft partition requires live draft mode");
+   require(!a.pipeline_persistent_requests||a.pipeline_live_draft,"persistent pipeline requires live draft mode");
+-  require(!a.pipeline_live_draft||a.pipeline_wavefront,"live draft requires wavefront mode");
++  require(!a.pipeline_live_draft||a.pipeline_wavefront||a.pipeline_ring_live_draft,"live draft requires an explicit admitted mode");
+   require(!a.pipeline_wavefront||a.pipeline_enabled(),"wavefront requires explicit pipeline stages");
+   require(!a.pipeline_wavefront_verify||a.pipeline_wavefront,"wavefront restore check requires wavefront mode");
+   require(a.pipeline_wavefront_trace_limit>=0&&a.pipeline_wavefront_trace_limit<=100000,"bounded wavefront trace limit");
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+index 44110c7cf..56ea1034b 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+@@ -179,6 +179,7 @@ class DraftRuntime {
+   a.push_back(scratch);a.push_back(id("error"));a.push_back(id("position"));a.push_back(id("active"));a.push_back(e.ropes[0]);return {s,a};
+  }
+ public:
++#include "pipeline/recursive_provider/draft_runtime_extension.inc"
+  int live_position()const{return position;}
+  int live_extent()const{return context_extent;}
+  void live_reset_admission(){
+@@ -277,6 +278,7 @@ public:
+   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
+   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
+   prepare_commands();
++  if(e.a.pipeline_ring_live_draft)prepare_recursive_depth2();
+   if(depth_probe){
+    for(auto allocation:mutable_ids)probe_bytes+=e.dev(0).arena.row(allocation).bytes;
+    require(probe_bytes<=32ull*1024*1024,"depth probe mutable backup exceeds 32 MiB reserve");
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+index 61a2a64cc..9fb5f33cd 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -412,7 +412,7 @@ static int run_rank(const Options& a) {
+   OperatorStatePartition operator_partition;std::set<Allocation> before_provider;
+   if(a.pipeline_draft_partition&&a.pipeline_first())for(const auto& [id,owner]:engine->allocations)before_provider.insert(id);
+   if(a.pipeline_live_draft&&a.pipeline_first())provider=std::make_unique<mtp36::DraftRuntime>(*engine);
+-  if(a.pipeline_draft_partition&&provider)operator_partition=admit_operator_partition(*engine,before_provider,provider->live_mutable_inventory(),provider->live_pinned_inventory());
++  if(a.pipeline_draft_partition&&provider)operator_partition=admit_operator_partition(*engine,before_provider,provider->live_mutable_inventory(),provider->live_pinned_inventory(),provider->live_private_recursive_inventory());
+   if(a.pipeline_wavefront){
+    wave_ledger.emplace(a.pipeline_final(),engine->p.g.context,engine->p.g.vocab);
+    wave_checkpoint=std::make_unique<StageCheckpoint>(*engine,a.pipeline_wavefront_verify,provider?provider->live_pinned_inventory():std::vector<Allocation>{},operator_partition);
+@@ -420,7 +420,7 @@ static int run_rank(const Options& a) {
+   }
+   if(a.pipeline_ring){
+    ownrt::ring_next::Digest request{};for(size_t i=0;i<request.size();++i)request[i]=uint8_t(std::stoul(a.pipeline_ring_request_sha256.substr(2*i,2),nullptr,16));
+-   ring_dispatcher=std::make_unique<ring_next::Dispatcher>(*engine,image,operator_partition,static_cast<uint8_t*>(mapping),shared_bytes,a.pipeline_ring_verify,0,request);
++   ring_dispatcher=std::make_unique<ring_next::Dispatcher>(*engine,image,operator_partition,static_cast<uint8_t*>(mapping),shared_bytes,a.pipeline_ring_verify,0,request,provider.get());
+   }
+ #ifndef OWN_RT_HOST_ONLY
+   if(a.rank==0&&!a.gsq_packed)weights->warm_lookups();
+@@ -439,7 +439,7 @@ static int run_rank(const Options& a) {
+     <<",\"begin\":"<<a.pipeline_boundaries[a.pipeline_stage]<<",\"end\":"<<a.pipeline_boundaries[a.pipeline_stage+1]
+     <<",\"first\":"<<(a.pipeline_first()?"true":"false")<<",\"final\":"<<(a.pipeline_final()?"true":"false")
+     <<",\"activation_dtype\":\"F32\",\"stream_bytes\":"<<engine->stream_bytes()<<",\"boundaries\":[";
+-   for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":"<<ownrt::quote(a.pipeline_ring?"verified-ring":(a.pipeline_wavefront?"wavefront":"target-only"))<<",\"speculation_enabled\":"<<((a.pipeline_wavefront||a.pipeline_ring)?"true":"false")<<",\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]";if(a.pipeline_ring)o<<",\"ring_capacity\":2,\"depth\":2,\"ring_epoch\":0,\"ring_request_sha256\":"<<ownrt::quote(a.pipeline_ring_request_sha256);o<<"}";save(a.output/"pipeline-stage.json",o.str());
++   for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":"<<ownrt::quote(a.pipeline_ring?(a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring"):(a.pipeline_wavefront?"wavefront":"target-only"))<<",\"speculation_enabled\":"<<((a.pipeline_wavefront||a.pipeline_ring)?"true":"false")<<",\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]";if(a.pipeline_ring)o<<",\"ring_capacity\":2,\"depth\":2,\"ring_epoch\":0,\"ring_request_sha256\":"<<ownrt::quote(a.pipeline_ring_request_sha256);if(a.pipeline_ring_live_draft)o<<",\"provider_borrow_mode\":\"quiescent-target\"";o<<"}";save(a.output/"pipeline-stage.json",o.str());
+   }
+   Reply ready{};ready.rank=a.rank;if(a.pipeline_enabled()){ready.reserved[0]=a.pipeline_stage;ready.reserved[1]=a.pipeline_final();ready.bytes=int32_t(engine->stream_bytes());}transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+   ownrt::live_draft::Sequence live_draft_sequence;
+@@ -448,7 +448,7 @@ static int run_rank(const Options& a) {
+    if(a.rank==1)engine->reply_report.before(r.op);
+    auto received=std::chrono::steady_clock::now();
+    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
+-   if(a.pipeline_ring&&ring_next::Dispatcher::handles(r.op)){auto reply=ring_dispatcher->execute(r);if(r.op==ownrt::ring_next::wire::accept_op&&r.fixture>0)++accepted;return reply;}
++   if(a.pipeline_ring&&ring_dispatcher->handles_command(r.op)){auto reply=ring_dispatcher->execute(r);if(r.op==ownrt::ring_next::wire::accept_op&&r.fixture>0)++accepted;return reply;}
+    if(a.pipeline_ring)ring_dispatcher->boundary();
+    if(a.pipeline_wavefront&&(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op)){
+     auto& ledger=*wave_ledger;auto& checkpoint=*wave_checkpoint;auto started=std::chrono::steady_clock::now();double checkpoint_ms=0;int ticket=r.sequence;bool tentative=false;
+@@ -562,7 +562,7 @@ static int run_rank(const Options& a) {
+     require(a.rank==1&&native_active&&!c.pending&&engine->sealed_selection.choices.at("probe")=="xchg","p149 miss responder ownership");
+     require(bool(probe),"p149 probe absent");probe->serve_correction([&]{if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();});
+    }
+-   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();if(provider)provider->flush_depth_probe();state_dump(*engine,r.position);if(a.pipeline_ring)ring_dispatcher->attest(engine->a.output/("state-"+std::to_string(r.position)+".ring-state.json"),r.position);if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/("state-"+std::to_string(r.position)+".draft"));if(a.pipeline_wavefront)wave_checkpoint->attest(*wave_ledger,engine->a.output/("state-"+std::to_string(r.position)+".wavefront-state.json"),r.position);if(engine->a.tp_replicate)tp_compare(*engine,a.output/"tp-replicate-compare.json");if(r.position==2147483647)request_state_inventory(*engine);}
++   else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();if(provider)provider->flush_depth_probe();state_dump(*engine,r.position);if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/("state-"+std::to_string(r.position)+".draft"));if(a.pipeline_ring)ring_dispatcher->attest(engine->a.output/("state-"+std::to_string(r.position)+".ring-state.json"),r.position);if(a.pipeline_wavefront)wave_checkpoint->attest(*wave_ledger,engine->a.output/("state-"+std::to_string(r.position)+".wavefront-state.json"),r.position);if(engine->a.tp_replicate)tp_compare(*engine,a.output/"tp-replicate-compare.json");if(r.position==2147483647)request_state_inventory(*engine);}
+    else if(r.op==11){image.boundary();v3state.reset();
+     const auto metadata=a.output/("reset-"+std::to_string(r.sequence)+".txt");
+     if(a.pipeline_persistent_requests){require(!r.token&&!r.position&&!r.fixture&&!r.speculative,"persistent reset zero payload");persistent_reset(*engine,c,provider.get(),*wave_checkpoint,*wave_ledger,live_draft_sequence,a.output,metadata,accepted,r.sequence,static_cast<uint8_t*>(mapping),shared_bytes,wave_trace,wave_trace_rows,wave_trace_omitted);wave_output=-1;}
+@@ -587,7 +587,7 @@ static int run_rank(const Options& a) {
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+    if(a.pipeline_enabled()){
+     require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
+-    if(a.pipeline_ring)require(ring_next::Dispatcher::handles(r.op)||((r.op==dump||r.op==finish)&&!r.speculative),"ring command admission");
++    if(a.pipeline_ring)require(ring_dispatcher->handles_command(r.op)||((r.op==dump||r.op==finish)&&!r.speculative),"ring command admission");
+     else if(a.pipeline_wavefront)require(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op||(a.pipeline_live_draft&&a.pipeline_first()&&r.op==ownrt::live_draft::step_op&&!r.speculative)||(a.pipeline_persistent_requests&&r.op==11&&!r.speculative)||((r.op==dump||r.op==finish)&&!r.speculative),"wavefront command admission");
+     else require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
+    }
+diff --git a/experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp b/experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp
+index 8642f2bae..7528c9bdf 100644
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp
+@@ -72,6 +72,7 @@ template<class Owner> class StageCheckpointFor {
+  }
+ public:
+  explicit StageCheckpointFor(Owner& engine,bool verify,const std::vector<Allocation>& pinned={},const OperatorStatePartition& partition={}):e(engine),verify_(verify){
++  require(partition.draft_private.empty(),"legacy wavefront refuses recursive provider-private ownership");
+   require(e.a.pipeline_enabled()&&e.a.pipeline_wavefront&&e.resident&&(!e.a.mtp||e.a.pipeline_live_draft)&&!e.a.prefill_rows,"wavefront checkpoint mode");quiescent();
+   partitioned=partition.enabled;require(partitioned==bool(e.a.pipeline_draft_partition&&e.a.mtp),"checkpoint partition mode mismatch");
+   std::set<Allocation> excluded(partition.draft_device.begin(),partition.draft_device.end());
+diff --git a/experiments/own-xpu-runtime/engine/src/pipeline/operator_state.hpp b/experiments/own-xpu-runtime/engine/src/pipeline/operator_state.hpp
+index 841ad5c5c..0bb06bdb3 100644
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/operator_state.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/operator_state.hpp
+@@ -4,22 +4,26 @@
+ namespace pipeline {
+ struct OperatorStatePartition {
+  bool enabled=false;
+- std::vector<Allocation> target_device,draft_device,draft_pinned;
++ std::vector<Allocation> target_device,draft_device,draft_pinned,draft_private;
+ };
+ template<class Owner> OperatorStatePartition admit_operator_partition(
+- Owner& e,const std::set<Allocation>& before,const std::vector<Allocation>& draft,const std::vector<Allocation>& pinned){
++ Owner& e,const std::set<Allocation>& before,const std::vector<Allocation>& draft,const std::vector<Allocation>& pinned,const std::vector<Allocation>& private_ids={}){
+  require(e.a.pipeline_live_draft&&e.a.pipeline_first()&&e.a.mtp,"operator partition live owner");
+  require(!before.empty()&&!draft.empty()&&pinned.size()==2,"operator partition complete inventories");
+- std::set<Allocation> declared(draft.begin(),draft.end()),actual;
++ std::set<Allocation> declared(draft.begin(),draft.end()),private_set(private_ids.begin(),private_ids.end()),actual;
++ require(private_set.size()==private_ids.size(),"duplicate provider-private ownership");
++ for(auto id:private_ids){const auto& row=e.dev(0).arena.row(id);require(!declared.count(id)&&!before.count(id)&&e.allocations.count(id)&&row.live&&row.memory==Memory::device&&row.category==Category::runtime_overhead&&row.label=="card0:draft:recursive-private-image", "invalid provider-private image ownership");}
++ require(private_ids.size()<=1,"bounded provider-private image count");
+  require(declared.size()==draft.size(),"duplicate provider device ownership");
+  OperatorStatePartition result;result.enabled=true;
+- for(auto id:before){require(e.allocations.count(id)&&!declared.count(id),"provider aliases preexisting target allocation");}
++ for(auto id:before){require(e.allocations.count(id)&&!declared.count(id)&&!private_set.count(id),"provider aliases preexisting target allocation");}
+  for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
+   require(owner.first==0&&row.live&&row.memory==Memory::device,"operator partition device census");
+-  if(row.category==Category::weights){require(!declared.count(id),"provider mutable declaration contains weight");continue;}
+-  if(before.count(id))result.target_device.push_back(id);else {actual.insert(id);result.draft_device.push_back(id);}
++  if(row.category==Category::weights){require(!declared.count(id)&&!private_set.count(id),"provider mutable declaration contains weight");continue;}
++  if(before.count(id))result.target_device.push_back(id);else {actual.insert(id);if(private_set.count(id))result.draft_private.push_back(id);else result.draft_device.push_back(id);}
+  }
+- require(actual==declared,"provider mutable inventory incomplete or unknown allocation");
++ auto complete=declared;complete.insert(private_set.begin(),private_set.end());
++ require(actual==complete,"provider mutable inventory incomplete or unknown allocation");
+  std::set<Allocation> unique;
+  for(auto id:pinned){const auto& row=e.dev(0).arena.row(id);
+   require(unique.insert(id).second&&!e.allocations.count(id)&&row.live&&row.memory==Memory::pinned,"operator pinned ownership");
+diff --git a/experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp b/experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp
+index 474a2adb7..b70aa98d8 100644
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp
+@@ -6,7 +6,7 @@ template<class Owner> class CheckpointRingFor {
+  Owner& e;bool verify;
+  struct Item {Allocation id;size_t bytes,offset;std::string label;};
+  struct Independent {Allocation id;size_t bytes;Memory memory;std::string label;};
+- std::vector<Item> items,excluded_private;std::vector<Independent> independent;
++ std::vector<Item> items,excluded_private;std::vector<Independent> independent,independent_private;
+  size_t bytes_=0,table_rows=0,tiles=0,allocation_count=0;
+  struct Metadata {
+   unsigned parity=0;int active=0,spare=1,extent=32,alternate=32;int64_t history0=0,history1=0;
+@@ -28,6 +28,7 @@ template<class Owner> class CheckpointRingFor {
+  void inventory(){
+   require(e.allocations.size()==allocation_count,"ring allocation census changed");
+   for(const auto& item:items){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==Memory::device&&r.bytes==item.bytes&&r.label==item.label,"ring target allocation changed");}
++  for(const auto& item:independent_private){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==item.memory&&r.bytes==item.bytes&&r.label==item.label,"ring provider-private allocation changed");}
+   for(const auto& item:independent){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==item.memory&&r.bytes==item.bytes&&r.label==item.label,"ring independent draft allocation changed");}
+  }
+  void prepare(Slot& slot,bool reverse){
+@@ -65,14 +66,17 @@ public:
+  CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition):e(owner),verify(full_byte_verification){
+   idle();require(e.resident&&e.a.pipeline_enabled()&&!e.a.prefill_rows,"ring resident scalar owner");
+   require(!e.a.mtp||partition.enabled,"ring provider needs independent state partition");
++  std::set<Allocation> private_ids(partition.draft_private.begin(),partition.draft_private.end());
+   std::set<Allocation> draft(partition.draft_device.begin(),partition.draft_device.end()),target(partition.target_device.begin(),partition.target_device.end());
+   require(!partition.enabled||(!draft.empty()&&draft.size()==partition.draft_device.size()&&target.size()==partition.target_device.size()),"ring explicit complete ownership");
+   for(auto id:partition.draft_device){const auto& row=e.dev(0).arena.row(id);require(e.allocations.count(id)&&row.live&&row.memory==Memory::device&&row.category!=Category::weights&&!target.count(id),"ring draft device identity");independent.push_back({id,row.bytes,row.memory,row.label});}
++  require(private_ids.size()==partition.draft_private.size()&&private_ids.size()<=1,"ring provider-private census");
++  for(auto id:private_ids){const auto& row=e.dev(0).arena.row(id);require(partition.enabled&&e.allocations.count(id)&&!target.count(id)&&!draft.count(id)&&row.live&&row.memory==Memory::device&&row.category==Category::runtime_overhead&&row.label=="card0:draft:recursive-private-image","ring explicit provider-private image");independent_private.push_back({id,row.bytes,row.memory,row.label});}
+   std::set<Allocation> pinned;
+   for(auto id:partition.draft_pinned){const auto& row=e.dev(0).arena.row(id);require(pinned.insert(id).second&&!e.allocations.count(id)&&row.live&&row.memory==Memory::pinned,"ring draft pinned identity");independent.push_back({id,row.bytes,row.memory,row.label});}
+   require(!partition.enabled||pinned.size()==2,"ring pinned provider inventory");
+   for(const auto& [id,where]:e.allocations){const auto& row=e.dev(where.first).arena.row(id);require(where.first==0&&row.live&&row.memory==Memory::device,"ring owner census");if(row.category==Category::weights)continue;
+-   if(partition.enabled){require(target.count(id)!=draft.count(id),"ring overlapping/unassigned mutable allocation");if(draft.count(id))continue;}
++   if(partition.enabled){require(target.count(id)+draft.count(id)+private_ids.count(id)==1,"ring overlapping/unassigned mutable allocation");if(draft.count(id)||private_ids.count(id))continue;}
+    if(row.label=="card0:speculative-private-image"||row.label=="card0:speculative-copy-table"||row.label=="card0:speculative-static-copy-table"){require(row.category==Category::runtime_overhead,"ring legacy private identity");excluded_private.push_back({id,row.bytes,0,row.label});continue;}
+    require(!row.label.starts_with("card0:wavefront-")&&!row.label.starts_with("card0:ring:"),"ring cannot coexist with another snapshot owner");
+    require(row.bytes>0&&row.bytes<=256ull*1024*1024&&bytes_<=256ull*1024*1024-row.bytes,"ring aggregate two-slot backup bound");
+@@ -102,13 +106,15 @@ public:
+   e.admit_position(0);if(e.a.pipeline_first()&&e.alternate_context_extent!=32){e.swap_state_banks();e.admit_position(0);e.swap_state_banks();}
+   for(auto& s:slots){prepare(s,false);prepare(s,true);s.shared=nullptr;s.output.fill(0);s.metadata={};}inventory();captures_=restores_=byte_checks_=releases_=0;
+  }
+- void write_layout(const fs::path& path){
+-  inventory();require(independent.empty(),"initial ring layout requires absent provider");
+-  std::ostringstream o;o<<"{\"schema\":\"ownrt.ring-checkpoint-layout.v1\",\"complete_target_owned_mutable_allocations\":true,\"provider_present\":false,\"ring_capacity\":2,\"slot_bytes\":"<<bytes_<<",\"allocations\":[";
++ void write_layout(const fs::path& path,bool live=false){
++  inventory();require(live||(independent.empty()&&independent_private.empty()),"target-only ring layout requires absent provider");
++  std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(live?"ownrt.ring-checkpoint-layout.live.v1":"ownrt.ring-checkpoint-layout.v1")<<",\"complete_target_owned_mutable_allocations\":true,\"provider_present\":"<<(independent.empty()?"false":"true")<<",\"ring_capacity\":2,\"slot_bytes\":"<<bytes_<<",\"allocations\":[";
+   auto item_json=[&](Allocation id,const std::string& label,size_t bytes){o<<"{\"id\":"<<id<<",\"label\":"<<ownrt::quote(label)<<",\"bytes\":"<<bytes<<"}";};
+   for(size_t i=0;i<items.size();++i){if(i)o<<',';item_json(items[i].id,items[i].label,items[i].bytes);}o<<"],\"excluded_private_runtime_allocations\":[";
+   for(size_t i=0;i<excluded_private.size();++i){if(i)o<<',';const auto& item=excluded_private[i];o<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"reason\":\"inactive-legacy-snapshot\"}";}o<<"],\"checkpoint_private_allocations\":[";
+-  bool comma=false;for(const auto& slot:slots)for(auto id:{slot.image,slot.capture_table,slot.restore_table}){if(comma)o<<',';const auto& row=e.dev(0).arena.row(id);item_json(id,row.label,row.bytes);comma=true;}o<<"]}";save(path,o.str());
++  bool comma=false;for(const auto& slot:slots)for(auto id:{slot.image,slot.capture_table,slot.restore_table}){if(comma)o<<',';const auto& row=e.dev(0).arena.row(id);item_json(id,row.label,row.bytes);comma=true;}o<<"]";
++  if(live){auto emit=[&](const auto& rows){bool comma=false;for(const auto& item:rows){o<<(comma?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"memory\":"<<ownrt::quote(item.memory==Memory::pinned?"pinned":"device")<<"}";comma=true;}};o<<",\"independent_draft_allocations\":[";emit(independent);o<<"],\"provider_private_allocations\":[";emit(independent_private);o<<"]";}
++  o<<"}";save(path,o.str());
+  }
+  void boundary(){idle();inventory();for(const auto& slot:slots)require(!slot.active,"ring active slot at boundary");}
+  uint64_t releases()const{return releases_;}
+diff --git a/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp b/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
+index bbb576f56..1f4f17822 100644
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
+@@ -2,7 +2,8 @@
+ #include "wire.hpp"
+ #include "checkpoint_ring.hpp"
+ #include "engine_backend.hpp"
+-// Opt-in concrete command24..26 handler. Include after existing native
++#include "pipeline/recursive_provider/admission.hpp"
++// Opt-in ring24..26 and separately admitted quiescent provider27 handler. Include after existing native
+ // Request/Reply,half_step,publish,reverse_ready. Existing handlers20..23 untouched.
+ namespace pipeline::ring_next {
+ class Dispatcher {
+@@ -10,6 +11,7 @@ class Dispatcher {
+  ownrt::ring_next::wire::Context context;
+  CheckpointRingFor<Engine> checkpoints;
+  EngineBackend backend;
++ mtp36::DraftRuntime* provider=nullptr;std::unique_ptr<pipeline::recursive_provider::Peer> peer;std::optional<ownrt::recursive_provider_next::Sequence> provider_sequence;std::ofstream draft_trace;uint64_t draft_trace_rows=0,draft_trace_omitted=0,provider_borrows_while_target_pending=0;
+  ownrt::ring_next::StageRing<EngineBackend> ring;std::ofstream trace;uint64_t trace_rows=0,trace_omitted=0;
+  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
+  void final_hidden(const ownrt::ring_next::Row& row,int commit_sequence,int next_token,Reply& reply){
+@@ -21,19 +23,22 @@ class Dispatcher {
+   ownrt::live_draft::validate(h,context.stream_bytes,context.stages,context.vocab);std::memcpy(area(ownrt::live_draft::header_offset,sizeof h).data(),&h,sizeof h);reply.bytes=h.bytes;reply.token=h.next_token;
+  }
+ public:
+- Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,std::function<void()> reset_owner={})
++ Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,mtp36::DraftRuntime* draft=nullptr)
+   :e(owner),shared(mapping),mapped_bytes(mapping_bytes),verify(full_byte_verify),
+    context{epoch,request,owner.a.pipeline_stage,int(owner.a.pipeline_boundaries.size()-1),int(owner.stream_bytes()),owner.p.g.vocab},
+-   checkpoints(owner,full_byte_verify,partition),backend(owner,legacy,checkpoints,mapping,std::move(reset_owner)),
++   checkpoints(owner,full_byte_verify,partition),backend(owner,legacy,checkpoints,mapping),provider(draft),
+    ring(backend,owner.a.pipeline_final(),partition.enabled,owner.p.g.context,owner.p.g.vocab,epoch,request,ownrt::ring_next::request_prefix(request,epoch)){
+   require(shared&&mapped_bytes==shared_bytes&&owner.a.pipeline_enabled(),"ring dispatcher mapping/mode");ownrt::ring_next::wire::context(context);legacy.boundary();
+-  require(owner.a.pipeline_ring&&!owner.a.pipeline_wavefront&&!owner.a.mtp&&!partition.enabled&&!owner.a.pipeline_live_draft,"ring exclusive target-only owner");
+-  checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json");
++  require(owner.a.pipeline_ring&&!owner.a.pipeline_wavefront,"ring exclusive owner");
++  require(bool(provider)==bool(owner.a.pipeline_ring_live_draft&&owner.a.pipeline_first())&&partition.enabled==bool(provider),"ring exact provider/partition ownership");
++  if(provider){require(provider->recursive_image&&provider->live_private_recursive_inventory()==partition.draft_private,"ring recursive private image census");peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_final_shared);provider_sequence.emplace(context);draft_trace.open(e.a.output/"ring-draft-batches.jsonl");require(bool(draft_trace),"ring recursive trace open");}
++  checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json",owner.a.pipeline_ring_live_draft);
+   trace.open(e.a.output/"ring.jsonl");require(bool(trace),"ring trace open");
+  }
++ bool handles_command(int op)const{return handles(op)||(e.a.pipeline_ring_live_draft&&provider&&op==ownrt::ring_next::wire::batch_op);}
+  static bool handles(int op){return op==24||op==25||op==26;}
+  Reply execute(const Request& r){
+-  namespace wire=ownrt::ring_next::wire;require(handles(r.op),"ring dispatcher only owns24..26");
++  namespace wire=ownrt::ring_next::wire;if(r.op==wire::batch_op)return draft_batch(r);require(handles(r.op),"ring dispatcher only owns admitted commands");
+   const auto started=std::chrono::steady_clock::now();const double gpu_before=e.gemv_ms+e.nongemv_ms;
+   wire::Command command{r.op,r.token,r.position,r.fixture,r.speculative,r.sequence,r.reserved[0],r.reserved[1]};
+   const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
+@@ -41,7 +46,7 @@ public:
+   Reply reply{};reply.sequence=r.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=context.stage==context.stages-1;
+   if(r.op==wire::row_op){
+    const auto bytes=e.a.pipeline_first()?std::span<uint8_t>{}:area(slot_bytes,context.stream_bytes);std::vector<uint8_t> owned(bytes.begin(),bytes.end());
+-   const auto row=wire::row(meta,command,context,owned);backend.stage_input(std::move(owned));const auto& completed=ring.execute(row);
++   const auto row=wire::row(meta,command,context,owned);require(!e.a.pipeline_ring_live_draft||!row.tentative,"initial ring-live refuses tentative target rows");if(e.a.pipeline_ring_live_draft&&e.a.pipeline_final())ownrt::recursive_provider::invalidate(shared);backend.stage_input(std::move(owned));const auto& completed=ring.execute(row);
+    reply.token=completed.token;reply.bytes=int32_t(completed.stream.size());
+    require(completed.stream.empty()||completed.stream.size()==size_t(context.stream_bytes),"ring complete native stream result");
+    if(!completed.stream.empty())std::memcpy(area(0,completed.stream.size()).data(),completed.stream.data(),completed.stream.size());
+@@ -53,7 +58,10 @@ public:
+    discarded=resolved.discarded;
+    const auto acknowledgment=wire::acknowledgment(context,r.sequence,row,resolved,checkpoints.byte_checks()>prior_checks);
+    wire::write(area(wire::ack_offset,sizeof acknowledgment),acknowledgment);
+-   if(r.op==wire::accept_op&&e.a.pipeline_final())final_hidden(row,r.sequence,next_token,reply);
++   if(r.op==wire::accept_op&&e.a.pipeline_final()){
++    if(e.a.pipeline_ring_live_draft){Reply ignored{};final_hidden(row,r.sequence,next_token,ignored);ownrt::recursive_provider::FinalRecord record;record.stage=context.stage;record.published_sequence=r.sequence;record.row=meta;record.row.publication_ticket=row.ticket;std::memcpy(&record.hidden,area(ownrt::live_draft::header_offset,sizeof(record.hidden)).data(),sizeof(record.hidden));ownrt::recursive_provider::validate_final_record(record,context,area(ownrt::live_draft::hidden_offset,context.stream_bytes));ownrt::recursive_provider::publish(shared,record);}
++    else final_hidden(row,r.sequence,next_token,reply);
++   }
+   }
+   if(trace_rows<size_t(e.a.pipeline_ring_trace_limit)){
+    trace<<"{\"op\":"<<r.op<<",\"sequence\":"<<r.sequence<<",\"row_id\":"<<meta.id<<",\"parent_id\":"<<meta.parent<<",\"position\":"<<meta.position<<",\"token\":"<<meta.token<<",\"fixture\":"<<meta.fixture<<",\"tentative\":"<<((meta.flags&wire::tentative)?"true":"false")<<",\"physical\":"<<ring.physical()<<",\"committed\":"<<ring.committed()<<",\"pending\":"<<ring.pending()<<",\"discarded\":[";
+@@ -62,7 +70,24 @@ public:
+   reply.busy_ms=Engine::ms(started);reply.gpu_ms=e.gemv_ms+e.nongemv_ms-gpu_before;
+   return reply;
+  }
+- // Initial ring integration refuses RESET and all provider commands.
++ Reply draft_batch(const Request& request){
++  namespace wire=ownrt::ring_next::wire;
++  require(e.a.pipeline_ring_live_draft&&provider&&peer&&provider_sequence&&request.op==wire::batch_op,"ring recursive command owner");
++  const auto started=std::chrono::steady_clock::now();const double gpu=e.gemv_ms+e.nongemv_ms;
++  require(!ring.pending(),"ring-live first gate requires quiescent target");ring.boundary();checkpoints.boundary();provider_borrows_while_target_pending+=ring.pending()?1:0;
++  const auto seed=ring.last_accepted();require(seed.position>0&&ring.committed()==seed.position+1,"ring recursive accepted seed frontier");
++  const auto event=peer->capture(context,e.a.output/"ring-final-peer.json");
++  auto admitted=pipeline::recursive_provider::admit_batch(request,context,seed,event,area(wire::row_offset,sizeof(wire::RowMeta)),area(ownrt::live_draft::header_offset,sizeof(ownrt::live_draft::Handoff)),area(slot_bytes,context.stream_bytes),provider_sequence->serial()+1);
++  const auto& input=admitted.input;const auto& pair=admitted.expected;
++  const auto batch=ring.draft(request.sequence,[&](){return provider->live_recursive_depth2(*provider_sequence,input,pair,e.a.pipeline_ring_recursive_verify);});
++  wire::write(area(wire::proposal_offset,sizeof batch),batch);const auto& result=provider_sequence->last_result();
++  if(draft_trace_rows<size_t(e.a.pipeline_ring_trace_limit)){
++   draft_trace<<"{\"sequence\":"<<request.sequence<<",\"provider_serial\":"<<batch.provider_serial<<",\"seed_row\":"<<batch.seed_row<<",\"parent_row\":"<<batch.parent_row<<",\"seed_position\":"<<batch.seed_position<<",\"confirmed_token\":"<<seed.token<<",\"fixture\":"<<seed.fixture<<",\"parent_final_ticket\":"<<input.parent.row_ticket<<",\"parent_final_commit\":"<<input.parent.commit_sequence<<",\"hidden_sha256\":"<<ownrt::quote(hash(input.hidden))<<",\"guesses\":[";
++   for(size_t i=0;i<result.guesses.size();++i)draft_trace<<(i?",":"")<<result.guesses[i];draft_trace<<"],\"restored_position\":"<<batch.restored_position<<",\"snapshot_bytes\":"<<result.snapshot_bytes<<",\"mutable_bytes_verified\":"<<(result.byte_verified?"true":"false")<<",\"canonical_ms\":"<<result.canonical_ms<<",\"capture_ms\":"<<result.capture_ms<<",\"recursive_ms\":"<<result.recursive_ms<<",\"restore_ms\":"<<result.restore_ms<<"}\n";draft_trace.flush();require(bool(draft_trace),"ring recursive trace write");++draft_trace_rows;
++  }else ++draft_trace_omitted;
++  Reply reply{};reply.sequence=request.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=0;reply.token=batch.guess0;reply.bytes=sizeof batch;reply.busy_ms=Engine::ms(started);reply.gpu_ms=e.gemv_ms+e.nongemv_ms-gpu;return reply;
++ }
++ // Ring modes refuse RESET; provider27 is separately admitted at a quiescent target.
+  void attest(const fs::path& destination={},int dump_marker=-1){
+   ring.boundary();checkpoints.boundary();const int position=e.integer(0,"position");
+   require(position==ring.committed()&&uint64_t(position)==ring.commits,"ring canonical position/commit conservation");
+@@ -78,13 +103,21 @@ public:
+    while(done<bytes.size()){auto n=::pread(fd,bytes.data()+done,bytes.size()-done,off_t(done));if(n<0&&errno==EINTR)continue;require(n>0,"ring bounded evidence read");done+=size_t(n);}
+    require(!::fstat(fd,&after)&&!::lstat(path.c_str(),&named)&&S_ISREG(named.st_mode)&&before.st_dev==after.st_dev&&before.st_ino==after.st_ino&&before.st_size==after.st_size&&before.st_mtim.tv_sec==after.st_mtim.tv_sec&&before.st_mtim.tv_nsec==after.st_mtim.tv_nsec&&before.st_ctim.tv_sec==after.st_ctim.tv_sec&&before.st_ctim.tv_nsec==after.st_ctim.tv_nsec&&before.st_dev==named.st_dev&&before.st_ino==named.st_ino,"ring evidence identity changed");return hash(bytes);
+   };
++  if(e.a.pipeline_ring_live_draft){require(!ring.tentative_rows&&!ring.abort_count&&!ring.discarded_rows&&!checkpoints.captures(),"initial ring-live must contain only verified target rows");require(!provider_borrows_while_target_pending,"initial ring-live cannot borrow pending target");}
++  if(provider){provider->recursive_idle();require(provider->recursive_healthy()&&!provider->recursive_active&&provider->live_position()==std::max(0,position-1)&&provider_sequence->serial()==uint64_t(provider->live_position()),"ring canonical provider quiescence/position");require(provider->recursive_captures==provider->recursive_restores&&provider->recursive_verified_restores<=provider->recursive_restores,"ring recursive checkpoint conservation");}
+   const auto layout=file_hash(e.a.output/"ring-checkpoint-layout.json",1024*1024);
+   std::string seal;if(dump_marker>=0)seal=file_hash(e.a.output/("state-"+std::to_string(dump_marker))/"state-seal.txt",4096);
+-  std::ostringstream o;o<<"{\"schema\":\"ownrt.ring-state.v1\",\"mode\":\"verified-ring\",\"stage_id\":"<<context.stage<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)<<",\"ring_epoch\":"<<context.epoch<<",\"ring_capacity\":2,\"depth\":2,\"dump_marker\":"<<dump_marker<<",\"state_seal_sha256\":"<<ownrt::quote(seal)<<",\"checkpoint_layout_sha256\":"<<ownrt::quote(layout)
++  std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(e.a.pipeline_ring_live_draft?"ownrt.ring-state.live.v1":"ownrt.ring-state.v1")<<",\"mode\":"<<ownrt::quote(e.a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring")<<",\"stage_id\":"<<context.stage<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)<<",\"ring_epoch\":"<<context.epoch<<",\"ring_capacity\":2,\"depth\":2,\"dump_marker\":"<<dump_marker<<",\"state_seal_sha256\":"<<ownrt::quote(seal)<<",\"checkpoint_layout_sha256\":"<<ownrt::quote(layout)
+    <<",\"actual_position\":"<<position<<",\"committed_position\":"<<ring.committed()<<",\"pending_tickets\":0,\"active_slots\":0,\"sticky_error\":0,\"rows\":"<<ring.rows<<",\"tentative_rows\":"<<ring.tentative_rows<<",\"commits\":"<<ring.commits<<",\"accepted_tentative_rows\":"<<ring.accepted_tentative_rows<<",\"abort_count\":"<<ring.abort_count<<",\"discarded_rows\":"<<ring.discarded_rows<<",\"snapshot_captures\":"<<checkpoints.captures()<<",\"snapshot_releases\":"<<checkpoints.releases()<<",\"byteverified_restore_count\":"<<checkpoints.byte_checks()<<",\"saved_bytes\":"<<checkpoints.captures()*checkpoints.slot_bytes()<<",\"target_mutable_checkpoint_bytes\":"<<checkpoints.slot_bytes()
+    <<",\"restore_verification_enabled\":"<<(verify?"true":"false")<<",\"all_aborts_byte_verified\":"<<(checkpoints.byte_checks()==ring.abort_count?"true":"false")<<",\"max_pending\":"<<ring.max_pending<<",\"trace_records\":"<<trace_rows<<",\"trace_omitted\":"<<trace_omitted<<",\"bank_parity\":"<<e.bank_parity<<",\"inactive_alternate_banks\":[";
+   bool comma=false;for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"],\"canonical_bank_mapping\":{";comma=false;
+-  for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name)<<":{\"active_allocation\":"<<e.buffers[0].at(name).id<<",\"inactive_allocation\":"<<id<<"}";comma=true;}o<<"}}";
++  for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name)<<":{\"active_allocation\":"<<e.buffers[0].at(name).id<<",\"inactive_allocation\":"<<id<<"}";comma=true;}o<<"}";
++  if(e.a.pipeline_ring_live_draft){std::string draft_seal;if(provider&&dump_marker>=0)draft_seal=file_hash(e.a.output/("state-"+std::to_string(dump_marker)+".draft")/"state-seal.txt",4096);
++   o<<",\"provider_borrow_mode\":\"quiescent-target\",\"provider_present\":"<<(provider?"true":"false")<<",\"provider_borrows_while_target_pending\":"<<provider_borrows_while_target_pending<<",\"canonical_draft_state_seal_sha256\":"<<ownrt::quote(draft_seal)<<",\"provider_position\":";
++   if(provider)o<<provider->live_position();else o<<"null";
++   o<<",\"provider_serial\":"<<(provider_sequence?provider_sequence->serial():0)<<",\"provider_commands\":"<<(provider_sequence?provider_sequence->serial():0)<<",\"provider_recursive_active\":false,\"provider_snapshot_captures\":"<<(provider?provider->recursive_captures:0)<<",\"provider_snapshot_restores\":"<<(provider?provider->recursive_restores:0)<<",\"provider_byteverified_restore_count\":"<<(provider?provider->recursive_verified_restores:0)<<",\"provider_restore_verification_enabled\":"<<(e.a.pipeline_ring_recursive_verify?"true":"false")<<",\"provider_all_restores_byte_verified\":"<<(!provider||provider->recursive_restores==provider->recursive_verified_restores?"true":"false")<<",\"provider_private_bytes\":"<<(provider?provider->recursive_bytes:0)<<",\"provider_canonical_allocation_count\":"<<(provider?provider->live_mutable_inventory().size()+provider->live_pinned_inventory().size():0)<<",\"provider_trace_records\":"<<draft_trace_rows<<",\"provider_trace_omitted\":"<<draft_trace_omitted;
++  }
++  o<<"}";
+   const auto path=destination.empty()?e.a.output/"ring-quiescence.json":destination;
+   const auto text=o.str();struct stat prior{};const int found=::lstat(path.c_str(),&prior);
+   if(!found){require(dump_marker>=0&&S_ISREG(prior.st_mode),"ring attestation destination already exists or is not regular");const std::vector<uint8_t> expected(text.begin(),text.end());require(file_hash(path,1024*1024)==hash(expected),"ring sealed attestation changed");}
+diff --git a/experiments/own-xpu-runtime/engine/src/pipeline/ring/stage_ring.hpp b/experiments/own-xpu-runtime/engine/src/pipeline/ring/stage_ring.hpp
+index bd90503b4..3a06ff6fc 100644
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/stage_ring.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/stage_ring.hpp
+@@ -4,6 +4,7 @@
+ #include <algorithm>
+ #include <cstdint>
+ #include <deque>
++#include <optional>
+ #include <limits>
+ #include <openssl/sha.h>
+ #include <stdexcept>
+@@ -37,7 +38,7 @@ template<class Backend> class StageRing {
+  Backend& backend;bool final_,partitioned_,poisoned_=false;
+  int context_,vocab_,committed_=0,last_fixture_=0,last_sequence_=0,last_output_=-1;
+  uint64_t epoch_,last_id_=0,accepted_id_=0;
+- Digest request_,accepted_prefix_;
++ Digest request_,accepted_prefix_;std::optional<Row> accepted_row_;
+  struct Pending {Row row;int slot=-1;typename Backend::Result result;};
+  std::deque<Pending> pending_;
+  void healthy(){need(!poisoned_&&!backend.error(),"ring sticky/partial failure");backend.quiescent();}
+@@ -77,6 +78,7 @@ public:
+    pending_.push_back({row,slot,std::move(result)});last_id_=row.id;++rows;if(row.tentative)++tentative_rows;max_pending=std::max(max_pending,pending_.size());
+   });return pending_.back().result;
+  }
++ const Row& last_accepted()const{need(accepted_row_.has_value(),"ring has no accepted seed");return *accepted_row_;}
+  const typename Backend::Result& oldest_result(const Row& row){return oldest(row).result;}
+  Resolution accept(int command_sequence,const Row& row,int verified_token){
+   healthy();sequence(command_sequence);auto& entry=oldest(row);
+@@ -85,7 +87,7 @@ public:
+   return mutate(command_sequence,[&]{
+    backend.publish(entry.result);if(entry.slot>=0)backend.release(entry.slot);
+    if(final_&&row.fixture>0)last_output_=entry.result.token;
+-   accepted_id_=row.id;accepted_prefix_=row.after;last_fixture_=row.fixture;++committed_;++commits;if(row.tentative)++accepted_tentative_rows;pending_.pop_front();
++   accepted_id_=row.id;accepted_prefix_=row.after;accepted_row_=row;last_fixture_=row.fixture;++committed_;++commits;if(row.tentative)++accepted_tentative_rows;pending_.pop_front();
+    need(backend.position()==physical_before,"ring ACCEPT rewound physical execution");return receipt();
+   });
+  }
+@@ -109,7 +111,7 @@ public:
+   healthy();sequence(command_sequence);need(pending_.empty()&&backend.position()==committed_,"ring reset needs canonical boundary");
+   need(epoch_!=std::numeric_limits<uint64_t>::max()&&epoch==epoch_+1,"ring reset epoch must advance once without wrapping");
+   mutate(command_sequence,[&]{backend.reset();need(backend.position()==0&&!backend.error(),"ring reset cold state");
+-   epoch_=epoch;request_=request;accepted_prefix_=initial_prefix;accepted_id_=last_id_=0;committed_=last_fixture_=0;last_output_=-1;rows=tentative_rows=commits=accepted_tentative_rows=abort_count=discarded_rows=0;max_pending=0;
++   epoch_=epoch;request_=request;accepted_prefix_=initial_prefix;accepted_id_=last_id_=0;accepted_row_.reset();committed_=last_fixture_=0;last_output_=-1;rows=tentative_rows=commits=accepted_tentative_rows=abort_count=discarded_rows=0;max_pending=0;
+   });
+  }
+  void boundary(){healthy();need(pending_.empty()&&backend.position()==committed_,"ring uncommitted boundary");}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/admission.hpp
+@@ -0,0 +1,16 @@
++#pragma once
++#include "pipeline/recursive_provider/peer.hpp"
++namespace pipeline::recursive_provider {
++struct Admission {ownrt::recursive_provider_next::Input input;ownrt::recursive_provider_next::ExpectedPair expected;};
++inline Admission admit_batch(const Request& request,const ownrt::ring_next::wire::Context& context,const ownrt::ring_next::Row& seed,const Peer::Event& event,std::span<const uint8_t> metadata,std::span<const uint8_t> relay_header,std::span<const uint8_t> relay_hidden,uint64_t next_serial){
++ namespace wire=ownrt::ring_next::wire;require(context.stage==0&&seed.position>0&&request.sequence>0&&next_serial>0,"ring recursive admission owner/serial");
++ require(request.op==wire::batch_op&&request.token==seed.token&&request.position==seed.position&&request.fixture==int(seed.fixture>0)&&request.speculative==2&&request.reserved[0]==context.stage&&!request.reserved[1],"ring recursive command seed/head/depth");
++ wire::RowMeta expected;expected.epoch=seed.epoch;expected.id=seed.id;expected.parent=seed.parent;expected.position=seed.position;expected.token=seed.token;expected.fixture=seed.fixture;expected.owner=context.stage;expected.final=0;expected.flags=seed.tentative?wire::tentative:0;expected.request=seed.request;expected.before=seed.before;expected.after=seed.after;expected.payload_sha=wire::digest({});
++ const auto submitted=wire::read<wire::RowMeta>(metadata);require(!std::memcmp(&expected,&submitted,sizeof expected),"ring recursive metadata differs from owned accepted seed");
++ require(seed.parent==event.record.row.id&&seed.before==event.record.row.after&&seed.position==event.record.row.position+1,"ring recursive independent final ancestry");
++ Admission result;auto& input=result.input;input.seed=seed;input.sequence=request.sequence;input.head=request.fixture!=0;
++ input.parent=wire::read<ownrt::live_draft::Handoff>(relay_header);input.hidden.assign(relay_hidden.begin(),relay_hidden.end());require(input.hidden==event.hidden,"ring recursive relay bytes differ from final owner");
++ require(!std::memcmp(&input.parent,&event.record.hidden,sizeof(input.parent)),"ring recursive relay header differs from final owner");
++ result.expected={seed,event.record.hidden,next_serial};return result;
++}
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/batch.hpp
+@@ -0,0 +1,72 @@
++#pragma once
++// Opt-in canonical draft advancement and restored recursive proposal transaction.
++#include "pipeline/ring/wire.hpp"
++#include "pipeline/live_draft.hpp"
++#include <span>
++#include <chrono>
++namespace ownrt::recursive_provider_next {
++using ring_next::Digest;using ring_next::Row;using ring_next::need;
++template<class Admitted,class Drain> void quiesce(Admitted admitted,Drain drain){
++ need(admitted(),"depth2 exclusive owner before drain");drain();need(admitted(),"depth2 owner changed while draining");
++}
++struct Input {
++ Row seed;live_draft::Handoff parent;int sequence=0;bool head=false;
++ std::vector<uint8_t> hidden;
++};
++// Construct this from the independently retained verified seed and final COMMIT
++// record, not by decoding the Input a second time. The seed is a verified INPUT;
++// its own target row need not have executed. The coordinator owns these input
++// identities and parent final tickets; native admission checks the causal chain.
++struct ExpectedPair {Row seed;live_draft::Handoff parent;uint64_t provider_serial=0;};
++struct Result {int position=0;std::vector<int> guesses;bool byte_verified=false;size_t snapshot_bytes=0;double canonical_ms=0,capture_ms=0,recursive_ms=0,restore_ms=0;};
++// Provider owns a complete post-canonical checkpoint. No exception path submits
++// recovery copies: an invalid/failed branch poisons this owner and publishes none.
++template<class Provider> Result depth2(Provider& p,const Input& input,bool verify){
++ p.idle();need(p.healthy()&&p.position()+1==input.seed.position,"depth2 canonical position");
++ need(input.seed.token>=0&&input.seed.token<p.vocab(),"depth2 confirmed token");
++ const auto now=[](){return std::chrono::steady_clock::now();};const auto elapsed=[&](auto start){return std::chrono::duration<double,std::milli>(now()-start).count();};
++ const auto canonical_start=now();const int first=p.canonical(input.seed.token,input.seed.position,input.head,input.hidden);
++ p.idle();need(p.healthy()&&p.position()==input.seed.position,"depth2 canonical advancement");
++ need(input.head?(first>=0&&first<p.vocab()):first==-1,"depth2 canonical proposal bound");
++ Result result;result.canonical_ms=elapsed(canonical_start);result.position=p.position();if(input.head)result.guesses.push_back(first);
++ if(!input.head||p.position()>=p.context())return result;
++ const auto capture_start=now();p.capture();result.capture_ms=elapsed(capture_start);result.snapshot_bytes=p.snapshot_bytes();
++ const auto recursive_start=now();const int second=p.recursive(first);
++ p.idle();need(p.healthy()&&p.position()==input.seed.position+1&&second>=0&&second<p.vocab(),"depth2 hypothetical branch failure");
++ result.recursive_ms=elapsed(recursive_start);const auto restore_start=now();p.restore(verify);p.idle();need(p.healthy()&&p.position()==result.position,"depth2 post-canonical restore");
++ result.restore_ms=elapsed(restore_start);result.guesses.push_back(second);result.byte_verified=verify;return result;
++}
++class Sequence {
++ ring_next::wire::Context context_;int next_position_=1,last_sequence_=0,last_commit_=0;
++ uint64_t serial_=0;Row last_seed_{};bool poisoned_=false;Result last_result_{};
++ static std::string hex(const Digest& value){constexpr char digits[]="0123456789abcdef";std::string out;for(auto v:value){out+=digits[v>>4];out+=digits[v&15];}return out;}
++public:
++ explicit Sequence(ring_next::wire::Context context):context_(context){ring_next::wire::context(context);need(context.stage==0,"depth2 provider must belong to first stage");}
++ const Result& last_result()const{return last_result_;}
++ uint64_t serial()const{return serial_;}bool poisoned()const{return poisoned_;}
++ void admit(const Input& in,const ExpectedPair& expected)const{
++  need(!poisoned_&&in.sequence>last_sequence_&&serial_!=UINT64_MAX,"depth2 stale/failed command");
++  const auto& row=in.seed;const auto& h=in.parent;
++  need(row==expected.seed&&std::memcmp(&h,&expected.parent,sizeof h)==0&&expected.provider_serial==serial_+1,"depth2 retained verified seed/final commit binding");
++  need(row.fixture>=0&&in.head==(row.fixture>0),"depth2 canonical seed head mask");
++  live_draft::validate(h,context_.stream_bytes,context_.stages,context_.vocab);
++  need(in.hidden.size()==size_t(context_.stream_bytes)&&hex(ring_next::wire::digest(in.hidden))==std::string(h.hidden_sha256.data(),h.hidden_sha256.size()),"depth2 owned raw hidden SHA");
++  need(row.epoch==context_.epoch&&row.request==context_.request&&row.id>row.parent&&row.parent>0&&row.position==next_position_&&row.token>=0&&row.token<context_.vocab,"depth2 request/seed identity");
++  need(h.position==row.position-1&&h.commit_sequence>last_commit_&&(!h.head||h.next_token==row.token),"depth2 final canonical parent");
++  need(row.after==ring_next::extend(row.before,uint32_t(row.position),uint32_t(row.token)),"depth2 seed prefix");
++  if(serial_)need(row.parent==last_seed_.id&&row.before==last_seed_.after&&h.input_token==last_seed_.token,"depth2 exact canonical ancestry");
++  else need(row.position==1&&row.before==ring_next::extend(ring_next::request_prefix(context_.request,context_.epoch),0,uint32_t(h.input_token)),"depth2 first canonical parent prefix");
++ }
++ template<class Provider> ring_next::wire::ProposalMeta run(Provider& provider,const Input& input,const ExpectedPair& expected,bool verify){
++  admit(input,expected);last_sequence_=input.sequence;
++  try{
++   const auto result=depth2(provider,input,verify);need(result.guesses.size()<=2&&result.position==input.seed.position,"depth2 result extent");
++   ring_next::wire::ProposalMeta out;out.flags=(input.head?1u:0u)|2u;out.epoch=context_.epoch;out.ticket=input.sequence;out.seed_row=input.seed.id;out.parent_row=input.seed.parent;out.final_commit=input.parent.commit_sequence;out.provider_serial=serial_+1;
++   out.seed_position=out.restored_position=result.position;out.available_depth=int32_t(result.guesses.size());out.guess0=result.guesses.empty()?-1:result.guesses[0];out.guess1=result.guesses.size()<2?-1:result.guesses[1];out.restored=1;
++   out.request=context_.request;out.seed_prefix=input.seed.after;out.hidden_sha=ring_next::wire::digest(input.hidden);
++   ring_next::wire::validate_batch(out,context_,input.sequence,input.seed.position,input.seed.after,out.hidden_sha,{input.seed.id,input.seed.parent,uint64_t(input.parent.commit_sequence),serial_+1});
++   last_result_=result;++serial_;last_seed_=input.seed;last_commit_=input.parent.commit_sequence;++next_position_;return out;
++  }catch(...){poisoned_=true;throw;}
++ }
++};
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/draft_runtime_extension.inc
+@@ -0,0 +1,94 @@
++// Included inside mtp36::DraftRuntime; batch.hpp is included outside the class.
++// Calls existing live_step/compute; it contains no model arithmetic executor.
++struct RecursiveRow {
++ Allocation id{};size_t bytes=0,offset=0;Memory memory=Memory::device;std::string label;
++ std::vector<uint8_t> pinned_before;
++};
++struct RecursiveHost {
++ int position=0,extent=0,pending_confirmed=0,queued_probe=0,queued_confirmed=0,depth=0;
++ bool disabled=false,async_pending=false,pending_head=false,reverse_present=false,captured=false;
++ ownrt::Event publication_event=0;std::chrono::steady_clock::time_point pending_start;
++ std::vector<uint8_t> reverse_bytes;
++ bool operator==(const RecursiveHost&)const=default;
++};
++struct RecursiveTarget {
++ decltype(e.fp32_sources) sources;decltype(e.fp32_extents) extents;
++ decltype(e.lookup_ids) lookup;decltype(e.selected) selected;decltype(e.loaded_layer) loaded;
++ int64_t history0=0,history1=0;unsigned parity=0;int active=0,spare=0,extent=0,alternate=0;
++ bool operator==(const RecursiveTarget&)const=default;
++};
++uint64_t recursive_captures=0,recursive_restores=0,recursive_verified_restores=0;
++Allocation recursive_image{};size_t recursive_bytes=0;bool recursive_active=false;
++std::vector<RecursiveRow> recursive_rows;RecursiveHost recursive_host;RecursiveTarget recursive_target;int recursive_class=0;
++RecursiveHost recursive_host_state()const{
++ return {position,context_extent,pending_confirmed,queued_probe,queued_confirmed,depth_probe,disabled,async_pending,pending_head,reverse_hidden!=nullptr,captured,publication_event,pending_start,probe_reverse_hidden};
++}
++RecursiveTarget recursive_target_state()const{
++ return {e.fp32_sources,e.fp32_extents,e.lookup_ids,e.selected,e.loaded_layer,e.history0,e.history1,e.bank_parity,e.active_bank,e.spare_bank,e.context_extent,e.alternate_context_extent};
++}
++void recursive_idle(){
++ auto admitted=[&](){return !disabled&&!e.poisoned&&!async_pending&&!publication_event&&!e.progress_pending&&!e.progress_callback&&!e.preparing_commands&&!e.draft_timing&&!reverse_hidden&&!depth_probe&&queued_probe==-1&&queued_confirmed==-1&&!e.dev(0).before_compute&&!e.dev(0).after_compute&&!e.correction_exchange&&!e.head_export&&!e.head_publish&&!e.head_merge&&!e.reply_report.pending();};
++ // drain() can invoke Engine progress callbacks. Refuse borrowers BEFORE it.
++ ownrt::recursive_provider_next::quiesce(admitted,[&](){e.drain();});
++}
++bool recursive_healthy(){
++ if(disabled||e.poisoned)return false;const auto raw=e.readback(0,id("error"),4);int error=0;std::memcpy(&error,raw.data(),4);return !error&&!e.integer(0,"error");
++}
++void recursive_inventory(){
++ require(recursive_image&&recursive_rows.size()==mutable_ids.size()+2,"recursive exact canonical inventory count");
++ std::set<Allocation> observed;for(const auto& item:recursive_rows){const auto& row=e.dev(0).arena.row(item.id);
++  require(observed.insert(item.id).second&&row.live&&row.label==item.label&&row.memory==item.memory&&row.bytes==item.bytes,"recursive allocation identity changed");
++  if(item.memory==Memory::device)require(mutable_ids.count(item.id)&&e.allocations.count(item.id),"recursive canonical device membership");
++  else require(item.memory==Memory::pinned&&!e.allocations.count(item.id)&&(item.id==publication||item.id==half_staging),"recursive explicit pinned membership");
++ }
++ require(observed.count(publication)&&observed.count(half_staging),"recursive pinned inventory incomplete");
++ const auto& backup=e.dev(0).arena.row(recursive_image);require(backup.live&&backup.memory==Memory::device&&backup.category==Category::runtime_overhead&&backup.bytes==recursive_bytes&&backup.label=="card0:draft:recursive-private-image"&&e.allocations.count(recursive_image)&&!mutable_ids.count(recursive_image),"recursive private image identity");
++}
++void prepare_recursive_depth2(){
++ recursive_idle();require(e.a.pipeline_live_draft&&e.a.pipeline_draft_partition&&e.a.pipeline_first()&&e.a.mtp&&!recursive_image&&!recursive_active,"recursive initialization owner");
++ for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);require(row.live&&row.memory==Memory::device&&row.category!=Category::weights&&row.bytes>0&&row.bytes<=32ull*1024*1024&&recursive_bytes<=32ull*1024*1024-row.bytes,"recursive canonical reserve bound");
++  recursive_rows.push_back({allocation,row.bytes,recursive_bytes,row.memory,row.label,{}});recursive_bytes+=row.bytes;
++ }
++ for(auto allocation:{publication,half_staging}){const auto& row=e.dev(0).arena.row(allocation);require(row.live&&row.memory==Memory::pinned&&row.bytes==(allocation==publication?8:4+e.stream_bytes())&&row.category==(allocation==publication?Category::output_ring:Category::pinned_slab),"recursive exact pinned extent/category");recursive_rows.push_back({allocation,row.bytes,0,row.memory,row.label,std::vector<uint8_t>(row.bytes)});}
++ require(recursive_bytes>0,"recursive empty canonical snapshot");
++ recursive_image=e.allocate(0,"draft:recursive-private-image",recursive_bytes,Category::runtime_overhead,Lifetime::process);allocated+=recursive_bytes;recursive_inventory();
++}
++// A NEW explicit ownership class is required at integration: these are provider
++// rollback storage, NOT canonical draft buffers and NOT target-owned storage.
++std::vector<Allocation> live_private_recursive_inventory()const{return recursive_image?std::vector<Allocation>{recursive_image}:std::vector<Allocation>{};}
++void recursive_copy(bool restore){
++ recursive_inventory();ownrt::CopyEngine copy(e.dev(0));
++ for(auto& item:recursive_rows){const auto& row=e.dev(0).arena.row(item.id);
++  if(item.memory==Memory::pinned){if(restore)std::memcpy(row.pointer,item.pinned_before.data(),item.bytes);else std::memcpy(item.pinned_before.data(),row.pointer,item.bytes);}
++  else e.tail=restore?copy.copy(item.id,0,recursive_image,item.offset,item.bytes,{}):copy.copy(recursive_image,item.offset,item.id,0,item.bytes,{});
++ }e.drain();
++}
++void recursive_capture(){
++ recursive_idle();require(!recursive_active&&recursive_healthy(),"recursive capture admission");
++ recursive_host=recursive_host_state();recursive_target=recursive_target_state();recursive_class=e.current_cls;
++ recursive_copy(false);recursive_active=true;++recursive_captures;
++}
++void recursive_restore(bool verify){
++ recursive_idle();require(recursive_active&&recursive_healthy(),"recursive failure cannot be rolled back");
++ require(recursive_target_state()==recursive_target,"recursive branch mutated target metadata");
++ recursive_copy(true);position=recursive_host.position;disabled=recursive_host.disabled;async_pending=recursive_host.async_pending;pending_head=recursive_host.pending_head;pending_confirmed=recursive_host.pending_confirmed;
++ publication_event=recursive_host.publication_event;pending_start=recursive_host.pending_start;queued_probe=recursive_host.queued_probe;queued_confirmed=recursive_host.queued_confirmed;
++ require(!recursive_host.reverse_present&&depth_probe==recursive_host.depth&&captured==recursive_host.captured,"recursive immutable/queued metadata changed");reverse_hidden=nullptr;probe_reverse_hidden=recursive_host.reverse_bytes;
++ if(position<p.g.context)admit_position(recursive_host.extent);else require(context_extent==recursive_host.extent,"recursive capacity extent mismatch");e.current_cls=recursive_class;
++ require(recursive_host_state()==recursive_host&&recursive_target_state()==recursive_target,"recursive complete host restoration mismatch");
++ if(verify){const auto saved=e.readback(0,recursive_image,recursive_bytes);
++  for(const auto& item:recursive_rows){const auto& row=e.dev(0).arena.row(item.id);if(item.memory==Memory::pinned)require(!std::memcmp(row.pointer,item.pinned_before.data(),item.bytes),"recursive pinned restore mismatch");else{const auto bytes=e.readback(0,item.id,item.bytes);require(std::equal(bytes.begin(),bytes.end(),saved.begin()+item.offset),"recursive canonical bytes mismatch");}}
++ }
++ recursive_idle();require(recursive_healthy(),"recursive post-restore error");recursive_active=false;++recursive_restores;if(verify)++recursive_verified_restores;
++}
++struct RecursiveAdapter {
++ DraftRuntime& d;void idle(){d.recursive_idle();}bool healthy(){return d.recursive_healthy();}
++ int position()const{return d.position;}int context()const{return d.p.g.context;}int vocab()const{return d.p.g.vocab;}
++ int canonical(int confirmed,int position,bool head,const std::vector<uint8_t>& hidden){return d.live_step(confirmed,position,head,hidden.data(),hidden.size());}
++ void capture(){d.recursive_capture();}size_t snapshot_bytes()const{return d.recursive_bytes;}
++ int recursive(int first){return d.compute(first,d.position+1,true,false,true);}
++ void restore(bool verify){d.recursive_restore(verify);}
++};
++ownrt::ring_next::wire::ProposalMeta live_recursive_depth2(ownrt::recursive_provider_next::Sequence& sequence,const ownrt::recursive_provider_next::Input& input,const ownrt::recursive_provider_next::ExpectedPair& expected,bool verify){
++ require(recursive_image&&!recursive_active,"recursive provider not initialized/idle");RecursiveAdapter adapter{*this};return sequence.run(adapter,input,expected,verify);
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/final_event.hpp
+@@ -0,0 +1,32 @@
++#pragma once
++#include "pipeline/ring/wire.hpp"
++#include "pipeline/live_draft.hpp"
++namespace ownrt::recursive_provider {
++constexpr size_t final_record_offset=2*ring_next::wire::slot+2560;
++constexpr uint32_t final_record_magic=0x52464331;
++struct FinalRecord {
++ uint32_t magic=final_record_magic,version=1,bytes=360,stage=0;
++ uint64_t published_sequence=0;
++ ring_next::wire::RowMeta row;
++ live_draft::Handoff hidden;
++};
++static_assert(sizeof(FinalRecord)==360&&offsetof(FinalRecord,published_sequence)==16&&offsetof(FinalRecord,row)==24&&offsetof(FinalRecord,hidden)==248);
++static_assert(final_record_offset+sizeof(FinalRecord)<=live_draft::hidden_offset);
++inline void validate_final_record(const FinalRecord& r,const ring_next::wire::Context& c,std::span<const uint8_t> raw){
++ using ring_next::need;namespace w=ring_next::wire;w::context(c);
++ need(r.magic==final_record_magic&&r.version==1&&r.bytes==sizeof r&&r.stage==uint32_t(c.stages-1)&&r.published_sequence>0&&r.published_sequence<=INT32_MAX,"recursive final record header/stage");
++ const auto& row=r.row;const auto& h=r.hidden;live_draft::validate(h,c.stream_bytes,c.stages,c.vocab);
++ need(row.magic==0x52494e47&&row.version==1&&row.bytes==sizeof row&&row.flags==0&&row.dtype==1&&std::all_of(row.reserved.begin(),row.reserved.end(),[](auto b){return !b;}),"recursive final row header");
++ need(row.epoch==c.epoch&&row.request==c.request&&row.id>row.parent&&row.id>0&&row.owner==c.stages-1&&row.final==1&&row.source==-1&&!row.source_ticket&&!row.payload_bytes&&row.payload_sha==w::digest({}),"recursive final row ownership");
++ need(row.position==h.position&&row.token==h.input_token&&row.fixture>=0&&bool(row.fixture)==bool(h.head)&&row.publication_ticket==h.row_ticket&&r.published_sequence==uint64_t(h.commit_sequence),"recursive final committed identity");
++ need(row.after==ring_next::extend(row.before,uint32_t(row.position),uint32_t(row.token)),"recursive final prefix");
++ need(raw.size()==size_t(c.stream_bytes),"recursive final full hidden extent");const auto sha=w::digest(raw);constexpr char digits[]="0123456789abcdef";
++ for(size_t i=0;i<sha.size();++i)need(h.hidden_sha256[2*i]==digits[sha[i]>>4]&&h.hidden_sha256[2*i+1]==digits[sha[i]&15],"recursive final hidden SHA");
++}
++inline uint64_t published(const uint8_t* shared){auto* p=reinterpret_cast<const uint64_t*>(shared+final_record_offset+offsetof(FinalRecord,published_sequence));return __atomic_load_n(p,__ATOMIC_ACQUIRE);}
++inline void invalidate(uint8_t* shared){auto* p=reinterpret_cast<uint64_t*>(shared+final_record_offset+offsetof(FinalRecord,published_sequence));__atomic_store_n(p,uint64_t(0),__ATOMIC_RELEASE);}
++inline void publish(uint8_t* shared,const FinalRecord& record){
++ ring_next::need(record.published_sequence>0,"recursive final publication sequence");invalidate(shared);auto copy=record;copy.published_sequence=0;std::memcpy(shared+final_record_offset,&copy,sizeof copy);
++ auto* p=reinterpret_cast<uint64_t*>(shared+final_record_offset+offsetof(FinalRecord,published_sequence));__atomic_store_n(p,record.published_sequence,__ATOMIC_RELEASE);
++}
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/peer.hpp
+@@ -0,0 +1,27 @@
++#pragma once
++#include "pipeline/recursive_provider/final_event.hpp"
++// Included after runtime filesystem/IPC types. The first stage never writes
++// the final owner's map. Its inode is pinned once and rechecked at every read.
++namespace pipeline::recursive_provider {
++class Peer {
++ fs::path path;int fd=-1;const uint8_t* mapping=nullptr;dev_t device{};ino_t inode{};
++public:
++ struct Event {ownrt::recursive_provider::FinalRecord record;std::vector<uint8_t> hidden;};
++ explicit Peer(fs::path source):path(std::move(source)){require(path.is_absolute(),"recursive final peer path must be absolute");}
++ ~Peer(){if(mapping)::munmap(const_cast<uint8_t*>(mapping),shared_bytes);if(fd>=0)::close(fd);}
++ Peer(const Peer&)=delete;Peer& operator=(const Peer&)=delete;
++ Event capture(const ownrt::ring_next::wire::Context& context,const fs::path& receipt){
++  if(fd<0){fd=::open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_NONBLOCK);require(fd>=0,"recursive final peer open");struct stat st{};
++   require(!::fstat(fd,&st)&&S_ISREG(st.st_mode)&&st.st_size==shared_bytes,"recursive final peer exact mapping");device=st.st_dev;inode=st.st_ino;
++   auto* p=::mmap(nullptr,shared_bytes,PROT_READ,MAP_SHARED,fd,0);require(p!=MAP_FAILED,"recursive final peer readonly mmap");mapping=static_cast<const uint8_t*>(p);
++   save(receipt,"{\"path\":"+ownrt::quote(path.string())+",\"device\":"+std::to_string(uint64_t(device))+",\"inode\":"+std::to_string(uint64_t(inode))+",\"bytes\":"+std::to_string(shared_bytes)+",\"readonly\":true}");
++  }
++  struct stat current{},named{};require(!::fstat(fd,&current)&&!::lstat(path.c_str(),&named)&&S_ISREG(named.st_mode)&&current.st_dev==device&&current.st_ino==inode&&current.st_size==shared_bytes&&named.st_dev==device&&named.st_ino==inode,"recursive final peer identity changed");
++  const auto before=ownrt::recursive_provider::published(mapping);require(before>0,"recursive final peer has no stable committed event");Event event;
++  std::memcpy(&event.record,mapping+ownrt::recursive_provider::final_record_offset,sizeof event.record);
++  require(context.stream_bytes>0&&context.stream_bytes<=int(slot_bytes),"recursive peer hidden bound");event.hidden.assign(mapping+ownrt::live_draft::hidden_offset,mapping+ownrt::live_draft::hidden_offset+context.stream_bytes);
++  const auto after=ownrt::recursive_provider::published(mapping);require(before==after&&event.record.published_sequence==before,"recursive final event changed while copied");
++  ownrt::recursive_provider::validate_final_record(event.record,context,event.hidden);return event;
++ }
++};
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/test_recursive_provider.cpp
+@@ -0,0 +1,39 @@
++#include "pipeline/recursive_provider/batch.hpp"
++#include <cassert>
++#include <iostream>
++using namespace ownrt;using namespace recursive_provider_next;
++template<class F>void refusal(F f){bool failed=false;try{f();}catch(const std::exception&){failed=true;}assert(failed);}
++struct Provider {
++ struct State {int position=0,extent=32;int pending=0;uint64_t event=0;std::vector<uint8_t> hidden;std::vector<std::vector<uint8_t>> allocations;bool operator==(const State&)const=default;} state,saved;
++ int limit=64;bool error=false,fail_branch=false,fail_restore=false;int captures=0,restores=0,full_reads=0,canonical_calls=0,recursive_calls=0;
++ Provider(){for(size_t i=0;i<73;++i)state.allocations.emplace_back(1+i%17,uint8_t(i));}
++ void idle(){}bool healthy()const{return !error;}int position()const{return state.position;}int context()const{return limit;}int vocab()const{return 97;}
++ void update(int token){++state.position;state.extent=((state.position+31)/32)*32;for(size_t i=0;i<state.allocations.size();++i)for(auto& x:state.allocations[i])x=uint8_t(x+token+state.position+i);state.pending+=token;state.event+=state.position;state.hidden.assign(16,uint8_t(token));}
++ int canonical(int token,int position,bool head,const std::vector<uint8_t>& hidden){assert(position==state.position+1&&hidden.size()==16);++canonical_calls;update(token);return head?(token+position*7)%97:-1;}
++ void capture(){saved=state;++captures;}size_t snapshot_bytes()const{size_t n=0;for(auto& a:state.allocations)n+=a.size();return n;}
++ int recursive(int first){++recursive_calls;update(first);if(fail_branch){error=true;throw std::runtime_error("partial provider branch");}return (first+state.position*7)%97;}
++ void restore(bool verify){assert(!error);++restores;state=saved;if(fail_restore)state.allocations.back()[0]^=1;if(verify){full_reads+=int(state.allocations.size());assert(state.allocations.size()==73);need(state==saved,"all canonical/pinned/host bytes restored");}}
++};
++std::string hex(const ring_next::Digest& bytes){const char*d="0123456789abcdef";std::string out;for(auto b:bytes){out+=d[b>>4];out+=d[b&15];}return out;}
++struct Fixture {
++ ring_next::wire::Context context{0,{},0,4,16,97};Sequence sequence{context};Provider provider;Row last;int ticket=0;
++ Input next(bool head=true){Input in;auto& r=in.seed;r.epoch=0;r.request=context.request;r.parent=last.id?last.id:1;r.id=r.parent+1;r.position=provider.position()+1;r.token=(r.position*3+4)%97;r.fixture=head?std::max(1,last.fixture+1):0;r.ticket=100+r.position;r.tentative=true;
++  const int parent_token=last.id?last.token:7;r.before=last.id?last.after:ring_next::extend(ring_next::request_prefix(context.request,0),0,parent_token);r.after=ring_next::extend(r.before,r.position,r.token);
++  in.sequence=++ticket;in.head=head;in.hidden.assign(16,uint8_t(r.position));auto& h=in.parent;h.bytes=16;h.position=r.position-1;h.final_stage=3;h.stages=4;h.row_ticket=2*r.position;h.commit_sequence=h.row_ticket+1;h.input_token=parent_token;h.head=last.fixture>0;h.next_token=h.head?r.token:-1;const auto sha=hex(ring_next::wire::digest(in.hidden));std::copy(sha.begin(),sha.end(),h.hidden_sha256.begin());return in;
++ }
++ ExpectedPair expected(const Input& in){return {in.seed,in.parent,sequence.serial()+1};}
++ auto run(Input in,bool verify){auto out=sequence.run(provider,in,expected(in),verify);last=in.seed;return out;}
++};
++int main(){
++ {bool callback=true;int drains=0;refusal([&]{quiesce([&]{return !callback;},[&]{++drains;});});assert(!drains);callback=false;quiesce([&]{return !callback;},[&]{++drains;});assert(drains==1);refusal([&]{quiesce([&]{return !callback;},[&]{++drains;callback=true;});});assert(drains==2);}
++
++ for(bool verify:{false,true}){Fixture f;Provider reference;for(int position=1;position<=64;++position){auto input=f.next(position>=3);auto expected=f.expected(input);auto before=f.provider.state;const int canonical=reference.canonical(input.seed.token,position,input.head,input.hidden);auto out=f.sequence.run(f.provider,input,expected,verify);f.last=input.seed;
++  assert(f.provider.state==reference.state&&f.provider.position()==position&&out.restored_position==position&&out.guess0==canonical&&out.provider_serial==uint64_t(position));
++  assert(out.available_depth==(!input.head?0:position<64?2:1));assert(f.sequence.last_result().byte_verified==(verify&&input.head&&position<64));assert(bool(f.sequence.last_result().snapshot_bytes)==(input.head&&position<64));if(position==31||position==32||position==33)assert(f.provider.state.extent==reference.state.extent);
++ }
++ assert(f.provider.captures==61&&f.provider.restores==61&&f.provider.recursive_calls==61&&f.provider.full_reads==(verify?61*73:0));}
++ for(int mutation=0;mutation<10;++mutation){Fixture f;auto in=f.next();auto expected=f.expected(in);switch(mutation){case 0:++in.seed.id;break;case 1:++in.seed.parent;break;case 2:++in.parent.row_ticket;break;case 3:++in.parent.commit_sequence;break;case 4:++expected.provider_serial;break;case 5:in.hidden[0]^=1;break;case 6:in.seed.after[0]^=1;break;case 7:in.head=false;break;case 8:in.seed.epoch=1;break;case 9:in.seed.request[0]=1;break;}refusal([&]{f.sequence.run(f.provider,in,expected,false);});assert(!f.provider.canonical_calls&&!f.sequence.poisoned());}
++ {Fixture f;auto first=f.next();f.run(first,false);auto second=f.next();auto wrong=f.expected(second);wrong.seed.parent=77;second.seed=wrong.seed;refusal([&]{f.sequence.run(f.provider,second,wrong,false);});assert(f.provider.canonical_calls==1);}
++ for(bool restore_failure:{false,true}){Fixture f;auto in=f.next();auto expected=f.expected(in);f.provider.fail_branch=!restore_failure;f.provider.fail_restore=restore_failure;refusal([&]{f.sequence.run(f.provider,in,expected,true);});assert(f.sequence.poisoned()&&f.sequence.serial()==0&&f.provider.canonical_calls==1&&f.provider.restores==int(restore_failure));refusal([&]{f.sequence.run(f.provider,in,expected,true);});assert(f.provider.canonical_calls==1);}
++ std::cout<<"PASS post-canonical depth2 restore of 73 synthetic mutable allocations/host state, 31/32/33 extents, no-head/capacity censoring, default no full readback, exact lineage/commit/serial/head binding and no recovery after partial failure; CPU only\n";
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/test_recursive_provider_native.cpp
+@@ -0,0 +1,78 @@
++#include "checkpoint_fixture.hpp"
++struct ProviderOwner:FixtureOwner {
++ bool preparing_commands=false,draft_timing=false;int current_cls=9,drains=0;
++ void drain(){++drains;FixtureOwner::drain();if(progress_callback)progress_callback();}
++ using FixtureOwner::FixtureOwner;
++};
++// Executes the ACTUAL member extension and checked Host copy transport. Only the
++// arithmetic entry points below are synthetic; no model kernels/GPU are invoked.
++class FixtureDraft {
++ ProviderOwner& e;
++ struct Plan {struct Geometry{int context=64,vocab=97;}g;}p;
++ std::set<Allocation> mutable_ids;std::map<std::string,Allocation> names;
++ Allocation publication{},half_staging{};size_t allocated=0;int position=0,context_extent=32;
++ bool disabled=false,async_pending=false,pending_head=false,captured=true;int pending_confirmed=0;
++ ownrt::Event publication_event=0;std::chrono::steady_clock::time_point pending_start;
++ int depth_probe=0,queued_probe=-1,queued_confirmed=-1;const void* reverse_hidden=nullptr;std::vector<uint8_t> probe_reverse_hidden;
++ Allocation id(const std::string& name)const{return names.at(name);}
++ void admit_position(int extent=0){context_extent=extent?extent:std::min(p.g.context,((position+32)/32)*32);}
++ int compute(int token,int target_position,bool head,bool asynchronous=false,bool recursive=false){
++  assert(!asynchronous&&target_position==position+1);admit_position();++position;
++  for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);if(allocation==id("error"))continue;std::memset(row.pointer,token+position,row.bytes);}
++  std::memcpy(e.dev(0).arena.row(id("position")).pointer,&position,4);
++  std::memset(e.dev(0).arena.row(publication).pointer,token,8);std::memset(e.dev(0).arena.row(half_staging).pointer,position,4+e.stream_bytes());probe_reverse_hidden.assign(e.stream_bytes(),uint8_t(token));pending_head=head;pending_confirmed=token;e.current_cls=77;
++  if(recursive&&corrupt_target)e.history0=999;
++  return head?(token+position*7)%p.g.vocab:-1;
++ }
++ int live_step(int token,int target_position,bool head,const void* hidden,size_t bytes){assert(hidden&&bytes==e.stream_bytes());const int saved_class=e.current_cls;const int out=compute(token,target_position,head);e.current_cls=saved_class;canonical_bytes=read_canonical();canonical_host=recursive_host_state();return out;}
++public:
++ using DraftRuntime=FixtureDraft;
++#include "pipeline/recursive_provider/draft_runtime_extension.inc"
++ bool corrupt_target=false;std::map<Allocation,std::vector<uint8_t>> canonical_bytes;RecursiveHost canonical_host;
++ explicit FixtureDraft(ProviderOwner& owner):e(owner){
++  for(int i=0;i<71;++i){std::string name=i==0?"error":i==1?"position":"scratch"+std::to_string(i);const size_t bytes=i<2?4:size_t(17+i);auto allocation=e.allocate(0,"draft:"+name,bytes,Category::scratch,Lifetime::transaction);names[name]=allocation;mutable_ids.insert(allocation);allocated+=bytes;}
++  publication=e.allocate(0,"draft:publication",8,Category::output_ring,Lifetime::request,Memory::pinned);half_staging=e.allocate(0,"draft:half-staging",4+e.stream_bytes(),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
++  prepare_recursive_depth2();
++ }
++ std::vector<Allocation> canonical_devices()const{return {mutable_ids.begin(),mutable_ids.end()};}
++ std::vector<Allocation> pins()const{return {publication,half_staging};}
++ std::map<Allocation,std::vector<uint8_t>> read_canonical(){std::map<Allocation,std::vector<uint8_t>> out;for(auto id:mutable_ids)out[id]=e.readback(0,id,e.dev(0).arena.row(id).bytes);for(auto id:{publication,half_staging})out[id]=e.readback(0,id,e.dev(0).arena.row(id).bytes);return out;}
++};
++static void options_gate(){
++ setenv("OMP_NUM_THREADS","2",1);
++ const std::vector<std::string> base{"native","--output","/unused-ring-parser-output","--rank","0","--memory","resident","--gsq-packed","--activations","f32","--context","4096","--target-split","24","--retain-steps","none","--pipeline-stage","0","--pipeline-boundaries","0,12,24,36,48","--native-nice",std::to_string(getpriority(PRIO_PROCESS,0))};
++ auto check=[&](std::vector<std::string> extra){auto args=base;args.insert(args.end(),extra.begin(),extra.end());std::vector<char*> pointers;for(auto& a:args)pointers.push_back(a.data());return parse(int(pointers.size()),pointers.data());};
++ auto legacy=check({});assert(!legacy.pipeline_ring&&!legacy.pipeline_wavefront);
++ const std::vector<std::string> ring{"--pipeline-ring","--pipeline-ring-request-sha256",std::string(64,'a'),"--pipeline-ring-verify-restore"};
++ auto admitted=check(ring);assert(admitted.pipeline_ring&&admitted.pipeline_ring_verify&&admitted.pipeline_ring_request_sha256==std::string(64,'a'));
++ for(const auto& extra:std::vector<std::vector<std::string>>{{"--pipeline-ring"},{"--pipeline-ring-verify-restore"},{"--pipeline-ring-request-sha256",std::string(64,'a')},{"--pipeline-ring","--pipeline-ring-request-sha256",std::string(64,'A')}})refusal([&]{check(extra);});
++ for(const auto& extra:std::vector<std::vector<std::string>>{{"--pipeline-wavefront"},{"--pipeline-live-draft"},{"--pipeline-draft-partition"},{"--pipeline-persistent-requests"},{"--draft-mtp"},{"--retain-steps","1"},{"--pipeline-ring-trace-limit","100001"}}){auto args=ring;args.insert(args.end(),extra.begin(),extra.end());refusal([&]{check(args);});}
++ auto live=ring;live.insert(live.end(),{"--pipeline-ring-live-draft","--draft-mtp","--pipeline-ring-final-shared","/not-created/final-shared","--pipeline-ring-recursive-verify-restore"});auto admitted_live=check(live);assert(admitted_live.pipeline_ring_live_draft&&admitted_live.pipeline_live_draft&&admitted_live.pipeline_draft_partition&&admitted_live.pipeline_ring_recursive_verify);
++ auto middle=ring;middle.insert(middle.end(),{"--pipeline-ring-live-draft","--pipeline-stage","1","--rank","1"});auto admitted_middle=check(middle);assert(admitted_middle.pipeline_ring_live_draft&&!admitted_middle.mtp&&admitted_middle.pipeline_ring_final_shared.empty());
++ auto wrong=middle;wrong.insert(wrong.end(),{"--pipeline-ring-recursive-verify-restore"});refusal([&]{check(wrong);});wrong=middle;wrong.insert(wrong.end(),{"--pipeline-ring-final-shared","/unexpected-peer"});refusal([&]{check(wrong);});wrong=ring;wrong.push_back("--pipeline-ring-live-draft");refusal([&]{check(wrong);});
++
++}
++int main(int argc,char** argv){options_gate();assert(argc==2);fs::path root=argv[1];fs::create_directory(root);ProviderOwner owner(root/"owner");owner.a.pipeline_live_draft=owner.a.pipeline_draft_partition=owner.a.mtp=true;
++ for(auto name:{"error","position"})owner.buffers[0][name]={owner.allocate(0,name,4,Category::graph_static,Lifetime::graph)};
++ auto target=owner.allocate(0,"target-state",257,Category::recurrent,Lifetime::request);std::memset(owner.dev(0).arena.row(target).pointer,53,257);owner.put("position",2);
++ std::set<Allocation> before;for(auto& [id,where]:owner.allocations)before.insert(id);FixtureDraft draft(owner);
++ int callbacks=0;const int drains_before=owner.drains;owner.progress_callback=[&]{++callbacks;};refusal([&]{draft.recursive_idle();});assert(!callbacks&&owner.drains==drains_before);owner.progress_callback={};
++ auto partition=pipeline::admit_operator_partition(owner,before,draft.canonical_devices(),draft.pins(),draft.live_private_recursive_inventory());assert(partition.draft_device.size()==71&&partition.draft_pinned.size()==2&&partition.draft_private.size()==1&&partition.target_device.size()==before.size());
++ refusal([&]{pipeline::admit_operator_partition(owner,before,draft.canonical_devices(),draft.pins());});auto overlap=draft.canonical_devices();overlap.push_back(draft.recursive_image);refusal([&]{pipeline::admit_operator_partition(owner,before,overlap,draft.pins(),draft.live_private_recursive_inventory());});
++ const auto peer_path=fs::absolute(root/"final-shared");pipeline::recursive_provider::Peer peer(peer_path);assert(!fs::exists(peer_path)); // lazy: construction cannot open a not-yet-created final owner
++ std::vector<uint8_t> shared(pipeline::shared_bytes);const int fd=::open(peer_path.c_str(),O_RDWR|O_CREAT|O_EXCL,0600);assert(fd>=0&&::ftruncate(fd,pipeline::shared_bytes)==0);auto* map=static_cast<uint8_t*>(::mmap(nullptr,pipeline::shared_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0));assert(map!=MAP_FAILED);
++ namespace wire=ownrt::ring_next::wire;wire::Context context{0,{},0,4,16,97};ownrt::recursive_provider::FinalRecord record;record.stage=3;record.published_sequence=3;record.row.epoch=0;record.row.id=1;record.row.position=0;record.row.token=7;record.row.owner=3;record.row.final=1;record.row.publication_ticket=2;record.row.request=context.request;record.row.before=ownrt::ring_next::request_prefix(context.request,0);record.row.after=ownrt::ring_next::extend(record.row.before,0,7);record.row.payload_sha=wire::digest({});
++ record.hidden.bytes=16;record.hidden.position=0;record.hidden.final_stage=3;record.hidden.stages=4;record.hidden.row_ticket=2;record.hidden.commit_sequence=3;record.hidden.input_token=7;
++ std::vector<uint8_t> hidden(16,23);const auto sha=hash(hidden);std::copy(sha.begin(),sha.end(),record.hidden.hidden_sha256.begin());std::memcpy(map+ownrt::live_draft::hidden_offset,hidden.data(),hidden.size());ownrt::recursive_provider::publish(map,record);
++ auto event=peer.capture(context,root/"peer.json");ownrt::ring_next::Row seed{0,2,1,7,1,11,1,false,context.request,record.row.after,{}};seed.after=ownrt::ring_next::extend(seed.before,1,11);
++ wire::RowMeta meta;meta.epoch=seed.epoch;meta.id=seed.id;meta.parent=seed.parent;meta.position=seed.position;meta.token=seed.token;meta.fixture=seed.fixture;meta.request=seed.request;meta.before=seed.before;meta.after=seed.after;meta.payload_sha=wire::digest({});
++ pipeline::Request request{27,11,1,1,2,9,{0,0}};
++ auto admit=[&](const auto& frame,const auto& header){return pipeline::recursive_provider::admit_batch(request,context,seed,event,{reinterpret_cast<const uint8_t*>(&frame),sizeof frame},{reinterpret_cast<const uint8_t*>(&header),sizeof header},hidden,1);};
++ auto wrong=record.hidden;++wrong.commit_sequence;refusal([&]{admit(meta,wrong);});auto wrong_meta=meta;++wrong_meta.id;refusal([&]{admit(wrong_meta,record.hidden);});auto admitted=admit(meta,record.hidden);
++ std::map<Allocation,std::vector<uint8_t>> target_before;for(auto id:before)target_before[id]=owner.readback(0,id,owner.dev(0).arena.row(id).bytes);
++ ownrt::recursive_provider_next::Sequence sequence(context);auto result=draft.live_recursive_depth2(sequence,admitted.input,admitted.expected,true);assert(result.available_depth==2&&result.restored_position==1&&draft.recursive_captures==1&&draft.recursive_restores==1&&draft.recursive_verified_restores==1&&!draft.recursive_active);
++ assert(draft.read_canonical()==draft.canonical_bytes&&draft.recursive_host_state()==draft.canonical_host);for(auto [id,bytes]:target_before)assert(owner.readback(0,id,bytes.size())==bytes);assert(owner.history0==0&&owner.current_cls==9);
++ ownrt::recursive_provider::invalidate(map);refusal([&]{peer.capture(context,root/"peer.json");});ownrt::recursive_provider::publish(map,record);map[ownrt::live_draft::hidden_offset]^=1;refusal([&]{peer.capture(context,root/"peer.json");});
++ {ProviderOwner failed(root/"failed-owner");failed.a.pipeline_live_draft=failed.a.pipeline_draft_partition=failed.a.mtp=true;for(auto name:{"error","position"})failed.buffers[0][name]={failed.allocate(0,name,4,Category::graph_static,Lifetime::graph)};failed.put("position",2);FixtureDraft broken(failed);broken.corrupt_target=true;ownrt::recursive_provider_next::Sequence seq(context);refusal([&]{broken.live_recursive_depth2(seq,admitted.input,admitted.expected,true);});assert(seq.poisoned()&&broken.recursive_captures==1&&!broken.recursive_restores&&failed.history0==999);failed.close();}
++ ::munmap(map,pipeline::shared_bytes);::close(fd);owner.close();std::cout<<"PASS actual recursive member snapshot/CopyEngine transport71device+2pinned, private census, exact op27 accepted-seed/independent-peer binding, lazy readonly peer, marker/SHA refusal, complete canonical restoration and unchanged target bytes/host; synthetic arithmetic only\n";
++}
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/planning/native-ring-live.md
+@@ -0,0 +1,64 @@
++# Quiescent ring-live depth-two gate
++
++The opt-in `--pipeline-ring-live-draft` mode enables existing-MTP canonical plus
++one recursive proposal through operation 27. It does not use either proposal for
++target execution in this gate. Every target ROW must be verified and all stages
++must be idle for the provider borrow. Target-only operations 24–26 and existing
++operations 20–23 retain their defaults.
++
++The flag implies existing internal live-provider and independent-partition
++semantics. Only stage 0 receives `--draft-mtp`, an absolute
++`--pipeline-ring-final-shared` path, and optionally
++`--pipeline-ring-recursive-verify-restore`. The peer path is stored at startup;
++it is opened read-only on the first operation 27, after all stages are ready.
++Its regular-file size, descriptor and named inode remain pinned.
++
++The final owner publishes a 360-byte FinalRecord at shared offset
++`2 * 65536 + 2560`. It includes the committed parent RowMeta and existing raw
++hidden Handoff. A release/acquire marker is invalidated before the next final
++ROW and published after COMMIT. Stage 0 copies the independently owned record
++and hidden bytes between matching marker reads, then checks all identities and
++full hidden SHA256. No record is fabricated from the current relay payload.
++
++The controller first executes and ACCEPTs the verified seed at stage 0. Native
++operation 27 binds incoming seed metadata to StageRing's owned last-accepted row,
++and the relay header/hidden bytes to the independently read final event. The
++confirmed seed is position p+1 while the parent final event is position p. Only
++after this borrow completes does the controller forward the seed downstream.
++
++Canonical advancement uses the existing `live_step` exactly once. A private
++snapshot is then taken; existing `compute(..., recursive=true)` predicts one
++additional token and its hypothetical state is restored before publication.
++The canonical draft dump still contains the same device and pinned allocations.
++The recursive image is a separately admitted provider-private allocation, counted
++in resident storage but excluded from canonical state. All target, canonical
++provider, pinned provider and private IDs are classified exactly once.
++
++Reply metadata is the 192-byte ProposalMeta at `2 * 65536 + 1536`; reply token is
++d1 or -1, reply bytes is 192. No-head priming and context censoring are explicit.
++The bounded `ring-draft-batches.jsonl` records identities, proposals, restoration
++checks, and canonical/capture/recursive/restore milliseconds. CopyEngine currently
++submits one checked copy per canonical device allocation each way, preserving the
++qualified diagnostic mechanism as the first baseline. A flattened checked copy
++path is a later measured optimization, not part of this gate.
++
++DUMP produces the unchanged canonical draft bundle at `state-MARKER.draft`.
++The new `ownrt.ring-state.live.v1` attestation and
++`ownrt.ring-checkpoint-layout.live.v1` layout bind that seal and separately classify
++the private image. They require quiescent-target borrowing, zero target speculative
++work, exact provider position/serial, empty transactions, and conserved provider
++capture/restore/verification counters. State-set v4 validation preserves earlier
++v3 target-only ring semantics.
++
++CPU checks include the actual full native translation unit and parser, native
++readonly peer and operation-27 admission, the actual recursive member snapshot
++code with checked Host Device/CopyEngine allocations, all 71 device and two pinned
++allocations, unchanged target bytes/metadata, pending callback refusal before
++drain, and failure poisoning without restoration after injected target mutation.
++Arithmetic in that fixture is synthetic. The first real-model replay must still
++compare all target state, all canonical draft state, and actual d1/d2 against the
++retained reference before any proposal-driven target overlap is admitted.
++
++See `evidence/native-ring-live-cpu.json`, its log, and the exact
++`evidence/native-ring-live.patch`. The isolated design and its earlier syntax-only
++proof remain in `recursive-provider-next/`. No training is involved.

@@ -2,7 +2,8 @@
 #include "wire.hpp"
 #include "checkpoint_ring.hpp"
 #include "engine_backend.hpp"
-// Opt-in concrete command24..26 handler. Include after existing native
+#include "pipeline/recursive_provider/admission.hpp"
+// Opt-in ring24..26 and separately admitted quiescent provider27 handler. Include after existing native
 // Request/Reply,half_step,publish,reverse_ready. Existing handlers20..23 untouched.
 namespace pipeline::ring_next {
 class Dispatcher {
@@ -10,6 +11,7 @@ class Dispatcher {
  ownrt::ring_next::wire::Context context;
  CheckpointRingFor<Engine> checkpoints;
  EngineBackend backend;
+ mtp36::DraftRuntime* provider=nullptr;std::unique_ptr<pipeline::recursive_provider::Peer> peer;std::optional<ownrt::recursive_provider_next::Sequence> provider_sequence;std::ofstream draft_trace;uint64_t draft_trace_rows=0,draft_trace_omitted=0,provider_borrows_while_target_pending=0;
  ownrt::ring_next::StageRing<EngineBackend> ring;std::ofstream trace;uint64_t trace_rows=0,trace_omitted=0;
  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
  void final_hidden(const ownrt::ring_next::Row& row,int commit_sequence,int next_token,Reply& reply){
@@ -21,19 +23,22 @@ class Dispatcher {
   ownrt::live_draft::validate(h,context.stream_bytes,context.stages,context.vocab);std::memcpy(area(ownrt::live_draft::header_offset,sizeof h).data(),&h,sizeof h);reply.bytes=h.bytes;reply.token=h.next_token;
  }
 public:
- Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,std::function<void()> reset_owner={})
+ Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,mtp36::DraftRuntime* draft=nullptr)
   :e(owner),shared(mapping),mapped_bytes(mapping_bytes),verify(full_byte_verify),
    context{epoch,request,owner.a.pipeline_stage,int(owner.a.pipeline_boundaries.size()-1),int(owner.stream_bytes()),owner.p.g.vocab},
-   checkpoints(owner,full_byte_verify,partition),backend(owner,legacy,checkpoints,mapping,std::move(reset_owner)),
+   checkpoints(owner,full_byte_verify,partition),backend(owner,legacy,checkpoints,mapping),provider(draft),
    ring(backend,owner.a.pipeline_final(),partition.enabled,owner.p.g.context,owner.p.g.vocab,epoch,request,ownrt::ring_next::request_prefix(request,epoch)){
   require(shared&&mapped_bytes==shared_bytes&&owner.a.pipeline_enabled(),"ring dispatcher mapping/mode");ownrt::ring_next::wire::context(context);legacy.boundary();
-  require(owner.a.pipeline_ring&&!owner.a.pipeline_wavefront&&!owner.a.mtp&&!partition.enabled&&!owner.a.pipeline_live_draft,"ring exclusive target-only owner");
-  checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json");
+  require(owner.a.pipeline_ring&&!owner.a.pipeline_wavefront,"ring exclusive owner");
+  require(bool(provider)==bool(owner.a.pipeline_ring_live_draft&&owner.a.pipeline_first())&&partition.enabled==bool(provider),"ring exact provider/partition ownership");
+  if(provider){require(provider->recursive_image&&provider->live_private_recursive_inventory()==partition.draft_private,"ring recursive private image census");peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_final_shared);provider_sequence.emplace(context);draft_trace.open(e.a.output/"ring-draft-batches.jsonl");require(bool(draft_trace),"ring recursive trace open");}
+  checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json",owner.a.pipeline_ring_live_draft);
   trace.open(e.a.output/"ring.jsonl");require(bool(trace),"ring trace open");
  }
+ bool handles_command(int op)const{return handles(op)||(e.a.pipeline_ring_live_draft&&provider&&op==ownrt::ring_next::wire::batch_op);}
  static bool handles(int op){return op==24||op==25||op==26;}
  Reply execute(const Request& r){
-  namespace wire=ownrt::ring_next::wire;require(handles(r.op),"ring dispatcher only owns24..26");
+  namespace wire=ownrt::ring_next::wire;if(r.op==wire::batch_op)return draft_batch(r);require(handles(r.op),"ring dispatcher only owns admitted commands");
   const auto started=std::chrono::steady_clock::now();const double gpu_before=e.gemv_ms+e.nongemv_ms;
   wire::Command command{r.op,r.token,r.position,r.fixture,r.speculative,r.sequence,r.reserved[0],r.reserved[1]};
   const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
@@ -41,7 +46,7 @@ public:
   Reply reply{};reply.sequence=r.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=context.stage==context.stages-1;
   if(r.op==wire::row_op){
    const auto bytes=e.a.pipeline_first()?std::span<uint8_t>{}:area(slot_bytes,context.stream_bytes);std::vector<uint8_t> owned(bytes.begin(),bytes.end());
-   const auto row=wire::row(meta,command,context,owned);backend.stage_input(std::move(owned));const auto& completed=ring.execute(row);
+   const auto row=wire::row(meta,command,context,owned);require(!e.a.pipeline_ring_live_draft||!row.tentative,"initial ring-live refuses tentative target rows");if(e.a.pipeline_ring_live_draft&&e.a.pipeline_final())ownrt::recursive_provider::invalidate(shared);backend.stage_input(std::move(owned));const auto& completed=ring.execute(row);
    reply.token=completed.token;reply.bytes=int32_t(completed.stream.size());
    require(completed.stream.empty()||completed.stream.size()==size_t(context.stream_bytes),"ring complete native stream result");
    if(!completed.stream.empty())std::memcpy(area(0,completed.stream.size()).data(),completed.stream.data(),completed.stream.size());
@@ -53,7 +58,10 @@ public:
    discarded=resolved.discarded;
    const auto acknowledgment=wire::acknowledgment(context,r.sequence,row,resolved,checkpoints.byte_checks()>prior_checks);
    wire::write(area(wire::ack_offset,sizeof acknowledgment),acknowledgment);
-   if(r.op==wire::accept_op&&e.a.pipeline_final())final_hidden(row,r.sequence,next_token,reply);
+   if(r.op==wire::accept_op&&e.a.pipeline_final()){
+    if(e.a.pipeline_ring_live_draft){Reply ignored{};final_hidden(row,r.sequence,next_token,ignored);ownrt::recursive_provider::FinalRecord record;record.stage=context.stage;record.published_sequence=r.sequence;record.row=meta;record.row.publication_ticket=row.ticket;std::memcpy(&record.hidden,area(ownrt::live_draft::header_offset,sizeof(record.hidden)).data(),sizeof(record.hidden));ownrt::recursive_provider::validate_final_record(record,context,area(ownrt::live_draft::hidden_offset,context.stream_bytes));ownrt::recursive_provider::publish(shared,record);}
+    else final_hidden(row,r.sequence,next_token,reply);
+   }
   }
   if(trace_rows<size_t(e.a.pipeline_ring_trace_limit)){
    trace<<"{\"op\":"<<r.op<<",\"sequence\":"<<r.sequence<<",\"row_id\":"<<meta.id<<",\"parent_id\":"<<meta.parent<<",\"position\":"<<meta.position<<",\"token\":"<<meta.token<<",\"fixture\":"<<meta.fixture<<",\"tentative\":"<<((meta.flags&wire::tentative)?"true":"false")<<",\"physical\":"<<ring.physical()<<",\"committed\":"<<ring.committed()<<",\"pending\":"<<ring.pending()<<",\"discarded\":[";
@@ -62,7 +70,24 @@ public:
   reply.busy_ms=Engine::ms(started);reply.gpu_ms=e.gemv_ms+e.nongemv_ms-gpu_before;
   return reply;
  }
- // Initial ring integration refuses RESET and all provider commands.
+ Reply draft_batch(const Request& request){
+  namespace wire=ownrt::ring_next::wire;
+  require(e.a.pipeline_ring_live_draft&&provider&&peer&&provider_sequence&&request.op==wire::batch_op,"ring recursive command owner");
+  const auto started=std::chrono::steady_clock::now();const double gpu=e.gemv_ms+e.nongemv_ms;
+  require(!ring.pending(),"ring-live first gate requires quiescent target");ring.boundary();checkpoints.boundary();provider_borrows_while_target_pending+=ring.pending()?1:0;
+  const auto seed=ring.last_accepted();require(seed.position>0&&ring.committed()==seed.position+1,"ring recursive accepted seed frontier");
+  const auto event=peer->capture(context,e.a.output/"ring-final-peer.json");
+  auto admitted=pipeline::recursive_provider::admit_batch(request,context,seed,event,area(wire::row_offset,sizeof(wire::RowMeta)),area(ownrt::live_draft::header_offset,sizeof(ownrt::live_draft::Handoff)),area(slot_bytes,context.stream_bytes),provider_sequence->serial()+1);
+  const auto& input=admitted.input;const auto& pair=admitted.expected;
+  const auto batch=ring.draft(request.sequence,[&](){return provider->live_recursive_depth2(*provider_sequence,input,pair,e.a.pipeline_ring_recursive_verify);});
+  wire::write(area(wire::proposal_offset,sizeof batch),batch);const auto& result=provider_sequence->last_result();
+  if(draft_trace_rows<size_t(e.a.pipeline_ring_trace_limit)){
+   draft_trace<<"{\"sequence\":"<<request.sequence<<",\"provider_serial\":"<<batch.provider_serial<<",\"seed_row\":"<<batch.seed_row<<",\"parent_row\":"<<batch.parent_row<<",\"seed_position\":"<<batch.seed_position<<",\"confirmed_token\":"<<seed.token<<",\"fixture\":"<<seed.fixture<<",\"parent_final_ticket\":"<<input.parent.row_ticket<<",\"parent_final_commit\":"<<input.parent.commit_sequence<<",\"hidden_sha256\":"<<ownrt::quote(hash(input.hidden))<<",\"guesses\":[";
+   for(size_t i=0;i<result.guesses.size();++i)draft_trace<<(i?",":"")<<result.guesses[i];draft_trace<<"],\"restored_position\":"<<batch.restored_position<<",\"snapshot_bytes\":"<<result.snapshot_bytes<<",\"mutable_bytes_verified\":"<<(result.byte_verified?"true":"false")<<",\"canonical_ms\":"<<result.canonical_ms<<",\"capture_ms\":"<<result.capture_ms<<",\"recursive_ms\":"<<result.recursive_ms<<",\"restore_ms\":"<<result.restore_ms<<"}\n";draft_trace.flush();require(bool(draft_trace),"ring recursive trace write");++draft_trace_rows;
+  }else ++draft_trace_omitted;
+  Reply reply{};reply.sequence=request.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=0;reply.token=batch.guess0;reply.bytes=sizeof batch;reply.busy_ms=Engine::ms(started);reply.gpu_ms=e.gemv_ms+e.nongemv_ms-gpu;return reply;
+ }
+ // Ring modes refuse RESET; provider27 is separately admitted at a quiescent target.
  void attest(const fs::path& destination={},int dump_marker=-1){
   ring.boundary();checkpoints.boundary();const int position=e.integer(0,"position");
   require(position==ring.committed()&&uint64_t(position)==ring.commits,"ring canonical position/commit conservation");
@@ -78,13 +103,21 @@ public:
    while(done<bytes.size()){auto n=::pread(fd,bytes.data()+done,bytes.size()-done,off_t(done));if(n<0&&errno==EINTR)continue;require(n>0,"ring bounded evidence read");done+=size_t(n);}
    require(!::fstat(fd,&after)&&!::lstat(path.c_str(),&named)&&S_ISREG(named.st_mode)&&before.st_dev==after.st_dev&&before.st_ino==after.st_ino&&before.st_size==after.st_size&&before.st_mtim.tv_sec==after.st_mtim.tv_sec&&before.st_mtim.tv_nsec==after.st_mtim.tv_nsec&&before.st_ctim.tv_sec==after.st_ctim.tv_sec&&before.st_ctim.tv_nsec==after.st_ctim.tv_nsec&&before.st_dev==named.st_dev&&before.st_ino==named.st_ino,"ring evidence identity changed");return hash(bytes);
   };
+  if(e.a.pipeline_ring_live_draft){require(!ring.tentative_rows&&!ring.abort_count&&!ring.discarded_rows&&!checkpoints.captures(),"initial ring-live must contain only verified target rows");require(!provider_borrows_while_target_pending,"initial ring-live cannot borrow pending target");}
+  if(provider){provider->recursive_idle();require(provider->recursive_healthy()&&!provider->recursive_active&&provider->live_position()==std::max(0,position-1)&&provider_sequence->serial()==uint64_t(provider->live_position()),"ring canonical provider quiescence/position");require(provider->recursive_captures==provider->recursive_restores&&provider->recursive_verified_restores<=provider->recursive_restores,"ring recursive checkpoint conservation");}
   const auto layout=file_hash(e.a.output/"ring-checkpoint-layout.json",1024*1024);
   std::string seal;if(dump_marker>=0)seal=file_hash(e.a.output/("state-"+std::to_string(dump_marker))/"state-seal.txt",4096);
-  std::ostringstream o;o<<"{\"schema\":\"ownrt.ring-state.v1\",\"mode\":\"verified-ring\",\"stage_id\":"<<context.stage<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)<<",\"ring_epoch\":"<<context.epoch<<",\"ring_capacity\":2,\"depth\":2,\"dump_marker\":"<<dump_marker<<",\"state_seal_sha256\":"<<ownrt::quote(seal)<<",\"checkpoint_layout_sha256\":"<<ownrt::quote(layout)
+  std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(e.a.pipeline_ring_live_draft?"ownrt.ring-state.live.v1":"ownrt.ring-state.v1")<<",\"mode\":"<<ownrt::quote(e.a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring")<<",\"stage_id\":"<<context.stage<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)<<",\"ring_epoch\":"<<context.epoch<<",\"ring_capacity\":2,\"depth\":2,\"dump_marker\":"<<dump_marker<<",\"state_seal_sha256\":"<<ownrt::quote(seal)<<",\"checkpoint_layout_sha256\":"<<ownrt::quote(layout)
    <<",\"actual_position\":"<<position<<",\"committed_position\":"<<ring.committed()<<",\"pending_tickets\":0,\"active_slots\":0,\"sticky_error\":0,\"rows\":"<<ring.rows<<",\"tentative_rows\":"<<ring.tentative_rows<<",\"commits\":"<<ring.commits<<",\"accepted_tentative_rows\":"<<ring.accepted_tentative_rows<<",\"abort_count\":"<<ring.abort_count<<",\"discarded_rows\":"<<ring.discarded_rows<<",\"snapshot_captures\":"<<checkpoints.captures()<<",\"snapshot_releases\":"<<checkpoints.releases()<<",\"byteverified_restore_count\":"<<checkpoints.byte_checks()<<",\"saved_bytes\":"<<checkpoints.captures()*checkpoints.slot_bytes()<<",\"target_mutable_checkpoint_bytes\":"<<checkpoints.slot_bytes()
    <<",\"restore_verification_enabled\":"<<(verify?"true":"false")<<",\"all_aborts_byte_verified\":"<<(checkpoints.byte_checks()==ring.abort_count?"true":"false")<<",\"max_pending\":"<<ring.max_pending<<",\"trace_records\":"<<trace_rows<<",\"trace_omitted\":"<<trace_omitted<<",\"bank_parity\":"<<e.bank_parity<<",\"inactive_alternate_banks\":[";
   bool comma=false;for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"],\"canonical_bank_mapping\":{";comma=false;
-  for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name)<<":{\"active_allocation\":"<<e.buffers[0].at(name).id<<",\"inactive_allocation\":"<<id<<"}";comma=true;}o<<"}}";
+  for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name)<<":{\"active_allocation\":"<<e.buffers[0].at(name).id<<",\"inactive_allocation\":"<<id<<"}";comma=true;}o<<"}";
+  if(e.a.pipeline_ring_live_draft){std::string draft_seal;if(provider&&dump_marker>=0)draft_seal=file_hash(e.a.output/("state-"+std::to_string(dump_marker)+".draft")/"state-seal.txt",4096);
+   o<<",\"provider_borrow_mode\":\"quiescent-target\",\"provider_present\":"<<(provider?"true":"false")<<",\"provider_borrows_while_target_pending\":"<<provider_borrows_while_target_pending<<",\"canonical_draft_state_seal_sha256\":"<<ownrt::quote(draft_seal)<<",\"provider_position\":";
+   if(provider)o<<provider->live_position();else o<<"null";
+   o<<",\"provider_serial\":"<<(provider_sequence?provider_sequence->serial():0)<<",\"provider_commands\":"<<(provider_sequence?provider_sequence->serial():0)<<",\"provider_recursive_active\":false,\"provider_snapshot_captures\":"<<(provider?provider->recursive_captures:0)<<",\"provider_snapshot_restores\":"<<(provider?provider->recursive_restores:0)<<",\"provider_byteverified_restore_count\":"<<(provider?provider->recursive_verified_restores:0)<<",\"provider_restore_verification_enabled\":"<<(e.a.pipeline_ring_recursive_verify?"true":"false")<<",\"provider_all_restores_byte_verified\":"<<(!provider||provider->recursive_restores==provider->recursive_verified_restores?"true":"false")<<",\"provider_private_bytes\":"<<(provider?provider->recursive_bytes:0)<<",\"provider_canonical_allocation_count\":"<<(provider?provider->live_mutable_inventory().size()+provider->live_pinned_inventory().size():0)<<",\"provider_trace_records\":"<<draft_trace_rows<<",\"provider_trace_omitted\":"<<draft_trace_omitted;
+  }
+  o<<"}";
   const auto path=destination.empty()?e.a.output/"ring-quiescence.json":destination;
   const auto text=o.str();struct stat prior{};const int found=::lstat(path.c_str(),&prior);
   if(!found){require(dump_marker>=0&&S_ISREG(prior.st_mode),"ring attestation destination already exists or is not regular");const std::vector<uint8_t> expected(text.begin(),text.end());require(file_hash(path,1024*1024)==hash(expected),"ring sealed attestation changed");}

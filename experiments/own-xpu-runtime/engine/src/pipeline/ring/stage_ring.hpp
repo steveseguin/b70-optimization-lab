@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <deque>
+#include <optional>
 #include <limits>
 #include <openssl/sha.h>
 #include <stdexcept>
@@ -37,7 +38,7 @@ template<class Backend> class StageRing {
  Backend& backend;bool final_,partitioned_,poisoned_=false;
  int context_,vocab_,committed_=0,last_fixture_=0,last_sequence_=0,last_output_=-1;
  uint64_t epoch_,last_id_=0,accepted_id_=0;
- Digest request_,accepted_prefix_;
+ Digest request_,accepted_prefix_;std::optional<Row> accepted_row_;
  struct Pending {Row row;int slot=-1;typename Backend::Result result;};
  std::deque<Pending> pending_;
  void healthy(){need(!poisoned_&&!backend.error(),"ring sticky/partial failure");backend.quiescent();}
@@ -77,6 +78,7 @@ public:
    pending_.push_back({row,slot,std::move(result)});last_id_=row.id;++rows;if(row.tentative)++tentative_rows;max_pending=std::max(max_pending,pending_.size());
   });return pending_.back().result;
  }
+ const Row& last_accepted()const{need(accepted_row_.has_value(),"ring has no accepted seed");return *accepted_row_;}
  const typename Backend::Result& oldest_result(const Row& row){return oldest(row).result;}
  Resolution accept(int command_sequence,const Row& row,int verified_token){
   healthy();sequence(command_sequence);auto& entry=oldest(row);
@@ -85,7 +87,7 @@ public:
   return mutate(command_sequence,[&]{
    backend.publish(entry.result);if(entry.slot>=0)backend.release(entry.slot);
    if(final_&&row.fixture>0)last_output_=entry.result.token;
-   accepted_id_=row.id;accepted_prefix_=row.after;last_fixture_=row.fixture;++committed_;++commits;if(row.tentative)++accepted_tentative_rows;pending_.pop_front();
+   accepted_id_=row.id;accepted_prefix_=row.after;accepted_row_=row;last_fixture_=row.fixture;++committed_;++commits;if(row.tentative)++accepted_tentative_rows;pending_.pop_front();
    need(backend.position()==physical_before,"ring ACCEPT rewound physical execution");return receipt();
   });
  }
@@ -109,7 +111,7 @@ public:
   healthy();sequence(command_sequence);need(pending_.empty()&&backend.position()==committed_,"ring reset needs canonical boundary");
   need(epoch_!=std::numeric_limits<uint64_t>::max()&&epoch==epoch_+1,"ring reset epoch must advance once without wrapping");
   mutate(command_sequence,[&]{backend.reset();need(backend.position()==0&&!backend.error(),"ring reset cold state");
-   epoch_=epoch;request_=request;accepted_prefix_=initial_prefix;accepted_id_=last_id_=0;committed_=last_fixture_=0;last_output_=-1;rows=tentative_rows=commits=accepted_tentative_rows=abort_count=discarded_rows=0;max_pending=0;
+   epoch_=epoch;request_=request;accepted_prefix_=initial_prefix;accepted_id_=last_id_=0;accepted_row_.reset();committed_=last_fixture_=0;last_output_=-1;rows=tentative_rows=commits=accepted_tentative_rows=abort_count=discarded_rows=0;max_pending=0;
   });
  }
  void boundary(){healthy();need(pending_.empty()&&backend.position()==committed_,"ring uncommitted boundary");}

@@ -1,0 +1,46 @@
+{
+  "schema": "ownrt.native-ring-live-cpu.v1",
+  "scope": "Actual native parser, readonly final peer/op27 admission, actual recursive member checkpoint with checked Host transport; synthetic arithmetic, no GPU/model replay",
+  "checks": [
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-recursive-provider"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/dev/shm/ownrt-test-recursive-provider-native",
+        "/dev/shm/ownrt-recursive-native-receipt"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "sources": {
+    ".github/workflows/own-engine-cpu.yml": "b30529fb4ce4406aed1b2680143dcdb10e8e55c03a51de0f2d094c5b07c9fc80",
+    "experiments/own-xpu-runtime/engine/planning/native-ring-live.md": "825fd86a48da3067e1f4f4970aca738617a0f27f4219b311f67b09dfc269f43a",
+    "experiments/own-xpu-runtime/engine/planning/test_recursive_provider.cpp": "4027d9da56d9d1ad1ae5c615857d8b3baa01da69b01da3451c513282b1ecbfcf",
+    "experiments/own-xpu-runtime/engine/planning/test_recursive_provider_native.cpp": "2b61d99510eabaf9d2651f28199695ff437212cbadffd3d577e2f83f4448bba8",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "d70ddc2677d8999f0ee823d23a788ce83f8cb9e739cc86b9cad8d19ceea6909e",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp": "160341ba7c9f136671038f05010a63d1e421957396fb3762162ec3bf9da62e24",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "34b12829b30a63fce6b3127560f3c80a61407fdf614986a07d73208fed622138",
+    "experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp": "101302a56ee79bd2327576d6650df14a9cf5c660bfdbb9a823e4e400707b424c",
+    "experiments/own-xpu-runtime/engine/src/pipeline/operator_state.hpp": "6b042c9589ff1869dcaf265a3fb4529c7319d8a8a52d1e6f637c249b7981601d",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/admission.hpp": "a45d397acf721463c0eb1c282652a3ec5786581e04cd5f37ad78e55f9a3a9c69",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/batch.hpp": "031fe824e85d0515c64c0a961515f1134d76996d6ce8a8b3b9116578d10ec11f",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/draft_runtime_extension.inc": "027f5ca30401a14c1d89c0fc43f073967d6539901a75d92f8ffe53a7095e32cb",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/final_event.hpp": "6425d85b2afe94ca56b498fd849f2820bb4eb9fa215408f373602f41b5ad9d46",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/peer.hpp": "045c6d518ebf24adf5415e3d2540f5dc87695653aa30ee498739133914f92e27",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp": "0d3272a593d6fc5c477f5764f615d17b64fdde1fe76fb0635ab470cb7703daf7",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp": "48987254321ba22d7dafa537adaf297485a01b68840001586745efbdf5a32ef6",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/stage_ring.hpp": "5f9a2b775d05f9da1176aa0fe005443c06f3925efb0b22c80d9348b50c1efb58"
+  },
+  "binaries": {
+    "/dev/shm/ownrt-test-recursive-provider": "689f2749bf0d495843e2048b76a21b5d5a180048d70ab4834ca2bae6596b7c08",
+    "/dev/shm/ownrt-test-recursive-provider-native": "1dfb242d019afb9bd7894e241535cc7b9fc8e099778ca29a8b0dcb71af4184db"
+  },
+  "log_sha256": "6ef54bb52c1b5b1b4a65f68f40e542ad128e29258621cb47760046585596f5d0",
+  "host_compile": "TMPDIR=/dev/shm/ownrt-host-compile-tmp nice -n 19 g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I experiments/own-xpu-runtime/engine/src experiments/own-xpu-runtime/engine/planning/test_recursive_provider_native.cpp experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /dev/shm/ownrt-test-recursive-provider-native",
+  "model_replay": "pending",
+  "review": "independent native lifecycle/ownership/provenance reviews closed; model arithmetic awaits parent-owned gate"
+}

@@ -6,7 +6,7 @@ template<class Owner> class CheckpointRingFor {
  Owner& e;bool verify;
  struct Item {Allocation id;size_t bytes,offset;std::string label;};
  struct Independent {Allocation id;size_t bytes;Memory memory;std::string label;};
- std::vector<Item> items,excluded_private;std::vector<Independent> independent;
+ std::vector<Item> items,excluded_private;std::vector<Independent> independent,independent_private;
  size_t bytes_=0,table_rows=0,tiles=0,allocation_count=0;
  struct Metadata {
   unsigned parity=0;int active=0,spare=1,extent=32,alternate=32;int64_t history0=0,history1=0;
@@ -28,6 +28,7 @@ template<class Owner> class CheckpointRingFor {
  void inventory(){
   require(e.allocations.size()==allocation_count,"ring allocation census changed");
   for(const auto& item:items){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==Memory::device&&r.bytes==item.bytes&&r.label==item.label,"ring target allocation changed");}
+  for(const auto& item:independent_private){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==item.memory&&r.bytes==item.bytes&&r.label==item.label,"ring provider-private allocation changed");}
   for(const auto& item:independent){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==item.memory&&r.bytes==item.bytes&&r.label==item.label,"ring independent draft allocation changed");}
  }
  void prepare(Slot& slot,bool reverse){
@@ -65,14 +66,17 @@ public:
  CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition):e(owner),verify(full_byte_verification){
   idle();require(e.resident&&e.a.pipeline_enabled()&&!e.a.prefill_rows,"ring resident scalar owner");
   require(!e.a.mtp||partition.enabled,"ring provider needs independent state partition");
+  std::set<Allocation> private_ids(partition.draft_private.begin(),partition.draft_private.end());
   std::set<Allocation> draft(partition.draft_device.begin(),partition.draft_device.end()),target(partition.target_device.begin(),partition.target_device.end());
   require(!partition.enabled||(!draft.empty()&&draft.size()==partition.draft_device.size()&&target.size()==partition.target_device.size()),"ring explicit complete ownership");
   for(auto id:partition.draft_device){const auto& row=e.dev(0).arena.row(id);require(e.allocations.count(id)&&row.live&&row.memory==Memory::device&&row.category!=Category::weights&&!target.count(id),"ring draft device identity");independent.push_back({id,row.bytes,row.memory,row.label});}
+  require(private_ids.size()==partition.draft_private.size()&&private_ids.size()<=1,"ring provider-private census");
+  for(auto id:private_ids){const auto& row=e.dev(0).arena.row(id);require(partition.enabled&&e.allocations.count(id)&&!target.count(id)&&!draft.count(id)&&row.live&&row.memory==Memory::device&&row.category==Category::runtime_overhead&&row.label=="card0:draft:recursive-private-image","ring explicit provider-private image");independent_private.push_back({id,row.bytes,row.memory,row.label});}
   std::set<Allocation> pinned;
   for(auto id:partition.draft_pinned){const auto& row=e.dev(0).arena.row(id);require(pinned.insert(id).second&&!e.allocations.count(id)&&row.live&&row.memory==Memory::pinned,"ring draft pinned identity");independent.push_back({id,row.bytes,row.memory,row.label});}
   require(!partition.enabled||pinned.size()==2,"ring pinned provider inventory");
   for(const auto& [id,where]:e.allocations){const auto& row=e.dev(where.first).arena.row(id);require(where.first==0&&row.live&&row.memory==Memory::device,"ring owner census");if(row.category==Category::weights)continue;
-   if(partition.enabled){require(target.count(id)!=draft.count(id),"ring overlapping/unassigned mutable allocation");if(draft.count(id))continue;}
+   if(partition.enabled){require(target.count(id)+draft.count(id)+private_ids.count(id)==1,"ring overlapping/unassigned mutable allocation");if(draft.count(id)||private_ids.count(id))continue;}
    if(row.label=="card0:speculative-private-image"||row.label=="card0:speculative-copy-table"||row.label=="card0:speculative-static-copy-table"){require(row.category==Category::runtime_overhead,"ring legacy private identity");excluded_private.push_back({id,row.bytes,0,row.label});continue;}
    require(!row.label.starts_with("card0:wavefront-")&&!row.label.starts_with("card0:ring:"),"ring cannot coexist with another snapshot owner");
    require(row.bytes>0&&row.bytes<=256ull*1024*1024&&bytes_<=256ull*1024*1024-row.bytes,"ring aggregate two-slot backup bound");
@@ -102,13 +106,15 @@ public:
   e.admit_position(0);if(e.a.pipeline_first()&&e.alternate_context_extent!=32){e.swap_state_banks();e.admit_position(0);e.swap_state_banks();}
   for(auto& s:slots){prepare(s,false);prepare(s,true);s.shared=nullptr;s.output.fill(0);s.metadata={};}inventory();captures_=restores_=byte_checks_=releases_=0;
  }
- void write_layout(const fs::path& path){
-  inventory();require(independent.empty(),"initial ring layout requires absent provider");
-  std::ostringstream o;o<<"{\"schema\":\"ownrt.ring-checkpoint-layout.v1\",\"complete_target_owned_mutable_allocations\":true,\"provider_present\":false,\"ring_capacity\":2,\"slot_bytes\":"<<bytes_<<",\"allocations\":[";
+ void write_layout(const fs::path& path,bool live=false){
+  inventory();require(live||(independent.empty()&&independent_private.empty()),"target-only ring layout requires absent provider");
+  std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(live?"ownrt.ring-checkpoint-layout.live.v1":"ownrt.ring-checkpoint-layout.v1")<<",\"complete_target_owned_mutable_allocations\":true,\"provider_present\":"<<(independent.empty()?"false":"true")<<",\"ring_capacity\":2,\"slot_bytes\":"<<bytes_<<",\"allocations\":[";
   auto item_json=[&](Allocation id,const std::string& label,size_t bytes){o<<"{\"id\":"<<id<<",\"label\":"<<ownrt::quote(label)<<",\"bytes\":"<<bytes<<"}";};
   for(size_t i=0;i<items.size();++i){if(i)o<<',';item_json(items[i].id,items[i].label,items[i].bytes);}o<<"],\"excluded_private_runtime_allocations\":[";
   for(size_t i=0;i<excluded_private.size();++i){if(i)o<<',';const auto& item=excluded_private[i];o<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"reason\":\"inactive-legacy-snapshot\"}";}o<<"],\"checkpoint_private_allocations\":[";
-  bool comma=false;for(const auto& slot:slots)for(auto id:{slot.image,slot.capture_table,slot.restore_table}){if(comma)o<<',';const auto& row=e.dev(0).arena.row(id);item_json(id,row.label,row.bytes);comma=true;}o<<"]}";save(path,o.str());
+  bool comma=false;for(const auto& slot:slots)for(auto id:{slot.image,slot.capture_table,slot.restore_table}){if(comma)o<<',';const auto& row=e.dev(0).arena.row(id);item_json(id,row.label,row.bytes);comma=true;}o<<"]";
+  if(live){auto emit=[&](const auto& rows){bool comma=false;for(const auto& item:rows){o<<(comma?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"memory\":"<<ownrt::quote(item.memory==Memory::pinned?"pinned":"device")<<"}";comma=true;}};o<<",\"independent_draft_allocations\":[";emit(independent);o<<"],\"provider_private_allocations\":[";emit(independent_private);o<<"]";}
+  o<<"}";save(path,o.str());
  }
  void boundary(){idle();inventory();for(const auto& slot:slots)require(!slot.active,"ring active slot at boundary");}
  uint64_t releases()const{return releases_;}

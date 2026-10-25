@@ -14,6 +14,9 @@ mandatory; v1 still admits target-only/no-speculation dumps only.
 Version v3 explicitly admits mode="verified-ring", ring_request_sha256 and
 ring_epoch. A sibling <dump-name>.ring-state.json and hash-bound native
 ring-checkpoint-layout.json must attest a fully resolved target-only ring.
+Version v4 admits only verified-ring-live with provider_borrow_mode=quiescent-target,
+require_provider_byte_verified_restores=true, draft_input_identity, and a first-stage
+draft_state_set pointing to the separately sealed canonical draft manifest.
 
 All canonical layer buffers compare exactly by absolute layer name. Physical
 spares are excluded only with the engine's explicit inactive-bank inventory
@@ -145,7 +148,9 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     require(0 < att_path.stat().st_size <= 1024 * 1024, 'ring attestation size bound')
     raw, receipt = source(att_path)
     att = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
-    require(att['schema'] == 'ownrt.ring-state.v1' and att['mode'] == 'verified-ring', 'unsupported ring attestation schema/mode')
+    live = spec['mode'] == 'verified-ring-live'
+    require(att['schema'] == ('ownrt.ring-state.live.v1' if live else 'ownrt.ring-state.v1')
+            and att['mode'] == spec['mode'], 'unsupported ring attestation schema/mode')
     marker = re.fullmatch(r'state-(0|[1-9][0-9]*)', dump.name)
     require(marker is not None and type(att['dump_marker']) is int and att['dump_marker'] == int(marker[1]), 'ring dump marker differs')
     require(type(att['stage_id']) is int and att['stage_id'] == stage['id'], 'ring stage identity differs')
@@ -192,12 +197,16 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     layout_raw, layout_source = source(layout_path)
     require(layout_source['sha256'] == att['checkpoint_layout_sha256'], 'ring checkpoint layout SHA differs')
     layout = json.loads(layout_raw, object_pairs_hook=BUNDLE.pairs)
-    require(layout['schema'] == 'ownrt.ring-checkpoint-layout.v1'
-            and layout['complete_target_owned_mutable_allocations'] is True and layout['provider_present'] is False
+    require(layout['schema'] == ('ownrt.ring-checkpoint-layout.live.v1' if live else 'ownrt.ring-checkpoint-layout.v1')
+            and layout['complete_target_owned_mutable_allocations'] is True
+            and layout['provider_present'] is (live and metadata['first'])
             and type(layout['ring_capacity']) is int and layout['ring_capacity'] == 2
             and type(layout['slot_bytes']) is int and layout['slot_bytes'] == size, 'ring complete target-only layout required')
     allocations, labels = set(), set()
-    for key in ('allocations','excluded_private_runtime_allocations','checkpoint_private_allocations'):
+    inventory_keys = ('allocations','excluded_private_runtime_allocations','checkpoint_private_allocations')
+    if live:
+        inventory_keys += ('independent_draft_allocations','provider_private_allocations')
+    for key in inventory_keys:
         require(isinstance(layout[key],list), 'ring layout allocation list required')
         for row in layout[key]:
             require(type(row['id']) is int and 0 < row['id'] <= 2**64-1 and row['id'] not in allocations
@@ -227,7 +236,72 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
         banks.extend(row.values())
     require(len(banks) == len(set(banks)) and set(banks) <= {r['id'] for r in layout['allocations']},
             'ring canonical/inactive banks alias or are absent from target inventory')
-    return att, receipt, layout_source
+    provider_sources = live_ring_provider(path,stage,dump,metadata,identity,spec,att,layout) if live else []
+    return att, receipt, layout_source, provider_sources
+
+
+def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout):
+    require(att['provider_borrow_mode'] == metadata['provider_borrow_mode']
+            == spec['provider_borrow_mode'] == 'quiescent-target',
+            'live ring permits only quiescent target borrowing')
+    require(att['provider_present'] is metadata['first'] and att['provider_recursive_active'] is False,
+            'live ring provider ownership/active transaction differs')
+    require(all(att[k] == 0 for k in ('tentative_rows','accepted_tentative_rows','abort_count',
+                                    'discarded_rows','snapshot_captures','snapshot_releases','saved_bytes')),
+            'quiescent provider proof cannot contain speculative target rows')
+    integers = ('provider_borrows_while_target_pending','provider_serial','provider_snapshot_captures',
+                'provider_snapshot_restores','provider_byteverified_restore_count','provider_private_bytes',
+                'provider_canonical_allocation_count','provider_commands','provider_trace_records','provider_trace_omitted')
+    require(all(type(att[k]) is int and 0 <= att[k] <= 2**64-1 for k in integers),
+            'live ring provider counters must be bounded integers')
+    require(att['provider_borrows_while_target_pending'] == 0, 'provider borrowed a pending target')
+    for key in ('provider_restore_verification_enabled','provider_all_restores_byte_verified'):
+        require(type(att[key]) is bool, 'provider restore policy must be boolean')
+    captures, restores, verified = (att[k] for k in ('provider_snapshot_captures','provider_snapshot_restores',
+                                                   'provider_byteverified_restore_count'))
+    require(captures == restores <= att['provider_commands'] and verified == (restores if att['provider_restore_verification_enabled'] else 0)
+            and att['provider_all_restores_byte_verified'] is (verified == restores),
+            'provider capture/restore verification accounting differs')
+    require(att['provider_trace_records'] + att['provider_trace_omitted'] == att['provider_commands'],
+            'provider trace command accounting differs')
+    canonical, private = layout['independent_draft_allocations'], layout['provider_private_allocations']
+    if not metadata['first']:
+        require(all(att[k] == 0 for k in integers) and att['provider_position'] is None
+                and att['canonical_draft_state_seal_sha256'] == '' and not canonical and not private
+                and 'draft_state_set' not in stage, 'nonfirst stage cannot own provider state')
+        return []
+    require(att['provider_restore_verification_enabled'] is True and att['provider_all_restores_byte_verified'] is True,
+            'live provider proof requires every restore byte-verified')
+    position = max(0, identity['position']-1)
+    require(type(att['provider_position']) is int and att['provider_position'] == position
+            == att['provider_serial'] == att['provider_commands'], 'provider canonical frontier differs')
+    import compare_draft_state as draft_reader
+    draft_path = path.parent/stage['draft_state_set']
+    draft = draft_reader.load_set(draft_path)
+    draft_raw, draft_receipt = draft_reader.small(draft_path)
+    require(draft_receipt == draft['sources'][0], 'draft state manifest changed after sealed read')
+    draft_spec = json.loads(draft_raw,object_pairs_hook=BUNDLE.pairs)
+    require((draft_path.parent/draft_spec['dump']).resolve() == dump.with_name(dump.name+'.draft'),
+            'live canonical draft dump must be exact target dump sibling')
+    require(draft['input_identity'] == spec['draft_input_identity']
+            and draft['input_identity']['model_sha256'] == identity['model_sha256']
+            and draft['input_identity']['position'] == position, 'live draft input identity differs')
+    seal = next(r for r in draft['sources'] if Path(r['path']).name == 'state-seal.txt')
+    require(seal['sha256'] == att['canonical_draft_state_seal_sha256'], 'live canonical draft seal differs')
+    expected = {label: dict(bytes=row['layout']['bytes'],memory=row['layout']['memory'])
+                for label,row in draft['canonical'].items()}
+    actual = {row['label']: dict(bytes=row['bytes'],memory=row.get('memory')) for row in canonical}
+    require(actual == expected and len(canonical) == att['provider_canonical_allocation_count'],
+            'live canonical allocation layout differs from sealed draft state')
+    require(len(private) == 1 and private[0]['label'] == 'card0:draft:recursive-private-image'
+            and private[0].get('memory') == 'device'
+            and private[0]['bytes'] == att['provider_private_bytes']
+            == sum(row['bytes'] for row in canonical if row['memory'] == 'device')
+            and 0 < att['provider_private_bytes'] <= 32*1024**2, 'provider private backup inventory differs')
+    require(expected['card0:draft:half-staging']['bytes'] == 4+metadata['stream_bytes']
+            and {label for label,row in expected.items() if row['memory']=='pinned'}
+            == {'card0:draft:publication','card0:draft:half-staging'}, 'provider exact pinned inventory differs')
+    return draft['sources']
 
 
 def load_set(path):
@@ -236,9 +310,14 @@ def load_set(path):
     spec = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
     mode = spec['mode']
     wavefront = spec['schema'] == 'ownrt.pipeline-state-set.v2' and mode == 'verified-wavefront'
-    ring = spec['schema'] == 'ownrt.pipeline-state-set.v3' and mode == 'verified-ring'
+    live_ring = spec['schema'] == 'ownrt.pipeline-state-set.v4' and mode == 'verified-ring-live'
+    ring = (spec['schema'] == 'ownrt.pipeline-state-set.v3' and mode == 'verified-ring') or live_ring
     require((spec['schema'] == 'ownrt.pipeline-state-set.v1' and mode == 'target-only') or wavefront or ring,
-            'unsupported pipeline state set schema/mode; v1 target-only, v2 verified-wavefront or v3 verified-ring required')
+            'unsupported pipeline state set schema/mode; explicit v1/v2/v3/v4 capability required')
+    if live_ring:
+        require(spec.get('provider_borrow_mode') == 'quiescent-target'
+                and spec.get('require_provider_byte_verified_restores') is True
+                and isinstance(spec.get('draft_input_identity'),dict), 'explicit quiescent verified provider proof required')
     if wavefront or ring:
         require(type(spec.get('require_byte_verified_restores')) is bool,
                 'speculative proof must explicitly declare require_byte_verified_restores')
@@ -269,7 +348,7 @@ def load_set(path):
         metadata_raw, metadata_source = source(metadata_path)
         metadata = json.loads(metadata_raw, object_pairs_hook=BUNDLE.pairs)
         if ring:
-            require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == 'verified-ring'
+            require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == mode
                     and metadata['speculation_enabled'] is True
                     and type(metadata['ring_capacity']) is int and metadata['ring_capacity'] == 2
                     and type(metadata['depth']) is int and metadata['depth'] == 2
@@ -309,9 +388,9 @@ def load_set(path):
             attestations.append({'stage': ordinal, 'attestation': att, 'source': att_source})
             sources.append(att_source)
         if ring:
-            att, att_source, layout_source = ring_attestation(path,stage,dump,metadata,identity,seal_source,hashes,lengths,spec)
+            att, att_source, layout_source, provider_sources = ring_attestation(path,stage,dump,metadata,identity,seal_source,hashes,lengths,spec)
             attestations.append({'stage':ordinal,'attestation':att,'source':att_source,'layout_source':layout_source})
-            sources += [att_source,layout_source]
+            sources += [att_source,layout_source] + provider_sources
         plan_raw, plan_source = source(plan_path)
         plan = json.loads(plan_raw, object_pairs_hook=BUNDLE.pairs)
         sources.append(plan_source)
