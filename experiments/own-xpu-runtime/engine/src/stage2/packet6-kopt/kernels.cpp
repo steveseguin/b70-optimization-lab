@@ -452,6 +452,11 @@ ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&t==Type::IQ4_NL) {
     // IQ4_NL (K=640): one row per subgroup straight from global memory with the word decoder (microbench 99 -> 73 us).
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    // Rows per subgroup (same per-row arithmetic). With the lean loop 2 is fastest (engine profile, IQ4_NL down per
+    // step: 1 row 1135 us, 2 rows 1049, 4 rows 1123); OWNRT_IQ4NL_ROWS=1|4 overrides.
+    static const int rows=[]{const char* e=std::getenv("OWNRT_IQ4NL_ROWS");return e?std::atoi(e):2;}();
+    if(rows==2){MultiplyBlockRows<2> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
+    if(rows==4){MultiplyBlockRows<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
     MultiplyBlockRows<1> block;block.desc=op.desc[0];return d.compute(block,ids,{});
   }
   return finish(d,op,ids);

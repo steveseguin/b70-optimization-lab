@@ -14,6 +14,7 @@ SERVICE_FLAGS=['--reset-dump','none','--finish-dump','none','--token-stream','js
 # Batched prefill (engine --prefill-rows): rows per chunk, 0 = off. Requires the F32 exact engine. The rows travel
 # through prefill.bin next to shared.bin (engine prefill_wire.hpp layout: header page, forward[2], reverse[2]).
 PREFILL_ROWS=int(os.environ.get('SC117_PREFILL_ROWS','0'))
+DISPATCH=os.environ.get('SC117_DISPATCH','')  # non-GEMV kernel choices (packet26.dispatch.v1); empty = engine defaults
 if not 0<=PREFILL_ROWS<=64:raise ValueError('SC117_PREFILL_ROWS must be 0..64')
 if PREFILL_ROWS and ACTIVATIONS!='f32':raise ValueError('batched prefill requires SC117_ACTIVATIONS=f32')
 PREFILL_STREAM=4*2560*4  # four F32 HC streams of width 2560
@@ -52,7 +53,7 @@ def environments(output,mini):
         e=dict(base)
         if not mini:e.update(NEOReadDebugKeys='1',FilterBdfPath=bdf,ZE_ENABLE_PCI_ID_DEVICE_ORDER='1',ZE_AFFINITY_MASK='0',ONEAPI_DEVICE_SELECTOR='level_zero:0')
         for key,sub in [('SYCL_CACHE_DIR','sycl'),('NEO_CACHE_DIR','neo'),('XDG_CACHE_HOME','xdg')]:e[key]=str(output/'cache'/str(rank)/sub)
-        for key in ('OWNRT_PREFILL_PROFILE','OWNRT_PREFILL_NATIVE','OWNRT_PREFILL_TILED','OWNRT_PREFILL_REUSE','OWNRT_PREFILL_SMALLTILE','OWNRT_DECODE_PROFILE','OWNRT_DECODE_FUSE','OWNRT_ROUTE_GROUP','OWNRT_KOPT_BLOCK_ROWS','OWNRT_ROUTE_FAST'):  # prefill diagnostics: per-site wall times; native rows off
+        for key in ('OWNRT_PREFILL_PROFILE','OWNRT_PREFILL_NATIVE','OWNRT_PREFILL_TILED','OWNRT_PREFILL_REUSE','OWNRT_PREFILL_SMALLTILE','OWNRT_DECODE_PROFILE','OWNRT_DECODE_FUSE','OWNRT_ROUTE_GROUP','OWNRT_KOPT_BLOCK_ROWS','OWNRT_ROUTE_FAST','OWNRT_IQ4NL_ROWS'):  # prefill diagnostics: per-site wall times; native rows off
             if key in os.environ:e[key]=os.environ[key]
         envs.append(e)
     return envs
@@ -67,6 +68,7 @@ def command(plan,rank,channel,stop_fd):
     cmd.extend(['--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block','--dense-q6-p33','--dense-packed-block','--recurrent-f32'])
     cmd.extend(plan.get('service_flags',[]))
     if PREFILL_ROWS:cmd+=['--prefill-rows',str(PREFILL_ROWS),'--prefill-shared',str(o/'prefill.bin')]
+    if DISPATCH:cmd+=['--dispatch',DISPATCH]
     return cmd
 
 def build_plan(output,*,mini=False,max_new=4,seconds=1800,evidence_output=None):

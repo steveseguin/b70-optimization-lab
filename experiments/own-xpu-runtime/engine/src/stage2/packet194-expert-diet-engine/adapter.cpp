@@ -428,7 +428,7 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  if(s.special==Special::normal&&(s.op==Op::gdn||s.op==Op::conv)){
   const int input=s.op==Op::gdn?3:1;
   if(s.ni<=input||s.no!=2)throw std::invalid_argument("recurrent state binding shape");
-  shape.flags|=recurrent_f32::admit(s.types[input],s.types[s.ni+1],Scalar::bf16,Scalar::f32,s.implementation);
+  shape.flags|=recurrent_f32::admit(s.types[input],s.types[s.ni+1],Scalar::bf16,Scalar::f32,s.implementation,s.f32_activations);
  }
  std::array<ownrt::Allocation,19> a;a.fill(control);a[15]=bindings[s.ni+s.no+s.nw+1];a[16]=bindings.back();a[17]=bindings[s.ni+s.no+s.nw+2];a[18]=bindings[s.ni+s.no+s.nw+3];
  auto in=[&](int dst,int j){a[dst]=bindings[j];};auto out=[&](int dst,int j){a[dst]=bindings[s.ni+j];};auto weight=[&](int dst,int j){a[dst]=bindings[s.ni+s.no+j];};

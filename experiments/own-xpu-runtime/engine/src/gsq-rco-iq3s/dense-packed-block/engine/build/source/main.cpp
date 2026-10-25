@@ -319,7 +319,9 @@ static Options parse(int argc, char **argv) {
   if(a.qkv_q6_p33)require(a.attention_q8_p33&&a.gsq_packed&&!a.mini,"QKV requires combined real GSQ mode");
   if(a.attention_q8_p33)require(a.gsq_packed&&!a.mini,"attention candidate requires real GSQ mode");
   if(a.gsq_packed){
-    require(a.dispatch.empty()&&a.selection.empty()&&a.selection_sha256.empty(),"GSQ mode refuses inherited selections");
+    // GSQ mode takes no inherited selection. A --dispatch file may only change non-GEMV kernel classes: its GEMV and
+    // fusion tables must equal the defaults (checked after load); every choice is still gated on the device.
+    require(a.selection.empty()&&a.selection_sha256.empty(),"GSQ mode refuses inherited selections");
     require(a.memory=="resident"&&a.rank>=0&&!a.first&&!a.record&&!a.priority_probe&&a.draft_capture.empty(),"GSQ resident rank mode only");
     require(!a.legacy&&!a.audit_prepare_each&&!a.argument_audit,"GSQ prepared mode only");
     require(a.mini||a.context==4096,"GSQ initial real context4096 only");
@@ -1988,7 +1990,10 @@ int main(int argc, char **argv) {
       throw std::invalid_argument("priority probe is host only");
 #endif
     }
-    if(!a.dispatch.empty())packet26::dispatch.load(a.dispatch);
+    if(!a.dispatch.empty()){
+      const packet26::Dispatch defaults;packet26::dispatch.load(a.dispatch);
+      if(a.gsq_packed)require(packet26::dispatch.gemv==defaults.gemv&&packet26::dispatch.fusions==defaults.fusions,"GSQ dispatch may change non-GEMV classes only");
+    }
     require(!fs::exists(a.output), "output already exists");
     output = a.output;
     fs::create_directories(output);

@@ -829,6 +829,10 @@ def main():
             # Kernel-choice overrides change the arithmetic path: each combination gets its own gate.
             overrides = ''.join(f"-{k[len('OWNRT_PREFILL_'):].lower()}{v}" for k, v in sorted(os.environ.items())
                                 if k.startswith('OWNRT_PREFILL_') and k != 'OWNRT_PREFILL_PROFILE')
+            overrides += ''.join(f"-{k[len('OWNRT_'):].lower()}{v}" for k, v in sorted(os.environ.items())
+                                 if k.startswith('OWNRT_') and not k.startswith('OWNRT_PREFILL_') and 'PROFILE' not in k)
+            if os.environ.get('SC117_DISPATCH'):
+                overrides += '-dispatch' + hashlib.sha256(Path(os.environ['SC117_DISPATCH']).read_bytes()).hexdigest()[:12]
             marker = P / 'evidence' / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}{overrides}.json"
             if not marker.exists():
                 state.detail = f'one-time batched-prefill gate ({rows_wanted} rows): tokens, guesses and persistent state vs token-by-token'

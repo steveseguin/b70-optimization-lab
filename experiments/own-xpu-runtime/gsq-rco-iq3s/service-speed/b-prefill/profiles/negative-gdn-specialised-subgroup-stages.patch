@@ -1,0 +1,73 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp
+index 24bc50549..b10737579 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp
+@@ -18,10 +18,68 @@ struct Guard {
+  int error(ng::Args a)const{return sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).load();}
+  void fail(ng::Args a)const{sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).store(1);}
+ };
++// GDN recurrence (stage 1), one 32-lane subgroup per state row (h, j) instead of one work item: lane l owns columns
++// 4l..4l+3, so the row is read and written coalesced and 32x more threads run. Every value is body<gdn,1>'s: each
++// dot128 is the same per-lane partial ((0+p0)+p1)+p2)+p3 and the same 32-leaf adjacent-pair tree (private_tree<32>),
++// here through subgroup shuffles; the prologue checks are the same and uniform across the subgroup.
++template<class Guard> inline void gdn_rows(ng::Shape s,ng::Args a,sycl::nd_item<1> it,float* scratch,Guard guard){
++ s.op=ng::gdn;auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t index=it.get_global_linear_id()/32;
++ if(index>=work_items(s,1)||!a.i(18)[0]||guard.error(a))return;
++ int pos=a.i(17)[0];if(pos<0||pos>ng::position_limit(s)-s.tokens){if(index==0&&lane==0)guard.fail(a);return;}
++ constexpr int step=4192;
++ const int h=int(index)/128,j=int(index)%128,key=(s.flags&4)?h%16:h/3,state=(h*128+j)*128,k0=4*int(lane);
++ auto tree=[&](float x){for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,x,(lane+width)%32);if(lane%(2*width)==0)x=x+rhs;}return sycl::group_broadcast(sg,x,0);};
++ for(int row=0;row<s.tokens;++row){const float* in=scratch+row*step;float v[4];
++  #pragma unroll
++  for(int i=0;i<4;++i)v[i]=a.b(row?7:5,state+k0+i)*in[4096+h];
++  float x=0.f;
++  #pragma unroll
++  for(int i=0;i<4;++i){const float product=v[i]*in[2048+key*128+k0+i];x=x+product;}
++  const float pred=tree(x);
++  const float delta=(a.b(0,row*10240+4096+h*128+j)-pred)*in[4144+h];
++  #pragma unroll
++  for(int i=0;i<4;++i)v[i]=v[i]+delta*in[2048+key*128+k0+i];
++  x=0.f;
++  #pragma unroll
++  for(int i=0;i<4;++i){const float product=v[i]*in[key*128+k0+i];x=x+product;}
++  const float y=tree(x);
++  if(lane==0)a.put(6,(row*48+h)*128+j,y);
++  #pragma unroll
++  for(int i=0;i<4;++i)a.put(7,state+k0+i,v[i]);
++ }
++}
++// GDN stage 0 with subgroups (same values as body<gdn,0>): per token, subgroup g<16 owns key g and computes its q and
++// k norms (dot128: per-lane ((0+v0*v0)+v1*v1)+... partials, the 32-leaf adjacent tree) and writes the normalized
++// vectors, lane l owning columns 4l..4l+3; subgroups 16 and 17 give one head per lane (decay and beta).
++template<class Guard> inline void gdn_prep(ng::Shape s,ng::Args a,sycl::nd_item<1> it,float* scratch,Guard guard){
++ s.op=ng::gdn;auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t index=it.get_global_linear_id()/32;
++ if(index>=size_t(s.tokens)*18||!a.i(18)[0]||guard.error(a))return;
++ int pos=a.i(17)[0];if(pos<0||pos>ng::position_limit(s)-s.tokens){if(index==0&&lane==0)guard.fail(a);return;}
++ constexpr int step=4192;const int row=int(index)/18,part=int(index)%18;float* out=scratch+row*step;
++ auto tree=[&](float x){for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,x,(lane+width)%32);if(lane%(2*width)==0)x=x+rhs;}return sycl::group_broadcast(sg,x,0);};
++ if(part<16){const int key=part,k0=4*int(lane);const size_t qb=size_t(row)*10240+key*128,kb=qb+2048;
++  float q[4],k[4],qs=0.f,ks=0.f;
++  #pragma unroll
++  for(int i=0;i<4;++i){q[i]=a.b(0,qb+k0+i);k[i]=a.b(0,kb+k0+i);const float qq=q[i]*q[i];qs=qs+qq;const float kk=k[i]*k[i];ks=ks+kk;}
++  const float qn=detmath::sqrt(tree(qs)+1e-6f),kn=detmath::sqrt(tree(ks)+1e-6f);
++  #pragma unroll
++  for(int i=0;i<4;++i){out[key*128+k0+i]=(q[i]/qn)/detmath::sqrt(float(128));out[2048+key*128+k0+i]=k[i]/kn;}
++ }else{const int h=(part-16)*32+int(lane);if(h>=48)return;
++  float gate=a.b(1,row*48+h)+a.weight(4,h,s.flags);
++  float sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate;
++  float av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
++  out[4096+h]=detmath::exp(av*sp);out[4144+h]=ng::sigmoid(a.b(2,row*48+h));
++ }
++}
++inline bool gdn_subgroups(){static const bool on=[]{const char* e=std::getenv("OWNRT_GDN_SUBGROUPS");return !e||e[0]!='0';}();return on;}
+ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel final:ownrt::SyclOperation {
+  ng::Shape shape;explicit Kernel(ng::Shape s):shape(s){}
+  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+   ng::Args a;std::copy_n(p.begin(),19,a.p.begin());float* scratch=static_cast<float*>(p[19]);auto s=shape;a.f32=(s.flags&ng::f32_activations_flag)!=0;auto n=work_items(s,Stage);
++  if constexpr(Code==ng::gdn&&Stage==0)if(gdn_subgroups())
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(size_t(s.tokens)*18*32),sycl::range<1>(32))](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_prep(s,a,it,scratch,Guard{});}));});
++  if constexpr(Code==ng::gdn&&Stage==1)if(gdn_subgroups())
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(n*32),sycl::range<1>(128))](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_rows(s,a,it,scratch,Guard{});}));});
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body<Code,Stage,FixedWidth,FixedHeads>(s,a,i[0],scratch,Guard{});}));});
+  }
+ };
