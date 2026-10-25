@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**October 25, 10:05 EDT — SC117: two-card decode is at its practical ceiling; work moves to the exact multi-card engine.**
+- Today's micro-levers all closed without a gain, though every one stayed exact: FMA and five other expert-kernel variants (the expert kernels are instruction-bound), fused HC combine+norm, and fused HC gate+mix (1.003×). Prompt-reading token tiles had already been measured slower. Details are in [DO-NOT-REPEAT](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/DO-NOT-REPEAT.md).
+- Per-token model on two cards: T ≈ (S+d)/2 + m(S−d)/2, with S = both halves' work, d = draft, m = miss rate. The hit cycle is balanced (17.1 ms per rank), so only less work per layer or fewer misses help.
+- Next, following the review: the exact TP engine (row splits plus gathers, expert placement), developed on cards 23/47 and on the mini model ([plan](experiments/own-xpu-runtime/research/2026-10-24-exact-multicard-design.md)). Running it on four cards still needs cards 27/43, which the vision server holds.
+
 **October 25, 08:45 EDT — SC117 service: new text no longer decodes slower; conversations continue without re-reading.**
 Engine `5de85b4aadfd` (same default path as `297b388764e9`, plus exact opt-in switches) serves at `http://192.168.2.44:18160/v1` (same unit and cards).
 - **New text was 30% slower than the suite showed.** The first request with unseen text decoded at about 33 tok/s,
