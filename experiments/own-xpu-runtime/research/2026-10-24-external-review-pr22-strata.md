@@ -86,5 +86,5 @@ MTP hits are identical (4568/5954). Decode is the 12-prompt suite median.
 | IQ3_XXS expert block kernel with 4 rows per subgroup and 16-bit word loads (microbench 98.3 → 60.6 µs) (`2045517b`) | **31.07** | |
 
 Kernel microbenchmarks (warm/cold, bitwise against an engine replica) are in [kbench/](kbench/).
-| routed packed kernel (Q2_0, IQ4_XS experts) with 4 rows per subgroup (Q2_0 microbench 151.7 → 73.9 µs) (`b9d6ab49`) | 31.26 | |
+| routed packed kernel (Q2_0, IQ4_XS experts) with 4 rows per subgroup (Q2_0 microbench 151.7 → 73.9 µs) (`ff0fff61`) | 31.26 | |
 | fast exact HC combine and expert gather in F32 mode: no generic accessor, four elements per item (`3108b3c6`) | **32.04** | |
