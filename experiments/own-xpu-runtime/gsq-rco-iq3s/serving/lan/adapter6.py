@@ -14,6 +14,7 @@ SERVICE_FLAGS=['--reset-dump','none','--finish-dump','none','--token-stream','js
 # Batched prefill (engine --prefill-rows): rows per chunk, 0 = off. Requires the F32 exact engine. The rows travel
 # through prefill.bin next to shared.bin (engine prefill_wire.hpp layout: header page, forward[2], reverse[2]).
 PREFILL_ROWS=int(os.environ.get('SC117_PREFILL_ROWS','0'))
+TARGET_SPLIT=int(os.environ.get('SC117_TARGET_SPLIT','24'))  # layers on rank 0 (draft on rank 0); the rest on rank 1
 DISPATCH=os.environ.get('SC117_DISPATCH','')  # non-GEMV kernel choices (packet26.dispatch.v1); empty = engine defaults
 if not 0<=PREFILL_ROWS<=64:raise ValueError('SC117_PREFILL_ROWS must be 0..64')
 if PREFILL_ROWS and ACTIVATIONS!='f32':raise ValueError('batched prefill requires SC117_ACTIVATIONS=f32')
@@ -59,7 +60,7 @@ def environments(output,mini):
     return envs
 
 def command(plan,rank,channel,stop_fd):
-    o=Path(plan['output']);e=Path(plan['evidence_output']);cmd=['ionice','-c','3',plan['binary'],'--gsq-packed','--rank',str(rank),'--channel',str(channel),'--stop-fd',str(stop_fd),'--shared',str(o/'shared.bin'),'--cards','1','--card','0','--output',str(e/f'rank{rank}'),'--memory','resident','--context',str(plan['context']),'--seconds',str(plan['seconds']),'--native-nice','19','--timing','token','--max-new',str(plan['max_new']),'--retain-steps','none','--draft-rank','0','--target-split','24','--host-path','prepared']
+    o=Path(plan['output']);e=Path(plan['evidence_output']);cmd=['ionice','-c','3',plan['binary'],'--gsq-packed','--rank',str(rank),'--channel',str(channel),'--stop-fd',str(stop_fd),'--shared',str(o/'shared.bin'),'--cards','1','--card','0','--output',str(e/f'rank{rank}'),'--memory','resident','--context',str(plan['context']),'--seconds',str(plan['seconds']),'--native-nice','19','--timing','token','--max-new',str(plan['max_new']),'--retain-steps','none','--draft-rank','0','--target-split',str(TARGET_SPLIT),'--host-path','prepared']
     if plan['mini']:cmd+=['--mini','--pipeline-mini']
     else:cmd+=['--plan',str(LANE/'loader/placement.tsv'),'--identity',str(LANE/'loader/shard-auth.tsv'),'--model-dir',str(MODEL),'--authorized-device-window']
     if rank==0:
@@ -139,6 +140,7 @@ class Transport(BASE.Transport):
         self.closed=False;self.retained=[];self.stop_sent=False;self.check=check
         validate_plan(plan);admit(copy.deepcopy(plan));check()
         args=BASE.parser().parse_args(['--output',plan['output'],'--binary',plan['binary'],'--draft','mtp','--draft-rank','0','--target-split','24','--context',str(plan['context']),'--tokens',str(plan['max_new']),'--seconds',str(plan['seconds']),'--wait-seconds',str(plan['wait_seconds']),'--native-nice','19','--retain-steps','none','--controller','native']+(['--mini'] if plan['mini'] else ['--device']))
+        args.target_split=TARGET_SPLIT  # the sealed base parser admits only 0/23/24; this adapter launches its own ranks
         self.a=args;self.control_output=Path(plan['output']);self.out=Path(plan['evidence_output']);self.device=args.device
         self.seq=[0,0];self.pending=[False,False];self.started=[0.,0.];self.commands=[{},{}]
         self.metrics=[dict(busy_ms=0.,handover_ms=0.,calls=0,gpu_ms=0.) for _ in range(2)]

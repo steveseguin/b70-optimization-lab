@@ -37,7 +37,7 @@ static void transfer(int fd,void* ptr,size_t n,bool send,int seconds) {
  }
 }
 static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1,int target_split=0,int rank0_extra=0) {
- require(target_split==0||target_split==23||target_split==24,"unsupported target split");
+ require(target_split==0||(target_split>=20&&target_split<=24),"unsupported target split");
  require(rank0_extra==0||rank0_extra==2||rank0_extra==3,"packet188 rank-0 extra layer count (0, 2: V3 24-25, 3: k3 24-26)");
  require(!rank0_extra||(target_split==0&&draft_rank==1),"packet186 V3 layout requires the 24/24 base split and the rank-1 draft");
  const int boundary=mini?2:(target_split?target_split:(draft_rank==0?22:24));

@@ -285,7 +285,7 @@ static Options parse(int argc, char **argv) {
   require(a.cancel_launch==-1,"forced cancellation is CPU diagnostic only");
 #endif
   require(a.draft_rank==0||a.draft_rank==1,"draft rank must be0 or1");
-  require(a.target_split==0||a.target_split==23||a.target_split==24,"target split must be0 (placement default),23 or24");
+  require(a.target_split==0||a.target_split==23||a.target_split==24||(a.gsq_packed&&a.target_split>=20&&a.target_split<=24),"target split must be0 (placement default),23 or24 (GSQ: 20..24)");
   require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&a.context==32768),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768");
   require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096,"24/24 rank0 draft admitted at context4096 only");
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
@@ -325,7 +325,8 @@ static Options parse(int argc, char **argv) {
     require(a.memory=="resident"&&a.rank>=0&&!a.first&&!a.record&&!a.priority_probe&&a.draft_capture.empty(),"GSQ resident rank mode only");
     require(!a.legacy&&!a.audit_prepare_each&&!a.argument_audit,"GSQ prepared mode only");
     require(a.mini||a.context==4096,"GSQ initial real context4096 only");
-    require(a.mini||(a.target_split==24&&a.draft_rank==0),"GSQ initial split24 draft0 required");
+    // GSQ: rank 0 (with the draft) holds layers 0..split-1, rank 1 the rest; stage boundaries only copy activations.
+    require(a.mini||(a.target_split>=20&&a.target_split<=24&&a.draft_rank==0),"GSQ split 20..24 with the rank-0 draft required");
   }
   return a;
 }

@@ -434,6 +434,35 @@ def b0_gate(engine, selftest):
 
 PREFILL_SUITE = P.parent.parent / 'service-speed/e-reference/runs/f32suite/inputs'
 PREFILL_SCALAR = P.parent.parent / 'service-speed/e-reference/runs/f32-suite.json'
+LAYER = re.compile(r'^(alternate-)?blk\.(\d+)\.')
+
+
+def split_differences(want, got, split, oracle_split=24):
+    """F32 oracle comparison when layers [split, oracle_split) moved from rank 0 to rank 1 (pipeline stage boundaries
+    only copy activations, so every layer's arithmetic is unchanged). Exact per rank for unmoved layers and global
+    buffers. A moved layer's persistent state (KV, pooled keys, recurrent state, histories) must equal one of the two
+    rank-0 banks in the oracle (rank 0 alternates banks for speculation; rank 1 keeps one). Not compared, by
+    construction: rank 0's boundary hand-off streams.bin, and a moved layer's transient buffers, which on rank 0 hold
+    the last speculative position."""
+    out = {r: [] for r in want}
+    for r, table in want.items():
+        for k, v in table.items():
+            m = LAYER.match(k)
+            if not m:
+                if not (r == 'rank0' and k == 'streams.bin') and got[r].get(k) != v:
+                    out[r].append(k)
+                continue
+            layer = int(m.group(2))
+            moved = r == 'rank0' and split <= layer < oracle_split
+            if not moved:
+                if got[r].get(k) != v:
+                    out[r].append(k)
+            elif not m.group(1) and PERSISTENT.search(k):
+                if got['rank1'].get(k) not in (v, table.get('alternate-' + k)):
+                    out['rank1'].append(k)
+    return {r: sorted(v) for r, v in out.items()}
+
+
 PERSISTENT = re.compile(r'(^alternate-|\.(keys|values|raw|pooled|state)\.bin$|history\.bin$|^position\.bin$|^token_history\.bin$)')
 
 
@@ -817,8 +846,10 @@ def main():
             oracle = P / 'evidence' / 'f32-state-oracle.json'
             if oracle.exists():
                 want = json.loads(oracle.read_text())
-                differ = {r: sorted(k for k in want['state'][r] if want['state'][r][k] != f32_state[r].get(k)) for r in want['state']}
-                (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}.json").write_text(json.dumps(
+                split = int(os.environ.get('SC117_TARGET_SPLIT', '24'))
+                differ = (split_differences(want['state'], f32_state, split) if split != 24 else
+                          {r: sorted(k for k in want['state'][r] if want['state'][r][k] != f32_state[r].get(k)) for r in want['state']})
+                (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(
                     dict(binary_sha256=engine.t.plan['binary_sha256'], oracle_binary_sha256=want['binary_sha256'], differences=differ, utc=utc()), indent=2) + '\n')
                 require(not any(differ.values()), f"F32 decode state differs from the oracle binary {want['binary_sha256'][:12]}: {differ}")
             else:
@@ -831,6 +862,8 @@ def main():
                                 if k.startswith('OWNRT_PREFILL_') and k != 'OWNRT_PREFILL_PROFILE')
             overrides += ''.join(f"-{k[len('OWNRT_'):].lower()}{v}" for k, v in sorted(os.environ.items())
                                  if k.startswith('OWNRT_') and not k.startswith('OWNRT_PREFILL_') and 'PROFILE' not in k)
+            if os.environ.get('SC117_TARGET_SPLIT', '24') != '24':
+                overrides += '-split' + os.environ['SC117_TARGET_SPLIT']
             if os.environ.get('SC117_DISPATCH'):
                 overrides += '-dispatch' + hashlib.sha256(Path(os.environ['SC117_DISPATCH']).read_bytes()).hexdigest()[:12]
             marker = P / 'evidence' / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}{overrides}.json"
