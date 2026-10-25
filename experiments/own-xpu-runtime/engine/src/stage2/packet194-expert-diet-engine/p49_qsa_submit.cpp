@@ -38,7 +38,7 @@ template<int Stage>struct Attention final:Base {
 };
 integrated::Launch attention(ownrt::Device&d,ng::Shape s,std::span<const ownrt::Allocation>a,ownrt::Allocation scratch,std::span<const ownrt::Event>deps){
  ng::validate(s);
- if(s.op!=ng::attention_score||s.tokens<1||s.tokens>2||a.size()!=19||s.budget!=2048)
+ if(s.op!=ng::attention_score||s.tokens<1||s.tokens>4||a.size()!=19||s.budget!=2048) // rows: 2 (M=2 verify), up to 4 (grouped prefill rows)
   throw std::invalid_argument("packet49 split32 geometry/bindings");
  auto required=ng::required_bytes(s);required[16]=0;
  for(int j=0;j<19;++j){const auto&r=d.arena.row(a[j]);if(!r.live||r.memory!=ownrt::Memory::device||r.bytes<required[j])throw std::invalid_argument("packet49 attention extent/lifetime");}

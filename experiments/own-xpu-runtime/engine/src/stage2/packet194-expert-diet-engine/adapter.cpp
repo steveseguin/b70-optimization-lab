@@ -433,7 +433,10 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   const bool normal=s.special==Special::normal,simple=normal&&(s.implementation==1||s.implementation==11)&&(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm));
   const bool generic=normal&&(s.implementation<=1||s.implementation==11)&&!(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm)||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate||s.op==Op::qsa_attention||s.op==Op::moe_combine);
   const bool round2_gdn=normal&&s.implementation==2&&s.op==Op::gdn; // loops token rows like the generic kernel
-  if(!simple&&!generic&&!round2_gdn)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
+  // p49 split32 attention (implementation 12) indexes every binding by row r < tokens, with per-row counts and causal
+  // bound; up to 4 rows (grouped prefill attention, OWNRT_PREFILL_ATTN_ROWS).
+  const bool p49_rows=normal&&s.implementation==12&&s.op==Op::qsa_attention&&s.tokens<=4;
+  if(!simple&&!generic&&!round2_gdn&&!p49_rows)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
  }
  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);
  if(s.implementation==2&&s.special==Special::normal&&(s.op==Op::route||s.op==Op::argmax))return round2::submit_simple(d,s,bindings,deps);

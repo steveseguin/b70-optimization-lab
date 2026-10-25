@@ -84,6 +84,7 @@ const std::vector<ownrt::PreparedCompute>& prefill_commands(const flash::Launch&
 // specialised kernels loop rows inside the launch, each row with its single-row arithmetic (rows of a recurrence
 // carry state through the output bank, so every row's state ends in the spare bank). OWNRT_PREFILL_NATIVE=0 replays
 // them per row instead (diagnostic).
+static int prefill_attention_rows() {static const int rows=[]{const char* e=std::getenv("OWNRT_PREFILL_ATTN_ROWS");int v=e?std::atoi(e):4; /* default 4: exact, 10.54 -> 10.25 ms/row on rank 1 at 3000 rows (2026-10-25) */return v<1?1:v>4?4:v;}();return rows;}
 static bool prefill_native_op(const std::string& op) {
   static const std::set<std::string> ops{"gdn","conv","gdn_norm_gate","qsa_prepare","qsa_append_pool","qsa_select","hc_mix","silu_div4","silu_product","norm",
                                          "route","expert_gather","hc_combine","check_status"};
@@ -181,6 +182,28 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
       bool banked_native=false;
       if(l->op=="gemv"||l->op=="routed_gemv")prefill_linear(*l,M);
       else if(prefill_native(*l)){prefill_native_site(*l,P0,M);banked_native=l->op=="gdn"||l->op=="conv";}
+      else if(l->op=="qsa_attention"&&prefill_attention_rows()>1) {
+        // Grouped rows (OWNRT_PREFILL_ATTN_ROWS=T, T<=4): one admit/tiles/combine launch set per T consecutive rows,
+        // from row g's views, with the extent of the group's last row. Each row keeps its own query, ids, slot count and
+        // causal bound, and combine stops at the row's own count, so its arithmetic equals its single-row replay.
+        const int T=prefill_attention_rows();
+        for(int g=0;g<M;g+=T) {
+          const int rows=std::min(T,M-g),extent=std::min(p.g.context,((P0+g+rows-1+32)/32)*32);
+          // Per-row bindings are the multi-row prefill shadows (as in prefill_native_site), each viewed at row g through
+          // a temporary self-view; shared bindings (KV pools, controls) are unchanged.
+          auto& d=dev(0);const int saved_extent=context_extent;context_extent=extent;
+          auto site=prepare_site(*l);context_extent=saved_extent;site.spec.tokens=rows;
+          std::vector<Allocation> viewed;size_t k=0;
+          for(const auto* names:{&l->inputs,&l->outputs})for(const auto& name:*names){
+            if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(name);site.bindings.at(k)=shadow;
+              require(!d.row_views.count(shadow),"prefill shadow already viewed");d.row_views[shadow]={shadow,prefill_row_bytes(name),false};viewed.push_back(shadow);}
+            ++k;}
+          d.view_row=g;
+          try {finish(0,site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);}
+          catch(...){d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);throw;}
+          d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
+        }
+      }
       else {
         const bool qsa=l->op=="qsa_select"||l->op=="qsa_attention";
         for(int r=0;r<M;++r) {

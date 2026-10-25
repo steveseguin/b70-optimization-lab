@@ -1302,8 +1302,9 @@ public:
     history0=history1=p.g.eos;metadata=w.metadata();
     for (int c = 0; c < a.cards; ++c) {
       controls.push_back(allocate(c,"parallel-controls:"+std::to_string(c),12,Category::scratch,Lifetime::transaction));
-      scores.push_back(allocate(c,"attention-scores:"+std::to_string(c),24*(p.g.budget+3)*4,Category::scratch,Lifetime::transaction));
-      probabilities.push_back(allocate(c,"attention-probabilities:"+std::to_string(c),24*(p.g.budget+3)*4,Category::scratch,Lifetime::transaction));
+      // Four rows: grouped prefill attention (OWNRT_PREFILL_ATTN_ROWS<=4) validates these per row; decode uses row 0.
+      scores.push_back(allocate(c,"attention-scores:"+std::to_string(c),4*24*(p.g.budget+3)*4,Category::scratch,Lifetime::transaction));
+      probabilities.push_back(allocate(c,"attention-probabilities:"+std::to_string(c),4*24*(p.g.budget+3)*4,Category::scratch,Lifetime::transaction));
       snapshots.push_back(allocate(c,"layer-snapshots:"+std::to_string(c),48*stream_bytes(),Category::scratch,Lifetime::transaction));
       buffers.emplace_back();
       weights.emplace_back();selected.emplace_back();loaded_layer.push_back(-1);
@@ -1985,7 +1986,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
        "pruned\",\"one_card_full_model\":\"stream one layer at a "
        "time\",\"capture\":false,\"memory_plan\":{";
   const size_t ab=a.f32_activations?4:2; // exact mode adds the F32 target RoPE table and widens mixture/snapshots
-  size_t extra=174080*4+rope_constants::bytes*(a.f32_activations?3:1)+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*ab+4+12+2*24*(p.g.budget+3)*4+48*4*p.g.h*ab;
+  size_t extra=174080*4+rope_constants::bytes*(a.f32_activations?3:1)+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*ab+4+12+2*4*24*(p.g.budget+3)*4+48*4*p.g.h*ab;
   std::vector<size_t> base(cards,extra),resident(cards,0);
   for(const auto& b:p.buffers)for(int c=0;c<cards;++c)
     if(b.card==-1 || b.card==c)base[c]+=count(b.shape)*flash::scalar_bytes(b.type);

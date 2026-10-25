@@ -18,7 +18,8 @@ REQ = struct.Struct('<8i')            # op, token, position, fixture, speculativ
 REP = struct.Struct('<8i4d')          # status, token, error, bytes, sequence, rank, reserved[2]; four doubles
 SLOT = 65536
 SHARED = 2 * SLOT + 4096 + 2 * SLOT + 64
-HALF, ACCEPT, DUMP, FINISH = 1, 2, 4, 5
+HALF, ACCEPT, DUMP, FINISH, PREFILL = 1, 2, 4, 5, 15
+PREFILL_MAGIC, PREFILL_VERSION, PREFILL_HEADER = 0x31465050, 1, 4096
 STREAM_FLOATS = 4 * 2560
 
 
@@ -72,6 +73,16 @@ def run(a):
         if flag in argv:
             i = argv.index(flag)
             del argv[i:i + 2]
+    prefill_file = None
+    if a.prompt:
+        # Prompt rows: --batched reads them in chunks of --rows through the prefill command (op 15); otherwise one
+        # half per row with fixture 0 (the token-by-token reading the prefill gate compares against).
+        stream = STREAM_FLOATS * 4
+        prefill_file = out / 'prefill.bin'
+        with open(prefill_file, 'wb') as f:
+            f.write(struct.pack('<4I', PREFILL_MAGIC, PREFILL_VERSION, a.rows, stream).ljust(PREFILL_HEADER, b'\0'))
+            f.write(bytes(4 * a.rows * stream))
+        argv += ['--prefill-rows', str(a.rows), '--prefill-shared', str(prefill_file)]
     if a.binary:
         argv[argv.index(next(x for x in argv if x.endswith('own-engine')))] = a.binary
     if a.tp:
@@ -82,8 +93,9 @@ def run(a):
         env['ONEAPI_DEVICE_SELECTOR'] = 'level_zero:*'
         if a.split:
             env['OWNRT_TP_SPLIT'] = a.split
+    cache_root = Path(a.cache).absolute() if a.cache else out / 'cache'  # --cache: shared, warm JIT caches across runs
     for key in ('SYCL_CACHE_DIR', 'NEO_CACHE_DIR', 'XDG_CACHE_HOME'):
-        env[key] = str(out / 'cache' / key.lower())
+        env[key] = str(cache_root / key.lower())
         Path(env[key]).mkdir(parents=True, exist_ok=True)
     full_env = dict(os.environ)
     full_env.update(env)
@@ -102,7 +114,32 @@ def run(a):
         with open(shared, 'r+b') as f:
             import mmap
             m = mmap.mmap(f.fileno(), SHARED)
-            for step in range(a.steps):
+            prompt_ms = 0.0
+            if a.prompt:
+                stream = STREAM_FLOATS * 4
+                s0 = time.monotonic()
+                if a.batched:
+                    pf = open(prefill_file, 'r+b')
+                    pm = mmap.mmap(pf.fileno(), PREFILL_HEADER + 4 * a.rows * stream)
+                    chunk = 0
+                    for first in range(0, a.prompt, a.rows):
+                        n = min(a.rows, a.prompt - first)
+                        base = PREFILL_HEADER + (chunk % 2) * a.rows * stream
+                        for r in range(n):
+                            pm[base + r * stream: base + (r + 1) * stream] = streams(100000 + first + r)
+                        seq += 1
+                        call(parent, PREFILL, seq, position=first, token=n, fixture=chunk % 2)
+                        chunk += 1
+                    pm.close(); pf.close()
+                else:
+                    for r in range(a.prompt):
+                        m[SLOT:SLOT + stream] = streams(100000 + r)
+                        seq += 1
+                        call(parent, HALF, seq, position=r, token=2000 + r, fixture=0)
+                        seq += 1
+                        call(parent, ACCEPT, seq, position=r, token=2000 + r, fixture=0)
+                prompt_ms = (time.monotonic() - s0) * 1000
+            for step in range(a.prompt, a.prompt + a.steps):
                 m[SLOT:SLOT + STREAM_FLOATS * 4] = streams(step)
                 seq += 1
                 s = time.monotonic()
@@ -116,7 +153,7 @@ def run(a):
             seq += 1
             parent.sendall(REQ.pack(FINISH, 0, 0, 0, 0, seq, 0, 0))  # the rank exits on finish without a reply
         proc.wait(timeout=600)
-        summary = dict(tp=a.tp, split=a.split, steps=a.steps, load_s=load_s, half_ms=times, tokens=tokens, rc=proc.returncode)
+        summary = dict(tp=a.tp, split=a.split, prompt=a.prompt, batched=a.batched, rows=a.rows, prompt_ms=prompt_ms, steps=a.steps, load_s=load_s, half_ms=times, tokens=tokens, rc=proc.returncode)
         (out / 'summary.json').write_text(json.dumps(summary, indent=1))
         print(json.dumps({k: summary[k] for k in ('tp', 'steps', 'load_s', 'tokens', 'rc')}),
               'median half ms %.2f' % sorted(times)[len(times) // 2])
@@ -156,6 +193,10 @@ if __name__ == '__main__':
     r.add_argument('--binary')
     r.add_argument('--tp', action='store_true')
     r.add_argument('--steps', type=int, default=8)
+    r.add_argument('--cache', help='shared SYCL/NEO cache directory (warm kernels for timing)')
+    r.add_argument('--prompt', type=int, default=0, help='prompt rows read before the decode steps')
+    r.add_argument('--batched', action='store_true', help='read the prompt rows through the batched prefill command')
+    r.add_argument('--rows', type=int, default=32, help='prefill chunk rows (--batched)')
     r.add_argument('--split', help='OWNRT_TP_SPLIT label suffixes, e.g. .attention,.gdn.qkv (with --tp)')
     c = sub.add_parser('compare')
     c.add_argument('a')
