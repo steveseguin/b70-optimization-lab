@@ -254,6 +254,29 @@ template<Op Code,int Phase,int FixedN=0,int FixedTop=0> struct SimpleNew final:o
  }
 };
 #endif
+#ifndef OWN_RT_HOST_ONLY
+// Route in one launch: one work-group per row runs the unchanged five route phases of simple_body in order, with a
+// work-group barrier (global and local fence) where the five-launch form had kernel boundaries. Every value is computed
+// by the same code from the same inputs. Exact but neutral on SC117 decode (27.67 vs 28.00 tok/s, 2026-10-24), so
+// opt-in: OWNRT_ROUTE_GROUP=1.
+template<int FixedN,int FixedTop> struct RouteGroup final:ownrt::SyclOperation {
+ static constexpr int Local=512;
+ Spec spec;explicit RouteGroup(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());
+  const std::array<int,5> work{simple_work(spec,0),simple_work(spec,1),simple_work(spec,2),simple_work(spec,3),simple_work(spec,4)};
+  const int rows=spec.tokens;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(rows)*Local,Local)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){
+   const int r=int(it.get_group_linear_id()),lid=int(it.get_local_linear_id());
+   auto phase=[&]<int Phase>(){
+    for(int i=lid;i<work[Phase];i+=Local){if(rows>1)simple_body<Op::route,Phase,FixedN,FixedTop>(RowBound{b,r,b.s},i);else simple_body<Op::route,Phase,FixedN,FixedTop>(b,i);}
+    it.barrier(sycl::access::fence_space::global_and_local);};
+   phase.template operator()<0>();phase.template operator()<1>();phase.template operator()<2>();phase.template operator()<3>();phase.template operator()<4>();
+  }));});
+ }
+};
+inline bool route_group(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_GROUP");return e&&e[0]=='1';}();return on;}
+#endif
 template<Op Code,int FixedN=0,int FixedTop=0> Launch simple_new_submit(ownrt::Device& d,const Spec& s,std::span<const ownrt::Allocation> bindings,std::span<const ownrt::Event> deps){
  Launch result{};auto issue=[&]<int Phase>(){SimpleNew<Code,Phase,FixedN,FixedTop> op(s,simple_work(s,Phase));std::array<ownrt::Event,1> after{result.last};auto e=d.compute(op,bindings,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=e;result.last=e;++result.passes;};
  issue.template operator()<0>();if constexpr(Code==Op::route||Code==Op::argmax||Code==Op::expert_gather)issue.template operator()<1>();
@@ -311,7 +334,12 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  if(s.implementation==2&&s.special==Special::normal&&(s.op==Op::route||s.op==Op::argmax))return round2::submit_simple(d,s,bindings,deps);
  if(s.implementation&&s.special==Special::broadcast)return simple_new_submit<Op::hc_mix>(d,s,bindings,deps);
  if(s.implementation&&s.special==Special::normal){switch(s.op){
- case Op::route:if(s.sizes[0]==512&&s.site.shape[1]==10)return simple_new_submit<Op::route,512,10>(d,s,bindings,deps);return simple_new_submit<Op::route>(d,s,bindings,deps);
+ case Op::route:if(s.sizes[0]==512&&s.site.shape[1]==10){
+#ifndef OWN_RT_HOST_ONLY
+  if(route_group()){RouteGroup<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+#endif
+  return simple_new_submit<Op::route,512,10>(d,s,bindings,deps);}
+  return simple_new_submit<Op::route>(d,s,bindings,deps);
  case Op::expert_gather:return simple_new_submit<Op::expert_gather>(d,s,bindings,deps);
  case Op::hc_combine:if(!s.fused_combine_norm)return simple_new_submit<Op::hc_combine>(d,s,bindings,deps);break;
  case Op::argmax:return simple_new_submit<Op::argmax>(d,s,bindings,deps);

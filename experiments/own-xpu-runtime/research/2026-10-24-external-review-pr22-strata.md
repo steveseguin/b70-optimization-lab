@@ -77,3 +77,5 @@ MTP hits are identical (4568/5954). Decode is the 12-prompt suite median.
 | hoisted loads in the raw kopt GEMV (latency guess) | 20.70 | exact but slower; reverted |
 | sibling fusion: HC low+inject, GDN a+b, indexer q+k, router+shared gate (`37879adf`) | **27.82 (+6%)** | the few-row member was latency-bound: HC inject 4×10240 cost 52.7 µs, the same as 320-row HC low |
 | idea 3 (part), IQ4_NL codebook packed into registers (`63ab006a`) | 28.00 | neutral; the compiler already kept the table in registers |
+| route in one launch: five `simple_body` phases per work-group (`de89717e`) | 27.67 | neutral; opt-in (`OWNRT_ROUTE_GROUP=1`) |
+| routed kopt with 4 rows per subgroup, read from global memory with no staging (`623cd3d4`) | **28.29** | +1%; kept. Expert kernels are decode/ALU bound, as Strata found on the B70 |

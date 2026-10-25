@@ -299,6 +299,58 @@ TILED_CASE(F32);TILED_CASE(F16);TILED_CASE(BF16);TILED_CASE(Q8_0);TILED_CASE(Q6_
     throw std::invalid_argument("kopt tiled token rows: dense F32/F16/BF16/Q8_0/Q6_K only");
   }
 };
+// Several rows per subgroup (F32 activations, decode8 formats): one subgroup owns R consecutive rows of one slot, decodes
+// each row straight from global memory (no local staging, no barrier) and shares each 8-column activation chunk across
+// its rows. Every row keeps Multiply's single-row arithmetic exactly: lane l owns columns l*8+SG*8*i, the same decode8
+// values, product then add in that order, the same adjacent-pair subgroup tree, and NaN for inactive rows.
+template<unsigned R> struct MultiplyBlockRows:ownrt::SyclOperation {
+  static constexpr unsigned Subgroups=4;
+  Descriptor desc{};unsigned subgroup=32;
+  template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+    auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt block-rows capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+    const size_t blocks=(d.span+R-1)/R,total=blocks*d.count,groups=(total+Subgroups-1)/Subgroups;
+    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(groups*SG*Subgroups),sycl::range<1>(SG*Subgroups))](sycl::handler& h) {
+      h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+        const size_t logical=it.get_group_linear_id()*Subgroups+sg.get_group_linear_id();if(logical>=total)return;
+        const size_t slot=logical/blocks,first=(logical%blocks)*R;
+        Route r{0,0,uint32_t(d.rows)};if(d.routed)r=static_cast<const Route*>(pointers[d.r])[slot];
+        const bool valid=valid_route(r,d.experts,d.rows,d.span);
+        if(d.routed&&first==0&&lane==0)static_cast<uint32_t*>(pointers[d.status])[slot]=valid?0:1;
+        const float* x=static_cast<const float*>(pointers[d.x])+slot*d.k;const uint8_t* w=static_cast<const uint8_t*>(pointers[d.w]);
+        float acc[R];
+        #pragma unroll
+        for(unsigned i=0;i<R;++i)acc[i]=0;
+        for(size_t k=size_t(lane)*8;k<d.k;k+=size_t(SG)*8) {
+          float input[8];for(unsigned j=0;j<8 && k+j<d.k;++j)input[j]=x[k+j];
+          #pragma unroll
+          for(unsigned i=0;i<R;++i) {
+            const size_t row=first+i;if(!valid||row>=d.span||row>=r.row_count)continue;
+            const uint8_t* source=w+(size_t(r.expert_id)*d.rows+r.row_begin+row)*d.rb;float values[8];
+            if(k+8<=d.k)decode8<T>(source,k,values);else for(size_t j=0;j<d.k-k;++j)values[j]=element(T,source,k+j);
+            for(unsigned j=0;j<8 && k+j<d.k;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
+          }
+        }
+        #pragma unroll
+        for(unsigned i=0;i<R;++i) {
+          float sum=acc[i];
+          for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
+          const size_t row=first+i;
+          if(lane==0&&row<d.span)static_cast<float*>(pointers[d.y])[slot*d.span+row]=valid&&row<r.row_count?sum:bits_float(0x7fc00000);
+        }
+      }));
+    });
+  }
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    switch(desc.type){
+#define BLOCK_CASE(T) case Type::T:return run<Type::T,32>(q,p,deps)
+BLOCK_CASE(Q8_0);BLOCK_CASE(Q6_K);BLOCK_CASE(IQ2_S);BLOCK_CASE(IQ3_S);BLOCK_CASE(IQ4_NL);
+#undef BLOCK_CASE
+    default:break;}
+    throw std::invalid_argument("kopt block rows: decode8 formats only");
+  }
+};
+inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_KOPT_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
 Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocation>& ids,Matrix m,
                 uint32_t experts,uint32_t count,uint32_t span,ownrt::Allocation r=0,ownrt::Allocation status=0) {
   geometry(m.type,m.activation,m.output_type,m.rows,m.columns,op.subgroup);
@@ -346,7 +398,13 @@ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
 ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation r,ownrt::Allocation status,uint32_t experts,uint32_t rows,size_t k,uint32_t count,uint32_t span,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   if(!r || !status)throw std::invalid_argument("kopt routing handles required");
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
-  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},experts,count,span,r,status);return finish(d,op,ids);
+  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},experts,count,span,r,status);
+  if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&(t==Type::IQ2_S||t==Type::IQ3_S||t==Type::IQ4_NL||t==Type::Q8_0||t==Type::Q6_K)) {
+    // F32 routed rows: 4 rows per subgroup, decoded from global memory (OWNRT_KOPT_BLOCK_ROWS=0 keeps one row each).
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    MultiplyBlockRows<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});
+  }
+  return finish(d,op,ids);
 }
 ownrt::Event fused_gemv(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg) {
   if(matrices.empty() || matrices.size()>4)throw std::invalid_argument("kopt fused matrix count1..4");
