@@ -65,3 +65,40 @@ Exact means each output keeps its single-card arithmetic.
 - **Device-side synchronization.** Use cross-queue event dependencies (no host wait) between cards. If they are
   cheaper than the host-waited 10–13 µs above, the sync budget shrinks.
 - **The owner's decision on cards 27:00.0 and 43:00.0**, which currently hold the protected vision server.
+
+## Route statistics (measured 2026-10-24)
+
+Source: the CPU reference's per-layer top-10 selections on four suite texts (prompt plus 512 output tokens each, about
+100,000 layer-token decisions). Tool: [route-stats/route-stats.cpp](route-stats/route-stats.cpp).
+
+**Static placement, one copy per expert.** Mean experts on the busiest card per (layer, token); ideal is 10/N.
+
+| Cards | Ideal | By id | Contiguous | Frequency-balanced (held-out prompt) | Expert speed-up vs 1 card |
+|---:|---:|---:|---:|---:|---:|
+| 2 | 5.00 | 6.23 | 6.24 | 6.20 | 1.6× |
+| 4 | 2.50 | 4.18 | 4.19 | 4.13 | 2.4× |
+| 6 | 1.67 | 3.44 | 3.42 | 3.36 | 3.0× |
+| 8 | 1.25 | 3.00 | 3.02 | 2.93 | 3.4× |
+
+**With replicas.** Each expert is held on two cards (or all cards), and each token uses the least-loaded holder. The
+experts are still computed whole, so this stays exact.
+
+| Cards | 1 copy | 2 copies | every card |
+|---:|---:|---:|---:|
+| 4 | 4.19 | 3.37 | 3.00 |
+| 6 | 3.44 | 2.68 | 2.00 |
+| 8 | 3.00 | 2.32 | 2.00 |
+
+Placement policy hardly matters. Replicas help; four cards have room for two copies of every expert.
+
+## Honest estimate for TP4-exact decode
+
+Today's per-token GPU work is roughly:
+- 35% dense projections, which split by rows (÷4);
+- 30% experts (÷3 with two copies);
+- 30% small ops and launches, which are replicated on every card and do not shrink;
+- 5% other.
+
+Adding about 2 ms of syncs gives roughly 0.55× of today's per-token GPU time. It also loses today's two-stage MTP
+overlap. Expected: about 1.5–1.8× decode. The replicated small ops cap it, so fusing small ops (fewer, cheaper
+launches) is worth doing first: it helps every configuration and raises this ceiling.
