@@ -53,11 +53,17 @@ template<unsigned R> struct BlockRowsOperation final:ownrt::SyclOperation {
    const float* x=reinterpret_cast<const float*>(b.x)+size_t(slot)*b.s.columns;float acc[R];
    #pragma unroll
    for(unsigned i=0;i<R;++i)acc[i]=0;
-   for(size_t block=0;block<b.s.columns/256;++block){
+   // Lean loop, same sequence: row pointers hoisted, 32-bit block/column index, unrolled groups.
+   const uint8_t* rows[R];bool live[R];
+   #pragma unroll
+   for(unsigned i=0;i<R;++i){const size_t row=first+i;live[i]=valid&&row<b.s.rows&&row<r.row_count;rows[i]=live[i]?b.w+(size_t(r.expert_id)*b.s.rows+r.row_begin+row)*b.s.row_bytes:b.w;}
+   const uint32_t nblocks=uint32_t(b.s.columns/256);
+   for(uint32_t block=0;block<nblocks;++block){
     #pragma unroll
-    for(unsigned i=0;i<R;++i){const size_t row=first+i;if(!valid||row>=b.s.rows||row>=r.row_count)continue;
-     const auto*packed=b.w+(size_t(r.expert_id)*b.s.rows+r.row_begin+row)*b.s.row_bytes+block*98;const float d=iq3::half(iq3::u16(packed));
-     for(unsigned group=0;group<8;++group){const size_t k=block*256+group*32+lane;const float weight=block_element_words(packed,d,group,lane);const float product=weight*x[k];acc[i]=acc[i]+product;}}
+    for(unsigned i=0;i<R;++i){if(!live[i])continue;
+     const auto*packed=rows[i]+block*98u;const float d=iq3::half(iq3::u16(packed));
+     #pragma unroll
+     for(unsigned group=0;group<8;++group){const uint32_t k=block*256u+group*32u+lane;const float weight=block_element_words(packed,d,group,lane);const float product=weight*x[k];acc[i]=acc[i]+product;}}
    }
    #pragma unroll
    for(unsigned i=0;i<R;++i){float sum=acc[i];

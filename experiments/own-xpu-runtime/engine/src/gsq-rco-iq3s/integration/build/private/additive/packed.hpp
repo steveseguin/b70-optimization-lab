@@ -85,11 +85,30 @@ template<unsigned T,unsigned R> struct PackedRowsOperation final:ownrt::SyclOper
    const float* x=reinterpret_cast<const float*>(b.x)+(b.s.per_slot?size_t(slot)*b.s.columns:0);float acc[R];
    #pragma unroll
    for(unsigned i=0;i<R;++i)acc[i]=0;
-   for(size_t k=lane;k<b.s.columns;k+=32){const float input=x[k];
+   // Lean loop, same sequence: row pointers hoisted, 32-bit column index.
+   const uint8_t* rows[R];bool live[R];
+   #pragma unroll
+   for(unsigned i=0;i<R;++i){const size_t row=first+i;live[i]=valid&&row<b.s.rows&&row<r.row_count;rows[i]=live[i]?b.w+(size_t(r.expert_id)*b.s.rows+r.row_begin+row)*b.s.row_bytes:b.w;}
+   const uint32_t columns=uint32_t(b.s.columns);
+   if constexpr(T==42) {
+    // Q2_0: the block's half scale is read once per row and block (element_unchecked reads the same value for each
+    // element); k still runs lane, lane+32, ... and each weight is float(code-1)*d as in element_unchecked.
+    for(uint32_t block=0;block<columns/64u;++block){
+     float d[R];
+     #pragma unroll
+     for(unsigned i=0;i<R;++i)d[i]=live[i]?iq3::half(iq3::u16(rows[i]+block*18u)):0.f;
+     #pragma unroll
+     for(unsigned h=0;h<2;++h){const uint32_t e=lane+32u*h,k=block*64u+e;const float input=x[k];
+      #pragma unroll
+      for(unsigned i=0;i<R;++i){if(!live[i])continue;
+       const unsigned code=(rows[i][block*18u+2u+e/4u]>>(2*(e%4u)))&3;const float weight=float(int(code)-1)*d[i];
+       const float product=weight*input;acc[i]=acc[i]+product;}}
+    }
+   } else
+   for(uint32_t k=lane;k<columns;k+=32){const float input=x[k];
     #pragma unroll
-    for(unsigned i=0;i<R;++i){const size_t row=first+i;if(!valid||row>=b.s.rows||row>=r.row_count)continue;
-     const auto*w=b.w+(size_t(r.expert_id)*b.s.rows+r.row_begin+row)*b.s.row_bytes;
-     const float weight=gsq::element_unchecked(T,w+(k/elements)*bytes,k%elements);const float product=weight*input;acc[i]=acc[i]+product;}}
+    for(unsigned i=0;i<R;++i){if(!live[i])continue;
+     const float weight=gsq::element_unchecked(T,rows[i]+(k/uint32_t(elements))*uint32_t(bytes),k%uint32_t(elements));const float product=weight*input;acc[i]=acc[i]+product;}}
    #pragma unroll
    for(unsigned i=0;i<R;++i){float sum=acc[i];
     for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}

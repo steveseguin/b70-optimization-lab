@@ -19,7 +19,8 @@ inline float half_scale(uint32_t h) {
 }
 // A contiguous group of eight amortizes scale/sign/codebook decoding. All
 // multiplication boundaries match packet2 decode; never factor FP expressions.
-template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
+// k is a 32-bit column index (rows are far below 2^32 columns): 64-bit index math is emulated on the B70.
+template<Type T> inline void decode8(const uint8_t* row,uint32_t k,float* v) {
   constexpr auto l=layout(T);
   if constexpr(T==Type::IQ2_S) {
     auto b=row+(k/256)*82;unsigned i=k%256,q=i/8;
@@ -27,7 +28,9 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
     uint64_t grid=iq2_s_grid[ix];unsigned signs=b[34+q];
     unsigned sc=(b[74+i/32]>>(4*((i/16)%2)))&15;
     float scale=(half_scale(u16(b))*(0.5f+float(sc)))*0.25f;
-    for(unsigned j=0;j<8;++j)v[j]=(scale*float((grid>>(8*j))&255))*float((signs>>j)&1?-1:1);
+    // The byte goes through uint32_t before the conversion: the same value (0..255), but a 64-bit integer to float
+    // conversion is emulated on the B70 and was most of this decoder's cost (microbench 80 -> 34 us with the lean loop).
+    for(unsigned j=0;j<8;++j)v[j]=(scale*float(uint32_t((grid>>(8*j))&255)))*float((signs>>j)&1?-1:1);
   } else if constexpr(T==Type::IQ3_S) {
     auto b=row+(k/256)*110;unsigned i=k%256,q=i/4;
     unsigned signs=b[74+i/8],sc=(b[106+i/64]>>(4*((i/32)%2)))&15;
@@ -49,10 +52,7 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
   } else if constexpr(T==Type::IQ4_NL || T==Type::Q8_0) {
     auto b=row+(k/32)*l.bytes;unsigned i=k%32;
     float scale=half_scale(u16(b));
-    // The 16 IQ4_NL levels {-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113} as signed bytes in two words:
-    // byte extraction keeps the codebook in registers (an indexed local array lowers to private memory on the GPU).
-    // The integer levels, and so every value, are unchanged.
-    constexpr uint64_t low=0xf6eaddcfbfad9881ull,high=0x7159453526190d01ull;
+    // IQ4_NL levels via iq4_level (register words; the integer levels, and so every value, are unchanged).
     if constexpr(T==Type::IQ4_NL) {
       // The 8 weights at k (k%8==0) are bytes b[2+(i&15)] .. +7 of the block, all low (i<16) or all high nibbles,
       // i.e. exactly levels[(b[2+(i+j)%16]>>(4*((i+j)/16)))&15]. Read them as two 32-bit words (aligned, or the
@@ -63,13 +63,13 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
         if((at&3)==0){lo=*reinterpret_cast<const uint32_t*>(q);hi=*reinterpret_cast<const uint32_t*>(q+4);}
         else {const uint32_t* w=reinterpret_cast<const uint32_t*>(q-2);lo=(w[0]>>16)|(w[1]<<16);hi=(w[1]>>16)|(uint32_t(*reinterpret_cast<const uint16_t*>(q+6))<<16);}
         const unsigned shift=(i/16)*4;
-        for(unsigned j=0;j<8;++j){const unsigned n=((((j<4?lo:hi)>>(8*(j&3)))&255)>>shift)&15;v[j]=scale*float(int(int8_t(uint8_t(((n<8?low:high)>>(8*(n&7)))&255))));}
+        for(unsigned j=0;j<8;++j){const unsigned n=((((j<4?lo:hi)>>(8*(j&3)))&255)>>shift)&15;v[j]=scale*float(iq4_level(n));}
         return;
       }
     }
     for(unsigned j=0;j<8;++j) {
       if constexpr(T==Type::Q8_0)v[j]=scale*float(signed8(b[2+i+j]));
-      else {const unsigned q=(b[2+(i+j)%16]>>(4*((i+j)/16)))&15;v[j]=scale*float(int(int8_t(uint8_t(((q<8?low:high)>>(8*(q&7)))&255))));}
+      else {const unsigned q=(b[2+(i+j)%16]>>(4*((i+j)/16)))&15;v[j]=scale*float(iq4_level(q));}
     }
   } else {
     for(unsigned j=0;j<8;++j)v[j]=element(T,row,k+j);
@@ -77,6 +77,20 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
 }
 template<Type T> inline float lane_dot(const uint8_t* row,const uint16_t* x,Type activation,size_t columns,unsigned lane,unsigned subgroup) {
   float acc=0;
+  if(activation==Type::F32) {
+    // Same arithmetic as the loop below for F32 activations: fixed-trip unrolled full chunks, 32-bit index.
+    const float* xf=reinterpret_cast<const float*>(x);const uint32_t k32=uint32_t(columns),step=subgroup*8u;uint32_t k=lane*8u;
+    for(;k+8u<=k32;k+=step) {
+      float values[8];decode8<T>(row,k,values);
+      #pragma unroll
+      for(unsigned j=0;j<8;++j){float product=values[j]*xf[k+j];acc=acc+product;}
+    }
+    if(k<k32) {
+      float values[8];for(uint32_t j=0;k+j<k32;++j)values[j]=element(T,row,k+j);
+      for(uint32_t j=0;k+j<k32;++j){float product=values[j]*xf[k+j];acc=acc+product;}
+    }
+    return acc;
+  }
   for(size_t k=size_t(lane)*8;k<columns;k+=size_t(subgroup)*8) {
     float values[8];
     if(k+8<=columns)decode8<T>(row,k,values);

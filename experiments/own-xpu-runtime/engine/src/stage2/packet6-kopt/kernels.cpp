@@ -58,6 +58,38 @@ template<Type T,unsigned SG> inline float dot(const uint8_t* row,const uint16_t*
   else {
     // Raw formats bypass SLM; consecutive lanes consume consecutive 16/32 B.
     float acc=0;
+    // F32 activations with 16-byte aligned row and input: every full chunk below takes the vector branch (its
+    // alignment test is the same for all chunks), so run those chunks as a fixed-trip unrolled body with a 32-bit
+    // index, then the ragged chunk exactly as below. Same values, same order.
+    if(a==Type::F32 && reinterpret_cast<uintptr_t>(row)%16==0 && reinterpret_cast<uintptr_t>(x)%16==0) {
+      const float* xf=reinterpret_cast<const float*>(x);const uint32_t k32=uint32_t(k);uint32_t base=lane*8u;
+      for(;base+8u<=k32;base+=SG*8u) {
+        float values[8],wide[8];
+        #pragma unroll
+        for(unsigned j=0;j<8;++j)wide[j]=xf[base+j];
+        if constexpr(T==Type::F32) {
+          auto w=reinterpret_cast<const sycl::vec<uint32_t,4>*>(row+size_t(base)*4);
+          auto lo=w[0],hi=w[1];
+          #pragma unroll
+          for(unsigned j=0;j<4;++j){values[j]=bits_float(lo[j]);values[j+4]=bits_float(hi[j]);}
+        } else {
+          auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(row+size_t(base)*2);
+          #pragma unroll
+          for(unsigned j=0;j<8;++j) {
+            if constexpr(T==Type::F16)values[j]=half(w[j]);
+            else {auto bits=uint32_t(w[j])<<16;if((bits&0x7fffffff)>0x7f800000)bits|=0x400000;values[j]=bits_float(bits);}
+          }
+        }
+        #pragma unroll
+        for(unsigned j=0;j<8;++j){float product=values[j]*wide[j];acc=acc+product;}
+      }
+      if(base<k32) {
+        float values[8],wide[8];
+        for(unsigned j=0;base+j<k32;++j){values[j]=element(T,row,base+j);wide[j]=xf[base+j];}
+        for(unsigned j=0;base+j<k32;++j){float product=values[j]*wide[j];acc=acc+product;}
+      }
+      return acc;
+    }
     for(size_t base=size_t(lane)*8;base<k;base+=SG*8) {
       float values[8];uint16_t inputs[8];float wide[8];const bool f32=a==Type::F32;
       if(base+8<=k && reinterpret_cast<uintptr_t>(row+base*layout(T).bytes)%16==0 &&
@@ -318,17 +350,30 @@ template<unsigned R> struct MultiplyBlockRows:ownrt::SyclOperation {
         const bool valid=valid_route(r,d.experts,d.rows,d.span);
         if(d.routed&&first==0&&lane==0)static_cast<uint32_t*>(pointers[d.status])[slot]=valid?0:1;
         const float* x=static_cast<const float*>(pointers[d.x])+slot*d.k;const uint8_t* w=static_cast<const uint8_t*>(pointers[d.w]);
-        float acc[R];
+        float acc[R];const uint8_t* rows[R];bool live[R];
         #pragma unroll
-        for(unsigned i=0;i<R;++i)acc[i]=0;
-        for(size_t k=size_t(lane)*8;k<d.k;k+=size_t(SG)*8) {
-          float input[8];for(unsigned j=0;j<8 && k+j<d.k;++j)input[j]=x[k+j];
+        for(unsigned i=0;i<R;++i){acc[i]=0;const size_t row=first+i;live[i]=valid&&row<d.span&&row<r.row_count;
+          rows[i]=live[i]?w+(size_t(r.expert_id)*d.rows+r.row_begin+row)*d.rb:w;}
+        // Lean loop, same arithmetic: row pointers hoisted, a 32-bit column index, and a fixed-trip unrolled body for
+        // every full 8-column chunk; the one ragged chunk per lane (if any) keeps the per-element checks.
+        const uint32_t k32=uint32_t(d.k);uint32_t k=lane*8u;
+        for(;k+8u<=k32;k+=SG*8u) {
+          float input[8];
+          #pragma unroll
+          for(unsigned j=0;j<8;++j)input[j]=x[k+j];
           #pragma unroll
           for(unsigned i=0;i<R;++i) {
-            const size_t row=first+i;if(!valid||row>=d.span||row>=r.row_count)continue;
-            const uint8_t* source=w+(size_t(r.expert_id)*d.rows+r.row_begin+row)*d.rb;float values[8];
-            if(k+8<=d.k)decode8<T>(source,k,values);else for(size_t j=0;j<d.k-k;++j)values[j]=element(T,source,k+j);
-            for(unsigned j=0;j<8 && k+j<d.k;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
+            if(!live[i])continue;float values[8];decode8<T>(rows[i],k,values);
+            #pragma unroll
+            for(unsigned j=0;j<8;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
+          }
+        }
+        if(k<k32) {
+          float input[8];for(unsigned j=0;k+j<k32;++j)input[j]=x[k+j];
+          #pragma unroll
+          for(unsigned i=0;i<R;++i) {
+            if(!live[i])continue;float values[8];for(uint32_t j=0;k+j<k32;++j)values[j]=element(T,rows[i],k+j);
+            for(unsigned j=0;k+j<k32;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
           }
         }
         #pragma unroll

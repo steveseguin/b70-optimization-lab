@@ -88,3 +88,4 @@ MTP hits are identical (4568/5954). Decode is the 12-prompt suite median.
 Kernel microbenchmarks (warm/cold, bitwise against an engine replica) are in [kbench/](kbench/).
 | routed packed kernel (Q2_0, IQ4_XS experts) with 4 rows per subgroup (Q2_0 microbench 151.7 → 73.9 µs) (`ff0fff61`) | 31.26 | |
 | fast exact HC combine and expert gather in F32 mode: no generic accessor, four elements per item (`3108b3c6`) | **32.04** | |
+| lean exact matrix loops across all kopt/gsq/IQ3_XXS kernels: no 64-bit integer math or 64-bit→float conversion, fixed-trip unrolled full chunks, hoisted rows, register IQ4 levels, Q2_0 block scale per block (`8476902a`; [roofline note](2026-10-25-decode-roofline.md)) | **37.63 (+17%)** | rank 0 busy 19.3 → 15.5 ms per step; all 12 suite outputs byte-identical |

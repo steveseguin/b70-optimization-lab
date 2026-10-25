@@ -19,7 +19,9 @@ inline size_t row_bytes(uint32_t type,size_t columns){
  if(!columns||columns%f.elements||columns/f.elements>std::numeric_limits<size_t>::max()/f.bytes)throw std::invalid_argument("GSQ scalar row extent");
  return columns/f.elements*f.bytes;
 }
-inline float element_unchecked(uint32_t type,const uint8_t*b,size_t i){
+inline float element_unchecked(uint32_t type,const uint8_t*b,size_t index){
+ // 32-bit in-block index (i < 256): 64-bit integer math is emulated on the B70.
+ const uint32_t i=uint32_t(index);
  if(type==42){const unsigned code=(b[2+i/4]>>(2*(i%4)))&3;return float(int(code)-1)*iq3::half(iq3::u16(b));}
  if(type==12||type==13){
   const unsigned group=i/32;const auto*s=b+4;
@@ -40,7 +42,8 @@ inline float element_unchecked(uint32_t type,const uint8_t*b,size_t i){
   const unsigned scale=((b[4+group/2]>>(4*(group%2)))&15)|(((iq3::u16(b+2)>>(2*group))&3)<<4);
   const unsigned code=(b[8+group*16+i%16]>>(4*((i%32)/16)))&15;
   const float factor=iq3::half(iq3::u16(b))*float(int(scale)-32);
-  return factor*float(levels[code]);
+  // The same 16 levels from register words (iq3::iq4_level; an indexed local array lowers to private memory).
+  (void)levels;return factor*float(iq3::iq4_level(code));
  }
  return iq3::decode(static_cast<iq3::Type>(type),b,uint32_t(i));
 }

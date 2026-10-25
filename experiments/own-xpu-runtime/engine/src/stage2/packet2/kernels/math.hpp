@@ -29,6 +29,13 @@ inline uint32_t u16(const uint8_t* b) {return uint32_t(b[0]) | uint32_t(b[1])<<8
 inline uint32_t u32(const uint8_t* b) {return u16(b) | u16(b+2)<<16;}
 inline int signed8(uint8_t b) {return b<128?int(b):int(b)-256;}
 inline float bits_float(uint32_t b) {return std::bit_cast<float>(b);}
+// The 16 IQ4_NL/IQ4_XS levels {-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113} as signed bytes in four
+// 32-bit words. Selects and a 32-bit shift keep them in registers: an indexed array lowers to private memory and a
+// 64-bit variable shift is emulated on the B70. code must be 0..15.
+inline int iq4_level(unsigned code) {
+  const uint32_t w=code<8?(code<4?0xbfad9881u:0xf6eaddcfu):(code<12?0x26190d01u:0x71594535u);
+  return int(int8_t(uint8_t((w>>(8*(code&3)))&255)));
+}
 inline float half(uint32_t h) {
   uint32_t sign=(h&0x8000)<<16, e=(h>>10)&31, m=h&1023;
 #if defined(__SYCL_DEVICE_ONLY__)

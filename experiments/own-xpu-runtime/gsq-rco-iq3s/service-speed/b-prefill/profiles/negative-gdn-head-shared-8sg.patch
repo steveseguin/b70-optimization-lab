@@ -1,0 +1,66 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/native.cpp b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/native.cpp
+index 03775d3d1..3eb16e1a9 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/native.cpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/native.cpp
+@@ -16,11 +16,61 @@ struct DeviceTeam {
+   return x[base];
+  }
+ };
++// GDN recurrence, same values as group()'s gdn branch with fewer threads idle and no per-row recomputation:
++// a work-group of 8 subgroups owns 32 state rows of one head. Subgroup 0 computes the head's normalized q/k, decay
++// and beta once per token (dot128's per-lane ((0+p0)+p1)+p2)+p3 partials and its 32-leaf adjacent tree, here by
++// shuffles; the same expressions), then each subgroup runs 4 rows with lane l owning columns 4l..4l+3. The guard
++// prologue is group()'s, decided once per work-group.
++inline float lane_tree32(sycl::sub_group sg,unsigned lane,float v){
++ for(unsigned stride=1;stride<32;stride*=2){const float right=sycl::select_from_group(sg,v,(lane+stride)%32);if(lane%(2*stride)==0)v=v+right;}
++ return sycl::group_broadcast(sg,v,0);
++}
++inline bool gdn_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_GDN_SUBGROUPS");return !e||e[0]!='0';}();return on;}
++inline void gdn_rows(Shape s,Args a,sycl::nd_item<1> it,float* x){
++ a.f32=(s.flags&f32_activations_flag)!=0;
++ const unsigned id=it.get_local_linear_id();auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),sgi=sg.get_group_linear_id();
++ const int group=int(it.get_group_linear_id());
++ if(id==0)x[260]=float(!a.i(18)[0]||DeviceTeam{it,x}.error(a));it.barrier(sycl::access::fence_space::global_and_local);
++ if(x[260])return;
++ it.barrier(sycl::access::fence_space::global_and_local);
++ const int pos=a.i(17)[0];
++ if(pos<0||pos>position_limit(s)-s.tokens){if(group==0&&id==0)DeviceTeam{it,x}.fail(a);return;}
++ const int h=group/4,first=(group%4)*32+int(sgi)*4,key=(s.flags&4)?h%16:h/3,c=4*int(lane);
++ for(int row=0;row<s.tokens;++row){
++  if(sgi==0){
++   const size_t qbase=size_t(row)*10240+key*128,kbase=qbase+2048;float q[4],k[4],qs=0,ks=0;
++   for(int z=0;z<4;++z){q[z]=a.b(0,qbase+c+z);k[z]=a.b(0,kbase+c+z);const float qq=q[z]*q[z];qs=qs+qq;const float kk=k[z]*k[z];ks=ks+kk;}
++   const float qn=detmath::sqrt(lane_tree32(sg,lane,qs)+1e-6f),kn=detmath::sqrt(lane_tree32(sg,lane,ks)+1e-6f);
++   for(int z=0;z<4;++z){x[c+z]=(q[z]/qn)/detmath::sqrt(float(128));x[128+c+z]=k[z]/kn;}
++   if(lane==0){
++    const float gate=a.b(1,row*48+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate;
++    const float av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
++    x[256]=detmath::exp(av*sp);x[257]=sigmoid(a.b(2,row*48+h));
++   }
++  }
++  it.barrier(sycl::access::fence_space::local_space);
++  const float decay=x[256],beta=x[257];
++  for(int r=0;r<4;++r){const int j=first+r,state=(h*128+j)*128;float v[4],p=0;
++   for(int z=0;z<4;++z){v[z]=a.recurrent(row?7:5,state+c+z,s.flags)*decay;const float product=v[z]*x[128+c+z];p=p+product;}
++   const float pred=lane_tree32(sg,lane,p);
++   const float delta=(a.b(0,row*10240+4096+h*128+j)-pred)*beta;
++   float y=0;
++   for(int z=0;z<4;++z){v[z]=v[z]+delta*x[128+c+z];const float product=v[z]*x[c+z];y=y+product;}
++   y=lane_tree32(sg,lane,y);
++   if(lane==0)a.put(6,(row*48+h)*128+j,y);
++   for(int z=0;z<4;++z)a.put_recurrent(7,state+c+z,v[z],s.flags);
++  }
++  it.barrier(sycl::access::fence_space::global_and_local);
++ }
++}
+ struct Kernel final:ownrt::SyclOperation{
+  Shape shape;
+  explicit Kernel(Shape s):shape(s){}
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const override{
+   Args a;std::copy(p.begin(),p.end(),a.p.begin());auto s=shape;
++  if(s.op==gdn&&gdn_fast()&&groups(s)==48*128)
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(48*4)*256,256)](sycl::handler& h){sycl::local_accessor<float,1> scratch(264,h);
++    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{gdn_rows(s,a,it,scratch.get_multi_ptr<sycl::access::decorated::no>().get());}));});
+   int work=s.op==gdn?32:128;
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(groups(s))*work,work)](sycl::handler& h){sycl::local_accessor<float,1> scratch(local_floats(s),h);
+    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{
