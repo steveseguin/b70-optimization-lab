@@ -1,0 +1,29 @@
+{
+  "checks": [
+    {
+      "archive_bytes": 319133,
+      "passed": true,
+      "policy": "qualification",
+      "qualified_bundles": 10,
+      "total_bundles": 16
+    },
+    {
+      "archive_bytes": 319159,
+      "passed": true,
+      "policy": "measured",
+      "qualified_bundles": 10,
+      "total_bundles": 16
+    }
+  ],
+  "device_execution_requested": false,
+  "fixed_finding": "Removed nonexistent test_persistent_rolling_reset_audit.py; reset tests live in test_persistent_rolling_trace_audit.py.",
+  "limits": "Synthetic sealed bundles and synthetic passed summaries only. Verifies archive admission/inventory/byte preservation, not model qualification or standalone extracted replay closure.",
+  "literal_source_inputs_verified": 61,
+  "measured_without_qualified_parity_refused": true,
+  "passed": true,
+  "schema": "ownrt.persistent-archive-independent-review.v1",
+  "sources": {
+    "research/continuation-2026-10-25/archive_persistent_rolling_proof.py": "e03d888b061192c9c2136d85d272d5a7d2c70406a31a9d87d05e29a48b698c07",
+    "research/continuation-2026-10-25/test_archive_persistent_rolling_proof.py": "31897602a89c1955709afad3c37c61a18348a6be9f032fa3980304560e98df2d"
+  }
+}

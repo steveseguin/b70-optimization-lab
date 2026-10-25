@@ -1,0 +1,19 @@
+{
+  "schema": "ownrt.bounded-run-resource-budget.v1",
+  "utc": "2026-10-25T22:21:58.779247+00:00",
+  "planned_run": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a",
+  "processes": 4,
+  "requests": 2,
+  "outputs_per_request_maximum": 32,
+  "diagnostics": "qualification with per-request full state dumps",
+  "start_floor_bytes": 96636764160,
+  "runtime_floor_bytes": 8589934592,
+  "root_floor_bytes": 27000000000,
+  "observed_root_free_bytes": 27099660288,
+  "observed_tmpfs_free_bytes": 47262060544,
+  "additional_build_budget_bytes": 2147483648,
+  "additional_evidence_budget_bytes": 3221225472,
+  "prior_rolling_minimum_available_bytes": 70508814336,
+  "reason": "Reuse one loaded four-worker set for two cold requests. Preserve all original evidence/builds; allow two complete request dumps plus the existing final sentinel dump. No cache, swap, power or host memory setting changes. The previous rolling run used about31GB available memory; 90GiB initial reserve remains conservative.",
+  "host_settings_changed": false
+}
