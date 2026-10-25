@@ -1,5 +1,26 @@
 # Current Workspace State
 
+**October 25, 08:00 EDT — four-card host: SC117 LAN service is now at 47.5 tok/s, still exact.**
+The SC117 IQ3_S chat service at `http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0;
+the vision server on 27/43 is untouched) now runs engine `eeb940fea95b`.
+- Speed: 47.5 tok/s on the 12-prompt suite, up from 32.0 yesterday evening (28.0 at the 21:00 entry below).
+- Long prompts: a 3,000-token prompt now reads in about 31 s (was 46 s) and then writes at about 45–49 tok/s (was 36).
+- Quality is unchanged. Every new engine was checked three ways before it served:
+  - the full engine state after the self-test matches the pinned 32-bit record byte for byte;
+  - the batched prompt reading gives the same state as reading token by token;
+  - all 12 suite answers are byte-identical to the earlier engine.
+- Where the speed came from:
+  - leaner math kernels (the B70 emulates 64-bit integer math);
+  - a smaller draft-only vocabulary for MTP guesses;
+  - moving one layer to the second card;
+  - cheaper rollback after a wrong guess;
+  - faster attention bookkeeping at long context.
+  Details are in [the speed notes](experiments/own-xpu-runtime/research/2026-10-25-decode-roofline.md).
+- The biggest remaining step is using all four cards: about 1.4× more, which needs cards 27/43 freed from the vision
+  server. This is waiting on the owner (asked 2026-10-24).
+- Next without the owner: exact kernel work. Ideas already measured and closed are listed in
+  [DO-NOT-REPEAT](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/DO-NOT-REPEAT.md).
+
 **October 24, 21:00 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode with batched prompt reading.**
 The owner asked to host the SC117 IQ3_S model on our own engine for LAN computers. The model is served at
 `http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0; the vision server on 27/43 is

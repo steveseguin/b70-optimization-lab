@@ -88,42 +88,43 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-24 20:58 EDT the service runs engine `63ab006a7566` (receipt
-[../../../engine/receipts/63ab006a7566.json](../../../engine/receipts/63ab006a7566.json)), built from the canonical
-source tree [../../../engine/](../../../engine/). It goes through [adapter6.py](adapter6.py) with
-`SC117_ACTIVATIONS=f32` and `SC117_PREFILL_ROWS=16`, both set in [sc117-lan.service](sc117-lan.service).
-- **Batched prefill.**
-  - Prompts are read in 16-row chunks on both cards, with the last two prompt tokens read token by token.
-  - A one-time startup gate per binary showed batched and token-by-token runs identical: tokens, MTP guesses and the
-    full target state on both cards ([evidence](evidence/),
-    [result](../../service-speed/b-prefill/RESULT.md)).
-  - A 581-token prompt reads in 9.3 s instead of 16.2 s.
-  - If the gate fails, requests fall back to token-by-token prefill.
-  - The binary and its objects are in `/dev/shm/engine-build-pf18`; a reboot loses them, and `engine/build.py`
-    rebuilds them from the tree.
-- The token-by-token path of this binary reproduces engine 32654dfb exactly: the same F32 self-test and the same suite
-  outputs, checked by the gate.
-- **Exact 32-bit mode (owner's choice: quality first).**
-  - Activations, router and expert outputs, HC streams and the attention KV cache are all F32. There is no intermediate
-    BF16 rounding, and RoPE uses an F32 table.
-  - The GDN recurrent state was already F32.
-  - The weights are unchanged.
-  - The MTP draft keeps its own BF16 arithmetic. It only proposes tokens, and the target verifies every token.
-- **Same binary, two modes.** Without `SC117_ACTIVATIONS=f32`, the same binary runs the tuned BF16 kernels. That BF16
-  mode has passed the one-time device gate against engine 5926: tokens and full engine state byte-identical
-  ([evidence](evidence/)).
-- **F32 startup check.** On its first F32 start, the service records the selftest tokens, which are identical from fresh
-  state and after RESET, in `evidence/f32-selftest-<binary>.json`. Every later start must reproduce them.
+Since 2026-10-25 the service runs engine `eeb940fea95b` (receipt
+[../../../engine/receipts/eeb940fea95b.json](../../../engine/receipts/eeb940fea95b.json)), built from the canonical
+source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.py). Its configuration lives in
+[sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it.
+- **Exact 32-bit mode (owner's choice: quality first).** Activations, router and expert outputs, HC streams and the
+  attention KV cache are all F32. The weights are unchanged. The MTP draft keeps its own BF16 arithmetic; it only
+  proposes tokens, and the target verifies every token.
+- **Gates every new engine passes before it serves.**
+  - The full engine state after the self-test equals the pinned F32 record
+    ([evidence](evidence/), `f32-state-*.json`; the comparison is split-aware when layers move between cards).
+  - The batched prompt reading equals token-by-token reading, full state on both cards (`prefill-*.json`; the gate is
+    keyed on the binary and every kernel switch, so a changed choice re-runs it).
+  - All 12 answers of the fixed suite are byte-identical to the earlier engines
+    ([suite runs](../../service-speed/d-mtp-fp8/suite/)).
+- **Configuration** (all in the unit file):
+  - `SC117_PREFILL_ROWS=32`: prompt chunks.
+  - `SC117_DISPATCH`: non-GEMV kernel choices; QSA select specialised, GDN round2.
+  - `OWNRT_DRAFT_PREFIX_ROWS=91392`: the draft scores the first 91,392 token ids.
+  - `SC117_TARGET_SPLIT=23`: layers 0–22 on card 0 (with the draft), 23–47 on card 1.
+  - `OWNRT_MISS=banks-batch` and `OWNRT_SNAPSHOT_HOST=static`: cheap speculation rollback.
+  - `OWNRT_DRAFT_KERNELS`: packet59 draft kernels where faster.
+  - `OWNRT_MERGE_CHECKS=1`: one expert status check per layer.
+- **Speed (2026-10-25):**
+  - 47.5 tok/s median on the 12-prompt suite;
+  - 3,000-token prompt: read in about 31 s, then about 45–49 tok/s;
+  - 1,000-token prompt: about 10 s, then about 49–50 tok/s.
+
+  How each step was found: [speed notes](../../../research/2026-10-25-decode-roofline.md); what not to retry:
+  [DO-NOT-REPEAT](../../service-speed/DO-NOT-REPEAT.md).
 - **Fidelity.** Against our exact CPU reference, the engine agrees at 99.90% of positions on the 12-prompt suite. All 6
   disagreements are near-ties, and their source is still open
-  ([result](../../service-speed/e-reference/RESULT-F32.md)).
-- **Cost.**
-  - Decode median: 28.0 tok/s on the 12-prompt suite (exact sibling fusion of few-row matrices, 2026-10-24).
-  - Memory: rank 0 30.68 GB, rank 1 30.07 GB.
-- **Earlier service steps that still apply:**
-  - RESET takes 0.11 s instead of 4.1 s;
-  - there are no per-request dumps;
-  - every target-confirmed token is streamed ([a-reset-stream](../../service-speed/a-reset-stream/)).
+  ([result](../../service-speed/e-reference/RESULT-F32.md)). Every speed change since then is byte-identical, so that
+  figure still holds.
+- The binary and its objects are in `/dev/shm/engine-build-pf70`. A reboot loses them; `engine/build.py` rebuilds them
+  from the tree.
+- `engine/tools/service-cycle.sh` performs one controlled reload for an experiment (an application reload, never a
+  host restart) and prints the gate summary.
 
 ## Storage and retention
 
