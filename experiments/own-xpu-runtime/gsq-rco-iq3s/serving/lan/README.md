@@ -88,8 +88,8 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-25 the service runs engine `297b388764e9` (receipt
-[../../../engine/receipts/297b388764e9.json](../../../engine/receipts/297b388764e9.json)), built from the canonical
+Since 2026-10-25 the service runs engine `7649fc43d0fc` (receipt
+[../../../engine/receipts/7649fc43d0fc.json](../../../engine/receipts/7649fc43d0fc.json)), built from the canonical
 source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.py). Its configuration lives in
 [sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it.
 - **Exact 32-bit mode (owner's choice: quality first).** Activations, router and expert outputs, HC streams and the
@@ -131,7 +131,7 @@ source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.
   disagreements are near-ties, and their source is still open
   ([result](../../service-speed/e-reference/RESULT-F32.md)). Every speed change since then is byte-identical, so that
   figure still holds.
-- The binary and its objects are in `/dev/shm/engine-build-pf74`. A reboot loses them; `engine/build.py` rebuilds them
+- The binary and its objects are in `/dev/shm/engine-build-pf75`. A reboot loses them; `engine/build.py` rebuilds them
   from the tree.
 - `engine/tools/service-cycle.sh` performs one controlled reload for an experiment (an application reload, never a
   host restart) and prints the gate summary.
