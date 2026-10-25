@@ -1,0 +1,54 @@
+{
+  "schema": "ownrt.guard-diagnostics-independent-review.v1",
+  "passed": true,
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/pipeline_driver.py": "8a2ac586559362c61ab5288b8416eb18fbdb692f0368ee0e2b974840ac7cbbf6",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/wavefront_driver.py": "14711539751029c4e6eef2e8bac9a6ebeec006ab738986a3d27cdcd2fee57e6e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/test_guard_diagnostics.py": "b75684fa46ba32e18d4070b651f4fe18ffa6659d972b38ebb052fac849e08efc"
+  },
+  "author_cpu_receipt": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/guard-diagnostics-cpu.json",
+    "sha256": "7d0da6d3e895c78406c7a87222ed94a2eae197c2a47fa9e0cd3ac25798c2ee89"
+  },
+  "unchanged_ast_regions": [
+    "pipeline_driver.py:make_plan",
+    "pipeline_driver.py:Stage",
+    "pipeline_driver.py:Guard.validate",
+    "wavefront_driver.py:make_plan",
+    "wavefront_driver.py:AsyncStage",
+    "wavefront_driver.py:drive"
+  ],
+  "tests": {
+    "count": 64,
+    "argv": [
+      "python3",
+      "-m",
+      "unittest",
+      "test_guard_diagnostics",
+      "test_wavefront_driver",
+      "test_live_wavefront_driver",
+      "test_ring_wire",
+      "test_ring_driver",
+      "test_ring_live_wire",
+      "test_ring_live_driver",
+      "test_pending_ring_live_driver",
+      "test_rolling_ring_socket",
+      "test_rolling_ring_driver",
+      "test_persistent_rolling",
+      "-q"
+    ],
+    "exit_code": 0,
+    "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/guard-diagnostics-independent-tests.txt",
+    "log_sha256": "f8767b63e29d7ea62fc62f6fb68d2d4d0ae6a50010a5cf9fe9f04b3d5e00963a"
+  },
+  "findings_closed": [
+    "first reason uses explicit None sentinels, including empty exceptions and nonzero native exit",
+    "stop bytes dispatched once before evidence I/O; evidence I/O outside admission lock",
+    "observer watch and three main wavefront lifecycle validations retain exact rejected observations",
+    "recording failures retained separately; existing artifact collisions never overwrite original files",
+    "final result persistence failure chains as secondary exception under original primary reason",
+    "success result field set unchanged; added failure fields appear only for failed lifecycle"
+  ],
+  "scope": "Diagnostic-only Python guard/lifecycle change; validation thresholds, polling interval, shutdown timeout/actions, model/native execution and successful scheduling unchanged. Other direct validate callers retain primary exception but do not automatically capture their rejected observation. No GPU or native build performed.",
+  "retrospective_limit": "Original balanced attempt first guard reason was not retained and remains unknown; this patch does not establish its cause."
+}

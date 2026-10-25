@@ -163,19 +163,39 @@ class Guard:
         self.identities, self.stoppers, self.lock = {}, [], threading.Lock()
         self.tracked_processes = []
         self.failed, self.done = None, threading.Event()
+        self.first_failure, self.failure_evidence_error = None, None
         self.targets = {s['bdf']: self.obs.target_nodes(self.baseline, s['bdf']) for s in plan['stages']}
         self.validate(self.obs.observe(), initial=True)
         self.thread = threading.Thread(target=self.watch, daemon=True)
 
-    def fail(self, reason):
+    def fail(self, reason, *, observation=None, phase=None):
         with self.lock:
-            if self.failed is None:
-                self.failed = str(reason)
-                for fd in self.stoppers:
-                    try:
-                        os.write(fd, b'!')
-                    except OSError:
-                        pass
+            if self.failed is not None:
+                return
+            self.failed = str(reason)
+            self.first_failure = dict(schema='ownrt.pipeline-guard-failure.v1',
+                reason=self.failed, exception_type=type(reason).__name__ if isinstance(reason, BaseException) else None,
+                phase=phase, utc=datetime.now(timezone.utc).isoformat(),
+                monotonic_seconds=time.monotonic(), rejected_observation=None)
+            for fd in self.stoppers:
+                try:
+                    os.write(fd, b'!')
+                except OSError:
+                    pass
+        # Exactly the first writer records evidence, outside the admission lock.
+        # Recording errors cannot replace the cause or prevent the stop above.
+        try:
+            output = Path(self.plan['output'])
+            if observation is not None:
+                path = output / 'guard-rejected-observation.json'
+                try:
+                    save(path, observation)
+                    self.first_failure['rejected_observation'] = dict(path=str(path), sha256=digest(path))
+                except Exception as error:
+                    self.first_failure['observation_write_error'] = repr(error)
+            save(output / 'guard-first-failure.json', self.first_failure)
+        except Exception as error:
+            self.failure_evidence_error = repr(error)
 
     def check(self):
         if time.monotonic() >= self.deadline:
@@ -184,8 +204,15 @@ class Guard:
             self.fail('coordinator signal stop')
         if self.stop_fd is not None and select.select([self.stop_fd], [], [], 0)[0]:
             self.fail('external coordinator stop/EOF')
-        if self.failed:
+        if self.failed is not None:
             raise RuntimeError(self.failed)
+
+    def validate_or_stop(self, row, *, phase):
+        try:
+            self.validate(row)
+        except Exception as error:
+            self.fail(error, observation=row, phase=phase)
+            raise
 
     def validate(self, row, initial=False):
         require(row['boot'] == self.baseline['boot'] and row['drm'] == self.baseline['drm'], 'boot/DRM changed')
@@ -208,14 +235,18 @@ class Guard:
 
     def watch(self):
         while not self.done.wait(3):
+            row, phase = None, 'check'
             try:
                 self.check()
+                phase = 'observe'
                 row = self.obs.observe()
-                self.validate(row)
+                phase = 'validate'
+                self.validate_or_stop(row, phase=phase)
+                phase = 'record'
                 with (Path(self.plan['output']) / 'observations.jsonl').open('a') as out:
                     out.write(json.dumps(row) + '\n')
             except Exception as error:
-                self.fail(error)
+                self.fail(error, observation=row, phase=phase)
                 return
 
 

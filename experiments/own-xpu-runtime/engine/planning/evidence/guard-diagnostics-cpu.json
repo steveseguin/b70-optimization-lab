@@ -1,0 +1,86 @@
+{
+  "schema": "ownrt.pipeline-guard-diagnostics-cpu.v1",
+  "passed": true,
+  "created_utc": "2026-10-25T23:29:02.213578+00:00",
+  "sources": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/pipeline_driver.py",
+      "bytes": 24952,
+      "sha256": "8a2ac586559362c61ab5288b8416eb18fbdb692f0368ee0e2b974840ac7cbbf6",
+      "before_sha256": "15b3616ed47348451e834022badaa7de5ff7161c9e53595bbddbabc4fd0a37d3",
+      "before_archive": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/guard-diagnostics-before/pipeline_driver.py.gz",
+        "bytes": 7676,
+        "sha256": "d8e0bf9a6d5b9aeb92d1adbfc5608074981a90d7b9fcdb0be60223515e1e52f8"
+      }
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/wavefront_driver.py",
+      "bytes": 15022,
+      "sha256": "14711539751029c4e6eef2e8bac9a6ebeec006ab738986a3d27cdcd2fee57e6e",
+      "before_sha256": "7c1b593ec4221fe2170275281c937842ed68bf8f578b9fca52d4a344518da56c",
+      "before_archive": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/guard-diagnostics-before/wavefront_driver.py.gz",
+        "bytes": 4372,
+        "sha256": "e86af7a2d919e93b031eee1cebb9908e394666e1849ecb0aefd5c43a62a4382b"
+      }
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/test_guard_diagnostics.py",
+      "bytes": 10667,
+      "sha256": "b75684fa46ba32e18d4070b651f4fe18ffa6659d972b38ebb052fac849e08efc",
+      "before_sha256": null,
+      "before_archive": null
+    }
+  ],
+  "patch": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/guard-diagnostics.patch.gz",
+    "bytes": 4529,
+    "sha256": "82aa5e085509de373a143212ad1fb56178f37f4d1df92496125160d6471fb429",
+    "raw_sha256": "d6cf81faaf850819cd8f44dd4b1f21ef9fbd7c720d21ff324800168514566958"
+  },
+  "pre_review_variant": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/guard-diagnostics-before/cpu-v1-before-review.tar.gz",
+    "bytes": 12807,
+    "sha256": "7ad610fac14c5fb1770392476172d54aa1871d78647e5eecd28ea9585203f255"
+  },
+  "tests": {
+    "passed": true,
+    "count": 63,
+    "new_regressions": 7,
+    "log": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/guard-diagnostics-tests.txt",
+      "bytes": 98,
+      "sha256": "c833ab8a7381f68429bc26d35a8bd68334b033c1effd2d3d1820ed7d76b58fb8"
+    },
+    "command": "PYTHONDONTWRITEBYTECODE=1 TMPDIR=/dev/shm/ownrt-persistent-ring-cpu-tmp PYTHONPATH=engine/tools:engine/planning nice -n19 python3 -m unittest test_guard_diagnostics test_pipeline_driver test_wavefront_driver test_rolling_provider test_rolling_provider_arbiter test_persistent_rolling test_rolling_ring_socket test_rolling_ring_driver test_persistent_trace_budget -q"
+  },
+  "behavior": [
+    "First guard reason latched once under existing lock; cooperative one-byte stop precedes evidence I/O.",
+    "First-writer receipt and exact rejecting observation persisted outside admission lock; secondary evidence write errors cannot replace cause.",
+    "Watch and main-thread post-READY/pre-FINISH/post-exit validation rejections retain their actual row/phase; existing initial prelaunch validation unchanged.",
+    "Terminal error prefers guard first cause; caught channel-close exception remains secondary failure-only field.",
+    "Result-save failure chains persistence exception under existing primary failure; successful result-save failure remains fail-closed.",
+    "Empty exception text is still a latched failure and survives nonzero native exit.",
+    "Successful result keyset and all observation/threshold/launch/stop actions unchanged."
+  ],
+  "new_artifacts": [
+    "guard-first-failure.json",
+    "guard-rejected-observation.json (when available)"
+  ],
+  "failure_only_result_fields": [
+    "guard_failure",
+    "caught_error",
+    "guard_first_failure",
+    "guard_failure_evidence_error"
+  ],
+  "native_binary": {
+    "path": "/dev/shm/engine-build-ring-persistent-20261025/own-engine",
+    "bytes": 21213688,
+    "sha256": "02a47c059444af0e9179612461a8078e4308f3357fb54e370421a2ba1b7788aa"
+  },
+  "native_changed": false,
+  "device_execution_requested": false,
+  "retrospective_limit": "Original balanced-a first stop cause was not retained. This patch fixes future diagnostics; CPU reproduction proves a possible masking race, not which historical threshold or signal fired. No geometry fault attribution.",
+  "failed_attempt_archive_sha256_reported_by_parent": "00edff65d2cc07790e5afd44b8b078c07cec53c495fdf7da3633ec54342e56b2"
+}

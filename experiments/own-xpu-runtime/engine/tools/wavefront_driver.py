@@ -219,11 +219,11 @@ def execute(plan, admission, unit, *, stage_type=AsyncStage, driver=drive,
             stages.append(stage)
             stage.receive(ready=True)
         base.require(len({s.stream_bytes for s in stages}) == 1, 'stage boundary shape mismatch')
-        guard.validate(guard.obs.observe())
+        guard.validate_or_stop(guard.obs.observe(), phase='main-after-ready')
         result = driver(stages, plan, guard, output)
         for stage in stages:
             stage.command(4, position=2147483647)
-        guard.validate(guard.obs.observe())
+        guard.validate_or_stop(guard.obs.observe(), phase='main-before-finish')
         for stage in stages:
             stage.command(5)
     except Exception as error:
@@ -240,20 +240,31 @@ def execute(plan, admission, unit, *, stage_type=AsyncStage, driver=drive,
         if failure is None:
             try:
                 guard.check()
-                guard.validate(guard.obs.observe())
+                guard.validate_or_stop(guard.obs.observe(), phase='main-after-exit')
             except Exception as error:
                 guard.fail(error)
-        failure = failure or guard.failed
+        caught_failure = failure
+        failure = guard.failed if guard.failed is not None else failure
         alive = [p.pid for _, p in guard.tracked_processes if p.poll() is None]
         codes = {str(i): p.poll() for i, p in guard.tracked_processes}
-        if alive or any(code != 0 for code in codes.values()):
-            failure = failure or 'native stages did not exit cleanly'
+        if failure is None and (alive or any(code != 0 for code in codes.values())):
+            failure = 'native stages did not exit cleanly'
         for sig, handler in prior.items():
             signal.signal(sig, handler)
-        base.save(output / 'result.json', dict(result, schema='ownrt.wavefront-driver-result.v1',
-                  passed=failure is None, error=failure, live_pids=alive, returncodes=codes,
-                  wall_seconds=time.monotonic() - start, mode='verified-wavefront',
-                  diagnostic_only=True, speed_claim=False, scripted_proposals=scripted_proposals))
+        failure_details = {}
+        if failure is not None:
+            failure_details = dict(guard_failure=guard.failed, caught_error=caught_failure,
+                guard_first_failure=guard.first_failure,
+                guard_failure_evidence_error=guard.failure_evidence_error)
+        try:
+            base.save(output / 'result.json', dict(result, **failure_details, schema='ownrt.wavefront-driver-result.v1',
+                      passed=failure is None, error=failure, live_pids=alive, returncodes=codes,
+                      wall_seconds=time.monotonic() - start, mode='verified-wavefront',
+                      diagnostic_only=True, speed_claim=False, scripted_proposals=scripted_proposals))
+        except Exception as evidence_error:
+            if failure is not None:
+                raise ValueError(failure) from evidence_error
+            raise
     base.require(failure is None, str(failure))
 
 
