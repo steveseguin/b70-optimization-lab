@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-portable-overlay-build-20261025",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--property=IOSchedulingClass=idle",
+    "--working-directory=/dev/shm/sc117-portable-source-f6079c380/own-xpu-runtime-source",
+    "/usr/bin/ionice",
+    "-c",
+    "3",
+    "/usr/bin/python3",
+    "/dev/shm/sc117-portable-source-f6079c380/own-xpu-runtime-source/build.py",
+    "/dev/shm/engine-build-portable-20261025",
+    "--jobs",
+    "4",
+    "--generated-include",
+    "/dev/shm/sc117-portable-deployment-20261025/include",
+    "--profile-sha256",
+    "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a",
+    "--deployment-sha256",
+    "bfd016aa02b31f6183cd9c739d6d30e5449704268a8f4b136d3ff45302805fdf"
+  ],
+  "source_commit": "f6079c380c846cf9f3a1676bed7eeb7f803cfcb2",
+  "cpu_only": true
+}

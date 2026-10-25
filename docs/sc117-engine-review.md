@@ -185,3 +185,13 @@ from `1cab4a1e5` also passed a fresh extracted-source build; its
 [receipt](../experiments/own-xpu-runtime/research/review-2026-10-25/source-1cab-rebuild.json)
 binds the public archive checksum and resulting binary. It preserves the same
 research-source-only boundary: this was not a clean-host runtime qualification.
+
+
+The newer [253-file source snapshot from f6079c380](../downloads/own-engine/ownrt-source-f6079c380.tar.gz)
+includes immutable profiles and deployment preparation. A complete model
+verification pass produced the local configuration, then a separate extracted
+source tree built successfully using that generated authority. Its
+[build receipt](../experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/build-result.json)
+records binary `517268ab9044`, profile and local binding hashes. No GPU executed
+in this build qualification; portable runtime qualification remains pending.
+The earlier 228-file download remains available with its original checksum.

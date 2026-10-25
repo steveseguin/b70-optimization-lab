@@ -20,7 +20,12 @@ Pinned historical manifests remain unchanged.
 Full comparison: [comparison.json.gz](comparison.json.gz). All native stage metadata,
 state seals/indexes, terminal result and schedule are retained alongside it.
 Raw state payloads total 417,299,400 bytes and remain at their original
-external paths with hashes; a durable archive is pending. Do not remove originals.
+external paths with hashes and in the verified durable archive. Do not remove originals.
 No diagnostic throughput is promoted to a performance claim.
 
-The complete run and retained proof metadata are also in an independently verified 176351937-byte tmpfs archive. [Archive receipt](archive-verification.json) pins every raw state member and the compressed archive. Durable copy remains pending; the original raw files are untouched.
+The complete run and retained proof metadata are also in an independently verified
+176351937-byte archive. [Archive receipt](archive-verification.json) pins every raw
+state member and the compressed archive. The [durable copy receipt](durable-archive.json)
+records its USB location and independently rehashed SHA256
+`23d94697e77de9ec8e130efbfd9c743374535580a47f601acc50f878f907b567`.
+The original raw files are untouched.
