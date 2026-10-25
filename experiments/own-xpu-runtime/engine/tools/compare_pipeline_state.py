@@ -17,6 +17,9 @@ ring-checkpoint-layout.json must attest a fully resolved target-only ring.
 Version v4 admits only verified-ring-live with provider_borrow_mode=quiescent-target,
 require_provider_byte_verified_restores=true, draft_input_identity, and a first-stage
 draft_state_set pointing to the separately sealed canonical draft manifest.
+Version v5 admits verified-ring-pending-provider only with pending-target borrowing,
+require_provider_survival_checks=true, required_provider_pending_depths, and the
+first-stage provider_survival path bound by the native survival receipt digest.
 
 All canonical layer buffers compare exactly by absolute layer name. Physical
 spares are excluded only with the engine's explicit inactive-bank inventory
@@ -148,8 +151,9 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     require(0 < att_path.stat().st_size <= 1024 * 1024, 'ring attestation size bound')
     raw, receipt = source(att_path)
     att = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
-    live = spec['mode'] == 'verified-ring-live'
-    require(att['schema'] == ('ownrt.ring-state.live.v1' if live else 'ownrt.ring-state.v1')
+    pending = spec['mode'] == 'verified-ring-pending-provider'
+    live = spec['mode'] == 'verified-ring-live' or pending
+    require(att['schema'] == ('ownrt.ring-state.pending-provider.v1' if pending else 'ownrt.ring-state.live.v1' if live else 'ownrt.ring-state.v1')
             and att['mode'] == spec['mode'], 'unsupported ring attestation schema/mode')
     marker = re.fullmatch(r'state-(0|[1-9][0-9]*)', dump.name)
     require(marker is not None and type(att['dump_marker']) is int and att['dump_marker'] == int(marker[1]), 'ring dump marker differs')
@@ -236,17 +240,20 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
         banks.extend(row.values())
     require(len(banks) == len(set(banks)) and set(banks) <= {r['id'] for r in layout['allocations']},
             'ring canonical/inactive banks alias or are absent from target inventory')
-    provider_sources = live_ring_provider(path,stage,dump,metadata,identity,spec,att,layout) if live else []
+    provider_sources = live_ring_provider(path,stage,dump,metadata,identity,spec,att,layout,pending=pending) if live else []
+    if pending:
+        from compare_provider_survival import validate_survival
+        provider_sources += validate_survival(path,stage,dump,spec,layout,metadata,att)
     return att, receipt, layout_source, provider_sources
 
 
-def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout):
+def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout, *, pending=False):
     require(att['provider_borrow_mode'] == metadata['provider_borrow_mode']
-            == spec['provider_borrow_mode'] == 'quiescent-target',
+            == spec['provider_borrow_mode'] == ('pending-target' if pending else 'quiescent-target'),
             'live ring permits only quiescent target borrowing')
     require(att['provider_present'] is metadata['first'] and att['provider_recursive_active'] is False,
             'live ring provider ownership/active transaction differs')
-    require(all(att[k] == 0 for k in ('tentative_rows','accepted_tentative_rows','abort_count',
+    require(pending or all(att[k] == 0 for k in ('tentative_rows','accepted_tentative_rows','abort_count',
                                     'discarded_rows','snapshot_captures','snapshot_releases','saved_bytes')),
             'quiescent provider proof cannot contain speculative target rows')
     integers = ('provider_borrows_while_target_pending','provider_serial','provider_snapshot_captures',
@@ -254,7 +261,7 @@ def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout)
                 'provider_canonical_allocation_count','provider_commands','provider_trace_records','provider_trace_omitted')
     require(all(type(att[k]) is int and 0 <= att[k] <= 2**64-1 for k in integers),
             'live ring provider counters must be bounded integers')
-    require(att['provider_borrows_while_target_pending'] == 0, 'provider borrowed a pending target')
+    require(pending or att['provider_borrows_while_target_pending'] == 0, 'provider borrowed a pending target')
     for key in ('provider_restore_verification_enabled','provider_all_restores_byte_verified'):
         require(type(att[key]) is bool, 'provider restore policy must be boolean')
     captures, restores, verified = (att[k] for k in ('provider_snapshot_captures','provider_snapshot_restores',
@@ -310,14 +317,21 @@ def load_set(path):
     spec = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
     mode = spec['mode']
     wavefront = spec['schema'] == 'ownrt.pipeline-state-set.v2' and mode == 'verified-wavefront'
-    live_ring = spec['schema'] == 'ownrt.pipeline-state-set.v4' and mode == 'verified-ring-live'
+    pending_ring = spec['schema'] == 'ownrt.pipeline-state-set.v5' and mode == 'verified-ring-pending-provider'
+    live_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v4' and mode == 'verified-ring-live') or pending_ring
     ring = (spec['schema'] == 'ownrt.pipeline-state-set.v3' and mode == 'verified-ring') or live_ring
     require((spec['schema'] == 'ownrt.pipeline-state-set.v1' and mode == 'target-only') or wavefront or ring,
-            'unsupported pipeline state set schema/mode; explicit v1/v2/v3/v4 capability required')
+            'unsupported pipeline state set schema/mode; explicit v1/v2/v3/v4/v5 capability required')
     if live_ring:
-        require(spec.get('provider_borrow_mode') == 'quiescent-target'
+        require(spec.get('provider_borrow_mode') == ('pending-target' if pending_ring else 'quiescent-target')
                 and spec.get('require_provider_byte_verified_restores') is True
                 and isinstance(spec.get('draft_input_identity'),dict), 'explicit quiescent verified provider proof required')
+    if pending_ring:
+        depths=spec.get('required_provider_pending_depths')
+        require(spec.get('require_provider_survival_checks') is True
+                and spec.get('require_byte_verified_restores') is True
+                and isinstance(depths,list) and bool(depths) and all(type(d)is int and d in (1,2) for d in depths)
+                and len(depths)==len(set(depths)), 'explicit pending provider survival and target restore proof required')
     if wavefront or ring:
         require(type(spec.get('require_byte_verified_restores')) is bool,
                 'speculative proof must explicitly declare require_byte_verified_restores')

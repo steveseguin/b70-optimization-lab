@@ -1,0 +1,37 @@
+{
+  "schema": "ownrt.pending-provider-evidence-cpu-review.v1",
+  "passed": true,
+  "verified_utc": "2026-10-25T21:35:28.550841+00:00",
+  "checks": [
+    {
+      "suite": "all state comparators v1-v5",
+      "tests": 46,
+      "passed": true
+    },
+    {
+      "suite": "pending and unchanged quiescent controller/codec",
+      "tests": 14,
+      "passed": true
+    },
+    {
+      "suite": "pending finalizer and independent trace audit",
+      "tests": 7,
+      "passed": true
+    }
+  ],
+  "native_source_hashes_independently_verified": 23,
+  "native_receipt_sha256": "20ab16efcd81fd2507a682587acef81b675d0e0fb8bf85f692036261c0d83f11",
+  "files": {
+    "engine/tools/compare_pipeline_state.py": "e300a33f65f732a21449fe6a2eb62b3cbdb96bffef4f00169ad592aa9f4e8e97",
+    "engine/tools/compare_provider_survival.py": "c57af8984ccd66ee23ff4f5f8bf08662d39a14a08c670af29aed6b2d521f7fb6",
+    "engine/tools/test_compare_pending_provider_state.py": "ae2eae053f0a15e3c22ec498d24a73d0ffa6959f20749cf56e2cbcd4972c3f32",
+    "research/continuation-2026-10-25/finalize_pending_provider_proof.py": "0bdabf827db12f1d1c10ab677e669643e7d6cbf7340f9d1d64e3e3016b6523e6",
+    "research/continuation-2026-10-25/test_finalize_pending_provider_proof.py": "dec7bb035acae03d6f3c6ed289ae7e072a4ac250a5c59214e88d47baa72fbd8f",
+    "research/continuation-2026-10-25/pending_provider_trace_audit.py": "c6200e1af2e6e4164f0215ce2b51f256946f61183b090a29f9bbd835a506b5ce",
+    "research/continuation-2026-10-25/test_pending_provider_trace_audit.py": "7781c9782e8e7f628cc91e711aa9ef00120028486b02bbc13f5b9d341c316a7b"
+  },
+  "gpu_actions": false,
+  "actual_model_pending_gate_qualified": false,
+  "scope": "Separate explicit v5 only; original v4 quiescent checks retained. Requires actual native receipt hashes, complete typed provider state groups and canonical/private allocation ownership, before/after equality, newer provider serial than captured target state, complete target command lineage and actual final-owned parent provenance. CPU/model fixtures cannot establish real model parity; terminal GPU proof remains required.",
+  "prepared_closure_scope": "Typed Spec/Geometry/bindings and exposed command descriptors/operation bytes plus stable object/function/owner identities. Opaque std::function heap and shared queue internals are not serialized; shared Engine and Device cumulative counter values may change during target restore."
+}
