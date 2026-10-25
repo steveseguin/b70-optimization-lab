@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 24, 19:40 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode with batched prompt reading.**
+**October 24, 21:00 EDT — four-card host: SC117 LAN chat service runs in exact 32-bit mode with batched prompt reading.**
 The owner asked to host the SC117 IQ3_S model on our own engine for LAN computers. The model is served at
 `http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0; the vision server on 27/43 is
 untouched).
@@ -10,11 +10,12 @@ untouched).
 - Against our exact CPU reference, the engine picks the reference's top token at 5,959 of 5,965 positions of the
   12-prompt suite (99.90%). The other 6 are near-ties (at most 0.1 logit), and their cause is not yet found. The 16-bit
   engine agreed at 98.2%.
-- Decode costs about 3% (23.2 tok/s median, against 24.0).
+- Decode: 28.0 tok/s median on the 12-prompt suite (26.25 before tonight's exact sibling fusion). Each new binary must
+  reproduce the pinned full engine state after the self-test byte for byte.
 - A reset takes 0.1 s, and every target-confirmed token is streamed.
 - Stop it with `systemctl --user stop sc117-lan`. It never restarts by itself and stops at 47 h.
 
-- Prompts are read in batches of 16 tokens (engine `b6c231473f39` since 20:30). Each new binary's startup gate on the
+- Prompts are read in batches of 16 tokens (engine `63ab006a7566` since 20:58). Each new binary's startup gate on the
   cards showed the batched reading identical to token-by-token reading: tokens, guesses and full engine state. A
   581-token prompt now takes 9.3 s instead of 16.2 s. An outside review (vLLM XPU kernels PR #22, Strata) ranked further
   exact ideas: [review](experiments/own-xpu-runtime/research/2026-10-24-external-review-pr22-strata.md).

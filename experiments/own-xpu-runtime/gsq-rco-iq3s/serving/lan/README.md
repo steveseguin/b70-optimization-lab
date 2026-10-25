@@ -88,18 +88,18 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-24 20:30 EDT the service runs engine `b6c231473f39` (receipt
-[../../../engine/receipts/b6c231473f39.json](../../../engine/receipts/b6c231473f39.json)), built from the canonical
+Since 2026-10-24 20:58 EDT the service runs engine `63ab006a7566` (receipt
+[../../../engine/receipts/63ab006a7566.json](../../../engine/receipts/63ab006a7566.json)), built from the canonical
 source tree [../../../engine/](../../../engine/). It goes through [adapter6.py](adapter6.py) with
 `SC117_ACTIVATIONS=f32` and `SC117_PREFILL_ROWS=16`, both set in [sc117-lan.service](sc117-lan.service).
 - **Batched prefill.**
   - Prompts are read in 16-row chunks on both cards, with the last two prompt tokens read token by token.
   - A one-time startup gate per binary showed batched and token-by-token runs identical: tokens, MTP guesses and the
-    full target state on both cards ([evidence](evidence/prefill-b6c231473f397f58-rows16.json),
+    full target state on both cards ([evidence](evidence/),
     [result](../../service-speed/b-prefill/RESULT.md)).
   - A 581-token prompt reads in 9.3 s instead of 16.2 s.
   - If the gate fails, requests fall back to token-by-token prefill.
-  - The binary and its objects are in `/dev/shm/engine-build-pf13`; a reboot loses them, and `engine/build.py`
+  - The binary and its objects are in `/dev/shm/engine-build-pf18`; a reboot loses them, and `engine/build.py`
     rebuilds them from the tree.
 - The token-by-token path of this binary reproduces engine 32654dfb exactly: the same F32 self-test and the same suite
   outputs, checked by the gate.
@@ -118,7 +118,7 @@ source tree [../../../engine/](../../../engine/). It goes through [adapter6.py](
   disagreements are near-ties, and their source is still open
   ([result](../../service-speed/e-reference/RESULT-F32.md)).
 - **Cost.**
-  - Decode median: 23.2 tok/s, against 24.0 in BF16 mode.
+  - Decode median: 28.0 tok/s on the 12-prompt suite (exact sibling fusion of few-row matrices, 2026-10-24).
   - Memory: rank 0 30.68 GB, rank 1 30.07 GB.
 - **Earlier service steps that still apply:**
   - RESET takes 0.11 s instead of 4.1 s;
