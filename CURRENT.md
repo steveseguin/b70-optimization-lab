@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 25, 11:30 EDT — SC117 LAN service paused for a TP development block (cards 23/47).**
+`sc117-lan` was stopped at 11:28 so the tensor-parallel (TP) engine can be built and tested on its cards without
+restarting the service for every test. It comes back on one gated build when the block ends.
+- Results so far, all bitwise-exact:
+  - card-to-card copies;
+  - rank 1 replicated on two cards equals the one-card run (half-step 17.08 vs 16.73 ms).
+- Running now: the first row split, with the attention and gdn.qkv rows divided between the cards.
+
 **October 25, 10:05 EDT — SC117: two-card decode is at its practical ceiling; work moves to the exact multi-card engine.**
 - Today's micro-levers all closed without a gain, though every one stayed exact: FMA and five other expert-kernel variants (the expert kernels are instruction-bound), fused HC combine+norm, and fused HC gate+mix (1.003×). Prompt-reading token tiles had already been measured slower. Details are in [DO-NOT-REPEAT](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/DO-NOT-REPEAT.md).
 - Per-token model on two cards: T ≈ (S+d)/2 + m(S−d)/2, with S = both halves' work, d = draft, m = miss rate. The hit cycle is balanced (17.1 ms per rank), so only less work per layer or fewer misses help.

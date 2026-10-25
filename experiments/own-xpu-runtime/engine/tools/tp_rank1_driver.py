@@ -80,6 +80,8 @@ def run(a):
         env['ZE_AFFINITY_MASK'] = '0,3'
         env.pop('FilterBdfPath', None)
         env['ONEAPI_DEVICE_SELECTOR'] = 'level_zero:*'
+        if a.split:
+            env['OWNRT_TP_SPLIT'] = a.split
     for key in ('SYCL_CACHE_DIR', 'NEO_CACHE_DIR', 'XDG_CACHE_HOME'):
         env[key] = str(out / 'cache' / key.lower())
         Path(env[key]).mkdir(parents=True, exist_ok=True)
@@ -114,7 +116,7 @@ def run(a):
             seq += 1
             parent.sendall(REQ.pack(FINISH, 0, 0, 0, 0, seq, 0, 0))  # the rank exits on finish without a reply
         proc.wait(timeout=600)
-        summary = dict(tp=a.tp, steps=a.steps, load_s=load_s, half_ms=times, tokens=tokens, rc=proc.returncode)
+        summary = dict(tp=a.tp, split=a.split, steps=a.steps, load_s=load_s, half_ms=times, tokens=tokens, rc=proc.returncode)
         (out / 'summary.json').write_text(json.dumps(summary, indent=1))
         print(json.dumps({k: summary[k] for k in ('tp', 'steps', 'load_s', 'tokens', 'rc')}),
               'median half ms %.2f' % sorted(times)[len(times) // 2])
@@ -147,6 +149,7 @@ if __name__ == '__main__':
     r.add_argument('--binary')
     r.add_argument('--tp', action='store_true')
     r.add_argument('--steps', type=int, default=8)
+    r.add_argument('--split', help='OWNRT_TP_SPLIT label suffixes, e.g. .attention,.gdn.qkv (with --tp)')
     c = sub.add_parser('compare')
     c.add_argument('a')
     c.add_argument('b')

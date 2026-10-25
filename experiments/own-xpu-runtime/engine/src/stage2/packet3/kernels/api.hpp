@@ -44,6 +44,7 @@ struct Launch {
   std::vector<int> shape; // op-specific logical output/batch geometry
   int card = 0, parameter = 0, source_card = -1;
   std::uint64_t weight_bytes = 0, read_bytes = 0, write_bytes = 0;
+  int row_begin = 0, row_count = 0; // tensor-parallel row split (2026-10-25): rows [row_begin, row_begin+row_count); 0 = all
 };
 // CONTRACT v1:
 // ENTRY PRECONDITION: inputs_ready covers uploads to BOTH owners. Replicated

@@ -13,12 +13,15 @@ void gsq_load(int c, const std::string& name) {
   }
   const bool control=gsq_control(name);
   const auto type=flash::grid_type(t.grid);
-  const size_t bytes=control?count(t.shape)*4:t.bytes;
+  // TP row slice: whole rows [first, first+rows) of a row-major tensor (row bytes = bytes / rows).
+  const auto slice=tp_slice(c,name);require(!slice.second||(!control&&t.shape.size()==2&&t.bytes%size_t(t.shape[0])==0),"TP row slice: raw 2-D rows only");
+  const size_t row_bytes=t.shape.empty()?0:t.bytes/size_t(t.shape[0]),begin=slice.second?slice.first*row_bytes:0,total=slice.second?slice.second*row_bytes:t.bytes;
+  const size_t bytes=control?count(t.shape)*4:total;
   auto id=allocate(c,"weight:"+name,bytes,Category::weights,Lifetime::process);
   weights[c][name]=id;
-  for(size_t off=0;off<t.bytes;) {
-    guard();size_t n=std::min(size_t(4*1024*1024),t.bytes-off);
-    auto raw=w.read(name,off,n);
+  for(size_t off=0;off<total;) {
+    guard();size_t n=std::min(size_t(4*1024*1024),total-off);
+    auto raw=w.read(name,begin+off,n);
     if(control) {
       const auto source_width=gsq::controls::source_width(unsigned(type));
       auto upload=gsq::controls::upload_f32(unsigned(type),raw);
@@ -114,8 +117,8 @@ void gsq_linear_matrix(const flash::Launch& l,const Matrix& m) {
   if(dense_block_site(w,a,l)){const auto*s=denseblock::selected(l.label,l.weights.at(0));require(s&&variant(l)==0&&dev(c).arena.row(m.w).bytes==s->bytes,"dense block raw storage/variant");finish(c,denseblock::submit(dev(c),m,l.label,l.weights.at(0),dense_input),true);return;}
   if(iq3_block_site(w,a,l)){require(((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&dev(c).arena.row(m.w).bytes==321126400,"IQ3 block exact matrix storage");finish(c,iq3block::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::per_slot),true);return;}
   if(dense_q6_site(w,a,l)){dense_q6_matrix(m,l,variant(l),dev(c).arena.row(m.w).bytes);finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
-  if(qkv_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&m.rows==10240&&m.columns==2560&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==34611200,"QKV Q6 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
-  if(attention_q8_site(w,a,l)){require(m.type==iq3::Type::Q8_0&&m.rows==2560&&m.columns==6144&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==18677760,"attention Q8 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+  if(qkv_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&m.rows==(l.row_count?size_t(l.row_count):10240)&&m.columns==2560&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*3380:34611200),"QKV Q6 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+  if(attention_q8_site(w,a,l)){require(m.type==iq3::Type::Q8_0&&m.rows==(l.row_count?size_t(l.row_count):2560)&&m.columns==6144&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*7296:18677760),"attention Q8 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
   if(l.weights[0]=="output.weight"&&!a.mini) {
     require(m.type==iq3::Type::Q6_K&&variant(l)==6,"GSQ expanded head dispatch");
     finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;

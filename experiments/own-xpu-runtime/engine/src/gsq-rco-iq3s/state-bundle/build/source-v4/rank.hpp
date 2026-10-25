@@ -282,7 +282,8 @@ static void state_dump(Engine& e,int sequence) {
  std::ostringstream o;o<<"{\"history0\":"<<e.history0<<",\"history1\":"<<e.history1<<",\"buffers\":{";bool comma=false;
  fs::path dir=e.a.output/("state-"+std::to_string(sequence));fs::create_directories(dir);gsq_bundle::Writer bundle(dir);
  // Full bytes of every plan allocation, including overwrite-only intermediates.
- for(auto& [name,s]:e.buffers[0]){auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));bundle.append(name+".bin",b.data(),b.size());
+ for(auto& [name,s]:e.buffers[0]){if(name.find("#tp")!=std::string::npos)continue; // TP-internal half buffers: not model state
+  auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));bundle.append(name+".bin",b.data(),b.size());
   o<<(comma?",":"")<<ownrt::quote(name)<<":"<<ownrt::quote(hash(b));comma=true;}
  for(auto& [name,id]:e.state_spares){auto b=e.readback(0,id,e.dev(0).arena.row(id).bytes);bundle.append("alternate-"+name+".bin",b.data(),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
  o<<"},\"fp32_cache_valid\":"<<(e.fp32_sources[0]?"true":"false")<<",\"fp32_extent\":"<<e.fp32_extents[0]<<"}";bundle.finish(o.str());
@@ -304,7 +305,8 @@ static void pipeline_cancel_check() {
 // --tp-replicate gate: every non-weight buffer of card 1 must equal card 0 bitwise after the same steps.
 static void tp_compare(Engine& e,const fs::path& path) {
  e.drain();std::ostringstream o;o<<"{\"buffers\":";size_t n=0;std::vector<std::string> differ;
- for(const auto& [name,slot]:e.buffers[0]){auto other=e.buffers[1].find(name);if(other==e.buffers[1].end()){differ.push_back(name+" (missing on card 1)");continue;}
+ for(const auto& [name,slot]:e.buffers[0]){if(name.find("#tp")!=std::string::npos)continue; // per-card halves differ by design
+  auto other=e.buffers[1].find(name);if(other==e.buffers[1].end()){differ.push_back(name+" (missing on card 1)");continue;}
   const size_t bytes=slot.n*flash::scalar_bytes(slot.type);if(!bytes)continue;++n;
   if(e.readback(0,slot.id,bytes)!=e.readback(1,other->second.id,bytes))differ.push_back(name);}
  o<<n<<",\"differ\":[";for(size_t i=0;i<differ.size();++i)o<<(i?",":"")<<ownrt::quote(differ[i]);o<<"],\"passed\":"<<(differ.empty()?"true":"false")<<"}";
@@ -327,8 +329,23 @@ static int run_rank(const Options& a) {
   weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,one_card),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
-   std::vector<flash::Launch> both;both.reserve(p.launches.size()*2);
-   for(const auto& l:p.launches){both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));}
+   // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
+   // [c*R/2, (c+1)*R/2) into its half buffer y#tp (whole rows, unchanged arithmetic), then a tp_gather site on each
+   // card assembles y from its own half (local copy) and the peer's half (peer copy). Order L0, L1, G0, G1.
+   std::vector<std::string> roles;if(const char* v=std::getenv("OWNRT_TP_SPLIT")){std::string s=v;size_t at=0;
+    while(at<=s.size()){auto end=s.find(',',at);if(end==std::string::npos)end=s.size();if(end>at)roles.push_back(s.substr(at,end-at));at=end+1;}}
+   auto split_site=[&](const flash::Launch& l){if(l.op!="gemv"||!l.label.starts_with("blk."))return false;for(const auto& r:roles)if(ends(l.label,r))return true;return false;};
+   std::vector<flash::Launch> both;both.reserve(p.launches.size()*2);std::set<std::string> halves;
+   for(const auto& l:p.launches){
+    if(split_site(l)){
+     const int R=l.shape.at(1);require(R>0&&R%2==0,"TP split needs an even row count");
+     const std::string y=l.outputs.at(0),part=y+"#tp";
+     if(halves.insert(part).second){auto it=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const flash::Buffer& b){return b.name==y;});
+      require(it!=p.buffers.end(),"TP split output buffer");flash::Buffer b=*it;b.name=part;b.shape={R/2};p.buffers.push_back(b);}
+     for(int c=0;c<2;++c){auto t=l;t.card=c;t.row_begin=c*(R/2);t.row_count=R/2;t.outputs.at(0)=part;both.push_back(std::move(t));}
+     for(int c=0;c<2;++c){flash::Launch g;g.op="tp_gather";g.label=l.label+".tp_gather";g.card=c;g.inputs={part};g.outputs={y};g.shape={R};g.parameter=R/2;both.push_back(std::move(g));}
+    } else {both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));}
+   }
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
   }
   engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();

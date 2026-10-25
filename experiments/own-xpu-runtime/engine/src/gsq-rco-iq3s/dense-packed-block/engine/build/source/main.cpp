@@ -1147,6 +1147,11 @@ public:
     if(a.gsq_packed)return false;
     return !a.mini&&a.memory=="resident"&&sealed_selection.choices.at("hc_gate")=="hc-weightcache"&&name.starts_with("blk.")&&(name.ends_with(".hc_attn_up.weight")||name.ends_with(".hc_ffn_up.weight"));
   }
+  // Tensor-parallel row slice of a weight on card c (from its split launch), {first row, rows}; {0,0} = whole tensor.
+  std::pair<size_t,size_t> tp_slice(int c,const std::string& name) const {
+    for(const auto& l:p.launches)if(l.card==c&&l.row_count&&!l.weights.empty()&&l.weights[0]==name)return {size_t(l.row_begin),size_t(l.row_count)};
+    return {0,0};
+  }
   void load(int c, const std::string &name) {
     if (weights[c].count(name))
       return;
@@ -1164,9 +1169,13 @@ public:
     if(hccache){require(t.shape.size()==2&&t.shape[0]==10240&&t.shape[1]==320&&type==iq3::Type::Q8_0,"p90 HC shape");expanded_bytes=size_t(t.shape[0])*p90::hc_stride;}
     const bool head_split=name=="output.weight"&&split_head();
     if(head_split)require(type==iq3::Type::Q6_K&&t.shape.size()==2&&t.shape[0]==248320&&t.shape[1]==2560,"p105 Q6 target head shape");
-    const size_t load_rows=head_split?(a.rank==0?p105::suffix:p105::prefix):size_t(t.shape[0]);
-    const size_t first_row=head_split&&a.rank==0?p105::prefix:0;
+    size_t load_rows=head_split?(a.rank==0?p105::suffix:p105::prefix):size_t(t.shape[0]);
+    size_t first_row=head_split&&a.rank==0?p105::prefix:0;
     if(head_split)expanded_bytes=load_rows*3380;
+    if(const auto slice=tp_slice(c,name);slice.second) {
+      require(!head_split&&!packed&&!planes&&!halfcache&&!hccache&&arithmetic::is_expanded(v)&&t.shape.size()==2,"TP row slice: expanded dense rows only");
+      first_row=slice.first;load_rows=slice.second;expanded_bytes=load_rows*arithmetic::row_bytes(type,t.shape[1],v);
+    }
     auto id = allocate(c, "weight:" + name, expanded_bytes, Category::weights,
                        Lifetime::process);
     weights[c][name] = id;
@@ -1380,7 +1389,7 @@ public:
   void prepare_plan() {
     if(a.memory!="resident")return;
     for(const auto& l:p.launches) {
-      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result")continue;
+      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather")continue;
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
         std::vector<Matrix> values{matrix(l)};
         if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
@@ -1507,6 +1516,7 @@ public:
     if(a.f32_activations){m.activation=m.output_type=iq3::Type::F32;}
     m.x=buffers[c].at(l.inputs[0]).id;m.y=buffers[c].at(l.outputs[projection*2]).id;
     m.rows=l.shape[1];m.columns=l.shape[2];m.span=m.rows;
+    if(l.row_count){m.rows=m.span=size_t(l.row_count);} // TP row split: this card's rows only
     m.workspace=workspace[c];
     if(l.weights[projection]=="output.weight"&&split_head()){require(a.rank==1,"p105 target prefix rank");m.rows=m.span=p105::prefix;}
     if(routed) {
@@ -1719,6 +1729,12 @@ public:
         ownrt::CopyEngine copy(dev(c));
         auto event=copy.copy(dest.id,0,source.id,0,source.n*flash::scalar_bytes(source.type),{});if(!preparing_commands)tail=event;
       }
+    } else if (l.op == "tp_gather") {
+      // Own half: local copy; the peer's half: peer copy after all the peer's submitted work. Bitwise copies.
+      const int peer=1-c;const auto& y=buffers[c].at(l.outputs.at(0));const size_t half=size_t(l.parameter)*flash::scalar_bytes(y.type);
+      ownrt::CopyEngine local(dev(c));
+      auto own=local.copy(y.id,size_t(c)*half,buffers[c].at(l.inputs.at(0)).id,0,half,{});finish(c,{own,own,1},false);
+      auto remote=dev(c).peer_copy(dev(peer),y.id,size_t(peer)*half,buffers[peer].at(l.inputs.at(0)).id,0,half);finish(c,{remote,remote,1},false);
     } else if (l.op == "gemv" || l.op == "routed_gemv" || l.op=="expert_gate_up") {
       linear(l);
     } else {
