@@ -344,6 +344,33 @@ struct GatherFast final:ownrt::SyclOperation {
  }
 };
 inline bool simple_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_SIMPLE_FAST");return !e||e[0]!='0';}();return on;}
+// Argmax in one 1024-lane work-group per row: lane l scans indices l, l+1024, ... keeping its first maximum (strict >),
+// then a work-group maximum of the values and a minimum of the indices that hold it. That is SimpleNew's result exactly
+// (largest value, lowest index among equal values, +0 and -0 equal) for finite logits. Any non-finite logit runs
+// SimpleNew's own fallback scan in one item and fails, as before. OWNRT_ARGMAX_FAST=0 keeps the two-phase kernel.
+struct ArgmaxFast final:ownrt::SyclOperation {
+ Spec spec;explicit ArgmaxFast(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int rows=spec.tokens;constexpr int W=1024;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(rows)*W,W)](sycl::handler& h){
+   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){
+    const int r=int(it.get_group_linear_id()),lane=int(it.get_local_linear_id());const RowBound rb{b,r,b.s};auto g=it.get_group();
+    if(!*rb.active()||rb.failed())return; // uniform across the work-group
+    const int n=int(rb.in(0).n);int best=-1;float value=0.f;bool finite=true;
+    for(int j=lane;j<n;j+=W){const float v=rb.in(0).get(j);finite=finite&&std::isfinite(v);if(best<0||v>value){best=j;value=v;}}
+    const bool all_finite=sycl::all_of_group(g,finite);
+    if(all_finite){
+     const float top=sycl::reduce_over_group(g,best<0?-INFINITY:value,sycl::maximum<float>());
+     const int index=sycl::reduce_over_group(g,(best>=0&&value==top)?best:INT_MAX,sycl::minimum<int>());
+     if(lane==0)rb.out(0).put(0,index);
+    }else if(lane==0){
+     int fallback=0;for(int l=0;l<128;++l){int local=l;for(int j=l;j<n;j+=128)if(rb.in(0).get(j)>rb.in(0).get(local))local=j;if(l<n&&(rb.in(0).get(local)>rb.in(0).get(fallback)||(rb.in(0).get(local)==rb.in(0).get(fallback)&&local<fallback)))fallback=local;}
+     rb.out(0).put(0,fallback);rb.fail();
+    }
+   }));});
+ }
+};
+inline bool argmax_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_ARGMAX_FAST");return !e||e[0]!='0';}();return on;}
 inline bool route_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_FAST");return !e||e[0]!='0';}();return on;}
 inline bool route_group(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_GROUP");return e&&e[0]=='1';}();return on;}
 #endif
@@ -421,7 +448,11 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   if(s.f32_activations&&simple_fast()&&s.types[0]==Scalar::f32&&s.types[1]==Scalar::f32&&s.types[2]==Scalar::f32&&s.types[s.ni]==Scalar::f32&&s.sizes[s.ni]%4==0&&s.site.shape[1]%4==0){CombineFast op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
 #endif
   return simple_new_submit<Op::hc_combine>(d,s,bindings,deps);}break;
- case Op::argmax:return simple_new_submit<Op::argmax>(d,s,bindings,deps);
+ case Op::argmax:
+#ifndef OWN_RT_HOST_ONLY
+  if(argmax_fast()){ArgmaxFast op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+#endif
+  return simple_new_submit<Op::argmax>(d,s,bindings,deps);
  case Op::ple_add:return simple_new_submit<Op::ple_add>(d,s,bindings,deps);
  default:break;}}
  ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;shape.tokens=s.tokens;if(s.f32_activations)shape.flags|=ng::f32_activations_flag;
