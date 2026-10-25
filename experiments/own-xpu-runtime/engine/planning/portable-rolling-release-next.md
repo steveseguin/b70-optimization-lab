@@ -191,5 +191,17 @@ The bounded rolling diagnostic has no headline speed claim. A later matched
 persistent twelve-prompt workload can measure decode intervals separately from
 TTFT/full response, require uncached prompts and all 5,965 output IDs, and retain
 bounded state qualification. Do not use fresh-server chains. Portable service,
-clean-host certification, other model support and the six unresolved CPU
-near-ties remain separate gates; no training is part of this work.
+clean-host certification, other model support and the six unexplained CPU-reference
+disagreements remain separate gates; no training is part of this work.
+
+## Completed since this plan was recorded
+
+The lab rolling proof and its durable, restore-tested archive passed; see
+[the result](../../../../notes/2026-10-25-rolling-depth2-result.md). The exact f300
+extraction also built successfully with generated local authority, producing
+`8ba3e562e1757dcbea6f74126ea675815216cfcf75b134b06d31a99b46ea161b`;
+[its checked receipt](../../research/continuation-2026-10-25/portable-f300-build-check.json)
+verifies all 225 native source dependencies and 40 objects. This executable has
+not run on GPUs. The portable live documentation now links the qualified 9d proof.
+The original commands and uncompleted portable rolling/offline replay gates above
+remain as the recorded plan, not new qualification claims.
