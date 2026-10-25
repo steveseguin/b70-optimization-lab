@@ -31,6 +31,10 @@ after new faults. Publication must retain the distinction between internal
 GPU parity and the six unresolved independent-reference disagreements.
 See [the review and release direction](docs/sc117-engine-review.md).
 
+October 25 follow-up: the owner explicitly prohibits draft-model training.
+Continue quad overlap, reference-discrepancy diagnosis and portable recipes using
+the existing draft weights. Do not install or initiate a training pipeline.
+
 These come directly from the owner and override anything else in this file,
 any older note, and any recipe.
 

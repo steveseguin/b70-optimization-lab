@@ -1,0 +1,629 @@
+{
+  "schema": "ownrt.cpu-reference-audit.v1",
+  "scope": "teacher-forced agreement, not independent free-running output identity",
+  "prompts": [
+    {
+      "prompt_tokens": 67,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "architecture-tradeoff"
+    },
+    {
+      "prompt_tokens": 65,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "benchmark-analysis"
+    },
+    {
+      "prompt_tokens": 71,
+      "scored_positions": 512,
+      "disagreements": [
+        {
+          "position": 526,
+          "output_index": 456,
+          "reference_argmax": 35239,
+          "engine_token": 92217,
+          "engine_token_reference_rank": 2,
+          "reference_top_logit": 18.6769428,
+          "engine_token_reference_logit": 18.6766205,
+          "reference_margin": 0.0003223000000005527
+        }
+      ],
+      "terminal_unscored_rows": 1,
+      "id": "bug-report-synthesis"
+    },
+    {
+      "prompt_tokens": 90,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "code-review"
+    },
+    {
+      "prompt_tokens": 77,
+      "scored_positions": 333,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "customer-email"
+    },
+    {
+      "prompt_tokens": 60,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "decision-memo"
+    },
+    {
+      "prompt_tokens": 87,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "incident-retrospective"
+    },
+    {
+      "prompt_tokens": 64,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "performance-hypotheses"
+    },
+    {
+      "prompt_tokens": 68,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "release-plan"
+    },
+    {
+      "prompt_tokens": 61,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "risk-register"
+    },
+    {
+      "prompt_tokens": 83,
+      "scored_positions": 512,
+      "disagreements": [],
+      "terminal_unscored_rows": 1,
+      "id": "sql-debugging"
+    },
+    {
+      "prompt_tokens": 69,
+      "scored_positions": 512,
+      "disagreements": [
+        {
+          "position": 243,
+          "output_index": 175,
+          "reference_argmax": 16568,
+          "engine_token": 6343,
+          "engine_token_reference_rank": 2,
+          "reference_top_logit": 19.3815823,
+          "engine_token_reference_logit": 19.2814579,
+          "reference_margin": 0.10012440000000211
+        },
+        {
+          "position": 329,
+          "output_index": 261,
+          "reference_argmax": 15,
+          "engine_token": 8152,
+          "engine_token_reference_rank": 2,
+          "reference_top_logit": 20.2243233,
+          "engine_token_reference_logit": 20.2095051,
+          "reference_margin": 0.014818199999997006
+        },
+        {
+          "position": 488,
+          "output_index": 420,
+          "reference_argmax": 13662,
+          "engine_token": 19023,
+          "engine_token_reference_rank": 2,
+          "reference_top_logit": 18.3627663,
+          "engine_token_reference_logit": 18.3435764,
+          "reference_margin": 0.019189900000000648
+        },
+        {
+          "position": 530,
+          "output_index": 462,
+          "reference_argmax": 5427,
+          "engine_token": 10202,
+          "engine_token_reference_rank": 2,
+          "reference_top_logit": 20.8198662,
+          "engine_token_reference_logit": 20.8154316,
+          "reference_margin": 0.004434599999999733
+        },
+        {
+          "position": 540,
+          "output_index": 472,
+          "reference_argmax": 82459,
+          "engine_token": 16196,
+          "engine_token_reference_rank": 2,
+          "reference_top_logit": 21.1613541,
+          "engine_token_reference_logit": 21.1519718,
+          "reference_margin": 0.009382300000002175
+        }
+      ],
+      "terminal_unscored_rows": 1,
+      "id": "technical-guide"
+    }
+  ],
+  "diagnostics": [
+    {
+      "id": "bug-report-synthesis",
+      "mode": "f32lane",
+      "input": {
+        "path": "/dev/shm/exactref/f32lane/out-bug-report-synthesis/rows.jsonl",
+        "bytes": 360260,
+        "sha256": "ce65367ff9e051f86db7dcc56d637fd2263c4c753175a5aa428acce527d2d309"
+      },
+      "argmax_changes": 0,
+      "max_abs_emitted_token_logit_delta": 1.5199999999992997e-05,
+      "max_abs_common_top20_logit_delta": 1.6199999999244596e-05,
+      "scope": "serialized next-token and common top20 logits; not full-vocabulary maximum"
+    },
+    {
+      "id": "bug-report-synthesis",
+      "mode": "rope-powf",
+      "input": {
+        "path": "/dev/shm/exactref/rope/out-powf-bug-report-synthesis/rows.jsonl",
+        "bytes": 360275,
+        "sha256": "0fc9553cfed5ae5dc0174929881e3d03bf5f32e3b7c22fcc0b939a6ef1a324bc"
+      },
+      "argmax_changes": 0,
+      "max_abs_emitted_token_logit_delta": 5.700000002661909e-06,
+      "max_abs_common_top20_logit_delta": 1.1499999999387e-05,
+      "scope": "serialized next-token and common top20 logits; not full-vocabulary maximum"
+    },
+    {
+      "id": "bug-report-synthesis",
+      "mode": "rope-f64",
+      "input": {
+        "path": "/dev/shm/exactref/rope/out-f64-bug-report-synthesis/rows.jsonl",
+        "bytes": 360281,
+        "sha256": "fafc0c85c98d7dd2de960e957c4c631ffcc81b1516324e809bf21bf3a7ece270"
+      },
+      "argmax_changes": 0,
+      "max_abs_emitted_token_logit_delta": 9.500000000883801e-06,
+      "max_abs_common_top20_logit_delta": 1.525999999962835e-05,
+      "scope": "serialized next-token and common top20 logits; not full-vocabulary maximum"
+    },
+    {
+      "id": "technical-guide",
+      "mode": "f32lane",
+      "input": {
+        "path": "/dev/shm/exactref/f32lane/out-technical-guide/rows.jsonl",
+        "bytes": 361471,
+        "sha256": "4dd1206481a497bfc719a926997f18080953a1b8066dbf3934d701bef424b961"
+      },
+      "argmax_changes": 0,
+      "max_abs_emitted_token_logit_delta": 3.999999999848569e-05,
+      "max_abs_common_top20_logit_delta": 3.999999999848569e-05,
+      "scope": "serialized next-token and common top20 logits; not full-vocabulary maximum"
+    },
+    {
+      "id": "technical-guide",
+      "mode": "rope-powf",
+      "input": {
+        "path": "/dev/shm/exactref/rope/out-powf-technical-guide/rows.jsonl",
+        "bytes": 361451,
+        "sha256": "500c2b818d5832352991cff64a20545aa0c635b06da86c99889651000c8a0f87"
+      },
+      "argmax_changes": 0,
+      "max_abs_emitted_token_logit_delta": 1.3400000000274304e-05,
+      "max_abs_common_top20_logit_delta": 1.5260000001404705e-05,
+      "scope": "serialized next-token and common top20 logits; not full-vocabulary maximum"
+    },
+    {
+      "id": "technical-guide",
+      "mode": "rope-f64",
+      "input": {
+        "path": "/dev/shm/exactref/rope/out-f64-technical-guide/rows.jsonl",
+        "bytes": 361462,
+        "sha256": "7ba7c91a0ce53fa509f5b624a4155193f00ac9e5b9d42c58704c9244583d8ed0"
+      },
+      "argmax_changes": 0,
+      "max_abs_emitted_token_logit_delta": 5.800000000277805e-06,
+      "max_abs_common_top20_logit_delta": 1.9070000000454e-05,
+      "scope": "serialized next-token and common top20 logits; not full-vocabulary maximum"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-architecture-tradeoff.json",
+      "bytes": 3362,
+      "sha256": "5a5cb0fbc006e56e3a6c1bd7d64b49f14c96d871294cba7494df2b07c135b043"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/architecture-tradeoff.rows.jsonl",
+      "bytes": 359835,
+      "sha256": "88710535eceb53ba150f3935f1e6dabe9d9f74d857018f271a0e728d024b7996"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-benchmark-analysis.json",
+      "bytes": 3352,
+      "sha256": "4857da838abb6a9cea3561bd55f03661de4baa0ab67e49df73639fcf18ca0d8e"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/benchmark-analysis.rows.jsonl",
+      "bytes": 360591,
+      "sha256": "377228f5721bff3fdc827e04994a690b6a633ba80ab48bb464dd1752d8a48948"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-bug-report-synthesis.json",
+      "bytes": 3368,
+      "sha256": "bc08a68734dd117d9910720f9fbc7575d5ea4220be3f01c59fc16711d3118f2a"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/bug-report-synthesis.rows.jsonl",
+      "bytes": 360268,
+      "sha256": "90368f61399677f754e88b93254a8105a8653943392a13fff18333aa3b1dd16d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-code-review.json",
+      "bytes": 3430,
+      "sha256": "9fda221034176240fdef4080e6859635877a1b17238cac9034832a6e8ed2501f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/code-review.rows.jsonl",
+      "bytes": 359784,
+      "sha256": "c514ebfd28152fe97fce7ca4b3609d79cdd4b36c4f92986bca2311bccc4a9fce"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-customer-email.json",
+      "bytes": 2383,
+      "sha256": "d3633c462d14fe9636d900d9ac0e5f17fe4def2771966a4c6e3c483c2a592180"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/customer-email.rows.jsonl",
+      "bytes": 234487,
+      "sha256": "18e7925e0793a16abc45b8da085ab843453278a6ea3fb0f991ccb728a96215e9"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-decision-memo.json",
+      "bytes": 3234,
+      "sha256": "1344186affd74754b693f5bfaf4a27ab4caf4a546a37bbf257249944d4c60398"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/decision-memo.rows.jsonl",
+      "bytes": 359654,
+      "sha256": "253c286224017440c25f9e6ee0f6696a71359727874fdeb77e618b6a052c6996"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-incident-retrospective.json",
+      "bytes": 3304,
+      "sha256": "02b809a2f7355134aa0ffc57a3205d72508cc9efaa56c5f31c6dec47da16e93d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/incident-retrospective.rows.jsonl",
+      "bytes": 357011,
+      "sha256": "7cbaf72dc8fb0cbb690604eb9dce799f06215467bfa4c5a966c3c65c52cfc5ab"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-performance-hypotheses.json",
+      "bytes": 3354,
+      "sha256": "7d718ae19e25c3f48009715dcc9e36f6e28e0777c03775cf4d924a321c9dc5c2"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/performance-hypotheses.rows.jsonl",
+      "bytes": 360417,
+      "sha256": "72af8c8f2ba739a82189fa4901f3b4b4c02e10d80765683b3f65c65df5a0f89d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-release-plan.json",
+      "bytes": 3284,
+      "sha256": "8392b04c7545290f1b24c8fff924e292811a38affaaa3d604466147fcef900ea"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/release-plan.rows.jsonl",
+      "bytes": 359507,
+      "sha256": "75f4f64241cafeefef8a200a0ca4f5a6ae2559bfcc04b378f1ae86a4fc8651a2"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-risk-register.json",
+      "bytes": 3258,
+      "sha256": "8bd6e1d8214502ddc6d429892f53a2edddaaaa5fbe3a32ccdd4c2d57f1271136"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/risk-register.rows.jsonl",
+      "bytes": 359122,
+      "sha256": "81b973c0c702924b10ebd3e3c9dd0e34b5916452d1f5e7c18a924bd93d06be94"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-sql-debugging.json",
+      "bytes": 3462,
+      "sha256": "230ae3472eb9826fb5b1cf79ee6a3a20c0d8cd3d9241f00b19b630f5a32494f8"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/sql-debugging.rows.jsonl",
+      "bytes": 360979,
+      "sha256": "31bdb038ac870f6fba84608b0199657c5e720c8e6680247e841a678aa199e0e7"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/inputs/in-technical-guide.json",
+      "bytes": 3401,
+      "sha256": "bc74bdc7f10b7d0abb09ca0ea84f6375a7e6bdd5c5a0a97be73312ada1cb70d1"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/runs/f32suite/technical-guide.rows.jsonl",
+      "bytes": 361426,
+      "sha256": "07b80117a9c9df9589cfe2748d902d9f73df8155ad343c504488627b0128c9ee"
+    }
+  ],
+  "audit_implementation": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/reference/analyze_reference.py",
+      "bytes": 10416,
+      "sha256": "cfb4f96e21a4f668b7d798a775c3b8651248eeaf7f7e90104561fe7463472394"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/reference/test_analyze_reference.py",
+      "bytes": 3430,
+      "sha256": "aa1901578810241c75f819c7fa8a5324b63c87cdb3c969b8e490e06b0e5bc89e"
+    }
+  ],
+  "aggregate": {
+    "scored_positions": 5965,
+    "disagreements": 6,
+    "agreement_fraction": 0.9989941324392289
+  },
+  "fixture": {
+    "bundle_path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state.bundle",
+    "index": {
+      "path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state-index.tsv",
+      "bytes": 102639,
+      "sha256": "b45eba358b14349e98c925cc9badc85d1e7c455b9694862dfb904c25413378dc"
+    },
+    "name": "embedding.bin",
+    "offset": 171756164,
+    "bytes_read": 10240,
+    "sha256": "23cb555f6cfb8b75de380bf12da47ebdbb3723b51580dc3e15146713d16807f3",
+    "scope": "PP2 pos118 saved tensor, not a discrepant suite position"
+  },
+  "gdn_fixture": {
+    "bundle_path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state.bundle",
+    "index": {
+      "path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state-index.tsv",
+      "bytes": 102639,
+      "sha256": "b45eba358b14349e98c925cc9badc85d1e7c455b9694862dfb904c25413378dc"
+    },
+    "name": "blk.0.gdn.conv.bin",
+    "offset": 292348,
+    "bytes_read": 40960,
+    "sha256": "f24de733d299b6a9d405bf41de39779da66d425eeb95b4a641355b2db6ae67f5",
+    "scope": "PP2 pos118 saved tensor, not a discrepant suite position"
+  },
+  "gdn_state_fixture": {
+    "bundle_path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state.bundle",
+    "index": {
+      "path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state-index.tsv",
+      "bytes": 102639,
+      "sha256": "b45eba358b14349e98c925cc9badc85d1e7c455b9694862dfb904c25413378dc"
+    },
+    "name": "blk.0.gdn.state.bin",
+    "offset": 521724,
+    "bytes_read": 3145728,
+    "sha256": "b56a10450651f6a6401303665f63f3fc2c26a5a02839098418f3e121c959b0cf",
+    "scope": "PP2 pos118 saved tensor, not a discrepant suite position"
+  },
+  "gdn_y_fixture": {
+    "bundle_path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state.bundle",
+    "index": {
+      "path": "/dev/shm/sc117-pipeline-review-20261025/pp2-v2/stage0/native/state-2147483647/state-index.tsv",
+      "bytes": 102639,
+      "sha256": "b45eba358b14349e98c925cc9badc85d1e7c455b9694862dfb904c25413378dc"
+    },
+    "name": "blk.0.gdn.y.bin",
+    "offset": 3667452,
+    "bytes_read": 24576,
+    "sha256": "d6812d090b67e0f0315c985d6ca765f57f16809be60c38903ba02ef73c951e64",
+    "scope": "PP2 pos118 saved tensor, not a discrepant suite position"
+  },
+  "operator_probe": {
+    "scope": "operator witnesses, not attribution of six output discrepancies",
+    "rms_frozen_embedding": {
+      "mean": {
+        "native": 3.18324896e-06,
+        "cpu": 3.18324874e-06,
+        "native_bits": 911581133,
+        "cpu_bits": 911581132
+      },
+      "inverse": {
+        "native": 488.926025,
+        "cpu": 488.926025,
+        "native_bits": 1140094600,
+        "cpu_bits": 1140094600
+      },
+      "normalized_values_differ": 0,
+      "max_abs_normalized_delta": 0
+    },
+    "rms_fixed": {
+      "mean": {
+        "native": 6553.66162,
+        "cpu": 6553.6626,
+        "native_bits": 1171049803,
+        "cpu_bits": 1171049805
+      },
+      "inverse": {
+        "native": 0.0123525886,
+        "cpu": 0.0123525877,
+        "native_bits": 1011507843,
+        "cpu_bits": 1011507842
+      },
+      "normalized_values_differ": 2560,
+      "max_abs_normalized_delta": 3.814697265625e-06
+    },
+    "gdn_query_normalization_frozen": {
+      "values": 128,
+      "values_differ": 38,
+      "formula_only_values_differ": 38,
+      "max_abs_delta": 2.9802322387695312e-08
+    },
+    "gdn_fixed": {
+      "dot": {
+        "native": 1,
+        "cpu": 1,
+        "native_bits": 1065353216,
+        "cpu_bits": 1065353216
+      },
+      "state_update": {
+        "native": 0,
+        "cpu": -1.42108547e-14,
+        "native_bits": 0,
+        "cpu_bits": 2826960896
+      },
+      "state_update_inputs": {
+        "state": -1,
+        "delta_bits": 1065353214,
+        "key_bits": 1065353217
+      },
+      "dot_fma_witness": {
+        "native": 0,
+        "cpu": -1.42108547e-14,
+        "native_bits": 0,
+        "cpu_bits": 2826960896
+      },
+      "dot_rational_fixed": {
+        "native": -20.1168823,
+        "cpu": -20.1168823,
+        "native_bits": 3248549728,
+        "cpu_bits": 3248549728
+      },
+      "scale_placement_same_reduction": {
+        "native": -1.77809823,
+        "cpu": -1.77809799,
+        "native_bits": 3219364025,
+        "cpu_bits": 3219364023
+      }
+    },
+    "gdn_frozen_post_update_output": {
+      "values": 6144,
+      "native_source_equation_replay": {
+        "values_differ_from_gpu": 3596,
+        "max_abs_delta": 2.9802322387695312e-08
+      },
+      "cpu_dot_same_operands": {
+        "values_differ_from_gpu": 4050,
+        "max_abs_delta": 2.9802322387695312e-08
+      },
+      "post_scale_same_native_reduction": {
+        "values_differ_from_gpu": 4094,
+        "max_abs_delta": 2.9802322387695312e-08
+      },
+      "cpu_normalization_dot_post_scale": {
+        "values_differ_from_gpu": 4539,
+        "max_abs_delta": 5.960464477539063e-08
+      },
+      "native_reciprocal_constant_scale": {
+        "values_differ_from_gpu": 2607,
+        "max_abs_delta": 2.9802322387695312e-08
+      },
+      "native_reciprocal_both": {
+        "values_differ_from_gpu": 400,
+        "max_abs_delta": 9.313225746154785e-10
+      },
+      "native_reciprocal_norm_only": {
+        "values_differ_from_gpu": 2909,
+        "max_abs_delta": 2.9802322387695312e-08
+      },
+      "native_combined_reciprocals": {
+        "values_differ_from_gpu": 2757,
+        "max_abs_delta": 2.9802322387695312e-08
+      },
+      "native_reciprocal_product": {
+        "values_differ_from_gpu": 3846,
+        "max_abs_delta": 1.1920928955078125e-07
+      }
+    },
+    "binary": {
+      "path": "/tmp/sc117-operators-_rs2sdg1/probe",
+      "bytes": 1750000,
+      "sha256": "c230f1eea6118e60ce5fc323cb63312328569f4a5cd0da6092190be563a70f05"
+    },
+    "build_command": [
+      "g++-13",
+      "-std=c++20",
+      "-O2",
+      "-ffp-contract=off",
+      "-march=native",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+      "-I/dev/shm/llref/ggml/src/ggml-cpu",
+      "-I/dev/shm/llref/ggml/include",
+      "-I/dev/shm/llref/ggml/src",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/reference/operator_probe.cpp",
+      "/dev/shm/llref/build/ggml/src/libggml-cpu.a",
+      "/dev/shm/llref/build/ggml/src/libggml-base.a",
+      "-fopenmp",
+      "-o",
+      "/tmp/sc117-operators-_rs2sdg1/probe"
+    ],
+    "source_and_library_identities": [
+      {
+        "path": "/dev/shm/llref/build/ggml/src/libggml-cpu.a",
+        "bytes": 1839230,
+        "sha256": "2260d6d024f59a3b57b69086d4c44b9fae53c70c65d9eb07480ce2723e88f796"
+      },
+      {
+        "path": "/dev/shm/llref/build/ggml/src/libggml-base.a",
+        "bytes": 1382406,
+        "sha256": "63fefcc9431000b0ca5ae57d9f75b48291b4bb8eedb9a67ce54770428a0b4019"
+      },
+      {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/reference/operator_probe.cpp",
+        "bytes": 7656,
+        "sha256": "154d6dd7541af119bfd420f67aa63c149693ad806dcae3e569fc7136cf361301"
+      },
+      {
+        "path": "/dev/shm/llref/ggml/src/ggml-cpu/vec.h",
+        "bytes": 68484,
+        "sha256": "885a50e405f20f75ea70cb7fb062934812beffc9229ddb56a003aa150163d2fa"
+      },
+      {
+        "path": "/dev/shm/llref/ggml/src/ggml-cpu/vec.cpp",
+        "bytes": 25373,
+        "sha256": "31e43ec66a1e2920a549dd2f71e6ce474e68f2fc298c4d2942404ca327e763d1"
+      },
+      {
+        "path": "/dev/shm/llref/ggml/src/ggml-cpu/ops.cpp",
+        "bytes": 428472,
+        "sha256": "b2118192bc11186812bdc1fb52246f4ee34402cc59a221ee7d42722cebec8ce8"
+      },
+      {
+        "path": "/dev/shm/llref/ggml/src/ggml-cpu/ggml-cpu.c",
+        "bytes": 138078,
+        "sha256": "09aef76564b67ffc77226cd9e5837ca88df6660423dc39744462e9b245b108a7"
+      },
+      {
+        "path": "/dev/shm/llref/src/models/qwen4exp.cpp",
+        "bytes": 69810,
+        "sha256": "e562fc60c6ccf9577820f17cac41c33b69fd41f5a5a79d0d2375f2ed1c0b8d7b"
+      },
+      {
+        "path": "/dev/shm/llref/build/compile_commands.json",
+        "bytes": 47820,
+        "sha256": "dfce6c7428679ee04ea28b22572d412f50cd28d0c9bc1ffbb100942f0d9b6da5"
+      },
+      {
+        "path": "/dev/shm/llref/src/models/models.h",
+        "bytes": 113997,
+        "sha256": "54e5287a5617fc008e9001561cbd0bd8b46992a6608fdeaf605ce41acf1578e8"
+      },
+      {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised.hpp",
+        "bytes": 14561,
+        "sha256": "14dd2c6138dc91cfd40b7462e0f4144c9a94b14874a426bf6f97b7fea919f11d"
+      },
+      {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/round2_submit.cpp",
+        "bytes": 17101,
+        "sha256": "11c14ca621615d74e3d8494b4b3aa82eeac9eb88464d9d5e30589879cdfbf13f"
+      },
+      {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet17-detmath/detmath.hpp",
+        "bytes": 5488,
+        "sha256": "d84dc360ac8c0ab4e93e3c104dd88bd86e64bbbca8558e19151c3e333fbbf434"
+      }
+    ]
+  }
+}
