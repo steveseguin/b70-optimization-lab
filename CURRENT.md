@@ -33,10 +33,16 @@ byte-verified two-row suffix restore. Binary `9be365880262` exited cleanly on al
 four cards. This qualifies rollback, not live recursive drafting or speed.
 Its lossless evidence packet is durable and restore-tested, reusing the exact
 raw state payloads already present in the durable portable-live archive.
-All GPUs are now idle. Next is an opt-in existing-MTP recursive provider proof:
-actual two-step guesses with exact private restoration, initially while target
-stages are quiescent. Pending-target overlap and a cold performance suite follow
-only after their own state gates. Draft training is prohibited. No host power or
+The existing-MTP recursive provider proof also passed on all four cards:
+all 32 outputs, 2,065 target buffers and 73 draft allocations match; all 117 true
+pairs, 32 actual two-step predictions and 32 recursive restorations agree with
+the retained reference. Binary `aa3df8dd2659` exited cleanly on every card, with
+no new faults. Guesses were discarded and target owners were quiescent during
+provider calls, so this is correctness evidence. All GPUs are idle. Next is a
+separate pending-target gate: rejecting a speculative suffix must preserve the
+newer canonical draft and its private snapshot. Rolling overlap and a cold
+performance suite follow those state gates. Deployment also now accepts a separately trusted
+launch-policy path/hash; its 42 CPU checks pass, with current capabilities retained. Draft training is prohibited. No host power or
 memory settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
 and [portable proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md).
 The [full four-card suite audit](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md)
@@ -44,7 +50,8 @@ retains the negative speed result and per-stage timings.
 The [portable live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable-live/pp4-proof/RESULT.md)
 qualifies the 294-file source snapshot's standalone controller on this host.
 The [scripted ring proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-scripted-proof/RESULT.md)
-records the new rollback gate; the [onboarding audit](experiments/own-xpu-runtime/engine/planning/reusable-onboarding-audit.md)
+records the new rollback gate. The [actual recursive provider proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-live-depth2-proof/RESULT.md)
+records the complete new target/draft comparison. The [onboarding audit](experiments/own-xpu-runtime/engine/planning/reusable-onboarding-audit.md)
 separates reusable interfaces from current model/topology capability limits.
 
 

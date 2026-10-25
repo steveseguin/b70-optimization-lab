@@ -1,0 +1,20 @@
+{
+  "schema": "ownrt.ring-live-archive-cpu-review.v1",
+  "passed": true,
+  "tests": 11,
+  "new_tests": 6,
+  "unchanged_legacy_tests": 5,
+  "actual_run_archived": false,
+  "gpu_actions": false,
+  "verified_utc": "2026-10-25T21:04:26.171989+00:00",
+  "files": {
+    "archive_ring_live_proof.py": "22cd1fee0a436c8c37af0c336bd9407af317feb7ef746c1760b30c979e22074b",
+    "restore_ring_live_archive.py": "c9e62a4f77c2f5cb68a1e29970471ca97eeed9945a725e9c5febe6c2910bab6b",
+    "test_archive_ring_live_proof.py": "4ca7a08de6707ac1e3016a7cec0360a3a044ab74c429d7d80ec9be442aa23a0b",
+    "ring-live-archive-recipe.md": "ea8d96a7de641d97b88dd85d1dd4a8f3c5e9638edc1f0578b03d6a285f8514d9"
+  },
+  "commands": [
+    "python3 -m unittest discover -s research/continuation-2026-10-25 -p test_archive_ring_live_proof.py -q",
+    "python3 -m unittest discover -s research/continuation-2026-10-25 -p test_restore_reused_state.py -q"
+  ]
+}
