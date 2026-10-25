@@ -121,7 +121,7 @@ struct SnapshotWriteSet {
   if(!parallel)return allocation;
   auto ceil=[](size_t n,size_t d){return (n+d-1)/d;};
   size_t n=0;
-  if(!l.inputs.empty())for(const auto& b:p.buffers)if(b.card==l.card&&b.name==l.inputs[0]){
+  if(!l.inputs.empty())for(const auto& b:p.buffers)if((b.card==l.card||b.card==-1)&&b.name==l.inputs[0]){ // -1: on every card (--tp-replicate)
    n=1;for(int v:b.shape){require(v>0,"snapshot input geometry");n*=size_t(v);}break;
   }
   size_t bytes=0;const auto& op=l.op;

@@ -322,8 +322,10 @@ static int run_rank(const Options& a) {
   fd=::open(a.shared.c_str(),O_RDWR|O_NOFOLLOW);require(fd>=0,"shared open");struct stat st{};
   require(!fstat(fd,&st)&&st.st_size==shared_bytes,"shared extent");mapping=mmap(nullptr,shared_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);require(mapping!=MAP_FAILED,"shared mmap");
   if(a.pipeline_canary){int rc=run_pipe_canary(a,static_cast<uint8_t*>(mapping));munmap(mapping,shared_bytes);::close(fd);return rc;}
-  weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
-  dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
+  // --tp-replicate: the plan is the one-card rank plan; the card-1 twins are added after write_plan.
+  Options one_card=a;one_card.cards=1;
+  weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,one_card),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
+  dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
    std::vector<flash::Launch> both;both.reserve(p.launches.size()*2);
    for(const auto& l:p.launches){both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));}

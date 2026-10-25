@@ -276,3 +276,19 @@ Executor design for step 2:
 - a split site runs on its own rows;
 - a gather waits on the peer thread's published event (an atomic mailbox), then submits `peer_copy` plus the
   `peer_wait` guard.
+
+## Step 2 result: rank 1 replicated on two cards (2026-10-25)
+
+Engine `8fb0de127da0` (pf83), `--cards 2 --tp-replicate`, driven by
+[engine/tools/tp_rank1_driver.py](../engine/tools/tp_rank1_driver.py). Setup: rank 1 alone, 4 decode halves,
+deterministic input streams.
+- **Card 1 against card 0:** all 1,079 buffers bitwise-equal after the dump
+  ([evidence](tp/evidence/step2-pf83-card1-vs-card0.json)).
+- **Card 0 against the one-card run of the same steps:** the dumped state is bitwise-equal.
+- **Speed:** 59 ms per half while every card switch drained on the host. Next, pf84 drops that drain and keeps a last
+  event per card.
+
+Fixes needed on the way:
+- the plan is the one-card rank plan, with twins added after `write_plan`;
+- the scratch proof matches buffers that exist on every card;
+- `drain()` waits on the tail's own card.

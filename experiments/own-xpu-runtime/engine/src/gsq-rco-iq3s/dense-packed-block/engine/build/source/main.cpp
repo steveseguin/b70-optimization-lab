@@ -860,7 +860,8 @@ public:
   const std::array<const char*,10> families{"dense_r5","experts_r5","p25_p27_gemv","p28_p29_gemv","small_fusions","specialised_round2","parallel18","combine","check_commit","copy"};
   std::array<double,10> family_ms{};
   std::vector<Pending> pending;
-  ownrt::Event tail=0;
+  ownrt::Event tail=0;int tail_card=0; // tail belongs to tail_card's Device (card switches drain first)
+  std::array<ownrt::Event,2> card_tails{}; // --tp-replicate: each card's last submission (no drain on card switches)
   int submission_card=-1;
   uint64_t host_waits=0;
   int64_t history0=0,history1=0;
@@ -884,12 +885,12 @@ public:
   static double ms(std::chrono::steady_clock::time_point t) {
     return std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-t).count();
   }
-  void finish(int, Launch l, bool gemv) {
+  void finish(int c, Launch l, bool gemv) {
     // Submission only. Owner::compute appends the preceding owned event.
     if(preparing_commands)return;
     if(profile_events||draft_timing)pending.push_back({l,gemv,current_cls});
     if(!draft_timing&&attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event);
-    tail=l.last; submitted+=l.passes;
+    tail=l.last; tail_card=c; if(c>=0&&c<2)card_tails[size_t(c)]=l.last; submitted+=l.passes;
   }
   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
   void attribution_row(ownrt::Event event,const ownrt::EventTiming& t) {
@@ -904,7 +905,8 @@ public:
   }
   void drain() {
     if(!tail && pending.empty())return;
-    if(tail)wait(0,tail);
+    if(tail)wait(tail_card,tail);
+    for(int c=0;c<2;++c)if(card_tails[size_t(c)]&&c!=tail_card)wait(c,card_tails[size_t(c)]);
     auto profiling_start=std::chrono::steady_clock::now();
 #ifndef OWN_RT_HOST_ONLY
     for(auto item:pending) {
@@ -922,8 +924,8 @@ public:
     }
 #endif
     profiling_ms+=ms(profiling_start);
-    pending.clear();attribution.events.clear();tail=0;
-    if(!devices.empty())retire_events(0);
+    pending.clear();attribution.events.clear();tail=0;tail_card=0;card_tails={};
+    for(size_t c=0;c<devices.size();++c)retire_events(int(c));
   }
 
   std::ofstream argument_log;
@@ -1832,7 +1834,7 @@ public:
     if(dep!=logical)throw std::logic_error("step event order");
     auto& site=issue_sites.at(index);int c=site.card;
     if(attribution.enabled)attribution.current.label=p.launches[index].label;
-    if(submission_card!=c)drain();submission_card=c;current_cls=site.cls;
+    if(submission_card!=c&&!a.tp_replicate)drain();submission_card=c;current_cls=site.cls; // TP cards order by device events
     auto previous_submitted=submitted;
     auto started=class_timing?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
     double waited=wait_ms;
@@ -2004,7 +2006,9 @@ static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
  require((a.mini||p.g.h==2560)&&p.g.context==a.context&&
          p.g.context>0&&p.g.context<=32768&&p.g.budget>0&&p.g.budget<=2048,
          "unproved bounded scratch geometry");
- const size_t required=pipeline::SnapshotWriteSet::scratch(p,legacy,true);
+ // --tp-replicate: card 1 runs twins of card 0's launches on its own scratch; the per-card bound is the one-card plan's.
+ flash::Plan card0=p;if(a.tp_replicate)std::erase_if(card0.launches,[](const flash::Launch& l){return l.card!=0;});
+ const size_t required=pipeline::SnapshotWriteSet::scratch(card0,legacy,true);
  require(!p.launches.empty()&&required<=bounded,"unproved bounded scratch extent");
  // SPEED6 plan gate also checks this writer union against the kernels' full
  // scratch_floats read/write requirements. Binding-time extent guards stay on.
