@@ -1,0 +1,13 @@
+{
+  "schema": "ownrt.bounded-run-resource-budget.v1",
+  "utc": "2026-10-25T21:44:10.645622+00:00",
+  "prior_run": "/dev/shm/sc117-ring-20261025/pending-provider-a",
+  "prior_samples": 75,
+  "prior_admitted_available_bytes": 103144820736,
+  "prior_minimum_available_bytes": 72047874048,
+  "observed_available_memory_drop_bytes": 31096946688,
+  "next_start_floor_bytes": 96636764160,
+  "runtime_floor_bytes": 8589934592,
+  "reason": "All original runs, complete archives, restored bundles and builds remain in tmpfs. A 90 GiB start reserve leaves over 60 GiB after the prior observed 31.1 GB drop, well above the unchanged 8 GiB runtime floor. This changes only next-run admission, not host memory, swap, cache or power settings.",
+  "host_settings_changed": false
+}

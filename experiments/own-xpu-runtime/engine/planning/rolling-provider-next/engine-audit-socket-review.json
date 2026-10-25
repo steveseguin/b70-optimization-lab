@@ -1,0 +1,231 @@
+{
+  "schema": "ownrt.rolling-socket-review.v1",
+  "reviewer": "engine_audit",
+  "scope": "Isolated socket bridge and actual PendingStage codecs using mock CPU workers only; no process/GPU/native model launches",
+  "existing_socket_tests": {
+    "command": "TMPDIR=/dev/shm/rolling-socket-review-tmp PYTHONPATH=experiments/own-xpu-runtime/engine/planning python -m unittest discover -s experiments/own-xpu-runtime/engine/planning/rolling-provider-next -p test_socket_bridge.py -v",
+    "passed": 4
+  },
+  "additional_fragment_cases": {
+    "schema": "ownrt.rolling-socket-partial-review.v1",
+    "passed": 21,
+    "cases": [
+      {
+        "stages": 2,
+        "cancel_on_opcode": null,
+        "cancel_before_any_command_byte": false,
+        "writes": 1078,
+        "provider_pairs": 18,
+        "input_position": 19,
+        "cancelled": false
+      },
+      {
+        "stages": 2,
+        "cancel_on_opcode": 24,
+        "cancel_before_any_command_byte": false,
+        "writes": 44,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 2,
+        "cancel_on_opcode": 24,
+        "cancel_before_any_command_byte": true,
+        "writes": 44,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 2,
+        "cancel_on_opcode": 25,
+        "cancel_before_any_command_byte": false,
+        "writes": 44,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 2,
+        "cancel_on_opcode": 25,
+        "cancel_before_any_command_byte": true,
+        "writes": 44,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 2,
+        "cancel_on_opcode": 27,
+        "cancel_before_any_command_byte": false,
+        "writes": 99,
+        "provider_pairs": 1,
+        "input_position": 2,
+        "cancelled": true
+      },
+      {
+        "stages": 2,
+        "cancel_on_opcode": 27,
+        "cancel_before_any_command_byte": true,
+        "writes": 99,
+        "provider_pairs": 1,
+        "input_position": 2,
+        "cancelled": true
+      },
+      {
+        "stages": 4,
+        "cancel_on_opcode": null,
+        "cancel_before_any_command_byte": false,
+        "writes": 2002,
+        "provider_pairs": 18,
+        "input_position": 19,
+        "cancelled": false
+      },
+      {
+        "stages": 4,
+        "cancel_on_opcode": 24,
+        "cancel_before_any_command_byte": false,
+        "writes": 88,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 4,
+        "cancel_on_opcode": 24,
+        "cancel_before_any_command_byte": true,
+        "writes": 88,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 4,
+        "cancel_on_opcode": 25,
+        "cancel_before_any_command_byte": false,
+        "writes": 88,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 4,
+        "cancel_on_opcode": 25,
+        "cancel_before_any_command_byte": true,
+        "writes": 88,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 4,
+        "cancel_on_opcode": 27,
+        "cancel_before_any_command_byte": false,
+        "writes": 187,
+        "provider_pairs": 1,
+        "input_position": 2,
+        "cancelled": true
+      },
+      {
+        "stages": 4,
+        "cancel_on_opcode": 27,
+        "cancel_before_any_command_byte": true,
+        "writes": 187,
+        "provider_pairs": 1,
+        "input_position": 2,
+        "cancelled": true
+      },
+      {
+        "stages": 6,
+        "cancel_on_opcode": null,
+        "cancel_before_any_command_byte": false,
+        "writes": 2926,
+        "provider_pairs": 18,
+        "input_position": 19,
+        "cancelled": false
+      },
+      {
+        "stages": 6,
+        "cancel_on_opcode": 24,
+        "cancel_before_any_command_byte": false,
+        "writes": 132,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 6,
+        "cancel_on_opcode": 24,
+        "cancel_before_any_command_byte": true,
+        "writes": 132,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 6,
+        "cancel_on_opcode": 25,
+        "cancel_before_any_command_byte": false,
+        "writes": 132,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 6,
+        "cancel_on_opcode": 25,
+        "cancel_before_any_command_byte": true,
+        "writes": 132,
+        "provider_pairs": 0,
+        "input_position": 1,
+        "cancelled": true
+      },
+      {
+        "stages": 6,
+        "cancel_on_opcode": 27,
+        "cancel_before_any_command_byte": false,
+        "writes": 275,
+        "provider_pairs": 1,
+        "input_position": 2,
+        "cancelled": true
+      },
+      {
+        "stages": 6,
+        "cancel_on_opcode": 27,
+        "cancel_before_any_command_byte": true,
+        "writes": 275,
+        "provider_pairs": 1,
+        "input_position": 2,
+        "cancelled": true
+      }
+    ]
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/socket_bridge.py": "e04489c26d199d1ca5736edb7ae8b2ce33a6e6e64de34ab492502391e6426844",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/test_socket_bridge.py": "330d32e1ee59b8bfcda1682bd1865198af4bf02b5d210fd29bc651fa2374ff5b",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/coordinator.py": "5bc7656ceeb89f5d6d6f615d16f9313f681c7e6be2d470e752e86286a613567e",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/arbiter.py": "ca07e2d0c46dea414b4b5188b0d86411fe700769ad1974a04aa7461cdc2f6c74",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/review_socket_fragments.py": "0d9c3c418e5e59677fa1626cfe034c82e58f098f8bf367310d93a78f81fd7da2",
+    "experiments/own-xpu-runtime/engine/tools/pending_ring_live_driver.py": "ef1ea1721959b5c3f4e1fbf2b3ff910e0042a2ae90c3db021ba9d27a34330f5b",
+    "experiments/own-xpu-runtime/engine/tools/pending_ring_live_wire.py": "e8cb3b84ec1c7efeb9e077e4bb1c5970e3a36ac258f780204744066048a694b5",
+    "experiments/own-xpu-runtime/engine/tools/ring_live_driver.py": "b82f8a0e7798e0727db8133e5061178e825de2d5c00b6f0f40aaa747bdb41ef7",
+    "experiments/own-xpu-runtime/engine/tools/ring_live_wire.py": "c687b2cf3b1343222513dd7b39e0337a9f44eff4695134c15f0c49b93e8984c4",
+    "experiments/own-xpu-runtime/engine/tools/ring_driver.py": "3f545dcfd77d1610e27f77630e117068889c87da535712507d74dedfe2a8558b",
+    "experiments/own-xpu-runtime/engine/tools/ring_wire.py": "16e7c7d3bc1a6c41e32d92e4df495144321b72d79feb88cf2a8bfc569ab6323b",
+    "experiments/own-xpu-runtime/engine/tools/wavefront_driver.py": "7c1b593ec4221fe2170275281c937842ed68bf8f578b9fca52d4a344518da56c",
+    "experiments/own-xpu-runtime/engine/tools/test_wavefront_driver.py": "60d5ec03008ed6d18fcc22b05ad5b7acf67c38515e0b42be980d3e0176272107",
+    "experiments/own-xpu-runtime/engine/tools/test_ring_live_driver.py": "bb461dbfb007a83879cf42607ccd4ef60f1b757f32852bd9dd7b17955153057d",
+    "experiments/own-xpu-runtime/engine/planning/ring_coordinator.py": "84b7d6970dd3f1c357c674760739e577c2f2be1d0577405b240abf9003a0690f",
+    "experiments/own-xpu-runtime/engine/planning/ring_contract.py": "3cf6a0b713bb0e87ae2be75cd57913237ea62de1a4c6651f53f68c159c84e1b7",
+    "experiments/own-xpu-runtime/engine/planning/test_ring_coordinator.py": "582b407158ca11a9f6d31d545efad5aa0a28137dee9441446f1d3cd4951ff672",
+    "experiments/own-xpu-runtime/engine/planning/wavefront_ring.py": "a3fadf01f90caa977013ee93aa3bda3ec584ca45659c21fcd6523cc65d9c9449"
+  },
+  "critical_findings": [],
+  "limitations": [
+    "Mock target/provider arithmetic does not prove native overlap correctness",
+    "Decoded result identity requires unchanged strict imported codecs and native mode/source qualification",
+    "Cancellation may leave canonical provider shorter than drained target; use cancellation shutdown, not ordinary full-state success attestation",
+    "Full runtime launch/admission/fault lifecycle absent from isolated bridge and not authorized by this review"
+  ]
+}

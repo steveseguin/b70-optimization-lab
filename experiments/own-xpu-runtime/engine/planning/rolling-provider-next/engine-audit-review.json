@@ -1,0 +1,34 @@
+{
+  "schema": "ownrt.rolling-coordinator-review.v1",
+  "reviewer": "engine_audit",
+  "scope": "CPU ownership/drain/cancel review only; no native/device/socket qualification",
+  "existing_tests": {
+    "command": "PYTHONPATH=experiments/own-xpu-runtime/engine/planning python -m unittest discover -s experiments/own-xpu-runtime/engine/planning/rolling-provider-next -p test_*.py -q",
+    "observed_test_count": 11,
+    "passed": true,
+    "note": "Run before new socket-bridge tests were added; only arbiter and coordinator tests existed."
+  },
+  "additional_schedules": {
+    "passed": 1000,
+    "seed": 852771,
+    "scope": "CPU mocked arithmetic and event delivery only"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/arbiter.py": "ca07e2d0c46dea414b4b5188b0d86411fe700769ad1974a04aa7461cdc2f6c74",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/coordinator.py": "5bc7656ceeb89f5d6d6f615d16f9313f681c7e6be2d470e752e86286a613567e",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/test_arbiter.py": "203d7b8628f1bbaa4d144092e77ad3dcd293976cbecf9852662a314e8658f3b0",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/test_coordinator.py": "ae7f2d0977f3922ea312a7cdbe7dae35c21cad0b2b26a3d3ad32bcff0cbc14e2",
+    "experiments/own-xpu-runtime/engine/planning/rolling-provider-next/review_schedules.py": "223ef9bca98c32f573299156e94efd80047a15c089aa50c55ac2689c31c926a5",
+    "experiments/own-xpu-runtime/engine/planning/ring_coordinator.py": "84b7d6970dd3f1c357c674760739e577c2f2be1d0577405b240abf9003a0690f",
+    "experiments/own-xpu-runtime/engine/planning/ring_contract.py": "3cf6a0b713bb0e87ae2be75cd57913237ea62de1a4c6651f53f68c159c84e1b7",
+    "experiments/own-xpu-runtime/engine/planning/test_ring_coordinator.py": "582b407158ca11a9f6d31d545efad5aa0a28137dee9441446f1d3cd4951ff672",
+    "experiments/own-xpu-runtime/engine/planning/wavefront_ring.py": "a3fadf01f90caa977013ee93aa3bda3ec584ca45659c21fcd6523cc65d9c9449"
+  },
+  "critical_findings": [],
+  "integration_requirements": [
+    "retain every reserved command through explicit cancellation; do not silently discard a pre-send reservation",
+    "apply exact final-record/proposal codec validation before typed model completion",
+    "label cancelled_provider_incomplete as conservative qualification exclusion rather than proved numerical mismatch",
+    "promote admission hooks instead of leaving copied core reservation loops to drift"
+  ]
+}
