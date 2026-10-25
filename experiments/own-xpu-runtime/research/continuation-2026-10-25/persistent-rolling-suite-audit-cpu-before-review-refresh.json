@@ -1,0 +1,42 @@
+{
+  "schema": "ownrt.persistent-rolling-suite-audit-cpu.v1",
+  "passed": true,
+  "status": "frozen; independent source review passed; actual fullsuite GPU proof pending",
+  "sources": {
+    "research/continuation-2026-10-25/persistent_rolling_suite_audit.py": "ebd74c763475090c1a0a315423a80e157e0a91b7ca859d4b12bdd76fdc9e122b",
+    "research/continuation-2026-10-25/finalize_persistent_rolling_suite.py": "f593f98648bb54a6875ef7b2202bcedf99864fc2d0bf49456a5b6a86967cac9f",
+    "research/continuation-2026-10-25/test_persistent_rolling_suite_audit.py": "5ac7e488668801d110c407444a5edfc771977c4fd4e26da8a281120b6010dc4f",
+    "research/continuation-2026-10-25/test_finalize_persistent_rolling_suite.py": "040e00c821a0c9331b9119465fa72ab31f55f8425938efb8bdf4dd2cd5b282ee",
+    "research/continuation-2026-10-25/test_persistent_rolling_suite_closure.py": "5397f49f4cb166c063162829dde4008d538c0d767cdaa0a781b5965373b112fe"
+  },
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "test_persistent_rolling_suite_audit",
+    "test_finalize_persistent_rolling_suite",
+    "test_persistent_rolling_suite_closure",
+    "test_persistent_ring_policy",
+    "test_persistent_rolling_trace_audit",
+    "test_finalize_persistent_rolling_proof",
+    "-q"
+  ],
+  "log": "research/continuation-2026-10-25/persistent-rolling-suite-audit-cpu.log",
+  "log_sha256": "e967d840e83b183c482479777796968b333837f16853c7fe4ecca328b58c87a7",
+  "tests": 26,
+  "gpu_actions": false,
+  "independent_review": {
+    "path": "research/continuation-2026-10-25/persistent-rolling-suite-independent-review.json",
+    "sha256": "dedb6e8dbb4676370b7aa9cac0e44da3861e2679e0f5ff0a4533cd0041e33adf"
+  },
+  "supersedes": {
+    "candidate_receipt_sha256": "13d9f1c17ac28b8e85369956cf874d928e02d1ab9831978c8bd20fc668ed493a",
+    "preserved_archive": "research/continuation-2026-10-25/persistent-rolling-suite-audit-before-closure-review.tar.gz",
+    "preserved_archive_sha256": "2e88467a1c2f0363c20d0121d2cf686b81adce86b7c8272384e9dd4893975b4b",
+    "reason": "Exact12 array-length checks; native/build/execution prerequisite identity; explicit reviewed planner-only transition; accepted summary binds exact parsed plan bytes."
+  },
+  "scope": "New measured12 gate only; old two32 helpers unchanged. Actual retained5965 IDs/position571, real mmap fragmented sockets2/4/6 cap and early-EOS suffix drains, exact observed provider/native/raw provenance fixtures, mandatory measured counters, strict trace budget, bounded readers, true median and exact prerequisite execution identity.",
+  "raw_state_scope": "Final request target parity only; final draft authentication without independent matching reference; prior11 outputs/reset/provenance only.",
+  "timing_scope": "Controller observation and retained service aggregate differ; prior42.311880797977615 negative and47.97057758420032 baseline retained, no certified speed claim.",
+  "actual_planner_transition_status": "Not yet implemented or reviewed; synthetic transition tests do not qualify a real planner patch."
+}
