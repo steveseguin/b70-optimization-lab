@@ -1,0 +1,333 @@
+{
+  "schema": "ownrt.persistent-rolling-reset-failure-review.v1",
+  "source_run": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a",
+  "independent_review_passed": true,
+  "run_passed": false,
+  "cause": "Python mmap iteration yields nonempty one-byte bytes values, including zero bytes; any(stage.shared) therefore rejects a correctly zeroed mapping. bytearray mock iteration yielded integers and masked the defect.",
+  "failure_expression": "not any(stage.shared)",
+  "failure_source": "engine/tools/persistent_rolling_suite.py:154",
+  "source_inputs": {
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/plan.json": {
+      "bytes": 26588,
+      "sha256": "beb020ac448fd0856f3620ed59c6bbc22cbfa4a802f57b2b89a5172dc8e17b29"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/persistent-rolling-result.json": {
+      "bytes": 831,
+      "sha256": "870ef125ad2e0f04c00629606383d871dda3cbd77065d6f64c87637c4ca1e57b"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/suite-partial.json": {
+      "bytes": 154,
+      "sha256": "30acf566f2bc553cd75e650af9cd83d9be51a8284935d5bba5e0bef474c52c50"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/request-00-cold-repeat-1/reset-commands.jsonl": {
+      "bytes": 12916,
+      "sha256": "73084f39b62a36e42e9b47983a545da8a7768d627602883b48c626fd127d09a6"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage0/native/reset-1.json": {
+      "bytes": 443,
+      "sha256": "d0e62a11ac03c50c8e7ecb3458243eeff54d2d4d5cbb9e5ac182d7a661d8b7be"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage0/native/requests/request-00-cold-repeat-1/ring-reset.json": {
+      "bytes": 1364,
+      "sha256": "604ac591eab7a958773e8d33f2891bb1c9f1876c6acd6aaf7acc95e9cd306664"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage1/native/reset-1.json": {
+      "bytes": 443,
+      "sha256": "f2056d19e4c6712d90c8a411394ac9bb1a82da0e75e7f94d555ca097bbaeb356"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage1/native/requests/request-00-cold-repeat-1/ring-reset.json": {
+      "bytes": 1244,
+      "sha256": "a0c4b3a20e2d76d822a308f8cad0beffe6dd9fa945768a04c89ff4059ae0503f"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage2/native/reset-1.json": {
+      "bytes": 443,
+      "sha256": "842ea9b82b572707e572e697a19b45858ef632a8c56b0880630ed329ddb0d06c"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage2/native/requests/request-00-cold-repeat-1/ring-reset.json": {
+      "bytes": 1244,
+      "sha256": "f6e1a920f77450f4ddeb51f9eb3d7565928472febea8f5ab80707e5bbf642c56"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage3/native/reset-1.json": {
+      "bytes": 443,
+      "sha256": "12676de43eab4016b09a4095b87ccb6f09eb8616c9e042ada7f941f246d2349f"
+    },
+    "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage3/native/requests/request-00-cold-repeat-1/ring-reset.json": {
+      "bytes": 1244,
+      "sha256": "773d7f65778237733be7693975cbddd3a6651f7508ba63e63ed896bdba00ac36"
+    },
+    "engine/tools/persistent_rolling_suite.py": {
+      "bytes": 15208,
+      "sha256": "f60ca0eb0e3650481f951a2c066ba7347f28e72c7bf47e70122b71a72d6b5b22"
+    }
+  },
+  "native_reset_completed_owners": 4,
+  "target_rows_executed": 0,
+  "completed_requests": 0,
+  "stages": [
+    {
+      "stage": 0,
+      "mapping": {
+        "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage0/shared.bin",
+        "bytes": 266304,
+        "sha256": "68c396a763508256bed83a144c693983e870386d6d56ac74ece114916a47b8eb",
+        "nonzero_bytes": 0,
+        "mmap_any": true,
+        "bytes_any": false,
+        "first_iteration_value_hex": "00"
+      },
+      "reset_receipt": {
+        "schema": "ownrt.ring-reset.v1",
+        "passed": true,
+        "stage_id": 0,
+        "global_sequence": 1,
+        "previous_epoch": 0,
+        "next_epoch": 1,
+        "previous_request_sha256": "989480e65e8a44750a93bf332cea4ca27d4726b8a02241721592963abbc5f8d2",
+        "next_request_sha256": "d09036e04a05972eefb6ae3ab95fabfa12a33b96bc42788e2c2e131a067c9a8a",
+        "destination": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage0/native/requests/request-00-cold-repeat-1",
+        "oracle": "",
+        "metadata_sha256": "d0e62a11ac03c50c8e7ecb3458243eeff54d2d4d5cbb9e5ac182d7a661d8b7be",
+        "reset_index": 1,
+        "previous_target_position": 0,
+        "target_position": 0,
+        "target_physical": 0,
+        "target_committed": 0,
+        "target_pending": 0,
+        "draft_position": 0,
+        "provider_serial": 0,
+        "context_extent": 32,
+        "alternate_extent": 32,
+        "draft_context_extent": 32,
+        "pending_ticket": false,
+        "sticky_error": 0,
+        "allocation_ids_preserved": true,
+        "allocation_inventory_before_sha256": "3dad1770ed4140cf21e31005c6a5f55abc4864ba63942e97a37788e0f267d20f",
+        "allocation_inventory_after_sha256": "3dad1770ed4140cf21e31005c6a5f55abc4864ba63942e97a37788e0f267d20f",
+        "provider_cold_host_sha256": "bb0c66e8ff25390467bea53bd0c244e3f7fa435f70bd7a0ab726e6ea79f2203a",
+        "provider_cold_sequence_sha256": "fa800cdc0c4f3bbc1562244e33a97a1bdfe7004564239752d5a9ae480b037805",
+        "cold_state_byte_verified": false,
+        "counters_reset": true,
+        "trace_reset": true,
+        "shared_publication_invalidated": true,
+        "check_policy": "qualification"
+      },
+      "empty_native_row_traces": [
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage0/native/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage0/native/requests/request-00-cold-repeat-1/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "stage": 1,
+      "mapping": {
+        "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage1/shared.bin",
+        "bytes": 266304,
+        "sha256": "68c396a763508256bed83a144c693983e870386d6d56ac74ece114916a47b8eb",
+        "nonzero_bytes": 0,
+        "mmap_any": true,
+        "bytes_any": false,
+        "first_iteration_value_hex": "00"
+      },
+      "reset_receipt": {
+        "schema": "ownrt.ring-reset.v1",
+        "passed": true,
+        "stage_id": 1,
+        "global_sequence": 1,
+        "previous_epoch": 0,
+        "next_epoch": 1,
+        "previous_request_sha256": "989480e65e8a44750a93bf332cea4ca27d4726b8a02241721592963abbc5f8d2",
+        "next_request_sha256": "d09036e04a05972eefb6ae3ab95fabfa12a33b96bc42788e2c2e131a067c9a8a",
+        "destination": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage1/native/requests/request-00-cold-repeat-1",
+        "oracle": "",
+        "metadata_sha256": "f2056d19e4c6712d90c8a411394ac9bb1a82da0e75e7f94d555ca097bbaeb356",
+        "reset_index": 1,
+        "previous_target_position": 0,
+        "target_position": 0,
+        "target_physical": 0,
+        "target_committed": 0,
+        "target_pending": 0,
+        "draft_position": null,
+        "provider_serial": null,
+        "context_extent": 32,
+        "alternate_extent": 32,
+        "draft_context_extent": null,
+        "pending_ticket": false,
+        "sticky_error": 0,
+        "allocation_ids_preserved": true,
+        "allocation_inventory_before_sha256": "adb4ef09827a194c667b08d89af2f9292d89a5afe7facd783869d36d90458ddd",
+        "allocation_inventory_after_sha256": "adb4ef09827a194c667b08d89af2f9292d89a5afe7facd783869d36d90458ddd",
+        "provider_cold_host_sha256": "",
+        "provider_cold_sequence_sha256": "",
+        "cold_state_byte_verified": false,
+        "counters_reset": true,
+        "trace_reset": true,
+        "shared_publication_invalidated": true,
+        "check_policy": "qualification"
+      },
+      "empty_native_row_traces": [
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage1/native/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage1/native/requests/request-00-cold-repeat-1/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "mapping": {
+        "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage2/shared.bin",
+        "bytes": 266304,
+        "sha256": "68c396a763508256bed83a144c693983e870386d6d56ac74ece114916a47b8eb",
+        "nonzero_bytes": 0,
+        "mmap_any": true,
+        "bytes_any": false,
+        "first_iteration_value_hex": "00"
+      },
+      "reset_receipt": {
+        "schema": "ownrt.ring-reset.v1",
+        "passed": true,
+        "stage_id": 2,
+        "global_sequence": 1,
+        "previous_epoch": 0,
+        "next_epoch": 1,
+        "previous_request_sha256": "989480e65e8a44750a93bf332cea4ca27d4726b8a02241721592963abbc5f8d2",
+        "next_request_sha256": "d09036e04a05972eefb6ae3ab95fabfa12a33b96bc42788e2c2e131a067c9a8a",
+        "destination": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage2/native/requests/request-00-cold-repeat-1",
+        "oracle": "",
+        "metadata_sha256": "842ea9b82b572707e572e697a19b45858ef632a8c56b0880630ed329ddb0d06c",
+        "reset_index": 1,
+        "previous_target_position": 0,
+        "target_position": 0,
+        "target_physical": 0,
+        "target_committed": 0,
+        "target_pending": 0,
+        "draft_position": null,
+        "provider_serial": null,
+        "context_extent": 32,
+        "alternate_extent": 32,
+        "draft_context_extent": null,
+        "pending_ticket": false,
+        "sticky_error": 0,
+        "allocation_ids_preserved": true,
+        "allocation_inventory_before_sha256": "f1f26812ba5ea9e36b2a047b54e24643d1768a585e98b70cd84aacee25d10f32",
+        "allocation_inventory_after_sha256": "f1f26812ba5ea9e36b2a047b54e24643d1768a585e98b70cd84aacee25d10f32",
+        "provider_cold_host_sha256": "",
+        "provider_cold_sequence_sha256": "",
+        "cold_state_byte_verified": false,
+        "counters_reset": true,
+        "trace_reset": true,
+        "shared_publication_invalidated": true,
+        "check_policy": "qualification"
+      },
+      "empty_native_row_traces": [
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage2/native/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage2/native/requests/request-00-cold-repeat-1/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "mapping": {
+        "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage3/shared.bin",
+        "bytes": 266304,
+        "sha256": "68c396a763508256bed83a144c693983e870386d6d56ac74ece114916a47b8eb",
+        "nonzero_bytes": 0,
+        "mmap_any": true,
+        "bytes_any": false,
+        "first_iteration_value_hex": "00"
+      },
+      "reset_receipt": {
+        "schema": "ownrt.ring-reset.v1",
+        "passed": true,
+        "stage_id": 3,
+        "global_sequence": 1,
+        "previous_epoch": 0,
+        "next_epoch": 1,
+        "previous_request_sha256": "989480e65e8a44750a93bf332cea4ca27d4726b8a02241721592963abbc5f8d2",
+        "next_request_sha256": "d09036e04a05972eefb6ae3ab95fabfa12a33b96bc42788e2c2e131a067c9a8a",
+        "destination": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage3/native/requests/request-00-cold-repeat-1",
+        "oracle": "",
+        "metadata_sha256": "12676de43eab4016b09a4095b87ccb6f09eb8616c9e042ada7f941f246d2349f",
+        "reset_index": 1,
+        "previous_target_position": 0,
+        "target_position": 0,
+        "target_physical": 0,
+        "target_committed": 0,
+        "target_pending": 0,
+        "draft_position": null,
+        "provider_serial": null,
+        "context_extent": 32,
+        "alternate_extent": 32,
+        "draft_context_extent": null,
+        "pending_ticket": false,
+        "sticky_error": 0,
+        "allocation_ids_preserved": true,
+        "allocation_inventory_before_sha256": "c46d2886264d41261c52cf38224dd0b75bac6064e4f5a25e22b525c5eb180c76",
+        "allocation_inventory_after_sha256": "c46d2886264d41261c52cf38224dd0b75bac6064e4f5a25e22b525c5eb180c76",
+        "provider_cold_host_sha256": "",
+        "provider_cold_sequence_sha256": "",
+        "cold_state_byte_verified": false,
+        "counters_reset": true,
+        "trace_reset": true,
+        "shared_publication_invalidated": true,
+        "check_policy": "qualification"
+      },
+      "empty_native_row_traces": [
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage3/native/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-qualified-a/stage3/native/requests/request-00-cold-repeat-1/ring.jsonl",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "terminal": {
+    "schema": "ownrt.persistent-rolling-result.v1",
+    "passed": false,
+    "error": "ValueError('native reset did not invalidate complete shared publication mapping')",
+    "live_pids": [],
+    "returncodes": {
+      "0": 1,
+      "1": 1,
+      "2": 1,
+      "3": 1
+    },
+    "wall_seconds": 132.76943197497167,
+    "mode": "persistent-rolling",
+    "diagnostic_only": true,
+    "speed_claim": false,
+    "scripted_proposals": false,
+    "check_policy": "qualification",
+    "actual_provider": true,
+    "scripted_oracle_assisted": false,
+    "draft_training": false,
+    "lifecycle_result_sha256": "d41d24287f04d9c01f92352d4073996b907b12cf7b6cff2407164a81d7494642",
+    "plan_sha256": "beb020ac448fd0856f3620ed59c6bbc22cbfa4a802f57b2b89a5172dc8e17b29",
+    "qualification_note": "Controller completion only; independent reset/state/provenance/output audit required."
+  },
+  "scope": "Read-only inspection after terminal failure; full model cold-state arithmetic not qualified; no GPU or process action, no runtime edit."
+}

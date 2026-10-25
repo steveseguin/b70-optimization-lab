@@ -48,9 +48,16 @@ the existing weights, with no training. Actual rolling inference now also passes
 and 73 draft allocations match. Both miss depths occurred; seven first-stage
 rollbacks preserved draft state (five after advancement, two without it).
 All four workers exited cleanly, with no new faults. The full evidence is
-durable and restore-tested. All GPUs are idle. Persistent requests and a
-separate timing mode are next; the checked rolling run is not a speed result.
-The complete 424-file source export passes hashes and isolated imports; its
+durable and restore-tested. The opt-in persistent/reset implementation and fixed
+qualification/measured policies passed CPU checks and independent review. Build
+`02a47c059444` completed initial native RESET on all four cards, but the first
+qualification stopped before ROW because Python `any(mmap)` falsely rejected
+all-zero publication maps. All workers exited; no new fault signatures appeared.
+The failed run is archived durably. A bytes-snapshot check and real-mmap regression
+are under review before a separately admitted corrected run. Full target/draft
+parity and later measured-policy parity remain pending. The earlier checked rolling run is not a speed result.
+The latest 450-file source export (`4b74995e2`) passes hashes and isolated imports;
+it is not built or published as a new qualified download. The earlier 424-file its
 extracted portable build passed (binary `8ba3e562e175`), including all 225 native
 source hashes and generated local model configuration. This newer build has not
 yet run on GPUs. Deployment also now accepts a separately trusted
