@@ -99,6 +99,16 @@ class SourceBundleTests(unittest.TestCase):
         with self.assertRaisesRegex(bundle.BundleError, "Unknown angle include"):
             bundle.prepare(self.engine)
 
+    def test_ring_standard_deque_is_inventoried_without_broadening_header_policy(self):
+        self.write('src/main.cpp','#include <deque>\n#include "local.hpp"\n')
+        self.commit()
+        _,report=bundle.prepare(self.engine)
+        self.assertIn('deque',report['external_system_headers'])
+        self.write('src/main.cpp','#include <deque-project-private.hpp>\n')
+        self.commit()
+        with self.assertRaisesRegex(bundle.BundleError,'Unknown angle include'):
+            bundle.prepare(self.engine)
+
     def test_supplemental_host_header_is_committed_and_hash_bound(self):
         path = self.root / "gsq-rco-iq3s/integration/host-support/device_validation.hpp"
         path.parent.mkdir(parents=True)

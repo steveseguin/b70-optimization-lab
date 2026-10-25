@@ -17,7 +17,7 @@ class BundleError(ValueError):
     pass
 
 
-SYSTEM_HEADERS = set("algorithm array atomic bit cassert cctype cerrno cfenv chrono cmath condition_variable csignal cstddef cstdint cstdio cstdlib cstring filesystem fstream functional iomanip iostream limits map memory mutex numeric optional ostream random set span sstream stdexcept string string_view thread tuple type_traits typeinfo unordered_map unordered_set utility variant vector fcntl.h poll.h sched.h unistd.h".split())
+SYSTEM_HEADERS = set("algorithm array atomic bit cassert cctype cerrno cfenv chrono cmath condition_variable csignal cstddef cstdint cstdio cstdlib cstring deque filesystem fstream functional iomanip iostream limits map memory mutex numeric optional ostream random set span sstream stdexcept string string_view thread tuple type_traits typeinfo unordered_map unordered_set utility variant vector fcntl.h poll.h sched.h unistd.h".split())
 SYSTEM_PREFIXES = ("sycl/", "openssl/", "level_zero/", "sys/", "linux/")
 
 
