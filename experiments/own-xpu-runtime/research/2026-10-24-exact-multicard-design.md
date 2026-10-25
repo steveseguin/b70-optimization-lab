@@ -190,3 +190,40 @@ Expected per stage (rank 0's 23 layers today):
 - gathers about 1.45 ms (about 9 per layer at about 7 µs).
 
 That is about 11 ms, or 12.4 ms with stage 0's draft, against 17.4 ms: about 1.4×, i.e. about 66 tok/s on the suite.
+
+## Code map for TP2 in one rank process (survey, 2026-10-25)
+
+What already carries a card index: plan buffers and launches (`l.card`), `buffers[c]`, `weights[c]`, `owned_bytes[c]`,
+and the weight loader (`gsq_load` → `upload(c, …)`).
+
+What is hard-wired to one card:
+- **Device layer.** `SyclDevice` (`stage2/packet194-expert-diet-engine/single_device.cpp:41-63`) makes its own
+  zeContext and one in-order queue per card.
+  - `Arena::row` rejects foreign allocation ids (`owner.cpp:283-287`).
+  - Cross-queue dependencies are rejected (`assert_local_dependencies`, `Device::issue`).
+  - `dev(c)` throws for c≠0 (main.cpp:1030).
+  - So gathers need a shared context. `stage2/packet14-tp2/backend.hpp` has one (two queues, peer-access check,
+    `peer_from`), but it has no prepared or ordered submission.
+- **Engine.**
+  - One `tail`/`drain()` (main.cpp:857-921), plus a drain on every card switch (:1824, :1840).
+  - Banks and `state_spares` on card 0 (main.cpp:1231-1260, 1642; rank.hpp:73-95).
+  - Card 0 is assumed by: rank I/O (`put(0,"token"/"streams")`, `integer(0,…)`), cancel observers, `strict_snapshot`,
+    `prefill_engine`, `state_dump`, census, and the draft (`mtp.hpp` shares `weights[0]["output.weight"]`).
+- **Admission.**
+  - Hard limits: `a.cards==1` (main.cpp:304), `pipeline::split` forces card 0, `prefill_allocate` needs one card.
+  - Exact site-count admits (IQ3 34, dense block 116, Q6 19, attention 48, QKV 22) and exact storage sizes
+    (`generic_engine.hpp:113-117`).
+  - Tensor-owner uniqueness (`write_plan` :1904).
+  - 30 GiB caps in four places.
+- **Python.** `adapter6.py` and the packet195 pipeline pass `--cards 1 --card 0`, set the per-rank
+  `ZE_AFFINITY_MASK`/`FilterBdfPath`, and gate memory per rank (`memory_gate.py` split 0/23/24, 30 GiB).
+
+Build order:
+1. Device layer: a shared context, a queue per card, cross-card event dependencies and a prepared peer copy.
+   Microbench against `p2p/p2p_events.cpp` (about 7 µs per device-side hand-off).
+2. Rank 1 on `--mini` with every launch replicated on two cards. The gate is card 0 equal to card 1, and both equal to
+   the one-card run.
+3. Row splits plus gathers (a half-size output and a gather into the full buffer); slice-aware storage checks.
+4. Expert placement by id parity, plus the slot and status gather.
+5. Rank 0 (banks, snapshots and lookups per card), the draft head (keep a full copy on card 0), and the Python
+   per-rank `--cards`.
