@@ -1,6 +1,6 @@
 # Own XPU runtime engine: canonical source tree
 
-This is the single source tree of our own model-specific B70 runtime. It starts from the exact files that
+This is the single source tree of our own B70 runtime. It starts from the exact files that
 built the SC117 service binary `17c3c5c2…`.
 - That engine had grown as a chain of packet overlays: copied `source-v2` trees, absolute `#include` paths and
   `#line`-pinned historical file names.
@@ -19,6 +19,12 @@ nice -n 19 taskset -c 8-15,24-31 python3 -B build.py /dev/shm/engine-build --job
 
 Receipts of the binaries the service uses are in [receipts/](receipts/).
 
+The manifest's origin/file hashes describe the initial consolidation. Subsequent
+edits are identified by the build receipt's actual compiled dependency hashes;
+the historical manifest hashes are not current source pins. The build currently
+requires Intel oneAPI compiler 2026.0 at its recorded `/opt/intel/oneapi` path.
+Source availability does not yet establish a portable, quality-qualified release.
+
 **Equivalence of the consolidation.**
 - Binary `1fb6511b…` from this tree has 52 of 53 device images byte-identical to `17c3c5c2…`.
 - The remaining image differs by one SPIR-V constant: the source line number that a device `assert()` records for its
@@ -33,3 +39,11 @@ Receipts of the binaries the service uses are in [receipts/](receipts/).
 - Batched prefill will be written once against those typed interfaces.
 - The packet-named directories can be reorganized into modules gradually. Each move is a pure rename, proven by an
   identical build.
+
+**Expanded direction (owner, 2026-10-25).** Preserve this engine for other quants,
+Qwen-like models and 1/2/4/6 B70 configurations. Separate model geometry,
+per-tensor formats, topology and tuning profiles. Existing optimized paths stay
+available. DeepSeek 4 Flash is a possible later architecture adapter, not claimed
+support. The [CPU placement planner](planning/README.md) produces hash-bound
+stage candidates; the current executor still has model and two-rank restrictions.
+See the [current evidence and release review](../../../docs/sc117-engine-review.md).

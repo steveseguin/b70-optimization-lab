@@ -12,6 +12,8 @@ and benchmark observations are provided under the repository [LICENSE](LICENSE)
 and the risks described in [DISCLAIMER.md](DISCLAIMER.md); review and use them
 at your own risk.
 
+Current own-engine work: [SC117 results, reusable engine and four-card direction](docs/sc117-engine-review.md). Source is available; complete portable release and independent-reference fidelity remain pending.
+
 ## Who This Is For
 
 - Local AI users who want reproducible Intel Arc/B-series commands, patches and

@@ -1,0 +1,913 @@
+{
+  "schema": "ownrt.retained-service-evidence-audit.v1",
+  "scope": "offline arithmetic and stored-evidence audit; no GPU, endpoint, replay, or publication qualification",
+  "producer_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a",
+  "baseline_current": {
+    "baseline": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-63ab006a.json",
+    "current": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-297b388764e9.json",
+    "median_decode_tok_s": [
+      27.91858117532168,
+      47.8872842883155
+    ],
+    "ratio": 1.7152477766543857,
+    "per_prompt": [
+      {
+        "prompt_id": "architecture-tradeoff",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "benchmark-analysis",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "bug-report-synthesis",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "code-review",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "customer-email",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 333
+      },
+      {
+        "prompt_id": "decision-memo",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "incident-retrospective",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "performance-hypotheses",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "release-plan",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "risk-register",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "sql-debugging",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      },
+      {
+        "prompt_id": "technical-guide",
+        "prompt_token_ids_equal": true,
+        "output_token_ids_present": true,
+        "output_token_ids_equal": true,
+        "stored_text_sha256_equal": true,
+        "output_tokens": 512
+      }
+    ],
+    "all_recorded_prompt_and_output_ids_match": true,
+    "limits": [
+      "Text hashes are compared as stored; original response text is not in these summaries.",
+      "Rates cover full natural responses (up to 512 tokens), not first-99 intervals or class-balanced primary rates.",
+      "The historical suite producer checked cached_tokens but did not retain that field; missing usage defaulted to zero. Later harness fixes do not retroactively qualify these observations.",
+      "These summary files alone do not bind the complete runtime and hardware identities."
+    ]
+  },
+  "suite_statistics": [
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-02b5d5700cec.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 38.17161167651836,
+      "conventional_median_decode_tok_s": 38.07721421488308,
+      "upper_middle_decode_tok_s": 38.17161167651836,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-0f478d44798b-split22.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 41.25687043151843,
+      "conventional_median_decode_tok_s": 41.21376503063952,
+      "upper_middle_decode_tok_s": 41.25687043151843,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-15e894805502.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 46.848983456360024,
+      "conventional_median_decode_tok_s": 46.767451815531324,
+      "upper_middle_decode_tok_s": 46.848983456360024,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-2045517b940b.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 31.07178823563918,
+      "conventional_median_decode_tok_s": 30.984885270437115,
+      "upper_middle_decode_tok_s": 31.07178823563918,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-2145dea24164-split23.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 44.132159266877146,
+      "conventional_median_decode_tok_s": 43.96455649714608,
+      "upper_middle_decode_tok_s": 44.132159266877146,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-2145dea24164.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 43.45868381043356,
+      "conventional_median_decode_tok_s": 43.33726680637921,
+      "upper_middle_decode_tok_s": 43.45868381043356,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-297b388764e9.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 47.95061787474774,
+      "conventional_median_decode_tok_s": 47.8872842883155,
+      "upper_middle_decode_tok_s": 47.95061787474774,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3108b3c6ea40.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 32.04268417006306,
+      "conventional_median_decode_tok_s": 31.999971116112448,
+      "upper_middle_decode_tok_s": 32.04268417006306,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3453bbbf3135.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 41.563120475415054,
+      "conventional_median_decode_tok_s": 41.45943285324134,
+      "upper_middle_decode_tok_s": 41.563120475415054,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3619d8eb492d.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 42.26269075366524,
+      "conventional_median_decode_tok_s": 42.201210931246344,
+      "upper_middle_decode_tok_s": 42.26269075366524,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-37879adf.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 27.821660874767304,
+      "conventional_median_decode_tok_s": 27.75735752135092,
+      "upper_middle_decode_tok_s": 27.821660874767304,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3f943b654250.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 46.53311168935681,
+      "conventional_median_decode_tok_s": 46.43982366326276,
+      "upper_middle_decode_tok_s": 46.53311168935681,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-52fcf95813be.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 30.624716403251618,
+      "conventional_median_decode_tok_s": 30.561197618929896,
+      "upper_middle_decode_tok_s": 30.624716403251618,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-57ccf5cf7012.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 47.36619898285672,
+      "conventional_median_decode_tok_s": 47.26756775768425,
+      "upper_middle_decode_tok_s": 47.36619898285672,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-5de85b4aadfd-mix8.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 48.13090516025211,
+      "conventional_median_decode_tok_s": 48.025552360664676,
+      "upper_middle_decode_tok_s": 48.13090516025211,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-623cd3d46456.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 28.294016287334383,
+      "conventional_median_decode_tok_s": 28.21988591304023,
+      "upper_middle_decode_tok_s": 28.294016287334383,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-63ab006a.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 27.999939072218762,
+      "conventional_median_decode_tok_s": 27.91858117532168,
+      "upper_middle_decode_tok_s": 27.999939072218762,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-6fc16d236261.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 30.395885748722904,
+      "conventional_median_decode_tok_s": 30.318971359351963,
+      "upper_middle_decode_tok_s": 30.395885748722904,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-7649fc43d0fc.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 47.966277576823764,
+      "conventional_median_decode_tok_s": 47.94722771100584,
+      "upper_middle_decode_tok_s": 47.966277576823764,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-8476902afb2c.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 37.63177669452675,
+      "conventional_median_decode_tok_s": 37.54724328809962,
+      "upper_middle_decode_tok_s": 37.63177669452675,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-91b6b0298027.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 47.476685673455584,
+      "conventional_median_decode_tok_s": 47.46387305582101,
+      "upper_middle_decode_tok_s": 47.476685673455584,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-a6c0c01e9d21-split23.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 40.49702856550747,
+      "conventional_median_decode_tok_s": 40.445571347508476,
+      "upper_middle_decode_tok_s": 40.49702856550747,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-b5f6be562f9c-mix.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 47.1569317347862,
+      "conventional_median_decode_tok_s": 47.043051023529245,
+      "upper_middle_decode_tok_s": 47.1569317347862,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-c97a9d6faf42-prefix122880.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 39.22424604638221,
+      "conventional_median_decode_tok_s": 39.10766265679562,
+      "upper_middle_decode_tok_s": 39.22424604638221,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7651998656365468,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-c97a9d6faf42-prefix80128.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 39.12689572929756,
+      "conventional_median_decode_tok_s": 39.125283862546546,
+      "upper_middle_decode_tok_s": 39.12689572929756,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7539469264360094,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-c97a9d6faf42-prefix91392.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 39.424919099062926,
+      "conventional_median_decode_tok_s": 39.38674900182575,
+      "upper_middle_decode_tok_s": 39.424919099062926,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-d63f7e2d5368.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 30.150694463672348,
+      "conventional_median_decode_tok_s": 30.079327257526757,
+      "upper_middle_decode_tok_s": 30.150694463672348,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-de4b2aa4.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 26.252236268060013,
+      "conventional_median_decode_tok_s": 26.096540278240056,
+      "upper_middle_decode_tok_s": 26.252236268060013,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-de89717e9784.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 27.671513057500974,
+      "conventional_median_decode_tok_s": 27.60924604840259,
+      "upper_middle_decode_tok_s": 27.671513057500974,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-e2fd81b2ea85.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 47.50637484920628,
+      "conventional_median_decode_tok_s": 47.401665724876295,
+      "upper_middle_decode_tok_s": 47.50637484920628,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7613369163587504,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-e90c54b0afcf.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 45.50747771857541,
+      "conventional_median_decode_tok_s": 45.345374870443194,
+      "upper_middle_decode_tok_s": 45.50747771857541,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.7603291904601949,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-f14336e6.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 20.69709734056211,
+      "conventional_median_decode_tok_s": 20.64780289028583,
+      "upper_middle_decode_tok_s": 20.69709734056211,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-ff0fff618825.json",
+      "prompts": 12,
+      "reported_median_decode_tok_s": 31.264680476877018,
+      "conventional_median_decode_tok_s": 31.225768814283974,
+      "upper_middle_decode_tok_s": 31.264680476877018,
+      "reported_uses_upper_middle": true,
+      "pooled_acceptance_recomputed": 0.767215317433658,
+      "totals_match": true,
+      "stored_scope": "one cold request per frozen suite prompt, 512 cap, greedy; service observation, not a certified benchmark"
+    }
+  ],
+  "grouped_prefill": {
+    "rank": 1,
+    "prompt_rows": 3000,
+    "per_row_ms": [
+      10.537504378007725,
+      10.252765720011666
+    ],
+    "elapsed_time_reduction_percent": 2.7021450979448414,
+    "throughput_increase_percent": 2.7771887681028007,
+    "four_decode_tokens_equal": true,
+    "linked_summaries_include_state_hashes": false,
+    "scope": "one synthetic rank-1 warm-JIT harness pair, 3000 prompt rows and 4 decode steps",
+    "exactness_limit": "The note reports 1079 buffers equal; neither linked JSON includes the comparison or state hashes. This audit cannot independently substantiate that claim.",
+    "full_service_speedup_measured": false
+  },
+  "tp_timings": [
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step2-pf83-tp-replicate-summary.json",
+      "steps": 4,
+      "median_all_steps_ms": 54.187782923690975,
+      "median_omitting_first_two_ms": 49.33376202825457,
+      "first_two_steps_ms": [
+        28373.449321021326,
+        59.00471890345216
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step2b-pf84-one-card-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 16.73296804074198,
+      "median_omitting_first_two_ms": 16.731780080590397,
+      "first_two_steps_ms": [
+        28490.621308097616,
+        20.644076983444393
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step2b-pf84-tp-replicate-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 17.089121509343386,
+      "median_omitting_first_two_ms": 17.08338549360633,
+      "first_two_steps_ms": [
+        28466.396464966238,
+        20.54191497154534
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step3-pf87-split-attention-qkv-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 17.112991539761424,
+      "median_omitting_first_two_ms": 17.042123537976295,
+      "first_two_steps_ms": [
+        28433.65779600572,
+        20.480894949287176
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step4-pf88-tp-e1-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 17.255139537155628,
+      "median_omitting_first_two_ms": 17.206137999892235,
+      "first_two_steps_ms": [
+        28135.573870968074,
+        21.11145993694663
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step4-pf88-tp-e2-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 16.938324959482998,
+      "median_omitting_first_two_ms": 16.923081479035318,
+      "first_two_steps_ms": [
+        28392.992191016674,
+        20.95171099063009
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step4b-pf90-tp-y-1-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 17.04360352596268,
+      "median_omitting_first_two_ms": 17.02282001497224,
+      "first_two_steps_ms": [
+        28390.813349979,
+        20.706127979792655
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step4b-pf90-tp-y-gather-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 17.732891952618957,
+      "median_omitting_first_two_ms": 17.731373955029994,
+      "first_two_steps_ms": [
+        28215.772376046516,
+        21.635683020576835
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step4c-pf91-slot-summary.json",
+      "steps": 16,
+      "median_all_steps_ms": 16.787309024948627,
+      "median_omitting_first_two_ms": 16.723283973988146,
+      "first_two_steps_ms": [
+        28514.80164891109,
+        20.627591060474515
+      ],
+      "exit_code": 0,
+      "scope": "synthetic rank-1 half execution; not full-model decode"
+    }
+  ],
+  "tp_state_comparisons": [
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step2-pf83-card1-vs-card0.json",
+      "stored_comparison": {
+        "buffers": 1079,
+        "differ": [],
+        "passed": true
+      }
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step3-pf87-card1-vs-card0.json",
+      "stored_comparison": {
+        "buffers": 1079,
+        "differ": [],
+        "passed": true
+      }
+    },
+    {
+      "path": "experiments/own-xpu-runtime/research/tp/evidence/step4-pf88-tp-e2-vs-one-card.json",
+      "stored_comparison": {
+        "compared": 954,
+        "ignored": 125,
+        "differ": [],
+        "differ_count": 0,
+        "only_one_side": [],
+        "other_fields_differ": {}
+      }
+    }
+  ],
+  "tp_limits": [
+    "Both all-step and first-two-omitted medians are exposed; this audit does not choose a new benchmark warmup policy.",
+    "The closeout's 16.72 ms balanced-slot figure matches a warm subset more closely than all 16 steps; keep timing definition explicit.",
+    "The 1.0-1.1x four-card expectation is a projection from this TP approach, not measured four-card performance or a general hardware ceiling."
+  ],
+  "cpu_reference": {
+    "source": "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/RESULT-F32.md",
+    "positions": 5965,
+    "disagreements": 6,
+    "agreement_percent": 99.89941324392288,
+    "scope": "reported teacher-forced CPU argmax on engine-generated prefixes; not free-running exact output parity",
+    "unresolved": true
+  },
+  "deeper_mtp": {
+    "current_suite_retains_only_aggregate_guess_counts": true,
+    "k2_k3_accuracy_derivable_from_current_suite": false,
+    "reason": "Recursive proposals require the draft's own hypothetical prefix/state. Consecutive teacher-forced one-step hits do not measure recursive accuracy.",
+    "prior_depth_two_result": "packet126 RESULTS reports packet71c matched first99 loss of 46.758%; different historical arithmetic/runtime, not a result for current F32 SC117.",
+    "reusable_probe": "stage2/packet66-mtp-depth2-probe has a discarded recursive d2 probe, full draft-state backup/restore, and analyze.py joining actual proposals to confirmed outputs. Its retained fixtures and preparation are not current-model measured acceptance.",
+    "historical_trace_location": "stage2/packet71c-depth2-engine/screen/evidence/candidate-B/run/summary.json contains per-request guess_rows/rank_trace for the older depth-two engine. Not an input to this arithmetic audit; use packet85-critical-path/MODEL.md's per-tile interpretation before reanalysis.",
+    "next_measurement": "Retain actual recursive guesses, conditioning/state identity, target-confirmed tokens, per-depth prefix acceptance, and draft/rollback cost on untrained prompts."
+  },
+  "inputs": {
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/native_controller.hpp": {
+      "sha256": "3e728a33e239be71025539c2d1636a09081405f45e6231938374177a4684ea34",
+      "bytes": 21177,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py": {
+      "sha256": "938609a1e41e266c3bae7ffcd957ec046b0c728de55f16ef2179c310603ce7dc",
+      "bytes": 9825,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-02b5d5700cec.json": {
+      "sha256": "9982af94cac8a48c7b971be5eda75b1d1e20b01dbba5045b445833e7ef373580",
+      "bytes": 72407
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-0f478d44798b-split22.json": {
+      "sha256": "6c355eabc52bfa239a8e53d8fb18cb35ae4ad98f684f89996ba3f8ac99647983",
+      "bytes": 72415
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-15e894805502.json": {
+      "sha256": "c7de08f8e940dd2ad4312b7388c0d9a0bf551c4ba74c9cb39df0be568dfd9ade",
+      "bytes": 72416
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-2045517b940b.json": {
+      "sha256": "15b70bc8dd70a54fdf090a70ac36ad15d4828e95aadcae65b3aacdff961fa8f8",
+      "bytes": 72427
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-2145dea24164-split23.json": {
+      "sha256": "c843d58e5207746d87e7c7cb72222c5be811a03d529e736046c228a4f3485836",
+      "bytes": 72415
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-2145dea24164.json": {
+      "sha256": "a21ae2dc386b0b261f3fa9c9a81e7214bb6c322cf874232750035b4fb90b1ca8",
+      "bytes": 72402
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-297b388764e9.json": {
+      "sha256": "07ce79b07849e30ee0669e2b30589dda9884bddf218dac982540189e1f7643f9",
+      "bytes": 72404
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3108b3c6ea40.json": {
+      "sha256": "f72ca6f2741013fa8e8c02b292843cd0693faae8ae256bf9c66950f4e38c8a6a",
+      "bytes": 72430
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3453bbbf3135.json": {
+      "sha256": "f550413d231deda7b6ebd6beb41a5a99139f996f8d3a87aa92133ceb5305444c",
+      "bytes": 72414
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3619d8eb492d.json": {
+      "sha256": "05b89be7b82c311d88db1f4e0dbd198ada10cb176ca6223c4dff8a72a47c1243",
+      "bytes": 72414
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-37879adf.json": {
+      "sha256": "16bec4a2fc9332a7bc64b62e5bb1125c8b6852d268c1f8417c7a26bd87ec164d",
+      "bytes": 72425
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-3f943b654250.json": {
+      "sha256": "b02a94892570fdf92f310d83bc48901908a5e6388d4f92796452752377880d8f",
+      "bytes": 72408
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-52fcf95813be.json": {
+      "sha256": "f63dafca57ac85e1e79f525a8e1a6634369edec547bdfa439f660ca3b8083a71",
+      "bytes": 72425
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-57ccf5cf7012.json": {
+      "sha256": "76061a3e32fa6dc0d33a5154d5fa99e5a548a46ea3d6b63ba37be3989797f11d",
+      "bytes": 72402
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-5de85b4aadfd-mix8.json": {
+      "sha256": "c5e51ade0c62b7e92054b6cddd9bf80eb84f0dfd2985935e52bcaf6df94c7981",
+      "bytes": 72413
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-623cd3d46456.json": {
+      "sha256": "6d530697c6f941247fb53001e45f8de383be730d14dff032ea4e5f3a5c792f02",
+      "bytes": 72429
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-63ab006a.json": {
+      "sha256": "b129de900fc1e464e0f02df6e0d3ae51eab4204a5cfeb0180dad451f950b4c3e",
+      "bytes": 72425
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-6fc16d236261.json": {
+      "sha256": "b08daae32e7d31d778e09005c2b62931da298f1df653e7979708f02d15d31da5",
+      "bytes": 72436
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-7649fc43d0fc.json": {
+      "sha256": "880e2be44b80415d71f22fcd6ee2047c4198050fb0e433c60680a9c5a1953ee6",
+      "bytes": 72407
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-8476902afb2c.json": {
+      "sha256": "e88d6ea869d3115d5c7f917ddef9d0930a96abc1ec5604a29eccf1b1d35a3a87",
+      "bytes": 72402
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-91b6b0298027.json": {
+      "sha256": "b308c75ae595179ea730e62901b1f70d4c3209fea4db14091e4d81eabfcb8fb7",
+      "bytes": 72403
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-a6c0c01e9d21-split23.json": {
+      "sha256": "b19765f85186239e9be108ca0571c1400c6afa35fccddab298c2da0a6bb704d9",
+      "bytes": 72414
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-b5f6be562f9c-mix.json": {
+      "sha256": "b22dafae6889f00d996a6e3659e7ecb2042fa0da168493ecc24ecc05731151bf",
+      "bytes": 72402
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-c97a9d6faf42-prefix122880.json": {
+      "sha256": "c7fef83d3a639c380e3d3431bb81b499cc8e1b4cef2d0638fb24f85abba7ab93",
+      "bytes": 72423
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-c97a9d6faf42-prefix80128.json": {
+      "sha256": "6956ef03e31a0c35fd11cb61b938470302362cff755460f100e52fbf98b75fee",
+      "bytes": 72419
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-c97a9d6faf42-prefix91392.json": {
+      "sha256": "0f8b99c8e729c006250d28a75ebef9888893e924c36b9c45f5c303133c966736",
+      "bytes": 72415
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-d63f7e2d5368.json": {
+      "sha256": "1c10ff1c0725352f5f86854b4780641c94d0314fc9c71eb6ea879444525e87b5",
+      "bytes": 72428
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-de4b2aa4.json": {
+      "sha256": "dbb1954db8d6abcd52fa172135a60a3a92fc1751e09aaf45463b6bf61ee0d2bd",
+      "bytes": 72423
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-de89717e9784.json": {
+      "sha256": "c64ec0caf4835f543bb0d76c2f6acf12752bd90005694e6874e642f008a7c6d9",
+      "bytes": 72428
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-e2fd81b2ea85.json": {
+      "sha256": "8e07798d3d7417c7f64fde700e1816f4beb0130a93b4b49d4a112634d035a18b",
+      "bytes": 72401
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-e90c54b0afcf.json": {
+      "sha256": "9ea0e12d729baa4f6875c05b9287da961f380b6b095e48a036f175ba7e3fd039",
+      "bytes": 72404
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-f14336e6.json": {
+      "sha256": "ff06357865ea3514ebc0e4882a1049701df69ede710b598d5c78248648a2dc35",
+      "bytes": 72416
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-ff0fff618825.json": {
+      "sha256": "784a3360da7743a07d0ac25e6099a0b6314e686c85ef4fe463252eaf3ec1401d",
+      "bytes": 72430
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/run_suite.py": {
+      "sha256": "08b9b1f4ee9715c9bc9f17faadb1b1f3d896b4125cf68fd602b7e34392638064",
+      "bytes": 3307,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/e-reference/RESULT-F32.md": {
+      "sha256": "75285b725a5604743e0656128ae8538ba0f6667124f46802aa4e92ab19d31e97",
+      "bytes": 3715
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/adapter6.py": {
+      "sha256": "613e8b6b3b5ff71e349c1d53510c2d82692ee3c6976f5b929275046e51e9680d",
+      "bytes": 27026,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/service.py": {
+      "sha256": "251cc0a40c21504755350b2f339521ff029d364e4d56a3846c67290605ba0633",
+      "bytes": 52837,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/research/prefill/2026-10-25-grouped-attention.md": {
+      "sha256": "09f15045e851ba04055bc1bb30b164404c02b2bec0c5434ad09f1baaebc1fa7d",
+      "bytes": 1429
+    },
+    "experiments/own-xpu-runtime/research/prefill/2026-10-25-pj-base-summary.json": {
+      "sha256": "dd7d4bdec4400ff1df2e502ecf28d6e94c43209f228a3d58b42d0900e322f2ff",
+      "bytes": 319
+    },
+    "experiments/own-xpu-runtime/research/prefill/2026-10-25-pj-group-summary.json": {
+      "sha256": "b46abf8f3ded5f0da9e1e4e6f822ea2648ab6e1f2339c812f862b49221f1b3ab",
+      "bytes": 313
+    },
+    "experiments/own-xpu-runtime/research/tp/2026-10-25-exact-tp-closeout.md": {
+      "sha256": "a4c3c2071e400da6adcda60f089c5568b2738eedc926aa48efacacb2f46ac731",
+      "bytes": 3306,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step2-pf83-card1-vs-card0.json": {
+      "sha256": "421a811901ba2388446d9e1f26e6f62f75831a146ed0880a563e5b009cfff109",
+      "bytes": 42
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step2-pf83-tp-replicate-summary.json": {
+      "sha256": "76472dbc889a4f92bf23068a11c82ff079f5336a73b78653575b92eb305ac1aa",
+      "bytes": 220
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step2b-pf84-one-card-summary.json": {
+      "sha256": "d98fe3face42b13412390073d3555eae94e00e7554dbcbbc9072e91a2c3fc91e",
+      "bytes": 586
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step2b-pf84-tp-replicate-summary.json": {
+      "sha256": "9d072e32332893d59853761de05e0aaa2fe336d158e8ab4a5397693cc7ec0dc8",
+      "bytes": 586
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step3-pf87-card1-vs-card0.json": {
+      "sha256": "421a811901ba2388446d9e1f26e6f62f75831a146ed0880a563e5b009cfff109",
+      "bytes": 42
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step3-pf87-split-attention-qkv-summary.json": {
+      "sha256": "bc25f67a6f7855d2e5cdfdd8622aad61d33d462d3c13a9281bb6d77740390fc6",
+      "bytes": 616
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step4-pf88-tp-e1-summary.json": {
+      "sha256": "307c3cd2cdc5cb74092c27cb50e6e16dc7a608fe4a6e364c6ae14ceade2e4e3f",
+      "bytes": 600
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step4-pf88-tp-e2-summary.json": {
+      "sha256": "27387613bb0c16d7063f0fe3ebab59834fe6398d89811e2072ec61ecda1f52bb",
+      "bytes": 622
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step4-pf88-tp-e2-vs-one-card.json": {
+      "sha256": "6cbf9cd5105d855304c7aab1ca0ced058b42243a9a96327a09b59bf305a84c75",
+      "bytes": 115
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step4b-pf90-tp-y-1-summary.json": {
+      "sha256": "b287d63206e8031b72fc35f6d08bc86f4777d5a498f39f79a2e8d86b824f93f7",
+      "bytes": 599
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step4b-pf90-tp-y-gather-summary.json": {
+      "sha256": "785da3b015d62d7b3f0a00d5e5d37a5d254eb047c7682c837fb56d738a23b1ec",
+      "bytes": 604
+    },
+    "experiments/own-xpu-runtime/research/tp/evidence/step4c-pf91-slot-summary.json": {
+      "sha256": "82a7bd1c668f9a295a91df2983be06822d1ed37e8ef2046283be32748b640e65",
+      "bytes": 601
+    },
+    "experiments/own-xpu-runtime/stage2/packet126-early-draft/RESULTS.md": {
+      "sha256": "b09c137d6328ca2fd4620927a006f730ea603d7a7c85ca307aec9cfdf4cfc4b2",
+      "bytes": 8083,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/README.md": {
+      "sha256": "fb4e12866bc7df377f4df4893c0489d3da89a5f6467b9c65352e0372346286ac",
+      "bytes": 7566,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet66-mtp-depth2-probe/analyze.py": {
+      "sha256": "5a5ce190c93118d031b6ee7aabb0576d92a0ccecaf788cff6638b5c4c2f52a8b",
+      "bytes": 5634,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md": {
+      "sha256": "0269b4a8e13b2f986ff89ed1167e7401a966cf8b866bf1219b9a8790404cf9c4",
+      "bytes": 26265,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    },
+    "notes/2026-10-17-own-runtime-packet71c.md": {
+      "sha256": "443c104afe344f9a9e6e1115f34adc7402f98fc95eb8c98e97d884f646cfd1fe",
+      "bytes": 5382,
+      "git_revision": "11eb60fb20a631d62158bcf91f3c81948657c32a"
+    }
+  }
+}

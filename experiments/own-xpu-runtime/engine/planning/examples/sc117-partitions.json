@@ -1,0 +1,1004 @@
+{
+  "schema": "ownrt.pipeline.partition-proposals.v1",
+  "model_label": "SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S",
+  "placement_sha256": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253",
+  "cost_profile_sha256": null,
+  "cost_profile": null,
+  "planner_sha256": "214d4c9b360a9ccf81ce8adedd531cefce3664e1923fe518f0d34b4381edbc60",
+  "scope": "metadata-only planning; no runtime admission, memory-fit or speed claim",
+  "executable": false,
+  "objective": "packed_layer_weight_bytes",
+  "input_inventory": {
+    "tensors": 1224,
+    "packed_bytes": 83852561920,
+    "quantization_types": {
+      "0": {
+        "tensors": 292,
+        "packed_bytes": 10063360
+      },
+      "1": {
+        "tensors": 1,
+        "packed_bytes": 81920
+      },
+      "8": {
+        "tensors": 96,
+        "packed_bytes": 885719040
+      },
+      "12": {
+        "tensors": 43,
+        "packed_bytes": 163307520
+      },
+      "13": {
+        "tensors": 31,
+        "packed_bytes": 303677440
+      },
+      "14": {
+        "tensors": 89,
+        "packed_bytes": 1361740800
+      },
+      "18": {
+        "tensors": 34,
+        "packed_bytes": 10918297600
+      },
+      "20": {
+        "tensors": 40,
+        "packed_bytes": 47202647040
+      },
+      "21": {
+        "tensors": 20,
+        "packed_bytes": 7208960000
+      },
+      "22": {
+        "tensors": 40,
+        "packed_bytes": 10747904000
+      },
+      "23": {
+        "tensors": 45,
+        "packed_bytes": 1398906880
+      },
+      "30": {
+        "tensors": 484,
+        "packed_bytes": 1527889920
+      },
+      "42": {
+        "tensors": 9,
+        "packed_bytes": 2123366400
+      }
+    }
+  },
+  "layer_inventory": {
+    "tensors": 1218,
+    "packed_bytes": 54180088320,
+    "quantization_types": {
+      "0": {
+        "tensors": 291,
+        "packed_bytes": 10022400
+      },
+      "1": {
+        "tensors": 1,
+        "packed_bytes": 81920
+      },
+      "8": {
+        "tensors": 96,
+        "packed_bytes": 885719040
+      },
+      "12": {
+        "tensors": 43,
+        "packed_bytes": 163307520
+      },
+      "13": {
+        "tensors": 31,
+        "packed_bytes": 303677440
+      },
+      "14": {
+        "tensors": 88,
+        "packed_bytes": 840268800
+      },
+      "18": {
+        "tensors": 34,
+        "packed_bytes": 10918297600
+      },
+      "20": {
+        "tensors": 39,
+        "packed_bytes": 18402508800
+      },
+      "21": {
+        "tensors": 20,
+        "packed_bytes": 7208960000
+      },
+      "22": {
+        "tensors": 40,
+        "packed_bytes": 10747904000
+      },
+      "23": {
+        "tensors": 44,
+        "packed_bytes": 1061191680
+      },
+      "30": {
+        "tensors": 482,
+        "packed_bytes": 1514782720
+      },
+      "42": {
+        "tensors": 9,
+        "packed_bytes": 2123366400
+      }
+    }
+  },
+  "excluded_lookup_tensors": [
+    {
+      "name": "per_layer_token_embd.weight",
+      "component": "ple_lookup",
+      "type_id": 20,
+      "bytes": 28800138240,
+      "layer": 1,
+      "dimensions": [
+        160,
+        320001536
+      ]
+    },
+    {
+      "name": "token_embd.weight",
+      "component": "embedding",
+      "type_id": 23,
+      "bytes": 337715200,
+      "layer": -1,
+      "dimensions": [
+        2560,
+        248320
+      ]
+    }
+  ],
+  "excluded_global_tensors": [
+    {
+      "name": "output.weight",
+      "component": "target_head",
+      "type_id": 14,
+      "bytes": 521472000,
+      "layer": -1,
+      "dimensions": [
+        2560,
+        248320
+      ]
+    },
+    {
+      "name": "output_hc_down.weight",
+      "component": "hyperconnections",
+      "type_id": 30,
+      "bytes": 6553600,
+      "layer": -1,
+      "dimensions": [
+        10240,
+        320
+      ]
+    },
+    {
+      "name": "output_hc_norm.weight",
+      "component": "norms",
+      "type_id": 0,
+      "bytes": 40960,
+      "layer": -1,
+      "dimensions": [
+        10240
+      ]
+    },
+    {
+      "name": "output_hc_up.weight",
+      "component": "hyperconnections",
+      "type_id": 30,
+      "bytes": 6553600,
+      "layer": -1,
+      "dimensions": [
+        320,
+        10240
+      ]
+    }
+  ],
+  "excluded_costs": [
+    "activation/KV/recurrent buffers",
+    "scratch",
+    "expanded/converted weights",
+    "draft weights and work (unless stage cost supplied)",
+    "communication and pipeline bubbles",
+    "runtime allocation overhead and host RAM shadow"
+  ],
+  "qualifications": [
+    "Placement hash binds metadata, not weight payload authenticity.",
+    "Existing placement masks are historical; they are not execution authority.",
+    "Quant IDs are inventoried, not decoder support claims.",
+    "Layer timings require matched model/runtime/arithmetic/workload identity.",
+    "Supported proposal counts do not imply the engine can execute those counts."
+  ],
+  "proposals": [
+    {
+      "gpus": 1,
+      "layout": "one_pipeline_stage_per_gpu",
+      "maximum_stage_cost": 54180088320,
+      "overhead_status": "excluded",
+      "stages": [
+        {
+          "rank": 0,
+          "layer_start": 0,
+          "layer_end_exclusive": 48,
+          "objective_cost": 54180088320,
+          "supplied_overhead": 0,
+          "tensors": 1218,
+          "packed_bytes": 54180088320,
+          "quantization_types": {
+            "0": {
+              "tensors": 291,
+              "packed_bytes": 10022400
+            },
+            "1": {
+              "tensors": 1,
+              "packed_bytes": 81920
+            },
+            "8": {
+              "tensors": 96,
+              "packed_bytes": 885719040
+            },
+            "12": {
+              "tensors": 43,
+              "packed_bytes": 163307520
+            },
+            "13": {
+              "tensors": 31,
+              "packed_bytes": 303677440
+            },
+            "14": {
+              "tensors": 88,
+              "packed_bytes": 840268800
+            },
+            "18": {
+              "tensors": 34,
+              "packed_bytes": 10918297600
+            },
+            "20": {
+              "tensors": 39,
+              "packed_bytes": 18402508800
+            },
+            "21": {
+              "tensors": 20,
+              "packed_bytes": 7208960000
+            },
+            "22": {
+              "tensors": 40,
+              "packed_bytes": 10747904000
+            },
+            "23": {
+              "tensors": 44,
+              "packed_bytes": 1061191680
+            },
+            "30": {
+              "tensors": 482,
+              "packed_bytes": 1514782720
+            },
+            "42": {
+              "tensors": 9,
+              "packed_bytes": 2123366400
+            }
+          }
+        }
+      ]
+    },
+    {
+      "gpus": 2,
+      "layout": "one_pipeline_stage_per_gpu",
+      "maximum_stage_cost": 27346785664,
+      "overhead_status": "excluded",
+      "stages": [
+        {
+          "rank": 0,
+          "layer_start": 0,
+          "layer_end_exclusive": 25,
+          "objective_cost": 26833302656,
+          "supplied_overhead": 0,
+          "tensors": 637,
+          "packed_bytes": 26833302656,
+          "quantization_types": {
+            "0": {
+              "tensors": 153,
+              "packed_bytes": 5319296
+            },
+            "1": {
+              "tensors": 1,
+              "packed_bytes": 81920
+            },
+            "8": {
+              "tensors": 50,
+              "packed_bytes": 461312000
+            },
+            "12": {
+              "tensors": 23,
+              "packed_bytes": 91422720
+            },
+            "13": {
+              "tensors": 14,
+              "packed_bytes": 116695040
+            },
+            "14": {
+              "tensors": 42,
+              "packed_bytes": 437337600
+            },
+            "18": {
+              "tensors": 16,
+              "packed_bytes": 5138022400
+            },
+            "20": {
+              "tensors": 18,
+              "packed_bytes": 8493465600
+            },
+            "21": {
+              "tensors": 4,
+              "packed_bytes": 1441792000
+            },
+            "22": {
+              "tensors": 30,
+              "packed_bytes": 8060928000
+            },
+            "23": {
+              "tensors": 27,
+              "packed_bytes": 115763200
+            },
+            "30": {
+              "tensors": 252,
+              "packed_bytes": 819655680
+            },
+            "42": {
+              "tensors": 7,
+              "packed_bytes": 1651507200
+            }
+          }
+        },
+        {
+          "rank": 1,
+          "layer_start": 25,
+          "layer_end_exclusive": 48,
+          "objective_cost": 27346785664,
+          "supplied_overhead": 0,
+          "tensors": 581,
+          "packed_bytes": 27346785664,
+          "quantization_types": {
+            "0": {
+              "tensors": 138,
+              "packed_bytes": 4703104
+            },
+            "8": {
+              "tensors": 46,
+              "packed_bytes": 424407040
+            },
+            "12": {
+              "tensors": 20,
+              "packed_bytes": 71884800
+            },
+            "13": {
+              "tensors": 17,
+              "packed_bytes": 186982400
+            },
+            "14": {
+              "tensors": 46,
+              "packed_bytes": 402931200
+            },
+            "18": {
+              "tensors": 18,
+              "packed_bytes": 5780275200
+            },
+            "20": {
+              "tensors": 21,
+              "packed_bytes": 9909043200
+            },
+            "21": {
+              "tensors": 16,
+              "packed_bytes": 5767168000
+            },
+            "22": {
+              "tensors": 10,
+              "packed_bytes": 2686976000
+            },
+            "23": {
+              "tensors": 17,
+              "packed_bytes": 945428480
+            },
+            "30": {
+              "tensors": 230,
+              "packed_bytes": 695127040
+            },
+            "42": {
+              "tensors": 2,
+              "packed_bytes": 471859200
+            }
+          }
+        }
+      ]
+    },
+    {
+      "gpus": 4,
+      "layout": "one_pipeline_stage_per_gpu",
+      "maximum_stage_cost": 13840188800,
+      "overhead_status": "excluded",
+      "stages": [
+        {
+          "rank": 0,
+          "layer_start": 0,
+          "layer_end_exclusive": 13,
+          "objective_cost": 13578311936,
+          "supplied_overhead": 0,
+          "tensors": 334,
+          "packed_bytes": 13578311936,
+          "quantization_types": {
+            "0": {
+              "tensors": 81,
+              "packed_bytes": 2844416
+            },
+            "1": {
+              "tensors": 1,
+              "packed_bytes": 81920
+            },
+            "8": {
+              "tensors": 26,
+              "packed_bytes": 239882240
+            },
+            "12": {
+              "tensors": 14,
+              "packed_bytes": 53452800
+            },
+            "13": {
+              "tensors": 5,
+              "packed_bytes": 56094720
+            },
+            "14": {
+              "tensors": 21,
+              "packed_bytes": 202944000
+            },
+            "18": {
+              "tensors": 6,
+              "packed_bytes": 1926758400
+            },
+            "20": {
+              "tensors": 9,
+              "packed_bytes": 4246732800
+            },
+            "22": {
+              "tensors": 20,
+              "packed_bytes": 5373952000
+            },
+            "23": {
+              "tensors": 15,
+              "packed_bytes": 74506240
+            },
+            "30": {
+              "tensors": 132,
+              "packed_bytes": 457344000
+            },
+            "42": {
+              "tensors": 4,
+              "packed_bytes": 943718400
+            }
+          }
+        },
+        {
+          "rank": 1,
+          "layer_start": 13,
+          "layer_end_exclusive": 25,
+          "objective_cost": 13254990720,
+          "supplied_overhead": 0,
+          "tensors": 303,
+          "packed_bytes": 13254990720,
+          "quantization_types": {
+            "0": {
+              "tensors": 72,
+              "packed_bytes": 2474880
+            },
+            "8": {
+              "tensors": 24,
+              "packed_bytes": 221429760
+            },
+            "12": {
+              "tensors": 9,
+              "packed_bytes": 37969920
+            },
+            "13": {
+              "tensors": 9,
+              "packed_bytes": 60600320
+            },
+            "14": {
+              "tensors": 21,
+              "packed_bytes": 234393600
+            },
+            "18": {
+              "tensors": 10,
+              "packed_bytes": 3211264000
+            },
+            "20": {
+              "tensors": 9,
+              "packed_bytes": 4246732800
+            },
+            "21": {
+              "tensors": 4,
+              "packed_bytes": 1441792000
+            },
+            "22": {
+              "tensors": 10,
+              "packed_bytes": 2686976000
+            },
+            "23": {
+              "tensors": 12,
+              "packed_bytes": 41256960
+            },
+            "30": {
+              "tensors": 120,
+              "packed_bytes": 362311680
+            },
+            "42": {
+              "tensors": 3,
+              "packed_bytes": 707788800
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "layer_start": 25,
+          "layer_end_exclusive": 37,
+          "objective_cost": 13840188800,
+          "supplied_overhead": 0,
+          "tensors": 303,
+          "packed_bytes": 13840188800,
+          "quantization_types": {
+            "0": {
+              "tensors": 72,
+              "packed_bytes": 2474880
+            },
+            "8": {
+              "tensors": 24,
+              "packed_bytes": 221429760
+            },
+            "12": {
+              "tensors": 6,
+              "packed_bytes": 21381120
+            },
+            "13": {
+              "tensors": 8,
+              "packed_bytes": 89886720
+            },
+            "14": {
+              "tensors": 27,
+              "packed_bytes": 242188800
+            },
+            "18": {
+              "tensors": 6,
+              "packed_bytes": 1926758400
+            },
+            "20": {
+              "tensors": 10,
+              "packed_bytes": 4718592000
+            },
+            "21": {
+              "tensors": 10,
+              "packed_bytes": 3604480000
+            },
+            "22": {
+              "tensors": 8,
+              "packed_bytes": 2149580800
+            },
+            "23": {
+              "tensors": 10,
+              "packed_bytes": 29245440
+            },
+            "30": {
+              "tensors": 120,
+              "packed_bytes": 362311680
+            },
+            "42": {
+              "tensors": 2,
+              "packed_bytes": 471859200
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "layer_start": 37,
+          "layer_end_exclusive": 48,
+          "objective_cost": 13506596864,
+          "supplied_overhead": 0,
+          "tensors": 278,
+          "packed_bytes": 13506596864,
+          "quantization_types": {
+            "0": {
+              "tensors": 66,
+              "packed_bytes": 2228224
+            },
+            "8": {
+              "tensors": 22,
+              "packed_bytes": 202977280
+            },
+            "12": {
+              "tensors": 14,
+              "packed_bytes": 50503680
+            },
+            "13": {
+              "tensors": 9,
+              "packed_bytes": 97095680
+            },
+            "14": {
+              "tensors": 19,
+              "packed_bytes": 160742400
+            },
+            "18": {
+              "tensors": 12,
+              "packed_bytes": 3853516800
+            },
+            "20": {
+              "tensors": 11,
+              "packed_bytes": 5190451200
+            },
+            "21": {
+              "tensors": 6,
+              "packed_bytes": 2162688000
+            },
+            "22": {
+              "tensors": 2,
+              "packed_bytes": 537395200
+            },
+            "23": {
+              "tensors": 7,
+              "packed_bytes": 916183040
+            },
+            "30": {
+              "tensors": 110,
+              "packed_bytes": 332815360
+            }
+          }
+        }
+      ]
+    },
+    {
+      "gpus": 6,
+      "layout": "one_pipeline_stage_per_gpu",
+      "maximum_stage_cost": 9435080960,
+      "overhead_status": "excluded",
+      "stages": [
+        {
+          "rank": 0,
+          "layer_start": 0,
+          "layer_end_exclusive": 8,
+          "objective_cost": 8743804160,
+          "supplied_overhead": 0,
+          "tensors": 208,
+          "packed_bytes": 8743804160,
+          "quantization_types": {
+            "0": {
+              "tensors": 51,
+              "packed_bytes": 1772800
+            },
+            "1": {
+              "tensors": 1,
+              "packed_bytes": 81920
+            },
+            "8": {
+              "tensors": 16,
+              "packed_bytes": 147619840
+            },
+            "12": {
+              "tensors": 7,
+              "packed_bytes": 22302720
+            },
+            "13": {
+              "tensors": 2,
+              "packed_bytes": 19148800
+            },
+            "14": {
+              "tensors": 14,
+              "packed_bytes": 141926400
+            },
+            "18": {
+              "tensors": 4,
+              "packed_bytes": 1284505600
+            },
+            "20": {
+              "tensors": 7,
+              "packed_bytes": 3303014400
+            },
+            "22": {
+              "tensors": 12,
+              "packed_bytes": 3224371200
+            },
+            "23": {
+              "tensors": 11,
+              "packed_bytes": 56053760
+            },
+            "30": {
+              "tensors": 82,
+              "packed_bytes": 307077120
+            },
+            "42": {
+              "tensors": 1,
+              "packed_bytes": 235929600
+            }
+          }
+        },
+        {
+          "rank": 1,
+          "layer_start": 8,
+          "layer_end_exclusive": 17,
+          "objective_cost": 9152939136,
+          "supplied_overhead": 0,
+          "tensors": 227,
+          "packed_bytes": 9152939136,
+          "quantization_types": {
+            "0": {
+              "tensors": 54,
+              "packed_bytes": 1896576
+            },
+            "8": {
+              "tensors": 18,
+              "packed_bytes": 166072320
+            },
+            "12": {
+              "tensors": 12,
+              "packed_bytes": 57507840
+            },
+            "13": {
+              "tensors": 4,
+              "packed_bytes": 47759360
+            },
+            "14": {
+              "tensors": 12,
+              "packed_bytes": 107520000
+            },
+            "18": {
+              "tensors": 6,
+              "packed_bytes": 1926758400
+            },
+            "20": {
+              "tensors": 5,
+              "packed_bytes": 2359296000
+            },
+            "22": {
+              "tensors": 12,
+              "packed_bytes": 3224371200
+            },
+            "23": {
+              "tensors": 10,
+              "packed_bytes": 47001600
+            },
+            "30": {
+              "tensors": 90,
+              "packed_bytes": 271037440
+            },
+            "42": {
+              "tensors": 4,
+              "packed_bytes": 943718400
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "layer_start": 17,
+          "layer_end_exclusive": 25,
+          "objective_cost": 8936559360,
+          "supplied_overhead": 0,
+          "tensors": 202,
+          "packed_bytes": 8936559360,
+          "quantization_types": {
+            "0": {
+              "tensors": 48,
+              "packed_bytes": 1649920
+            },
+            "8": {
+              "tensors": 16,
+              "packed_bytes": 147619840
+            },
+            "12": {
+              "tensors": 4,
+              "packed_bytes": 11612160
+            },
+            "13": {
+              "tensors": 8,
+              "packed_bytes": 49786880
+            },
+            "14": {
+              "tensors": 16,
+              "packed_bytes": 187891200
+            },
+            "18": {
+              "tensors": 6,
+              "packed_bytes": 1926758400
+            },
+            "20": {
+              "tensors": 6,
+              "packed_bytes": 2831155200
+            },
+            "21": {
+              "tensors": 4,
+              "packed_bytes": 1441792000
+            },
+            "22": {
+              "tensors": 6,
+              "packed_bytes": 1612185600
+            },
+            "23": {
+              "tensors": 6,
+              "packed_bytes": 12707840
+            },
+            "30": {
+              "tensors": 80,
+              "packed_bytes": 241541120
+            },
+            "42": {
+              "tensors": 2,
+              "packed_bytes": 471859200
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "layer_start": 25,
+          "layer_end_exclusive": 33,
+          "objective_cost": 9435080960,
+          "supplied_overhead": 0,
+          "tensors": 202,
+          "packed_bytes": 9435080960,
+          "quantization_types": {
+            "0": {
+              "tensors": 48,
+              "packed_bytes": 1649920
+            },
+            "8": {
+              "tensors": 16,
+              "packed_bytes": 147619840
+            },
+            "12": {
+              "tensors": 3,
+              "packed_bytes": 10690560
+            },
+            "13": {
+              "tensors": 6,
+              "packed_bytes": 70737920
+            },
+            "14": {
+              "tensors": 19,
+              "packed_bytes": 175795200
+            },
+            "18": {
+              "tensors": 4,
+              "packed_bytes": 1284505600
+            },
+            "20": {
+              "tensors": 7,
+              "packed_bytes": 3303014400
+            },
+            "21": {
+              "tensors": 8,
+              "packed_bytes": 2883584000
+            },
+            "22": {
+              "tensors": 4,
+              "packed_bytes": 1074790400
+            },
+            "23": {
+              "tensors": 6,
+              "packed_bytes": 5222400
+            },
+            "30": {
+              "tensors": 80,
+              "packed_bytes": 241541120
+            },
+            "42": {
+              "tensors": 1,
+              "packed_bytes": 235929600
+            }
+          }
+        },
+        {
+          "rank": 4,
+          "layer_start": 33,
+          "layer_end_exclusive": 41,
+          "objective_cost": 9160398080,
+          "supplied_overhead": 0,
+          "tensors": 202,
+          "packed_bytes": 9160398080,
+          "quantization_types": {
+            "0": {
+              "tensors": 48,
+              "packed_bytes": 1649920
+            },
+            "8": {
+              "tensors": 16,
+              "packed_bytes": 147619840
+            },
+            "12": {
+              "tensors": 7,
+              "packed_bytes": 22302720
+            },
+            "13": {
+              "tensors": 6,
+              "packed_bytes": 50237440
+            },
+            "14": {
+              "tensors": 15,
+              "packed_bytes": 151603200
+            },
+            "18": {
+              "tensors": 6,
+              "packed_bytes": 1926758400
+            },
+            "20": {
+              "tensors": 7,
+              "packed_bytes": 3303014400
+            },
+            "21": {
+              "tensors": 4,
+              "packed_bytes": 1441792000
+            },
+            "22": {
+              "tensors": 6,
+              "packed_bytes": 1612185600
+            },
+            "23": {
+              "tensors": 6,
+              "packed_bytes": 25763840
+            },
+            "30": {
+              "tensors": 80,
+              "packed_bytes": 241541120
+            },
+            "42": {
+              "tensors": 1,
+              "packed_bytes": 235929600
+            }
+          }
+        },
+        {
+          "rank": 5,
+          "layer_start": 41,
+          "layer_end_exclusive": 48,
+          "objective_cost": 8751306624,
+          "supplied_overhead": 0,
+          "tensors": 177,
+          "packed_bytes": 8751306624,
+          "quantization_types": {
+            "0": {
+              "tensors": 42,
+              "packed_bytes": 1403264
+            },
+            "8": {
+              "tensors": 14,
+              "packed_bytes": 129167360
+            },
+            "12": {
+              "tensors": 10,
+              "packed_bytes": 38891520
+            },
+            "13": {
+              "tensors": 5,
+              "packed_bytes": 66007040
+            },
+            "14": {
+              "tensors": 12,
+              "packed_bytes": 75532800
+            },
+            "18": {
+              "tensors": 8,
+              "packed_bytes": 2569011200
+            },
+            "20": {
+              "tensors": 7,
+              "packed_bytes": 3303014400
+            },
+            "21": {
+              "tensors": 4,
+              "packed_bytes": 1441792000
+            },
+            "23": {
+              "tensors": 5,
+              "packed_bytes": 914442240
+            },
+            "30": {
+              "tensors": 70,
+              "packed_bytes": 212044800
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

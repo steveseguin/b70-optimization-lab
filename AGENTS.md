@@ -14,6 +14,23 @@ where it matters.
 
 ## Owner's Standing Rules
 
+### Reusable engine direction (2026-10-25)
+
+The owner wants the complete inference engine and recipe published on GitHub
+and neural.download, with current links/details on skindeep.ai. Preserve the
+engine as a reusable foundation for other quants, Qwen-like model variants and
+1/2/4/6 B70 configurations; possible future DeepSeek 4 Flash support is a
+separate architecture extension. Optimize the current SC117 model on two and
+four cards without deleting existing kernels or baking its dimensions, quant
+label or placement into new general interfaces. Keep model description,
+per-tensor quantization, topology and measured tuning profiles separate.
+The owner explicitly authorized using all four cards in this session, including
+gracefully freeing the vision cards and incident-reviewed resumption. This does
+not authorize reboots, driver resets, power/memory-setting changes or retries
+after new faults. Publication must retain the distinction between internal
+GPU parity and the six unresolved independent-reference disagreements.
+See [the review and release direction](docs/sc117-engine-review.md).
+
 These come directly from the owner and override anything else in this file,
 any older note, and any recipe.
 

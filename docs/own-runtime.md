@@ -1,11 +1,23 @@
 # The Own Xe Runtime (own-xpu-runtime)
 
-A custom SYCL/Xe inference engine for Qwen3.8 hybrid-architecture models on
-Intel Arc Pro B70 GPUs, built and validated in this repository under a
-fail-closed packet campaign. It exists to prove two things at once: **speed**
-(records on LocalMaxxing, sealed profiles) and **exactness** (every published
-output byte-identical to its oracle or to an independent repeat run, with
-receipts).
+A custom SYCL/Xe inference engine for Qwen-like models on Intel Arc Pro B70
+GPUs. The goal is reusable support for multiple quantizations, model variants
+and card counts, with each optimization checked against its declared reference.
+Internal output parity and independent-reference fidelity are separate gates.
+
+## Current SC117 work — October 25
+
+The SC117 IQ3_S F32 service observations improved from **27.92 to 47.89 tok/s**
+using the conventional all-prompt median. All twelve retained output token
+arrays match. This is not the certified class-balanced benchmark. Six of 5,965
+teacher-forced CPU-reference positions still disagree; no broad bit-faithful or
+no-added-quality-loss claim follows. Four-card performance is unmeasured.
+
+Start with the [evidence review and release direction](sc117-engine-review.md),
+[canonical engine](../experiments/own-xpu-runtime/engine/README.md) and
+[placement planner](../experiments/own-xpu-runtime/engine/planning/README.md).
+The current source is available; the complete portable release remains open.
+The historical Unsloth/BF16 profiles below use different weights and arithmetic.
 
 - Engine + campaign: [`experiments/own-xpu-runtime/`](../experiments/own-xpu-runtime/README.md)
   · [SCOREBOARD](../experiments/own-xpu-runtime/SCOREBOARD.md)
@@ -15,7 +27,11 @@ receipts).
   (rendered on neural.download under *Qwen3.8 Flash-Next UD-IQ3_XXS — own runtime*)
 - Reproduction bundles: [`repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/`](../repro/qwen38-flash-next-iq3xxs-ownrt-tp1-b70/)
 
-## Measured state (all with receipts; caps stated, not hidden)
+## Historical measured state (different model and arithmetic)
+
+These retained results use the earlier custom BF16 recurrent-state contract.
+Matching its oracle or repeating the same output does not establish reference
+FP32 fidelity. They are not performance results for current SC117 F32.
 
 | Lane | Profile | Decode | Prompt reading | Exactness |
 |---|---|---|---|---|
@@ -69,7 +85,10 @@ declared gap.
   day); scope one card only, TP2 checkpoints not implemented, no ctxkeeper
   adapter yet.
 
-## Open items (tracked, in priority order)
+## Historical follow-up list
+
+This list describes the earlier Unsloth packets. Current priorities and known
+SC117 restrictions are in the October 25 review above.
 
 1. **Two-card rebuilt-binary device qualification.** The portable source
    rebuild (42 TUs) produces a binary with a different hash than the sealed

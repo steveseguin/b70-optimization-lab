@@ -184,9 +184,9 @@
     }
   },
   "kernel": {
-    "journal_sha256": "ecc107783a9ab5a7f8de9b1c99bbecbcc67ffc743c83cfac935e022f90f4b158",
-    "rows": 3595,
-    "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20e1fc0;b=2cba7160054a4ffeb4c4e252eb956f5f;m=99d95c67de;t=65e8efc23dc42;x=1e34503db88756e1",
+    "journal_sha256": "c6fc684a63722f80dcec4f3e84a491b35141152453a4acac0d10c3bdffa404b7",
+    "rows": 3664,
+    "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20fd968;b=2cba7160054a4ffeb4c4e252eb956f5f;m=b849f6e247;t=65ead6cbe56ac;x=db7e8267ae64026c",
     "faults": [
       {
         "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
@@ -195,6 +195,54 @@
       {
         "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
         "timestamp": "42064105299"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "timestamp": "785786710264"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs, logical_mask: 0x1, guc_id=6",
+        "timestamp": "785786710632"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x249",
+        "timestamp": "785786710949"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Timedout job: seqno=216, lrc_seqno=216, guc_id=6, flags=0x20 in own-engine [4047949]",
+        "timestamp": "785786711440"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Xe device coredump has been created",
+        "timestamp": "785786750115"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Check your /sys/class/drm/card2/device/devcoredump/data",
+        "timestamp": "785786750462"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "timestamp": "785791708828"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs, logical_mask: 0x1, guc_id=6",
+        "timestamp": "785791709037"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x249",
+        "timestamp": "785791709349"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Timedout job: seqno=567, lrc_seqno=567, guc_id=6, flags=0x20 in own-engine [4047949]",
+        "timestamp": "785791709517"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Xe device coredump has been created",
+        "timestamp": "785791754268"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Check your /sys/class/drm/card3/device/devcoredump/data",
+        "timestamp": "785791754628"
       }
     ]
   },
@@ -230,5 +278,11 @@
         0.0
       ]
     }
+  },
+  "fault_baseline_review": {
+    "utc": "2026-10-25T17:32:48.919071+00:00",
+    "receipt": "experiments/own-xpu-runtime/research/review-2026-10-25/incident-owner-review.json",
+    "original_snapshot": "experiments/own-xpu-runtime/research/review-2026-10-25/host-baseline-before-review.json",
+    "scope": "Only kernel fault baseline reviewed; original snapshot fields remain historical."
   }
 }

@@ -32,7 +32,7 @@
 <meta name="twitter:image" content="https://neural.download/og-image.png">
 <meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"The own runtime: a custom Xe engine for Qwen3.8 Flash-Next","description":"What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.","url":"https://neural.download/own-runtime.html","dateModified":"2026-10-23","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","custom inference engine","Qwen3.8 Flash-Next"]}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"The own runtime: a custom Xe engine for Qwen3.8 Flash-Next","description":"What the lab's custom SYCL/Xe inference engine for Intel Arc Pro B70 is, its measured state with every cap labeled, its exactness discipline, and its honest non-goals.","url":"https://neural.download/own-runtime.html","dateModified":"2026-10-25","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","custom inference engine","Qwen3.8 Flash-Next"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"The own runtime","item":"https://neural.download/own-runtime.html"}]}
@@ -57,15 +57,30 @@
   <p class="breadcrumb"><a href="index.html">Home</a> / The own runtime</p>
   <p class="eyebrow">Lab engine · SYCL/Xe · Intel Arc Pro B70</p>
   <h1>The own runtime, in plain terms</h1>
-  <p>A custom inference engine the lab built for Qwen3.8 Flash-Next on Arc Pro B70 cards. Its published results retain measured speed, exact output comparisons and the limits of each test. The October 23 closeout updates the one-card record and streaming results while keeping the experimental prefill work separate.</p>
+  <p>A custom inference engine the lab built for Qwen3.8 Flash-Next on Arc Pro B70 cards. Its published results retain measured speed, exact output comparisons and the limits of each test. Current work focuses on SC117 in full 32-bit mode and a reusable engine for more models, quantizations and card counts.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose">
 
+  <section id="current-sc117">
+    <h2>Current work: SC117 on two cards</h2>
+    <p>Our SC117 IQ3_S engine now writes at about <strong>48 tokens a second</strong> in the retained service tests. The ordinary median rose from <strong>27.92 to 47.89 tok/s</strong>, with the same output tokens on all twelve prompts. These are service observations, not a certified benchmark or a comparison with the older model below.</p>
+    <div class="scroller"><table class="data">
+      <thead><tr><th>Setup</th><th>Writing speed</th><th>Prompt reading</th><th>What is checked</th></tr></thead>
+      <tbody><tr><td>SC117 IQ3_S, F32 activations and KV, two B70s, MTP</td><td>47.89 tok/s, median of twelve full-response service rates</td><td>About 31 seconds for 3,000 tokens in a separate service check; standard 512-token benchmark not measured here</td><td>Twelve outputs match the earlier GPU engine. Six of 5,965 teacher-forced CPU-reference positions disagree; the cause is unresolved.</td></tr>
+      <tr><td>SC117 on four B70s</td><td>Not measured</td><td>Not measured</td><td>In development. The tested two-device stage split broke even; it does not establish a four-card speed limit.</td></tr></tbody>
+    </table></div>
+    <p><strong>Source available; complete portable release pending.</strong> The engine, experiments and build commands are on GitHub. A clean public build, portable launch configuration, downloadable release assets and remaining fidelity checks must pass before this becomes a complete verified recipe.</p>
+    <p>We are keeping one reusable engine with separate model descriptions, quantization kernels, device placement and measured tuning. The goal is support for one, two, four and six B70 cards. That is a development goal, not a claim that every configuration runs today. DeepSeek 4 Flash would need its own architecture work.</p>
+    <p><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/sc117-engine-review.md">Current results, limitations and four-card plan</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/tree/main/experiments/own-xpu-runtime/engine">Engine source and build instructions</a> · <a href="https://skindeep.ai/own-runtime.html">SkinDeep overview</a></p>
+  </section>
+  <h2>Earlier Unsloth model results</h2>
+  <p>The records below use Unsloth UD-IQ3_XXS weights and the earlier arithmetic. They remain available as historical evidence; they are not current SC117 measurements.</p>
+
   <p><strong>October 24 precision qualification:</strong> The CPU oracle uses the custom BF16 recurrent-state contract. Even first-128-token agreement does not establish equivalence to reference FP32 recurrence or no additional quality loss. Historical timings and internal parity remain measured; reference fidelity is unqualified. Retained P195/P165 two-card sources confirm BF16 rounding of recurrent state on each token; the exact one-card source-to-object audit remains incomplete. <a href="experiments/own-xpu-runtime/gsq-rco-iq3s/candidate-appraisals/published-unsloth-recurrent-state.md">Source audit and scope</a>.</p>
 
   <div class="tldr">
-    <h2>The short version</h2>
+    <h2>Earlier engine: scope</h2>
     <ul>
       <li><strong>It is a research engine, not a product.</strong> Source archives, build recipes and verification tools are available; a portable service installer and production certification remain open.</li>
       <li><strong>It is fast where measured:</strong> 58.557–58.632 tok/s decode on two B70s and 31.510–31.782 tok/s on one, with prompt reading at 75.884–75.973 and 32.595–32.752 tok/s respectively — every figure from sealed, receipted runs.</li>
@@ -84,7 +99,7 @@
   <p>The own runtime (own-xpu-runtime) is a custom SYCL/Xe inference engine for Qwen3.8 hybrid-architecture models on Intel Arc Pro B70 GPUs, built and validated in this lab under a fail-closed packet campaign. Qwen3.8 Flash-Next is a hybrid: 48 layers made of 36 GDN (gated delta net, linear attention) layers and 12 QSA full-attention layers, a 512-expert top-10 mixture-of-experts, and a PLE early layer. The engine is designed around that exact structure — per-layer plans, a resident expert cache, snapshot banks — instead of inheriting generic kernels from a general-purpose runtime.</p>
   <p>Why build one at all, when vLLM and llama.cpp already serve this hardware? Two reasons, and neither is a claim of exclusivity: those runtimes remain excellent and are the right choice for most setups on this site. The lab wanted (a) an architecture-fit kernel plan for this specific hybrid, and (b) engine-level access to session state — checkpoint/restore, residency, future context features — that frontends do not expose. Owning the whole stack makes both possible.</p>
 
-  <h2>Measured state <span class="badge lab">Lab-measured</span></h2>
+  <h2>Historical measured state <span class="badge lab">Lab-measured</span></h2>
   <p>Every row below carries receipts in the lab repository. Caps are stated, not hidden: where a suite stops at 128 tokens, the table says so.</p>
   <div class="scroller"><table class="data">
     <thead><tr><th>Lane</th><th>Profile</th><th class="num">Decode (tok/s)</th><th class="num">Prompt reading (tok/s)</th><th>Exactness</th></tr></thead>

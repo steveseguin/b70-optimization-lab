@@ -1,5 +1,29 @@
 # Current Workspace State
 
+**October 25, review session — owner authorizes all four cards; reusable engine and publication work active.**
+The owner asked for the complete engine/recipe on GitHub and neural.download,
+updated skindeep.ai links, and faster SC117 on two/four B70s while preserving
+support for other quants/models and future 1/2/4/6-card profiles.
+- Owner explicitly approved incident-reviewed resumption and using all four cards.
+  The saved health probe passed; a passive review found exactly the twelve saved
+  incident signatures added to the two old signatures, with no later fault.
+  The startup fault baseline is now reviewed, with its original bytes preserved
+  and an [authorization receipt](experiments/own-xpu-runtime/research/review-2026-10-25/incident-owner-review.json).
+  Fault matching remains enabled. No reboot/reset/settings change.
+- SC117 service remains stopped while an opt-in recursive draft-depth probe is
+  prepared. Vision still holds 27/43; it may be stopped gracefully when the quad
+  test is ready. No new GPU run has started in this review session.
+- Audit corrects the ordinary service median to **27.92 → 47.89 tok/s** with all
+  twelve output arrays identical. These are uncertified service observations;
+  six CPU-reference disagreements remain. Current four-card speed is unmeasured.
+- Added reusable metadata-driven placement planning and tightened service suite
+  cache evidence. Public descriptions are being corrected; a source-only bundle
+  is being prepared, not labeled a complete portable release.
+- Next: current-model recursive depth-2/3 acceptance and full-state preservation,
+  then an evidence-driven four-stage pipeline. Preserve the old failed depth-two
+  design and the break-even tensor-split result. [Review and plan](docs/sc117-engine-review.md).
+
+
 **October 25, 12:30 EDT — SC117 LAN service is down, waiting on the owner; exact TP measured.**
 - **The service will not start, by design.** Its admission guard refuses because this boot's kernel fault list grew
   with the 11:44 incident lines. Re-baselining that guard (`gsq-rco-iq3s/operating/host-before-stop.json`) is the

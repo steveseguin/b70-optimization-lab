@@ -20,6 +20,7 @@ Docs should point to those artifacts instead of duplicating every script.
   no current repro is starter-certified.
 - [Model Packages](../packages/README.md): user-facing machine-readable package
   front doors for promoted deployment and research recipes.
+- [SC117 engine review and four-card direction](sc117-engine-review.md): current evidence, reusable model/quant/topology design and public release gaps.
 - [The Own Xe Runtime](own-runtime.md): the custom SYCL/Xe engine for Qwen3.8
   hybrid models — measured state, exactness discipline, session-swap contract,
   and open qualification items.
