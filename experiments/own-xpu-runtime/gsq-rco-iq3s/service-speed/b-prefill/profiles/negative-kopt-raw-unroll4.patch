@@ -1,0 +1,65 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+index 0435bd487..e0d56b246 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+@@ -57,29 +57,39 @@ template<Type T,unsigned SG> inline float dot(const uint8_t* row,const uint16_t*
+   if constexpr(layout(T).elements!=1)return lane_dot<T>(row,x,a,k,lane,SG);
+   else {
+     // Raw formats bypass SLM; consecutive lanes consume consecutive 16/32 B.
++    // Loads for Unroll consecutive lane chunks are issued before their products, so long-K rows keep several loads in
++    // flight per lane (few-row matrices were memory-latency bound). Values and the order of every add are unchanged.
++    constexpr unsigned Unroll=4;
+     float acc=0;
+-    for(size_t base=size_t(lane)*8;base<k;base+=SG*8) {
+-      float values[8];uint16_t inputs[8];float wide[8];const bool f32=a==Type::F32;
+-      if(base+8<=k && reinterpret_cast<uintptr_t>(row+base*layout(T).bytes)%16==0 &&
+-         reinterpret_cast<uintptr_t>(x+base)%16==0) {
+-        if(f32){for(unsigned j=0;j<8;++j)wide[j]=reinterpret_cast<const float*>(x)[base+j];}
+-        else{auto xv=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(x+base);
+-        for(unsigned j=0;j<8;++j)inputs[j]=xv[j];}
+-        if constexpr(T==Type::F32) {
+-          auto w=reinterpret_cast<const sycl::vec<uint32_t,4>*>(row+base*4);
+-          auto lo=w[0],hi=w[1];
+-          for(unsigned j=0;j<4;++j){values[j]=bits_float(lo[j]);values[j+4]=bits_float(hi[j]);}
+-        } else {
+-          auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(row+base*2);
+-          for(unsigned j=0;j<8;++j) {
+-            if constexpr(T==Type::F16)values[j]=half(w[j]);
+-            else {auto bits=uint32_t(w[j])<<16;if((bits&0x7fffffff)>0x7f800000)bits|=0x400000;values[j]=bits_float(bits);}
++    for(size_t first=size_t(lane)*8;first<k;first+=SG*8*Unroll) {
++      float values[Unroll][8],input[Unroll][8];
++      #pragma unroll
++      for(unsigned u=0;u<Unroll;++u) {
++        const size_t base=first+size_t(u)*SG*8;if(base>=k)break;
++        uint16_t inputs[8];float wide[8];const bool f32=a==Type::F32;
++        if(base+8<=k && reinterpret_cast<uintptr_t>(row+base*layout(T).bytes)%16==0 &&
++           reinterpret_cast<uintptr_t>(x+base)%16==0) {
++          if(f32){for(unsigned j=0;j<8;++j)wide[j]=reinterpret_cast<const float*>(x)[base+j];}
++          else{auto xv=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(x+base);
++          for(unsigned j=0;j<8;++j)inputs[j]=xv[j];}
++          if constexpr(T==Type::F32) {
++            auto w=reinterpret_cast<const sycl::vec<uint32_t,4>*>(row+base*4);
++            auto lo=w[0],hi=w[1];
++            for(unsigned j=0;j<4;++j){values[u][j]=bits_float(lo[j]);values[u][j+4]=bits_float(hi[j]);}
++          } else {
++            auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(row+base*2);
++            for(unsigned j=0;j<8;++j) {
++              if constexpr(T==Type::F16)values[u][j]=half(w[j]);
++              else {auto bits=uint32_t(w[j])<<16;if((bits&0x7fffffff)>0x7f800000)bits|=0x400000;values[u][j]=bits_float(bits);}
++            }
+           }
+-        }
+-      } else for(unsigned j=0;j<8 && base+j<k;++j){values[j]=element(T,row,base+j);if(f32)wide[j]=reinterpret_cast<const float*>(x)[base+j];else inputs[j]=x[base+j];}
+-      for(unsigned j=0;j<8 && base+j<k;++j) {
+-        float input=f32?wide[j]:a==Type::BF16?bits_float(uint32_t(inputs[j])<<16):half(inputs[j]);
+-        float product=values[j]*input;acc=acc+product;
++        } else for(unsigned j=0;j<8 && base+j<k;++j){values[u][j]=element(T,row,base+j);if(f32)wide[j]=reinterpret_cast<const float*>(x)[base+j];else inputs[j]=x[base+j];}
++        for(unsigned j=0;j<8 && base+j<k;++j)input[u][j]=f32?wide[j]:a==Type::BF16?bits_float(uint32_t(inputs[j])<<16):half(inputs[j]);
++      }
++      #pragma unroll
++      for(unsigned u=0;u<Unroll;++u) {
++        const size_t base=first+size_t(u)*SG*8;if(base>=k)break;
++        for(unsigned j=0;j<8 && base+j<k;++j){float product=values[u][j]*input[u][j];acc=acc+product;}
+       }
+     }
+     return acc;

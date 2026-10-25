@@ -97,7 +97,11 @@ template<unsigned SG> float dispatch_dot(Type t,const uint8_t* row,const uint16_
 struct Multiply:ownrt::SyclOperation {
   std::array<Descriptor,4> desc{};unsigned matrices=0,subgroup=16;size_t groups=0,local_stride=16;
   template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
-    if(matrices!=1)throw std::invalid_argument("packet26 single-matrix kernel");auto description=desc[0];auto ng=groups,stride=local_stride;
+    // Several independent matrices of one type share a launch (sibling fusion): work-groups are partitioned by each
+    // descriptor's first_group, and every row runs the unchanged single-matrix code with its own descriptor.
+    if(matrices<1||matrices>desc.size())throw std::invalid_argument("kopt matrix count");
+    for(unsigned j=1;j<matrices;++j)if(desc[j].type!=desc[0].type||desc[j].activation!=desc[0].activation||desc[j].output!=desc[0].output||desc[j].routed)throw std::invalid_argument("kopt fused matrices must share type/activation/output and be dense");
+    auto descriptors=desc;const unsigned count=matrices;auto ng=groups,stride=local_stride;
     std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("packet26 capture extent");std::copy(p.begin(),p.end(),pointers.begin());
     return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(ng*SG*rows_per_group),sycl::range<1>(SG*rows_per_group))](sycl::handler& h) {
       sycl::local_accessor<uint8_t,1> storage(stride*rows_per_group,h);
@@ -105,7 +109,8 @@ struct Multiply:ownrt::SyclOperation {
         packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
           auto group=it.get_group_linear_id();auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id();
           unsigned row_in_group=sg.get_group_linear_id();
-          auto d=description;size_t logical=(group-d.first_group)*rows_per_group+row_in_group;
+          auto d=descriptors[0];for(unsigned j=1;j<count;++j)if(group>=descriptors[j].first_group)d=descriptors[j];
+          size_t logical=(group-d.first_group)*rows_per_group+row_in_group;
           size_t slot=d.row_major?logical%d.count:logical/d.span,row=d.row_major?logical/d.count:logical%d.span;bool in_range=d.row_major?row<d.span:slot<d.count;
           Route r{0,0,uint32_t(d.rows)};
           if(d.routed && in_range)r=static_cast<const Route*>(pointers[d.r])[slot];
@@ -302,7 +307,9 @@ Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocati
   Descriptor v{m.type,m.activation,m.output_type,m.rows,m.columns,rb,op.groups,(mul(count,span)+3)/4,experts,count,span,r!=0,0,0,0,0,0,0,m.fp32!=0};
   auto add=[&](ownrt::Allocation id,size_t bytes){check(d,id,bytes);unsigned index=ids.size();ids.push_back(id);return index;};
   const size_t ab=m.activation==Type::F32?4:2;
-  v.w=add(m.w,mul(mul(experts,m.rows),rb));v.x=add(m.x,mul(mul(count,m.columns),ab));v.y=add(m.y,mul(mul(count,span),ab));
+  // A shared read-only input (fused siblings) binds once; outputs and weights must stay distinct.
+  auto input=[&](ownrt::Allocation id,size_t bytes){for(unsigned i=0;i<ids.size();++i)if(ids[i]==id){check(d,id,bytes);return i;}return add(id,bytes);};
+  v.w=add(m.w,mul(mul(experts,m.rows),rb));v.x=input(m.x,mul(mul(count,m.columns),ab));v.y=add(m.y,mul(mul(count,span),ab));
   if(r){v.r=add(r,mul(count,sizeof(Route)));v.status=add(status,mul(count,4));}
   if(m.fp32)v.fp32=add(m.fp32,mul(mul(count,span),4));
   if(l.elements!=1)op.local_stride=std::max(op.local_stride,(rb+15)/16*16);

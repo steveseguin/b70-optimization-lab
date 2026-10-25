@@ -154,6 +154,10 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  }
  double prepare_ms=Engine::ms(prepare_start);auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e.wait_ms;
  std::array<int,48> captured{};size_t captured_count=0,issued=0;
+ // Diagnostic only (OWNRT_DECODE_PROFILE=1): drain after every site and add its wall time to its op (linear sites by
+ // weight format), one line per HALF. Serializes the step, so it shows where time goes, never speed. No arithmetic change.
+ static const bool decode_profile=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v&&v[0]=='1';}();
+ std::map<std::string,std::pair<int,double>> decode_spent;
  auto cancel_at_boundary=[&](){
   if(!request.speculative)return false;
   if(e.a.cancel_launch>=0)return issued==size_t(e.a.cancel_launch);
@@ -174,7 +178,13 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(request.fixture==0&&(ready?ready->prefill_skip:(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")))continue;
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(l.label=="logits"&&e.head_export)e.head_export(request.sequence,request.position,request.fixture);
+  if(decode_profile)e.drain();
+  const auto site_start=std::chrono::steady_clock::now();
   e.enqueue(l,e.logical);
+  if(decode_profile){e.drain();
+   // Linear sites by weight format and role (label without its layer number), other sites by op.
+   std::string key=l.op;if(l.op=="gemv"||l.op=="routed_gemv"){auto role=l.label;if(role.starts_with("blk.")){auto dot=role.find('.',4);if(dot!=std::string::npos)role=role.substr(dot+1);}key+=":"+e.w.directory.at(l.weights.at(0)).grid+":"+role;}
+   auto& entry=decode_spent[key];++entry.first;entry.second+=Engine::ms(site_start);}
   if(e.correction_exchange&&(l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up")&&(ends(l.label,".gdn.z")||ends(l.label,".qsa.ik")||ends(l.label,".attention")||l.op=="expert_gate_up"||ends(l.label,".expsdown")))e.correction_exchange(l);
   if(l.label=="logits"&&e.head_publish)e.head_publish();
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
@@ -194,6 +204,8 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(cancel_at_boundary())candidate.cancelled=true;
  double enqueue_ms=Engine::ms(enqueue_start)-(e.wait_ms-enqueue_wait);
  e.drain();if(e.a.rank==0)p150::record("layer_body",request.position,false,enqueue_start);
+ if(decode_profile){std::ofstream o(e.a.output/"decode-profile.jsonl",std::ios::app);o<<"{\"position\":"<<request.position<<",\"fixture\":"<<request.fixture<<",\"speculative\":"<<(request.speculative?"true":"false")<<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<",\"sites\":{";bool comma=false;
+  for(const auto& [k,v]:decode_spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
  if(staged)candidate.token_history=e.finish_staged(request.position,e.buffers[0].count("token_history")>0);
  if(request.fixture>0&&e.head_merge)e.head_merge(request.sequence,request.position,request.fixture);
  int error=0,folded_token=-1;bool folded=false;

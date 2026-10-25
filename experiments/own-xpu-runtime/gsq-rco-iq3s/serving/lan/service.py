@@ -807,6 +807,23 @@ def main():
                 record.parent.mkdir(exist_ok=True)
                 save(record, dict(binary_sha256=engine.t.plan['binary_sha256'], prompt_tokens=st['prompt_tokens'], tokens=rows[0]['tokens'],
                                   status='first F32 run; reference agreement checked offline (service-speed/e-reference)', utc=utc()))
+        if mode == 'f32':
+            # Decode-path exactness: after a RESET and the fixed self-test, every target state buffer on both ranks must
+            # equal the pinned F32 oracle (recorded once from a gated binary). Kernel changes that claim to be exact must
+            # pass this before anything else.
+            with engine.lock:
+                engine.generate(st['prompt_tokens'], st['max_new'], 'f32-state-check', force_reset=True, prefill=0)
+                f32_state = engine.dump_buffers()
+            oracle = P / 'evidence' / 'f32-state-oracle.json'
+            if oracle.exists():
+                want = json.loads(oracle.read_text())
+                differ = {r: sorted(k for k in want['state'][r] if want['state'][r][k] != f32_state[r].get(k)) for r in want['state']}
+                (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}.json").write_text(json.dumps(
+                    dict(binary_sha256=engine.t.plan['binary_sha256'], oracle_binary_sha256=want['binary_sha256'], differences=differ, utc=utc()), indent=2) + '\n')
+                require(not any(differ.values()), f"F32 decode state differs from the oracle binary {want['binary_sha256'][:12]}: {differ}")
+            else:
+                save(oracle, dict(binary_sha256=engine.t.plan['binary_sha256'], selftest='selftest.json prompt, 32 tokens MTP, after RESET',
+                                  state=f32_state, utc=utc()))
         rows_wanted = getattr(A, 'PREFILL_ROWS', 0)
         if rows_wanted and mode == 'f32':
             # Kernel-choice overrides change the arithmetic path: each combination gets its own gate.

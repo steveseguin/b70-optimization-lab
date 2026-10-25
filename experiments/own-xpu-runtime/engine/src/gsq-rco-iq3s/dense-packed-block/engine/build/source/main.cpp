@@ -28,6 +28,8 @@
 #include "stage2/packet194-expert-diet-engine/p28/submit.hpp"
 #include "stage2/packet194-expert-diet-engine/expert_down.hpp"
 #include <unordered_map>
+#include <unordered_set>
+#include <cstring>
 #include <optional>
 #include <thread>
 #ifndef OWN_RT_HOST_ONLY
