@@ -254,3 +254,25 @@ All bytes are bitwise-equal after 800 hops.
   B70), before the row-split work pays off.
 - **Next:** measure the prepared (captured) issue path per card from two threads, and check that cross-card event
   dependencies stay correct between threads.
+
+## Host submission with two threads (2026-10-25, [p2p/two_thread_submit.cpp](p2p/two_thread_submit.cpp))
+
+One shared context, cards 23:00.0 and 47:00.0, small kernels:
+
+| Host pattern | Enqueue cost |
+|---|---|
+| one thread, one card | 2.80 µs per kernel |
+| one thread alternating two cards | 3.73 µs per kernel (7.46 µs per pair) |
+| two threads, one card each | 4.4 and 5.3 µs per kernel in parallel (5.32 µs per pair) |
+| cross-thread hand-off (A kernel → event → B copy + B kernel) | 9.27 µs per round, pipelined |
+
+A thread per card is about 1.4× the submission rate of one thread. At about 760 launches plus gathers per card, a
+half-step costs about 3.6 ms of host time per card. That is below the projected 7–11 ms of GPU time per card after the
+split, so per-card submission threads make TP2 feasible on the host side.
+
+Executor design for step 2:
+- each card has a submission thread walking the same site list;
+- replicated sites run on both cards;
+- a split site runs on its own rows;
+- a gather waits on the peer thread's published event (an atomic mailbox), then submits `peer_copy` plus the
+  `peer_wait` guard.
