@@ -110,3 +110,34 @@ Order:
 2. Small-op cost.
 3. The hybrid four-card layout once cards 27/43 are free; its exact two-way split is built and verified on today's two
    cards.
+
+## Pipeline critical path (2026-10-25, from the controller's rank trace, no profiling)
+
+Per decode position, measured on `8b0037be`:
+
+| Rank 0 target half | MTP draft (rank 0, incl. guess readback) | Rank 1 target half | Cycle |
+|---:|---:|---:|---:|
+| 17.7 ms | ~3.5 ms | 18.1 ms | 23.0 ms |
+
+Rank 0 is busy 89% of the window and rank 1 71%. Rank 0's speculative half for p+1 cannot start until the draft for
+p+1 has run on rank 0's GPU, so the cycle is rank 0's half plus the draft. Two exact levers came out of this:
+
+1. **Draft-only head prefix.** The GSQ draft scored all 248,320 vocabulary rows from an 839 MB Q6 copy.
+   `OWNRT_DRAFT_PREFIX_ROWS=N` restricts the draft head and argmax to the first N token ids. Every output is still
+   verified by the unchanged target head.
+
+   | Prefix rows | Suite tok/s | MTP hits |
+   |---:|---:|---:|
+   | 248,320 (full) | 38.17 | 4568 |
+   | 122,880 | 39.22 | 4556 |
+   | **91,392** | **39.42** | 4527 |
+   | 80,128 | 39.13 | 4489 |
+
+   All outputs byte-identical. The 91,392-row prefix also frees 530 MB on rank 0.
+2. **Layer split as data.** GSQ accepts `--target-split 20..24` with the rank-0 draft; the service sets
+   `SC117_TARGET_SPLIT`, and its F32 oracle comparison is split-aware (`split_differences`).
+   - 23/25 gives **40.50 tok/s**: cycle 21.9 → 21.2 ms; rank 0 half 16.8 ms, rank 1 18.9 ms.
+   - 22/26 is refused by the engine's 30 GiB per-card plan cap (rank 1 would be 30.1 GiB of 31.89).
+
+Rank 1 is now the slower stage. Further balance needs rank-1 memory: the 522 MB target head, KV, or the cap itself.
+Reducing either stage's work, or the ~2 ms per-position hand-off and host overhead, now pays off directly.
