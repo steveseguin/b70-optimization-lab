@@ -334,6 +334,74 @@ TILED_CASE(F32);TILED_CASE(F16);TILED_CASE(BF16);TILED_CASE(Q8_0);TILED_CASE(Q6_
     throw std::invalid_argument("kopt tiled token rows: dense F32/F16/BF16/Q8_0/Q6_K only");
   }
 };
+// Dense token rows for raw formats (BF16/F16/F32 weights, F32 activations): one subgroup owns RW weight rows x T token
+// rows; each 8-column weight chunk is decoded once and each activation chunk loaded once per subgroup. Every output keeps
+// Multiply's single-row arithmetic (lane l owns columns l*8+SG*8*i, product then add in that order, the adjacent-pair
+// tree). Requires 16-byte aligned rows (checked by the caller); BF16 without the explicit NaN-quiet test (finite weights
+// are bit-identical, a NaN weight's product is the same quiet NaN). Prefill microbench, 16 tokens: HC low 91 -> 61 us.
+template<unsigned RW,unsigned T> struct MultiplyRowsLean:ownrt::SyclOperation {
+  static constexpr unsigned Subgroups=4;
+  Descriptor desc{};
+  template<Type W,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+    auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt lean rows capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+    const size_t rtiles=(d.span+RW-1)/RW,ttiles=(d.count+T-1)/T,total=rtiles*ttiles,groups=(total+Subgroups-1)/Subgroups;
+    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(groups*SG*Subgroups),sycl::range<1>(SG*Subgroups))](sycl::handler& h) {
+      h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+        const size_t logical=it.get_group_linear_id()*Subgroups+sg.get_group_linear_id();if(logical>=total)return;
+        const size_t row0=(logical/ttiles)*RW,tok0=(logical%ttiles)*T;
+        const uint8_t* rows[RW];const float* xs[T];float acc[RW][T];
+        #pragma unroll
+        for(unsigned r=0;r<RW;++r){rows[r]=static_cast<const uint8_t*>(pointers[d.w])+(row0+r<d.span?row0+r:row0)*d.rb;
+          #pragma unroll
+          for(unsigned t=0;t<T;++t)acc[r][t]=0;}
+        #pragma unroll
+        for(unsigned t=0;t<T;++t)xs[t]=static_cast<const float*>(pointers[d.x])+(tok0+t<d.count?tok0+t:tok0)*d.k;
+        const uint32_t k32=uint32_t(d.k);uint32_t base=lane*8u;
+        for(;base+8u<=k32;base+=SG*8u) {
+          float values[RW][8];
+          #pragma unroll
+          for(unsigned r=0;r<RW;++r) {
+            if constexpr(W==Type::F32) {
+              auto w=reinterpret_cast<const sycl::vec<uint32_t,4>*>(rows[r]+size_t(base)*4);auto lo=w[0],hi=w[1];
+              #pragma unroll
+              for(unsigned j=0;j<4;++j){values[r][j]=bits_float(lo[j]);values[r][j+4]=bits_float(hi[j]);}
+            } else {
+              auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(rows[r]+size_t(base)*2);
+              #pragma unroll
+              for(unsigned j=0;j<8;++j){if constexpr(W==Type::F16)values[r][j]=half(w[j]);else values[r][j]=bits_float(uint32_t(w[j])<<16);}
+            }
+          }
+          #pragma unroll
+          for(unsigned t=0;t<T;++t){float input[8];
+            #pragma unroll
+            for(unsigned j=0;j<8;++j)input[j]=xs[t][base+j];
+            #pragma unroll
+            for(unsigned r=0;r<RW;++r)
+              #pragma unroll
+              for(unsigned j=0;j<8;++j){float product=values[r][j]*input[j];acc[r][t]=acc[r][t]+product;}}
+        }
+        if(base<k32) {
+          #pragma unroll
+          for(unsigned r=0;r<RW;++r){float values[8];for(uint32_t j=0;base+j<k32;++j)values[j]=element(W,rows[r],base+j);
+            #pragma unroll
+            for(unsigned t=0;t<T;++t)for(uint32_t j=0;base+j<k32;++j){float product=values[j]*xs[t][base+j];acc[r][t]=acc[r][t]+product;}}
+        }
+        #pragma unroll
+        for(unsigned r=0;r<RW;++r)
+          #pragma unroll
+          for(unsigned t=0;t<T;++t){float sum=acc[r][t];
+            for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
+            if(lane==0&&row0+r<d.span&&tok0+t<d.count)static_cast<float*>(pointers[d.y])[(tok0+t)*d.span+row0+r]=sum;}
+      }));
+    });
+  }
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    switch(desc.type){case Type::BF16:return run<Type::BF16,32>(q,p,deps);case Type::F16:return run<Type::F16,32>(q,p,deps);case Type::F32:return run<Type::F32,32>(q,p,deps);default:break;}
+    throw std::invalid_argument("kopt lean rows: raw formats only");
+  }
+};
+inline bool lean_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_LEAN_ROWS");return !e||e[0]!='0';}();return on;}
 // Several rows per subgroup (F32 activations, decode8 formats): one subgroup owns R consecutive rows of one slot, decodes
 // each row straight from global memory (no local staging, no barrier) and shares each 8-column activation chunk across
 // its rows. Every row keeps Multiply's single-row arithmetic exactly: lane l owns columns l*8+SG*8*i, the same decode8
@@ -437,6 +505,12 @@ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
     MultiplyTiled<2,16> tiled;tiled.desc=op.desc[0];return d.compute(tiled,ids,{});
   }
   if(!prefill_switches::small_tile_rows())return finish(d,op,ids);
+  if(lean_rows()&&sg==32&&(t==Type::BF16||t==Type::F16||t==Type::F32)&&op.desc[0].rb%16==0&&op.matrices==1) {
+    // Raw weights: 2 weight rows x 4 token rows per subgroup (register tile; prefill microbench HC low 91 -> 61 us).
+    MultiplyRowsLean<2,4> lean;lean.desc=op.desc[0];
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    return d.compute(lean,ids,{});
+  }
   // F32 token rows: weight-reuse kernel, 4 token rows per subgroup (small register tile, after vllm-xpu-kernels PR #22).
   constexpr unsigned R=4;MultiplyRows<R> rows_op;rows_op.desc=op.desc[0];rows_op.subgroup=sg;rows_op.local_stride=op.local_stride;
   rows_op.desc.first_group=0;rows_op.groups=(rows*((tokens+R-1)/R)+rows_per_group-1)/rows_per_group;
