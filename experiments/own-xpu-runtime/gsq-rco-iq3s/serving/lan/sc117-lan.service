@@ -11,7 +11,7 @@ ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-x
 # No restart policy, no SIGKILL: on stop the coordinator FINISHes both ranks and waits for drain.
 Environment=SC117_ACTIVATIONS=f32
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/3f943b654250.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/15e894805502.json
 Environment=SC117_PREFILL_ROWS=16
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -31,6 +31,9 @@ Environment=OWNRT_SNAPSHOT_HOST=static
 # span 1758 -> ~1450 us, qsa.attention 217 -> 46 us); excluded: experts (no FP8 kernel), route, qgate, hc gates (slower).
 # Suite 45.51 -> 46.53 tok/s, hits 4527 -> 4533, outputs identical.
 Environment=OWNRT_DRAFT_KERNELS=qsa_attention,attention_output,fuse_attention_combine,hc_a_low,hc_f_low,hc_final_low,fuse_hc_a_low,fuse_hc_f_low,fuse_hc_final_low,hc_final_gate,fuse_hc_final_mix,hc_a_inject,hc_f_inject,embedding_norm,hidden_norm,hc_a_norm,hc_f_norm,final_norm,hidden_projection,embedding_projection,fuse_hidden_merge,qsa_k,qsa_v,qsa_iq,qsa_ik,router,shared_gate,shared_up,shared_down,shared_router,fuse_shared_activation
+# One expert status check per layer over the gate/up/down statuses (sets the error exactly when a separate check would):
+# two fewer launches per layer. Suite 46.53 -> 46.85 tok/s, outputs identical.
+Environment=OWNRT_MERGE_CHECKS=1
 Restart=no
 KillMode=process
 KillSignal=SIGTERM

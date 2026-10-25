@@ -128,7 +128,9 @@ template<class Team> void simple(Bound b,int group,Team t) {
  if(s.special==Special::commit){t.each(1,[&](int){++*b.position();});return;}
  if(s.special==Special::broadcast){t.each(int(b.out(0).n),[&](int j){b.out(0).put(j,b.in(0).get(j%b.in(0).n));});return;}
  if(s.special==Special::check_status){
-  float failed=ng::tree(t,int(b.in(0).n),[&](int j){return float(b.in(0).get(j)!=0);});t.barrier();
+  // Any nonzero slot status in any status input (inputs: statuses, then error and active). A merged check over a
+  // layer's expert gate/up/down statuses sets the error exactly when one of the separate checks would.
+  float failed=0;for(int k=0;k+2<s.ni;++k){failed=failed+ng::tree(t,int(b.in(k).n),[&](int j){return float(b.in(k).get(j)!=0);});t.barrier();}
   t.each(1,[&](int){if(failed)b.fail();});return;
  }
  if(s.special==Special::ple_hash){t.each(1,[&](int){

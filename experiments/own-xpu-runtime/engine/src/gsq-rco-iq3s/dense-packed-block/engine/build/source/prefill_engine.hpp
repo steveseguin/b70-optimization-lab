@@ -108,7 +108,8 @@ void prefill_native_site(const flash::Launch& l,int P0,int M) {
   for(const auto& name:l.outputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(name);++k;}
   if(l.op=="check_status") {
     // One status check over every row's slots: the sticky error is set exactly when some row's check would set it.
-    require(prefill_role_of.count(l.inputs[0])&&!prefill_role_of.count("error"),"prefill status rows");site.spec.sizes[0]*=size_t(M);
+    require(!prefill_role_of.count("error"),"prefill status rows");
+    for(size_t k=0;k<l.inputs.size()&&ends(l.inputs[k],".status");++k){require(prefill_role_of.count(l.inputs[k]),"prefill status rows");site.spec.sizes[k]*=size_t(M);}
   } else {
     site.spec.tokens=M;
     for(size_t j=0;j<l.inputs.size()+l.outputs.size();++j){

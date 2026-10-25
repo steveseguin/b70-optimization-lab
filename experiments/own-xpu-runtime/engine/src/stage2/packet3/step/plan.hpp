@@ -2,6 +2,7 @@
 #pragma once
 #include "stage2/packet3/model/directory.hpp"
 #include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <map>
 #include <optional>
@@ -14,6 +15,7 @@ class Builder {
   std::map<std::string, Buffer> bs;
   std::set<std::string> consumed;
   int card = 0;
+  std::vector<std::string> pending_status; // OWNRT_MERGE_CHECKS: expert statuses awaiting the down GEMV's check
   // Storage type of every activation/KV buffer that does not name an explicit type:
   // BF16 (tuned default) or F32 (exact mode). Recurrent state, ids and controls keep explicit types.
   Scalar act = Scalar::bf16;
@@ -98,9 +100,23 @@ public:
     }
     node(ids.empty() ? "gemv" : "routed_gemv", y, in, outputs, {batch, n, k},
          {w});
-    if (!ids.empty())
-      node("check_status", y + ".check", {y + ".status", "error"}, {"error"},
-           {batch});
+    if (!ids.empty()) {
+      // OWNRT_MERGE_CHECKS=1: a layer's expert gate/up statuses are checked together with down's in one launch after
+      // the down GEMV (the error is set exactly when one of the three separate checks would).
+      // Target plans only (built with a weight directory); the MTP draft pairs gate/up around their separate checks.
+      static const bool merge_on = [] { const char *e = std::getenv("OWNRT_MERGE_CHECKS"); return e && e[0] == '1'; }();
+      const bool merge = merge_on && directory != nullptr;
+      const bool gate_or_up = y.ends_with(".expsgate") || y.ends_with(".expsup");
+      if (merge && gate_or_up) {
+        pending_status.push_back(y + ".status");
+      } else {
+        std::vector<std::string> statuses = merge ? pending_status : std::vector<std::string>{};
+        pending_status.clear();
+        statuses.push_back(y + ".status");
+        statuses.push_back("error");
+        node("check_status", y + ".check", statuses, {"error"}, {batch});
+      }
+    }
   }
   void norm(std::string x, std::string y, int rows, int width, std::string w,
             int unit = 0) {

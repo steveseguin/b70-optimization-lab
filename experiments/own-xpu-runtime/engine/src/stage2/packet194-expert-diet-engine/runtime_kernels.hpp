@@ -104,9 +104,10 @@ inline void evaluate(Spec spec, void *const *p) {
     return;
   }
   if (spec.special == Special::check_status) {
-    for (size_t i = 0; i < in[0].n; ++i)
-      if (in[0].get(i))
-        *error = 1;
+    for (int k = 0; k + 2 < spec.ni; ++k) // every status input (then error and active)
+      for (size_t i = 0; i < in[k].n; ++i)
+        if (in[k].get(i))
+          *error = 1;
     return;
   }
   if (spec.special == Special::ple_hash) {
