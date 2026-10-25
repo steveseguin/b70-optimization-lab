@@ -26,6 +26,26 @@ struct Team {
 inline sycl::event admit(sycl::queue&q,ng::Shape s,ng::Args a,int* counts,const std::vector<sycl::event>&deps={}){
  return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(s.tokens)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1>idx){int r=idx[0];counts[r]=-1;if(!a.i(18)[0]||Atomic(a.i(15)[0]).load())return;int pos=a.i(17)[0];if(pos<0||pos>ng::launch_extent(s)-s.tokens){Atomic(a.i(15)[0]).store(1);return;}int n=0,S=s.budget+3;while(n<S&&a.i(4)[r*S+n]!=-1){int id=a.i(4)[r*S+n];if(id<0||id>=s.capacity||id>pos+r||n>=ng::launch_slots(s)){Atomic(a.i(15)[0]).store(1);return;}++n;}counts[r]=n;}));});
 }
+// admit with one 256-lane work-group per row: the count is the first -1 slot (minimum over lanes), and the row fails
+// exactly when admit's serial scan would (an invalid id before it, or more slots than launch_slots); the result does
+// not depend on which slot is found first. OWNRT_ADMIT_FAST=0 keeps the single-item scan.
+inline sycl::event admit_fast(sycl::queue&q,ng::Shape s,ng::Args a,int* counts,const std::vector<sycl::event>&deps={}){
+ constexpr int W=256;
+ return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*W,W)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){
+  const int r=int(it.get_group_linear_id()),lane=int(it.get_local_linear_id());auto g=it.get_group();
+  if(lane==0)counts[r]=-1;
+  const bool skip=sycl::group_broadcast(g,lane==0?int(!a.i(18)[0]||Atomic(a.i(15)[0]).load()):0,0)!=0;if(skip)return;
+  const int pos=a.i(17)[0];if(pos<0||pos>ng::launch_extent(s)-s.tokens){if(lane==0)Atomic(a.i(15)[0]).store(1);return;}
+  const int S=s.budget+3;const int* ids=a.i(4)+r*S;int first=S;
+  for(int k=lane;k<S;k+=W)if(ids[k]==-1){first=k;break;}
+  first=sycl::reduce_over_group(g,first,sycl::minimum<int>());
+  bool bad=first>ng::launch_slots(s);
+  for(int k=lane;k<first;k+=W){const int id=ids[k];bad=bad||id<0||id>=s.capacity||id>pos+r;}
+  bad=sycl::any_of_group(g,bad);
+  if(lane==0){if(bad)Atomic(a.i(15)[0]).store(1);else counts[r]=first;}
+ }));});
+}
+inline bool admit_fast_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_ADMIT_FAST");return !e||e[0]!='0';}();return on;}
 inline float lane_tree(sycl::sub_group sg,float v){int lane=sg.get_local_linear_id();for(int z=1;z<32;z*=2){float rhs=sycl::select_from_group(sg,v,(lane+z)%32);if(lane%(2*z)==0)v=v+rhs;}return sycl::select_from_group(sg,v,0);}
 template<bool F32=false> inline float score(sycl::sub_group sg,ng::Args a,int r,int h,int id){
  int lane=sg.get_local_linear_id();
@@ -73,6 +93,31 @@ template<bool SplitSoftmax,bool F32=false>inline sycl::event tiles(sycl::queue&q
  p[lid*2]=vals[0][0];p[lid*2+1]=vals[0][1];
  }));});
 }
+// Split-softmax tiles with grouped heads: one work-group per (row, KV head, tile) runs the 12 query heads that share
+// the KV head in turn, each with tiles<true>'s unchanged per-head body and the same partial slot, so each K/V row
+// is fetched from memory once per tile instead of once per query head (later heads hit the cache). Exact.
+template<bool F32=false>inline sycl::event tiles_gqa(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
+ int C=splits(s);return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*2*C*128,128)](sycl::handler& handler){sycl::local_accessor<float,1>local(66,handler);
+ handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+ const int G=it.get_group_linear_id(),c=G%C,kv=(G/C)%2,r=G/(C*2),lid=it.get_local_linear_id(),n=counts[r],S=s.budget+3;
+ if(n<=0||blocked(a))return;const int start=c*32;if(start>=n)return;auto sg=it.get_sub_group();const int lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32;
+ for(int t=0;t<12;++t){const int h=kv*12+t;const int g=(r*24+h)*C+c;float* p=partial+size_t(g)*258;
+  for(int j=sub;j<32;j+=4){float x=-INFINITY;if(start+j<n)x=score<F32>(sg,a,r,h,a.i(4)[r*S+start+j]);if(lane==0)local[j]=x;}
+  it.barrier(sycl::access::fence_space::local_space);
+  if(lid==0){float m=-INFINITY;for(int j=0;j<32&&start+j<n;++j)m=std::max(m,local[j]);local[64]=m;p[256]=m;}
+  it.barrier(sycl::access::fence_space::local_space);
+  if(lid<32){float x=start+lid<n?detmath::exp(local[lid]-local[64]):0.f;local[32+lid]=x;float den=lane_tree(sg,x);if(lid==0)p[257]=den;}
+  it.barrier(sycl::access::fence_space::local_space);
+  sycl::vec<float,2> vals[32];for(int j=0;j<32;++j){vals[j]=sycl::vec<float,2>(0.f);if(start+j<n){int id=a.i(4)[r*S+start+j];if constexpr(F32){sycl::vec<float,2>v;v.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(static_cast<const float*>(a.p[3])+(id*2+h/12)*256+lid*2));for(int d=0;d<2;++d)vals[j][d]=local[32+j]*v[d];}
+   else{sycl::vec<uint16_t,2>v;v.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(static_cast<const uint16_t*>(a.p[3])+(id*2+h/12)*256+lid*2));for(int d=0;d<2;++d)vals[j][d]=local[32+j]*bf(v[d]);}}}
+  for(int z=1;z<32;z*=2)for(int j=0;j<32;j+=2*z)vals[j]=vals[j]+vals[j+z];
+  p[lid*2]=vals[0][0];p[lid*2+1]=vals[0][1];
+  it.barrier(sycl::access::fence_space::local_space); // the next head reuses the tile scratch
+ }
+ }));});
+}
+// Measured slower (3K context, rank 0: 2127 -> 2913 us per step: 12x fewer work-groups, serial heads); OWNRT_ATTN_GQA=1 opts in.
+inline bool attention_gqa(){static const bool on=[]{const char* e=std::getenv("OWNRT_ATTN_GQA");return e&&e[0]=='1';}();return on;}
 inline sycl::event scores(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,const std::vector<sycl::event>&deps){int L=ng::launch_slots(s),S=s.budget+3;return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*24*L*32,32)](sycl::handler& handler){handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{int g=it.get_group_linear_id(),j=g%L,h=(g/L)%24,r=g/(L*24),n=counts[r];if(n<0||blocked(a))return;auto sg=it.get_sub_group();float v=-INFINITY;if(j<n)v=score(sg,a,r,h,a.i(4)[r*S+j]);if(sg.get_local_linear_id()==0)a.f(6)[(r*24+h)*S+j]=v;}));});}
 inline sycl::event softmax(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,const std::vector<sycl::event>&deps){int S=s.budget+3;return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*24*128,128)](sycl::handler& handler){sycl::local_accessor<float,1>local(S+1,handler);handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it){int h=it.get_group_linear_id(),r=h/24,n=counts[r];if(n<=0||blocked(a))return;Team t{it,local.get_multi_ptr<sycl::access::decorated::no>().get()};if(it.get_local_linear_id()==0){float m=-INFINITY;for(int j=0;j<n;++j)m=std::max(m,a.f(6)[h*S+j]);local[S]=m;}t.barrier();float m=local[S];t.each(n,[&](int j){float x=detmath::exp(a.f(6)[h*S+j]-m);local[j]=x;a.f(7)[h*S+j]=x;});t.barrier();float den=t.sum(n);t.barrier();t.each(n,[&](int j){a.f(7)[h*S+j]=a.f(7)[h*S+j]/den;});}));});}
 template<bool SplitSoftmax,bool F32=false>inline sycl::event combine(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,const float*partial,const std::vector<sycl::event>&deps){int C=splits(s);return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*24*128,128)](sycl::handler& handler){sycl::local_accessor<float,1>factors(131,handler);handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it){int h=it.get_group_linear_id(),r=h/24,lid=it.get_local_linear_id(),n=counts[r];if(n<=0||blocked(a))return;int count=(n+31)/32;const float*p=partial+size_t(h)*C*258;float den=1.f;

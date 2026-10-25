@@ -18,10 +18,41 @@ struct Guard {
  int error(ng::Args a)const{return sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).load();}
  void fail(ng::Args a)const{sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).store(1);}
 };
+// QSA select with one 32-lane subgroup per block item (body<select,Stage>'s values; work items -> subgroups).
+// Stage 0: the 128-leaf adjacent tree of each head's score with lane l holding leaves 4l..4l+3 (in-lane levels 1-2,
+// shuffles for 3-7), heads accumulated in order. Stage 1: the finiteness test and the rank count split across lanes
+// and combined with all-of and an integer sum, both independent of order.
+template<int Stage,class Guard> inline void select_rows(ng::Shape s,ng::Args a,sycl::nd_item<1> it,float* scratch,Guard guard){
+ s.op=ng::select;auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id());const size_t index=it.get_global_linear_id()/32;
+ if(index>=work_items(s,Stage)||!a.i(18)[0]||guard.error(a))return;
+ const int pos=a.i(17)[0];if(pos<0||pos>ng::position_limit(s)-s.tokens){if(index==0&&lane==0)guard.fail(a);return;}
+ const int cap=ceildiv(s.capacity,4),L=ceildiv(ng::launch_extent(s),4),S=slots(s),per=Stage==0?std::max(L,S):L;
+ const int r=int(index)/per,b=int(index)%per,n=(pos+r+1)/4,count=std::min(n,s.budget/4);
+ auto tree32=[&](float x){for(int width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,x,(lane+width)%32);if(lane%(2*width)==0)x=x+rhs;}return sycl::group_broadcast(sg,x,0);};
+ if constexpr(Stage==0){
+  if(b<S&&lane==0)a.i(2)[r*S+b]=-1;
+  if(b<n){float score=0.f;
+   for(int h=0;h<4;++h){float v[4];
+    #pragma unroll
+    for(int i=0;i<4;++i){const int k=4*lane+i;v[i]=a.b(0,(r*4+h)*128+k)*a.b(1,b*128+k);}
+    const float d=tree32((v[0]+v[1])+(v[2]+v[3]));score=score+std::max(0.f,d);}
+   if(lane==0)scratch[r*cap+b]=score/detmath::sqrt(float(128));}
+ }else{
+  if(b>=n&&b!=0)return;bool finite=true;int rank=0;const float v=b<n?scratch[r*cap+b]:0.f;
+  for(int k=lane;k<n;k+=32){const float other=scratch[r*cap+k];finite=finite&&std::isfinite(other);rank+=other>v||(other==v&&k<b);}
+  if(!sycl::all_of_group(sg,finite)){if(b==0&&lane==0)guard.fail(a);return;}
+  rank=sycl::reduce_over_group(sg,rank,sycl::plus<int>());
+  if(lane==0){if(b<n&&rank<count)for(int j=0;j<4;++j)a.i(2)[r*S+rank*4+j]=b*4+j;
+   if(b==0)for(int j=0;j<pos+r+1-n*4;++j)a.i(2)[r*S+count*4+j]=n*4+j;}
+ }
+}
+inline bool select_subgroups(){static const bool on=[]{const char* e=std::getenv("OWNRT_SELECT_SG");return !e||e[0]!='0';}();return on;}
 template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel final:ownrt::SyclOperation {
  ng::Shape shape;explicit Kernel(ng::Shape s):shape(s){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
   ng::Args a;std::copy_n(p.begin(),19,a.p.begin());float* scratch=static_cast<float*>(p[19]);auto s=shape;a.f32=(s.flags&ng::f32_activations_flag)!=0;auto n=work_items(s,Stage);
+  if constexpr(Code==ng::select)if(select_subgroups())
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(n*32),sycl::range<1>(32))](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{select_rows<Stage>(s,a,it,scratch,Guard{});}));});
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body<Code,Stage,FixedWidth,FixedHeads>(s,a,i[0],scratch,Guard{});}));});
  }
 };
