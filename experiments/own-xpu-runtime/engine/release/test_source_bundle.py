@@ -304,6 +304,23 @@ class PythonClosureTests(unittest.TestCase):
         subprocess.run([sys.executable,'-I','-c',code,str(snapshot/'tools'),str(snapshot/'planning')],
                        check=True,capture_output=True,text=True,timeout=10)
 
+    def test_tracked_trace_budget_regression_is_exported_with_import_closure(self):
+        self.install_persistent_fixture()
+        self.write('tools/test_persistent_trace_budget.py',
+                   'from persistent_rolling_driver import CAPACITY\nTRACE_LIMIT=32768\n')
+        self.commit()
+        contents,report=bundle.prepare(self.engine)
+        name='tools/test_persistent_trace_budget.py'
+        self.assertIn(name,contents)
+        self.assertEqual(contents[name],(self.engine/name).read_bytes())
+        with tarfile.open(fileobj=io.BytesIO(bundle.archive_bytes(contents)),mode='r:gz') as archive:
+            member=archive.getmember('own-xpu-runtime-source/'+name)
+            self.assertEqual(archive.extractfile(member).read(),contents[name])
+        self.assertIn({'from':name,'to':'tools/persistent_rolling_driver.py'},report['python_import_edges'])
+        self.write(name,'from persistent_rolling_driver import CAPACITY\nTRACE_LIMIT=4096\n')
+        with self.assertRaisesRegex(bundle.BundleError,'differs from source_commit'):
+            bundle.prepare(self.engine)
+
     def test_untracked_or_missing_persistent_helper_refused(self):
         self.install_persistent_fixture()
         path=self.engine/'tools/persistent_rolling_suite.py';raw=path.read_bytes()

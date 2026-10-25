@@ -75,7 +75,8 @@ RING_TEST_SUPPORT=(
     'tools/test_wavefront_driver.py','tools/test_ring_driver.py','tools/test_ring_wire.py',
     'tools/test_ring_live_driver.py','tools/test_ring_live_wire.py',
     'tools/test_pending_ring_live_driver.py','tools/test_rolling_ring_driver.py',
-    'tools/test_rolling_ring_socket.py','tools/test_persistent_rolling.py')
+    'tools/test_rolling_ring_socket.py','tools/test_persistent_rolling.py',
+    'tools/test_persistent_trace_budget.py')
 
 
 def python_closure(contents):
