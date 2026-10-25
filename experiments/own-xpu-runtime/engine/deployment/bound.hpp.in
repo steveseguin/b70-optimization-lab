@@ -1,0 +1,79 @@
+#pragma once
+// Generated exact-model authority. Include the admitted iq3 loader first.
+// Hash callback must be the independently admitted SHA256 implementation.
+#include <array>
+#include <cerrno>
+#include <fcntl.h>
+#include <limits>
+#include <sys/stat.h>
+#include <unistd.h>
+namespace gsq::bound {
+namespace fs=std::filesystem;
+inline constexpr const char* placement_path=@PLACEMENT@;
+inline constexpr const char* auth_path=@AUTH@;
+inline constexpr const char* model_root=@ROOT@;
+inline constexpr const char* placement_sha256=@PLAN_SHA@;
+inline constexpr const char* auth_sha256=@AUTH_SHA@;
+inline const std::array<iq3::ShardIdentity,@COUNT@> shards={{
+@SHARDS@
+}};
+struct Header {uint64_t bytes;const char* sha256;};
+inline constexpr std::array<Header,@HEADER_COUNT@> headers={{
+@HEADERS@
+}};
+inline std::vector<iq3::Planned> expected_plan(){return {
+@PLAN@
+};}
+inline void require(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
+struct HeldFile {
+  int fd=-1;struct stat before{};
+  explicit HeldFile(const fs::path& path){
+    fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK);
+    require(fd>=0,"bound authority open refused");
+    if(::fstat(fd,&before)||!S_ISREG(before.st_mode)||before.st_size<0){::close(fd);fd=-1;throw std::runtime_error("bound authority regular file required");}
+  }
+  HeldFile(const HeldFile&)=delete;HeldFile&operator=(const HeldFile&)=delete;
+  ~HeldFile(){if(fd>=0)::close(fd);}
+  static bool same(const struct stat&a,const struct stat&b){
+    return S_ISREG(b.st_mode)&&a.st_dev==b.st_dev&&a.st_ino==b.st_ino&&a.st_size==b.st_size&&a.st_mtim.tv_sec==b.st_mtim.tv_sec&&a.st_mtim.tv_nsec==b.st_mtim.tv_nsec&&a.st_ctim.tv_sec==b.st_ctim.tv_sec&&a.st_ctim.tv_nsec==b.st_ctim.tv_nsec;
+  }
+  void stable()const{struct stat now{};require(!::fstat(fd,&now)&&same(before,now),"bound authority file changed");}
+  void matches(const iq3::ShardIdentity&e)const{
+    require(uint64_t(before.st_size)==e.bytes&&uint64_t(before.st_dev)==e.dev&&uint64_t(before.st_ino)==e.ino&&uint64_t(before.st_mtim.tv_sec)*1000000000ULL+uint64_t(before.st_mtim.tv_nsec)==e.mtime_ns&&uint64_t(before.st_ctim.tv_sec)*1000000000ULL+uint64_t(before.st_ctim.tv_nsec)==e.ctime_ns,"bound authority shard stat mismatch");
+  }
+  std::vector<uint8_t> prefix(uint64_t n,uint64_t cap)const{
+    require(n<=cap&&n<=uint64_t(before.st_size)&&n<=std::numeric_limits<size_t>::max(),"bound authority read extent");
+    std::vector<uint8_t> bytes(size_t(n),uint8_t(0));size_t done=0;
+    while(done<bytes.size()){
+      auto got=::pread(fd,bytes.data()+done,bytes.size()-done,off_t(done));
+      if(got<0&&errno==EINTR)continue;
+      require(got>0,"bound authority short read");done+=size_t(got);
+    }
+    stable();return bytes;
+  }
+};
+template<class Hash> inline void verify_text(const fs::path&path,const char*fixed,const char*expected,Hash&hash){
+  require(path==fs::path(fixed),"bound authority fixed path required");HeldFile file(path);
+  auto bytes=file.prefix(uint64_t(file.before.st_size),2*1024*1024);
+  require(hash(bytes)==expected,"bound authority text SHA mismatch");file.stable();
+}
+struct Verified {
+  iq3::Admission admission;
+  std::vector<fs::path> paths;
+  std::vector<iq3::Planned> candidate;
+};
+template<class Hash> inline Verified authenticate(const fs::path&plan,const fs::path&auth,const fs::path&model,Hash hash){
+  require(model==fs::path(model_root),"bound authority fixed model root required");
+  verify_text(plan,placement_path,placement_sha256,hash);verify_text(auth,auth_path,auth_sha256,hash);
+  Verified result;result.admission.expected=expected_plan();
+  for(size_t i=0;i<shards.size();++i){
+    const auto&identity=shards[i];auto path=model/identity.basename;HeldFile file(path);file.matches(identity);
+    auto bytes=file.prefix(headers[i].bytes,16*1024*1024);
+    require(hash(bytes)==headers[i].sha256,"bound authority raw header SHA mismatch");file.stable();
+    result.paths.push_back(path);result.admission.shards.push_back(identity);
+  }
+  // Both input files were verified against compiled digests. Candidate bytes
+  // are represented by the compiled descriptors, never a second pathname read.
+  result.candidate=result.admission.expected;return result;
+}
+} // namespace gsq::bound

@@ -146,6 +146,28 @@ class SourceBundleTests(unittest.TestCase):
         self.assertIn("planning/README.md", contents)
         self.assertNotIn("planning/local-notes.md", contents)
 
+    def test_portable_profile_and_build_helper_are_included(self):
+        (self.engine / "deployment").mkdir()
+        (self.engine / "profiles").mkdir()
+        self.write("build.py", "from deployment.prepare import require\n")
+        self.write("deployment/prepare.py", "# deployment helper\n")
+        self.write("deployment/bound.hpp.in", "# authority template\n")
+        self.write("profiles/profile.json", '{"portable":true}\n')
+        self.commit()
+        contents, _ = bundle.prepare(self.engine)
+        self.assertIn("deployment/prepare.py", contents)
+        self.assertIn("deployment/bound.hpp.in", contents)
+        self.assertIn("profiles/profile.json", contents)
+
+    def test_untracked_build_helper_refused(self):
+        self.write("build.py", "from deployment.prepare import require\n")
+        self.commit()
+        (self.engine / "deployment").mkdir()
+        self.write("deployment/prepare.py", "# not committed\n")
+        self.write("deployment/bound.hpp.in", "# not committed\n")
+        with self.assertRaisesRegex(bundle.BundleError, "Untracked required input"):
+            bundle.prepare(self.engine)
+
 
 if __name__ == "__main__":
     unittest.main()

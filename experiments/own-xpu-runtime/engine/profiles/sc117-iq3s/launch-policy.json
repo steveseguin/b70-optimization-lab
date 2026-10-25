@@ -1,0 +1,52 @@
+{
+  "boundaries": {
+    "2": [
+      0,
+      23,
+      48
+    ],
+    "4": [
+      0,
+      13,
+      25,
+      37,
+      48
+    ]
+  },
+  "context": 4096,
+  "dispatch": {
+    "file": "dispatch-f32-select-gdn2.json",
+    "sha256": "d0705c52ca12347632b4d67fef6abdc6145abe41d327e8449eefcdd5b666654d"
+  },
+  "environment": {
+    "OWNRT_DRAFT_DEPTH_PROBE": "0",
+    "OWNRT_DRAFT_DEPTH_VERIFY": "0",
+    "OWNRT_DRAFT_KERNELS": "qsa_attention,attention_output,fuse_attention_combine,hc_a_low,hc_f_low,hc_final_low,fuse_hc_a_low,fuse_hc_f_low,fuse_hc_final_low,hc_final_gate,fuse_hc_final_mix,hc_a_inject,hc_f_inject,embedding_norm,hidden_norm,hc_a_norm,hc_f_norm,final_norm,hidden_projection,embedding_projection,fuse_hidden_merge,qsa_k,qsa_v,qsa_iq,qsa_ik,router,shared_gate,shared_up,shared_down,shared_router,fuse_shared_activation",
+    "OWNRT_DRAFT_PREFIX_ROWS": "91392",
+    "OWNRT_EARLY_RANK1": "0",
+    "OWNRT_MERGE_CHECKS": "1",
+    "OWNRT_MISS": "banks-batch",
+    "OWNRT_SNAPSHOT_HOST": "static"
+  },
+  "eos_token_ids": [
+    248044,
+    248046
+  ],
+  "model_profile_sha256": "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a",
+  "mtp": {
+    "draft_rank": 0,
+    "experts": "fp8",
+    "prefill_rows": 0
+  },
+  "schema": "ownrt.sc117-launch-policy.v1",
+  "scope": "Launch templates only; independent runtime admission and clean-host qualification required; no training or speed claim.",
+  "target_flags": [
+    "--attention-q8-p33",
+    "--qkv-q6-p33",
+    "--expert-iq3xxs-block",
+    "--dense-q6-p33",
+    "--dense-packed-block",
+    "--recurrent-f32"
+  ],
+  "vocab": 248320
+}

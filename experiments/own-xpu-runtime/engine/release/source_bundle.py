@@ -46,8 +46,10 @@ def prepare(engine):
     tracked = set(git(root, "ls-files", "-z", "--", prefix).decode().split("\0")) - {""}
     source_names = sorted(name for name in tracked if name.startswith(prefix + "/src/"))
     required = [prefix + "/" + name for name in ("README.md", "build.py", "build-manifest.json")]
-    optional = sorted(name for name in tracked if name.startswith(prefix + "/planning/")
-                      or name.startswith(prefix + "/release/"))
+    optional = sorted(name for name in tracked if any(name.startswith(prefix + "/" + folder + "/")
+                      for folder in ("planning", "release", "deployment", "profiles")))
+    if b"from deployment.prepare import" in (engine / "build.py").read_bytes():
+        required += [prefix + "/deployment/" + name for name in ("prepare.py", "bound.hpp.in")]
     selected = sorted(set(source_names + required + optional))
     contents, inputs = {}, []
     if not source_names:

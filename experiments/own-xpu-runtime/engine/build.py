@@ -1,45 +1,117 @@
 #!/usr/bin/env python3
-"""Build the own-runtime engine from engine/src with the recorded flags.
+"""Build canonical sources, optionally with one authenticated deployment header.
 
-usage: build.py OUT_DIR [--jobs N] [--only OBJ ...]
-Compiles each translation unit of build-manifest.json (same flags as the receipts, plus -I engine/src),
-links in manifest order, and writes OUT_DIR/build-receipt.json with source/object/binary hashes.
-TMPDIR defaults to OUT_DIR/tmp. Run under nice/taskset; never executes the binary.
+Never executes the engine. Preserve the source tree at its build location: the
+current native runtime reads its pinned rope.bf16 next to the compiled main.cpp.
 """
-import argparse, concurrent.futures as cf, hashlib, json, os, subprocess, sys, time
+import argparse
+import concurrent.futures as cf
+import hashlib
+import json
+import os
 from pathlib import Path
+import shlex
+import subprocess
+import time
+import sys
+
 ENGINE = Path(__file__).resolve().parent
 SRC = ENGINE / 'src'
-def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
-ap = argparse.ArgumentParser(); ap.add_argument('out', type=Path); ap.add_argument('--jobs', type=int, default=4)
-ap.add_argument('--name', default='own-engine'); a = ap.parse_args()
-m = json.loads((ENGINE / 'build-manifest.json').read_text())
-out = a.out.resolve(); out.mkdir(parents=True, exist_ok=True); (out / 'tmp').mkdir(exist_ok=True)
-env = dict(os.environ, TMPDIR=str(out / 'tmp'))
-def compile_tu(tu):
-    obj = out / tu['object']
-    cmd = [m['compiler'], *tu['flags'], '-I', str(SRC), '-MMD', '-MF', str(obj.with_suffix('.d')), '-c', str(SRC / tu['source']), '-o', str(obj)]
-    t = time.time(); p = subprocess.run(cmd, env=env, capture_output=True, text=True)
-    return tu['object'], cmd, p.returncode, round(time.time() - t, 1), p.stderr[-6000:]
-log = {}
-with cf.ThreadPoolExecutor(a.jobs) as ex:
-    for name, cmd, rc, sec, err in ex.map(compile_tu, m['translation_units']):
-        log[name] = dict(cmd=cmd, rc=rc, seconds=sec, stderr=err)
-        print(name, 'rc', rc, sec, 's', flush=True)
-        if rc: print(err); sys.exit(1)
-binary = out / a.name
-link = [m['link']['compiler'], *[x for x in m['link']['flags'] if x.startswith('-fsycl') or x.startswith('-Wl,--gc')],
-        *[str(out / tu['object']) for tu in m['translation_units']],
-        *[x for x in m['link']['flags'] if not (x.startswith('-fsycl') or x.startswith('-Wl,--gc'))], '-o', str(binary)]
-p = subprocess.run(link, env=env, capture_output=True, text=True)
-log['link'] = dict(cmd=link, rc=p.returncode, stderr=p.stderr[-6000:])
-if p.returncode: print(p.stderr); sys.exit(1)
-deps = set()
-for tu in m['translation_units']:
-    for t in (out / tu['object']).with_suffix('.d').read_text().replace('\\\n', ' ').split()[1:]:
-        if t.startswith(str(SRC)): deps.add(t)
-receipt = dict(schema='ownrt.engine.build.v1', binary=str(binary), binary_sha256=sha(binary),
-               objects={tu['object']: sha(out / tu['object']) for tu in m['translation_units']},
-               sources={str(Path(d).relative_to(SRC)): sha(d) for d in sorted(deps)}, commands=log)
-(out / 'build-receipt.json').write_text(json.dumps(receipt, indent=1) + '\n')
-print('binary', receipt['binary_sha256'])
+sys.path.insert(0, str(ENGINE))
+from deployment.prepare import HEADER, require, validate_overlay
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def compile_command(manifest, unit, out, include=None, compiler=None):
+    obj = out / unit['object']
+    overlays = ['-I', str(include)] if include is not None else []
+    return [compiler or manifest['compiler'], *unit['flags'], *overlays, '-I', str(SRC),
+            '-MMD', '-MF', str(obj.with_suffix('.d')), '-c', str(SRC/unit['source']), '-o', str(obj)]
+
+
+def dependencies(path, include=None):
+    # Make dependency output escapes spaces; shlex also handles escaped backslashes.
+    tokens = shlex.split(path.read_text().replace('\\\n', ' '))
+    canonical, generated = set(), set()
+    for token in tokens[1:]:
+        p = Path(token).absolute()
+        if include is not None and p.is_relative_to(include):
+            require(p.relative_to(include).as_posix() == HEADER, 'unexpected generated dependency')
+            generated.add(p)
+        elif p.is_relative_to(SRC):
+            canonical.add(p)
+    return canonical, generated
+
+
+def build(args):
+    require(args.jobs > 0, 'positive job count')
+    require(Path(args.name).name == args.name and args.name not in ('.', '..'), 'binary basename required')
+    supplied = (args.generated_include is not None, args.profile_sha256 is not None, args.deployment_sha256 is not None)
+    require(all(supplied) or not any(supplied), 'overlay requires --generated-include, --profile-sha256 and --deployment-sha256')
+    include = args.generated_include.absolute() if args.generated_include is not None else None
+    overlay = validate_overlay(include, args.profile_sha256, args.deployment_sha256) if include else None
+    m = json.loads((ENGINE/'build-manifest.json').read_text())
+    out = args.out.resolve(); out.mkdir(parents=True, exist_ok=True); (out/'tmp').mkdir(exist_ok=True)
+    receipt_path = out/'build-receipt.json'
+    env = dict(os.environ, TMPDIR=str(out/'tmp'))
+
+    def compile_tu(unit):
+        cmd = compile_command(m, unit, out, include, args.compiler)
+        start = time.time(); result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+        return unit['object'], cmd, result.returncode, round(time.time()-start, 1), result.stderr[-6000:]
+
+    log = {}; failed = False
+    with cf.ThreadPoolExecutor(args.jobs) as pool:
+        for name, cmd, rc, seconds, error in pool.map(compile_tu, m['translation_units']):
+            log[name] = dict(cmd=cmd, rc=rc, seconds=seconds, stderr=error)
+            print(name, 'rc', rc, seconds, 's', flush=True)
+            if rc:
+                print(error); failed = True
+    require(not failed, 'compilation failed')
+    binary = out/args.name
+    link = [args.compiler or m['link']['compiler'],
+            *[x for x in m['link']['flags'] if x.startswith('-fsycl') or x.startswith('-Wl,--gc')],
+            *[str(out/u['object']) for u in m['translation_units']],
+            *[x for x in m['link']['flags'] if not (x.startswith('-fsycl') or x.startswith('-Wl,--gc'))],
+            '-o', str(binary)]
+    result = subprocess.run(link, env=env, capture_output=True, text=True)
+    log['link'] = dict(cmd=link, rc=result.returncode, stderr=result.stderr[-6000:])
+    require(result.returncode == 0, 'link failed: '+result.stderr[-6000:])
+    deps, generated = set(), set()
+    for unit in m['translation_units']:
+        own, extra = dependencies((out/unit['object']).with_suffix('.d'), include)
+        deps.update(own); generated.update(extra)
+    if include:
+        require(generated == {include/HEADER} and SRC/HEADER not in deps,
+                'generated authority did not replace canonical header')
+        require(validate_overlay(include, args.profile_sha256, args.deployment_sha256) == overlay,
+                'deployment authority changed during build')
+    runtime = SRC/'gsq-rco-iq3s/dense-packed-block/engine/build/source/rope.bf16'
+    receipt = dict(schema='ownrt.engine.build.v1', binary=str(binary), binary_sha256=sha(binary),
+        objects={u['object']: sha(out/u['object']) for u in m['translation_units']},
+        sources={str(p.relative_to(SRC)): sha(p) for p in sorted(deps)}, commands=log,
+        runtime_assets={str(runtime): sha(runtime)}, generated_authority=overlay,
+        generated_dependencies={str(p): sha(p) for p in sorted(generated)},
+        build_script_sha256=sha(__file__), build_manifest_sha256=sha(ENGINE/'build-manifest.json'))
+    receipt_path.write_text(json.dumps(receipt, indent=1)+'\n')
+    print('binary', receipt['binary_sha256'])
+    return receipt
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('out', type=Path)
+    parser.add_argument('--jobs', type=int, default=4)
+    parser.add_argument('--name', default='own-engine')
+    parser.add_argument('--compiler', help='explicit compiler path; recorded in every build command')
+    parser.add_argument('--generated-include', type=Path)
+    parser.add_argument('--profile-sha256')
+    parser.add_argument('--deployment-sha256')
+    build(parser.parse_args())
+
+
+if __name__ == '__main__':
+    main()

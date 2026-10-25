@@ -1,5 +1,14 @@
 # Portable SC117 recipe: concrete remaining work
 
+Implementation update: the [CPU preparation/build recipe](../deployment/README.md),
+[immutable SC117 profile](../profiles/sc117-iq3s/profile.json), generated authority
+overlay support and [direct launch-plan generator](../deployment/launch_plan.py)
+now exist. Synthetic CPU tests cover authentication, relocation, native authority,
+and command templates. A real full-model rebind/build/replay and the portable
+guarded controller/observer remain unqualified. No model payload was read by the
+implementation's metadata-only local preparation plan. The audit below is retained
+as the original dependency analysis; its proposed names are historical.
+
 Read-only implementation audit, 2026-10-25. No native changes or hardware actions.
 The canonical source builds on the current host; the following is the shortest
 route to a reproducible deployment elsewhere, not a claim that this route already
