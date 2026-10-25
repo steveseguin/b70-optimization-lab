@@ -1,0 +1,56 @@
+{
+  "checks": [
+    "short two-request default4096 preserved",
+    "largest later request controls budget",
+    "insufficient and oversized/noninteger/bool budgets refused",
+    "explicit budget required for twelve-request scope",
+    "native argv exact once and equals admitted limit; duplicate inherited flags refused",
+    "context-valid request whose conservative bound exceeds100000 refused"
+  ],
+  "command": "PYTHONDONTWRITEBYTECODE=1 TMPDIR=/dev/shm PYTHONPATH=engine/tools:engine/planning python3 -m unittest test_persistent_trace_budget test_persistent_rolling test_rolling_ring_socket test_rolling_ring_driver test_rolling_provider test_rolling_provider_arbiter -q",
+  "current_suite": {
+    "conservative_required": 3606,
+    "max_new": 512,
+    "note": "Explicit allowance changes trace capacity only; current twelve-prompt cohort would not truncate under the prior4096 limit.",
+    "planned_explicit_limit": 32768,
+    "prior_default": 4096,
+    "prior_default_sufficient": true,
+    "prompt_lengths": [
+      87,
+      90,
+      77,
+      83,
+      68,
+      65,
+      67,
+      71,
+      69,
+      61,
+      64,
+      60
+    ]
+  },
+  "device_execution_requested": false,
+  "execution_changed": false,
+  "exit_code": 0,
+  "historical_unapplied_proposal": "engine/planning/persistent-trace-budget-next/manifest.json",
+  "native_changed": false,
+  "new_trace_tests": 5,
+  "non_planner_toplevel_ast_unchanged": true,
+  "passed": true,
+  "planner_after_sha256": "6197c3575a91da804c9cebf9956e3fb606a1e8973a212b553b298590215f4d8f",
+  "planner_before_sha256": "bf51db8f80926b5bc32eccc36aabc911e75e70dd44f9fc59d69cf08a5ccf9ce6",
+  "planner_patch_archive": {
+    "bytes": 786,
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget.patch.gz",
+    "raw_sha256": "8a8d79ee21035ed92afe8a1338719c53f71c12a83ae92a88308c17c9dd8f53da",
+    "sha256": "f8e04e482aeb2620b510058aaafe5bf1f68f303010d4efc7477aa791a1fdaf78"
+  },
+  "planner_patch_sha256": "8a8d79ee21035ed92afe8a1338719c53f71c12a83ae92a88308c17c9dd8f53da",
+  "schema": "ownrt.persistent-trace-budget-cpu.v1",
+  "test_source": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/test_persistent_trace_budget.py",
+    "sha256": "1050de59bd2ce50e9cc0c5c317ff5d0b8884cc6e9a74d99a649676934ca019c4"
+  },
+  "tests": 37
+}

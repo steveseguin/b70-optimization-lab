@@ -96,6 +96,24 @@ def make_plan(config_path):
     count=config.get('suite_prompt_count')
     rows=suite_tools.validate_suite(json.loads(raw),plan,count)
     base.require(plan['prompt_tokens']==rows[0]['prompt_tokens'],'first prompt/config identity')
+    # Each canonical input can have two discarded hypotheses and one accepted
+    # execution: <=3N ROW + N ACCEPT + <=2N ABORT. Provider trace is separate.
+    trace_budgets=[dict(id=row['id'],input_positions=len(row['prompt_tokens'])+row['max_new']-1,
+        target_commands=6*(len(row['prompt_tokens'])+row['max_new']-1),
+        provider_commands=len(row['prompt_tokens'])+row['max_new']-2) for row in rows]
+    trace_required=max(row['target_commands'] for row in trace_budgets)
+    explicit_trace='ring_trace_limit' in config
+    base.require(explicit_trace or (count<=2 and trace_required<=4096),
+                 'long suite requires explicit ring_trace_limit')
+    trace_limit=config.get('ring_trace_limit',4096)
+    base.require(type(trace_limit) is int and 1<=trace_limit<=100000,
+                 'native trace limit integer bound1..100000')
+    base.require(trace_required<=100000,'worst-case trace budget exceeds native100000 cap')
+    base.require(trace_limit>=trace_required,'ring trace limit below worst-case request budget')
+    for stage in plan['stages']:
+        stage['argv']=base.replace_options(stage['argv'],{'--pipeline-ring-trace-limit':trace_limit})
+    plan.update(ring_trace_limit=trace_limit,ring_trace_required=trace_required,
+        ring_trace_budget=trace_budgets,ring_trace_limit_explicit=explicit_trace)
     dump_each=config.get('dump_each')
     base.require(type(dump_each) is bool and (not dump_each or count<=2),'full dumps bounded to two requests')
     if verify:

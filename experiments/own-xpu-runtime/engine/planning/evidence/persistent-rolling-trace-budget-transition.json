@@ -1,0 +1,44 @@
+{
+  "after_source": {
+    "bytes": 11808,
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "sha256": "6197c3575a91da804c9cebf9956e3fb606a1e8973a212b553b298590215f4d8f"
+  },
+  "before_source": {
+    "bytes": 10466,
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent_rolling_driver-before-trace.py",
+    "sha256": "bf51db8f80926b5bc32eccc36aabc911e75e70dd44f9fc59d69cf08a5ccf9ce6"
+  },
+  "cpu_review": {
+    "bytes": 2379,
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget-cpu.json",
+    "sha256": "873951bfd79b2b19e9bbac1126b7e9ec272836c3e261829a8d6b1f9d05509b0a"
+  },
+  "current_suite_required": 3606,
+  "independent_review": {
+    "bytes": 11006,
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget-independent-review.json",
+    "sha256": "7db6fb799e18edf2a3782fbad0f403c3902fcce88eebc2e7b962891707f29a9e"
+  },
+  "limits": "Planner trace capacity/admission only. No additional target/provider work or output tokens requested by increasing trace capacity; no performance certification.",
+  "passed": true,
+  "patch": {
+    "bytes": 1832,
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget.patch",
+    "sha256": "8a8d79ee21035ed92afe8a1338719c53f71c12a83ae92a88308c17c9dd8f53da"
+  },
+  "patch_archive": {
+    "bytes": 786,
+    "encoding": "gzip",
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget.patch.gz",
+    "raw_sha256": "8a8d79ee21035ed92afe8a1338719c53f71c12a83ae92a88308c17c9dd8f53da",
+    "sha256": "f8e04e482aeb2620b510058aaafe5bf1f68f303010d4efc7477aa791a1fdaf78"
+  },
+  "planned_trace_limit": 32768,
+  "preserved_execution": true,
+  "preserved_native": true,
+  "prior_default_sufficient": true,
+  "schema": "ownrt.persistent-rolling-planner-transition.v1",
+  "scope": "trace-budget-only",
+  "source_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py"
+}

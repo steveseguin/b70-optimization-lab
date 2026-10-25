@@ -1,0 +1,227 @@
+{
+  "schema": "ownrt.persistent-rolling-trace-budget-independent-review.v1",
+  "passed": true,
+  "reviewed_utc": "2026-10-25T23:00:09.069189+00:00",
+  "scope": "trace-budget-only",
+  "planner_before_sha256": "bf51db8f80926b5bc32eccc36aabc911e75e70dd44f9fc59d69cf08a5ccf9ce6",
+  "planner_after_sha256": "6197c3575a91da804c9cebf9956e3fb606a1e8973a212b553b298590215f4d8f",
+  "planner_patch_sha256": "8a8d79ee21035ed92afe8a1338719c53f71c12a83ae92a88308c17c9dd8f53da",
+  "sources": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent_rolling_driver-before-trace.py",
+      "bytes": 10466,
+      "sha256": "bf51db8f80926b5bc32eccc36aabc911e75e70dd44f9fc59d69cf08a5ccf9ce6"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+      "bytes": 11808,
+      "sha256": "6197c3575a91da804c9cebf9956e3fb606a1e8973a212b553b298590215f4d8f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget.patch",
+      "bytes": 1832,
+      "sha256": "8a8d79ee21035ed92afe8a1338719c53f71c12a83ae92a88308c17c9dd8f53da"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget.patch.gz",
+      "bytes": 786,
+      "sha256": "f8e04e482aeb2620b510058aaafe5bf1f68f303010d4efc7477aa791a1fdaf78"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/test_persistent_trace_budget.py",
+      "bytes": 5563,
+      "sha256": "1050de59bd2ce50e9cc0c5c317ff5d0b8884cc6e9a74d99a649676934ca019c4"
+    }
+  ],
+  "cpu_review": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget-cpu.json",
+    "bytes": 2379,
+    "sha256": "873951bfd79b2b19e9bbac1126b7e9ec272836c3e261829a8d6b1f9d05509b0a"
+  },
+  "tests": {
+    "passed": true,
+    "count": 37,
+    "log": {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-trace-budget-independent-tests.txt",
+      "bytes": 98,
+      "sha256": "d21538ae084b7c35a3ae94a1b39257991edcbe32f61fdf215e677ceb88a6e70d"
+    }
+  },
+  "non_planner_toplevel_ast_unchanged": true,
+  "canonical_unified_diff_recomputed": true,
+  "prior_qualified_and_measured_planner_hashes_match_preserved_before": true,
+  "unchanged_execution_pins": [
+    {
+      "path": "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261025T180655Z/ranks/admission-plan.json",
+      "bytes": 11378,
+      "sha256": "18e2b47125df69c5d8bca1a0871c70d5bfb6f31116f7c44d23c7cf6ecf42a33a"
+    },
+    {
+      "path": "/dev/shm/engine-build-ring-persistent-20261025/build-receipt.json",
+      "bytes": 252316,
+      "sha256": "0752a776cec88496a82ff4f1c3fd36dc3c791324e7fd363714be08d9ef37b0a1"
+    },
+    {
+      "path": "/dev/shm/engine-build-ring-persistent-20261025/own-engine",
+      "bytes": 21213688,
+      "sha256": "02a47c059444af0e9179612461a8078e4308f3357fb54e370421a2ba1b7788aa"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/pipeline_driver.py",
+      "bytes": 23302,
+      "sha256": "15b3616ed47348451e834022badaa7de5ff7161c9e53595bbddbabc4fd0a37d3"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/operating/observe.py",
+      "bytes": 7363,
+      "sha256": "fcd0740e64ab7701885f1b57f5bffb523219ed88b41202d9b2cee990c6e1dfef"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+      "bytes": 169484,
+      "sha256": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+      "bytes": 260,
+      "sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/placement.py",
+      "bytes": 9142,
+      "sha256": "214d4c9b360a9ccf81ce8adedd531cefce3664e1923fe518f0d34b4381edbc60"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json",
+      "bytes": 987,
+      "sha256": "d0705c52ca12347632b4d67fef6abdc6145abe41d327e8449eefcdd5b666654d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/transport.py",
+      "bytes": 14461,
+      "sha256": "22e4077ae3a02c6d791f383329533c3b96dfa5ba130eb7a5af2f16ac04cb015e"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/pending_ring_live_driver.py",
+      "bytes": 18223,
+      "sha256": "ef1ea1721959b5c3f4e1fbf2b3ff910e0042a2ae90c3db021ba9d27a34330f5b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/pending_ring_live_wire.py",
+      "bytes": 1898,
+      "sha256": "e8cb3b84ec1c7efeb9e077e4bb1c5970e3a36ac258f780204744066048a694b5"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/ring_live_driver.py",
+      "bytes": 19928,
+      "sha256": "b82f8a0e7798e0727db8133e5061178e825de2d5c00b6f0f40aaa747bdb41ef7"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/ring_live_wire.py",
+      "bytes": 5488,
+      "sha256": "c687b2cf3b1343222513dd7b39e0337a9f44eff4695134c15f0c49b93e8984c4"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/ring_driver.py",
+      "bytes": 18035,
+      "sha256": "3f545dcfd77d1610e27f77630e117068889c87da535712507d74dedfe2a8558b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/ring_wire.py",
+      "bytes": 5377,
+      "sha256": "16e7c7d3bc1a6c41e32d92e4df495144321b72d79feb88cf2a8bfc569ab6323b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/wavefront_driver.py",
+      "bytes": 14352,
+      "sha256": "7c1b593ec4221fe2170275281c937842ed68bf8f578b9fca52d4a344518da56c"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_suite.py",
+      "bytes": 15268,
+      "sha256": "ce5e45e6ed22249a981ee4b2b80c564d406d95e0cb2ca0ec93dbdc3601ad89e1"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_live_suite.py",
+      "bytes": 12967,
+      "sha256": "72727de6a04c5ff12fbdcd272daf0732f36627bdcf3546e29230f9c509438dc4"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/live_wavefront_driver.py",
+      "bytes": 12361,
+      "sha256": "511b1d625a3549789dda8d78d3bbacfe39a840baba5c0f174c4a3e48e51a9b41"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/rolling_ring_driver.py",
+      "bytes": 8082,
+      "sha256": "7e7dc1e639855bd4f0b579e78e99a0dc92e70dc4608a2b7c5147a0e0ee5b7afa"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/__init__.py",
+      "bytes": 87,
+      "sha256": "abc1bdba13243035d81b919dcfdcfce28d9ca4999177a6cf679fd2394111f99e"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py",
+      "bytes": 10096,
+      "sha256": "cc3dc143fcd7d64ca66a57d87f94875db78b17936c765b43d750c03b9ec3ab72"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/arbiter.py",
+      "bytes": 6571,
+      "sha256": "ebb16b5131bcec7c410dc54ead95e8f2f44d32885a3b9e2f64825496e3c4f6ec"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py",
+      "bytes": 20222,
+      "sha256": "84b7d6970dd3f1c357c674760739e577c2f2be1d0577405b240abf9003a0690f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_contract.py",
+      "bytes": 7102,
+      "sha256": "3cf6a0b713bb0e87ae2be75cd57913237ea62de1a4c6651f53f68c159c84e1b7"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/live_draft.py",
+      "bytes": 4029,
+      "sha256": "58e86748fb2799a3ddc1951893a3f82efb6072736b01c53d71532ec1be3aad4d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/wavefront.py",
+      "bytes": 8260,
+      "sha256": "4f8e6856fbf263616618c5a3871bad3dc20a20caebc557434304f0e58a2aa9cc"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv",
+      "bytes": 756336,
+      "sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py",
+      "bytes": 2800,
+      "sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py",
+      "bytes": 44620,
+      "sha256": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8"
+    }
+  ],
+  "checks": [
+    "Only18 inserted lines inside make_plan; execute/main/import/module AST identical.",
+    "Each validated request needs N=prompt_length+max_new-1; conservative6N target command budget and N-1 provider budget.",
+    "Two possible hypothetical identities plus verified fallback bound ROW to3N; ACCEPT<=N and ABORT<=2N; trace counters reset per request, so max suffices.",
+    "Native ceiling100000, strict integer excluding bool, lower-bound refusal, explicit limit for >2 requests or required>4096.",
+    "Default short qualification capacity4096 remains; each stage gets exactly one declared trace-limit argv flag through checked replace_options.",
+    "Tests cover largest later prompt, exact lower boundary, nonintegers/booleans, native ceiling, all12 explicit admission, duplicate native flag refusal and inherited single value replacement.",
+    "Full-suite frozen verifier requires explicit trusted transition with these exact hashes, patch and independent/CPU review bindings."
+  ],
+  "native_changed": false,
+  "execution_changed": false,
+  "device_execution_requested": false,
+  "scope_limits": [
+    "CPU/source planner review only; no new GPU run or speed claim.",
+    "Trace capacity is an evidence retention limit; it does not alter scheduling, arithmetic, proposal generation or number of commands.",
+    "Review applies only to this exact patch; future planner edits require a new bridge."
+  ]
+}
