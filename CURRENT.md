@@ -1,5 +1,20 @@
 # Current Workspace State
 
+**October 25, 12:15 EDT — GPU fault on cards 23/47 from a TP test; recovered without a reboot.**
+- **What happened.** At 11:44 the first two-card run with the device profiler on (`OWNRT_DECODE_PROFILE=2` plus
+  `--tp-replicate`) hit a copy-engine memory fault while loading, first on 47:00.0 and then on 23:00.0 (CAT error,
+  `-ENOENT`, engine reset, timed-out job).
+- **Response.**
+  - The process was spinning and ignored INT and TERM, so it was killed.
+  - Devcoredumps and the kernel log were saved
+    ([incident](experiments/own-xpu-runtime/research/tp/incident-2026-10-25/)).
+  - A bounded health probe on 23/47 passed: kernels, copies and 800-hop card-to-card copies were all bitwise, and the
+    journal stayed clean.
+- **Guard.** The engine now refuses that combination. The cause is not yet localized; the earlier TP runs without the
+  profiler were clean.
+- **Status.** The vision server (27/43) was not involved. The LAN service stays paused for the TP block and comes back
+  by 13:00.
+
 **October 25, 11:30 EDT — SC117 LAN service paused for a TP development block (cards 23/47).**
 `sc117-lan` was stopped at 11:28 so the tensor-parallel (TP) engine can be built and tested on its cards without
 restarting the service for every test. It comes back on one gated build when the block ends.

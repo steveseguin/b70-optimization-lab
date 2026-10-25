@@ -1,0 +1,20 @@
+1 thread, 1 card:  enqueue 2.99 us/kernel, total 2.99 us/kernel
+1 thread, 2 cards: enqueue 3.82 us/kernel, total 7.63 us per kernel pair
+2 threads, 2 cards: enqueue A 5.11 / B 5.85 us/kernel, total 5.90 us per kernel pair
+cross-thread hand-off chain: 10.18 us per (A kernel + B copy + B kernel)
+peer copy bitwise: equal
+rc=0
+  10240 B  device-side round trip (2 copies + 2 waits):    27.2 us
+  10240 B  enqueue per round trip with waits   34.5 us; copies only: enqueue   16.0 us, total   16.1 us
+  10240 B  host-waited round trip:                       21.9 us
+  10240 B  bytes after 800 hops: bitwise-equal
+  40960 B  device-side round trip (2 copies + 2 waits):    30.1 us
+  40960 B  enqueue per round trip with waits   28.1 us; copies only: enqueue   13.6 us, total   16.4 us
+  40960 B  host-waited round trip:                       28.4 us
+  40960 B  bytes after 800 hops: bitwise-equal
+ 163840 B  device-side round trip (2 copies + 2 waits):    29.1 us
+ 163840 B  enqueue per round trip with waits   30.4 us; copies only: enqueue   15.8 us, total   22.6 us
+ 163840 B  host-waited round trip:                       34.7 us
+ 163840 B  bytes after 800 hops: bitwise-equal
+rc=0
+0
