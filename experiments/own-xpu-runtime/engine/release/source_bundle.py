@@ -47,6 +47,33 @@ PORTABLE_LIVE_RUNTIME=(
     'tools/persistent_live_suite.py','tools/persistent_wavefront_driver.py',
     'planning/wavefront.py','planning/live_draft.py')
 
+# Each independently introduced entrypoint requires its complete literal and
+# dynamic runtime closure. Historical source trees without that entrypoint keep
+# their earlier requirements; no exported launcher/authority is substituted.
+RING_RUNTIME=PORTABLE_LIVE_RUNTIME+(
+    'tools/ring_driver.py','tools/ring_wire.py',
+    'planning/ring_coordinator.py','planning/ring_contract.py')
+RING_LIVE_RUNTIME=RING_RUNTIME+('tools/ring_live_driver.py','tools/ring_live_wire.py')
+PENDING_RING_RUNTIME=RING_LIVE_RUNTIME+(
+    'tools/pending_ring_live_driver.py','tools/pending_ring_live_wire.py')
+ROLLING_RUNTIME=PENDING_RING_RUNTIME+(
+    'tools/rolling_ring_driver.py','planning/rolling_provider/__init__.py',
+    'planning/rolling_provider/arbiter.py','planning/rolling_provider/coordinator.py',
+    'planning/rolling_provider/transport.py')
+DYNAMIC_RUNTIME_GROUPS=(
+    ('deployment/portable_live.py',PORTABLE_LIVE_RUNTIME),
+    ('tools/ring_driver.py',RING_RUNTIME),
+    ('tools/ring_live_driver.py',RING_LIVE_RUNTIME),
+    ('tools/pending_ring_live_driver.py',PENDING_RING_RUNTIME),
+    ('tools/rolling_ring_driver.py',ROLLING_RUNTIME))
+# Planning research/tests import these CPU fixtures. Include only committed
+# fixtures; an import of an untracked/missing fixture still fails closed below.
+RING_TEST_SUPPORT=(
+    'tools/test_wavefront_driver.py','tools/test_ring_driver.py','tools/test_ring_wire.py',
+    'tools/test_ring_live_driver.py','tools/test_ring_live_wire.py',
+    'tools/test_pending_ring_live_driver.py','tools/test_rolling_ring_driver.py',
+    'tools/test_rolling_ring_socket.py')
+
 
 def python_closure(contents):
     edges=[];external=set()
@@ -93,8 +120,10 @@ def prepare(engine):
                       for folder in ("planning", "release", "deployment", "profiles")))
     if b"from deployment.prepare import" in (engine / "build.py").read_bytes():
         required += [prefix + "/deployment/" + name for name in ("prepare.py", "bound.hpp.in")]
-    if prefix+'/deployment/portable_live.py' in tracked:
-        required += [prefix+'/'+name for name in PORTABLE_LIVE_RUNTIME]
+    dynamic = sorted({name for trigger,names in DYNAMIC_RUNTIME_GROUPS
+                      if prefix+'/'+trigger in tracked for name in names})
+    required += [prefix+'/'+name for name in dynamic]
+    optional += [prefix+'/'+name for name in RING_TEST_SUPPORT if prefix+'/'+name in tracked]
     selected = sorted(set(source_names + required + optional))
     contents, inputs = {}, []
     if not source_names:
@@ -227,7 +256,7 @@ def prepare(engine):
                   for name, data in sorted(contents.items())],
         "include_edges": local_edges, "external_system_headers": sorted(system_headers),
         "python_import_edges": python_edges, "python_standard_library_modules": python_system,
-        "explicit_dynamic_python_dependencies": list(PORTABLE_LIVE_RUNTIME) if "deployment/portable_live.py" in contents else [],
+        "explicit_dynamic_python_dependencies": dynamic,
         "supplemental_source_inputs": supplemental,
         "toolchain_prerequisites": {"python": ">=3.10", "compiler": manifest["compiler"],
                                     "link_compiler": manifest["link"]["compiler"],

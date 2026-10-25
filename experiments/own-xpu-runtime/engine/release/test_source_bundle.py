@@ -4,6 +4,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -204,6 +205,66 @@ class PythonClosureTests(unittest.TestCase):
             bundle.prepare(self.engine)
     def test_unknown_external_package_not_silently_system(self):
         self.write('build.py','import external_package_not_in_stdlib\n');self.commit()
+        with self.assertRaisesRegex(bundle.BundleError,'Missing/untracked Python dependency'):
+            bundle.prepare(self.engine)
+
+    def install_rolling_fixture(self):
+        for name in bundle.ROLLING_RUNTIME:
+            path=self.engine/name;path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_text('# committed runtime fixture\n')
+        self.write('planning/rolling_provider/arbiter.py','CAPACITY=2\n')
+        self.write('planning/rolling_provider/coordinator.py','from .arbiter import CAPACITY\n')
+        self.write('planning/rolling_provider/transport.py',
+            'from .coordinator import CAPACITY\nimport pending_ring_live_driver\n')
+        self.write('tools/rolling_ring_driver.py','from rolling_provider import transport\n')
+        self.write('tools/pending_ring_live_driver.py','import ring_live_driver\n')
+        self.write('tools/ring_live_driver.py','import ring_driver\n')
+        self.write('tools/ring_driver.py','import wavefront_driver\nimport ring_wire\n')
+        self.write('tools/ring_wire.py','import ring_coordinator\n')
+
+    def test_complete_rolling_package_extracts_imports_and_is_deterministic(self):
+        self.install_rolling_fixture();self.commit()
+        contents,report=bundle.prepare(self.engine)
+        self.assertTrue(set(bundle.ROLLING_RUNTIME)<=set(contents))
+        self.assertTrue(set(bundle.ROLLING_RUNTIME)<=set(report['explicit_dynamic_python_dependencies']))
+        first=bundle.archive_bytes(contents)
+        self.assertEqual(first,bundle.archive_bytes(bundle.prepare(self.engine)[0]))
+        extracted=self.root/'extracted';extracted.mkdir()
+        with tarfile.open(fileobj=io.BytesIO(first),mode='r:gz') as archive:
+            for member in archive.getmembers():
+                self.assertTrue(member.isfile())
+                target=extracted/member.name
+                self.assertTrue(target.resolve().is_relative_to(extracted))
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_bytes(archive.extractfile(member).read())
+        snapshot=extracted/'own-xpu-runtime-source'
+        code='import sys;sys.path[:0]=sys.argv[1:];import rolling_ring_driver;assert rolling_ring_driver.transport.CAPACITY==2'
+        subprocess.run([sys.executable,'-I','-c',code,str(snapshot/'tools'),str(snapshot/'planning')],
+                       check=True,capture_output=True,text=True,timeout=10)
+
+    def test_untracked_rolling_package_member_cannot_claim_complete_runtime(self):
+        self.install_rolling_fixture()
+        missing=self.engine/'planning/rolling_provider/transport.py';raw=missing.read_bytes()
+        missing.unlink();self.commit();missing.write_bytes(raw)
+        with self.assertRaisesRegex(bundle.BundleError,'Untracked required input'):
+            bundle.prepare(self.engine)
+
+    def test_new_untracked_relative_package_dependency_is_refused(self):
+        self.install_rolling_fixture()
+        self.write('planning/rolling_provider/coordinator.py','from .untracked_helper import CAPACITY\n')
+        self.commit();self.write('planning/rolling_provider/untracked_helper.py','CAPACITY=2\n')
+        with self.assertRaisesRegex(bundle.BundleError,'Missing/untracked Python dependency'):
+            bundle.prepare(self.engine)
+
+    def test_planning_cpu_fixture_import_included_only_when_committed(self):
+        self.install_rolling_fixture()
+        self.write('planning/review.py','from test_ring_live_driver import helper\n')
+        self.write('tools/test_ring_live_driver.py','helper=1\n')
+        self.commit()
+        contents,_=bundle.prepare(self.engine)
+        self.assertIn('tools/test_ring_live_driver.py',contents)
+        self.write('planning/review.py','from test_ring_live_wire import helper\n')
+        self.commit();self.write('tools/test_ring_live_wire.py','helper=2\n')
         with self.assertRaisesRegex(bundle.BundleError,'Missing/untracked Python dependency'):
             bundle.prepare(self.engine)
 

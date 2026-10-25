@@ -49,6 +49,25 @@ also check the portable adapter imports from an isolated extracted layout.
 See [the portable live research recipe](../deployment/LIVE.md) for its scope;
 packaging shared tools does not make their historical lab launchers portable.
 
+Committed ring entrypoints now activate additional explicit dependency groups:
+target-only ring, actual recursive-provider ring, pending-provider qualification,
+and rolling qualification each require their complete predecessor closure. The
+rolling group includes `tools/rolling_ring_driver.py` and all four
+`planning/rolling_provider` package modules, including `__init__.py`. Missing or
+untracked package members are refused even if another source tree happens to
+make an import work locally. Older source trees without these entrypoints retain
+the earlier portable-live requirements.
+
+The ring CPU test helpers used by committed planning/review modules are also
+included when tracked. An import of an untracked fixture still fails export;
+there is no fallback to the developer's working tree. The tests cover package
+relative imports, an isolated extracted package import, deterministic archive
+bytes, and refusal of missing runtime members or untracked helper dependencies.
+This change does not alter previously published source snapshots, including the
+9d snapshot, and does not itself build or upload a replacement. The independent
+v6 comparator/finalizer and external model/run evidence require their own
+closure before claiming a complete rolling qualification replay package.
+
 The compiler is Intel oneAPI 2026.0 at the path in the build manifest. C++20 system
 headers, OpenSSL and Level Zero development libraries are also required. The
 bundler does not validate their installation or modify them.
