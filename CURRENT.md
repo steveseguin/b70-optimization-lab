@@ -70,15 +70,22 @@ different metric from the old service observation. Full journals and raw state
 are durable and restore-tested; public metadata retains the exact hashes.
 The next placement (`0,8,21,34,48`) stopped cooperatively during first-card
 loading, before requests. The secondary channel-close error hid the original
-guard reason; diagnostic retention is being corrected before another attempt.
-No new faults appeared and all GPU processes exited. The failed run and original
-source pins are preserved durably. No training or arithmetic change. See the
+guard reason. Reviewed diagnostics now retain the first failure and rejected
+observation, with unchanged safety checks. A distinct qualification attempt
+(`persistent-rolling-balanced-qualified-b`) is loading on all four cards. The
+failed run and original source pins are preserved durably. The 27 GB root reserve
+remains enforced after verified consolidation of redundant tool downloads.
+No new fault, training or arithmetic change. See the
 [complete rolling suite result](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-proof/RESULT.md).
-The latest 450-file source export (`4b74995e2`) passes hashes and isolated imports;
-it is not built or published as a new qualified download. The earlier 424-file
-extracted portable build passed (binary `8ba3e562e175`), including all 225 native
-source hashes and generated local model configuration. This newer build has not
-yet run on GPUs. Deployment also now accepts a separately trusted
+The corrected 467-file source export (`5e196b41e`) passes all 466 payload hashes
+and isolated imports, including the mmap fix and trace-budget regression.
+Its extracted build with the generated deployment profile also passed: binary
+`ac1752994f8f`, all 227 compiled source hashes and 40 objects verified. This new
+executable has not run on GPUs and does not inherit portable rolling/service
+qualification. The older source snapshots remain preserved. The full rolling
+suite result is now live on neural.download; SkinDeep's matching local commit
+is `230f723`, with the existing remote write-access block unchanged.
+Deployment also now accepts a separately trusted
 launch-policy path/hash; its 42 CPU checks pass, with current capabilities retained. Draft training is prohibited. No host power or
 memory settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)
 and [portable proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/portable/pp4-proof/RESULT.md).

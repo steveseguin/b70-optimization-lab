@@ -1,0 +1,87 @@
+{
+  "schema": "ownrt.publication-agent-operation-timeline.v1",
+  "qualification_window_reported_by_parent": {
+    "began_utc": "2026-10-25T23:19:53Z",
+    "stop_utc": "2026-10-25T23:20:30Z\u201323:20:34Z"
+  },
+  "commands": [
+    {
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/dev/shm/codex-review-browsers node /dev/shm/ownrt-public-suite-visuals/check.cjs",
+      "kind": "Chromium screenshot verification",
+      "artifacts": [
+        "/dev/shm/ownrt-public-suite-visuals/neural-390.png",
+        "/dev/shm/ownrt-public-suite-visuals/neural-1440.png",
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-390.png",
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-1440.png"
+      ],
+      "notes": "Browser launched headless with --disable-gpu and --renderer-process-limit=2; script awaits browser.close() and closes local HTTP server in finally. This is not proof that Chromium never inspected DRM.",
+      "artifact_mtimes_utc": {
+        "/dev/shm/ownrt-public-suite-visuals/neural-390.png": "2026-10-25T23:16:06.394352+00:00",
+        "/dev/shm/ownrt-public-suite-visuals/neural-1440.png": "2026-10-25T23:16:06.609353+00:00",
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-390.png": "2026-10-25T23:16:06.792353+00:00",
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-1440.png": "2026-10-25T23:16:06.997353+00:00"
+      }
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 tools/validate-repro-guides.py --write-package-catalog; PYTHONDONTWRITEBYTECODE=1 python3 tools/validate-repro-guides.py; PYTHONDONTWRITEBYTECODE=1 TMPDIR=/dev/shm python3 -m unittest tools/test_validate_repro_guides.py",
+      "kind": "Guide validation and16CPUtests",
+      "artifacts": [
+        "/dev/shm/ownrt-public-suite-visuals/guides-catalog.log",
+        "/dev/shm/ownrt-public-suite-visuals/guides-validation.log",
+        "/dev/shm/ownrt-public-suite-visuals/guides-tests.log"
+      ],
+      "artifact_mtimes_utc": {
+        "/dev/shm/ownrt-public-suite-visuals/guides-catalog.log": "2026-10-25T23:19:17.769676+00:00",
+        "/dev/shm/ownrt-public-suite-visuals/guides-validation.log": "2026-10-25T23:19:19.044678+00:00",
+        "/dev/shm/ownrt-public-suite-visuals/guides-tests.log": "2026-10-25T23:19:20.294766+00:00"
+      }
+    },
+    {
+      "command": "python3 scripts/check_site.py; python3 scripts/check_seo.py",
+      "kind": "SkinDeep static validation",
+      "artifacts": [
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-links.log",
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-seo.log"
+      ],
+      "artifact_mtimes_utc": {
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-links.log": "2026-10-25T23:19:17.029675+00:00",
+        "/dev/shm/ownrt-public-suite-visuals/skindeep-seo.log": "2026-10-25T23:19:17.125675+00:00"
+      }
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 TMPDIR=/dev/shm python3 engine/release/source_bundle.py /dev/shm/ownrt-source-5e196b41e-closure.tar.gz",
+      "kind": "CPU source export",
+      "artifacts": [
+        "/dev/shm/ownrt-source-5e196b41e-closure.tar.gz",
+        "/dev/shm/ownrt-source-5e196b41e-closure.tar.gz.manifest.json"
+      ],
+      "artifact_mtimes_utc": {
+        "/dev/shm/ownrt-source-5e196b41e-closure.tar.gz": "2026-10-25T23:20:03.324229+00:00",
+        "/dev/shm/ownrt-source-5e196b41e-closure.tar.gz.manifest.json": "2026-10-25T23:20:03.330755+00:00"
+      }
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 TMPDIR=/dev/shm python3 /dev/shm/check-source-5e196b41e.py",
+      "kind": "CPU extraction/hash/import verification",
+      "artifacts": [
+        "/dev/shm/check-source-5e196b41e.py",
+        "/dev/shm/ownrt-source-5e196b41e-closure-check.json"
+      ],
+      "child_command": "python3 -I -B -c <code retained in helper> /dev/shm/ownrt-source-5e196b41e-extracted/own-xpu-runtime-source",
+      "imports": [
+        "persistent_rolling_driver",
+        "persistent_rolling_suite",
+        "rolling_provider.transport",
+        "portable_live",
+        "prepare",
+        "test_persistent_trace_budget"
+      ],
+      "artifact_mtimes_utc": {
+        "/dev/shm/check-source-5e196b41e.py": "2026-10-25T23:20:19.035782+00:00",
+        "/dev/shm/ownrt-source-5e196b41e-closure-check.json": "2026-10-25T23:20:19.362733+00:00"
+      }
+    }
+  ],
+  "limits": "Artifact mtimes record writes, not exact process start/exit timestamps. Tool calls returned completion; no process accounting trace was captured. No cause is inferred. Agent issued no additional subprocess between successful import receipt23:20:19.363 and parent diagnosis request.",
+  "browser_gui_checks_prohibited_while_gpu_runs_acknowledged": true
+}
