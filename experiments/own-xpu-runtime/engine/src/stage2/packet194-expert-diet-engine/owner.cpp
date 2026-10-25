@@ -5,6 +5,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstdio>
+#include <cstring>
 #include <limits>
 #include <mutex>
 #include <map>
@@ -319,6 +320,34 @@ std::string Arena::census() const {
 }
 CopyEngine::CopyEngine(Device& d,std::size_t limit,std::size_t depth):owner_(d),limit_(limit),depth_(depth) {
   if(!limit || limit>128ull*1024*1024 || !depth || depth>2) throw std::invalid_argument("copy bound");
+}
+Event Device::peer_copy(Device& source,Allocation dst,std::size_t off,Allocation src,std::size_t soff,std::size_t n) {
+  admit();source.admit();if(&source==this)throw std::invalid_argument("peer copy within one device");
+  const auto& d=arena.row(dst);const auto& s=source.arena.row(src);
+  if(!n||!d.live||!s.live||d.memory!=Memory::device||s.memory!=Memory::device||off>d.bytes||n>d.bytes-off||soff>s.bytes||n>s.bytes-soff)
+    throw std::out_of_range("peer copy extent/lifetime");
+  void* dp=static_cast<std::byte*>(d.pointer)+off;const void* sp=static_cast<const std::byte*>(s.pointer)+soff;
+  auto& counter=fast_owners.at(this).copies.peer[0];
+  if(capture_) {
+    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=0;item.copy_counter=&counter;
+    item.ids={dst,src};item.pointers={dp,const_cast<void*>(sp)};
+    item.submit=backend_->prepare_peer_copy(dp,sp,n,*source.backend_);
+    item.argument_bytes.resize(sizeof(Allocation)*2+sizeof(std::size_t)*3);
+    auto* bytes=item.argument_bytes.data();std::memcpy(bytes,item.ids.data(),sizeof(Allocation)*2);std::size_t extents[]{off,soff,n};std::memcpy(bytes+sizeof(Allocation)*2,extents,sizeof extents);
+    capture_->push_back(std::move(item));return capture_->size();
+  }
+  try {auto e=backend_->peer_copy(dp,sp,n,*source.backend_);events_.push_back(e);remember(e,0);++counter;return e;}
+  catch(const std::exception& e){fault_=e.what();throw;}
+}
+Event Device::peer_wait(Device& peer) {
+  admit();peer.admit();if(&peer==this)throw std::invalid_argument("peer wait within one device");
+  if(capture_) {
+    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=0;
+    Backend* self=backend_.get();Backend* other=peer.backend_.get();item.submit=[self,other]{return self->peer_wait(*other);};
+    capture_->push_back(std::move(item));return capture_->size();
+  }
+  try {auto e=backend_->peer_wait(*peer.backend_);events_.push_back(e);remember(e,0);return e;}
+  catch(const std::exception& e){fault_=e.what();throw;}
 }
 Event CopyEngine::copy(Allocation dst,std::size_t off,Allocation src,std::size_t soff,std::size_t n,std::span<const Event> deps) {
   owner_.admit(); owner_.validate(deps);

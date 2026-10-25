@@ -52,6 +52,11 @@ struct Backend {
   virtual std::function<Event()> prepare(const Operation&, std::span<void* const>) { throw std::logic_error("prepared backend unsupported"); }
   virtual std::function<Event()> prepare_owned(std::shared_ptr<const Operation> op, std::span<void* const> pointers) { return prepare(*op,pointers); }
   virtual EventTiming timing(Event) { throw std::logic_error("profiling disabled"); }
+  // Multi-card (2026-10-25): devices that share one context. peer_copy runs on this queue after everything already
+  // submitted to `source`'s queue; peer_wait puts a marker on this queue that waits for `peer`'s latest work.
+  virtual Event peer_copy(void*, const void*, std::size_t, Backend& /*source*/) { throw std::logic_error("peer copy unsupported"); }
+  virtual std::function<Event()> prepare_peer_copy(void* d, const void* s, std::size_t n, Backend& source) { return [this,d,s,n,&source]{return peer_copy(d,s,n,source);}; }
+  virtual Event peer_wait(Backend& /*peer*/) { throw std::logic_error("peer wait unsupported"); }
   virtual bool complete(Event) = 0;
   virtual bool wait(Event, Deadline) = 0;
   virtual void synchronize() = 0; // only after all tracked events complete
@@ -195,6 +200,11 @@ class Device {
   void begin_capture(std::vector<PreparedCompute>& out) { admit(); if(capture_)throw std::logic_error("nested capture");capture_=&out; }
   void end_capture() noexcept { capture_=nullptr; }
   Event issue(const PreparedCompute&);
+  // Multi-card (2026-10-25): both Devices belong to one shared-context group (make_sycl_device_group).
+  // peer_copy: copy source's allocation bytes into this Device's allocation, after all work submitted to `source`.
+  // peer_wait: a marker on this queue after all work submitted to `peer` (protects a buffer the peer still reads).
+  Event peer_copy(Device& source, Allocation dst, std::size_t dst_offset, Allocation src, std::size_t src_offset, std::size_t bytes);
+  Event peer_wait(Device& peer);
   void invalidate_prepared() { if(in_flight())throw std::logic_error("invalidate while pending");generation_=next_handle(); }
   uint64_t generation() const noexcept {return generation_;}
   // Packet4 eager segments only: retire completed events, preserving allocations.
@@ -208,5 +218,7 @@ class Device {
 // No _Exit/terminate, automatic reset, kill, retry or successful exit receipt.
 [[noreturn]] void hold_for_supervisor();
 std::unique_ptr<Backend> make_sycl_device(std::size_t card, bool profiling = false);
+// One shared Level Zero context over several cards, one in-order queue each (peer access required).
+std::vector<std::unique_ptr<Backend>> make_sycl_device_group(const std::vector<std::size_t>& cards, bool profiling = false);
 std::vector<std::string> enumerate_sycl_cards();
 }

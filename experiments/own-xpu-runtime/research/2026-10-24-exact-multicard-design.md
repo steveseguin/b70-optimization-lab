@@ -227,3 +227,30 @@ Build order:
 4. Expert placement by id parity, plus the slot and status gather.
 5. Rank 0 (banks, snapshots and lookups per card), the draft head (keep a full copy on card 0), and the Python
    per-rank `--cards`.
+
+## Step 1 result: engine peer copy (2026-10-25)
+
+Built:
+- `make_sycl_device_group` (one shared Level Zero context, one in-order queue per card, peer access checked);
+- `Device::peer_copy(source, …)`, which runs after all work submitted to the source card;
+- `Device::peer_wait(peer)`, a marker after the peer's latest work, which protects a buffer the peer still reads.
+
+Both have prepared (captured) forms. Test: [p2p/owner_peer.cpp](p2p/owner_peer.cpp), cards 23:00.0 and 47:00.0.
+
+| Bytes | Copy + wait round trip | Copies only | Host-waited round trip |
+|---:|---:|---:|---:|
+| 10,240 | 26.7 µs (enqueue 27.8) | 13.3 µs (enqueue 13.2) | 20.9 µs |
+| 40,960 | 30.8 µs (enqueue 29.4) | 16.3 µs (enqueue 13.5) | 28.2 µs |
+| 163,840 | 29.1 µs (enqueue 29.7) | 22.6 µs (enqueue 13.5) | 34.2 µs |
+
+All bytes are bitwise-equal after 800 hops.
+
+- **The limit is host submission, not the GPU.** Each SYCL submit with a cross-queue dependency costs about 6.7 µs on
+  the host, and the enqueue time equals the total.
+- **Consequence for TP in one process.** One host thread would submit for both cards. That is about twice today's ~758
+  launches per half: rank 0's enqueue loop is already 3.7 ms per half, and gathers come on top. Single-threaded
+  submission would make the host the bottleneck before the GPUs.
+- **TP therefore needs** one submission thread per card, or replayed command lists (XPU graph capture works on the
+  B70), before the row-split work pays off.
+- **Next:** measure the prepared (captured) issue path per card from two threads, and check that cross-card event
+  dependencies stay correct between threads.

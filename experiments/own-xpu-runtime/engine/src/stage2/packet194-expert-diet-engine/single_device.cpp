@@ -23,7 +23,12 @@ std::vector<sycl::device> cards() {
       for(const auto& d:p.get_devices(sycl::info::device_type::gpu)) out.push_back(d);
   return out;
 }
+struct SharedGroup {
+  ze_context_handle_t native=nullptr;std::unique_ptr<sycl::context> context;std::vector<sycl::device> devices;
+  ~SharedGroup(){context.reset();if(native)zeContextDestroy(native);}
+};
 class SyclDevice final : public Backend, public OrderedQueue {
+  std::shared_ptr<SharedGroup> group_;
   std::size_t card_;
   std::string label_;
   ze_context_handle_t native_=nullptr;
@@ -40,6 +45,40 @@ class SyclDevice final : public Backend, public OrderedQueue {
     for(auto e:deps)(void)event(e); return {}; // Same in-order queue; validate ownership, omit redundant dependencies.
   }
  public:
+  // Group member: the shared context, this card's own in-order queue.
+  SyclDevice(std::size_t card,bool profiling,std::shared_ptr<SharedGroup> group,std::size_t index):group_(std::move(group)),card_(card) {
+    events_.reserve(65536);
+    std::lock_guard lock(registry_mutex);
+    if(owned_cards.contains(card)) throw std::logic_error("card already has an owner");
+    auto d=group_->devices.at(index);
+    label_="LevelZero:"+std::to_string(card)+":"+d.get_info<sycl::info::device::name>()+":shared-context";
+    if(profiling) label_+=":driver="+d.get_info<sycl::info::device::driver_version>();
+    auto handler=[this](sycl::exception_list errors) {
+      std::lock_guard error_lock(error_mutex_);
+      if(!error_ && errors.size()) error_=*errors.begin();
+    };
+    context_=std::make_unique<sycl::context>(*group_->context);
+    auto properties=profiling
+      ? sycl::property_list{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}}
+      : sycl::property_list{sycl::property::queue::in_order{}};
+    queue_=std::make_unique<sycl::queue>(*context_,d,handler,properties);
+    owned_cards.insert(card);
+  }
+  bool shares(const SyclDevice& o) const {return group_&&group_==o.group_;}
+  // The latest submission on this in-order queue (none when every tracked event has been retired).
+  bool last_native(sycl::event& out) const {if(events_.empty())return false;out=events_.back().event;return true;}
+  Event peer_copy(void* d,const void* s,std::size_t n,Backend& source) override {
+    check_error();capacity();auto& src=dynamic_cast<SyclDevice&>(source);
+    if(!shares(src)||&src==this)throw std::logic_error("peer copy needs two cards of one shared context");
+    sycl::event dep;const bool has=src.last_native(dep);
+    return record(queue_->submit([&](sycl::handler& h){if(has)h.depends_on(dep);h.memcpy(d,s,n);}));
+  }
+  Event peer_wait(Backend& peer) override {
+    check_error();capacity();auto& other=dynamic_cast<SyclDevice&>(peer);
+    if(!shares(other)||&other==this)throw std::logic_error("peer wait needs two cards of one shared context");
+    sycl::event dep;const bool has=other.last_native(dep);
+    return record(queue_->submit([&](sycl::handler& h){if(has)h.depends_on(dep);h.single_task<class PeerWaitMarker>(packet26::checked([]{}));}));
+  }
   explicit SyclDevice(std::size_t card,bool profiling):card_(card) {
     events_.reserve(65536);
     std::lock_guard lock(registry_mutex);
@@ -126,11 +165,28 @@ class SyclDevice final : public Backend, public OrderedQueue {
   void close_context() override {
     context_.reset();
     if(native_ && zeContextDestroy(native_)!=ZE_RESULT_SUCCESS) throw std::runtime_error("zeContextDestroy failed");
-    native_=nullptr; std::lock_guard lock(registry_mutex); owned_cards.erase(card_);
+    native_=nullptr; group_.reset(); std::lock_guard lock(registry_mutex); owned_cards.erase(card_);
   }
 };
 }
 std::unique_ptr<Backend> make_sycl_device(std::size_t card,bool profiling) {return std::make_unique<SyclDevice>(card,profiling);}
+std::vector<std::unique_ptr<Backend>> make_sycl_device_group(const std::vector<std::size_t>& indices,bool profiling) {
+  auto found=cards();if(indices.size()<2)throw std::invalid_argument("device group needs two or more cards");
+  auto group=std::make_shared<SharedGroup>();
+  for(auto i:indices){if(i>=found.size())throw std::out_of_range("Level Zero GPU index");group->devices.push_back(found[i]);}
+  for(size_t a=0;a<group->devices.size();++a)for(size_t b=0;b<group->devices.size();++b)if(a!=b) {
+    ze_bool_t can=0;auto da=sycl::get_native<sycl::backend::ext_oneapi_level_zero>(group->devices[a]),db=sycl::get_native<sycl::backend::ext_oneapi_level_zero>(group->devices[b]);
+    if(zeDeviceCanAccessPeer(da,db,&can)!=ZE_RESULT_SUCCESS||!can)throw std::runtime_error("cards cannot access each other's memory");
+  }
+  ze_context_desc_t desc{};desc.stype=ZE_STRUCTURE_TYPE_CONTEXT_DESC;
+  auto driver=sycl::get_native<sycl::backend::ext_oneapi_level_zero>(group->devices[0].get_platform());
+  if(zeContextCreate(driver,&desc,&group->native)!=ZE_RESULT_SUCCESS)throw std::runtime_error("zeContextCreate failed; no fallback context");
+  group->context=std::make_unique<sycl::context>(sycl::make_context<sycl::backend::ext_oneapi_level_zero>(
+    {group->native,group->devices,sycl::ext::oneapi::level_zero::ownership::keep},[](sycl::exception_list){}));
+  std::vector<std::unique_ptr<Backend>> out;
+  for(size_t i=0;i<indices.size();++i)out.push_back(std::make_unique<SyclDevice>(indices[i],profiling,group,i));
+  return out;
+}
 std::vector<std::string> enumerate_sycl_cards() {
   std::vector<std::string> names;
   for(const auto& d:cards()) names.push_back(d.get_info<sycl::info::device::name>());
