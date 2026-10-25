@@ -10,30 +10,42 @@
     "allocation identity invariant across requests",
     "no expected answers/oracles in runtime inputs",
     "explicit fixed process check policy and max512 admission",
-    "failed existing lifecycle remains failed without retry"
+    "failed existing lifecycle remains failed without retry",
+    "actual file-backed mmap four-owner/two-request socket run; stale final-byte and last-owner reset failure refuse before any ROW"
   ],
-  "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=engine/tools:engine/planning python3 -m unittest test_rolling_provider test_rolling_provider_arbiter test_persistent_rolling test_rolling_ring_socket test_rolling_ring_driver -q",
+  "command": "PYTHONDONTWRITEBYTECODE=1 TMPDIR=/dev/shm PYTHONPATH=engine/tools:engine/planning python3 -m unittest test_rolling_provider test_rolling_provider_arbiter test_persistent_rolling test_rolling_ring_socket test_rolling_ring_driver -q",
   "device_execution_requested": false,
   "exit_code": 0,
-  "native_build_performed": false,
-  "new_persistent_tests": 12,
-  "packaging_only": {
-    "current_test_sha256": "02ed2bcc95949108870c0cc4d4cf529755cc80286904d9d2f04000f63d300428",
-    "old_test_archive": "engine/planning/evidence/test_persistent_rolling-before-eof-cleanup.py.gz",
-    "old_test_archive_sha256": "4f85e819a0f3e543c7779c1e98dc67fc71fba1abb517ec08504f5025498f5a5a",
-    "old_test_sha256": "bd4d49b209a67303495414a0d88d73ef34058bb09cc91504d4c3d6b51970f685",
-    "patch_archive": {
-      "bytes": 662,
-      "path": "engine/planning/evidence/persistent-rolling-context-minimum.patch.gz",
-      "raw_bytes": 1383,
-      "raw_sha256": "291aabf485523a945ac2fe6efc8da5db3f7946447b19bbc863c2cf22582a5c75",
-      "sha256": "513d448f49b233b6822925a5d70f3157b8a80a8e29428c1defa4dd33b46e16c4"
+  "mmap_fix": {
+    "all_owner_barrier_failure_refused": true,
+    "full_file_backed_two_request_owners": 4,
+    "native_changed": false,
+    "original_failure_archive_sha256": "dff45f3fbb0c34606ea8c2df8be189d4015435296f5f41b31738f94149f41328",
+    "patch": "engine/planning/evidence/persistent-rolling-mmap-fix.patch.gz",
+    "patch_raw_sha256": "8b2c57d666cf79123b09265146679eeb12e56b7446324b2e9109eca633598604",
+    "patch_sha256": "ad7869cdbeb28c4fd59ddc975f2e4dd2760fdb372f32370764a07980adf69de0",
+    "raw_shared_bytes": 266304,
+    "source_snapshots": {
+      "engine/planning/evidence/persistent-rolling-controller-cpu.json": {
+        "sha256": "a9ccdaf2433274f45362f63a9d174e021f1fb1181fef91d922da119a2727fd50",
+        "snapshot": "engine/planning/evidence/persistent-rolling-controller-cpu.json-before-mmap-fix.gz",
+        "snapshot_sha256": "2c04d3092bcd88517400ffaad339202df7c8f9800517c2f8fd7a86e4253e1d4d"
+      },
+      "engine/tools/persistent_rolling_suite.py": {
+        "sha256": "f60ca0eb0e3650481f951a2c066ba7347f28e72c7bf47e70122b71a72d6b5b22",
+        "snapshot": "engine/planning/evidence/persistent_rolling_suite.py-before-mmap-fix.gz",
+        "snapshot_sha256": "b77a19b89f252d75d006eee9247c1b1cd8259e7e868f32961cc6ccfc33fe0661"
+      },
+      "engine/tools/test_persistent_rolling.py": {
+        "sha256": "02ed2bcc95949108870c0cc4d4cf529755cc80286904d9d2f04000f63d300428",
+        "snapshot": "engine/planning/evidence/test_persistent_rolling.py-before-mmap-fix.gz",
+        "snapshot_sha256": "db310ad147427760aa4dc60f991874b661f3e6effef419f24ae3dc3131f3d66d"
+      }
     },
-    "prior_receipt": "engine/planning/evidence/persistent-rolling-controller-cpu-before-packaging.json",
-    "prior_receipt_sha256": "ea9cea3592dee779f52f38d89c48dabc8c8b2913fc023a13772404c9febf8857",
-    "python_ast_sha256": "a0bdc11c4b3b2d8a58d58131f6d49fa46069d1aea1e1a6cd8c8acd04405c59a9",
-    "reason": "Preserve literal patch context through Git whitespace checks; remove only one test EOF blank line, with identical Python AST. Runtime source unchanged."
+    "stale_final_byte_refused": true
   },
+  "native_build_performed": false,
+  "new_persistent_tests": 13,
   "passed": true,
   "plan_schema": "ownrt.persistent-rolling-plan.v1",
   "reset_descriptor_schema": "ownrt.ring-reset-request.v1",
@@ -63,19 +75,25 @@
     "engine/tools/pending_ring_live_wire.py": "e8cb3b84ec1c7efeb9e077e4bb1c5970e3a36ac258f780204744066048a694b5",
     "engine/tools/persistent_live_suite.py": "72727de6a04c5ff12fbdcd272daf0732f36627bdcf3546e29230f9c509438dc4",
     "engine/tools/persistent_rolling_driver.py": "bf51db8f80926b5bc32eccc36aabc911e75e70dd44f9fc59d69cf08a5ccf9ce6",
-    "engine/tools/persistent_rolling_suite.py": "f60ca0eb0e3650481f951a2c066ba7347f28e72c7bf47e70122b71a72d6b5b22",
+    "engine/tools/persistent_rolling_suite.py": "ce5e45e6ed22249a981ee4b2b80c564d406d95e0cb2ca0ec93dbdc3601ad89e1",
     "engine/tools/pipeline_driver.py": "15b3616ed47348451e834022badaa7de5ff7161c9e53595bbddbabc4fd0a37d3",
     "engine/tools/ring_driver.py": "3f545dcfd77d1610e27f77630e117068889c87da535712507d74dedfe2a8558b",
     "engine/tools/ring_live_driver.py": "b82f8a0e7798e0727db8133e5061178e825de2d5c00b6f0f40aaa747bdb41ef7",
     "engine/tools/ring_live_wire.py": "c687b2cf3b1343222513dd7b39e0337a9f44eff4695134c15f0c49b93e8984c4",
     "engine/tools/ring_wire.py": "16e7c7d3bc1a6c41e32d92e4df495144321b72d79feb88cf2a8bfc569ab6323b",
     "engine/tools/rolling_ring_driver.py": "7e7dc1e639855bd4f0b579e78e99a0dc92e70dc4608a2b7c5147a0e0ee5b7afa",
-    "engine/tools/test_persistent_rolling.py": "02ed2bcc95949108870c0cc4d4cf529755cc80286904d9d2f04000f63d300428",
+    "engine/tools/test_persistent_rolling.py": "232ecce61298e3fffd86606649f4ff089cd49c3364a89b0a201811f80edb76c9",
     "engine/tools/test_ring_live_driver.py": "bb461dbfb007a83879cf42607ccd4ef60f1b757f32852bd9dd7b17955153057d",
     "engine/tools/test_rolling_ring_driver.py": "eacf53be1852dab3ddb12628a7bd23bd749f53866cdfcb85adf3f2c33ae5e783",
     "engine/tools/test_rolling_ring_socket.py": "e5c8c9e12a68ebfcf2b7d31b223ac82d6dcf8af7bdd71aacdac4c9188cf08fdd",
     "engine/tools/test_wavefront_driver.py": "60d5ec03008ed6d18fcc22b05ad5b7acf67c38515e0b42be980d3e0176272107",
     "engine/tools/wavefront_driver.py": "7c1b593ec4221fe2170275281c937842ed68bf8f578b9fca52d4a344518da56c"
+  },
+  "superseded_controller_receipt": {
+    "reason": "Initial GPU reset barrier falsely rejected actual zero mmap because iteration yields truthy bytes; corrected byte slice inspection and real mmap end-to-end fixture.",
+    "sha256": "a9ccdaf2433274f45362f63a9d174e021f1fb1181fef91d922da119a2727fd50",
+    "snapshot": "engine/planning/evidence/persistent-rolling-controller-cpu.json-before-mmap-fix.gz",
+    "snapshot_sha256": "2c04d3092bcd88517400ffaad339202df7c8f9800517c2f8fd7a86e4253e1d4d"
   },
   "supersedes": {
     "patch": "engine/planning/evidence/persistent-rolling-context-minimum.patch.gz",
@@ -86,7 +104,7 @@
     "reason": "Explicit context>=32 admission for fixed cold extent; old CPU proof did not test this boundary.",
     "sha256": "ccc86caba44ac010d90a9ba6ae73d6d48edc98665f476477a90a01c21d1ae6fe"
   },
-  "tests": 31,
+  "tests": 32,
   "topologies": [
     2,
     4,

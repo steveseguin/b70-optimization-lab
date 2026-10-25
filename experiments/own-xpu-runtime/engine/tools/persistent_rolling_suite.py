@@ -151,7 +151,8 @@ def reset(stages, plan, guard, output, *, previous_epoch, previous_request, epoc
     # Only after every native owner attests cold state may Python replace its
     # target/provider ledgers. start_async does not reset the global sequence.
     for stage in stages:
-        base.require(not any(stage.shared),'native reset did not invalidate complete shared publication mapping')
+        base.require(len(stage.shared)==base.SHARED and not any(stage.shared[:]),
+                     'native reset did not invalidate complete shared publication mapping')
         stage.start_async()
         stage.sock.settimeout(.2)
         if hasattr(stage,'handoff'):del stage.handoff

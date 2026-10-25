@@ -1,6 +1,7 @@
 """Real fragmented socket/codec cold-reset tests; no device/process creation."""
 from hashlib import sha256
 import json
+import mmap
 from pathlib import Path
 import socket
 import tempfile
@@ -40,6 +41,7 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
                 serial=0;final_tokens={};state.pop('accepted',None);state.pop('provider',None)
                 shared[:]=bytes(len(shared));destination=Path(d['destination']);destination.mkdir(parents=True)
                 if state.get('stale_shared'):shared[codec.FINAL_OFFSET+16]=1
+                if state.get('stale_shared_tail'):shared[-1]=1
                 receipt=dict(d,schema='ownrt.ring-reset.v1',passed=True,check_policy=state['policy'],
                     target_position=0,target_physical=0,target_committed=0,target_pending=0,
                     draft_position=0 if index==0 else None,provider_serial=0 if index==0 else None,
@@ -123,15 +125,21 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
 
 
 def exercise(count, *, policy='qualification', first_options=None, second_prompt=None, final_options=None,
-             on_cleanup=None, eos=None):
+             on_cleanup=None, eos=None, file_backed=False):
     prompt=[3,5,8,11]
     requests=[dict(id='first',prompt_tokens=prompt,max_new=16),
               dict(id='second',prompt_tokens=second_prompt or prompt,max_new=16)]
-    stages=[];threads=[];states=[];errors=[];mappings=[bytearray(base.SHARED) for _ in range(count)]
+    stages=[];threads=[];states=[];errors=[];mappings=[]
     guard=Guard();guard.obs=type('Observer',(),{'observe':lambda self:{}})()
     guard.validate=lambda *_:None
     with tempfile.TemporaryDirectory() as temporary:
         output=Path(temporary)
+        for i in range(count):
+            if file_backed:
+                with (output/f'mapping-{i}.bin').open('w+b') as stream:
+                    stream.truncate(base.SHARED)
+                    mappings.append(mmap.mmap(stream.fileno(),base.SHARED))
+            else:mappings.append(bytearray(base.SHARED))
         eos=[96] if eos is None else eos
         inputs=dict(schema='ownrt.persistent-rolling-inputs.v1',model_identity_sha256='a'*64,
             activation_dtype='F32',eos_token_ids=eos,prompts=requests)
@@ -171,9 +179,26 @@ def exercise(count, *, policy='qualification', first_options=None, second_prompt
             for stage in stages:stage.sock.close()
             for thread in threads:thread.join(timeout=2)
             if on_cleanup:on_cleanup(states)
+            for mapping in mappings:
+                if isinstance(mapping,mmap.mmap):mapping.close()
 
 
 class PersistentSocketTests(unittest.TestCase):
+    def test_real_file_backed_mmap_zero_tail_and_all_owner_barrier(self):
+        with tempfile.TemporaryFile() as stream:
+            stream.truncate(base.SHARED)
+            with mmap.mmap(stream.fileno(),base.SHARED) as mapping:
+                self.assertTrue(any(mapping))  # b'\\0' elements are truthy.
+                self.assertFalse(any(mapping[:]))
+        result,_,_=exercise(4,file_backed=True)
+        self.assertEqual(result['request_count'],2)
+        for options in ({'stale_shared_tail':True},{'bad_reset_receipt':{'target_pending':1}}):
+            retained=[]
+            with self.subTest(options=options),self.assertRaises(ValueError):
+                exercise(4,file_backed=True,final_options=options,on_cleanup=lambda s:retained.extend(s))
+            self.assertTrue(all(len(s.get('resets',()))==1 for s in retained))
+            self.assertFalse(any(s.get('issued_epochs') for s in retained))
+
     def test_two_real_fragmented_cold_requests_two_four_six_and_global_sequence(self):
         for count in (2,4,6):
             with self.subTest(count=count):
