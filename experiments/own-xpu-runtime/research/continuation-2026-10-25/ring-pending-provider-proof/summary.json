@@ -1,0 +1,214 @@
+{
+  "schema": "ownrt.pending-provider-proof.v1",
+  "passed": true,
+  "source_run": "/dev/shm/sc117-ring-20261025/pending-provider-a",
+  "target_state_exact": true,
+  "draft_state_exact": true,
+  "output_tokens_exact": true,
+  "legacy_proposals_exact": true,
+  "target_buffer_count": 2065,
+  "draft_allocation_count": 73,
+  "output_tokens": 32,
+  "input_rows": 118,
+  "boundaries": [
+    0,
+    13,
+    25,
+    37,
+    48
+  ],
+  "provider_pairs": 117,
+  "recursive_depth2_pairs": 32,
+  "pending_borrows": {
+    "1": 1,
+    "2": 2
+  },
+  "provider_survival_passed": true,
+  "provider_survival_checks": 2,
+  "provider_survival_discarded_rows": 3,
+  "provider_survival_advanced_checks": 2,
+  "provider_audit": {
+    "passed": true,
+    "pairs": 117,
+    "depth2_pairs": 32,
+    "pending_borrows": [
+      [
+        95,
+        2
+      ],
+      [
+        96,
+        2
+      ],
+      [
+        97,
+        1
+      ]
+    ],
+    "pair_sequence_sha256": "e83e418b189598df0852656a71abab9ae33826e99bfcfd96f46790bdd60d7fe3"
+  },
+  "survival_audit": {
+    "passed": true,
+    "checks": 2,
+    "discarded_rows": 3,
+    "frontiers": [
+      {
+        "provider_position": 95,
+        "current_extent": 96,
+        "saved_extent": 96,
+        "discarded_rows": 2,
+        "captured_provider_position": 94,
+        "abort_sequence": 290
+      },
+      {
+        "provider_position": 97,
+        "current_extent": 128,
+        "saved_extent": 128,
+        "discarded_rows": 1,
+        "captured_provider_position": 95,
+        "abort_sequence": 298
+      }
+    ]
+  },
+  "native_command_audits": [
+    {
+      "passed": true,
+      "commands": 241,
+      "accepted_input_rows": 118,
+      "peak_pending": 2,
+      "counters": {
+        "rows": 121,
+        "tentative_rows": 4,
+        "commits": 118,
+        "abort_count": 2,
+        "discarded_rows": 3,
+        "accepted_tentative_rows": 1
+      },
+      "suffix_restores": [
+        {
+          "sequence": 290,
+          "position": 96,
+          "row_ids": [
+            97,
+            98
+          ]
+        },
+        {
+          "sequence": 298,
+          "position": 98,
+          "row_ids": [
+            101
+          ]
+        }
+      ]
+    },
+    {
+      "passed": true,
+      "commands": 236,
+      "accepted_input_rows": 118,
+      "peak_pending": 1,
+      "counters": {
+        "rows": 118,
+        "tentative_rows": 0,
+        "commits": 118,
+        "abort_count": 0,
+        "discarded_rows": 0,
+        "accepted_tentative_rows": 0
+      },
+      "suffix_restores": []
+    },
+    {
+      "passed": true,
+      "commands": 236,
+      "accepted_input_rows": 118,
+      "peak_pending": 1,
+      "counters": {
+        "rows": 118,
+        "tentative_rows": 0,
+        "commits": 118,
+        "abort_count": 0,
+        "discarded_rows": 0,
+        "accepted_tentative_rows": 0
+      },
+      "suffix_restores": []
+    },
+    {
+      "passed": true,
+      "commands": 236,
+      "accepted_input_rows": 118,
+      "peak_pending": 1,
+      "counters": {
+        "rows": 118,
+        "tentative_rows": 0,
+        "commits": 118,
+        "abort_count": 0,
+        "discarded_rows": 0,
+        "accepted_tentative_rows": 0
+      },
+      "suffix_restores": []
+    }
+  ],
+  "raw_bundles": [
+    {
+      "path": "/dev/shm/sc117-ring-20261025/pending-provider-a/stage0/native/state-2147483647/state.bundle",
+      "bytes": 133264652,
+      "sha256": "68d08d89fc5b0cfb1f89b565a8921f73e0fd4b37a237da4de907420fdf9f2cb7",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-pending-provider-proof/stage0/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/pending-provider-a/stage0/native/state-2147483647.draft/state.bundle",
+      "bytes": 27451714,
+      "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-pending-provider-proof/stage0/state-2147483647.draft",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/pending-provider-a/stage1/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "7b46fe09c96a06095bafbb23598f29fb3d9d808814e64905632fa0c3504d4063",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-pending-provider-proof/stage1/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/pending-provider-a/stage2/native/state-2147483647/state.bundle",
+      "bytes": 95627784,
+      "sha256": "f4c7e4791a65bf25da09de93be773a36e6013e68c362b467853981d6a8ae37ce",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-pending-provider-proof/stage2/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/pending-provider-a/stage3/native/state-2147483647/state.bundle",
+      "bytes": 92779180,
+      "sha256": "503ded24366842efb7bcb9b64aa9556a0eb9afbe8b691ac96c4cbf66770d42e5",
+      "retained_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-pending-provider-proof/stage3/state-2147483647",
+      "retention": "external raw; durable archive pending"
+    }
+  ],
+  "raw_bytes": 444751114,
+  "actual_provider": true,
+  "scripted_tentative_inputs": true,
+  "recursive_proposals_consumed": false,
+  "speed_claim": false,
+  "original_plan": {
+    "path": "/dev/shm/sc117-ring-20261025/pending-provider-a/plan.json",
+    "bytes": 24165,
+    "sha256": "03e471d6ea1299844bbf3e47d5bbfd67ef000a92a4d66c725f153b2baa9a0371"
+  },
+  "original_result": {
+    "path": "/dev/shm/sc117-ring-20261025/pending-provider-a/pending-ring-live-result.json",
+    "bytes": 2027,
+    "sha256": "1fb132e1aadfad6e5bd5e289dab04f9debe5ea2fa9020e1139541ac200170829"
+  },
+  "finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_pending_provider_proof.py",
+    "bytes": 19035,
+    "sha256": "0bdabf827db12f1d1c10ab677e669643e7d6cbf7340f9d1d64e3e3016b6523e6"
+  },
+  "comparator": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py",
+    "bytes": 38328,
+    "sha256": "e300a33f65f732a21449fe6a2eb62b3cbdb96bffef4f00169ad592aa9f4e8e97"
+  },
+  "scope": "Actual canonical provider state/private backup/host/Sequence survive target suffix abort with two and one pending rows, and final target/draft states match accepted replay. Tentative target inputs are scripted; recursive proposals remain discarded. No rolling, speed or independent CPU arithmetic qualification."
+}

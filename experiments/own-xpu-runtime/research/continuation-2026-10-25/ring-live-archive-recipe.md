@@ -1,7 +1,8 @@
 # Ring-live evidence archive support
 
-These commands are prepared for a future PASSED `ownrt.ring-live-proof.v1`.
-No actual run archive has been created by this preparation task. Keep the run,
+These commands accept a PASSED `ownrt.ring-live-proof.v1`; the
+[actual recursive proof](ring-live-depth2-proof/RESULT.md) has now been archived
+and restore-tested using them. Keep the run,
 proof, complete archive and restoration directory; no helper deletes originals.
 
 Create a complete archive in tmpfs after the proof passes:
@@ -31,6 +32,13 @@ The compact receipt records exact sizes and hashes, the full mapping, embedded
 and reused byte counts, and a strict sealed-reader check of every independently
 restored bundle. A later durable copy needs its own copy-and-rehash receipt;
 creating a tmpfs archive does not establish durable retention.
+
+The distinct pending-target survival proof uses
+`archive_pending_provider_proof.py --run RUN --proof PROOF --archive ARCHIVE --receipt RECEIPT`
+for its full archive. It requires the explicit v5 proof, both newer-provider
+survival checks and the complete target/draft comparison. The same `reuse`
+command and restoration reader then preserve all its raw bytes. The old
+quiescent full-archive gate remains unchanged.
 
 Restore from the compact packet using its independently retained digest:
 

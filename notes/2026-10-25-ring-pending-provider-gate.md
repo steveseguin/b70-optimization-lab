@@ -182,3 +182,28 @@ classified before the census freezes. Preserve the current copy path and its
 measured recipe, then repeat exact provider/target survival checks before timing
 an identical request. A faster snapshot is useful only if the complete rolling
 schedule improves; this note predicts no speedup.
+
+## Actual four-card result
+
+The bounded run passed with native binary
+`8e03d3cd67fc99c7db4408cb9c2e6abb158806f142df16292ece37083e706231`.
+All 32 output IDs, 2,065 target buffers and 73 canonical draft allocations match
+accepted replay. All 117 true pairs and 32 recursive predictions match the
+retained reference. Both target suffix restores were byte-verified.
+
+The first abort retained canonical provider position 95 after discarding two
+rows whose snapshots were taken at provider position 94. The second retained
+position 97 after discarding one row captured at provider position 95; the
+older tentative row had been accepted without rewinding the remaining suffix.
+Provider attention extents were 96 and 128 respectively. Complete canonical,
+pinned and private bytes plus host/Sequence/exposed prepared bindings survived.
+
+All four workers exited zero. Across 75 passive samples, the 14 known fault
+signatures stayed unchanged; minimum available host memory was 72,047,874,048
+bytes. No host settings changed. Actual recursive proposals were still discarded;
+scripted target inputs forced these rejection cases. This is a correctness
+qualification, not rolling inference or a speed result.
+
+The [independent v5 proof](../experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-pending-provider-proof/RESULT.md)
+retains full command lineage and native survival records. Actual overlapping
+proposal consumption is the next gate, using existing draft weights only.
