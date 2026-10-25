@@ -102,3 +102,39 @@ Today's per-token GPU work is roughly:
 Adding about 2 ms of syncs gives roughly 0.55× of today's per-token GPU time. It also loses today's two-stage MTP
 overlap. Expected: about 1.5–1.8× decode. The replicated small ops cap it, so fusing small ops (fewer, cheaper
 launches) is worth doing first: it helps every configuration and raises this ceiling.
+
+## Device-side hand-off cost (measured 2026-10-25)
+
+Tool: [p2p/p2p_events.cpp](p2p/p2p_events.cpp). Setup: cards 23:00.0 and 47:00.0 in one SYCL context, one in-order
+queue each, 200 round trips. Each round trip is a kernel on A, a peer copy to B, a kernel on B, and a peer copy back.
+
+| Block | Device-event chain (no host wait) | Host wait after every copy | Two kernels on one card |
+|---:|---:|---:|---:|
+| 4 KB | 24.7 µs | 44.7 µs | 7.6 µs |
+| 40 KB | **20.0 µs** | 39.9 µs | 5.6 µs |
+| 160 KB | 25.7 µs | 45.9 µs | 5.5 µs |
+
+With device-side dependencies, a one-way cross-card hand-off costs about **7 µs** (host-waited: about 17 µs).
+
+For an exact two-way split of one pipeline stage:
+- syncs: about 8–10 all-gathers per layer, each about 7 µs, so about 1.5 ms per stage per token (host-staged: about
+  3.9 ms);
+- stage time: about 5 ms of matrix work (half of today's) + 4.6 ms of replicated small ops + 1.5 ms of syncs, plus the
+  1.45 ms draft on stage 0;
+- that is about 11–12.6 ms against 17.4 ms today, about **1.35–1.4×**, misses included (a miss redoes the shorter
+  stage 0).
+
+Feasibility blockers to solve before building:
+- **Device-side events need one process driving both cards of a stage.** On this host every GPU buffer in a multi-B70
+  process also costs its size in host RAM. Two two-card processes at about 26 GB per card would need about 100 GB of
+  the host's roughly 107 GB, next to the vision server. Options:
+  - Level Zero IPC memory and events between single-card processes;
+  - a check whether the shadow applies to device-local USM in a shared context. It was observed with the older
+    multi-card engine path.
+- The engine's plan and launch machinery is one card per process. A stage split needs:
+  - row-range GEMVs;
+  - row-half weight loading;
+  - a gather op;
+  - GDN split by heads;
+  - expert placement with a fixed-order gather before the combine;
+  - a four-rank controller, with prefill and MTP draft placement.
