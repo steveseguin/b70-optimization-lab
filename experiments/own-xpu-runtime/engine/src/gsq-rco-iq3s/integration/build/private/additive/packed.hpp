@@ -137,7 +137,12 @@ inline Shape validate(ownrt::Device&d,const integrated::Matrix&m,InputMode input
 }
 template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes?m.routes:m.x,m.status?m.status:m.y};
 #ifndef OWN_RT_HOST_ONLY
- if(s.f32&&s.routed&&!s.row_major&&routed_rows()){PackedRowsOperation<T,4>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
+ if(s.f32&&s.routed&&!s.row_major&&routed_rows()){
+  // OWNRT_SMALLK_ROWS=1|2: rows per subgroup for columns <= 640 (same per-row arithmetic); default 4.
+  static const int small_k=[]{const char* e=std::getenv("OWNRT_SMALLK_ROWS");return e?std::atoi(e):4;}();
+  if(s.columns<=640&&small_k==2){PackedRowsOperation<T,2>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
+  if(s.columns<=640&&small_k==1){PackedRowsOperation<T,1>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
+  PackedRowsOperation<T,4>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
 #endif
  if(s.f32){PackedOperation<T,true>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
  PackedOperation<T>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}

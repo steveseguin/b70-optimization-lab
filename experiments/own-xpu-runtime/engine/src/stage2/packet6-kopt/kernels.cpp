@@ -447,6 +447,10 @@ ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&(t==Type::IQ2_S||t==Type::IQ3_S||t==Type::Q8_0||t==Type::Q6_K)) { // not IQ4_NL: K=640 loses parallelism (153 vs ~107 us/layer)
     // F32 routed rows: 4 rows per subgroup, decoded from global memory (OWNRT_KOPT_BLOCK_ROWS=0 keeps one row each).
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    // OWNRT_SMALLK_ROWS=1|2: rows per subgroup for K <= 640 (same per-row arithmetic); default 4.
+    static const int small_k=[]{const char* e=std::getenv("OWNRT_SMALLK_ROWS");return e?std::atoi(e):4;}();
+    if(k<=640&&small_k==2){MultiplyBlockRows<2> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
+    if(k<=640&&small_k==1){MultiplyBlockRows<1> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
     MultiplyBlockRows<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});
   }
   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&t==Type::IQ4_NL) {

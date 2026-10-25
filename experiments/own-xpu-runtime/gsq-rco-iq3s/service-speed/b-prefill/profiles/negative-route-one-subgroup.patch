@@ -1,0 +1,68 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp
+index 387c96aaa..007ec1528 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp
+@@ -313,6 +313,55 @@ template<int N,int Top> struct RouteFast final:ownrt::SyclOperation {
+    }));});
+  }
+ };
++// Route in one subgroup per token row (no work-group barriers, no 64-bit keys); every value is RouteFast's: lane l
++// owns experts 16l..16l+15, so each subtree<16> chunk sum runs in-lane with the same function, the 32-chunk total is
++// the same adjacent tree (subtree<256> over 32 partials) by shuffles, the maximum is the same value, and each of the
++// Top rounds picks the same expert (larger probability bits first, then the lower id) from a lane-local best of 16 and
++// a subgroup butterfly over that total order. Normalization is the same subtree<32> call. OWNRT_ROUTE_SG=0 keeps
++// RouteFast.
++template<int N,int Top> struct RouteSub final:ownrt::SyclOperation {
++ Spec spec;explicit RouteSub(Spec s):spec(s){}
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  static_assert(N==512,"one subgroup of 32 lanes x 16 experts");
++  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int rows=spec.tokens;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(rows)*32,32)](sycl::handler& h){
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++    constexpr int per=N/32;
++    const int r=int(it.get_group_linear_id());auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id());const RowBound rb{b,r,b.s};
++    if(!*rb.active()||rb.failed())return; // uniform across the subgroup
++    float x[per];bool finite=true;
++    #pragma unroll
++    for(int i=0;i<per;++i){x[i]=rb.in(0).get(lane*per+i);finite=finite&&std::isfinite(x[i]);}
++    if(!sycl::all_of_group(sg,finite)){if(lane==0)rb.fail();return;}
++    float m=x[0];
++    #pragma unroll
++    for(int i=1;i<per;++i)m=sycl::fmax(m,x[i]);
++    const float maximum=sycl::reduce_over_group(sg,m,sycl::maximum<float>());
++    float ex[per];
++    #pragma unroll
++    for(int i=0;i<per;++i)ex[i]=detmath::exp(x[i]-maximum);
++    float part=subtree<16>(N,lane*per,[&](int i){return ex[i-lane*per];});
++    for(int stride=1;stride<32;stride*=2){const float rhs=sycl::select_from_group(sg,part,(lane+stride)%32);if(lane%(2*stride)==0)part=part+rhs;}
++    const float den=sycl::group_broadcast(sg,part,0);
++    uint32_t bits[per];
++    #pragma unroll
++    for(int i=0;i<per;++i)bits[i]=sycl::bit_cast<uint32_t>(ex[i]/den);
++    uint32_t taken=0;
++    for(int rank=0;rank<Top;++rank){
++     uint32_t best_bits=0;int best=N;
++     #pragma unroll
++     for(int i=0;i<per;++i){const int id=lane*per+i;if(!((taken>>i)&1u)&&(best==N||bits[i]>best_bits||(bits[i]==best_bits&&id<best))){best_bits=bits[i];best=id;}}
++     for(int mask=1;mask<32;mask*=2){const uint32_t ob=sycl::permute_group_by_xor(sg,best_bits,mask);const int oi=sycl::permute_group_by_xor(sg,best,mask);
++      if(oi!=N&&(best==N||ob>best_bits||(ob==best_bits&&oi<best))){best_bits=ob;best=oi;}}
++     if(best/per==lane)taken|=1u<<(best%per);
++     if(lane==0){const float v=sycl::bit_cast<float>(best_bits);rb.out(0).put(rank,best);rb.out(1).put(rank,v);
++      if(rb.s.no>=4)for(int k=0;k<3;++k){rb.out(2).put(rank*3+k,k==0?best:k==1?0:rb.s.g.mid);rb.out(3).put(rank*3+k,k==0?best:k==1?0:rb.s.g.h);}}
++    }
++    if(lane==0){float sum=subtree<32>(Top,0,[&](int i){return rb.out(1).get(i);});for(int i=0;i<Top;++i)rb.out(1).put(i,rb.out(1).get(i)/sum);}
++   }));});
++ }
++};
++inline bool route_sg(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_SG");return !e||e[0]!='0';}();return on;}
+ // HC combine and expert gather, F32 mode, without the generic accessor: each item handles four consecutive elements with
+ // the SimpleNew expression unchanged (stream + branch*(2*sigmoid(inject/4)); exact copies for the gather), and routes and
+ // validity exactly as before (an invalid id sets the sticky error, as the second gather phase did). Rows of a prefill
+@@ -406,6 +455,7 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
+  if(s.implementation&&s.special==Special::normal){switch(s.op){
+  case Op::route:if(s.sizes[0]==512&&s.site.shape[1]==10){
+ #ifndef OWN_RT_HOST_ONLY
++  if(route_fast()&&route_sg()){RouteSub<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+   if(route_fast()){RouteFast<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+   if(route_group()){RouteGroup<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+ #endif

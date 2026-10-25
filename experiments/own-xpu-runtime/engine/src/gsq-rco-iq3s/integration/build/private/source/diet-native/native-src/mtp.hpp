@@ -67,7 +67,13 @@ class DraftRuntime {
  // Profiling remains owned by Engine::pending and is consumed once by drain().
 
  bool q4_head()const{return e.sealed_selection.draft.at("head_format")=="q4-g32";}
- unsigned prefix_rows()const{return e.a.gsq_packed?p.g.vocab:p83::rows(p.g.vocab,e.a.mini,e.sealed_selection.draft.at("head_prefix"));}
+ // GSQ: the draft head scores the first OWNRT_DRAFT_PREFIX_ROWS token ids (a multiple of 256; default the full
+ // vocabulary). Draft-only: the target head and every target output are unchanged, guesses outside the prefix miss.
+ unsigned prefix_rows()const{
+  if(e.a.gsq_packed){static const unsigned rows=[&]{const char* v=std::getenv("OWNRT_DRAFT_PREFIX_ROWS");if(!v)return 0u;const long n=std::atol(v);
+    require(n>0&&n%256==0,"OWNRT_DRAFT_PREFIX_ROWS must be a positive multiple of 256");return unsigned(n);}();
+   if(!rows||e.a.mini)return p.g.vocab;require(rows<=p.g.vocab,"draft prefix exceeds the vocabulary");return rows;}
+  return p83::rows(p.g.vocab,e.a.mini,e.sealed_selection.draft.at("head_prefix"));}
  bool selected(const std::string& key)const{return e.sealed_selection.draft.at(key)=="packet59";}
  bool changed(const flash::Launch& l)const{auto i=p59c::sites.find(l.label);return i!=p59c::sites.end()&&selected(i->second);}
  bool fused(const flash::Launch& l)const{auto i=p59c::consumers.find(l.label);return i!=p59c::consumers.end()&&selected(i->second);}
