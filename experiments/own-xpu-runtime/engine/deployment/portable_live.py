@@ -37,13 +37,15 @@ def make_plan(config_path):
     c=json.loads(raw,object_pairs_hook=planner.prep.pairs)
     require(c.get('schema')=='ownrt.portable-live-config.v1','portable live config schema')
     allowed={'schema','deployment','profile_sha256','binding_sha256','build_receipt','build_receipt_sha256',
-             'bdfs','library_dirs','output','prompt_tokens','max_new','seconds','verify_restore','draft_partition','use_proposals'}
+             'bdfs','library_dirs','output','prompt_tokens','max_new','seconds','verify_restore','draft_partition','use_proposals',
+             'launch_policy','launch_policy_sha256'}
     require(not set(c)-allowed,'unknown portable live config field')
     verify=c.get('verify_restore',True);partition=c.get('draft_partition',False);proposals=c.get('use_proposals',True)
     require(all(type(v)is bool for v in (verify,partition,proposals)),'explicit live mode booleans')
     plan=planner.make_plan(c['deployment'],c['profile_sha256'],c['binding_sha256'],
         c['build_receipt'],c['build_receipt_sha256'],c['bdfs'],c['library_dirs'],c['output'],
-        c['prompt_tokens'],'target-only',c.get('max_new',32),c.get('seconds',1800))
+        c['prompt_tokens'],'target-only',c.get('max_new',32),c.get('seconds',1800),
+        policy_path=c.get('launch_policy'),policy_sha256=c.get('launch_policy_sha256'))
     deployment=Path(c['deployment']).absolute()
     binding=planner.checked_file(deployment/'binding.json',c['binding_sha256'])
     planner.validate_local_files(binding,require_draft=True)
@@ -52,7 +54,7 @@ def make_plan(config_path):
     required={'pipeline/layout.hpp','pipeline/wavefront.hpp','pipeline/checkpoint.hpp','pipeline/live_draft.hpp'}
     if partition:required.add('pipeline/operator_state.hpp')
     require(required<=set(receipt.get('sources',{})),'build lacks live-MTP/partition source capability')
-    policy=planner.checked_file(planner.PROFILE/'launch-policy.json',planner.POLICY_SHA256)
+    policy=planner.checked_file(plan['launch_policy']['path'],plan['launch_policy']['sha256'])
     for stage in plan['stages']:
         stage['environment'].pop('OWNRT_DRAFT_DEPTH_PROBE',None)
         stage['environment'].pop('OWNRT_DRAFT_DEPTH_VERIFY',None)

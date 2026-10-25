@@ -51,14 +51,17 @@ disagreements.
 ## Ordered implementation gates
 
 1. **Select independently authenticated model and launch profiles.**
-   [launch_plan.py](../deployment/launch_plan.py) currently pins a single
-   `profiles/sc117-iq3s` directory and launch-policy SHA in code. Its
+   [launch_plan.py](../deployment/launch_plan.py) now accepts an explicit policy
+   path and independently trusted SHA, checks its model-profile association,
+   and records that selection for controller reconstruction. The original
+   `profiles/sc117-iq3s` policy remains the default. Relocation, mismatch and
+   reconstruction tests are CPU-only; another selected tuning recipe is not
+   hardware-qualified by this interface. Its
    [launch policy](../profiles/sc117-iq3s/launch-policy.json) already separates
    dispatch, per-model EOS/vocabulary, arithmetic flags, draft tuning and stage
-   cuts from local BDFs and paths. A next profile version should accept an explicit
-   profile path/hash and a separately trusted policy path/hash, require their
-   model-hash association, and retain the current SC117 profile as a qualified
-   option. A profile import tool must preserve full shard, header, descriptor,
+   cuts from local BDFs and paths. Preparation already accepts an explicit model
+   profile path/hash; current native capability restrictions remain. A profile
+   import tool must preserve full shard, header, descriptor,
    tokenizer/template and draft identities. Renaming a profile is not onboarding.
 
 2. **Declare geometry and decoder capabilities before another quant/model.**

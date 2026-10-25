@@ -37,6 +37,53 @@ def checked_file(path, trusted_sha, cap=2*1024**2):
     return json.loads(raw,object_pairs_hook=prep.pairs)
 
 
+def select_policy(profile_sha, policy_path=None, policy_sha256=None):
+    """Select independently pinned tuning; a model profile cannot self-authorize it."""
+    prep.require((policy_path is None)==(policy_sha256 is None),
+                 'launch policy path and independently trusted SHA256 must be supplied together')
+    path=Path(PROFILE/'launch-policy.json' if policy_path is None else policy_path).absolute()
+    trusted=POLICY_SHA256 if policy_sha256 is None else policy_sha256
+    policy=checked_file(path,trusted)
+    prep.require(policy.get('schema')=='ownrt.sc117-launch-policy.v1',
+                 'unsupported launch policy capability')
+    prep.require(policy['model_profile_sha256']==profile_sha,'launch policy belongs to another model profile')
+    # v1 still describes the admitted SC117 geometry/arithmetic. Selecting a
+    # different file does not add a native decoder, model or topology capability.
+    prep.require(type(policy['context']) is int and policy['context']==4096
+                 and type(policy['vocab']) is int and policy['vocab']==248320,
+                 'unsupported v1 launch policy geometry')
+    flags={'--attention-q8-p33','--qkv-q6-p33','--expert-iq3xxs-block',
+           '--dense-q6-p33','--dense-packed-block','--recurrent-f32'}
+    prep.require(isinstance(policy['target_flags'],list) and len(policy['target_flags'])==len(flags)
+                 and all(isinstance(f,str) for f in policy['target_flags'])
+                 and set(policy['target_flags'])==flags,'unsupported v1 target flags')
+    fixed_env={'OWNRT_DRAFT_DEPTH_PROBE':'0','OWNRT_DRAFT_DEPTH_VERIFY':'0',
+               'OWNRT_EARLY_RANK1':'0','OWNRT_MERGE_CHECKS':'1',
+               'OWNRT_MISS':'banks-batch','OWNRT_SNAPSHOT_HOST':'static'}
+    env=policy['environment']
+    prep.require(isinstance(env,dict) and set(env)==set(fixed_env)|{'OWNRT_DRAFT_KERNELS','OWNRT_DRAFT_PREFIX_ROWS'}
+                 and all(env[k]==v for k,v in fixed_env.items()),'unsupported v1 policy environment')
+    prefix=env['OWNRT_DRAFT_PREFIX_ROWS'];kernels=env['OWNRT_DRAFT_KERNELS']
+    prep.require(isinstance(prefix,str) and re.fullmatch('[1-9][0-9]{0,5}',prefix)
+                 and int(prefix)<=policy['vocab'],'bounded draft prefix rows')
+    prep.require(isinstance(kernels,str) and len(kernels)<=4096
+                 and re.fullmatch('[a-z0-9_]+(?:,[a-z0-9_]+)*',kernels), 'draft kernel list syntax')
+    prep.require(policy['mtp']=={'draft_rank':0,'experts':'fp8','prefill_rows':0},
+                 'unsupported v1 draft mode')
+    eos=policy['eos_token_ids']
+    prep.require(isinstance(eos,list) and eos and all(type(t)is int and 0<=t<policy['vocab'] for t in eos)
+                 and len(set(eos))==len(eos),'invalid EOS token IDs')
+    prep.require(isinstance(policy['boundaries'],dict) and set(policy['boundaries'])=={'2','4'},
+                 'v1 launch policy requires two/four stage boundaries')
+    for count,cuts in policy['boundaries'].items():
+        prep.require(isinstance(cuts,list) and len(cuts)==int(count)+1
+                     and all(type(c)is int for c in cuts) and cuts[0]==0 and cuts[-1]==48
+                     and all(a<b for a,b in zip(cuts,cuts[1:])), 'invalid contiguous v1 stage boundaries')
+    prep.basename(policy['dispatch']['file'])
+    prep.require(prep.hexhash(policy['dispatch']['sha256']), 'invalid dispatch digest')
+    return policy,dict(path=str(path),sha256=trusted)
+
+
 def validate_local_files(binding, require_draft=False):
     for component in ('target','draft'):
         if component=='draft' and not require_draft:
@@ -52,12 +99,11 @@ def validate_local_files(binding, require_draft=False):
 
 def make_plan(deployment, profile_sha, binding_sha, receipt_path, receipt_sha,
               bdfs, library_dirs, output, prompt_tokens, mode='target-only',
-              max_new=32, seconds=1800):
+              max_new=32, seconds=1800, *, policy_path=None, policy_sha256=None):
     deployment,receipt_path,output=map(lambda p:Path(p).absolute(),(deployment,receipt_path,output))
     authority=prep.validate_overlay(deployment/'include',profile_sha,binding_sha)
     binding=checked_file(deployment/'binding.json',binding_sha)
-    policy=checked_file(PROFILE/'launch-policy.json',POLICY_SHA256)
-    prep.require(policy['model_profile_sha256']==profile_sha,'launch policy belongs to another model profile')
+    policy,policy_identity=select_policy(profile_sha,policy_path,policy_sha256)
     prep.require(mode in ('target-only','mtp'),'supported mode: target-only or mtp')
     prep.require(len(bdfs) in (2,4) and len(set(bdfs))==len(bdfs)
                  and all(re.fullmatch(r'[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]',b) for b in bdfs),
@@ -90,13 +136,13 @@ def make_plan(deployment, profile_sha, binding_sha, receipt_path, receipt_sha,
     prep.require(isinstance(runtime,dict) and len(runtime)==1,'one pinned RoPE runtime asset required')
     for path,want in runtime.items():
         prep.require(Path(path).name=='rope.bf16' and hash_file(path,4*1024**2)==want,'RoPE runtime asset missing/changed')
-    dispatch=PROFILE/policy['dispatch']['file']
+    dispatch=Path(policy_identity['path']).parent/policy['dispatch']['file']
     prep.require(hash_file(dispatch,2*1024**2)==policy['dispatch']['sha256'],'dispatch profile changed')
     profile,_,_,rows,_,_=prep.load_profile(deployment/'profile.json',profile_sha)
     cuts=policy['boundaries'][str(len(bdfs))]
     pins={str(deployment/'binding.json'):binding_sha,str(deployment/'profile.json'):profile_sha,
           str(receipt_path):receipt_sha,str(binary):receipt['binary_sha256'],
-          str(PROFILE/'launch-policy.json'):POLICY_SHA256,str(dispatch):policy['dispatch']['sha256'],
+          policy_identity['path']:policy_identity['sha256'],str(dispatch):policy['dispatch']['sha256'],
           str(Path(__file__).resolve()):hash_file(__file__),str(prep.HERE/'prepare.py'):hash_file(prep.HERE/'prepare.py'),
           **runtime,**{str(deployment/k):v for k,v in binding['artifacts'].items()}}
     pins['/usr/bin/ionice'] = hash_file('/usr/bin/ionice', 2*1024**2)
@@ -110,7 +156,7 @@ def make_plan(deployment, profile_sha, binding_sha, receipt_path, receipt_sha,
               '--cards','1','--card','0','--output',str(native),'--memory','resident',
               '--context',str(policy['context']),'--seconds',str(seconds),'--native-nice','19',
               '--timing','token','--max-new',str(max_new),'--retain-steps','none','--draft-rank','0',
-              '--target-split','23','--host-path','prepared','--plan',str(deployment/'placement.tsv'),
+              '--target-split',str(cuts[1] if mode=='mtp' else 23),'--host-path','prepared','--plan',str(deployment/'placement.tsv'),
               '--identity',str(deployment/'shard-auth.tsv'),'--model-dir',binding['target_root'],
               '--authorized-device-window',*policy['target_flags'],
               '--reset-dump','none','--finish-dump','none','--token-stream','jsonl',
@@ -133,7 +179,7 @@ def make_plan(deployment, profile_sha, binding_sha, receipt_path, receipt_sha,
         stages.append(dict(id=i,first=first,final=final,begin=cuts[i],end=cuts[i+1],bdf=bdf,
                            native_output=str(native),shared=str(shared),argv=argv,environment=environment,
                            packed_weight_bytes=packed))
-    result=dict(schema='ownrt.portable-launch-plan.v1',model_profile_sha256=profile_sha,
+    result=dict(schema='ownrt.portable-launch-plan.v1',model_profile_sha256=profile_sha,launch_policy=policy_identity,
         deployment_binding_sha256=binding_sha,model_id=profile['id'],pins=pins,output=str(output),
         output_parent_identity=parent_identity,boundaries=cuts,stages=stages,mode=mode,
         protocol='pipeline-target-only-v1' if mode=='target-only' else 'legacy-native-two-rank-mtp',
@@ -157,6 +203,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--deployment',type=Path,required=True)
     p.add_argument('--profile-sha256',required=True)
+    p.add_argument('--launch-policy',type=Path,help='explicit tuning policy; requires its independently trusted digest')
+    p.add_argument('--launch-policy-sha256')
     p.add_argument('--binding-sha256',required=True)
     p.add_argument('--build-receipt',type=Path,required=True)
     p.add_argument('--build-receipt-sha256',required=True)
@@ -171,7 +219,8 @@ def main():
     a=p.parse_args()
     prompt_raw=prep.read_small(a.prompt_tokens)
     result=make_plan(a.deployment,a.profile_sha256,a.binding_sha256,a.build_receipt,a.build_receipt_sha256,
-        a.bdf,a.library_dir,a.output,json.loads(prompt_raw),a.mode,a.max_new,a.seconds)
+        a.bdf,a.library_dir,a.output,json.loads(prompt_raw),a.mode,a.max_new,a.seconds,
+        policy_path=a.launch_policy,policy_sha256=a.launch_policy_sha256)
     result['pins'][str(a.prompt_tokens.absolute())]=prep.digest(prompt_raw)
     with a.plan.open('xb') as output:output.write(prep.encoded(result))
     print(json.dumps(dict(plan=str(a.plan.absolute()),sha256=hash_file(a.plan),device_execution_requested=False,run_authorized=False)))

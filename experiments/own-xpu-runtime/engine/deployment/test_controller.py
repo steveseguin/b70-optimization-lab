@@ -148,6 +148,7 @@ class PortableIdentityTests(unittest.TestCase):
     pin=fixture.LaunchPlanTests.pin
     run_prepare=fixture.LaunchPlanTests.run_prepare
     generate=fixture.LaunchPlanTests.generate
+    external_policy=fixture.LaunchPlanTests.external_policy
     def verify(self,plan):
         path=self.root/'plan.json';path.write_text(json.dumps(plan))
         return driver.verify_plan(path,driver.digest(path),self.sha,self.binding_sha,self.receipt_path,driver.digest(self.receipt_path))
@@ -160,6 +161,12 @@ class PortableIdentityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'target-only'):self.verify(self.generate('mtp'))
         plan=self.generate();plan['pins'][str(self.receipt_path)]='0'*64
         with self.assertRaisesRegex(ValueError,'receipt digest'):self.verify(plan)
+    def test_selected_policy_survives_reconstruction_and_changed_policy_refuses(self):
+        selected=self.external_policy(boundaries={'2':[0,24,48],'4':[0,12,24,36,48]})
+        plan=self.generate(**selected)
+        self.assertEqual(self.verify(plan),plan)
+        selected['policy_path'].write_text('{}')
+        with self.assertRaisesRegex(ValueError,'pinned artifact'):self.verify(plan)
     def test_admission_requires_code_and_explicit_authority(self):
         admission=dict(schema='ownrt.portable-run-admission.v1',owner_authorized=True,plan_sha256='test',
             controller_sha256=driver.digest(driver.__file__),observer_sha256=driver.digest(observer.__file__),

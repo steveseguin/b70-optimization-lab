@@ -1,0 +1,35 @@
+{
+  "schema": "ownrt.selected-launch-policy-cpu.v1",
+  "passed": true,
+  "verified_utc": "2026-10-25T20:53:58.155391+00:00",
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "test_launch_plan.py",
+    "test_controller.py",
+    "test_portable_live.py"
+  ],
+  "working_directory": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/deployment",
+  "tests": 42,
+  "independent_review": "evidence_review: independently reran 42 tests; no blocker; native still validates kernel-name capability before device setup",
+  "sources": {
+    "deployment/launch_plan.py": "77329a94c82623f889c185ece95763646b36292045203c3a5a9e9cda454178ba",
+    "deployment/controller.py": "1c8d1056377e0f67fa7ad4e91bd6b490c45d0e7d762373df340769c8c862bc94",
+    "deployment/portable_live.py": "64b24d735662ac84cf563f7a15f75a80ef0d11bfaab61b2ae50b0694c2715a0b",
+    "deployment/test_launch_plan.py": "9017b3c29bf26b82589819f8e7d36a666a369ca20a84912d04db5a09330761e4",
+    "deployment/test_controller.py": "097f4a3e78680e4ab1dc313a699e1348eda0d4063eb314cc1183778f69d82247",
+    "deployment/test_portable_live.py": "ab490229c2ec50e10cb6b9bedc148383a06620a8759845fc39fd0a551b8f2484"
+  },
+  "scope": "CPU selection and controller regeneration only. Default current model policy unchanged. No new model, quant, topology or tuning hardware qualification; no GPU execution.",
+  "checks": [
+    "explicit relocated policy with independently supplied SHA256",
+    "policy hash and model association",
+    "policy dispatch basename confinement and digest",
+    "fixed arithmetic/owner environment; no BDF or preload injection",
+    "two/four contiguous stage geometry",
+    "legacy MTP target-split matches selected two-stage cut",
+    "target-only and portable-live controller regeneration",
+    "selected policy tampering and missing trust pair refuse"
+  ]
+}

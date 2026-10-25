@@ -300,7 +300,8 @@ def verify_plan(path, plan_sha, profile_sha, binding_sha, receipt_path, receipt_
     deployment=Path(option(stages[0]['argv'],'--plan')).parent
     expected=planner.make_plan(deployment,profile_sha,binding_sha,receipt_path,receipt_sha,
         [s['bdf'] for s in stages],stages[0]['environment']['LD_LIBRARY_PATH'].split(':'),
-        plan['output'],plan['prompt_tokens'],plan['mode'],plan['max_new'],plan['seconds'])
+        plan['output'],plan['prompt_tokens'],plan['mode'],plan['max_new'],plan['seconds'],
+        policy_path=plan['launch_policy']['path'],policy_sha256=plan['launch_policy']['sha256'])
     actual_pins=plan['pins'];expected_pins=expected['pins']
     require(all(actual_pins.get(p)==sha for p,sha in expected_pins.items()),'missing/changed regenerated plan pins')
     for p,sha in actual_pins.items():require(digest(p)==sha,'pinned launch artifact changed: '+p)

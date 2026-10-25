@@ -153,9 +153,27 @@ and the existing two-rank MTP command templates. Its separate
 [launch policy](../profiles/sc117-iq3s/launch-policy.json) pins the existing
 [dispatch choices](../profiles/sc117-iq3s/dispatch-f32-select-gdn2.json), F32 target
 flags, 23/25 or 13/12/12/11 layer placement, and existing draft kernel choices.
-The policy SHA256 is embedded in the generator. MTP templates use the unchanged
+The default policy SHA256 is embedded in the generator. MTP templates use the unchanged
 official draft weights, scalar prefill and `OWNRT_EARLY_RANK1=0`; they make no
 claim to reproduce the fastest service timing.
+
+An independently reviewed tuning recipe can instead be selected with both
+`--launch-policy /path/to/policy.json` and `--launch-policy-sha256 TRUSTED_DIGEST`.
+The planner authenticates the policy, requires its model-profile hash to match
+the selected deployment, and resolves its hash-pinned dispatch file beside it.
+The plan records the selected policy path/hash; the controller reconstructs the
+same commands from it before execution. Neither a model profile nor a policy
+file can supply its own trusted digest. With neither option, the existing
+default is selected; supplying only one is refused. The portable live JSON
+configuration accepts the equivalent `launch_policy` and
+`launch_policy_sha256` fields.
+
+This selection interface has CPU tests, including relocation, changed-policy
+refusal and controller reconstruction. It does not qualify a new tuning recipe
+on hardware. Current v1 policy capability remains SC117 geometry, F32 and
+two/four stages; another model, quant or topology still needs native capability
+and runtime qualification. Existing frozen recipes retain their original source
+and plan pins.
 
 After building the generated authority, record the build receipt's SHA256 and
 provide explicit runtime-library directories and PCI BDFs. This example writes

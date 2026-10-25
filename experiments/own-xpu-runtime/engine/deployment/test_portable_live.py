@@ -19,6 +19,7 @@ class PortableLiveTests(unittest.TestCase):
     setUp=fixtures.LaunchPlanTests.setUp
     pin=fixtures.LaunchPlanTests.pin
     run_prepare=fixtures.LaunchPlanTests.run_prepare
+    external_policy=fixtures.LaunchPlanTests.external_policy
     def config(self,**changes):
         self.receipt['sources']={name:'a'*64 for name in ('pipeline/layout.hpp','pipeline/wavefront.hpp','pipeline/checkpoint.hpp','pipeline/live_draft.hpp','pipeline/operator_state.hpp')}
         self.receipt_path.write_bytes(adapter.planner.prep.encoded(self.receipt))
@@ -53,6 +54,18 @@ class PortableLiveTests(unittest.TestCase):
         path=self.config();self.receipt['sources'].pop('pipeline/live_draft.hpp');self.receipt_path.write_bytes(adapter.planner.prep.encoded(self.receipt))
         config=json.loads(path.read_text());config['build_receipt_sha256']=adapter.planner.hash_file(self.receipt_path);path.write_text(json.dumps(config))
         with self.assertRaisesRegex(ValueError,'source capability'):adapter.make_plan(path)
+    def test_live_recipe_uses_selected_policy_for_plan_and_provider(self):
+        selected=self.external_policy(boundaries={'2':[0,24,48],'4':[0,12,24,36,48]})
+        path=self.config(launch_policy=str(selected['policy_path']),launch_policy_sha256=selected['policy_sha256'])
+        with mock.patch.object(adapter.planner,'PROFILE',self.root/'absent-builtin'):
+            plan=adapter.make_plan(path)
+            saved=self.root/'selected-plan.json';saved.write_text(json.dumps(plan))
+            self.assertEqual(adapter.verify_plan(saved,adapter.planner.hash_file(saved),self.sha,self.binding_sha,
+                                                adapter.planner.hash_file(self.receipt_path)),plan)
+        self.assertEqual(plan['boundaries'],[0,24,48])
+        self.assertEqual(plan['launch_policy']['sha256'],selected['policy_sha256'])
+        with self.assertRaisesRegex(ValueError,'supplied together'):
+            adapter.make_plan(self.config(launch_policy=str(selected['policy_path'])))
     def test_plan_rechecks_full_identity_and_independent_profile(self):
         plan=adapter.make_plan(self.config());path=self.root/'plan.json';path.write_text(json.dumps(plan));sha=adapter.planner.hash_file(path)
         self.assertEqual(adapter.verify_plan(path,sha,self.sha,self.binding_sha,adapter.planner.hash_file(self.receipt_path)),plan)
