@@ -322,3 +322,28 @@ local copy of its own half and a `peer_copy` of the peer's.
 Fixes on the way:
 - split only sites with row-major expanded rows (dense-block Q4_K/Q5_K sites refuse);
 - peer copies use the Device's own queue index (`card1:` allocations map to queue 1).
+
+## Step 4 result: expert placement by id parity (2026-10-25, pf88)
+
+`OWNRT_TP_EXPERTS=1`:
+- after the replicated route and gather, `tp_route_mask` sets row_count=0 on the slots whose expert the card does not
+  own (every routed kernel skips those rows);
+- after `expsdown`, `tp_expert_gather` peer-copies the peer's routed output and takes those slots' rows from it
+  (`slot_select`, a bitwise copy);
+- `moe_combine` then runs unchanged.
+
+**Exact.** The 16 tokens are identical, and all 954 model-state buffers equal the one-card run
+([evidence](tp/evidence/step4-pf88-tp-e2-vs-one-card.json)). By design the differing buffers are only:
+- the masked `routes`/`routes.down`;
+- the per-slot intermediates `expsgate`/`expsup`/`expsact`, which hold NaN for the slots the other card computes.
+
+**No gain yet.**
+
+| Rank 1 half-step | Median |
+|---|---:|
+| one card | 16.73 ms |
+| experts placed | 17.21 ms |
+| experts placed plus the attention/qkv split | 16.92 ms |
+
+The expected saving was about 1.5 ms of expert time. Next: per-site device profile of card 0
+(`OWNRT_DECODE_PROFILE=2`) to see whether the gathers stall card 0.

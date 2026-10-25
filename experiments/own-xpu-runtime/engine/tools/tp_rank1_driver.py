@@ -130,14 +130,21 @@ def run(a):
 
 
 def compare(a):
-    def files(root):
-        base = Path(root) / 'rank1' / 'state-2147483647'
-        return {p.relative_to(base).as_posix(): p for p in base.rglob('*') if p.is_file()}
-    fa, fb = files(a.a), files(a.b)
-    diff = sorted(k for k in fa.keys() & fb.keys() if fa[k].read_bytes() != fb[k].read_bytes())
-    only = sorted(fa.keys() ^ fb.keys())
-    print(json.dumps(dict(files=len(fa.keys() & fb.keys()), differ=diff[:50], differ_count=len(diff), only_one_side=only[:20])))
-    return 1 if diff or only else 0
+    """Per-buffer comparison of two dumps (state.json hashes). --ignore lists buffer-name suffixes that are allowed to
+    differ (e.g. per-slot expert intermediates that hold NaN for the slots another card computes)."""
+    def state(root):
+        return json.loads((Path(root) / 'rank1' / 'state-2147483647' / 'state.json').read_text())
+    sa, sb = state(a.a), state(a.b)
+    ba, bb = sa['buffers'], sb['buffers']
+    ignore = [x for x in (a.ignore or '').split(',') if x]
+    skipped = sorted(k for k in ba.keys() | bb.keys() if any(k.endswith(x) for x in ignore))
+    keys = sorted((ba.keys() & bb.keys()) - set(skipped))
+    diff = [k for k in keys if ba[k] != bb[k]]
+    only = sorted((ba.keys() ^ bb.keys()) - set(skipped))
+    other = {k: (sa[k], sb[k]) for k in sa if k != 'buffers' and sa.get(k) != sb.get(k)}
+    print(json.dumps(dict(compared=len(keys), ignored=len(skipped), differ=diff[:40], differ_count=len(diff),
+                          only_one_side=only[:20], other_fields_differ=other)))
+    return 1 if diff or only or other else 0
 
 
 if __name__ == '__main__':
@@ -153,5 +160,6 @@ if __name__ == '__main__':
     c = sub.add_parser('compare')
     c.add_argument('a')
     c.add_argument('b')
+    c.add_argument('--ignore', help='comma-separated buffer-name suffixes allowed to differ')
     a = ap.parse_args()
     sys.exit(run(a) if a.cmd == 'run' else compare(a))

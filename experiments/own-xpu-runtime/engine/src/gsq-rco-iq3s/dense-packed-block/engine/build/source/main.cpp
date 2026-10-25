@@ -1389,7 +1389,7 @@ public:
   void prepare_plan() {
     if(a.memory!="resident")return;
     for(const auto& l:p.launches) {
-      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather")continue;
+      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather")continue;
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
         std::vector<Matrix> values{matrix(l)};
         if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
@@ -1735,6 +1735,14 @@ public:
       ownrt::CopyEngine local(dev(c));
       auto own=local.copy(y.id,size_t(c)*half,buffers[c].at(l.inputs.at(0)).id,0,half,{});finish(c,{own,own,1},false);
       auto remote=dev(c).peer_copy(dev(peer),y.id,size_t(peer)*half,buffers[peer].at(l.inputs.at(0)).id,0,half);finish(c,{remote,remote,1},false);
+    } else if (l.op == "tp_route_mask") {
+      finish(c,iq3::kopt::route_mask(dev(c),buffers[c].at(l.outputs.at(0)).id,buffers[c].at(l.outputs.at(1)).id,uint32_t(p.g.top),uint32_t(l.parameter)));
+    } else if (l.op == "tp_expert_gather") {
+      // The peer's routed output (all its own slots computed) into y#tp, then this card's non-owned slots from it.
+      const int peer=1-c;const auto& y=buffers[c].at(l.outputs.at(0));const size_t bytes=y.n*flash::scalar_bytes(y.type);
+      require(y.type==flash::Scalar::f32&&bytes%(size_t(p.g.top)*4)==0,"TP expert gather: F32 slot rows");
+      auto remote=dev(c).peer_copy(dev(peer),buffers[c].at(l.inputs.at(0)).id,0,buffers[peer].at(l.outputs.at(0)).id,0,bytes);finish(c,{remote,remote,1},false);
+      finish(c,iq3::kopt::slot_select(dev(c),y.id,buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,uint32_t(p.g.top),uint32_t(bytes/(size_t(p.g.top)*4)),uint32_t(l.parameter)));
     } else if (l.op == "gemv" || l.op == "routed_gemv" || l.op=="expert_gate_up") {
       linear(l);
     } else {
