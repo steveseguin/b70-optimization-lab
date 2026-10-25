@@ -161,3 +161,10 @@ identifies compiled absolute paths and filesystem identities as concrete launch
 blockers. Immutable model/quant identities must remain separate from each
 deployment's local paths and file metadata. The existing draft loader requires
 30.05 GB of source shards, even though its selected tensors total 2.70 GB.
+
+After the quad proof, the normal two-card service was restored on engine
+`51ebe7496793`. Its F32-state, batched-prefill and continuation gates passed.
+The [new cold twelve-prompt service check](../experiments/own-xpu-runtime/research/review-2026-10-25/normal-service-result.json)
+measured **47.9706 tok/s** ordinary median, with explicit `cached_tokens=0` on
+every request and all 5,965 output IDs plus twelve text hashes unchanged. This
+confirms the earlier roughly 48 tok/s observation; it is not a new certified record.

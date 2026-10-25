@@ -16,15 +16,19 @@ support for other quants/models and future 1/2/4/6-card profiles.
   The matched target-only two/four-stage proof passed: all 32 output IDs and
   2,065 canonical state buffers agree; no new faults. Serial PP4 target steps
   are 24.50% slower, so speculative overlap remains the speed work.
-  Engine `51ebe7496793` is now running the normal two-card service startup gates.
+  Engine `51ebe7496793` is serving normally on 23/47. State, batched-prefill
+  and continuation gates passed. A fresh 12-prompt suite measured **47.97 tok/s**
+  ordinary median with explicit zero cached tokens; all 5,965 output IDs and
+  all twelve text hashes match the earlier baseline. Vision remains stopped;
+  27/43 are free for future quad scheduling work. No experiment/client is active.
   A receipt-format mistake was refused before device launch and corrected with
   the existing receipt generator; its evidence is retained.
 - Audit corrects the ordinary service median to **27.92 → 47.89 tok/s** with all
   twelve output arrays identical. These are uncertified service observations;
   six CPU-reference disagreements remain. Four-card speculative speed is unmeasured.
 - Added reusable metadata-driven placement planning and tightened service suite
-  cache evidence. GitHub and neural.download are updated (`baccc3613`, all CI
-  green). SkinDeep updates are local commits `017179e` and `ac45f76`; remote write credentials
+  cache evidence. GitHub and neural.download carry the audited results and pinned research
+  source download. SkinDeep updates are local commits `017179e` and `ac45f76`; remote write credentials
   are unavailable. A 224-file source bundle from `d882b4df4` rebuilt independently
   in an extracted directory; this is not a complete portable runtime release.
 - Next: asynchronous speculative overlap informed by measured recursive
