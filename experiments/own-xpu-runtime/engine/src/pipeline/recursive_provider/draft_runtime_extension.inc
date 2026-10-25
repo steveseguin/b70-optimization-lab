@@ -93,3 +93,14 @@ struct RecursiveAdapter {
 ownrt::ring_next::wire::ProposalMeta live_recursive_depth2(ownrt::recursive_provider_next::Sequence& sequence,const ownrt::recursive_provider_next::Input& input,const ownrt::recursive_provider_next::ExpectedPair& expected,bool verify){
  require(recursive_image&&!recursive_active,"recursive provider not initialized/idle");RecursiveAdapter adapter{*this};return sequence.run(adapter,input,expected,verify);
 }
+
+// Owner-zero reset has already cleared canonical device buffers and both pinned
+// buffers. Private physical storage is zeroed by the same checked owner pass.
+// Retain every allocation/prepared binding; clear only request-owned saved data.
+void recursive_reset_after_owner_zero(){
+ recursive_idle();require(e.a.pipeline_ring_persistent_requests&&!recursive_active&&position==0&&context_extent==32&&recursive_healthy(),"recursive cold reset admission");recursive_inventory();
+ recursive_host={};recursive_target={};recursive_class=0;
+ for(auto& row:recursive_rows)std::fill(row.pinned_before.begin(),row.pinned_before.end(),0);
+ recursive_captures=recursive_restores=recursive_verified_restores=0;
+ require(!pending_head&&!pending_confirmed&&!reverse_hidden&&probe_reverse_hidden.empty()&&queued_probe==-1&&queued_confirmed==-1&&!publication_event,"recursive cold host state");
+}

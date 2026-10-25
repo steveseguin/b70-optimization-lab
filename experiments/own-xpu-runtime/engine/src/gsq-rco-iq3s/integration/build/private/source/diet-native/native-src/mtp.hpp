@@ -403,7 +403,7 @@ public:
   uint32_t active=1;e.upload(0,id("active"),0,&active,4);e.drain();position=0;disabled=false;reverse_hidden=nullptr;
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   publication_event=0;e.progress_pending=false;e.progress_callback={};
-  if(e.a.pipeline_persistent_requests){pending_head=false;pending_confirmed=0;queued_probe=queued_confirmed=-1;probe_reverse_hidden.clear();admit_position(32);}
+  if(e.a.pipeline_persistent_requests||e.a.pipeline_ring_persistent_requests){pending_start={};pending_head=false;pending_confirmed=0;queued_probe=queued_confirmed=-1;probe_reverse_hidden.clear();admit_position(32);}
   trace.close();trace.clear();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
   if(depth_probe)probe_output=output;
  }

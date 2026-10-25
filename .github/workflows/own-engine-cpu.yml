@@ -58,3 +58,10 @@ jobs:
           /tmp/ownrt-recursive-provider
           g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -ffunction-sections -fdata-sections -I engine/src engine/planning/test_recursive_provider_native.cpp engine/src/stage2/packet194-expert-diet-engine/owner.cpp -Wl,--gc-sections -lcrypto -pthread -o /tmp/ownrt-recursive-provider-native
           /tmp/ownrt-recursive-provider-native /tmp/ownrt-recursive-provider-output
+      - name: Persistent ring reset and fixed verification policy without device access
+        working-directory: experiments/own-xpu-runtime
+        run: |
+          g++ -std=c++20 -O1 -I engine/src engine/planning/test_ring_reset_descriptor.cpp -lcrypto -o /tmp/ownrt-ring-reset-descriptor
+          /tmp/ownrt-ring-reset-descriptor /tmp/ownrt-ring-reset-descriptor-output
+          g++ -std=c++20 -O1 -DOWN_RT_HOST_ONLY -DP56X_SLEEP20=0 -ffunction-sections -fdata-sections -I engine/src engine/planning/test_persistent_ring_native.cpp engine/planning/persistent_ring_host_stubs.cpp engine/src/stage2/packet194-expert-diet-engine/owner.cpp engine/src/stage2/packet194-expert-diet-engine/owner_retire.cpp engine/src/stage2/packet194-expert-diet-engine/host_wait_mode.cpp -Wl,--gc-sections -lcrypto -pthread -o /tmp/ownrt-persistent-ring-native
+          /tmp/ownrt-persistent-ring-native /tmp/ownrt-persistent-ring-output

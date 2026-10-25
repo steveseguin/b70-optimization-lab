@@ -439,7 +439,7 @@ static int run_rank(const Options& a) {
     <<",\"begin\":"<<a.pipeline_boundaries[a.pipeline_stage]<<",\"end\":"<<a.pipeline_boundaries[a.pipeline_stage+1]
     <<",\"first\":"<<(a.pipeline_first()?"true":"false")<<",\"final\":"<<(a.pipeline_final()?"true":"false")
     <<",\"activation_dtype\":\"F32\",\"stream_bytes\":"<<engine->stream_bytes()<<",\"boundaries\":[";
-   for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":"<<ownrt::quote(a.pipeline_ring?(a.pipeline_ring_pending_provider?"verified-ring-pending-provider":(a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring")):(a.pipeline_wavefront?"wavefront":"target-only"))<<",\"speculation_enabled\":"<<((a.pipeline_wavefront||a.pipeline_ring)?"true":"false")<<",\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]";if(a.pipeline_ring)o<<",\"ring_capacity\":2,\"depth\":2,\"ring_epoch\":0,\"ring_request_sha256\":"<<ownrt::quote(a.pipeline_ring_request_sha256);if(a.pipeline_ring_live_draft)o<<",\"provider_borrow_mode\":"<<ownrt::quote(a.pipeline_ring_pending_provider?"pending-target":"quiescent-target");o<<"}";save(a.output/"pipeline-stage.json",o.str());
+   for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":"<<ownrt::quote(a.pipeline_ring?(a.pipeline_ring_pending_provider?"verified-ring-pending-provider":(a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring")):(a.pipeline_wavefront?"wavefront":"target-only"))<<",\"speculation_enabled\":"<<((a.pipeline_wavefront||a.pipeline_ring)?"true":"false")<<",\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]";if(a.pipeline_ring)o<<",\"ring_capacity\":2,\"depth\":2,\"ring_epoch\":0,\"ring_request_sha256\":"<<ownrt::quote(a.pipeline_ring_request_sha256);if(a.pipeline_ring_live_draft)o<<",\"provider_borrow_mode\":"<<ownrt::quote(a.pipeline_ring_pending_provider?"pending-target":"quiescent-target");o<<"}";if(a.pipeline_ring_persistent_requests)ring_dispatcher->write_request_stage_metadata();else save(a.output/"pipeline-stage.json",o.str());
   }
   Reply ready{};ready.rank=a.rank;if(a.pipeline_enabled()){ready.reserved[0]=a.pipeline_stage;ready.reserved[1]=a.pipeline_final();ready.bytes=int32_t(engine->stream_bytes());}transfer(a.channel,&ready,sizeof ready,true,a.seconds);
   ownrt::live_draft::Sequence live_draft_sequence;
@@ -448,7 +448,7 @@ static int run_rank(const Options& a) {
    if(a.rank==1)engine->reply_report.before(r.op);
    auto received=std::chrono::steady_clock::now();
    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
-   if(a.pipeline_ring&&ring_dispatcher->handles_command(r.op)){auto reply=ring_dispatcher->execute(r);if(r.op==ownrt::ring_next::wire::accept_op&&r.fixture>0)++accepted;return reply;}
+   if(a.pipeline_ring&&ring_dispatcher->handles_command(r.op)){auto reply=ring_dispatcher->execute(r);if(r.op==ownrt::ring_next::wire::accept_op&&r.fixture>0)++accepted;if(r.op==11)accepted=0;return reply;}
    if(a.pipeline_ring)ring_dispatcher->boundary();
    if(a.pipeline_wavefront&&(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op)){
     auto& ledger=*wave_ledger;auto& checkpoint=*wave_checkpoint;auto started=std::chrono::steady_clock::now();double checkpoint_ms=0;int ticket=r.sequence;bool tentative=false;

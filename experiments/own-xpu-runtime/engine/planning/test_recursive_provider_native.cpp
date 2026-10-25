@@ -49,6 +49,19 @@ public:
   ownrt::ring_next::wire::Context context{0,{},0,4,16,97};ownrt::recursive_provider_next::Sequence fresh(context);refusal([&]{verify_survival(baseline,fresh);});
   ++shared_copy_count;++e.drains;verify_survival(baseline,sequence); // shared evidence counters are explicitly excluded
  }
+ void reset_fixture(){
+  // The fixture performs the existing canonical owner-zero operation; the new
+  // private/host reset below is the actual production member implementation.
+  e.a.pipeline_ring_persistent_requests=true;
+  refusal([&]{recursive_reset_after_owner_zero();}); // current position is not cold
+  const auto frozen=recursive_rows;const auto image=recursive_image;
+  for(auto id:mutable_ids)std::memset(e.dev(0).arena.row(id).pointer,0,e.dev(0).arena.row(id).bytes);
+  for(auto id:{publication,half_staging,recursive_image})std::memset(e.dev(0).arena.row(id).pointer,0,e.dev(0).arena.row(id).bytes);
+  position=0;context_extent=32;pending_head=false;pending_confirmed=0;pending_start={};probe_reverse_hidden.clear();reverse_hidden=nullptr;publication_event=0;queued_probe=queued_confirmed=-1;
+  recursive_reset_after_owner_zero();assert(recursive_image==image&&recursive_host==RecursiveHost{}&&recursive_target==RecursiveTarget{}&&!recursive_class&&!recursive_captures&&!recursive_restores&&!recursive_verified_restores);
+  assert(recursive_rows.size()==frozen.size());for(size_t i=0;i<recursive_rows.size();++i){const auto& row=recursive_rows[i];assert(row.id==frozen[i].id&&row.offset==frozen[i].offset&&row.bytes==frozen[i].bytes);assert(std::all_of(row.pinned_before.begin(),row.pinned_before.end(),[](auto b){return !b;}));}
+  for(auto [id,bytes]:read_canonical())assert(std::all_of(bytes.begin(),bytes.end(),[](auto b){return !b;}));
+ }
  std::vector<Allocation> canonical_devices()const{return {mutable_ids.begin(),mutable_ids.end()};}
  std::vector<Allocation> pins()const{return {publication,half_staging};}
  std::map<Allocation,std::vector<uint8_t>> read_canonical(){std::map<Allocation,std::vector<uint8_t>> out;for(auto id:mutable_ids)out[id]=e.readback(0,id,e.dev(0).arena.row(id).bytes);for(auto id:{publication,half_staging})out[id]=e.readback(0,id,e.dev(0).arena.row(id).bytes);return out;}
@@ -102,6 +115,13 @@ int main(int argc,char** argv){options_gate();assert(argc==2);fs::path root=argv
  auto pair2=pipeline::recursive_provider::admit_batch(request2,context,seed2,event2,{reinterpret_cast<const uint8_t*>(&meta2),sizeof meta2},{reinterpret_cast<const uint8_t*>(&record2.hidden),sizeof record2.hidden},hidden,2);
  draft.live_recursive_depth2(sequence,pair2.input,pair2.expected,true);assert(sequence.serial()==2&&draft.recursive_host_state().position==2);auto one_pending=draft.capture_survival(sequence);target_ring.restore(newer);target_ring.release(newer);draft.verify_survival(one_pending,sequence);assert(owner.integer(0,"position")==3&&owner.history0==3&&target_shared[0]==3);owner.put("position",2);owner.history0=0;
  assert(draft.read_canonical()==draft.canonical_bytes&&draft.recursive_host_state()==draft.canonical_host);for(auto [id,bytes]:target_before)assert(owner.readback(0,id,bytes.size())==bytes);assert(owner.history0==0&&owner.current_cls==9);
+ // A fresh request keeps allocations/bindings and clears saved recursive host,
+ // pinned images and counters. New Sequence context rejects prior publications;
+ // measured restore still restores canonical bytes and host exactly.
+ draft.reset_fixture();auto next_context=context;next_context.epoch=1;next_context.request[0]=1;ownrt::recursive_provider_next::Sequence next_sequence(next_context);
+ refusal([&]{draft.live_recursive_depth2(next_sequence,admitted.input,admitted.expected,false);});assert(!next_sequence.poisoned());
+ auto next_input=admitted.input;next_input.sequence=21;next_input.seed.epoch=1;next_input.seed.request=next_context.request;next_input.seed.ticket=19;next_input.seed.before=ownrt::ring_next::extend(ownrt::ring_next::request_prefix(next_context.request,1),0,next_input.parent.input_token);next_input.seed.after=ownrt::ring_next::extend(next_input.seed.before,1,next_input.seed.token);auto next_expected=admitted.expected;next_expected.seed=next_input.seed;
+ auto next_result=draft.live_recursive_depth2(next_sequence,next_input,next_expected,false);assert(next_result.available_depth==2&&next_sequence.serial()==1&&draft.recursive_captures==1&&draft.recursive_restores==1&&!draft.recursive_verified_restores&&draft.read_canonical()==draft.canonical_bytes&&draft.recursive_host_state()==draft.canonical_host);
  ownrt::recursive_provider::invalidate(map);refusal([&]{peer.capture(context,root/"peer.json");});ownrt::recursive_provider::publish(map,record);map[ownrt::live_draft::hidden_offset]^=1;refusal([&]{peer.capture(context,root/"peer.json");});
  {ProviderOwner failed(root/"failed-owner");failed.a.pipeline_live_draft=failed.a.pipeline_draft_partition=failed.a.mtp=true;for(auto name:{"error","position"})failed.buffers[0][name]={failed.allocate(0,name,4,Category::graph_static,Lifetime::graph)};failed.put("position",2);FixtureDraft broken(failed);broken.corrupt_target=true;ownrt::recursive_provider_next::Sequence seq(context);refusal([&]{broken.live_recursive_depth2(seq,admitted.input,admitted.expected,true);});assert(seq.poisoned()&&broken.recursive_captures==1&&!broken.recursive_restores&&failed.history0==999);failed.close();}
  ::munmap(map,pipeline::shared_bytes);::close(fd);owner.close();std::cout<<"PASS actual recursive member snapshot/CopyEngine transport71device+2pinned, private census, exact op27 accepted-seed/independent-peer binding, lazy readonly peer, marker/SHA refusal, complete canonical restoration, pending depth2/depth1 target rollback survival, corruption refusals for device/pinned/private/host/Sequence/prepared bindings, and unchanged target bytes/host; synthetic arithmetic only\n";
