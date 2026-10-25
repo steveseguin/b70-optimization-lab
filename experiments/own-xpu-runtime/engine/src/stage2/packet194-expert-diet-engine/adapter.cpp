@@ -313,6 +313,37 @@ template<int N,int Top> struct RouteFast final:ownrt::SyclOperation {
    }));});
  }
 };
+// HC combine and expert gather, F32 mode, without the generic accessor: each item handles four consecutive elements with
+// the SimpleNew expression unchanged (stream + branch*(2*sigmoid(inject/4)); exact copies for the gather), and routes and
+// validity exactly as before (an invalid id sets the sticky error, as the second gather phase did). Rows of a prefill
+// chunk use the Spec row strides. OWNRT_SIMPLE_FAST=0 keeps the SimpleNew kernels.
+struct CombineFast final:ownrt::SyclOperation {
+ Spec spec;explicit CombineFast(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const size_t n=spec.sizes[spec.ni],w=size_t(spec.site.shape[1]),quads=n/4;const int rows=spec.tokens;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(size_t(rows)*quads)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> id){
+   const size_t r=id[0]/quads,c=(id[0]%quads)*4;const RowBound rb{b,int(r),b.s};
+   if(!*rb.active()||rb.failed())return;
+   const float* stream=static_cast<const float*>(rb.in(0).p);const float* branch=static_cast<const float*>(rb.in(1).p);const float* inject=static_cast<const float*>(rb.in(2).p);float* out=static_cast<float*>(rb.out(0).p);
+   const float gate=2.f*ng::sigmoid(inject[c/w]/4.f);
+   for(int j=0;j<4;++j)out[c+j]=stream[c+j]+branch[(c+j)%w]*gate;}));});
+ }
+};
+struct GatherFast final:ownrt::SyclOperation {
+ Spec spec;explicit GatherFast(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int top=spec.g.top;const size_t n=spec.no_materialize_gather?0:spec.sizes[spec.ni+2],h=spec.sizes[1],per=size_t(top)+n/4;const int rows=spec.tokens;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(size_t(rows)*per)](sycl::handler& hd){hd.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> id){
+   const size_t r=id[0]/per,index=id[0]%per;const RowBound rb{b,int(r),b.s};
+   if(!*rb.active()||rb.failed())return;
+   if(index<size_t(top)){const int j=int(index);float v=rb.in(0).get(j);bool valid=std::isfinite(v)&&v>=0&&v<float(rb.s.g.experts)&&std::floor(v)==v;int ex=valid?int(v):0;
+    for(int k=0;k<3;++k){rb.out(0).put(j*3+k,k==0?ex:k==1?0:rb.s.g.mid);rb.out(1).put(j*3+k,k==0?ex:k==1?0:rb.s.g.h);}
+    if(!valid)rb.fail();return;}
+   const size_t c=(index-top)*4;const float* src=static_cast<const float*>(rb.in(1).p);float* dst=static_cast<float*>(rb.out(2).p);
+   for(int j=0;j<4;++j)dst[c+j]=src[(c+j)%h];}));});
+ }
+};
+inline bool simple_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_SIMPLE_FAST");return !e||e[0]!='0';}();return on;}
 inline bool route_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_FAST");return !e||e[0]!='0';}();return on;}
 inline bool route_group(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_GROUP");return e&&e[0]=='1';}();return on;}
 #endif
@@ -380,8 +411,16 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
 #endif
   return simple_new_submit<Op::route,512,10>(d,s,bindings,deps);}
   return simple_new_submit<Op::route>(d,s,bindings,deps);
- case Op::expert_gather:return simple_new_submit<Op::expert_gather>(d,s,bindings,deps);
- case Op::hc_combine:if(!s.fused_combine_norm)return simple_new_submit<Op::hc_combine>(d,s,bindings,deps);break;
+ case Op::expert_gather:
+#ifndef OWN_RT_HOST_ONLY
+  if(s.f32_activations&&simple_fast()&&(s.no_materialize_gather||(s.types[1]==Scalar::f32&&s.types[s.ni+2]==Scalar::f32&&s.sizes[1]%4==0&&s.sizes[s.ni+2]%s.sizes[1]==0))){GatherFast op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+#endif
+  return simple_new_submit<Op::expert_gather>(d,s,bindings,deps);
+ case Op::hc_combine:if(!s.fused_combine_norm){
+#ifndef OWN_RT_HOST_ONLY
+  if(s.f32_activations&&simple_fast()&&s.types[0]==Scalar::f32&&s.types[1]==Scalar::f32&&s.types[2]==Scalar::f32&&s.types[s.ni]==Scalar::f32&&s.sizes[s.ni]%4==0&&s.site.shape[1]%4==0){CombineFast op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+#endif
+  return simple_new_submit<Op::hc_combine>(d,s,bindings,deps);}break;
  case Op::argmax:return simple_new_submit<Op::argmax>(d,s,bindings,deps);
  case Op::ple_add:return simple_new_submit<Op::ple_add>(d,s,bindings,deps);
  default:break;}}

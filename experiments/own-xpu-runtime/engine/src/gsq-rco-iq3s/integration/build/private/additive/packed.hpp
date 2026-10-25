@@ -65,6 +65,42 @@ template<unsigned T,bool F=false> struct PackedOperation final:
  }
 #endif
 };
+#ifndef OWN_RT_HOST_ONLY
+// Routed rows, several per subgroup (F32 activations): one subgroup owns R consecutive rows of one slot and shares each
+// activation element across them. Every row keeps lane_sum's exact sequence (k = lane + 32*i), the same element value,
+// product then add, and the adjacent-pair tree; inactive rows still write NaN. Microbench (Q2_0 down 10 x 2560 x 640):
+// 151.7 -> 73.9 us with R=4.
+template<unsigned T,unsigned R> class PackedRowsKernel;
+template<unsigned T,unsigned R> struct PackedRowsOperation final:ownrt::SyclOperation {
+ Shape s{};
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
+  const Bound b{s,static_cast<const uint8_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4])};
+  const size_t blocks=(b.s.rows+R-1)/R;
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<PackedRowsKernel<T,R>>(sycl::nd_range<1>(blocks*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+   constexpr size_t elements=T==42?64:256;constexpr size_t bytes=T==42?18:T==12?144:T==13?176:T==23?136:98;
+   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id();
+   const unsigned slot=unsigned(logical/blocks);const size_t first=(logical%blocks)*R;
+   const auto r=b.routes[slot];const bool valid=iq3::valid_route(r,b.s.experts,uint32_t(b.s.rows),uint32_t(b.s.rows));
+   const float* x=reinterpret_cast<const float*>(b.x)+(b.s.per_slot?size_t(slot)*b.s.columns:0);float acc[R];
+   #pragma unroll
+   for(unsigned i=0;i<R;++i)acc[i]=0;
+   for(size_t k=lane;k<b.s.columns;k+=32){const float input=x[k];
+    #pragma unroll
+    for(unsigned i=0;i<R;++i){const size_t row=first+i;if(!valid||row>=b.s.rows||row>=r.row_count)continue;
+     const auto*w=b.w+(size_t(r.expert_id)*b.s.rows+r.row_begin+row)*b.s.row_bytes;
+     const float weight=gsq::element_unchecked(T,w+(k/elements)*bytes,k%elements);const float product=weight*input;acc[i]=acc[i]+product;}}
+   #pragma unroll
+   for(unsigned i=0;i<R;++i){float sum=acc[i];
+    for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
+    const size_t row=first+i;
+    if(lane==0&&row<b.s.rows)reinterpret_cast<float*>(b.y)[size_t(slot)*b.s.rows+row]=valid&&row<r.row_count?sum:iq3::bits_float(0x7fc00000);}
+   if(lane==0&&first==0&&b.status)b.status[slot]=!valid;
+  }));});
+ }
+};
+inline bool routed_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_GSQ_ROUTED_ROWS");return !e||e[0]!='0';}();return on;}
+#endif
 inline Shape validate(ownrt::Device&d,const integrated::Matrix&m,InputMode input,Storage storage){
  require(input==InputMode::shared||input==InputMode::per_slot,"GSQ input mode");
  require(storage==Storage::packed_direct,"GSQ packed direct storage only");const auto t=unsigned(m.type);require(t==12||t==13||t==18||t==23||t==42,"GSQ unsupported packed type");
@@ -81,6 +117,9 @@ inline Shape validate(ownrt::Device&d,const integrated::Matrix&m,InputMode input
  return s;
 }
 template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes?m.routes:m.x,m.status?m.status:m.y};
+#ifndef OWN_RT_HOST_ONLY
+ if(s.f32&&s.routed&&!s.row_major&&routed_rows()){PackedRowsOperation<T,4>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
+#endif
  if(s.f32){PackedOperation<T,true>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
  PackedOperation<T>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
 // integrated::Matrix facade: caller must explicitly admit raw packed storage.

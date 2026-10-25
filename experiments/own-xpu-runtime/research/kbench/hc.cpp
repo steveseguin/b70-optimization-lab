@@ -25,6 +25,26 @@ sycl::event run_pipelined(sycl::queue& q,const uint16_t* w,const float* x,float*
     if(lane==0)y[row]=sum;
   });
 }
+// Engine-faithful replica of kopt Multiply's raw BF16 path: 4 subgroups per work-group, a local accessor, the
+// work-group barrier that quantized staging needs, and the alignment-checked vector load. BARRIER=false drops only the
+// barrier.
+template<bool BARRIER>
+sycl::event run_engine(sycl::queue& q,const uint16_t* w,const float* x,float* y,int rows,int k){
+  constexpr int SG=32,SGS=4;const size_t groups=(rows+SGS-1)/SGS;
+  return q.submit([&](sycl::handler& h){sycl::local_accessor<uint8_t,1> storage(16*SGS,h);
+   h.parallel_for<K<10+BARRIER,1>>(sycl::nd_range<1>(groups*SG*SGS,SG*SGS),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();const int lane=sg.get_local_linear_id();const int row=it.get_group_linear_id()*SGS+sg.get_group_linear_id();
+    const bool active=row<rows;const uint16_t* src=w+size_t(active?row:0)*k;
+    if constexpr(BARRIER)it.barrier(sycl::access::fence_space::local_space);
+    float acc=0;
+    if(active)for(int base=lane*8;base<k;base+=SG*8){float values[8],wide[8];
+      if(base+8<=k&&reinterpret_cast<uintptr_t>(src+base)%16==0&&reinterpret_cast<uintptr_t>(reinterpret_cast<const uint16_t*>(x)+base)%16==0){
+        for(int j=0;j<8;++j)wide[j]=x[base+j];auto wv=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(src+base);for(int j=0;j<8;++j)values[j]=bf(wv[j]);}
+      else for(int j=0;j<8&&base+j<k;++j){values[j]=bf(src[base+j]);wide[j]=x[base+j];}
+      for(int j=0;j<8&&base+j<k;++j){float product=values[j]*wide[j];acc=acc+product;}}
+    for(int width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,acc,(lane+width)%SG);if(lane%(2*width)==0)acc=acc+rhs;}
+    if(lane==0&&active)y[row]=acc;});});
+}
 template<int V,int RowsPerSg>
 sycl::event run(sycl::queue& q,const uint16_t* w,const float* x,float* y,int rows,int k){
   constexpr int SG=32,SGS=4;const int per_wg=SGS*RowsPerSg;const size_t groups=(rows+per_wg-1)/per_wg;
@@ -62,6 +82,8 @@ int main(int argc,char** argv){
     std::printf("%s (%.1f MB weights)\n",s.name,hw.size()*2/1e6);
     run<0,1>(q,w,x,y,s.rows,s.k).wait();q.memcpy(ref.data(),y,s.rows*4).wait();
     time([&]{return run<0,1>(q,w,x,y,s.rows,s.k);},"v0 1 row/subgroup");
+    time([&]{return run_engine<true>(q,w,x,y,s.rows,s.k);},"engine replica (barrier)");
+    time([&]{return run_engine<false>(q,w,x,y,s.rows,s.k);},"engine replica, no barrier");
     time([&]{return run<0,2>(q,w,x,y,s.rows,s.k);},"2 rows/subgroup");
     time([&]{return run<0,4>(q,w,x,y,s.rows,s.k);},"4 rows/subgroup");
     time([&]{return run<0,8>(q,w,x,y,s.rows,s.k);},"8 rows/subgroup");
