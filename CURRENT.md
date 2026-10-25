@@ -16,9 +16,11 @@ GitHub/neural.download carry the research source; the new 253-file archive is
 live and checksum-verified. SkinDeep remote access remains unavailable; its local
 updates are preserved. Clean-host installation and portable serving remain open.
 
-Now building the cold multi-request path so a larger suite can reuse loaded
-engines. Initial qualification will compare two short requests with complete
-reset/state checks before any twelve-prompt timing run. Explicit target/draft
+The cold multi-request path passed two complete reset/state comparisons: both
+requests match all 2,065 target buffers, 73 draft allocations and output tokens.
+The twelve-prompt timing launch then refused its 512-token cap before opening a
+GPU because of a legacy 128-token argument bound; that narrow fix is in progress.
+No workers remain from the refused launch. Explicit target/draft
 state ownership is opt-in groundwork for deeper overlap. The established two-card
 speed remains 47.97 tok/s; draft training is prohibited. No host power or memory
 settings changed. See [live proof](experiments/own-xpu-runtime/research/continuation-2026-10-25/live-pp4-proof/RESULT.md)

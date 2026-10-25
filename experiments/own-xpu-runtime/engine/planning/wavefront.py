@@ -45,12 +45,17 @@ class Stage:
 
 
 class Wavefront:
-    def __init__(self, stages, prompt, max_new, vocab, eos, propose):
+    def __init__(self, stages, prompt, max_new, vocab, eos, propose, *, eos_token_ids=None):
         require(type(stages) is int and stages > 0, 'positive stage count')
         require(prompt and all(type(t) is int and 0 <= t < vocab for t in prompt), 'prompt tokens')
         require(type(max_new) is int and max_new > 0 and 0 <= eos < vocab, 'generation bounds')
         self.stages = [Stage() for _ in range(stages)]
         self.prompt, self.max_new, self.vocab, self.eos = list(prompt), max_new, vocab, eos
+        endings = [eos] if eos_token_ids is None else eos_token_ids
+        require(isinstance(endings, (list, tuple)) and endings and eos in endings
+                and all(type(t) is int and 0 <= t < vocab for t in endings)
+                and len(set(endings)) == len(endings), 'explicit unique EOS tokens')
+        self.eos_tokens = frozenset(endings)
         self.propose = propose
         self.frontier, self.counter = 0, 0
         self.known = dict(enumerate(prompt))
@@ -157,7 +162,7 @@ class Wavefront:
             self.emitted.append(row.next_token)
             self.events.append(dict(event='verified-output', position=row.position,
                                     token=row.next_token, row=row.identity))
-            if len(self.emitted) == self.max_new or row.next_token == self.eos:
+            if len(self.emitted) == self.max_new or row.next_token in self.eos_tokens:
                 self.stopping = True
                 for future in self.rows.values():
                     if future.position > row.position:

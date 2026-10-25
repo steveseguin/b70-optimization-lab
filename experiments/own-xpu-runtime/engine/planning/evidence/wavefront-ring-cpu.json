@@ -1,0 +1,22 @@
+{
+  "schema": "ownrt.wavefront-ring-cpu.v1",
+  "scope": "Pure CPU speculative suffix protocol model only; no native implementation, distributed scheduler, GPU parity or speed evidence",
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/engine/planning",
+    "-p",
+    "test_wavefront_ring.py",
+    "-v"
+  ],
+  "exit_code": 0,
+  "sources": {
+    "wavefront_ring.py": "a3fadf01f90caa977013ee93aa3bda3ec584ca45659c21fcd6523cc65d9c9449",
+    "test_wavefront_ring.py": "8b46f27d078ee9a923640c1f4ee6aaec9066d8a3151ff82bdac9b62a2367217c",
+    "wavefront-ring-next.md": "12c6d6c90a549eaebc08999af97e0aa63a2f084763606d78603972416e1f37ba"
+  },
+  "log_sha256": "41dbfc250c87863c8563e4b70042120260f3cede30b7aeb428ca983de093701f"
+}

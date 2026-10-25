@@ -303,6 +303,7 @@ static void pipeline_cancel_check() {
 }
 #include "stage2/packet194-expert-diet-engine/rank_canary.hpp"
 #include "stage2/packet194-expert-diet-engine/request_reset.hpp"
+#include "pipeline/request_reset.hpp"
 #include "gsq-rco-iq3s/state-bundle/build/source-v4/prefill_wire.hpp"
 #include "stage2/packet194-expert-diet-engine/native_controller.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp"
@@ -406,10 +407,13 @@ static int run_rank(const Options& a) {
   SpeculativeImage image(*engine);
   std::optional<ownrt::wavefront::Ledger> wave_ledger;
   std::unique_ptr<StageCheckpoint> wave_checkpoint;std::ofstream wave_trace;size_t wave_trace_rows=0,wave_trace_omitted=0;int wave_output=-1;
+  OperatorStatePartition operator_partition;std::set<Allocation> before_provider;
+  if(a.pipeline_draft_partition&&a.pipeline_first())for(const auto& [id,owner]:engine->allocations)before_provider.insert(id);
   if(a.pipeline_live_draft&&a.pipeline_first())provider=std::make_unique<mtp36::DraftRuntime>(*engine);
+  if(a.pipeline_draft_partition&&provider)operator_partition=admit_operator_partition(*engine,before_provider,provider->live_mutable_inventory(),provider->live_pinned_inventory());
   if(a.pipeline_wavefront){
    wave_ledger.emplace(a.pipeline_final(),engine->p.g.context,engine->p.g.vocab);
-   wave_checkpoint=std::make_unique<StageCheckpoint>(*engine,a.pipeline_wavefront_verify,provider?provider->live_pinned_inventory():std::vector<Allocation>{});
+   wave_checkpoint=std::make_unique<StageCheckpoint>(*engine,a.pipeline_wavefront_verify,provider?provider->live_pinned_inventory():std::vector<Allocation>{},operator_partition);
    wave_trace.open(a.output/"wavefront.jsonl");require(bool(wave_trace),"wavefront trace open");
   }
 #ifndef OWN_RT_HOST_ONLY
@@ -551,7 +555,12 @@ static int run_rank(const Options& a) {
     require(bool(probe),"p149 probe absent");probe->serve_correction([&]{if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();});
    }
    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();if(provider)provider->flush_depth_probe();state_dump(*engine,r.position);if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/("state-"+std::to_string(r.position)+".draft"));if(a.pipeline_wavefront)wave_checkpoint->attest(*wave_ledger,engine->a.output/("state-"+std::to_string(r.position)+".wavefront-state.json"),r.position);if(engine->a.tp_replicate)tp_compare(*engine,a.output/"tp-replicate-compare.json");if(r.position==2147483647)request_state_inventory(*engine);}
-   else if(r.op==11){image.boundary();v3state.reset();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+   else if(r.op==11){image.boundary();v3state.reset();
+    const auto metadata=a.output/("reset-"+std::to_string(r.sequence)+".txt");
+    if(a.pipeline_persistent_requests){require(!r.token&&!r.position&&!r.fixture&&!r.speculative,"persistent reset zero payload");persistent_reset(*engine,c,provider.get(),*wave_checkpoint,*wave_ledger,live_draft_sequence,a.output,metadata,accepted,r.sequence,static_cast<uint8_t*>(mapping),shared_bytes,wave_trace,wave_trace_rows,wave_trace_omitted);wave_output=-1;}
+    else request_reset(*engine,c,provider.get(),metadata,accepted);
+    accepted=0;
+   }
    else if(r.op==13){require(!async_half_ready,"pending half");v3state.reset();bracket_boundary(*engine,c,provider.get(),image,a.output/("bracket-"+std::to_string(r.sequence)+".txt"),accepted);async_half_position=async_half_token=-1;}
    #ifdef OWN_RT_HOST_ONLY
    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
@@ -570,7 +579,7 @@ static int run_rank(const Options& a) {
   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
    if(a.pipeline_enabled()){
     require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
-    if(a.pipeline_wavefront)require(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op||(a.pipeline_live_draft&&a.pipeline_first()&&r.op==ownrt::live_draft::step_op&&!r.speculative)||((r.op==dump||r.op==finish)&&!r.speculative),"wavefront command admission");
+    if(a.pipeline_wavefront)require(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op||(a.pipeline_live_draft&&a.pipeline_first()&&r.op==ownrt::live_draft::step_op&&!r.speculative)||(a.pipeline_persistent_requests&&r.op==11&&!r.speculative)||((r.op==dump||r.op==finish)&&!r.speculative),"wavefront command admission");
     else require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
    }
    if(r.op==finish){if(a.pipeline_wavefront){wave_checkpoint->attest(*wave_ledger);save(a.output/"wavefront-trace-summary.json","{\"records\":"+std::to_string(wave_trace_rows)+",\"omitted\":"+std::to_string(wave_trace_omitted)+"}");}if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/"draft-final-state-sealed");break;}

@@ -1,0 +1,49 @@
+{
+  "schema": "ownrt.persistent-suite-cpu-integration.v1",
+  "timestamp_utc": "2026-10-25T19:42:57.264207+00:00",
+  "passed": true,
+  "source_sha256": {
+    "engine/tools/persistent_live_suite.py": "72727de6a04c5ff12fbdcd272daf0732f36627bdcf3546e29230f9c509438dc4",
+    "engine/tools/test_persistent_live_suite.py": "8e830653fba2a431c22cb61f6517ccd4d585ba9e3e73d8be56d664b57a14f7a4",
+    "engine/tools/persistent_wavefront_driver.py": "df1ce2530aa2f5ce6f3aa1c856da55be44f0a62618a92262fc9d17985df9c80a",
+    "engine/tools/test_persistent_wavefront_driver.py": "329d925797c0973fe3c0f0be95719aeb604278da9979520bde5d24d628c41dfd",
+    "engine/tools/live_wavefront_driver.py": "511b1d625a3549789dda8d78d3bbacfe39a840baba5c0f174c4a3e48e51a9b41",
+    "engine/tools/test_live_wavefront_driver.py": "e2bb6448b936144ce6f087d769e676ac9e7a3e5f165767096a376300c0255b5e",
+    "engine/planning/wavefront.py": "4f8e6856fbf263616618c5a3871bad3dc20a20caebc557434304f0e58a2aa9cc",
+    "engine/planning/persistent-cold-suite.md": "53dd8955c71611e652506287e3f000d21ebb7244c84665aa52ab4c6439d1572a",
+    "research/continuation-2026-10-25/persistent-cold-suite.json": "8b6f853c0ec71f63f6651539cd2d32bb56d9cb9f0ba30385d27ed7b54d0c9df3"
+  },
+  "checks": [
+    {
+      "directory": "engine/tools",
+      "pattern": "test_live_wavefront_driver.py",
+      "tests": 5
+    },
+    {
+      "directory": "engine/tools",
+      "pattern": "test_persistent_live_suite.py",
+      "tests": 11
+    },
+    {
+      "directory": "engine/tools",
+      "pattern": "test_persistent_wavefront_driver.py",
+      "tests": 5
+    },
+    {
+      "directory": "engine/planning",
+      "pattern": "test_wavefront.py",
+      "tests": 6
+    },
+    {
+      "directory": "engine/planning",
+      "pattern": "test_live_draft.py",
+      "tests": 4
+    }
+  ],
+  "total_tests": 31,
+  "device_executed": false,
+  "native_reset_qualified": false,
+  "drive_hook_integrated": true,
+  "scope": "Independent source review and CPU tests. Explicit sequence seeding, both profile EOS IDs, two/four/six fake-wire stages, native capability/dump/input/hash gates. Native cold-state reset remains unqualified before device proof.",
+  "supersedes_cpu_contract": "persistent-suite-cpu-contract.json"
+}

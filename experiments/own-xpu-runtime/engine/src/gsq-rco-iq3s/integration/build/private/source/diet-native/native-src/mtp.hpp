@@ -118,7 +118,7 @@ class DraftRuntime {
  Allocation scratch{},control{},score{},probability{},head_workspace{},head_fp32{};unsigned head_variant{};std::string head_candidate;
  std::set<Allocation> mutable_ids;size_t allocated=0;int position=0;bool disabled=false;std::ofstream trace;
  Allocation alloc(const std::string& name,size_t bytes,Category category=Category::scratch){auto id=e.allocate(0,"draft:"+name,bytes,category,category==Category::weights?Lifetime::process:category==Category::kv?Lifetime::request:Lifetime::transaction);allocated+=bytes;mutable_ids.insert(id);std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,id,off,zero.data(),std::min(zero.size(),bytes-off));return id;}
- Allocation id(const std::string& name)const{return buffers.at(name).id;}
+ Allocation id(const std::string& name)const{auto allocation=buffers.at(name).id;if(e.a.pipeline_draft_partition)require(mutable_ids.count(allocation),"draft matrix/fused buffer outside provider ownership");return allocation;}
  void add(const std::string& n,size_t elements,Scalar type=Scalar::bf16){buffers[n]={alloc(n,elements*flash::scalar_bytes(type),(ends(n,".keys")||ends(n,".values")||ends(n,".raw")||ends(n,".pooled"))?Category::kv:Category::scratch),elements,type};}
  std::vector<uint8_t> synthetic(const std::string& n,unsigned rows,unsigned cols,bool gain){std::vector<uint8_t> raw(size_t(rows)*cols*(gain?4:2));for(size_t i=0;i<size_t(rows)*cols;++i){float f=flash::mock::weight("draft:"+n,int(i/cols),int(i%cols));if(gain)f+=1;if(gain)std::memcpy(raw.data()+i*4,&f,4);else {auto b=iq3::bf16_bits(f);std::memcpy(raw.data()+i*2,&b,2);}}return raw;}
  void load(const std::string& name,unsigned rows,unsigned cols,bool gain=false,bool routed=false){if(weights.count(name))return;Weight w;w.rows=rows;w.cols=cols;w.experts=routed?p.g.experts:1;w.fp8=routed&&!e.a.mini&&e.a.draft_experts_fp8;w.int8=routed&&!e.a.mini&&!w.fp8;w.type=gain?iq3::Type::F32:iq3::Type::BF16;
@@ -180,6 +180,12 @@ class DraftRuntime {
  }
 public:
  int live_position()const{return position;}
+ int live_extent()const{return context_extent;}
+ void live_reset_admission(){
+  require(e.a.pipeline_live_draft&&!disabled&&!async_pending&&!reverse_hidden&&queued_probe==-1&&queued_confirmed==-1,"live reset cannot clear failed/pending draft");
+  e.drain();auto bytes=e.readback(0,id("error"),4);int error=0;std::memcpy(&error,bytes.data(),4);require(!error,"live reset cannot clear draft sticky error");
+ }
+ std::vector<Allocation> live_mutable_inventory()const{require(e.a.pipeline_live_draft,"live draft mutable inventory mode");return {mutable_ids.begin(),mutable_ids.end()};}
  std::vector<Allocation> live_pinned_inventory()const{require(e.a.pipeline_live_draft,"live draft pinned inventory mode");return {publication,half_staging};}
  int live_step(int confirmed,int target_position,bool head,const void* hidden,size_t bytes){
   require(e.a.pipeline_live_draft&&e.a.pipeline_first()&&e.a.mtp&&e.a.draft_rank==0,"live draft owner");
@@ -188,7 +194,15 @@ public:
   reverse_hidden=probe_reverse_hidden.data();
   // Fail closed; unlike the legacy optional provider, a broken live owner must
   // not return a plausible proposal or continue with a partially advanced cache.
-  int token=compute(confirmed,target_position,head);
+  int token=-1;
+  if(e.a.pipeline_draft_partition){
+   const auto sources=e.fp32_sources;const auto extents=e.fp32_extents;const auto lookup=e.lookup_ids;const auto selected=e.selected;const auto loaded=e.loaded_layer;
+   const auto history0=e.history0,history1=e.history1;const auto bank=e.bank_parity;const int target_extent=e.context_extent,alternate_extent=e.alternate_context_extent,old_class=e.current_cls;
+   require(!e.preparing_commands&&!e.draft_timing,"live draft operator borrow must begin idle");
+   token=compute(confirmed,target_position,head);
+   require(!e.preparing_commands&&!e.draft_timing&&e.fp32_sources==sources&&e.fp32_extents==extents&&e.lookup_ids==lookup&&e.selected==selected&&e.loaded_layer==loaded&&e.history0==history0&&e.history1==history1&&e.bank_parity==bank&&e.context_extent==target_extent&&e.alternate_context_extent==alternate_extent,"draft mutated target operator metadata");
+   e.current_cls=old_class;
+  }else token=compute(confirmed,target_position,head);
   require(!disabled&&position==target_position&&!reverse_hidden&&!async_pending,"live draft canonical completion");
   require(head?(token>=0&&token<p.g.vocab):token==-1,"live draft proposal bounds");
   return token;
@@ -386,7 +400,8 @@ public:
   uint32_t active=1;e.upload(0,id("active"),0,&active,4);e.drain();position=0;disabled=false;reverse_hidden=nullptr;
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   publication_event=0;e.progress_pending=false;e.progress_callback={};
-  trace.close();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
+  if(e.a.pipeline_persistent_requests){pending_head=false;pending_confirmed=0;queued_probe=queued_confirmed=-1;probe_reverse_hidden.clear();admit_position(32);}
+  trace.close();trace.clear();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
   if(depth_probe)probe_output=output;
  }
  void flush_depth_probe(){

@@ -1,0 +1,40 @@
+{
+  "schema": "ownrt.operator-partition-reset-cpu.v1",
+  "scope": "CPU only: actual checked copy/snapshot transport via Host owner, exact provider census/disjoint membership, target rollback preserves newer draft device+pinned bytes, reset reconstructs zeroed copy tables/extent, reset metadata refusal tests; no full model/GPU reset or continuous overlap proof",
+  "results": [
+    {
+      "name": "operator-partition-reset",
+      "command": [
+        "/dev/shm/ownrt-test-operator-partition-final",
+        "/dev/shm/ownrt-operator-partition-cpu-final"
+      ],
+      "exit_code": 0,
+      "log": "experiments/own-xpu-runtime/engine/planning/evidence/operator-partition-reset.log",
+      "log_sha256": "1a277faf88a9d1be417ba8f7a361de337ce28f417c27bb43c67694a5c2e817c8",
+      "binary_sha256": "43cee208f862ff6ba7f5149fc3e7f19ddb2ba5901949d46348ab63ea8071a426"
+    },
+    {
+      "name": "default-checkpoint-regression",
+      "command": [
+        "/dev/shm/ownrt-test-default-checkpoint-final",
+        "/dev/shm/ownrt-default-checkpoint-cpu-final"
+      ],
+      "exit_code": 0,
+      "log": "experiments/own-xpu-runtime/engine/planning/evidence/default-checkpoint-regression.log",
+      "log_sha256": "3d981660c5dd6590987fd162b6c7b8f81ea016d1f33c08403e78c61146d952fd",
+      "binary_sha256": "bfb024b904187606faa241ac8b4a7947973e455a6a659c191b7566d875389586"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/engine/src/pipeline/operator_state.hpp": "7859ff652d06a9e3c23ef08fc23d19369780f0b633c40b6354ec87ff65880502",
+    "experiments/own-xpu-runtime/engine/src/pipeline/checkpoint.hpp": "42ee91edcaecc39112b6321cb5c4f56dd9d77434e82aea49d398e75521b78d8e",
+    "experiments/own-xpu-runtime/engine/src/pipeline/request_reset.hpp": "d0509c2e46f338d412f0dfb5834acea10132274825e58a3c76d01144477cc678",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "be040f64e9acb1c33c5b8e7f33c0daf181ed6abf5c0a1d14995435f1f2a7f4f3",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "7debffa82316d1dca2558f3399d1ec75935d84acbbebfb7b74ccb9faaf99a7c6",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp": "b83e6c13b56e44536aba11973f5bbe29eda4980c8588dbd504f0c3ca545938e5",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/request_reset.hpp": "bd4a11f9487d4bff25f54ee1cd9844f1aa43bb95430a6696ebcaed5da13aea3d",
+    "experiments/own-xpu-runtime/engine/planning/checkpoint_fixture.hpp": "434bb5901ea7fea1cc4b317283b0215df35dac132bad635244ef2c96ec3ac607",
+    "experiments/own-xpu-runtime/engine/planning/test_operator_partition.cpp": "b4c09ca387335326a885aa855f972e6094201920c6520f8fb8ab56db5e9a0aa0",
+    "experiments/own-xpu-runtime/engine/planning/test_wavefront_checkpoint.cpp": "09c2766d87ecb4ba0b2964c05e47683a3076a9e82a629371772d879248c33b4e"
+  }
+}

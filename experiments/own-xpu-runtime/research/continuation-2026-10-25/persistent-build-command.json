@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-persistent-build-20261025",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--property=IOSchedulingClass=idle",
+    "--working-directory=/home/steve/llm-optimizations",
+    "/usr/bin/python3",
+    "experiments/own-xpu-runtime/engine/build.py",
+    "/dev/shm/engine-build-persistent-20261025",
+    "--jobs",
+    "4"
+  ],
+  "device_executed": false,
+  "tmpfs_free_bytes": 55137366016,
+  "planned_build_bytes": 2147483648
+}

@@ -14,8 +14,8 @@ from test_wavefront_driver import Guard, exact
 base, wave, codec = live.base, live.wave, live.codec
 
 
-def worker(sock, shared, index, count, state, errors, misses):
-    sequence, pending, snapshot, expected_next = 0, None, None, None
+def worker(sock, shared, index, count, state, errors, misses, initial_sequence=0):
+    sequence, pending, snapshot, expected_next = initial_sequence, None, None, None
     try:
         while (packet := exact(sock, base.REQUEST.size)) is not None:
             op, token, position, fixture, spec, seq, stage, final = base.REQUEST.unpack(packet)
@@ -76,7 +76,7 @@ class LiveTests(unittest.TestCase):
             receipt=p/'receipt.json';receipt.write_text(json.dumps({'sources':{'pipeline/live_draft.hpp':'fixture'}}))
             adapter=p/'adapter.json';adapter.write_text(json.dumps({'rank_argv':[['--draft-mtp','--draft-fault','none','--draft-manifest',str(manifest),'--draft-model','/model','--draft-experts','fp8']]}))
             config=p/'config.json';config.write_text(json.dumps({'live_draft':True,'build_receipt':str(receipt),'adapter_plan':str(adapter)}))
-            plan={'pins':{},'stages':[{'first':i==0,'argv':['--draft-rank','0'],
+            plan={'pins':{},'eos':96,'vocab':97,'stages':[{'first':i==0,'argv':['--draft-rank','0'],
                     'environment':{'OWNRT_DRAFT_DEPTH_PROBE':'0','OWNRT_DRAFT_DEPTH_VERIFY':'0'}} for i in range(4)]}
             with patch.object(base,'make_plan',return_value=plan): result=live.make_plan(config)
             for stage in result['stages']:
@@ -84,26 +84,29 @@ class LiveTests(unittest.TestCase):
                 self.assertNotIn('OWNRT_DRAFT_DEPTH_VERIFY',stage['environment'])
                 self.assertEqual('--draft-mtp' in stage['argv'],stage['first'])
 
-    def fixture(self,count,misses,max_new=12,eos=96,prompt=None,use_proposals=True):
+    def fixture(self,count,misses,max_new=12,eos=96,prompt=None,use_proposals=True,
+                eos_token_ids=None, initial_sequence=0):
         prompt=prompt or [3,5,8,11]
         inputs=list(prompt); outputs=[]
         for _ in range(max_new):
             token=(inputs[-1]*7+len(inputs)+3)%97; outputs.append(token)
-            if token==eos or len(outputs)==max_new: break
+            if token in (eos_token_ids or [eos]) or len(outputs)==max_new: break
             inputs.append(token)
         plan=dict(prompt_tokens=prompt,max_new=max_new,vocab=97,eos=eos,seconds=15,
-                  stages=[{} for _ in range(count)],use_proposals=use_proposals)
+                  stages=[{} for _ in range(count)],use_proposals=use_proposals,
+                  eos_token_ids=eos_token_ids)
         stages,threads,states,errors=[],[],[],[]; guard=Guard()
         try:
             for i in range(count):
                 s=live.LiveStage.__new__(live.LiveStage); s.sock,peer=socket.socketpair()
                 s.spec=dict(id=i,first=i==0,final=i==count-1)
-                s.shared=bytearray(base.SHARED); s.sequence=0; s.stream_bytes=16;s.guard=guard;s.plan=plan
+                s.shared=bytearray(base.SHARED); s.sequence=initial_sequence; s.stream_bytes=16;s.guard=guard;s.plan=plan
                 state=dict(tokens=[],pairs=[],aborts=0)
-                t=threading.Thread(target=worker,args=(peer,s.shared,i,count,state,errors,misses),daemon=True)
+                t=threading.Thread(target=worker,args=(peer,s.shared,i,count,state,errors,misses,initial_sequence),daemon=True)
                 stages.append(s);states.append(state);threads.append(t);t.start()
             with tempfile.TemporaryDirectory() as tmp:
-                result=live.drive(stages,plan,guard,Path(tmp))
+                result=live.drive(stages,plan,guard,Path(tmp),
+                                  initial_sequences=tuple(s.sequence for s in stages) if initial_sequence else None)
             self.assertEqual(result['output_ids'],outputs)
             self.assertTrue(all(s['tokens']==inputs for s in states))
             self.assertEqual(states[0]['pairs'],[(p,inputs[p],int(p+1>=len(prompt))) for p in range(1,len(inputs))])
@@ -131,6 +134,10 @@ class LiveTests(unittest.TestCase):
         for count in (2,4):
             states=self.fixture(count,set(range(4,16)),use_proposals=False)
             self.assertTrue(all(s['aborts']==0 for s in states))
+
+    def test_secondary_eos_drains_speculation_with_nonzero_wire_sequence(self):
+        for count in (2,4,6):
+            self.fixture(count,{4,5},eos_token_ids=[96,14],initial_sequence=500)
 
 
 if __name__=='__main__':unittest.main()

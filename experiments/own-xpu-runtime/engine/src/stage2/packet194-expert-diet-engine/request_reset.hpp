@@ -4,14 +4,16 @@
 // Request boundary only: no allocation release or prepared-command invalidation.
 namespace pipeline {
 static void request_reset(Engine& e,Candidate& candidate,mtp36::DraftRuntime* provider,
-                          const fs::path& metadata,int accepted) {
+                          const fs::path& metadata,int accepted,
+                          const std::optional<std::pair<fs::path,std::string>>& admitted={}) {
  require(!candidate.pending,"reset with unresolved candidate");
  e.drain();require(!e.poisoned && !e.integer(0,"error"),"reset cannot clear target failure");
  // A deferred diagnostic still owns the previous draft state. Flush before
  // any allocation (including its backup) is zeroed, even with reset_dump off.
  if(provider)provider->flush_depth_probe();
- std::ifstream input(metadata);std::string output,oracle;
- require(bool(std::getline(input,output))&&bool(std::getline(input,oracle)),"reset metadata");
+ std::string output,oracle;
+ if(admitted){output=admitted->first.string();oracle=admitted->second;}
+ else {std::ifstream input(metadata);require(bool(std::getline(input,output))&&bool(std::getline(input,oracle)),"reset metadata");}
  fs::path destination(output);require(destination.is_absolute()&&!output.empty(),"reset output absolute");
  // Keep all boundary/drain/reset actions; only optional evidence readbacks disappear.
  if(e.a.reset_dump){state_dump(e,2147483647);request_state_inventory(e);if(provider)provider->dump_all_state(e.a.output/"draft-final-state");}

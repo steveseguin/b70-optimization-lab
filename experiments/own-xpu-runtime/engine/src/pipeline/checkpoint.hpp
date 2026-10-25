@@ -6,9 +6,10 @@ namespace pipeline {
 template<class Owner> class StageCheckpointFor {
  Owner& e;
  struct Item {Allocation id;size_t bytes,offset;std::string label;};
- std::vector<Item> items;
+ std::vector<Item> items,independent_device,excluded_private;
+ bool partitioned=false;
  struct HostItem {Allocation id;size_t bytes;std::string label;std::vector<uint8_t> before;};
- std::vector<HostItem> host_items;
+ std::vector<HostItem> host_items,independent_pinned;
  Allocation backup=0,capture_table=0,restore_table=0;
  std::vector<Allocation> capture_ids,restore_ids;
  size_t capacity=0,pinned_bytes=0,table_rows=0,tiles=0,allocation_count=0;
@@ -31,6 +32,8 @@ template<class Owner> class StageCheckpointFor {
   require(e.allocations.size()==allocation_count,"wavefront allocation set changed after load");
   for(const auto& item:items){const auto& row=e.dev(0).arena.row(item.id);
    require(row.live&&row.memory==Memory::device&&row.bytes==item.bytes&&row.label==item.label,"wavefront mutable allocation identity changed");}
+  for(const auto& item:independent_device){const auto& row=e.dev(0).arena.row(item.id);require(row.live&&row.memory==Memory::device&&row.bytes==item.bytes&&row.label==item.label,"independent draft device identity changed");}
+  for(const auto& item:independent_pinned){const auto& row=e.dev(0).arena.row(item.id);require(row.live&&row.memory==Memory::pinned&&row.bytes==item.bytes&&row.label==item.label,"independent draft pinned identity changed");}
   for(const auto& item:host_items){const auto& row=e.dev(0).arena.row(item.id);
    require(row.live&&row.memory==Memory::pinned&&row.bytes==item.bytes&&row.label==item.label,"wavefront pinned draft identity changed");}
  }
@@ -68,13 +71,19 @@ template<class Owner> class StageCheckpointFor {
   for(size_t c=0;c<e.fp32_sources.size();++c)if(e.fp32_sources[c])require(e.dev(int(c)).arena.row(e.fp32_sources[c]).live,"wavefront dead cached source");
  }
 public:
- explicit StageCheckpointFor(Owner& engine,bool verify,const std::vector<Allocation>& pinned={}):e(engine),verify_(verify){
+ explicit StageCheckpointFor(Owner& engine,bool verify,const std::vector<Allocation>& pinned={},const OperatorStatePartition& partition={}):e(engine),verify_(verify){
   require(e.a.pipeline_enabled()&&e.a.pipeline_wavefront&&e.resident&&(!e.a.mtp||e.a.pipeline_live_draft)&&!e.a.prefill_rows,"wavefront checkpoint mode");quiescent();
+  partitioned=partition.enabled;require(partitioned==bool(e.a.pipeline_draft_partition&&e.a.mtp),"checkpoint partition mode mismatch");
+  std::set<Allocation> excluded(partition.draft_device.begin(),partition.draft_device.end());
+  require(!partitioned||(excluded.size()==partition.draft_device.size()&&!excluded.empty()&&partition.draft_pinned==pinned),"checkpoint explicit provider partition");
+  std::set<Allocation> targets(partition.target_device.begin(),partition.target_device.end());
+  if(partitioned)for(auto id:excluded){const auto& row=e.dev(0).arena.row(id);require(e.allocations.count(id)&&row.live&&row.memory==Memory::device&&row.category!=Category::weights&&!targets.count(id),"checkpoint invalid independent allocation");independent_device.push_back({id,row.bytes,0,row.label});}
   for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);if(!row.live||row.category==Category::weights)continue;
+   if(partitioned){require(targets.count(id)!=excluded.count(id),"checkpoint unassigned or overlapping operator allocation");if(excluded.count(id))continue;}
    // Legacy rank-zero snapshot storage is allocated for the preserved controller
    // but never used by WAVE_ROW. Only these exact private labels are excluded.
    if(row.label=="card0:speculative-private-image"||row.label=="card0:speculative-copy-table"||row.label=="card0:speculative-static-copy-table"){
-    require(row.category==Category::runtime_overhead,"wavefront legacy-private category");continue;
+    require(row.category==Category::runtime_overhead,"wavefront legacy-private category");excluded_private.push_back({id,row.bytes,0,row.label});continue;
    }
    require(owner.first==0&&row.memory==Memory::device&&row.bytes>0,"wavefront allocation owner/extent");
    require(row.bytes<=512ull*1024*1024&&capacity<=512ull*1024*1024-row.bytes,"wavefront complete checkpoint exceeds 512 MiB admission");
@@ -90,22 +99,42 @@ public:
    require(row.live&&row.memory==Memory::pinned&&pinned_labels.insert(row.label).second&&
      ((row.label=="card0:draft:publication"&&row.bytes==8&&row.category==Category::output_ring)||
       (row.label=="card0:draft:half-staging"&&row.bytes==4+e.stream_bytes()&&row.category==Category::pinned_slab)),"wavefront pinned draft allocation admission");
-   host_items.push_back({id,row.bytes,row.label,std::vector<uint8_t>(row.bytes)});pinned_bytes+=row.bytes;
+   if(partitioned)independent_pinned.push_back({id,row.bytes,row.label,{}});
+   else {host_items.push_back({id,row.bytes,row.label,std::vector<uint8_t>(row.bytes)});pinned_bytes+=row.bytes;}
   }
   require(capacity>0&&table_rows>0&&table_rows<=4096,"wavefront checkpoint census");require(capacity+pinned_bytes<=512ull*1024*1024,"wavefront total checkpoint extent");
   backup=e.allocate(0,"wavefront-private-image",capacity,Category::runtime_overhead,Lifetime::process);
   capture_table=e.allocate(0,"wavefront-capture-table",table_rows*sizeof(SnapshotFlat::Item),Category::runtime_overhead,Lifetime::process);
   restore_table=e.allocate(0,"wavefront-restore-table",table_rows*sizeof(SnapshotFlat::Item),Category::runtime_overhead,Lifetime::process);
   prepare(false);prepare(true);allocation_count=e.allocations.size();
-  std::ostringstream receipt;receipt<<"{\"schema\":\"ownrt.wavefront-checkpoint-layout.v1\",\"complete_mutable_physical_allocations\":true,\"bytes\":"<<capacity+pinned_bytes<<",\"device_bytes\":"<<capacity<<",\"pinned_bytes\":"<<pinned_bytes<<",\"allocations\":[";
+  std::ostringstream receipt;receipt<<"{\"schema\":\"ownrt.wavefront-checkpoint-layout.v1\",\"complete_mutable_physical_allocations\":"<<(partitioned?"false":"true")<<",\"complete_target_owned_mutable_allocations\":true,\"partitioned_draft\":"<<(partitioned?"true":"false")<<",\"bytes\":"<<capacity+pinned_bytes<<",\"device_bytes\":"<<capacity<<",\"pinned_bytes\":"<<pinned_bytes<<",\"allocations\":[";
   for(size_t i=0;i<items.size();++i){const auto& item=items[i];receipt<<(i?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<"}";}receipt<<"],\"pinned_allocations\":[";
   for(size_t i=0;i<host_items.size();++i){const auto& item=host_items[i];receipt<<(i?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<"}";}
+  receipt<<"],\"independent_draft_allocations\":[";bool independent_comma=false;
+  for(const auto& item:independent_device){receipt<<(independent_comma?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"memory\":\"device\"}";independent_comma=true;}
+  for(const auto& item:independent_pinned){receipt<<(independent_comma?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"memory\":\"pinned\"}";independent_comma=true;}
+  receipt<<"],\"excluded_private_runtime_allocations\":[";
+  for(size_t i=0;i<excluded_private.size();++i){const auto& item=excluded_private[i];receipt<<(i?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"reason\":\"inactive-legacy-snapshot\"}";}
+  receipt<<"],\"checkpoint_private_allocations\":[";bool private_comma=false;
+  for(auto id:{backup,capture_table,restore_table}){const auto& row=e.dev(0).arena.row(id);receipt<<(private_comma?",":"")<<"{\"id\":"<<id<<",\"label\":"<<ownrt::quote(row.label)<<",\"bytes\":"<<row.bytes<<"}";private_comma=true;}
   receipt<<"]}";save(e.a.output/"wavefront-checkpoint-layout.json",receipt.str());
  }
  bool active()const{return active_;}
  uint64_t aborts()const{return aborts_;}
  uint64_t byte_checks()const{return byte_checks_;}
  size_t bytes()const{return capacity+pinned_bytes;}
+ void reset_at_boundary(){
+  require(!active_,"checkpoint reset with active row");quiescent();inventory();
+  require(e.integer(0,"position")==0&&e.bank_parity==0,"checkpoint reset requires cold target position/banks");
+  e.admit_position(0);
+  if(e.a.pipeline_first()&&e.alternate_context_extent!=32){e.swap_state_banks();e.admit_position(0);e.swap_state_banks();}
+  require(e.context_extent==32&&(!e.a.pipeline_first()||e.alternate_context_extent==32),"checkpoint reset attention extents");
+  // request_reset deliberately zeroes runtime storage too. Rebuild checked
+  // device pointer tables before a new row can use the retained allocations.
+  prepare(false);prepare(true);inventory();
+  captures_=commits_=aborts_=byte_checks_=0;output=nullptr;output_before.fill(0);
+  for(auto& item:host_items)std::fill(item.before.begin(),item.before.end(),0);
+ }
  void begin(uint8_t* shared){
   require(!active_,"wavefront checkpoint already active");quiescent();inventory();require(shared,"wavefront output slot");
   parity=e.bank_parity;active_bank=e.active_bank;spare_bank=e.spare_bank;extent=e.context_extent;alternate_extent=e.alternate_context_extent;
@@ -137,12 +166,17 @@ public:
    require(fs::file_size(seal)<=4096,"wavefront state seal extent");std::ifstream f(seal,std::ios::binary);require(bool(f),"wavefront state seal missing");
    std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(f)),{});require(!bytes.empty()&&!f.bad()&&bytes.size()==fs::file_size(seal),"wavefront state seal read");seal_sha=hash(bytes);
   }
-  std::ostringstream o;o<<"{\"schema\":\"ownrt.wavefront-state.v1\",\"mode\":\"verified-wavefront\",\"stage_id\":"<<e.a.pipeline_stage
+  std::string layout_sha,draft_seal_sha;
+  if(partitioned){auto file_hash=[&](const fs::path& file,size_t limit){require(fs::file_size(file)<=limit,"partition evidence extent");std::ifstream f(file,std::ios::binary);require(bool(f),"partition evidence missing");std::vector<uint8_t> b((std::istreambuf_iterator<char>(f)),{});require(!f.bad()&&b.size()==fs::file_size(file),"partition evidence read");return hash(b);};
+   layout_sha=file_hash(e.a.output/"wavefront-checkpoint-layout.json",1024*1024);
+   if(dump_marker>=0)draft_seal_sha=file_hash(e.a.output/("state-"+std::to_string(dump_marker)+".draft")/"state-seal.txt",4096);
+  }
+  std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(partitioned?"ownrt.wavefront-state.partition.v1":"ownrt.wavefront-state.v1")<<",\"checkpoint_layout_sha256\":"<<ownrt::quote(layout_sha)<<",\"independent_draft_state_seal_sha256\":"<<ownrt::quote(draft_seal_sha)<<",\"checkpoint_scope\":"<<ownrt::quote(partitioned?"target-owned":"complete-owner")<<",\"mode\":\"verified-wavefront\",\"stage_id\":"<<e.a.pipeline_stage
    <<",\"dump_marker\":"<<dump_marker<<",\"state_seal_sha256\":"<<ownrt::quote(seal_sha)<<",\"pending_ticket\":false,\"actual_position\":"<<position<<",\"abort_count\":"<<aborts_<<",\"byteverified_restore_count\":"<<byte_checks_<<",\"saved_bytes\":"<<uint64_t(capacity+pinned_bytes)*captures_
    <<",\"committed_position\":"<<ledger.position()<<",\"pending_tickets\":0,\"checkpoint_active\":false,\"rows\":"<<ledger.rows<<",\"tentative_rows\":"<<ledger.tentative_rows
    <<",\"commits\":"<<ledger.commits<<",\"aborts\":"<<ledger.aborts<<",\"snapshot_captures\":"<<captures_<<",\"snapshot_commits\":"<<commits_<<",\"snapshot_aborts\":"<<aborts_
    <<",\"restore_verification_enabled\":"<<(verify_?"true":"false")<<",\"abort_byte_checks\":"<<byte_checks_<<",\"all_aborts_byte_verified\":"<<(aborts_==byte_checks_?"true":"false")
-   <<",\"bank_parity\":"<<e.bank_parity<<",\"sticky_error\":0,\"full_mutable_checkpoint_bytes\":"<<capacity+pinned_bytes<<",\"inactive_alternate_banks\":[";
+   <<",\"bank_parity\":"<<e.bank_parity<<",\"sticky_error\":0,"<<ownrt::quote(partitioned?"target_mutable_checkpoint_bytes":"full_mutable_checkpoint_bytes")<<":"<<capacity+pinned_bytes<<",\"inactive_alternate_banks\":[";
   bool comma=false;for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"],\"canonical_bank_mapping\":{";comma=false;
   for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name)<<":{\"active_allocation\":"<<e.buffers[0].at(name).id<<",\"inactive_allocation\":"<<id<<"}";comma=true;}o<<"}}";
   const auto path=destination.empty()?e.a.output/"wavefront-quiescence.json":destination;

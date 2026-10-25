@@ -32,6 +32,10 @@ def make_plan(config_path):
     base.require(type(verify) is bool, 'restore verification boolean')
     use_proposals = config.get('use_proposals', True)
     base.require(type(use_proposals) is bool, 'explicit proposal-use boolean')
+    endings = config.get('eos_token_ids', [plan['eos']])
+    base.require(isinstance(endings, list) and endings and plan['eos'] in endings
+                 and all(type(t) is int and 0 <= t < plan['vocab'] for t in endings)
+                 and len(set(endings)) == len(endings), 'explicit unique EOS tokens')
     adapter = json.loads(Path(config['adapter_plan']).read_text())
     draft = adapter['rank_argv'][0]
     base.require('--draft-mtp' in draft, 'recorded existing draft authority required')
@@ -60,6 +64,7 @@ def make_plan(config_path):
     plan.update(schema='ownrt.live-wavefront-driver-plan.v1', mode='verified-wavefront',
                 live_draft=True, draft_training=False, verify_restore=verify, max_inflight=2,
                 use_proposals=use_proposals,
+                eos_token_ids=endings,
                 diagnostic_only=True, speed_claim=False,
                 limits='Existing live depth-one draft; target and draft state qualification required. No speed claim.')
     return plan
@@ -102,11 +107,21 @@ def draft_step(stage, model, sequence, handoff, confirmed, head):
     return reply
 
 
-def drive(stages, plan, guard, output):
+def drive(stages, plan, guard, output, *, initial_sequences=None):
     prompt = plan['prompt_tokens']
     sequence = codec.CanonicalSequence(plan['vocab'])
     model = schedule.Wavefront(len(stages), prompt, plan['max_new'], plan['vocab'],
-                               plan['eos'], sequence.proposal if plan.get('use_proposals', True) else lambda _: None)
+                               plan['eos'], sequence.proposal if plan.get('use_proposals', True) else lambda _: None,
+                               eos_token_ids=plan.get('eos_token_ids'))
+    if initial_sequences is not None:
+        base.require(tuple(initial_sequences) == tuple(s.sequence for s in stages),
+                     'persistent scheduler seed differs from native wire sequence')
+        # Function-local import avoids a module initialization cycle; the helper
+        # validates a fresh scheduler and never mutates native Stage ownership.
+        from persistent_live_suite import seed_model_sequences
+        seed_model_sequences(model, initial_sequences)
+    else:
+        base.require(all(s.sequence == 0 for s in stages), 'nonfresh wire requires explicit sequence seed')
     for stage in stages:
         stage.start_async()
     sockets = {s.sock:s for s in stages}

@@ -34,6 +34,7 @@ def main():
     parser.add_argument('--run',required=True,type=Path)
     parser.add_argument('--out',required=True,type=Path)
     parser.add_argument('--draft-reference',type=Path)
+    parser.add_argument('--dump-marker',type=int,default=2147483647)
     args=parser.parse_args()
     run,out=args.run.resolve(),args.out.resolve()
     terminal=json.loads((run/'result.json').read_text())
@@ -58,14 +59,14 @@ def main():
     raw_bundles=[]
     for stage in plan['stages']:
         native=Path(stage['native_output']);local=out/f'stage{stage["id"]}';local.mkdir()
-        dump=native/'state-2147483647'
+        dump=native/f'state-{args.dump_marker}'
         if dump.is_dir():retain_bundle(dump,local/dump.name,raw_bundles)
         for name in ('launch-plan.json','pipeline-stage.json','wavefront-checkpoint-layout.json',
-                     'state-2147483647.wavefront-state.json','wavefront-quiescence.json','receipt.json','draft-rows.jsonl'):
+                     f'state-{args.dump_marker}.wavefront-state.json','wavefront-quiescence.json','receipt.json','draft-rows.jsonl'):
             if (native/name).is_file():shutil.copyfile(native/name,local/name)
         candidate['stages'].append(dict(id=stage['id'],begin=stage['begin'],end=stage['end'],dump=str(dump),
             plan=str(local/'launch-plan.json'),metadata=str(local/'pipeline-stage.json'),
-            quiescence=str(native/'state-2147483647.wavefront-state.json')))
+            quiescence=str(native/f'state-{args.dump_marker}.wavefront-state.json')))
         if stage['first']:
             draft_dump=dump.with_name(dump.name+'.draft')
             if draft_dump.is_dir():retain_bundle(draft_dump,local/draft_dump.name,raw_bundles)
