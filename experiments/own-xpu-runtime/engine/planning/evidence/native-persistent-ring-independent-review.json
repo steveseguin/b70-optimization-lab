@@ -1,0 +1,80 @@
+{
+  "checks": [
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "/dev/shm/ownrt-persistent-ring-native-v5",
+        "/dev/shm/ownrt-persistent-independent-native-v5"
+      ],
+      "exit_code": 0,
+      "stderr": "context lifetime PASS: 214 destructions, native release last, zero late destructions\ncontext lifetime PASS: 214 destructions, native release last, zero late destructions\n",
+      "stdout": "PASS actual native Dispatcher two cold resets, fixed qualification/measured parser, real Host owner zero, table reconstruction, stable allocation inventory, cache/stream coldness, monotonic epochs/sequences and stale refusals; no model arithmetic/GPU\n"
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "/dev/shm/ownrt-persistent-ring-provider-v2",
+        "/dev/shm/ownrt-persistent-independent-provider-v2"
+      ],
+      "exit_code": 0,
+      "stderr": "context lifetime PASS: 75 destructions, native release last, zero late destructions\ncontext lifetime PASS: 436 destructions, native release last, zero late destructions\n",
+      "stdout": "PASS actual recursive member snapshot/CopyEngine transport71device+2pinned, private census, exact op27 accepted-seed/independent-peer binding, lazy readonly peer, marker/SHA refusal, complete canonical restoration, pending depth2/depth1 target rollback survival, corruption refusals for device/pinned/private/host/Sequence/prepared bindings, and unchanged target bytes/host; synthetic arithmetic only\n"
+    }
+  ],
+  "coverage_limits": [
+    "No GPU/model arithmetic or production engine build",
+    "First-owner Dispatcher to real DraftRuntime reset glue reviewed in source, integrated behavior remains a two-request GPU gate",
+    "Final-owner empty-plan unused legacy256MiB scratch replaced with4KiB before census; no model operator executes",
+    "38 explicit throw-only link stubs exclude model loader/arithmetic; reaching any one fails"
+  ],
+  "device_execution_requested": false,
+  "first_owner_integrated_gpu_qualified": false,
+  "native_build_performed": false,
+  "native_receipt": "experiments/own-xpu-runtime/engine/planning/evidence/native-persistent-ring-cpu.json",
+  "native_receipt_sha256": "03008dffa7410cbe26b63bde7265f652377208aeb7b3b0b11de6502ad49543a5",
+  "notes": [
+    "Actual final-owner Dispatcher fixture plus actual provider-member synthetic arithmetic fixture are distinct; first-owner glue is source reviewed and requires bounded GPU proof.",
+    "Provider fixture main source predates only parser context>=32 guard, as explicitly bridged in native receipt.",
+    "target_host_restore_checks counts metadata bank/extent/reference checks and assignments, not a separate all-host byte comparison."
+  ],
+  "passed": true,
+  "schema": "ownrt.native-persistent-ring-independent-review.v1",
+  "source_review": [
+    "reset descriptor strictbounded path/JSON/request/epoch/sequence authority",
+    "canonical target and provider frontier drain before reset; no queued callbacks",
+    "checked owner-zero covers target/canonical draft/runtime private images; pinned provider reset explicit",
+    "both target bank extents and checked copy tables restored; saved slot outputs/metadata/references cleared",
+    "recursive saved host/target/pinned snapshots and counters cleared; canonical Sequence recreated",
+    "same allocation identities and readonly final-peer inode retained across request boundaries",
+    "fixed measured policy preserves checked copies/host/sticky checks; byte/survival readback counters honestly disabled",
+    "context below32 refused predevice for fixed cold extent32"
+  ],
+  "sources": {
+    ".github/workflows/own-engine-cpu.yml": "a2ce9702fb6dd79e140db22ffdf2c60213f36c1733454bed52b9aca2687f6be3",
+    "experiments/own-xpu-runtime/engine/planning/checkpoint_fixture.hpp": "9804e50d768d9beece06895602fe5db5eb37c080e4ff3b57089ba975cd838506",
+    "experiments/own-xpu-runtime/engine/planning/persistent-ring-native.md": "6d6ab88886264d07819ec6b88187ad0391e828dc590e06b00af1515976ae9ba5",
+    "experiments/own-xpu-runtime/engine/planning/persistent_ring_host_stubs.cpp": "aa1372ec7f78a1775b2d230aa2e66fbc1b290e0f0f2540e1ff31662867c76c41",
+    "experiments/own-xpu-runtime/engine/planning/test_native_ring_checkpoint.cpp": "650b7b904dd7f855d8927fc2918e441182006bb551763dbc1c8480ef90562460",
+    "experiments/own-xpu-runtime/engine/planning/test_native_ring_control.cpp": "724abdcb91d7dd996c4f430c954df0f863da0cdfc4f4080eea98a33ff4ba2796",
+    "experiments/own-xpu-runtime/engine/planning/test_persistent_ring_native.cpp": "62024952f4eb801d3e0972395f8571b3dc40692f39fcb8b38666629e0f98912b",
+    "experiments/own-xpu-runtime/engine/planning/test_recursive_provider_native.cpp": "6d7857413d24479f9fb40a1b9ae94f60de3248a6b0047731ddffbf9b5a4ee4fb",
+    "experiments/own-xpu-runtime/engine/planning/test_ring_reset_descriptor.cpp": "d720c3fb78fee0e159bf9a4c17411c884fbe2b38bd3eb500ca3afad9a28e5a62",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "7d384884983d95b93f896003395b4621f294382b6804cb0ddfb347048310bfd9",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp": "6cd461e6a32e592cffbfa649083b00c4e5f8cbb382e34986871244fde4f5ade7",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "08897344499ef8c7b8c724937352eb95631c8088c3c270959c3dd218aac2b55f",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/batch.hpp": "43641d9f9ae659bfcee7b44c78c70939acf0ee575895513f3ef3ffd92e886e01",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/draft_runtime_extension.inc": "a162ae1f242ec94bff064a4c1ae3917440d81c9e98dca35224e301adcd53f1b5",
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/peer.hpp": "6c21ecc1045617449bd3b3d3cf81ea5f5e6e920325ffe06df22a43c480bca6a7",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp": "ee97572de6ae4148f5dbfb226389ed498d220ade2b3ace70a4de63c144442020",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp": "e2142556ebd1eea566ee9806ad52ad5dc2dbae5a0a0fe22dd9a58402254281ca",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/engine_backend.hpp": "961487eb581c5d9369786157e03b0b88e4ece8eadad58a18b45e080e3b4de623",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/persistent_reset.inc": "f8c0a42280593321c18b37e73af1ba3696537c475bf6658bab4adb152406632b",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/reset_descriptor.hpp": "95c1bad473c661ee46c5e5cde034185d77d1b7728f5b285d938f0c42761036d5",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/stage_ring.hpp": "deba29cbba6409575f64ef727f72a1f0937161deb938656e46a38c4aa4ad11ad",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/request_reset.hpp": "bd4a11f9487d4bff25f54ee1cd9844f1aa43bb95430a6696ebcaed5da13aea3d"
+  }
+}
