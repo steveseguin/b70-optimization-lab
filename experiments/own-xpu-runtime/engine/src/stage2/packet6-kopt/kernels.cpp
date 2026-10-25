@@ -404,6 +404,11 @@ ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
     MultiplyBlockRows<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});
   }
+  if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&t==Type::IQ4_NL) {
+    // IQ4_NL (K=640): one row per subgroup straight from global memory with the word decoder (microbench 99 -> 73 us).
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    MultiplyBlockRows<1> block;block.desc=op.desc[0];return d.compute(block,ids,{});
+  }
   return finish(d,op,ids);
 }
 ownrt::Event fused_gemv(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg) {

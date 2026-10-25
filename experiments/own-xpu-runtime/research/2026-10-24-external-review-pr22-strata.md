@@ -81,3 +81,8 @@ MTP hits are identical (4568/5954). Decode is the 12-prompt suite median.
 | routed kopt with 4 rows per subgroup, read from global memory with no staging (`623cd3d4`) | **28.29** | +1%; kept. Expert kernels are decode/ALU bound, as Strata found on the B70 |
 | device-timestamp profile (`OWNRT_DECODE_PROFILE=2`): rank 0 busy 22.07 of 22.21 ms per step, gaps 0.12 ms, so kernel time (not launches) is the cost | | |
 | exact fast route: same softmax code, top 10 by ten integer-key work-group maxima (idea 5); IQ4_NL down back to one row per subgroup (`d63f7e2d`) | **30.15 (+6.6%)** | route 68.8 → 25.1 µs/layer, IQ4_NL 153 → 127 µs/layer |
+| IQ4_NL word decoder: aligned 32-bit loads and a register codebook, exact (idea 3; microbench 99 → 73 µs) (`6fc16d23`) | 30.40 | |
+| NaN-safe hardware half → float on the device in `iq3::half` and the kopt decoders (IQ2_S microbench 69.7 → 43.6 µs) (`52fcf958`) | 30.62 | |
+| IQ3_XXS expert block kernel with 4 rows per subgroup and 16-bit word loads (microbench 98.3 → 60.6 µs) (`2045517b`) | **31.07** | |
+
+Kernel microbenchmarks (warm/cold, bitwise against an engine replica) are in [kbench/](kbench/).

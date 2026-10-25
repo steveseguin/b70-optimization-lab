@@ -1,10 +1,22 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #pragma once
+#if defined(SYCL_LANGUAGE_VERSION)
+#include <sycl/sycl.hpp>
+#endif
 #include "stage2/packet2/kernels/math.hpp"
 #include <stdexcept>
 
 // Original lab arithmetic. Old lane_dot/tree32/gemv_row remain untouched.
 namespace iq3::kopt {
+// Block scale half -> float. On the device, the hardware conversion is exact for every non-NaN half; NaN patterns keep
+// the reference conversion (canonical quiet NaN), so the result equals half() for all 65536 inputs. The software
+// version's subnormal loop made it a large share of expert decode (IQ2_S microbench 69.7 -> 43.6 us).
+inline float half_scale(uint32_t h) {
+#if defined(__SYCL_DEVICE_ONLY__)
+  if(((h>>10)&31)!=31)return float(sycl::bit_cast<sycl::half>(uint16_t(h)));
+#endif
+  return half(h);
+}
 // A contiguous group of eight amortizes scale/sign/codebook decoding. All
 // multiplication boundaries match packet2 decode; never factor FP expressions.
 template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
@@ -14,12 +26,12 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
     unsigned ix=b[2+q]|(((b[66+q/4]>>(2*(q%4)))&3)<<8);
     uint64_t grid=iq2_s_grid[ix];unsigned signs=b[34+q];
     unsigned sc=(b[74+i/32]>>(4*((i/16)%2)))&15;
-    float scale=(half(u16(b))*(0.5f+float(sc)))*0.25f;
+    float scale=(half_scale(u16(b))*(0.5f+float(sc)))*0.25f;
     for(unsigned j=0;j<8;++j)v[j]=(scale*float((grid>>(8*j))&255))*float((signs>>j)&1?-1:1);
   } else if constexpr(T==Type::IQ3_S) {
     auto b=row+(k/256)*110;unsigned i=k%256,q=i/4;
     unsigned signs=b[74+i/8],sc=(b[106+i/64]>>(4*((i/32)%2)))&15;
-    float scale=half(u16(b))*float(1+2*sc);
+    float scale=half_scale(u16(b))*float(1+2*sc);
     for(unsigned g=0;g<2;++g) {
       unsigned qi=q+g,ix=b[2+qi]|(((b[66+qi/8]>>(qi%8))&1)<<8);
       uint32_t grid=iq3_s_grid[ix];
@@ -27,7 +39,7 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
     }
   } else if constexpr(T==Type::Q6_K) {
     auto b=row+(k/256)*210;unsigned i=k%256;
-    float scale=half(u16(b+208))*float(signed8(b[192+i/16]));
+    float scale=half_scale(u16(b+208))*float(signed8(b[192+i/16]));
     for(unsigned j=0;j<8;++j) {
       unsigned n=i+j;
       int low=(b[(n/128)*64+n%64]>>(4*((n%128)/64)))&15;
@@ -36,11 +48,25 @@ template<Type T> inline void decode8(const uint8_t* row,size_t k,float* v) {
     }
   } else if constexpr(T==Type::IQ4_NL || T==Type::Q8_0) {
     auto b=row+(k/32)*l.bytes;unsigned i=k%32;
-    float scale=half(u16(b));
+    float scale=half_scale(u16(b));
     // The 16 IQ4_NL levels {-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113} as signed bytes in two words:
     // byte extraction keeps the codebook in registers (an indexed local array lowers to private memory on the GPU).
     // The integer levels, and so every value, are unchanged.
     constexpr uint64_t low=0xf6eaddcfbfad9881ull,high=0x7159453526190d01ull;
+    if constexpr(T==Type::IQ4_NL) {
+      // The 8 weights at k (k%8==0) are bytes b[2+(i&15)] .. +7 of the block, all low (i<16) or all high nibbles,
+      // i.e. exactly levels[(b[2+(i+j)%16]>>(4*((i+j)/16)))&15]. Read them as two 32-bit words (aligned, or the
+      // covering aligned words with the last two bytes as one 16-bit load), never a byte outside the 8 needed ones.
+      const uint8_t* q=b+2+(i&15);const uintptr_t at=reinterpret_cast<uintptr_t>(q);
+      if(i%8==0&&(at&1)==0) {
+        uint32_t lo,hi;
+        if((at&3)==0){lo=*reinterpret_cast<const uint32_t*>(q);hi=*reinterpret_cast<const uint32_t*>(q+4);}
+        else {const uint32_t* w=reinterpret_cast<const uint32_t*>(q-2);lo=(w[0]>>16)|(w[1]<<16);hi=(w[1]>>16)|(uint32_t(*reinterpret_cast<const uint16_t*>(q+6))<<16);}
+        const unsigned shift=(i/16)*4;
+        for(unsigned j=0;j<8;++j){const unsigned n=((((j<4?lo:hi)>>(8*(j&3)))&255)>>shift)&15;v[j]=scale*float(int(int8_t(uint8_t(((n<8?low:high)>>(8*(n&7)))&255))));}
+        return;
+      }
+    }
     for(unsigned j=0;j<8;++j) {
       if constexpr(T==Type::Q8_0)v[j]=scale*float(signed8(b[2+i+j]));
       else {const unsigned q=(b[2+(i+j)%16]>>(4*((i+j)/16)))&15;v[j]=scale*float(int(int8_t(uint8_t(((q<8?low:high)>>(8*(q&7)))&255))));}

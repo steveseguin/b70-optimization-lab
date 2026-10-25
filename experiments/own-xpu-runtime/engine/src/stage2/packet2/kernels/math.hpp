@@ -1,5 +1,8 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #pragma once
+#if defined(SYCL_LANGUAGE_VERSION)
+#include <sycl/sycl.hpp>
+#endif
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -28,6 +31,11 @@ inline int signed8(uint8_t b) {return b<128?int(b):int(b)-256;}
 inline float bits_float(uint32_t b) {return std::bit_cast<float>(b);}
 inline float half(uint32_t h) {
   uint32_t sign=(h&0x8000)<<16, e=(h>>10)&31, m=h&1023;
+#if defined(__SYCL_DEVICE_ONLY__)
+  // Hardware half -> float is exact for every non-NaN half (normals and subnormals); NaN keeps the canonical
+  // quiet NaN below. Same result for all 65536 inputs, without the subnormal loop.
+  if(e!=31)return float(sycl::bit_cast<sycl::half>(uint16_t(h)));
+#endif
   if(e==31) return bits_float(sign|0x7f800000|(m?0x400000:0)); // Python struct canonical NaN
   if(e) return bits_float(sign|((e+112)<<23)|(m<<13));
   if(!m) return bits_float(sign);

@@ -27,6 +27,49 @@ template<bool F=false> inline float block_lane_sum(const Bound&b,const iq3::Rout
  return sum;
 }
 using gsqn::require;
+#ifndef OWN_RT_HOST_ONLY
+// Several rows per subgroup (F32 activations): one subgroup owns R consecutive rows of one slot and shares each
+// activation element across them. Every row keeps block_lane_sum's exact sequence (block, group, lane), the same
+// block_element value (its sign/scale word read as two 16-bit halves of the same bytes), product then add, and the
+// adjacent-pair tree; inactive rows still write NaN. Microbench (10 x 640 x 2560): 98.3 -> 60.6 us with R=4.
+inline float block_element_words(const uint8_t*b,float d,unsigned group,unsigned lane){
+ const auto*half_words=reinterpret_cast<const uint16_t*>(b+66+4*group);const uint32_t word=uint32_t(half_words[0])|uint32_t(half_words[1])<<16,code=(word>>(7*(lane/8)))&127;
+ const auto mask=code|((std::popcount(code)%2)<<7);
+ const int sign=(mask>>(lane%8))&1?-1:1;
+ const auto mag=(iq3::iq3_grid[b[2+group*8+lane/4]]>>(8*(lane%4)))&255;
+ return (((d*(0.5f+float(word>>28)))*0.5f)*float(mag))*float(sign);
+}
+template<unsigned R> class BlockRowsKernel;
+template<unsigned R> struct BlockRowsOperation final:ownrt::SyclOperation {
+ Shape s{};
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
+  Bound b{s,static_cast<const uint8_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4])};
+  const size_t blocks=(b.s.rows+R-1)/R;
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<BlockRowsKernel<R>>(sycl::nd_range<1>(blocks*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id();
+   const unsigned slot=unsigned(logical/blocks);const size_t first=(logical%blocks)*R;
+   const auto r=b.routes[slot];const bool valid=iq3::valid_route(r,b.s.experts,uint32_t(b.s.rows),uint32_t(b.s.rows));
+   const float* x=reinterpret_cast<const float*>(b.x)+size_t(slot)*b.s.columns;float acc[R];
+   #pragma unroll
+   for(unsigned i=0;i<R;++i)acc[i]=0;
+   for(size_t block=0;block<b.s.columns/256;++block){
+    #pragma unroll
+    for(unsigned i=0;i<R;++i){const size_t row=first+i;if(!valid||row>=b.s.rows||row>=r.row_count)continue;
+     const auto*packed=b.w+(size_t(r.expert_id)*b.s.rows+r.row_begin+row)*b.s.row_bytes+block*98;const float d=iq3::half(iq3::u16(packed));
+     for(unsigned group=0;group<8;++group){const size_t k=block*256+group*32+lane;const float weight=block_element_words(packed,d,group,lane);const float product=weight*x[k];acc[i]=acc[i]+product;}}
+   }
+   #pragma unroll
+   for(unsigned i=0;i<R;++i){float sum=acc[i];
+    for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
+    const size_t row=first+i;
+    if(lane==0&&row<b.s.rows)reinterpret_cast<float*>(b.y)[size_t(slot)*b.s.rows+row]=valid&&row<r.row_count?sum:iq3::bits_float(0x7fc00000);}
+   if(lane==0&&first==0&&b.status)b.status[slot]=!valid;
+  }));});
+ }
+};
+inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_IQ3_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
+#endif
 template<bool F> class BlockKernel;
 template<bool F=false> struct BlockOperation final:
 #ifdef OWN_RT_HOST_ONLY
@@ -67,6 +110,9 @@ inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std:
  require(input==gsqn::InputMode::per_slot,"IQ3 block requires original gathered per-slot input");
  const auto shape=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
  std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes,m.status};
+#ifndef OWN_RT_HOST_ONLY
+ if(shape.f32&&!shape.row_major&&block_rows()){BlockRowsOperation<4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+#endif
  if(shape.f32){BlockOperation<true> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
  BlockOperation<> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};
 }
