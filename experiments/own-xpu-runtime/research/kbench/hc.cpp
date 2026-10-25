@@ -85,6 +85,28 @@ sycl::event run_lean(sycl::queue& q,const uint16_t* w,const float* x,float* y,in
     for(int width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,acc,(lane+width)%SG);if(lane%(2*width)==0)acc=acc+rhs;}
     if(lane==0)y[row]=acc;});
 }
+// Lean path with R rows per subgroup sharing each 8-column activation chunk (each row's arithmetic unchanged).
+template<int V,int R>
+sycl::event run_lean_rows(sycl::queue& q,const uint16_t* w,const float* x,float* y,int rows,int k){
+  constexpr int SG=32,SGS=4;const size_t total=(rows+R-1)/R,groups=(total+SGS-1)/SGS;
+  return q.parallel_for<K<V,R>>(sycl::nd_range<1>(groups*SG*SGS,SG*SGS),[=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();const size_t logical=it.get_group_linear_id()*SGS+sg.get_group_linear_id();
+    if(logical>=total)return;const int first=int(logical)*R;const uint32_t k32=uint32_t(k);float acc[R];const uint16_t* src[R];
+    #pragma unroll
+    for(int r=0;r<R;++r){acc[r]=0;src[r]=w+size_t(first+r<rows?first+r:first)*k;}
+    for(uint32_t base=lane*8u;base+8u<=k32;base+=SG*8u){
+      float wide[8];
+      #pragma unroll
+      for(int j=0;j<8;++j)wide[j]=x[base+j];
+      #pragma unroll
+      for(int r=0;r<R;++r){auto wv=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(src[r]+base);
+        #pragma unroll
+        for(int j=0;j<8;++j){float value=sycl::bit_cast<float>(uint32_t(wv[j])<<16);float product=value*wide[j];acc[r]=acc[r]+product;}}
+    }
+    #pragma unroll
+    for(int r=0;r<R;++r){float a=acc[r];for(int width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,a,(lane+width)%SG);if(lane%(2*width)==0)a=a+rhs;}
+      if(lane==0&&first+r<rows)y[first+r]=a;}});
+}
 int main(int argc,char** argv){
   sycl::queue q(sycl::gpu_selector_v,{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}});
   std::printf("%s\n",q.get_device().get_info<sycl::info::device::name>().c_str());
@@ -104,7 +126,10 @@ int main(int argc,char** argv){
       std::printf("  %-28s warm %8.2f us  cold %8.2f us  %s\n",label,t[t.size()/2],cold[cold.size()/2],same?"bitwise-equal":"DIFFERS");};
     std::printf("%s (%.1f MB weights)\n",s.name,hw.size()*2/1e6);
     run<0,1>(q,w,x,y,s.rows,s.k).wait();q.memcpy(ref.data(),y,s.rows*4).wait();
-    time([&]{return run_lean<20,true,1>(q,w,x,y,s.rows,s.k);},"lean (engine now)");
+    time([&]{return run_lean<20,true,1>(q,w,x,y,s.rows,s.k);},"lean quiet (old engine)");
+    time([&]{return run_lean<23,false,2>(q,w,x,y,s.rows,s.k);},"lean, no quiet, unroll 2 (engine now)");
+    time([&]{return run_lean_rows<30,2>(q,w,x,y,s.rows,s.k);},"lean, 2 rows/subgroup");
+    time([&]{return run_lean_rows<31,4>(q,w,x,y,s.rows,s.k);},"lean, 4 rows/subgroup");
     time([&]{return run_lean<21,false,1>(q,w,x,y,s.rows,s.k);},"lean, no NaN-quiet test");
     time([&]{return run_lean<22,true,2>(q,w,x,y,s.rows,s.k);},"lean, unroll 2");
     time([&]{return run_lean<23,false,2>(q,w,x,y,s.rows,s.k);},"lean, no quiet, unroll 2");
