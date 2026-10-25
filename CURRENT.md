@@ -55,9 +55,11 @@ qualification stopped before ROW because Python `any(mmap)` falsely rejected
 all-zero publication maps. All workers exited; no new fault signatures appeared.
 The failed run is archived durably. The bytes-snapshot correction and actual
 file-backed mmap regression passed 32 CPU tests and independent review. Corrected
-run `persistent-rolling-qualified-b` is active in its separately admitted unit;
-the native binary is unchanged. Full target/draft parity and later measured-policy
-parity remain pending. The earlier checked rolling run is not a speed result.
+run `persistent-rolling-qualified-b` passed: each of two cold requests matches
+32 output tokens, 2,065 target buffers and 73 draft allocations. All workers
+exited zero with no new fault signatures. Its complete/compact evidence is durable
+and restore-tested. The native binary is unchanged; the separate measured-policy
+parity gate is next. All GPUs are currently idle. The earlier checked rolling run is not a speed result.
 The latest 450-file source export (`4b74995e2`) passes hashes and isolated imports;
 it is not built or published as a new qualified download. The earlier 424-file its
 extracted portable build passed (binary `8ba3e562e175`), including all 225 native
