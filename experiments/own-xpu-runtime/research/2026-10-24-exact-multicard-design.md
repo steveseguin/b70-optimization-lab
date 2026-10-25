@@ -292,3 +292,12 @@ Fixes needed on the way:
 - the plan is the one-card rank plan, with twins added after `write_plan`;
 - the scratch proof matches buffers that exist on every card;
 - `drain()` waits on the tail's own card.
+
+**Step 2b (pf84, no drain on card switches, one host thread).** Rank 1 half-step medians over 16 steps:
+- one card: 16.73 ms;
+- two cards replicated: 17.08 ms (+2%).
+
+Tokens, all 1,079 buffers and the dump are bitwise-identical
+([one-card](tp/evidence/step2b-pf84-one-card-summary.json), [TP](tp/evidence/step2b-pf84-tp-replicate-summary.json)).
+One thread submitting both cards (about 7.4 ms of enqueue) stays below the GPU time, so per-card submission threads
+are not needed yet.
