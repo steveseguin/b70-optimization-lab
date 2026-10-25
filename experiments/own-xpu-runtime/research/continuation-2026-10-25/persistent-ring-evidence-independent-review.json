@@ -1,0 +1,80 @@
+{
+  "schema": "ownrt.persistent-ring-evidence-independent-review.v1",
+  "passed": true,
+  "reviewer": "engine_audit",
+  "sources": {
+    "experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py": "76b5d22bf78b99b7e0007474db8fbd02d2b0159470b3a251a3a84b3a37b8bbb1",
+    "experiments/own-xpu-runtime/engine/tools/compare_persistent_provider_survival.py": "459e61386ad168723e61f79ba7c3bfc5d8f43079d9632d9e20657f91350e6c94",
+    "experiments/own-xpu-runtime/engine/tools/persistent_ring_policy.py": "252c4642ba69f54535c9a00e5eb61692bca391804b197d07d64eb04bdac931e9",
+    "experiments/own-xpu-runtime/engine/tools/test_compare_persistent_ring_state.py": "e0665e4bc3fe4265011ffaaa6bd861101717327010ebc0386a9ff901de0d69e9",
+    "experiments/own-xpu-runtime/engine/tools/test_persistent_ring_policy.py": "51cded6e9a17856ae34472225033e8311f6070b82653505ac6d937c73a318b86",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent_rolling_trace_audit.py": "a54b5175293676db0d835eb42c012a06a9eb9a628e75108bb1ab21e59400e44a",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent_rolling_reset_audit.py": "bcef5d444535331d830d736deab9939a898c848c920eebab3d445603372fa110",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_persistent_rolling_proof.py": "0086e26c67b1ad717b8abab883293c5b0ace8d2010e1b03a8e84d15400171aec",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/test_persistent_rolling_trace_audit.py": "197e906425c9de87e8ae1e50964a6381fabe05ee347e35907dbe2b2e6d6e83f1",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/test_finalize_persistent_rolling_proof.py": "dc20075a64846a6e8f8c97601fb5462e28cdd3e54777d3b57d0fc19a35df58b7"
+  },
+  "historical_helpers_unchanged": {
+    "engine/tools/compare_provider_survival.py": "c57af8984ccd66ee23ff4f5f8bf08662d39a14a08c670af29aed6b2d521f7fb6",
+    "engine/tools/compare_rolling_provider_survival.py": "ed19abd842a0f2c71f793fc1cae7cfe2f8522a4b4bd842a3b03a124b3f23eae8",
+    "research/continuation-2026-10-25/rolling_provider_trace_audit.py": "a9f67a843439a44b25c6f945491f06657340116b650777f25c98e9e575916acf",
+    "research/continuation-2026-10-25/finalize_rolling_provider_proof.py": "a13eb9d7a35611e8debeafd72ad64b5895abed79770a594aabcd8c9edf369b24"
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "engine/tools",
+        "-p",
+        "test_compare*state.py"
+      ],
+      "tests": 54,
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "test_persistent_ring_policy",
+        "test_persistent_rolling_trace_audit",
+        "test_finalize_persistent_rolling_proof"
+      ],
+      "tests": 12,
+      "exit_code": 0
+    }
+  ],
+  "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "TMPDIR": "/dev/shm/ownrt-persistent-ring-cpu-tmp",
+    "PYTHONPATH": "engine/tools:research/continuation-2026-10-25"
+  },
+  "reviewed": [
+    "Separate v7 dispatch preserves historical v5/v6 policy requirements",
+    "Exact native fixed-policy fields, mandatory operation/host counters and truthful omitted byte-check aggregates",
+    "First RESET starts at native wire sequence0; later reset follows actual final command plus per-owner DUMP, without sequence restart",
+    "Request/epoch identity, descriptor native hash, allocation census continuity and complete owner reset barrier",
+    "Raw target/proposal metadata, original tentative identity, independently retained final-parent lease, actual provider-only speculative token provenance",
+    "Full target and canonical draft state comparison against accepted baseline; measured mode additionally compares accepted persistent qualification",
+    "No-advance survival is derived honestly; measured mode requires an empty authenticated survival trace rather than invented proof",
+    "Timing arithmetic binds observed committed output events; two matched32 cap requests only, no speed/EOS/cancellation certification"
+  ],
+  "findings_closed": [
+    {
+      "finding": "New raw descriptor and reset receipt JSON paths must reject duplicate keys even when all surrounding hashes are updated",
+      "resolution": "object_pairs_hook=BUNDLE.pairs on both raw parses plus fully rehashed duplicate descriptor/receipt refusal regression",
+      "status": "verified"
+    }
+  ],
+  "limitations": [
+    "CPU/static review only; no model/GPU run by reviewer",
+    "Measured policy does not establish per-abort provider byte survival or full cold-state readback",
+    "First native full first-owner reset qualification remains the planned two-request GPU proof",
+    "Full12 prompt throughput and early EOS/cancellation remain separate evidence scopes"
+  ]
+}

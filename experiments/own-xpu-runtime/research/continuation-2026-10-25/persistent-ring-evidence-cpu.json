@@ -1,0 +1,86 @@
+{
+  "schema": "ownrt.persistent-ring-evidence-cpu.v1",
+  "passed": true,
+  "sources": {
+    "experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py": "76b5d22bf78b99b7e0007474db8fbd02d2b0159470b3a251a3a84b3a37b8bbb1",
+    "experiments/own-xpu-runtime/engine/tools/compare_persistent_provider_survival.py": "459e61386ad168723e61f79ba7c3bfc5d8f43079d9632d9e20657f91350e6c94",
+    "experiments/own-xpu-runtime/engine/tools/persistent_ring_policy.py": "252c4642ba69f54535c9a00e5eb61692bca391804b197d07d64eb04bdac931e9",
+    "experiments/own-xpu-runtime/engine/tools/test_compare_persistent_ring_state.py": "e0665e4bc3fe4265011ffaaa6bd861101717327010ebc0386a9ff901de0d69e9",
+    "experiments/own-xpu-runtime/engine/tools/test_persistent_ring_policy.py": "51cded6e9a17856ae34472225033e8311f6070b82653505ac6d937c73a318b86",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent_rolling_trace_audit.py": "a54b5175293676db0d835eb42c012a06a9eb9a628e75108bb1ab21e59400e44a",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent_rolling_reset_audit.py": "bcef5d444535331d830d736deab9939a898c848c920eebab3d445603372fa110",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_persistent_rolling_proof.py": "5d2dbd6294bb73d0a672d61e50cdcf37b45f4514acc54fa31f58897295e5cd6e",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/test_persistent_rolling_trace_audit.py": "197e906425c9de87e8ae1e50964a6381fabe05ee347e35907dbe2b2e6d6e83f1",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/test_finalize_persistent_rolling_proof.py": "dc20075a64846a6e8f8c97601fb5462e28cdd3e54777d3b57d0fc19a35df58b7"
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "engine/tools",
+        "-p",
+        "test_compare*state.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-ring-evidence-states-cpu.log",
+      "log_sha256": "a8d8110996cece5860ee332d3809a591747665480ac6ab16b7840dee673b433b",
+      "output": "----------------------------------------------------------------------\nRan 54 tests in 0.582s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "test_persistent_ring_policy",
+        "test_persistent_rolling_trace_audit",
+        "test_finalize_persistent_rolling_proof",
+        "-q"
+      ],
+      "exit_code": 0,
+      "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-ring-evidence-evidence-cpu.log",
+      "log_sha256": "ade0ebc2ae8d0e996550e768c6d9cbb7b706e96a5592c6a89cd1dfe4a4c3b164",
+      "output": "----------------------------------------------------------------------\nRan 12 tests in 1.535s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "test_rolling_provider",
+        "test_rolling_provider_arbiter",
+        "test_persistent_rolling",
+        "test_rolling_ring_socket",
+        "test_rolling_ring_driver",
+        "-q"
+      ],
+      "exit_code": 0,
+      "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-ring-evidence-controller-cpu.log",
+      "log_sha256": "078db76c18085881d4da4c011fc8004206786aed172124a0d5d75c4e75b476ca",
+      "output": "----------------------------------------------------------------------\nRan 31 tests in 1.912s\n\nOK\n"
+    }
+  ],
+  "independent_review": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-ring-evidence-independent-review.json",
+    "sha256": "cfc86ccaa4fafb2309198bd49a26c7798f0b66484925dba0b60ba8256dca848c"
+  },
+  "eof_bridge": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-ring-evidence-eof-bridge.json",
+    "sha256": "746a7a9d77cb4e1ee5bb369de0759e76265e80b092e7b87b955e23ec027d4820"
+  },
+  "controller_review": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/evidence/persistent-rolling-controller-cpu.json",
+    "sha256": "a9ccdaf2433274f45362f63a9d174e021f1fb1181fef91d922da119a2727fd50",
+    "source_pins_verified": 33,
+    "packaging_ast_identical": true,
+    "findings": []
+  },
+  "scope": "CPU independent fixed-policy, reset chain, raw witness provenance, exact state comparator and finalizer qualification; model GPU proof pending. No speed, early EOS, cancellation or full cold-byte reset claim.",
+  "qualified_raw_bundles": 10,
+  "outer_final_bundles": "preserve only; not separately qualified",
+  "gpu_actions": false
+}

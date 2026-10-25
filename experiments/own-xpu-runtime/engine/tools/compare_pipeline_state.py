@@ -151,10 +151,14 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     require(0 < att_path.stat().st_size <= 1024 * 1024, 'ring attestation size bound')
     raw, receipt = source(att_path)
     att = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
-    pending = spec['mode'] == 'verified-ring-pending-provider'
+    persistent = spec['schema'] == 'ownrt.pipeline-state-set.v7'
+    pending = spec['mode'] in ('verified-ring-pending-provider','persistent-rolling')
     live = spec['mode'] == 'verified-ring-live' or pending
-    require(att['schema'] == ('ownrt.ring-state.pending-provider.v1' if pending else 'ownrt.ring-state.live.v1' if live else 'ownrt.ring-state.v1')
+    require(att['schema'] == ('ownrt.ring-state.persistent.v1' if persistent else 'ownrt.ring-state.pending-provider.v1' if pending else 'ownrt.ring-state.live.v1' if live else 'ownrt.ring-state.v1')
             and att['mode'] == spec['mode'], 'unsupported ring attestation schema/mode')
+    if persistent:
+        from persistent_ring_policy import validate_policy
+        validate_policy(att,policy=spec['verification_policy'],first=metadata['first'])
     marker = re.fullmatch(r'state-(0|[1-9][0-9]*)', dump.name)
     require(marker is not None and type(att['dump_marker']) is int and att['dump_marker'] == int(marker[1]), 'ring dump marker differs')
     require(type(att['stage_id']) is int and att['stage_id'] == stage['id'], 'ring stage identity differs')
@@ -184,7 +188,8 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
             'ring trace/maximum pending accounting differs')
     require(type(att['restore_verification_enabled']) is bool and type(att['all_aborts_byte_verified']) is bool
             and att['byteverified_restore_count'] <= att['abort_count']
-            and att['all_aborts_byte_verified'] is (att['byteverified_restore_count'] == att['abort_count']),
+            and att['all_aborts_byte_verified'] is ((att['restore_verification_enabled'] or not persistent)
+                                                   and att['byteverified_restore_count'] == att['abort_count']),
             'ring restore verification accounting differs')
     require(att['byteverified_restore_count'] == (att['abort_count'] if att['restore_verification_enabled'] else 0),
             'ring declared restore policy differs from checks')
@@ -242,7 +247,9 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
             'ring canonical/inactive banks alias or are absent from target inventory')
     provider_sources = live_ring_provider(path,stage,dump,metadata,identity,spec,att,layout,pending=pending) if live else []
     if pending:
-        if spec['schema'] == 'ownrt.pipeline-state-set.v6':
+        if persistent:
+            from compare_persistent_provider_survival import validate_survival
+        elif spec['schema'] == 'ownrt.pipeline-state-set.v6':
             from compare_rolling_provider_survival import validate_survival
         else:
             from compare_provider_survival import validate_survival
@@ -251,6 +258,7 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
 
 
 def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout, *, pending=False):
+    persistent = spec['schema'] == 'ownrt.pipeline-state-set.v7'
     require(att['provider_borrow_mode'] == metadata['provider_borrow_mode']
             == spec['provider_borrow_mode'] == ('pending-target' if pending else 'quiescent-target'),
             'live ring permits only quiescent target borrowing')
@@ -270,7 +278,8 @@ def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout,
     captures, restores, verified = (att[k] for k in ('provider_snapshot_captures','provider_snapshot_restores',
                                                    'provider_byteverified_restore_count'))
     require(captures == restores <= att['provider_commands'] and verified == (restores if att['provider_restore_verification_enabled'] else 0)
-            and att['provider_all_restores_byte_verified'] is (verified == restores),
+            and att['provider_all_restores_byte_verified'] is ((att['provider_restore_verification_enabled'] or not persistent)
+                                                              and verified == restores),
             'provider capture/restore verification accounting differs')
     require(att['provider_trace_records'] + att['provider_trace_omitted'] == att['provider_commands'],
             'provider trace command accounting differs')
@@ -280,7 +289,7 @@ def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout,
                 and att['canonical_draft_state_seal_sha256'] == '' and not canonical and not private
                 and 'draft_state_set' not in stage, 'nonfirst stage cannot own provider state')
         return []
-    require(att['provider_restore_verification_enabled'] is True and att['provider_all_restores_byte_verified'] is True,
+    require(persistent or att['provider_restore_verification_enabled'] is True and att['provider_all_restores_byte_verified'] is True,
             'live provider proof requires every restore byte-verified')
     position = max(0, identity['position']-1)
     require(type(att['provider_position']) is int and att['provider_position'] == position
@@ -321,24 +330,36 @@ def load_set(path):
     mode = spec['mode']
     wavefront = spec['schema'] == 'ownrt.pipeline-state-set.v2' and mode == 'verified-wavefront'
     rolling_ring = spec['schema'] == 'ownrt.pipeline-state-set.v6' and mode == 'verified-ring-pending-provider'
-    pending_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v5' and mode == 'verified-ring-pending-provider') or rolling_ring
+    persistent_ring = spec['schema'] == 'ownrt.pipeline-state-set.v7' and mode == 'persistent-rolling'
+    pending_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v5' and mode == 'verified-ring-pending-provider') or rolling_ring or persistent_ring
     live_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v4' and mode == 'verified-ring-live') or pending_ring
     ring = (spec['schema'] == 'ownrt.pipeline-state-set.v3' and mode == 'verified-ring') or live_ring
     require((spec['schema'] == 'ownrt.pipeline-state-set.v1' and mode == 'target-only') or wavefront or ring,
-            'unsupported pipeline state set schema/mode; explicit v1/v2/v3/v4/v5/v6 capability required')
+            'unsupported pipeline state set schema/mode; explicit v1/v2/v3/v4/v5/v6/v7 capability required')
+    if persistent_ring:
+        require(spec.get('verification_policy') in ('qualification','measured')
+                and spec.get('actual_proposals_only') is True
+                and spec.get('controller_mode') == 'persistent-rolling'
+                and type(spec.get('ring_epoch')) is int and spec['ring_epoch']>0,
+                'explicit persistent process policy, actual proposals and reset epoch required')
+        enabled=spec['verification_policy']=='qualification'
+        require(spec.get('require_byte_verified_restores') is enabled
+                and spec.get('require_provider_byte_verified_restores') is enabled
+                and spec.get('require_provider_survival_checks') is enabled,
+                'persistent manifest cannot override fixed process verification policy')
     if rolling_ring:
         require(spec.get('controller_mode') == 'rolling-ring-live-depth2-qualification'
                 and spec.get('actual_proposals_only') is True,
                 'explicit rolling controller and actual-proposal scope required')
     if live_ring:
         require(spec.get('provider_borrow_mode') == ('pending-target' if pending_ring else 'quiescent-target')
-                and spec.get('require_provider_byte_verified_restores') is True
+                and (persistent_ring or spec.get('require_provider_byte_verified_restores') is True)
                 and isinstance(spec.get('draft_input_identity'),dict), 'explicit quiescent verified provider proof required')
     if pending_ring:
         depths=spec.get('required_provider_pending_depths')
-        require(spec.get('require_provider_survival_checks') is True
-                and spec.get('require_byte_verified_restores') is True
-                and isinstance(depths,list) and (bool(depths) or rolling_ring) and all(type(d)is int and d in (1,2) for d in depths)
+        require((persistent_ring or spec.get('require_provider_survival_checks') is True
+                 and spec.get('require_byte_verified_restores') is True)
+                and isinstance(depths,list) and (bool(depths) or rolling_ring or persistent_ring) and all(type(d)is int and d in (1,2) for d in depths)
                 and len(depths)==len(set(depths)), 'explicit pending provider survival and target restore proof required')
     if wavefront or ring:
         require(type(spec.get('require_byte_verified_restores')) is bool,
@@ -377,6 +398,9 @@ def load_set(path):
                     and metadata['ring_request_sha256'] == spec['ring_request_sha256']
                     and type(metadata['ring_epoch']) is int and metadata['ring_epoch'] == spec['ring_epoch'],
                     'engine ring/speculation metadata required')
+            if persistent_ring:
+                require(metadata.get('verification_policy') == spec['verification_policy'],
+                        'persistent native metadata process policy differs')
         elif wavefront:
             require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == 'wavefront'
                     and metadata['speculation_enabled'] is True, 'engine wavefront/speculation metadata required')
