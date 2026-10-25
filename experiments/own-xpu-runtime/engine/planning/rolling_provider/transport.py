@@ -44,14 +44,16 @@ def command_identity(command):
         row_ticket=seed.sequence if command.op in (ring.ROW,PROVIDER) else command.row_ticket)
 
 
-def drive(stages, plan, guard, output, *, stop_requested=None):
+def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
     base.require(plan.get('rolling_depth2') is True and plan.get('use_proposals') is True,
                  'explicit rolling actual-proposal mode')
     base.require(not any(k in plan for k in ('recursive_reference','scripted_proposal_tokens',
                      'force_miss_positions','expected_outputs')), 'rolling driver accepts no reference/oracle inputs')
     base.require(len(stages) in (2,4,6) and all(s.stream_bytes == stages[0].stream_bytes for s in stages),
                  'uniform admitted rolling owner geometry')
-    model = RollingCoordinator(stages=len(stages), request=bytes.fromhex(plan['request_sha256']), epoch=0,
+    base.require(type(epoch) is int and 0 <= epoch < 2**64 and epoch == plan.get('epoch', 0),
+                 'rolling request epoch differs from explicit plan')
+    model = RollingCoordinator(stages=len(stages), request=bytes.fromhex(plan['request_sha256']), epoch=epoch,
         prompt=plan['prompt_tokens'], max_new=plan['max_new'], context=plan['context'], vocab=plan['vocab'],
         eos_token_ids=plan['eos_token_ids'], stream_bytes=stages[0].stream_bytes,
         initial_sequences=[s.sequence for s in stages])

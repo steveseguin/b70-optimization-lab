@@ -1,0 +1,27 @@
+--- a/engine/tools/persistent_rolling_driver.py
++++ b/engine/tools/persistent_rolling_driver.py
+@@ -28,6 +28,7 @@
+         config['admitted_max_new']==config.get('max_new') and 1<=config['admitted_max_new']<=512,
+         'explicit per-process max-new admission required')
+     plan = base.make_plan(config_path)
++    base.require(plan['context']>=32,'persistent cold reset requires context extent at least32')
+     base.require(len(plan['stages']) in (2,4,6) and 1 <= plan['max_new'] <= config['admitted_max_new'],
+                  'persistent rolling supports2/4/6 owners and explicit bounded outputs')
+     eos = config.get('eos_token_ids')
+--- a/engine/tools/test_persistent_rolling.py
++++ b/engine/tools/test_persistent_rolling.py
+@@ -328,6 +328,14 @@
+             self.assertFalse(result['passed'])
+             self.assertEqual(result['lifecycle_result_sha256'],base.digest(Path(tmp)/'result.json'))
+ 
++    def test_small_context_is_refused_before_native_reset(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            path,config,_,baseline=self.fixture(Path(tmp))
++            def small(p):
++                plan=baseline(p);plan['context']=16;return plan
++            with patch.object(base,'make_plan',side_effect=small),self.assertRaisesRegex(ValueError,'at least32'):
++                driver.make_plan(path)
++
+ 
+ if __name__=='__main__':unittest.main()
+ 
