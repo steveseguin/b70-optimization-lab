@@ -1,0 +1,61 @@
+{
+  "schema": "ownrt.rolling-v6-independent-review.v1",
+  "reviewer": "engine_audit",
+  "passed": true,
+  "scope": "CPU-only explicit v6 comparator/finalizer/witness review; no runtime/native edits or GPU/build",
+  "sources": {
+    "experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py": "d5cf2a97e04043b3ca0260ecf1c3331605177a1013134cbfe944e59d7395a0c3",
+    "experiments/own-xpu-runtime/engine/tools/compare_provider_survival.py": "c57af8984ccd66ee23ff4f5f8bf08662d39a14a08c670af29aed6b2d521f7fb6",
+    "experiments/own-xpu-runtime/engine/tools/compare_rolling_provider_survival.py": "ed19abd842a0f2c71f793fc1cae7cfe2f8522a4b4bd842a3b03a124b3f23eae8",
+    "experiments/own-xpu-runtime/engine/tools/test_compare_rolling_provider_state.py": "c9476644014f3c6a2a9037b4cff4742a4367f443999c8a4c7056dca37a44c0f8",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/rolling_provider_trace_audit.py": "a9f67a843439a44b25c6f945491f06657340116b650777f25c98e9e575916acf",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/test_rolling_provider_trace_audit.py": "27d2ce91b18cf1d5240584d8bbcf1890bc632a487739200498ff87d2d88eea5d",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_rolling_provider_proof.py": "b0926e31a095d03cc795ccd5914476780b49915d3efeffaebb288b4030fcd942",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/test_finalize_rolling_provider_proof.py": "23a6b1aae2e701279efd9d7cf8d14d3f9a0bfc0e4d3bb06ff5b14a80bb8887f8",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_pending_provider_proof.py": "0bdabf827db12f1d1c10ab677e669643e7d6cbf7340f9d1d64e3e3016b6523e6",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_ring_proof.py": "78dc605d0eda1ad64d16d954987a47fc14b137a38901baef27eb14c7ede7135d"
+  },
+  "checks": [
+    {
+      "name": "all state comparison tests including unchanged v5 refusals",
+      "tests": 51,
+      "passed": true,
+      "log_sha256": "8ac61b25b1541e060de14486d23b5f0bd5154e5322237e5f304e0a2aa1fc5289"
+    },
+    {
+      "name": "v6 real mock-wire trace and finalizer tests",
+      "tests": 9,
+      "passed": true,
+      "log_sha256": "1222967e98f8057b89858dbe3957932fc00995b7263a443cab4ebd33ec6e91e4"
+    }
+  ],
+  "closed_findings": [
+    {
+      "finding": "Final parent pre-reservation lease was not independently replayed; moving final ROW issue14 before provider issue12 in2-stage max_new6 mock was incorrectly accepted",
+      "fix": "Hold lease from final ACCEPT through provider completion; require final owner idle/no pending at provider admission; exact reorder regression passes",
+      "runtime_effect": "None; runtime already enforced the correct lease"
+    }
+  ],
+  "additional_hardening": [
+    "native original tentative flags directly matched to issued command witnesses",
+    "ROW tentative status must match then-current verified truth; controls retain original flags",
+    "one ROW identity per owner even across rollback",
+    "bounded stable regular JSON/JSONL and duplicate-key refusal"
+  ],
+  "v5_shared_implementation_unchanged": true,
+  "coverage_semantics": [
+    "Zero survival receipts admitted only explicitly by v6 with actual empty-file SHA and zero counters",
+    "No-advance provider survival accepted only when capture positions/serials derive false advancement; full byte/host/Sequence/private coverage unchanged",
+    "Downstream target aborts require target proof but cannot claim provider inventory",
+    "Provider positions/results bound to actual completed op27 sequence and independently verified canonical reference",
+    "First v6 finalizer scope is matched-full-cap-reference; early EOS and cancellation unqualified"
+  ],
+  "critical_findings_remaining": [],
+  "format_only_successor": {
+    "receipt": "finalizer-eof-format.json",
+    "original_reviewed_sha256": "b0926e31a095d03cc795ccd5914476780b49915d3efeffaebb288b4030fcd942",
+    "current_sha256": "a13eb9d7a35611e8debeafd72ad64b5895abed79770a594aabcd8c9edf369b24",
+    "ast_identical": true,
+    "root_tests_passed": 9
+  }
+}

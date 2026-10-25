@@ -1,0 +1,71 @@
+{
+  "schema": "ownrt.rolling-provider-evidence-cpu-review.v1",
+  "passed": true,
+  "created_utc": "2026-10-25T21:55:23.818367+00:00",
+  "tests": [
+    {
+      "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools",
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-p",
+        "test_compare*state.py",
+        "-q"
+      ],
+      "returncode": 0,
+      "output": "----------------------------------------------------------------------\nRan 51 tests in 0.523s\n\nOK\n"
+    },
+    {
+      "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25",
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "test_finalize_rolling_provider_proof",
+        "test_rolling_provider_trace_audit",
+        "-q"
+      ],
+      "returncode": 0,
+      "output": "----------------------------------------------------------------------\nRan 9 tests in 0.315s\n\nOK\n"
+    }
+  ],
+  "source_sha256": {
+    "engine/tools/compare_pipeline_state.py": "d5cf2a97e04043b3ca0260ecf1c3331605177a1013134cbfe944e59d7395a0c3",
+    "engine/tools/compare_rolling_provider_survival.py": "ed19abd842a0f2c71f793fc1cae7cfe2f8522a4b4bd842a3b03a124b3f23eae8",
+    "engine/tools/test_compare_rolling_provider_state.py": "c9476644014f3c6a2a9037b4cff4742a4367f443999c8a4c7056dca37a44c0f8",
+    "engine/tools/compare_provider_survival.py": "c57af8984ccd66ee23ff4f5f8bf08662d39a14a08c670af29aed6b2d521f7fb6",
+    "engine/tools/compare_draft_state.py": "c2d634ae016b037f69ab2c828495474fd55445665c59beb2774a7ac65a033593",
+    "research/continuation-2026-10-25/rolling_provider_trace_audit.py": "a9f67a843439a44b25c6f945491f06657340116b650777f25c98e9e575916acf",
+    "research/continuation-2026-10-25/test_rolling_provider_trace_audit.py": "27d2ce91b18cf1d5240584d8bbcf1890bc632a487739200498ff87d2d88eea5d",
+    "research/continuation-2026-10-25/finalize_rolling_provider_proof.py": "a13eb9d7a35611e8debeafd72ad64b5895abed79770a594aabcd8c9edf369b24",
+    "research/continuation-2026-10-25/test_finalize_rolling_provider_proof.py": "23a6b1aae2e701279efd9d7cf8d14d3f9a0bfc0e4d3bb06ff5b14a80bb8887f8",
+    "research/continuation-2026-10-25/finalize_pending_provider_proof.py": "0bdabf827db12f1d1c10ab677e669643e7d6cbf7340f9d1d64e3e3016b6523e6",
+    "research/continuation-2026-10-25/finalize_ring_live_proof.py": "87bb5c2c4546684d900a0e88e1efbe70cb6618e93060d6350c9b83e61675cbb4",
+    "research/continuation-2026-10-25/finalize_ring_proof.py": "78dc605d0eda1ad64d16d954987a47fc14b137a38901baef27eb14c7ede7135d"
+  },
+  "fixes_before_gpu": [
+    "Retained v2 reference prompt_tokens is a count; require count and compact JSON token hash, with real-packet smoke.",
+    "Independent replay now holds final parent lease from final ACCEPT through op27 completion; raw-preserving early final ROW reorder is refused.",
+    "ROW-only verification frontier and per-owner unique ROW IDs checked; original tentative flags retained for resolution/provider commands."
+  ],
+  "scope": "CPU only: 51 state comparator tests preserving v1-v5 plus explicitv6, and9 independent trace/finalizer tests. Fragmented mock codecs2/4/6, malformed witnesses, actual retained metadata smoke. No model GPU state or speed claim.",
+  "mode": "rolling-ring-live-depth2-qualification",
+  "proof_schema": "ownrt.rolling-provider-proof.v1",
+  "qualified_termination": "matched-full-cap-reference",
+  "format_only_successor": {
+    "schema": "ownrt.format-only-source-successor.v1",
+    "reason": "Remove extra blank line at EOF reported by git diff --check.",
+    "source": "finalize_rolling_provider_proof.py",
+    "before_sha256": "b0926e31a095d03cc795ccd5914476780b49915d3efeffaebb288b4030fcd942",
+    "after_sha256": "a13eb9d7a35611e8debeafd72ad64b5895abed79770a594aabcd8c9edf369b24",
+    "before_archive": "rolling-audit-review/finalizer-before-eof-format.py.gz",
+    "before_archive_sha256": "a7543ddb6b2f5348937fd61d615f2b6d02515e8251f484e226c1dd8bb1661aa8",
+    "ast_identical": true,
+    "ast_sha256": "deaa56ee8d068fc5db22e3271ee6d508fdf0f2795264125c0eac2f04442a351f",
+    "tests": 9,
+    "test_output": "----------------------------------------------------------------------\nRan 9 tests in 0.344s\n\nOK\n",
+    "passed": true
+  }
+}

@@ -242,7 +242,10 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
             'ring canonical/inactive banks alias or are absent from target inventory')
     provider_sources = live_ring_provider(path,stage,dump,metadata,identity,spec,att,layout,pending=pending) if live else []
     if pending:
-        from compare_provider_survival import validate_survival
+        if spec['schema'] == 'ownrt.pipeline-state-set.v6':
+            from compare_rolling_provider_survival import validate_survival
+        else:
+            from compare_provider_survival import validate_survival
         provider_sources += validate_survival(path,stage,dump,spec,layout,metadata,att)
     return att, receipt, layout_source, provider_sources
 
@@ -317,11 +320,16 @@ def load_set(path):
     spec = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
     mode = spec['mode']
     wavefront = spec['schema'] == 'ownrt.pipeline-state-set.v2' and mode == 'verified-wavefront'
-    pending_ring = spec['schema'] == 'ownrt.pipeline-state-set.v5' and mode == 'verified-ring-pending-provider'
+    rolling_ring = spec['schema'] == 'ownrt.pipeline-state-set.v6' and mode == 'verified-ring-pending-provider'
+    pending_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v5' and mode == 'verified-ring-pending-provider') or rolling_ring
     live_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v4' and mode == 'verified-ring-live') or pending_ring
     ring = (spec['schema'] == 'ownrt.pipeline-state-set.v3' and mode == 'verified-ring') or live_ring
     require((spec['schema'] == 'ownrt.pipeline-state-set.v1' and mode == 'target-only') or wavefront or ring,
-            'unsupported pipeline state set schema/mode; explicit v1/v2/v3/v4/v5 capability required')
+            'unsupported pipeline state set schema/mode; explicit v1/v2/v3/v4/v5/v6 capability required')
+    if rolling_ring:
+        require(spec.get('controller_mode') == 'rolling-ring-live-depth2-qualification'
+                and spec.get('actual_proposals_only') is True,
+                'explicit rolling controller and actual-proposal scope required')
     if live_ring:
         require(spec.get('provider_borrow_mode') == ('pending-target' if pending_ring else 'quiescent-target')
                 and spec.get('require_provider_byte_verified_restores') is True
@@ -330,7 +338,7 @@ def load_set(path):
         depths=spec.get('required_provider_pending_depths')
         require(spec.get('require_provider_survival_checks') is True
                 and spec.get('require_byte_verified_restores') is True
-                and isinstance(depths,list) and bool(depths) and all(type(d)is int and d in (1,2) for d in depths)
+                and isinstance(depths,list) and (bool(depths) or rolling_ring) and all(type(d)is int and d in (1,2) for d in depths)
                 and len(depths)==len(set(depths)), 'explicit pending provider survival and target restore proof required')
     if wavefront or ring:
         require(type(spec.get('require_byte_verified_restores')) is bool,
