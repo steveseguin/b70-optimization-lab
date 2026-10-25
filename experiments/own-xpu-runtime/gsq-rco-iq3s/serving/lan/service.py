@@ -866,6 +866,8 @@ def main():
                 overrides += '-split' + os.environ['SC117_TARGET_SPLIT']
             if os.environ.get('SC117_DISPATCH'):
                 overrides += '-dispatch' + hashlib.sha256(Path(os.environ['SC117_DISPATCH']).read_bytes()).hexdigest()[:12]
+            if len(overrides) > 120:  # long switch lists: keep the file name bounded, the hash still keys the gate
+                overrides = '-ov' + hashlib.sha256(overrides.encode()).hexdigest()[:16]
             marker = P / 'evidence' / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}{overrides}.json"
             if not marker.exists():
                 state.detail = f'one-time batched-prefill gate ({rows_wanted} rows): tokens, guesses and persistent state vs token-by-token'

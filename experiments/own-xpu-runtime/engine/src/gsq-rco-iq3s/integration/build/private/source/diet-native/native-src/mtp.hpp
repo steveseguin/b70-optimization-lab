@@ -255,10 +255,23 @@ public:
   // Bounded target embedding row only. No target PLE/history/token preparation.
   auto t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);size_t rb=p.g.h/fmt.elements*fmt.bytes;auto raw=e.w.read(t.name,size_t(confirmed)*rb,rb);std::vector<uint16_t> emb(p.g.h);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));e.upload(0,id("embedding"),0,emb.data(),emb.size()*2);
   if(captured) {
+   // OWNRT_DECODE_PROFILE=2: per-site device time of the draft (diagnostic; waits for the draft, no arithmetic change).
+   static const bool draft_profile=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v&&std::atoi(v)==2;}();
+   std::vector<std::pair<int,ownrt::Event>> profiled;
    for(const auto& site:issue_sites){if(!head&&site.head)continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();e.current_cls=site.cls;
-    for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+    for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);if(draft_profile)profiled.push_back({site.cls,event});}
+   }
+   if(draft_profile&&!profiled.empty()){
+    try{e.dev(0).wait(profiled.back().second,std::chrono::milliseconds(10000));}catch(const std::exception&){}
+    std::map<std::string,std::array<double,2>> spent;uint64_t first=0,last=0;
+    for(const auto& [cls,event]:profiled){ownrt::EventTiming t{};try{t=e.dev(0).timing(event);}catch(const std::exception&){continue;}
+     if(!first)first=t.start_ns;last=std::max(last,t.end_ns);std::string key=cls>=0&&size_t(cls)<e.class_names.size()?e.class_names[size_t(cls)]:std::string("?");if(key.starts_with("draft."))key=key.substr(6);
+     if(key.starts_with("blk.")){auto dot=key.find('.',4);if(dot!=std::string::npos)key=key.substr(dot+1);}
+     auto& v=spent[key];v[0]+=double(t.end_ns-t.start_ns)/1000.0;v[1]+=1;}
+    std::ofstream o(e.a.output/"draft-device-profile.jsonl",std::ios::app);o<<"{\"position\":"<<position<<",\"span_us\":"<<double(last-first)/1000.0<<",\"sites\":{";bool comma=false;
+    for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v[1]<<",\"busy_us\":"<<v[0]<<"}";comma=true;}o<<"}}\n";
    }
   } else {
    for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}

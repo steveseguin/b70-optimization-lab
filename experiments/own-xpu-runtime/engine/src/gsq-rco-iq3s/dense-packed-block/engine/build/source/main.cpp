@@ -904,6 +904,14 @@ public:
       // the device (the self-test and prefill cases include misses and compare the full state).
       if(const char* v=std::getenv("OWNRT_MISS")){const std::string m=v;require(m=="control"||m=="banks"||m=="banks-batch"||m=="banks-batch-overlap","OWNRT_MISS choice");sealed_selection.choices["miss"]=m;}
       if(const char* v=std::getenv("OWNRT_SNAPSHOT_HOST")){const std::string m=v;require(m=="production"||m=="static","OWNRT_SNAPSHOT_HOST choice");sealed_selection.choices["snapshot_host"]=m;}
+      // OWNRT_DRAFT_KERNELS=all|key,key...: the BF16 record line's packet59 draft kernels for these p59c sites/fusions.
+      // Draft-only: proposals are verified by the unchanged target, so outputs stay exact; only guesses may change.
+      if(const char* v=std::getenv("OWNRT_DRAFT_KERNELS")){const std::string list=v;
+        if(list=="all"){for(auto& [key,value]:sealed_selection.draft)if(key!="head_format"&&key!="head_prefix")value="packet59";}
+        else{size_t at=0;while(at<=list.size()){const size_t end=list.find(',',at);const std::string key=list.substr(at,end==std::string::npos?std::string::npos:end-at);
+          require(sealed_selection.draft.contains(key)&&key!="head_format"&&key!="head_prefix","OWNRT_DRAFT_KERNELS key "+key);sealed_selection.draft[key]="packet59";
+          if(end==std::string::npos)break;at=end+1;}}
+        p59c::validate(sealed_selection.draft);}
     }
     const auto down_choice=sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production";
     if(down_choice.find("down-interleave")!=std::string::npos||down_choice.find("down-tile16")!=std::string::npos)
