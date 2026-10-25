@@ -96,7 +96,8 @@ bool prefill_native(const flash::Launch& l) const {
   if(l.op=="check_status")return s.special==Special::check_status; // any-nonzero over all rows' slot status
   if(l.op=="route"||l.op=="expert_gather"||l.op=="hc_combine") // SimpleNew kernels with per-row binding offsets
     return s.special==Special::normal&&(s.implementation==1||s.implementation==11)&&!s.fused_combine_norm;
-  return s.special==Special::normal&&(s.implementation<=1||s.implementation==11)&&!s.fused_combine_norm;
+  // round2's GDN (implementation 2) loops token rows like the generic kernel: row r reads the state row r-1 wrote.
+  return s.special==Special::normal&&(s.implementation<=1||s.implementation==11||(l.op=="gdn"&&s.implementation==2))&&!s.fused_combine_norm;
 }
 void prefill_native_site(const flash::Launch& l,int P0,int M) {
   const int saved_extent=context_extent;

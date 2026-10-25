@@ -54,6 +54,7 @@ template<ng::Op Code,int Stage> struct Kernel final:ownrt::SyclOperation {
  ng::Shape s;explicit Kernel(ng::Shape v):s(v){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
   ng::Args a;std::copy_n(p.begin(),19,a.p.begin());auto shape=s;float* global=static_cast<float*>(p[19]);int count=round2::groups(s),local=round2::local_floats(s);
+  a.f32=(s.flags&ng::f32_activations_flag)!=0; // as ng::group(): F32 exact-mode buffers are read and written as F32
   if constexpr(Code==ng::gdn)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device(shape,a,it);}));});
   else return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){sycl::local_accessor<float,1> x(local,h);h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{group<Code,Stage>(shape,a,int(it.get_group_linear_id()),global,Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()});}));});
  }

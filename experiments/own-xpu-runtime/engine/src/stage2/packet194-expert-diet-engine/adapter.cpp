@@ -302,9 +302,12 @@ template<int N,int Top> struct RouteFast final:ownrt::SyclOperation {
     prob[j]=ex[j]/den;it.barrier(sycl::access::fence_space::local_space);
     bool taken=false;
     for(int rank=0;rank<Top;++rank){
-     // Bit 63 marks a candidate; non-negative float bits order like the values; N-1-j puts the lower id first on ties.
-     const uint64_t key=taken?0:((uint64_t(1)<<63)|(uint64_t(sycl::bit_cast<uint32_t>(prob[j]))<<32)|uint64_t(uint32_t(N-1-j)));
-     const uint64_t best=sycl::reduce_over_group(g,key,sycl::maximum<uint64_t>());const int index=N-1-int(uint32_t(best));
+     // Same order as the former 64-bit key (non-negative probability bits, then the lower id), as two 32-bit
+     // reductions: the largest bits among candidates, then the smallest id holding them. 64-bit integer reductions are
+     // emulated on the B70.
+     const uint32_t bits=sycl::bit_cast<uint32_t>(prob[j]);
+     const uint32_t top=sycl::reduce_over_group(g,taken?0u:bits+1u,sycl::maximum<uint32_t>());
+     const int index=sycl::reduce_over_group(g,(!taken&&bits+1u==top)?j:N,sycl::minimum<int>());
      if(j==index)taken=true;
      if(j==0){const float v=prob[index];rb.out(0).put(rank,index);rb.out(1).put(rank,v);
       if(rb.s.no>=4)for(int k=0;k<3;++k){rb.out(2).put(rank*3+k,k==0?index:k==1?0:rb.s.g.mid);rb.out(3).put(rank*3+k,k==0?index:k==1?0:rb.s.g.h);}}
@@ -417,7 +420,9 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   for(int j=0;j<s.ni+s.no;++j)if(s.types[j]==Scalar::bf16)throw std::invalid_argument("BF16 activation buffer in exact F32 mode");
   bool ported=s.special!=Special::normal||s.op==Op::norm||s.op==Op::silu_div4||s.op==Op::silu_product||s.op==Op::hc_mix||s.op==Op::conv||s.op==Op::gdn||s.op==Op::gdn_norm_gate||
    s.op==Op::moe_combine||s.op==Op::qsa_prepare||s.op==Op::qsa_append_pool||s.op==Op::qsa_select||s.op==Op::qsa_attention||s.op==Op::route||s.op==Op::expert_gather||s.op==Op::hc_combine||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate;
-  bool generic_impl=s.implementation==0||s.implementation==1||s.implementation==11||s.implementation==12;
+  // round2's GDN (implementation 2) is the same arithmetic as the generic kernel with subgroup shuffles: F32-capable
+  // (a.b/a.put follow the activation type, and F32 state equals the activation type here).
+  bool generic_impl=s.implementation==0||s.implementation==1||s.implementation==11||s.implementation==12||(s.implementation==2&&s.op==Op::gdn);
   if(!ported||!generic_impl)throw std::invalid_argument("implementation "+std::to_string(s.implementation)+" has no exact F32 activation variant");
  }
  if(s.tokens!=1) {
@@ -425,7 +430,8 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   // SimpleNew route/gather/combine kernels through their per-row binding offsets.
   const bool normal=s.special==Special::normal,simple=normal&&(s.implementation==1||s.implementation==11)&&(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm));
   const bool generic=normal&&(s.implementation<=1||s.implementation==11)&&!(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm)||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate||s.op==Op::qsa_attention||s.op==Op::moe_combine);
-  if(!simple&&!generic)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
+  const bool round2_gdn=normal&&s.implementation==2&&s.op==Op::gdn; // loops token rows like the generic kernel
+  if(!simple&&!generic&&!round2_gdn)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
  }
  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);
  if(s.implementation==2&&s.special==Special::normal&&(s.op==Op::route||s.op==Op::argmax))return round2::submit_simple(d,s,bindings,deps);
