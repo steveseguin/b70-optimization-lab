@@ -21,6 +21,7 @@ systemctl --user stop sc117-lan
 # keep the newest; root control: keep the newest three; summaries live in the repo).
 usb=/mnt/usb-models/own-xpu-runtime-results/sc117-lan; ctl=$HOME/own-xpu-runtime-results/sc117-lan
 for d in $(ls -td "$usb"/run-* 2>/dev/null | tail -n +2); do rm -rf -- "$d"; done
+for d in $(ls -td /dev/shm/sc117-lan-evidence/run-* 2>/dev/null | tail -n +2); do rm -rf -- "$d"; done
 for d in $(ls -td "$ctl"/run-2026102[5-9]T* 2>/dev/null | tail -n +4); do rm -rf -- "$d"; done
 start=$(date +%H:%M:%S)
 systemctl --user start sc117-lan

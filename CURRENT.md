@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**October 25, 08:45 EDT — SC117 service: new text no longer decodes slower; conversations continue without re-reading.**
+Engine `297b388764e9` serves at `http://192.168.2.44:18160/v1` (same unit and cards).
+- **New text was 30% slower than the suite showed.** The first request with unseen text decoded at about 33 tok/s,
+  because each token read 16 rows of a 28.8 GB per-layer embedding table from the USB disk (ntfs-3g). Every earlier
+  suite number was warm.
+  - The engine now copies that table into host RAM at load (55 s).
+  - New prompts now decode at 44–50 tok/s, depending on how well the draft guesses; for example, one prompt went from
+    33.6 to 48.4 with identical guesses.
+  - The suite is still byte-identical (12/12, median 47.95).
+  - [Note](experiments/own-xpu-runtime/research/2026-10-25-cold-lookup-reads.md).
+- **Conversation continuation.** When a request extends the previous conversation exactly, the engine keeps its state
+  and reads only the new tokens. For example, a 236-token second turn read 22 tokens: 0.46 s instead of about 2.5 s.
+  - A startup gate on the cards checks that a continued request gives the same tokens, guesses and full engine state as
+  a fresh one.
+  - The API reports the reused part as `cached_tokens`. Benchmarks still require `cached_tokens=0`; this is a service
+  feature, not a speed figure.
+- Rank output files moved from the USB disk to `/dev/shm`: a busy USB disk had cost up to 18% decode.
+
 **October 25, 08:00 EDT — four-card host: SC117 LAN service is now at 47.5 tok/s, still exact.**
 The SC117 IQ3_S chat service at `http://192.168.2.44:18160/v1` (user unit `sc117-lan`, cards 23:00.0 and 47:00.0;
 the vision server on 27/43 is untouched) now runs engine `eeb940fea95b`.

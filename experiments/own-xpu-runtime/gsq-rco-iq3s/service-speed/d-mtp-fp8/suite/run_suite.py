@@ -25,6 +25,7 @@ for p in manifest['prompts']:
     with urllib.request.urlopen(urllib.request.Request(a.url, data=body, headers={'Content-Type': 'application/json'}), timeout=900) as r:
         res = json.load(r)
     o = res['ownrt']; content = res['choices'][0]['message']['content']
+    assert ((res.get('usage') or {}).get('prompt_tokens_details') or {}).get('cached_tokens', 0) == 0, p['prompt_id'] + ': cached_tokens must be 0 (cold request)'
     rows.append(dict(prompt_id=p['prompt_id'], prompt_tokens=len(ids), output_tokens=o['output_tokens'], finish=res['choices'][0]['finish_reason'],
                      mtp=o['mtp'], acceptance=o['mtp']['hits'] / o['mtp']['guesses'] if o['mtp']['guesses'] else None,
                      decode_tok_s=o['decode_tok_s'], prompt_wall_ms=o['prompt_wall_ms'], wall_s=time.time() - t0,

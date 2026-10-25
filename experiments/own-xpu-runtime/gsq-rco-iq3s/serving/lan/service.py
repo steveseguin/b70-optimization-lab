@@ -15,7 +15,9 @@ from pathlib import Path
 P = Path(__file__).resolve().parent
 LANE = P.parents[1]
 CONTROL_PARENT = Path('/home/steve/own-xpu-runtime-results/sc117-lan')
-EVIDENCE_PARENT = Path('/mnt/usb-models/own-xpu-runtime-results/sc117-lan')
+# Rank output directories (per-token streams, RESET dumps). Must be a local filesystem: on the ntfs-3g USB mount a busy
+# FUSE daemon stalls rank 0's per-token appends and decode drops from ~49.5 to ~40 tok/s (2026-10-25, 1 GiB dd test).
+EVIDENCE_PARENT = Path(os.environ.get('SC117_EVIDENCE_PARENT', '/mnt/usb-models/own-xpu-runtime-results/sc117-lan'))
 BDFS = ('0000:23:00.0', '0000:47:00.0')
 LAN = ipaddress.ip_network('192.168.2.0/24')
 ROOT_FLOOR = 27_000_000_000
@@ -233,6 +235,11 @@ class Engine:
         self.log_bytes = 0
         self.prefill_rows = 0      # batched prefill rows for requests; set only after this binary's prefill gate passed
         self.last_result = None    # last native result (gate use only; never logged)
+        # Conversation continuation (set only after this binary's continuation gate passed): the tokens whose state
+        # the ranks hold (prompt + answer minus its last token) and that last token, after a clean request.
+        self.continuation = False
+        self.convo = None
+        self.convo_last = None
 
     def start(self):
         plan = A.build_plan(self.control / 'ranks', mini=False, max_new=128, seconds=NATIVE_SECONDS,
@@ -322,7 +329,17 @@ class Engine:
             shutil.rmtree(d)
         return out
 
-    def generate(self, prompt, max_new, label, on_token=None, mode='mtp', force_reset=False, prefill=None):
+    def continuation_start(self, prompt, mode):
+        """Position from which `prompt` can continue the held state, or 0 (fresh request)."""
+        h = self.convo
+        if not self.continuation or h is None or mode != 'mtp' or len(prompt) < len(h) + 2:
+            return 0
+        if prompt[len(h)] != self.convo_last or prompt[:len(h)] != h:
+            return 0
+        return len(h)
+
+    def generate(self, prompt, max_new, label, on_token=None, mode='mtp', force_reset=False, prefill=None,
+                 continue_ok=False):
         """Caller holds self.lock. Returns (tokens, result-summary).
 
         With the streaming build, rank0 appends each target-confirmed token to
@@ -336,7 +353,13 @@ class Engine:
         started = time.monotonic()
         reset_ms = released = 0
         stale = None
-        if self.count > 1 or force_reset:
+        start = self.continuation_start(prompt, mode) if continue_ok and not force_reset else 0
+        held, self.convo = self.convo, None  # cleared until this request completes cleanly
+        if start:
+            dest = t.out / f'req-{self.count:06d}'
+            A.redirect(t, dest)
+            stale, self.previous = self.previous, dest
+        elif self.count > 1 or force_reset:
             dest = t.out / f'req-{self.count:06d}'
             r0 = time.monotonic()
             A.reset(t, dest)
@@ -360,7 +383,7 @@ class Engine:
             if prefill is None:
                 prefill = self.prefill_rows
             if hasattr(A, 'NativeController'):  # adapter6+: optional batched prefill rows per request
-                r = A.NativeController(t, A.BASE.Draft(mode), True, False, prefill=prefill).run(prompt, max_new, CHAT.EOS)
+                r = A.NativeController(t, A.BASE.Draft(mode), True, False, prefill=prefill, start=start).run(prompt, max_new, CHAT.EOS)
             else:
                 require(not prefill, 'adapter has no batched prefill')
                 r = A.BASE.NativeController(t, A.BASE.Draft(mode), True, False).run(prompt, max_new, CHAT.EOS)
@@ -377,11 +400,14 @@ class Engine:
         self.last_result = r
         tokens = list(r['tokens'])
         require(0 < len(tokens) <= max_new and all(0 <= x < 248320 for x in tokens), 'native output bounds')
+        if mode == 'mtp':  # the state now holds prompt + tokens[:-1]; the next turn may continue it
+            self.convo, self.convo_last = list(prompt) + tokens[:-1], tokens[-1]
         stats = r['stats']
         summary = dict(request=self.count, label=label, mode=mode, streamed=stream is not None, prompt_tokens=len(prompt), output_tokens=len(tokens),
                        mtp=dict(guesses=stats['guesses'], hits=stats['hits'], misses=stats['misses']),
                        prompt_wall_ms=r.get('prompt_wall_ms'), decode_wall_ms=r.get('decode_wall_ms'),
                        decode_tok_s=r.get('decode_tok_s'), reset_ms=reset_ms, released_dump_bytes=released, prefill_rows=prefill or 0,
+                       continued_from=start,
                        wall_s=time.monotonic() - started)
         line = json.dumps(dict(utc=utc(), **summary)) + '\n'
         if self.log_bytes < 50 * 1024**2:
@@ -464,6 +490,34 @@ def split_differences(want, got, split, oracle_split=24):
 
 
 PERSISTENT = re.compile(r'(^alternate-|\.(keys|values|raw|pooled|state)\.bin$|history\.bin$|^position\.bin$|^token_history\.bin$)')
+
+
+def continuation_gate(engine, prompt):
+    """One-time gate per binary and configuration for conversation continuation. For a long follow-up (read in batched
+    chunks) and a short one (token by token): turn 1 runs fresh, turn 2 continues its state, and the same turn 2 runs
+    fresh after a RESET. Both turn-2 runs must emit the same tokens and MTP guesses and leave the same full target state
+    on both ranks (every buffer except the spare recurrent banks, whose roles depend on the step parity)."""
+    cases, passed = [], True
+    for name, suffix in (('long', (list(prompt) * 2)[:72]), ('short', list(prompt)[:3])):
+        first, _ = engine.generate(prompt, 16, f'continue-gate-{name}-turn1', force_reset=True)
+        turn2 = list(prompt) + first + suffix
+        cont, summary_c = engine.generate(turn2, 32, f'continue-gate-{name}-continued', continue_ok=True)
+        guesses_c = engine.last_result.get('guess_sequence')
+        state_c = engine.dump_buffers()
+        fresh, summary_f = engine.generate(turn2, 32, f'continue-gate-{name}-fresh', force_reset=True)
+        guesses_f = engine.last_result.get('guess_sequence')
+        state_f = engine.dump_buffers()
+        differ = {r: sorted(k for k in state_f[r] if not k.startswith('alternate-') and state_f[r][k] != state_c[r].get(k))
+                  for r in state_f}
+        row = dict(case=name, prompt_tokens=len(turn2), continued_from=summary_c['continued_from'],
+                   tokens_equal=cont == fresh, guesses_equal=guesses_c == guesses_f, state_differences=differ,
+                   decode_tok_s=[summary_c['decode_tok_s'], summary_f['decode_tok_s']],
+                   prompt_wall_ms=[summary_c['prompt_wall_ms'], summary_f['prompt_wall_ms']])
+        row['passed'] = bool(summary_c['continued_from']) and row['tokens_equal'] and row['guesses_equal'] and not any(differ.values())
+        passed = passed and row['passed']
+        cases.append(row)
+    engine.convo = None
+    return dict(passed=passed, binary_sha256=engine.t.plan['binary_sha256'], cases=cases, utc=utc())
 
 
 def prefill_gate(engine, rows):
@@ -692,7 +746,7 @@ def make_handler(state, engine, chat, key):
                 writer = threading.Thread(target=write, daemon=True)
                 writer.start()
             try:
-                return engine.generate(req['prompt_ids'], req['max_new'], 'client', on_token=on_token)
+                return engine.generate(req['prompt_ids'], req['max_new'], 'client', on_token=on_token, continue_ok=True)
             except BaseException as error:
                 state.fault(error)
                 raise _Halt(repr(error))
@@ -878,6 +932,15 @@ def main():
             gate = json.loads(marker.read_text())
             engine.prefill_rows = rows_wanted if gate['passed'] else 0
             status['prefill_rows'] = engine.prefill_rows
+            # Conversation continuation: its own one-time gate per binary and configuration (needs batched prefill).
+            if engine.prefill_rows and os.environ.get('SC117_CONTINUE', '1') == '1':
+                cmarker = marker.with_name(marker.name.replace('prefill-', 'continue-', 1))
+                if not cmarker.exists():
+                    state.detail = 'one-time continuation gate: continued turn vs fresh turn (tokens, guesses, full state)'
+                    engine.continuation = True
+                    save(cmarker, continuation_gate(engine, st['prompt_tokens']))
+                engine.continuation = bool(json.loads(cmarker.read_text())['passed'])
+                status['continuation'] = engine.continuation
             (control / 'run.json').write_text(json.dumps(status, indent=2) + '\n')
         require(all(monitor.contacts), 'both rank contacts must be observed on their target cards')
         save(control / 'selftest-result.json', dict(passed=True, tokens=tokens, runs=rows))

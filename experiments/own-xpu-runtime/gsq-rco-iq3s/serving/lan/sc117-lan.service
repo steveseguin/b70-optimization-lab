@@ -10,8 +10,11 @@ WorkingDirectory=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-r
 ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/service.py --bind 192.168.2.44 --port 18160
 # No restart policy, no SIGKILL: on stop the coordinator FINISHes both ranks and waits for drain.
 Environment=SC117_ACTIVATIONS=f32
+# Rank output directories on local RAM disk, not the ntfs-3g USB mount: FUSE stalls on per-token stream appends cost up
+# to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
+Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/eeb940fea95b.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/297b388764e9.json
 Environment=SC117_PREFILL_ROWS=32
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),

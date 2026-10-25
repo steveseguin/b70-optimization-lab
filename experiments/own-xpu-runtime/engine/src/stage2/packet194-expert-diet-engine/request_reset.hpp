@@ -47,4 +47,19 @@ static void request_reset(Engine& e,Candidate& candidate,mtp36::DraftRuntime* pr
  candidate={};
  save(destination/"reset.json","{\"passed\":true,\"allocation_ids_preserved\":true,\"allocations\":"+std::to_string(reset_allocations)+",\"bytes\":"+std::to_string(reset_bytes)+"}");
 }
+// Conversation continuation boundary (command 16): the next request continues this state (the service has checked
+// that its prompt extends the processed tokens). Only the output directory and its log streams change; no allocation,
+// bank, history, counter or draft state is touched.
+static void request_redirect(Engine& e,mtp36::DraftRuntime* provider,const fs::path& metadata) {
+ e.drain();require(!e.poisoned && !e.integer(0,"error"),"redirect after target failure");
+ std::ifstream input(metadata);std::string output;
+ require(bool(std::getline(input,output)),"redirect metadata");
+ fs::path destination(output);require(destination.is_absolute()&&!output.empty(),"redirect output absolute");
+ fs::create_directories(destination);e.a.output=destination;
+ auto reopen=[&](std::ofstream& stream,const char* name){stream.close();stream.clear();stream.open(destination/name);require(bool(stream),std::string("redirect stream ")+name);};
+ reopen(e.timings,"timings.jsonl");reopen(e.prefill_timings,"prefill-timings.jsonl");reopen(e.site_timings,"sites.jsonl");reopen(e.progress,"progress.jsonl");
+ if(e.a.argument_audit)reopen(e.argument_log,"argument-equivalence.jsonl");
+ if(provider)provider->redirect(destination);
+ save(destination/"redirect.json","{\"passed\":true,\"state_kept\":true}");
+}
 }

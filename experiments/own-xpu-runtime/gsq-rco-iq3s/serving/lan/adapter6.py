@@ -54,7 +54,7 @@ def environments(output,mini):
         e=dict(base)
         if not mini:e.update(NEOReadDebugKeys='1',FilterBdfPath=bdf,ZE_ENABLE_PCI_ID_DEVICE_ORDER='1',ZE_AFFINITY_MASK='0',ONEAPI_DEVICE_SELECTOR='level_zero:0')
         for key,sub in [('SYCL_CACHE_DIR','sycl'),('NEO_CACHE_DIR','neo'),('XDG_CACHE_HOME','xdg')]:e[key]=str(output/'cache'/str(rank)/sub)
-        for key in ('OWNRT_PREFILL_PROFILE','OWNRT_PREFILL_NATIVE','OWNRT_PREFILL_TILED','OWNRT_PREFILL_REUSE','OWNRT_PREFILL_SMALLTILE','OWNRT_DECODE_PROFILE','OWNRT_DECODE_FUSE','OWNRT_ROUTE_GROUP','OWNRT_KOPT_BLOCK_ROWS','OWNRT_ROUTE_FAST','OWNRT_IQ4NL_ROWS','OWNRT_SMALLK_ROWS','OWNRT_DRAFT_PREFIX_ROWS','OWNRT_DRAFT_HEAD_Q4','OWNRT_ARGMAX_FAST','OWNRT_MISS','OWNRT_SNAPSHOT_HOST','OWNRT_EARLY_RANK1','OWNRT_DRAFT_KERNELS','OWNRT_MERGE_CHECKS','OWNRT_ATTN_GQA','OWNRT_SELECT_SG','OWNRT_ADMIT_FAST','OWNRT_ATTN_PIPELINE','OWNRT_PREFILL_LEAN_ROWS','OWNRT_ATTN_WIDE'):  # prefill diagnostics: per-site wall times; native rows off
+        for key in ('OWNRT_PREFILL_PROFILE','OWNRT_PREFILL_NATIVE','OWNRT_PREFILL_TILED','OWNRT_PREFILL_REUSE','OWNRT_PREFILL_SMALLTILE','OWNRT_DECODE_PROFILE','OWNRT_DECODE_FUSE','OWNRT_ROUTE_GROUP','OWNRT_KOPT_BLOCK_ROWS','OWNRT_ROUTE_FAST','OWNRT_IQ4NL_ROWS','OWNRT_SMALLK_ROWS','OWNRT_DRAFT_PREFIX_ROWS','OWNRT_DRAFT_HEAD_Q4','OWNRT_ARGMAX_FAST','OWNRT_MISS','OWNRT_SNAPSHOT_HOST','OWNRT_EARLY_RANK1','OWNRT_DRAFT_KERNELS','OWNRT_MERGE_CHECKS','OWNRT_ATTN_GQA','OWNRT_SELECT_SG','OWNRT_ADMIT_FAST','OWNRT_ATTN_PIPELINE','OWNRT_PREFILL_LEAN_ROWS','OWNRT_ATTN_WIDE','OWNRT_LOOKUP_COPY'):  # prefill diagnostics: per-site wall times; native rows off
             if key in os.environ:e[key]=os.environ[key]
         envs.append(e)
     return envs
@@ -130,8 +130,33 @@ def storage_guard(plan,started=False):
     require(shutil.disk_usage(cp).free>=need,'root storage forecast/floor')
     if not same:require(shutil.disk_usage(ep).free>=b['external_floor_bytes']+b['evidence_forecast_bytes'],'external evidence forecast/floor')
 
+# Rank 0 copies the embedding and PLE lookup tables into anonymous memory (engine Weights::copy_lookups, 2026-10-25):
+# the exact size it reported for this model. The sealed base bounds both ranks' anonymous memory at 8 GiB.
+LOOKUP_COPY_BYTES=29_137_853_440
+
 class Transport(BASE.Transport):
-    """Only constructor differs. Caller owns admission, leases and physical drain."""
+    """Constructor differs; the anonymous-memory bound also admits rank 0's lookup-table copy. Caller owns admission,
+    leases and physical drain."""
+    def check_alive(self):
+        self.check()
+        require(time.monotonic()-self.start_time<self.a.seconds,"pipeline total deadline")
+        for rank,proc in enumerate(self.children):
+            code=proc.poll()
+            if code is not None and rank not in self.finishing:
+                if code != 0 and not self.stop_sent:
+                    raise BASE.DeviceOwnerFailure("rank failed with exit "+str(code), self.out/f"rank{rank}")
+                raise ValueError("rank closed unexpectedly")
+        allowance=0 if os.environ.get('OWNRT_LOOKUP_COPY')=='0' else LOOKUP_COPY_BYTES
+        receipt=self.out/'rank0'/'lookup-residency.json'
+        if allowance and receipt.exists():
+            r=json.loads(receipt.read_text());require(r.get('enabled') and r.get('bytes')==LOOKUP_COPY_BYTES,'lookup copy size differs from the admitted bound')
+        anonymous=0
+        for proc in self.children:
+            try:
+                for line in Path(f"/proc/{proc.pid}/status").read_text().splitlines():
+                    if line.startswith("RssAnon:"):anonymous+=int(line.split()[1])*1024
+            except FileNotFoundError:pass
+        require(anonymous<8*1024**3+allowance,"aggregate rank anonymous memory exceeded 8 GiB plus the lookup copy")
     def __init__(self,plan,*,admit,check,launch_hook):
         # These trusted coordinator hooks are mandatory, including for CPU tests.
         require(all(callable(x) for x in (admit,check,launch_hook)),'coordinator hooks required')
@@ -238,6 +263,28 @@ def reset(transport,destination):
     transport.mapping[:BASE.SHARED]=bytes(BASE.SHARED)
     transport.trace=[];transport.metrics=[dict(busy_ms=0.,handover_ms=0.,calls=0,gpu_ms=0.) for _ in range(2)];transport.last_complete=[0.,0.]
 
+def redirect(transport,destination):
+    """Conversation continuation boundary (rank command 16): the next request continues the current state; only each
+    rank's output directory moves. The shared region is reset except the draft's first-step inputs."""
+    require(not any(transport.pending),'redirect while busy')
+    destination=Path(destination).absolute();require(not destination.exists(),'fresh request destination')
+    require(destination.parent==transport.out,'fixed request child')
+    destination.mkdir(mode=0o700)
+    for rank in (0,1):
+        metadata=transport.out/f'rank{rank}'/f'redirect-{transport.seq[rank]+1}.txt'
+        dest=destination/f'rank{rank}';require('\n' not in str(dest),'redirect path newline')
+        with metadata.open('x') as f:f.write(str(dest)+'\n')
+        transport.call(rank,16)
+    transport.request_output=destination
+    # Same shared region as after a reset, except the two inputs of the draft's first continuation step (rank.hpp
+    # layout): reverse_ready at 2*slot+192 and rank 1's final hidden row at reverse_offset. Turn 1's verification
+    # slot, draft publication and mailbox must not survive: a fresh request never sees them.
+    slot=65536;ready=2*slot+192;reverse=2*slot+4096;require(BASE.SHARED==reverse+2*slot+64,'shared layout')
+    keep_ready=bytes(transport.mapping[ready:ready+4]);keep_row=bytes(transport.mapping[reverse:reverse+slot])
+    transport.mapping[:BASE.SHARED]=bytes(BASE.SHARED)
+    transport.mapping[ready:ready+4]=keep_ready;transport.mapping[reverse:reverse+slot]=keep_row
+    transport.trace=[];transport.metrics=[dict(busy_ms=0.,handover_ms=0.,calls=0,gpu_ms=0.) for _ in range(2)];transport.last_complete=[0.,0.]
+
 def compare_attached(transport,prompt,count):
     """Two serialized requests, same pair. Leaves normal close to caller."""
     require(type(prompt)is list and prompt and all(type(t)is int and 0<=t<(16 if transport.a.mini else 248320) for t in prompt),'prompt token IDs')
@@ -259,16 +306,20 @@ def compare_attached(transport,prompt,count):
     return dict(passed=True,same_rank_processes=True,rank_pids=[p.pid for p in transport.children],requests=2,rows=rows,no_speed_claim=True)
 
 class NativeController(BASE.NativeController):
-    """BASE.NativeController plus the optional "prefill <rows>" request trailer (engine native_controller.hpp)."""
-    def __init__(self,backend,draft,overlap=True,dumps=False,prefill=None):
-        super().__init__(backend,draft,overlap,dumps);self.prefill=PREFILL_ROWS if prefill is None else prefill
+    """BASE.NativeController plus the optional "prefill <rows>" and "start <position>" request trailers (engine
+    native_controller.hpp). start>0 continues a conversation: prompt[:start] is already in the ranks' state."""
+    def __init__(self,backend,draft,overlap=True,dumps=False,prefill=None,start=0):
+        super().__init__(backend,draft,overlap,dumps);self.prefill=PREFILL_ROWS if prefill is None else prefill;self.start=start
         require(0<=self.prefill<=PREFILL_ROWS,'request prefill rows exceed the engine allocation')
+        require(start>=0,'continuation start')
     def run(self,prompt,count,eos=()):
-        if not self.prefill:return super().run(prompt,count,eos)
+        if not self.prefill and not self.start:return super().run(prompt,count,eos)
+        require(self.start+2<=len(prompt),'continuation needs at least two new prompt tokens')
         # BASE.NativeController.run with the trailer; everything after the request write is the parent's code path.
         b=self.b;mode={"none":0,"ngram":1,"script":2,"mtp":3}[self.draft.mode]
         values=[mode,count,int(self.overlap),int(self.dumps),len(prompt),len(self.draft.script),len(eos),*prompt,*self.draft.script,*eos]
         if self.prefill:values+=['prefill',self.prefill]
+        if self.start:values+=['start',self.start]
         (b.shared_path.parent/"native-request.txt").write_text(" ".join(map(str,values))+"\n")
         trace_start=len(b.trace)
         b.start(1,BASE.NATIVE);b.start(0,BASE.NATIVE)

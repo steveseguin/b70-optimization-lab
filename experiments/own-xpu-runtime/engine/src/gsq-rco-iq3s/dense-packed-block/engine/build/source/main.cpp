@@ -339,6 +339,21 @@ struct Weights {
   size_t max_read = 0;
   std::map<std::string,std::unique_ptr<iq3::Slice>> lookup_mappings;
   std::string residency="{\"enabled\":false,\"reason\":\"one-card streaming or mini\"}";
+  // Lookup tables copied into anonymous host memory (2026-10-25). Each decoded token reads its embedding row and 16
+  // hashed PLE rows (bigram/trigram ids) from the 28.8 GB per_layer_token_embd table; served from the GGUF on the
+  // ntfs-3g USB mount, a new n-gram is a cold FUSE read and new text decoded at ~33 instead of ~49 tok/s. The copy holds
+  // the same bytes (no swap on this host, so it stays resident); read() serves from it first.
+  std::map<std::string,std::pair<std::unique_ptr<uint8_t[]>,size_t>> lookup_copies;
+  void copy_lookups() {
+    auto start=std::chrono::steady_clock::now();uint64_t bytes=0;const size_t chunk=64ull<<20;
+    for(const auto& [name,t]:directory)if(t.component=="embedding"||t.component=="ple_lookup") {
+      std::unique_ptr<uint8_t[]> copy(new uint8_t[t.bytes]);
+      for(size_t off=0;off<t.bytes;off+=chunk){size_t n=std::min(chunk,t.bytes-off);auto slice=model->slice(name,off,n);std::memcpy(copy.get()+off,slice.data(),n);}
+      bytes+=t.bytes;lookup_copies.emplace(name,std::make_pair(std::move(copy),size_t(t.bytes)));
+    }
+    double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
+    std::ostringstream o;o<<"{\"enabled\":true,\"method\":\"anonymous copy of embedding and PLE lookup tables\",\"bytes\":"<<bytes<<",\"tables\":"<<lookup_copies.size()<<",\"elapsed_ms\":"<<elapsed<<"}";residency=o.str();
+  }
   void warm_lookups() {
     if(mini)return;
     auto start=std::chrono::steady_clock::now();struct rusage before{},after{};getrusage(RUSAGE_SELF,&before);
@@ -453,6 +468,9 @@ struct Weights {
       auto &b = synthetic.at(name);
       require(off <= b.size() && n <= b.size() - off, "synthetic bounds");
       return {b.begin() + off, b.begin() + off + n};
+    }
+    if(auto it=lookup_copies.find(name);it!=lookup_copies.end()) {
+      require(off<=it->second.second&&n<=it->second.second-off,"lookup copy bounds");auto data=it->second.first.get()+off;return {data,data+n};
     }
     if(auto it=lookup_mappings.find(name);it!=lookup_mappings.end()) {
       require(off<=it->second->size()&&n<=it->second->size()-off,"resident lookup bounds");auto data=it->second->data()+off;return {data,data+n};
@@ -2064,7 +2082,9 @@ int main(int argc, char **argv) {
     e->initialize();
     e->prepare_plan();
     e->prepare_commands();
-    if(a.memory=="resident"&&!a.gsq_packed)w->warm_lookups();residency_json=w->residency;
+    if(a.memory=="resident"&&!a.gsq_packed)w->warm_lookups();
+    else if(a.memory=="resident"&&a.gsq_packed&&a.rank==0&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")w->copy_lookups();}
+    residency_json=w->residency;
     record_host_memory(output,"after_load");
 
 

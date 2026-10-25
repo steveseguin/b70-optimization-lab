@@ -324,6 +324,8 @@ public:
   e.tail=e.io_copy(0,{{e.buffers[0].at("token").id,0,half_staging,0,4},{e.buffers[0].at("streams").id,0,half_staging,4,e.stream_bytes()}}); // packet188
  }
  // Reset is quiescent and never frees/reallocates a shared-owner allocation.
+ // Conversation continuation: only the row trace moves to the new request directory; the draft state stays.
+ void redirect(const fs::path& output){require(!async_pending,"redirect with pending draft publication");trace.close();trace.clear();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft redirect trace");}
  void reset_request(const fs::path& output) {
   require(!async_pending,"reset with pending draft publication");e.drain();for(auto allocation:mutable_ids){auto bytes=e.dev(0).arena.row(allocation).bytes;
    std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));

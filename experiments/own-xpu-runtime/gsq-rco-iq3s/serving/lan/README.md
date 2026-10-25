@@ -88,8 +88,8 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-Since 2026-10-25 the service runs engine `eeb940fea95b` (receipt
-[../../../engine/receipts/eeb940fea95b.json](../../../engine/receipts/eeb940fea95b.json)), built from the canonical
+Since 2026-10-25 the service runs engine `297b388764e9` (receipt
+[../../../engine/receipts/297b388764e9.json](../../../engine/receipts/297b388764e9.json)), built from the canonical
 source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.py). Its configuration lives in
 [sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it.
 - **Exact 32-bit mode (owner's choice: quality first).** Activations, router and expert outputs, HC streams and the
@@ -102,6 +102,16 @@ source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.
     keyed on the binary and every kernel switch, so a changed choice re-runs it).
   - All 12 answers of the fixed suite are byte-identical to the earlier engines
     ([suite runs](../../service-speed/d-mtp-fp8/suite/)).
+  - A continued conversation turn equals a fresh request: tokens, MTP guesses and full state on both cards
+    (`continue-*.json`, long and short new suffix).
+- **Conversation continuation.** If a request's prompt extends the previous request's prompt and answer exactly, the
+  engine keeps its state and reads only the new tokens (rank command 16 moves the output directory; the shared region
+  is reset except the draft's two first-step inputs). The API reports the reused tokens as `cached_tokens`. Benchmarks
+  must show `cached_tokens=0`. `SC117_CONTINUE=0` disables it.
+- **Lookup tables in RAM.** Rank 0 copies the embedding and the 28.8 GB per-layer embedding table into host memory at
+  load (55 s). Each token reads 16 rows of it; from the USB disk, new text decoded about 30% slower
+  ([note](../../../research/2026-10-25-cold-lookup-reads.md)). `OWNRT_LOOKUP_COPY=0` disables it.
+- **Rank output on `/dev/shm`** (`SC117_EVIDENCE_PARENT`): per-token stream appends must not go through ntfs-3g.
 - **Configuration** (all in the unit file):
   - `SC117_PREFILL_ROWS=32`: prompt chunks.
   - `SC117_DISPATCH`: non-GEMV kernel choices; QSA select specialised, GDN round2.
@@ -121,7 +131,7 @@ source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.
   disagreements are near-ties, and their source is still open
   ([result](../../service-speed/e-reference/RESULT-F32.md)). Every speed change since then is byte-identical, so that
   figure still holds.
-- The binary and its objects are in `/dev/shm/engine-build-pf70`. A reboot loses them; `engine/build.py` rebuilds them
+- The binary and its objects are in `/dev/shm/engine-build-pf74`. A reboot loses them; `engine/build.py` rebuilds them
   from the tree.
 - `engine/tools/service-cycle.sh` performs one controlled reload for an experiment (an application reload, never a
   host restart) and prints the gate summary.

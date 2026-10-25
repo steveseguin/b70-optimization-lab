@@ -53,13 +53,19 @@ inline void worker(Mailbox& m,int seconds,const std::function<Reply(const Reques
 }
 // prefill: rows per batched-prefill chunk requested for this request (0 = token-by-token prompt).
 inline bool early_rank1(){static const bool on=[]{const char* e=std::getenv("OWNRT_EARLY_RANK1");return !e||e[0]!='0';}();return on;}
-struct Config {int draft_rank=1,mode=0,count=0,overlap=1,dumps=0,vocab=31,prefill=0;std::vector<int> prompt,script,eos;};
+struct Config {int draft_rank=1,mode=0,count=0,overlap=1,dumps=0,vocab=31,prefill=0,start=0;std::vector<int> prompt,script,eos;};
 inline Config config(const fs::path& path,int context,int vocab){
  std::ifstream f(path);Config c;c.vocab=vocab;size_t np=0,ns=0,ne=0;require(bool(f>>c.mode>>c.count>>c.overlap>>c.dumps>>np>>ns>>ne),"native config header");
  require(c.mode>=0&&c.mode<=3&&c.count>0&&np>0&&np<=size_t(context)&&size_t(c.count)<=size_t(context)-np&&ns<=size_t(context)&&ne<=16&&(c.overlap==0||c.overlap==1)&&(c.dumps==0||c.dumps==1),"native config bounds");
  for(auto pair:{std::pair{&c.prompt,np},std::pair{&c.script,ns},std::pair{&c.eos,ne}}){pair.first->resize(pair.second);for(int& x:*pair.first){require(bool(f>>x),"native config tokens");require(x>=((pair.first==&c.script)?-1:0)&&x<vocab,"native config token bounds");}}
- // Optional trailer "prefill <rows>"; any other trailing data is refused.
- std::string extra;if(f>>extra){require(extra=="prefill"&&bool(f>>c.prefill)&&c.prefill>=0&&c.prefill<=64,"native config prefill trailer");require(!(f>>extra),"native config trailing data");}
+ // Optional trailers "prefill <rows>" and "start <position>" (continuation: positions [0, start) of the prompt are
+ // already in the ranks' state); any other trailing data is refused.
+ std::string extra;
+ while(f>>extra){
+  if(extra=="prefill"){require(bool(f>>c.prefill)&&c.prefill>=0&&c.prefill<=64,"native config prefill trailer");}
+  else if(extra=="start"){require(bool(f>>c.start)&&c.start>0&&c.start+2<=int(c.prompt.size()),"native config start trailer");}
+  else require(false,"native config trailing data");
+ }
  return c;
 }
 struct Row {int token;double stamp;};
@@ -114,24 +120,33 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
  // loop resumes at p=N in exactly the state its iteration N-1 leaves: rank 0 has run and accepted HALF(N), rank 1
  // is committed through N-1, and the draft has consumed confirmed positions 1..N with its publication for N+1 pending.
  const int rows=b.prefill&&c.prefill>0?std::min(c.prefill,b.prefill_rows):0;
- const int bulk=rows&&c.draft_rank==0&&c.overlap==1&&(c.mode==0||c.mode==3)&&length-2>=rows?length-2:0;
- int first=0;
+ // Continuation (c.start>0): the ranks hold positions [0, start) from the previous request of this conversation, and
+ // the draft has consumed confirmed positions up to start-1. Everything below runs exactly as for a fresh request
+ // from that point: the draft first consumes confirmed position start (rank 1's final row of start-1 is still in the
+ // shared region), then the prompt from start on is read in chunks (or token by token) with absolute positions.
+ const int start=c.start;
+ require(start==0||(c.draft_rank==0&&c.overlap==1&&(c.mode==0||c.mode==3)),"native continuation mode");
+ if(start>0&&c.mode==3){require(__atomic_load_n(&reverse_ready(b.shared).position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(start),"native continuation reverse row");
+  b.call(0,draft,c.prompt[start],start,0,0);}
+ const int bulk=rows&&c.draft_rank==0&&c.overlap==1&&(c.mode==0||c.mode==3)&&length-2-start>=rows?length-2:0;
+ int first=start;
  if(bulk) {
   auto* header=reinterpret_cast<pipeline::prefill::Header*>(b.prefill);
   require(header->magic==pipeline::prefill::magic&&header->rows==uint32_t(b.prefill_rows)&&header->stream_bytes==b.prefill_stream,"native prefill header");
-  const int chunks=(bulk+rows-1)/rows;
-  auto count=[&](int k){return std::min(rows,bulk-k*rows);};
-  auto rank0_chunk=[&](int k){std::memcpy(header->tokens,c.prompt.data()+k*rows,size_t(count(k))*4);b.call(0,pipeline::prefill::op,count(k),k*rows,k%2);};
+  const int span=bulk-start,chunks=(span+rows-1)/rows;
+  auto base=[&](int k){return start+k*rows;};
+  auto count=[&](int k){return std::min(rows,span-k*rows);};
+  auto rank0_chunk=[&](int k){std::memcpy(header->tokens,c.prompt.data()+base(k),size_t(count(k))*4);b.call(0,pipeline::prefill::op,count(k),base(k),k%2);};
   // Draft replay for chunk k: confirmed position q+1 takes rank 1's final row of position q, in order.
   auto drafts=[&](int k){if(c.mode!=3)return;
    const auto* rev=pipeline::prefill::reverse(b.prefill,k%2,size_t(b.prefill_rows),b.prefill_stream);
-   for(int r=0;r<count(k);++r){const int q=k*rows+r;if(q+1>=bulk)break;
+   for(int r=0;r<count(k);++r){const int q=base(k)+r;if(q+1>=bulk)break;
     std::memcpy(b.shared+reverse_offset,rev+size_t(r)*b.prefill_stream,b.prefill_stream);
     __atomic_store_n(&reverse_ready(b.shared).position_plus_one,uint32_t(q+1),__ATOMIC_RELEASE);
     b.call(0,draft,c.prompt[q+1],q+1,0,0);}};
   rank0_chunk(0);
   for(int k=0;k<chunks;++k){
-   b.start(1,pipeline::prefill::op,count(k),k*rows,k%2);
+   b.start(1,pipeline::prefill::op,count(k),base(k),k%2);
    if(k>0)drafts(k-1);
    if(k+1<chunks)rank0_chunk(k+1);
    b.wait(1);
@@ -148,7 +163,7 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
   }
   b.call(0,accept);
   first=bulk;
- } else {half_start(0,c.prompt[0],0);b.wait(0);b.call(0,accept);}
+ } else {half_start(0,c.prompt[start],start);b.wait(0);b.call(0,accept);}
  for(int p=first;p<length+c.count-1;++p){
   double cycle=clock_now();int token=p<length?c.prompt[p]:out.tokens.back();history.push_back(token);int draft_guess=-1;
   uint32_t expected_draft=0;double draft_started=0;

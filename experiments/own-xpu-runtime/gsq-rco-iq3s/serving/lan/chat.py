@@ -161,7 +161,9 @@ def completion(req, tokens, result, chat):
         'model': MODEL_ID,
         'choices': [{'index': 0, 'message': message, 'finish_reason': finish}],
         'usage': {'prompt_tokens': len(req['prompt_ids']), 'completion_tokens': len(tokens),
-                  'total_tokens': len(req['prompt_ids']) + len(tokens)},
+                  'total_tokens': len(req['prompt_ids']) + len(tokens),
+                  # Conversation continuation reuses the held state for this many prompt tokens (0 = fresh request).
+                  'prompt_tokens_details': {'cached_tokens': int((result or {}).get('continued_from') or 0)}},
         'ownrt': result,
     }
 

@@ -343,6 +343,7 @@ static int run_rank(const Options& a) {
   SpeculativeImage image(*engine);
 #ifndef OWN_RT_HOST_ONLY
   if(a.rank==0&&!a.gsq_packed)weights->warm_lookups();
+  else if(a.rank==0&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups();}
 #endif
   save(a.output/"lookup-residency.json",weights->residency);
   {cpu_set_t cpus;CPU_ZERO(&cpus);require(!sched_getaffinity(0,sizeof cpus,&cpus),"affinity receipt");double load=0;getloadavg(&load,1);std::ostringstream o;o<<"{\"cpu_affinity\":[";bool comma=false;for(int i=0;i<CPU_SETSIZE;++i)if(CPU_ISSET(i,&cpus)){o<<(comma?",":"")<<i;comma=true;}o<<"],\"load_average_1m\":"<<load<<"}";save(a.output/"host-environment.json",o.str());}
@@ -421,6 +422,7 @@ static int run_rank(const Options& a) {
    #ifdef OWN_RT_HOST_ONLY
    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
 #endif
+   else if(r.op==16){require(!c.pending&&!async_half_ready,"redirect with unresolved candidate");require(!provider||!provider->submitting(),"redirect draft publication pending");image.boundary();request_redirect(*engine,provider.get(),a.output/("redirect-"+std::to_string(r.sequence)+".txt"));}
    else if(r.op==fail)throw std::runtime_error("injected rank failure");
    else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
    else throw std::runtime_error("unknown rank command");
