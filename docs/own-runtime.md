@@ -7,21 +7,35 @@ Internal output parity and independent-reference fidelity are separate gates.
 
 ## Current SC117 work — October 25
 
-The SC117 IQ3_S F32 service observations improved from **27.92 to 47.89 tok/s**
-using the conventional all-prompt median. All twelve retained output token
-arrays match. This is not the certified class-balanced benchmark. Six of 5,965
-teacher-forced CPU-reference positions still disagree; no broad bit-faithful or
-no-added-quality-loss claim follows. The first complete four-card live-draft
-suite measured **42.31 tok/s**, below the later two-card **47.97 tok/s** service
-observation; their timestamp sources differ. All 5,965 output IDs match.
+The current SC117 IQ3_S F32 work preserves all twelve retained answers, but
+four-card overlap has not produced a speed gain in the measured observations.
 
-The newer two-step rolling scheduler passes the bounded correctness gate:
-all 32 outputs, 2,065 target buffers and 73 draft allocations match while
-consuming 35 actual speculative target rows. Both miss depths occurred, and
-seven first-stage rollbacks preserved draft state. Diagnostic checks were
-enabled, so this is not a speed result. Existing draft weights were used;
-training is prohibited. See the [actual rolling proof](../experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/RESULT.md)
-and [measured four-card suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md).
+| Setup | Ordinary median decode | Output scope |
+|---|---:|---|
+| Two B70s, normal MTP service | 47.97 tok/s | All 5,965 output IDs match; zero cached prompt tokens |
+| Four B70s, earlier live-draft overlap | 42.31 tok/s | All 5,965 output IDs match; twelve cold requests in persistent workers |
+| Four B70s, rolling two-step draft overlap | 41.57 tok/s | All 5,965 output IDs match; twelve checked cold resets; final request’s 2,065 target buffers match |
+
+Each median covers twelve prompts capped at 512 generated tokens, with one
+early-ending answer. Decode uses the intervals between first and last generated
+token, excluding the first-token wait. The quad controller observes committed
+outputs; the two-card service reports its native decode interval. These are
+uncertified observations with different timing observers, not a controlled
+speedup comparison. See the [latest rolling suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-proof/RESULT.md)
+and [earlier quad suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md).
+
+The rolling suite consumes actual predictions from the existing draft weights;
+no training was used. Its fixed measured policy omits diagnostic byte readbacks
+while retaining mandatory restoration and error checks. Full target-state
+comparison covers the final request only. The final draft state is authenticated,
+without independent long-cohort draft parity. Earlier [bounded rolling checks](../experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/RESULT.md)
+matched all 32 outputs, 2,065 target buffers and 73 draft allocations with full
+diagnostics, including recovery from both prediction miss depths.
+
+Six of 5,965 teacher-forced CPU-reference positions still disagree. Internal GPU
+parity does not establish exact independent-reference fidelity or absence of
+added quality loss. Earlier two-card optimization improved the ordinary median
+from 27.92 to 47.89 tok/s; the later 47.97 observation confirms that range.
 
 Start with the [evidence review and release direction](sc117-engine-review.md),
 [canonical engine](../experiments/own-xpu-runtime/engine/README.md) and
