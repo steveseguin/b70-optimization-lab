@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-25T22:31:12.414676+00:00",
+  "source_commit": "4b74995e29386a36beffcb43cdea7c17d09afbc1",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-ring-persistent-qualified-proof-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "--run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-qualified-plan.json",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-qualified-admission.json",
+    "--unit",
+    "sc117-ring-persistent-qualified-proof-20261025.service"
+  ]
+}
