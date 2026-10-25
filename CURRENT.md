@@ -15,7 +15,7 @@ and standalone two/four-card target-only replays also passed all 32 outputs and
 GitHub/neural.download carry the research source; the new 294-file archive is
 live and checksum-verified after successful publication checks. SkinDeep remote
 write access remains unavailable; its latest local update is committed as
-`6955a43`. Clean-host installation and portable serving remain open.
+`230f723`. Clean-host installation and portable serving remain open.
 
 The cold multi-request path passed two complete reset/state comparisons: both
 requests match all 2,065 target buffers, 73 draft allocations and output tokens.
@@ -68,8 +68,11 @@ full-response decode observation is **41.57 tok/s**, so deeper rolling guesses
 have not improved speed. The six-class first99 metric is **42.68 tok/s**, a
 different metric from the old service observation. Full journals and raw state
 are durable and restore-tested; public metadata retains the exact hashes.
-Next: rebalance target layers away from the first card, which also owns draft
-work. No training or arithmetic change. See the
+The next placement (`0,8,21,34,48`) stopped cooperatively during first-card
+loading, before requests. The secondary channel-close error hid the original
+guard reason; diagnostic retention is being corrected before another attempt.
+No new faults appeared and all GPU processes exited. The failed run and original
+source pins are preserved durably. No training or arithmetic change. See the
 [complete rolling suite result](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-proof/RESULT.md).
 The latest 450-file source export (`4b74995e2`) passes hashes and isolated imports;
 it is not built or published as a new qualified download. The earlier 424-file

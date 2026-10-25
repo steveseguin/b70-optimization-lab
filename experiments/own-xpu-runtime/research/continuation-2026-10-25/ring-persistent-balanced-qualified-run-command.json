@@ -1,0 +1,35 @@
+{
+  "utc": "2026-10-25T23:19:51.937818+00:00",
+  "source_commit": "5e196b41e5f31bb33e21805b9786c2149d1f7f54",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-ring-persistent-balanced-qualified-proof-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "--run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-balanced-qualified-plan.json",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-balanced-qualified-admission.json",
+    "--unit",
+    "sc117-ring-persistent-balanced-qualified-proof-20261025.service"
+  ],
+  "boundaries": [
+    0,
+    8,
+    21,
+    34,
+    48
+  ],
+  "native_binary_unchanged": true,
+  "arithmetic_unchanged": true,
+  "prior_full_suite_archived": true,
+  "qualification_only": true
+}

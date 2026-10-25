@@ -1,0 +1,621 @@
+{
+  "schema": "ownrt.rolling-depth2-weighted-cut-analysis.v1",
+  "created_utc": "2026-10-25T23:21:19.341641+00:00",
+  "source_run": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a",
+  "source_proof": {
+    "path": "/dev/shm/sc117-persistent-rolling-suite-proof-20261025/summary.json",
+    "bytes": 890218,
+    "sha256": "5fc0ca429b2ba63a2c22d84674d2189a978b8fd12abd45c6ff3c782a4fd1e05e"
+  },
+  "sources": [
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/plan.json",
+      "bytes": 28175,
+      "sha256": "3ae870820b25b33264f26e4c15221264326ce5a736afd891848414a46867534b"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/suite-result.json",
+      "bytes": 363304,
+      "sha256": "ddf40407b681ee8e144ecfdea8b2c80a3a83ed80b2ad7d97a78d0ef4fa695152"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-00-incident-retrospective/commands.jsonl",
+      "bytes": 17322865,
+      "sha256": "37874ba6acf5cf2e31fbcb22c2ec9d54dc2cc8421ba4462f8a0eb375d743231b"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-01-code-review/commands.jsonl",
+      "bytes": 17298018,
+      "sha256": "58e6aff38c473967d4c0f85327ef2f0c07f5e196f0b94644c5d997a854bbb3ff"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-02-customer-email/commands.jsonl",
+      "bytes": 11834658,
+      "sha256": "e9d32186f35b59acb0b85aa585ab5b31e5c1942b14d5cb943b819febb1b98cc8"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-03-sql-debugging/commands.jsonl",
+      "bytes": 16952251,
+      "sha256": "222d47b9fc3f860272298a1700b87b4aa73fc6210fc28ccf81ec1c14901b3b05"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-04-release-plan/commands.jsonl",
+      "bytes": 17407455,
+      "sha256": "d0bb81ed2a7e6bae4b62af6be016ed28833ceee922485d69a66c622d3a55a3ac"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-05-benchmark-analysis/commands.jsonl",
+      "bytes": 16780440,
+      "sha256": "65ef88aa5e3aade9323a0014f1afe83d843f854304e64dc8bb166e58bfc55f52"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-06-architecture-tradeoff/commands.jsonl",
+      "bytes": 16608701,
+      "sha256": "b1925209a54be2c97d270f1c4b8d7ea38117c8d3691cf2e10df2da29e92ab4fe"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-07-bug-report-synthesis/commands.jsonl",
+      "bytes": 17247474,
+      "sha256": "2c2f063f8c109cd79addd236376332db6625f9ed14117e86a990332837544516"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-08-technical-guide/commands.jsonl",
+      "bytes": 16784745,
+      "sha256": "26f6a06073d4087e2aead398ae97a16cda380889423dd8b6ea5f1fe5682495f2"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-09-risk-register/commands.jsonl",
+      "bytes": 17117210,
+      "sha256": "ba838904a2432d15fd4a12976bc1b66f53b0f0c13efc8a60fd0ac817c5d41e96"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-10-performance-hypotheses/commands.jsonl",
+      "bytes": 16906166,
+      "sha256": "e113aeafb097778a32cfa8edabc5df0a0efd9446997ed1c9e84aec1a0897aa9f"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/request-11-decision-memo/commands.jsonl",
+      "bytes": 17209838,
+      "sha256": "772dc273fd3411299ba7c1fa9f9f9eb964494da1e90b56402440ca7bd5dd6101"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage0/native/census.json",
+      "bytes": 150741,
+      "sha256": "c3a5f13b8de79c0ade3468215c8ab67247d0e2a957e259f62456d48d36156cca"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage1/native/census.json",
+      "bytes": 117072,
+      "sha256": "e08beb68a8a816f2827f651a3c73664799ee17ec5bf91f4be8bcdc3387eeb356"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage2/native/census.json",
+      "bytes": 117077,
+      "sha256": "3ecb27a9994fad156d6f63ec729d44c1a4e36387c650c362009177c3a8eb4c01"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-suite-a/stage3/native/census.json",
+      "bytes": 109175,
+      "sha256": "14156bfb57c5161bcecf2b4b38fb807035ed4d890048e07f924aef79077ae0f4"
+    }
+  ],
+  "scope": "Post-run CPU analysis; no source/runtime/GPU changes. Parent owns all future admission, launches and archives.",
+  "finding": "Move target layers off the provider-owning first stage before changing native provider ownership or optimizing small copies.",
+  "measured_result": {
+    "outputs": 5965,
+    "decode_intervals": 5953,
+    "total_decode_interval_seconds": 143.0506667282898,
+    "pooled_ms_per_interval": 24.03001288901223,
+    "median_tokens_per_second": 41.57251906798183,
+    "historical_two_card_median": 47.97057758420032,
+    "historical_earlier_four_stage_median": 42.311880797977615,
+    "matched_historical_timing_observer": false,
+    "certified_speed_claim": false,
+    "correctness": "All12 output arrays exact; final target state only matches retained571-position reference. Final draft is authenticated, without independent long-cohort draft parity."
+  },
+  "owners": [
+    {
+      "stage": 0,
+      "layers": 13,
+      "ops": {
+        "24": {
+          "count": 8516,
+          "total_ms": 81243.93292299999,
+          "mean_ms": 9.540151822804132,
+          "ms_per_output_interval": 13.64756138467999
+        },
+        "26": {
+          "count": 1639,
+          "total_ms": 2719.46722,
+          "mean_ms": 1.6592234411226356,
+          "ms_per_output_interval": 0.45682298336972954
+        },
+        "25": {
+          "count": 5953,
+          "total_ms": 603.918665,
+          "mean_ms": 0.10144778515034437,
+          "ms_per_output_interval": 0.10144778515034437
+        },
+        "27": {
+          "count": 5953,
+          "total_ms": 31874.870746999997,
+          "mean_ms": 5.35442142566773,
+          "ms_per_output_interval": 5.35442142566773
+        }
+      },
+      "total_native_command_ms_per_output": 19.560253578867794,
+      "row_execution_amplification": 1.4305392239207122,
+      "accepted_proposals_by_depth": {
+        "1": 1356,
+        "2": 2959
+      },
+      "discarded_proposals_by_depth": {
+        "1": 588,
+        "2": 1975
+      },
+      "abort_suffix_histogram": {
+        "1": 715,
+        "2": 924
+      }
+    },
+    {
+      "stage": 1,
+      "layers": 12,
+      "ops": {
+        "24": {
+          "count": 7760,
+          "total_ms": 65401.285615,
+          "mean_ms": 8.428000723582475,
+          "ms_per_output_interval": 10.986273410885268
+        },
+        "26": {
+          "count": 1594,
+          "total_ms": 1717.344083,
+          "mean_ms": 1.0773802277289837,
+          "ms_per_output_interval": 0.28848380362842263
+        },
+        "25": {
+          "count": 5953,
+          "total_ms": 584.1943029999999,
+          "mean_ms": 0.09813443692256003,
+          "ms_per_output_interval": 0.09813443692256003
+        }
+      },
+      "total_native_command_ms_per_output": 11.37289165143625,
+      "row_execution_amplification": 1.3035444313791367,
+      "accepted_proposals_by_depth": {
+        "1": 1356,
+        "2": 2959
+      },
+      "discarded_proposals_by_depth": {
+        "1": 543,
+        "2": 1264
+      },
+      "abort_suffix_histogram": {
+        "1": 1381,
+        "2": 213
+      }
+    },
+    {
+      "stage": 2,
+      "layers": 12,
+      "ops": {
+        "24": {
+          "count": 7465,
+          "total_ms": 62139.819562,
+          "mean_ms": 8.324155333154721,
+          "ms_per_output_interval": 10.43840409239039
+        },
+        "25": {
+          "count": 5953,
+          "total_ms": 446.766521,
+          "mean_ms": 0.07504897043507476,
+          "ms_per_output_interval": 0.07504897043507476
+        },
+        "26": {
+          "count": 1512,
+          "total_ms": 1514.3456679999997,
+          "mean_ms": 1.0015513677248675,
+          "ms_per_output_interval": 0.25438361632790185
+        }
+      },
+      "total_native_command_ms_per_output": 10.767836679153367,
+      "row_execution_amplification": 1.2539895850831513,
+      "accepted_proposals_by_depth": {
+        "1": 1356,
+        "2": 2959
+      },
+      "discarded_proposals_by_depth": {
+        "1": 461,
+        "2": 1051
+      },
+      "abort_suffix_histogram": {
+        "1": 1512,
+        "2": 0
+      }
+    },
+    {
+      "stage": 3,
+      "layers": 11,
+      "ops": {
+        "24": {
+          "count": 5953,
+          "total_ms": 53486.409541,
+          "mean_ms": 8.984782385519907,
+          "ms_per_output_interval": 8.984782385519907
+        },
+        "25": {
+          "count": 5953,
+          "total_ms": 590.851001,
+          "mean_ms": 0.09925264589282715,
+          "ms_per_output_interval": 0.09925264589282715
+        }
+      },
+      "total_native_command_ms_per_output": 9.084035031412734,
+      "row_execution_amplification": 1.0,
+      "accepted_proposals_by_depth": {
+        "1": 1356,
+        "2": 2959
+      },
+      "discarded_proposals_by_depth": {
+        "1": 0,
+        "2": 0
+      },
+      "abort_suffix_histogram": {
+        "1": 0,
+        "2": 0
+      }
+    }
+  ],
+  "provider_components": {
+    "canonical_ms": {
+      "count": 5953,
+      "total_ms": 12404.00002,
+      "mean_ms": 2.083655303208466,
+      "ms_per_output_interval": 2.083655303208466
+    },
+    "capture_ms": {
+      "count": 5953,
+      "total_ms": 2867.9006310000004,
+      "mean_ms": 0.4817572032588612,
+      "ms_per_output_interval": 0.4817572032588612
+    },
+    "recursive_ms": {
+      "count": 5953,
+      "total_ms": 12211.086159999999,
+      "mean_ms": 2.051249144968923,
+      "ms_per_output_interval": 2.051249144968923
+    },
+    "restore_ms": {
+      "count": 5953,
+      "total_ms": 2938.7684249999998,
+      "mean_ms": 0.49366175457752387,
+      "ms_per_output_interval": 0.49366175457752387
+    }
+  },
+  "row_times_by_original_flag": [
+    {
+      "stage": 0,
+      "tentative": false,
+      "count": 1638,
+      "mean_ms": 8.257277092185593,
+      "median_ms": 8.2357205
+    },
+    {
+      "stage": 0,
+      "tentative": true,
+      "count": 6878,
+      "mean_ms": 9.845669241930793,
+      "median_ms": 9.8188375
+    },
+    {
+      "stage": 1,
+      "tentative": false,
+      "count": 1767,
+      "mean_ms": 7.642231200905489,
+      "median_ms": 7.611879
+    },
+    {
+      "stage": 1,
+      "tentative": true,
+      "count": 5993,
+      "mean_ms": 8.659680140664108,
+      "median_ms": 8.611856
+    },
+    {
+      "stage": 2,
+      "tentative": false,
+      "count": 1905,
+      "mean_ms": 7.7522953060367445,
+      "median_ms": 7.758955
+    },
+    {
+      "stage": 2,
+      "tentative": true,
+      "count": 5560,
+      "mean_ms": 8.520089389208634,
+      "median_ms": 8.454982000000001
+    },
+    {
+      "stage": 3,
+      "tentative": false,
+      "count": 5953,
+      "mean_ms": 8.984782385519907,
+      "median_ms": 9.001188
+    }
+  ],
+  "ordered_event_evidence": {
+    "counts": {
+      "decoded_final_accepts_including_first": 5965,
+      "stage0_busy_op24_position_delta2_tentativeTrue": 3721,
+      "decode_provider_jobs": 5953,
+      "seed_not_stage2_ready_at_provider_completion": 2985,
+      "stage0_idle_at_final_accept": 2070,
+      "seed_stage2_ready_at_provider_issue": 1047,
+      "seed_stage2_ready_during_provider": 1921,
+      "stage0_busy_op24_position_delta1_tentativeTrue": 174
+    },
+    "provider_native_busy_ms_by_stage2_readiness": {
+      "seed_not_stage2_ready_at_provider_completion": 15999.385941999979,
+      "seed_stage2_ready_at_provider_issue": 5624.7375090000005,
+      "seed_stage2_ready_during_provider": 10250.747296
+    },
+    "interpretation": "Order/count evidence only: command witnesses lack issue/completion monotonic times. Readiness observations cannot be converted into exact blocked wall durations or GPU utilization."
+  },
+  "why_depth2_is_not_faster": [
+    "First owner combines13 target layers, all canonical+recursive provider work, and the most speculative re-execution. Its19.560ms/output native command work dominates other owners11.373/10.768/9.084ms.",
+    "Actual accepted proposals4315/5953 decode positions coexist with2563 discarded stage0 hypotheses. Stage0 executes1.4305 target ROWs per accepted interval; downstream amplification is1.3035/1.25399/1.0. Acceptance alone is not a throughput model.",
+    "Fresh depth1 was used1944 times and old depth2 used4934 times; stage0 accepts1356/1944 depth1 and2959/4934 depth2 attempts. These are selected issued-cohort rates, not the previous independent probe conditional probabilities.",
+    "Provider costs5.354ms per decode interval; canonical and recursive arithmetic each cost about2.08/2.05ms, capture+restore together0.975ms. Removing all provider copies cannot recover more than about0.975ms of owner command work under the current schedule.",
+    "At3895/5965 final ACCEPT events, stage0 was executing a tentative target ROW;3721 were two positions ahead. The canonical-provider job then waits for that unpreemptible target work.",
+    "The final owner cannot start its next ROW while a parent lease is held, until op27 fully completes. Seed stream was already ready at provider issue1047/5953 times and arrived during it1921 times;2985 were not ready by completion. Thus the lease is a real dependency but not the entire bottleneck, and early release alone has no measured speed projection.",
+    "Only three global input positions may exist and final stage executes verified rows only; four devices cannot be assumed continuously occupied. Summed native durations are not GPU utilization or additive wall time."
+  ],
+  "recommendation": {
+    "boundaries": [
+      0,
+      8,
+      21,
+      34,
+      48
+    ],
+    "layers": [
+      8,
+      13,
+      13,
+      14
+    ],
+    "same_binary_sha256": "02a47c059444af0e9179612461a8078e4308f3357fb54e370421a2ba1b7788aa",
+    "bdf_order": [
+      "0000:23:00.0",
+      "0000:27:00.0",
+      "0000:43:00.0",
+      "0000:47:00.0"
+    ],
+    "reason": "Five layers move off the first owner, one goes to each middle owner and three to final. First cut8 follows fullattention layer7. This is a material imbalance correction using existing configurable slicing and no new arithmetic.",
+    "not_a_speed_prediction": {
+      "removed_stage0_compute_work_proxy_ms_per_output": 4.543214908905174,
+      "assumptions": "Use plain stage0ROW mean8.257ms/13layers times5 movedlayers times current1.4305 ROW amplification. Fixed snapshots/provider overhead remain; layer types, changed acceptance timing and pipeline bubbles invalidate conversion to wall speed.",
+      "aggressive_later_hypothesis": [
+        0,
+        6,
+        19,
+        33,
+        48
+      ],
+      "aggressive_caveat": "Simple layer-linear equal-work fit only, not first launch; no per-layer measured costs."
+    },
+    "qualification_config": {
+      "adapter_plan": "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261025T180655Z/ranks/admission-plan.json",
+      "boundaries": [
+        0,
+        8,
+        21,
+        34,
+        48
+      ],
+      "bdfs": [
+        "0000:23:00.0",
+        "0000:27:00.0",
+        "0000:43:00.0",
+        "0000:47:00.0"
+      ],
+      "prompt_tokens": [
+        248045,
+        846,
+        198,
+        2523,
+        513,
+        60566,
+        449,
+        13343,
+        2015,
+        1238,
+        264,
+        2393,
+        10142,
+        13,
+        9357,
+        264,
+        61446,
+        694,
+        4434,
+        10142,
+        76135,
+        364,
+        264,
+        5492,
+        5165,
+        85093,
+        8613,
+        539,
+        264,
+        3743,
+        6297,
+        8060,
+        362,
+        5728,
+        13,
+        28763,
+        5253,
+        11,
+        24024,
+        11,
+        27780,
+        9085,
+        11,
+        17448,
+        31092,
+        11,
+        32418,
+        6880,
+        11,
+        25411,
+        944,
+        11,
+        321,
+        6171,
+        1375,
+        1783,
+        13,
+        5272,
+        14542,
+        3992,
+        364,
+        23438,
+        321,
+        19079,
+        13,
+        68227,
+        364,
+        883,
+        220,
+        19,
+        20,
+        15,
+        12,
+        20,
+        20,
+        15,
+        4105,
+        13,
+        248046,
+        198,
+        248045,
+        74455,
+        198,
+        248068,
+        271,
+        248069,
+        271
+      ],
+      "context": 4096,
+      "vocab": 248320,
+      "eos": 248044,
+      "grace_seconds": 120,
+      "memory_floor_bytes": 8589934592,
+      "root_floor_bytes": 27000000000,
+      "evidence_floor_bytes": 2147483648,
+      "schema": "ownrt.pipeline-driver-config.v1",
+      "build_receipt": "/dev/shm/engine-build-ring-persistent-20261025/build-receipt.json",
+      "output": "/dev/shm/sc117-ring-20261025/weighted-cut-qualified-a",
+      "max_new": 32,
+      "seconds": 1800,
+      "memory_start_bytes": 85899345920,
+      "eos_token_ids": [
+        248044,
+        248046
+      ],
+      "use_proposals": true,
+      "verify_recursive_restore": true,
+      "verify_restore": true,
+      "verify_provider_survival": true,
+      "trusted_draft_manifest_sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+      "rolling_depth2": true,
+      "persistent_requests": true,
+      "check_policy": "qualification",
+      "admitted_max_new": 32,
+      "suite": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-persistent-qualified-inputs.json",
+      "suite_sha256": "e8925424b9dfa82cf595a0df2e9d6f265bcf611694ad7713c03a60853e4346f8",
+      "suite_prompt_count": 2,
+      "dump_each": true,
+      "ring_trace_limit": 4096
+    },
+    "cpu_plan_check": {
+      "passed": true,
+      "device_execution_requested": false,
+      "plan": {
+        "path": "/dev/shm/ownrt-weighted-cut-review/weighted-cut-qualified-plan.json",
+        "bytes": 26910,
+        "sha256": "fc0e9a184086d36b24bf799ad98be47f23500c6477df0d908a434d9fddc5e79d"
+      },
+      "note": "CPU proposal used prior90GiB startup threshold; exact config above uses parent-authorized80GiB threshold. Parent will regenerate/admit its own plan."
+    },
+    "gates": [
+      "Parent fresh passive admission only after archive closure; no hardware settings or restart chain.",
+      "One persistent qualification worker set, two cold87-token/32-output requests, all diagnostic checks, reset and full state dumps. Compare every2065 target buffer and73 draft allocations, canonical117 true pairs and32 recursive proposals to accepted baseline.",
+      "Existing compare_pipeline_state canonicalizes absolute layers and independently validates each full partition; bounded v7 finalizer does not require boundaries equal to baseline. First/last global roles and scratch ownership exclusions remain strict.",
+      "Then same-cut measured two32 parity against its own qualified reference. Frozen full12 prerequisite closure intentionally requires matching boundaries, so old13/12/12/11 qualification cannot authorize new8/13/13/14 fullsuite.",
+      "Only after those gates, one persistent measured12 suite with same honest timing window; retain loss if no gain. No automatic cut sweep or fresh-server chain."
+    ]
+  },
+  "memory": {
+    "documented_physical_vram": "32GB per B70, not48GB",
+    "documentation": "/home/steve/llm-optimizations/docs/b70-ecc-and-vram.md",
+    "runtime_capacity_query_performed": false,
+    "settings_changed": false,
+    "records": [
+      {
+        "stage": 0,
+        "old_packed_bytes": 13578311936,
+        "old_observed_device_allocation_bytes": 17522591816,
+        "new_exact_packed_bytes": 8743804160,
+        "new_constant_overhead_estimate_bytes": 12688084040,
+        "new_all_overhead_scaled_by_layercount_estimate_bytes": 12688084040,
+        "assumption": "Prior owner overhead retained; alternative scales overhead upward only for larger layer counts. Provider/global fixed costs never scaled down. Not an allocation fit proof."
+      },
+      {
+        "stage": 1,
+        "old_packed_bytes": 13254990720,
+        "old_observed_device_allocation_bytes": 13777704368,
+        "new_exact_packed_bytes": 13673449216,
+        "new_constant_overhead_estimate_bytes": 14196162864,
+        "new_all_overhead_scaled_by_layercount_estimate_bytes": 14239722335,
+        "assumption": "Prior owner overhead retained; alternative scales overhead upward only for larger layer counts. Provider/global fixed costs never scaled down. Not an allocation fit proof."
+      },
+      {
+        "stage": 2,
+        "old_packed_bytes": 13840188800,
+        "old_observed_device_allocation_bytes": 14362902448,
+        "new_exact_packed_bytes": 15042058496,
+        "new_constant_overhead_estimate_bytes": 15564772144,
+        "new_all_overhead_scaled_by_layercount_estimate_bytes": 15608331615,
+        "assumption": "Prior owner overhead retained; alternative scales overhead upward only for larger layer counts. Provider/global fixed costs never scaled down. Not an allocation fit proof."
+      },
+      {
+        "stage": 3,
+        "old_packed_bytes": 14041217024,
+        "old_observed_device_allocation_bytes": 14824077980,
+        "new_exact_packed_bytes": 17255396608,
+        "new_constant_overhead_estimate_bytes": 18038257564,
+        "new_all_overhead_scaled_by_layercount_estimate_bytes": 18251765097,
+        "assumption": "Prior owner overhead retained; alternative scales overhead upward only for larger layer counts. Provider/global fixed costs never scaled down. Not an allocation fit proof."
+      }
+    ],
+    "notes": "Largest new packed payload17.255GB. Prior-census overhead estimate gives final18.038GB, or18.252GB when all prior overhead scales14/11. Both are below documented~28GB ECC-visible capacity; this is not an ECC-state claim or proof of allocator success. Host RAM capacity remains separate."
+  },
+  "later_reusable_work": [
+    "Use explicit provider_owner and measured operator-cost profile in future topology planning; account for embedding/head/provider and actual re-execution weights rather than equal layers/bytes. Preserve1/2/4/6 profiles and quants separately.",
+    "If weighted cuts leave meaningful parent-lease stalls, prototype owned final-record handoff with explicit capture acknowledgment; never release shared ownership before copied bytes are proven captured. Add issue/completion monotonic timestamps first to measure true lease/provider wait rather than infer it from ordering.",
+    "Only then consider provider placement on final/another already-admitted owner with independently partitioned target/provider caches and reset state. ExistingMTP only; no training.",
+    "Copy batching has bounded~0.975ms/output total observed copy cost; do not prioritize it above multi-millisecond placement/serialization work."
+  ],
+  "source_reuse_paths": [
+    "engine/tools/pipeline_driver.py:make_plan",
+    "engine/tools/persistent_rolling_driver.py:make_plan",
+    "engine/planning/rolling_provider/arbiter.py:row_allowed,can_reserve,complete",
+    "engine/planning/rolling_provider/coordinator.py:_poll_proposals",
+    "engine/tools/compare_pipeline_state.py",
+    "research/continuation-2026-10-25/finalize_persistent_rolling_proof.py"
+  ]
+}

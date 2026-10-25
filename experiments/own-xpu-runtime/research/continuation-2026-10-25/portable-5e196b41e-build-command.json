@@ -1,0 +1,32 @@
+{
+  "utc": "2026-10-25T23:21:09.716779+00:00",
+  "source_commit": "5e196b41e5f31bb33e21805b9786c2149d1f7f54",
+  "archive_sha256": "83b097ec93cada4cbea189bc1c7726f8987897cb9501ee805e7ee4164f293723",
+  "source": "/dev/shm/ownrt-source-5e196b41e-extracted/own-xpu-runtime-source",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-portable-5e196b41e-build-20261025",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--working-directory=/dev/shm/ownrt-source-5e196b41e-extracted/own-xpu-runtime-source",
+    "/usr/bin/ionice",
+    "-c",
+    "3",
+    "/usr/bin/python3",
+    "build.py",
+    "/dev/shm/engine-build-portable-5e196b41e",
+    "--jobs",
+    "2",
+    "--generated-include",
+    "/dev/shm/sc117-portable-deployment-20261025/include",
+    "--profile-sha256",
+    "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a",
+    "--deployment-sha256",
+    "bfd016aa02b31f6183cd9c739d6d30e5449704268a8f4b136d3ff45302805fdf"
+  ],
+  "tmpfs_free_bytes": 37934489600,
+  "planned_build_bytes": 2147483648,
+  "device_execution_requested": false,
+  "concurrent_gpu_work": "Short correctness qualification only; no measured performance suite running"
+}
