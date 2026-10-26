@@ -275,7 +275,7 @@ def session_floors(control, evidence):
 class SessionArchive:
     """Disk copies of parked sessions (SC117_SESSION_ARCHIVE). They outlive reboots and RAM eviction.
 
-    Each copy is a directory <id>.<build16> written file by file, with COMPLETE (the sha256 of manifest.json) written
+    Each copy is a directory <id>.<build id> written file by file, with COMPLETE (the sha256 of manifest.json) written
     last. The archive filesystem gets no renames or locks (the RAID is ntfs-3g); a directory without a valid COMPLETE is
     a partial copy and is removed at prepare. Copies run on one background thread, a chunk at a time, only while the
     engine is idle (busy() false), under the RAM session's shared lock so the store cannot delete it mid-copy. A prompt
@@ -292,9 +292,8 @@ class SessionArchive:
         self.stats = dict(archived=0, recalled=0, failed=0, evicted=0, skipped=0)
         self.thread = None
 
-    @staticmethod
-    def name(m):
-        return f"{m['id']}.{m['identity']['binary_sha256'][:16]}"
+    def name(self, m):
+        return f"{m['id']}.{self.ops.build_id(m['identity'])}"
 
     def prepare(self):
         self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -305,7 +304,7 @@ class SessionArchive:
                 raw = (d / 'manifest.json').read_bytes()
                 require(hashlib.sha256(raw).hexdigest() == (d / self.COMPLETE).read_text().strip(), 'archive manifest digest')
                 m = json.loads(raw)
-                require(self.name(m) == d.name, 'archive directory name')
+                require(d.name in (self.name(m), f"{m['id']}.{m['identity']['binary_sha256'][:16]}"), 'archive directory name')
             except Exception:
                 shutil.rmtree(d, ignore_errors=True)  # partial or broken copy
                 continue
@@ -458,7 +457,7 @@ class Sessions:
         self.events = []             # last decisions (request summaries)
         self.stats = dict(parked=0, restored=0, park_skipped=0, park_refused=0, restore_refused=0, evicted=0)
         self.pinned = set()          # ids LRU eviction skips (SC117_KEEPER: the head checkpoints of active conversations)
-        self.accepted = set()        # other engine builds gated as state-identical to this one (session_compat_gate)
+        self.accepted = set()        # build ids (adapter build_id) gated as state-identical to this engine (session_compat_gate)
         self.archive = None          # SessionArchive when SC117_SESSION_ARCHIVE is set
 
     def near(self, saved, identity):
@@ -467,7 +466,7 @@ class Sessions:
 
     def usable(self, saved, identity):
         """A session restores here when its identity is this engine's, or differs only in an accepted engine build."""
-        return saved == identity or (self.near(saved, identity) and saved.get('binary_sha256') in self.accepted)
+        return saved == identity or (self.near(saved, identity) and self.ops.build_id(saved) in self.accepted)
 
     def settle(self, identity):
         """After session_compat_gate: drop parked sessions of other builds that were not accepted."""
@@ -644,7 +643,7 @@ class Sessions:
                 self.index.pop(entry['path'].name, None)
                 self.pinned.discard(entry['path'].name)
                 if entry.get('recalled') and self.archive is not None and 'identity' not in str(error):
-                    self.archive.drop(SessionArchive.name(dict(id=entry['path'].name, identity=entry['identity'])))
+                    self.archive.drop(self.archive.name(dict(id=entry['path'].name, identity=entry['identity'])))
             raise
         entry['used'] = time.time()
         self.stats['restored'] += 1
@@ -1059,13 +1058,13 @@ def continuation_gate(engine, prompt):
 
 def session_compat_gate(engine, prompt):
     """Cross-build session gate (sessions on), run at every start. Parks this build's canary once: the fixed self-test
-    prompt's turn 1, under CANARY_DIR/<build16> (and its archive copy). Then for each other build's canary whose
+    prompt's turn 1, under CANARY_DIR/<build id> (and its archive copy). Then for each other build's canary whose
     identity equals this engine's but for the build, it restores that canary through the store (VERIFY with the compat
     line), continues it with a fixed turn 2, and runs the same turn 2 fresh after a RESET. Tokens, MTP guesses and the
     full target state on both ranks (every buffer except the spare recurrent banks) must be identical, as in
     continuation_gate. A build that passes is accepted: its parked sessions restore here. Others' sessions are purged."""
     s, live = engine.sessions, engine.session_identity
-    build = live['binary_sha256']
+    build = A.build_id(live)
     CANARY_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
     archive = Path(SESSION_ARCHIVE + '-canaries') if SESSION_ARCHIVE else None
     if archive is not None:  # canaries from before a reboot come back from disk
@@ -1076,7 +1075,7 @@ def session_compat_gate(engine, prompt):
                 (CANARY_DIR / d.name / SessionArchive.COMPLETE).unlink()
     suffix = list(prompt)[:24]
     first, _ = engine.generate(prompt, 16, 'compat-canary-turn1', force_reset=True)
-    own = CANARY_DIR / build[:16]
+    own = CANARY_DIR / build
     if not any(m is not None for _, m, _ in (A.session_list(own) if own.is_dir() else [])):
         shutil.rmtree(own, ignore_errors=True)
         own.mkdir(mode=0o700)
@@ -1091,12 +1090,12 @@ def session_compat_gate(engine, prompt):
     results = []
     for d in builds[:CANARY_KEEP]:
         for path, m, error in A.session_list(d):
-            if m is None or not A.identity_near(m['identity'], live) or m['identity']['binary_sha256'] == build:
+            if m is None or not A.identity_near(m['identity'], live) or A.build_id(m['identity']) == build:
                 continue
-            other, sid = m['identity']['binary_sha256'], m['id']
-            held = [e for e in s.index.values() if e['identity'].get('binary_sha256') == other]
+            other, sid = A.build_id(m['identity']), m['id']
+            held = [e for e in s.index.values() if A.build_id(e['identity']) == other]
             if s.archive is not None:
-                held += [e for e in s.archive.index.values() if e['identity'].get('binary_sha256') == other]
+                held += [e for e in s.archive.index.values() if A.build_id(e['identity']) == other]
             if not held:  # nothing of that build is parked: no gate needed
                 continue
             turn2 = list(m['tokens']) + [m['pending_token']] + suffix
@@ -1105,7 +1104,7 @@ def session_compat_gate(engine, prompt):
                                 bytes=m['bytes'], used=time.time())
             s.pinned.add(sid)
             s.accepted.add(other)
-            row = dict(build=other, canary=str(path), prompt_tokens=len(turn2), passed=False)
+            row = dict(build=other, binary_sha256=m['identity']['binary_sha256'], canary=str(path), prompt_tokens=len(turn2), passed=False)
             try:
                 engine.generate(list(prompt)[:8], 4, 'compat-canary-other', force_reset=True, parkable=False)
                 cont, summary_c = engine.generate(turn2, 32, 'compat-canary-continued', continue_ok=True, parkable=False)
@@ -1132,7 +1131,8 @@ def session_compat_gate(engine, prompt):
             results.append(row)
     engine.convo = None
     s.settle(live)
-    return dict(passed=all(r['passed'] for r in results), binary_sha256=build, accepted=sorted(s.accepted), results=results, utc=utc())
+    return dict(passed=all(r['passed'] for r in results), build=build, binary_sha256=live['binary_sha256'], accepted=sorted(s.accepted),
+                results=results, utc=utc())
 
 
 def prefill_gate(engine, rows):

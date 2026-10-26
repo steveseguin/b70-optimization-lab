@@ -54,7 +54,7 @@ def environments(output,mini):
         e=dict(base)
         if not mini:e.update(NEOReadDebugKeys='1',FilterBdfPath=bdf,ZE_ENABLE_PCI_ID_DEVICE_ORDER='1',ZE_AFFINITY_MASK='0',ONEAPI_DEVICE_SELECTOR='level_zero:0')
         for key,sub in [('SYCL_CACHE_DIR','sycl'),('NEO_CACHE_DIR','neo'),('XDG_CACHE_HOME','xdg')]:e[key]=str(output/'cache'/str(rank)/sub)
-        for key in ('OWNRT_PREFILL_PROFILE','OWNRT_PREFILL_NATIVE','OWNRT_PREFILL_TILED','OWNRT_PREFILL_REUSE','OWNRT_PREFILL_SMALLTILE','OWNRT_DECODE_PROFILE','OWNRT_DECODE_FUSE','OWNRT_ROUTE_GROUP','OWNRT_KOPT_BLOCK_ROWS','OWNRT_ROUTE_FAST','OWNRT_IQ4NL_ROWS','OWNRT_SMALLK_ROWS','OWNRT_DRAFT_PREFIX_ROWS','OWNRT_DRAFT_HEAD_Q4','OWNRT_ARGMAX_FAST','OWNRT_MISS','OWNRT_SNAPSHOT_HOST','OWNRT_EARLY_RANK1','OWNRT_DRAFT_KERNELS','OWNRT_MERGE_CHECKS','OWNRT_ATTN_GQA','OWNRT_SELECT_SG','OWNRT_ADMIT_FAST','OWNRT_ATTN_PIPELINE','OWNRT_PREFILL_LEAN_ROWS','OWNRT_ATTN_WIDE','OWNRT_LOOKUP_COPY','OWNRT_GSQ_FUSE_NORM','OWNRT_FUSE_MIX','OWNRT_DRAFT_DEPTH_PROBE','OWNRT_DRAFT_DEPTH_VERIFY','OWNRT_SELECT_TOPK','OWNRT_RESET_DEVICE_ZERO'):  # prefill diagnostics: per-site wall times; native rows off
+        for key in ('OWNRT_PREFILL_PROFILE','OWNRT_PREFILL_NATIVE','OWNRT_PREFILL_TILED','OWNRT_PREFILL_REUSE','OWNRT_PREFILL_SMALLTILE','OWNRT_DECODE_PROFILE','OWNRT_DECODE_FUSE','OWNRT_ROUTE_GROUP','OWNRT_KOPT_BLOCK_ROWS','OWNRT_ROUTE_FAST','OWNRT_IQ4NL_ROWS','OWNRT_SMALLK_ROWS','OWNRT_DRAFT_PREFIX_ROWS','OWNRT_DRAFT_HEAD_Q4','OWNRT_ARGMAX_FAST','OWNRT_MISS','OWNRT_SNAPSHOT_HOST','OWNRT_EARLY_RANK1','OWNRT_DRAFT_KERNELS','OWNRT_MERGE_CHECKS','OWNRT_ATTN_GQA','OWNRT_SELECT_SG','OWNRT_ADMIT_FAST','OWNRT_ATTN_PIPELINE','OWNRT_PREFILL_LEAN_ROWS','OWNRT_ATTN_WIDE','OWNRT_LOOKUP_COPY','OWNRT_GSQ_FUSE_NORM','OWNRT_FUSE_MIX','OWNRT_DRAFT_DEPTH_PROBE','OWNRT_DRAFT_DEPTH_VERIFY','OWNRT_SELECT_TOPK','OWNRT_RESET_DEVICE_ZERO','OWNRT_ATTN_HEADS','OWNRT_ATTN_COMBINE2','OWNRT_ATTN_GUARD'):  # prefill diagnostics: per-site wall times; native rows off
             if key in os.environ:e[key]=os.environ[key]
         envs.append(e)
     return envs
@@ -515,28 +515,33 @@ def session_save(t,root,tokens,pending):
 
 # Identity fields that name the engine build. A session saved by another build is restorable only when every other
 # field matches and the service has gated that build as state-identical (service.py session_compat_gate).
-BUILD_IDENTITY_KEYS=('binary_sha256','build_receipt_sha256')
+# The build is the binary, its receipt and the ranks' environment (kernel switches such as OWNRT_ATTN_*).
+BUILD_IDENTITY_KEYS=('binary_sha256','build_receipt_sha256','rank_environment_sha256')
 
 def identity_near(saved,live):
     """True when two session identities differ at most in the engine build."""
     strip=lambda d:{k:v for k,v in d.items() if k not in BUILD_IDENTITY_KEYS}
     return type(saved) is dict and strip(saved)==strip(live)
 
+def build_id(identity):
+    """16 hex digits naming an engine build (BUILD_IDENTITY_KEYS of a session identity)."""
+    return hashlib.sha256(json.dumps([identity.get(k) for k in BUILD_IDENTITY_KEYS]).encode()).hexdigest()[:16]
+
 def session_restore(t,path,destination,readback=False,accepted=()):
     """Restore a parked session into both ranks: inspect (shared lock held throughout), RESET into `destination`, VERIFY
     both, APPLY both only if both verified, then the shared map exactly as redirect() leaves it (reverse_ready and the
     reverse slot; everything else zero). Returns dict(position, pending_token, tokens, id, ...). The next request must
     run the native continuation with start = position. Raises SessionRefused with engine 'untouched'/'fresh'/'partial'.
-    accepted: engine binaries (sha256) gated as state-identical to this one; a session saved by one of them is restored
-    with VERIFY's compat line, which lets only identity.binary_sha256 differ on the ranks."""
+    accepted: build ids (build_id) gated as state-identical to this engine; a session saved by one of them is restored,
+    with VERIFY's compat line when its binary differs (the line lets only identity.binary_sha256 differ on the ranks)."""
     path=Path(path);sid=path.name
     with SessionLock(path.parent,sid,False):
         m=session_inspect(path,lock=False)
         live=session_identity(t);foreign=None
         if m['identity']!=live:
-            if not(identity_near(m['identity'],live) and m['identity']['binary_sha256'] in set(accepted)):
+            if not(identity_near(m['identity'],live) and build_id(m['identity']) in set(accepted)):
                 raise SessionRefused('session identity differs from this engine')
-            foreign=m['identity']['binary_sha256']
+            if m['identity']['binary_sha256']!=live['binary_sha256']:foreign=m['identity']['binary_sha256']
         N=m['position']
         if not 1<=N<t.plan['context']:raise SessionRefused('session position outside this engine context')
         row=(path/'reverse.bin').read_bytes()

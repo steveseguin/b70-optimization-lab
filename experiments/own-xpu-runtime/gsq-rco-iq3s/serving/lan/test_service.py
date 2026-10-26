@@ -1060,13 +1060,24 @@ class SessionCompatTests(unittest.TestCase):
         t.plan['binary_sha256'] = 'c' * 64
         with self.assertRaises(A6.SessionRefused):
             A6.session_restore(t, root / m['id'], t.out / 'req-a')
-        r = A6.session_restore(t, root / m['id'], t.out / 'req-b', accepted=('b' * 64,))
+        with self.assertRaises(A6.SessionRefused):  # accepted names builds, not binaries
+            A6.session_restore(t, root / m['id'], t.out / 'req-a2', accepted=('b' * 64,))
+        r = A6.session_restore(t, root / m['id'], t.out / 'req-b', accepted=(A6.build_id(m['identity']),))
         self.assertEqual((r['position'], r['foreign_binary']), (300, 'b' * 64))
         lines = [sorted((t.out / f'rank{x}').glob('checkpoint-*.txt'))[-1].read_text().split('\n') for x in (0, 1)]
         self.assertTrue(all(l[2] == 'compat ' + 'b' * 64 for l in lines))
+        # a kernel switch in the ranks' environment only (same binary): restorable once gated, no compat line
+        t.plan['binary_sha256'] = 'b' * 64
+        t.plan['environment'][0]['OWNRT_ATTN_HEADS'] = '1'
+        with self.assertRaises(A6.SessionRefused):
+            A6.session_restore(t, root / m['id'], t.out / 'req-d')
+        r = A6.session_restore(t, root / m['id'], t.out / 'req-e', accepted=(A6.build_id(m['identity']),))
+        self.assertIsNone(r['foreign_binary'])
+        lines = [sorted((t.out / f'rank{x}').glob('checkpoint-*.txt'))[-1].read_text().split('\n') for x in (0, 1)]
+        self.assertTrue(all(len(l) < 3 or l[2] == '' for l in lines))
         t.plan['context'] = 8192  # any other identity field still refuses
         with self.assertRaises(A6.SessionRefused):
-            A6.session_restore(t, root / m['id'], t.out / 'req-c', accepted=('b' * 64,))
+            A6.session_restore(t, root / m['id'], t.out / 'req-c', accepted=(A6.build_id(m['identity']),))
 
     def test_compat_gate_accepts_an_exact_earlier_build_and_its_sessions_restore(self):
         e, t = self.rig()
@@ -1074,6 +1085,7 @@ class SessionCompatTests(unittest.TestCase):
         with e.lock:
             first = S.session_compat_gate(e, st)  # build b: parks its canary, nothing to compare
         self.assertEqual((first['results'], first['accepted']), ([], []))
+        build_b = A6.build_id(e.session_identity)
         conv_a, conv_b = list(range(1000, 1300)), list(range(2000, 2010))
         e.generate(conv_a, 3, 'client', continue_ok=True)
         e.generate(conv_b, 3, 'client', continue_ok=True)  # parks conv_a under build b
@@ -1083,11 +1095,11 @@ class SessionCompatTests(unittest.TestCase):
         with e.lock:
             gate = S.session_compat_gate(e, st)
         self.assertTrue(gate['passed'])
-        self.assertEqual(gate['accepted'], ['b' * 64])
+        self.assertEqual(gate['accepted'], [build_b])
         self.assertEqual(gate['results'][0]['continued_from'], len(st) + 2)
         _, s3 = e.generate(h + [9, 1, 2], 3, 'client', continue_ok=True)
         self.assertEqual(s3['continued_from'], 302)
-        self.assertEqual(sorted((S.CANARY_DIR).iterdir())[0].name in ('b' * 16, 'c' * 16), True)
+        self.assertEqual(sorted(p.name for p in S.CANARY_DIR.iterdir()), sorted([build_b, A6.build_id(e.session_identity)]))
 
     def test_compat_gate_rejects_a_build_whose_continuation_differs_and_purges_its_sessions(self):
         e, t = self.rig()
@@ -1123,7 +1135,7 @@ class SessionCompatTests(unittest.TestCase):
             if e.sessions.archive.stats['archived']:
                 break
             time.sleep(0.05)
-        name = f"{sid}.{'b' * 16}"
+        name = f"{sid}.{A6.build_id(e.session_identity)}"
         self.assertTrue((self.tmp / 'archive' / name / 'COMPLETE').exists())
         # RAM copy gone (eviction, or a reboot): the archive brings it back for the extending prompt
         A6.session_delete(self.tmp / 'sessions' / sid)

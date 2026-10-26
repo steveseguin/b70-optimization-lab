@@ -28,11 +28,17 @@ template<int Stage>struct Attention final:Base {
   ng::Args a;std::copy_n(p.begin(),19,a.p.begin());a.f32=(s.flags&ng::f32_activations_flag)!=0;
   auto counts=static_cast<int*>(p[19]);auto partial=reinterpret_cast<float*>(static_cast<uint8_t*>(p[19])+16);
   if constexpr(Stage==0)return p47::admit_fast_on()?p47::admit_fast(q,s,a,counts,deps):p47::admit(q,s,a,counts,deps);
-  if constexpr(Stage==1){if(p47::tiles_wide_on()&&!p47::tiles_pipelined_on()&&!p47::attention_gqa())return a.f32?p47::tiles_wide<true>(q,s,a,counts,partial,deps):p47::tiles_wide<false>(q,s,a,counts,partial,deps);
+  // Lab 2026-10-26 (default off, exact): OWNRT_ATTN_HEADS=1 query heads in parallel per (row, KV head, tile);
+  // OWNRT_ATTN_COMBINE2=1 blocked combine; OWNRT_ATTN_GUARD=1 the incumbent kernels with the guard read once per group.
+  if constexpr(Stage==1){if(a.f32&&p47::tiles_heads_on())return p47::tiles_heads(q,s,a,counts,partial,deps);
+   if(p47::attention_guard_once()&&!p47::tiles_wide_on()&&!p47::tiles_pipelined_on()&&!p47::attention_gqa())return a.f32?p47::tiles<true,true,true>(q,s,a,counts,partial,deps):p47::tiles<true,false,true>(q,s,a,counts,partial,deps);
+   if(p47::tiles_wide_on()&&!p47::tiles_pipelined_on()&&!p47::attention_gqa())return a.f32?p47::tiles_wide<true>(q,s,a,counts,partial,deps):p47::tiles_wide<false>(q,s,a,counts,partial,deps);
    if(a.f32&&p47::tiles_pipelined_on()&&!p47::attention_gqa())return p47::tiles_pipelined(q,s,a,counts,partial,deps);
    if(p47::attention_gqa())return a.f32?p47::tiles_gqa<true>(q,s,a,counts,partial,deps):p47::tiles_gqa<false>(q,s,a,counts,partial,deps);
    return a.f32?p47::tiles<true,true>(q,s,a,counts,partial,deps):p47::tiles<true>(q,s,a,counts,partial,deps);}
-  if constexpr(Stage==2)return a.f32?p47::combine<true,true>(q,s,a,counts,partial,deps):p47::combine<true>(q,s,a,counts,partial,deps);
+  if constexpr(Stage==2){if(a.f32&&p47::combine_blocked_on())return p47::combine_blocked(q,s,a,counts,partial,deps);
+   if(p47::attention_guard_once())return a.f32?p47::combine<true,true,true>(q,s,a,counts,partial,deps):p47::combine<true,false,true>(q,s,a,counts,partial,deps);
+   return a.f32?p47::combine<true,true>(q,s,a,counts,partial,deps):p47::combine<true>(q,s,a,counts,partial,deps);}
  }
 #endif
 };

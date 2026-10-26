@@ -1,0 +1,721 @@
+{
+ "schema": "ownrt.lab.qsa-attention.v1",
+ "date": "2026-10-26",
+ "card": "0000:27:00.0 (renderD131)",
+ "launch_template": "research/context-64k/rank1-card27-s24-ctx65536-launch.json (binary replaced; FilterBdfPath=0000:27:00.0, OWNRT_SELECT_TOPK=1, OWNRT_RESET_DEVICE_ZERO=1)",
+ "driver": "engine/tools/tp_rank1_driver.py run --steps 48 --prompt N --batched --rows 32 (cache /dev/shm/ownrt-lab-attn/cache)",
+ "switches": {
+  "OWNRT_ATTN_HEADS": "1: tiles_heads (512-lane work-group per row, KV head, tile)",
+  "OWNRT_ATTN_COMBINE2": "1: combine_blocked",
+  "OWNRT_ATTN_GUARD": "1: incumbent tiles/combine with the guard read once per work-group"
+ },
+ "best": {
+  "env": {
+   "OWNRT_ATTN_HEADS": "1",
+   "OWNRT_ATTN_COMBINE2": "1"
+  },
+  "binary_sha256": "19d60bef5dc95a709332b0098d74d4dedecb94ae0d06c910535615e3f581f6b3"
+ },
+ "builds": {
+  "ref": {
+   "binary": "/dev/shm/engine-build-lab-attn-ref/sc117-engine",
+   "binary_sha256": "075fdd0aca3508ea32e3eb52b8024e9b802790e0582e14d76e4c2127e86efeb5",
+   "p49_qsa_kernel_hpp": "b561bdfdb0505ff36e89e8525a18c6519a863353be0d832c6fd83f47c506249a",
+   "p49_qsa_submit_cpp": "6cb28575f9caa592333bf4d23f75ac4999329bff6c81465dbfe6a49d54dccf6a",
+   "rank_hpp": "71abd978b92135679c92cfd56a3bf66dae53eb09af0151874fe0fad10173aad4",
+   "note": "unmodified lab copy of canonical engine/src taken 05:12 (session_checkpoint.hpp as of 03:33)"
+  },
+  "c1": {
+   "binary": "/dev/shm/engine-build-lab-attn-c1/sc117-engine",
+   "binary_sha256": "342cc4a2efc19b9328fa17a9dd8dfe8e59a947e35e6da5a44397630a8f2d4c82",
+   "p49_qsa_kernel_hpp": "eb5045d6c20e5762dfec86bae72508bc7d38e0a346fedca0b590217b348a13ca",
+   "p49_qsa_submit_cpp": "c64762c2144750f0f9dc0513757e0284e11f2df774bc98d096edd8aa6aea9f87",
+   "rank_hpp": "078ee58343ae60e812d47c8ab27507a5cc8d3ff3d59848481dea21c7fd6f06a8",
+   "note": "lab copy + attention v1 (tiles_heads 384-lane + L1 prefetch, combine_blocked, guard) + LAB-ONLY rank.hpp profile-export deferral (inert without OWNRT_DECODE_PROFILE>=2)"
+  },
+  "c2": {
+   "binary": "/dev/shm/engine-build-lab-attn-c2/sc117-engine",
+   "binary_sha256": "46c3659365fe9abf00ef7136e0369f71b3c64ff5d0db71d12c9e6dcbfdf7a423",
+   "p49_qsa_kernel_hpp": "0708c5bd76e0d3a1b90622c35458bdfdd7487f6404b8cf1db9e43fcb9bc23ce5",
+   "p49_qsa_submit_cpp": "c64762c2144750f0f9dc0513757e0284e11f2df774bc98d096edd8aa6aea9f87",
+   "rank_hpp": "078ee58343ae60e812d47c8ab27507a5cc8d3ff3d59848481dea21c7fd6f06a8",
+   "note": "lab copy + final attention kernels (tiles_heads v3) + LAB-ONLY rank.hpp deferral"
+  },
+  "ref2": {
+   "binary": "/dev/shm/engine-build-lab-attn-ref2/sc117-engine",
+   "binary_sha256": "002a2785e4e88d5b5603b11be69207696697b42eea85a7ddf52a51ddd20da0ef",
+   "p49_qsa_kernel_hpp": "b561bdfdb0505ff36e89e8525a18c6519a863353be0d832c6fd83f47c506249a",
+   "p49_qsa_submit_cpp": "6cb28575f9caa592333bf4d23f75ac4999329bff6c81465dbfe6a49d54dccf6a",
+   "rank_hpp": "71abd978b92135679c92cfd56a3bf66dae53eb09af0151874fe0fad10173aad4",
+   "note": "fresh copy of canonical engine/src at 06:0x (includes the 05:35 session_checkpoint.hpp update), unmodified"
+  },
+  "c4": {
+   "binary": "/dev/shm/engine-build-lab-attn-c4/sc117-engine",
+   "binary_sha256": "19d60bef5dc95a709332b0098d74d4dedecb94ae0d06c910535615e3f581f6b3",
+   "p49_qsa_kernel_hpp": "c44af65571a632c7be6ccf55392a44958952c69876a3dc5495cfa25468c8f064",
+   "p49_qsa_submit_cpp": "c64762c2144750f0f9dc0513757e0284e11f2df774bc98d096edd8aa6aea9f87",
+   "rank_hpp": "71abd978b92135679c92cfd56a3bf66dae53eb09af0151874fe0fad10173aad4",
+   "note": "ref2 sources + attention.patch only (the deliverable)"
+  }
+ },
+ "final_series": {
+  "ref2": {
+   "per_run_median_half_ms": [
+    18.079,
+    18.1059,
+    18.042
+   ],
+   "mean_of_medians": 18.0756
+  },
+  "c4_on": {
+   "per_run_median_half_ms": [
+    16.905,
+    16.7891,
+    16.8115
+   ],
+   "mean_of_medians": 16.8352
+  },
+  "delta_ms": -1.2404,
+  "delta_pct": -6.86
+ },
+ "runs": {
+  "c1-guard-p4096": {
+   "tag": "c1-guard-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c1/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_GUARD=1"
+   ],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 17.364,
+   "mean_half_ms": 17.3822,
+   "min_half_ms": 17.1133,
+   "prompt_ms": 38045.9,
+   "tokens_equal_ref": true,
+   "tokens_ref": "ref-p4096"
+  },
+  "c1-heads-comb2-p300": {
+   "tag": "c1-heads-comb2-p300",
+   "binary": "/dev/shm/engine-build-lab-attn-c1/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 300,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.393,
+   "mean_half_ms": 16.3727,
+   "min_half_ms": 16.0243,
+   "prompt_ms": 2711.9,
+   "tokens_equal_ref": true,
+   "tokens_ref": "ref-p300"
+  },
+  "c1-heads-comb2-p4096": {
+   "tag": "c1-heads-comb2-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c1/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.9555,
+   "mean_half_ms": 16.9805,
+   "min_half_ms": 16.5823,
+   "prompt_ms": 39011.0,
+   "tokens_equal_ref": true,
+   "tokens_ref": "ref-p4096"
+  },
+  "c1-off-p4096": {
+   "tag": "c1-off-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c1/sc117-engine",
+   "env": [],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 18.0066,
+   "mean_half_ms": 18.0212,
+   "min_half_ms": 17.6159,
+   "prompt_ms": 42545.5,
+   "tokens_equal_ref": true,
+   "tokens_ref": "ref-p4096"
+  },
+  "c2-heads-comb2-p4096": {
+   "tag": "c2-heads-comb2-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c2/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.7605,
+   "mean_half_ms": 16.7765,
+   "min_half_ms": 16.5381,
+   "prompt_ms": 39346.3,
+   "tokens_equal_ref": true,
+   "tokens_ref": "ref-p4096"
+  },
+  "c2-prof-off-p4096": {
+   "tag": "c2-prof-off-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c2/sc117-engine",
+   "env": [
+    "OWNRT_DECODE_PROFILE=3"
+   ],
+   "prompt": 4096,
+   "steps": 16,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 26.071,
+   "mean_half_ms": 26.0561,
+   "min_half_ms": 25.5358,
+   "prompt_ms": 40243.8
+  },
+  "c2-prof-on-p4096": {
+   "tag": "c2-prof-on-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c2/sc117-engine",
+   "env": [
+    "OWNRT_DECODE_PROFILE=3",
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 4096,
+   "steps": 16,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 24.5583,
+   "mean_half_ms": 24.6796,
+   "min_half_ms": 24.1907,
+   "prompt_ms": 36504.2
+  },
+  "fin-c4guard-p4096": {
+   "tag": "fin-c4guard-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c4/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_GUARD=1"
+   ],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 17.373,
+   "mean_half_ms": 17.3799,
+   "min_half_ms": 17.1101,
+   "prompt_ms": 38064.0,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "fin-c4off-p4096": {
+   "tag": "fin-c4off-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-c4/sc117-engine",
+   "env": [],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 18.0011,
+   "mean_half_ms": 18.0207,
+   "min_half_ms": 17.6508,
+   "prompt_ms": 40192.0,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "fin-c4on-p300": {
+   "tag": "fin-c4on-p300",
+   "binary": "/dev/shm/engine-build-lab-attn-c4/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 300,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.3433,
+   "mean_half_ms": 16.3401,
+   "min_half_ms": 16.1247,
+   "prompt_ms": 2713.3,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p300"
+  },
+  "fin-c4on-p4096-a": {
+   "tag": "fin-c4on-p4096-a",
+   "binary": "/dev/shm/engine-build-lab-attn-c4/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.905,
+   "mean_half_ms": 16.9509,
+   "min_half_ms": 16.6734,
+   "prompt_ms": 36564.6,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "fin-c4on-p4096-b": {
+   "tag": "fin-c4on-p4096-b",
+   "binary": "/dev/shm/engine-build-lab-attn-c4/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.7891,
+   "mean_half_ms": 16.8381,
+   "min_half_ms": 16.5254,
+   "prompt_ms": 36556.8,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "fin-c4on-p4096-c": {
+   "tag": "fin-c4on-p4096-c",
+   "binary": "/dev/shm/engine-build-lab-attn-c4/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1"
+   ],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.8115,
+   "mean_half_ms": 16.8535,
+   "min_half_ms": 16.5392,
+   "prompt_ms": 36574.6,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "fin-ref2-p300": {
+   "tag": "fin-ref2-p300",
+   "binary": "/dev/shm/engine-build-lab-attn-ref2/sc117-engine",
+   "env": [],
+   "prompt": 300,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.5699,
+   "mean_half_ms": 16.5724,
+   "min_half_ms": 16.3755,
+   "prompt_ms": 2742.6,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p300"
+  },
+  "fin-ref2-p4096-a": {
+   "tag": "fin-ref2-p4096-a",
+   "binary": "/dev/shm/engine-build-lab-attn-ref2/sc117-engine",
+   "env": [],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 18.079,
+   "mean_half_ms": 18.1194,
+   "min_half_ms": 17.7075,
+   "prompt_ms": 39830.7,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "fin-ref2-p4096-b": {
+   "tag": "fin-ref2-p4096-b",
+   "binary": "/dev/shm/engine-build-lab-attn-ref2/sc117-engine",
+   "env": [],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 18.1059,
+   "mean_half_ms": 18.1126,
+   "min_half_ms": 17.7819,
+   "prompt_ms": 40201.1,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "fin-ref2-p4096-c": {
+   "tag": "fin-ref2-p4096-c",
+   "binary": "/dev/shm/engine-build-lab-attn-ref2/sc117-engine",
+   "env": [],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 18.042,
+   "mean_half_ms": 18.0882,
+   "min_half_ms": 17.756,
+   "prompt_ms": 40287.5,
+   "tokens_equal_ref": true,
+   "tokens_ref": "fin-ref2-p4096-a"
+  },
+  "ref-p300": {
+   "tag": "ref-p300",
+   "binary": "/dev/shm/engine-build-lab-attn-ref/sc117-engine",
+   "env": [],
+   "prompt": 300,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 16.4072,
+   "mean_half_ms": 16.4357,
+   "min_half_ms": 16.1905,
+   "prompt_ms": 2738.2,
+   "tokens_equal_ref": true,
+   "tokens_ref": "ref-p300"
+  },
+  "ref-p4096": {
+   "tag": "ref-p4096",
+   "binary": "/dev/shm/engine-build-lab-attn-ref/sc117-engine",
+   "env": [],
+   "prompt": 4096,
+   "steps": 48,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "kernel_fault_lines": 0,
+   "median_half_ms": 17.8544,
+   "mean_half_ms": 17.9132,
+   "min_half_ms": 17.5903,
+   "prompt_ms": 69325.8,
+   "tokens_equal_ref": true,
+   "tokens_ref": "ref-p4096"
+  }
+ },
+ "compares": {
+  "c1-guard-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "c1-heads-comb2-p300": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "c1-heads-comb2-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "c1-off-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "c2-heads-comb2-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-c4guard-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-c4off-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-c4on-p300": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-c4on-p4096-a": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-c4on-p4096-b": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-c4on-p4096-c": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-ref2-p4096-b": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "fin-ref2-p4096-c": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  }
+ },
+ "rank1_device_profiles": {
+  "c2-prof-off-p4096": {
+   "qsa_attention": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 1445.99,
+    "per_layer_us": 241.0
+   },
+   "qsa_attention#0": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 21.93,
+    "per_layer_us": 3.65
+   },
+   "qsa_attention#1": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 1156.88,
+    "per_layer_us": 192.81
+   },
+   "qsa_attention#2": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 267.14,
+    "per_layer_us": 44.52
+   },
+   "qsa_select": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 456.98,
+    "per_layer_us": 76.16
+   },
+   "span_us_median": 17420.6,
+   "tokens_profiled": 16
+  },
+  "c2-prof-on-p4096": {
+   "qsa_attention": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 262.66,
+    "per_layer_us": 43.78
+   },
+   "qsa_attention#0": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 21.88,
+    "per_layer_us": 3.65
+   },
+   "qsa_attention#1": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 193.8,
+    "per_layer_us": 32.3
+   },
+   "qsa_attention#2": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 47.4,
+    "per_layer_us": 7.9
+   },
+   "qsa_select": {
+    "count_per_token": 6,
+    "median_busy_us_per_token": 456.3,
+    "per_layer_us": 76.05
+   },
+   "span_us_median": 16169.4,
+   "tokens_profiled": 16
+  }
+ },
+ "bench": {
+  "harness": "research/qsa-attention/bench/bench.cpp (+ exp_kernels.hpp), card 27, n = selected slots, T=1 row, C=65 tiles, 30 timed iterations, median device time (event profiling)",
+  "flush_modes": {
+   "cold_dirty": "256 MB write kernel before each iteration (L2 full of dirty lines)",
+   "cold_clean": "256 MB read kernel before each iteration (BENCH_RFLUSH=1)",
+   "hot": "no flush"
+  },
+  "exactness": "bitwise output (slot 5) and every valid partial (258 floats per tile) vs tiles<true,true>+combine<true,true>, 23 cases: n in {1,2,31,32,33,64,65,300,513,1025,1056,2047,2048,2049,2050,2051}, T in {1,2,4} with per-row n, mode 1 = exact +0/-0 inputs, scaled K and repeated slot ids (exact score ties). 0 failures for every variant listed as exact.",
+  "n2051_us": {
+   "ref tiles<true,true> / combine<true,true>": {
+    "tiles_hot": 177.6,
+    "tiles_cold_dirty": 187.6,
+    "tiles_cold_clean": 184.4,
+    "combine_hot": 42.6,
+    "combine_cold": 43.9
+   },
+   "ref at n=33 (2 live tiles)": {
+    "tiles_hot": 156.8,
+    "note": "cost is the per-lane guard atomic: every one of 1560x128 lanes runs blocked(a) before the start>=n exit"
+   },
+   "probe: 130x384 lanes, guard atomic only": {
+    "with_atomic": 37.0,
+    "without": 1.0
+   },
+   "orig_guard (OWNRT_ATTN_GUARD=1)": {
+    "tiles_hot": 78.4,
+    "tiles_cold_dirty": 94.8,
+    "combine_hot": 40.7
+   },
+   "tiles_heads v1 (12 subgroups = 12 heads, lane = 8 dims, per-lane guard)": {
+    "tiles_hot": 63.6,
+    "tiles_cold_dirty": 106.3
+   },
+   "tiles_heads v1 + subgroup guard": {
+    "tiles_hot": 28.0,
+    "tiles_cold_dirty": 74.7
+   },
+   "tiles_heads v1 + guard + L1 prefetch of tile (engine build c1)": {
+    "tiles_hot": 30.8,
+    "tiles_cold_dirty": 52.2
+   },
+   "v1 + SLM staging of K and V": {
+    "tiles_hot": 50.5,
+    "tiles_cold_dirty": 73.7,
+    "verdict": "loss"
+   },
+   "v1 + SLM K + prefetched V": {
+    "tiles_hot": 35.1,
+    "tiles_cold_dirty": 55.6,
+    "verdict": "loss"
+   },
+   "tiles_v2 (512 lanes, scores lane=slot x 3 heads x 64-dim quarter, values lane=dim x 6 heads)": {
+    "tiles_hot": 28.5,
+    "tiles_cold_dirty": 49.4
+   },
+   "tiles_v3 = v2 + early id/q loads + full-tile body + register weights (FINAL tiles_heads)": {
+    "tiles_hot": 20.0,
+    "tiles_cold_dirty": 43.4,
+    "tiles_cold_clean": 30.7
+   },
+   "v3 + L1/L2 prefetch variants": {
+    "tiles_hot": "21.4-22.6",
+    "tiles_cold_clean": "33.5-35.0",
+    "verdict": "loss"
+   },
+   "v4 = v3 + explicit K/V load batching (6 shapes)": {
+    "tiles_hot": "19.7-20.8",
+    "tiles_cold_clean": "30.6-31.4",
+    "verdict": "neutral, closed"
+   },
+   "v5 6 heads per work-group": {
+    "tiles_hot": 22.2,
+    "tiles_cold_clean": 33.3,
+    "verdict": "loss"
+   },
+   "v5 12 heads + V loads before softmax": {
+    "tiles_hot": 22.2,
+    "tiles_cold_clean": 28.2,
+    "verdict": "+2.2 hot / -3.5 cold, not adopted (sub-0.1% lever)"
+   },
+   "v3 phase split (hot)": {
+    "prologue_launch_guard_loads": 3.85,
+    "scores": 6.4,
+    "softmax_exp_max_den": 5.4,
+    "values": 5.0
+   },
+   "combine_blocked v1 (per-lane guard)": {
+    "combine_hot": 25.8
+   },
+   "combine_blocked + group guard": {
+    "combine_hot": 7.6
+   },
+   "combine_blocked + group guard + all loads before guard (FINAL)": {
+    "combine_hot": 6.7,
+    "combine_cold_clean": 5.7
+   },
+   "combine_v2 (no factor exchange, 3 exp per lane)": {
+    "combine_hot": 10.1,
+    "verdict": "loss; also inexact for count<65 (not debugged)"
+   }
+  },
+  "large_grf_env": "SYCL_PROGRAM_COMPILE_OPTIONS=-ze-opt-large-register-file: no gain (tiles_heads v1 63.6 -> 72.2 us)"
+ }
+}

@@ -19,7 +19,7 @@ Environment=SC117_CONTEXT=65536
 # to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
 Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/8ed9f5cb695e.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/516405a497ea.json
 Environment=SC117_PREFILL_ROWS=32
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -49,6 +49,11 @@ Environment=OWNRT_SELECT_TOPK=1
 # RESET zeroes the same allocations with one device store kernel each instead of 4 MiB host uploads (2026-10-26;
 # card-27 session test at 32K: restored state equal to the uninterrupted run, bitwise).
 Environment=OWNRT_RESET_DEVICE_ZERO=1
+# Exact QSA decode attention (2026-10-26, research/qsa-attention): one 512-lane group per (row, KV head, tile) so the
+# 12 query heads sharing a KV head load each K/V row together, a blocked combine, and the error/active guard read once
+# per group (a per-lane device-scope atomic load serialized the old passes). Same trees; card-27 lab bitwise.
+Environment=OWNRT_ATTN_HEADS=1
+Environment=OWNRT_ATTN_COMBINE2=1
 # Engine sessions (2026-10-26): a conversation of >= 256 tokens is parked (rank ops 17-19, both ranks + the draft's
 # reverse row, sealed manifest) before a RESET would evict it, and restored when a later prompt extends it.
 Environment=SC117_SESSIONS=1

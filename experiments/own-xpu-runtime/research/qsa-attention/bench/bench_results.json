@@ -1,0 +1,28 @@
+{
+ "harness": "research/qsa-attention/bench/bench.cpp (+ exp_kernels.hpp), card 27, n = selected slots, T=1 row, C=65 tiles, 30 timed iterations, median device time (event profiling)",
+ "flush_modes": {"cold_dirty": "256 MB write kernel before each iteration (L2 full of dirty lines)", "cold_clean": "256 MB read kernel before each iteration (BENCH_RFLUSH=1)", "hot": "no flush"},
+ "exactness": "bitwise output (slot 5) and every valid partial (258 floats per tile) vs tiles<true,true>+combine<true,true>, 23 cases: n in {1,2,31,32,33,64,65,300,513,1025,1056,2047,2048,2049,2050,2051}, T in {1,2,4} with per-row n, mode 1 = exact +0/-0 inputs, scaled K and repeated slot ids (exact score ties). 0 failures for every variant listed as exact.",
+ "n2051_us": {
+  "ref tiles<true,true> / combine<true,true>": {"tiles_hot": 177.6, "tiles_cold_dirty": 187.6, "tiles_cold_clean": 184.4, "combine_hot": 42.6, "combine_cold": 43.9},
+  "ref at n=33 (2 live tiles)": {"tiles_hot": 156.8, "note": "cost is the per-lane guard atomic: every one of 1560x128 lanes runs blocked(a) before the start>=n exit"},
+  "probe: 130x384 lanes, guard atomic only": {"with_atomic": 37.0, "without": 1.0},
+  "orig_guard (OWNRT_ATTN_GUARD=1)": {"tiles_hot": 78.4, "tiles_cold_dirty": 94.8, "combine_hot": 40.7},
+  "tiles_heads v1 (12 subgroups = 12 heads, lane = 8 dims, per-lane guard)": {"tiles_hot": 63.6, "tiles_cold_dirty": 106.3},
+  "tiles_heads v1 + subgroup guard": {"tiles_hot": 28.0, "tiles_cold_dirty": 74.7},
+  "tiles_heads v1 + guard + L1 prefetch of tile (engine build c1)": {"tiles_hot": 30.8, "tiles_cold_dirty": 52.2},
+  "v1 + SLM staging of K and V": {"tiles_hot": 50.5, "tiles_cold_dirty": 73.7, "verdict": "loss"},
+  "v1 + SLM K + prefetched V": {"tiles_hot": 35.1, "tiles_cold_dirty": 55.6, "verdict": "loss"},
+  "tiles_v2 (512 lanes, scores lane=slot x 3 heads x 64-dim quarter, values lane=dim x 6 heads)": {"tiles_hot": 28.5, "tiles_cold_dirty": 49.4},
+  "tiles_v3 = v2 + early id/q loads + full-tile body + register weights (FINAL tiles_heads)": {"tiles_hot": 20.0, "tiles_cold_dirty": 43.4, "tiles_cold_clean": 30.7},
+  "v3 + L1/L2 prefetch variants": {"tiles_hot": "21.4-22.6", "tiles_cold_clean": "33.5-35.0", "verdict": "loss"},
+  "v4 = v3 + explicit K/V load batching (6 shapes)": {"tiles_hot": "19.7-20.8", "tiles_cold_clean": "30.6-31.4", "verdict": "neutral, closed"},
+  "v5 6 heads per work-group": {"tiles_hot": 22.2, "tiles_cold_clean": 33.3, "verdict": "loss"},
+  "v5 12 heads + V loads before softmax": {"tiles_hot": 22.2, "tiles_cold_clean": 28.2, "verdict": "+2.2 hot / -3.5 cold, not adopted (sub-0.1% lever)"},
+  "v3 phase split (hot)": {"prologue_launch_guard_loads": 3.85, "scores": 6.4, "softmax_exp_max_den": 5.4, "values": 5.0},
+  "combine_blocked v1 (per-lane guard)": {"combine_hot": 25.8},
+  "combine_blocked + group guard": {"combine_hot": 7.6},
+  "combine_blocked + group guard + all loads before guard (FINAL)": {"combine_hot": 6.7, "combine_cold_clean": 5.7},
+  "combine_v2 (no factor exchange, 3 exp per lane)": {"combine_hot": 10.1, "verdict": "loss; also inexact for count<65 (not debugged)"}
+ },
+ "large_grf_env": "SYCL_PROGRAM_COMPILE_OPTIONS=-ze-opt-large-register-file: no gain (tiles_heads v1 63.6 -> 72.2 us)"
+}
