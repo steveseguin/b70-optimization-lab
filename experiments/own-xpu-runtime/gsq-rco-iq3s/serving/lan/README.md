@@ -87,11 +87,10 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-The tracked unit selects engine `728c70b3eec6` (receipt
-[../../../engine/receipts/728c70b3eec6.json](../../../engine/receipts/728c70b3eec6.json)), built from the canonical
+The tracked unit selects engine `51f32b2655cc` (receipt
+[../../../engine/receipts/51f32b2655cc.json](../../../engine/receipts/51f32b2655cc.json)), built from the canonical
 source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.py). Its configuration lives in
-[sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it. The service is currently
-stopped while all four cards run optimization lanes.
+[sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it.
 A controlled research override may select another receipt. [CURRENT.md](../../../../../CURRENT.md) owns live state; the unit alone does not prove that a build is running or has passed its startup gates.
 - **Exact 32-bit mode (owner's choice: quality first).** Activations, router and expert outputs, HC streams and the
   attention KV cache are all F32. The weights are unchanged. The MTP draft keeps its own BF16 arithmetic; it only
@@ -121,9 +120,9 @@ A controlled research override may select another receipt. [CURRENT.md](../../..
   - `OWNRT_MISS=banks-batch` and `OWNRT_SNAPSHOT_HOST=static`: cheap speculation rollback.
   - `OWNRT_DRAFT_KERNELS`: packet59 draft kernels where faster.
   - `OWNRT_MERGE_CHECKS=1`: one expert status check per layer.
-- **Speed (2026-10-26):** B18's retained cold 12-prompt service observation measured 65.67 tok/s median decode, with
-  every output id/hash and all MTP hits identical to B17's 64.01 tok/s suite; this is not a certified benchmark.
-  The rank-0 draft changes also reduced 4096-row lab replay from 6.03 s to 5.08 s.
+- **Speed (2026-10-26):** B19's retained cold 12-prompt service observation measured 66.21 tok/s median decode, with
+  every output id/hash and all MTP hits identical to B18. B18 measured 65.67 and B17 64.01; these are not certified
+  benchmarks. A 12.4K-token needle/continuation check passed with 62.35 tok/s fresh decode.
   How each step was found: [speed notes](../../../research/2026-10-25-decode-roofline.md), [rank-0 draft result](../../../research/rank0-lab/RESULT.md);
   what not to retry: [DO-NOT-REPEAT](../../service-speed/DO-NOT-REPEAT.md).
 

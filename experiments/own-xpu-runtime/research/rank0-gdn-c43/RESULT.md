@@ -24,7 +24,9 @@ allocations with zero differences, no missing buffers or other differing fields,
 tokens. Every run held only renderD128 (PCI 0000:43:00.0) under `/dev/shm/card43.lock`; before/after kernel checks
 found zero GPU fault lines.
 
-Service promotion still requires canonical build, normal startup gates and the exact 12-prompt suite.
+B19 passed both context oracles with zero differences, prefill 13/13, continuation and prior-build session
+compatibility. The cold 12-prompt suite matched B18 token for token and rose from 65.669 to 66.205 tok/s (+0.82%).
+The 12.4K-token needle/continuation check passed; fresh decode measured 62.35 tok/s.
 ## Independent review and reproduction
 
 Canonical B19 is binary `51f32b2655cc0a9d514081362ea6b3ceaa8b0d004df94fbbd83eb7fa76e3ae0a`. Independent code
