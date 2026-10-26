@@ -6,6 +6,7 @@
 #include "stage2/packet194-expert-diet-engine/mock_order.hpp"
 #ifndef OWN_RT_HOST_ONLY
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
+#include "stage2/packet194-expert-diet-engine/select_fast.hpp"
 #endif
 namespace specialised {
 #ifdef OWN_RT_HOST_ONLY
@@ -127,6 +128,16 @@ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel 
  ng::Shape shape;explicit Kernel(ng::Shape s):shape(s){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
   ng::Args a;std::copy_n(p.begin(),19,a.p.begin());float* scratch=static_cast<float*>(p[19]);auto s=shape;a.f32=(s.flags&ng::f32_activations_flag)!=0;auto n=work_items(s,Stage);
+  // Lab 2026-10-26 (default off, exact): OWNRT_SELECT_FAST=1 with OWNRT_SELECT_TOPK=1, select_fast.hpp.
+  if constexpr(Code==ng::select&&Stage==0)if(select_topk()&&select_fast()){
+   auto launch=[&]<int B>(){const size_t sub=size_t(s.tokens)*select_groups<B>(s);
+    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((sub*32+255)/256*256,256)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{select_scores_sg<B>(s,a,it,scratch,Guard{});}));});};
+   return select_bps4(s)?launch.template operator()<4>():launch.template operator()<8>();}
+  if constexpr(Code==ng::select&&Stage==1)if(select_topk()&&select_fast()&&select_topk_row2_ok(s))
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(size_t(s.tokens)*1024),sycl::range<1>(1024))](sycl::handler& h){
+    sycl::local_accessor<int,1> idx(sycl::range<1>(size_t(s.budget/4)),h);sycl::local_accessor<float,1> val(sycl::range<1>(size_t(s.budget/4)),h);
+    sycl::local_accessor<int,1> hist(sycl::range<1>(select_hist_ints),h);sycl::local_accessor<int,1> found(sycl::range<1>(select_found_ints),h);sycl::local_accessor<int,1> part(sycl::range<1>(1024),h);
+    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{select_topk_row2(s,a,it,scratch,idx.get_multi_ptr<sycl::access::decorated::no>().get(),val.get_multi_ptr<sycl::access::decorated::no>().get(),hist.get_multi_ptr<sycl::access::decorated::no>().get(),found.get_multi_ptr<sycl::access::decorated::no>().get(),part.get_multi_ptr<sycl::access::decorated::no>().get(),Guard{});}));});
   if constexpr(Code==ng::select&&Stage==0)if(select_topk())
    return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){select_scores_item(s,a,i[0],scratch,Guard{});}));});
   if constexpr(Code==ng::select&&Stage==1)if(select_topk())

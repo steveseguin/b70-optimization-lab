@@ -1,0 +1,84 @@
+{
+ "harness": "research/qsa-select-2/bench/bench_select.cpp (+ bench_variants.inc, select_ref.hpp = verbatim copy of the canonical stage-0/stage-1 kernels), card 27, context 65536 (16384 blocks), T=1, extent = min(65536, ((pos+32)/32)*32) as rank.hpp, F32 iqn/pooled, median device time of 30 iterations; cold = 256 MB read flush before each iteration",
+ "exactness": "ids (a.i(2), all 2051 slots per row), every score of the row (scratch, bits), and the error flag vs the canonical TOPK path, 25 cases (21 before the histogram-size fix, 25 after): pos in {0,2,3,100,1500,2030,2046,2047,2048,2051,4000,4095,4096,4099,9999,29990,30000,65530}, 1, 2 and 32 rows (prefill chunk shapes), mode 0 normal keys, mode 1 many exact score ties (7 repeating key patterns, every third block all-zero = score +0), mode 2 almost all zero keys (T = +0, ties broken by index across ~7400 blocks). The original all-pairs select_rows<1> is a third oracle. 0 failures for every variant (13 variants on 21 cases; final kernels on 25 cases).",
+ "note_first_row": "the first measured variant (ref) runs ~2x slow in this harness (warm-up/clock artefact); the reference numbers below are the same kernels measured later in the run",
+ "reference_us": {
+  "stage0_4096_hot": 16.25,
+  "stage0_4096_cold": 17.8,
+  "stage1_4096": 60.2,
+  "stage0_30000_hot": 19.06,
+  "stage0_30000_cold": 21.4,
+  "stage1_30000": "68.2-88.8"
+ },
+ "reference_stage1_phases_us": {
+  "pos4096": {
+   "finite_check": 1.46,
+   "radix_pass0": 3.44,
+   "radix_passes_1_2": 6.46,
+   "compaction": 9.17,
+   "rank_loop_and_writes": "~51"
+  },
+  "pos30000": {
+   "finite_check": 3.12,
+   "radix_pass0": 8.12,
+   "radix_passes_1_2": 12.4,
+   "compaction": 17.19,
+   "rank_loop_and_writes": "~51-66"
+  }
+ },
+ "allpairs_stage1_us": {
+  "pos4096": 29.4,
+  "pos30000": 221.7
+ },
+ "stage0_select_scores_sg_us": {
+  "BPS4": {
+   "4096_hot": 3.33,
+   "4096_cold": 5.94,
+   "30000_hot": 8.02,
+   "30000_cold": 12.4
+  },
+  "BPS8": {
+   "4096_hot": 4.06,
+   "4096_cold": 7.6,
+   "30000_hot": 6.67,
+   "30000_cold": 12.3
+  },
+  "BPS16": {
+   "4096_hot": 5.94,
+   "30000_hot": 6.67
+  },
+  "BPS32": {
+   "4096_hot": 10.1,
+   "30000_hot": 10.2
+  },
+  "adopted": "BPS 4 if launch extent <= 8192 positions, else 8"
+ },
+ "stage1_select_topk_row2_us": {
+  "v1 registers + rank split over 1024 lanes with float compares": {
+   "4096": 29.4,
+   "30000": 34.4,
+   "rank_phase": "14.7 / 17.7"
+  },
+  "v2 + integer-threshold rank + one packed compaction scan": {
+   "4096": 13.4,
+   "30000": 18.0,
+   "phases_4096": {
+    "finite": 1.88,
+    "radix0": 4.27,
+    "radix12": 7.71,
+    "compact": 9.79,
+    "rank": 12.92
+   }
+  },
+  "v3 + per-pass histograms/found (2 barriers per pass) + taken from the scan": {
+   "4096": 13.0,
+   "30000": 17.7
+  },
+  "v4 + pass-0 histogram copies by subgroup (FINAL, NH0=4)": {
+   "4096": 13.1,
+   "30000": 15.0,
+   "NH0=1": "13.0 / 17.9",
+   "NH0=8": "13.9 / 15.5"
+  }
+ }
+}

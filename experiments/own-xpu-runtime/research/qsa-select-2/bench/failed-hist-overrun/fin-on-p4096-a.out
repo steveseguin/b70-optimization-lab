@@ -1,0 +1,16 @@
+cmd flock /dev/shm/card27.lock nice -n 10 taskset -c 8-15,24-31 python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py run --launch /dev/shm/ownrt-lab-sel/launch-fin-on-p4096-a.json --out /dev/shm/ownrt-lab-sel/fin-on-p4096-a --steps 48 --prompt 4096 --batched --rows 32 --cache /dev/shm/ownrt-lab-sel/cache
+engine pid 152961
+dri fd /dev/dri/renderD131
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 206, in <module>
+    sys.exit(run(a) if a.cmd == 'run' else compare(a))
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 131, in run
+    call(parent, PREFILL, seq, position=first, token=n, fixture=chunk % 2)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 39, in call
+    rep = REP.unpack(recv_exact(sock, REP.size, time.monotonic() + timeout))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 32, in recv_exact
+    raise RuntimeError('rank closed the channel')
+RuntimeError: rank closed the channel
+RESULT {"tag": "fin-on-p4096-a", "rc": 1, "engine_pid": 152961, "dri": ["/dev/dri/renderD131"], "since": 1793012015, "env": ["OWNRT_ATTN_HEADS=1", "OWNRT_ATTN_COMBINE2=1", "OWNRT_SELECT_FAST=1"], "binary": "/dev/shm/engine-build-lab-sel-fin/sc117-engine"} faults 0
