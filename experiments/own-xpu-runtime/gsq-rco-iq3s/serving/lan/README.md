@@ -177,6 +177,10 @@ End-to-end check, 2026-10-26 (pi 1.2.0 in a container, headless `--mode json`, k
 unit test. It ran 6 turns with bash, read and edit tool calls. After the first request read the 1.9K-token head,
 every turn continued the cached state and read only 7-214 new tokens. The task took 28 s.
 
+A harder check (engine 718a59eff64f): a planted bug (`nums[-1]` → `nums[0]`) in a copy of ctxkeeper's 1,143-line
+`notesdelta.py` failed 2 of 11 tests. Pi ran the tests, read the module and its tests, narrowed the bug with greps and
+scripts, and restored the original line exactly. It made 10 tool calls, reached a 22.5K-token context and took 296 s.
+
 ## Storage and retention
 
 Before each request after the first, the native RESET writes about 320 MB of complete engine state (310,364,224
