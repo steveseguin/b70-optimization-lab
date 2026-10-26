@@ -57,7 +57,43 @@ void prepare_recursive_depth2(){
 // A NEW explicit ownership class is required at integration: these are provider
 // rollback storage, NOT canonical draft buffers and NOT target-owned storage.
 std::vector<Allocation> live_private_recursive_inventory()const{return recursive_image?std::vector<Allocation>{recursive_image}:std::vector<Allocation>{};}
+void recursive_flat_copy(bool restore){
+ // Capture the unchanged CopyEngine guards into ephemeral descriptors. These
+ // pointers never survive this call; RESET needs no additional allocation or
+ // table state, and every next use binds the current admitted physical owner.
+ recursive_inventory();ownrt::CopyEngine copy(e.dev(0));
+ std::vector<ownrt::PreparedCompute> checked;std::vector<size_t> lengths;size_t payload=0;
+ e.dev(0).begin_capture(checked);
+ try{
+  for(const auto& item:recursive_rows)if(item.memory==Memory::device){
+   require(item.bytes<=pipeline::SnapshotBatch::limit&&item.offset==payload&&payload<=recursive_bytes&&item.bytes<=recursive_bytes-payload,"recursive flat disjoint row bound");
+   payload+=item.bytes;
+   if(restore)copy.copy(item.id,0,recursive_image,item.offset,item.bytes,{});
+   else copy.copy(recursive_image,item.offset,item.id,0,item.bytes,{});
+   lengths.push_back(item.bytes);
+  }
+  e.dev(0).end_capture();
+ }catch(...){e.dev(0).end_capture();throw;}
+ require(payload==recursive_bytes&&!checked.empty()&&checked.size()==lengths.size()&&checked.size()<=4096,"recursive checked flat descriptor count");
+ for(size_t first=0;first<checked.size();first+=pipeline::SnapshotInlineFlat::width){
+  pipeline::SnapshotInlineFlat operation;std::vector<Allocation> bindings;
+  const size_t end=std::min(checked.size(),first+pipeline::SnapshotInlineFlat::width);
+  for(size_t i=first;i<end;++i){const auto& command=checked[i];
+   require(command.ids.size()==2&&command.pointers.size()==2,"recursive checked copy ABI");
+   operation.tiles+=(lengths[i]+pipeline::SnapshotFlat::tile-1)/pipeline::SnapshotFlat::tile;
+   operation.items[operation.count++]={static_cast<uint8_t*>(command.pointers[0]),static_cast<const uint8_t*>(command.pointers[1]),lengths[i],operation.tiles};
+   bindings.insert(bindings.end(),command.ids.begin(),command.ids.end());
+  }
+  e.tail=e.dev(0).compute(operation,bindings,{});
+ }
+ for(auto& item:recursive_rows)if(item.memory==Memory::pinned){const auto& row=e.dev(0).arena.row(item.id);
+  if(restore)std::memcpy(row.pointer,item.pinned_before.data(),item.bytes);
+  else std::memcpy(item.pinned_before.data(),row.pointer,item.bytes);
+ }
+ e.drain();
+}
 void recursive_copy(bool restore){
+ if(e.a.pipeline_ring_recursive_flat_copy){recursive_flat_copy(restore);return;}
  recursive_inventory();ownrt::CopyEngine copy(e.dev(0));
  for(auto& item:recursive_rows){const auto& row=e.dev(0).arena.row(item.id);
   if(item.memory==Memory::pinned){if(restore)std::memcpy(row.pointer,item.pinned_before.data(),item.bytes);else std::memcpy(item.pinned_before.data(),row.pointer,item.bytes);}

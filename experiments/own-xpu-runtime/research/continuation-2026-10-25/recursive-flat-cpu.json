@@ -1,0 +1,51 @@
+{
+  "status": "CPU PASS; GPU performance unmeasured",
+  "patch_sha256": "cdc58f70c13a79a41965b2858e5e6f5113db70e557a8b38f1406314edc2139bf",
+  "sources": {
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": {
+      "before_sha256": "3a83c47a72f210f5c919f7ee045d2206e792be56ce41de445a63082175d60c79",
+      "after_sha256": "c3d5873774f578f3cc0660f15adf8580124ee18586c291907567e7d3f1737106"
+    },
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp": {
+      "before_sha256": "d7b5c859840f6f9f282919ad4126472d9e06afb78ed1a0a0fc895ecb2083e503",
+      "after_sha256": "c745a3213183711fe363c0b2d5f0a0cdc6e878e2932870e8cd00aca072ee241d"
+    },
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/draft_runtime_extension.inc": {
+      "before_sha256": "a162ae1f242ec94bff064a4c1ae3917440d81c9e98dca35224e301adcd53f1b5",
+      "after_sha256": "35fd554038f75a174bf4238c901c83dd7145ae67b70645b980c4b05630800f81"
+    },
+    "experiments/own-xpu-runtime/engine/planning/checkpoint_fixture.hpp": {
+      "before_sha256": "9804e50d768d9beece06895602fe5db5eb37c080e4ff3b57089ba975cd838506",
+      "after_sha256": "f562444f04f170b24397b4dfef7eacff0731dc280005dc4e8b2cfda4ccaee450"
+    },
+    "experiments/own-xpu-runtime/engine/planning/test_recursive_provider_native.cpp": {
+      "before_sha256": "6d7857413d24479f9fb40a1b9ae94f60de3248a6b0047731ddffbf9b5a4ee4fb",
+      "after_sha256": "9ee6f769f5382a1af25792e09dff6934700b743a4d02ff83463dd14be21a11b9"
+    }
+  },
+  "core_file_count": 3,
+  "test_file_count": 2,
+  "mode": "--pipeline-ring-recursive-flat-copy on first persistent provider only; default off",
+  "mechanism": "checked CopyEngine descriptor capture each call; batches of at most32 descriptors reuse SnapshotFlat exact tile copy; two pinned memcpy unchanged",
+  "inventory": "unchanged71device+2pinned canonical and1private image; no new arena allocation or persistent descriptor state; rebuild checked descriptors every use including after RESET",
+  "tests": {
+    "compile": "compile-v1.log: full actual main+member Host fixture, throw-only model stubs, no SYCL/device",
+    "legacy": "legacy-copy-run.log: exit0",
+    "flat": "flat-copy-run.log: exit0",
+    "boundary_bytes": [
+      1,
+      15,
+      16,
+      17,
+      4095,
+      4096,
+      4097,
+      8192,
+      8193
+    ],
+    "scope": "71-row capture/restore; full canonical/pinned bytes and host; pending2/1 target abort survival; owner-zero reset/new epoch; measured restore; device/pinned/private/host/Sequence/binding corruption refusals"
+  },
+  "fixture_note": "Compiled test_recursive_flat_native.cpp is byte-identical to patch target planning/test_recursive_provider_native.cpp; only filename differs",
+  "checker_changes_required": false,
+  "next": "One full12 screening against capture baseline; same outputs/final target; extra canonical draft qualification only if gain, per parent"
+}

@@ -70,6 +70,34 @@ struct SnapshotFlat final:ownrt::SyclOperation {
 };
 static_assert(sizeof(SnapshotFlat::Item)==32);
 
+// The same exact flat-tile transport with a bounded inline descriptor block.
+// SnapshotBatch already uses width32 inline arguments; this version avoids its
+// maximum-row rectangular grid. No persistent device table or owner is added.
+#ifdef OWN_RT_HOST_ONLY
+struct SnapshotInlineFlat final:integrated::HostOperation {
+#else
+struct SnapshotInlineFlat final:ownrt::SyclOperation {
+#endif
+ static constexpr size_t width=32;
+ std::array<SnapshotFlat::Item,width> items{};size_t count=0,tiles=0;
+#ifdef OWN_RT_HOST_ONLY
+ void run(std::span<void*const>)const override {
+  for(size_t t=0;t<tiles;++t)for(size_t lane=0;lane<SnapshotFlat::lanes;++lane)
+   SnapshotFlat::copy_lane(items.data(),count,t,lane);
+ }
+#else
+ sycl::event submit(sycl::queue& q,std::span<void*const>,const std::vector<sycl::event>& deps)const override {
+  const auto values=items;const auto n=count,total=tiles;
+  return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(total*SnapshotFlat::lanes,SnapshotFlat::lanes)](sycl::handler& h){
+   h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> id){
+    SnapshotFlat::copy_lane(values.data(),n,id.get_group_linear_id(),id.get_local_linear_id());
+   }));
+  });
+ }
+#endif
+};
+
+
 // Packet153: immutable, load-time extent geometry. All bank destinations are
 // omitted by the already-qualified banks-batch policy. Thus all six physical
 // rotation states share this one table. Only QSA row position is a kernel scalar.
