@@ -1,0 +1,42 @@
+{
+ "schema": "ownrt.archive-pointer.v1",
+ "date": "2026-10-26",
+ "reason": "Free host RAM (service admission needs 98.8 GB MemAvailable) and root disk (27.27 GB start floor) to restore sc117-lan; tmpfs is also lost on reboot.",
+ "method": "one tar.zst per source on /mnt/raid-models, per-file sha256 manifest beside it, archive re-read and every member re-hashed against the manifest before the original was removed",
+ "archives": [
+  {
+   "name": "claude-scratch-9743941a",
+   "source": "/tmp/claude-1000/-home-steve/9743941a-5875-4449-b2f0-62a6e15d94f5",
+   "files": 7759,
+   "bytes": 960264175,
+   "archive": "/mnt/raid-models/own-xpu-runtime-archive/tmpfs-and-scratch-20261025/claude-scratch-9743941a.tar.zst",
+   "archive_bytes": 146417911,
+   "sha256": "34a5024b50f4bad1dfa3e4ade886a0a5ebfb86c75469a95ddfc95a1cbda0622b",
+   "verify_counts": "7759 7759 0 0 0",
+   "original_removed": true
+  },
+  {
+   "name": "shm-peer",
+   "source": "/dev/shm/peer",
+   "files": 1291,
+   "bytes": 5896621430,
+   "archive": "/mnt/raid-models/own-xpu-runtime-archive/tmpfs-and-scratch-20261025/shm-peer.tar.zst",
+   "archive_bytes": 2560272543,
+   "sha256": "55f1c3e98726c9fc8944ce004d2fb1c8223252b332fbc472ae9b21145370f10b",
+   "verify_counts": "1291 1291 0 0 0",
+   "original_removed": true
+  },
+  {
+   "name": "shm-sc117-ring-20261025",
+   "source": "/dev/shm/sc117-ring-20261025",
+   "files": 9503,
+   "bytes": 17014857511,
+   "archive": "/mnt/raid-models/own-xpu-runtime-archive/tmpfs-and-scratch-20261025/shm-sc117-ring-20261025.tar.zst",
+   "archive_bytes": 5827254569,
+   "sha256": "63e9fb2bb37a9326d6e64b5cbb8b0e5fa6938beb6dee5f819544475325eb5a10",
+   "verify_counts": "9503 9503 0 0 0",
+   "original_removed": true
+  }
+ ],
+ "note": "Codex summaries that cite /dev/shm/sc117-ring-20261025/<run> now resolve inside shm-sc117-ring-20261025.tar.zst under the same relative path."
+}

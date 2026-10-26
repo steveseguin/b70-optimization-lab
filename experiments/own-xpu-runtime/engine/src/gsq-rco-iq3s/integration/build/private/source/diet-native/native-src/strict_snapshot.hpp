@@ -410,6 +410,10 @@ public:
     continue; // only the post-half suffix service reads/writes these allocations
    }
    if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[0])continue;
+   // Batched-prefill shadows (prefill_allocate, 36 MB at 32 rows): only prefill_chunk reaches them, through row views it
+   // switches on at entry and off on every exit, and no speculation is outstanding then. A decode half never reads or
+   // writes them, so capturing and restoring them copied identical bytes on every speculative row and every miss.
+   if(row.label.starts_with("card0:prefill:"))continue;
    require(owner.first==0&&row.memory==Memory::device,"snapshot owner/memory");
    Source source{{},id,row.bytes,false,false,false};source.write_bytes=id==e.scratch[0]?SnapshotWriteSet::scratch(e.p,row.bytes,e.a.nongemv=="parallel"):row.bytes;
    sources.push_back(source);capacity+=row.bytes;

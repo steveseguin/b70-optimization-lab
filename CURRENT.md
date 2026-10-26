@@ -1,5 +1,21 @@
 # Current Workspace State
 
+**October 26, 00:20 EDT — SC117 LAN service is back on two cards, 48.32 tok/s, exact.**
+- `sc117-lan` serves on 23/47 with engine `092da687b5d7`, the fastest exact setup. The four-card best is 44.97 tok/s,
+  slower on all 12 prompts.
+- The gain from 47.97 comes from one patch: the speculative snapshot no longer copies the 36 MB batched-prefill shadows
+  on every guess and every miss (66 → about 30 MB). Snapshot 0.57 → 0.29 ms; rollback 0.54 → 0.28 ms.
+- Gates:
+  - oracle zero differences;
+  - prefill 13/13;
+  - continuation passed;
+  - all 5,965 output ids, 12 text hashes and MTP hits identical.
+- [Note and critical-path analysis](experiments/own-xpu-runtime/research/2026-10-26-snapshot-trim.md).
+- To meet the service's RAM and root floors, 23.9 GB of tmpfs proofs and old scratch were archived to the RAID. Each
+  archive was verified file by file before its original was removed
+  ([pointer](experiments/own-xpu-runtime/research/continuation-2026-10-25/raw-archive-20261026.json)).
+- The vision server stays stopped; cards 27/43 are idle.
+
 **Active focus — performance work, October 26.** GPUs are idle. Depth3 closed
 negative: full12 passed all 5,965 output IDs and final 2,065 target buffers,
 but measured **43.381 tok/s**, 4.019% below flat depth2 (45.198) and 3.528%
