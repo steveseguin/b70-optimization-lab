@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SC117 Qwen3.8 Flash-Next IQ3_S on our corrected two-rank native engine, served to the LAN.
 
-Serial (one generation at a time), MTP on, greedy only, 4096-token context.
+Serial (one generation at a time), MTP on, greedy only, 4096-token context (SC117_CONTEXT=32768 for 32K).
 Run only as the systemd user unit in this directory (Restart=no, no SIGKILL).
 On a GPU/kernel fault, a lost rank or a foreign holder on the target cards it
 stops intake, sends the single cooperative stop, waits for physical drain and
@@ -24,7 +24,7 @@ ROOT_FLOOR = 27_000_000_000
 ROOT_START = ROOT_FLOOR + 256 * 1024**2
 ROOT_ONGOING = ROOT_FLOOR + 128 * 1024**2
 EXTERNAL_FLOOR = 2 * 1024**3
-DUMP_BYTES = 310_364_224 + 9_699_332          # one RESET target + draft dump (or one explicit DUMP)
+DUMP_BYTES = (310_364_224 + 9_699_332) * (int(os.environ.get('SC117_CONTEXT', '4096')) // 4096)  # one RESET target + draft dump at 4096, scaled up as a bound
 META_RESERVE = 64 * 1024**2
 MEM_START = 98_806_740_766                    # corrected-engine admission (recurrent-f32 plans)
 MEM_ONGOING = 8 * 1024**3
@@ -897,7 +897,10 @@ def main():
             with engine.lock:
                 engine.generate(st['prompt_tokens'], st['max_new'], 'f32-state-check', force_reset=True, prefill=0)
                 f32_state = engine.dump_buffers()
-            oracle = P / 'evidence' / 'f32-state-oracle.json'
+            # Context-sized buffers (KV, pooled keys, attention scratch) change extent with the context, so each
+            # context has its own oracle; a new one is recorded once, after the self-test tokens above matched the
+            # binary's pinned record, and the 12-prompt suite must then reproduce the 4096-context outputs.
+            oracle = P / 'evidence' / ('f32-state-oracle.json' if CHAT.CONTEXT == 4096 else f'f32-state-oracle-ctx{CHAT.CONTEXT}.json')
             if oracle.exists():
                 want = json.loads(oracle.read_text())
                 split = int(os.environ.get('SC117_TARGET_SPLIT', '24'))

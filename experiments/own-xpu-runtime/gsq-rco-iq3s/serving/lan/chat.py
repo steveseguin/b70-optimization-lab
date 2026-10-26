@@ -3,17 +3,21 @@
 No model inference happens here. Rendering uses the exact GGUF chat template that
 coverage/tokenizer.py verifies (same tokenizer.json, vocabulary, merges, template).
 """
-import importlib.util, json, time, uuid
+import importlib.util, json, os, re, time, uuid
 from pathlib import Path
 
 P = Path(__file__).resolve().parent
 LANE = P.parents[1]
 EOS = (248044, 248046)  # <|endoftext|>, <|im_end|>
 THINK_END = 248069      # </think>
-CONTEXT = 4096
+# Engine context (prompt + output tokens). SC117_CONTEXT is read by this module and adapter6.py alike; the engine
+# admits 4096 and 32768 for the 23/25 split with the draft on rank 0 (main.cpp), and its RoPE table ends at 32768.
+CONTEXT = int(os.environ.get('SC117_CONTEXT', '4096'))
+if CONTEXT not in (4096, 32768):
+    raise RuntimeError('SC117_CONTEXT must be 4096 or 32768')
 DEFAULT_MAX_TOKENS = 512
 MODEL_ID = 'sc117-qwen3.8-flash-next-iq3s-ownrt'
-ROLES = ('system', 'user', 'assistant')
+ROLES = ('system', 'user', 'assistant', 'tool')
 
 
 class RequestError(ValueError):
@@ -39,15 +43,19 @@ class Chat:
         def fail(message):
             raise RequestError('chat template: ' + str(message))
         env.globals['raise_exception'] = fail
+        # The chat template renders tools and tool-call arguments with tojson. Use the Hugging Face definition (no
+        # HTML escaping, keys in given order) that apply_chat_template and vLLM use, not Jinja's sorted, HTML-safe one.
+        env.filters['tojson'] = lambda x, ensure_ascii=False, indent=None, separators=None, sort_keys=False: json.dumps(
+            x, ensure_ascii=ensure_ascii, indent=indent, separators=separators, sort_keys=sort_keys)
         self.template = env.from_string(meta['tokenizer.chat_template']['value'])
         # The multi-message renderer must agree with the validated single-message renderer.
         probe = 'Explain why the sky looks blue in three short sentences.'
         if self.render([{'role': 'user', 'content': probe}], False) != single(probe):
             raise RuntimeError('multi-message renderer disagrees with pinned renderer')
 
-    def render(self, messages, thinking):
+    def render(self, messages, thinking, tools=None):
         return self.template.render(messages=messages, add_generation_prompt=True,
-                                    enable_thinking=bool(thinking), tools=None)
+                                    enable_thinking=bool(thinking), tools=tools or None)
 
     def encode(self, text):
         return self.tok.encode(text, add_special_tokens=False).ids
@@ -71,6 +79,42 @@ def _text(content):
     raise RequestError('message content must be a string or a list of text parts')
 
 
+def _tool_list(body):
+    tools = body.get('tools')
+    if tools is None:
+        return None
+    if not isinstance(tools, list):
+        raise RequestError('tools must be a list')
+    for t in tools:
+        f = t.get('function') if isinstance(t, dict) else None
+        if not isinstance(t, dict) or t.get('type') != 'function' or not isinstance(f, dict) or not isinstance(f.get('name'), str) or not f['name']:
+            raise RequestError('each tool must be {"type": "function", "function": {"name": ..., "parameters": ...}}')
+    return tools or None
+
+
+def _assistant_tool_calls(calls):
+    """OpenAI tool_calls (arguments as a JSON string) -> the template's form (arguments as a mapping)."""
+    if not isinstance(calls, list) or not calls:
+        raise RequestError('tool_calls must be a non-empty list')
+    out = []
+    for c in calls:
+        f = c.get('function') if isinstance(c, dict) else None
+        if not isinstance(f, dict) or not isinstance(f.get('name'), str) or not f['name']:
+            raise RequestError('each tool call needs function.name')
+        args = f.get('arguments')
+        if args is None or args == '':
+            args = {}
+        elif isinstance(args, str):
+            try:
+                args = json.loads(args)
+            except ValueError:
+                raise RequestError(f'tool call {f["name"]}: arguments are not valid JSON')
+        if not isinstance(args, dict):
+            raise RequestError(f'tool call {f["name"]}: arguments must be a JSON object')
+        out.append({'type': 'function', 'function': {'name': f['name'], 'arguments': args}})
+    return out
+
+
 def parse(body, chat):
     """Validate an OpenAI-style chat request; return a plan dict for the engine."""
     if not isinstance(body, dict):
@@ -84,11 +128,16 @@ def parse(body, chat):
             m = dict(m, role='system')
         if not isinstance(m, dict) or m.get('role') not in ROLES:
             raise RequestError('each message needs role system, user or assistant')
-        if m.get('tool_calls') or m.get('role') == 'tool':
-            raise RequestError('tool calls are not supported')
-        clean.append({'role': m['role'], 'content': _text(m.get('content'))})
-    if body.get('tools'):
-        raise RequestError('tools are not supported')
+        item = {'role': m['role'], 'content': _text(m.get('content'))}
+        if m.get('tool_calls'):
+            if m['role'] != 'assistant':
+                raise RequestError('only assistant messages can carry tool_calls')
+            item['tool_calls'] = _assistant_tool_calls(m['tool_calls'])
+        clean.append(item)
+    tools = _tool_list(body)
+    choice = body.get('tool_choice')
+    if choice not in (None, 'auto', 'none'):
+        raise RequestError('tool_choice must be "auto" or "none" (forced or required calls are not supported)')
     if body.get('n') not in (None, 1):
         raise RequestError('only n=1 is supported')
     kwargs = body.get('chat_template_kwargs') or {}
@@ -104,7 +153,7 @@ def parse(body, chat):
         stop = [stop]
     if not isinstance(stop, list) or len(stop) > 4 or not all(isinstance(s, str) and s for s in stop):
         raise RequestError('stop must be a string or up to 4 non-empty strings')
-    rendered = chat.render(clean, thinking)
+    rendered = chat.render(clean, thinking, tools)
     ids = chat.encode(rendered)
     room = CONTEXT - len(ids)
     if room < 1:
@@ -117,11 +166,12 @@ def parse(body, chat):
             requested = int(requested)
         if type(requested) is not int or requested < 1:
             raise RequestError('max_tokens must be a positive integer')
-        max_new = min(requested, room)  # clamp to the 4096-token context instead of refusing
+        max_new = min(requested, room)  # clamp to the context instead of refusing
     ignored = sorted(k for k in ('temperature', 'top_p', 'top_k', 'seed', 'presence_penalty',
                                  'frequency_penalty', 'repetition_penalty', 'min_p')
                      if body.get(k) not in (None, 0, 1, 0.0, 1.0))
     return dict(prompt_ids=ids, max_new=max_new, thinking=thinking, stop=stop,
+                tools=tools, parse_tool_calls=bool(tools) and choice != 'none',
                 stream=bool(body.get('stream')), include_usage=bool((body.get('stream_options') or {}).get('include_usage')),
                 ignored_sampling=ignored)
 
@@ -151,9 +201,52 @@ def shape(req, tokens, chat):
     return content, reasoning, finish
 
 
+_CALL = re.compile(r'<tool_call>\s*<function=([^>\n]+)>(.*?)</function>\s*</tool_call>', re.S)
+_PARAM = re.compile(r'<parameter=([^>\n]+)>\n?(.*?)\n?</parameter>', re.S)
+
+
+def _param_types(tools, name):
+    for t in tools or ():
+        f = t['function']
+        if f['name'] == name:
+            props = (f.get('parameters') or {}).get('properties') or {}
+            return {k: (v or {}).get('type') for k, v in props.items() if isinstance(v, dict)}
+    return {}
+
+
+def tool_calls(req, content):
+    """Split the template's XML tool-call format out of the content: (content or None, OpenAI tool_calls)."""
+    if not req.get('parse_tool_calls') or '<tool_call>' not in content:
+        return content, []
+    calls = []
+    for i, m in enumerate(_CALL.finditer(content)):
+        name = m.group(1).strip()
+        types = _param_types(req['tools'], name)
+        args = {}
+        for p in _PARAM.finditer(m.group(2)):
+            key, raw = p.group(1).strip(), p.group(2)
+            value = raw
+            if types.get(key) != 'string':
+                try:
+                    value = json.loads(raw)
+                except ValueError:
+                    value = raw
+            args[key] = value
+        calls.append({'id': 'call_' + uuid.uuid4().hex[:24], 'type': 'function',
+                      'function': {'name': name, 'arguments': json.dumps(args, ensure_ascii=False)}})
+    if not calls:
+        return content, []
+    head = content[:content.index('<tool_call>')].rstrip()
+    return (head or None), calls
+
+
 def completion(req, tokens, result, chat):
     content, reasoning, finish = shape(req, tokens, chat)
+    content, calls = tool_calls(req, content)
     message = {'role': 'assistant', 'content': content}
+    if calls:
+        message['tool_calls'] = calls
+        finish = 'tool_calls'
     if reasoning is not None:
         message['reasoning_content'] = reasoning
     return {
@@ -174,6 +267,8 @@ def chunks(full):
     base['object'] = 'chat.completion.chunk'
     msg = full['choices'][0]['message']
     delta = {'role': 'assistant', 'content': msg['content']}
+    if msg.get('tool_calls'):
+        delta['tool_calls'] = [dict(c, index=i) for i, c in enumerate(msg['tool_calls'])]
     if 'reasoning_content' in msg:
         delta['reasoning_content'] = msg['reasoning_content']
     yield dict(base, choices=[{'index': 0, 'delta': delta, 'finish_reason': None}])
@@ -248,7 +343,7 @@ class Streamer:
             d = self._delta('reasoning_content', r.rstrip() if not answering else r)
             if d:
                 out.append(('reasoning_content', d))
-        if answering:
+        if answering and not self.req.get('parse_tool_calls'):
             d = self._delta('content', self._safe_content(content))
             if d:
                 out.append(('content', d))
@@ -256,12 +351,16 @@ class Streamer:
 
     def finish(self, tokens):
         content, reasoning, finish = shape(self.req, tokens, self.chat)
+        content, calls = tool_calls(self.req, content)
         out = []
-        for field, final in (('reasoning_content', reasoning or ''), ('content', content)):
+        for field, final in (('reasoning_content', reasoning or ''), ('content', content or '')):
             prev = self.sent[field]
             if final.startswith(prev):
                 if len(final) > len(prev):
                     out.append((field, final[len(prev):]))
             else:
                 self.mismatch = True
+        if calls:
+            out.append(('tool_calls', [dict(c, index=i) for i, c in enumerate(calls)]))
+            finish = 'tool_calls'
         return out, finish

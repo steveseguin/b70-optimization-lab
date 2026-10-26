@@ -35,12 +35,14 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(req['max_new'], 7)
 
     def test_rejections(self):
-        bad = [{}, {'messages': []}, {'messages': [{'role': 'tool', 'content': 'x'}]},
+        bad = [{}, {'messages': []}, {'messages': [{'role': 'user', 'content': 'x', 'tool_calls': [{'function': {'name': 'f'}}]}]},
+               {'messages': [{'role': 'user', 'content': 'x'}], 'tools': [{'type': 'function', 'function': {}}]},
+               {'messages': [{'role': 'user', 'content': 'x'}], 'tool_choice': 'required'},
                {'messages': [{'role': 'user', 'content': [{'type': 'image_url', 'image_url': {}}]}]},
                {'messages': [{'role': 'user', 'content': 'x'}], 'n': 2},
                {'messages': [{'role': 'user', 'content': 'x'}], 'max_tokens': 0},
                {'messages': [{'role': 'user', 'content': 'x'}], 'tools': [{'type': 'function'}]},
-               {'messages': [{'role': 'user', 'content': 'word ' * 5000}]}]
+               {'messages': [{'role': 'user', 'content': 'word ' * (C.CONTEXT + 1000)}]}]
         for body in bad:
             with self.assertRaises(C.RequestError, msg=str(body)[:80]):
                 C.parse(body, CHAT)
@@ -58,7 +60,7 @@ class ChatTests(unittest.TestCase):
 
     def test_clamp_and_lenient_fields(self):
         req = C.parse({'messages': [{'role': 'developer', 'content': 'Be brief.'}, {'role': 'user', 'content': 'x'}],
-                       'max_tokens': 5000.0, 'n': None}, CHAT)
+                       'max_tokens': float(C.CONTEXT + 1000), 'n': None}, CHAT)
         self.assertEqual(req['max_new'], C.CONTEXT - len(req['prompt_ids']))
         self.assertTrue(CHAT.tok.decode(req['prompt_ids'], skip_special_tokens=False).startswith('<|im_start|>system\nBe brief.'))
 
@@ -66,6 +68,75 @@ class ChatTests(unittest.TestCase):
         req = C.parse({'messages': [{'role': 'user', 'content': 'x'}], 'temperature': 0.7, 'top_p': 1}, CHAT)
         self.assertEqual(req['ignored_sampling'], ['temperature'])
 
+
+
+TOOLS = [{'type': 'function', 'function': {'name': 'recall', 'description': 'Search the archive for <old> text.',
+          'parameters': {'type': 'object', 'properties': {'query': {'type': 'string'}, 'limit': {'type': 'integer'}},
+                         'required': ['query']}}}]
+
+
+class ToolTests(unittest.TestCase):
+    def test_tools_render_like_hugging_face_tojson(self):
+        req = C.parse({'messages': [{'role': 'user', 'content': 'Find it'}], 'tools': TOOLS}, CHAT)
+        text = CHAT.tok.decode(req['prompt_ids'], skip_special_tokens=False)
+        self.assertIn('<tools>\n' + json.dumps(TOOLS[0], ensure_ascii=False) + '\n</tools>', text)
+        self.assertNotIn('\\u003c', text)
+        self.assertTrue(req['parse_tool_calls'])
+        plain = C.parse({'messages': [{'role': 'user', 'content': 'Find it'}]}, CHAT)
+        self.assertFalse(plain['parse_tool_calls'])
+        self.assertNotIn('<tools>', CHAT.tok.decode(plain['prompt_ids'], skip_special_tokens=False))
+
+    def test_history_with_calls_and_results(self):
+        msgs = [{'role': 'user', 'content': 'Find it'},
+                {'role': 'assistant', 'content': None, 'tool_calls': [{'id': 'call_1', 'type': 'function',
+                 'function': {'name': 'recall', 'arguments': '{"query": "blue sky", "limit": 3}'}}]},
+                {'role': 'tool', 'tool_call_id': 'call_1', 'content': 'Rayleigh scattering.'}]
+        req = C.parse({'messages': msgs, 'tools': TOOLS}, CHAT)
+        text = CHAT.tok.decode(req['prompt_ids'], skip_special_tokens=False)
+        self.assertIn('<tool_call>\n<function=recall>\n<parameter=query>\nblue sky\n</parameter>\n'
+                      '<parameter=limit>\n3\n</parameter>\n</function>\n</tool_call><|im_end|>', text)
+        self.assertIn('<|im_start|>user\n<tool_response>\nRayleigh scattering.\n</tool_response><|im_end|>', text)
+        with self.assertRaises(C.RequestError):
+            bad = [dict(msgs[1], tool_calls=[{'function': {'name': 'recall', 'arguments': '{not json'}}])]
+            C.parse({'messages': [msgs[0]] + bad, 'tools': TOOLS}, CHAT)
+
+    def test_call_parsed_with_schema_types(self):
+        req = C.parse({'messages': [{'role': 'user', 'content': 'Find it'}], 'tools': TOOLS}, CHAT)
+        out = 'Let me look.\n\n<tool_call>\n<function=recall>\n<parameter=query>\n42\n</parameter>\n' \
+              '<parameter=limit>\n3\n</parameter>\n</function>\n</tool_call>'
+        tokens = CHAT.encode(out) + [C.EOS[1]]
+        full = C.completion(req, tokens, {}, CHAT)
+        choice = full['choices'][0]
+        self.assertEqual(choice['finish_reason'], 'tool_calls')
+        self.assertEqual(choice['message']['content'], 'Let me look.')
+        call = choice['message']['tool_calls'][0]
+        self.assertEqual(call['function']['name'], 'recall')
+        self.assertEqual(json.loads(call['function']['arguments']), {'query': '42', 'limit': 3})
+        chunks = list(C.chunks(full))
+        self.assertEqual(chunks[0]['choices'][0]['delta']['tool_calls'][0]['index'], 0)
+        self.assertEqual(chunks[-1]['choices'][0]['finish_reason'], 'tool_calls')
+
+    def test_tool_choice_none_keeps_text_and_prompt(self):
+        auto = C.parse({'messages': [{'role': 'user', 'content': 'Find it'}], 'tools': TOOLS}, CHAT)
+        none = C.parse({'messages': [{'role': 'user', 'content': 'Find it'}], 'tools': TOOLS, 'tool_choice': 'none'}, CHAT)
+        self.assertEqual(auto['prompt_ids'], none['prompt_ids'])  # same prefix either way (prefix reuse)
+        out = '<tool_call>\n<function=recall>\n<parameter=query>\nx\n</parameter>\n</function>\n</tool_call>'
+        full = C.completion(none, CHAT.encode(out) + [C.EOS[1]], {}, CHAT)
+        self.assertEqual(full['choices'][0]['message']['content'], out)
+        self.assertNotIn('tool_calls', full['choices'][0]['message'])
+
+    def test_streamer_holds_call_markup(self):
+        req = C.parse({'messages': [{'role': 'user', 'content': 'Find it'}], 'tools': TOOLS, 'stream': True}, CHAT)
+        out = 'Checking.<tool_call>\n<function=recall>\n<parameter=query>\nsky\n</parameter>\n</function>\n</tool_call>'
+        ids = CHAT.encode(out) + [C.EOS[1]]
+        st = C.Streamer(req, CHAT)
+        streamed = [d for t in ids for d in st.feed(t)]
+        self.assertEqual(streamed, [])
+        tail, finish = st.finish(ids)
+        self.assertEqual(finish, 'tool_calls')
+        self.assertEqual(dict(tail)['content'], 'Checking.')
+        self.assertEqual(json.loads(dict(tail)['tool_calls'][0]['function']['arguments']), {'query': 'sky'})
+        self.assertFalse(st.mismatch)
 
 class StreamerTests(unittest.TestCase):
     def run_stream(self, req, ids):
@@ -112,13 +183,15 @@ class FakeEngine:
     def activations(self):
         return 'bf16'
 
-    def generate(self, prompt, max_new, label, on_token=None):
+    reply = 'Blue light scatters more.'
+
+    def generate(self, prompt, max_new, label, on_token=None, **service_options):  # continue_ok etc.
         time.sleep(self.delay)
         if self.fail:
             raise RuntimeError('rank failed')
         self.count += 1
         self.calls.append((prompt, max_new))
-        out = CHAT.encode('Blue light scatters more.') + [248046]
+        out = CHAT.encode(self.reply) + [248046]
         for t in out:
             if on_token:
                 on_token(t)
@@ -162,6 +235,26 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(events[0]['choices'][0]['delta']['role'], 'assistant')
         self.assertEqual(events[-2]['choices'][0]['finish_reason'], 'stop')
         self.assertIn('usage', events[-1])
+
+    def test_tool_call_over_http_and_stream(self):
+        engine = FakeEngine()
+        engine.reply = 'One moment.<tool_call>\n<function=recall>\n<parameter=query>\nsky\n</parameter>\n</function>\n</tool_call>'
+        _, port = self.serve(engine)
+        body = {'messages': [{'role': 'user', 'content': 'Find it'}], 'tools': TOOLS, 'max_tokens': 64}
+        code, raw = self.post(port, body)
+        self.assertEqual(code, 200, raw)
+        msg = json.loads(raw)['choices'][0]
+        self.assertEqual(msg['finish_reason'], 'tool_calls')
+        self.assertEqual(msg['message']['content'], 'One moment.')
+        self.assertEqual(json.loads(msg['message']['tool_calls'][0]['function']['arguments']), {'query': 'sky'})
+        code, raw = self.post(port, dict(body, stream=True))
+        self.assertEqual(code, 200)
+        events = [json.loads(l[6:]) for l in raw.splitlines() if l.startswith('data: {')]
+        deltas = [e['choices'][0]['delta'] for e in events if e['choices']]
+        self.assertEqual(''.join(d.get('content') or '' for d in deltas), 'One moment.')
+        calls = [c for d in deltas for c in d.get('tool_calls', [])]
+        self.assertEqual([c['function']['name'] for c in calls], ['recall'])
+        self.assertEqual(events[-1]['choices'][0]['finish_reason'], 'tool_calls')
 
     def test_not_ready_and_bad_requests_do_not_touch_engine(self):
         engine = FakeEngine()
