@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 26, 12:00 EDT — SC117 service on engine `0efa50e4c5ee`: 58.62 tok/s exact.**
+- Raw-size dense Q6_K/Q8_0 weights (`OWNRT_DENSE_RAW=1`): identical values; the load-time element check is on.
+- VRAM: rank 1 −611 MB, rank 0 −278 MB.
+- Suite 56.96 → 58.62 tok/s; decode at 10.7K 59.5 tok/s; 10.7K prompt 49 s.
+- Rank 0 (the draft plus 24 layers) is the decode bottleneck now: about 13.3 vs 12.1 ms per position before this
+  change.
+- Split 23 at 64K still misses rank 1's cap by about 145 MB (plan).
+- Next: rank-0 levers (raw draft head, draft chain) and finding the 145 MB for split 23.
+  [Result](experiments/own-xpu-runtime/research/dense-raw/RESULT.md).
+
 **October 26, 10:45 EDT — SC117 service on engine `5e44953236cc`: 56.96 tok/s exact (+15.4%), prompt reading 1.45× faster.**
 - Three merged exact lab wins:
   - decode experts V2;
