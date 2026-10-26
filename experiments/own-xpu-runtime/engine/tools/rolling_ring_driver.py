@@ -67,7 +67,7 @@ def make_plan(config_path):
     dependencies = [Path(module.__file__).resolve() for module in
         (bridge,bridge.pending,bridge.pending.pending_codec,live,live.codec,live.target,
          live.wire,base,live.target.lifecycle)]
-    dependencies += [Path(__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',
+    dependencies += [Path(__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',folder/'capture_ready.py',
         live.wire.PLANNING/'ring_coordinator.py',live.wire.PLANNING/'ring_contract.py',
         live.wire.PLANNING/'live_draft.py',live.target.lifecycle.SCHEDULE_PATH,manifest,
         base.ROOT/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',

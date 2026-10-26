@@ -26,11 +26,25 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
             if op==27:
                 assert index==0 and spec==2 and model.ring.committed==pos+1 and all(p.ticket.tentative for p in model.ring.pending)
                 assert state['accepted'].row==row and state['accepted'].tentative==bool(m[3]);assert seq==model.sequence+1;model.sequence=seq;serial+=1;assert fixture==int(row.fixture>0) and pos==serial
-                state['provider_inflight']=True;time.sleep(state.get('provider_delay',0));peer=mappings[-1];record=bytes(peer[codec.FINAL_OFFSET:codec.FINAL_OFFSET+360]);header=codec.FINAL_HEADER.unpack(record[:24])
+                state['provider_inflight']=True
+                if not state.get('capture_ready'):time.sleep(state.get('provider_delay',0))
+                peer=mappings[-1];record=bytes(peer[codec.FINAL_OFFSET:codec.FINAL_OFFSET+360]);header=codec.FINAL_HEADER.unpack(record[:24])
                 assert header[:4]==(codec.FINAL_MAGIC,1,360,count-1) and header[4]>0
                 assert record[248:]==bytes(shared[codec.handoff_codec.HEADER_OFFSET:codec.handoff_codec.HEADER_OFFSET+112])
                 raw=bytes(peer[codec.handoff_codec.HIDDEN_OFFSET:codec.handoff_codec.HIDDEN_OFFSET+16]);assert raw==bytes(shared[base.SLOT:base.SLOT+16])
                 parent=wire.ROW_META.unpack(record[24:248]);assert parent[5]==row.parent and parent[7]+1==pos and parent[19]==row.before
+                if state.get('capture_ready'):
+                    from rolling_provider import capture_ready as cr
+                    ready=base.REPLY.pack(cr.STATUS,-1,0,128,seq,0,0,0,0.01,0,0,0)
+                    identity=cr.CAPTURE.pack(cr.MAGIC,1,128,row.epoch,seq,row.identity,row.parent,
+                        header[4],serial,row.request,sha256(record).digest())
+                    if state.get('bad_capture_identity'):identity=identity[:-1]+bytes([identity[-1]^1])
+                    packet=ready+identity
+                    # Split both the fixed header and its identity body.
+                    for begin,end in (() if state.get('skip_capture') else (((0,len(packet)),) if state.get('coalesced_capture') else ((0,7),(7,70),(70,151),(151,len(packet))))):
+                        sock.sendall(packet[begin:end]);time.sleep(0.00001)
+                    if state.get('duplicate_capture'):sock.sendall(packet)
+                    time.sleep(state.get('provider_delay',0.004))
                 first=(target(token,pos)+int(pos in state.get('miss_first',())))%97 if fixture else -1;second=(target(first,pos+1)+int(pos in state.get('miss_second',())))%97 if fixture else -1
                 batch=codec.PROPOSAL.pack(0x44525032,1,192,2+fixture,0,seq,row.identity,row.parent,header[4],serial,
                        pos,pos,2,2 if fixture else 0,first,second,0,1,row.request,row.after,sha256(raw).digest())
@@ -45,7 +59,10 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
                     raw=bytes(shared[base.SLOT:base.SLOT+16]);source=ring.Publication(row,index-1,m[13],raw,m[20])
                 command=ring.Command(index,op,seq,row,bool(m[3]),0 if op==ring.ROW else spec,source)
                 provider_before=state.get('provider');ack=model.execute(command)
-                if op==ring.ACCEPT:state['accepted']=command
+                if op==ring.ACCEPT:
+                    state['accepted']=command
+                    if final and state.get('provider_state'):
+                        assert not state['provider_state'].get('provider_inflight',False), 'final ACCEPT replaced live provider parent'
                 if op==ring.ABORT_SUFFIX:
                     assert state.get('provider')==provider_before
                     state.setdefault('survivals',[]).append((serial,ack.discarded))
@@ -55,6 +72,10 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
                     publication=list(m);publication[3]|=2;publication[14],publication[15],publication[20]=seq,extent,sha256(raw).digest()
                     shared[wire.ROW_OFFSET:wire.ROW_OFFSET+224]=wire.ROW_META.pack(*publication)
                     if final:
+                        if state.get('provider_state',{}).get('provider_inflight',False):
+                            state['overlapped_rows']=state.get('overlapped_rows',0)+1
+                        if state.get('overwrite_hidden'):
+                            shared[codec.handoff_codec.HIDDEN_OFFSET:codec.handoff_codec.HIDDEN_OFFSET+16]=b'Z'*16
                         if state.get('force_final_position')==pos:output=state['force_final_token']
                         shared[codec.FINAL_OFFSET+16:codec.FINAL_OFFSET+24]=bytes(8);final_tokens[row.identity]=output
                 else:
@@ -69,6 +90,7 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
                         shared[codec.handoff_codec.HIDDEN_OFFSET:codec.handoff_codec.HIDDEN_OFFSET+16]=raw
                         shared[codec.FINAL_OFFSET:codec.FINAL_OFFSET+360]=record
                         if state.get('bad_final_marker'):shared[codec.FINAL_OFFSET+16]^=1
+            if op==27 and state.get('capture_ready'):state['provider_inflight']=False
             reply=base.REPLY.pack(0,output,0,extent,seq,0 if index==0 else 1,index,final,0.1,0,0,0)
             sock.sendall(reply[:7]);time.sleep(state.get('fragment_delay',0.00001))
             if op==27 and state.get('truncate_provider'):break
@@ -82,6 +104,7 @@ def exercise(count, *, maximum=16, first_options=None, final_options=None, cance
     prompt=[3,5,8,11]
     plan=dict(rolling_depth2=True,use_proposals=True,prompt_tokens=prompt,max_new=maximum,
         context=128,vocab=97,eos_token_ids=[96],request_sha256=sha256(b'rolling-wire').hexdigest(),verify_restore=True)
+    if (first_options or {}).get('capture_ready'):plan['capture_ready_overlap']=True
     stages=[];threads=[];states=[];errors=[];mappings=[bytearray(base.SHARED) for _ in range(count)]
     guard=Guard()
     with tempfile.TemporaryDirectory() as temporary:
@@ -93,7 +116,9 @@ def exercise(count, *, maximum=16, first_options=None, final_options=None, cance
                 stage.guard=guard;stage.plan=plan
                 state=dict(wire=wire_seed,fragment_delay=0.00002*(count-i))
                 if i==0:state.update(first_options or {})
-                if i==count-1:state.update(final_options or {})
+                if i==count-1:
+                    state.update(final_options or {})
+                    if plan.get('capture_ready_overlap'):state['provider_state']=states[0]
                 thread=threading.Thread(target=worker,args=(peer,stage.shared,mappings,i,count,prompt,state,errors),daemon=True)
                 stages.append(stage);threads.append(thread);states.append(state);thread.start()
             stop=(lambda:states[0].get('provider_inflight',False) and len(states[0].get('borrows',[]))>=3) if cancel else None
@@ -176,5 +201,29 @@ class SocketBridgeTests(unittest.TestCase):
     def test_oracle_configuration_refused_without_owner_or_socket_use(self):
         with tempfile.TemporaryDirectory() as tmp,self.assertRaisesRegex(ValueError,'no reference'):
             bridge.drive([],dict(rolling_depth2=True,use_proposals=True,recursive_reference='/unused'),Guard(),Path(tmp))
+
+
+
+class CaptureReadySocketTests(unittest.TestCase):
+    def test_fragmented_capture_overlap_owned_hidden_misses_and_accept_fence(self):
+        for count in (2,4,6):
+            with self.subTest(stages=count):
+                result,states=exercise(count,first_options=dict(capture_ready=True,
+                    provider_delay=.006,miss_first=(5,9),miss_second=(7,11),coalesced_capture=count==2),
+                    final_options=dict(overwrite_hidden=True))
+                self.assertGreater(states[-1].get('overlapped_rows',0),0)
+                self.assertEqual(result['output_ids'],reference([3,5,8,11],16,[96])[1])
+                self.assertTrue(any(x['event']=='parent-captured' for x in result['commands']))
+
+    def test_capture_cancel_drains_provider_before_final_accept(self):
+        result,states=exercise(4,cancel=True,first_options=dict(capture_ready=True,provider_delay=.008),
+            final_options=dict(overwrite_hidden=True))
+        self.assertTrue(result['cancelled'])
+        for state in states:self.assertFalse(state['worker'].ring.pending)
+
+    def test_capture_identity_and_duplicate_refused(self):
+        for flag in ('bad_capture_identity','duplicate_capture','skip_capture'):
+            with self.subTest(flag=flag),self.assertRaises(ValueError):
+                exercise(4,first_options=dict(capture_ready=True,provider_delay=.004,**{flag:True}))
 
 if __name__=='__main__':unittest.main()

@@ -4,6 +4,7 @@
 #include "engine_backend.hpp"
 #include "reset_descriptor.hpp"
 #include "pipeline/recursive_provider/admission.hpp"
+#include "pipeline/recursive_provider/capture_ready.hpp"
 // Opt-in ring24..26 and separately admitted provider27 handler. Include after existing native
 // Request/Reply,half_step,publish,reverse_ready. Existing handlers20..23 untouched.
 namespace pipeline::ring_next {
@@ -92,7 +93,18 @@ public:
   const auto event=peer->capture(context,e.a.output/"ring-final-peer.json");
   auto admitted=pipeline::recursive_provider::admit_batch(request,context,seed,event,area(wire::row_offset,sizeof(wire::RowMeta)),area(ownrt::live_draft::header_offset,sizeof(ownrt::live_draft::Handoff)),area(slot_bytes,context.stream_bytes),provider_sequence->serial()+1);
   const auto& input=admitted.input;const auto& pair=admitted.expected;
-  const auto batch=ring.draft(request.sequence,[&](){return provider->live_recursive_depth2(*provider_sequence,input,pair,e.a.pipeline_ring_recursive_verify);});
+  const auto batch=ring.draft(request.sequence,[&](){
+   if(e.a.pipeline_ring_parent_capture_ack){
+    // Validate the complete sequence before releasing the independent final
+    // owner. Admission owns all remaining header/hidden bytes by value.
+    provider_sequence->admit(input,pair);
+    auto captured=ownrt::recursive_provider::captured(context,seed,event.record,request.sequence,pair.provider_serial);
+    Reply ready{};ready.status=ownrt::recursive_provider::capture_ready_status;ready.token=-1;ready.bytes=sizeof captured;ready.sequence=request.sequence;ready.rank=e.a.rank;ready.reserved[0]=context.stage;ready.busy_ms=Engine::ms(started);
+    transfer(e.a.channel,&ready,sizeof ready,true,e.a.seconds);
+    transfer(e.a.channel,&captured,sizeof captured,true,e.a.seconds);
+   }
+   return provider->live_recursive_depth2(*provider_sequence,input,pair,e.a.pipeline_ring_recursive_verify);
+  });
   ++provider_borrows_by_depth[pending];provider_borrows_while_target_pending+=pending?1:0;
   wire::write(area(wire::proposal_offset,sizeof batch),batch);const auto& result=provider_sequence->last_result();
   if(draft_trace_rows<size_t(e.a.pipeline_ring_trace_limit)){

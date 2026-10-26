@@ -157,6 +157,7 @@ struct Options {
   std::vector<int> pipeline_boundaries;int pipeline_stage=-1;
   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
   bool pipeline_ring_pending_provider=false,pipeline_ring_verify_provider_survival=false;
+  bool pipeline_ring_parent_capture_ack=false;
   bool pipeline_ring_persistent_requests=false;std::string pipeline_ring_check_policy;
   bool pipeline_ring_live_draft=false,pipeline_ring_recursive_verify=false;fs::path pipeline_ring_final_shared;
   bool pipeline_ring=false,pipeline_ring_verify=false;std::string pipeline_ring_request_sha256;int pipeline_ring_trace_limit=4096;
@@ -214,6 +215,7 @@ static Options parse(int argc, char **argv) {
     else if(k=="--pipeline-ring-persistent-requests")a.pipeline_ring_persistent_requests=true;
     else if(k=="--pipeline-ring-check-policy")a.pipeline_ring_check_policy=value();
     else if(k=="--pipeline-ring-pending-provider")a.pipeline_ring_pending_provider=true;
+    else if(k=="--pipeline-ring-parent-capture-ack")a.pipeline_ring_parent_capture_ack=true;
     else if(k=="--pipeline-ring-verify-provider-survival")a.pipeline_ring_verify_provider_survival=true;
     else if(k=="--pipeline-ring-live-draft")a.pipeline_ring_live_draft=true;
     else if(k=="--pipeline-ring-recursive-verify-restore")a.pipeline_ring_recursive_verify=true;
@@ -348,6 +350,7 @@ static Options parse(int argc, char **argv) {
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
   require(!a.pipeline_ring_pending_provider||a.pipeline_ring_live_draft,"pending-provider gate requires ring-live mode");
+  require(!a.pipeline_ring_parent_capture_ack||(a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_first()),"parent capture acknowledgment requires persistent first-stage provider");
   require(a.pipeline_ring_check_policy.empty()||a.pipeline_ring_persistent_requests,"ring check policy requires explicit persistent mode");
   if(a.pipeline_ring_persistent_requests){
    require(a.context>=32,"persistent ring requires context at least32");

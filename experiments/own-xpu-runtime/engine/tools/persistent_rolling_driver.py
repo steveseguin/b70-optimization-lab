@@ -18,6 +18,8 @@ def make_plan(config_path):
     base.require(not any(k in config for k in ('recursive_reference','scripted_proposal_tokens',
         'force_miss_positions','expected_outputs','pending_cases')), 'rolling config accepts no reference/oracle inputs')
     base.require(config.get('persistent_requests') is True,'explicit persistent request opt-in')
+    capture_overlap=config.get('capture_ready_overlap',False)
+    base.require(type(capture_overlap) is bool,'capture-ready overlap requires boolean opt-in')
     policy=config.get('check_policy')
     base.require(policy in ('qualification','measured'),'fixed per-process native check policy')
     verify=policy=='qualification'
@@ -40,6 +42,7 @@ def make_plan(config_path):
         'final_event.hpp','peer.hpp','admission.hpp','pending_survival.inc','survival_identity.hpp','survival_writer.inc')}
     required |= {'pipeline/live_draft.hpp','pipeline/operator_state.hpp',
                  'pipeline/ring/persistent_reset.inc','pipeline/ring/reset_descriptor.hpp'}
+    if capture_overlap:required.add('pipeline/recursive_provider/capture_ready.hpp')
     base.require(required <= set(receipt.get('sources',{})), 'complete native pending-provider capability required')
     adapter = suite_tools.evidence.read_json(config['adapter_plan'],4*1024**2)
     draft = adapter['rank_argv'][0]
@@ -66,6 +69,7 @@ def make_plan(config_path):
                      'persistent runtime accepts no oracle file')
         if verify:stage['argv'].append('--pipeline-ring-verify-restore')
         if stage['first']:
+            if capture_overlap:stage['argv'].append('--pipeline-ring-parent-capture-ack')
             stage['argv'] += ['--pipeline-ring-final-shared',final_shared,'--draft-mtp']
             if verify:stage['argv'] += ['--pipeline-ring-recursive-verify-restore','--pipeline-ring-verify-provider-survival']
             for flag in ('--draft-fault','--draft-manifest','--draft-model','--draft-experts'):
@@ -77,7 +81,7 @@ def make_plan(config_path):
          live.wire,base,live.target.lifecycle)]
     dependencies += [Path(__file__).resolve(),Path(suite_tools.__file__).resolve(),
         Path(suite_tools.evidence.__file__).resolve(),Path(suite_tools.evidence.live.__file__).resolve(),
-        Path(suite_tools.rolling.__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',
+        Path(suite_tools.rolling.__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',folder/'capture_ready.py',
         live.wire.PLANNING/'ring_coordinator.py',live.wire.PLANNING/'ring_contract.py',
         live.wire.PLANNING/'live_draft.py',live.target.lifecycle.SCHEDULE_PATH,manifest,
         base.ROOT/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',
@@ -126,6 +130,7 @@ def make_plan(config_path):
         suite_prompt_count=count,dump_each=dump_each,admitted_max_new=config['admitted_max_new'],
         limits='One fixed-policy loaded worker set; runtime prompts contain no expected answers. Cold native reset/state and measured-policy parity require independent qualification. No portable/service or speed certification.')
     plan['pins'][str(suite_path)]=config['suite_sha256']
+    if capture_overlap:plan['capture_ready_overlap']=True
     return plan
 
 

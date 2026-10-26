@@ -13,11 +13,11 @@ from .arbiter import Arbiter, Parent, PROVIDER
 
 
 class RollingCoordinator(core.Coordinator):
-    def __init__(self, **kwargs):
+    def __init__(self, *, capture_ready_overlap=False, **kwargs):
         need(kwargs.get('proposal_callback') is None, 'rolling proposals belong only to native completion')
         super().__init__(**kwargs)
         self.provider = Arbiter(stages=len(self.stages), request=self.request, epoch=self.epoch,
-            last_input_position=self.limit-1, vocab=self.vocab)
+            last_input_position=self.limit-1, vocab=self.vocab, capture_ready_overlap=capture_ready_overlap)
         self.auxiliary_commands = []
         self.provider_jobs = {}
         self.cancelled_provider_incomplete = False
@@ -46,6 +46,8 @@ class RollingCoordinator(core.Coordinator):
             pending = stage.pending[0].command
             work = self.rows[pending.row.position]
             allow = self._cancel_only() or self.provider.accept_allowed(index, pending.row.position)
+            if self.provider.capture_ready_overlap and index == len(self.stages)-1 and self.provider.job is not None:
+                allow = False  # Cancellation also drains op27 before replacing its final parent.
             if not work.verified or work.cancelled or not allow:
                 continue
             if self.cut is not None and pending.row.position >= self.cut:
@@ -156,6 +158,19 @@ class RollingCoordinator(core.Coordinator):
         except Exception:
             self.provider.fault()
             self.failed = 'rolling target/record completion refused'
+            raise
+
+    def capture_provider(self, command):
+        try:
+            need(command.op == PROVIDER and self.stages[0].busy is command,
+                 'capture-ready retains exact auxiliary owner')
+            job = self.provider_jobs[command.sequence]
+            self.provider.captured(job)
+            self.events.append(dict(event='provider-parent-captured', sequence=command.sequence,
+                seed=command.row.position, serial=job.serial, parent=job.parent.row.identity))
+        except Exception:
+            self.provider.fault()
+            self.failed = 'rolling parent capture refused'
             raise
 
     def complete_provider(self, command, *, provider_serial, restored_position, physical, committed,

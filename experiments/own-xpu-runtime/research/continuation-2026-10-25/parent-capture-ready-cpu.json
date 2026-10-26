@@ -1,0 +1,59 @@
+{
+  "scope": "Scratch-only opt-in early final-parent capture acknowledgment; no canonical edits, no GPU/build/run",
+  "patch_sha256": "9fcbd9b7f80bf0b7e3603f52265593d7542f1bd788d74bbbe3f9ee981426ca2e",
+  "sources": {
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": {
+      "before_sha256": "7d384884983d95b93f896003395b4621f294382b6804cb0ddfb347048310bfd9",
+      "after_sha256": "3a83c47a72f210f5c919f7ee045d2206e792be56ce41de445a63082175d60c79"
+    },
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp": {
+      "before_sha256": "e2142556ebd1eea566ee9806ad52ad5dc2dbae5a0a0fe22dd9a58402254281ca",
+      "after_sha256": "d00a64cbf31b4fb9d7b0e0e1c1e2dddd26ab83ea479b044291c5c7f6652f8696"
+    },
+    "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/capture_ready.hpp": {
+      "before_sha256": null,
+      "after_sha256": "f49d6c160c37e7bf71f402d1c5f6e7188947de7602bafb2c394c91030b51452f"
+    },
+    "experiments/own-xpu-runtime/engine/planning/rolling_provider/arbiter.py": {
+      "before_sha256": "ebb16b5131bcec7c410dc54ead95e8f2f44d32885a3b9e2f64825496e3c4f6ec",
+      "after_sha256": "d30e141faeeab6f70a4bc45d67a6f39383cc8b994eb231dd4c826812ee38de45"
+    },
+    "experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py": {
+      "before_sha256": "cc3dc143fcd7d64ca66a57d87f94875db78b17936c765b43d750c03b9ec3ab72",
+      "after_sha256": "c10781098a23eed24b29bd830f8c290c6d8ec00791fb17a41a5824c491437ae5"
+    },
+    "experiments/own-xpu-runtime/engine/planning/rolling_provider/transport.py": {
+      "before_sha256": "22e4077ae3a02c6d791f383329533c3b96dfa5ba130eb7a5af2f16ac04cb015e",
+      "after_sha256": "9c3efb32549f4dfa0d97fd65f4bb08ea5f27bd447dd46403ddf7bf1f5ab26b1a"
+    },
+    "experiments/own-xpu-runtime/engine/planning/rolling_provider/capture_ready.py": {
+      "before_sha256": null,
+      "after_sha256": "717df4fd571685ece34e64e2e0c03abaa799e64af9433fcfdf9ab9619f07d6ca"
+    },
+    "experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py": {
+      "before_sha256": "6197c3575a91da804c9cebf9956e3fb606a1e8973a212b553b298590215f4d8f",
+      "after_sha256": "ed0e4abb8da6a8463c3ea197d410e2261c5121ef0cee9c497b3384bf50bd1fcb"
+    },
+    "experiments/own-xpu-runtime/engine/tools/rolling_ring_driver.py": {
+      "before_sha256": "7e7dc1e639855bd4f0b579e78e99a0dc92e70dc4608a2b7c5147a0e0ee5b7afa",
+      "after_sha256": "b2539f191813960b945fbe31593d2cbc1553ddf8688ab5be5f2a3b55373141f1"
+    },
+    "experiments/own-xpu-runtime/engine/tools/test_rolling_ring_socket.py": {
+      "before_sha256": "e5c8c9e12a68ebfcf2b7d31b223ac82d6dcf8af7bdd71aacdac4c9188cf08fdd",
+      "after_sha256": "677a52fbc01f0e253e383d3dfe14bc16e6f771b5852d3e0a1da2a1ed24586a38"
+    },
+    "experiments/own-xpu-runtime/engine/tools/test_parent_capture_plan.py": {
+      "before_sha256": null,
+      "after_sha256": "a2abb05542719d1a170d9e4da48beda6f66c14dc6c0b088a4f78a1654add15b1"
+    },
+    "experiments/own-xpu-runtime/engine/planning/test_parent_capture_native.cpp": {
+      "before_sha256": null,
+      "after_sha256": "92a3e3344edb8d3b8db9b7dc6f323ba1211a151be6520bf6ce35b6d913dd5fe2"
+    }
+  },
+  "python_tests": "38 tests PASS; python-tests-v3.log",
+  "native_fixture": "test-parent-capture-native: actual Peer/admission owned input survives final map+relay overwrite; exact128B C++/Python wire; all128 byte corruptions refused",
+  "native_compile": "g++ -std=c++20 -O0 -Iexperiments/own-xpu-runtime/engine/src experiments/own-xpu-runtime/engine/planning/test_parent_capture_native.cpp -lcrypto",
+  "limits": "No full production compilation or model/GPU state/timing qualification performed; old strict trace finalizer needs explicit parent-captured branch",
+  "failed_fixture_preserved": "test-socket-first-assertions.py; initial assertions used wrong output key and overclaimed provider-incomplete on cancellation; corrected, no runtime failure observed"
+}

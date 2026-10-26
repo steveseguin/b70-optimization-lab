@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'tools'))
 import pending_ring_live_driver as pending
 from .coordinator import RollingCoordinator
 from .arbiter import Parent, PROVIDER
+from . import capture_ready
 
 base, codec, ring = pending.base, pending.codec, pending.ring
 
@@ -29,6 +30,12 @@ class Stage(pending.PendingStage):
     def start_async(self):
         super().start_async()
         self.received = ReplyBuffer()
+        self.capture_reader = capture_ready.Reader()
+
+    def read_ready(self):
+        if self.plan.get('capture_ready_overlap',False) and isinstance(self.command_pending,pending.pending_codec.PendingProviderCommand):
+            return self.capture_reader.read_ready(self)
+        return super().read_ready()
 
 
 def row_identity(row):
@@ -56,7 +63,7 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
     model = RollingCoordinator(stages=len(stages), request=bytes.fromhex(plan['request_sha256']), epoch=epoch,
         prompt=plan['prompt_tokens'], max_new=plan['max_new'], context=plan['context'], vocab=plan['vocab'],
         eos_token_ids=plan['eos_token_ids'], stream_bytes=stages[0].stream_bytes,
-        initial_sequences=[s.sequence for s in stages])
+        initial_sequences=[s.sequence for s in stages], capture_ready_overlap=plan.get('capture_ready_overlap',False))
     for stage in stages:
         stage.start_async()
     sockets = {s.sock:s for s in stages}
@@ -149,6 +156,14 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                 stage = sockets[sock]
                 complete = stage.read_ready()
                 if complete is None:
+                    continue
+                if isinstance(complete,capture_ready.Captured):
+                    command = complete.command
+                    logical,transported = provider_wire[command.sequence]
+                    base.require(command is transported,'capture-ready retains exact provider reservation')
+                    model.capture_provider(logical)
+                    journal('parent-captured',command,reply_hex=complete.header.hex(),
+                        metadata_hex=complete.identity.hex())
                     continue
                 command,reply,result = complete
                 if command.op == PROVIDER:

@@ -32,7 +32,7 @@ class Job:
 
 
 class Arbiter:
-    def __init__(self, *, stages, request, epoch, last_input_position, vocab):
+    def __init__(self, *, stages, request, epoch, last_input_position, vocab, capture_ready_overlap=False):
         need(stages >= 2 and isinstance(request, bytes) and len(request) == 32
              and epoch >= 0 and last_input_position >= 0 and vocab > 0, 'rolling scope')
         self.stages, self.request, self.epoch = stages, request, epoch
@@ -42,6 +42,8 @@ class Arbiter:
         self.local_seed = self.parent = self.job = None
         self.failed = False
         self.stopping = False
+        self.capture_ready_overlap = capture_ready_overlap
+        self.parent_captured = False
 
     def checked_row(self, row):
         need(row.request == self.request and row.epoch == self.epoch, 'rolling request/epoch')
@@ -70,7 +72,7 @@ class Arbiter:
     def row_allowed(self, stage, position, *, tentative):
         if self.failed or self.stopping or position > self.last_input_position:
             return False
-        if stage == self.stages-1 and self.parent is not None:
+        if stage == self.stages-1 and self.parent is not None and not self.parent_captured:
             return False
         if stage == 0 and self.job is not None:
             return False
@@ -78,7 +80,14 @@ class Arbiter:
             return False
         return True
 
+    def captured(self, job):
+        need(self.capture_ready_overlap and not self.failed and self.job is job and not self.parent_captured,
+             'capture-ready requires exact outstanding uncaptured provider')
+        self.parent_captured = True
+
     def accept_allowed(self, stage, position):
+        if self.capture_ready_overlap and stage == self.stages-1 and self.job is not None:
+            return False
         return not self.failed and position <= self.last_input_position and (stage != 0 or self.job is None and position <= self.next_seed)
 
     def can_reserve(self, *, stage_busy, pending, physical, committed, phase):
@@ -105,6 +114,7 @@ class Arbiter:
     def complete(self, job, *, command_sequence, provider_serial, restored_position, physical, committed,
                  pending_rows, guesses, release_auxiliary):
         need(not self.failed and self.job is job, 'stale provider completion')
+        need(not self.capture_ready_overlap or self.parent_captured, 'provider completed without owned capture acknowledgment')
         try:
             need((command_sequence, provider_serial, restored_position) ==
                  (job.command.sequence, job.serial, job.seed.position), 'provider wire/serial/canonical position')
@@ -117,6 +127,7 @@ class Arbiter:
             self.serial = job.serial
             self.next_seed += 1
             self.local_seed = self.parent = self.job = None
+            self.parent_captured = False
             if not guesses:
                 return None
             return ProposalBatch(self.request, self.epoch, job.command.sequence, job.seed.position+1,
