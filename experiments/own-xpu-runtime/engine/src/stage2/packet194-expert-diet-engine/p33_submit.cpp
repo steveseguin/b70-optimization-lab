@@ -146,8 +146,23 @@ template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> struct DenseRa
 template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> ownrt::Event raw_rows(ownrt::Device& d,const integrated::Matrix& m,uint32_t rb){
  DenseRaw<T,K,R,U,G> op;op.rows=uint32_t(m.rows);op.rb=rb;op.tokens=m.tokens;std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};return d.compute(op,ids,{});
 }
+// OWNRT_DRAFT_HEAD_RAW=1 (default off): the rank-0 draft head prefix, raw Q6_K rows with BF16 activations and outputs.
+template<unsigned K,unsigned R,unsigned U> struct DenseRawBF16 final:ownrt::SyclOperation {
+ uint32_t rows=0,rb=0;
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  const size_t global=(size_t((rows+R-1)/R)*32+127)/128*128;
+  const raw::RowsKernelBF16<K,R,U> kernel{static_cast<const uint8_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),rows,rb};
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked(kernel)));});
+ }
+};
 template<iq3::Type T,unsigned K> integrated::Launch raw_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& ms,unsigned v){
  const auto& m=ms.at(0);
+ if constexpr(T==iq3::Type::Q6_K&&K==2560) if(denseraw::draft_head()&&ms.size()==1&&v==6&&m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&m.tokens==1) {
+  if(m.fp32||m.routes||m.status||m.count!=1||m.experts!=1||(m.span&&m.span!=m.rows)||!m.rows||m.rows>UINT32_MAX||m.columns!=K)throw std::invalid_argument("p33 raw BF16: dense split-1 rows only");
+  const size_t rb=denseraw::row_bytes(T,K);
+  if(d.arena.row(m.w).bytes<size_t(m.rows)*rb||!v2_aligned(d,m.w,4)||!v2_aligned(d,m.x,16)||!v2_aligned(d,m.y,2))throw std::invalid_argument("p33 raw BF16: weight extent/alignment");
+  DenseRawBF16<K,1,1> op;op.rows=uint32_t(m.rows);op.rb=uint32_t(rb);std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};auto e=d.compute(op,ids,{});return {e,e,1};
+ }
  if(ms.size()!=1||v!=6||m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.routes||m.status||m.count!=1||m.experts!=1||(m.span&&m.span!=m.rows)||!m.rows||m.rows>UINT32_MAX||!m.tokens||m.columns!=K)
   throw std::invalid_argument("p33 raw: dense F32 split-1 rows only");
  if constexpr(!((T==iq3::Type::Q6_K&&K==2560)||(T==iq3::Type::Q8_0&&K==6144)))throw std::invalid_argument("p33 raw: uncompiled shape");

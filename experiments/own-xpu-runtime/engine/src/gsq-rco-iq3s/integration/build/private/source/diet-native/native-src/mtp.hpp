@@ -53,7 +53,7 @@ inline std::string official(const std::string& n){
  static const std::map<std::string,std::string> names{{"attn_q.weight","self_attn.q_proj.weight"},{"attn_k.weight","self_attn.k_proj.weight"},{"attn_v.weight","self_attn.v_proj.weight"},{"attn_output.weight","self_attn.o_proj.weight"},{"attn_q_norm.weight","self_attn.q_norm.weight"},{"attn_k_norm.weight","self_attn.k_norm.weight"},{"indexer.q_norm.weight","self_attn.indexer.q_layernorm.weight"},{"indexer.k_norm.weight","self_attn.indexer.k_layernorm.weight"},{"indexer.q_proj.weight","self_attn.indexer.index_qk_proj.weight"},{"indexer.k_proj.weight","self_attn.indexer.index_qk_proj.weight"},{"ffn_gate_inp.weight","mlp.gate.weight"},{"ffn_gate_inp_shexp.weight","mlp.shared_expert_gate.weight"},{"ffn_gate_shexp.weight","mlp.shared_expert.gate_proj.weight"},{"ffn_up_shexp.weight","mlp.shared_expert.up_proj.weight"},{"ffn_down_shexp.weight","mlp.shared_expert.down_proj.weight"}};
  return "mtp.layers.0."+names.at(n.substr(6));
 }
-struct Weight {Allocation id{};iq3::Type type=iq3::Type::BF16;unsigned rows{},cols{},experts=1;bool int8=false,fp8=false;};
+struct Weight {Allocation id{};iq3::Type type=iq3::Type::BF16;unsigned rows{},cols{},experts=1;bool int8=false,fp8=false,raw=false;};
 struct ProviderError:std::runtime_error{using std::runtime_error::runtime_error;};
 class DraftRuntime {
  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
@@ -128,7 +128,7 @@ class DraftRuntime {
    e.upload(0,w.id,0,raw.data(),raw.size());}weights[name]=w;
  }
  void matrix(const flash::Launch& l){const auto& w=weights.at(l.weights[0]);
-  if(l.label=="logits"){if(q4_head()){e.finish(0,p83::submit(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),prefix_rows(),w.cols),true);return;}integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;
+  if(l.label=="logits"){if(q4_head()){e.finish(0,p83::submit(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),prefix_rows(),w.cols),true);return;}integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;m.raw=w.raw;
    p56::restrict_matrix(m,prefix_rows());
    if((head_candidate.starts_with("p25.")||head_candidate.starts_with("p27."))&&!e.a.mini){Allocation prepared_input=0;if(head_candidate=="p27.fp32_input"){e.finish(0,packet26::p25bridge::prepare_input(e.dev(0),m.x,head_fp32,m.columns),true);prepared_input=head_fp32;}e.finish(0,packet26::p25bridge::submit(e.dev(0),{m},head_candidate,false,head_variant,prepared_input),true);return;}
    if(!e.a.mini && (head_candidate.starts_with("p33.")||head_candidate.starts_with("p29."))){
@@ -254,9 +254,23 @@ public:
    hw.id=alloc("q4-head",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
    const size_t chunk=std::max(size_t(1),size_t(4194304)/std::max(rb,er));
    for(size_t row=0;row<hw.rows;row+=chunk){auto n=std::min(chunk,size_t(hw.rows)-row);auto source=e.w.read("output.weight",row*rb,n*rb);auto raw=p83::quantize(hw.type,source.data(),n,hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}
-  }else if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")&&!e.raw_weights.count({0,"output.weight"}))hw.id=e.weights[0].at("output.weight");else { /* OWNRT_DENSE_RAW: a raw target head is never shared (the draft head kernel reads expanded rows) */auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))hw.rows=prefix_rows();hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
+  }else if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")&&!e.raw_weights.count({0,"output.weight"}))hw.id=e.weights[0].at("output.weight");
+  else if(denseraw::draft_head()&&e.a.gsq_packed&&!e.a.mini&&e.a.rank==0&&!e.a.pipeline_enabled()&&head_variant==6&&hw.type==iq3::Type::Q6_K&&hw.cols==2560) {
+   // OWNRT_DRAFT_HEAD_RAW=1 (lab 2026-10-26, default off): the rank-0 draft head prefix as raw-size Q6_K rows
+   // (dense_raw.hpp), read by the BF16-activation raw kernel; every row is checked element by element against the
+   // expanded rows the default build uploads (OWNRT_DENSE_RAW_VERIFY=0 skips the check).
+   hw.rows=prefix_rows();const size_t rb=hw.cols/256*210,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);
+   hw.id=alloc("shared-head-host",size_t(hw.rows)*rb,Category::weights);mutable_ids.erase(hw.id);hw.raw=true;uint64_t checked=0,bad=0;
+   const size_t nr=std::max(size_t(1),size_t(4194304)/er);
+   for(size_t row=0;row<hw.rows;row+=nr){const auto n=std::min(nr,size_t(hw.rows)-row);auto source=e.w.read("output.weight",row*rb,n*rb);
+    auto rows=denseraw::repack(hw.type,source.data(),source.size(),hw.cols);
+    if(denseraw::verify()){auto expanded=iq3::expanded::expand(hw.type,source.data(),source.size(),hw.cols);bad+=denseraw::check_rows(hw.type,rows.data(),expanded.data(),n,hw.cols,er);checked+=uint64_t(n)*hw.cols;}
+    require(!bad,"OWNRT_DRAFT_HEAD_RAW decode differs from the expanded rows");e.upload(0,hw.id,row*rb,rows.data(),rows.size());}
+   save(e.a.output/"draft-head-raw.json","{\"rows\":"+std::to_string(hw.rows)+",\"raw_bytes\":"+std::to_string(size_t(hw.rows)*rb)+",\"expanded_bytes\":"+std::to_string(size_t(hw.rows)*er)+",\"checked_elements\":"+std::to_string(checked)+",\"mismatches\":"+std::to_string(bad)+"}");
+  }
+  else { /* OWNRT_DENSE_RAW: a raw target head is never shared (the draft head kernel reads expanded rows) */auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))hw.rows=prefix_rows();hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
    size_t nr=std::max(size_t(1),size_t(4194304)/std::max(rb,er));for(size_t row=0;row<hw.rows;row+=nr){auto n=std::min(nr,size_t(hw.rows)-row);auto raw=e.w.read("output.weight",row*rb,n*rb);if(arithmetic::is_expanded(head_variant))raw=iq3::expanded::expand(hw.type,raw.data(),raw.size(),hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}}
-  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))?size_t(hw.rows)*arithmetic::row_bytes(hw.type,hw.cols,head_variant):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
+  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))?size_t(hw.rows)*(hw.raw?size_t(hw.cols/256*210):arithmetic::row_bytes(hw.type,hw.cols,head_variant)):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
   weights["output.weight"]=hw;
   for(const auto& l:p.launches)if(l.op!="gemv"&&l.op!="routed_gemv"&&l.op!="expert_gate_up")prepared.emplace(&l,bind(l));
   if(store){require(store->reads.size()==3101,"not all official draft tensors read");std::ostringstream o;o<<"{";bool comma=false;for(auto& [n,h]:store->reads){o<<(comma?",":"")<<ownrt::quote(n)<<":"<<ownrt::quote(h);comma=true;}o<<"}";save(e.a.output/"draft-tensor-reads.json",o.str());}

@@ -1,0 +1,379 @@
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp	2026-10-26 11:28:33.475292853 -0400
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp	2026-10-26 12:04:13.941996896 -0400
+@@ -28,6 +28,7 @@
+ #include "stage2/packet194-expert-diet-engine/p28/submit.hpp"
+ #include "stage2/packet194-expert-diet-engine/expert_down.hpp"
+ #include "stage2/packet194-expert-diet-engine/dense_raw.hpp"
++#include "stage2/packet194-expert-diet-engine/qsa_ring.hpp"
+ #include <unordered_map>
+ #include <unordered_set>
+ #include <cstring>
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp	2026-10-26 09:52:47.959129398 -0400
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp	2026-10-26 12:04:13.941556758 -0400
+@@ -47,12 +47,54 @@
+       auto role=prefill_role(name);prefill_role_of[name]=role;role_bytes[role]=std::max(role_bytes[role],bytes);
+     }
+   }
+-  size_t total=0;
++  size_t total=0,unpacked=0;
++  // OWNRT_PREFILL_SHADOW_PACK=1 (lab 2026-10-26, default off; rank 1 only): roles whose live ranges never overlap share
++  // one allocation. A chunk runs prefill_sites in this order (every row of a site before the next site), and only
++  // prefill_chunk reaches the shadows. A role's value lives from the site that writes it to its last reader before the
++  // next write; a role read before any write (the input rows), and every non-layer role, lives for the whole chunk.
++  // Two roles share an allocation only if none of their live ranges intersect. So every read sees the bytes its role's
++  // last write left, exactly as with private shadows; two roles of one site never share. Largest role first, best fit.
++  static const bool pack_env=[]{const char* e=std::getenv("OWNRT_PREFILL_SHADOW_PACK");return e&&e[0]=='1';}();
++  std::map<std::string,size_t> slot_of;std::vector<size_t> slot_bytes;
++  if(pack_env&&a.rank==1&&a.gsq_packed&&!a.mini) {
++    using Segment=std::pair<size_t,size_t>;std::map<std::string,std::vector<Segment>> live;std::map<std::string,std::pair<size_t,size_t>> open;
++    const size_t n=prefill_sites.size();
++    for(size_t i=0;i<n;++i){const auto& l=*prefill_sites[i];
++      for(const auto& name:l.inputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
++        if(it==open.end())open[r]={0,i};else it->second.second=i;}
++      for(const auto& name:l.outputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
++        if(it!=open.end())live[r].push_back(it->second);open[r]={l.op=="lookup"?0:i,i};}
++    }
++    for(const auto& [r,seg]:open)live[r].push_back(seg);
++    for(auto& [r,segs]:live)if(!r.starts_with("blk.*")){segs.assign(1,{0,n});}
++    for(const auto& [r,bytes]:role_bytes)require(live.count(r),"prefill shadow role without a site");
++    auto overlap=[&](const std::string& x,const std::string& y){for(const auto& a0:live.at(x))for(const auto& b0:live.at(y))if(a0.first<=b0.second&&b0.first<=a0.second)return true;return false;};
++    std::vector<std::pair<size_t,std::string>> order;for(const auto& [r,bytes]:role_bytes)order.push_back({bytes,r});
++    std::sort(order.begin(),order.end(),[](const auto& x,const auto& y){return x.first!=y.first?x.first>y.first:x.second<y.second;});
++    std::vector<std::vector<std::string>> members;
++    for(const auto& [bytes,r]:order){size_t best=SIZE_MAX;
++      for(size_t k=0;k<members.size();++k){bool ok=true;for(const auto& q:members[k])if(overlap(r,q)){ok=false;break;}
++        if(ok&&(best==SIZE_MAX||slot_bytes[k]<slot_bytes[best]))best=k;}
++      if(best==SIZE_MAX){best=members.size();members.emplace_back();slot_bytes.push_back(0);}
++      members[best].push_back(r);slot_bytes[best]=std::max(slot_bytes[best],bytes);slot_of[r]=best;}
++  }
++  if(!slot_of.empty()) {
++    std::vector<Allocation> ids;
++    for(size_t k=0;k<slot_bytes.size();++k){const size_t bytes=slot_bytes[k]*M;
++      auto id=allocate(0,"prefill:pack"+std::to_string(k),bytes,Category::scratch,Lifetime::transaction);
++      std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)),0);
++      for(size_t off=0;off<bytes;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes-off));
++      ids.push_back(id);total+=bytes;}
++    for(const auto& [role,bytes]:role_bytes){prefill_shadows[role]={ids.at(slot_of.at(role)),bytes};unpacked+=bytes*M;}
++    std::ostringstream o;o<<"{\"slots\":[";for(size_t k=0;k<slot_bytes.size();++k){o<<(k?",":"")<<"{\"bytes\":"<<slot_bytes[k]*M<<",\"roles\":[";bool c=false;
++      for(const auto& [r,slot]:slot_of)if(slot==k){o<<(c?",":"")<<ownrt::quote(r);c=true;}o<<"]}";}
++    o<<"]}";save(a.output/"prefill-shadow-pack.json",o.str());
++  } else
+   for(const auto& [role,bytes]:role_bytes) {
+     auto id=allocate(0,"prefill:"+role,bytes*M,Category::scratch,Lifetime::transaction);
+     std::vector<uint8_t> zero(std::min(bytes*M,size_t(4194304)),0);
+     for(size_t off=0;off<bytes*M;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes*M-off));
+-    prefill_shadows[role]={id,bytes};total+=bytes*M;
++    prefill_shadows[role]={id,bytes};total+=bytes*M;unpacked+=bytes*M;
+   }
+ #ifndef OWN_RT_HOST_ONLY
+   if(xgroup::enabled()) { // expert-grouped routed sites: slot order, tile descriptors and tile count for top*M slots
+@@ -65,7 +107,7 @@
+   prefill_positions=allocate(0,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
+   prefill_tokens=allocate(0,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
+   std::ostringstream o;o<<"{\"rows\":"<<M<<",\"roles\":"<<role_bytes.size()<<",\"buffers\":"<<prefill_role_of.size()
+-    <<",\"sites\":"<<prefill_sites.size()<<",\"shadow_bytes\":"<<total<<"}";
++    <<",\"sites\":"<<prefill_sites.size()<<",\"shadow_bytes\":"<<total<<(slot_of.empty()?std::string():",\"packed_slots\":"+std::to_string(slot_bytes.size())+",\"unpacked_bytes\":"+std::to_string(unpacked))<<"}";
+   save(a.output/"prefill-allocation.json",o.str());
+ }
+ // Captured row replays: the commands an unchanged site issues for one row, captured once under that row's views and
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+--- a/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp	2026-10-26 11:28:33.476481716 -0400
++++ b/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp	2026-10-26 12:08:05.963140848 -0400
+@@ -53,7 +53,7 @@
+  static const std::map<std::string,std::string> names{{"attn_q.weight","self_attn.q_proj.weight"},{"attn_k.weight","self_attn.k_proj.weight"},{"attn_v.weight","self_attn.v_proj.weight"},{"attn_output.weight","self_attn.o_proj.weight"},{"attn_q_norm.weight","self_attn.q_norm.weight"},{"attn_k_norm.weight","self_attn.k_norm.weight"},{"indexer.q_norm.weight","self_attn.indexer.q_layernorm.weight"},{"indexer.k_norm.weight","self_attn.indexer.k_layernorm.weight"},{"indexer.q_proj.weight","self_attn.indexer.index_qk_proj.weight"},{"indexer.k_proj.weight","self_attn.indexer.index_qk_proj.weight"},{"ffn_gate_inp.weight","mlp.gate.weight"},{"ffn_gate_inp_shexp.weight","mlp.shared_expert_gate.weight"},{"ffn_gate_shexp.weight","mlp.shared_expert.gate_proj.weight"},{"ffn_up_shexp.weight","mlp.shared_expert.up_proj.weight"},{"ffn_down_shexp.weight","mlp.shared_expert.down_proj.weight"}};
+  return "mtp.layers.0."+names.at(n.substr(6));
+ }
+-struct Weight {Allocation id{};iq3::Type type=iq3::Type::BF16;unsigned rows{},cols{},experts=1;bool int8=false,fp8=false;};
++struct Weight {Allocation id{};iq3::Type type=iq3::Type::BF16;unsigned rows{},cols{},experts=1;bool int8=false,fp8=false,raw=false;};
+ struct ProviderError:std::runtime_error{using std::runtime_error::runtime_error;};
+ class DraftRuntime {
+  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
+@@ -128,7 +128,7 @@
+    e.upload(0,w.id,0,raw.data(),raw.size());}weights[name]=w;
+  }
+  void matrix(const flash::Launch& l){const auto& w=weights.at(l.weights[0]);
+-  if(l.label=="logits"){if(q4_head()){e.finish(0,p83::submit(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),prefix_rows(),w.cols),true);return;}integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;
++  if(l.label=="logits"){if(q4_head()){e.finish(0,p83::submit(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),prefix_rows(),w.cols),true);return;}integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;m.raw=w.raw;
+    p56::restrict_matrix(m,prefix_rows());
+    if((head_candidate.starts_with("p25.")||head_candidate.starts_with("p27."))&&!e.a.mini){Allocation prepared_input=0;if(head_candidate=="p27.fp32_input"){e.finish(0,packet26::p25bridge::prepare_input(e.dev(0),m.x,head_fp32,m.columns),true);prepared_input=head_fp32;}e.finish(0,packet26::p25bridge::submit(e.dev(0),{m},head_candidate,false,head_variant,prepared_input),true);return;}
+    if(!e.a.mini && (head_candidate.starts_with("p33.")||head_candidate.starts_with("p29."))){
+@@ -254,9 +254,23 @@
+    hw.id=alloc("q4-head",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
+    const size_t chunk=std::max(size_t(1),size_t(4194304)/std::max(rb,er));
+    for(size_t row=0;row<hw.rows;row+=chunk){auto n=std::min(chunk,size_t(hw.rows)-row);auto source=e.w.read("output.weight",row*rb,n*rb);auto raw=p83::quantize(hw.type,source.data(),n,hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}
+-  }else if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")&&!e.raw_weights.count({0,"output.weight"}))hw.id=e.weights[0].at("output.weight");else { /* OWNRT_DENSE_RAW: a raw target head is never shared (the draft head kernel reads expanded rows) */auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))hw.rows=prefix_rows();hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
++  }else if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")&&!e.raw_weights.count({0,"output.weight"}))hw.id=e.weights[0].at("output.weight");
++  else if(denseraw::draft_head()&&e.a.gsq_packed&&!e.a.mini&&e.a.rank==0&&!e.a.pipeline_enabled()&&head_variant==6&&hw.type==iq3::Type::Q6_K&&hw.cols==2560) {
++   // OWNRT_DRAFT_HEAD_RAW=1 (lab 2026-10-26, default off): the rank-0 draft head prefix as raw-size Q6_K rows
++   // (dense_raw.hpp), read by the BF16-activation raw kernel; every row is checked element by element against the
++   // expanded rows the default build uploads (OWNRT_DENSE_RAW_VERIFY=0 skips the check).
++   hw.rows=prefix_rows();const size_t rb=hw.cols/256*210,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);
++   hw.id=alloc("shared-head-host",size_t(hw.rows)*rb,Category::weights);mutable_ids.erase(hw.id);hw.raw=true;uint64_t checked=0,bad=0;
++   const size_t nr=std::max(size_t(1),size_t(4194304)/er);
++   for(size_t row=0;row<hw.rows;row+=nr){const auto n=std::min(nr,size_t(hw.rows)-row);auto source=e.w.read("output.weight",row*rb,n*rb);
++    auto rows=denseraw::repack(hw.type,source.data(),source.size(),hw.cols);
++    if(denseraw::verify()){auto expanded=iq3::expanded::expand(hw.type,source.data(),source.size(),hw.cols);bad+=denseraw::check_rows(hw.type,rows.data(),expanded.data(),n,hw.cols,er);checked+=uint64_t(n)*hw.cols;}
++    require(!bad,"OWNRT_DRAFT_HEAD_RAW decode differs from the expanded rows");e.upload(0,hw.id,row*rb,rows.data(),rows.size());}
++   save(e.a.output/"draft-head-raw.json","{\"rows\":"+std::to_string(hw.rows)+",\"raw_bytes\":"+std::to_string(size_t(hw.rows)*rb)+",\"expanded_bytes\":"+std::to_string(size_t(hw.rows)*er)+",\"checked_elements\":"+std::to_string(checked)+",\"mismatches\":"+std::to_string(bad)+"}");
++  }
++  else { /* OWNRT_DENSE_RAW: a raw target head is never shared (the draft head kernel reads expanded rows) */auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))hw.rows=prefix_rows();hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
+    size_t nr=std::max(size_t(1),size_t(4194304)/std::max(rb,er));for(size_t row=0;row<hw.rows;row+=nr){auto n=std::min(nr,size_t(hw.rows)-row);auto raw=e.w.read("output.weight",row*rb,n*rb);if(arithmetic::is_expanded(head_variant))raw=iq3::expanded::expand(hw.type,raw.data(),raw.size(),hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}}
+-  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))?size_t(hw.rows)*arithmetic::row_bytes(hw.type,hw.cols,head_variant):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
++  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))?size_t(hw.rows)*(hw.raw?size_t(hw.cols/256*210):arithmetic::row_bytes(hw.type,hw.cols,head_variant)):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
+   weights["output.weight"]=hw;
+   for(const auto& l:p.launches)if(l.op!="gemv"&&l.op!="routed_gemv"&&l.op!="expert_gate_up")prepared.emplace(&l,bind(l));
+   if(store){require(store->reads.size()==3101,"not all official draft tensors read");std::ostringstream o;o<<"{";bool comma=false;for(auto& [n,h]:store->reads){o<<(comma?",":"")<<ownrt::quote(n)<<":"<<ownrt::quote(h);comma=true;}o<<"}";save(e.a.output/"draft-tensor-reads.json",o.str());}
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+--- a/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp	2026-10-26 03:33:34.941710355 -0400
++++ b/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp	2026-10-26 12:03:37.247278319 -0400
+@@ -337,7 +337,13 @@
+   Options one_card=a;one_card.cards=1;
+   weights=std::make_unique<Weights>(a);auto full_plan=plan(*weights,one_card);
+   auto p=a.pipeline_enabled()?ownrt::pipeline_layout::slice(std::move(full_plan),a.pipeline_boundaries,a.pipeline_stage):split(std::move(full_plan),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
++  // OWNRT_QSA_RAW_RING=1 (lab 2026-10-26, default off; rank 1 only): every QSA raw indexer-key buffer is a 512-row ring
++  // (qsa_ring.hpp). Rank 0's speculative image captures KV rows by position, so its buffers keep the full extent.
++  if(qsaring::enabled()&&a.rank==1&&a.gsq_packed&&!a.mini&&!a.pipeline_enabled()&&!a.tp_replicate&&p.g.context>qsaring::rows)
++   for(auto& b:p.buffers)if(ends(b.name,".qsa.raw")){require(b.shape.size()==2&&b.shape[0]==p.g.context,"QSA raw buffer geometry");b.shape[0]=qsaring::rows;}
+   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
++  // Lab diagnostic (2026-10-26, default off): OWNRT_PLAN_ONLY=1 stops after the plan (owned_bytes), before any device contact.
++  if(const char* only=std::getenv("OWNRT_PLAN_ONLY");only&&only[0]=='1'){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
+   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
+    // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
+    // [c*R/2, (c+1)*R/2) into its half buffer y#tp (whole rows, unchanged arithmetic), then a tp_gather site on each
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/session_checkpoint.hpp engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/session_checkpoint.hpp
+--- a/gsq-rco-iq3s/state-bundle/build/source-v4/session_checkpoint.hpp	2026-10-26 05:35:57.786139472 -0400
++++ b/gsq-rco-iq3s/state-bundle/build/source-v4/session_checkpoint.hpp	2026-10-26 12:03:37.247459570 -0400
+@@ -40,6 +40,7 @@
+  require(positions>=0&&positions<=context,"checkpoint KV row bound "+name);
+  rows=pooled?positions/4:positions;return size_t(rows)*(full/total);
+ }
++static const char* const raw_ring_rule="saved: QSA raw indexer-key ring (OWNRT_QSA_RAW_RING, 512 rows), whole: it holds every raw row a later pool can read";
+ static const char* const kv_rule="saved: QSA KV rows [0,N) (pooled [0,N/4)); tail rows are zero after the request reset";
+ static const char* const temporal_rule="saved: recurrent temporal state (gdn/conv output[1]: GDN state, conv/PLE history), active logical bank";
+ static const char* const token_history_rule="saved: PLE token history (device token pair hashed by ple_hash)";
+@@ -74,7 +75,8 @@
+  for(const auto& [name,s]:e.buffers[0]) {
+   Item it;it.label=name;it.source="plan";it.id=s.id;it.full=s.n*flash::scalar_bytes(s.type);represented.insert(s.id);
+   refuse_unless(name.find("#tp")==std::string::npos,"checkpoint coverage refused: TP half buffer "+name);
+-  if(kv.count(name)){require(kv_suffix(name),"checkpoint KV writer output name "+name);it.saved=true;it.rule=kv_rule;it.bytes=kv_slice(e.p.g.context,name,it.full,N,it.rows);}
++  if(kv.count(name)&&ends(name,".raw")&&e.p.g.context>qsaring::rows&&s.n==size_t(qsaring::rows)*size_t(e.p.g.id)){it.saved=true;it.rule=raw_ring_rule;it.bytes=it.full;} // OWNRT_QSA_RAW_RING
++  else if(kv.count(name)){require(kv_suffix(name),"checkpoint KV writer output name "+name);it.saved=true;it.rule=kv_rule;it.bytes=kv_slice(e.p.g.context,name,it.full,N,it.rows);}
+   else if(temporal.count(name)){it.saved=true;it.rule=temporal_rule;it.bytes=it.full;}
+   else if(name=="token_history"){it.saved=true;it.rule=token_history_rule;it.bytes=it.full;}
+   else if(control_name(name)){it.saved=true;it.rule=control_rule;it.bytes=it.full;}
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp engine/src/stage2/packet194-expert-diet-engine/adapter.cpp
+--- a/stage2/packet194-expert-diet-engine/adapter.cpp	2026-10-26 09:52:47.964869442 -0400
++++ b/stage2/packet194-expert-diet-engine/adapter.cpp	2026-10-26 12:03:37.247062463 -0400
+@@ -613,6 +613,8 @@
+  case Op::qsa_attention:shape.op=ng::attention_score;for(int j=0;j<5;++j)in(j,j);out(5,0);a[6]=score;a[7]=probability;break;
+  default:use_ng=false;
+  }
++ // OWNRT_QSA_RAW_RING=1: a raw binding allocated as the 512-row ring (rank 1 plan, rank.hpp) selects ring indexing.
++ if(use_ng&&shape.op==ng::pool&&qsaring::enabled()&&shape.capacity>qsaring::rows&&d.arena.row(a[6]).bytes==size_t(qsaring::rows)*128*(s.f32_activations?4:2))shape.flags|=qsaring::flag;
+  // Packet15's GDN/QSA geometry is fixed to the real model. Mini's synthetic
+  // geometry uses dimensioned parallel equations, never the interpreter control.
+  bool tiny=s.g.h!=2560;
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/dense_raw.hpp engine/src/stage2/packet194-expert-diet-engine/dense_raw.hpp
+--- a/stage2/packet194-expert-diet-engine/dense_raw.hpp	2026-10-26 11:28:33.476862822 -0400
++++ b/stage2/packet194-expert-diet-engine/dense_raw.hpp	2026-10-26 12:08:05.962851554 -0400
+@@ -40,6 +40,8 @@
+ namespace denseraw {
+ using iq3::Type;
+ inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_RAW");return e&&e[0]=='1';}();return on;}
++// OWNRT_DRAFT_HEAD_RAW=1 (lab 2026-10-26, default off): the rank-0 draft head prefix is stored raw as well (BF16 kernel).
++inline bool draft_head(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_HEAD_RAW");return e&&e[0]=='1';}();return on;}
+ // Load-time per-element proof (raw decode == expanded value), on with the switch unless OWNRT_DENSE_RAW_VERIFY=0.
+ inline bool verify(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_RAW_VERIFY");return !(e&&e[0]=='0');}();return on;}
+ inline bool supported(Type t,size_t k){return (t==Type::Q6_K&&k&&k%512==0&&k<=17408)||(t==Type::Q8_0&&k&&k%256==0&&k<=17408);}
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/kernels.hpp engine/src/stage2/packet194-expert-diet-engine/kernels.hpp
+--- a/stage2/packet194-expert-diet-engine/kernels.hpp	2026-10-26 09:52:47.967641339 -0400
++++ b/stage2/packet194-expert-diet-engine/kernels.hpp	2026-10-26 12:03:19.046378074 -0400
+@@ -1,6 +1,7 @@
+ #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
+ #include "stage2/packet194-expert-diet-engine/detmath.hpp"
+ #include "stage2/packet194-expert-diet-engine/rope.hpp"
++#include "stage2/packet194-expert-diet-engine/qsa_ring.hpp"
+ #pragma once
+ // Original lab non-GEMV kernels. No runtime implementation imported.
+ #include <array>
+@@ -71,7 +72,8 @@
+ inline void validate(Shape s){
+  if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>256||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
+  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
+- if(s.flags&~(1|2|4|8|16|f32_activations_flag))throw std::invalid_argument("unknown shape flag");
++ if(s.flags&~(1|2|4|8|16|f32_activations_flag|qsaring::flag))throw std::invalid_argument("unknown shape flag");
++ if((s.flags&qsaring::flag)&&(s.op!=pool||s.capacity<=qsaring::rows))throw std::invalid_argument("QSA raw ring flag: pool with capacity above the ring only");
+  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
+  if(s.op==conv&&s.extra!=0&&s.extra!=1&&s.extra!=3)throw std::invalid_argument("conv dilation");
+  if((s.op==norm||s.op==combine_norm)&&s.width>4096)throw std::invalid_argument("norm width");
+@@ -95,7 +97,7 @@
+  case moe_combine:b(0,T*s.extra*W);f(1,T*s.extra);b(2,T*W);b(3,T);n[4]=n[2];break;
+  case gated_norm:b(0,T*6144);n[1]=n[0];weight(2,128);n[3]=n[0];break;
+  case prepare:b(0,T*24*512);b(1,T*512);b(2,T*512);weight(3,256);weight(4,256);weight(5,128);b(6,T*6144);n[7]=n[6];n[8]=n[1];n[9]=n[2];break;
+- case pool:b(0,T*512);n[1]=n[0];b(2,T*128);weight(3,128);b(4,C*512);n[5]=n[4];b(6,C*128);b(7,((C+3)/4)*128);break;
++ case pool:b(0,T*512);n[1]=n[0];b(2,T*128);weight(3,128);b(4,C*512);n[5]=n[4];b(6,size_t((s.flags&qsaring::flag)?qsaring::rows:C)*128);b(7,((C+3)/4)*128);break;
+  case select:b(0,T*512);b(1,((C+3)/4)*128);f(2,T*S);break;
+  case attention_score:case attention_softmax:case attention_value:b(0,T*6144);n[1]=n[0];b(2,C*512);n[3]=n[2];f(4,T*S);n[5]=n[0];f(6,T*24*S);n[7]=n[6];break;
+  }
+@@ -188,10 +190,10 @@
+   else{h-=26;norm_rope(t,[&](int k){return a.b(2,(r*4+h)*128+k);},[&](int k,float v){a.put(9,(r*4+h)*128+k,v);},a,5,128,position,s.flags);}
+  }else if(s.op==pool){
+   int blocks=append_pools(s);
+-  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,pos*128+j,a.b(2,j));});}
++  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,qsaring::row(pos+j/128,s.flags)*128+j%128,a.b(2,j));});}
+   else if(pos/4+group<(pos+s.tokens)/4){
+    group+=pos/4;
+-   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(x/4.f);};
++   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,qsaring::row(r,s.flags)*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(x/4.f);};
+    norm_rope(t,pooled,[&](int k,float v){a.put(7,group*128+k,v);},a,3,128,group*4,s.flags);
+   }
+  }else if(s.op==select){
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp engine/src/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp
+--- a/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp	2026-10-26 11:28:33.477216346 -0400
++++ b/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp	2026-10-26 12:08:05.962754792 -0400
+@@ -81,6 +81,58 @@
+  const uint32_t row=row0+(lane&(R-1));
+  if(lane<R&&row<rows)y[row]=A[0];
+ }
++// BF16 activations and outputs (OWNRT_DRAFT_HEAD_RAW=1: the rank-0 draft head prefix, lab 2026-10-26, default off).
++// Each output keeps Kernel<0,Q6_K,K,1,false> on the expanded rows (dense_lane<Q6_K,K,false>, begin 0): lane l walks the
++// tiles 8l, 8l+256, ... in order; value (bit-identical to the expanded value), input = float(bf16 bits << 16),
++// product = value*input, sum = sum + product; the adjacent-pair tree over 32 lanes (transposing butterfly); the output
++// row is iq3::bf16_bits(sum).
++template<unsigned K,unsigned R,unsigned U>
++inline void dense_rows_bf16(const uint8_t* W,const uint16_t* X,uint16_t* Y,uint32_t rows,uint32_t rb,sycl::nd_item<1> it){
++ static_assert(K%512==0&&(R==1||R==2||R==4)&&U>=1);
++ constexpr unsigned LR=R==1?0:R==2?1:2;constexpr uint32_t P=K/512;
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++ const uint32_t row0=(uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(sg.get_group_linear_id()))*R;
++ if(row0>=rows)return; // whole subgroup; no barriers in this kernel
++ const uint8_t* wr[R];
++ #pragma unroll
++ for(unsigned r=0;r<R;++r)wr[r]=W+size_t(row0+r<rows?row0+r:row0)*rb; // a missing row reads row0, never stored
++ float A[R];
++ #pragma unroll
++ for(unsigned r=0;r<R;++r)A[r]=0.f;
++ #pragma unroll 1
++ for(uint32_t p0=0;p0<P;p0+=U){
++  denseraw::Q6Pair words[U][R];
++  #pragma unroll
++  for(unsigned u=0;u<U;++u)if(p0+u<P){
++   #pragma unroll
++   for(unsigned r=0;r<R;++r)words[u][r]=denseraw::q6_load_pair(wr[r],K,p0+u,lane);}
++  #pragma unroll
++  for(unsigned u=0;u<U;++u)if(p0+u<P){
++   #pragma unroll
++   for(unsigned o=0;o<2;++o){
++    const sycl::vec<uint16_t,8> bits=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(X+512*(p0+u)+256*o+lane*8);float xs[8];
++    #pragma unroll
++    for(unsigned j=0;j<8;++j)xs[j]=iq3::bits_float(uint32_t(bits[j])<<16);
++    #pragma unroll
++    for(unsigned r=0;r<R;++r){float v[8];denseraw::q6_pair_values(words[u][r],o,v);
++     #pragma unroll
++     for(unsigned j=0;j<8;++j){const float product=v[j]*xs[j];A[r]=A[r]+product;}}}}
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<LR;++lv){const bool hi=((lane>>lv)&1u)!=0;
++  #pragma unroll
++  for(unsigned m=0;m<(R>>(lv+1));++m){const float lo_v=A[2*m],hi_v=A[2*m+1];const float send=hi?lo_v:hi_v,mine=hi?hi_v:lo_v;
++   const float recv=sycl::permute_group_by_xor(sg,send,1u<<lv);A[m]=hi?recv+mine:mine+recv;}}
++ #pragma unroll
++ for(unsigned lv=LR;lv<5;++lv){const float o=sycl::permute_group_by_xor(sg,A[0],1u<<lv);A[0]=((lane>>lv)&1u)?o+A[0]:A[0]+o;}
++ const uint32_t row=row0+(lane&(R-1));
++ if(lane<R&&row<rows)Y[row]=iq3::bf16_bits(A[0]);
++}
++template<unsigned K,unsigned R,unsigned U> struct RowsKernelBF16 {
++ const uint8_t* w;const uint16_t* x;uint16_t* y;uint32_t rows,rb;
++ void operator()(sycl::nd_item<1> it) const {dense_rows_bf16<K,R,U>(w,x,y,rows,rb,it);}
++ auto get(sycl::ext::oneapi::experimental::properties_tag) const {return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>};}
++};
+ // Kernel object: sub-group size 32 and the GRF mode (128 or 256 registers) as kernel properties.
+ template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned GRF> struct RowsKernel {
+  const uint8_t* w;const float* x;float* y;uint32_t rows,rb,groups,tokens;
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/p33_submit.cpp engine/src/stage2/packet194-expert-diet-engine/p33_submit.cpp
+--- a/stage2/packet194-expert-diet-engine/p33_submit.cpp	2026-10-26 11:28:33.477369494 -0400
++++ b/stage2/packet194-expert-diet-engine/p33_submit.cpp	2026-10-26 12:08:05.962955229 -0400
+@@ -146,8 +146,23 @@
+ template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> ownrt::Event raw_rows(ownrt::Device& d,const integrated::Matrix& m,uint32_t rb){
+  DenseRaw<T,K,R,U,G> op;op.rows=uint32_t(m.rows);op.rb=rb;op.tokens=m.tokens;std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};return d.compute(op,ids,{});
+ }
++// OWNRT_DRAFT_HEAD_RAW=1 (default off): the rank-0 draft head prefix, raw Q6_K rows with BF16 activations and outputs.
++template<unsigned K,unsigned R,unsigned U> struct DenseRawBF16 final:ownrt::SyclOperation {
++ uint32_t rows=0,rb=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  const size_t global=(size_t((rows+R-1)/R)*32+127)/128*128;
++  const raw::RowsKernelBF16<K,R,U> kernel{static_cast<const uint8_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),rows,rb};
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked(kernel)));});
++ }
++};
+ template<iq3::Type T,unsigned K> integrated::Launch raw_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& ms,unsigned v){
+  const auto& m=ms.at(0);
++ if constexpr(T==iq3::Type::Q6_K&&K==2560) if(denseraw::draft_head()&&ms.size()==1&&v==6&&m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16&&m.tokens==1) {
++  if(m.fp32||m.routes||m.status||m.count!=1||m.experts!=1||(m.span&&m.span!=m.rows)||!m.rows||m.rows>UINT32_MAX||m.columns!=K)throw std::invalid_argument("p33 raw BF16: dense split-1 rows only");
++  const size_t rb=denseraw::row_bytes(T,K);
++  if(d.arena.row(m.w).bytes<size_t(m.rows)*rb||!v2_aligned(d,m.w,4)||!v2_aligned(d,m.x,16)||!v2_aligned(d,m.y,2))throw std::invalid_argument("p33 raw BF16: weight extent/alignment");
++  DenseRawBF16<K,1,1> op;op.rows=uint32_t(m.rows);op.rb=uint32_t(rb);std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};auto e=d.compute(op,ids,{});return {e,e,1};
++ }
+  if(ms.size()!=1||v!=6||m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.routes||m.status||m.count!=1||m.experts!=1||(m.span&&m.span!=m.rows)||!m.rows||m.rows>UINT32_MAX||!m.tokens||m.columns!=K)
+   throw std::invalid_argument("p33 raw: dense F32 split-1 rows only");
+  if constexpr(!((T==iq3::Type::Q6_K&&K==2560)||(T==iq3::Type::Q8_0&&K==6144)))throw std::invalid_argument("p33 raw: uncompiled shape");
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/p42_cooperative.hpp engine/src/stage2/packet194-expert-diet-engine/p42_cooperative.hpp
+--- a/stage2/packet194-expert-diet-engine/p42_cooperative.hpp	2026-10-24 15:09:33.119358151 -0400
++++ b/stage2/packet194-expert-diet-engine/p42_cooperative.hpp	2026-10-26 12:03:19.046807782 -0400
+@@ -67,10 +67,10 @@
+   else{h-=26;norm_rope(t,[&](int k){return a.b(2,(r*4+h)*128+k);},[&](int k,float v){a.put(9,(r*4+h)*128+k,v);},a,5,128,position,s.flags);}
+  }else if constexpr(Code==pool){
+   int blocks=ng::append_pools(s);
+-  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,pos*128+j,a.b(2,j));});}
++  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,qsaring::row(pos+j/128,s.flags)*128+j%128,a.b(2,j));});}
+   else if(pos/4+group<(pos+s.tokens)/4){
+    group+=pos/4;
+-   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return Args::bf(x/4.f);};
++   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,qsaring::row(r,s.flags)*128+k):a.b(2,(r-pos)*128+k));}return Args::bf(x/4.f);};
+    norm_rope(t,pooled,[&](int k,float v){a.put(7,group*128+k,v);},a,3,128,group*4,s.flags);
+   }
+  }else if constexpr(Code==ng::select){
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/qsa_ring.hpp engine/src/stage2/packet194-expert-diet-engine/qsa_ring.hpp
+--- a/stage2/packet194-expert-diet-engine/qsa_ring.hpp	1969-12-31 19:00:00.000000000 -0500
++++ b/stage2/packet194-expert-diet-engine/qsa_ring.hpp	2026-10-26 12:03:10.881475820 -0400
+@@ -0,0 +1,20 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#pragma once
++// OWNRT_QSA_RAW_RING=1 (lab 2026-10-26, default off; rank 1 only): each QSA layer's raw indexer-key buffer
++// (blk.N.qsa.raw, context x 128 values, 33.5 MB in F32 at context 65536) becomes a 512-row ring.
++//
++// Why it is exact: qsa_append_pool is the buffer's only reader and writer (plan.hpp). A launch of T rows at positions
++// [pos, pos+T) writes raw rows pos..pos+T-1, and it reads raw only for the earlier rows of the pools it completes:
++// rows [4*(pos/4), pos), at most three of them. Rows older than those are never read again. T <= 256
++// (ng::validate), so the at most T+3 rows that one launch touches are distinct modulo 512, and each read row was
++// written by an earlier launch that the ring has not overwritten since (at most 259 newer rows). So every read returns
++// the same bytes as with the full buffer, and every write and every output is unchanged. Only the storage of
++// never-read-again rows is dropped.
++#include <cstddef>
++#include <cstdlib>
++namespace qsaring {
++inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_QSA_RAW_RING");return e&&e[0]=='1';}();return on;}
++inline constexpr int rows=512;  // ring rows, a power of two >= 256 launch rows + 3 open-pool rows
++inline constexpr int flag=128;  // ng::Shape flag of qsa_append_pool: raw row r lives at r & (rows-1)
++inline int row(int r,int flags){return (flags&flag)?(r&(rows-1)):r;}
++}
+diff -ruN -x __pycache__ /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised.hpp engine/src/stage2/packet194-expert-diet-engine/specialised.hpp
+--- a/stage2/packet194-expert-diet-engine/specialised.hpp	2026-10-24 15:20:36.535885582 -0400
++++ b/stage2/packet194-expert-diet-engine/specialised.hpp	2026-10-26 12:03:19.046683529 -0400
+@@ -149,12 +149,12 @@
+   int blocks=ng::append_pools(s);
+   if(stage==0&&index>=size_t(blocks)*4){int j=int(index)-blocks*4;
+    if(j<s.tokens*512){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));}
+-   else if(j<s.tokens*640){int k=j-s.tokens*512;a.put(6,pos*128+k,a.b(2,k));}
++   else if(j<s.tokens*640){int k=j-s.tokens*512;a.put(6,qsaring::row(pos+k/128,s.flags)*128+k%128,a.b(2,k));}
+    return;
+   }
+   int per=stage==0?4:32,block=pos/4+int(index)/per,c=int(index)%per;
+   if(block>=(pos+s.tokens)/4)return;
+-  auto get=[&](int k){float v=0.f;for(int j=0;j<4;++j){int r=block*4+j;v=v+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(v/4.f);};
++  auto get=[&](int k){float v=0.f;for(int j=0;j<4;++j){int r=block*4+j;v=v+(r<pos?a.b(6,qsaring::row(r,s.flags)*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(v/4.f);};
+   if(stage==0)scratch[block*4+c]=subtree(128,c,[&](int k){float v=get(k);return v*v;});
+   else{float inv=detmath::rsqrt(upper(scratch+block*4,4)/float(128)+1e-6f);for(int k=c*4;k<c*4+4;++k)a.put(7,block*128+k,rotary(get,a,3,k,s.flags,inv,block*4));}
+  }else if constexpr(Code==ng::select){

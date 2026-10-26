@@ -47,12 +47,54 @@ void prefill_allocate() {
       auto role=prefill_role(name);prefill_role_of[name]=role;role_bytes[role]=std::max(role_bytes[role],bytes);
     }
   }
-  size_t total=0;
+  size_t total=0,unpacked=0;
+  // OWNRT_PREFILL_SHADOW_PACK=1 (lab 2026-10-26, default off; rank 1 only): roles whose live ranges never overlap share
+  // one allocation. A chunk runs prefill_sites in this order (every row of a site before the next site), and only
+  // prefill_chunk reaches the shadows. A role's value lives from the site that writes it to its last reader before the
+  // next write; a role read before any write (the input rows), and every non-layer role, lives for the whole chunk.
+  // Two roles share an allocation only if none of their live ranges intersect. So every read sees the bytes its role's
+  // last write left, exactly as with private shadows; two roles of one site never share. Largest role first, best fit.
+  static const bool pack_env=[]{const char* e=std::getenv("OWNRT_PREFILL_SHADOW_PACK");return e&&e[0]=='1';}();
+  std::map<std::string,size_t> slot_of;std::vector<size_t> slot_bytes;
+  if(pack_env&&a.rank==1&&a.gsq_packed&&!a.mini) {
+    using Segment=std::pair<size_t,size_t>;std::map<std::string,std::vector<Segment>> live;std::map<std::string,std::pair<size_t,size_t>> open;
+    const size_t n=prefill_sites.size();
+    for(size_t i=0;i<n;++i){const auto& l=*prefill_sites[i];
+      for(const auto& name:l.inputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
+        if(it==open.end())open[r]={0,i};else it->second.second=i;}
+      for(const auto& name:l.outputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
+        if(it!=open.end())live[r].push_back(it->second);open[r]={l.op=="lookup"?0:i,i};}
+    }
+    for(const auto& [r,seg]:open)live[r].push_back(seg);
+    for(auto& [r,segs]:live)if(!r.starts_with("blk.*")){segs.assign(1,{0,n});}
+    for(const auto& [r,bytes]:role_bytes)require(live.count(r),"prefill shadow role without a site");
+    auto overlap=[&](const std::string& x,const std::string& y){for(const auto& a0:live.at(x))for(const auto& b0:live.at(y))if(a0.first<=b0.second&&b0.first<=a0.second)return true;return false;};
+    std::vector<std::pair<size_t,std::string>> order;for(const auto& [r,bytes]:role_bytes)order.push_back({bytes,r});
+    std::sort(order.begin(),order.end(),[](const auto& x,const auto& y){return x.first!=y.first?x.first>y.first:x.second<y.second;});
+    std::vector<std::vector<std::string>> members;
+    for(const auto& [bytes,r]:order){size_t best=SIZE_MAX;
+      for(size_t k=0;k<members.size();++k){bool ok=true;for(const auto& q:members[k])if(overlap(r,q)){ok=false;break;}
+        if(ok&&(best==SIZE_MAX||slot_bytes[k]<slot_bytes[best]))best=k;}
+      if(best==SIZE_MAX){best=members.size();members.emplace_back();slot_bytes.push_back(0);}
+      members[best].push_back(r);slot_bytes[best]=std::max(slot_bytes[best],bytes);slot_of[r]=best;}
+  }
+  if(!slot_of.empty()) {
+    std::vector<Allocation> ids;
+    for(size_t k=0;k<slot_bytes.size();++k){const size_t bytes=slot_bytes[k]*M;
+      auto id=allocate(0,"prefill:pack"+std::to_string(k),bytes,Category::scratch,Lifetime::transaction);
+      std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)),0);
+      for(size_t off=0;off<bytes;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes-off));
+      ids.push_back(id);total+=bytes;}
+    for(const auto& [role,bytes]:role_bytes){prefill_shadows[role]={ids.at(slot_of.at(role)),bytes};unpacked+=bytes*M;}
+    std::ostringstream o;o<<"{\"slots\":[";for(size_t k=0;k<slot_bytes.size();++k){o<<(k?",":"")<<"{\"bytes\":"<<slot_bytes[k]*M<<",\"roles\":[";bool c=false;
+      for(const auto& [r,slot]:slot_of)if(slot==k){o<<(c?",":"")<<ownrt::quote(r);c=true;}o<<"]}";}
+    o<<"]}";save(a.output/"prefill-shadow-pack.json",o.str());
+  } else
   for(const auto& [role,bytes]:role_bytes) {
     auto id=allocate(0,"prefill:"+role,bytes*M,Category::scratch,Lifetime::transaction);
     std::vector<uint8_t> zero(std::min(bytes*M,size_t(4194304)),0);
     for(size_t off=0;off<bytes*M;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes*M-off));
-    prefill_shadows[role]={id,bytes};total+=bytes*M;
+    prefill_shadows[role]={id,bytes};total+=bytes*M;unpacked+=bytes*M;
   }
 #ifndef OWN_RT_HOST_ONLY
   if(xgroup::enabled()) { // expert-grouped routed sites: slot order, tile descriptors and tile count for top*M slots
@@ -65,7 +107,7 @@ void prefill_allocate() {
   prefill_positions=allocate(0,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
   prefill_tokens=allocate(0,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
   std::ostringstream o;o<<"{\"rows\":"<<M<<",\"roles\":"<<role_bytes.size()<<",\"buffers\":"<<prefill_role_of.size()
-    <<",\"sites\":"<<prefill_sites.size()<<",\"shadow_bytes\":"<<total<<"}";
+    <<",\"sites\":"<<prefill_sites.size()<<",\"shadow_bytes\":"<<total<<(slot_of.empty()?std::string():",\"packed_slots\":"+std::to_string(slot_bytes.size())+",\"unpacked_bytes\":"+std::to_string(unpacked))<<"}";
   save(a.output/"prefill-allocation.json",o.str());
 }
 // Captured row replays: the commands an unchanged site issues for one row, captured once under that row's views and

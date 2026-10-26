@@ -40,6 +40,8 @@
 namespace denseraw {
 using iq3::Type;
 inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_RAW");return e&&e[0]=='1';}();return on;}
+// OWNRT_DRAFT_HEAD_RAW=1 (lab 2026-10-26, default off): the rank-0 draft head prefix is stored raw as well (BF16 kernel).
+inline bool draft_head(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_HEAD_RAW");return e&&e[0]=='1';}();return on;}
 // Load-time per-element proof (raw decode == expanded value), on with the switch unless OWNRT_DENSE_RAW_VERIFY=0.
 inline bool verify(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_RAW_VERIFY");return !(e&&e[0]=='0');}();return on;}
 inline bool supported(Type t,size_t k){return (t==Type::Q6_K&&k&&k%512==0&&k<=17408)||(t==Type::Q8_0&&k&&k%256==0&&k<=17408);}

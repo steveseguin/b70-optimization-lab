@@ -1006,6 +1006,34 @@ class SessionIntegrationTests(unittest.TestCase):
         self.assertEqual(e3.index, {})
 
 
+class QsaRingOracleTests(unittest.TestCase):
+    """OWNRT_QSA_RAW_RING: a 512-row ring below 512 written positions, zero-extended, hashes like the linear buffer."""
+
+    def test_ring_zero_extension_matches_linear_buffers(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        row = S.QSA_RAW_ROW_BYTES
+        written = bytes(range(256)) * (119 * row // 256 + 1)
+        written = written[:119 * row]
+        ring = written + bytes((S.QSA_RING_ROWS - 119) * row)
+        other = b'\x07' * 64
+        bufs = [('blk.27.qsa.raw.bin', ring), ('blk.27.qsa.keys.bin', other), ('blk.3.qsa.raw.bin', written + bytes((4096 - 119) * row))]
+        off, rows, blob = 0, ['GSQ_STATE_BUNDLE_V1'], b''
+        for name, data in bufs:
+            rows.append(f'{name}\t{off}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}')
+            off += len(data)
+            blob += data
+        (tmp / 'state-index.tsv').write_text('\n'.join(rows) + '\n')
+        (tmp / 'state.bundle').write_bytes(blob)
+        rings = S.ring_extended_hashes(tmp, (4096, 65536))
+        self.assertEqual(sorted(rings), ['blk.27.qsa.raw.bin'])  # the linear 4096-row buffer is not a ring
+        linear = lambda n: hashlib.sha256(written + bytes((n - 119) * row)).hexdigest()
+        self.assertEqual(rings['blk.27.qsa.raw.bin'], {4096: linear(4096), 65536: linear(65536)})
+        state = {'rank1': {'blk.27.qsa.raw.bin': hashlib.sha256(ring).hexdigest(), 'blk.27.qsa.keys.bin': 'k'}}
+        view = S.ring_view(state, {'rank1': rings}, 4096)
+        self.assertEqual(view, {'rank1': {'blk.27.qsa.raw.bin': linear(4096), 'blk.27.qsa.keys.bin': 'k'}})
+
+
 class SessionCompatTests(unittest.TestCase):
     """Cross-build session restore (VERIFY compat line, store acceptance, compat gate) and the disk archive."""
 

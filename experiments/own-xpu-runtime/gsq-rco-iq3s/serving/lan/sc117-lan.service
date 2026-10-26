@@ -19,7 +19,7 @@ Environment=SC117_CONTEXT=65536
 # to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
 Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/0efa50e4c5ee.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/25b3f7542cad.json
 Environment=SC117_PREFILL_ROWS=256
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -28,8 +28,9 @@ Environment=OWNRT_DRAFT_PREFIX_ROWS=91392
 # Layer split (rank 0 holds layers 0..split-1 and the draft). It follows the stage balance: 2026-10-25 suite on
 # 0f478d44: 23/25 40.60, 22/26 41.26 tok/s; after the GDN/route/argmax kernels (2145dea2): 22/26 43.46, 23/25 44.13.
 # Outputs identical in every case; 21/27 exceeds the 30 GiB per-card plan cap.
-# 24/24 at the 65536 context (rank 1 31.57 GB of the 32.21 GB cap); use 23 only with SC117_CONTEXT<=32768.
-Environment=SC117_TARGET_SPLIT=24
+# 23/25 at the 65536 context since 2026-10-26 12:50 (research/split23): with the qsa.raw ring and packed prefill shadows
+# rank 1 measures 32.19 GB of the 32.21 GB plan cap at 256-row chunks; without them use 24 at 65536.
+Environment=SC117_TARGET_SPLIT=23
 # Speculation-miss machinery from the BF16 record line, admitted for F32 state (redo-bank proof): rotate recurrent banks,
 # batch the snapshot copies, capture only written KV rows. Suite 2026-10-25: control 41.56 tok/s (102 MB copied per
 # speculative step, rollback 3.3-4 ms), banks-batch+static 42.26 (46 MB in one submission, rollback 2.4 ms),
@@ -70,6 +71,10 @@ Environment=OWNRT_PREFILL_EXPERTS=1
 # Raw-size dense Q6_K/Q8_0 weights (2026-10-26, research/dense-raw): head, qkv, gdn.z, qgate and attention decode
 # raw GGUF blocks to the identical values; every element is checked against the expanded rows at load.
 Environment=OWNRT_DENSE_RAW=1
+# Rank-1 storage for split 23 at 64K (research/split23): qsa.raw keys in a 512-row ring (only 3 rows are ever read back),
+# prefill row shadows with disjoint live ranges share memory. Storage only; outputs bitwise equal.
+Environment=OWNRT_QSA_RAW_RING=1
+Environment=OWNRT_PREFILL_SHADOW_PACK=1
 # Engine sessions (2026-10-26): a conversation of >= 256 tokens is parked (rank ops 17-19, both ranks + the draft's
 # reverse row, sealed manifest) before a RESET would evict it, and restored when a later prompt extends it.
 Environment=SC117_SESSIONS=1

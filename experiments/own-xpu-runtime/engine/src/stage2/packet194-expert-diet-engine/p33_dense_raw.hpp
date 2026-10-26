@@ -81,6 +81,58 @@ inline void dense_rows(const uint8_t* W,const float* X,float* Y,uint32_t rows,ui
  const uint32_t row=row0+(lane&(R-1));
  if(lane<R&&row<rows)y[row]=A[0];
 }
+// BF16 activations and outputs (OWNRT_DRAFT_HEAD_RAW=1: the rank-0 draft head prefix, lab 2026-10-26, default off).
+// Each output keeps Kernel<0,Q6_K,K,1,false> on the expanded rows (dense_lane<Q6_K,K,false>, begin 0): lane l walks the
+// tiles 8l, 8l+256, ... in order; value (bit-identical to the expanded value), input = float(bf16 bits << 16),
+// product = value*input, sum = sum + product; the adjacent-pair tree over 32 lanes (transposing butterfly); the output
+// row is iq3::bf16_bits(sum).
+template<unsigned K,unsigned R,unsigned U>
+inline void dense_rows_bf16(const uint8_t* W,const uint16_t* X,uint16_t* Y,uint32_t rows,uint32_t rb,sycl::nd_item<1> it){
+ static_assert(K%512==0&&(R==1||R==2||R==4)&&U>=1);
+ constexpr unsigned LR=R==1?0:R==2?1:2;constexpr uint32_t P=K/512;
+ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+ const uint32_t row0=(uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(sg.get_group_linear_id()))*R;
+ if(row0>=rows)return; // whole subgroup; no barriers in this kernel
+ const uint8_t* wr[R];
+ #pragma unroll
+ for(unsigned r=0;r<R;++r)wr[r]=W+size_t(row0+r<rows?row0+r:row0)*rb; // a missing row reads row0, never stored
+ float A[R];
+ #pragma unroll
+ for(unsigned r=0;r<R;++r)A[r]=0.f;
+ #pragma unroll 1
+ for(uint32_t p0=0;p0<P;p0+=U){
+  denseraw::Q6Pair words[U][R];
+  #pragma unroll
+  for(unsigned u=0;u<U;++u)if(p0+u<P){
+   #pragma unroll
+   for(unsigned r=0;r<R;++r)words[u][r]=denseraw::q6_load_pair(wr[r],K,p0+u,lane);}
+  #pragma unroll
+  for(unsigned u=0;u<U;++u)if(p0+u<P){
+   #pragma unroll
+   for(unsigned o=0;o<2;++o){
+    const sycl::vec<uint16_t,8> bits=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(X+512*(p0+u)+256*o+lane*8);float xs[8];
+    #pragma unroll
+    for(unsigned j=0;j<8;++j)xs[j]=iq3::bits_float(uint32_t(bits[j])<<16);
+    #pragma unroll
+    for(unsigned r=0;r<R;++r){float v[8];denseraw::q6_pair_values(words[u][r],o,v);
+     #pragma unroll
+     for(unsigned j=0;j<8;++j){const float product=v[j]*xs[j];A[r]=A[r]+product;}}}}
+ }
+ #pragma unroll
+ for(unsigned lv=0;lv<LR;++lv){const bool hi=((lane>>lv)&1u)!=0;
+  #pragma unroll
+  for(unsigned m=0;m<(R>>(lv+1));++m){const float lo_v=A[2*m],hi_v=A[2*m+1];const float send=hi?lo_v:hi_v,mine=hi?hi_v:lo_v;
+   const float recv=sycl::permute_group_by_xor(sg,send,1u<<lv);A[m]=hi?recv+mine:mine+recv;}}
+ #pragma unroll
+ for(unsigned lv=LR;lv<5;++lv){const float o=sycl::permute_group_by_xor(sg,A[0],1u<<lv);A[0]=((lane>>lv)&1u)?o+A[0]:A[0]+o;}
+ const uint32_t row=row0+(lane&(R-1));
+ if(lane<R&&row<rows)Y[row]=iq3::bf16_bits(A[0]);
+}
+template<unsigned K,unsigned R,unsigned U> struct RowsKernelBF16 {
+ const uint8_t* w;const uint16_t* x;uint16_t* y;uint32_t rows,rb;
+ void operator()(sycl::nd_item<1> it) const {dense_rows_bf16<K,R,U>(w,x,y,rows,rb,it);}
+ auto get(sycl::ext::oneapi::experimental::properties_tag) const {return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>};}
+};
 // Kernel object: sub-group size 32 and the GRF mode (128 or 256 registers) as kernel properties.
 template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned GRF> struct RowsKernel {
  const uint8_t* w;const float* x;float* y;uint32_t rows,rb,groups,tokens;

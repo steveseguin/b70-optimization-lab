@@ -613,6 +613,8 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  case Op::qsa_attention:shape.op=ng::attention_score;for(int j=0;j<5;++j)in(j,j);out(5,0);a[6]=score;a[7]=probability;break;
  default:use_ng=false;
  }
+ // OWNRT_QSA_RAW_RING=1: a raw binding allocated as the 512-row ring (rank 1 plan, rank.hpp) selects ring indexing.
+ if(use_ng&&shape.op==ng::pool&&qsaring::enabled()&&shape.capacity>qsaring::rows&&d.arena.row(a[6]).bytes==size_t(qsaring::rows)*128*(s.f32_activations?4:2))shape.flags|=qsaring::flag;
  // Packet15's GDN/QSA geometry is fixed to the real model. Mini's synthetic
  // geometry uses dimensioned parallel equations, never the interpreter control.
  bool tiny=s.g.h!=2560;

@@ -1,0 +1,775 @@
+{
+ "schema": "ownrt.lab.split23.v1",
+ "date": "2026-10-26",
+ "card": "0000:27:00.0 (renderD131), rank 1 alone, service env incl. OWNRT_DENSE_RAW=1, 256-row prefill chunks",
+ "switches": {
+  "OWNRT_QSA_RAW_RING": "1: rank 1 QSA raw indexer-key buffers become 512-row rings (233 MB at split 23)",
+  "OWNRT_PREFILL_SHADOW_PACK": "1: rank 1 batched-prefill row shadows share allocations by live range (217.8 -> 68.3 MB at 256 rows)",
+  "OWNRT_DRAFT_HEAD_RAW": "1: rank 0 draft head prefix stored raw (-116,981,760 B), BF16-activation raw Q6_K kernel; no lab device check (rank 0)",
+  "OWNRT_PLAN_ONLY": "lab diagnostic: stop after the plan, before device contact"
+ },
+ "patch": "split23.patch (13 files vs canonical engine/src; patched canonical == final lab source of build b)",
+ "builds": {
+  "reference (live service, canonical 0efa50e4c5ee)": {
+   "binary": "/dev/shm/engine-build-svc-b14-raw-20261026/sc117-engine",
+   "sha256": "0efa50e4c5eea571605e4560cb7ac987b658b45717f57b377c9c840729f4b13c"
+  },
+  "a (ring + shadow pack + plan-only)": {
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "sha256": "190130f62fa94c7b0dadb0c7f0b1f31119e7b479f2fb5e3c4d5859c2395d109c"
+  },
+  "b FINAL (canonical + split23.patch)": {
+   "binary": "/dev/shm/engine-build-lab-s23-b/sc117-engine",
+   "sha256": "fccabd41b6531e88e1ea9a36945f8a70628601ff771ca08598dbe151182ef61f"
+  }
+ },
+ "owned_bytes": {
+  "cap": 32212254720,
+  "rank1_plan": {
+   "split24": {
+    "reference": 30959631492,
+    "new": 30759877764
+   },
+   "split23": {
+    "reference": 32356767340,
+    "new": 32123721324,
+    "new_headroom": 88533396
+   }
+  },
+  "rank1_runtime": {
+   "split24": {
+    "reference": 31177563332,
+    "new": 30828309700
+   },
+   "split23_64k": {
+    "reference_estimate": 32574699180,
+    "new": 32192153260,
+    "new_headroom": 20101460
+   },
+   "split23_32k": {
+    "reference": 31488374444,
+    "new": 31223269036
+   }
+  },
+  "rank0_draft_head_raw_saving": 116981760
+ },
+ "timing_rank1_64k": {
+  "split24_half_ms": [
+   12.932,
+   12.942,
+   12.936
+  ],
+  "split23_half_ms": [
+   13.407,
+   13.407,
+   13.411
+  ],
+  "split24_prompt_ms": [
+   16901,
+   16945,
+   16939
+  ],
+  "split23_prompt_ms": [
+   17378,
+   17370,
+   17348
+  ]
+ },
+ "cpu_tests": {
+  "qsa_ring": "cputest/test_qsa_ring.cpp: 76 launches / 4977 positions, keys/values/pooled bitwise equal after every launch, 512/512 ring slots equal; negative control detected",
+  "draft_head_bf16": "cputest/test_draft_head_bf16.cpp: 6/6 cases (2 row ranges x 3 inputs) bitwise vs Kernel<0,Q6_K,2560,1,false>, no out-of-range stores",
+  "draft_head_values": "research/dense-raw prove_dense_raw: every element of output.weight (incl. the 91392-row prefix) raw == expanded; plus the load-time per-element check"
+ },
+ "gates": [
+  {
+   "gate": "split 24, 64K, 4096/256: ring+pack (build a) vs reference",
+   "runs": [
+    "ref24",
+    "new24b"
+   ],
+   "result": "1032 buffers: 1026 bitwise equal, 6 raw rings equal to the newest reference rows; tokens equal"
+  },
+  {
+   "gate": "split 24, 64K, 4096/256: switches off (build a) vs reference",
+   "runs": [
+    "ref24",
+    "off24"
+   ],
+   "result": "1032/1032 equal, tokens equal"
+  },
+  {
+   "gate": "split 24, 64K, 300/256 (44-row last chunk): ring+pack vs reference",
+   "runs": [
+    "ref24-300",
+    "new24-300"
+   ],
+   "result": "1032 buffers: equal, 6 rings; tokens equal"
+  },
+  {
+   "gate": "split 23, 32K, 4096/256: ring+pack vs reference",
+   "runs": [
+    "ref23k32",
+    "new23k32"
+   ],
+   "result": "1079 buffers: equal, 7 rings; tokens equal"
+  },
+  {
+   "gate": "split 23, 64K (new) vs split 23, 32K (reference), 4096/256",
+   "runs": [
+    "ref23k32",
+    "new23"
+   ],
+   "result": "1079 buffers: equal, 7 rings, 21 KV buffers equal over the written rows and zero after; tokens equal"
+  },
+  {
+   "gate": "split 23, 64K (new) vs split 23, 32K (reference), 30000/256 (118 chunks, ring wraps 58 times)",
+   "runs": [
+    "ref23k32-30k",
+    "new23-30k"
+   ],
+   "result": "1079 buffers: equal, 7 rings, 21 KV prefixes; tokens equal"
+  },
+  {
+   "gate": "split 24, 64K, 4096/256: final build b with all three switches vs reference",
+   "runs": [
+    "ref24c",
+    "b24"
+   ],
+   "result": "1032 buffers: equal, 6 rings; tokens equal"
+  },
+  {
+   "gate": "split 24, 64K: final build b, switches off, vs reference",
+   "runs": [
+    "ref24c",
+    "boff24"
+   ],
+   "result": "1032/1032 equal, tokens equal"
+  }
+ ],
+ "runs": [
+  {
+   "run": "b23",
+   "binary": "/dev/shm/engine-build-lab-s23-b/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1",
+    "OWNRT_DRAFT_HEAD_RAW": "1"
+   },
+   "plan_owned_bytes": 32123721324,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 17450,
+   "half_ms_median": 13.413,
+   "tokens_sha256": "0fd79f0522dc7a29",
+   "runtime_device_bytes": 32192153260,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "b24",
+   "binary": "/dev/shm/engine-build-lab-s23-b/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1",
+    "OWNRT_DRAFT_HEAD_RAW": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16989,
+   "half_ms_median": 12.92,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 30828309700,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "boff24",
+   "binary": "/dev/shm/engine-build-lab-s23-b/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {},
+   "plan_owned_bytes": 30959631492,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16922,
+   "half_ms_median": 12.931,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 31177563332,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "new23",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 32123721324,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 17374,
+   "half_ms_median": 13.426,
+   "tokens_sha256": "0fd79f0522dc7a29",
+   "runtime_device_bytes": 32192153260,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "new23-30k",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 32123721324,
+   "prompt_rows": 30000,
+   "chunk_rows": 256,
+   "prompt_ms": 128950,
+   "half_ms_median": 13.461,
+   "tokens_sha256": "57a9b9dadda2ab59",
+   "runtime_device_bytes": 32192153260,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "new23k32",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 32768,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 31154837100,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 17353,
+   "half_ms_median": 13.435,
+   "tokens_sha256": "0fd79f0522dc7a29",
+   "runtime_device_bytes": 31223269036,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "new24",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 25203,
+   "half_ms_median": 12.937,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 30828309700,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "new24-300",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "prompt_rows": 300,
+   "chunk_rows": 256,
+   "prompt_ms": 1285,
+   "half_ms_median": 12.802,
+   "tokens_sha256": "cdb9d7b2d8e4f260",
+   "runtime_device_bytes": 30828309700,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "new24b",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16918,
+   "half_ms_median": 12.93,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 30828309700,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "off24",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {},
+   "plan_owned_bytes": 30959631492,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16939,
+   "half_ms_median": 12.929,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 31177563332,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "pl-new23",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1",
+    "OWNRT_PLAN_ONLY": "1"
+   },
+   "plan_owned_bytes": 32123721324,
+   "dri": []
+  },
+  {
+   "run": "pl-new24",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1",
+    "OWNRT_PLAN_ONLY": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "dri": []
+  },
+  {
+   "run": "pl-off23",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_PLAN_ONLY": "1"
+   },
+   "plan_owned_bytes": 32356767340,
+   "dri": []
+  },
+  {
+   "run": "pl-off24",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_PLAN_ONLY": "1"
+   },
+   "plan_owned_bytes": 30959631492,
+   "dri": []
+  },
+  {
+   "run": "ref23k32",
+   "binary": "/dev/shm/engine-build-svc-b14-raw-20261026/sc117-engine",
+   "target_split": 23,
+   "context": 32768,
+   "env_beyond_service": {},
+   "plan_owned_bytes": 31270442604,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 17281,
+   "half_ms_median": 13.432,
+   "tokens_sha256": "0fd79f0522dc7a29",
+   "runtime_device_bytes": 31488374444,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "ref23k32-30k",
+   "binary": "/dev/shm/engine-build-svc-b14-raw-20261026/sc117-engine",
+   "target_split": 23,
+   "context": 32768,
+   "env_beyond_service": {},
+   "plan_owned_bytes": 31270442604,
+   "prompt_rows": 30000,
+   "chunk_rows": 256,
+   "prompt_ms": 128916,
+   "half_ms_median": 13.466,
+   "tokens_sha256": "57a9b9dadda2ab59",
+   "runtime_device_bytes": 31488374444,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "ref24",
+   "binary": "/dev/shm/engine-build-svc-b14-raw-20261026/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {},
+   "plan_owned_bytes": 30959631492,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 47611,
+   "half_ms_median": 12.932,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 31177563332,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "ref24-300",
+   "binary": "/dev/shm/engine-build-svc-b14-raw-20261026/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {},
+   "plan_owned_bytes": 30959631492,
+   "prompt_rows": 300,
+   "chunk_rows": 256,
+   "prompt_ms": 1291,
+   "half_ms_median": 12.78,
+   "tokens_sha256": "cdb9d7b2d8e4f260",
+   "runtime_device_bytes": 31177563332,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "ref24c",
+   "binary": "/dev/shm/engine-build-svc-b14-raw-20261026/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {},
+   "plan_owned_bytes": 30959631492,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16949,
+   "half_ms_median": 12.933,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 31177563332,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "t23-1",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 32123721324,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 17378,
+   "half_ms_median": 13.407,
+   "tokens_sha256": "0fd79f0522dc7a29",
+   "runtime_device_bytes": 32192153260,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "t23-2",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 32123721324,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 17370,
+   "half_ms_median": 13.407,
+   "tokens_sha256": "0fd79f0522dc7a29",
+   "runtime_device_bytes": 32192153260,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "t23-3",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 23,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 32123721324,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 17348,
+   "half_ms_median": 13.411,
+   "tokens_sha256": "0fd79f0522dc7a29",
+   "runtime_device_bytes": 32192153260,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 1004,
+    "sites": 916,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "t24-1",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16901,
+   "half_ms_median": 12.932,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 30828309700,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "t24-2",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16945,
+   "half_ms_median": 12.942,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 30828309700,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  },
+  {
+   "run": "t24-3",
+   "binary": "/dev/shm/engine-build-lab-s23-a/sc117-engine",
+   "target_split": 24,
+   "context": 65536,
+   "env_beyond_service": {
+    "OWNRT_QSA_RAW_RING": "1",
+    "OWNRT_PREFILL_SHADOW_PACK": "1"
+   },
+   "plan_owned_bytes": 30759877764,
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 16939,
+   "half_ms_median": 12.936,
+   "tokens_sha256": "d6a2a39ae337b541",
+   "runtime_device_bytes": 30828309700,
+   "prefill_allocation": {
+    "rows": 256,
+    "roles": 51,
+    "buffers": 961,
+    "sites": 878,
+    "shadow_bytes": 68302848,
+    "packed_slots": 12,
+    "unpacked_bytes": 217802752
+   },
+   "dri": [
+    "/dev/dri/renderD131"
+   ]
+  }
+ ]
+}

@@ -67,10 +67,10 @@ template<ng::Op Code,class Team> inline void cooperative_group(Shape s,Args a,in
   else{h-=26;norm_rope(t,[&](int k){return a.b(2,(r*4+h)*128+k);},[&](int k,float v){a.put(9,(r*4+h)*128+k,v);},a,5,128,position,s.flags);}
  }else if constexpr(Code==pool){
   int blocks=ng::append_pools(s);
-  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,pos*128+j,a.b(2,j));});}
+  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,qsaring::row(pos+j/128,s.flags)*128+j%128,a.b(2,j));});}
   else if(pos/4+group<(pos+s.tokens)/4){
    group+=pos/4;
-   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return Args::bf(x/4.f);};
+   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,qsaring::row(r,s.flags)*128+k):a.b(2,(r-pos)*128+k));}return Args::bf(x/4.f);};
    norm_rope(t,pooled,[&](int k,float v){a.put(7,group*128+k,v);},a,3,128,group*4,s.flags);
   }
  }else if constexpr(Code==ng::select){

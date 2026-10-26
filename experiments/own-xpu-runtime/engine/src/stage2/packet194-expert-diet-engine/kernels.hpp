@@ -1,6 +1,7 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #include "stage2/packet194-expert-diet-engine/detmath.hpp"
 #include "stage2/packet194-expert-diet-engine/rope.hpp"
+#include "stage2/packet194-expert-diet-engine/qsa_ring.hpp"
 #pragma once
 // Original lab non-GEMV kernels. No runtime implementation imported.
 #include <array>
@@ -71,7 +72,8 @@ inline int local_floats(Shape s){
 inline void validate(Shape s){
  if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>256||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
- if(s.flags&~(1|2|4|8|16|f32_activations_flag))throw std::invalid_argument("unknown shape flag");
+ if(s.flags&~(1|2|4|8|16|f32_activations_flag|qsaring::flag))throw std::invalid_argument("unknown shape flag");
+ if((s.flags&qsaring::flag)&&(s.op!=pool||s.capacity<=qsaring::rows))throw std::invalid_argument("QSA raw ring flag: pool with capacity above the ring only");
  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
  if(s.op==conv&&s.extra!=0&&s.extra!=1&&s.extra!=3)throw std::invalid_argument("conv dilation");
  if((s.op==norm||s.op==combine_norm)&&s.width>4096)throw std::invalid_argument("norm width");
@@ -95,7 +97,7 @@ inline std::array<size_t,19> required_bytes(Shape s) {
  case moe_combine:b(0,T*s.extra*W);f(1,T*s.extra);b(2,T*W);b(3,T);n[4]=n[2];break;
  case gated_norm:b(0,T*6144);n[1]=n[0];weight(2,128);n[3]=n[0];break;
  case prepare:b(0,T*24*512);b(1,T*512);b(2,T*512);weight(3,256);weight(4,256);weight(5,128);b(6,T*6144);n[7]=n[6];n[8]=n[1];n[9]=n[2];break;
- case pool:b(0,T*512);n[1]=n[0];b(2,T*128);weight(3,128);b(4,C*512);n[5]=n[4];b(6,C*128);b(7,((C+3)/4)*128);break;
+ case pool:b(0,T*512);n[1]=n[0];b(2,T*128);weight(3,128);b(4,C*512);n[5]=n[4];b(6,size_t((s.flags&qsaring::flag)?qsaring::rows:C)*128);b(7,((C+3)/4)*128);break;
  case select:b(0,T*512);b(1,((C+3)/4)*128);f(2,T*S);break;
  case attention_score:case attention_softmax:case attention_value:b(0,T*6144);n[1]=n[0];b(2,C*512);n[3]=n[2];f(4,T*S);n[5]=n[0];f(6,T*24*S);n[7]=n[6];break;
  }
@@ -188,10 +190,10 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   else{h-=26;norm_rope(t,[&](int k){return a.b(2,(r*4+h)*128+k);},[&](int k,float v){a.put(9,(r*4+h)*128+k,v);},a,5,128,position,s.flags);}
  }else if(s.op==pool){
   int blocks=append_pools(s);
-  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,pos*128+j,a.b(2,j));});}
+  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,qsaring::row(pos+j/128,s.flags)*128+j%128,a.b(2,j));});}
   else if(pos/4+group<(pos+s.tokens)/4){
    group+=pos/4;
-   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(x/4.f);};
+   auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,qsaring::row(r,s.flags)*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(x/4.f);};
    norm_rope(t,pooled,[&](int k,float v){a.put(7,group*128+k,v);},a,3,128,group*4,s.flags);
   }
  }else if(s.op==select){

@@ -764,17 +764,22 @@ class Engine:
             shutil.rmtree(d)
         return out
 
-    def dump_buffers(self, prefix_ratio=0):
+    def dump_buffers(self, prefix_ratio=0, ring_contexts=()):
         """Explicit full target-state DUMP on both ranks; per-buffer content hashes; dump removed after hashing. With
-        prefix_ratio, also returns grown_prefix_hashes of each rank's dump."""
-        t, out, grown = self.t, {}, {}
+        prefix_ratio, also returns grown_prefix_hashes of each rank's dump; with ring_contexts, also the rings' zero
+        extensions (ring_extended_hashes)."""
+        t, out, grown, rings = self.t, {}, {}, {}
         for rank in (0, 1):
             t.call(rank, A.BASE.DUMP, position=2147483647)
             d = t.request_output / f'rank{rank}' / 'state-2147483647'
             out[f'rank{rank}'] = {k: v for k, v in A.BUNDLE.read_state(d).items() if k != 'state.json'}
             if prefix_ratio:
                 grown[f'rank{rank}'] = grown_prefix_hashes(d, prefix_ratio)
+            if ring_contexts:
+                rings[f'rank{rank}'] = ring_extended_hashes(d, ring_contexts)
             shutil.rmtree(d)
+        if ring_contexts:
+            return out, grown, rings
         return (out, grown) if prefix_ratio else out
 
     def session_boundary(self, prompt, held):
@@ -1010,6 +1015,48 @@ def grown_prefix_hashes(directory, ratio):
             if zero:
                 out[name] = hashlib.sha256(head).hexdigest()
     return out
+
+
+# OWNRT_QSA_RAW_RING=1 keeps each rank-1 QSA layer's raw indexer keys (blk.N.qsa.raw) in a 512-row ring (engine
+# qsa_ring.hpp). Below 512 written positions, ring row r is linear row r and every other row is zero, so the ring's
+# bytes followed by zeros equal the linear buffer of any length: the oracles (recorded with linear buffers) compare
+# against that zero extension.
+QSA_RING = os.environ.get('OWNRT_QSA_RAW_RING') == '1'
+QSA_RING_ROWS = 512
+QSA_RAW_ROW_BYTES = 128 * 4
+
+
+def ring_extended_hashes(directory, contexts):
+    """{name: {context: sha256 of the ring bytes zero-extended to context rows}} for each ring-sized qsa.raw buffer."""
+    out = {}
+    lines = (Path(directory) / 'state-index.tsv').read_text().split('\n')
+    with open(Path(directory) / 'state.bundle', 'rb') as f:
+        for line in lines[1:]:
+            if not line:
+                continue
+            name, start, length, _ = line.split('\t')
+            start, length = int(start), int(length)
+            if not name.endswith('.qsa.raw.bin') and not name.endswith('.qsa.raw'):
+                continue
+            if length != QSA_RING_ROWS * QSA_RAW_ROW_BYTES:
+                continue
+            f.seek(start)
+            ring = f.read(length)
+            out[name] = {}
+            for c in contexts:
+                h = hashlib.sha256(ring)
+                left = (c - QSA_RING_ROWS) * QSA_RAW_ROW_BYTES
+                zero = bytes(1 << 20)
+                while left > 0:
+                    h.update(zero[:min(left, len(zero))])
+                    left -= min(left, len(zero))
+                out[name][c] = h.hexdigest()
+    return out
+
+
+def ring_view(state, rings, context):
+    """The state as linear buffers of `context` rows would hash: ring entries replaced by their zero extension."""
+    return {r: {k: (rings[r][k][context] if k in rings.get(r, {}) else v) for k, v in table.items()} for r, table in state.items()}
 
 
 def cross_context_state(want, got, grown):
@@ -1623,29 +1670,39 @@ def main():
             # equal the pinned F32 oracle (recorded once from a gated binary). Kernel changes that claim to be exact must
             # pass this before anything else.
             ratio = CHAT.CONTEXT // 4096
+            rings = {}
+            if QSA_RING:
+                require(len(st['prompt_tokens']) + st['max_new'] < QSA_RING_ROWS, 'the self-test must stay inside the QSA raw ring')
             with engine.lock:
                 engine.generate(st['prompt_tokens'], st['max_new'], 'f32-state-check', force_reset=True, prefill=0)
-                if ratio > 1:
+                if QSA_RING:
+                    f32_state, grown, rings = engine.dump_buffers(ratio if ratio > 1 else 0, ring_contexts=(4096, CHAT.CONTEXT))
+                elif ratio > 1:
                     f32_state, grown = engine.dump_buffers(ratio)
                 else:
                     f32_state = engine.dump_buffers()
             split = int(os.environ.get('SC117_TARGET_SPLIT', '24'))
+            if QSA_RING:
+                require(any(rings.values()), 'OWNRT_QSA_RAW_RING=1 but no ring-sized qsa.raw buffer in the dump')
+            ring_counts = {r: len(v) for r, v in rings.items()}
             if ratio > 1:
                 # Every startup at a larger context: the state must equal the 4096-context oracle, buffer by buffer,
                 # with context-sized buffers holding the oracle's bytes as their prefix and zeros after it.
                 base = json.loads((P / 'evidence' / 'f32-state-oracle.json').read_text())
-                seen = cross_context_state(base['state'], f32_state, grown)
+                seen = cross_context_state(base['state'], ring_view(f32_state, rings, 4096) if rings else f32_state, grown)
                 differ = (split_differences(base['state'], seen, split) if split != 24 else
                           {r: sorted(k for k in base['state'][r] if base['state'][r][k] != seen[r].get(k)) for r in base['state']})
                 grew = {r: sum(seen[r][k] != f32_state[r][k] for k in f32_state[r]) for r in f32_state}
                 (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}-ctx{CHAT.CONTEXT}-vs4096{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(
                     dict(binary_sha256=engine.t.plan['binary_sha256'], oracle_binary_sha256=base['binary_sha256'], context=CHAT.CONTEXT,
-                         grown_prefix_buffers=grew, differences=differ, utc=utc()), indent=2) + '\n')
+                         grown_prefix_buffers=grew, qsa_raw_rings=ring_counts, differences=differ, utc=utc()), indent=2) + '\n')
                 require(not any(differ.values()), f"F32 state at context {CHAT.CONTEXT} differs from the 4096 oracle {base['binary_sha256'][:12]}: {differ}")
             # Context-sized buffers (KV, pooled keys, attention scratch) change extent with the context, so each
             # context has its own oracle; a new one is recorded once, after the self-test tokens above matched the
             # binary's pinned record, and the 12-prompt suite must then reproduce the 4096-context outputs.
             oracle = P / 'evidence' / ('f32-state-oracle.json' if CHAT.CONTEXT == 4096 else f'f32-state-oracle-ctx{CHAT.CONTEXT}.json')
+            if rings:  # compare (and record) as linear buffers of this context
+                f32_state = ring_view(f32_state, rings, CHAT.CONTEXT)
             if oracle.exists():
                 want = json.loads(oracle.read_text())
                 differ = (split_differences(want['state'], f32_state, split) if split != 24 else

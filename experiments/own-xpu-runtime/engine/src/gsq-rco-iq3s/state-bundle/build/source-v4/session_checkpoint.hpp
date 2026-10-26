@@ -40,6 +40,7 @@ static size_t kv_slice(int context,const std::string& name,size_t full,int64_t p
  require(positions>=0&&positions<=context,"checkpoint KV row bound "+name);
  rows=pooled?positions/4:positions;return size_t(rows)*(full/total);
 }
+static const char* const raw_ring_rule="saved: QSA raw indexer-key ring (OWNRT_QSA_RAW_RING, 512 rows), whole: it holds every raw row a later pool can read";
 static const char* const kv_rule="saved: QSA KV rows [0,N) (pooled [0,N/4)); tail rows are zero after the request reset";
 static const char* const temporal_rule="saved: recurrent temporal state (gdn/conv output[1]: GDN state, conv/PLE history), active logical bank";
 static const char* const token_history_rule="saved: PLE token history (device token pair hashed by ple_hash)";
@@ -74,7 +75,8 @@ static std::vector<Item> classify(Engine& e,mtp36::DraftRuntime* draft,int64_t N
  for(const auto& [name,s]:e.buffers[0]) {
   Item it;it.label=name;it.source="plan";it.id=s.id;it.full=s.n*flash::scalar_bytes(s.type);represented.insert(s.id);
   refuse_unless(name.find("#tp")==std::string::npos,"checkpoint coverage refused: TP half buffer "+name);
-  if(kv.count(name)){require(kv_suffix(name),"checkpoint KV writer output name "+name);it.saved=true;it.rule=kv_rule;it.bytes=kv_slice(e.p.g.context,name,it.full,N,it.rows);}
+  if(kv.count(name)&&ends(name,".raw")&&e.p.g.context>qsaring::rows&&s.n==size_t(qsaring::rows)*size_t(e.p.g.id)){it.saved=true;it.rule=raw_ring_rule;it.bytes=it.full;} // OWNRT_QSA_RAW_RING
+  else if(kv.count(name)){require(kv_suffix(name),"checkpoint KV writer output name "+name);it.saved=true;it.rule=kv_rule;it.bytes=kv_slice(e.p.g.context,name,it.full,N,it.rows);}
   else if(temporal.count(name)){it.saved=true;it.rule=temporal_rule;it.bytes=it.full;}
   else if(name=="token_history"){it.saved=true;it.rule=token_history_rule;it.bytes=it.full;}
   else if(control_name(name)){it.saved=true;it.rule=control_rule;it.bytes=it.full;}

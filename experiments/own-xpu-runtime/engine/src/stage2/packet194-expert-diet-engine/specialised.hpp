@@ -149,12 +149,12 @@ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0,class Guard> in
   int blocks=ng::append_pools(s);
   if(stage==0&&index>=size_t(blocks)*4){int j=int(index)-blocks*4;
    if(j<s.tokens*512){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));}
-   else if(j<s.tokens*640){int k=j-s.tokens*512;a.put(6,pos*128+k,a.b(2,k));}
+   else if(j<s.tokens*640){int k=j-s.tokens*512;a.put(6,qsaring::row(pos+k/128,s.flags)*128+k%128,a.b(2,k));}
    return;
   }
   int per=stage==0?4:32,block=pos/4+int(index)/per,c=int(index)%per;
   if(block>=(pos+s.tokens)/4)return;
-  auto get=[&](int k){float v=0.f;for(int j=0;j<4;++j){int r=block*4+j;v=v+(r<pos?a.b(6,r*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(v/4.f);};
+  auto get=[&](int k){float v=0.f;for(int j=0;j<4;++j){int r=block*4+j;v=v+(r<pos?a.b(6,qsaring::row(r,s.flags)*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(v/4.f);};
   if(stage==0)scratch[block*4+c]=subtree(128,c,[&](int k){float v=get(k);return v*v;});
   else{float inv=detmath::rsqrt(upper(scratch+block*4,4)/float(128)+1e-6f);for(int k=c*4;k<c*4+4;++k)a.put(7,block*128+k,rotary(get,a,3,k,s.flags,inv,block*4));}
  }else if constexpr(Code==ng::select){

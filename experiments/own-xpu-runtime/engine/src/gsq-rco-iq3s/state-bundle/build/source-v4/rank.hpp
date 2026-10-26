@@ -337,7 +337,13 @@ static int run_rank(const Options& a) {
   Options one_card=a;one_card.cards=1;
   weights=std::make_unique<Weights>(a);auto full_plan=plan(*weights,one_card);
   auto p=a.pipeline_enabled()?ownrt::pipeline_layout::slice(std::move(full_plan),a.pipeline_boundaries,a.pipeline_stage):split(std::move(full_plan),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
+  // OWNRT_QSA_RAW_RING=1 (lab 2026-10-26, default off; rank 1 only): every QSA raw indexer-key buffer is a 512-row ring
+  // (qsa_ring.hpp). Rank 0's speculative image captures KV rows by position, so its buffers keep the full extent.
+  if(qsaring::enabled()&&a.rank==1&&a.gsq_packed&&!a.mini&&!a.pipeline_enabled()&&!a.tp_replicate&&p.g.context>qsaring::rows)
+   for(auto& b:p.buffers)if(ends(b.name,".qsa.raw")){require(b.shape.size()==2&&b.shape[0]==p.g.context,"QSA raw buffer geometry");b.shape[0]=qsaring::rows;}
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
+  // Lab diagnostic (2026-10-26, default off): OWNRT_PLAN_ONLY=1 stops after the plan (owned_bytes), before any device contact.
+  if(const char* only=std::getenv("OWNRT_PLAN_ONLY");only&&only[0]=='1'){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
    // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
    // [c*R/2, (c+1)*R/2) into its half buffer y#tp (whole rows, unchanged arithmetic), then a tp_gather site on each

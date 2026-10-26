@@ -28,6 +28,7 @@
 #include "stage2/packet194-expert-diet-engine/p28/submit.hpp"
 #include "stage2/packet194-expert-diet-engine/expert_down.hpp"
 #include "stage2/packet194-expert-diet-engine/dense_raw.hpp"
+#include "stage2/packet194-expert-diet-engine/qsa_ring.hpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <cstring>
