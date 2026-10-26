@@ -18,7 +18,10 @@
   - B10 and B11 each restored the previous builds' canaries and matched a fresh read (tokens, guesses, full state).
   - A 2,139-token conversation parked by B9, held only in the RAID archive, was recalled and restored into B10.
     It matched a fresh read token for token.
-- 53K-token test at 64K: the needle was found, continued equals fresh, and decode ran at 47 tok/s at 53K.
+- 53K-token test at 64K on `718a59eff64f`, with ids identical to `8ed9f5cb695e`:
+  - prompt read 544 → 363 s (about 147 tok/s);
+  - decode at 53K 47.1 → 50.3 tok/s;
+  - needle found; continued equals fresh.
 - Pi 1.2.0 runs end to end through the keeper model (see `serving/lan/README.md`).
 - Lab agents on card 27 (`flock /dev/shm/card27.lock`):
   - exact expert-grouped prefill (routed experts are now about 3.3 ms of about 7.6 ms per prefill row);
