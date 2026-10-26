@@ -1,5 +1,27 @@
 # Current Workspace State
 
+**October 26, 06:05 EDT — SC117 service: keeper verified on the device; sessions archived to the RAID and kept across engine builds.**
+- `sc117-lan` runs engine `8ed9f5cb695e`: 64K context, split 24/24, keeper model on, sessions on with a RAID archive.
+  Gates all passed. Suite exact at 48.40 tok/s. The session device test passed: a restored session equals a fresh
+  read token for token.
+- **Keeper device test (18 log parts at 64K) passed all 8 checks:**
+  - 2 in-place cuts;
+  - the head checkpoint is parked, pinned and restored after each cut;
+  - notes calls and turns continue the live state;
+  - the part-1 checksum, held only in the archive, is answered through a hidden recall round, with no leak.
+  - 88K tokens read; 280K served from cached state.
+  - The recipe cuts near 27K tokens (`SC117_KEEPER_INPLACE_TOKENS`, default 15000), not near 64K.
+  - [Result](experiments/own-xpu-runtime/research/keeper-device/keeper-device-a523650a-ctx64k.json).
+- **Disk sessions** (`SC117_SESSION_ARCHIVE=/mnt/raid-models/sc117-session-archive`, 200 GB):
+  - parked sessions are copied to the RAID while the engine is idle (ntfs-3g, about 32 MB/s);
+  - a prompt that extends one copies it back to RAM, and the ranks verify every byte.
+- **Across engine builds:**
+  - Each build parks a canary.
+  - At start, the new build restores each earlier build's canary, continues it, and compares with a fresh read:
+    tokens, guesses and full state. Builds that pass keep their sessions.
+  - VERIFY's `compat` line lets only the binary hash differ.
+  - First exercised at the next engine deploy.
+
 **October 26, 05:35 EDT — SC117 service at 64K now runs engine `a523650a434e`: 48.29 tok/s, exact.**
 - The speculative snapshot and rollback copies move 16-byte words instead of bytes: snapshot 0.294 → 0.196 ms per
   guess, rollback 0.288 → 0.206 ms.
