@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 26, 12:50 EDT — SC117 service on engine `25b3f7542cad`, split 23/25 at 64K: 60.52 tok/s exact.**
+- Rank-1 storage lets the faster split hold 64K context:
+  - the `qsa.raw` ring;
+  - packed prefill shadows.
+- Rank 1 now uses 32.19 of 32.21 GB.
+- Gates passed. The service's oracle check zero-extends the rings.
+- Suite 58.62 → 60.52 tok/s; decode at 10.7K 61.6 tok/s; 10.7K prompt 48 s.
+- `OWNRT_DRAFT_HEAD_RAW` (rank 0, about −0.19 ms per draft step) is built but off until it has a device check.
+- Tonight's full progression, suite median at 64K: 47.97 → 60.52 tok/s (+26%), every step bitwise exact.
+  [split23](experiments/own-xpu-runtime/research/split23/RESULT.md).
+
 **October 26, 12:00 EDT — SC117 service on engine `0efa50e4c5ee`: 58.62 tok/s exact.**
 - Raw-size dense Q6_K/Q8_0 weights (`OWNRT_DENSE_RAW=1`): identical values; the load-time element check is on.
 - VRAM: rank 1 −611 MB, rank 0 −278 MB.
