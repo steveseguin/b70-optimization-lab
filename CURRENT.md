@@ -1,5 +1,28 @@
 # Current Workspace State
 
+**October 26, 09:10 EDT — SC117 service is DOWN, waiting on the owner. A lab-card fault tripped its guard; lab results are recorded.**
+- **08:50:29:** spare card 27 logged a copy-engine page fault and engine reset during a lab microbenchmark that aborted
+  with GPU work still in flight. `sc117-lan`, on cards 23/47 with engine `1d72818cfe8c`, stopped itself cleanly, by
+  design.
+- **Probe:** one bounded four-card health probe passed, with no fault lines during it.
+- **Why the service is still down:** it refuses to start because the boot's fault list now has the two reviewed
+  card-27 lines beyond the recorded baseline. Re-recording that baseline was blocked as a safety-guard change, so it
+  is the owner's call.
+  - Steps to restore: [incident README](experiments/own-xpu-runtime/research/incidents/2026-10-26-card27-bcs-fault/README.md).
+    Check the fault list, re-record the baseline, then run `service-cycle.sh 1d72818cfe8c restore`.
+  - `engine/src` is unchanged, so that receipt still starts.
+- **All lab GPU work is halted.** A second fault on this boot goes to the owner.
+- **Lab results ready to gate after the restore** (rank 1 on card 27, bitwise exact against the reference build):
+  - Decode routed experts, `OWNRT_EXPERTS_V2=1`: rank-1 half 16.74 → 15.53 ms (−7.2%). It also reads the error flag
+    once per group in norms, gather and route.
+    [Result](experiments/own-xpu-runtime/research/decode-experts/RESULT.md).
+  - Dense decode GEMVs, `OWNRT_DENSE_DECODE_V2=1`: rank-1 half 16.54 → 15.11 ms (single runs). The 300/30K and M=2
+    gates were not run because of the stop.
+    [Result](experiments/own-xpu-runtime/research/dense-decode/RESULT.md).
+  - Expert-grouped prefill, `OWNRT_PREFILL_EXPERTS=1` at 256-row chunks: rank-1 4096-row prompt 26.7 → 18.0 s
+    (1.48×). Rank 0's memory at 256 rows is not checked yet.
+    [Result](experiments/own-xpu-runtime/research/prefill-experts/RESULT.md).
+
 **October 26, 08:15 EDT — SC117 service on engine `1d72818cfe8c`: exact faster QSA select; suite 49.38 tok/s.**
 - `OWNRT_SELECT_FAST=1`: rank-1 select 76.4 → 19.2 µs per layer at a 4K prompt (90.7 → 27.4 at 30K), same ids.
 - Gates passed; the session compat gate accepted the three earlier builds. Suite exact 49.38 tok/s.
