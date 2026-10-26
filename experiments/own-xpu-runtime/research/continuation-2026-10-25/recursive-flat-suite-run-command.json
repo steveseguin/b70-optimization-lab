@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-26T00:37:12.744281+00:00",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-recursive-flat-suite-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "--run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/recursive-flat-suite-plan.json",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/recursive-flat-suite-admission.json",
+    "--unit",
+    "sc117-recursive-flat-suite-20261025.service"
+  ],
+  "purpose": "Experimental full12 purecopy screening after focusedHost tests; same-build short gate onlyifgain"
+}

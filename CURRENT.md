@@ -6,7 +6,12 @@ the full twelve-prompt suite: **44.968 tok/s** versus balanced **41.399 tok/s**,
 buffers match; all four workers exited zero. Its preceding measured two-request
 gate matched 32 output IDs, 2,065 target buffers and 73 draft allocations per
 request. This remains experimental, with no new-build debug-policy qualification.
-The main agent is starting the next copy-kernel experiment. Raw GPU proofs remain
+The flat recursive-copy screen completed at **45.198 tok/s**, only **0.511%** above
+parent-capture despite about 37% less measured copy time. All 5,965 output IDs and
+final 2,065 target buffers match. The candidate stays off by default; this bounded
+lever is closed without further tuning or a short draft-state gate for 0.5% alone.
+GPUs are idle while source work moves to the larger provider-placement lever.
+[Copy-screen result](experiments/own-xpu-runtime/research/continuation-2026-10-25/recursive-flat-screen/RESULT.md). Raw GPU proofs remain
 protected in tmpfs; [compact result](experiments/own-xpu-runtime/research/continuation-2026-10-25/parent-capture-suite-proof/RESULT.md)
 retains the measured outcome without claiming a durable raw archive.
 Publication/portable side work stays paused; necessary bookkeeping is delegated.

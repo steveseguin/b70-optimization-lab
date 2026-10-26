@@ -1,0 +1,28 @@
+{
+  "schema": "ownrt.focused-planner-candidate.v1",
+  "source": "/dev/shm/ownrt-recursive-flat-planner",
+  "result": "Focused CPU planner checks passed as reported by coordinator; not rerun during full-suite timing.",
+  "tests": [
+    "default/explicit boolean flag only first owner for 2/4/6 stages",
+    "wrong types refused before base planner",
+    "inherited adapter flags refused"
+  ],
+  "retained_files": [
+    {
+      "path": "planner.patch",
+      "bytes": 2693,
+      "sha256": "71ed38013fd9563537a18d965ba73f80b66e1dda954b63d14d30789764315d00"
+    },
+    {
+      "path": "test_flat_planner.py",
+      "bytes": 2388,
+      "sha256": "445667b983ce2d383a32b5abb4814abb1a38891630e369a25642304d4b9eb55e"
+    },
+    {
+      "path": "persistent_rolling_driver.py",
+      "bytes": 12723,
+      "sha256": "87d1dcdd1c0d7e97eef117450b550b9db4e17251950db7882c83ec336365fb19"
+    }
+  ],
+  "scope": "Planner candidate only; no GPU qualification claim."
+}

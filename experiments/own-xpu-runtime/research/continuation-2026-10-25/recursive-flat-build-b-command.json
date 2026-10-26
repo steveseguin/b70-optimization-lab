@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-26T00:31:53.684261+00:00",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-recursive-flat-build-b-20261025",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations",
+    "/usr/bin/python3",
+    "experiments/own-xpu-runtime/engine/build.py",
+    "/dev/shm/engine-build-recursive-flat-b-20261025",
+    "--jobs",
+    "4"
+  ],
+  "device_execution_requested": false,
+  "fix": "width31 respects existing1024byte kernel capture guard"
+}

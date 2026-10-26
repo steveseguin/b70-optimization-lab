@@ -18,6 +18,8 @@ def make_plan(config_path):
     base.require(not any(k in config for k in ('recursive_reference','scripted_proposal_tokens',
         'force_miss_positions','expected_outputs','pending_cases')), 'rolling config accepts no reference/oracle inputs')
     base.require(config.get('persistent_requests') is True,'explicit persistent request opt-in')
+    recursive_flat_copy=config.get('recursive_flat_copy',False)
+    base.require(type(recursive_flat_copy) is bool,'recursive_flat_copy requires boolean opt-in')
     capture_overlap=config.get('capture_ready_overlap',False)
     base.require(type(capture_overlap) is bool,'capture-ready overlap requires boolean opt-in')
     policy=config.get('check_policy')
@@ -58,6 +60,8 @@ def make_plan(config_path):
     request = sha256(json.dumps(identity,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     final_shared = str(Path(plan['output'])/f"stage{len(plan['stages'])-1}/shared.bin")
     for stage in plan['stages']:
+        base.require('--pipeline-ring-recursive-flat-copy' not in stage['argv'],
+                     'recursive_flat_copy must be selected by config, not inherited adapter flags')
         base.require(not any(f in stage['argv'] for f in ('--pipeline-wavefront','--pipeline-live-draft',
             '--pipeline-ring','--draft-mtp')), 'rolling must not inherit another controller')
         for env in ('OWNRT_DRAFT_DEPTH_PROBE','OWNRT_DRAFT_DEPTH_VERIFY'):
@@ -69,6 +73,7 @@ def make_plan(config_path):
                      'persistent runtime accepts no oracle file')
         if verify:stage['argv'].append('--pipeline-ring-verify-restore')
         if stage['first']:
+            if recursive_flat_copy:stage['argv'].append('--pipeline-ring-recursive-flat-copy')
             if capture_overlap:stage['argv'].append('--pipeline-ring-parent-capture-ack')
             stage['argv'] += ['--pipeline-ring-final-shared',final_shared,'--draft-mtp']
             if verify:stage['argv'] += ['--pipeline-ring-recursive-verify-restore','--pipeline-ring-verify-provider-survival']
@@ -130,6 +135,7 @@ def make_plan(config_path):
         suite_prompt_count=count,dump_each=dump_each,admitted_max_new=config['admitted_max_new'],
         limits='One fixed-policy loaded worker set; runtime prompts contain no expected answers. Cold native reset/state and measured-policy parity require independent qualification. No portable/service or speed certification.')
     plan['pins'][str(suite_path)]=config['suite_sha256']
+    if recursive_flat_copy:plan['recursive_flat_copy']=True
     if capture_overlap:plan['capture_ready_overlap']=True
     return plan
 

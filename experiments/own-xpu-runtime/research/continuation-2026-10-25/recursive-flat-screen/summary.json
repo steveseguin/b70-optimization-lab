@@ -1,0 +1,254 @@
+{
+  "schema": "ownrt.persistent-rolling-suite-proof.v1",
+  "passed": true,
+  "source_run": "/dev/shm/sc117-ring-20261025/persistent-recursive-flat-suite-a",
+  "requests": 12,
+  "output_tokens": 5965,
+  "output_tokens_exact": true,
+  "provenance_passed": true,
+  "all_cold_resets_checked": true,
+  "cached_tokens": 0,
+  "check_policy": "measured",
+  "byte_verification_enabled": false,
+  "provider_survival_checks_enabled": false,
+  "provider_survival_evidence": "not-collected",
+  "cold_state_byte_verified": false,
+  "mandatory_restore_checks_passed": true,
+  "all_requests_full_state_parity": false,
+  "final_target_state_exact": true,
+  "final_target_buffer_count": 2065,
+  "final_state_position": 571,
+  "final_state_request": "decision-memo",
+  "final_draft_authenticated": true,
+  "final_draft_state_parity": false,
+  "early_eos_requests": [
+    "customer-email"
+  ],
+  "cap_requests": 11,
+  "cancellation_qualified": false,
+  "actual_provider": true,
+  "actual_proposals_consumed": true,
+  "actual_proposal_rows": 6881,
+  "scripted_oracle_assisted": false,
+  "scripted_tentative_inputs": false,
+  "speed_claim": false,
+  "certified": false,
+  "timing": {
+    "candidate_median": 45.1978680158136,
+    "candidate_pooled_interval_rate": 45.5603099263281,
+    "baseline_median": 47.97057758420032,
+    "prior_four_stage_median": 42.311880797977615,
+    "descriptive_ratio_to_baseline": 0.9421997877027867,
+    "certified": false,
+    "candidate_observer": "Controller committed-output observations; n-1 / last-first per request, excluding RESET/DUMP.",
+    "baseline_observer": "Retained service full-response decode aggregate; individual completion timestamps absent. No first99 window inference.",
+    "historical_negative_preserved": true,
+    "matched_timing_observer": false
+  },
+  "raw_bytes": 431676682,
+  "finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_persistent_rolling_suite.py",
+    "bytes": 17843,
+    "sha256": "f593f98648bb54a6875ef7b2202bcedf99864fc2d0bf49456a5b6a86967cac9f"
+  },
+  "scope": "Twelve exact cold outputs and complete reset/proposal/native command provenance; full target state only for final request; no independent full-cohort draft state reference or per-operation byte diagnostics. Timing observers differ from retained service baseline. Pure-copy experimental screen; prior proofs are comparison provenance, not same-build qualification. Extra draft-state gate remains pending.",
+  "screening_only": true,
+  "same_build_short_gate": false,
+  "experimental": true,
+  "scheduler_overlap_by_request": [
+    {
+      "final_rows_issued_during_provider": 397,
+      "head_bearing_final_rows_issued_during_provider": 355,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 407,
+      "head_bearing_final_rows_issued_during_provider": 366,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 254,
+      "head_bearing_final_rows_issued_during_provider": 216,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 421,
+      "head_bearing_final_rows_issued_during_provider": 380,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 364,
+      "head_bearing_final_rows_issued_during_provider": 331,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 392,
+      "head_bearing_final_rows_issued_during_provider": 360,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 394,
+      "head_bearing_final_rows_issued_during_provider": 371,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 378,
+      "head_bearing_final_rows_issued_during_provider": 343,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 383,
+      "head_bearing_final_rows_issued_during_provider": 349,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 356,
+      "head_bearing_final_rows_issued_during_provider": 326,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 376,
+      "head_bearing_final_rows_issued_during_provider": 345,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 358,
+      "head_bearing_final_rows_issued_during_provider": 329,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    }
+  ],
+  "screening_finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_capture_flat_copy_screen.py",
+    "bytes": 2125,
+    "sha256": "fda0b17bd4405632380b10a0a80fddf6e49d0ded38f02308c2f93f90818f7251"
+  },
+  "capture_ready_auditor": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent_capture_ready_trace_audit.py",
+    "bytes": 20852,
+    "sha256": "a238e52898910c55490390571c923c1deeee37e145634245f1fbafb8e2681af4"
+  },
+  "raw_evidence": "/dev/shm/sc117-recursive-flat-suite-screen-20261025",
+  "raw_archive_claim": false,
+  "per_request_state_scope": "All exact output IDs; full target state only final request, no independent full-cohort draft parity.",
+  "comparison": {
+    "candidate": "recursive-inline-flat width31",
+    "baseline_tps": 44.96792398417218,
+    "candidate_tps": 45.1978680158136,
+    "median_gain_percent": 0.5113512283163368,
+    "faster_prompts": 12,
+    "prompt_count": 12,
+    "outputs_exact": 5965,
+    "final_target_buffers_exact": 2065,
+    "decision": "Not promoted: only0.51% median singlecohort gain, close bounded lever without more tuning; preserve defaultoff candidate. Extra short draft-state gate not run.",
+    "baseline_copy_ms_mean": 0.9854878399296796,
+    "candidate_copy_ms_mean": 0.6179854158173791,
+    "rows": [
+      {
+        "prompt": "incident-retrospective",
+        "baseline_tps": 43.61197766832456,
+        "candidate_tps": 43.788853745035304,
+        "percent_gain": 0.40556765862789224,
+        "baseline_copy_ms": 0.9862445812133073,
+        "candidate_copy_ms": 0.6166198904109589
+      },
+      {
+        "prompt": "code-review",
+        "baseline_tps": 46.73904723783328,
+        "candidate_tps": 47.01767084930005,
+        "percent_gain": 0.5961259972822708,
+        "baseline_copy_ms": 0.9832697181996086,
+        "candidate_copy_ms": 0.6192986947162427
+      },
+      {
+        "prompt": "customer-email",
+        "baseline_tps": 45.11571254969904,
+        "candidate_tps": 45.18677961079717,
+        "percent_gain": 0.15752175258196832,
+        "baseline_copy_ms": 0.9800366114457832,
+        "candidate_copy_ms": 0.6191660993975904
+      },
+      {
+        "prompt": "sql-debugging",
+        "baseline_tps": 48.39444725102252,
+        "candidate_tps": 48.85348329853416,
+        "percent_gain": 0.9485304070746325,
+        "baseline_copy_ms": 0.9951129041095891,
+        "candidate_copy_ms": 0.6149017769080235
+      },
+      {
+        "prompt": "release-plan",
+        "baseline_tps": 42.7040506956409,
+        "candidate_tps": 43.11532624400975,
+        "percent_gain": 0.9630832243528342,
+        "baseline_copy_ms": 0.983184771037182,
+        "candidate_copy_ms": 0.6168389863013699
+      },
+      {
+        "prompt": "benchmark-analysis",
+        "baseline_tps": 46.35484935524818,
+        "candidate_tps": 46.81747417368351,
+        "percent_gain": 0.9980073819028767,
+        "baseline_copy_ms": 0.9844467084148728,
+        "candidate_copy_ms": 0.6188124363992172
+      },
+      {
+        "prompt": "architecture-tradeoff",
+        "baseline_tps": 48.140922798758375,
+        "candidate_tps": 48.4199157467131,
+        "percent_gain": 0.57953385962497,
+        "baseline_copy_ms": 0.9846524559686888,
+        "candidate_copy_ms": 0.6179744774951077
+      },
+      {
+        "prompt": "bug-report-synthesis",
+        "baseline_tps": 44.31819113610794,
+        "candidate_tps": 44.437130029378345,
+        "percent_gain": 0.2683748822354337,
+        "baseline_copy_ms": 0.9773731859099803,
+        "candidate_copy_ms": 0.6187050078277887
+      },
+      {
+        "prompt": "technical-guide",
+        "baseline_tps": 46.94615892618738,
+        "candidate_tps": 47.10945555121842,
+        "percent_gain": 0.34783809531209187,
+        "baseline_copy_ms": 0.9797858943248532,
+        "candidate_copy_ms": 0.6205610352250488
+      },
+      {
+        "prompt": "risk-register",
+        "baseline_tps": 43.64573899177271,
+        "candidate_tps": 44.12218328956889,
+        "percent_gain": 1.0916169798064201,
+        "baseline_copy_ms": 0.9908261311154599,
+        "candidate_copy_ms": 0.6168922798434442
+      },
+      {
+        "prompt": "performance-hypotheses",
+        "baseline_tps": 44.82013541864532,
+        "candidate_tps": 45.20895642083002,
+        "percent_gain": 0.867514117378021,
+        "baseline_copy_ms": 0.9914142739726028,
+        "candidate_copy_ms": 0.6192407651663406
+      },
+      {
+        "prompt": "decision-memo",
+        "baseline_tps": 43.27371220652172,
+        "candidate_tps": 43.431090787705095,
+        "percent_gain": 0.3636817207460563,
+        "baseline_copy_ms": 0.9895068434442271,
+        "candidate_copy_ms": 0.6168135401174168
+      }
+    ],
+    "source_summaries": [
+      {
+        "path": "/dev/shm/sc117-parent-capture-suite-proof-20261025/summary.json",
+        "sha256": "f1362189d46ffc444d902d1a39491005970dcb8154eef799852ab0418fe35120"
+      },
+      {
+        "path": "/dev/shm/sc117-recursive-flat-suite-screen-20261025/summary.json",
+        "sha256": "27312e8b50676b0fff676ffa69390bcf60b1b936b996731c1a017323a9f0b281"
+      }
+    ]
+  }
+}

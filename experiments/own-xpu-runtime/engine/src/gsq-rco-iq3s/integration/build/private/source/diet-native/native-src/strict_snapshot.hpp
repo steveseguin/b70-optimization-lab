@@ -71,14 +71,14 @@ struct SnapshotFlat final:ownrt::SyclOperation {
 static_assert(sizeof(SnapshotFlat::Item)==32);
 
 // The same exact flat-tile transport with a bounded inline descriptor block.
-// SnapshotBatch already uses width32 inline arguments; this version avoids its
-// maximum-row rectangular grid. No persistent device table or owner is added.
+// Thirty-one 32-byte descriptors plus count fit the 1024-byte kernel capture
+// limit. This avoids the rectangular grid without a persistent device table.
 #ifdef OWN_RT_HOST_ONLY
 struct SnapshotInlineFlat final:integrated::HostOperation {
 #else
 struct SnapshotInlineFlat final:ownrt::SyclOperation {
 #endif
- static constexpr size_t width=32;
+ static constexpr size_t width=31;
  std::array<SnapshotFlat::Item,width> items{};size_t count=0,tiles=0;
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const>)const override {
