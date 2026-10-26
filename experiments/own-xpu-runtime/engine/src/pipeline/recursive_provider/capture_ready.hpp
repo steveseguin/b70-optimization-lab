@@ -11,7 +11,7 @@ struct CaptureReady {
 };
 static_assert(sizeof(CaptureReady)==128&&offsetof(CaptureReady,epoch)==16&&offsetof(CaptureReady,request)==64);
 inline CaptureReady captured(const ring_next::wire::Context& context,const ring_next::Row& seed,const FinalRecord& record,int sequence,uint64_t serial){
- ring_next::need(context.stage==0&&sequence>0&&serial>0&&seed.parent==record.row.id&&seed.epoch==context.epoch&&seed.request==context.request,"capture-ready owned identities");
+ ring_next::need(context.stage>=0&&context.stage<context.stages-1&&sequence>0&&serial>0&&seed.parent==record.row.id&&seed.epoch==context.epoch&&seed.request==context.request,"capture-ready owned identities");
  CaptureReady out;out.epoch=context.epoch;out.sequence=sequence;out.seed=seed.id;out.parent=seed.parent;out.final_commit=record.published_sequence;out.provider_serial=serial;out.request=context.request;
  out.final_record_sha=ring_next::wire::digest(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(&record),sizeof record));return out;
 }

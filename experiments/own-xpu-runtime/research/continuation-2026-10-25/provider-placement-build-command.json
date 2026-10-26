@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-26T00:58:47.561370+00:00",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-provider-stage-build-20261025",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations",
+    "/usr/bin/python3",
+    "experiments/own-xpu-runtime/engine/build.py",
+    "/dev/shm/engine-build-provider-stage-20261025",
+    "--jobs",
+    "4"
+  ],
+  "device_execution_requested": false
+}

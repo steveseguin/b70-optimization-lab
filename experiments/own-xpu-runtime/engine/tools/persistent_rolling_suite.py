@@ -67,12 +67,13 @@ def quiescent(stages):
 
 
 def validate_receipt(receipt, descriptor, stage, policy, metadata_sha256):
+    provider = stage.spec['id'] == stage.plan.get('provider_stage',0)
     expected=dict(descriptor,schema=RECEIPT_SCHEMA,passed=True,check_policy=policy,
         target_position=0,target_physical=0,target_committed=0,target_pending=0,
-        draft_position=0 if stage.spec['first'] else None,
-        provider_serial=0 if stage.spec['first'] else None,
+        draft_position=0 if provider else None,
+        provider_serial=0 if provider else None,
         context_extent=32,alternate_extent=32,
-        draft_context_extent=32 if stage.spec['first'] else None,
+        draft_context_extent=32 if provider else None,
         pending_ticket=False,sticky_error=0,allocation_ids_preserved=True,
         counters_reset=True,trace_reset=True,shared_publication_invalidated=True,
         reset_index=descriptor['next_epoch'],metadata_sha256=metadata_sha256,
@@ -85,7 +86,7 @@ def validate_receipt(receipt, descriptor, stage, policy, metadata_sha256):
     for key in ('provider_cold_host_sha256','provider_cold_sequence_sha256'):
         value=receipt.get(key)
         base.require(isinstance(value,str) and (bool(re.fullmatch('[0-9a-f]{64}',value))
-            if stage.spec['first'] else value==''),'reset cold provider host/Sequence identity')
+            if provider else value==''),'reset cold provider host/Sequence identity')
 
 
 def reset(stages, plan, guard, output, *, previous_epoch, previous_request, epoch, request):

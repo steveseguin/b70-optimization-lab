@@ -19,7 +19,7 @@ void write_request_stage_metadata(){
  require(e.a.pipeline_ring_persistent_requests,"ring persistent stage metadata owner");
  std::ostringstream o;o<<"{\"schema\":\"ownrt.pipeline-stage.v1\",\"stage_id\":"<<context.stage<<",\"stage_count\":"<<context.stages
   <<",\"begin\":"<<e.a.pipeline_boundaries[context.stage]<<",\"end\":"<<e.a.pipeline_boundaries[context.stage+1]
-  <<",\"first\":"<<(e.a.pipeline_first()?"true":"false")<<",\"final\":"<<(e.a.pipeline_final()?"true":"false")
+  <<",\"provider_stage\":"<<e.a.pipeline_provider_stage<<",\"provider_present\":"<<(provider?"true":"false")<<",\"first\":"<<(e.a.pipeline_first()?"true":"false")<<",\"final\":"<<(e.a.pipeline_final()?"true":"false")
   <<",\"activation_dtype\":\"F32\",\"stream_bytes\":"<<context.stream_bytes<<",\"boundaries\":[";
  for(size_t i=0;i<e.a.pipeline_boundaries.size();++i)o<<(i?",":"")<<e.a.pipeline_boundaries[i];
  o<<"],\"mode\":\"persistent-rolling\",\"speculation_enabled\":true,\"inactive_alternate_banks\":[";bool comma=false;
@@ -35,14 +35,14 @@ Reply persistent_reset(const Request& request){
  const auto metadata=original_output/("reset-"+std::to_string(request.sequence)+".json");
  const auto d=reset::load(metadata,original_output,context.epoch,e.a.pipeline_ring_request_sha256,context.stage,request.sequence,e.a.oracle.string());
  ring.boundary();checkpoints.boundary();require(provider_at_capture.empty(),"ring reset retains capture provenance");
- if(provider){provider->recursive_idle();require(!provider->recursive_active&&!provider_sequence->poisoned()&&provider->recursive_healthy()&&provider->live_position()==std::max(0,ring.committed()-1)&&provider_sequence->serial()==uint64_t(provider->live_position()),"ring reset canonical provider frontier");peer->request_boundary();}
+ if(provider){provider->recursive_idle();require(!provider->recursive_active&&!provider_sequence->poisoned()&&provider->recursive_healthy()&&provider->live_position()==std::max(0,ring.committed()-1)&&provider_sequence->serial()==uint64_t(provider->live_position()),"ring reset canonical provider frontier");peer->request_boundary();if(seed_peer)seed_peer->request_boundary();}
  attest(); // seal the old request once, before its state or output path changes
  const auto inventory_before=allocation_identity();const int previous_position=ring.committed();const auto old_output=e.a.output;
  reset_spec=d;
  ring.reset(request.sequence,d.next_epoch,reset::digest(d.next_request),ownrt::ring_next::request_prefix(reset::digest(d.next_request),d.next_epoch));
  reset_spec.reset();
  context.epoch=d.next_epoch;context.request=reset::digest(d.next_request);e.a.pipeline_ring_request_sha256=d.next_request;
- if(provider){provider_sequence.emplace(context);peer->request_boundary();}
+ if(provider){provider_sequence.emplace(context);peer->request_boundary();if(seed_peer)seed_peer->request_boundary();}
  require(e.a.output==d.destination&&allocation_identity()==inventory_before,"ring reset physical allocation identity");
  std::memset(shared,0,mapped_bytes);accepted_output_rows=0;provider_at_capture.clear();provider_borrows_by_depth.fill(0);provider_borrows_while_target_pending=0;
  survival_records=survival_rows=survival_advanced_records=draft_trace_rows=draft_trace_omitted=trace_rows=trace_omitted=0;

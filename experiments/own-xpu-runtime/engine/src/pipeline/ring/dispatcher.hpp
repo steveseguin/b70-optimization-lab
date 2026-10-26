@@ -14,7 +14,7 @@ class Dispatcher {
  fs::path original_output;std::optional<ownrt::ring_next::reset::Descriptor> reset_spec;uint64_t reset_index=0;int accepted_output_rows=0;
  CheckpointRingFor<Engine> checkpoints;
  EngineBackend backend;
- mtp36::DraftRuntime* provider=nullptr;std::unique_ptr<pipeline::recursive_provider::Peer> peer;std::optional<ownrt::recursive_provider_next::Sequence> provider_sequence;std::ofstream draft_trace;uint64_t draft_trace_rows=0,draft_trace_omitted=0,provider_borrows_while_target_pending=0;
+ mtp36::DraftRuntime* provider=nullptr;std::unique_ptr<pipeline::recursive_provider::Peer> peer,seed_peer;std::optional<ownrt::recursive_provider_next::Sequence> provider_sequence;std::ofstream draft_trace;uint64_t draft_trace_rows=0,draft_trace_omitted=0,provider_borrows_while_target_pending=0;
  struct ProviderCapture {int position=0;uint64_t serial=0;};std::map<uint64_t,ProviderCapture> provider_at_capture;
  std::array<uint64_t,3> provider_borrows_by_depth{};std::ofstream survival_trace;uint64_t survival_records=0,survival_rows=0,survival_advanced_records=0;
  ownrt::ring_next::StageRing<EngineBackend> ring;std::ofstream trace;uint64_t trace_rows=0,trace_omitted=0;
@@ -35,8 +35,8 @@ public:
    ring(backend,owner.a.pipeline_final(),partition.enabled,owner.p.g.context,owner.p.g.vocab,epoch,request,ownrt::ring_next::request_prefix(request,epoch)){
   require(shared&&mapped_bytes==shared_bytes&&owner.a.pipeline_enabled(),"ring dispatcher mapping/mode");ownrt::ring_next::wire::context(context);legacy.boundary();
   require(owner.a.pipeline_ring&&!owner.a.pipeline_wavefront,"ring exclusive owner");
-  require(bool(provider)==bool(owner.a.pipeline_ring_live_draft&&owner.a.pipeline_first())&&partition.enabled==bool(provider),"ring exact provider/partition ownership");
-  if(provider){require(provider->recursive_image&&provider->live_private_recursive_inventory()==partition.draft_private,"ring recursive private image census");peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_final_shared);provider_sequence.emplace(context);draft_trace.open(e.a.output/"ring-draft-batches.jsonl");require(bool(draft_trace),"ring recursive trace open");if(owner.a.pipeline_ring_pending_provider){survival_trace.open(e.a.output/"ring-provider-survival.jsonl");require(bool(survival_trace),"provider survival trace open");}}
+  require(bool(provider)==bool(owner.a.pipeline_ring_live_draft&&owner.a.pipeline_provider())&&partition.enabled==bool(provider),"ring exact provider/partition ownership");
+  if(provider){require(provider->recursive_image&&provider->live_private_recursive_inventory()==partition.draft_private,"ring recursive private image census");peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_final_shared);if(owner.a.pipeline_provider_stage)seed_peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_seed_shared);provider_sequence.emplace(context);draft_trace.open(e.a.output/"ring-draft-batches.jsonl");require(bool(draft_trace),"ring recursive trace open");if(owner.a.pipeline_ring_pending_provider){survival_trace.open(e.a.output/"ring-provider-survival.jsonl");require(bool(survival_trace),"provider survival trace open");}}
   checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json",owner.a.pipeline_ring_live_draft);
   trace.open(e.a.output/"ring.jsonl");require(bool(trace),"ring trace open");
  }
@@ -66,6 +66,10 @@ public:
    if(survival){auto after=provider->verify_survival(*survival,*provider_sequence);write_survival(r,row,resolved,*survival,after,survival_pending);}
    if(provider&&e.a.pipeline_ring_pending_provider){if(r.op==wire::accept_op)provider_at_capture.erase(row.id);else for(auto id:resolved.discarded)provider_at_capture.erase(id);}
    discarded=resolved.discarded;if(r.op==wire::accept_op&&row.fixture>0)++accepted_output_rows;
+   if(r.op==wire::accept_op&&e.a.pipeline_first()&&e.a.pipeline_provider_stage){
+    ownrt::recursive_provider::SeedRecord accepted;accepted.published_sequence=r.sequence;accepted.physical=ring.physical();accepted.committed=ring.committed();accepted.row=meta;accepted.row.publication_ticket=row.ticket;
+    require(ownrt::recursive_provider::seed_row(accepted,context)==row,"stage0 accepted seed publication identity");ownrt::recursive_provider::publish_seed(shared,accepted);
+   }
    const auto acknowledgment=wire::acknowledgment(context,r.sequence,row,resolved,checkpoints.byte_checks()>prior_checks);
    wire::write(area(wire::ack_offset,sizeof acknowledgment),acknowledgment);
    if(r.op==wire::accept_op&&e.a.pipeline_final()){
@@ -89,7 +93,10 @@ public:
   provider->recursive_idle();const auto pending=ring.pending();
   if(e.a.pipeline_ring_pending_provider){require(pending<=2&&ring.physical()==ring.committed()+int(pending),"pending provider target cursors");require(ring.completed_tentative_rows().size()==pending,"pending provider completed target inventory");checkpoints.borrow_boundary(pending);}
   else {require(!pending,"quiescent ring-live requires no pending target");ring.boundary();checkpoints.boundary();}
-  const auto seed=ring.last_accepted();require(seed.position>0&&ring.committed()==seed.position+1,"ring recursive accepted seed frontier");
+  std::optional<ownrt::recursive_provider::SeedRecord> accepted;
+  if(seed_peer)accepted=seed_peer->capture_seed(context,e.a.output/"ring-seed-peer.json");
+  const auto seed=accepted?ownrt::recursive_provider::seed_row(*accepted,context):ring.last_accepted();
+  require(seed.position>0&&(ring.committed()==seed.position+1||(accepted&&ring.committed()==seed.position)),"ring recursive accepted seed frontier");
   const auto event=peer->capture(context,e.a.output/"ring-final-peer.json");
   auto admitted=pipeline::recursive_provider::admit_batch(request,context,seed,event,area(wire::row_offset,sizeof(wire::RowMeta)),area(ownrt::live_draft::header_offset,sizeof(ownrt::live_draft::Handoff)),area(slot_bytes,context.stream_bytes),provider_sequence->serial()+1);
   const auto& input=admitted.input;const auto& pair=admitted.expected;
@@ -108,7 +115,7 @@ public:
   ++provider_borrows_by_depth[pending];provider_borrows_while_target_pending+=pending?1:0;
   wire::write(area(wire::proposal_offset,sizeof batch),batch);const auto& result=provider_sequence->last_result();
   if(draft_trace_rows<size_t(e.a.pipeline_ring_trace_limit)){
-   draft_trace<<"{\"sequence\":"<<request.sequence<<",\"provider_serial\":"<<batch.provider_serial<<",\"target_pending_depth\":"<<pending<<",\"seed_row\":"<<batch.seed_row<<",\"parent_row\":"<<batch.parent_row<<",\"seed_position\":"<<batch.seed_position<<",\"confirmed_token\":"<<seed.token<<",\"fixture\":"<<seed.fixture<<",\"parent_final_ticket\":"<<input.parent.row_ticket<<",\"parent_final_commit\":"<<input.parent.commit_sequence<<",\"hidden_sha256\":"<<ownrt::quote(hash(input.hidden))<<",\"guesses\":[";
+   draft_trace<<"{\"sequence\":"<<request.sequence<<",\"provider_serial\":"<<batch.provider_serial<<",\"target_pending_depth\":"<<pending<<",\"seed_row\":"<<batch.seed_row<<",\"parent_row\":"<<batch.parent_row<<",\"seed_position\":"<<batch.seed_position<<",\"confirmed_token\":"<<seed.token<<",\"fixture\":"<<seed.fixture<<",\"parent_final_ticket\":"<<input.parent.row_ticket<<",\"parent_final_commit\":"<<input.parent.commit_sequence<<",\"hidden_sha256\":"<<ownrt::quote(hash(input.hidden))<<",\"seed_accept_sequence\":"<<(accepted?accepted->published_sequence:0)<<",\"seed_journal_sha256\":"<<ownrt::quote(accepted?hash(std::vector<uint8_t>(reinterpret_cast<const uint8_t*>(&*accepted),reinterpret_cast<const uint8_t*>(&*accepted)+sizeof(*accepted))):std::string{})<<",\"guesses\":[";
    for(size_t i=0;i<result.guesses.size();++i)draft_trace<<(i?",":"")<<result.guesses[i];draft_trace<<"],\"restored_position\":"<<batch.restored_position<<",\"snapshot_bytes\":"<<result.snapshot_bytes<<",\"mutable_bytes_verified\":"<<(result.byte_verified?"true":"false")<<",\"canonical_ms\":"<<result.canonical_ms<<",\"capture_ms\":"<<result.capture_ms<<",\"recursive_ms\":"<<result.recursive_ms<<",\"restore_ms\":"<<result.restore_ms<<"}\n";draft_trace.flush();require(bool(draft_trace),"ring recursive trace write");++draft_trace_rows;
   }else ++draft_trace_omitted;
   Reply reply{};reply.sequence=request.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=0;reply.token=batch.guess0;reply.bytes=sizeof batch;reply.busy_ms=Engine::ms(started);reply.gpu_ms=e.gemv_ms+e.nongemv_ms-gpu;return reply;
@@ -140,7 +147,7 @@ public:
   bool comma=false;for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"],\"canonical_bank_mapping\":{";comma=false;
   for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name)<<":{\"active_allocation\":"<<e.buffers[0].at(name).id<<",\"inactive_allocation\":"<<id<<"}";comma=true;}o<<"}";
   if(e.a.pipeline_ring_live_draft){std::string draft_seal;if(provider&&dump_marker>=0)draft_seal=file_hash(e.a.output/("state-"+std::to_string(dump_marker)+".draft")/"state-seal.txt",4096);
-   o<<",\"provider_borrow_mode\":"<<ownrt::quote(e.a.pipeline_ring_pending_provider?"pending-target":"quiescent-target")<<",\"provider_present\":"<<(provider?"true":"false")<<",\"provider_borrows_while_target_pending\":"<<provider_borrows_while_target_pending<<",\"canonical_draft_state_seal_sha256\":"<<ownrt::quote(draft_seal)<<",\"provider_position\":";
+   o<<",\"provider_borrow_mode\":"<<ownrt::quote(e.a.pipeline_ring_pending_provider?"pending-target":"quiescent-target")<<",\"provider_stage\":"<<e.a.pipeline_provider_stage<<",\"provider_present\":"<<(provider?"true":"false")<<",\"provider_borrows_while_target_pending\":"<<provider_borrows_while_target_pending<<",\"canonical_draft_state_seal_sha256\":"<<ownrt::quote(draft_seal)<<",\"provider_position\":";
    if(provider)o<<provider->live_position();else o<<"null";
    o<<",\"provider_serial\":"<<(provider_sequence?provider_sequence->serial():0)<<",\"provider_commands\":"<<(provider_sequence?provider_sequence->serial():0)<<",\"provider_recursive_active\":false,\"provider_snapshot_captures\":"<<(provider?provider->recursive_captures:0)<<",\"provider_snapshot_restores\":"<<(provider?provider->recursive_restores:0)<<",\"provider_byteverified_restore_count\":"<<(provider?provider->recursive_verified_restores:0)<<",\"provider_restore_verification_enabled\":"<<(e.a.pipeline_ring_recursive_verify?"true":"false")<<",\"provider_all_restores_byte_verified\":"<<((!e.a.pipeline_ring_persistent_requests||bool(provider&&e.a.pipeline_ring_recursive_verify))&&(!provider||provider->recursive_restores==provider->recursive_verified_restores)?"true":"false")<<",\"provider_private_bytes\":"<<(provider?provider->recursive_bytes:0)<<",\"provider_canonical_allocation_count\":"<<(provider?provider->live_mutable_inventory().size()+provider->live_pinned_inventory().size():0)<<",\"provider_trace_records\":"<<draft_trace_rows<<",\"provider_trace_omitted\":"<<draft_trace_omitted;
   }

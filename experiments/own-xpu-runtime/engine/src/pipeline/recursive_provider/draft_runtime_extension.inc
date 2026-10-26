@@ -46,7 +46,7 @@ void recursive_inventory(){
  const auto& backup=e.dev(0).arena.row(recursive_image);require(backup.live&&backup.memory==Memory::device&&backup.category==Category::runtime_overhead&&backup.bytes==recursive_bytes&&backup.label=="card0:draft:recursive-private-image"&&e.allocations.count(recursive_image)&&!mutable_ids.count(recursive_image),"recursive private image identity");
 }
 void prepare_recursive_depth2(){
- recursive_idle();require(e.a.pipeline_live_draft&&e.a.pipeline_draft_partition&&e.a.pipeline_first()&&e.a.mtp&&!recursive_image&&!recursive_active,"recursive initialization owner");
+ recursive_idle();require(e.a.pipeline_live_draft&&e.a.pipeline_draft_partition&&e.a.pipeline_provider()&&e.a.mtp&&!recursive_image&&!recursive_active,"recursive initialization owner");
  for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);require(row.live&&row.memory==Memory::device&&row.category!=Category::weights&&row.bytes>0&&row.bytes<=32ull*1024*1024&&recursive_bytes<=32ull*1024*1024-row.bytes,"recursive canonical reserve bound");
   recursive_rows.push_back({allocation,row.bytes,recursive_bytes,row.memory,row.label,{}});recursive_bytes+=row.bytes;
  }

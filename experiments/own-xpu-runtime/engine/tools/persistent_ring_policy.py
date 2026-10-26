@@ -5,10 +5,12 @@ from compare_pipeline_state import require
 EMPTY_SHA=hashlib.sha256(b'').hexdigest()
 
 
-def validate_policy(att, *, policy, first):
+def validate_policy(att, *, policy, first, provider=None):
     require(policy in ('qualification','measured') and type(first)is bool,'explicit persistent fixed policy/owner required')
     require(att['schema']=='ownrt.ring-state.persistent.v1' and att['mode']=='persistent-rolling'
             and att['verification_policy']==policy,'persistent attestation policy identity differs')
+    require(provider is None or type(provider)is bool,'provider policy role must be boolean')
+    first=first if provider is None else provider
     enabled=policy=='qualification'
     controls=dict(target_restore_byte_checks_enabled=enabled,
                   provider_recursive_byte_checks_enabled=enabled and first,

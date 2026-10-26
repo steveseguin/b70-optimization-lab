@@ -59,7 +59,7 @@ class Reader:
             return event
         reply = base.REPLY.unpack(stage.received)
         base.require(not stage.transmit and reply[2] == 0 and reply[4] == command.sequence
-                     and reply[5:8] == (0,0,0), 'provider capture/reply owner/error identity')
+                     and reply[5:8] == (int(command.stage != 0),command.stage,0), 'provider capture/reply owner/error identity')
         if reply[0] == STATUS:
             base.require(self.captured_sequence != command.sequence and reply[1] == -1
                          and reply[3] == CAPTURE.size and math.isfinite(reply[8]) and reply[8] >= 0

@@ -21,6 +21,8 @@ def request_identity(plan,row,index,epoch):
 
 def audit_reset(plan,row,result,journal,*,previous_request,previous_sequences,previous_target_position,prior_inventories,read_raw):
     index=result['index'];epoch=index+1;count=len(previous_sequences);policy=plan['check_policy']
+    provider=plan.get('provider_stage',0)
+    need(type(provider)is int and 0<=provider<count-1,'reset provider role')
     need(type(index)is int and index>=0 and policy in ('qualification','measured'),'persistent request index/policy')
     request=request_identity(plan,row,index,epoch)
     need(result['schema']=='ownrt.persistent-rolling-request-result.v1' and result['passed'] is True
@@ -61,10 +63,10 @@ def audit_reset(plan,row,result,journal,*,previous_request,previous_sequences,pr
              'actual native descriptor bytes differ')
         need(sha(receipt_raw)==item['receipt_sha256'] and json.loads(receipt_raw,object_pairs_hook=BUNDLE.pairs)==item['receipt'],
              'actual native reset receipt bytes differ')
-        receipt=item['receipt'];first=stage==0
+        receipt=item['receipt'];first=stage==0;owns_provider=stage==provider
         expected_receipt=dict(expected,schema='ownrt.ring-reset.v1',passed=True,check_policy=policy,
-            target_position=0,target_physical=0,target_committed=0,target_pending=0,draft_position=0 if first else None,
-            provider_serial=0 if first else None,context_extent=32,alternate_extent=32,draft_context_extent=32 if first else None,
+            target_position=0,target_physical=0,target_committed=0,target_pending=0,draft_position=0 if owns_provider else None,
+            provider_serial=0 if owns_provider else None,context_extent=32,alternate_extent=32,draft_context_extent=32 if owns_provider else None,
             pending_ticket=False,sticky_error=0,allocation_ids_preserved=True,counters_reset=True,trace_reset=True,
             shared_publication_invalidated=True,reset_index=epoch,metadata_sha256=item['descriptor_sha256'],
             previous_target_position=previous_target_position,cold_state_byte_verified=False)
@@ -75,7 +77,7 @@ def audit_reset(plan,row,result,journal,*,previous_request,previous_sequences,pr
              and inventory==receipt['allocation_inventory_after_sha256'],'native allocation inventory changed')
         if prior_inventories is not None:need(inventory==prior_inventories[stage],'allocation identity changed across requests')
         for key in ('provider_cold_host_sha256','provider_cold_sequence_sha256'):
-            need(bool(re.fullmatch('[0-9a-f]{64}',receipt[key])) if first else receipt[key]=='','cold provider host/Sequence identity missing')
+            need(bool(re.fullmatch('[0-9a-f]{64}',receipt[key])) if owns_provider else receipt[key]=='','cold provider host/Sequence identity missing')
         reply=base.REPLY.unpack(bytes.fromhex(item['reply_hex']))
         need(reply[:8]==(0,0,0,0,sequence,0 if first else 1,stage,int(stage==count-1)),
              'RESET raw acknowledgment differs')

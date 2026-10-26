@@ -143,6 +143,16 @@ def wavefront_attestation(path, stage, dump, metadata, identity, seal_source, ha
     return att, receipt
 
 
+def provider_owner(spec,metadata,stage):
+    provider=spec.get('provider_stage',0)
+    require(type(provider)is int and 0<=provider<len(spec['stages'])-1,'explicit nonfinal state-set provider role')
+    if provider or 'provider_stage' in metadata:
+        require(type(metadata.get('provider_stage'))is int and metadata['provider_stage']==provider
+                and metadata.get('provider_present') is (stage['id']==provider),
+                'native metadata provider role differs from state manifest')
+    return stage['id']==provider
+
+
 def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes, lengths, spec):
     declared = path.parent / stage['quiescence']
     require(not declared.is_symlink(), 'ring attestation symlink refused')
@@ -158,7 +168,7 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
             and att['mode'] == spec['mode'], 'unsupported ring attestation schema/mode')
     if persistent:
         from persistent_ring_policy import validate_policy
-        validate_policy(att,policy=spec['verification_policy'],first=metadata['first'])
+        validate_policy(att,policy=spec['verification_policy'],first=metadata['first'],provider=provider_owner(spec,metadata,stage))
     marker = re.fullmatch(r'state-(0|[1-9][0-9]*)', dump.name)
     require(marker is not None and type(att['dump_marker']) is int and att['dump_marker'] == int(marker[1]), 'ring dump marker differs')
     require(type(att['stage_id']) is int and att['stage_id'] == stage['id'], 'ring stage identity differs')
@@ -208,7 +218,7 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     layout = json.loads(layout_raw, object_pairs_hook=BUNDLE.pairs)
     require(layout['schema'] == ('ownrt.ring-checkpoint-layout.live.v1' if live else 'ownrt.ring-checkpoint-layout.v1')
             and layout['complete_target_owned_mutable_allocations'] is True
-            and layout['provider_present'] is (live and metadata['first'])
+            and layout['provider_present'] is (live and provider_owner(spec,metadata,stage))
             and type(layout['ring_capacity']) is int and layout['ring_capacity'] == 2
             and type(layout['slot_bytes']) is int and layout['slot_bytes'] == size, 'ring complete target-only layout required')
     allocations, labels = set(), set()
@@ -262,7 +272,7 @@ def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout,
     require(att['provider_borrow_mode'] == metadata['provider_borrow_mode']
             == spec['provider_borrow_mode'] == ('pending-target' if pending else 'quiescent-target'),
             'live ring permits only quiescent target borrowing')
-    require(att['provider_present'] is metadata['first'] and att['provider_recursive_active'] is False,
+    require(att['provider_present'] is provider_owner(spec,metadata,stage) and att['provider_recursive_active'] is False,
             'live ring provider ownership/active transaction differs')
     require(pending or all(att[k] == 0 for k in ('tentative_rows','accepted_tentative_rows','abort_count',
                                     'discarded_rows','snapshot_captures','snapshot_releases','saved_bytes')),
@@ -284,7 +294,7 @@ def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout,
     require(att['provider_trace_records'] + att['provider_trace_omitted'] == att['provider_commands'],
             'provider trace command accounting differs')
     canonical, private = layout['independent_draft_allocations'], layout['provider_private_allocations']
-    if not metadata['first']:
+    if not provider_owner(spec,metadata,stage):
         require(all(att[k] == 0 for k in integers) and att['provider_position'] is None
                 and att['canonical_draft_state_seal_sha256'] == '' and not canonical and not private
                 and 'draft_state_set' not in stage, 'nonfirst stage cannot own provider state')

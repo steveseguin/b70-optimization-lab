@@ -190,7 +190,7 @@ public:
  std::vector<Allocation> live_mutable_inventory()const{require(e.a.pipeline_live_draft,"live draft mutable inventory mode");return {mutable_ids.begin(),mutable_ids.end()};}
  std::vector<Allocation> live_pinned_inventory()const{require(e.a.pipeline_live_draft,"live draft pinned inventory mode");return {publication,half_staging};}
  int live_step(int confirmed,int target_position,bool head,const void* hidden,size_t bytes){
-  require(e.a.pipeline_live_draft&&e.a.pipeline_first()&&e.a.mtp&&e.a.draft_rank==0,"live draft owner");
+  require(e.a.pipeline_live_draft&&e.a.pipeline_provider()&&e.a.mtp&&e.a.draft_rank==0,"live draft owner");
   require(!depth_probe&&!async_pending&&!disabled&&queued_probe==-1&&hidden&&bytes==e.stream_bytes(),"live draft quiescent handoff");
   probe_reverse_hidden.resize(bytes);std::memcpy(probe_reverse_hidden.data(),hidden,bytes);
   reverse_hidden=probe_reverse_hidden.data();
@@ -227,7 +227,7 @@ public:
    const std::string v=value;require(v=="0"||v=="1","OWNRT_DRAFT_DEPTH_VERIFY must be 0 or 1");verify_depth_restore=v=="1";
    require(!verify_depth_restore||depth_probe,"depth restore verification requires the probe");
   }
-  require(e.a.rank==e.a.draft_rank||!e.a.draft_capture.empty(),"draft placement/capture");if(!e.a.mini)store=std::make_unique<Store>(e.a.draft_manifest,e.a.draft_model);
+  require((e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.a.rank==e.a.draft_rank||!e.a.draft_capture.empty(),"draft placement/capture");if(!e.a.mini)store=std::make_unique<Store>(e.a.draft_manifest,e.a.draft_model);
   p=flash::Builder(e.p.g).build({true});std::erase_if(p.launches,[](const auto& l){return l.op=="lookup"||l.op=="broadcast";});
   // Keep plan shape/ops, pair routed gate/up at the same schedule point.
   for(size_t i=0;i+2<p.launches.size();++i)if(p.launches[i].label=="blk.0.expsgate"){
@@ -248,15 +248,15 @@ public:
   load("mtp.pre_fc_norm_embedding.weight",1,p.g.h,true);load("mtp.pre_fc_norm_hidden.weight",1,4*p.g.h,true);load("mtp.fc_embedding.weight",p.g.h,p.g.h);load("mtp.fc_hidden.weight",p.g.h,p.g.h);
   const flash::Launch* head=nullptr;for(const auto& l:p.launches)if(l.label=="logits")head=&l;require(head,"draft head absent");head_variant=selected_variant(e.w,e.a,p,*head);head_candidate=e.a.gsq_packed?"p33.dense.segment":packet26::dispatch.gemv_for(head->label);
   auto t=e.w.directory.at("output.weight");Weight hw;hw.rows=p.g.vocab;hw.cols=p.g.h;hw.type=flash::grid_type(t.grid);
-  if(!e.a.mini){if(e.a.draft_capture.empty())require(e.a.memory=="resident"&&(e.a.rank==0||e.weights[0].count("output.weight")),"packet79 production requires rank0 prefix or rank1 resident head");require(head_candidate=="p33.dense.segment"&&head_variant==6,"packet56 requires unchanged expanded Q6 head kernel");}
+  if(!e.a.mini){if(e.a.draft_capture.empty())require(e.a.memory=="resident"&&(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.weights[0].count("output.weight")),"packet79 production requires rank0 prefix or rank1 resident head");require(head_candidate=="p33.dense.segment"&&head_variant==6,"packet56 requires unchanged expanded Q6 head kernel");}
   if(q4_head()){
    const size_t rb=hw.cols/iq3::layout(hw.type).elements*iq3::layout(hw.type).bytes,er=p83::row_bytes(hw.cols);hw.rows=prefix_rows();
    hw.id=alloc("q4-head",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
    const size_t chunk=std::max(size_t(1),size_t(4194304)/std::max(rb,er));
    for(size_t row=0;row<hw.rows;row+=chunk){auto n=std::min(chunk,size_t(hw.rows)-row);auto source=e.w.read("output.weight",row*rb,n*rb);auto raw=p83::quantize(hw.type,source.data(),n,hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}
-  }else if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight"))hw.id=e.weights[0].at("output.weight");else {auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.a.rank==0||e.packed_weight("output.weight"))hw.rows=prefix_rows();hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
+  }else if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight"))hw.id=e.weights[0].at("output.weight");else {auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))hw.rows=prefix_rows();hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
    size_t nr=std::max(size_t(1),size_t(4194304)/std::max(rb,er));for(size_t row=0;row<hw.rows;row+=nr){auto n=std::min(nr,size_t(hw.rows)-row);auto raw=e.w.read("output.weight",row*rb,n*rb);if(arithmetic::is_expanded(head_variant))raw=iq3::expanded::expand(hw.type,raw.data(),raw.size(),hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}}
-  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||e.packed_weight("output.weight"))?size_t(hw.rows)*arithmetic::row_bytes(hw.type,hw.cols,head_variant):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
+  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))?size_t(hw.rows)*arithmetic::row_bytes(hw.type,hw.cols,head_variant):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
   weights["output.weight"]=hw;
   for(const auto& l:p.launches)if(l.op!="gemv"&&l.op!="routed_gemv"&&l.op!="expert_gate_up")prepared.emplace(&l,bind(l));
   if(store){require(store->reads.size()==3101,"not all official draft tensors read");std::ostringstream o;o<<"{";bool comma=false;for(auto& [n,h]:store->reads){o<<(comma?",":"")<<ownrt::quote(n)<<":"<<ownrt::quote(h);comma=true;}o<<"}";save(e.a.output/"draft-tensor-reads.json",o.str());}
@@ -311,7 +311,7 @@ public:
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
   e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);if(recursive){
    e.tail=e.io_copy(0,id("merge.hidden"),0,id("streams"),0,4*p.g.h*2);
-  }else if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");
+  }else if((e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider()))&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");
    if(e.a.f32_activations){ // exact-mode target streams are F32; the draft keeps its BF16 inputs (proposals are target-verified)
     std::vector<uint16_t> hidden(size_t(4)*p.g.h);auto* f=static_cast<const float*>(reverse_hidden);for(size_t i=0;i<hidden.size();++i)hidden[i]=iq3::bf16_bits(f[i]);
     e.upload(0,id("merge.hidden"),0,hidden.data(),hidden.size()*2);

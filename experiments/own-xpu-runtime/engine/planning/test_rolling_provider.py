@@ -9,11 +9,11 @@ from rolling_provider.coordinator import RollingCoordinator
 from rolling_provider.arbiter import Parent, PROVIDER
 
 
-def fixture(count, *, maximum=18, eos=(96,), wire=500):
+def fixture(count, *, maximum=18, eos=(96,), wire=500, provider_stage=0):
     prompt = [3, 5, 8, 11]
     c = RollingCoordinator(stages=count, request=sha256(b'rolling').digest(), epoch=1,
         prompt=prompt, max_new=maximum, vocab=97, eos_token_ids=eos, context=128,
-        initial_sequences=[wire]*count)
+        initial_sequences=[wire]*count, provider_stage=provider_stage)
     return c, [Worker(i, count, 1, prompt, wire) for i in range(count)]
 
 

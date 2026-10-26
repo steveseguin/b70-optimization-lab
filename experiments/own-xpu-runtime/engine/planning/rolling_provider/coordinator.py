@@ -13,11 +13,11 @@ from .arbiter import Arbiter, Parent, PROVIDER
 
 
 class RollingCoordinator(core.Coordinator):
-    def __init__(self, *, capture_ready_overlap=False, **kwargs):
+    def __init__(self, *, capture_ready_overlap=False, provider_stage=0, **kwargs):
         need(kwargs.get('proposal_callback') is None, 'rolling proposals belong only to native completion')
         super().__init__(**kwargs)
         self.provider = Arbiter(stages=len(self.stages), request=self.request, epoch=self.epoch,
-            last_input_position=self.limit-1, vocab=self.vocab, capture_ready_overlap=capture_ready_overlap)
+            last_input_position=self.limit-1, vocab=self.vocab, capture_ready_overlap=capture_ready_overlap, provider_stage=provider_stage)
         self.auxiliary_commands = []
         self.provider_jobs = {}
         self.cancelled_provider_incomplete = False
@@ -46,7 +46,8 @@ class RollingCoordinator(core.Coordinator):
             pending = stage.pending[0].command
             work = self.rows[pending.row.position]
             allow = self._cancel_only() or self.provider.accept_allowed(index, pending.row.position)
-            if self.provider.capture_ready_overlap and index == len(self.stages)-1 and self.provider.job is not None:
+            if self.provider.job is not None and (index == 0 or
+                    self.provider.capture_ready_overlap and index == len(self.stages)-1):
                 allow = False  # Cancellation also drains op27 before replacing its final parent.
             if not work.verified or work.cancelled or not allow:
                 continue
@@ -94,13 +95,27 @@ class RollingCoordinator(core.Coordinator):
             result.append(self._reserve(index, core.ROW, work.row, tentative=tentative, source=source))
         return result
 
+    def publish(self, batch):
+        if self.provider.provider_stage == 0:
+            return super().publish(batch)
+        need(self.phase is None and not self.done and self.stop_reason is None,
+             'proposal publication during drain/reset')
+        stage = self.stages[self.provider.provider_stage]
+        need(stage.busy is None and all(p.command.tentative for p in stage.pending),
+             'proposal requires restored provider owner')
+        need(batch.seed_length >= 2 and self.frontier >= batch.seed_length-1,
+             'canonical true-pair parent not yet committed')
+        self.proposals.publish(batch)
+        self.events.append(dict(event='proposal', ticket=batch.ticket,
+            seed=batch.seed_length, tokens=batch.tokens))
+
     def _poll_proposals(self):
-        stage = self.stages[0]
+        stage = self.stages[self.provider.provider_stage]
         pending = tuple(p.command for p in stage.pending)
         if self.stop_reason is not None or not self.provider.can_reserve(stage_busy=stage.busy is not None,
                 pending=pending, physical=stage.physical, committed=stage.committed, phase=self.phase):
             return
-        job = self.provider.reserve(lambda op, row: self._reserve(0, op, row),
+        job = self.provider.reserve(lambda op, row: self._reserve(self.provider.provider_stage, op, row),
             stage_busy=False, pending=pending, physical=stage.physical, committed=stage.committed, phase=self.phase)
         self.provider_jobs[job.command.sequence] = job
         self.auxiliary_commands.append(job.command)
@@ -162,7 +177,7 @@ class RollingCoordinator(core.Coordinator):
 
     def capture_provider(self, command):
         try:
-            need(command.op == PROVIDER and self.stages[0].busy is command,
+            need(command.op == PROVIDER and self.stages[self.provider.provider_stage].busy is command,
                  'capture-ready retains exact auxiliary owner')
             job = self.provider_jobs[command.sequence]
             self.provider.captured(job)
@@ -175,7 +190,7 @@ class RollingCoordinator(core.Coordinator):
 
     def complete_provider(self, command, *, provider_serial, restored_position, physical, committed,
                           pending_rows, guesses):
-        stage = self.stages[0]
+        stage = self.stages[self.provider.provider_stage]
         try:
             need(command.op == PROVIDER and stage.busy is command, 'exact outstanding provider owner')
             job = self.provider_jobs[command.sequence]

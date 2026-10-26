@@ -42,7 +42,7 @@ class Sequence {
  uint64_t serial_=0;Row last_seed_{};bool poisoned_=false;Result last_result_{};
  static std::string hex(const Digest& value){constexpr char digits[]="0123456789abcdef";std::string out;for(auto v:value){out+=digits[v>>4];out+=digits[v&15];}return out;}
 public:
- explicit Sequence(ring_next::wire::Context context):context_(context){ring_next::wire::context(context);need(context.stage==0,"depth2 provider must belong to first stage");}
+ explicit Sequence(ring_next::wire::Context context):context_(context){ring_next::wire::context(context);need(context.stage>=0&&context.stage<context.stages-1,"depth2 provider must belong to a nonfinal stage");}
  const Result& last_result()const{return last_result_;}
  std::string survival_identity()const{
   using ownrt::provider_survival::quote;using ownrt::provider_survival::row_json;

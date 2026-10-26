@@ -8,11 +8,17 @@ original_validate=frozen.validate_identity
 
 def validate(plan,suite,terminal,reference):
     frozen.need(plan.get('capture_ready_overlap') is True,'explicit capture-ready true required')
+    provider=plan.get('provider_stage',0)
+    frozen.need(type(provider)is int and 0<=provider<len(plan['stages'])-1,'capture provider role')
     flag='--pipeline-ring-parent-capture-ack'
-    frozen.need([s['argv'].count(flag) for s in plan['stages']]==[1]+[0]*(len(plan['stages'])-1),
-                'capture-ready native opt-in only on first owner')
+    frozen.need([s['argv'].count(flag) for s in plan['stages']]==[int(i==provider) for i in range(len(plan['stages']))],
+                'capture-ready native opt-in only on provider owner')
     frozen.need(any(p.endswith('/rolling_provider/capture_ready.py') for p in plan['pins']),
                 'capture-ready transport source pin required')
+    for stage in plan['stages']:
+        argv=stage['argv'];role_flag='--pipeline-provider-stage'
+        frozen.need(argv.count(role_flag)==int(provider>0),'exact native provider role flag count')
+        if provider:frozen.need(argv[argv.index(role_flag)+1]==str(provider),'native provider role differs')
     return original_validate(plan,suite,terminal,reference)
 
 if __name__=='__main__':

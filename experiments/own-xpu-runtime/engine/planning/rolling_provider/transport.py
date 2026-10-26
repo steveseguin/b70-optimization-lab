@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'tools'))
 import pending_ring_live_driver as pending
 from .coordinator import RollingCoordinator
 from .arbiter import Parent, PROVIDER
-from . import capture_ready
+from . import capture_ready, remote
 
 base, codec, ring = pending.base, pending.codec, pending.ring
 
@@ -63,7 +63,8 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
     model = RollingCoordinator(stages=len(stages), request=bytes.fromhex(plan['request_sha256']), epoch=epoch,
         prompt=plan['prompt_tokens'], max_new=plan['max_new'], context=plan['context'], vocab=plan['vocab'],
         eos_token_ids=plan['eos_token_ids'], stream_bytes=stages[0].stream_bytes,
-        initial_sequences=[s.sequence for s in stages], capture_ready_overlap=plan.get('capture_ready_overlap',False))
+        initial_sequences=[s.sequence for s in stages], capture_ready_overlap=plan.get('capture_ready_overlap',False),
+        provider_stage=plan.get('provider_stage',0))
     for stage in stages:
         stage.start_async()
     sockets = {s.sock:s for s in stages}
@@ -103,16 +104,21 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                         and sha256(parent_record.record).digest() == job.parent.record_sha256
                         and sha256(parent_record.handoff.hidden).digest() == job.parent.hidden_sha256,
                         'provider must consume exact owned final-record lease')
-                    base.require(stage.accepted_row is not None and stage.accepted_row.row == job.seed,
+                    seed_owner = stages[0]
+                    base.require(seed_owner.accepted_row is not None and seed_owner.accepted_row.row == job.seed,
                                  'provider consumes actual locally ACCEPTed original ROW')
                     transported = pending.pending_codec.PendingProviderCommand(command.sequence,
-                        stage.accepted_row, parent_record, job.serial, accepted_sequence=stage.accepted_sequence,
+                        seed_owner.accepted_row, parent_record, job.serial, stage=command.stage, accepted_sequence=seed_owner.accepted_sequence,
                         target_physical=job.target_physical, target_committed=job.target_committed,
                         pending_rows=job.pending_rows)
                     provider_wire[command.sequence] = (command, transported)
-                    stage.issue_provider(transported)
+                    if command.stage:
+                        seed_witness=remote.issue(stage,transported,seed_owner)
+                    else:
+                        stage.issue_provider(transported)
+                        seed_witness={}
                     issued_command = transported
-                    details = dict(accepted_seed_sequence=stage.accepted_sequence,
+                    details = dict(**seed_witness,accepted_seed_sequence=seed_owner.accepted_sequence,
                         provider_serial=job.serial,target_physical=job.target_physical,
                         target_committed=job.target_committed,pending_target_rows=list(job.pending_rows),
                         parent_record_hex=parent_record.record.hex(),

@@ -8,7 +8,7 @@ struct OperatorStatePartition {
 };
 template<class Owner> OperatorStatePartition admit_operator_partition(
  Owner& e,const std::set<Allocation>& before,const std::vector<Allocation>& draft,const std::vector<Allocation>& pinned,const std::vector<Allocation>& private_ids={}){
- require(e.a.pipeline_live_draft&&e.a.pipeline_first()&&e.a.mtp,"operator partition live owner");
+ require(e.a.pipeline_live_draft&&e.a.pipeline_provider()&&e.a.mtp,"operator partition live owner");
  require(!before.empty()&&!draft.empty()&&pinned.size()==2,"operator partition complete inventories");
  std::set<Allocation> declared(draft.begin(),draft.end()),private_set(private_ids.begin(),private_ids.end()),actual;
  require(private_set.size()==private_ids.size(),"duplicate provider-private ownership");

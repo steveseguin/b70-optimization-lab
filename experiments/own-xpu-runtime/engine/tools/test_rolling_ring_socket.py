@@ -24,8 +24,8 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
             row=ring.Row(m[4],m[5],m[6],m[7],m[8],m[9],m[17],m[18],m[19]);assert row.token==token and row.position==pos and m[3] in (0,1)
             output=extent=0
             if op==27:
-                assert index==0 and spec==2 and model.ring.committed==pos+1 and all(p.ticket.tentative for p in model.ring.pending)
-                assert state['accepted'].row==row and state['accepted'].tentative==bool(m[3]);assert seq==model.sequence+1;model.sequence=seq;serial+=1;assert fixture==int(row.fixture>0) and pos==serial
+                assert index==state.get('provider_stage',0) and spec==2 and model.ring.committed in ((pos+1,) if index==0 else (pos,pos+1)) and all(p.ticket.tentative for p in model.ring.pending)
+                accepted=state['all_states'][0]['accepted'];assert accepted.row==row and accepted.tentative==bool(m[3]);assert seq==model.sequence+1;model.sequence=seq;serial+=1;assert fixture==int(row.fixture>0) and pos==serial
                 state['provider_inflight']=True
                 if not state.get('capture_ready'):time.sleep(state.get('provider_delay',0))
                 peer=mappings[-1];record=bytes(peer[codec.FINAL_OFFSET:codec.FINAL_OFFSET+360]);header=codec.FINAL_HEADER.unpack(record[:24])
@@ -35,7 +35,7 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
                 parent=wire.ROW_META.unpack(record[24:248]);assert parent[5]==row.parent and parent[7]+1==pos and parent[19]==row.before
                 if state.get('capture_ready'):
                     from rolling_provider import capture_ready as cr
-                    ready=base.REPLY.pack(cr.STATUS,-1,0,128,seq,0,0,0,0.01,0,0,0)
+                    ready=base.REPLY.pack(cr.STATUS,-1,0,128,seq,int(index!=0),index,0,0.01,0,0,0)
                     identity=cr.CAPTURE.pack(cr.MAGIC,1,128,row.epoch,seq,row.identity,row.parent,
                         header[4],serial,row.request,sha256(record).digest())
                     if state.get('bad_capture_identity'):identity=identity[:-1]+bytes([identity[-1]^1])
@@ -60,7 +60,13 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
                 command=ring.Command(index,op,seq,row,bool(m[3]),0 if op==ring.ROW else spec,source)
                 provider_before=state.get('provider');ack=model.execute(command)
                 if op==ring.ACCEPT:
+                    if index==0 and state.get('provider_stage',0):
+                        assert not state['all_states'][state['provider_stage']].get('provider_inflight',False), 'stage0 ACCEPT overwrote live provider seed'
                     state['accepted']=command
+                    if index==0 and state.get('provider_stage',0):
+                        from rolling_provider.remote import SEED_OFFSET,SEED_HEADER
+                        fields=list(m);fields[14]=spec
+                        shared[SEED_OFFSET:SEED_OFFSET+256]=SEED_HEADER.pack(0x52534331,1,256,0,seq,ack.physical,ack.committed)+wire.ROW_META.pack(*fields)
                     if final and state.get('provider_state'):
                         assert not state['provider_state'].get('provider_inflight',False), 'final ACCEPT replaced live provider parent'
                 if op==ring.ABORT_SUFFIX:
@@ -100,11 +106,13 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
     finally:sock.close()
 
 
-def exercise(count, *, maximum=16, first_options=None, final_options=None, cancel=False, wire_seed=500):
+def exercise(count, *, maximum=16, first_options=None, final_options=None, cancel=False, wire_seed=500, provider_stage=0):
     prompt=[3,5,8,11]
     plan=dict(rolling_depth2=True,use_proposals=True,prompt_tokens=prompt,max_new=maximum,
         context=128,vocab=97,eos_token_ids=[96],request_sha256=sha256(b'rolling-wire').hexdigest(),verify_restore=True)
     if (first_options or {}).get('capture_ready'):plan['capture_ready_overlap']=True
+    if provider_stage:plan['provider_stage']=provider_stage
+    plan['stages']=[dict(id=i) for i in range(count)]
     stages=[];threads=[];states=[];errors=[];mappings=[bytearray(base.SHARED) for _ in range(count)]
     guard=Guard()
     with tempfile.TemporaryDirectory() as temporary:
@@ -114,14 +122,14 @@ def exercise(count, *, maximum=16, first_options=None, final_options=None, cance
                 stage=bridge.Stage.__new__(bridge.Stage);stage.sock,peer=socket.socketpair();stage.shared=mappings[i]
                 stage.sequence=wire_seed;stage.stream_bytes=16;stage.spec=dict(id=i,first=i==0,final=i==count-1)
                 stage.guard=guard;stage.plan=plan
-                state=dict(wire=wire_seed,fragment_delay=0.00002*(count-i))
-                if i==0:state.update(first_options or {})
+                state=dict(wire=wire_seed,fragment_delay=0.00002*(count-i),provider_stage=provider_stage,all_states=states)
+                if i==provider_stage:state.update(first_options or {})
                 if i==count-1:
                     state.update(final_options or {})
-                    if plan.get('capture_ready_overlap'):state['provider_state']=states[0]
+                    if plan.get('capture_ready_overlap'):state['provider_state']=states[provider_stage]
                 thread=threading.Thread(target=worker,args=(peer,stage.shared,mappings,i,count,prompt,state,errors),daemon=True)
                 stages.append(stage);threads.append(thread);states.append(state);thread.start()
-            stop=(lambda:states[0].get('provider_inflight',False) and len(states[0].get('borrows',[]))>=3) if cancel else None
+            stop=(lambda:states[provider_stage].get('provider_inflight',False) and len(states[provider_stage].get('borrows',[]))>=3) if cancel else None
             result=bridge.drive(stages,plan,guard,output,stop_requested=stop)
             assert not errors,errors
             import json

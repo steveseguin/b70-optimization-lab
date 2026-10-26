@@ -22,6 +22,10 @@ def make_plan(config_path):
     base.require(type(recursive_flat_copy) is bool,'recursive_flat_copy requires boolean opt-in')
     capture_overlap=config.get('capture_ready_overlap',False)
     base.require(type(capture_overlap) is bool,'capture-ready overlap requires boolean opt-in')
+    provider_stage=config.get('provider_stage',0)
+    base.require(type(provider_stage) is int and provider_stage >= 0,
+                 'provider_stage requires a nonfinal owner index')
+    base.require(provider_stage == 0 or capture_overlap, 'remote provider requires owned-parent capture overlap')
     policy=config.get('check_policy')
     base.require(policy in ('qualification','measured'),'fixed per-process native check policy')
     verify=policy=='qualification'
@@ -32,6 +36,7 @@ def make_plan(config_path):
         config['admitted_max_new']==config.get('max_new') and 1<=config['admitted_max_new']<=512,
         'explicit per-process max-new admission required')
     plan = base.make_plan(config_path)
+    base.require(provider_stage < len(plan['stages'])-1, 'provider must be a nonfinal stage')
     base.require(plan['context']>=32,'persistent cold reset requires context extent at least32')
     base.require(len(plan['stages']) in (2,4,6) and 1 <= plan['max_new'] <= config['admitted_max_new'],
                  'persistent rolling supports2/4/6 owners and explicit bounded outputs')
@@ -45,6 +50,8 @@ def make_plan(config_path):
     required |= {'pipeline/live_draft.hpp','pipeline/operator_state.hpp',
                  'pipeline/ring/persistent_reset.inc','pipeline/ring/reset_descriptor.hpp'}
     if capture_overlap:required.add('pipeline/recursive_provider/capture_ready.hpp')
+    # Remote native capability is additionally checked through its build receipt.
+    if provider_stage:required.add('pipeline/recursive_provider/seed_peer.hpp')
     base.require(required <= set(receipt.get('sources',{})), 'complete native pending-provider capability required')
     adapter = suite_tools.evidence.read_json(config['adapter_plan'],4*1024**2)
     draft = adapter['rank_argv'][0]
@@ -60,8 +67,9 @@ def make_plan(config_path):
     request = sha256(json.dumps(identity,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     final_shared = str(Path(plan['output'])/f"stage{len(plan['stages'])-1}/shared.bin")
     for stage in plan['stages']:
-        base.require('--pipeline-ring-recursive-flat-copy' not in stage['argv'],
-                     'recursive_flat_copy must be selected by config, not inherited adapter flags')
+        base.require(not any(flag in stage['argv'] for flag in ('--pipeline-ring-recursive-flat-copy',
+            '--pipeline-provider-stage','--pipeline-ring-seed-shared')),
+            'provider options must be selected by config, not inherited adapter flags')
         base.require(not any(f in stage['argv'] for f in ('--pipeline-wavefront','--pipeline-live-draft',
             '--pipeline-ring','--draft-mtp')), 'rolling must not inherit another controller')
         for env in ('OWNRT_DRAFT_DEPTH_PROBE','OWNRT_DRAFT_DEPTH_VERIFY'):
@@ -72,7 +80,9 @@ def make_plan(config_path):
         base.require('--oracle' not in stage['argv'] or base.option(stage['argv'],'--oracle')=='',
                      'persistent runtime accepts no oracle file')
         if verify:stage['argv'].append('--pipeline-ring-verify-restore')
-        if stage['first']:
+        if provider_stage:stage['argv'] += ['--pipeline-provider-stage',str(provider_stage)]
+        if stage['id'] == provider_stage:
+            if provider_stage:stage['argv'] += ['--pipeline-ring-seed-shared',str(Path(plan['output'])/'stage0/shared.bin')]
             if recursive_flat_copy:stage['argv'].append('--pipeline-ring-recursive-flat-copy')
             if capture_overlap:stage['argv'].append('--pipeline-ring-parent-capture-ack')
             stage['argv'] += ['--pipeline-ring-final-shared',final_shared,'--draft-mtp']
@@ -86,7 +96,7 @@ def make_plan(config_path):
          live.wire,base,live.target.lifecycle)]
     dependencies += [Path(__file__).resolve(),Path(suite_tools.__file__).resolve(),
         Path(suite_tools.evidence.__file__).resolve(),Path(suite_tools.evidence.live.__file__).resolve(),
-        Path(suite_tools.rolling.__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',folder/'capture_ready.py',
+        Path(suite_tools.rolling.__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',folder/'capture_ready.py',folder/'remote.py',
         live.wire.PLANNING/'ring_coordinator.py',live.wire.PLANNING/'ring_contract.py',
         live.wire.PLANNING/'live_draft.py',live.target.lifecycle.SCHEDULE_PATH,manifest,
         base.ROOT/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',
@@ -135,6 +145,7 @@ def make_plan(config_path):
         suite_prompt_count=count,dump_each=dump_each,admitted_max_new=config['admitted_max_new'],
         limits='One fixed-policy loaded worker set; runtime prompts contain no expected answers. Cold native reset/state and measured-policy parity require independent qualification. No portable/service or speed certification.')
     plan['pins'][str(suite_path)]=config['suite_sha256']
+    if provider_stage:plan['provider_stage']=provider_stage
     if recursive_flat_copy:plan['recursive_flat_copy']=True
     if capture_overlap:plan['capture_ready_overlap']=True
     return plan

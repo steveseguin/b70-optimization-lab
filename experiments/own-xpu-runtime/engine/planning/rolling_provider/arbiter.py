@@ -32,9 +32,11 @@ class Job:
 
 
 class Arbiter:
-    def __init__(self, *, stages, request, epoch, last_input_position, vocab, capture_ready_overlap=False):
+    def __init__(self, *, stages, request, epoch, last_input_position, vocab, capture_ready_overlap=False, provider_stage=0):
         need(stages >= 2 and isinstance(request, bytes) and len(request) == 32
              and epoch >= 0 and last_input_position >= 0 and vocab > 0, 'rolling scope')
+        need(type(provider_stage) is int and 0 <= provider_stage < stages-1, 'provider must be a nonfinal owner')
+        self.provider_stage = provider_stage
         self.stages, self.request, self.epoch = stages, request, epoch
         self.last_input_position = last_input_position
         self.vocab = vocab
@@ -74,7 +76,7 @@ class Arbiter:
             return False
         if stage == self.stages-1 and self.parent is not None and not self.parent_captured:
             return False
-        if stage == 0 and self.job is not None:
+        if stage == self.provider_stage and self.job is not None:
             return False
         if stage == 0 and self.local_seed is not None and position > self.next_seed and not tentative:
             return False
@@ -97,15 +99,16 @@ class Arbiter:
             return False
         seed, parent = self.local_seed, self.parent.row
         return (seed.position == self.next_seed and seed.parent == parent.identity and seed.before == parent.after
-                and committed == seed.position+1 and physical == committed+len(pending) and len(pending) <= 2)
+                and (committed == seed.position+1 if self.provider_stage == 0 else committed in (seed.position, seed.position+1))
+                and physical == committed+len(pending) and len(pending) <= 2)
 
     def reserve(self, reserve_auxiliary, *, stage_busy, pending, physical, committed, phase=None):
         need(self.can_reserve(stage_busy=stage_busy, pending=pending, physical=physical, committed=committed, phase=phase),
              'provider reservation before canonical seed/parent/quiescence')
         # This callback must call the Coordinator's one authoritative allocator
-        # and set stage0.busy. No separate provider wire counter is permitted.
+        # and set the provider owner busy. No separate provider wire counter is permitted.
         command = reserve_auxiliary(PROVIDER, self.local_seed)
-        need(command.stage == 0 and command.op == PROVIDER and command.row == self.local_seed
+        need(command.stage == self.provider_stage and command.op == PROVIDER and command.row == self.local_seed
              and command.sequence > 0, 'authoritative auxiliary wire reservation')
         self.job = Job(command, self.local_seed, self.parent, self.serial+1, physical, committed,
                        tuple(c.row.identity for c in pending))

@@ -154,16 +154,17 @@ struct Options {
   // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
   bool tp_replicate=false;
   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
-  std::vector<int> pipeline_boundaries;int pipeline_stage=-1;
+  std::vector<int> pipeline_boundaries;int pipeline_stage=-1,pipeline_provider_stage=0;
   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
   bool pipeline_ring_pending_provider=false,pipeline_ring_verify_provider_survival=false;
   bool pipeline_ring_parent_capture_ack=false;
   bool pipeline_ring_recursive_flat_copy=false;
   bool pipeline_ring_persistent_requests=false;std::string pipeline_ring_check_policy;
-  bool pipeline_ring_live_draft=false,pipeline_ring_recursive_verify=false;fs::path pipeline_ring_final_shared;
+  bool pipeline_ring_live_draft=false,pipeline_ring_recursive_verify=false;fs::path pipeline_ring_final_shared,pipeline_ring_seed_shared;
   bool pipeline_ring=false,pipeline_ring_verify=false;std::string pipeline_ring_request_sha256;int pipeline_ring_trace_limit=4096;
   bool pipeline_enabled()const{return pipeline_stage>=0;}
   bool pipeline_first()const{return pipeline_enabled()?pipeline_stage==0:rank==0;}
+  bool pipeline_provider()const{return pipeline_enabled()?pipeline_stage==pipeline_provider_stage:rank==0;}
   bool pipeline_final()const{return pipeline_enabled()?size_t(pipeline_stage+2)==pipeline_boundaries.size():rank==1;}
   bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false,dense_packed_block=false;
   // Evidence/notification only. Defaults preserve the executed engine behavior.
@@ -222,6 +223,8 @@ static Options parse(int argc, char **argv) {
     else if(k=="--pipeline-ring-live-draft")a.pipeline_ring_live_draft=true;
     else if(k=="--pipeline-ring-recursive-verify-restore")a.pipeline_ring_recursive_verify=true;
     else if(k=="--pipeline-ring-final-shared")a.pipeline_ring_final_shared=value();
+    else if(k=="--pipeline-ring-seed-shared")a.pipeline_ring_seed_shared=value();
+    else if(k=="--pipeline-provider-stage")a.pipeline_provider_stage=std::stoi(value());
     else if(k=="--pipeline-ring")a.pipeline_ring=true;
     else if(k=="--pipeline-ring-verify-restore")a.pipeline_ring_verify=true;
     else if(k=="--pipeline-ring-request-sha256")a.pipeline_ring_request_sha256=value();
@@ -351,9 +354,14 @@ static Options parse(int argc, char **argv) {
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
+  require(a.pipeline_provider_stage>=0,"provider stage must be nonnegative");
+  require(!a.pipeline_provider_stage||(a.pipeline_enabled()&&a.pipeline_ring_live_draft&&a.pipeline_ring_persistent_requests),"remote provider requires persistent ring-live mode");
+  require(!a.pipeline_live_draft||(size_t(a.pipeline_provider_stage)+2)<a.pipeline_boundaries.size(),"provider must be a nonfinal pipeline stage");
+  require((a.pipeline_provider_stage>0&&a.pipeline_provider())==!a.pipeline_ring_seed_shared.empty(),"remote provider needs independent stage0 seed peer");
+  require(a.pipeline_ring_seed_shared.empty()||a.pipeline_ring_seed_shared.is_absolute(),"seed peer path must be absolute");
   require(!a.pipeline_ring_pending_provider||a.pipeline_ring_live_draft,"pending-provider gate requires ring-live mode");
-  require(!a.pipeline_ring_parent_capture_ack||(a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_first()),"parent capture acknowledgment requires persistent first-stage provider");
-  require(!a.pipeline_ring_recursive_flat_copy||(a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_first()),"recursive flat copy requires persistent first-stage provider");
+  require(!a.pipeline_ring_parent_capture_ack||(a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_provider()),"parent capture acknowledgment requires persistent selected provider");
+  require(!a.pipeline_ring_recursive_flat_copy||(a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_provider()),"recursive flat copy requires persistent selected provider");
   require(a.pipeline_ring_check_policy.empty()||a.pipeline_ring_persistent_requests,"ring check policy requires explicit persistent mode");
   if(a.pipeline_ring_persistent_requests){
    require(a.context>=32,"persistent ring requires context at least32");
@@ -361,21 +369,21 @@ static Options parse(int argc, char **argv) {
    if(a.pipeline_ring_check_policy.empty())a.pipeline_ring_check_policy="qualification";
    require(a.pipeline_ring_check_policy=="qualification"||a.pipeline_ring_check_policy=="measured","ring fixed check policy");
    const bool full=a.pipeline_ring_check_policy=="qualification";
-   require(a.pipeline_ring_verify==full&&a.pipeline_ring_recursive_verify==(full&&a.pipeline_first())&&a.pipeline_ring_verify_provider_survival==(full&&a.pipeline_first()),"ring diagnostic flags must match fixed process policy");
+   require(a.pipeline_ring_verify==full&&a.pipeline_ring_recursive_verify==(full&&a.pipeline_provider())&&a.pipeline_ring_verify_provider_survival==(full&&a.pipeline_provider()),"ring diagnostic flags must match fixed process policy");
    require(a.pipeline_ring_trace_limit>0,"persistent ring retains bounded trace");
   }else{
-   require(a.pipeline_ring_verify_provider_survival==(a.pipeline_ring_pending_provider&&a.pipeline_first()),"pending-provider first stage requires explicit survival verification");
+   require(a.pipeline_ring_verify_provider_survival==(a.pipeline_ring_pending_provider&&a.pipeline_provider()),"pending-provider provider stage requires explicit survival verification");
    require(!a.pipeline_ring_pending_provider||(a.pipeline_ring_verify&&a.pipeline_ring_trace_limit>0),"pending-provider gate requires target restore verification and bounded trace");
   }
   require(!a.pipeline_ring_live_draft||(a.pipeline_ring&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests),"ring live draft requires exclusive ring owner");
-  require(!a.pipeline_ring_recursive_verify||(a.pipeline_ring_live_draft&&a.pipeline_first()),"recursive restore verification belongs to first ring-live stage");
-  require((a.pipeline_ring_live_draft&&a.pipeline_first())==!a.pipeline_ring_final_shared.empty(),"ring-live first stage requires final shared peer path");
+  require(!a.pipeline_ring_recursive_verify||(a.pipeline_ring_live_draft&&a.pipeline_provider()),"recursive restore verification belongs to selected ring-live stage");
+  require((a.pipeline_ring_live_draft&&a.pipeline_provider())==!a.pipeline_ring_final_shared.empty(),"ring-live provider stage requires final shared peer path");
   require(a.pipeline_ring_final_shared.empty()||a.pipeline_ring_final_shared.is_absolute(),"ring final peer path must be absolute");
   require(!a.pipeline_ring_verify||a.pipeline_ring,"ring restore verification requires ring mode");
   require(a.pipeline_ring_trace_limit>=0&&a.pipeline_ring_trace_limit<=100000,"bounded ring trace limit");
   require(a.pipeline_ring==!a.pipeline_ring_request_sha256.empty(),"ring mode requires explicit request SHA256 identity");
   if(a.pipeline_ring){
-   require(a.pipeline_enabled()&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests&&(a.pipeline_ring_live_draft? (a.pipeline_live_draft&&a.pipeline_draft_partition&&a.mtp==a.pipeline_first()):(!a.pipeline_live_draft&&!a.pipeline_draft_partition&&!a.mtp)),"ring requires exclusive admitted target/provider owner");
+   require(a.pipeline_enabled()&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests&&(a.pipeline_ring_live_draft? (a.pipeline_live_draft&&a.pipeline_draft_partition&&a.mtp==a.pipeline_provider()):(!a.pipeline_live_draft&&!a.pipeline_draft_partition&&!a.mtp)),"ring requires exclusive admitted target/provider owner");
    require(a.retain_steps.ranges.empty()&&a.draft_rank==0,"ring requires retain-steps none and canonical target roles");
    require(a.pipeline_ring_request_sha256.size()==64&&std::all_of(a.pipeline_ring_request_sha256.begin(),a.pipeline_ring_request_sha256.end(),[](char c){return(c>='0'&&c<='9')||(c>='a'&&c<='f');}),"ring request identity must be lowercase SHA256");
   }
@@ -393,10 +401,10 @@ static Options parse(int argc, char **argv) {
    require(a.rank==(a.pipeline_first()?0:1),"pipeline legacy rank role differs from stage identity");
    require(a.gsq_packed&&a.f32_activations&&a.cards==1&&a.memory=="resident"&&!a.mini,
            "pipeline stages initially require one-card resident GSQ F32 path");
-   require((!a.mtp||(a.pipeline_live_draft&&a.pipeline_first()&&a.draft_rank==0))&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
+   require((!a.mtp||(a.pipeline_live_draft&&a.pipeline_provider()&&a.draft_rank==0))&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
            "pipeline unsupported MTP/TP/prefill/canary/cancel mode");
    if(a.pipeline_live_draft){
-    require(a.mtp==a.pipeline_first()&&a.draft_rank==0&&a.draft_fault=="none","live draft belongs only to first stage");
+    require(a.mtp==a.pipeline_provider()&&a.draft_rank==0&&a.draft_fault=="none","live draft belongs only to selected stage");
     require(!std::getenv("OWNRT_DRAFT_DEPTH_PROBE")&&!std::getenv("OWNRT_DRAFT_DEPTH_VERIFY"),"live draft refuses diagnostic recursive probe environment");
    }
   }
@@ -441,15 +449,15 @@ struct Weights {
   // ntfs-3g USB mount, a new n-gram is a cold FUSE read and new text decoded at ~33 instead of ~49 tok/s. The copy holds
   // the same bytes (no swap on this host, so it stays resident); read() serves from it first.
   std::map<std::string,std::pair<std::unique_ptr<uint8_t[]>,size_t>> lookup_copies;
-  void copy_lookups() {
+  void copy_lookups(bool embedding_only=false) {
     auto start=std::chrono::steady_clock::now();uint64_t bytes=0;const size_t chunk=64ull<<20;
-    for(const auto& [name,t]:directory)if(t.component=="embedding"||t.component=="ple_lookup") {
+    for(const auto& [name,t]:directory)if(t.component=="embedding"||(!embedding_only&&t.component=="ple_lookup")) {
       std::unique_ptr<uint8_t[]> copy(new uint8_t[t.bytes]);
       for(size_t off=0;off<t.bytes;off+=chunk){size_t n=std::min(chunk,t.bytes-off);auto slice=model->slice(name,off,n);std::memcpy(copy.get()+off,slice.data(),n);}
       bytes+=t.bytes;lookup_copies.emplace(name,std::make_pair(std::move(copy),size_t(t.bytes)));
     }
     double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
-    std::ostringstream o;o<<"{\"enabled\":true,\"method\":\"anonymous copy of embedding and PLE lookup tables\",\"bytes\":"<<bytes<<",\"tables\":"<<lookup_copies.size()<<",\"elapsed_ms\":"<<elapsed<<"}";residency=o.str();
+    std::ostringstream o;o<<"{\"enabled\":true,\"method\":"<<ownrt::quote(embedding_only?"anonymous copy of embedding table only":"anonymous copy of embedding and PLE lookup tables")<<",\"bytes\":"<<bytes<<",\"tables\":"<<lookup_copies.size()<<",\"elapsed_ms\":"<<elapsed<<"}";residency=o.str();
   }
   void warm_lookups() {
     if(mini)return;

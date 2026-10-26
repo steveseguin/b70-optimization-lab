@@ -29,6 +29,8 @@ def audit_provider(batches,native,reference,replay,prompt_length,att,request,*,e
          'complete controller/native canonical provider cohort')
     observed=[];pending=[]
     for position,(batch,row,context,want) in enumerate(zip(batches,native,contexts,pairs),1):
+        if context.get('provider_stage',0):
+            need(row['seed_accept_sequence']==context['seed']['accept_sequence'] and row['seed_journal_sha256']==context['seed_journal_sha256'],'native/controller seed journal provenance differs')
         seed,parent=context['seed'],context['parent'];head=position>=prompt_length-1;guesses=depths[position]['guesses'] if head else []
         need((want['position'],want['token'],want['head'])==(position,seed['token'],head),'canonical reference input/head identity')
         need((batch['epoch'],batch['request_sha256'],batch['sequence'],batch['provider_serial'],batch['seed_row'],batch['parent_row'],
@@ -88,6 +90,8 @@ def bind_survival(records,replay,batches,reference,prompt_length,request):
 
 def validate_identity(plan,suite,terminal,reference):
     policy=plan['check_policy'];enabled=policy=='qualification'
+    provider=plan.get('provider_stage',0)
+    need(type(provider)is int and 0<=provider<len(plan['stages'])-1,'explicit nonfinal provider role')
     need(plan['schema']=='ownrt.persistent-rolling-plan.v1' and plan['mode']=='persistent-rolling'
          and policy in ('qualification','measured') and plan['persistent_requests'] is True
          and plan['use_proposals'] is True and plan['dump_each'] is True and plan['suite_prompt_count']==2,
@@ -158,7 +162,8 @@ def main():
             receipt=identity(Path(name));need(receipt['sha256']==want,'persistent runtime source pin changed');source_pins.append(receipt)
     need(any(p['path'].endswith('/persistent_rolling_suite.py') for p in source_pins)
          and any(p['path'].endswith('/persistent_rolling_driver.py') for p in source_pins),'persistent code closure incomplete')
-    argv=plan['stages'][0]['argv'];draft_manifest=Path(argv[argv.index('--draft-manifest')+1])
+    provider_stage=plan.get('provider_stage',0)
+    argv=plan['stages'][provider_stage]['argv'];draft_manifest=Path(argv[argv.index('--draft-manifest')+1])
     need(identity(draft_manifest)['sha256']==plan['draft_model_sha256']==plan['pins'][str(draft_manifest)],'actual draft manifest pin differs')
     suite_result=read(run/'suite-result.json')
     need(suite_result['schema']=='ownrt.persistent-rolling-suite-result.v1' and suite_result['passed'] is True
@@ -200,11 +205,11 @@ def main():
         expected_plan=dict(plan,epoch=epoch,request_sha256=request,prompt_tokens=row['prompt_tokens'],max_new=row['max_new'])
         need(request_plan==expected_plan,'request plan changed process policy/identity')
         stages=[dict(stage,native_output=record['reset_receipts'][i]['native_output']) for i,stage in enumerate(plan['stages'])]
-        native0=Path(stages[0]['native_output']);metadata=read(native0/'pipeline-stage.json')
+        native0=Path(stages[provider_stage]['native_output']);metadata=read(native0/'pipeline-stage.json')
         batches=lines(request_run/'provider-batches.jsonl')
         replay=audit_controller(lines(request_run/'commands.jsonl'),lines(request_run/'final-records.jsonl'),batches,row['prompt_tokens'],outputs,
             request,len(stages),metadata['stream_bytes'],plan['vocab'],plan['context'],epoch=epoch,
-            initial_sequences=record['initial_sequences'],check_policy=policy,max_new=row['max_new'])
+            initial_sequences=record['initial_sequences'],check_policy=policy,max_new=row['max_new'],**({'provider_stage':provider_stage} if provider_stage else {}))
         need([s['last_sequence'] for s in replay['states']]==record['final_sequences'],'request ending global sequences differ')
         need(replay['actual_proposal_rows']>0,'actual proposals must be consumed in each qualification request')
         need([e for e in lines(request_run/'schedule.jsonl') if e['event'] not in ('native-reply','issued-proposal')]==driver['events'],
@@ -217,7 +222,7 @@ def main():
         draft_set=dict(schema='ownrt.draft-state-set.v1',dump=str(draft_dump),input_identity=recursive['canonical_draft_input_identity'])
         save(request_out/'draft-state-set.json',draft_set)
         candidate=dict(schema='ownrt.pipeline-state-set.v7',mode='persistent-rolling',controller_mode='persistent-rolling',
-            actual_proposals_only=True,verification_policy=policy,layer_count=plan['boundaries'][-1],
+            actual_proposals_only=True,provider_stage=provider_stage,verification_policy=policy,layer_count=plan['boundaries'][-1],
             require_byte_verified_restores=enabled,require_provider_byte_verified_restores=enabled,provider_borrow_mode='pending-target',
             require_provider_survival_checks=enabled,required_provider_pending_depths=[],draft_input_identity=draft_set['input_identity'],
             ring_request_sha256=request,ring_epoch=epoch,input_identity=dict(model_sha256=plan['model_identity_sha256'],
@@ -237,7 +242,7 @@ def main():
                  'actual native original row flags differ')
             need(all(r['fixture']==max(0,r['position']-len(row['prompt_tokens'])+2) for r in native_rows),'native prompt/head mask differs')
             audits.append(dict(stage=number,**audit_native(native_rows,replay['sent'][number],replay['created'],input_rows,att,stage['final'])))
-            if number==0:
+            if number==provider_stage:
                 item.update(draft_state_set=str(request_out/'draft-state-set.json'),provider_survival=str(native/'ring-provider-survival.jsonl'))
                 retain_bundle(draft_dump,local/draft_dump.name,raw_bundles)
                 provider=audit_provider(batches,lines(native/'ring-draft-batches.jsonl'),recursive,replay,len(row['prompt_tokens']),att,request,

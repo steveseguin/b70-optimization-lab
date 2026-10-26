@@ -410,8 +410,8 @@ static int run_rank(const Options& a) {
   std::unique_ptr<StageCheckpoint> wave_checkpoint;std::ofstream wave_trace;size_t wave_trace_rows=0,wave_trace_omitted=0;int wave_output=-1;
   std::unique_ptr<ring_next::Dispatcher> ring_dispatcher;
   OperatorStatePartition operator_partition;std::set<Allocation> before_provider;
-  if(a.pipeline_draft_partition&&a.pipeline_first())for(const auto& [id,owner]:engine->allocations)before_provider.insert(id);
-  if(a.pipeline_live_draft&&a.pipeline_first())provider=std::make_unique<mtp36::DraftRuntime>(*engine);
+  if(a.pipeline_draft_partition&&a.pipeline_provider())for(const auto& [id,owner]:engine->allocations)before_provider.insert(id);
+  if(a.pipeline_live_draft&&a.pipeline_provider())provider=std::make_unique<mtp36::DraftRuntime>(*engine);
   if(a.pipeline_draft_partition&&provider)operator_partition=admit_operator_partition(*engine,before_provider,provider->live_mutable_inventory(),provider->live_pinned_inventory(),provider->live_private_recursive_inventory());
   if(a.pipeline_wavefront){
    wave_ledger.emplace(a.pipeline_final(),engine->p.g.context,engine->p.g.vocab);
@@ -425,6 +425,7 @@ static int run_rank(const Options& a) {
 #ifndef OWN_RT_HOST_ONLY
   if(a.rank==0&&!a.gsq_packed)weights->warm_lookups();
   else if(a.rank==0&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups();}
+  else if(a.pipeline_live_draft&&a.pipeline_provider()&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups(true);}
 #endif
   save(a.output/"lookup-residency.json",weights->residency);
   {cpu_set_t cpus;CPU_ZERO(&cpus);require(!sched_getaffinity(0,sizeof cpus,&cpus),"affinity receipt");double load=0;getloadavg(&load,1);std::ostringstream o;o<<"{\"cpu_affinity\":[";bool comma=false;for(int i=0;i<CPU_SETSIZE;++i)if(CPU_ISSET(i,&cpus)){o<<(comma?",":"")<<i;comma=true;}o<<"],\"load_average_1m\":"<<load<<"}";save(a.output/"host-environment.json",o.str());}
@@ -437,7 +438,7 @@ static int run_rank(const Options& a) {
    require(engine->stream_bytes()>0&&engine->stream_bytes()<=slot_bytes,"pipeline stream slot extent");
    std::ostringstream o;o<<"{\"schema\":\"ownrt.pipeline-stage.v1\",\"stage_id\":"<<a.pipeline_stage<<",\"stage_count\":"<<a.pipeline_boundaries.size()-1
     <<",\"begin\":"<<a.pipeline_boundaries[a.pipeline_stage]<<",\"end\":"<<a.pipeline_boundaries[a.pipeline_stage+1]
-    <<",\"first\":"<<(a.pipeline_first()?"true":"false")<<",\"final\":"<<(a.pipeline_final()?"true":"false")
+    <<",\"provider_stage\":"<<a.pipeline_provider_stage<<",\"provider_present\":"<<(provider?"true":"false")<<",\"first\":"<<(a.pipeline_first()?"true":"false")<<",\"final\":"<<(a.pipeline_final()?"true":"false")
     <<",\"activation_dtype\":\"F32\",\"stream_bytes\":"<<engine->stream_bytes()<<",\"boundaries\":[";
    for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":"<<ownrt::quote(a.pipeline_ring?(a.pipeline_ring_pending_provider?"verified-ring-pending-provider":(a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring")):(a.pipeline_wavefront?"wavefront":"target-only"))<<",\"speculation_enabled\":"<<((a.pipeline_wavefront||a.pipeline_ring)?"true":"false")<<",\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]";if(a.pipeline_ring)o<<",\"ring_capacity\":2,\"depth\":2,\"ring_epoch\":0,\"ring_request_sha256\":"<<ownrt::quote(a.pipeline_ring_request_sha256);if(a.pipeline_ring_live_draft)o<<",\"provider_borrow_mode\":"<<ownrt::quote(a.pipeline_ring_pending_provider?"pending-target":"quiescent-target");o<<"}";if(a.pipeline_ring_persistent_requests)ring_dispatcher->write_request_stage_metadata();else save(a.output/"pipeline-stage.json",o.str());
   }

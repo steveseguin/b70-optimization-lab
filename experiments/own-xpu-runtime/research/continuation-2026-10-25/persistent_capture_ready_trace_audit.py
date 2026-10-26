@@ -17,10 +17,11 @@ def raw(value,size):
     return bytes.fromhex(value)
 
 
-def audit_controller(commands,records,batches,prompt,outputs,request,stages,stream_bytes,vocab,context,*,epoch,initial_sequences,check_policy,max_new):
+def audit_controller(commands,records,batches,prompt,outputs,request,stages,stream_bytes,vocab,context,*,epoch,initial_sequences,check_policy,max_new,provider_stage=0):
     need(type(epoch)is int and 0<epoch<2**64 and check_policy in ('qualification','measured'), 'explicit persistent epoch and fixed policy')
     need(len(initial_sequences)==stages and all(type(n)is int and 0<n<2**31 for n in initial_sequences), 'exact per-owner post-reset wire sequences')
     need(type(max_new)is int and len(outputs)<=max_new<=512, 'admitted persistent output bound')
+    need(type(provider_stage)is int and 0<=provider_stage<stages-1,'explicit nonfinal provider owner')
     verify=check_policy=='qualification'
     initial=hashlib.sha256(b'ownrt.ring-request.v1\0'+bytes.fromhex(request)+struct.pack('<Q',epoch)).digest()
     inputs=prompt+outputs[:-1];truth=list(prompt);created={};origin={};sent=[[] for _ in range(stages)]
@@ -64,11 +65,11 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
         rowcheck(r);need(type(event['tentative'])is bool,'original tentative flag type')
         if event['event']=='parent-captured':
             issued=s['busy']
-            need(owner==0 and op==27 and issued is not None and seq not in captured
+            need(owner==provider_stage and op==27 and issued is not None and seq not in captured
                  and all(event[k]==issued[k] for k in ('stage','sequence','op','row','tentative','row_ticket')),
                  'capture exact outstanding provider; no duplicates')
             reply=base.REPLY.unpack(raw(event['reply_hex'],base.REPLY.size))
-            need(reply[:8]==(2,-1,0,128,seq,0,0,0) and __import__('math').isfinite(reply[8])
+            need(reply[:8]==(2,-1,0,128,seq,0 if owner==0 else 1,owner,0) and __import__('math').isfinite(reply[8])
                  and reply[8]>=0 and reply[9:]==(0,0,0),'capture raw nonterminal header')
             parent=issued['context']['parent']
             expected=(0x315950414352574f,1,128,epoch,seq,r['id'],r['parent'],parent['accept_sequence'],
@@ -105,7 +106,7 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
                 if not event['tentative']:need(r['position']<len(truth) and r['token']==truth[r['position']],'unverified ROW promoted to truth')
                 if final:
                     need(parent_lease is None,'final record overwritten during provider lease')
-                    provider_busy=states[0]['busy']
+                    provider_busy=states[provider_stage]['busy']
                     if provider_busy and provider_busy['op']==27:
                         need(provider_busy['sequence'] in captured,'overlap ROW before capture')
                         overlap_rows+=1;overlap_head_rows+=int(r['fixture']>0)
@@ -116,16 +117,17 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
             elif op in (25,26):
                 need(s['pending'] and r['id']==s['pending'][0]['id'] and event['row_ticket']==s['pending'][0]['row_sequence']
                      and event['tentative'] is s['pending'][0]['tentative'],'resolution original oldest ROW')
-                if op==25 and final:need(states[0]['busy'] is None or states[0]['busy']['op']!=27,'final ACCEPT before provider completion')
+                if op==25 and (final or owner==0):need(states[provider_stage]['busy'] is None or states[provider_stage]['busy']['op']!=27,'final ACCEPT before provider completion')
                 if op==25:need(r['position']<len(truth) and r['token']==truth[r['position']],'ACCEPT before target truth')
                 else:
                     need(cut is not None and not final and all(p['tentative'] and p['position']>=cut for p in s['pending'])
                          and not any(t['busy'] and t['busy']['op'] not in (26,) for t in states),'ABORT before distributed drain')
             else:
-                need(owner==0 and s['accepted'] and s['accepted']['id']==r['id'] and r['position']==provider_position+1
-                     and event['provider_serial']==r['position'] and event['row_ticket']==s['accepted']['row_sequence']
-                     and event['accepted_seed_sequence']==s['accepted']['accept_sequence']
-                     and event['tentative'] is s['accepted']['tentative'] and all(v['tentative'] for v in s['pending']),
+                seed=states[0]['accepted']
+                need(owner==provider_stage and seed and seed['id']==r['id'] and r['position']==provider_position+1
+                     and event['provider_serial']==r['position'] and event['row_ticket']==seed['row_sequence']
+                     and event['accepted_seed_sequence']==seed['accept_sequence']
+                     and event['tentative'] is seed['tentative'] and all(v['tentative'] for v in s['pending']),
                      'provider exact locally accepted true pair')
                 parent=states[-1]['accepted'];need(parent and parent['id']==r['parent'] and parent['position']+1==r['position'],
                                                    'provider independent final parent')
@@ -135,14 +137,24 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
                 need(event['parent_record_hex']==rec['record_hex'] and event['parent_record_sha256']==rec['record_sha256']
                      and event['parent_hidden_sha256']==rec['hidden_sha256'] and event['parent_hidden_bytes']==stream_bytes,
                      'provider owned final-record lease')
-                event=dict(event,context=dict(sequence=seq,position=r['position'],serial=r['position'],seed=dict(s['accepted']),
+                event=dict(event,context=dict(sequence=seq,position=r['position'],serial=r['position'],seed=dict(seed),provider_stage=provider_stage,seed_journal_sha256=event.get('seed_journal_sha256'),
                     parent=dict(parent),physical=s['physical'],committed=s['committed'],pending=[v['id'] for v in s['pending']]))
+            if op==27 and provider_stage:
+                need(s['committed'] in (r['position'],r['position']+1) and s['physical']==s['committed']+len(s['pending']),'remote provider target cursor/seed frontier')
             meta=list(wire.ROW_META.unpack(raw(event['metadata_hex'],224)))
             src=event.get('source') if op==24 else None
             expected=[0x52494e47,1,224,int(event['tentative']),epoch,r['id'],r['parent'],r['position'],r['token'],r['fixture'],owner,int(final),
-                      owner-1 if src else -1,src['ticket'] if src else 0,0,stream_bytes if src else 0,1,
+                      owner-1 if src else -1,src['ticket'] if src else 0,event['row_ticket'] if op==27 and provider_stage else 0,stream_bytes if src else 0,1,
                       bytes.fromhex(request),bytes.fromhex(r['before']),bytes.fromhex(r['after']),bytes.fromhex(src['sha256']) if src else wire.EMPTY_SHA,bytes(16)]
             need(meta==expected,'issued exact native metadata differs')
+            if op==27 and provider_stage:
+                journal=raw(event['seed_journal_hex'],256)
+                need(sha(journal)==event['seed_journal_sha256'],'seed journal raw SHA differs')
+                magic,version,size,seed_owner,accepted,physical,committed=struct.unpack('<4IQ2i',journal[:32])
+                need((magic,version,size,seed_owner,accepted)==(0x52534331,1,256,0,event['accepted_seed_sequence'])
+                     and accepted>event['row_ticket'] and committed==r['position']+1 and committed<=physical<=committed+2,'seed journal owned ACCEPT/frontier binding')
+                seed_meta=list(expected);seed_meta[10]=0;seed_meta[14]=event['row_ticket']
+                need(journal[32:]==wire.ROW_META.pack(*seed_meta),'seed journal original stage0 row differs')
             packet=base.REQUEST.unpack(raw(event['request_hex'],base.REQUEST.size))
             need(packet==(op,r['token'],r['position'],int(r['fixture']>0) if op==27 else r['fixture'],
                           2 if op==27 else int(event['tentative']) if op==24 else event['row_ticket'],seq,owner,int(final)),
@@ -225,7 +237,7 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
                     item=dict(sequence=seq,oldest=dict(s['pending'][0]),discarded=[dict(p) for p in s['pending']],
                               provider_position=provider_position,provider_serial=provider_position)
                     all_aborts.append(dict(stage=owner,**item))
-                    if owner==0:aborts.append(item)
+                    if owner==provider_stage:aborts.append(item)
                     s['pending']=[];s['physical']=s['committed']
             need((ack['physical'],ack['committed'],ack['pending'])==(s['physical'],s['committed'],len(s['pending'])),'decoded target cursor ACK differs')
         s['busy']=None
