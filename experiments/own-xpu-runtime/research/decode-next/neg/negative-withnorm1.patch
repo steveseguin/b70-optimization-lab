@@ -1,0 +1,58 @@
+--- a/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp
++++ b/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp
+@@ -164,8 +164,55 @@
+  }
+ };
+ #endif
++#ifndef OWN_RT_HOST_ONLY
++// OWNRT_DECODE_NEXT norm1 (lab 2026-10-26): the two-stage specialised norm (norm / combine_norm, width % 32 == 0) in
++// one launch, one 256-lane work-group per row. Stage 0's 32-leaf chunk subtrees are formed by 32-lane shuffle trees
++// (the same adjacent pairs and operand order; full chunks) and also stored to the scratch exactly as stage 0 stores
++// them; one lane then evaluates stage 1's inv = rsqrt(upper(partials, C)/w + 1e-6) once (the same function on the same
++// partials) instead of every stage-1 item, and all lanes run stage 1's per-element body unchanged. Guard read once per
++// work-group; row 0 fails a bad position as stage 0's item 0 does.
++template<ng::Op Code,int FixedWidth,int FixedHeads> struct NormFused final:ownrt::SyclOperation {
++ ng::Shape shape;explicit NormFused(ng::Shape s):shape(s){}
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  ng::Args a;std::copy_n(p.begin(),19,a.p.begin());float* scratch=static_cast<float*>(p[19]);auto s=shape;a.f32=(s.flags&ng::f32_activations_flag)!=0;
++  s.op=Code;if constexpr(FixedWidth)s.width=FixedWidth;if constexpr(FixedHeads)s.heads=FixedHeads;
++  const int nrows=rows(s);constexpr int WG=256;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(nrows)*WG,WG)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++   float* part=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[514]>(it.get_group());
++   const int lid=int(it.get_local_linear_id()),row=int(it.get_group_linear_id());auto sg=it.get_sub_group();
++   const int lane=int(sg.get_local_linear_id()),sgi=int(sg.get_group_linear_id());
++   if(lid==0)part[512]=(!a.i(18)[0]||Guard{}.error(a))?1.f:0.f;
++   sycl::group_barrier(it.get_group());
++   if(part[512]!=0.f)return;
++   const int pos=a.i(17)[0];if(pos<0||pos>ng::position_limit(s)-s.tokens){if(row==0&&lid==0)Guard{}.fail(a);return;}
++   const int w=width(s),C=w/tile;
++   for(int c=sgi;c<C;c+=WG/32){float x=norm_value<Code>(s,a,row,c*tile+lane);float v=x*x;
++    for(int width2=1;width2<32;width2*=2){const float rhs=sycl::select_from_group(sg,v,(lane+width2)%32);if(lane%(2*width2)==0)v=v+rhs;}
++    if(lane==0){part[c]=v;scratch[row*C+c]=v;}}
++   sycl::group_barrier(it.get_group());
++   if(lid==0)part[513]=detmath::rsqrt(upper(part,C)/float(w)+1e-6f);
++   sycl::group_barrier(it.get_group());
++   const float inv=part[513];
++   for(int i=lid;i<ceildiv(w,4);i+=WG){const int first=i*4;
++    for(int k=first;k<std::min(w,first+4);++k){float x=norm_value<Code>(s,a,row,k);
++     int slot=Code==ng::combine_norm?3:Code==ng::gated_norm?2:1;
++     float y=(x*inv)*(a.weight(slot,(Code==ng::gated_norm?0:(row%s.heads)*w)+k,s.flags)+float(s.flags&1));
++     if constexpr(Code==ng::gated_norm)y=y*ng::sigmoid(a.b(1,row*w+k));
++     a.put(Code==ng::combine_norm?5:Code==ng::gated_norm?3:2,row*w+k,y);
++     if constexpr(Code==ng::combine_norm)a.put(4,row*w+k,x);
++    }}
++  }));});
++ }
++};
++#endif
+ template<ng::Op Code,int FixedWidth=0,int FixedHeads=0> integrated::Launch submit_class(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,std::span<const ownrt::Event> deps){
+  integrated::Launch result{};
++#ifndef OWN_RT_HOST_ONLY
++ if constexpr(Code==ng::norm||Code==ng::combine_norm){
++  ng::Shape t=s;t.op=Code;if constexpr(FixedWidth)t.width=FixedWidth;if constexpr(FixedHeads)t.heads=FixedHeads;
++  if(decode_next::enabled("norm1")&&width(t)%tile==0&&width(t)>=tile&&width(t)/tile<=512){NormFused<Code,FixedWidth,FixedHeads> op(s);auto e=d.compute(op,a,deps);return {e,e,1};}
++ }
++#endif
+  auto issue=[&]<int Stage>(){Kernel<Code,Stage,FixedWidth,FixedHeads> op(s);std::array<ownrt::Event,1> after{result.last};auto e=d.compute(op,a,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=e;result.last=e;++result.passes;};
+  issue.template operator()<0>();if constexpr(Code!=ng::attention_score)issue.template operator()<1>();if constexpr(Code==ng::attention_softmax||Code==ng::route_gather)issue.template operator()<2>();if constexpr(Code==ng::route_gather){issue.template operator()<3>();issue.template operator()<4>();}return result;
+ }

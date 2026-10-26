@@ -1,0 +1,33 @@
+--- a/src/stage2/packet194-expert-diet-engine/native.cpp
++++ b/src/stage2/packet194-expert-diet-engine/native.cpp
+@@ -42,6 +42,30 @@
+     }));
+    });
+   }
++  if(s.op==gated_norm&&decode_next::enabled("gnorm")){
++   // OWNRT_DECODE_NEXT gnorm (measured slower: rank-1 profile 112 -> 133 us over 18 layers; kept opt-in): the GDN gated norm (128-wide rows) in one 32-lane subgroup per row instead of a 128-lane
++   // team. Lane l holds elements 4l..4l+3: ng::tree's adjacent pairs at strides 1 and 2 run in registers
++   // ((v0+v1)+(v2+v3)), strides 4..64 by shuffles (node = lower + upper, same operands and order); then group()'s
++   // rsqrt(sum/128+1e-6) and per-element expression unchanged. Guard once per subgroup; group 0 fails a bad position.
++   const size_t rows=size_t(s.tokens)*48;
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(rows*32,32)](sycl::handler& h){
++    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{
++     Args a2=a;a2.f32=(s.flags&f32_activations_flag)!=0;auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++     const int group=int(it.get_group_linear_id());
++     const int blocked=sycl::group_broadcast(sg,lane==0?int(!a2.i(18)[0]||DeviceTeam{it,nullptr}.error(a2)):0,0);
++     if(blocked)return;
++     const int pos=a2.i(17)[0];if(pos<0||pos>position_limit(s)-s.tokens){if(group==0&&lane==0)DeviceTeam{it,nullptr}.fail(a2);return;}
++     const bool unit=s.flags&1;const int width=128,base=group*width;
++     float xv[4],sq[4];
++     for(int z=0;z<4;++z){xv[z]=a2.b(0,base+4*int(lane)+z);sq[z]=xv[z]*xv[z];}
++     float v=(sq[0]+sq[1])+(sq[2]+sq[3]);
++     for(unsigned width2=1;width2<32;width2*=2){const float rhs=sycl::select_from_group(sg,v,(lane+width2)%32);if(lane%(2*width2)==0)v=v+rhs;}
++     const float sum=sycl::group_broadcast(sg,v,0);
++     const float inv=detmath::rsqrt(sum/float(width)+1e-6f);
++     for(int z=0;z<4;++z){const int k=4*int(lane)+z;float y=(xv[z]*inv)*(a2.weight(2,k,s.flags)+float(unit));y=y*sigmoid(a2.b(1,base+k));a2.put(3,base+k,y);}
++    }));
++   });
++  }
+   if(s.op==mix&&decode_next::enabled("mix4")){
+    // OWNRT_DECODE_NEXT mix4 (lab 2026-10-26): the HC mix with its four sigmoid terms on four adjacent lanes. Lane
+    // 4*idx+h forms term h = sigmoid(b1)*b0 exactly as group()/the ew path; lane 4*idx then adds the terms to sum = 0

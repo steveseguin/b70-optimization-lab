@@ -19,7 +19,7 @@ Environment=SC117_CONTEXT=65536
 # to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
 Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/25b3f7542cad.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/ef3a2665ffe5.json
 Environment=SC117_PREFILL_ROWS=256
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -75,6 +75,9 @@ Environment=OWNRT_DENSE_RAW=1
 # prefill row shadows with disjoint live ranges share memory. Storage only; outputs bitwise equal.
 Environment=OWNRT_QSA_RAW_RING=1
 Environment=OWNRT_PREFILL_SHADOW_PACK=1
+# Exact decode-next (2026-10-26, research/decode-next): packed Q8_0 shexpdown and Q6_K block rows for the last kopt
+# Multiply decode rows, four-lane HC mix with the same h order.
+Environment=OWNRT_DECODE_NEXT=1
 # Engine sessions (2026-10-26): a conversation of >= 256 tokens is parked (rank ops 17-19, both ranks + the draft's
 # reverse row, sealed manifest) before a RESET would evict it, and restored when a later prompt extends it.
 Environment=SC117_SESSIONS=1

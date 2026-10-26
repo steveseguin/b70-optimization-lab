@@ -5,6 +5,7 @@
 #include "stage2/packet194-expert-diet-engine/native.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+#include "stage2/packet194-expert-diet-engine/decode_next.hpp"
 namespace ng {
 struct DeviceTeam {
  sycl::nd_item<1> it;float* x;
@@ -22,6 +23,26 @@ struct Kernel final:ownrt::SyclOperation{
  explicit Kernel(Shape s):shape(s){}
  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const override{
   Args a;std::copy(p.begin(),p.end(),a.p.begin());auto s=shape;
+  if(s.op==mix&&decode_next::enabled("mix4")){
+   // OWNRT_DECODE_NEXT mix4 (lab 2026-10-26): the HC mix with its four sigmoid terms on four adjacent lanes. Lane
+   // 4*idx+h forms term h = sigmoid(b1)*b0 exactly as group()/the ew path; lane 4*idx then adds the terms to sum = 0
+   // in h order and stores sum/4: the same operands, operations and order per output, the exps no longer serial.
+   // Guard and position check as the ew path (once per subgroup; item 0 fails an out-of-range position).
+   const size_t n=size_t(s.tokens)*size_t(s.width),m=4*n;
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((m+127)/128*128,128)](sycl::handler& h){
+    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{
+     Args b=a;b.f32=(s.flags&f32_activations_flag)!=0;auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+     const int blocked=sycl::group_broadcast(sg,lane==0?int(!b.i(18)[0]||DeviceTeam{it,nullptr}.error(b)):0,0);
+     if(blocked)return;
+     const size_t gid=it.get_global_linear_id(),idx=gid/4;const unsigned hh=unsigned(gid%4);
+     const int pos=b.i(17)[0];if(pos<0||pos>position_limit(s)-s.tokens){if(gid==0)DeviceTeam{it,nullptr}.fail(b);return;}
+     float term=0.f;const bool in=idx<n;
+     if(in){const int r=int(idx/size_t(s.width)),k=int(idx%size_t(s.width));term=sigmoid(b.b(1,(r*4+int(hh))*s.width+k))*b.b(0,(r*4+int(hh))*s.width+k);}
+     const float t1=sycl::select_from_group(sg,term,(lane+1)%32),t2=sycl::select_from_group(sg,term,(lane+2)%32),t3=sycl::select_from_group(sg,term,(lane+3)%32);
+     if(in&&hh==0){float sum=0;sum=sum+term;sum=sum+t1;sum=sum+t2;sum=sum+t3;b.put(2,int(idx),sum/4.f);}
+    }));
+   });
+  }
   if((s.op==activation||s.op==mix||s.op==moe_combine)&&experts_v2::enabled("ew")){
    // OWNRT_EXPERTS_V2 "ew" (lab 2026-10-26): the element-wise ops without the 128-lane team (no local scratch, no
    // barriers): item idx computes group()'s expression for idx unchanged; the active/sticky-error guard is read once per

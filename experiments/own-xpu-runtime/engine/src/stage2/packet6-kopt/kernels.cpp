@@ -8,6 +8,7 @@
 #include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
 #include "stage2/packet194-expert-diet-engine/detmath.hpp"
 #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+#include "stage2/packet194-expert-diet-engine/decode_next.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include "stage2/packet6-kopt/dense_v2.hpp"
 #include <algorithm>
@@ -562,6 +563,77 @@ template<unsigned SG,unsigned RI,unsigned WGSG,int MODE> struct MultiplyIQ4NLPac
     });
   }
 };
+// OWNRT_DECODE_NEXT dense8 (lab 2026-10-26): Q8_0 decode rows with packed logical lanes (dense or routed, F32). As
+// MultiplyIQ4NLPacked: work-item t of a row owns logical lanes 4t..4t+3 of Multiply's mapping (lane l: columns
+// 8l+256i), i.e. Q8_0 block 8i+t of each 256-column chunk, read once as 9 aligned words (the block's 34 bytes; its
+// parity is t's), the scale converted once. Each logical lane keeps decode8's values scale*float(signed8(code)) for its
+// 8 columns, product then add, chunks in order; ((l0+l1)+(l2+l3)) in registers and three shuffle levels, same operands
+// and order. Requires K%64==0 (even block count: no word read leaves its row) and 4-byte aligned rows.
+template<unsigned SG,unsigned RI,unsigned WGSG> struct MultiplyQ8Packed:ownrt::SyclOperation {
+  Descriptor desc{};
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt q8 packed capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+    constexpr unsigned SETS=SG/8,RPS=SETS*RI;
+    const uint32_t span=uint32_t(d.span),rows=uint32_t(d.rows),k=uint32_t(d.k),rb=uint32_t(d.rb),experts=d.experts,count=d.count;
+    const uint32_t blocks=(span+RPS-1)/RPS,total=blocks*count,groups=(total+WGSG-1)/WGSG;
+    const unsigned wi=d.w,xi=d.x,yi=d.y,ri=d.r,si=d.status;const bool routed=d.routed;
+    return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG)](sycl::handler& h) {
+      h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
+        const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
+        const uint32_t slot=logical/blocks,first=(logical%blocks)*RPS+set*RI;
+        Route r{0,0,rows};if(routed)r=static_cast<const Route*>(pointers[ri])[slot];
+        const bool valid=valid_route(r,experts,rows,span);
+        if(routed&&first==0&&lane==0)static_cast<uint32_t*>(pointers[si])[slot]=valid?0:1;
+        const float* xs=static_cast<const float*>(pointers[xi])+size_t(slot)*k;const uint8_t* w=static_cast<const uint8_t*>(pointers[wi]);
+        float acc[RI][4];const uint8_t* rp[RI];bool live[RI];
+        #pragma unroll
+        for(unsigned i=0;i<RI;++i){
+          #pragma unroll
+          for(unsigned j=0;j<4;++j)acc[i][j]=0;
+          const uint32_t row=first+i;live[i]=valid&&row<span&&row<r.row_count;
+          rp[i]=live[i]?w+(size_t(r.expert_id)*rows+r.row_begin+row)*rb:w;}
+        const bool odd=t&1; // block 8i+t: its 34 bytes start 2 (odd) or 0 (even) bytes past a word
+        for(uint32_t b=t;b*32u<k;b+=8u) {
+          float xv[32];
+          {const sycl::vec<float,4>* xp=reinterpret_cast<const sycl::vec<float,4>*>(xs+b*32u);
+           #pragma unroll
+           for(unsigned c=0;c<8;++c){const auto v=xp[c];xv[4*c]=v[0];xv[4*c+1]=v[1];xv[4*c+2]=v[2];xv[4*c+3]=v[3];}}
+          #pragma unroll
+          for(unsigned i=0;i<RI;++i) {
+            if(!live[i])continue;
+            const uint32_t* wp=reinterpret_cast<const uint32_t*>(rp[i]+b*34u-(odd?2u:0u));
+            uint32_t wv[9];
+            #pragma unroll
+            for(unsigned e=0;e<9;++e)wv[e]=wp[e];
+            const uint32_t sbits=odd?(wv[0]>>16):(wv[0]&0xffffu);
+            uint32_t cw[8];
+            #pragma unroll
+            for(unsigned e=0;e<8;++e)cw[e]=odd?wv[e+1]:(wv[e]>>16)|(wv[e+1]<<16);
+            const float scale=half_scale(sbits);
+            #pragma unroll
+            for(unsigned j=0;j<4;++j) { // logical lane 4t+j: codes 8j..8j+7 of the block
+              #pragma unroll
+              for(unsigned jj=0;jj<8;++jj) {
+                const uint32_t byte=(cw[2*j+jj/4]>>(8*(jj%4)))&255u;
+                const float value=scale*float(int(int8_t(uint8_t(byte))));
+                const float product=value*xv[8*j+jj];acc[i][j]=acc[i][j]+product;
+              }
+            }
+          }
+        }
+        #pragma unroll
+        for(unsigned i=0;i<RI;++i) {
+          const float a01=acc[i][0]+acc[i][1],a23=acc[i][2]+acc[i][3];float sum=a01+a23;
+          #pragma unroll
+          for(unsigned width=1;width<8;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
+          const uint32_t row=first+i;
+          if(t==0&&row<span)static_cast<float*>(pointers[yi])[size_t(slot)*span+row]=live[i]?sum:bits_float(0x7fc00000);
+        }
+      }));
+    });
+  }
+};
 // HC gate + mix in one launch (2026-10-25, single-row decode). Work-group j runs the gate rows h*width+j (h=0..3) of
 // hidden index j, one per subgroup, with Multiply's unchanged single-row code (dot, staging, adjacent-pair tree), and
 // writes them. One lane then forms mix[j] exactly as the generic mix kernel (ng::mix): sum=0, sum=sum+sigmoid(gate)*norm
@@ -654,7 +726,22 @@ ownrt::Event finish(ownrt::Device& d,Multiply& op,const std::vector<ownrt::Alloc
 std::string device_properties(){return properties;}
 ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
-  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},1,1,rows);return finish(d,op,ids);
+  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},1,1,rows);
+  if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&(t==Type::Q8_0||t==Type::Q6_K)&&decode_next::enabled("dense8")) {
+    // OWNRT_DECODE_NEXT dense8 (lab 2026-10-26): dense Q8_0 / Q6_K decode rows. Every row keeps Multiply's single-row
+    // arithmetic (decode8 values, lane l owns columns 8l+256i, product then add in order, the same adjacent-pair tree).
+    //  Q6_K (shared-expert gate/up, QSA k/v): MultiplyBlockRows<1>, decode8 from global memory without local staging
+    //   or a barrier (the routed kernel, exact against Multiply). 2 or 4 rows per subgroup, and packed logical lanes,
+    //   were slower end to end.
+    //  Q8_0 with K % 64 == 0 (shared-expert down, 2560 x 640): packed logical lanes (MultiplyQ8Packed, SG16).
+    //   OWNRT_DECODE_NEXT_Q8=0 keeps Multiply for Q8_0.
+    // Rank-1 A/B, 4096-row prompt: half 13.42 -> 13.17 ms.
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    if(t==Type::Q6_K){MultiplyBlockRows<1> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
+    static const int q8=decode_next::variant("OWNRT_DECODE_NEXT_Q8",1);
+    if(q8==1&&k%64==0&&op.desc[0].rb%4==0){MultiplyQ8Packed<16,1,4> pk;pk.desc=op.desc[0];return d.compute(pk,ids,{});}
+  }
+  return finish(d,op,ids);
 }
 ownrt::Event gemv_mix(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation norm,ownrt::Allocation mix,uint32_t width) {
   if(a!=Type::F32||o!=Type::F32||sg!=32||!width||rows!=size_t(width)*4)throw std::invalid_argument("kopt gate+mix: F32, 32 lanes, four stream rows per index");

@@ -1,0 +1,411 @@
+{
+ "date": "2026-10-26",
+ "task": "rank-1 decode next (after OWNRT_EXPERTS_V2)",
+ "engine": {
+  "canonical": "engine/src == live service 25b3f7542cad",
+  "reference_binary": "/dev/shm/engine-build-svc-b15-split23-20261026/sc117-engine",
+  "reference_sha256_prefix": "25b3f7542cad99b6",
+  "final_lab_binary": "/dev/shm/engine-build-lab-dnext-fin/sc117-engine",
+  "final_lab_sha256_prefix": "9c4c3ba597f7e271",
+  "profile_reference_binary_sha256_prefix": "7633864d9885e5ef",
+  "lab_only": "final lab binary also carries research/decode-experts/profile-defer-lab.patch (profiling only; inert without OWNRT_DECODE_PROFILE)"
+ },
+ "identity": {
+  "card": "0000:27:00.0 renderD131 under flock /dev/shm/card27.lock",
+  "driver": "tp_rank1_driver.py run --steps 48 --prompt 4096|300 --batched --rows 256 --cache",
+  "split": 23,
+  "context": 65536,
+  "env_live": "OWNRT_ATTN_HEADS=1 OWNRT_ATTN_COMBINE2=1 OWNRT_PREFILL_REUSE2=1 OWNRT_SELECT_TOPK=1 OWNRT_SELECT_FAST=1 OWNRT_RESET_DEVICE_ZERO=1 OWNRT_EXPERTS_V2=1 OWNRT_DENSE_DECODE_V2=1 OWNRT_PREFILL_EXPERTS=1 OWNRT_DENSE_RAW=1 OWNRT_QSA_RAW_RING=1 OWNRT_PREFILL_SHADOW_PACK=1",
+  "env_new": "OWNRT_DECODE_NEXT=1 (= dense8,mix4); OWNRT_DECODE_NEXT_Q8=0 keeps Multiply for Q8_0",
+  "taskset": "8-15,24-31 nice 10",
+  "median": "halves 3..48 of fixture 1"
+ },
+ "switches": {
+  "OWNRT_DECODE_NEXT": {
+   "default": "off",
+   "tokens": {
+    "dense8": "Q8_0 dense decode rows K%64==0 via MultiplyQ8Packed<16,1,4>; Q6_K dense decode rows via MultiplyBlockRows<1>",
+    "mix4": "HC mix: four sigmoid terms on four adjacent lanes, lane 4i sums in h order"
+   }
+  }
+ },
+ "final_sequence": {
+  "F-ref-1": {
+   "driver_median_ms": 13.415,
+   "half_completion_median_ms": 13.357,
+   "enqueue_loop_median_ms": 3.43,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-ref-2": {
+   "driver_median_ms": 13.415,
+   "half_completion_median_ms": 13.362,
+   "enqueue_loop_median_ms": 3.79,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-ref-3": {
+   "driver_median_ms": 13.428,
+   "half_completion_median_ms": 13.366,
+   "enqueue_loop_median_ms": 3.43,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-new-1": {
+   "driver_median_ms": 12.969,
+   "half_completion_median_ms": 12.913,
+   "enqueue_loop_median_ms": 3.72,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-new-2": {
+   "driver_median_ms": 12.979,
+   "half_completion_median_ms": 12.918,
+   "enqueue_loop_median_ms": 3.37,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-new-3": {
+   "driver_median_ms": 12.991,
+   "half_completion_median_ms": 12.929,
+   "enqueue_loop_median_ms": 3.38,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-ref-p300": {
+   "driver_median_ms": 13.254,
+   "half_completion_median_ms": 13.201,
+   "enqueue_loop_median_ms": 3.77,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-new-p300": {
+   "driver_median_ms": 12.807,
+   "half_completion_median_ms": 12.748,
+   "enqueue_loop_median_ms": 3.45,
+   "halves": 46,
+   "kfaults": 0
+  },
+  "F-off-1": {
+   "driver_median_ms": 13.407,
+   "half_completion_median_ms": 13.355,
+   "enqueue_loop_median_ms": 3.81,
+   "halves": 46,
+   "kfaults": 0
+  }
+ },
+ "summary": {
+  "prompt4096": {
+   "ref_driver_median_ms": [
+    13.415,
+    13.415,
+    13.428
+   ],
+   "new_driver_median_ms": [
+    12.969,
+    12.979,
+    12.991
+   ],
+   "delta_ms": -0.44,
+   "delta_pct": -3.3
+  },
+  "prompt300": {
+   "ref": 13.254,
+   "new": 12.807,
+   "delta_ms": -0.447
+  },
+  "default_off": 13.407
+ },
+ "exactness": {
+  "compares": {
+   "F-ref-1 vs F-new-1": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-2 vs F-new-2": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-3 vs F-new-3": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-1 vs F-off-1": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-p300 vs F-new-p300": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "prof-a vs F-prof": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   }
+  },
+  "tokens_identical": true,
+  "cpu_device_tests": {
+   "test_q8 (blk.23.ffn_down_shexp + synthetic, SG16/SG32)": "PASS 0 mismatches 0 OOB",
+   "test_q6 (blk.23.attn_k/v + synthetic, DeviceSanitizer)": "PASS"
+  }
+ },
+ "profile": {
+  "reference": {
+   "run": "prof-a",
+   "busy_us": 12906,
+   "span_us": 13034,
+   "weights_GB_per_token": 3.06
+  },
+  "final": {
+   "run": "F-prof",
+   "busy_us": 12494,
+   "span_us": 12608
+  },
+  "site_us_ref_final": {
+   "hc_mix": [
+    333.7,
+    172.6,
+    -161.1
+   ],
+   "gemv:Q8_0:shexpdown": [
+    373.9,
+    233.7,
+    -140.2
+   ],
+   "gemv:Q6_K:shexpgate": [
+    89.0,
+    71.3,
+    -17.7
+   ],
+   "gemv:Q6_K:gdn.qkv": [
+    381.5,
+    365.2,
+    -16.3
+   ],
+   "gemv:Q6_K:qsa.k": [
+    80.8,
+    66.8,
+    -14.0
+   ],
+   "gemv:Q6_K:shexpup": [
+    92.7,
+    79.7,
+    -13.0
+   ],
+   "gemv:BF16:hc.a.gate": [
+    419.7,
+    407.7,
+    -12.0
+   ],
+   "gemv:Q6_K:qsa.qgate": [
+    278.4,
+    267.9,
+    -10.5
+   ],
+   "silu_div4": [
+    163.0,
+    155.5,
+    -7.5
+   ],
+   "gemv:Q5_K:gdn.qkv": [
+    353.5,
+    346.7,
+    -6.8
+   ],
+   "gemv:Q8_0:attention": [
+    920.1,
+    914.4,
+    -5.7
+   ],
+   "route": [
+    308.0,
+    303.5,
+    -4.5
+   ],
+   "gemv:Q6_K:gdn.z": [
+    224.2,
+    220.0,
+    -4.2
+   ],
+   "conv": [
+    106.2,
+    102.5,
+    -3.7
+   ],
+   "gemv:BF16:hc.a.low": [
+    402.3,
+    398.8,
+    -3.5
+   ],
+   "expert_gather": [
+    99.6,
+    102.9,
+    3.3
+   ],
+   "silu_product": [
+    138.9,
+    143.9,
+    5.0
+   ],
+   "routed_gemv:IQ4_NL:expsdown": [
+    856.7,
+    861.8,
+    5.1
+   ]
+  },
+  "note": "OWNRT_DECODE_PROFILE=3 drains per site; per-kernel savings do not translate 1:1 end to end (see RESULT.md lesson)"
+ },
+ "ab_driver_median_ms": {
+  "ab2-ref": [
+   13.421,
+   13.414
+  ],
+  "ab2-dense8": [
+   13.176,
+   13.169
+  ],
+  "ab2-mix4": [
+   13.282,
+   13.276
+  ],
+  "ab2-gdn2": [
+   13.768,
+   13.782
+  ],
+  "ab2-gua": [
+   13.618,
+   13.64
+  ],
+  "ab2-small": [
+   13.414,
+   13.408
+  ],
+  "ab2-comb1": [
+   13.459,
+   13.469
+  ],
+  "ab3-ref": [
+   13.409,
+   13.424
+  ],
+  "ab3-B": [
+   13.002,
+   13.032
+  ],
+  "ab3-xxs2": [
+   13.206,
+   13.118
+  ],
+  "ab3-kopt2": [
+   13.159,
+   13.164
+  ],
+  "ab3-xxs8": [
+   13.252,
+   13.237
+  ],
+  "ab3-kopt8": [
+   13.402,
+   13.396
+  ],
+  "ab4-B": [
+   12.98,
+   12.996
+  ],
+  "ab4-norm2": [
+   12.989,
+   12.989
+  ],
+  "ab4-comb4": [
+   12.983,
+   12.968
+  ],
+  "ab5-B": [
+   12.97,
+   12.98
+  ],
+  "ab5-q6a": [
+   13.226,
+   13.237
+  ],
+  "ab5-q6b": [
+   13.537,
+   13.536
+  ],
+  "ab6-nl0": [
+   13.172,
+   13.15
+  ],
+  "ab6-nl1": [
+   12.989,
+   12.997
+  ],
+  "ab6-nl2": [
+   13.004,
+   13.028
+  ],
+  "ab6-nl3": [
+   13.135,
+   13.177
+  ],
+  "ab7-B": [
+   13.0,
+   13.0
+  ],
+  "ab7-route3": [
+   13.01,
+   13.001
+  ]
+ },
+ "ab_notes": {
+  "ab2": "ref 13.41-13.42 in this round",
+  "ab3_ref": [
+   13.409,
+   13.424
+  ],
+  "names": {
+   "dense8": "Q8 packed + Q6 BlockRows",
+   "mix4": "4-lane HC mix",
+   "gdn2": "GDN 4 state rows per subgroup",
+   "gua": "IQ3_XXS gate+up+act one launch",
+   "small": "small ew fusions",
+   "comb1": "hc_combine single launch",
+   "B": "dense8+mix4",
+   "xxs2": "IQ3_XXS 2 rows/subgroup",
+   "xxs8": "IQ3_XXS 8 rows/subgroup",
+   "kopt2": "Q6 BlockRows<2>",
+   "kopt8": "Q6 BlockRows<8>",
+   "norm2": "norm 2-stage",
+   "comb4": "hc_combine 4 lanes",
+   "q6a": "packed Q6_K SG16",
+   "q6b": "packed Q6_K SG32",
+   "nl0": "IQ4_NL select variant 0",
+   "nl1": "IQ4_NL default table SG16 (=B)",
+   "nl2": "IQ4_NL variant 2",
+   "nl3": "IQ4_NL variant 3",
+   "route3": "route 3-stage"
+  }
+ },
+ "faults": {
+  "kfaults_total": 0,
+  "pre_check_hits": 0,
+  "standalone_device_microbenchmarks": 0
+ },
+ "files": {
+  "patch": "research/decode-next/decode-next.patch",
+  "negatives": "research/decode-next/neg/",
+  "cputest": "research/decode-next/cputest/"
+ }
+}
