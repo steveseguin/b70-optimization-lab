@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Bounded GSQ rank adapter. CLI is plan-only; operational admission is external."""
-import argparse, copy, hashlib, importlib.util, json, mmap, os, shutil, socket, subprocess, time
+import argparse, copy, fcntl, hashlib, importlib.util, json, mmap, os, shutil, socket, struct, subprocess, time
 from pathlib import Path
 
 P=Path(__file__).resolve().parent
@@ -45,7 +45,7 @@ def source_pins():
     files=[Path(__file__).resolve(),LANE/'recurrent-f32/operating/prefix-replay-a/generated/adapter.py',LANE/'recurrent-f32/operating/prefix-replay-a/source-preparation.json',Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py'),PARENT,ENV_SOURCE,LANE/'loader/bound.hpp',LANE/'loader/bound-authority.json',LANE/'loader/placement.tsv',LANE/'loader/shard-auth.tsv',LANE/'mtp/draft-manifest.tsv',LANE/'mtp/target-bindings.json',LEDGER]
     history=LANE/'integration/evidence/host-retained-source-map.json'
     if history.exists():files.append(history)
-    return {str(p.relative_to(ROOT)):sha(p) for p in files}
+    return {str(p.relative_to(ROOT)) if p.is_relative_to(ROOT) else str(p):sha(p) for p in files}  # absolute key: relocated (lab) copy
 
 def environments(output,mini):
     base=load(ENV_SOURCE,'gsq_launch_env').environment();base['HOME']=os.environ['HOME']
@@ -348,6 +348,209 @@ def qualification(plan,prompt,count,*,admit,check,launch_hook):
             try:save(t.out/'incident.json',dict(error=repr(error),secondary=secondary,passed=False))
             except BaseException:pass
         raise
+
+# ---------------------------------------------------------------- session parking (opt-in; service SC117_SESSIONS=1)
+# Two-rank save/restore of a conversation's engine state, coordinated here exactly like reset()/redirect(): between
+# requests both ranks sit in their command loops and take rank commands over their own channels (the native
+# controller runs only inside op 10). Rank ops (engine session_checkpoint.hpp): 17 STAGE, 18 VERIFY (only directly
+# after op 11), 19 APPLY (only directly after a successful VERIFY). A refusal replies status 2 / error = op, writes
+# checkpoint-refused-<seq>.json into the rank's request output and leaves that rank's engine state unchanged.
+# Layout under the parking root:  <id>/manifest.json (authoritative, written last, published by one directory rename),
+# <id>/rank0/ and <id>/rank1/ (sealed rank bundles), <id>/reverse.bin (shared-map reverse slot); lock: sibling <id>.lock
+# (flock, non-blocking: shared for restore/inspect, exclusive for save/delete). <id> = first 32 hex of tokens_sha256.
+SESSION_SCHEMA='sc117.session.v1'
+STAGE_OP,VERIFY_OP,APPLY_OP=17,18,19
+SESSION_SLOT=65536;SESSION_READY=2*SESSION_SLOT+192;SESSION_REVERSE=2*SESSION_SLOT+4096  # rank.hpp shared layout
+PENDING_CONVENTION=('the ranks hold positions [0, position) = tokens; pending_token is the last target output, not yet '
+                    'stepped; the draft has consumed confirmed positions up to position-1 and the reverse slot holds rank '
+                    "1's final row of position-1 with reverse_ready = position. A restore continues exactly like the "
+                    'in-memory continuation (native start = position): the next prompt must be tokens + [pending_token] '
+                    '+ at least one more token.')
+
+class SessionRefused(RuntimeError):
+    """A session operation refused. engine: 'untouched' (no rank command sent), 'fresh' (both ranks at a fresh request
+    reset, nothing applied), 'partial' (some rank applied: the caller must RESET again), 'unchanged' (save: live state
+    intact)."""
+    def __init__(self,message,engine='untouched'):
+        super().__init__(message);self.engine=engine
+
+def tokens_sha256(tokens):return hashlib.sha256(struct.pack(f'<{len(tokens)}i',*tokens)).hexdigest()
+def session_id(tokens):return tokens_sha256(tokens)[:32]
+
+def session_identity(t):
+    """What a parked session must match to be restored into this engine (the ranks check their own identity again)."""
+    plan=t.plan
+    env=[{k:v for k,v in e.items() if k not in ('SYCL_CACHE_DIR','NEO_CACHE_DIR','XDG_CACHE_HOME')} for e in plan['environment']]
+    return dict(binary_sha256=plan['binary_sha256'],build_receipt_sha256=plan['build_receipt_sha256'],target_split=TARGET_SPLIT,
+                context=plan['context'],prefill_rows=PREFILL_ROWS,activations=ACTIVATIONS,dispatch_sha256=sha(DISPATCH) if DISPATCH else None,
+                service_flags=list(plan['service_flags']),rank_environment_sha256=hashlib.sha256(json.dumps(env,sort_keys=True).encode()).hexdigest())
+
+class SessionLock:
+    def __init__(self,root,sid,exclusive):self.path=Path(root)/f'{sid}.lock';self.exclusive=exclusive;self.fd=None
+    def __enter__(self):
+        fd=os.open(self.path,os.O_RDWR|os.O_CREAT|os.O_CLOEXEC|os.O_NOFOLLOW,0o600)
+        try:fcntl.flock(fd,(fcntl.LOCK_EX if self.exclusive else fcntl.LOCK_SH)|fcntl.LOCK_NB)
+        except BlockingIOError:
+            os.close(fd);raise SessionRefused('session locked by another holder: '+self.path.name)
+        self.fd=fd;return self
+    def __exit__(self,*exc):
+        fcntl.flock(self.fd,fcntl.LOCK_UN);os.close(self.fd);self.fd=None
+
+def _durable(path,data):
+    fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_CLOEXEC|os.O_NOFOLLOW,0o600)
+    try:
+        view=memoryview(data)
+        while view:view=view[os.write(fd,view):]
+        os.fsync(fd)
+    finally:os.close(fd)
+
+def _fsync_dir(path):
+    fd=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_CLOEXEC)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+
+def _tree_bytes(path):return sum(f.stat().st_size for f in Path(path).rglob('*') if f.is_file())
+
+def _checkpoint_ops(t,op,per_rank):
+    """One checkpoint op on the given ranks, issued to both before either reply is read. per_rank: {rank: dict(position,
+    token, fixture, metadata=[lines] or None)}. Returns {rank: dict(ok, ...)}; a rank that fails (not a refusal) raises."""
+    require(not any(t.pending),'checkpoint op while a rank is busy')
+    for rank,a in per_rank.items():
+        if a.get('metadata') is not None:
+            text=''.join(line+'\n' for line in a['metadata']);require(text.count('\n')==len(a['metadata']),'checkpoint metadata newline')
+            with (t.out/f'rank{rank}'/f'checkpoint-{t.seq[rank]+1}.txt').open('x') as f:f.write(text)
+        t.start(rank,op,a.get('token',0),a['position'],a.get('fixture',0))
+    replies={}
+    for rank in per_rank:
+        # The sealed base receive() admits only status 0 and a slot-sized payload; checkpoint replies carry byte counts.
+        values=BASE.REPLY.unpack(t.io(rank));t.pending[rank]=False
+        require(values[4]==t.seq[rank] and values[5]==rank,'checkpoint reply sequence/identity')
+        if values[0]==0 and values[2]==0:
+            replies[rank]=dict(ok=True,token=values[1],bytes=values[3],blobs=values[6],checked=values[7],busy_ms=values[8])
+            continue
+        require(values[0]==2 and values[2]==op,f'rank {rank} failed checkpoint op {op} (status {values[0]}, error {values[2]})')
+        receipt=t.request_output/f'rank{rank}'/f'checkpoint-refused-{t.seq[rank]}.json'
+        replies[rank]=dict(ok=False,reason=json.loads(receipt.read_text()).get('reason') if receipt.exists() else 'refusal receipt missing')
+    return replies
+
+def _refusals(replies):return {r:x['reason'] for r,x in replies.items() if not x['ok']}
+
+def session_inspect(path,lock=True):
+    """Manifest of a published session after cheap integrity checks (manifest/token binding, reverse slot hash, both rank
+    bundle seals). The ranks verify every payload byte again at VERIFY. Raises SessionRefused."""
+    path=Path(path);sid=path.name
+    ctx=SessionLock(path.parent,sid,False) if lock else None
+    if ctx:ctx.__enter__()
+    try:
+        try:m=json.loads((path/'manifest.json').read_text())
+        except (OSError,ValueError) as e:raise SessionRefused(f'session manifest unreadable: {e}')
+        ok=(m.get('schema')==SESSION_SCHEMA and m.get('id')==sid and type(m.get('tokens')) is list and len(m['tokens'])==m.get('position')
+            and tokens_sha256(m['tokens'])==m.get('tokens_sha256') and session_id(m['tokens'])==sid)
+        if not ok:raise SessionRefused('session manifest/token binding')
+        rev=m['reverse']
+        try:row=(path/rev['file']).read_bytes()
+        except OSError as e:raise SessionRefused(f'session reverse slot unreadable: {e}')
+        if len(row)!=SESSION_SLOT or hashlib.sha256(row).hexdigest()!=rev['sha256'] or rev['ready']!=m['position']:raise SessionRefused('session reverse slot')
+        for r in ('0','1'):
+            try:seal=(path/m['ranks'][r]['directory']/'state-seal.txt').read_bytes()
+            except (OSError,KeyError) as e:raise SessionRefused(f'session rank {r} bundle: {e!r}')
+            if hashlib.sha256(seal).hexdigest()!=m['ranks'][r]['seal_sha256']:raise SessionRefused(f'session rank {r} seal differs from the manifest')
+        return m
+    finally:
+        if ctx:ctx.__exit__(None,None,None)
+
+def session_list(root):
+    """[(path, manifest or None, error or None)] for every published session under root (staging directories skipped)."""
+    out=[]
+    for p in sorted(Path(root).iterdir()):
+        if p.name.startswith('.') or not p.is_dir():continue
+        try:out.append((p,session_inspect(p),None))
+        except SessionRefused as e:out.append((p,None,str(e)))
+    return out
+
+def session_save(t,root,tokens,pending):
+    """Park the live state (positions [0, N) = tokens, pending token not yet stepped) as root/<id>. Phase 1: STAGE both
+    ranks into a private staging directory and copy the shared-map reverse slot; phase 2: manifest.json last, then one
+    rename publishes. The live engine state is never changed (STAGE only reads). Raises SessionRefused(engine='unchanged')."""
+    root=Path(root);tokens=[int(x) for x in tokens];N=len(tokens)
+    require(1<=N<t.plan['context'] and all(0<=x<248320 for x in tokens) and type(pending) is int and 0<=pending<248320,'session token state bounds')
+    require(not any(t.pending),'session save while a rank is busy')
+    ready=struct.unpack_from('<I',t.mapping,SESSION_READY)[0]
+    if ready!=N:raise SessionRefused(f'reverse_ready {ready} != position {N}: not at a request boundary',engine='unchanged')
+    identity=session_identity(t);sid=session_id(tokens);final=root/sid;digest=tokens_sha256(tokens)
+    try:lock=SessionLock(root,sid,True).__enter__()
+    except SessionRefused as e:e.engine='unchanged';raise
+    try:
+        if final.exists():
+            try:
+                m=session_inspect(final,lock=False)
+                if m['identity']==identity and m['tokens']==tokens and m['pending_token']==pending:os.utime(final);return m
+            except SessionRefused:pass
+            shutil.rmtree(final)  # broken, or another engine identity: replace
+        staging=root/f'.{sid}.staging'
+        if staging.exists():shutil.rmtree(staging)
+        staging.mkdir(mode=0o700)
+        try:
+            tag='sc117.'+digest;started=time.monotonic()
+            replies=_checkpoint_ops(t,STAGE_OP,{0:dict(position=N,token=pending,fixture=0,metadata=[str(staging/'rank0'),tag]),
+                                                1:dict(position=N,token=pending,fixture=1,metadata=[str(staging/'rank1'),tag])})
+            if _refusals(replies):raise SessionRefused('stage refused: '+json.dumps(_refusals(replies)),engine='unchanged')
+            stage_ms=(time.monotonic()-started)*1000
+            row=bytes(t.mapping[SESSION_REVERSE:SESSION_REVERSE+SESSION_SLOT]);_durable(staging/'reverse.bin',row)
+            receipt=t.request_output/'rank0'/f'checkpoint-stage-{t.seq[0]}.json'
+            draft_position=json.loads(receipt.read_text()).get('draft_position') if receipt.exists() else None
+            ranks={str(r):dict(directory=f'rank{r}',seal_sha256=hashlib.sha256((staging/f'rank{r}'/'state-seal.txt').read_bytes()).hexdigest(),
+                               bundle_bytes=_tree_bytes(staging/f'rank{r}'),saved_bytes=replies[r]['bytes'],saved_blobs=replies[r]['blobs'],
+                               stage_ms=replies[r]['busy_ms']) for r in (0,1)}
+            m=dict(schema=SESSION_SCHEMA,id=sid,created_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),identity=identity,position=N,
+                   tokens=tokens,tokens_sha256=digest,pending_token=pending,pending_convention=PENDING_CONVENTION,draft_position=draft_position,
+                   reverse=dict(file='reverse.bin',bytes=SESSION_SLOT,sha256=hashlib.sha256(row).hexdigest(),ready=N),ranks=ranks,
+                   bytes=_tree_bytes(staging)+len(json.dumps(tokens)),stage_wall_ms=stage_ms)
+            _durable(staging/'manifest.json',(json.dumps(m,indent=1)+'\n').encode())
+            _fsync_dir(staging);os.rename(staging,final);_fsync_dir(root)
+            return m
+        except BaseException:
+            shutil.rmtree(staging,ignore_errors=True);raise
+    finally:lock.__exit__(None,None,None)
+
+def session_restore(t,path,destination,readback=False):
+    """Restore a parked session into both ranks: inspect (shared lock held throughout), RESET into `destination`, VERIFY
+    both, APPLY both only if both verified, then the shared map exactly as redirect() leaves it (reverse_ready and the
+    reverse slot; everything else zero). Returns dict(position, pending_token, tokens, id, ...). The next request must
+    run the native continuation with start = position. Raises SessionRefused with engine 'untouched'/'fresh'/'partial'."""
+    path=Path(path);sid=path.name
+    with SessionLock(path.parent,sid,False):
+        m=session_inspect(path,lock=False)
+        if m['identity']!=session_identity(t):raise SessionRefused('session identity differs from this engine')
+        N=m['position']
+        if not 1<=N<t.plan['context']:raise SessionRefused('session position outside this engine context')
+        row=(path/'reverse.bin').read_bytes()
+        if hashlib.sha256(row).hexdigest()!=m['reverse']['sha256']:raise SessionRefused('session reverse slot changed')
+        if any(t.pending):raise SessionRefused('a rank is busy')
+        reset(t,destination)  # op 11 on both ranks, fresh shared map: from here on the engine is at a fresh request
+        tag='sc117.'+m['tokens_sha256'];started=time.monotonic()
+        v=_checkpoint_ops(t,VERIFY_OP,{r:dict(position=N,token=m['pending_token'],metadata=[str(path/m['ranks'][str(r)]['directory']),tag]) for r in (0,1)})
+        if _refusals(v):raise SessionRefused('verify refused: '+json.dumps(_refusals(v)),engine='fresh')
+        verify_ms=(time.monotonic()-started)*1000;started=time.monotonic()
+        a=_checkpoint_ops(t,APPLY_OP,{r:dict(position=N,fixture=1 if readback else 0) for r in (0,1)})
+        if _refusals(a):raise SessionRefused('apply refused: '+json.dumps(_refusals(a)),engine='partial' if any(x['ok'] for x in a.values()) else 'fresh')
+        apply_ms=(time.monotonic()-started)*1000
+        require(not any(t.mapping[SESSION_READY:SESSION_READY+4]) and not any(t.mapping[SESSION_REVERSE:SESSION_REVERSE+SESSION_SLOT]),'shared map not fresh after reset')
+        t.mapping[SESSION_REVERSE:SESSION_REVERSE+SESSION_SLOT]=row;struct.pack_into('<I',t.mapping,SESSION_READY,N)
+        os.utime(path)  # LRU recency
+        return dict(id=sid,position=N,pending_token=m['pending_token'],tokens=m['tokens'],verify_ms=verify_ms,apply_ms=apply_ms,
+                    held_bytes=sum(x['bytes'] for x in v.values()),uploaded_bytes=sum(x['bytes'] for x in a.values()),readback=readback)
+
+def session_delete(path):
+    """Remove a parked session under its exclusive lock. False if another holder has it locked."""
+    path=Path(path);sid=path.name
+    try:lock=SessionLock(path.parent,sid,True).__enter__()
+    except SessionRefused:return False
+    try:
+        if path.exists():shutil.rmtree(path)
+        (path.parent/f'{sid}.lock').unlink(missing_ok=True)
+        return True
+    finally:lock.__exit__(None,None,None)
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--plan',action='store_true',required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--mini',action='store_true');ap.add_argument('--evidence-output',type=Path);ap.add_argument('--max-new',type=int,default=4);ap.add_argument('--seconds',type=int,default=1800)

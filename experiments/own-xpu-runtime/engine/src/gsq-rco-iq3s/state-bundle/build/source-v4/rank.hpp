@@ -310,6 +310,7 @@ static void pipeline_cancel_check() {
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/v3_boundary.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/bracket_boundary.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/probe_exchange.hpp"
+#include "gsq-rco-iq3s/state-bundle/build/source-v4/session_checkpoint.hpp" // opt-in ops 17-19 (lab 2026-10-26)
 // --tp-replicate gate: every non-weight buffer of card 1 must equal card 0 bitwise after the same steps.
 static void tp_compare(Engine& e,const fs::path& path) {
  e.drain();std::ostringstream o;o<<"{\"buffers\":";size_t n=0;std::vector<std::string> differ;
@@ -445,10 +446,15 @@ static int run_rank(const Options& a) {
   Reply ready{};ready.rank=a.rank;if(a.pipeline_enabled()){ready.reserved[0]=a.pipeline_stage;ready.reserved[1]=a.pipeline_final();ready.bytes=int32_t(engine->stream_bytes());}transfer(a.channel,&ready,sizeof ready,true,a.seconds);
   ownrt::live_draft::Sequence live_draft_sequence;
   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;V3Boundary v3state;
+  // Opt-in session checkpoint (ops 17-19, session_checkpoint.hpp): VERIFY only directly after the request reset,
+  // APPLY only directly after a successful VERIFY. Any other command consumes both flags and drops held bytes.
+  session::Held checkpoint_held;bool checkpoint_after_reset=false,checkpoint_after_verify=false;
   auto execute=[&](const Request& r)->Reply {
    if(a.rank==1)engine->reply_report.before(r.op);
    auto received=std::chrono::steady_clock::now();
    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
+   const bool checkpoint_fresh=std::exchange(checkpoint_after_reset,false),checkpoint_verified=std::exchange(checkpoint_after_verify,false);
+   if(r.op!=session::apply_op&&checkpoint_held.valid)checkpoint_held.clear();
    if(a.pipeline_ring&&ring_dispatcher->handles_command(r.op)){auto reply=ring_dispatcher->execute(r);if(r.op==ownrt::ring_next::wire::accept_op&&r.fixture>0)++accepted;if(r.op==11)accepted=0;return reply;}
    if(a.pipeline_ring)ring_dispatcher->boundary();
    if(a.pipeline_wavefront&&(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op)){
@@ -568,13 +574,30 @@ static int run_rank(const Options& a) {
     const auto metadata=a.output/("reset-"+std::to_string(r.sequence)+".txt");
     if(a.pipeline_persistent_requests){require(!r.token&&!r.position&&!r.fixture&&!r.speculative,"persistent reset zero payload");persistent_reset(*engine,c,provider.get(),*wave_checkpoint,*wave_ledger,live_draft_sequence,a.output,metadata,accepted,r.sequence,static_cast<uint8_t*>(mapping),shared_bytes,wave_trace,wave_trace_rows,wave_trace_omitted);wave_output=-1;}
     else request_reset(*engine,c,provider.get(),metadata,accepted);
-    accepted=0;
+    accepted=0;checkpoint_after_reset=!a.pipeline_persistent_requests;
    }
    else if(r.op==13){require(!async_half_ready,"pending half");v3state.reset();bracket_boundary(*engine,c,provider.get(),image,a.output/("bracket-"+std::to_string(r.sequence)+".txt"),accepted);async_half_position=async_half_token=-1;}
    #ifdef OWN_RT_HOST_ONLY
    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
 #endif
    else if(r.op==16){require(!c.pending&&!async_half_ready,"redirect with unresolved candidate");require(!provider||!provider->submitting(),"redirect draft publication pending");image.boundary();request_redirect(*engine,provider.get(),a.output/("redirect-"+std::to_string(r.sequence)+".txt"));}
+   else if(r.op==session::stage_op){ // preconditions and boundary actions as the continuation command (op 16)
+    require(!c.pending&&!async_half_ready,"checkpoint stage with unresolved candidate");require(!provider||!provider->submitting(),"checkpoint stage draft publication pending");
+    require(!v3state.ready,"checkpoint stage with a pending V3 boundary");
+    image.boundary();if(provider)provider->flush_depth_probe();
+    response=session::stage(*engine,provider.get(),r,a.output/("checkpoint-"+std::to_string(r.sequence)+".txt"));
+   }
+   else if(r.op==session::verify_op){
+    require(!c.pending&&!async_half_ready&&!v3state.ready&&(!provider||!provider->submitting()),"checkpoint verify with unresolved command state");
+    response=session::verify(*engine,provider.get(),r,a.output/("checkpoint-"+std::to_string(r.sequence)+".txt"),checkpoint_fresh,checkpoint_held);
+    // Verify changes no device state: the engine stays at the fresh reset either way.
+    checkpoint_after_reset=checkpoint_fresh;checkpoint_after_verify=response.status==0;
+   }
+   else if(r.op==session::apply_op){
+    require(!c.pending&&!async_half_ready&&!v3state.ready&&(!provider||!provider->submitting()),"checkpoint apply with unresolved command state");
+    response=session::apply(*engine,provider.get(),r,checkpoint_verified,checkpoint_held);
+    if(response.status!=0)checkpoint_after_reset=checkpoint_fresh; // refused before any upload
+   }
    else if(r.op==fail)throw std::runtime_error("injected rank failure");
    else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
    else throw std::runtime_error("unknown rank command");

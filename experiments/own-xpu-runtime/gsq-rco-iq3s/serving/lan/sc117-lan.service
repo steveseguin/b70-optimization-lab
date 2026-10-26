@@ -17,7 +17,7 @@ Environment=SC117_CONTEXT=32768
 # to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
 Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/bd476fb8af0e.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/9d89dca01ece.json
 Environment=SC117_PREFILL_ROWS=32
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -43,6 +43,12 @@ Environment=OWNRT_MERGE_CHECKS=1
 # Exact O(n) QSA select (scores in a register tree, radix threshold, chunked compaction; same ids as the all-pairs
 # rank). Card-27 rank-1 lab 2026-10-26: 30K prefill + decode bitwise on 1,079 buffers; decode half at 30K 20.52 -> 18.35 ms.
 Environment=OWNRT_SELECT_TOPK=1
+# Engine sessions (2026-10-26): a conversation of >= 256 tokens is parked (rank ops 17-19, both ranks + the draft's
+# reverse row, sealed manifest) before a RESET would evict it, and restored when a later prompt extends it.
+Environment=SC117_SESSIONS=1
+Environment=SC117_SESSION_DIR=/dev/shm/sc117-sessions
+Environment=SC117_SESSION_BUDGET_GB=16
+Environment=SC117_SESSION_READBACK=1
 Restart=no
 KillMode=process
 KillSignal=SIGTERM

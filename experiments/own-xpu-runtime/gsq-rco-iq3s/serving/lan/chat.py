@@ -7,7 +7,7 @@ import importlib.util, json, os, re, time, uuid
 from pathlib import Path
 
 P = Path(__file__).resolve().parent
-LANE = P.parents[1]
+LANE = P.parents[1] if (P.parents[1] / 'coverage').is_dir() else Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')  # relocated (lab) copy
 EOS = (248044, 248046)  # <|endoftext|>, <|im_end|>
 THINK_END = 248069      # </think>
 # Engine context (prompt + output tokens). SC117_CONTEXT is read by this module and adapter6.py alike; the engine
@@ -178,13 +178,16 @@ def parse(body, chat):
         if type(requested) is not int or requested < 1:
             raise RequestError('max_tokens must be a positive integer')
         max_new = min(requested, room)  # clamp to the context instead of refusing
+    reuse = body.get('sc117_reuse', True)  # false: read this prompt fresh (no continuation, no parked session); diagnostics
+    if not isinstance(reuse, bool):
+        raise RequestError('sc117_reuse must be boolean')
     ignored = sorted(k for k in ('temperature', 'top_p', 'top_k', 'seed', 'presence_penalty',
                                  'frequency_penalty', 'repetition_penalty', 'min_p')
                      if body.get(k) not in (None, 0, 1, 0.0, 1.0))
     return dict(prompt_ids=ids, max_new=max_new, thinking=thinking, stop=stop,
                 tools=tools, parse_tool_calls=bool(tools) and choice != 'none',
                 stream=bool(body.get('stream')), include_usage=bool((body.get('stream_options') or {}).get('include_usage')),
-                ignored_sampling=ignored)
+                ignored_sampling=ignored, reuse=reuse)
 
 
 def shape(req, tokens, chat):

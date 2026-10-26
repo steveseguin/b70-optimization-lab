@@ -13,7 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 P = Path(__file__).resolve().parent
-LANE = P.parents[1]
+# A relocated copy (lab) reads the lane's shared inputs in place; at its repo location this is P.parents[1].
+LANE = P.parents[1] if (P.parents[1] / 'operating').is_dir() else Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
 CONTROL_PARENT = Path('/home/steve/own-xpu-runtime-results/sc117-lan')
 # Rank output directories (per-token streams, RESET dumps). Must be a local filesystem: on the ntfs-3g USB mount a busy
 # FUSE daemon stalls rank 0's per-token appends and decode drops from ~49.5 to ~40 tok/s (2026-10-25, 1 GiB dd test).
@@ -222,6 +223,178 @@ class Monitor:
         return not any((i := OBS.process_identity(pid)) is not None and i['start_ticks'] == t for pid, t in self.identities)
 
 
+SESSIONS = os.environ.get('SC117_SESSIONS', '0') == '1'   # opt-in session parking; default off (unchanged service)
+SESSION_DIR = Path(os.environ.get('SC117_SESSION_DIR', '/dev/shm/sc117-sessions'))
+SESSION_BUDGET = int(float(os.environ.get('SC117_SESSION_BUDGET_GB', '16')) * 1024**3)
+SESSION_MIN_TOKENS = 256                     # park only conversations at least this long
+# VERIFY holds each rank's bundle in that rank's anonymous memory until APPLY (rank 1: ~59 MB + 33 KB/token), which the
+# transport's aggregate rank anonymous-memory bound counts. Longer conversations are not parked unless raised.
+SESSION_MAX_TOKENS = int(os.environ.get('SC117_SESSION_MAX_TOKENS', '16384'))
+SESSION_MEMORY_MARGIN = int(float(os.environ.get('SC117_SESSION_MEMORY_MARGIN_GB', '8')) * 1024**3)  # RAM store: MemAvailable >= MEM_ONGOING + this
+SESSION_READBACK = os.environ.get('SC117_SESSION_READBACK', '0') == '1'  # APPLY reads every uploaded region back
+# Upper bounds for one parked session of this model (12 QSA layers x 4736 B/position F32 plus the draft's BF16 rows;
+# 36 GDN states/histories, PLE history and bundle metadata), for admission before the real size is known.
+SESSION_TOKEN_BYTES = 64 * 1024
+SESSION_FIXED_BYTES = 160 * 1024**2
+
+
+def mem_available():
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        if line.startswith('MemAvailable:'):
+            return int(line.split()[1]) * 1024
+    raise RuntimeError('MemAvailable missing')
+
+
+def fs_type(path):
+    """Filesystem type of the mount holding `path` (longest mount-point prefix in /proc/self/mounts)."""
+    path, best, kind = str(Path(path).resolve()), '', ''
+    for line in Path('/proc/self/mounts').read_text().splitlines():
+        fields = line.split()
+        if len(fields) >= 3:
+            mount = fields[1].replace('\\040', ' ')
+            if (path == mount or path.startswith(mount.rstrip('/') + '/')) and len(mount) > len(best):
+                best, kind = mount, fields[2]
+    return kind
+
+
+def session_floors(control, evidence):
+    """The service's own storage floors (storage_ok): a session store on the same filesystem must keep them."""
+    return [(control, ROOT_ONGOING), (evidence, EXTERNAL_FLOOR + META_RESERVE + DUMP_BYTES)]
+
+
+class Sessions:
+    """Parked conversations (policy only; the adapter owns the two-rank protocol, files, manifest and locks).
+
+    Park: when the live state of a client conversation (>= SESSION_MIN_TOKENS) is about to be evicted by a RESET for a
+    different prompt. Restore: when a prompt does not continue the live state, the longest parked token list H with
+    prompt[:N] == H, prompt[N] == its pending token and len(prompt) >= N + 2 (the in-memory continuation rule) is
+    restored and the request continues from N. Bounded by an LRU byte budget, and never admitted below the service's
+    own floors: the store's filesystem floor and, on a RAM filesystem, MemAvailable >= MEM_ONGOING + margin."""
+
+    def __init__(self, root, budget, ops, floors=(), meminfo=mem_available, ram=None, min_tokens=SESSION_MIN_TOKENS,
+                 readback=SESSION_READBACK, max_tokens=SESSION_MAX_TOKENS):
+        self.root, self.budget, self.ops, self.meminfo, self.min_tokens, self.readback = Path(root), budget, ops, meminfo, min_tokens, readback
+        self.max_tokens = max_tokens
+        self.floors = list(floors)   # [(path, floor bytes)]: a store on the same filesystem keeps that floor
+        self.ram = ram
+        self.index = {}              # id -> dict(path, tokens, pending, identity, bytes, used)
+        self.events = []             # last decisions (request summaries)
+        self.stats = dict(parked=0, restored=0, park_skipped=0, park_refused=0, restore_refused=0, evicted=0)
+
+    def note(self, kind, **fields):
+        self.events = (self.events + [dict(kind=kind, **fields)])[-32:]
+
+    def prepare(self, identity=None):
+        """Create/scan the store. Broken entries, staging leftovers and (given an identity) other engines' sessions go."""
+        self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
+        st = self.root.stat()
+        require(st.st_uid == os.getuid() and st.st_mode & 0o077 == 0, f'session directory {self.root} must be private and owned')
+        if self.ram is None:
+            self.ram = fs_type(self.root) in ('tmpfs', 'ramfs')
+        for p in self.root.iterdir():
+            if p.name.startswith('.') and p.name.endswith('.staging'):
+                shutil.rmtree(p, ignore_errors=True)
+        self.index = {}
+        for path, m, error in self.ops.session_list(self.root):
+            if m is None or (identity is not None and m['identity'] != identity):
+                if self.ops.session_delete(path):
+                    self.note('purged', id=path.name, reason=error or 'identity')
+                continue
+            self.index[m['id']] = dict(path=path, tokens=m['tokens'], pending=m['pending_token'], identity=m['identity'],
+                                       bytes=m['bytes'], used=path.stat().st_mtime)
+
+    def used_bytes(self):
+        return sum(e['bytes'] for e in self.index.values())
+
+    def match(self, prompt, identity):
+        best = None
+        for e in self.index.values():
+            h, n = e['tokens'], len(e['tokens'])
+            if e['identity'] == identity and len(prompt) >= n + 2 and prompt[n] == e['pending'] and prompt[:n] == h:
+                if best is None or n > len(best['tokens']):
+                    best = e
+        return best
+
+    def evict_one(self, keep=None):
+        for sid, e in sorted(self.index.items(), key=lambda kv: kv[1]['used']):
+            if sid != keep and self.ops.session_delete(e['path']):
+                del self.index[sid]
+                self.stats['evicted'] += 1
+                self.note('evicted', id=sid, bytes=e['bytes'])
+                return True
+        return False
+
+    def floor_ok(self, need):
+        """None if `need` more bytes fit in the store without breaking a service floor, else the reason."""
+        try:
+            free = shutil.disk_usage(self.root).free
+            dev = self.root.stat().st_dev
+            floor = max([f for p, f in self.floors if Path(p).exists() and Path(p).stat().st_dev == dev] + [1024**3])
+            if free - need < floor:
+                return f'store free {free} - {need} below floor {floor}'
+            if self.ram and self.meminfo() - need < MEM_ONGOING + SESSION_MEMORY_MARGIN:
+                return f'MemAvailable {self.meminfo()} - {need} below {MEM_ONGOING + SESSION_MEMORY_MARGIN}'
+        except OSError as error:
+            return 'store check failed: ' + repr(error)
+        return None
+
+    def relieve_memory(self, need):
+        """Startup admission: evict parked sessions (LRU) while MemAvailable is below `need`."""
+        while self.index and self.meminfo() < need and self.evict_one():
+            pass
+
+    def park(self, t, tokens, pending, identity):
+        """Save the live state. Returns the parked id, or None (skipped or refused; the live state is unchanged)."""
+        if len(tokens) < self.min_tokens:
+            return None
+        sid = self.ops.session_id(tokens)
+        e = self.index.get(sid)
+        if e is not None and e['identity'] == identity and e['pending'] == pending:
+            e['used'] = time.time()
+            os.utime(e['path'])
+            return sid
+        estimate = SESSION_FIXED_BYTES + SESSION_TOKEN_BYTES * len(tokens)
+        if estimate > self.budget or len(tokens) > self.max_tokens:
+            self.stats['park_skipped'] += 1
+            self.note('park-skipped', reason='larger than the budget or SC117_SESSION_MAX_TOKENS', tokens=len(tokens))
+            return None
+        while (self.used_bytes() + estimate > self.budget or self.floor_ok(estimate)) and self.evict_one():
+            pass
+        reason = self.floor_ok(estimate) or (None if self.used_bytes() + estimate <= self.budget else 'budget')
+        if reason:
+            self.stats['park_skipped'] += 1
+            self.note('park-skipped', reason=reason, tokens=len(tokens))
+            return None
+        try:
+            m = self.ops.session_save(t, self.root, tokens, pending)
+        except self.ops.SessionRefused as error:
+            self.stats['park_refused'] += 1
+            self.note('park-refused', reason=str(error), tokens=len(tokens))
+            return None
+        self.index[m['id']] = dict(path=self.root / m['id'], tokens=m['tokens'], pending=m['pending_token'], identity=m['identity'],
+                                   bytes=m['bytes'], used=time.time())
+        while self.used_bytes() > self.budget and self.evict_one(keep=m['id']):
+            pass
+        self.stats['parked'] += 1
+        self.note('parked', id=m['id'], tokens=len(tokens), bytes=m['bytes'])
+        return m['id']
+
+    def restore(self, t, entry, destination):
+        """The adapter's two-rank restore. A refusal about the stored session itself (not a lock) drops that session."""
+        try:
+            r = self.ops.session_restore(t, entry['path'], destination, readback=self.readback)
+        except self.ops.SessionRefused as error:
+            self.stats['restore_refused'] += 1
+            self.note('restore-refused', id=entry['path'].name, reason=str(error), engine=error.engine)
+            if 'locked' not in str(error) and self.ops.session_delete(entry['path']):
+                self.index.pop(entry['path'].name, None)
+            raise
+        entry['used'] = time.time()
+        self.stats['restored'] += 1
+        self.note('restored', id=r['id'], tokens=r['position'])
+        return r
+
+
 class Engine:
     def __init__(self, control, evidence, monitor):
         self.control = control
@@ -240,6 +413,9 @@ class Engine:
         self.continuation = False
         self.convo = None
         self.convo_last = None
+        self.convo_parkable = False  # the held state came from a client request (sessions park only those)
+        self.sessions = None         # Sessions when SC117_SESSIONS=1 (adapter6+); set in start()
+        self.session_identity = None
 
     def start(self):
         plan = A.build_plan(self.control / 'ranks', mini=False, max_new=128, seconds=NATIVE_SECONDS,
@@ -249,6 +425,11 @@ class Engine:
         self.t = t
         t.__init__(plan, admit=lambda p: require(p == plan, 'plan identity'), check=self.monitor.check,
                    launch_hook=self.monitor.register)
+        if SESSIONS:
+            require(hasattr(A, 'session_save'), 'SC117_SESSIONS=1 needs an adapter with session parking (adapter6)')
+            self.session_identity = A.session_identity(t)
+            self.sessions = Sessions(SESSION_DIR, SESSION_BUDGET, A, floors=session_floors(self.control, self.evidence))
+            self.sessions.prepare(self.session_identity)
         return plan
 
     def storage_ok(self):
@@ -329,6 +510,47 @@ class Engine:
             shutil.rmtree(d)
         return out
 
+    def session_boundary(self, prompt, held):
+        """Sessions on, the prompt does not continue the live state: park the live conversation before the RESET that
+        evicts it, then restore the longest parked prefix of the prompt (or reset as usual). Returns (session summary,
+        continuation start, reset ms, stale request directories). The caller's existing paths are unchanged."""
+        t, s = self.t, self.sessions
+        info = dict(parked=None, restored=None, refused=None)
+        stale = [self.previous]
+        if held is not None and self.convo_parkable and self.continuation and self.convo_last is not None:
+            p0 = time.monotonic()
+            info['parked'] = s.park(t, held, self.convo_last, self.session_identity)
+            info['park_ms'] = (time.monotonic() - p0) * 1000
+        candidate = s.match(prompt, self.session_identity) if self.continuation else None
+        start = reset_ms = 0
+        if candidate is None and self.count == 1:
+            t.request_output = t.out
+            self.previous = t.out
+            return info, 0, 0, [x for x in stale if x is not None]
+        dest = t.out / f'req-{self.count:06d}'
+        r0 = time.monotonic()
+        if candidate is not None:
+            try:
+                r = s.restore(t, candidate, dest)
+                start = r['position']
+                info['restored'] = dict(id=r['id'], position=r['position'], verify_ms=r['verify_ms'], apply_ms=r['apply_ms'])
+            except s.ops.SessionRefused as error:
+                info['refused'] = dict(reason=str(error)[:500], engine=error.engine)
+                if error.engine == 'untouched':
+                    A.reset(t, dest)  # nothing was sent: the ordinary reset of a fresh request
+                elif error.engine == 'partial':
+                    stale.append(dest)  # one rank applied: reset both again, then read the prompt fresh
+                    dest = t.out / f'req-{self.count:06d}-retry'
+                    A.reset(t, dest)
+                # 'fresh': both ranks already sit at the fresh reset into dest; read the prompt fresh
+        else:
+            A.reset(t, dest)
+        reset_ms = (time.monotonic() - r0) * 1000
+        self.previous = dest
+        info['restore_ms'] = reset_ms if candidate is not None else None
+        info['store'] = dict(sessions=len(s.index), bytes=s.used_bytes(), **s.stats)
+        return info, start, reset_ms, [x for x in stale if x is not None]
+
     def continuation_start(self, prompt, mode):
         """Position from which `prompt` can continue the held state, or 0 (fresh request)."""
         h = self.convo
@@ -355,10 +577,13 @@ class Engine:
         stale = None
         start = self.continuation_start(prompt, mode) if continue_ok and not force_reset else 0
         held, self.convo = self.convo, None  # cleared until this request completes cleanly
+        session = None
         if start:
             dest = t.out / f'req-{self.count:06d}'
             A.redirect(t, dest)
             stale, self.previous = self.previous, dest
+        elif self.sessions is not None and continue_ok and not force_reset and mode == 'mtp':
+            session, start, reset_ms, stale = self.session_boundary(prompt, held)
         elif self.count > 1 or force_reset:
             dest = t.out / f'req-{self.count:06d}'
             r0 = time.monotonic()
@@ -396,12 +621,13 @@ class Engine:
             os.close(stream['fd'])
             require(streamed == list(r['tokens']), 'stream/result mismatch')
         # Retention: the dump RESET just wrote is not needed; drop it before the next RESET.
-        released = self.release(stale)
+        released = sum(self.release(x) for x in stale) if isinstance(stale, list) else self.release(stale)
         self.last_result = r
         tokens = list(r['tokens'])
         require(0 < len(tokens) <= max_new and all(0 <= x < 248320 for x in tokens), 'native output bounds')
         if mode == 'mtp':  # the state now holds prompt + tokens[:-1]; the next turn may continue it
             self.convo, self.convo_last = list(prompt) + tokens[:-1], tokens[-1]
+            self.convo_parkable = bool(continue_ok and not force_reset)
         stats = r['stats']
         summary = dict(request=self.count, label=label, mode=mode, streamed=stream is not None, prompt_tokens=len(prompt), output_tokens=len(tokens),
                        mtp=dict(guesses=stats['guesses'], hits=stats['hits'], misses=stats['misses']),
@@ -409,6 +635,8 @@ class Engine:
                        decode_tok_s=r.get('decode_tok_s'), reset_ms=reset_ms, released_dump_bytes=released, prefill_rows=prefill or 0,
                        continued_from=start,
                        wall_s=time.monotonic() - started)
+        if session is not None:
+            summary['session'] = session
         line = json.dumps(dict(utc=utc(), **summary)) + '\n'
         if self.log_bytes < 50 * 1024**2:
             with open(self.log, 'a') as f:
@@ -458,8 +686,8 @@ def b0_gate(engine, selftest):
                 rows=rows, utc=utc())
 
 
-PREFILL_SUITE = P.parent.parent / 'service-speed/e-reference/runs/f32suite/inputs'
-PREFILL_SCALAR = P.parent.parent / 'service-speed/e-reference/runs/f32-suite.json'
+PREFILL_SUITE = LANE / 'service-speed/e-reference/runs/f32suite/inputs'
+PREFILL_SCALAR = LANE / 'service-speed/e-reference/runs/f32-suite.json'
 LAYER = re.compile(r'^(alternate-)?blk\.(\d+)\.')
 
 
@@ -746,7 +974,7 @@ def make_handler(state, engine, chat, key):
                 writer = threading.Thread(target=write, daemon=True)
                 writer.start()
             try:
-                return engine.generate(req['prompt_ids'], req['max_new'], 'client', on_token=on_token, continue_ok=True)
+                return engine.generate(req['prompt_ids'], req['max_new'], 'client', on_token=on_token, continue_ok=req.get('reuse', True))
             except BaseException as error:
                 state.fault(error)
                 raise _Halt(repr(error))
@@ -854,6 +1082,13 @@ def main():
     result = dict(passed=False)
     try:
         state.detail = 'admission checks'
+        if SESSIONS:  # parked sessions in RAM must not block the startup memory admission: evict LRU until it can pass
+            require(hasattr(A, 'session_list'), 'SC117_SESSIONS=1 needs an adapter with session parking (adapter6)')
+            pre = Sessions(SESSION_DIR, SESSION_BUDGET, A)
+            pre.prepare()
+            pre.relieve_memory(MEM_START)
+            status['sessions'] = dict(directory=str(SESSION_DIR), budget_bytes=SESSION_BUDGET, parked_at_start=len(pre.index),
+                                      readback=SESSION_READBACK, min_tokens=SESSION_MIN_TOKENS, max_tokens=SESSION_MAX_TOKENS)
         monitor.admit()
         threading.Thread(target=monitor.run, args=(monitor_stop,), daemon=True).start()
         require(not state.stop.is_set(), 'stopped before load')

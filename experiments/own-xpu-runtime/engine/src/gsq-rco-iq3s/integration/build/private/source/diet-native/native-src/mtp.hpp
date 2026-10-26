@@ -455,6 +455,7 @@ public:
    <<",\"discarded\":true,\"diagnostic_only\":true}\n";probe_trace.flush();require(bool(probe_trace),"depth probe trace write failed");
  }
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/draft_bracket.hpp"
+#include "gsq-rco-iq3s/integration/build/private/source/diet-native/native/draft_checkpoint.hpp"
  void live_dump(const fs::path& path){
   require(e.a.pipeline_live_draft&&!disabled&&!async_pending&&!e.progress_pending&&!reverse_hidden&&queued_probe==-1&&queued_confirmed==-1,"live draft dump quiescence");
   e.drain();require(!e.integer(0,"error"),"live draft dump target error");

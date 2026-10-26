@@ -19,7 +19,7 @@ CHAT = C.Chat()
 
 class ChatTests(unittest.TestCase):
     def test_selftest_prompt_is_what_the_template_renders(self):
-        fixture = json.loads((P.parents[1] / 'operating/first-model-prompt.json').read_text())
+        fixture = json.loads((S.LANE / 'operating/first-model-prompt.json').read_text())
         req = C.parse({'messages': fixture['messages']}, CHAT)
         self.assertEqual(req['prompt_ids'], fixture['token_ids'])
         self.assertEqual(req['max_new'], 512)
@@ -500,6 +500,503 @@ class StreamTailTests(unittest.TestCase):
             self.assertEqual(got, ids)
             self.assertEqual(seen_now, [1, 2, 3])  # delivered during generation, token by token
             self.assertTrue(summary['streamed'])
+
+
+
+# ---------------------------------------------------------------- session parking (SC117_SESSIONS=1), CPU only
+import hashlib, shutil, struct
+A6 = load(P / 'adapter6.py', 'sc117_lan_adapter6_test')
+
+
+class FakeRanks:
+    """Two ranks behind the adapter's transport API (start/io/call). Ops 11, 17, 18, 19 follow the engine's rules
+    (session_checkpoint.hpp): STAGE writes a sealed directory, VERIFY only directly after RESET, APPLY only directly after
+    VERIFY; refusals reply status 2 / error = op with a checkpoint-refused receipt. State = (position, payload)."""
+
+    def __init__(self, root):
+        self.out = root / 'evidence'
+        for r in (0, 1):
+            (self.out / f'rank{r}').mkdir(parents=True)
+        self.request_output = self.out
+        self.seq, self.pending, self.cmd = [0, 0], [False, False], [None, None]
+        self.mapping = bytearray(A6.BASE.SHARED)
+        self.plan = dict(binary_sha256='b' * 64, build_receipt_sha256='r' * 64, context=4096, service_flags=['--activations', 'f32'],
+                         environment=[dict(PATH='/usr/bin', SYCL_CACHE_DIR='/x0'), dict(PATH='/usr/bin', SYCL_CACHE_DIR='/x1')])
+        self.state = [dict(position=0, payload=b''), dict(position=0, payload=b'')]
+        self.outdir = [self.out / 'rank0', self.out / 'rank1']
+        self.last = [None, None]
+        self.held = [None, None]
+        self.refuse = set()   # (rank, op)
+        self.log = []
+
+    def check_alive(self):
+        pass
+
+    def live(self, tokens, pending):
+        """The end-of-request state the native loop leaves: both ranks at N, reverse slot of N-1, reverse_ready = N."""
+        n = len(tokens)
+        for r in (0, 1):
+            self.state[r] = dict(position=n, payload=f'rank{r}:{tokens}:{pending}'.encode())
+        row = hashlib.sha256(str(tokens).encode()).digest() * 2048
+        self.mapping[A6.SESSION_REVERSE:A6.SESSION_REVERSE + A6.SESSION_SLOT] = row
+        struct.pack_into('<I', self.mapping, A6.SESSION_READY, n)
+        self.pending_token = pending
+        return row
+
+    def start(self, rank, op, token=0, position=0, fixture=0, speculative=0):
+        assert not self.pending[rank]
+        self.seq[rank] += 1
+        self.pending[rank] = True
+        self.cmd[rank] = (op, token, position, fixture)
+
+    def call(self, rank, op, token=0, position=0, fixture=0, speculative=0):
+        self.start(rank, op, token, position, fixture)
+        values = A6.BASE.REPLY.unpack(self.io(rank))
+        self.pending[rank] = False
+        assert values[0] == 0
+        return dict(token=values[1])
+
+    def reply(self, rank, status=0, error=0, token=0, nbytes=0):
+        return A6.BASE.REPLY.pack(status, token, error, nbytes, self.seq[rank], rank, 0, 0, 1.0, 0, 0, 0)
+
+    def io(self, rank, payload=None, timeout=None):
+        op, token, position, fixture = self.cmd[rank]
+        seq, st, prev = self.seq[rank], self.state[rank], self.last[rank]
+        self.last[rank] = op
+        self.log.append((rank, op))
+        meta = self.out / f'rank{rank}' / f'checkpoint-{seq}.txt'
+        def refuse(reason):
+            (self.outdir[rank] / f'checkpoint-refused-{seq}.json').write_text(json.dumps(dict(reason=reason)))
+            return self.reply(rank, 2, op)
+        if op == 11:
+            dest = Path((self.out / f'rank{rank}' / f'reset-{seq}.txt').read_text().split('\n')[0])
+            dest.mkdir(parents=True)
+            self.outdir[rank] = dest
+            self.state[rank] = dict(position=0, payload=b'')
+            self.held[rank] = None
+            return self.reply(rank)
+        if op == 16:  # redirect: only the request output directory moves; the state stays
+            dest = Path((self.out / f'rank{rank}' / f'redirect-{seq}.txt').read_text().split('\n')[0])
+            dest.mkdir(parents=True)
+            self.outdir[rank] = dest
+            return self.reply(rank)
+        if (rank, op) in self.refuse:
+            return refuse('injected')
+        if op == 17:
+            d, tag = meta.read_text().split('\n')[:2]
+            if st['position'] != position:
+                return refuse('position')
+            d = Path(d)
+            d.mkdir()
+            (d / 'state.bundle').write_bytes(st['payload'])
+            (d / 'state-seal.txt').write_text(hashlib.sha256(st['payload'] + tag.encode()).hexdigest() + f'\n{position}\n{tag}\n')
+            (self.outdir[rank] / f'checkpoint-stage-{seq}.json').write_text(json.dumps(dict(draft_position=position - 1 if rank == 0 else -1)))
+            return self.reply(rank, token=token, nbytes=len(st['payload']))
+        if op == 18:
+            if prev != 11:
+                return refuse('must directly follow the request reset')
+            d, tag = meta.read_text().split('\n')[:2]
+            seal = (Path(d) / 'state-seal.txt').read_text().split('\n')
+            data = (Path(d) / 'state.bundle').read_bytes()
+            if seal[0] != hashlib.sha256(data + tag.encode()).hexdigest() or seal[2] != tag or int(seal[1]) != position:
+                return refuse('seal/tag/position')
+            self.held[rank] = dict(position=position, payload=data)
+            return self.reply(rank, nbytes=len(data))
+        if op == 19:
+            if prev != 18 or self.held[rank] is None or self.held[rank]['position'] != position:
+                return refuse('needs the directly preceding verify')
+            self.state[rank], self.held[rank] = self.held[rank], None
+            return self.reply(rank, nbytes=len(self.state[rank]['payload']))
+        raise AssertionError(op)
+
+
+class SessionAdapterTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.root = self.tmp / 'sessions'
+        self.root.mkdir(mode=0o700)
+        self.t = FakeRanks(self.tmp)
+        self.tokens = list(range(300))
+
+    def park(self, tokens=None, pending=77):
+        tokens = self.tokens if tokens is None else tokens
+        row = self.t.live(tokens, pending)
+        return A6.session_save(self.t, self.root, tokens, pending), row
+
+    def test_save_publishes_manifest_last_and_binds_both_ranks(self):
+        m, row = self.park()
+        path = self.root / m['id']
+        self.assertEqual(sorted(p.name for p in self.root.iterdir()), sorted([m['id'], m['id'] + '.lock']))  # no staging left
+        self.assertEqual(A6.session_inspect(path), m)
+        self.assertEqual((m['position'], m['pending_token'], m['tokens']), (300, 77, self.tokens))
+        self.assertEqual(m['reverse']['sha256'], hashlib.sha256(row).hexdigest())
+        self.assertEqual(m['reverse']['ready'], 300)
+        self.assertEqual(m['draft_position'], 299)
+        for r in ('0', '1'):
+            self.assertEqual(m['ranks'][r]['seal_sha256'], hashlib.sha256((path / f'rank{r}' / 'state-seal.txt').read_bytes()).hexdigest())
+        self.assertEqual(m['identity'], A6.session_identity(self.t))
+        self.assertEqual(self.t.cmd[1][3], 1)  # rank 1 STAGE checks its next_token against the pending token
+        seq = list(self.t.seq)
+        self.assertEqual(A6.session_save(self.t, self.root, self.tokens, 77), m)  # same state: no second STAGE
+        self.assertEqual(self.t.seq, seq)
+
+    def test_restore_is_reset_verify_apply_then_redirect_shared_map(self):
+        m, row = self.park()
+        self.t.live(list(range(10)), 5)  # another conversation is live now
+        self.t.mapping[0:16] = b'x' * 16       # stale verification/mailbox bytes must not survive
+        dest = self.t.out / 'req-000009'
+        r = A6.session_restore(self.t, self.root / m['id'], dest)
+        self.assertEqual((r['position'], r['pending_token'], r['tokens']), (300, 77, self.tokens))
+        self.assertEqual(self.t.request_output, dest)
+        for rank in (0, 1):
+            self.assertEqual(self.t.state[rank], dict(position=300, payload=f'rank{rank}:{self.tokens}:77'.encode()))
+        self.assertEqual(bytes(self.t.mapping[A6.SESSION_REVERSE:A6.SESSION_REVERSE + A6.SESSION_SLOT]), row)
+        self.assertEqual(struct.unpack_from('<I', self.t.mapping, A6.SESSION_READY)[0], 300)
+        rest = bytearray(self.t.mapping)
+        rest[A6.SESSION_REVERSE:A6.SESSION_REVERSE + A6.SESSION_SLOT] = bytes(A6.SESSION_SLOT)
+        rest[A6.SESSION_READY:A6.SESSION_READY + 4] = bytes(4)
+        self.assertFalse(any(rest))
+        ops = [op for _, op in self.t.log[-6:]]
+        self.assertEqual(ops, [11, 11, 18, 18, 19, 19])
+
+    def test_stage_refusal_leaves_nothing_and_live_state(self):
+        self.t.refuse.add((1, 17))
+        with self.assertRaises(A6.SessionRefused) as c:
+            self.park()
+        self.assertEqual(c.exception.engine, 'unchanged')
+        self.assertEqual([p.name for p in self.root.iterdir() if not p.name.endswith('.lock')], [])
+        self.assertEqual(self.t.state[0]['position'], 300)
+
+    def test_verify_refusal_is_fresh_and_applies_nothing(self):
+        m, _ = self.park()
+        self.t.refuse.add((1, 18))
+        with self.assertRaises(A6.SessionRefused) as c:
+            A6.session_restore(self.t, self.root / m['id'], self.t.out / 'req-000002')
+        self.assertEqual(c.exception.engine, 'fresh')
+        self.assertNotIn(19, [op for _, op in self.t.log])
+        self.assertEqual([s['position'] for s in self.t.state], [0, 0])
+
+    def test_partial_apply_is_reported(self):
+        m, _ = self.park()
+        self.t.refuse.add((1, 19))
+        with self.assertRaises(A6.SessionRefused) as c:
+            A6.session_restore(self.t, self.root / m['id'], self.t.out / 'req-000002')
+        self.assertEqual(c.exception.engine, 'partial')
+        self.assertEqual([s['position'] for s in self.t.state], [300, 0])
+
+    def test_identity_corruption_and_lock_refuse_before_any_command(self):
+        m, _ = self.park()
+        path = self.root / m['id']
+        seq = list(self.t.seq)
+        self.t.plan = dict(self.t.plan, binary_sha256='c' * 64)
+        with self.assertRaises(A6.SessionRefused) as c:
+            A6.session_restore(self.t, path, self.t.out / 'req-000002')
+        self.assertEqual((c.exception.engine, self.t.seq), ('untouched', seq))
+        self.t.plan = dict(self.t.plan, binary_sha256='b' * 64)
+        with A6.SessionLock(self.root, m['id'], True):  # a save/delete holds it: restore and delete refuse, no wait
+            with self.assertRaises(A6.SessionRefused):
+                A6.session_restore(self.t, path, self.t.out / 'req-000002')
+            self.assertFalse(A6.session_delete(path))
+        with A6.SessionLock(self.root, m['id'], False):  # a restore holds it: save refuses
+            with self.assertRaises(A6.SessionRefused) as c:
+                A6.session_save(self.t, self.root, self.tokens, 78)
+            self.assertEqual(c.exception.engine, 'unchanged')
+            self.assertEqual(A6.session_inspect(path, lock=True)['id'], m['id'])  # shared + shared is fine
+        self.assertEqual(self.t.seq, seq)
+        raw = bytearray((path / 'reverse.bin').read_bytes())
+        raw[5] ^= 1
+        os.chmod(path / 'reverse.bin', 0o600)
+        (path / 'reverse.bin').write_bytes(bytes(raw))
+        with self.assertRaises(A6.SessionRefused):
+            A6.session_inspect(path)
+        self.assertEqual([x[2] is not None for x in A6.session_list(self.root)], [True])
+        self.assertTrue(A6.session_delete(path))
+        self.assertEqual(list(self.root.iterdir()), [])
+
+    def test_save_refuses_off_boundary(self):
+        self.t.live(self.tokens, 77)
+        struct.pack_into('<I', self.t.mapping, A6.SESSION_READY, 299)
+        with self.assertRaises(A6.SessionRefused):
+            A6.session_save(self.t, self.root, self.tokens, 77)
+
+
+class SessionOps:
+    """In-memory session store with the adapter's interface (policy tests)."""
+    SessionRefused = A6.SessionRefused
+
+    def __init__(self, size=lambda n: 1000 + n):
+        self.saved, self.calls, self.size, self.refuse = {}, [], size, None
+
+    @staticmethod
+    def session_id(tokens):
+        return A6.session_id(tokens)
+
+    def session_identity(self, t):
+        return {'engine': 1}
+
+    def session_list(self, root):
+        return [(root / sid, m, None) for sid, m in self.saved.items()]
+
+    def session_save(self, t, root, tokens, pending):
+        self.calls.append(('save', len(tokens)))
+        getattr(self, 'events', []).append(('save', len(tokens)))
+        sid = self.session_id(tokens)
+        (root / sid).mkdir(exist_ok=True)
+        m = dict(id=sid, tokens=list(tokens), pending_token=pending, identity={'engine': 1}, bytes=self.size(len(tokens)), position=len(tokens))
+        self.saved[sid] = m
+        return m
+
+    def session_restore(self, t, path, destination, readback=False):
+        self.calls.append(('restore', len(self.saved[path.name]['tokens'])))
+        if self.refuse == 'untouched':
+            raise A6.SessionRefused('session identity differs', 'untouched')
+        destination.mkdir()
+        t.request_output = destination
+        if self.refuse:
+            raise A6.SessionRefused('verify refused', self.refuse)
+        m = self.saved[path.name]
+        return dict(id=m['id'], position=m['position'], pending_token=m['pending_token'], tokens=m['tokens'], verify_ms=1.0, apply_ms=1.0)
+
+    def session_delete(self, path):
+        self.calls.append(('delete', len(self.saved.get(path.name, {}).get('tokens', []))))
+        shutil.rmtree(path, ignore_errors=True)
+        self.saved.pop(path.name, None)
+        return True
+
+
+class SessionPolicyTests(unittest.TestCase):
+    """Engine.generate with sessions on: park on eviction, longest-prefix restore, budget, refusal fallbacks."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        out = self.tmp / 'evidence'
+        out.mkdir()
+        self.events = []
+        events = self.events
+
+        class T:
+            pass
+        t = T()
+        t.out = out
+        t.check_alive = lambda: None
+        t.request_output = out
+        t.seq = [0, 0]
+        self.t = t
+
+        def fake_reset(tr, dest):
+            dest.mkdir()
+            tr.request_output = dest
+            events.append(('reset', dest.name))
+
+        def fake_redirect(tr, dest):
+            dest.mkdir()
+            tr.request_output = dest
+            events.append(('redirect', dest.name))
+        reply = self.reply = [7, 8, 9]
+
+        class NC:
+            def __init__(self, tr, draft, overlap, dumps, prefill=None, start=0):
+                self.start = start
+
+            def run(self, prompt, count, eos):
+                events.append(('run', len(prompt), self.start))
+                return dict(tokens=list(reply), stats=dict(guesses=0, hits=0, misses=0))
+        had = hasattr(S.A, 'NativeController')
+        old = (S.A.reset, S.A.redirect if hasattr(S.A, 'redirect') else None, getattr(S.A, 'NativeController', None))
+        S.A.reset, S.A.redirect, S.A.NativeController = fake_reset, fake_redirect, NC
+
+        def restore():
+            S.A.reset = old[0]
+            if old[1] is None:
+                del S.A.redirect
+            else:
+                S.A.redirect = old[1]
+            if had:
+                S.A.NativeController = old[2]
+            else:
+                del S.A.NativeController
+        self.addCleanup(restore)
+        self.ops = SessionOps()
+        self.ops.events = events
+        e = S.Engine(out, out, type('M', (), {'check': lambda self: None})())
+        e.t = t
+        e.continuation = True
+        e.session_identity = {'engine': 1}
+        root = self.tmp / 'sessions'
+        e.sessions = S.Sessions(root, 10**9, self.ops, meminfo=lambda: 10**15, ram=False)
+        e.sessions.prepare({'engine': 1})
+        self.e = e
+        self.A = list(range(1000, 1300))   # 300-token conversation
+        self.B = list(range(2000, 2010))   # short other conversation
+
+    def client(self, prompt):
+        tokens, summary = self.e.generate(prompt, 3, 'client', continue_ok=True)
+        return summary
+
+    def test_park_on_eviction_then_restore_longest_prefix(self):
+        self.client(self.A)                                   # request 1: fresh (first request, no reset)
+        s2 = self.client(self.B)                              # request 2: evicts A -> parked before the RESET
+        self.assertEqual(self.ops.calls, [('save', 302)])
+        self.assertEqual(self.events[1:4], [('save', 302), ('reset', 'req-000002'), ('run', 10, 0)])  # parked before the RESET
+        self.assertEqual(s2['session']['parked'], A6.session_id(self.A + [7, 8]))
+        a2 = self.A + [7, 8, 9] + [1, 2]                      # A's next turn: does not continue the live state (B)
+        s3 = self.client(a2)
+        self.assertEqual(self.ops.calls[-1], ('restore', 302))  # B is short: not parked
+        self.assertEqual(self.events[-1], ('run', 305, 302))
+        self.assertEqual(s3['continued_from'], 302)
+        req = dict(prompt_ids=a2, thinking=False, stop=[], parse_tool_calls=False, max_new=3)
+        usage = C.completion(req, [7, 8, 9], s3, CHAT)['usage']
+        self.assertEqual(usage['prompt_tokens_details']['cached_tokens'], 302)
+        self.assertEqual(s3['session']['restored']['position'], 302)
+        a3 = a2 + [7, 8, 9] + [3, 4]                          # live continuation: unchanged redirect path, no session ops
+        calls = len(self.ops.calls)
+        s4 = self.client(a3)
+        self.assertEqual(self.events[-2][0], 'redirect')
+        self.assertEqual((len(self.ops.calls), s4['continued_from'], 'session' in s4), (calls, 307, False))
+        self.client(self.B)                                   # evicts the longer A state (a3 + 2 = 312 tokens) -> parked
+        self.assertEqual(self.ops.calls[-1], ('save', 312))
+        s6 = self.client(a3 + [7, 8, 9] + [5, 6])             # both parked prefixes (302, 312) match: the longest wins
+        self.assertEqual(self.ops.calls[-1], ('restore', 312))
+        self.assertEqual(s6['continued_from'], 312)
+
+    def test_prefix_rule_short_and_gate_requests(self):
+        self.client(self.A)
+        self.client(self.B)
+        self.client(self.A + [7, 8, 9])                       # only one token after the prefix: fresh read
+        self.assertEqual(self.ops.calls[-1], ('save', 302))   # (the B state was too short to park)
+        self.assertEqual(self.events[-1], ('run', 303, 0))
+        self.client(self.A + [7, 8, 5, 1])                    # prompt[N] != pending token: fresh read
+        self.assertEqual(self.events[-1][2], 0)
+        calls = len(self.ops.calls)
+        self.e.generate(self.A + [7, 8, 9, 1, 2], 3, 'gate', force_reset=True)  # gate requests never park/restore
+        self.assertEqual(len(self.ops.calls), calls)
+
+    def test_budget_evicts_least_recently_used(self):
+        self.e.sessions.budget = 2 * S.SESSION_FIXED_BYTES + 2 * 400 * S.SESSION_TOKEN_BYTES
+        self.ops.size = lambda n: S.SESSION_FIXED_BYTES + n * S.SESSION_TOKEN_BYTES
+        convs = [list(range(k * 10000, k * 10000 + 300)) for k in (1, 2, 3)]
+        for c in convs:
+            self.client(c)
+        self.client(self.B)                                   # parks conv 3; conv 1 (least recent) is evicted
+        self.assertEqual([c for c in self.ops.calls if c[0] == 'save'], [('save', 302)] * 3)
+        self.assertIn(('delete', 302), self.ops.calls)
+        self.assertNotIn(A6.session_id(convs[0] + [7, 8]), self.e.sessions.index)
+        self.assertEqual(len(self.e.sessions.index), 2)
+        self.assertLessEqual(self.e.sessions.used_bytes(), self.e.sessions.budget)
+        self.e.sessions.meminfo = lambda: S.MEM_ONGOING   # RAM store below the margin: parking is skipped, never fatal
+        self.e.sessions.ram = True
+        self.client(list(range(50000, 50300)))
+        self.client(self.B)
+        self.assertEqual(self.e.sessions.stats['park_skipped'], 1)
+
+    def test_refusals_fall_back_to_a_fresh_read(self):
+        a2 = self.A + [7, 8, 9] + [1, 2]
+        for engine, resets in (('fresh', []), ('untouched', ['req-000003']), ('partial', ['req-000003-retry'])):
+            with self.subTest(engine=engine):
+                self.setUp()
+                self.client(self.A)
+                self.client(self.B)
+                self.ops.refuse = engine
+                before = len(self.events)
+                s = self.client(a2)
+                self.assertEqual(s['continued_from'], 0)
+                self.assertEqual(s['session']['refused']['engine'], engine)
+                self.assertEqual([x[1] for x in self.events[before:] if x[0] == 'reset'], resets)
+                self.assertEqual(self.events[-1], ('run', 305, 0))
+                self.assertEqual(self.e.sessions.index, {})  # a refused session is dropped
+                self.assertFalse((self.t.out / 'req-000003').exists() and engine == 'partial')
+
+    def test_reuse_false_reads_fresh_without_parking(self):
+        self.client(self.A)
+        self.e.generate(self.B, 3, 'client', continue_ok=False)  # sc117_reuse=false: no park, no restore
+        self.assertEqual(self.ops.calls, [])
+        req = C.parse({'messages': [{'role': 'user', 'content': 'x'}], 'sc117_reuse': False}, CHAT)
+        self.assertFalse(req['reuse'])
+        self.assertTrue(C.parse({'messages': [{'role': 'user', 'content': 'x'}]}, CHAT)['reuse'])
+        with self.assertRaises(C.RequestError):
+            C.parse({'messages': [{'role': 'user', 'content': 'x'}], 'sc117_reuse': 'no'}, CHAT)
+
+    def test_sessions_are_off_by_default(self):
+        self.assertFalse(S.SESSIONS)
+        self.assertIsNone(S.Engine(self.tmp, self.tmp, None).sessions)
+
+    def test_cached_tokens_over_http(self):
+        engine = FakeEngine()
+        engine.generate = lambda prompt, max_new, label, on_token=None, **kw: (CHAT.encode('ok') + [248046], dict(request=1, continued_from=300))
+        state = S.State()
+        state.phase = 'ready'
+        state.fault = lambda e: None
+        server = S.Server(('127.0.0.1', 0), S.make_handler(state, engine, CHAT, None))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.shutdown)
+        c = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=30)
+        c.request('POST', '/v1/chat/completions', json.dumps({'messages': [{'role': 'user', 'content': 'x'}]}), {'Content-Type': 'application/json'})
+        body = json.loads(c.getresponse().read())
+        self.assertEqual(body['usage']['prompt_tokens_details']['cached_tokens'], 300)
+
+
+
+class SessionIntegrationTests(unittest.TestCase):
+    """Service policy + the real adapter6 session protocol over FakeRanks (files, manifest, locks, RESET metadata)."""
+
+    def test_park_restore_continue_through_the_adapter(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        t = FakeRanks(tmp)
+        seen = []
+
+        class NC:
+            def __init__(self, tr, draft, overlap, dumps, prefill=None, start=0):
+                self.start = start
+
+            def run(self, prompt, count, eos):
+                if self.start:  # what the native continuation needs on entry
+                    h = prompt[:self.start]
+                    seen.append(([s['position'] for s in t.state], struct.unpack_from('<I', t.mapping, A6.SESSION_READY)[0],
+                                 [s['payload'] for s in t.state] == [f'rank{r}:{h}:{prompt[self.start]}'.encode() for r in (0, 1)],
+                                 bytes(t.mapping[A6.SESSION_REVERSE:A6.SESSION_REVERSE + 32]) == hashlib.sha256(str(h).encode()).digest()))
+                tokens = [7, 8, 9]
+                t.live(list(prompt) + tokens[:-1], tokens[-1])  # the end-of-request state of the native loop
+                return dict(tokens=tokens, stats=dict(guesses=0, hits=0, misses=0))
+        old = (S.A.reset, getattr(S.A, 'redirect', None), getattr(S.A, 'NativeController', None))
+        S.A.reset, S.A.redirect, S.A.NativeController = A6.reset, A6.redirect, NC
+
+        def restore():
+            S.A.reset = old[0]
+            for name, value in (('redirect', old[1]), ('NativeController', old[2])):
+                if value is None:
+                    delattr(S.A, name)
+                else:
+                    setattr(S.A, name, value)
+        self.addCleanup(restore)
+        e = S.Engine(tmp, tmp, type('M', (), {'check': lambda self: None})())
+        e.t = t
+        e.continuation = True
+        e.session_identity = A6.session_identity(t)
+        root = tmp / 'sessions'
+        e.sessions = S.Sessions(root, 10**10, A6, meminfo=lambda: 10**15, ram=False)
+        e.sessions.prepare(e.session_identity)
+        conv_a, conv_b = list(range(1000, 1300)), list(range(2000, 2010))
+        e.generate(conv_a, 3, 'client', continue_ok=True)
+        _, s2 = e.generate(conv_b, 3, 'client', continue_ok=True)
+        h = conv_a + [7, 8]
+        self.assertEqual(s2['session']['parked'], A6.session_id(h))
+        self.assertEqual(A6.session_inspect(root / A6.session_id(h))['tokens'], h)
+        _, s3 = e.generate(h + [9, 1, 2], 3, 'client', continue_ok=True)
+        self.assertEqual(s3['continued_from'], 302)
+        self.assertEqual(seen, [([302, 302], 302, True, True)])
+        _, s4 = e.generate(h + [9, 1, 2] + [7, 8, 9, 3, 4], 3, 'client', continue_ok=True)  # live continuation (redirect)
+        self.assertEqual(s4['continued_from'], 307)
+        self.assertNotIn('session', s4)
+        # A second engine process (same identity) finds the parked session on disk.
+        e2 = S.Sessions(root, 10**10, A6, meminfo=lambda: 10**15, ram=False)
+        e2.prepare(e.session_identity)
+        self.assertEqual(list(e2.index), [A6.session_id(h)])
+        e2.prepare(dict(e.session_identity, binary_sha256='0' * 64))  # another engine: its sessions are purged
+        self.assertEqual(e2.index, {})
+        self.assertEqual(sorted(p.name for p in root.iterdir()), [])
 
 
 if __name__ == '__main__':
