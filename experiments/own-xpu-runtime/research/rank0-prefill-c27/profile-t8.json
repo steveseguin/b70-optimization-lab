@@ -1,0 +1,19 @@
+{
+  "schema": "ownrt.rank0-prefill-c27-t8-profile.v1",
+  "run": "prof-t8-cycle",
+  "method": "16 chunks cycle 2x4, 1x4, 4x8/GRF256, 2x8, incumbent; per-config warm median excludes each configuration's first JIT occurrence",
+  "units": "ms per 256-row chunk across all rank-0 layers of each format",
+  "configurations": ["2x4", "1x4", "4x8_grf256", "2x8", "incumbent"],
+  "sites": {
+    "IQ2_S_640x2560": {"2x4": 93.612, "1x4": 105.033, "4x8_grf256": 88.983, "2x8": 80.094, "incumbent": 159.947},
+    "IQ3_S_640x2560": {"2x4": 14.704, "1x4": 17.942, "4x8_grf256": 13.175, "2x8": 13.974, "incumbent": 29.446},
+    "IQ3_XXS_640x2560": {"2x4": 78.819, "1x4": 77.416, "4x8_grf256": 106.994, "2x8": 93.525, "incumbent": 117.217},
+    "IQ4_NL_2560x640": {"2x4": 75.353, "1x4": 74.735, "4x8_grf256": 80.338, "2x8": 66.407, "incumbent": 230.482},
+    "Q2_0_2560x640": {"2x4": 35.256, "1x4": 33.493, "4x8_grf256": 72.314, "2x8": 65.914, "incumbent": 83.317}
+  },
+  "selected_for_ab": "OWNRT_PREFILL_EXPERTS_KOPT=3 (2x8), IQ3 and ELEM retain their incumbent grouped defaults",
+  "profile_predicted_target_prefill_saving_ms": 361.2,
+  "profile_predicted_target_prefill_saving_percent": 2.81,
+  "material_threshold": "at least 500 ms or 5% target prefill",
+  "cycle_exactness": {"target_compared": 1029, "target_differ_count": 0, "draft_compared": 71, "draft_differ_count": 0, "draft_tokens_equal": true}
+}

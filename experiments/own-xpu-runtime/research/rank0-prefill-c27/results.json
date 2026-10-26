@@ -1,0 +1,116 @@
+{
+ "schema": "ownrt.rank0-prefill-c27-results.v1",
+ "verdict": "drop",
+ "variant": "2x8 grouped expert tiles for KOPT only (OWNRT_PREFILL_EXPERTS_KOPT=3); other families unchanged",
+ "baseline_binary_sha256": "51f32b2655cc0a9d514081362ea6b3ceaa8b0d004df94fbbd83eb7fa76e3ae0a",
+ "candidate_binary_sha256": "94cbb3075e4e6e8713e3e684eac95d4742735232d425634d59b50826c304e056",
+ "candidate_source_delta": [
+  "gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp"
+ ],
+ "patch": "expert-t8.patch",
+ "pci": "0000:27:00.0",
+ "render_node": "/dev/dri/renderD131",
+ "lock": "/dev/shm/card27prefill.lock",
+ "method": "three warm interleaved unprofiled 4096-row A/B pairs, 256-row chunks, 48 decode steps; BA/AB/AB; the first cold-JIT pair is retained only for exactness",
+ "rounds": [
+  {
+   "reference": "final-ref2",
+   "candidate": "final-cand2",
+   "reference_prompt_ms": 17332.824056618847,
+   "candidate_prompt_ms": 16936.043235007674,
+   "reference_target_prefill_ms": 12241.801335359924,
+   "candidate_target_prefill_ms": 11852.190853911452,
+   "reference_replay_ms": 5091.022721258923,
+   "candidate_replay_ms": 5083.8523810962215,
+   "prompt_reference_minus_candidate_ms": 396.78082161117345,
+   "target_reference_minus_candidate_ms": 389.61048144847155
+  },
+  {
+   "reference": "final-ref3",
+   "candidate": "final-cand3",
+   "reference_prompt_ms": 17242.01135581825,
+   "candidate_prompt_ms": 16931.54843163211,
+   "reference_target_prefill_ms": 12178.264955058694,
+   "candidate_target_prefill_ms": 11855.149212642573,
+   "reference_replay_ms": 5063.746400759555,
+   "candidate_replay_ms": 5076.399218989536,
+   "prompt_reference_minus_candidate_ms": 310.4629241861403,
+   "target_reference_minus_candidate_ms": 323.11574241612107
+  },
+  {
+   "reference": "final-ref4",
+   "candidate": "final-cand4",
+   "reference_prompt_ms": 17239.782509044744,
+   "candidate_prompt_ms": 16937.31051753275,
+   "reference_target_prefill_ms": 12175.93914992176,
+   "candidate_target_prefill_ms": 11871.51821225416,
+   "reference_replay_ms": 5063.843359122984,
+   "candidate_replay_ms": 5065.792305278592,
+   "prompt_reference_minus_candidate_ms": 302.4719915119931,
+   "target_reference_minus_candidate_ms": 304.4209376676008
+  }
+ ],
+ "reference_median_prompt_ms": 17242.01135581825,
+ "candidate_median_prompt_ms": 16936.043235007674,
+ "median_paired_prompt_improvement_ms": 310.4629241861403,
+ "median_paired_prompt_improvement_percent": 1.80061895204225,
+ "reference_median_target_prefill_ms": 12178.264955058694,
+ "candidate_median_target_prefill_ms": 11855.149212642573,
+ "median_paired_target_prefill_improvement_ms": 323.11574241612107,
+ "median_paired_target_prefill_improvement_percent": 2.653216559243137,
+ "material_threshold": "500 ms or 5% at 4096 rows",
+ "exactness": {
+  "comparisons": 4,
+  "target_compared_each": 1029,
+  "target_differ_count": 0,
+  "draft_compared_each": 71,
+  "draft_differ_count": 0,
+  "draft_tokens_equal": true
+ },
+ "cold_jit_exactness": {
+  "compared": 1029,
+  "ignored": 0,
+  "differ": [],
+  "differ_count": 0,
+  "only_one_side": [],
+  "other_fields_differ": {},
+  "draft_compared": 71,
+  "draft_differ": [],
+  "draft_differ_count": 0,
+  "draft_only_one_side": [],
+  "draft_tokens_equal": true
+ },
+ "cycle_exactness": {
+  "compared": 1029,
+  "ignored": 0,
+  "differ": [],
+  "differ_count": 0,
+  "only_one_side": [],
+  "other_fields_differ": {},
+  "draft_compared": 71,
+  "draft_differ": [],
+  "draft_differ_count": 0,
+  "draft_only_one_side": [],
+  "draft_tokens_equal": true
+ },
+ "cpu_test": {
+  "device": "AMD Ryzen Threadripper PRO 5955WX (OpenCL CPU)",
+  "gpu_access": "blocked by nodri.so",
+  "cases": 168,
+  "failures": 0,
+  "evidence": "cpu-test.out"
+ },
+ "minimum_memavailable_kb": 44676612,
+ "kernel_fault_lines": {
+  "final-ref2": 0,
+  "final-cand2": 0,
+  "final-ref3": 0,
+  "final-cand3": 0,
+  "final-ref4": 0,
+  "final-cand4": 0,
+  "final-ref1": 0,
+  "final-cand1": 0
+ },
+ "profile_predicted_saving_ms": 361.2,
+ "reason": "drop: exact 2x8 KOPT tiles did not meet the 500 ms / 5% material threshold"
+}

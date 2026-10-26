@@ -1,0 +1,39 @@
+{
+  "schema": "ownrt.rank0-prefill-c27-analysis.v1",
+  "baseline_binary_sha256": "51f32b2655cc0a9d514081362ea6b3ceaa8b0d004df94fbbd83eb7fa76e3ae0a",
+  "pci": "0000:27:00.0",
+  "profile_run": "prof-sites",
+  "profile_config": "4096 rows, 256-row chunks, OWNRT_PREFILL_PROFILE=1 and SHAPE=1; decode profiling off",
+  "profile_prompt_ms": 17896,
+  "profile_target_prefill_ms": 12848,
+  "profile_draft_replay_ms": 5048,
+  "largest_costs_ms": {
+    "draft_replay_end_to_end": 5048,
+    "routed_experts_combined": 4720.0,
+    "gdn": 2368.4,
+    "moe_combine": 836.9
+  },
+  "routed_sites_ms": {
+    "IQ2_S_640x2560": 1495.6,
+    "IQ3_XXS_640x2560": 1253.0,
+    "IQ4_NL_2560x640": 1199.3,
+    "Q2_0_2560x640": 537.4,
+    "IQ3_S_640x2560": 234.7
+  },
+  "floors": {
+    "routed_unique_weight_upper_bound_gb": 364.2753024,
+    "routed_unique_weight_600GBps_floor_ms": 607.125504,
+    "routed_tmac": 4.630511616,
+    "routed_2p5TMACs_floor_ms": 1852.2046464,
+    "note": "The byte bound assumes every one of 512 experts is touched in every site; actual distinct experts are fewer. The compute floor uses the dense reuse kernels' previously measured 2.5 TMAC/s. Routed 4.72 s is above both floors, so weight decode/reuse, not an arithmetic or DRAM floor, is the lever."
+  },
+  "chosen_mechanism": "Add only the already CPU-tested exact 4x8/GRF256 and 2x8/GRF128 grouped-expert configurations; select by the existing family switches. Per-output arithmetic is unchanged.",
+  "reuse_model": {
+    "basis": "Prior 256-row route census: 2560 slots over about 440 distinct experts; Poisson occupancy model",
+    "T4_slots_per_tile": 3.1818611706,
+    "T8_slots_per_tile": 5.1410181391,
+    "T8_over_T4_weight_row_decodes": 0.6189165423,
+    "estimated_decode_reduction_percent": 38.10834577
+  },
+  "prior_attempts": "T8 lost at 32-128 rows and was not swept at 256 rows because the earlier card-27 sweep stopped at a fault. This task tests only the unmeasured 256-row regime; it does not repeat decode-kernel or dense-layout attempts."
+}

@@ -1,0 +1,22 @@
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp
+@@ -43,15 +43,15 @@
+ };
+ template<unsigned RW,unsigned T,unsigned S,unsigned GRF> struct Cfg {static constexpr unsigned rw=RW,t=T,s=S,grf=GRF;};
+ // The tile list (index = OWNRT_PREFILL_EXPERTS_<FAMILY>; config_count = the existing kernel). Cfg<RW rows, T slots, S
+-// subgroups per work-group, GRF>. Production keeps the two tiles that won the 2026-10-26 sweeps (RESULT.md); build with
+-// -DXGROUP_EXPLORE for the sweep list (4x2, 4x4, 4x8/256, 8x4/256 and 2x8 never won).
++// subgroups per work-group, GRF>. Eight-slot tiles reuse each expert row across the larger 256-row prefill buckets;
++// their per-output decode, product, accumulation and reduction order is unchanged.
+ #ifdef XGROUP_EXPLORE
+ #define XGROUP_CONFIGS xgroup::Cfg<2,4,4,128>,xgroup::Cfg<1,4,4,128>,xgroup::Cfg<4,2,4,128>,xgroup::Cfg<4,4,4,128>,xgroup::Cfg<4,8,4,256>,\
+  xgroup::Cfg<8,4,4,256>,xgroup::Cfg<2,8,4,128>
+ inline constexpr unsigned config_count=7;
+ #else
+-#define XGROUP_CONFIGS xgroup::Cfg<2,4,4,128>,xgroup::Cfg<1,4,4,128>
+-inline constexpr unsigned config_count=2;
++#define XGROUP_CONFIGS xgroup::Cfg<2,4,4,128>,xgroup::Cfg<1,4,4,128>,xgroup::Cfg<4,8,4,256>,xgroup::Cfg<2,8,4,128>
++inline constexpr unsigned config_count=4;
+ #endif
+ // Defaults (80-row chunks, rows per subgroup loop 4, launch divisor 4): 1 row x 4 slots for IQ3_XXS block sites, gsqn
+ // packed rows and kopt IQ4_NL; 2 x 4 for the other kopt formats (IQ2_S, IQ3_S).
