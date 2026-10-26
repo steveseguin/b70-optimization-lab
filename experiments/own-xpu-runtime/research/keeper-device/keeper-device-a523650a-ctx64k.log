@@ -1,0 +1,59 @@
+  1 start    json     8.1s prompt=765 cached=758 cuts=0 | head:0+758r/7.1s main:758+7r/0.1s[head parked]
+  2 tool     sse    38.2s prompt=4493 cached=803 cuts=0 | main:803+3690r/37.1s
+  3 tool     json    38.6s prompt=8230 cached=4543 cuts=0 | main:4543+3687r/37.6s
+  4 tool     sse    38.7s prompt=11965 cached=8280 cuts=0 | main:8280+3685r/37.7s
+  5 tool     json    38.7s prompt=15692 cached=12015 cuts=0 | main:12015+3677r/37.7s
+  6 tool     sse    38.7s prompt=19422 cached=15742 cuts=0 | main:15742+3680r/37.7s
+  7 tool     json    38.9s prompt=23167 cached=19472 cuts=0 | main:19472+3695r/37.8s
+  8 tool     sse    39.0s prompt=26906 cached=23217 cuts=0 | main:23217+3689r/37.9s
+  9 tool     json    54.9s prompt=4785 cached=758 cuts=1 | main:758+4027r/40.5s[restored][head pinned] | before: notes:26956+502r/5.4s
+ 10 tool     sse    38.7s prompt=8528 cached=4835 cuts=1 | main:4835+3693r/37.7s
+ 11 tool     json    38.9s prompt=12274 cached=8579 cuts=1 | main:8579+3695r/37.8s
+ 12 tool     sse    38.9s prompt=16020 cached=12327 cuts=1 | main:12327+3693r/37.8s
+ 13 tool     json    38.5s prompt=19773 cached=16073 cuts=1 | main:16073+3700r/38.0s
+ 14 user     sse    40.8s prompt=23660 cached=19799 cuts=1 | main:19799+3861r/39.6s
+ 15 tool     json    39.0s prompt=27404 cached=23716 cuts=1 | main:23716+3688r/37.9s
+ 16 tool     sse    88.7s prompt=8496 cached=758 cuts=2 | main:758+7738r/78.1s[restored][head pinned] | before: notes:27457+558r/5.9s
+ 17 tool     json    39.0s prompt=12249 cached=8549 cuts=2 | main:8549+3700r/37.9s
+ 18 tool     sse    39.0s prompt=15993 cached=12302 cuts=2 | main:12302+3691r/37.9s
+ 19 tool     json    39.0s prompt=19740 cached=16046 cuts=2 | main:16046+3694r/37.9s
+ 20 question sse   161.0s prompt=16437 cached=16346 cuts=2 | main:758+15559r/157.7s[restored][head pinned] main:16346+91r/1.2s
+{
+ "answer": "48151623",
+ "checks": {
+  "cut_happened": true,
+  "head_parked_and_pinned": true,
+  "cut_restores_head": true,
+  "notes_continue_live_state": true,
+  "turns_continue": true,
+  "recall_answer_correct": true,
+  "no_internal_recall": true,
+  "finish_reasons_valid": true
+ },
+ "totals": {
+  "requests": 20,
+  "wall_s": 935.1,
+  "prompt_read_s": 901.9,
+  "tokens_read": 88458,
+  "tokens_cached": 280089
+ },
+ "keeper_status": {
+  "cut": 28,
+  "cuts": 2,
+  "inplace_cuts": 2,
+  "inplace_failed": 0,
+  "notes_failed": 0,
+  "recalls": 1,
+  "requests": 20,
+  "restarts": null,
+  "async_applied": 2,
+  "async_discarded": null,
+  "sc117_notes_deferred": null,
+  "largest_turn": 2471,
+  "ratio": 2.5126,
+  "notes_chars": 904,
+  "head": "058b10a706a13bc5ba35abd2f808e377",
+  "notes_due": false
+ }
+}
+PASSED
