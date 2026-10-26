@@ -7,21 +7,25 @@ Internal output parity and independent-reference fidelity are separate gates.
 
 ## Current SC117 work — October 25
 
-The current SC117 IQ3_S F32 work preserves all twelve retained answers, but
-four-card overlap has not produced a speed gain in the measured observations.
+The current SC117 IQ3_S F32 parent-capture scheduler measured **44.9679 tok/s**
+on four B70s, versus its matched balanced baseline of **41.3990 tok/s**: an
+**8.62% gain** under the same controller observer. All twelve retained answers match.
 
 | Setup | Ordinary median decode | Output scope |
 |---|---:|---|
-| Two B70s, normal MTP service | 47.97 tok/s | All 5,965 output IDs match; zero cached prompt tokens |
+| Two B70s, normal MTP service | 47.9706 tok/s | All 5,965 output IDs match; zero cached prompt tokens |
 | Four B70s, earlier live-draft overlap | 42.31 tok/s | All 5,965 output IDs match; twelve cold requests in persistent workers |
-| Four B70s, rolling two-step draft overlap | 41.57 tok/s | All 5,965 output IDs match; twelve checked cold resets; final request’s 2,065 target buffers match |
+| Four B70s, balanced rolling baseline | 41.3990 tok/s | All 5,965 output IDs match; twelve checked cold resets; final request’s 2,065 target buffers match |
+| Four B70s, parent-capture overlap, provider stage0 | **44.9679 tok/s** | All 5,965 output IDs and final 2,065 target buffers match; preceding two-request gate matches target and all 73 draft allocations |
 
 Each median covers twelve prompts capped at 512 generated tokens, with one
 early-ending answer. Decode uses the intervals between first and last generated
 token, excluding the first-token wait. The quad controller observes committed
 outputs; the two-card service reports its native decode interval. These are
 uncertified observations with different timing observers, not a controlled
-speedup comparison. See the [latest rolling suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-proof/RESULT.md)
+two-versus-four-card speedup comparison. The 8.62% four-card comparison does use
+the same observer. See the [parent-capture suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/parent-capture-suite-proof/RESULT.md)
+and [matched balanced baseline](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-balanced-suite-proof/RESULT.md)
 and [earlier quad suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-suite-b-proof/RESULT.md).
 
 The rolling suite consumes actual predictions from the existing draft weights;
@@ -31,6 +35,22 @@ comparison covers the final request only. The final draft state is authenticated
 without independent long-cohort draft parity. Earlier [bounded rolling checks](../experiments/own-xpu-runtime/research/continuation-2026-10-25/ring-rolling-depth2-proof/RESULT.md)
 matched all 32 outputs, 2,065 target buffers and 73 draft allocations with full
 diagnostics, including recovery from both prediction miss depths.
+
+A flat-copy screen measured **45.1979 tok/s** (+0.511%); it stays off by default
+and was not promoted or given an extra same-build draft-state gate. Remote-provider
+placements measured **42.6283** and **43.2659 tok/s**, both losses. The latter was
+a different-cut screen, without a same-cut short-gate claim. See the
+[copy screen](../experiments/own-xpu-runtime/research/continuation-2026-10-25/recursive-flat-screen/RESULT.md) and
+[relocation results](../experiments/own-xpu-runtime/research/continuation-2026-10-25/provider-relocation-results/RESULT.md).
+
+The [latest 485-file research source](../downloads/own-engine/ownrt-source-e6f89fbce.tar.gz)
+includes capture notifications and optional provider placement (default stage0),
+including the seed-journal owner and remote transport. All 484 payload hashes and
+isolated controller imports pass; its 230 native source hashes match build
+`be61a3b986c2`. This new extracted archive has not been rebuilt or GPU-qualified.
+The [capture recipe and source scope](sc117-capture-replay.md) distinguish the
+working lab configuration from portable installation. The older 9d source asset
+and its bounded standalone live proof remain unchanged.
 
 Six of 5,965 teacher-forced CPU-reference positions still disagree. Internal GPU
 parity does not establish exact independent-reference fidelity or absence of

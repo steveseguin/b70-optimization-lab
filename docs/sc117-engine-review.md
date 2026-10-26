@@ -269,3 +269,31 @@ does not import the lab launcher or its host snapshots. Weights, tokenizer and
 Intel platform dependencies remain separately supplied. This is bounded same-host
 runtime qualification, not portable speed, a multi-request HTTP service,
 clean-host installation, or general support for every model/quant/card count.
+
+## Parent-capture gain and subsequent bounded trials
+
+The [parent-capture four-card suite](../experiments/own-xpu-runtime/research/continuation-2026-10-25/parent-capture-suite-proof/RESULT.md)
+measured **44.9679 tok/s** versus the [matched balanced baseline](../experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-balanced-suite-proof/RESULT.md)
+**41.3990 tok/s**, +8.62% with the same controller observer. All 5,965 output IDs
+and final 2,065 target buffers match. A preceding measured two-request gate matched
+all 32 outputs, 2,065 target buffers and 73 draft allocations per request. This
+is experimental; per-operation byte diagnostics were omitted and no new-build
+debug-policy qualification is claimed. The two-card **47.9706 tok/s** service
+uses a different timing observer, so no matched cross-topology speedup is claimed.
+Six independent CPU-reference disagreements remain unresolved.
+
+The [copy screen](../experiments/own-xpu-runtime/research/continuation-2026-10-25/recursive-flat-screen/RESULT.md)
+measured 45.1979 tok/s (+0.511%) and stays off by default without promotion or an
+extra draft-state gate. [Provider relocation](../experiments/own-xpu-runtime/research/continuation-2026-10-25/provider-relocation-results/RESULT.md)
+measured 42.6283 and 43.2659 tok/s; both lost. The latter has output/final-target
+parity but no same-cut short-gate claim. Remote debug-policy survival qualification
+is explicitly unsupported; the remote measured two-request state gate passed.
+
+The [485-file source snapshot](../downloads/own-engine/ownrt-source-e6f89fbce.tar.gz)
+exports commit `e6f89fbce49b`. SHA256:
+`401cbdb895702199da5e8f06415915f9761a745974e5766a8f7653031788212a`.
+Its 484 payload hashes and isolated imports pass; all 230 native source hashes
+match build `be61a3b986c2`. Seed-journal and remote-provider modules are included.
+This extracted snapshot was not rebuilt or GPU-qualified. It does not replace
+the unchanged 9d asset or inherit its standalone proof. See the
+[capture replay instructions and limits](sc117-capture-replay.md).
