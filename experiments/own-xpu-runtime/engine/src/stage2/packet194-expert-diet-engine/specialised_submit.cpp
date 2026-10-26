@@ -7,6 +7,7 @@
 #ifndef OWN_RT_HOST_ONLY
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include "stage2/packet194-expert-diet-engine/select_fast.hpp"
+#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
 #endif
 namespace specialised {
 #ifdef OWN_RT_HOST_ONLY
@@ -18,6 +19,11 @@ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel 
 struct Guard {
  int error(ng::Args a)const{return sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).load();}
  void fail(ng::Args a)const{sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).store(1);}
+};
+struct CachedGuard {
+ int value;
+ int error(ng::Args)const{return value;}
+ void fail(ng::Args a)const{Guard{}.fail(a);}
 };
 // QSA select with one 32-lane subgroup per block item (body<select,Stage>'s values; work items -> subgroups).
 // Stage 0: the 128-leaf adjacent tree of each head's score with lane l holding leaves 4l..4l+3 (in-lane levels 1-2,
@@ -147,6 +153,12 @@ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel 
     h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){select_topk_row(s,a,it,scratch,idx.get_multi_ptr<sycl::access::decorated::no>().get(),val.get_multi_ptr<sycl::access::decorated::no>().get(),hist.get_multi_ptr<sycl::access::decorated::no>().get(),found.get_multi_ptr<sycl::access::decorated::no>().get(),Guard{});}));});
   if constexpr(Code==ng::select)if(select_subgroups())
    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(n*32),sycl::range<1>(32))](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{select_rows<Stage>(s,a,it,scratch,Guard{});}));});
+  if(experts_v2::enabled("guard"))
+   // The error flag read once per 32-lane subgroup (broadcast) instead of by every item: CachedGuard returns that value
+   // (fail() still stores to the flag). Items past n return in body's own index check.
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((n+127)/128*128,128)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();const int err=sycl::group_broadcast(sg,sg.get_local_linear_id()==0?Guard{}.error(a):0,0);
+    body<Code,Stage,FixedWidth,FixedHeads>(s,a,it.get_global_linear_id(),scratch,CachedGuard{err});}));});
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body<Code,Stage,FixedWidth,FixedHeads>(s,a,i[0],scratch,Guard{});}));});
  }
 };

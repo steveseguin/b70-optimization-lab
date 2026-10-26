@@ -23,3 +23,29 @@ service after the card-27 incident (see `../incidents/2026-10-26-card27-bcs-faul
 3. Rank-0 memory at 256-row prefill chunks: the plan cap must hold. If it does not, deploy with 128- or 32-row chunks.
 4. Service reload with gates and the suite.
 5. Add the new env names to `adapter6.py`'s rank environment whitelist.
+
+## Result (2026-10-26, after the owner's restore)
+
+**Lab, card 27, rank 1, merged build.** Every run below was bitwise identical to the 1d72818cfe8c reference on all
+1032 buffers (`card27-lab-ab.log`).
+
+| Run | Decode half | 4096-row prompt |
+|---|---|---|
+| Reference, 1d72818cfe8c | 16.40 ms | 61.9 s (includes kernel compiles on a fresh cache) |
+| Decode switches, 32-row chunks | 13.84 ms | 54.8 s |
+| All switches, 256-row chunks | 13.86 ms | 17.3 s |
+
+All switches also matched the reference at a 300-row prompt.
+
+**First service start (72693296ae0e) refused.** Rank 0 stopped on "native config prefill trailer". The service-path
+native controller still capped prefill chunks at 64 rows, and so did the prefill wire header (`tokens[64]`); the lab
+driver does not use either. No GPU fault.
+
+**Fix (5e44953236cc).** `prefill_wire.hpp` sets `max_rows=256` (16 + 1024 bytes, still inside the unchanged 4096-byte
+header page), and the controller trailer uses that constant.
+
+**Service on 5e44953236cc (`SC117_PREFILL_ROWS=256`).**
+- Gates: F32 oracle at 64K and against the 4096 oracle, zero differences on both ranks; prefill gate 13/13 at 256
+  rows; continuation passed.
+- Suite: ids, text and MTP hits identical; 49.38 → 56.96 tok/s, faster on 12/12 prompts.
+- 10.7K test, ids identical: decode 50.2 → 57.9 tok/s; prompt read 71.2 → 49.1 s.

@@ -4,6 +4,7 @@
 #endif
 #include "stage2/packet194-expert-diet-engine/native.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
+#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
 namespace ng {
 struct DeviceTeam {
  sycl::nd_item<1> it;float* x;
@@ -21,6 +22,26 @@ struct Kernel final:ownrt::SyclOperation{
  explicit Kernel(Shape s):shape(s){}
  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const override{
   Args a;std::copy(p.begin(),p.end(),a.p.begin());auto s=shape;
+  if((s.op==activation||s.op==mix||s.op==moe_combine)&&experts_v2::enabled("ew")){
+   // OWNRT_EXPERTS_V2 "ew" (lab 2026-10-26): the element-wise ops without the 128-lane team (no local scratch, no
+   // barriers): item idx computes group()'s expression for idx unchanged; the active/sticky-error guard is read once per
+   // 32-lane subgroup, and an out-of-range position fails once (item 0) and stops, as in group().
+   const size_t n=size_t(s.tokens)*size_t(s.width);
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((n+127)/128*128,128)](sycl::handler& h){
+    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{
+     Args b=a;b.f32=(s.flags&f32_activations_flag)!=0;auto sg=it.get_sub_group();
+     const int blocked=sycl::group_broadcast(sg,sg.get_local_linear_id()==0?int(!b.i(18)[0]||DeviceTeam{it,nullptr}.error(b)):0,0);
+     if(blocked)return;
+     const size_t idx=it.get_global_linear_id();
+     const int pos=b.i(17)[0];if(pos<0||pos>position_limit(s)-s.tokens){if(idx==0)DeviceTeam{it,nullptr}.fail(b);return;}
+     if(idx>=n)return;
+     const int r=int(idx/size_t(s.width)),k=int(idx%size_t(s.width));const int i=int(idx);
+     if(s.op==activation){float v=b.b(0,i);b.put(2,i,s.extra?silu(v)*b.b(1,i):detmath::silu_div4(v));}
+     else if(s.op==mix){float sum=0;for(int hh=0;hh<4;++hh)sum=sum+sigmoid(b.b(1,(r*4+hh)*s.width+k))*b.b(0,(r*4+hh)*s.width+k);b.put(2,i,sum/4.f);}
+     else{float sum=0;for(int e=0;e<s.extra;++e)sum=sum+b.b(0,(r*s.extra+e)*s.width+k)*b.f(1)[r*s.extra+e];b.put(4,i,b.rnd(sum)+b.rnd(b.b(2,i)*sigmoid(b.b(3,r))));}
+    }));
+   });
+  }
   int work=s.op==gdn?32:128;
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(groups(s))*work,work)](sycl::handler& h){sycl::local_accessor<float,1> scratch(local_floats(s),h);
    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{

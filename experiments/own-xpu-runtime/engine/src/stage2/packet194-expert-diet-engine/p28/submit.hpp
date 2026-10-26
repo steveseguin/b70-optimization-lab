@@ -3,7 +3,7 @@
 #include "stage2/packet194-expert-diet-engine/p28/registry.hpp"
 namespace p28 {
 // Upper bound on dense token rows per launch (batched prefill chunk).
-inline constexpr unsigned p28_max_tokens=64;
+inline constexpr unsigned p28_max_tokens=256;
 struct Bound {
  const uint8_t* w{};const uint8_t* peer{};const uint16_t* x{};uint16_t* y{};uint16_t* py{};
  const iq3::Route* routes{};uint32_t* status{};uint32_t* ps{};float* scratch{};

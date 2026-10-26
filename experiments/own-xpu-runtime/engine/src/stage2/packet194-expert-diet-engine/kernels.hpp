@@ -69,7 +69,7 @@ inline int local_floats(Shape s){
  return 1024;
 }
 inline void validate(Shape s){
- if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>87||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
+ if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>256||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
  if(s.flags&~(1|2|4|8|16|f32_activations_flag))throw std::invalid_argument("unknown shape flag");
  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");

@@ -4,6 +4,9 @@
 #endif
 #include "stage2/packet194-expert-diet-engine/p33_submit.hpp"
 #include "stage2/packet194-expert-diet-engine/p33_candidates.hpp"
+#ifndef OWN_RT_HOST_ONLY
+#include "stage2/packet194-expert-diet-engine/p33_dense_v2.hpp"
+#endif
 #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
 #ifndef OWN_RT_HOST_ONLY
 #include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
@@ -117,8 +120,27 @@ template<iq3::Type T,unsigned K,unsigned R> struct DenseRows final:ownrt::SyclOp
  }
 };
 #endif
+#ifndef OWN_RT_HOST_ONLY
+// OWNRT_DENSE_DECODE_V2=1 (lab 2026-10-26, default off): decode rows of the expanded Q8_0 6144-column matrices (the
+// attention output projections), two rows per subgroup, p33_dense_v2.hpp. Same values as Kernel<0,T,K,1,true>.
+template<iq3::Type T,unsigned K,unsigned R,unsigned U> struct DenseV2 final:ownrt::SyclOperation {
+ uint32_t rows=0,rb=0;
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  const uint8_t* w=static_cast<const uint8_t*>(p[0]);const float* x=static_cast<const float*>(p[1]);float* y=static_cast<float*>(p[2]);
+  const uint32_t n=rows,b=rb;const size_t global=(size_t((n+R-1)/R)*32+127)/128*128;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+   v2::dense_rows<T,K,R,U>(w,x,y,n,b,it);})));});
+ }
+};
+inline bool v2_aligned(ownrt::Device& d,ownrt::Allocation a,uintptr_t n){return reinterpret_cast<uintptr_t>(d.arena.row(a).pointer)%n==0;}
+#endif
 template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
 #ifndef OWN_RT_HOST_ONLY
+ if constexpr(T==iq3::Type::Q8_0&&K==6144) if(v2::enabled()&&m.size()==1&&v==6&&m[0].activation==iq3::Type::F32&&m[0].output_type==iq3::Type::F32&&m[0].tokens==1&&m[0].count==1&&
+   m[0].experts==1&&!m[0].routes&&!m[0].status&&m[0].rows<=UINT32_MAX&&v2_aligned(d,m[0].w,16)&&v2_aligned(d,m[0].x,16)) {
+  const size_t rb=integrated::arithmetic::row_bytes(T,K,6);
+  if(rb%4==0&&rb<=UINT32_MAX){DenseV2<T,K,2,2> op;op.rows=uint32_t(m[0].rows);op.rb=uint32_t(rb);std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};auto e=d.compute(op,ids,{});return {e,e,1};}
+ }
  if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&reuse2::enabled()) {
   // Generation-2 token rows (OWNRT_PREFILL_REUSE2=1; tile OWNRT_PREFILL_REUSE2_P33=i): dense_lane's values and sequence.
   const size_t rb=integrated::arithmetic::row_bytes(T,K,6);

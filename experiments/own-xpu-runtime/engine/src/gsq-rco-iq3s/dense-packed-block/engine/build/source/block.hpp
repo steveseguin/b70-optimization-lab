@@ -70,6 +70,14 @@ template<unsigned T,bool F=false> struct DenseBlockOperation final:
  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
   require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
   const auto b=bind(p);
+  if constexpr(F)if(gsqn::v2::enabled()&&!b.routes&&!b.s.routed&&b.s.count==1&&b.s.experts==1&&!b.s.per_slot&&!b.s.row_major&&gsqn::v2::fits<T>(b.w,b.s.rows,b.s.columns,b.s.row_bytes)){
+   // OWNRT_DENSE_DECODE_V2=1: same values, fewer memory messages, uniform per-block arithmetic (dense_decode_v2.hpp).
+   const uint32_t rows=uint32_t(b.s.rows),cols=uint32_t(b.s.columns),rb=uint32_t(b.s.row_bytes);const uint8_t* w=b.w;
+   const float* x=reinterpret_cast<const float*>(b.x);float* y=reinterpret_cast<float*>(b.y);
+   const unsigned R=gsqn::v2::rows_per_subgroup(rows);const size_t global=((rows+R-1)/R*32+127)/128*128;
+   if(R==4)return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(global,128),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{gsqn::v2::rows_fast<T,4>(w,x,y,rows,cols,rb,it);}));});
+   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(global,128),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{gsqn::v2::rows_fast<T,1>(w,x,y,rows,cols,rb,it);}));});
+  }
   // Outer command owns by-value pointers/shape/dependencies. No caller span or
   // operation object survives by reference in the prepared callback.
   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<DenseBlockKernel<T,F>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{

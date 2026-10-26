@@ -140,6 +140,7 @@ struct RetainSteps {
 #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
 #include "gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp"
 #include "gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp"
+#include "gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp"
 #include "gsq-rco-iq3s/integration/build/private/additive/upload.hpp"
 #include "gsq-rco-iq3s/integration/build/private/additive/generic_host.hpp"
 #include "gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
@@ -247,7 +248,7 @@ static Options parse(int argc, char **argv) {
       a.f32_activations=v=="f32";
     }
     else if (k == "--prefill-rows") {
-      a.prefill_rows=std::stoi(value());require(a.prefill_rows>=0&&a.prefill_rows<=64,"prefill rows must be 0..64");
+      a.prefill_rows=std::stoi(value());require(a.prefill_rows>=0&&a.prefill_rows<=256,"prefill rows must be 0..256");
     }
     else if (k == "--prefill-shared") a.prefill_shared=value();
     else if (k == "--draft-experts") {

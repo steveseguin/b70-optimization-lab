@@ -10,6 +10,7 @@
 #include "stage2/packet194-expert-diet-engine/kernels.hpp"
 #include "gsq-rco-iq3s/recurrent-f32/recurrent_policy.hpp"
 #include "stage2/packet194-expert-diet-engine/specialised_submit.hpp"
+#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
 #include "stage2/packet194-expert-diet-engine/round2_submit.hpp"
 #include "stage2/packet194-expert-diet-engine/p33r2.hpp"
 #include "stage2/packet194-expert-diet-engine/mock_order.hpp"
@@ -318,6 +319,80 @@ template<int N,int Top> struct RouteFast final:ownrt::SyclOperation {
    }));});
  }
 };
+// OWNRT_EXPERTS_V2 "guard"/"route" (lab 2026-10-26): RouteFast with the active/sticky-error guard read once per
+// work-group (lane 0, through the local flag word, instead of by all 512 lanes) and, with MERGE, the ten arg-max rounds
+// split in two levels: each 32-lane subgroup first takes its own ten best by subgroup reductions (no work-group
+// barrier), then subgroup 0 runs the ten rounds over those 160 candidates. The order is RouteFast's (larger probability
+// bits, then the lower id) and every top-ten entry is in its subgroup's ten best, so the same ten ids come out in the
+// same order. The softmax, the outputs and the normalisation are RouteFast's code. Microbench: 9.8 -> 8.4 us (MERGE).
+template<int N,int Top,bool MERGE> struct RouteFast2 final:ownrt::SyclOperation {
+ static_assert(N%32==0&&(N/32)*Top%32==0,"route geometry");
+ Spec spec;explicit RouteFast2(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int rows=spec.tokens;
+  constexpr int C=(N/32)*Top;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(rows)*N,N)](sycl::handler& h){
+   sycl::local_accessor<float,1> ex(N,h),prob(N,h),sums(N/16,h);sycl::local_accessor<uint32_t,1> flags(2+(MERGE?2*C:0),h);
+   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    const int r=int(it.get_group_linear_id()),j=int(it.get_local_linear_id());const RowBound rb{b,r,b.s};auto g=it.get_group();
+    uint32_t* bad=flags.get_multi_ptr<sycl::access::decorated::no>().get();
+    if(j==0){bad[0]=0;bad[1]=(!*rb.active()||rb.failed())?1u:0u;}
+    it.barrier(sycl::access::fence_space::local_space);
+    if(bad[1])return; // uniform across the work-group
+    const float x=rb.in(0).get(j);if(!std::isfinite(x))sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::work_group,sycl::access::address_space::local_space>(bad[0]).store(1);
+    it.barrier(sycl::access::fence_space::local_space);
+    if(bad[0]){if(j==0)rb.fail();return;}
+    const float maximum=sycl::reduce_over_group(g,x,sycl::maximum<float>());
+    ex[j]=detmath::exp(x-maximum);it.barrier(sycl::access::fence_space::local_space);
+    constexpr int chunks=(N+15)/16;
+    if(j<chunks)sums[j]=subtree<16>(N,j*16,[&](int i){return ex[i];});
+    it.barrier(sycl::access::fence_space::local_space);
+    const float den=subtree<256>(chunks,0,[&](int i){return sums[i];});
+    prob[j]=ex[j]/den;it.barrier(sycl::access::fence_space::local_space);
+    auto put=[&](int rank,int index){const float v=prob[index];rb.out(0).put(rank,index);rb.out(1).put(rank,v);
+     if(rb.s.no>=4)for(int k=0;k<3;++k){rb.out(2).put(rank*3+k,k==0?index:k==1?0:rb.s.g.mid);rb.out(3).put(rank*3+k,k==0?index:k==1?0:rb.s.g.h);}};
+    if constexpr(!MERGE){
+     bool taken=false;
+     for(int rank=0;rank<Top;++rank){
+      const uint32_t bits=sycl::bit_cast<uint32_t>(prob[j]);
+      const uint32_t top=sycl::reduce_over_group(g,taken?0u:bits+1u,sycl::maximum<uint32_t>());
+      const int index=sycl::reduce_over_group(g,(!taken&&bits+1u==top)?j:N,sycl::minimum<int>());
+      if(j==index)taken=true;
+      if(j==0)put(rank,index);
+     }
+    } else {
+     uint32_t* cbits=bad+2;uint32_t* cidx=cbits+C;
+     auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id()),sgi=int(sg.get_group_linear_id());
+     const uint32_t bits=sycl::bit_cast<uint32_t>(prob[j]);bool taken=false;
+     for(int k=0;k<Top;++k){
+      const uint32_t top=sycl::reduce_over_group(sg,taken?0u:bits+1u,sycl::maximum<uint32_t>());
+      const int index=sycl::reduce_over_group(sg,(!taken&&bits+1u==top)?j:N,sycl::minimum<int>());
+      if(j==index){taken=true;cbits[sgi*Top+k]=bits;cidx[sgi*Top+k]=uint32_t(j);}
+     }
+     it.barrier(sycl::access::fence_space::local_space);
+     if(sgi==0){
+      constexpr int PER=C/32;uint32_t cb[PER],ci[PER];bool tk[PER];
+      #pragma unroll
+      for(int c=0;c<PER;++c){cb[c]=cbits[lane+32*c];ci[c]=cidx[lane+32*c];tk[c]=false;}
+      for(int rank=0;rank<Top;++rank){
+       uint32_t best=0;
+       #pragma unroll
+       for(int c=0;c<PER;++c)best=std::max(best,tk[c]?0u:cb[c]+1u);
+       const uint32_t top=sycl::reduce_over_group(sg,best,sycl::maximum<uint32_t>());
+       uint32_t mi=uint32_t(N);
+       #pragma unroll
+       for(int c=0;c<PER;++c)if(!tk[c]&&cb[c]+1u==top)mi=std::min(mi,ci[c]);
+       const uint32_t index=sycl::reduce_over_group(sg,mi,sycl::minimum<uint32_t>());
+       #pragma unroll
+       for(int c=0;c<PER;++c)if(ci[c]==index)tk[c]=true;
+       if(lane==0)put(rank,int(index));
+      }
+     }
+    }
+    if(j==0){float sum=subtree<32>(Top,0,[&](int i){return rb.out(1).get(i);});for(int i=0;i<Top;++i)rb.out(1).put(i,rb.out(1).get(i)/sum);}
+   }));});
+ }
+};
 // HC combine and expert gather, F32 mode, without the generic accessor: each item handles four consecutive elements with
 // the SimpleNew expression unchanged (stream + branch*(2*sigmoid(inject/4)); exact copies for the gather), and routes and
 // validity exactly as before (an invalid id sets the sticky error, as the second gather phase did). Rows of a prefill
@@ -326,6 +401,18 @@ struct CombineFast final:ownrt::SyclOperation {
  Spec spec;explicit CombineFast(Spec s):spec(s){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
   Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const size_t n=spec.sizes[spec.ni],w=size_t(spec.site.shape[1]),quads=n/4;const int rows=spec.tokens;
+  if(experts_v2::enabled("guard")){
+   // Guard read once per 32-lane subgroup (broadcast) instead of by every item; same arithmetic per item.
+   const size_t total=size_t(rows)*quads;
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((total+127)/128*128,128)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();
+    if(sycl::group_broadcast(sg,sg.get_local_linear_id()==0?int(!*b.active()||b.failed()):0,0))return;
+    const size_t i=it.get_global_linear_id();if(i>=total)return;
+    const size_t r=i/quads,c=(i%quads)*4;const RowBound rb{b,int(r),b.s};
+    const float* stream=static_cast<const float*>(rb.in(0).p);const float* branch=static_cast<const float*>(rb.in(1).p);const float* inject=static_cast<const float*>(rb.in(2).p);float* out=static_cast<float*>(rb.out(0).p);
+    const float gate=2.f*ng::sigmoid(inject[c/w]/4.f);
+    for(int j=0;j<4;++j)out[c+j]=stream[c+j]+branch[(c+j)%w]*gate;}));});
+  }
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(size_t(rows)*quads)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> id){
    const size_t r=id[0]/quads,c=(id[0]%quads)*4;const RowBound rb{b,int(r),b.s};
    if(!*rb.active()||rb.failed())return;
@@ -338,6 +425,20 @@ struct GatherFast final:ownrt::SyclOperation {
  Spec spec;explicit GatherFast(Spec s):spec(s){}
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
   Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int top=spec.g.top;const size_t n=spec.no_materialize_gather?0:spec.sizes[spec.ni+2],h=spec.sizes[1],per=size_t(top)+n/4;const int rows=spec.tokens;
+  if(experts_v2::enabled("guard")){
+   // Guard read once per 32-lane subgroup (broadcast) instead of by every item; same work per item.
+   const size_t total=size_t(rows)*per;
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((total+127)/128*128,128)](sycl::handler& hd){hd.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();
+    if(sycl::group_broadcast(sg,sg.get_local_linear_id()==0?int(!*b.active()||b.failed()):0,0))return;
+    const size_t i=it.get_global_linear_id();if(i>=total)return;
+    const size_t r=i/per,index=i%per;const RowBound rb{b,int(r),b.s};
+    if(index<size_t(top)){const int j=int(index);float v=rb.in(0).get(j);bool valid=std::isfinite(v)&&v>=0&&v<float(rb.s.g.experts)&&std::floor(v)==v;int ex=valid?int(v):0;
+     for(int k=0;k<3;++k){rb.out(0).put(j*3+k,k==0?ex:k==1?0:rb.s.g.mid);rb.out(1).put(j*3+k,k==0?ex:k==1?0:rb.s.g.h);}
+     if(!valid)rb.fail();return;}
+    const size_t c=(index-top)*4;const float* src=static_cast<const float*>(rb.in(1).p);float* dst=static_cast<float*>(rb.out(2).p);
+    for(int j=0;j<4;++j)dst[c+j]=src[(c+j)%h];}));});
+  }
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(size_t(rows)*per)](sycl::handler& hd){hd.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> id){
    const size_t r=id[0]/per,index=id[0]%per;const RowBound rb{b,int(r),b.s};
    if(!*rb.active()||rb.failed())return;
@@ -346,6 +447,23 @@ struct GatherFast final:ownrt::SyclOperation {
     if(!valid)rb.fail();return;}
    const size_t c=(index-top)*4;const float* src=static_cast<const float*>(rb.in(1).p);float* dst=static_cast<float*>(rb.out(2).p);
    for(int j=0;j<4;++j)dst[c+j]=src[(c+j)%h];}));});
+ }
+};
+// OWNRT_EXPERTS_V2 "status" (lab 2026-10-26): the merged expert status check in one 32-lane subgroup. The generic
+// form (simple(): 128 lanes, an active and a sticky-error read, then a float tree sum of (status!=0) per input and
+// fail() when the total is nonzero) sets the error exactly when some status element is nonzero; here each lane ORs
+// its strided elements and any_of_group decides. Same guards (inactive or already failed: nothing), same single store.
+struct StatusFast final:ownrt::SyclOperation {
+ Spec spec;explicit StatusFast(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+   auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id());
+   if(sycl::group_broadcast(sg,lane==0?int(!*b.active()||b.failed()):0,0))return;
+   bool any=false;
+   for(int k=0;k+2<b.s.ni;++k){const View v=b.in(k);for(int j=lane;j<int(v.n);j+=32)any=any||v.get(j)!=0;}
+   if(sycl::any_of_group(sg,any)&&lane==0)b.fail();
+  }));});
  }
 };
 inline bool simple_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_SIMPLE_FAST");return !e||e[0]!='0';}();return on;}
@@ -444,6 +562,8 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  if(s.implementation&&s.special==Special::normal){switch(s.op){
  case Op::route:if(s.sizes[0]==512&&s.site.shape[1]==10){
 #ifndef OWN_RT_HOST_ONLY
+  if(route_fast()&&experts_v2::enabled("route")){RouteFast2<512,10,true> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+  if(route_fast()&&experts_v2::enabled("guard")){RouteFast2<512,10,false> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
   if(route_fast()){RouteFast<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
   if(route_group()){RouteGroup<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
 #endif
@@ -498,6 +618,7 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  bool tiny=s.g.h!=2560;
  bool tiny_core=tiny&&s.special==Special::normal&&(s.op==Op::gdn||s.op==Op::gdn_norm_gate||s.op==Op::qsa_prepare||s.op==Op::qsa_append_pool||s.op==Op::qsa_select||s.op==Op::qsa_attention);
  std::array<ownrt::Allocation,32> b{};std::copy(bindings.begin(),bindings.end(),b.begin());b[bindings.size()]=control;
+ if(!use_ng&&!tiny_core&&s.special==Special::check_status&&s.tokens==1&&experts_v2::enabled("status")){StatusFast k(s);auto e=d.compute(k,bindings,deps);return {e,e,1};}
  if(!use_ng||tiny_core){Glue k(s,tiny_core?3:0);auto e=d.compute(k,std::span<const ownrt::Allocation>(b.data(),bindings.size()+1),deps);return {e,e,1};}
  // Validate before submitting anything, so a bad shape cannot strand a partial chain.
  ng::validate(shape);auto required=ng::required_bytes(shape);for(int j=0;j<19;++j)if(d.arena.row(a[j]).bytes<required[j])throw std::invalid_argument("adapter allocation too short at slot "+std::to_string(j));

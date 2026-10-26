@@ -14,7 +14,7 @@ constexpr uint32_t magic=0x31465050u; // "PPF1"
 constexpr uint32_t version=1;
 constexpr int32_t op=15;              // rank command: token = rows, position = first position, fixture = buffer index
 constexpr size_t header_bytes=4096;
-constexpr int max_rows=64;
+constexpr int max_rows=256;            // header tokens fit the 4096-byte page (16 + 4*256 bytes); the row regions follow it
 struct Header {uint32_t magic,version,rows,stream_bytes;int32_t tokens[max_rows];};
 static_assert(sizeof(Header)<=header_bytes);
 inline size_t bytes(size_t rows,size_t stream){return header_bytes+4*rows*stream;}

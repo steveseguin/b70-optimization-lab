@@ -16,6 +16,7 @@ std::map<std::string,PrefillShadow> prefill_shadows;   // by role: "blk.*.<suffi
 std::map<std::string,std::string> prefill_role_of;     // plan buffer name -> role
 std::vector<const flash::Launch*> prefill_sites;
 Allocation prefill_positions=0,prefill_tokens=0;
+Allocation xg_order=0,xg_tiles=0,xg_count=0;size_t xg_capacity=0;
 uint64_t prefill_chunks=0,prefill_rows_done=0;
 static std::string prefill_role(const std::string& name) {
   if(!name.starts_with("blk."))return name;
@@ -53,6 +54,14 @@ void prefill_allocate() {
     for(size_t off=0;off<bytes*M;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes*M-off));
     prefill_shadows[role]={id,bytes};total+=bytes*M;
   }
+#ifndef OWN_RT_HOST_ONLY
+  if(xgroup::enabled()) { // expert-grouped routed sites: slot order, tile descriptors and tile count for top*M slots
+    xg_capacity=size_t(p.g.top)*M;
+    xg_order=allocate(0,"prefill:xg-order",xg_capacity*4,Category::scratch,Lifetime::transaction);
+    xg_tiles=allocate(0,"prefill:xg-tiles",xg_capacity*xgroup::desc_words*4,Category::scratch,Lifetime::transaction);
+    xg_count=allocate(0,"prefill:xg-count",64,Category::scratch,Lifetime::transaction);
+  }
+#endif
   prefill_positions=allocate(0,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
   prefill_tokens=allocate(0,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
   std::ostringstream o;o<<"{\"rows\":"<<M<<",\"roles\":"<<role_bytes.size()<<",\"buffers\":"<<prefill_role_of.size()
@@ -121,6 +130,26 @@ void prefill_native_site(const flash::Launch& l,int P0,int M) {
   }
   finish(0,site.submit(dev(0),site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);
 }
+// QSA select rows per native launch: its specialised scratch holds tokens x ceil(context/4) floats in the 8 MiB
+// operator scratch (128 rows at context 65536). Longer chunks run the native select in groups of at most that many rows,
+// each from row g's views exactly as the grouped attention below (position/token views give row g its own position;
+// shadows are viewed at row g), with the extent its last row admits. Each row's arithmetic is its single-row select.
+int prefill_select_rows() const {return std::max(1,int(size_t(8)*1024*1024/(size_t(4)*((size_t(p.g.context)+3)/4))));}
+void prefill_native_group(const flash::Launch& l,int P0,int g,int rows) {
+  auto& d=dev(0);const int saved_extent=context_extent;
+  context_extent=std::min(p.g.context,((P0+g+rows-1+32)/32)*32);
+  auto site=prepare_site(l);context_extent=saved_extent;
+  std::vector<Allocation> viewed;size_t k=0;
+  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){
+    if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(name);site.bindings.at(k)=shadow;site.spec.row_bytes[k]=uint32_t(prefill_row_bytes(name));
+      if(!d.row_views.count(shadow)){d.row_views[shadow]={shadow,prefill_row_bytes(name),false};viewed.push_back(shadow);}}
+    ++k;}
+  site.spec.tokens=rows;site.spec.tmp_row_bytes=4096*4;
+  d.view_row=g;
+  try {finish(0,site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);}
+  catch(...){d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);throw;}
+  d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
+}
 Allocation prefill_shadow(const std::string& name) const {return prefill_shadows.at(prefill_role_of.at(name)).id;}
 size_t prefill_row_bytes(const std::string& name) const {const auto& s=buffers[0].at(name);return s.n*flash::scalar_bytes(s.type);}
 // Rank 0 host inputs: per-row lookup rows (embedding, PLE) with the token history advanced row by row.
@@ -145,7 +174,67 @@ void prefill_linear(const flash::Launch& l,int M) {
     require(m.count==unsigned(p.g.top)&&m.routes&&m.status,"prefill routed site");
     m.routes=prefill_shadow(l.inputs[1]);m.status=prefill_shadow(l.outputs[1]);m.count=unsigned(p.g.top)*unsigned(M);
   } else {require(m.count==1&&!m.routes,"prefill dense site");m.tokens=unsigned(M);}
-  gsq_linear_matrix(l,m);
+  if(!(l.op=="routed_gemv"&&prefill_experts_site(l,m)))gsq_linear_matrix(l,m);
+  // Diagnostic only (OWNRT_PREFILL_ROUTE_DUMP=<file>): after each routed site, drain and append its M*top routes
+  // (record: u32 label length, label, u32 rows M, u32 slots, then slots x {expert_id,row_begin,row_count}).
+  static const char* route_dump=std::getenv("OWNRT_PREFILL_ROUTE_DUMP");
+  if(route_dump&&l.op=="routed_gemv") {
+    drain();auto raw=readback(0,m.routes,size_t(m.count)*sizeof(iq3::Route));
+    std::ofstream o(route_dump,std::ios::app|std::ios::binary);const uint32_t head[3]{uint32_t(l.label.size()),uint32_t(M),m.count};
+    o.write(reinterpret_cast<const char*>(head),4);o.write(l.label.data(),l.label.size());o.write(reinterpret_cast<const char*>(head+1),8);
+    o.write(reinterpret_cast<const char*>(raw.data()),raw.size());
+  }
+}
+// Expert-grouped routed site (OWNRT_PREFILL_EXPERTS=1, prefill_experts.hpp): the same decode values as the kernel that
+// gsq_linear_matrix would select for this site (IQ3_XXS block sites, gsqn packed rows, kopt routed rows), grouped by
+// expert so each expert row is decoded once per tile of slots. Returns false (existing path) for anything else.
+bool prefill_experts_site(const flash::Launch& l,const Matrix& m) {
+#ifdef OWN_RT_HOST_ONLY
+  (void)l;(void)m;return false;
+#else
+  if(!xgroup::enabled()||!xg_order)return false;
+  if(m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.tokens!=1||!m.routes||!m.status||!m.count||!m.experts)return false;
+  if((m.span&&m.span!=m.rows)||m.count>xg_capacity||!m.rows||m.rows>UINT32_MAX||!m.columns||m.columns>16384||m.columns%32)return false;
+  const unsigned t=unsigned(m.type);int family=-1;
+  if(dense_block_site(w,a,l))return false;
+  if(iq3_block_site(w,a,l))family=0;
+  else if(dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
+  else if(t==12||t==13||t==18||t==23||t==42)family=1;
+  else if(t==8||t==14||t==20||t==21||t==22)family=2;
+  else return false;
+  const auto fmt=iq3::layout(iq3::Type(t));if(!fmt.elements||m.columns%fmt.elements)return false;
+  if(family!=2&&t!=42&&m.columns%256)return false;
+  auto& d=dev(l.card);
+  if(reinterpret_cast<uintptr_t>(d.arena.row(m.x).pointer)%16||reinterpret_cast<uintptr_t>(d.arena.row(m.w).pointer)%16)return false;
+  static const char* names[]{"IQ3","ELEM","KOPT"};
+  const unsigned index=xgroup::config(names[family],xgroup::config_count,xgroup::default_tile(family,t));
+  if(index>=xgroup::config_count)return false;
+  const uint32_t rb=uint32_t(m.columns/fmt.elements*fmt.bytes),n=m.count,span=uint32_t(m.rows),k=uint32_t(m.columns);
+  const std::array<Allocation,8> ids{m.w,m.x,m.y,m.routes,m.status,xg_order,xg_tiles,xg_count};
+  std::pair<ownrt::Event,ownrt::Event> e;
+  using namespace xgroup;
+  if(family==0)e=issue<S32<Iq3Words>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);
+  else if(family==1){
+    switch(t){
+      case 12:e=issue<S32<Elem<12>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      case 13:e=issue<S32<Elem<13>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      case 18:e=issue<S32<Elem<18>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      case 23:e=issue<S32<Elem<23>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      default:e=issue<S32<Elem<42>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+    }
+  } else {
+    if(m.columns%8)return false;
+    switch(t){
+      case 8:e=issue<C8<Kopt<iq3::Type::Q8_0>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      case 14:e=issue<C8<Kopt<iq3::Type::Q6_K>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      case 20:e=issue<C8<Kopt<iq3::Type::IQ4_NL>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      case 21:e=issue<C8<Kopt<iq3::Type::IQ3_S>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+      default:e=issue<C8<Kopt<iq3::Type::IQ2_S>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
+    }
+  }
+  finish(l.card,{e.first,e.second,2},true);
+  return true;
+#endif
 }
 void prefill_set_views(bool on) {
   auto& d=dev(0);d.row_views.clear();d.view_row=-1;
@@ -181,7 +270,10 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
       const auto site_start=std::chrono::steady_clock::now();
       bool banked_native=false;
       if(l->op=="gemv"||l->op=="routed_gemv")prefill_linear(*l,M);
-      else if(prefill_native(*l)){prefill_native_site(*l,P0,M);banked_native=l->op=="gdn"||l->op=="conv";}
+      else if(prefill_native(*l)){
+        if(l->op=="qsa_select"&&M>prefill_select_rows()){const int G=prefill_select_rows();for(int g=0;g<M;g+=G)prefill_native_group(*l,P0,g,std::min(G,M-g));}
+        else prefill_native_site(*l,P0,M);
+        banked_native=l->op=="gdn"||l->op=="conv";}
       else if(l->op=="qsa_attention"&&prefill_attention_rows()>1) {
         // Grouped rows (OWNRT_PREFILL_ATTN_ROWS=T, T<=4): one admit/tiles/combine launch set per T consecutive rows,
         // from row g's views, with the extent of the group's last row. Each row keeps its own query, ids, slot count and

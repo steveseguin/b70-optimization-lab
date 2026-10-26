@@ -62,7 +62,7 @@ inline Config config(const fs::path& path,int context,int vocab){
  // already in the ranks' state); any other trailing data is refused.
  std::string extra;
  while(f>>extra){
-  if(extra=="prefill"){require(bool(f>>c.prefill)&&c.prefill>=0&&c.prefill<=64,"native config prefill trailer");}
+  if(extra=="prefill"){require(bool(f>>c.prefill)&&c.prefill>=0&&c.prefill<=pipeline::prefill::max_rows,"native config prefill trailer");}
   else if(extra=="start"){require(bool(f>>c.start)&&c.start>0&&c.start+2<=int(c.prompt.size()),"native config start trailer");}
   else require(false,"native config trailing data");
  }
