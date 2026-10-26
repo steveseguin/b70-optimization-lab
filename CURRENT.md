@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 26, 10:45 EDT — SC117 service on engine `5e44953236cc`: 56.96 tok/s exact (+15.4%), prompt reading 1.45× faster.**
+- Three merged exact lab wins:
+  - decode experts V2;
+  - dense decode GEMVs V2;
+  - expert-grouped prefill at 256-row chunks (`SC117_PREFILL_ROWS=256`).
+- Gates: 64K oracle and vs-4096 zero differences on both ranks; prefill 13/13 at 256 rows; continuation passed.
+- Suite exact: 49.38 → 56.96 tok/s. 10.7K test, ids identical: decode 57.9 tok/s; prompt read 71 → 49 s.
+- The first start refused cleanly: the service-path prefill caps were still 64. Fixed in `prefill_wire.hpp` and
+  `native_controller.hpp`. [Note](experiments/own-xpu-runtime/research/merge-b13/README.md).
+- Parked sessions from earlier builds were not carried over: the prefill-row change alters the session layout key.
+
 **October 26, ~10:00 EDT — SC117 service restored at the owner's request.**
 - The fault-guard baseline was re-recorded after a fresh check showed only the two reviewed card-27 lines.
 - Engine `1d72818cfe8c` is ready; gates passed.
