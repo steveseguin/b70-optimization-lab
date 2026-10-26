@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 26, 16:30 EDT — SC117 service on engine `96473c90783c`: 64.01 tok/s exact; decode at 10.7K 64.9 tok/s.**
+- `OWNRT_DECODE_NEXT2=1`: IQ3_XXS gate/up, four elements per item. Also HC gate and BF16 split rows.
+- Gates passed.
+- Suite since last night: 47.97 → 64.01 tok/s (+33%), every step bitwise exact.
+- Rank 0 now sets the pace. The next lever is a rank-0 profile; rank 0 cannot run in the lab driver.
+  [Result](experiments/own-xpu-runtime/research/decode-next2/RESULT.md).
+
 **October 26, 15:05 EDT — SC117 service on engine `ef3a2665ffe5`: 62.20 tok/s exact; decode at 10.7K 63.1 tok/s.**
 - `OWNRT_DECODE_NEXT=1`: packed Q8_0 shexpdown, Q6_K block rows, four-lane HC mix.
 - All gates passed.
