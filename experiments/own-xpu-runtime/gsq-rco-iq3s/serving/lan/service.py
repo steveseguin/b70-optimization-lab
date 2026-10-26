@@ -236,6 +236,9 @@ SESSION_READBACK = os.environ.get('SC117_SESSION_READBACK', '0') == '1'  # APPLY
 # 36 GDN states/histories, PLE history and bundle metadata), for admission before the real size is known.
 SESSION_TOKEN_BYTES = 64 * 1024
 SESSION_FIXED_BYTES = 160 * 1024**2
+# Opt-in second model id <MODEL_ID>-keeper: ctxkeeper's long-context policy in process (keeper.py; SC117_KEEPER_LIB,
+# SC117_KEEPER_DIR). Default off: the service, its model list and every request path are unchanged.
+KEEPER = os.environ.get('SC117_KEEPER', '0') == '1'
 
 
 def mem_available():
@@ -280,6 +283,17 @@ class Sessions:
         self.index = {}              # id -> dict(path, tokens, pending, identity, bytes, used)
         self.events = []             # last decisions (request summaries)
         self.stats = dict(parked=0, restored=0, park_skipped=0, park_refused=0, restore_refused=0, evicted=0)
+        self.pinned = set()          # ids LRU eviction skips (SC117_KEEPER: the head checkpoints of active conversations)
+
+    def pin(self, sid):
+        """Keep a parked session out of LRU eviction (it still counts toward the budget). False if it is not parked."""
+        if sid not in self.index:
+            return False
+        self.pinned.add(sid)
+        return True
+
+    def unpin(self, sid):
+        self.pinned.discard(sid)
 
     def note(self, kind, **fields):
         self.events = (self.events + [dict(kind=kind, **fields)])[-32:]
@@ -302,6 +316,7 @@ class Sessions:
                 continue
             self.index[m['id']] = dict(path=path, tokens=m['tokens'], pending=m['pending_token'], identity=m['identity'],
                                        bytes=m['bytes'], used=path.stat().st_mtime)
+        self.pinned &= set(self.index)
 
     def used_bytes(self):
         return sum(e['bytes'] for e in self.index.values())
@@ -317,7 +332,7 @@ class Sessions:
 
     def evict_one(self, keep=None):
         for sid, e in sorted(self.index.items(), key=lambda kv: kv[1]['used']):
-            if sid != keep and self.ops.session_delete(e['path']):
+            if sid != keep and sid not in self.pinned and self.ops.session_delete(e['path']):
                 del self.index[sid]
                 self.stats['evicted'] += 1
                 self.note('evicted', id=sid, bytes=e['bytes'])
@@ -388,6 +403,7 @@ class Sessions:
             self.note('restore-refused', id=entry['path'].name, reason=str(error), engine=error.engine)
             if 'locked' not in str(error) and self.ops.session_delete(entry['path']):
                 self.index.pop(entry['path'].name, None)
+                self.pinned.discard(entry['path'].name)
             raise
         entry['used'] = time.time()
         self.stats['restored'] += 1
@@ -416,6 +432,7 @@ class Engine:
         self.convo_parkable = False  # the held state came from a client request (sessions park only those)
         self.sessions = None         # Sessions when SC117_SESSIONS=1 (adapter6+); set in start()
         self.session_identity = None
+        self.storage_checks = []     # more stores counted in storage_ok (SC117_KEEPER: the keeper's state directory)
 
     def start(self):
         plan = A.build_plan(self.control / 'ranks', mini=False, max_new=128, seconds=NATIVE_SECONDS,
@@ -443,6 +460,10 @@ class Engine:
         need = EXTERNAL_FLOOR + META_RESERVE + (0 if self.dump_free() else DUMP_BYTES)
         if ext < need:
             return f'evidence disk free {ext} is below {need}'
+        for check in self.storage_checks:
+            reason = check()
+            if reason:
+                return reason
         return None
 
     def dump_free(self):
@@ -500,15 +521,18 @@ class Engine:
             shutil.rmtree(d)
         return out
 
-    def dump_buffers(self):
-        """Explicit full target-state DUMP on both ranks; per-buffer content hashes; dump removed after hashing."""
-        t, out = self.t, {}
+    def dump_buffers(self, prefix_ratio=0):
+        """Explicit full target-state DUMP on both ranks; per-buffer content hashes; dump removed after hashing. With
+        prefix_ratio, also returns grown_prefix_hashes of each rank's dump."""
+        t, out, grown = self.t, {}, {}
         for rank in (0, 1):
             t.call(rank, A.BASE.DUMP, position=2147483647)
             d = t.request_output / f'rank{rank}' / 'state-2147483647'
             out[f'rank{rank}'] = {k: v for k, v in A.BUNDLE.read_state(d).items() if k != 'state.json'}
+            if prefix_ratio:
+                grown[f'rank{rank}'] = grown_prefix_hashes(d, prefix_ratio)
             shutil.rmtree(d)
-        return out
+        return (out, grown) if prefix_ratio else out
 
     def session_boundary(self, prompt, held):
         """Sessions on, the prompt does not continue the live state: park the live conversation before the RESET that
@@ -561,12 +585,14 @@ class Engine:
         return len(h)
 
     def generate(self, prompt, max_new, label, on_token=None, mode='mtp', force_reset=False, prefill=None,
-                 continue_ok=False):
+                 continue_ok=False, parkable=None):
         """Caller holds self.lock. Returns (tokens, result-summary).
 
         With the streaming build, rank0 appends each target-confirmed token to
         confirmed-tokens.jsonl; we tail it from the transport's health callback
         and the final list must equal native-result.json exactly.
+        parkable=False: the state this request leaves is not parked when a RESET evicts it (keeper-internal states that
+        no later prompt extends); None keeps the rule (continue_ok client requests are parked).
         """
         t = self.t
         self.monitor.check()
@@ -627,7 +653,7 @@ class Engine:
         require(0 < len(tokens) <= max_new and all(0 <= x < 248320 for x in tokens), 'native output bounds')
         if mode == 'mtp':  # the state now holds prompt + tokens[:-1]; the next turn may continue it
             self.convo, self.convo_last = list(prompt) + tokens[:-1], tokens[-1]
-            self.convo_parkable = bool(continue_ok and not force_reset)
+            self.convo_parkable = bool(continue_ok and not force_reset and parkable is not False)
         stats = r['stats']
         summary = dict(request=self.count, label=label, mode=mode, streamed=stream is not None, prompt_tokens=len(prompt), output_tokens=len(tokens),
                        mtp=dict(guesses=stats['guesses'], hits=stats['hits'], misses=stats['misses']),
@@ -717,6 +743,45 @@ def split_differences(want, got, split, oracle_split=24):
     return {r: sorted(v) for r, v in out.items()}
 
 
+def grown_prefix_hashes(directory, ratio):
+    """For a DUMP read by read_state (which verified every byte): per buffer whose size divides by ratio and whose bytes
+    after the first 1/ratio are all zero, the hash of that first part. A context-sized buffer (position-major KV,
+    pooled keys, select scores) at ratio times the oracle's context then holds the oracle's bytes as its prefix."""
+    out = {}
+    lines = (Path(directory) / 'state-index.tsv').read_text().split('\n')
+    with open(Path(directory) / 'state.bundle', 'rb') as f:
+        for line in lines[1:]:
+            if not line:
+                continue
+            name, start, length, _ = line.split('\t')
+            start, length = int(start), int(length)
+            if length % ratio:
+                continue
+            f.seek(start)
+            head = f.read(length // ratio)
+            left, zero = length - len(head), True
+            while left and zero:
+                b = f.read(min(1 << 24, left))
+                zero = len(b) > 0 and b == bytes(len(b))
+                left -= len(b)
+            if zero:
+                out[name] = hashlib.sha256(head).hexdigest()
+    return out
+
+
+def cross_context_state(want, got, grown):
+    """The state at a larger context as the 4096-context oracle would see it: a buffer keeps its full hash when that
+    matches the oracle's entry (or its alternate bank) for the name; otherwise, when its tail is zero, the hash of its
+    4096-context prefix. The usual exact or split comparison then applies unchanged."""
+    out = {}
+    for r, table in got.items():
+        out[r] = {}
+        for k, h in table.items():
+            seen = {w.get(k) for w in want.values()} | {w.get('alternate-' + k) for w in want.values()}
+            out[r][k] = h if h in seen or k not in grown[r] else grown[r][k]
+    return out
+
+
 PERSISTENT = re.compile(r'(^alternate-|\.(keys|values|raw|pooled|state)\.bin$|history\.bin$|^position\.bin$|^token_history\.bin$)')
 
 
@@ -798,7 +863,7 @@ def prefill_gate(engine, rows):
     return dict(passed=passed, binary_sha256=engine.t.plan['binary_sha256'], rows=rows, cases=report, utc=utc())
 
 
-def make_handler(state, engine, chat, key):
+def make_handler(state, engine, chat, key, keeper=None):
     class Handler(http.server.BaseHTTPRequestHandler):
         protocol_version = 'HTTP/1.1'
         server_version = 'sc117-ownrt'
@@ -838,13 +903,21 @@ def make_handler(state, engine, chat, key):
             path = self.path.split('?', 1)[0]
             if path in ('/health', '/v1/health'):
                 code = 200 if state.phase == 'ready' else 503
-                self.reply(code, {'status': state.phase, 'detail': state.detail, 'waiting': state.waiting,
-                                  'activations': engine.activations() if engine.t is not None else None,
-                                  'prefill_rows': engine.prefill_rows,
-                                  'requests_served': engine.count, 'model': CHAT.MODEL_ID})
+                health = {'status': state.phase, 'detail': state.detail, 'waiting': state.waiting,
+                          'activations': engine.activations() if engine.t is not None else None,
+                          'prefill_rows': engine.prefill_rows,
+                          'requests_served': engine.count, 'model': CHAT.MODEL_ID}
+                if keeper is not None:
+                    health['keeper'] = keeper.health()
+                self.reply(code, health)
             elif path == '/v1/models':
-                self.reply(200, {'object': 'list', 'data': [{'id': CHAT.MODEL_ID, 'object': 'model', 'owned_by': 'ownrt',
-                                 'context_length': CHAT.CONTEXT}]})
+                models = [{'id': CHAT.MODEL_ID, 'object': 'model', 'owned_by': 'ownrt', 'context_length': CHAT.CONTEXT}]
+                if keeper is not None:
+                    models.append({'id': keeper.model_id, 'object': 'model', 'owned_by': 'ownrt', 'context_length': CHAT.CONTEXT,
+                                   'keeper': 'ctxkeeper long-context view: notes, archive, recall; unbounded conversations'})
+                self.reply(200, {'object': 'list', 'data': models})
+            elif path == '/keeper/status' and keeper is not None:
+                self.reply(200, keeper.status())
             else:
                 self.error(404, 'not found')
 
@@ -857,11 +930,14 @@ def make_handler(state, engine, chat, key):
                 n = int(self.headers.get('Content-Length', '0'))
                 require(0 < n <= 64 * 1024**2, 'body size')  # agents resend whole histories
                 body = json.loads(self.rfile.read(n))
-                req = CHAT.parse(body, chat)
+                to_keeper = keeper is not None and isinstance(body, dict) and body.get('model') == keeper.model_id
+                req = CHAT.validate(body) if to_keeper else CHAT.parse(body, chat)
             except CHAT.RequestError as e:
                 return self.error(400, str(e))
             except Exception as e:
                 return self.error(400, 'bad request: ' + str(e))
+            if to_keeper:
+                return self.keeper_post(body, req)
             if state.phase != 'ready':
                 return self.error(503, f'service {state.phase}: {state.detail}', 'unavailable')
             with state.lock:
@@ -990,6 +1066,93 @@ def make_handler(state, engine, chat, key):
                 self.send_bytes(b'data: ' + json.dumps({'error': {'message': message, 'code': code}}).encode() + b'\n\n')
             except OSError:
                 pass
+
+        def keeper_post(self, body, opts):
+            """A request for the keeper model (SC117_KEEPER=1): the same admission, queue, lock and storage rules as a
+            client request; ctxkeeper's internal calls run under this lock; SSE keepalives while they do; the reply is
+            sent whole at the end (the keeper must first see whether the model searched its archive)."""
+            if state.phase != 'ready':
+                return self.error(503, f'service {state.phase}: {state.detail}', 'unavailable')
+            with state.lock:
+                if state.waiting >= QUEUE_LIMIT:
+                    return self.error(429, 'queue full; one generation runs at a time', 'rate_limit')
+                state.waiting += 1
+            streaming = opts['stream']
+            self.wlock = threading.Lock()
+            queued = True
+            header = self.headers.get('x-session-affinity') or self.headers.get('x-ctx-session')
+            try:
+                if streaming:
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/event-stream')
+                    self.send_header('Cache-Control', 'no-cache')
+                    self.send_header('Connection', 'close')
+                    self.end_headers()
+                    self.close_connection = True
+                got = False
+                while not got:
+                    got = engine.lock.acquire(timeout=10)
+                    if not got and streaming:
+                        self.send_bytes(b': queued\n\n')
+                    if state.phase != 'ready':
+                        if got:
+                            engine.lock.release()
+                        return self.stream_error(streaming, 503, f'service {state.phase}')
+                handed_over = False
+                try:
+                    with state.lock:
+                        state.waiting -= 1
+                        queued = False
+                    reason = engine.storage_ok()
+                    if reason:
+                        return self.stream_error(streaming, 507, reason)
+                    done = threading.Event()
+
+                    def keepalive():
+                        while not done.wait(keeper.KEEPALIVE_SECONDS):
+                            try:
+                                self.send_bytes(b': keeper\n\n')
+                            except OSError:
+                                return
+                    ticker = threading.Thread(target=keepalive, daemon=True) if streaming else None
+                    if ticker is not None:
+                        ticker.start()
+                    try:
+                        resp, _ = keeper.serve(body, header)
+                    except OSError as e:  # the keeper's own files (archive, notes), not the client socket
+                        raise RuntimeError('keeper state: ' + repr(e)) from e
+                    finally:
+                        done.set()
+                        if ticker is not None:
+                            ticker.join()
+                finally:
+                    # A notes job the reply made due keeps the engine lock until it is done (it extends this state).
+                    post = keeper.post_reply()
+                    if post is not None:
+                        threading.Thread(target=keeper.finish_post_reply, args=(post, engine.lock), daemon=True).start()
+                        handed_over = True
+                    if not handed_over:
+                        engine.lock.release()
+            except keeper.Halt as h:
+                return self.stream_error(streaming, 503, 'engine halted: ' + str(h))
+            except (keeper.TooLarge, CHAT.RequestError) as e:
+                return self.stream_error(streaming, 400, str(e))
+            except OSError:
+                return
+            except Exception as e:
+                traceback.print_exc()
+                return self.stream_error(streaming, 400 if isinstance(e, ValueError) else 500, 'keeper: ' + str(e)[:1000])
+            finally:
+                if queued:
+                    with state.lock:
+                        state.waiting -= 1
+            if not streaming:
+                return self.reply(200, resp)
+            try:
+                for raw in keeper.sse(resp, opts['include_usage']):
+                    self.send_bytes(raw)
+            except OSError:
+                pass
     return Handler
 
 
@@ -1045,6 +1208,14 @@ def main():
     status = dict(schema='sc117.lan.run.v1', started=utc(), pid=os.getpid(), bind=a.bind, interface=interface, port=a.port,
                   control=str(control), evidence=str(evidence), api_key_required=bool(key), lifetime_hours=a.lifetime_hours,
                   tokenizer=chat.authority, model=str(A.MODEL), draft_model=str(A.DRAFT_MODEL))
+    keeper = None
+    if KEEPER:  # the keeper model id; its store counts in storage_ok, its calls run under the engine lock
+        KM = load(P / 'keeper.py', 'sc117_lan_keeper')
+        keeper = KM.KeeperService(engine, CHAT, chat, state, root=KM.DIR, floors=session_floors(control, evidence),
+                                  meminfo=mem_available, mem_floor=MEM_ONGOING + SESSION_MEMORY_MARGIN)
+        keeper.ram = fs_type(keeper.root) in ('tmpfs', 'ramfs')
+        status['keeper'] = dict(model=keeper.model_id, directory=str(keeper.root), library=str(KM.LIB),
+                                head_checkpoints=SESSIONS)  # the checkpoints need SC117_SESSIONS=1
     save(control / 'run.json', status)
     faults = []
     fault_lock = threading.Lock()
@@ -1072,7 +1243,7 @@ def main():
     signal.signal(signal.SIGTERM, on_signal)
     signal.signal(signal.SIGINT, on_signal)
 
-    handler = make_handler(state, engine, chat, key)
+    handler = make_handler(state, engine, chat, key, keeper)
     servers = [Server((a.bind, a.port), handler), Server(('127.0.0.1', a.port), handler)]
     for s in servers:
         threading.Thread(target=s.serve_forever, daemon=True).start()
@@ -1129,16 +1300,32 @@ def main():
             # Decode-path exactness: after a RESET and the fixed self-test, every target state buffer on both ranks must
             # equal the pinned F32 oracle (recorded once from a gated binary). Kernel changes that claim to be exact must
             # pass this before anything else.
+            ratio = CHAT.CONTEXT // 4096
             with engine.lock:
                 engine.generate(st['prompt_tokens'], st['max_new'], 'f32-state-check', force_reset=True, prefill=0)
-                f32_state = engine.dump_buffers()
+                if ratio > 1:
+                    f32_state, grown = engine.dump_buffers(ratio)
+                else:
+                    f32_state = engine.dump_buffers()
+            split = int(os.environ.get('SC117_TARGET_SPLIT', '24'))
+            if ratio > 1:
+                # Every startup at a larger context: the state must equal the 4096-context oracle, buffer by buffer,
+                # with context-sized buffers holding the oracle's bytes as their prefix and zeros after it.
+                base = json.loads((P / 'evidence' / 'f32-state-oracle.json').read_text())
+                seen = cross_context_state(base['state'], f32_state, grown)
+                differ = (split_differences(base['state'], seen, split) if split != 24 else
+                          {r: sorted(k for k in base['state'][r] if base['state'][r][k] != seen[r].get(k)) for r in base['state']})
+                grew = {r: sum(seen[r][k] != f32_state[r][k] for k in f32_state[r]) for r in f32_state}
+                (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}-ctx{CHAT.CONTEXT}-vs4096{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(
+                    dict(binary_sha256=engine.t.plan['binary_sha256'], oracle_binary_sha256=base['binary_sha256'], context=CHAT.CONTEXT,
+                         grown_prefix_buffers=grew, differences=differ, utc=utc()), indent=2) + '\n')
+                require(not any(differ.values()), f"F32 state at context {CHAT.CONTEXT} differs from the 4096 oracle {base['binary_sha256'][:12]}: {differ}")
             # Context-sized buffers (KV, pooled keys, attention scratch) change extent with the context, so each
             # context has its own oracle; a new one is recorded once, after the self-test tokens above matched the
             # binary's pinned record, and the 12-prompt suite must then reproduce the 4096-context outputs.
             oracle = P / 'evidence' / ('f32-state-oracle.json' if CHAT.CONTEXT == 4096 else f'f32-state-oracle-ctx{CHAT.CONTEXT}.json')
             if oracle.exists():
                 want = json.loads(oracle.read_text())
-                split = int(os.environ.get('SC117_TARGET_SPLIT', '24'))
                 differ = (split_differences(want['state'], f32_state, split) if split != 24 else
                           {r: sorted(k for k in want['state'][r] if want['state'][r][k] != f32_state[r].get(k)) for r in want['state']})
                 (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(

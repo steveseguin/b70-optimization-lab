@@ -999,5 +999,551 @@ class SessionIntegrationTests(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in root.iterdir()), [])
 
 
+# ---------------------------------------------------------------- keeper model (SC117_KEEPER=1), CPU only
+import re
+K = load(P / 'keeper.py', 'sc117_lan_keeper_test')
+IM_START, IM_END = CHAT.encode('<|im_start|>')[0], C.EOS[1]
+INPLACE = '[[Message from the context keeper, not part of the task]]'
+TURNS_OUT = '=== TURNS BEING MOVED OUT ==='
+KSYSTEM = 'You are a careful reader. ' + ' '.join(f'Guideline {i}: read every part closely and keep a record of it.' for i in range(12))
+BASH = [{'type': 'function', 'function': {'name': 'bash', 'description': 'Run a shell command.',
+         'parameters': {'type': 'object', 'properties': {'command': {'type': 'string'}}, 'required': ['command']}}}]
+
+
+def kpart(k, words=60):
+    fact = ' The codename is HELIOTROPE.' if k == 1 else ''
+    return f'Part {k}:{fact} ' + ' '.join(f'sentence {k}.{i} talks about the weather in town number {i}.' for i in range(words // 10))
+
+
+def decoded(ids):
+    return CHAT.tok.decode(ids, skip_special_tokens=False)
+
+
+class ScriptModel:
+    """Answers from the decoded prompt, like ctxkeeper's scripted test models: notes in the layout asked for, a `recall`
+    call for a fact no longer in view (then the answer from the search result), a bash call when it has that tool,
+    otherwise a short confirmation; with thinking on, a line of reasoning first. A one-token request (the head's split
+    read) gets `head_token` (<|im_start|>, the view's next token)."""
+
+    def __init__(self):
+        self.fail, self.delay, self.head_token = None, 0.0, IM_START
+
+    def __call__(self, prompt, count):
+        time.sleep(self.delay)
+        if count == 1:
+            return [self.head_token]
+        text = decoded(prompt)
+        last = text.rsplit('<|im_start|>user\n', 1)[-1]
+        if self.fail and self.fail in last:
+            raise RuntimeError('rank failed')
+        parts = sorted({int(x) for x in re.findall(r'Part (\d+):', text)})
+        if INPLACE in last:
+            first = '[[NOTES kept' not in text
+            reply = ('NEW RULES\n' + ('- Answer briefly.' if first else '(none)') + '\nCHANGES\n'
+                     + ('\n'.join(f'part{k}: received' for k in parts) or '(none)') + '\nOPEN\n- keep reading')
+        elif TURNS_OUT in last:
+            reply = 'RULES\n- Answer briefly.\nSTATE\n- parts: received\nOPEN\n'
+        else:
+            q = text.rfind('What was the codename')
+            tail = text[q:] if q >= 0 else ''
+            if q >= 0 and '<tool_response>' in tail:
+                reply = 'The codename was HELIOTROPE.' if 'HELIOTROPE' in tail else 'Not found.'
+            elif q >= 0 and 'HELIOTROPE' in text:
+                reply = 'The codename was HELIOTROPE.'
+            elif q >= 0:
+                reply = '<tool_call>\n<function=recall>\n<parameter=pattern>\ncodename\n</parameter>\n</function>\n</tool_call>'
+            elif '"name": "bash"' in text:
+                reply = ('<tool_call>\n<function=bash>\n<parameter=command>\n'
+                         f'cat part{parts[-1] + 1 if parts else 1}\n</parameter>\n</function>\n</tool_call>')
+            else:
+                reply = f'Noted part {parts[-1] if parts else 0}.'
+        if text.endswith('<think>\n'):
+            reply = f'I should confirm part {parts[-1] if parts else 0}.\n</think>\n\n' + reply
+        return CHAT.encode(reply) + [IM_END]
+
+
+class TrackingOps(SessionOps):
+    """The in-memory session store, also moving the rig's rank state on restore (what the ranks would hold)."""
+
+    def __init__(self, rig):
+        super().__init__()
+        self.rig = rig
+
+    def session_save(self, t, root, tokens, pending):
+        assert list(tokens) == self.rig.held and pending == self.rig.pending, 'a park saves exactly the held state'
+        return super().session_save(t, root, tokens, pending)
+
+    def session_restore(self, t, path, destination, readback=False):
+        r = super().session_restore(t, path, destination, readback)
+        self.rig.held, self.rig.pending = list(r['tokens']), r['pending_token']
+        self.rig.events.append(('restore', len(r['tokens'])))
+        return r
+
+
+class KeeperRig:
+    """The real Engine.generate (continuation, park on eviction, longest-prefix restore) over fake ranks that hold an
+    exact token state: every native run checks that a continuation starts from exactly what the ranks hold and that a
+    fresh read follows a RESET. The keeper runs on it with a small window (`context`)."""
+
+    def __init__(self, test, context=4096, model=None, budget=10**12, **policy):
+        self.tmp = Path(tempfile.mkdtemp())
+        test.addCleanup(shutil.rmtree, self.tmp)
+        out = self.tmp / 'evidence'
+        out.mkdir()
+        self.held, self.pending, self.runs, self.events = [], None, [], []
+        self.model = model or ScriptModel()
+        rig = self
+
+        class Tr:
+            pass
+        t = Tr()
+        t.out, t.request_output, t.seq = out, out, [0, 0]
+        t.check_alive = lambda: None
+
+        def fake_reset(tr, dest):
+            dest.mkdir()
+            tr.request_output = dest
+            rig.held, rig.pending = [], None
+            rig.events.append(('reset',))
+
+        def fake_redirect(tr, dest):
+            dest.mkdir()
+            tr.request_output = dest
+            rig.events.append(('redirect',))
+
+        class NC:
+            def __init__(self, tr, draft, overlap, dumps, prefill=None, start=0):
+                self.start = start
+
+            def run(self, prompt, count, eos):
+                prompt = list(prompt)
+                if self.start:
+                    assert rig.held == prompt[:self.start] and prompt[self.start] == rig.pending, 'continue only what the ranks hold'
+                else:
+                    assert rig.held == [], 'a fresh read starts after a reset'
+                tokens = rig.model(prompt, count)[:count]
+                rig.runs.append(dict(prompt=prompt, start=self.start, count=count, tokens=tokens))
+                rig.events.append(('run', len(prompt), self.start))
+                rig.held, rig.pending = prompt + tokens[:-1], tokens[-1]
+                return dict(tokens=tokens, stats=dict(guesses=0, hits=0, misses=0), prompt_wall_ms=1.0, decode_wall_ms=1.0)
+        old = (S.A.reset, getattr(S.A, 'redirect', None), getattr(S.A, 'NativeController', None))
+        S.A.reset, S.A.redirect, S.A.NativeController = fake_reset, fake_redirect, NC
+
+        def restore():
+            S.A.reset = old[0]
+            for name, value in (('redirect', old[1]), ('NativeController', old[2])):
+                if value is None:
+                    delattr(S.A, name)
+                else:
+                    setattr(S.A, name, value)
+        test.addCleanup(restore)
+        self.ops = TrackingOps(self)
+        e = S.Engine(out, out, type('M', (), {'check': lambda self: None})())
+        e.t, e.continuation, e.session_identity = t, True, {'engine': 1}
+        e.sessions = S.Sessions(self.tmp / 'sessions', budget, self.ops, meminfo=lambda: 10**15, ram=False)
+        e.sessions.prepare({'engine': 1})
+        self.engine = e
+        self.state = S.State()
+        self.state.phase = 'ready'
+        self.faults = []
+
+        def fault(error):
+            self.faults.append(error)
+            self.state.phase = 'halted'
+        self.state.fault = fault
+        settings = dict(headroom=100, inplace_tokens=600)
+        settings.update(policy)
+        self.svc = K.KeeperService(e, C, CHAT, self.state, root=self.tmp / 'keeper', context=context, reserve=64,
+                                   min_free=0, **settings)
+
+    def opening(self, tools=None):
+        msgs = [{'role': 'system', 'content': KSYSTEM}, {'role': 'user', 'content': 'Read the parts I send and confirm each one.'}]
+        return msgs
+
+    def send(self, msgs, header='conv-1', max_tokens=48, **extra):
+        body = dict({'model': self.svc.model_id, 'messages': msgs, 'max_tokens': max_tokens}, **extra)
+        resp, s = self.svc.serve(body, header)
+        thread = self.svc.post_reply()
+        if thread is not None:
+            thread.join()
+        return resp, s
+
+    def talk(self, turns, msgs=None, first=1, header='conv-1', **kw):
+        msgs = msgs if msgs is not None else self.opening()
+        out = []
+        for k in range(first, first + turns):
+            msgs.append({'role': 'user', 'content': kpart(k)})
+            resp, s = self.send(msgs, header, **kw)
+            msgs.append(resp['choices'][0]['message'])
+            out.append(resp)
+        return msgs, out, s
+
+    def head(self):
+        """(tokens, id) of the conversation's head checkpoint (the first one parked)."""
+        saves = [c for c in self.ops.calls if c[0] == 'save']
+        return saves[0][1], next(iter(self.ops.saved))
+
+    def notes_runs(self):
+        return [r for r in self.runs if INPLACE in decoded(r['prompt']).rsplit('<|im_start|>user\n', 1)[-1]]
+
+
+class KeeperOffTests(unittest.TestCase):
+    def test_off_by_default_and_the_plain_path_is_unchanged(self):
+        self.assertFalse(S.KEEPER)
+        engine = FakeEngine()
+        state = S.State()
+        state.phase = 'ready'
+        state.fault = lambda e: None
+        server = S.Server(('127.0.0.1', 0), S.make_handler(state, engine, CHAT, None))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.shutdown)
+        c = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=30)
+        c.request('GET', '/v1/models')
+        self.assertEqual([m['id'] for m in json.loads(c.getresponse().read())['data']], [C.MODEL_ID])
+        c.request('GET', '/keeper/status')
+        r = c.getresponse()
+        r.read()
+        self.assertEqual(r.status, 404)
+        c = http.client.HTTPConnection('127.0.0.1', server.server_address[1], timeout=30)
+        c.request('POST', '/v1/chat/completions', json.dumps({'model': C.MODEL_ID + K.SUFFIX, 'messages': [{'role': 'user', 'content': 'x'}]}),
+                  {'Content-Type': 'application/json'})
+        self.assertEqual(c.getresponse().status, 200)       # without the keeper any model name is the plain model
+        c.close()
+        self.assertEqual(len(engine.calls), 1)
+        self.assertTrue(issubclass(K.KeeperHalt, BaseException) and not issubclass(K.KeeperHalt, Exception))
+
+
+class KeeperTests(unittest.TestCase):
+    def setUp(self):
+        old = threading.excepthook
+        threading.excepthook = lambda args: None if issubclass(args.exc_type, K.KeeperHalt) else old(args)
+        self.addCleanup(setattr, threading, 'excepthook', old)
+        for name in ('ROOT_ONGOING', 'EXTERNAL_FLOOR', 'META_RESERVE', 'DUMP_BYTES'):   # host disks are not under test
+            self.addCleanup(setattr, S, name, getattr(S, name))
+            setattr(S, name, 0)
+
+    def serve_http(self, rig):
+        server = S.Server(('127.0.0.1', 0), S.make_handler(rig.state, rig.engine, CHAT, None, keeper=rig.svc))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.shutdown)
+        return server.server_address[1]
+
+    def post(self, port, body, headers=None):
+        c = http.client.HTTPConnection('127.0.0.1', port, timeout=60)
+        c.request('POST', '/v1/chat/completions', json.dumps(body), {'Content-Type': 'application/json', **(headers or {})})
+        r = c.getresponse()
+        return r.status, r.read().decode()
+
+    def test_head_split_read_parks_pins_and_the_request_continues_from_it(self):
+        rig = KeeperRig(self)
+        msgs, (resp,), s = rig.talk(1)
+        n, sid = rig.head()
+        runs = [e for e in rig.events if e[0] != 'redirect']
+        self.assertEqual(runs, [('run', n, 0), ('run', len(rig.runs[1]['prompt']), n)])   # split read, then continue
+        self.assertEqual(rig.runs[0]['count'], 1)
+        self.assertEqual(rig.ops.calls, [('save', n)])
+        self.assertIn(sid, rig.engine.sessions.pinned)
+        self.assertEqual(rig.ops.saved[sid]['tokens'], C.prefix_ids(dict(messages=K.ck.with_memory_note(msgs[:2]), tools=[K.ck.RECALL_TOOL],
+                                                                          chat_template_kwargs=dict(enable_thinking=False, reasoning_effort='medium')), CHAT, 2))
+        self.assertEqual(rig.ops.saved[sid]['pending_token'], IM_START)
+        self.assertEqual(resp['usage']['prompt_tokens_details']['cached_tokens'], n)
+        calls = resp['ownrt']['keeper']['calls']
+        self.assertEqual([c['kind'] for c in calls], ['head', 'main'])
+        self.assertEqual(calls[1]['head']['event'], 'parked')
+        self.assertEqual(resp['model'], C.MODEL_ID + K.SUFFIX)
+
+    def test_cuts_restore_the_pinned_head_and_read_only_notes_and_recent_turns(self):
+        rig = KeeperRig(self)
+        msgs, resps, s = rig.talk(22)
+        n, sid = rig.head()
+        self.assertGreaterEqual(s.state['inplace_cuts'], 3)
+        self.assertEqual(s.state['cuts'], s.state['inplace_cuts'])             # the ordinary cut never had to run
+        self.assertNotIn(('reset',), rig.events)                               # every call continued or restored
+        self.assertEqual([c for c in rig.ops.calls if c[0] == 'save'], [('save', n)])   # one park: the head
+        restored = [i for i, e in enumerate(rig.events) if e[0] == 'restore']
+        self.assertEqual(len(restored), s.state['inplace_cuts'])               # once per cut, and only then
+        for i in restored:
+            self.assertEqual(rig.events[i], ('restore', n))
+            run = rig.events[i + 1]
+            self.assertEqual(run[2], n)                                        # the main call reads from the head on
+            prompt = next(r['prompt'] for r in rig.runs if len(r['prompt']) == run[1] and r['start'] == n)
+            self.assertTrue(decoded(prompt[n:]).startswith('<|im_start|>user\n[[NOTES kept by the context keeper'))
+        heads = [c['head']['event'] for r in resps for c in r['ownrt']['keeper']['calls'] if c.get('head')]
+        self.assertEqual(heads, ['parked'] + ['pinned'] * s.state['inplace_cuts'])
+        # The ordinary continuation between cuts: the cached prefix is the whole previous state.
+        main = [r['ownrt']['keeper']['calls'][-1] for r in resps]
+        for a, b in zip(main, main[1:]):
+            if b['cached_tokens'] != n:
+                self.assertEqual(b['cached_tokens'], a['prompt_tokens'] + a['output_tokens'] - 1)
+        # Under LRU pressure the pinned head stays; other parked states go first.
+        store = rig.engine.sessions
+        store.budget = store.used_bytes() + 1
+        rig.ops.saved['x' * 32] = dict(id='x' * 32, tokens=[1] * 300, pending_token=2, identity={'engine': 1}, bytes=10, position=300)
+        store.index['x' * 32] = dict(path=store.root / ('x' * 32), tokens=[1] * 300, pending=2, identity={'engine': 1}, bytes=10, used=0.0)
+        store.index[sid]['used'] = -1.0                                        # the head is the least recently used
+        self.assertTrue(store.evict_one())
+        self.assertIn(sid, store.index)
+        self.assertNotIn('x' * 32, store.index)
+        self.assertFalse(store.evict_one())                                    # only pinned entries are left
+
+    def test_notes_call_extends_the_live_state_right_after_the_reply(self):
+        rig = KeeperRig(self)
+        msgs, resps, s = rig.talk(16)
+        notes = rig.notes_runs()
+        self.assertGreaterEqual(len(notes), 2)
+        for r in notes:
+            i = rig.runs.index(r)
+            main = rig.runs[i - 1]                                             # the reply that made the notes due
+            self.assertEqual(r['start'], len(main['prompt']) + len(main['tokens']) - 1)
+            self.assertEqual(r['prompt'][:r['start']], main['prompt'] + main['tokens'][:-1])
+            j = rig.events.index(('run', len(r['prompt']), r['start']))
+            self.assertEqual(rig.events[j - 1], ('redirect',))                 # no RESET between the reply and its notes
+            text = decoded(r['prompt'][r['start']:])
+            self.assertTrue(text.startswith('<|im_end|>\n<|im_start|>user\n' + INPLACE))
+            self.assertIn(K.TAIL_NOTE.strip(), text)
+            self.assertTrue(text.endswith('<think>\n\n</think>\n\n'))           # notes without thinking
+        # each notes result is applied by the next request (ctxkeeper's freshness rules), which restores the head
+        self.assertEqual(s.state['async_applied'], len(notes))
+        self.assertEqual(s.state['inplace_cuts'], len(notes))
+        later = [r['ownrt']['keeper'] for r in resps if r['ownrt']['keeper']['previous_post_reply']]
+        self.assertEqual([c['kind'] for k in later for c in k['previous_post_reply']], ['notes'] * len(notes))
+        self.assertTrue(all(c['cached_tokens'] > 0 for k in later for c in k['previous_post_reply']))
+
+    def test_thinking_main_calls_and_notes_without_thinking_share_the_live_state(self):
+        rig = KeeperRig(self)
+        msgs, resps, s = rig.talk(10, chat_template_kwargs={'enable_thinking': True})
+        self.assertTrue(all(r['choices'][0]['message'].get('reasoning_content') for r in resps))
+        notes = rig.notes_runs()
+        self.assertTrue(notes)
+        for r in notes:
+            main = rig.runs[rig.runs.index(r) - 1]
+            self.assertTrue(decoded(main['prompt']).endswith('<think>\n'))
+            self.assertEqual(r['start'], len(main['prompt']) + len(main['tokens']) - 1)
+        self.assertNotIn(('reset',), rig.events)
+
+    def test_recall_is_answered_inside_continues_its_round_and_never_reaches_the_client(self):
+        rig = KeeperRig(self)
+        msgs, _, s = rig.talk(8)
+        self.assertNotIn('HELIOTROPE', s.state['notes'])
+        self.assertGreater(s.state['cut'], 2)                                  # part 1 is in the archive only
+        msgs.append({'role': 'user', 'content': 'What was the codename in part 1?'})
+        resp, s = rig.send(msgs)
+        msg = resp['choices'][0]['message']
+        self.assertEqual(msg['content'], 'The codename was HELIOTROPE.')
+        self.assertNotIn('tool_calls', msg)
+        self.assertEqual(resp['choices'][0]['finish_reason'], 'stop')
+        self.assertEqual(s.state['recalls'], 1)
+        calls = resp['ownrt']['keeper']['calls']
+        self.assertEqual([c['kind'] for c in calls], ['main', 'main'])
+        self.assertEqual(calls[1]['cached_tokens'], calls[0]['prompt_tokens'] + calls[0]['output_tokens'] - 1)
+        search = decoded(rig.runs[-1]['prompt'][calls[1]['cached_tokens']:])
+        self.assertIn('<tool_response>', search)
+        self.assertIn('HELIOTROPE', search)
+        # Over HTTP, streamed: the search never shows.
+        port = self.serve_http(rig)
+        msgs.append(msg)
+        msgs.append({'role': 'user', 'content': 'What was the codename in part 1? Check again.'})
+        code, raw = self.post(port, {'model': rig.svc.model_id, 'messages': msgs, 'max_tokens': 48, 'stream': True},
+                              {'x-session-affinity': 'conv-1'})
+        self.assertEqual(code, 200)
+        self.assertNotIn('recall', raw.replace('"recalls"', ''))
+        self.assertNotIn('tool_call', raw)
+        self.assertIn('HELIOTROPE', raw)
+
+    def test_streaming_sends_keepalives_then_the_whole_reply(self):
+        rig = KeeperRig(self)
+        rig.model.delay = 0.25
+        rig.svc.KEEPALIVE_SECONDS = 0.05
+        port = self.serve_http(rig)
+        body = {'model': rig.svc.model_id, 'stream': True, 'stream_options': {'include_usage': True}, 'max_tokens': 48,
+                'messages': rig.opening() + [{'role': 'user', 'content': kpart(1)}]}
+        code, raw = self.post(port, body, {'x-session-affinity': 'stream-1'})
+        self.assertEqual(code, 200)
+        self.assertGreaterEqual(raw.count(': keeper\n\n'), 2)
+        events = [json.loads(l[6:]) for l in raw.splitlines() if l.startswith('data: {')]
+        self.assertTrue(raw.rstrip().endswith('data: [DONE]'))
+        self.assertEqual(events[0]['choices'][0]['delta']['role'], 'assistant')
+        self.assertEqual(''.join(e['choices'][0]['delta'].get('content') or '' for e in events if e['choices']), 'Noted part 1.')
+        self.assertEqual([e['choices'][0]['finish_reason'] for e in events if e['choices']][-1], 'stop')
+        self.assertEqual(events[-1]['usage']['prompt_tokens_details']['cached_tokens'], rig.head()[0])
+        self.assertEqual(events[0]['model'], rig.svc.model_id)
+        # tool calls stream as one delta with an index; models lists both ids; health and status report the keeper
+        msgs = body['messages'] + [{'role': 'assistant', 'content': 'Noted part 1.'}, {'role': 'user', 'content': kpart(2)}]
+        code, raw = self.post(port, dict(body, messages=msgs, tools=BASH), {'x-session-affinity': 'stream-1'})
+        calls = [c for l in raw.splitlines() if l.startswith('data: {') for ch in json.loads(l[6:])['choices']
+                 for c in ch['delta'].get('tool_calls', [])]
+        self.assertEqual([(c['index'], c['function']['name'], json.loads(c['function']['arguments'])) for c in calls],
+                         [(0, 'bash', {'command': 'cat part3'})])
+        c = http.client.HTTPConnection('127.0.0.1', port, timeout=30)
+        c.request('GET', '/v1/models')
+        self.assertEqual([m['id'] for m in json.loads(c.getresponse().read())['data']], [C.MODEL_ID, rig.svc.model_id])
+        c.request('GET', '/keeper/status')
+        self.assertIn('stream-1', json.loads(c.getresponse().read()))
+        c.close()
+
+    def test_tool_turns_continue_and_the_head_serves_every_cut(self):
+        rig = KeeperRig(self)
+        msgs = rig.opening()
+        msgs.append({'role': 'user', 'content': 'Read the parts with bash, one per call.'})
+        resp, s = rig.send(msgs, tools=BASH)
+        for k in range(1, 15):
+            msg = resp['choices'][0]['message']
+            self.assertEqual(resp['choices'][0]['finish_reason'], 'tool_calls')
+            msgs += [msg, {'role': 'tool', 'tool_call_id': msg['tool_calls'][0]['id'], 'content': kpart(k)}]
+            resp, s = rig.send(msgs, tools=BASH)
+        self.assertGreaterEqual(s.state['inplace_cuts'], 2)
+        self.assertNotIn(('reset',), rig.events)
+        n, _ = rig.head()
+        self.assertEqual([e for e in rig.events if e[0] == 'restore'], [('restore', n)] * s.state['inplace_cuts'])
+
+    def test_engine_fault_in_the_post_reply_notes_call_halts_the_service(self):
+        rig = KeeperRig(self)
+        rig.model.fail = INPLACE
+        port = self.serve_http(rig)
+        msgs = rig.opening()
+        for k in range(1, 12):
+            msgs.append({'role': 'user', 'content': kpart(k)})
+            code, raw = self.post(port, {'model': rig.svc.model_id, 'messages': msgs, 'max_tokens': 48}, {'x-session-affinity': 'f'})
+            if code != 200:
+                break
+            msgs.append(json.loads(raw)['choices'][0]['message'])
+            for _ in range(200):                                               # the handler keeps the lock for the notes
+                if not rig.engine.lock.locked():
+                    break
+                time.sleep(0.01)
+        self.assertEqual(code, 503)
+        self.assertIn('halted', raw)
+        self.assertEqual(len(rig.faults), 1)
+        self.assertEqual(str(rig.faults[0]), 'rank failed')
+        self.assertEqual(rig.state.phase, 'halted')
+        self.assertFalse(rig.engine.lock.locked())
+        self.assertEqual(rig.notes_runs(), [])                                 # the failing call never completed
+
+    def test_engine_fault_in_an_ordinary_notes_call_is_not_absorbed_by_ctxkeeper(self):
+        rig = KeeperRig(self, inplace_tokens=10**6, inplace_fit=False)         # no in-place notes: the window fills
+        rig.model.fail = TURNS_OUT
+        msgs = rig.opening()
+        with self.assertRaises(K.KeeperHalt):
+            for k in range(1, 40):
+                msgs.append({'role': 'user', 'content': kpart(k)})
+                resp, s = rig.send(msgs)
+                msgs.append(resp['choices'][0]['message'])
+        self.assertEqual(len(rig.faults), 1)
+        self.assertEqual(rig.state.phase, 'halted')
+        with self.assertRaises(K.KeeperHalt):                                  # nothing runs after the halt
+            rig.send(msgs)
+        s = next(iter(rig.svc.keeper.sessions.values()))
+        self.assertEqual(s.state['notes_failed'], 0)                           # not counted as a failed note
+
+    def test_engine_fault_in_a_main_call_returns_503_and_halts(self):
+        rig = KeeperRig(self)
+        rig.model.fail = 'Part 2:'
+        port = self.serve_http(rig)
+        msgs = rig.opening() + [{'role': 'user', 'content': kpart(1)}]
+        self.assertEqual(self.post(port, {'model': rig.svc.model_id, 'messages': msgs, 'max_tokens': 48})[0], 200)
+        msgs += [{'role': 'assistant', 'content': 'Noted part 1.'}, {'role': 'user', 'content': kpart(2)}]
+        code, raw = self.post(port, {'model': rig.svc.model_id, 'messages': msgs, 'max_tokens': 48, 'stream': True})
+        self.assertEqual(code, 200)                                            # streaming: the error is an event
+        self.assertIn('"code": 503', raw)
+        self.assertEqual((len(rig.faults), rig.state.phase), (1, 'halted'))
+        self.assertEqual(self.post(port, {'model': rig.svc.model_id, 'messages': msgs})[0], 503)
+        self.assertFalse(rig.engine.lock.locked())
+
+    def test_the_reply_is_never_cut_below_max_tokens_the_view_is(self):
+        rig = KeeperRig(self, inplace_tokens=10**6, inplace_fit=False)
+        msgs = rig.opening()
+        for k in range(1, 16):
+            msgs.append({'role': 'user', 'content': kpart(k)})
+            resp, s = rig.send(msgs, max_tokens=1800)
+            msgs.append(resp['choices'][0]['message'])
+        notes = [r for r in rig.runs if TURNS_OUT in decoded(r['prompt'])]
+        main = [r for r in rig.runs if r['count'] > 1 and r not in notes]
+        self.assertTrue(all(r['count'] == 1800 and len(r['prompt']) + 1800 <= 4096 for r in main))
+        self.assertGreaterEqual(s.state['cuts'], 1)
+        self.assertTrue(notes and all(len(r['prompt']) + r['count'] <= 4096 for r in notes))   # internal calls fit the room
+        port = self.serve_http(rig)
+        code, raw = self.post(port, {'model': rig.svc.model_id, 'messages': msgs, 'max_tokens': 4096})
+        self.assertEqual(code, 400)
+        self.assertIn('max_tokens 4096', raw)
+        big = rig.opening() + [{'role': 'user', 'content': 'word ' * 3500}]
+        code, raw = self.post(port, {'model': rig.svc.model_id, 'messages': big, 'max_tokens': 600})
+        self.assertEqual(code, 400)
+        self.assertIn('too large', raw)
+        self.assertEqual(rig.state.phase, 'ready')                             # a client error, not a fault
+
+    def test_overflow_found_on_the_exact_count_cuts_the_view_and_keeps_the_reply_size(self):
+        rig = KeeperRig(self, inplace_tokens=10**6, inplace_fit=False, headroom=0)
+        msgs = rig.opening()
+        for k in range(1, 12):
+            msgs.append({'role': 'user', 'content': kpart(k, words=120)})
+            s = rig.svc.keeper.session({'model': rig.svc.model_id, 'messages': msgs}, 'o')
+            s.state['ratio'] = 9.0                                             # an estimate far too low: only the count is right
+            resp, s = rig.send(msgs, 'o', max_tokens=1500)
+            msgs.append(resp['choices'][0]['message'])
+        events = [json.loads(l) for l in (s.dir / 'events.jsonl').read_text().splitlines()]
+        self.assertTrue(any(e['event'].startswith('sc117: view and reply over the context') for e in events))
+        main = [r for r in rig.runs if r['count'] > 1 and TURNS_OUT not in decoded(r['prompt'])]
+        self.assertTrue(all(r['count'] == 1500 and len(r['prompt']) + 1500 <= 4096 for r in main))
+        self.assertGreaterEqual(s.state['cuts'], 1)
+
+    def test_session_key_storage_and_status(self):
+        rig = KeeperRig(self)
+        rig.talk(1, header='pi-session-a')
+        rig.talk(1, header='pi-session-b')
+        rig.talk(1, header=None)
+        keys = sorted(rig.svc.keeper.sessions)
+        self.assertIn('pi-session-a', keys)
+        self.assertIn('pi-session-b', keys)
+        self.assertEqual(len(keys), 3)                                         # no header: ctxkeeper's opening fingerprint
+        self.assertTrue((rig.svc.root / 'pi-session-a' / 'state.json').exists())
+        self.assertEqual(rig.svc.root.stat().st_mode & 0o777, 0o700)
+        self.assertIsNone(rig.engine.storage_ok())
+        rig.svc.max_bytes = 10
+        self.assertIn('keeper state directory', rig.engine.storage_ok())       # counted in the service's storage check
+        port = self.serve_http(rig)
+        self.assertEqual(self.post(port, {'model': rig.svc.model_id, 'messages': rig.opening()})[0], 507)
+        rig.svc.max_bytes = 10**9
+        self.assertEqual(len(rig.svc.pins), 1)                                 # one shared head for the three openings
+        self.assertEqual(rig.svc.health()['pinned_heads'], 1)
+
+    def test_ordinary_cut_notes_call_restores_the_head(self):
+        rig = KeeperRig(self, inplace_tokens=10**6, inplace_fit=False)
+        msgs, resps, s = rig.talk(36)
+        n, _ = rig.head()
+        self.assertGreaterEqual(s.state['cuts'], 1)
+        self.assertEqual(s.state['inplace_cuts'], 0)
+        full = [r for r in rig.runs if TURNS_OUT in decoded(r['prompt'])]
+        self.assertEqual(len(full), s.state['cuts'])
+        self.assertTrue(all(r['start'] == n for r in full))                   # the head restored, the turns read as text
+        self.assertTrue(all('"name": "recall"' in decoded(r['prompt'][:n]) for r in full))
+        self.assertNotIn(('reset',), rig.events)
+        # sc117_reuse=false on the keeper model: that call reads its prompt fresh and its reply is the same
+        msgs.append({'role': 'user', 'content': kpart(99)})
+        a, _ = rig.send(msgs)
+        b, _ = rig.send(msgs, sc117_reuse=False)
+        self.assertEqual(b['ownrt']['keeper']['calls'][-1]['cached_tokens'], 0)
+        self.assertEqual(a['choices'][0]['message'], b['choices'][0]['message'])
+
+    def test_next_token_after_the_head_differs_reads_fresh_once(self):
+        rig = KeeperRig(self)
+        rig.model.head_token = 13
+        msgs, (r1, r2), s = rig.talk(2)
+        n = len(rig.runs[0]['prompt'])
+        self.assertEqual(rig.ops.calls, [])                                    # nothing parked
+        self.assertEqual(r1['ownrt']['keeper']['calls'][1]['head']['event'], 'next-token-differs')
+        self.assertEqual(rig.events[:3], [('run', n, 0), ('reset',), ('run', len(rig.runs[1]['prompt']), 0)])
+        self.assertEqual(r2['ownrt']['keeper']['calls'][0]['cached_tokens'],
+                         r1['usage']['prompt_tokens'] + r1['usage']['completion_tokens'] - 1)
+
+    def test_pins_are_bounded_most_recent_conversations_first(self):
+        rig = KeeperRig(self, pins=2)
+        for k in range(3):
+            msgs = [{'role': 'system', 'content': KSYSTEM + f' Reader {k}.'}, {'role': 'user', 'content': 'Confirm each part.'}]
+            rig.talk(1, msgs=msgs, header=f'c{k}')
+        heads = [rig.svc.keeper.sessions[f'c{k}'].sc117_head for k in range(3)]
+        self.assertEqual(rig.engine.sessions.pinned, set(heads[1:]))
+        self.assertEqual(list(rig.svc.pins), heads[1:])
+
+
 if __name__ == '__main__':
     unittest.main()

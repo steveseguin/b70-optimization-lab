@@ -11,10 +11,11 @@ LANE = P.parents[1] if (P.parents[1] / 'coverage').is_dir() else Path('/home/ste
 EOS = (248044, 248046)  # <|endoftext|>, <|im_end|>
 THINK_END = 248069      # </think>
 # Engine context (prompt + output tokens). SC117_CONTEXT is read by this module and adapter6.py alike; the engine
-# admits 4096 and 32768 for the 23/25 split with the draft on rank 0 (main.cpp), and its RoPE table ends at 32768.
+# admits 4096, 32768 and 65536 with the draft on rank 0 (main.cpp); its RoPE table (rope-65536.bf16) ends at 65536.
+# 65536 needs the 24/24 split (SC117_TARGET_SPLIT=24): at 23/25 rank 1's KV would pass the 30 GiB plan cap.
 CONTEXT = int(os.environ.get('SC117_CONTEXT', '4096'))
-if CONTEXT not in (4096, 32768):
-    raise RuntimeError('SC117_CONTEXT must be 4096 or 32768')
+if CONTEXT not in (4096, 32768, 65536):
+    raise RuntimeError('SC117_CONTEXT must be 4096, 32768 or 65536')
 DEFAULT_MAX_TOKENS = 512
 MODEL_ID = 'sc117-qwen3.8-flash-next-iq3s-ownrt'
 ROLES = ('system', 'user', 'assistant', 'tool')
@@ -53,9 +54,9 @@ class Chat:
         if self.render([{'role': 'user', 'content': probe}], False) != single(probe):
             raise RuntimeError('multi-message renderer disagrees with pinned renderer')
 
-    def render(self, messages, thinking, tools=None, effort=None):
+    def render(self, messages, thinking, tools=None, effort=None, generation=True):
         extra = {} if effort is None else {'reasoning_effort': effort}
-        return self.template.render(messages=messages, add_generation_prompt=True,
+        return self.template.render(messages=messages, add_generation_prompt=generation,
                                     enable_thinking=bool(thinking), tools=tools or None, **extra)
 
     def encode(self, text):
@@ -116,8 +117,8 @@ def _assistant_tool_calls(calls):
     return out
 
 
-def parse(body, chat):
-    """Validate an OpenAI-style chat request; return a plan dict for the engine."""
+def _fields(body):
+    """Every check parse() makes before rendering: (clean messages, tools, tool_choice, thinking, effort, stop)."""
     if not isinstance(body, dict):
         raise RequestError('request body must be a JSON object')
     messages = body.get('messages')
@@ -164,23 +165,53 @@ def parse(body, chat):
         stop = [stop]
     if not isinstance(stop, list) or len(stop) > 4 or not all(isinstance(s, str) and s for s in stop):
         raise RequestError('stop must be a string or up to 4 non-empty strings')
+    return clean, tools, choice, thinking, effort, stop
+
+
+def requested_tokens(body):
+    """The client's max_completion_tokens / max_tokens as an int, or None when it sent neither."""
+    requested = body.get('max_completion_tokens', body.get('max_tokens'))
+    if requested is None:
+        return None
+    if isinstance(requested, float) and requested.is_integer():
+        requested = int(requested)
+    if type(requested) is not int or requested < 1:
+        raise RequestError('max_tokens must be a positive integer')
+    return requested
+
+
+def _reuse(body):
+    reuse = body.get('sc117_reuse', True)  # false: read this prompt fresh (no continuation, no parked session); diagnostics
+    if not isinstance(reuse, bool):
+        raise RequestError('sc117_reuse must be boolean')
+    return reuse
+
+
+def validate(body):
+    """parse() without rendering (no context check): for a client history that the keeper model shows in part."""
+    _fields(body)
+    requested_tokens(body)
+    _reuse(body)
+    return dict(stream=bool(body.get('stream')), include_usage=bool((body.get('stream_options') or {}).get('include_usage')))
+
+
+def prefix_ids(body, chat, count):
+    """Token ids of the request's first `count` messages, rendered as parse() renders them, without a generation prompt."""
+    clean, tools, choice, thinking, effort, stop = _fields(body)
+    return chat.encode(chat.render(clean[:count], thinking, tools, effort, generation=False))
+
+
+def parse(body, chat):
+    """Validate an OpenAI-style chat request; return a plan dict for the engine."""
+    clean, tools, choice, thinking, effort, stop = _fields(body)
     rendered = chat.render(clean, thinking, tools, effort)
     ids = chat.encode(rendered)
     room = CONTEXT - len(ids)
     if room < 1:
         raise RequestError(f'prompt is {len(ids)} tokens; context is {CONTEXT}')
-    requested = body.get('max_completion_tokens', body.get('max_tokens'))
-    if requested is None:
-        max_new = min(DEFAULT_MAX_TOKENS, room)
-    else:
-        if isinstance(requested, float) and requested.is_integer():
-            requested = int(requested)
-        if type(requested) is not int or requested < 1:
-            raise RequestError('max_tokens must be a positive integer')
-        max_new = min(requested, room)  # clamp to the context instead of refusing
-    reuse = body.get('sc117_reuse', True)  # false: read this prompt fresh (no continuation, no parked session); diagnostics
-    if not isinstance(reuse, bool):
-        raise RequestError('sc117_reuse must be boolean')
+    requested = requested_tokens(body)
+    max_new = min(DEFAULT_MAX_TOKENS if requested is None else requested, room)  # clamp to the context instead of refusing
+    reuse = _reuse(body)
     ignored = sorted(k for k in ('temperature', 'top_p', 'top_k', 'seed', 'presence_penalty',
                                  'frequency_penalty', 'repetition_penalty', 'min_p')
                      if body.get(k) not in (None, 0, 1, 0.0, 1.0))

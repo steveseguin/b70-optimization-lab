@@ -136,6 +136,35 @@ A controlled research override may select another receipt. [CURRENT.md](../../..
 - `engine/tools/service-cycle.sh` performs one controlled reload for an experiment (an application reload, never a
   host restart) and prints the gate summary.
 
+## Keeper model (opt-in, `SC117_KEEPER=1`; lab 2026-10-26, not yet run on the device)
+
+A second model id, `sc117-qwen3.8-flash-next-iq3s-ownrt-keeper`, serves conversations of any length. Requests for the
+plain id are unchanged, and with `SC117_KEEPER=0` (the default) nothing changes at all. [keeper.py](keeper.py) loads
+ctxkeeper's Keeper (its recipe `qwen`) as a library from `SC117_KEEPER_LIB`. The model sees a bounded view: the
+opening messages, NOTES kept in place by the model itself, and the recent turns. Turns that are cut go verbatim to an
+archive under `SC117_KEEPER_DIR` (default `/dev/shm/sc117-keeper`; it counts in the storage checks). The model can search
+that archive with a `recall` tool. The service answers those searches itself, and the client never sees them. Every
+model call runs in process under the engine lock. An engine fault in any of these calls halts the service, exactly as
+it does for a client request.
+
+The engine's session checkpoints carry the cost of the long context. They need `SC117_SESSIONS=1`.
+
+- **Head.** Each conversation's opening (the system block with its tools and the first user message) is parked once by a
+  split read and pinned. After each cut, the new view restores the head and reads only the NOTES and the recent turns.
+- **Notes.** The in-place notes call runs right after the reply that makes it due, before the engine lock is released.
+  It is an exact extension of the live state.
+- **Continuation.** Recall rounds and ordinary turns continue the live state. So does the next user turn: the RULES
+  recital stays in view.
+
+Settings: `SC117_KEEPER_INPLACE_TOKENS` (15000), `SC117_KEEPER_RESERVE` (512 tokens beside the client's `max_tokens`),
+`SC117_KEEPER_PINS` (4 pinned heads), `SC117_KEEPER_MAX_GB` (2), `SC117_KEEPER_MAX_RECALLS` (16). The client's reply is
+never shortened below its `max_tokens`. If the view does not fit beside it, the view is cut. A conversation whose newest
+messages alone do not fit gets HTTP 400. Session key: the `x-session-affinity` header, or ctxkeeper's fingerprint of
+the opening messages. Replies arrive whole at the end (SSE keepalives while the internal calls run). Usage reports the
+final call; `ownrt.keeper` lists every internal call (cached and read tokens, prompt seconds, restores). `GET
+/keeper/status` shows each conversation's cut count. Pi configuration: `pi/models.json` and `pi/settings.json` in
+the lab folder (`/dev/shm/ownrt-lab-keeper/pi/`). Device test: [keeper_device_test.py](keeper_device_test.py).
+
 ## Storage and retention
 
 Before each request after the first, the native RESET writes about 320 MB of complete engine state (310,364,224

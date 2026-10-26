@@ -52,6 +52,13 @@ Environment=SC117_SESSIONS=1
 Environment=SC117_SESSION_DIR=/dev/shm/sc117-sessions
 Environment=SC117_SESSION_BUDGET_GB=16
 Environment=SC117_SESSION_READBACK=1
+# Keeper model (lab 2026-10-26, opt-in): a second model id sc117-qwen3.8-flash-next-iq3s-ownrt-keeper runs ctxkeeper's
+# long-context policy in process (keeper.py): bounded view, NOTES, archive, hidden recall; a pinned head checkpoint per
+# conversation is restored after each cut. Requests for the plain model id are unchanged. Needs SC117_SESSIONS=1 for
+# the checkpoints. CPU tests: test_service.py (KeeperTests); device test: keeper_device_test.py.
+Environment=SC117_KEEPER=1
+Environment=SC117_KEEPER_DIR=/dev/shm/sc117-keeper
+Environment=SC117_KEEPER_LIB=/home/steve/llm-optimizations/tools/ctxkeeper
 Restart=no
 KillMode=process
 KillSignal=SIGTERM

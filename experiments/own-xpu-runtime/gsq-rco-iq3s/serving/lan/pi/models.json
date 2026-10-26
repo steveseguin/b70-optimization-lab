@@ -1,0 +1,49 @@
+{
+ "providers": {
+  "sc117": {
+   "baseUrl": "http://192.168.2.44:18160/v1",
+   "api": "openai-completions",
+   "apiKey": "sc117-lan-no-key",
+   "models": [
+    {
+     "id": "sc117-qwen3.8-flash-next-iq3s-ownrt-keeper",
+     "name": "SC117 Flash-Next IQ3_S on our engine, ctxkeeper long context",
+     "reasoning": true,
+     "input": [
+      "text"
+     ],
+     "contextWindow": 10000000,
+     "maxTokens": 8192,
+     "compat": {
+      "thinkingFormat": "qwen-chat-template",
+      "sendSessionAffinityHeaders": true,
+      "maxTokensField": "max_completion_tokens",
+      "supportsDeveloperRole": false,
+      "supportsStore": false,
+      "supportsReasoningEffort": false,
+      "supportsUsageInStreaming": true
+     }
+    },
+    {
+     "id": "sc117-qwen3.8-flash-next-iq3s-ownrt",
+     "name": "SC117 Flash-Next IQ3_S on our engine (plain, 64K context)",
+     "reasoning": true,
+     "input": [
+      "text"
+     ],
+     "contextWindow": 65536,
+     "maxTokens": 8192,
+     "compat": {
+      "thinkingFormat": "qwen-chat-template",
+      "sendSessionAffinityHeaders": true,
+      "maxTokensField": "max_completion_tokens",
+      "supportsDeveloperRole": false,
+      "supportsStore": false,
+      "supportsReasoningEffort": false,
+      "supportsUsageInStreaming": true
+     }
+    }
+   ]
+  }
+ }
+}
