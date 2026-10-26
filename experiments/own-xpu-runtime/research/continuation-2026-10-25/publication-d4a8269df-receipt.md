@@ -6,3 +6,5 @@ Publication observation retained from `/dev/shm/publication-d4a8269df-check.json
 - Deployment succeeded: https://github.com/steveseguin/b70-optimization-lab/actions/runs/40255449185
 - Guides/hygiene succeeded; engine CPU CI was still in progress at last observation (run 40255449170).
 - Commit: `d4a8269df`. Raw publication observation remains in tmpfs.
+
+Final public check: own-engine CPU CI run [40255449170](https://github.com/steveseguin/b70-optimization-lab/actions/runs/40255449170) also completed successfully for d4a8269df. All four publication workflows passed.

@@ -1,0 +1,51 @@
+{
+  "status": "closed-negative",
+  "candidate_median": 43.38129512231569,
+  "flat_depth2_median": 45.1978680158136,
+  "capture_depth2_median": 44.96792398417218,
+  "versus_flat_depth2_percent": -4.019156153255576,
+  "versus_capture_depth2_percent": -3.528356929296872,
+  "output_ids_exact": 5965,
+  "final_target_buffers_exact": 2065,
+  "short_gate": {
+    "output_ids": 64,
+    "target_buffers_per_request": 2065,
+    "draft_allocations_per_request": 73,
+    "recorded_third_guesses_exact": true
+  },
+  "worker_exit_codes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "live_worker_pids": [],
+  "default_speculative_depth": 2,
+  "next_action": "Close trial; no further depth sweep.",
+  "raw_proofs": [
+    "/dev/shm/sc117-depth3-measured-proof-20261026",
+    "/dev/shm/sc117-depth3-suite-proof-20261026"
+  ],
+  "host_postcheck": "host-depth3-suite-after.json: no fault baseline change; holders empty",
+  "certified": false,
+  "work_breakdown_ms_per_output": {
+    "denominator": "sum(output_tokens-1); overlapping work, not wall time",
+    "depth2_flat": {
+      "stage0_row": 8.7837,
+      "provider": 5.1944,
+      "recursive_draft": 2.0643,
+      "canonical": 2.0958,
+      "capture": 0.2938,
+      "restore": 0.3242
+    },
+    "depth3": {
+      "stage0_row": 10.1299,
+      "provider": 7.0824,
+      "recursive_draft": 4.1141,
+      "canonical": 2.0881,
+      "capture": 0.2911,
+      "restore": 0.3207
+    }
+  },
+  "interpretation": "Extra speculative target work and an extra recursive draft pass outweighed pipeline fill."
+}

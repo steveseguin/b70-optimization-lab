@@ -1,21 +1,20 @@
 # Current Workspace State
 
-**Active focus — performance work, October 25.** Parent-capture overlap passed
-the full twelve-prompt suite: **44.968 tok/s** versus balanced **41.399 tok/s**, an
-**8.62% gain** under the same observer. All 5,965 output IDs and final 2,065 target
-buffers match; all four workers exited zero. Its preceding measured two-request
-gate matched 32 output IDs, 2,065 target buffers and 73 draft allocations per
-request. This remains experimental, with no new-build debug-policy qualification.
-The flat recursive-copy screen completed at **45.198 tok/s**, only **0.511%** above
-parent-capture despite about 37% less measured copy time. All 5,965 output IDs and
-final 2,065 target buffers match. The candidate stays off by default; this bounded
-lever is closed without further tuning or a short draft-state gate for 0.5% alone.
-GPUs are idle while source work moves to the larger provider-placement lever.
-[Copy-screen result](experiments/own-xpu-runtime/research/continuation-2026-10-25/recursive-flat-screen/RESULT.md). Raw GPU proofs remain
-protected in tmpfs; [compact result](experiments/own-xpu-runtime/research/continuation-2026-10-25/parent-capture-suite-proof/RESULT.md)
-retains the measured outcome without claiming a durable raw archive.
-Publication/portable side work stays paused; necessary bookkeeping is delegated.
-The focus reviewer checks every 15 minutes.
+**Active focus — performance work, October 26.** GPUs are idle. Depth3 closed
+negative: full12 passed all 5,965 output IDs and final 2,065 target buffers,
+but measured **43.381 tok/s**, 4.019% below flat depth2 (45.198) and 3.528%
+below capture depth2 (44.968). The short gate also passed all 64 outputs,
+2,065 target buffers and 73 draft allocations per request, including recorded
+third guesses. All four workers exited zero; no live worker PIDs remained.
+Depth2 remains the default; no further depth sweep. The best fully gated
+four-GPU result remains **44.968 tok/s**; flat-copy's **45.198** is a screen,
+stays off by default, and has no extra short-state gate. Provider relocation
+also remains a closed negative trial. See [depth3 result](experiments/own-xpu-runtime/research/continuation-2026-10-25/depth3-result.json).
+Publication `d4a8269df` is live on neural.download. The two-GPU **47.9706**
+observation uses a different observer; six independent CPU-reference disagreements
+remain unresolved. Raw GPU proofs remain protected in tmpfs; no durable raw
+archive is claimed. Necessary bookkeeping stays delegated; the focus reviewer
+checks every 15 minutes.
 
 **October 25, continuation — quad overlap and portable deployment; no draft training.**
 The owner approved the next work and explicitly excluded draft-model training.

@@ -1,0 +1,86 @@
+{
+  "schema": "ownrt.persistent-rolling-proof.v1",
+  "passed": true,
+  "source_run": "/dev/shm/sc117-ring-20261025/persistent-depth3-measured-a",
+  "check_policy": "measured",
+  "requests": 2,
+  "output_tokens": 64,
+  "all_requests_full_state_parity": true,
+  "target_state_exact": true,
+  "draft_state_exact": true,
+  "output_tokens_exact": true,
+  "provenance_passed": true,
+  "all_cold_resets_checked": true,
+  "cold_state_byte_verified": false,
+  "mandatory_restore_checks_passed": true,
+  "byte_verification_enabled": false,
+  "provider_survival_checks_enabled": false,
+  "actual_provider": true,
+  "actual_proposals_consumed": true,
+  "scripted_oracle_assisted": false,
+  "scripted_tentative_inputs": false,
+  "speed_claim": false,
+  "early_eos_qualified": false,
+  "cancellation_qualified": false,
+  "qualified_reference_parity": true,
+  "qualified_reference": {
+    "path": "/dev/shm/sc117-persistent-balanced-qualified-proof-20261025/summary.json",
+    "bytes": 32712,
+    "sha256": "5952a05e65d95aea76f44a99e33bf82748fab4864d08dd21e67c1b12417c211d"
+  },
+  "raw_bytes": 863353364,
+  "original_plan": {
+    "path": "/dev/shm/sc117-ring-20261025/persistent-depth3-measured-a/plan.json",
+    "bytes": 27496,
+    "sha256": "6c951dc8274dff307356855763365ca7c9b64d3cc92331dbffd40224f2b574a5"
+  },
+  "original_result": {
+    "path": "/dev/shm/sc117-ring-20261025/persistent-depth3-measured-a/persistent-rolling-result.json",
+    "bytes": 33881,
+    "sha256": "359744b7430eeef7b525e51b3dc6bc3e502c063104312dbbb4bbeec425a4dd06"
+  },
+  "finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_persistent_rolling_proof.py",
+    "bytes": 29730,
+    "sha256": "ab066c19ebb8ab3b40bbc988e50ddb2d7851b6800065c759a29ed216653f8654"
+  },
+  "comparator": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py",
+    "bytes": 42342,
+    "sha256": "b3cc7fa3ef34318254fe81315b70beffdb18089a3bcf4f4c10c81d796fa62aa6"
+  },
+  "scope": "Two matched full-cap requests with native cold reset, epoch/global wire continuity and exact target/draft state against accepted baseline. Measured policy omits per-operation byte diagnostics honestly; mandatory copy/host/causal checks remain. Cold allocations were not all individually read back. No certified speed, portable deployment or full12-prompt state qualification.",
+  "capture_ready_overlap": true,
+  "scheduler_overlap_by_request": [
+    {
+      "final_rows_issued_during_provider": 63,
+      "head_bearing_final_rows_issued_during_provider": 22,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    },
+    {
+      "final_rows_issued_during_provider": 66,
+      "head_bearing_final_rows_issued_during_provider": 23,
+      "scope": "Scheduler overlap only; not GPU utilization or proven kernel concurrency."
+    }
+  ],
+  "capture_ready_finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_persistent_capture_ready_proof.py",
+    "bytes": 2555,
+    "sha256": "65d4257568292f5dd25ffd117dc9666f976958f45bd4d4e14ef80776f0df7a3f"
+  },
+  "capture_ready_auditor": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent_capture_ready_trace_audit.py",
+    "bytes": 22879,
+    "sha256": "ed4a123f72a9a523b8a4bd6a52ad37396aee0c8e7b65af3b3b549d1d0b0c78c0"
+  },
+  "retention": {
+    "raw_summary": "/dev/shm/sc117-depth3-measured-proof-20261026/summary.json",
+    "raw_summary_sha256": "42c23ed3951524a313e57e206f52ad63483f793319d7194e248a31bbdef5dfba",
+    "omitted_large_keys": [
+      "request_summaries",
+      "raw_bundles"
+    ],
+    "raw_evidence_protected": true,
+    "durable_raw_archive": false
+  }
+}
