@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**October 26, 04:10 EDT — SC117 service: engine sessions live, exact O(n) QSA select; ctxkeeper-in-service in progress.**
+- `sc117-lan` runs engine `9d89dca01ece` (32K context, `OWNRT_SELECT_TOPK=1`, `SC117_SESSIONS=1`).
+  Gates: 32K F32 oracle zero differences, prefill 13/13, continuation passed. Suite identical at 48.61 tok/s.
+- **Sessions.**
+  - A conversation of 256 tokens or more is parked (both ranks plus the draft row, sealed manifest; `/dev/shm`, 16 GB
+    LRU) before a RESET evicts it.
+  - A later prompt that extends it is restored and reads only its new tokens.
+  - At 975 tokens: park 188 ms, restore 411 ms, next turn 0.4 s against 9.0 s fresh, output identical token for
+    token.
+- **QSA select.**
+  - The exact O(n) select (identical ids) takes the rank-1 half at 30K from 20.52 to 18.35 ms.
+  - On the 10.7K test it lifts decode from 44.67 to 45.59 tok/s and cuts prompt reading from 107 to 102.5 s; outputs
+    are identical.
+  - [Note](experiments/own-xpu-runtime/research/qsa-select/RESULT.md).
+- **In progress.**
+  - ctxkeeper inside the service, using engine checkpoints for the head prefix (lab).
+  - Prompt-reading speed (about 10 ms per row: experts and dense GEMVs without weight reuse).
+
 **October 26, 02:20 EDT — SC117 LAN service now serves a 32K context, exact; tool calls for Pi live.**
 - `sc117-lan` (cards 23/47) runs engine `1ccb7712cc7a` with `SC117_CONTEXT=32768`.
   - Suite: all 5,965 tokens and MTP hits identical to the 4K baseline, 48.21 tok/s.
