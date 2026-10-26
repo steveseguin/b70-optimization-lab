@@ -58,8 +58,10 @@ cards could run independent optimization lanes.
 ## Rejected follow-up: attention-output split scheduling
 
 `OWNRT_DRAFT_ATTN_OUT` was a lab-only attempt to execute the existing four attention-output partitions sequentially in
-one subgroup, retaining their lane and partition reduction order. The small OpenCL CPU test passed all 201 outputs and
-sentinel bytes, but the real 4096-row card-27 gate differed in `card0:draft:blk.0.attention` (one of 71 draft buffers;
-all 1,029 target buffers and all tokens still matched). Unprofiled timing was neutral (draft 1.727 ms off versus
-1.726 ms on). The variant is rejected and is not in canonical `engine/src` or B18. Do not promote it based on the CPU
-test or token equality.
+one subgroup. The first version incorrectly used `(p0+p2)+(p1+p3)` instead of the incumbent `(p0+p1)+(p2+p3)` and
+differed in `card0:draft:blk.0.attention`; its CPU reference repeated that error and its shared infinite input masked
+finite arithmetic. Review caught all three test/implementation issues.
+
+The corrected finite-value CPU test passed all 201 outputs and sentinels. On card 27 the fixed kernel passed all 1,029
+target and 71 draft comparisons with equal tokens, but was slower: target half 11.120 versus 10.732 ms and draft 1.780
+versus 1.727 ms. The lever is closed negatively. Neither version is in canonical `engine/src` or B18.

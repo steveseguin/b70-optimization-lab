@@ -7,9 +7,9 @@
   session compatibility. Suite 64.01 → 65.67 tok/s (+2.6%).
 - The owner authorized using all four cards and stopping hosting. `sc117-lan` is now stopped cleanly. Rank-0 lab lanes
   own cards 23, 27, 43 and 47 independently; do not launch another job on a card without its lane owner's handoff.
-- Next: integrate only bitwise-exact interleaved winners. The first attention-output scheduling attempt was rejected;
-  its partition association and finite-value CPU test were corrected for one retest, not deployed.
-  [Draft result](experiments/own-xpu-runtime/research/rank0-lab/RESULT.md).
+- Next: integrate only bitwise-exact interleaved winners. Active lanes: Q6_K GDN qkv (23), Q8_0 attention (27), GDN
+  recurrence (43), IQ4_NL expert down (47). The draft attention-output scheduling lever closed negatively: its corrected
+  form was bitwise exact but slower (11.12 vs 10.73 ms per rank-0 half), so it is not in B18.
 
 **October 26, 16:30 EDT — SC117 service on engine `96473c90783c`: 64.01 tok/s exact; decode at 10.7K 64.9 tok/s.**
 - `OWNRT_DECODE_NEXT2=1`: IQ3_XXS gate/up, four elements per item. Also HC gate and BF16 split rows.
