@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 26, 15:05 EDT — SC117 service on engine `ef3a2665ffe5`: 62.20 tok/s exact; decode at 10.7K 63.1 tok/s.**
+- `OWNRT_DECODE_NEXT=1`: packed Q8_0 shexpdown, Q6_K block rows, four-lane HC mix.
+- All gates passed.
+- Suite tonight: 47.97 → 62.20 tok/s (+29.7%), every step exact.
+- Lesson from the profile: fusions that reduce thread count win in the device profile but lose end to end. Accept a
+  lever only on interleaved end-to-end A/B runs.
+  [Result](experiments/own-xpu-runtime/research/decode-next/RESULT.md).
+
 **October 26, 12:50 EDT — SC117 service on engine `25b3f7542cad`, split 23/25 at 64K: 60.52 tok/s exact.**
 - Rank-1 storage lets the faster split hold 64K context:
   - the `qsa.raw` ring;
