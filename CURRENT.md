@@ -1,5 +1,29 @@
 # Current Workspace State
 
+**October 26, 07:10 EDT — SC117 service on engine `718a59eff64f`: faster exact attention and prefill; sessions survive engine upgrades.**
+- **Decode** (exact QSA attention, `OWNRT_ATTN_HEADS=1 OWNRT_ATTN_COMBINE2=1`):
+  - one work-group per KV head and tile for all 12 query heads;
+  - the guard is read once per group (a per-lane device-scope atomic load had serialized the passes);
+  - rank-1 attention 1446 → 263 µs per token;
+  - at 10.7K context, decode is 45.9 → 49.2 tok/s; the suite is 49.02 tok/s.
+- **Prompt reading** (exact dense weight reuse, `OWNRT_PREFILL_REUSE2=1`):
+  - a 10.7K prompt now reads in 71.6 s, against 107.5 s at the start of the night;
+  - rank-1 dense prefill is 3.52 → 1.10 ms per row.
+- Every deploy passed the gates:
+  - F32 oracle at 64K and against the 4096 oracle, zero differences;
+  - prefill 13/13 (batched equals token-by-token, full state, both ranks);
+  - continuation passed;
+  - suite ids, text and MTP hits identical.
+- **Sessions across builds, verified on the device:**
+  - B10 and B11 each restored the previous builds' canaries and matched a fresh read (tokens, guesses, full state).
+  - A 2,139-token conversation parked by B9, held only in the RAID archive, was recalled and restored into B10.
+    It matched a fresh read token for token.
+- 53K-token test at 64K: the needle was found, continued equals fresh, and decode ran at 47 tok/s at 53K.
+- Pi 1.2.0 runs end to end through the keeper model (see `serving/lan/README.md`).
+- Lab agents on card 27 (`flock /dev/shm/card27.lock`):
+  - exact expert-grouped prefill (routed experts are now about 3.3 ms of about 7.6 ms per prefill row);
+  - exact faster QSA select (about 76 µs per layer at 4K, 277 µs at 30K).
+
 **October 26, 06:05 EDT — SC117 service: keeper verified on the device; sessions archived to the RAID and kept across engine builds.**
 - `sc117-lan` runs engine `8ed9f5cb695e`: 64K context, split 24/24, keeper model on, sessions on with a RAID archive.
   Gates all passed. Suite exact at 48.40 tok/s. The session device test passed: a restored session equals a fresh
