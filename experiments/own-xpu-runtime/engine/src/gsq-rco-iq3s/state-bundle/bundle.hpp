@@ -18,7 +18,7 @@
 #include <vector>
 namespace gsq_bundle {
 namespace fs=std::filesystem;
-inline constexpr uint64_t byte_cap=256ull*1024*1024,metadata_cap=1024*1024,row_cap=4096;
+inline constexpr uint64_t byte_cap=4ull*1024*1024*1024,metadata_cap=1024*1024,row_cap=4096; // full KV dumps at 32768
 inline void need(bool b,const char*s){if(!b)throw std::runtime_error(std::string("state bundle: ")+s);}
 #ifdef GSQ_BUNDLE_TESTING
 inline void(*test_hook)(const char*)=nullptr;
