@@ -5,6 +5,9 @@
 #include "stage2/packet194-expert-diet-engine/p33_submit.hpp"
 #include "stage2/packet194-expert-diet-engine/p33_candidates.hpp"
 #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
+#ifndef OWN_RT_HOST_ONLY
+#include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
+#endif
 #include "stage2/packet194-expert-diet-engine/p42_expert.hpp"
 #include "stage2/packet194-expert-diet-engine/expert_down.hpp"
 #ifndef OWN_RT_HOST_ONLY
@@ -116,6 +119,16 @@ template<iq3::Type T,unsigned K,unsigned R> struct DenseRows final:ownrt::SyclOp
 #endif
 template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
 #ifndef OWN_RT_HOST_ONLY
+ if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&reuse2::enabled()) {
+  // Generation-2 token rows (OWNRT_PREFILL_REUSE2=1; tile OWNRT_PREFILL_REUSE2_P33=i): dense_lane's values and sequence.
+  const size_t rb=integrated::arithmetic::row_bytes(T,K,6);
+  const unsigned c=reuse2::config("P33",reuse2::config_count,reuse2::default_p33(uint32_t(m[0].rows),K));
+  if(c<reuse2::config_count&&rb%4==0&&K%4==0&&reuse2::aligned(d,m[0].w,4)&&reuse2::aligned(d,m[0].x,16)&&rb<=UINT32_MAX) {
+   std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};
+   auto e=reuse2::issue<reuse2::Expanded8<T==iq3::Type::Q6_K?16u:32u>,REUSE2_CONFIGS>(d,c,ids,uint32_t(m[0].rows),K,m[0].tokens,uint32_t(rb));
+   return {e,e,1};
+  }
+ }
  if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&prefill_switches::weight_reuse_rows()) {
   constexpr unsigned R=4;DenseRows<T,K,R> k;k.b.rb=integrated::arithmetic::row_bytes(T,K,6);k.b.rows=m[0].rows;k.b.tokens=m[0].tokens;
   std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};auto e=d.compute(k,ids,{});return {e,e,1};

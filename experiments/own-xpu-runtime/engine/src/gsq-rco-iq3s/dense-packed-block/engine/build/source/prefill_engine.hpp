@@ -213,13 +213,21 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
         }
       }
       if(banked_native)banks_native=true;else if(l->op=="gdn"||l->op=="conv")banks_replayed=true;
-      if(profile){drain();auto& entry=spent[l->op=="gemv"||l->op=="routed_gemv"?l->op+":"+w.directory.at(l->weights.at(0)).grid:l->op];++entry.first;entry.second+=ms(site_start);}
+      // OWNRT_PREFILL_PROFILE_SHAPE=1 (diagnostic) also keys linear sites by their rows x columns.
+      static const bool profile_shape=[]{const char* e=std::getenv("OWNRT_PREFILL_PROFILE_SHAPE");return e&&e[0]=='1';}();
+      if(profile){drain();std::string key=l->op=="gemv"||l->op=="routed_gemv"?l->op+":"+w.directory.at(l->weights.at(0)).grid:l->op;
+        if(profile_shape&&(l->op=="gemv"||l->op=="routed_gemv")&&l->shape.size()==3)key+=":"+std::to_string(l->shape[1])+"x"+std::to_string(l->shape[2]);
+        auto& entry=spent[key];++entry.first;entry.second+=ms(site_start);}
       // Owner event ledger holds 16384 events; retire well before it fills.
       if(submitted-drained_at>6000){drain();drained_at=submitted;}
     }
     prefill_set_views(false);
   } catch(...) {prefill_set_views(false);throw;}
-  if(profile){std::ofstream o(a.output/"prefill-profile.jsonl",std::ios::app);o<<"{\"position\":"<<P0<<",\"rows\":"<<M<<",\"sites\":{";bool comma=false;
+  if(profile){std::ofstream o(a.output/"prefill-profile.jsonl",std::ios::app);o<<"{\"position\":"<<P0<<",\"rows\":"<<M<<
+#ifndef OWN_RT_HOST_ONLY
+    (reuse2::enabled()?",\"chunk\":"+std::to_string(reuse2::chunk_counter()):std::string())<<
+#endif
+    ",\"sites\":{";bool comma=false;
     for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
   drain();
   require(!integer(0,"error"),"sticky rank error in batched prefill");
@@ -230,4 +238,7 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
   if(!state_spares.empty())for(int r=0;r<(banks_native?1:M%2);++r)swap_state_banks();
   if(rows_out){auto raw=readback(0,prefill_shadow("streams"),size_t(M)*stream);std::memcpy(rows_out,raw.data(),raw.size());}
   ++prefill_chunks;prefill_rows_done+=size_t(M);
+#ifndef OWN_RT_HOST_ONLY
+  ++reuse2::chunk_counter(); // OWNRT_PREFILL_REUSE2_CYCLE diagnostic: the next chunk's tile configuration
+#endif
 }

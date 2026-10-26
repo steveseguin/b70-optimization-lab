@@ -2,6 +2,9 @@
 #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
 #include "gsq-rco-iq3s/dense-packed-block/selection.hpp"
 #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
+#ifndef OWN_RT_HOST_ONLY
+#include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
+#endif
 // Included after frozen gsqn definitions. Candidate changes only repeated
 // block half conversion/addressing, never the scalar FP expression boundaries.
 namespace denseblock {
@@ -110,6 +113,9 @@ template<unsigned T,unsigned R> struct DenseBlockRows final:ownrt::SyclOperation
   }));});
  }
 };
+// Generation-2 token rows (OWNRT_PREFILL_REUSE2=1, prefill_reuse2.hpp): RW rows x T tokens per subgroup, each
+// block_element value decoded once per tile; every output keeps block_lane_sum's sequence and the subgroup tree.
+struct BlockElement {template<unsigned T> static float element(const uint8_t*b,float d,float dmin,unsigned group,unsigned lane){return block_element<T>(b,d,dmin,group,lane);}};
 #endif
 inline const Site& policy(const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
  const auto*s=selected(label,weight);require(s,"dense block exact census site");
@@ -120,6 +126,14 @@ inline const Site& policy(const integrated::Matrix&m,std::string_view label,std:
 }
 template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.x,m.y};
 #ifndef OWN_RT_HOST_ONLY
+ if(s.f32&&s.row_major&&reuse2::enabled()&&s.columns%256==0&&reuse2::aligned(d,m.x,16)){
+  // OWNRT_PREFILL_REUSE2_BLOCK=i selects the tile (default reuse2::default_block); the x rows are 16-byte aligned for subgroup block reads.
+  if(const unsigned c=reuse2::config("BLOCK",reuse2::config_count,reuse2::default_block(uint32_t(s.rows),uint32_t(s.columns)));c<reuse2::config_count){
+   std::array<ownrt::Allocation,3> rows{m.w,m.x,m.y};
+   auto e=reuse2::issue<reuse2::Block32<T,BlockElement>,REUSE2_CONFIGS>(d,c,rows,uint32_t(s.rows),uint32_t(s.columns),s.count,uint32_t(s.row_bytes));
+   return {e,e,1};
+  }
+ }
  if(s.f32&&s.row_major&&prefill_switches::small_tile_rows()){DenseBlockRows<T,4>op;op.s=s;std::array<ownrt::Allocation,3>rows{m.w,m.x,m.y};auto e=d.compute(op,rows,{});return {e,e,1};}
 #endif
  if(s.f32){DenseBlockOperation<T,true>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}

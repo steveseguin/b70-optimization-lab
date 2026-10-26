@@ -1,0 +1,573 @@
+{
+ "schema": "ownrt.prefill-reuse.results.v1",
+ "date": "2026-10-26",
+ "card": "0000:27:00.0 (renderD131), rank 1 alone (layers 23-47 + head), context 32768",
+ "driver": "tp_rank1_driver.py run --steps 4 --prompt N --batched --rows R --cache /dev/shm/ownrt-lab-prefill/cache",
+ "base_launch": "/dev/shm/ownrt-lab-ctx32k/rank1-card27-b3-launch.json + OWNRT_SELECT_TOPK=1, OWNRT_RESET_DEVICE_ZERO=1, binary replaced",
+ "compare": "tp_rank1_driver.py compare (sha256 of all 1079 state buffers + history/fp32 fields)",
+ "runs": [
+  {
+   "run": "ref-4096",
+   "note": "reference state (unmodified lab build), first run on a cold JIT cache: timing not comparable",
+   "binary": "/dev/shm/engine-build-lab-prefill-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "0df557b33163439fbc58726386dfd5047349c61135c54e138926808d1ea7686f",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 71244.7,
+   "load_s": 12.03,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-4096"
+  },
+  {
+   "run": "ref-t32",
+   "note": "baseline timing, warm JIT cache",
+   "binary": "/dev/shm/engine-build-lab-prefill-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "0df557b33163439fbc58726386dfd5047349c61135c54e138926808d1ea7686f",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 41852.0,
+   "load_s": 11.64,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-t32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "ref-t32b",
+   "note": "baseline timing repeat",
+   "binary": "/dev/shm/engine-build-lab-prefill-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "0df557b33163439fbc58726386dfd5047349c61135c54e138926808d1ea7686f",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 41982.2,
+   "load_s": 11.7,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-t32b",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "ref-p4090",
+   "note": "partial-chunk reference (4090 = 127 x 32 + 26 rows)",
+   "binary": "/dev/shm/engine-build-lab-prefill-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "0df557b33163439fbc58726386dfd5047349c61135c54e138926808d1ea7686f",
+   "env_delta": {},
+   "prompt_rows": 4090,
+   "chunk_rows": 32,
+   "prompt_ms": 41724.7,
+   "load_s": 11.97,
+   "tokens": [
+    132123,
+    421,
+    61236,
+    121841
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-p4090"
+  },
+  {
+   "run": "r2b-cycleprof",
+   "note": "profiled sweep, 6 tiles + canonical cycled per chunk, lane-0 tree epilogue",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2b/sc117-engine",
+   "build": "r2b",
+   "binary_sha256": "5e0c412e8bd71d01f51bef93cd4ce462bd9f5f67f9ded65cf48af17d371d6c36",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1",
+    "OWNRT_PREFILL_REUSE2_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 37797.1,
+   "load_s": 11.79,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2b-cycleprof",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2c-cycleprof",
+   "note": "profiled sweep, butterfly epilogue, 7 tiles + canonical",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2c/sc117-engine",
+   "build": "r2c",
+   "binary_sha256": "6f5dd8c43dfe508d1d899e367a418fa79ad348fab38be78126f4e8966141d0d8",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1",
+    "OWNRT_PREFILL_REUSE2_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 36201.0,
+   "load_s": 11.75,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2c-cycleprof",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2d-t32",
+   "note": "first per-family defaults",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2d/sc117-engine",
+   "build": "r2d",
+   "binary_sha256": "2e6e052e20a38012c7693187d01f9398677d537171b014104da0f3b531e7aa6d",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 31031.9,
+   "load_s": 11.66,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2d-t32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2d-t64",
+   "note": "64-row chunks",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2d/sc117-engine",
+   "build": "r2d",
+   "binary_sha256": "2e6e052e20a38012c7693187d01f9398677d537171b014104da0f3b531e7aa6d",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 64,
+   "prompt_ms": 30921.0,
+   "load_s": 11.65,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2d-t64",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2d-prof32",
+   "note": "per-site profile",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2d/sc117-engine",
+   "build": "r2d",
+   "binary_sha256": "2e6e052e20a38012c7693187d01f9398677d537171b014104da0f3b531e7aa6d",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 33074.0,
+   "load_s": 11.66,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2d-prof32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2e-cycleprof",
+   "note": "profiled sweep, 12 tiles + canonical (adds 2x4, 1x1, 8x4, row-tile-major order)",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2e/sc117-engine",
+   "build": "r2e",
+   "binary_sha256": "3c5203e221329573bd44f103e0eb0399ea37738b5de278252d9188a6ee9566bb",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1",
+    "OWNRT_PREFILL_REUSE2_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 36537.0,
+   "load_s": 11.81,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2e-cycleprof",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2f-cycleprof",
+   "note": "profiled sweep, adds half-split 128-GRF tiles (lost)",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2f/sc117-engine",
+   "build": "r2f",
+   "binary_sha256": "f0141ee48e6b56691c53da718b5ce009a7c922bc0c3acc37c5d156d06eea88df",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1",
+    "OWNRT_PREFILL_REUSE2_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 36931.5,
+   "load_s": 11.83,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2f-cycleprof",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2f-t32",
+   "note": "refined defaults",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2f/sc117-engine",
+   "build": "r2f",
+   "binary_sha256": "f0141ee48e6b56691c53da718b5ce009a7c922bc0c3acc37c5d156d06eea88df",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 31202.6,
+   "load_s": 11.64,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2f-t32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2f-p4090",
+   "note": "partial-chunk exactness",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2f/sc117-engine",
+   "build": "r2f",
+   "binary_sha256": "f0141ee48e6b56691c53da718b5ce009a7c922bc0c3acc37c5d156d06eea88df",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1"
+   },
+   "prompt_rows": 4090,
+   "chunk_rows": 32,
+   "prompt_ms": 32629.5,
+   "load_s": 12.18,
+   "tokens": [
+    132123,
+    421,
+    61236,
+    121841
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2f-p4090",
+   "compare": {
+    "against": "ref-p4090",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2g-t32",
+   "note": "FINAL build, OWNRT_PREFILL_REUSE2=1",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2g/sc117-engine",
+   "build": "r2g",
+   "binary_sha256": "e259812dbb3accbf8a0b6db3f987ae9d1b9595c3e2fa879d7346cc8c0d227952",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 30958.9,
+   "load_s": 11.82,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2g-t32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2g-t32b",
+   "note": "FINAL build repeat",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2g/sc117-engine",
+   "build": "r2g",
+   "binary_sha256": "e259812dbb3accbf8a0b6db3f987ae9d1b9595c3e2fa879d7346cc8c0d227952",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 31387.3,
+   "load_s": 11.67,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2g-t32b",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2g-off-t32",
+   "note": "FINAL build, switch off (canonical path)",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2g/sc117-engine",
+   "build": "r2g",
+   "binary_sha256": "e259812dbb3accbf8a0b6db3f987ae9d1b9595c3e2fa879d7346cc8c0d227952",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 41982.6,
+   "load_s": 11.57,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2g-off-t32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2g-prof32",
+   "note": "FINAL build per-site profile, switch on",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2g/sc117-engine",
+   "build": "r2g",
+   "binary_sha256": "e259812dbb3accbf8a0b6db3f987ae9d1b9595c3e2fa879d7346cc8c0d227952",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 33143.8,
+   "load_s": 11.54,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2g-prof32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2g-off-prof32",
+   "note": "FINAL build per-site profile, switch off",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2g/sc117-engine",
+   "build": "r2g",
+   "binary_sha256": "e259812dbb3accbf8a0b6db3f987ae9d1b9595c3e2fa879d7346cc8c0d227952",
+   "env_delta": {
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 43382.2,
+   "load_s": 11.61,
+   "tokens": [
+    565,
+    1092,
+    998,
+    11
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2g-off-prof32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "r2g-p4090",
+   "note": "FINAL build partial-chunk exactness",
+   "binary": "/dev/shm/engine-build-lab-prefill-r2g/sc117-engine",
+   "build": "r2g",
+   "binary_sha256": "e259812dbb3accbf8a0b6db3f987ae9d1b9595c3e2fa879d7346cc8c0d227952",
+   "env_delta": {
+    "OWNRT_PREFILL_REUSE2": "1"
+   },
+   "prompt_rows": 4090,
+   "chunk_rows": 32,
+   "prompt_ms": 31141.8,
+   "load_s": 11.77,
+   "tokens": [
+    132123,
+    421,
+    61236,
+    121841
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/r2g-p4090",
+   "compare": {
+    "against": "ref-p4090",
+    "rc": 0,
+    "compared": 1079,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  }
+ ]
+}

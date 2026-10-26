@@ -5,6 +5,7 @@
 #include "stage2/packet6-kopt/kernels.hpp"
 #include "stage2/packet6-kopt/reference.hpp"
 #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
+#include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
 #include "stage2/packet194-expert-diet-engine/detmath.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include <algorithm>
@@ -580,11 +581,26 @@ ownrt::Event slot_select(ownrt::Device& d,ownrt::Allocation y,ownrt::Allocation 
   if(y==peer||y==expert_ids||peer==expert_ids)throw std::invalid_argument("slot select aliases");
   SlotSelect op;op.top=top;op.rows=rows;op.parity=parity;op.by_slot=by_slot;std::vector<ownrt::Allocation> ids{y,peer,expert_ids};return d.compute(op,ids,{});
 }
+// Generation-2 token rows (prefill_reuse2.hpp): raw Q6_K/Q8_0 rows decoded 8 columns at a time exactly as MultiplyRows.
+struct Reuse2Q6 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q6_K>(row,k,v);}};
+struct Reuse2Q8 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q8_0>(row,k,v);}};
 ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
   if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;
   if(a!=Type::F32||o!=Type::F32||tokens==1)return finish(d,op,ids);
+  if(reuse2::enabled()&&sg==32&&k%8==0&&op.desc[0].rb<=UINT32_MAX&&(t==Type::BF16||t==Type::Q6_K||t==Type::Q8_0)&&(t!=Type::BF16||op.desc[0].rb%16==0)) {
+    // OWNRT_PREFILL_REUSE2=1: RW rows x T tokens per subgroup (tile OWNRT_PREFILL_REUSE2_BF16 / _KOPT); every output keeps
+    // MultiplyRowsLean's (BF16) or MultiplyRows' (Q6_K/Q8_0) single-row sequence and tree. Allocations are 16-byte aligned.
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    const uint32_t r32=uint32_t(rows),k32=uint32_t(k),rb=uint32_t(op.desc[0].rb);
+    const unsigned c=t==Type::BF16?reuse2::config("BF16",reuse2::config_count,reuse2::default_bf16(r32,k32)):reuse2::config("KOPT",reuse2::config_count,reuse2::default_kopt(r32,k32));
+    if(c<reuse2::config_count) {
+      if(t==Type::BF16)return reuse2::issue<reuse2::BF16x8,REUSE2_CONFIGS>(d,c,ids,r32,k32,tokens,rb);
+      if(t==Type::Q6_K)return reuse2::issue<reuse2::Decode8<Reuse2Q6>,REUSE2_CONFIGS>(d,c,ids,r32,k32,tokens,rb);
+      return reuse2::issue<reuse2::Decode8<Reuse2Q8>,REUSE2_CONFIGS>(d,c,ids,r32,k32,tokens,rb);
+    }
+  }
   if(sg==32&&tokens<=16&&prefill_switches::tiled_rows()){
     // F32 token rows (up to 16): tiled kernel, activations staged once per 16 weight rows.
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");

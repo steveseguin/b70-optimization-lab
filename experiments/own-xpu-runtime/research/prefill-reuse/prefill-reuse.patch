@@ -1,0 +1,388 @@
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp
+@@ -2,6 +2,9 @@
+ #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
+ #include "gsq-rco-iq3s/dense-packed-block/selection.hpp"
+ #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
++#endif
+ // Included after frozen gsqn definitions. Candidate changes only repeated
+ // block half conversion/addressing, never the scalar FP expression boundaries.
+ namespace denseblock {
+@@ -110,6 +113,9 @@
+   }));});
+  }
+ };
++// Generation-2 token rows (OWNRT_PREFILL_REUSE2=1, prefill_reuse2.hpp): RW rows x T tokens per subgroup, each
++// block_element value decoded once per tile; every output keeps block_lane_sum's sequence and the subgroup tree.
++struct BlockElement {template<unsigned T> static float element(const uint8_t*b,float d,float dmin,unsigned group,unsigned lane){return block_element<T>(b,d,dmin,group,lane);}};
+ #endif
+ inline const Site& policy(const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
+  const auto*s=selected(label,weight);require(s,"dense block exact census site");
+@@ -120,6 +126,14 @@
+ }
+ template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.x,m.y};
+ #ifndef OWN_RT_HOST_ONLY
++ if(s.f32&&s.row_major&&reuse2::enabled()&&s.columns%256==0&&reuse2::aligned(d,m.x,16)){
++  // OWNRT_PREFILL_REUSE2_BLOCK=i selects the tile (default reuse2::default_block); the x rows are 16-byte aligned for subgroup block reads.
++  if(const unsigned c=reuse2::config("BLOCK",reuse2::config_count,reuse2::default_block(uint32_t(s.rows),uint32_t(s.columns)));c<reuse2::config_count){
++   std::array<ownrt::Allocation,3> rows{m.w,m.x,m.y};
++   auto e=reuse2::issue<reuse2::Block32<T,BlockElement>,REUSE2_CONFIGS>(d,c,rows,uint32_t(s.rows),uint32_t(s.columns),s.count,uint32_t(s.row_bytes));
++   return {e,e,1};
++  }
++ }
+  if(s.f32&&s.row_major&&prefill_switches::small_tile_rows()){DenseBlockRows<T,4>op;op.s=s;std::array<ownrt::Allocation,3>rows{m.w,m.x,m.y};auto e=d.compute(op,rows,{});return {e,e,1};}
+ #endif
+  if(s.f32){DenseBlockOperation<T,true>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+@@ -213,13 +213,21 @@
+         }
+       }
+       if(banked_native)banks_native=true;else if(l->op=="gdn"||l->op=="conv")banks_replayed=true;
+-      if(profile){drain();auto& entry=spent[l->op=="gemv"||l->op=="routed_gemv"?l->op+":"+w.directory.at(l->weights.at(0)).grid:l->op];++entry.first;entry.second+=ms(site_start);}
++      // OWNRT_PREFILL_PROFILE_SHAPE=1 (diagnostic) also keys linear sites by their rows x columns.
++      static const bool profile_shape=[]{const char* e=std::getenv("OWNRT_PREFILL_PROFILE_SHAPE");return e&&e[0]=='1';}();
++      if(profile){drain();std::string key=l->op=="gemv"||l->op=="routed_gemv"?l->op+":"+w.directory.at(l->weights.at(0)).grid:l->op;
++        if(profile_shape&&(l->op=="gemv"||l->op=="routed_gemv")&&l->shape.size()==3)key+=":"+std::to_string(l->shape[1])+"x"+std::to_string(l->shape[2]);
++        auto& entry=spent[key];++entry.first;entry.second+=ms(site_start);}
+       // Owner event ledger holds 16384 events; retire well before it fills.
+       if(submitted-drained_at>6000){drain();drained_at=submitted;}
+     }
+     prefill_set_views(false);
+   } catch(...) {prefill_set_views(false);throw;}
+-  if(profile){std::ofstream o(a.output/"prefill-profile.jsonl",std::ios::app);o<<"{\"position\":"<<P0<<",\"rows\":"<<M<<",\"sites\":{";bool comma=false;
++  if(profile){std::ofstream o(a.output/"prefill-profile.jsonl",std::ios::app);o<<"{\"position\":"<<P0<<",\"rows\":"<<M<<
++#ifndef OWN_RT_HOST_ONLY
++    (reuse2::enabled()?",\"chunk\":"+std::to_string(reuse2::chunk_counter()):std::string())<<
++#endif
++    ",\"sites\":{";bool comma=false;
+     for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
+   drain();
+   require(!integer(0,"error"),"sticky rank error in batched prefill");
+@@ -230,4 +238,7 @@
+   if(!state_spares.empty())for(int r=0;r<(banks_native?1:M%2);++r)swap_state_banks();
+   if(rows_out){auto raw=readback(0,prefill_shadow("streams"),size_t(M)*stream);std::memcpy(rows_out,raw.data(),raw.size());}
+   ++prefill_chunks;prefill_rows_done+=size_t(M);
++#ifndef OWN_RT_HOST_ONLY
++  ++reuse2::chunk_counter(); // OWNRT_PREFILL_REUSE2_CYCLE diagnostic: the next chunk's tile configuration
++#endif
+ }
+--- a/stage2/packet194-expert-diet-engine/p33_submit.cpp
++++ b/stage2/packet194-expert-diet-engine/p33_submit.cpp
+@@ -5,6 +5,9 @@
+ #include "stage2/packet194-expert-diet-engine/p33_submit.hpp"
+ #include "stage2/packet194-expert-diet-engine/p33_candidates.hpp"
+ #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
++#endif
+ #include "stage2/packet194-expert-diet-engine/p42_expert.hpp"
+ #include "stage2/packet194-expert-diet-engine/expert_down.hpp"
+ #ifndef OWN_RT_HOST_ONLY
+@@ -116,6 +119,16 @@
+ #endif
+ template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
+ #ifndef OWN_RT_HOST_ONLY
++ if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&reuse2::enabled()) {
++  // Generation-2 token rows (OWNRT_PREFILL_REUSE2=1; tile OWNRT_PREFILL_REUSE2_P33=i): dense_lane's values and sequence.
++  const size_t rb=integrated::arithmetic::row_bytes(T,K,6);
++  const unsigned c=reuse2::config("P33",reuse2::config_count,reuse2::default_p33(uint32_t(m[0].rows),K));
++  if(c<reuse2::config_count&&rb%4==0&&K%4==0&&reuse2::aligned(d,m[0].w,4)&&reuse2::aligned(d,m[0].x,16)&&rb<=UINT32_MAX) {
++   std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};
++   auto e=reuse2::issue<reuse2::Expanded8<T==iq3::Type::Q6_K?16u:32u>,REUSE2_CONFIGS>(d,c,ids,uint32_t(m[0].rows),K,m[0].tokens,uint32_t(rb));
++   return {e,e,1};
++  }
++ }
+  if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&prefill_switches::weight_reuse_rows()) {
+   constexpr unsigned R=4;DenseRows<T,K,R> k;k.b.rb=integrated::arithmetic::row_bytes(T,K,6);k.b.rows=m[0].rows;k.b.tokens=m[0].tokens;
+   std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};auto e=d.compute(k,ids,{});return {e,e,1};
+--- a/stage2/packet6-kopt/kernels.cpp
++++ b/stage2/packet6-kopt/kernels.cpp
+@@ -5,6 +5,7 @@
+ #include "stage2/packet6-kopt/kernels.hpp"
+ #include "stage2/packet6-kopt/reference.hpp"
+ #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
++#include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
+ #include "stage2/packet194-expert-diet-engine/detmath.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+ #include <algorithm>
+@@ -580,11 +581,26 @@
+   if(y==peer||y==expert_ids||peer==expert_ids)throw std::invalid_argument("slot select aliases");
+   SlotSelect op;op.top=top;op.rows=rows;op.parity=parity;op.by_slot=by_slot;std::vector<ownrt::Allocation> ids{y,peer,expert_ids};return d.compute(op,ids,{});
+ }
++// Generation-2 token rows (prefill_reuse2.hpp): raw Q6_K/Q8_0 rows decoded 8 columns at a time exactly as MultiplyRows.
++struct Reuse2Q6 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q6_K>(row,k,v);}};
++struct Reuse2Q8 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q8_0>(row,k,v);}};
+ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
+   if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
+   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;
+   if(a!=Type::F32||o!=Type::F32||tokens==1)return finish(d,op,ids);
++  if(reuse2::enabled()&&sg==32&&k%8==0&&op.desc[0].rb<=UINT32_MAX&&(t==Type::BF16||t==Type::Q6_K||t==Type::Q8_0)&&(t!=Type::BF16||op.desc[0].rb%16==0)) {
++    // OWNRT_PREFILL_REUSE2=1: RW rows x T tokens per subgroup (tile OWNRT_PREFILL_REUSE2_BF16 / _KOPT); every output keeps
++    // MultiplyRowsLean's (BF16) or MultiplyRows' (Q6_K/Q8_0) single-row sequence and tree. Allocations are 16-byte aligned.
++    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
++    const uint32_t r32=uint32_t(rows),k32=uint32_t(k),rb=uint32_t(op.desc[0].rb);
++    const unsigned c=t==Type::BF16?reuse2::config("BF16",reuse2::config_count,reuse2::default_bf16(r32,k32)):reuse2::config("KOPT",reuse2::config_count,reuse2::default_kopt(r32,k32));
++    if(c<reuse2::config_count) {
++      if(t==Type::BF16)return reuse2::issue<reuse2::BF16x8,REUSE2_CONFIGS>(d,c,ids,r32,k32,tokens,rb);
++      if(t==Type::Q6_K)return reuse2::issue<reuse2::Decode8<Reuse2Q6>,REUSE2_CONFIGS>(d,c,ids,r32,k32,tokens,rb);
++      return reuse2::issue<reuse2::Decode8<Reuse2Q8>,REUSE2_CONFIGS>(d,c,ids,r32,k32,tokens,rb);
++    }
++  }
+   if(sg==32&&tokens<=16&&prefill_switches::tiled_rows()){
+     // F32 token rows (up to 16): tiled kernel, activations staged once per 16 weight rows.
+     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+--- /dev/null
++++ b/stage2/packet194-expert-diet-engine/prefill_reuse2.hpp
+@@ -0,0 +1,191 @@
++#pragma once
++// Batched-prefill dense token-row kernels, generation 2 (lab, 2026-10-26). Default off: OWNRT_PREFILL_REUSE2=1 selects
++// them for F32 dense token rows (tokens > 1); without it nothing here is ever launched.
++//
++// One 32-lane subgroup owns a register tile of RW weight rows x T token rows. Per 256-column step every lane decodes its
++// 8 weight values of each of the RW rows once (the format's own decode expression) and applies them to each of the T
++// tokens. Accumulator (row, token) of lane l sees exactly the single-row sequence of the format's existing kernel:
++// steps in ascending order, the 8 values of a step in ascending order, product computed first, then sum = sum + product;
++// then the explicit adjacent-pair subgroup tree (width 1..16, lane%(2w)==0 adds lane+w). Lanes whose chunk lies past the
++// row end skip the step (their sum is unchanged), as in the single-row loop. Only which hardware thread performs an
++// output's sequence changes. Index math is 32-bit (64-bit integer math is emulated on the B70), except one 64-bit
++// row/token base per pointer, formed once per subgroup.
++//
++// Formats (F): static bool active(uint32_t k,uint32_t step,unsigned lane);
++//              static void decode(const uint8_t* row,uint32_t k,uint32_t step,unsigned lane,float (&v)[8]);
++//              static void inputs(sub_group sg,const float* x,uint32_t step,unsigned lane,float (&in)[8]);
++#include <sycl/sycl.hpp>
++#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
++#include <algorithm>
++#include <cstdint>
++#include <cstdlib>
++#include "stage2/packet2/kernels/math.hpp"
++namespace reuse2 {
++inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_REUSE2");return e&&e[0]=='1';}();return on;}
++// Batched-prefill chunk counter (diagnostic config cycling): prefill_chunk advances it once per chunk.
++inline uint64_t& chunk_counter(){static uint64_t n=0;return n;}
++// Tile configuration index for one kernel family, 0..count-1, or count for the family's existing (canonical) kernel:
++// OWNRT_PREFILL_REUSE2_<FAMILY>=i fixes it (default: `fallback`); OWNRT_PREFILL_REUSE2_CYCLE=1 (diagnostic) uses
++// chunk % (count+1) instead, so one profiled run times every configuration and the canonical kernel side by side. Every
++// configuration is exact; the choice changes only speed.
++inline unsigned config(const char* family,unsigned count,unsigned fallback){
++ static const bool cycle=[]{const char* e=std::getenv("OWNRT_PREFILL_REUSE2_CYCLE");return e&&e[0]=='1';}();
++ if(cycle)return unsigned(chunk_counter()%(count+1));
++ char name[96]="OWNRT_PREFILL_REUSE2_";size_t n=21;for(const char* p=family;*p&&n+1<sizeof(name);++p)name[n++]=*p;name[n]=0;
++ const char* e=std::getenv(name);if(!e||!*e)return std::min(fallback,count);
++ const int v=std::atoi(e);return v>=0&&unsigned(v)<=count?unsigned(v):std::min(fallback,count);
++}
++// Lane chunks of 8 consecutive columns: lane l owns columns 256*step + 8*l + j (kopt / p33 dense lanes).
++inline bool chunk8_active(uint32_t k,uint32_t step,unsigned lane){return step*256u+lane*8u+8u<=k;}
++template<class G> inline void chunk8_inputs(G,const float* x,uint32_t step,unsigned lane,float (&in)[8]){
++ const auto* p=reinterpret_cast<const sycl::vec<float,4>*>(x+(step*256u+lane*8u));const auto lo=p[0],hi=p[1];
++ #pragma unroll
++ for(unsigned j=0;j<4;++j){in[j]=lo[j];in[j+4]=hi[j];}
++}
++// Lane columns of stride 32: lane l owns columns 256*step + 32*g + l, g = 0..7 (dense packed blocks).
++inline bool stride32_active(uint32_t k,uint32_t step,unsigned){return step*256u<k;}
++// One subgroup block read of 8 x 32 floats (16-byte aligned rows; the caller checks): lane l receives
++// x[256*step + 32*g + l] as element g, the same values as eight lane loads.
++template<class G> inline void stride32_inputs(G sg,const float* x,uint32_t step,unsigned,float (&in)[8]){
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wdeprecated-declarations"
++ const auto v=sg.template load<8>(sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::yes>(x+step*256u));
++#pragma clang diagnostic pop
++ #pragma unroll
++ for(unsigned g=0;g<8;++g)in[g]=v[g];
++}
++// Dense packed blocks Q4_K/Q5_K/IQ4_XS (T = 12/13/23, 256-column blocks): the values of block_lane_sum /
++// DenseBlockRows, block = step and group g = 0..7; E::element<T> is denseblock::block_element<T>.
++template<unsigned T,class E> struct Block32 {
++ static bool active(uint32_t k,uint32_t step,unsigned lane){return stride32_active(k,step,lane);}
++ static void decode(const uint8_t* row,uint32_t,uint32_t step,unsigned lane,float (&v)[8]){
++  constexpr uint32_t bytes=T==12?144:T==13?176:136;
++  const uint8_t* packed=row+step*bytes;const float d=iq3::half(iq3::u16(packed));
++  float dmin=0;if constexpr(T==12||T==13)dmin=iq3::half(iq3::u16(packed+2));
++  #pragma unroll
++  for(unsigned g=0;g<8;++g)v[g]=E::template element<T>(packed,d,dmin,g,lane);
++ }
++ template<class G> static void inputs(G sg,const float* x,uint32_t step,unsigned lane,float (&in)[8]){stride32_inputs(sg,x,step,lane,in);}
++};
++// p33 expanded rows (variant 6: k signed bytes, then one F32 scale per Group columns; Q6_K Group 16, Q8_0 32): the
++// values of p33::dense_lane / DenseRows, value = scale*float(signed8(code)). Rows and k are multiples of 4 bytes (the
++// caller checks), so the 8 code bytes and the scale are read as aligned 32-bit words; the same bytes, the same values.
++template<unsigned Group> struct Expanded8 {
++ static bool active(uint32_t k,uint32_t step,unsigned lane){return chunk8_active(k,step,lane);}
++ static void decode(const uint8_t* w,uint32_t k,uint32_t step,unsigned lane,float (&v)[8]){
++  const uint32_t tile=step*256u+lane*8u;
++  const float scale=iq3::bits_float(*reinterpret_cast<const uint32_t*>(w+k+4u*(tile/Group)));
++  const uint32_t* codes=reinterpret_cast<const uint32_t*>(w+tile);const uint32_t lo=codes[0],hi=codes[1];
++  #pragma unroll
++  for(unsigned j=0;j<8;++j){const uint8_t code=uint8_t(((j<4?lo:hi)>>(8*(j&3)))&255u);v[j]=scale*float(int(int8_t(code)));} // int(int8_t(b)) == iq3::signed8(b) for every byte
++ }
++ template<class G> static void inputs(G sg,const float* x,uint32_t step,unsigned lane,float (&in)[8]){chunk8_inputs(sg,x,step,lane,in);}
++};
++// Raw BF16 rows (16-byte aligned, the caller checks): kopt MultiplyRowsLean's values, bits << 16 with no NaN-quiet
++// test (as the decode path's F32 fast loop).
++struct BF16x8 {
++ static bool active(uint32_t k,uint32_t step,unsigned lane){return chunk8_active(k,step,lane);}
++ static void decode(const uint8_t* row,uint32_t,uint32_t step,unsigned lane,float (&v)[8]){
++  const auto bits=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(row+(step*256u+lane*8u)*2u);
++  #pragma unroll
++  for(unsigned j=0;j<8;++j)v[j]=iq3::bits_float(uint32_t(bits[j])<<16);
++ }
++ template<class G> static void inputs(G sg,const float* x,uint32_t step,unsigned lane,float (&in)[8]){chunk8_inputs(sg,x,step,lane,in);}
++};
++// Raw quantized blocks decoded 8 columns at a time (D::decode8 is iq3::kopt::decode8<T>, as kopt MultiplyRows).
++template<class D> struct Decode8 {
++ static bool active(uint32_t k,uint32_t step,unsigned lane){return chunk8_active(k,step,lane);}
++ static void decode(const uint8_t* row,uint32_t,uint32_t step,unsigned lane,float (&v)[8]){D::decode8(row,step*256u+lane*8u,v);}
++ template<class G> static void inputs(G sg,const float* x,uint32_t step,unsigned lane,float (&in)[8]){chunk8_inputs(sg,x,step,lane,in);}
++};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF,unsigned O=0> struct Tile {
++ const uint8_t* w;const float* x;float* y;uint32_t rows,k,tokens,rb,ttiles,total;
++ void operator()(sycl::nd_item<1> it) const {
++  const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++  const uint32_t logical=uint32_t(it.get_group(0))*S+uint32_t(sg.get_group_linear_id());
++  if(logical>=total)return; // whole subgroup: no barriers in this kernel
++  // O = 0: token tiles of one row tile are adjacent (a work-group shares weight rows); O = 1: row tiles adjacent.
++  const uint32_t rtiles=total/ttiles;
++  const uint32_t row0=(O==0?logical/ttiles:logical%rtiles)*RW,tok0=(O==0?logical%ttiles:logical/rtiles)*T;
++  const uint8_t* wr[RW];const float* xt[T];
++  #pragma unroll
++  for(unsigned r=0;r<RW;++r)wr[r]=w+size_t(std::min(row0+r,rows-1u))*rb;
++  #pragma unroll
++  for(unsigned t=0;t<T;++t)xt[t]=x+size_t(std::min(tok0+t,tokens-1u))*k;
++  float acc[RW][T];
++  #pragma unroll
++  for(unsigned r=0;r<RW;++r)
++   #pragma unroll
++   for(unsigned t=0;t<T;++t)acc[r][t]=0.f;
++  // Every lane is active in the first k/256 steps (branch-free, unrolled U times so loads can be scheduled early);
++  // a ragged last step (k % 256, chunk8 formats only) runs only on the lanes whose chunk lies inside the row.
++  auto step=[&](uint32_t s){
++   float v[RW][8];
++   #pragma unroll
++   for(unsigned r=0;r<RW;++r)F::decode(wr[r],k,s,lane,v[r]);
++   #pragma unroll
++   for(unsigned t=0;t<T;++t){
++    float in[8];F::inputs(sg,xt[t],s,lane,in);
++    #pragma unroll
++    for(unsigned r=0;r<RW;++r)
++     #pragma unroll
++     for(unsigned j=0;j<8;++j){const float product=v[r][j]*in[j];acc[r][t]=acc[r][t]+product;}
++   }
++  };
++  constexpr unsigned U=RW*T<=8?4:RW*T<=16?2:1;
++  const uint32_t full=k/256u;
++  #pragma unroll U
++  for(uint32_t s=0;s<full;++s)step(s);
++  if(full*256u<k&&F::active(k,full,lane))step(full);
++  // Reduction: for every output the adjacent-pair tree of the single-row kernels (width w = 1, 2, .., 16: the partial of
++  // lanes [l, l+w) plus the partial of lanes [l+w, l+2w), lower range on the left). Groups of G = min(RW*T, 32)
++  // accumulators share the shuffles: at width w < G, lanes with bit w clear keep the even-position accumulators and
++  // lanes with bit w set the odd ones, each adding the same two partials in the same order (a butterfly transpose).
++  // After log2(G) levels lane l owns accumulator l % G; the remaining widths add lane l+w into lane l. Lanes 0..G-1
++  // then hold the G results and store them with one instruction.
++  constexpr unsigned N=RW*T,G=N<32?N:32;
++  static_assert((N&(N-1))==0,"tile size must be a power of two");
++  float flat[N];
++  #pragma unroll
++  for(unsigned r=0;r<RW;++r)
++   #pragma unroll
++   for(unsigned t=0;t<T;++t)flat[r*T+t]=acc[r][t];
++  #pragma unroll
++  for(unsigned g0=0;g0<N;g0+=G){
++   float a[G];
++   #pragma unroll
++   for(unsigned i=0;i<G;++i)a[i]=flat[g0+i];
++   #pragma unroll
++   for(unsigned w=1,n=G;n>1;w*=2,n/=2){
++    const bool upper=(lane&w)!=0;
++    #pragma unroll
++    for(unsigned i=0;i<n/2;++i){
++     const float send=upper?a[2*i]:a[2*i+1];
++     const float recv=sycl::permute_group_by_xor(sg,send,w);
++     const float left=upper?recv:a[2*i],right=upper?a[2*i+1]:recv;
++     a[i]=left+right;
++    }
++   }
++   float sum=a[0];
++   #pragma unroll
++   for(unsigned w=G;w<32;w*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+w)%32);if(((lane/G)%(2*w/G))==0)sum=sum+rhs;}
++   if(lane<G){const unsigned i=g0+lane,r=i/T,t=i%T;if(row0+r<rows&&tok0+t<tokens)y[(tok0+t)*rows+(row0+r)]=sum;}
++  }
++ }
++ auto get(sycl::ext::oneapi::experimental::properties_tag) const {
++#ifndef REUSE2_TEST_NO_GRF // CPU-device tests only: OpenCL CPU rejects the large-GRF build option
++  if constexpr(GRF==256)return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>,sycl::ext::intel::experimental::grf_size<256>};
++  else
++#endif
++  return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>};
++ }
++};
++// Kernel object and range for y[token*rows + row] over tokens x rows outputs (F32 activations x[token*k + column]).
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF,unsigned O=0> struct Prepared {Tile<F,RW,T,S,GRF,O> kernel;sycl::nd_range<1> range;};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF,unsigned O=0>
++Prepared<F,RW,T,S,GRF,O> prepare(const uint8_t* w,const float* x,float* y,uint32_t rows,uint32_t k,uint32_t tokens,uint32_t rb){
++ Tile<F,RW,T,S,GRF,O> kernel{w,x,y,rows,k,tokens,rb,(tokens+T-1)/T,0};
++ kernel.total=((rows+RW-1)/RW)*kernel.ttiles;const size_t groups=(kernel.total+S-1)/S;
++ return {kernel,sycl::nd_range<1>(groups*S*32,S*32)};
++}
++} // namespace reuse2
+--- /dev/null
++++ b/stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp
+@@ -0,0 +1,54 @@
++#pragma once
++// Engine operation wrapper for the generation-2 prefill token-row kernels (prefill_reuse2.hpp). Bindings: weights,
++// F32 activations (tokens x k), F32 outputs (tokens x rows).
++#include "stage2/packet194-expert-diet-engine/prefill_reuse2.hpp"
++#include "stage2/packet194-expert-diet-engine/prepared_submission.hpp"
++#include "stage1/packet3-prep/src/sycl_operation.hpp"
++#include <span>
++#include <stdexcept>
++namespace reuse2 {
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF,unsigned O> struct Op final:ownrt::SyclOperation {
++ uint32_t rows=0,k=0,tokens=0,rb=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
++  if(p.size()<3||!rows||!k||!tokens||k%8)throw std::invalid_argument("reuse2 token-row geometry");
++  const auto prepared=prepare<F,RW,T,S,GRF,O>(static_cast<const uint8_t*>(p[0]),static_cast<const float*>(p[1]),static_cast<float*>(p[2]),rows,k,tokens,rb);
++  const auto kernel=prepared.kernel;const auto range=prepared.range;
++  return ownrt::prepared_submit(q,[=](sycl::handler& h){h.depends_on(deps);h.parallel_for(range,packet26::checked(kernel));});
++ }
++};
++// Configuration list entry: RW rows x T tokens per subgroup, S subgroups per work-group, GRF 128 or 256.
++template<unsigned RW,unsigned T,unsigned S,unsigned GRF,unsigned O=0> struct Cfg {static constexpr unsigned rw=RW,t=T,s=S,grf=GRF,o=O;};
++// Issue configuration `index` of the list Cs... for format F.
++template<class F,class... Cs> ownrt::Event issue(ownrt::Device& d,unsigned index,std::span<const ownrt::Allocation> ids,uint32_t rows,uint32_t k,uint32_t tokens,uint32_t rb){
++ ownrt::Event e{};bool done=false;unsigned i=0;
++ auto one=[&]<class C>(C){if(i++!=index||done)return;Op<F,C::rw,C::t,C::s,C::grf,C::o> op;op.rows=rows;op.k=k;op.tokens=tokens;op.rb=rb;e=d.compute(op,ids,{});done=true;};
++ (one(Cs{}),...);
++ if(!done)throw std::invalid_argument("reuse2 configuration index");
++ return e;
++}
++}
++namespace reuse2 {
++// The configuration list every family compiles: index = OWNRT_PREFILL_REUSE2_<FAMILY> (BLOCK, P33, KOPT, BF16), and
++// config_count selects the family's canonical kernel; OWNRT_PREFILL_REUSE2_CYCLE=1 cycles chunk % (config_count+1).
++// Cfg<RW rows, T tokens, S subgroups per work-group, GRF 128|256, O tile order>. The production list keeps the tiles
++// that won at least one site class in the 2026-10-26 sweeps (2x8, 1x16, 2x16, 4x16, 2x4, 8x4 and 4x8 row-major order,
++// and half-split 128-GRF variants, never won; RESULT.md). Build with -DREUSE2_EXPLORE for the wider sweep list.
++#ifdef REUSE2_EXPLORE
++#define REUSE2_CONFIGS reuse2::Cfg<1,32,4,256>,reuse2::Cfg<4,8,4,256>,reuse2::Cfg<1,4,4,128>,reuse2::Cfg<1,1,4,128>,reuse2::Cfg<2,16,4,256,1>,\
++ reuse2::Cfg<2,8,4,128>,reuse2::Cfg<1,16,4,128>,reuse2::Cfg<2,16,4,256>,reuse2::Cfg<4,16,4,256>,reuse2::Cfg<2,4,4,128>,reuse2::Cfg<8,4,4,256>,\
++ reuse2::Cfg<4,8,4,256,1>
++inline constexpr unsigned config_count=12;
++#else
++#define REUSE2_CONFIGS reuse2::Cfg<1,32,4,256>,reuse2::Cfg<4,8,4,256>,reuse2::Cfg<1,4,4,128>,reuse2::Cfg<1,1,4,128>,reuse2::Cfg<2,16,4,256,1>
++inline constexpr unsigned config_count=5;
++#endif
++// Measured defaults (rank 1, 32-row chunks; profiled cycle runs r2c/r2e/r2f 2026-10-26, ms per chunk in RESULT.md):
++// dense blocks 2x16 row-tile-major (GRF 256); p33 expanded Q6_K/Q8_0 4x8 (GRF 256); kopt raw Q6_K/Q8_0 1x32 for <= 1024
++// rows, else 2x16 row-tile-major; BF16 1x1 for <= 64 rows, 1x4 for <= 128 rows, the canonical lean kernel for k >= 8192
++// (320 x 10240: 3.57 vs 3.82 ms best tile), else 4x8.
++inline unsigned default_block(uint32_t,uint32_t){return 4;}
++inline unsigned default_p33(uint32_t,uint32_t){return 1;}
++inline unsigned default_kopt(uint32_t rows,uint32_t){return rows<=1024?0:4;}
++inline unsigned default_bf16(uint32_t rows,uint32_t k){return rows<=64?3:rows<=128?2:k>=8192?config_count:1;}
++inline bool aligned(ownrt::Device& d,ownrt::Allocation id,uintptr_t a){return reinterpret_cast<uintptr_t>(d.arena.row(id).pointer)%a==0;}
++}
