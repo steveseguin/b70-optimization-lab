@@ -162,8 +162,20 @@ never shortened below its `max_tokens`. If the view does not fit beside it, the 
 messages alone do not fit gets HTTP 400. Session key: the `x-session-affinity` header, or ctxkeeper's fingerprint of
 the opening messages. Replies arrive whole at the end (SSE keepalives while the internal calls run). Usage reports the
 final call; `ownrt.keeper` lists every internal call (cached and read tokens, prompt seconds, restores). `GET
-/keeper/status` shows each conversation's cut count. Pi configuration: `pi/models.json` and `pi/settings.json` in
-the lab folder (`/dev/shm/ownrt-lab-keeper/pi/`). Device test: [keeper_device_test.py](keeper_device_test.py).
+/keeper/status` shows each conversation's cut count. Device test: [keeper_device_test.py](keeper_device_test.py).
+
+### Pi
+
+1. Copy [pi/models.json](pi/models.json) and [pi/settings.json](pi/settings.json) into `~/.pi/agent/`.
+2. Run `pi` (pi-coding-agent 1.2.0). The default model is the keeper id. The plain id
+   `sc117-qwen3.8-flash-next-iq3s-ownrt` (64K window, no keeper) is in the same file.
+
+Settings: thinking is off by default (`defaultThinkingLevel`; "medium" turns it on), Pi's own compaction is off,
+session-affinity headers are on, and `maxTokens` is 8192.
+
+End-to-end check, 2026-10-26 (pi 1.2.0 in a container, headless `--mode json`, keeper model): Pi fixed a failing
+unit test. It ran 6 turns with bash, read and edit tool calls. After the first request read the 1.9K-token head,
+every turn continued the cached state and read only 7-214 new tokens. The task took 28 s.
 
 ## Storage and retention
 
