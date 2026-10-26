@@ -333,13 +333,13 @@ static Options parse(int argc, char **argv) {
 #endif
   require(a.draft_rank==0||a.draft_rank==1,"draft rank must be0 or1");
   require(a.target_split==0||a.target_split==23||a.target_split==24||(a.gsq_packed&&a.target_split>=20&&a.target_split<=24),"target split must be0 (placement default),23 or24 (GSQ: 20..24)");
-  require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&a.context==32768),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768");
-  require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096,"24/24 rank0 draft admitted at context4096 only");
+  require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&(a.context==32768||a.context==65536)),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536");
+  require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096||a.context==32768||a.context==65536,"24/24 rank0 draft admitted at context4096/32768/65536");
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
   require(a.tokens > 0 && a.tokens <= (a.pipeline_enabled() ? 512 : 128) && a.context >= 8 &&
-              a.context <= 32768 && a.seconds > 0 && a.seconds <= 172800,
+              a.context <= 65536 && a.seconds > 0 && a.seconds <= 172800,
           "bounded generation/context/deadline");
   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
@@ -435,7 +435,7 @@ static Options parse(int argc, char **argv) {
     // 32768 (the RoPE table's extent) with the rank-0 draft, as main.cpp admits for the 23/25 split; QSA bounds come
     // from capacity or the launch extent and attention keeps its 2051-slot budget, so only allocations grow
     // (card 27 rank-1 lab 2026-10-26: 4096 vs 32768 bitwise on 1,079 buffers; 8K batched == token-by-token).
-    require(a.mini||a.context==4096||(a.context==32768&&a.draft_rank==0),"GSQ real context 4096 or 32768 (rank-0 draft)");
+    require(a.mini||a.context==4096||((a.context==32768||a.context==65536)&&a.draft_rank==0),"GSQ real context 4096, 32768 or 65536 (rank-0 draft)");
     // GSQ: rank 0 (with the draft) holds layers 0..split-1, rank 1 the rest; stage boundaries only copy activations.
     require(a.mini||(a.target_split>=20&&a.target_split<=24&&a.draft_rank==0),"GSQ split 20..24 with the rank-0 draft required");
   }
@@ -1396,7 +1396,7 @@ public:
     save(a.output/"device-contact.json","{\"device_contact\":true}");
 #endif
     if(a.argument_audit){argument_log.open(a.output/"argument-equivalence.jsonl");dev(0).argument_audit=&argument_log;dev(0).audit_prepare_each=a.audit_prepare_each;}
-    std::ifstream rope_file(fs::path(__FILE__).parent_path()/"rope.bf16",std::ios::binary);
+    std::ifstream rope_file(fs::path(__FILE__).parent_path()/"rope-65536.bf16",std::ios::binary); // 32768-position rope.bf16 stays for older pinned binaries
     require(bool(rope_file),"RoPE model constant missing");
     std::vector<uint8_t> rope_bytes((std::istreambuf_iterator<char>(rope_file)),{});
     require(rope_bytes.size()==rope_constants::bytes && hash(rope_bytes)==rope_constants::sha256,"RoPE model constant hash/extent mismatch");
@@ -2140,11 +2140,11 @@ static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
  constexpr size_t legacy=256ull*1024*1024, bounded=8ull*1024*1024;
  // GSQ resident ranks use the same plan-derived bound (the writer union below must fit 8 MiB); binding-time extent
  // guards in every scratch-using kernel stay on, so a short scratch refuses instead of writing out of bounds.
- const bool gsq=a.gsq_packed&&!a.mini&&(a.context==4096||a.context==32768)&&a.memory=="resident";
+ const bool gsq=a.gsq_packed&&!a.mini&&(a.context==4096||a.context==32768||a.context==65536)&&a.memory=="resident";
  if(!gsq&&(a.target_split!=23||a.draft_rank!=1||a.nongemv!="parallel"||
     (!a.mini&&a.context!=4096)))return legacy;
  require((a.mini||p.g.h==2560)&&p.g.context==a.context&&
-         p.g.context>0&&p.g.context<=32768&&p.g.budget>0&&p.g.budget<=2048,
+         p.g.context>0&&p.g.context<=65536&&p.g.budget>0&&p.g.budget<=2048,
          "unproved bounded scratch geometry");
  // --tp-replicate: card 1 runs twins of card 0's launches on its own scratch; the per-card bound is the one-card plan's.
  flash::Plan card0=p;if(a.tp_replicate)std::erase_if(card0.launches,[](const flash::Launch& l){return l.card!=0;});

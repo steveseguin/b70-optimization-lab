@@ -395,7 +395,13 @@ public:
    row.write_bytes=row.bytes;row.kv=row.kv&&SnapshotWriteSet::single_row(e.p,name,true);
    row.single_row=row.kv&&e.a.nongemv=="parallel";
    if(row.bank){auto proof=RedoBankProof::derive(e.p,name);row.redo_overwrite=proof.bytes==row.bytes&&proof.bytes>0;require(!e.miss_banks()||row.redo_overwrite,"third bank requires proved full destination overwrite");}
-   if(!(e.miss_banks()&&row.bank))capacity+=row.bytes;sources.push_back(std::move(row));
+   // A single-row QSA source is captured one row at a time (static rows and begin() both copy bytes/rows), so it
+   // needs one row of backup, not its whole context extent (about 0.75 GB on rank 0 at context 32768).
+   if(!(e.miss_banks()&&row.bank)){size_t need=row.bytes;
+    if(row.kv&&row.single_row){const size_t rows=row.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);
+     require(rows>0&&row.bytes%rows==0,"snapshot QSA row geometry");need=row.bytes/rows;}
+    capacity+=need;}
+   sources.push_back(std::move(row));
   }
   for(const auto& [name,id]:e.state_spares)represented.insert(id);
   for(const auto& [name,id]:e.state_reserves)represented.insert(id);

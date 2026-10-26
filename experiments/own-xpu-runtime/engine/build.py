@@ -2,7 +2,7 @@
 """Build canonical sources, optionally with one authenticated deployment header.
 
 Never executes the engine. Preserve the source tree at its build location: the
-current native runtime reads its pinned rope.bf16 next to the compiled main.cpp.
+current native runtime reads its pinned rope-65536.bf16 next to the compiled main.cpp.
 """
 import argparse
 import concurrent.futures as cf
@@ -89,7 +89,7 @@ def build(args):
                 'generated authority did not replace canonical header')
         require(validate_overlay(include, args.profile_sha256, args.deployment_sha256) == overlay,
                 'deployment authority changed during build')
-    runtime = SRC/'gsq-rco-iq3s/dense-packed-block/engine/build/source/rope.bf16'
+    runtime = SRC/'gsq-rco-iq3s/dense-packed-block/engine/build/source/rope-65536.bf16'
     receipt = dict(schema='ownrt.engine.build.v1', binary=str(binary), binary_sha256=sha(binary),
         objects={u['object']: sha(out/u['object']) for u in m['translation_units']},
         sources={str(p.relative_to(SRC)): sha(p) for p in sorted(deps)}, commands=log,
