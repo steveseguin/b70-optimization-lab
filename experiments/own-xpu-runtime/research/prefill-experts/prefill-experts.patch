@@ -1,0 +1,487 @@
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -140,6 +140,7 @@
+ #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
+ #include "gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp"
+ #include "gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp"
++#include "gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp"
+ #include "gsq-rco-iq3s/integration/build/private/additive/upload.hpp"
+ #include "gsq-rco-iq3s/integration/build/private/additive/generic_host.hpp"
+ #include "gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
+@@ -247,7 +248,7 @@
+       a.f32_activations=v=="f32";
+     }
+     else if (k == "--prefill-rows") {
+-      a.prefill_rows=std::stoi(value());require(a.prefill_rows>=0&&a.prefill_rows<=64,"prefill rows must be 0..64");
++      a.prefill_rows=std::stoi(value());require(a.prefill_rows>=0&&a.prefill_rows<=256,"prefill rows must be 0..256");
+     }
+     else if (k == "--prefill-shared") a.prefill_shared=value();
+     else if (k == "--draft-experts") {
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+@@ -16,6 +16,7 @@
+ std::map<std::string,std::string> prefill_role_of;     // plan buffer name -> role
+ std::vector<const flash::Launch*> prefill_sites;
+ Allocation prefill_positions=0,prefill_tokens=0;
++Allocation xg_order=0,xg_tiles=0,xg_count=0;size_t xg_capacity=0;
+ uint64_t prefill_chunks=0,prefill_rows_done=0;
+ static std::string prefill_role(const std::string& name) {
+   if(!name.starts_with("blk."))return name;
+@@ -53,6 +54,14 @@
+     for(size_t off=0;off<bytes*M;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes*M-off));
+     prefill_shadows[role]={id,bytes};total+=bytes*M;
+   }
++#ifndef OWN_RT_HOST_ONLY
++  if(xgroup::enabled()) { // expert-grouped routed sites: slot order, tile descriptors and tile count for top*M slots
++    xg_capacity=size_t(p.g.top)*M;
++    xg_order=allocate(0,"prefill:xg-order",xg_capacity*4,Category::scratch,Lifetime::transaction);
++    xg_tiles=allocate(0,"prefill:xg-tiles",xg_capacity*xgroup::desc_words*4,Category::scratch,Lifetime::transaction);
++    xg_count=allocate(0,"prefill:xg-count",64,Category::scratch,Lifetime::transaction);
++  }
++#endif
+   prefill_positions=allocate(0,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
+   prefill_tokens=allocate(0,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
+   std::ostringstream o;o<<"{\"rows\":"<<M<<",\"roles\":"<<role_bytes.size()<<",\"buffers\":"<<prefill_role_of.size()
+@@ -121,6 +130,26 @@
+   }
+   finish(0,site.submit(dev(0),site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);
+ }
++// QSA select rows per native launch: its specialised scratch holds tokens x ceil(context/4) floats in the 8 MiB
++// operator scratch (128 rows at context 65536). Longer chunks run the native select in groups of at most that many rows,
++// each from row g's views exactly as the grouped attention below (position/token views give row g its own position;
++// shadows are viewed at row g), with the extent its last row admits. Each row's arithmetic is its single-row select.
++int prefill_select_rows() const {return std::max(1,int(size_t(8)*1024*1024/(size_t(4)*((size_t(p.g.context)+3)/4))));}
++void prefill_native_group(const flash::Launch& l,int P0,int g,int rows) {
++  auto& d=dev(0);const int saved_extent=context_extent;
++  context_extent=std::min(p.g.context,((P0+g+rows-1+32)/32)*32);
++  auto site=prepare_site(l);context_extent=saved_extent;
++  std::vector<Allocation> viewed;size_t k=0;
++  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){
++    if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(name);site.bindings.at(k)=shadow;site.spec.row_bytes[k]=uint32_t(prefill_row_bytes(name));
++      if(!d.row_views.count(shadow)){d.row_views[shadow]={shadow,prefill_row_bytes(name),false};viewed.push_back(shadow);}}
++    ++k;}
++  site.spec.tokens=rows;site.spec.tmp_row_bytes=4096*4;
++  d.view_row=g;
++  try {finish(0,site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);}
++  catch(...){d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);throw;}
++  d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
++}
+ Allocation prefill_shadow(const std::string& name) const {return prefill_shadows.at(prefill_role_of.at(name)).id;}
+ size_t prefill_row_bytes(const std::string& name) const {const auto& s=buffers[0].at(name);return s.n*flash::scalar_bytes(s.type);}
+ // Rank 0 host inputs: per-row lookup rows (embedding, PLE) with the token history advanced row by row.
+@@ -145,7 +174,67 @@
+     require(m.count==unsigned(p.g.top)&&m.routes&&m.status,"prefill routed site");
+     m.routes=prefill_shadow(l.inputs[1]);m.status=prefill_shadow(l.outputs[1]);m.count=unsigned(p.g.top)*unsigned(M);
+   } else {require(m.count==1&&!m.routes,"prefill dense site");m.tokens=unsigned(M);}
+-  gsq_linear_matrix(l,m);
++  if(!(l.op=="routed_gemv"&&prefill_experts_site(l,m)))gsq_linear_matrix(l,m);
++  // Diagnostic only (OWNRT_PREFILL_ROUTE_DUMP=<file>): after each routed site, drain and append its M*top routes
++  // (record: u32 label length, label, u32 rows M, u32 slots, then slots x {expert_id,row_begin,row_count}).
++  static const char* route_dump=std::getenv("OWNRT_PREFILL_ROUTE_DUMP");
++  if(route_dump&&l.op=="routed_gemv") {
++    drain();auto raw=readback(0,m.routes,size_t(m.count)*sizeof(iq3::Route));
++    std::ofstream o(route_dump,std::ios::app|std::ios::binary);const uint32_t head[3]{uint32_t(l.label.size()),uint32_t(M),m.count};
++    o.write(reinterpret_cast<const char*>(head),4);o.write(l.label.data(),l.label.size());o.write(reinterpret_cast<const char*>(head+1),8);
++    o.write(reinterpret_cast<const char*>(raw.data()),raw.size());
++  }
++}
++// Expert-grouped routed site (OWNRT_PREFILL_EXPERTS=1, prefill_experts.hpp): the same decode values as the kernel that
++// gsq_linear_matrix would select for this site (IQ3_XXS block sites, gsqn packed rows, kopt routed rows), grouped by
++// expert so each expert row is decoded once per tile of slots. Returns false (existing path) for anything else.
++bool prefill_experts_site(const flash::Launch& l,const Matrix& m) {
++#ifdef OWN_RT_HOST_ONLY
++  (void)l;(void)m;return false;
++#else
++  if(!xgroup::enabled()||!xg_order)return false;
++  if(m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.tokens!=1||!m.routes||!m.status||!m.count||!m.experts)return false;
++  if((m.span&&m.span!=m.rows)||m.count>xg_capacity||!m.rows||m.rows>UINT32_MAX||!m.columns||m.columns>16384||m.columns%32)return false;
++  const unsigned t=unsigned(m.type);int family=-1;
++  if(dense_block_site(w,a,l))return false;
++  if(iq3_block_site(w,a,l))family=0;
++  else if(dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
++  else if(t==12||t==13||t==18||t==23||t==42)family=1;
++  else if(t==8||t==14||t==20||t==21||t==22)family=2;
++  else return false;
++  const auto fmt=iq3::layout(iq3::Type(t));if(!fmt.elements||m.columns%fmt.elements)return false;
++  if(family!=2&&t!=42&&m.columns%256)return false;
++  auto& d=dev(l.card);
++  if(reinterpret_cast<uintptr_t>(d.arena.row(m.x).pointer)%16||reinterpret_cast<uintptr_t>(d.arena.row(m.w).pointer)%16)return false;
++  static const char* names[]{"IQ3","ELEM","KOPT"};
++  const unsigned index=xgroup::config(names[family],xgroup::config_count,xgroup::default_tile(family,t));
++  if(index>=xgroup::config_count)return false;
++  const uint32_t rb=uint32_t(m.columns/fmt.elements*fmt.bytes),n=m.count,span=uint32_t(m.rows),k=uint32_t(m.columns);
++  const std::array<Allocation,8> ids{m.w,m.x,m.y,m.routes,m.status,xg_order,xg_tiles,xg_count};
++  std::pair<ownrt::Event,ownrt::Event> e;
++  using namespace xgroup;
++  if(family==0)e=issue<S32<Iq3Words>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);
++  else if(family==1){
++    switch(t){
++      case 12:e=issue<S32<Elem<12>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 13:e=issue<S32<Elem<13>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 18:e=issue<S32<Elem<18>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 23:e=issue<S32<Elem<23>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      default:e=issue<S32<Elem<42>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++    }
++  } else {
++    if(m.columns%8)return false;
++    switch(t){
++      case 8:e=issue<C8<Kopt<iq3::Type::Q8_0>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 14:e=issue<C8<Kopt<iq3::Type::Q6_K>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 20:e=issue<C8<Kopt<iq3::Type::IQ4_NL>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 21:e=issue<C8<Kopt<iq3::Type::IQ3_S>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      default:e=issue<C8<Kopt<iq3::Type::IQ2_S>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++    }
++  }
++  finish(l.card,{e.first,e.second,2},true);
++  return true;
++#endif
+ }
+ void prefill_set_views(bool on) {
+   auto& d=dev(0);d.row_views.clear();d.view_row=-1;
+@@ -181,7 +270,10 @@
+       const auto site_start=std::chrono::steady_clock::now();
+       bool banked_native=false;
+       if(l->op=="gemv"||l->op=="routed_gemv")prefill_linear(*l,M);
+-      else if(prefill_native(*l)){prefill_native_site(*l,P0,M);banked_native=l->op=="gdn"||l->op=="conv";}
++      else if(prefill_native(*l)){
++        if(l->op=="qsa_select"&&M>prefill_select_rows()){const int G=prefill_select_rows();for(int g=0;g<M;g+=G)prefill_native_group(*l,P0,g,std::min(G,M-g));}
++        else prefill_native_site(*l,P0,M);
++        banked_native=l->op=="gdn"||l->op=="conv";}
+       else if(l->op=="qsa_attention"&&prefill_attention_rows()>1) {
+         // Grouped rows (OWNRT_PREFILL_ATTN_ROWS=T, T<=4): one admit/tiles/combine launch set per T consecutive rows,
+         // from row g's views, with the extent of the group's last row. Each row keeps its own query, ids, slot count and
+--- a/gsq-rco-iq3s/integration/build/private/additive/packed.hpp
++++ b/gsq-rco-iq3s/integration/build/private/additive/packed.hpp
+@@ -22,7 +22,7 @@
+ template<bool F> inline float act_in(const uint16_t*x,size_t i){if constexpr(F)return reinterpret_cast<const float*>(x)[i];else return iq3::bits_float(uint32_t(x[i])<<16);}
+ template<bool F> inline void act_out(uint16_t*y,size_t i,float v){if constexpr(F)reinterpret_cast<float*>(y)[i]=v;else y[i]=iq3::bf16_bits(v);}
+ // Upper bound on token rows per launch (batched prefill chunk); routed sites carry 10 slots per token.
+-inline constexpr uint32_t max_tokens=64;
++inline constexpr uint32_t max_tokens=256;
+ struct Bound {Shape s;const uint8_t*w;const uint16_t*x;uint16_t*y;const iq3::Route*routes;uint32_t*status;};
+ template<unsigned T,bool F=false> inline float lane_sum(const Bound&b,const iq3::Route&r,size_t row,unsigned slot,unsigned lane){
+  constexpr size_t elements=T==42?64:256;constexpr size_t bytes=T==42?18:T==12?144:T==13?176:T==23?136:98;
+--- a/stage2/packet194-expert-diet-engine/kernels.hpp
++++ b/stage2/packet194-expert-diet-engine/kernels.hpp
+@@ -69,7 +69,7 @@
+  return 1024;
+ }
+ inline void validate(Shape s){
+- if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>87||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
++ if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>256||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
+  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
+  if(s.flags&~(1|2|4|8|16|f32_activations_flag))throw std::invalid_argument("unknown shape flag");
+  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
+--- a/stage2/packet194-expert-diet-engine/p28/submit.hpp
++++ b/stage2/packet194-expert-diet-engine/p28/submit.hpp
+@@ -3,7 +3,7 @@
+ #include "stage2/packet194-expert-diet-engine/p28/registry.hpp"
+ namespace p28 {
+ // Upper bound on dense token rows per launch (batched prefill chunk).
+-inline constexpr unsigned p28_max_tokens=64;
++inline constexpr unsigned p28_max_tokens=256;
+ struct Bound {
+  const uint8_t* w{};const uint8_t* peer{};const uint16_t* x{};uint16_t* y{};uint16_t* py{};
+  const iq3::Route* routes{};uint32_t* status{};uint32_t* ps{};float* scratch{};
+--- a/stage2/packet6-kopt/kernels.cpp
++++ b/stage2/packet6-kopt/kernels.cpp
+@@ -585,7 +585,7 @@
+ struct Reuse2Q6 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q6_K>(row,k,v);}};
+ struct Reuse2Q8 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q8_0>(row,k,v);}};
+ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
+-  if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
++  if(!tokens||tokens>256)throw std::invalid_argument("kopt token rows 1..256");
+   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;
+   if(a!=Type::F32||o!=Type::F32||tokens==1)return finish(d,op,ids);
+--- /dev/null
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp
+@@ -0,0 +1,74 @@
++#pragma once
++// Decode policies for the expert-grouped prefill tiles (prefill_experts.hpp): each returns, for its routed site class,
++// exactly the values the existing routed kernel computes (the same functions, called the same way).
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/prefill_experts.hpp"
++#include "stage2/packet6-kopt/reference.hpp"
++namespace xgroup {
++// IQ3_XXS block sites (iq3block::BlockRowsOperation): 98-byte blocks, block_element_words with the block's half scale.
++struct Iq3Words {static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned gv,float (&v)[8]){
++ const uint8_t* packed=row+step*98u;const float d=iq3::half(iq3::u16(packed));
++ #pragma unroll
++ for(unsigned g=0;g<8;++g)if(g<gv)v[g]=iq3block::block_element_words(packed,d,g,lane);}};
++// gsqn packed routed rows (PackedRowsOperation / PackedOperation, types 12, 13, 18, 23, 42): gsq::element_unchecked at
++// column k = 256*step + 32*g + lane of the row (Q2_0's dedicated loop computes the same float(code-1)*d).
++template<unsigned T> struct Elem {static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned gv,float (&v)[8]){
++ constexpr uint32_t elements=T==42?64:256,bytes=T==42?18:T==12?144:T==13?176:T==23?136:98;
++ #pragma unroll
++ for(unsigned g=0;g<8;++g)if(g<gv){const uint32_t k=step*256u+g*32u+lane;v[g]=gsq::element_unchecked(T,row+(k/elements)*bytes,k%elements);}}};
++// kopt routed rows (MultiplyBlockRows / Multiply): iq3::kopt::decode8<T> at the lane's 8-column chunk.
++template<iq3::Type T> struct Kopt {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){iq3::kopt::decode8<T>(row,k,v);}};
++// Engine operations. Bucket bindings: routes, status, order, tiles, tile_count. Tiles bindings: weights, F32 slot inputs
++// (slots x k), F32 outputs (slots x span), order, tiles, tile_count.
++struct BucketOp final:ownrt::SyclOperation {
++ uint32_t n=0,experts=0,rows=0,span=0,T=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
++  if(p.size()<5||!n||!T||!experts)throw std::invalid_argument("expert bucket geometry");
++  const Bucket k{static_cast<const iq3::Route*>(p[0]),static_cast<uint32_t*>(p[1]),static_cast<uint32_t*>(p[2]),static_cast<uint32_t*>(p[3]),
++                 static_cast<uint32_t*>(p[4]),n,experts,rows,span,T,{}};
++  const uint32_t nn=n;
++  return ownrt::prepared_submit(q,[=](sycl::handler& h){h.depends_on(deps);Bucket kk=k;kk.keys=sycl::local_accessor<uint32_t,1>(sycl::range<1>(nn),h);
++   h.parallel_for(sycl::nd_range<1>(bucket_items,bucket_items),packet26::checked(kk));});
++ }
++};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF> struct TilesOp final:ownrt::SyclOperation {
++ uint32_t span=0,k=0,rb=0,n=0,experts=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
++  if(p.size()<6||!span||!k||!n)throw std::invalid_argument("expert tiles geometry");
++  const auto prepared=prepare<F,RW,T,S,GRF>(static_cast<const uint8_t*>(p[0]),static_cast<const float*>(p[1]),static_cast<float*>(p[2]),
++   static_cast<const uint32_t*>(p[3]),static_cast<const uint32_t*>(p[4]),static_cast<const uint32_t*>(p[5]),span,k,rb,n,experts);
++  const auto kernel=prepared.kernel;const auto range=prepared.range;
++  return ownrt::prepared_submit(q,[=](sycl::handler& h){h.depends_on(deps);h.parallel_for(range,packet26::checked(kernel));});
++ }
++};
++template<unsigned RW,unsigned T,unsigned S,unsigned GRF> struct Cfg {static constexpr unsigned rw=RW,t=T,s=S,grf=GRF;};
++// The tile list (index = OWNRT_PREFILL_EXPERTS_<FAMILY>; config_count = the existing kernel). Cfg<RW rows, T slots, S
++// subgroups per work-group, GRF>. Production keeps the two tiles that won the 2026-10-26 sweeps (RESULT.md); build with
++// -DXGROUP_EXPLORE for the sweep list (4x2, 4x4, 4x8/256, 8x4/256 and 2x8 never won).
++#ifdef XGROUP_EXPLORE
++#define XGROUP_CONFIGS xgroup::Cfg<2,4,4,128>,xgroup::Cfg<1,4,4,128>,xgroup::Cfg<4,2,4,128>,xgroup::Cfg<4,4,4,128>,xgroup::Cfg<4,8,4,256>,\
++ xgroup::Cfg<8,4,4,256>,xgroup::Cfg<2,8,4,128>
++inline constexpr unsigned config_count=7;
++#else
++#define XGROUP_CONFIGS xgroup::Cfg<2,4,4,128>,xgroup::Cfg<1,4,4,128>
++inline constexpr unsigned config_count=2;
++#endif
++// Defaults (80-row chunks, rows per subgroup loop 4, launch divisor 4): 1 row x 4 slots for IQ3_XXS block sites, gsqn
++// packed rows and kopt IQ4_NL; 2 x 4 for the other kopt formats (IQ2_S, IQ3_S).
++inline unsigned default_tile(int family,unsigned type){return family==2&&type!=20?0u:1u;}
++// Bucket (with the configuration's T) then the configuration's tiles: two operations, events first..last.
++template<class F,class... Cs> std::pair<ownrt::Event,ownrt::Event> issue(ownrt::Device& d,unsigned index,const std::array<ownrt::Allocation,8>& ids,
++  uint32_t n,uint32_t experts,uint32_t rows,uint32_t span,uint32_t k,uint32_t rb){
++ // ids: weights, x, y, routes, status, order, tiles, tile_count
++ std::pair<ownrt::Event,ownrt::Event> r{};bool done=false;unsigned i=0;
++ auto one=[&]<class C>(C){if(i++!=index||done)return;
++  BucketOp b;b.n=n;b.experts=experts;b.rows=rows;b.span=span;b.T=C::t;std::array<ownrt::Allocation,5> bi{ids[3],ids[4],ids[5],ids[6],ids[7]};
++  r.first=d.compute(b,bi,{});
++  TilesOp<F,C::rw,C::t,C::s,C::grf> op;op.span=span;op.k=k;op.rb=rb;op.n=n;op.experts=experts;std::array<ownrt::Allocation,6> ti{ids[0],ids[1],ids[2],ids[5],ids[6],ids[7]};
++  r.second=d.compute(op,ti,{});done=true;};
++ (one(Cs{}),...);
++ if(!done)throw std::invalid_argument("expert tile configuration index");
++ return r;
++}
++}
++#endif
+--- /dev/null
++++ b/stage2/packet194-expert-diet-engine/prefill_experts.hpp
+@@ -0,0 +1,211 @@
++#pragma once
++// Expert-grouped routed token rows for batched prefill (lab, 2026-10-26). Default off: OWNRT_PREFILL_EXPERTS=1 selects
++// them for F32 routed sites of a prefill chunk; without it nothing here is ever launched.
++//
++// A chunk's routed site has n = rows x top slots, slot s reading input row x[s] and writing y[s*span + row] with route
++// s = {expert, row_begin, row_count}. The existing kernels decode the expert's weights once per slot. Here:
++//  1. Bucket (one work-group): status[s] = !valid(route) exactly as the existing kernels write it; slots with a valid
++//     full route (row_begin 0, row_count rows) are grouped by expert in slot order and cut into tiles of at most T slots;
++//     every other slot (invalid or partial route) gets a tile of its own with its own route. Integer work only.
++//  2. Tile kernel: one 32-lane subgroup owns RW weight rows of one tile's expert and the tile's slots (<= T). Per
++//     256-column step each lane decodes its 8 values of each row once, with the format's own decode expression, and
++//     applies them to each slot of the tile. Output (slot, row) of lane l sees the single-row sequence of the existing
++//     kernel for that format: steps ascending, the 8 values of a step ascending, product first, then sum = sum + product
++//     (lanes whose chunk lies past the row end skip the step); then the adjacent-pair subgroup tree (as a butterfly
++//     transpose, the same pairs in the same order: see prefill_reuse2.hpp). Rows past row_count, and every row of an
++//     invalid route, are written as the same quiet NaN (0x7fc00000) as the existing kernels.
++// Only which hardware thread performs an output's sequence changes.
++#include <sycl/sycl.hpp>
++#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
++#include <algorithm>
++#include <cstdint>
++#include <cstdlib>
++#include "stage2/packet2/kernels/math.hpp"
++#include "stage2/packet194-expert-diet-engine/prefill_reuse2.hpp"
++namespace xgroup {
++inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS");return e&&e[0]=='1';}();return on;}
++// Tile configuration for one site family, 0..count-1, or count for the existing kernel: OWNRT_PREFILL_EXPERTS_<FAMILY>=i
++// fixes it (default `fallback`); OWNRT_PREFILL_EXPERTS_CYCLE=1 (diagnostic) uses chunk % (count+1) (reuse2's chunk
++// counter), so one profiled run times every configuration and the existing kernel side by side. All are exact.
++inline unsigned config(const char* family,unsigned count,unsigned fallback){
++ static const bool cycle=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS_CYCLE");return e&&e[0]=='1';}();
++ if(cycle)return unsigned(reuse2::chunk_counter()%(count+1));
++ char name[96]="OWNRT_PREFILL_EXPERTS_";size_t n=22;for(const char* p=family;*p&&n+1<sizeof(name);++p)name[n++]=*p;name[n]=0;
++ const char* e=std::getenv(name);if(!e||!*e)return std::min(fallback,count);
++ const int v=std::atoi(e);return v>=0&&unsigned(v)<=count?unsigned(v):std::min(fallback,count);
++}
++inline constexpr uint32_t desc_words=5; // tile: weight row base (expert*rows + row_begin), row_count, first, count, valid
++inline constexpr uint32_t special=0xffffffffu;
++inline constexpr uint32_t bucket_items=512;
++// Bucket: one work-group of bucket_items work-items. keys: local n words.
++struct Bucket {
++ const iq3::Route* routes;uint32_t* status;uint32_t* order;uint32_t* tiles;uint32_t* tile_count;
++ uint32_t n,experts,rows,span,T;sycl::local_accessor<uint32_t,1> keys;
++ void operator()(sycl::nd_item<1> it) const {
++  const auto g=it.get_group();const uint32_t lid=uint32_t(it.get_local_linear_id());
++  for(uint32_t i=lid;i<n;i+=bucket_items){
++   const iq3::Route r=routes[i];const bool v=iq3::valid_route(r,experts,rows,span);
++   status[i]=v?0u:1u;keys[i]=v&&r.row_begin==0&&r.row_count==rows?r.expert_id:special;
++  }
++  sycl::group_barrier(g);
++  uint32_t mine=0,mytiles=0,myspecial=0;
++  for(uint32_t e=lid;e<experts;e+=bucket_items){uint32_t c=0;for(uint32_t i=0;i<n;++i)c+=keys[i]==e?1u:0u;mine+=c;mytiles+=(c+T-1)/T;}
++  for(uint32_t i=lid;i<n;i+=bucket_items)myspecial+=keys[i]==special?1u:0u;
++  const uint32_t slot_off=sycl::exclusive_scan_over_group(g,mine,sycl::plus<uint32_t>());
++  const uint32_t tile_off=sycl::exclusive_scan_over_group(g,mytiles,sycl::plus<uint32_t>());
++  const uint32_t special_off=sycl::exclusive_scan_over_group(g,myspecial,sycl::plus<uint32_t>());
++  const uint32_t std_slots=sycl::reduce_over_group(g,mine,sycl::plus<uint32_t>());
++  const uint32_t std_tiles=sycl::reduce_over_group(g,mytiles,sycl::plus<uint32_t>());
++  const uint32_t specials=sycl::reduce_over_group(g,myspecial,sycl::plus<uint32_t>());
++  uint32_t so=slot_off,to=tile_off;
++  for(uint32_t e=lid;e<experts;e+=bucket_items){
++   uint32_t c=0;
++   for(uint32_t i=0;i<n;++i)if(keys[i]==e){
++    if(c%T==0){uint32_t* d=tiles+(to+c/T)*desc_words;d[0]=e*rows;d[1]=rows;d[2]=so+c;d[3]=0;d[4]=1;}
++    order[so+c]=i;++c;
++   }
++   for(uint32_t j=0;j*T<c;++j)tiles[(to+j)*desc_words+3]=std::min(T,c-j*T);
++   so+=c;to+=(c+T-1)/T;
++  }
++  uint32_t k=special_off;
++  for(uint32_t i=lid;i<n;i+=bucket_items)if(keys[i]==special){
++   const iq3::Route r=routes[i];const bool v=iq3::valid_route(r,experts,rows,span);
++   const uint32_t p=std_slots+k,t=std_tiles+k;order[p]=i;
++   uint32_t* d=tiles+t*desc_words;d[0]=v?r.expert_id*rows+r.row_begin:0u;d[1]=v?r.row_count:0u;d[2]=p;d[3]=1;d[4]=v?1u:0u;++k;
++  }
++  if(lid==0)*tile_count=std_tiles+specials;
++ }
++};
++// Lane-column formats. Stride32 (S32): lane l owns columns 256*step + 32*g + l, g = 0..7; a ragged last step has
++// gv = (k - 256*step)/32 < 8 groups (k % 32 == 0). Chunk8 (C8): lane l owns columns 256*step + 8*l + j, j = 0..7; in a
++// ragged last step only the lanes whose chunk fits run it.
++// D::decode(row, step, lane, gv, v[8]) (S32) / D::decode8(row, column, v[8]) (C8) give the existing kernels' values.
++template<class D> struct S32 {static constexpr bool chunk8=false;
++ static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned gv,float (&v)[8]){D::decode(row,step,lane,gv,v);}};
++template<class D> struct C8 {static constexpr bool chunk8=true;
++ static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned,float (&v)[8]){D::decode8(row,step*256u+lane*8u,v);}};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF> struct Tiles {
++ const uint8_t* w;const float* x;float* y;const uint32_t* order;const uint32_t* tiles;const uint32_t* tile_count;
++ uint32_t span,k,rb,rtiles,G,rl,rgroups; // rl consecutive row tiles per subgroup, rgroups = ceil(rtiles / rl)
++ void operator()(sycl::nd_item<1> it) const {
++  const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++  const uint32_t logical=uint32_t(it.get_group(0))*S+uint32_t(sg.get_group_linear_id());
++  if(logical>=rgroups*G)return; // whole subgroup: no barriers in this kernel
++  const uint32_t rg=logical%rgroups,first_tile=logical/rgroups,ntiles=*tile_count;
++  const float nan=iq3::bits_float(0x7fc00000);
++  for(uint32_t tile=first_tile;tile<ntiles;tile+=G){
++   const uint32_t* d=tiles+tile*desc_words;
++   const uint32_t base=d[0],rcount=d[1],first=d[2],cnt=d[3],valid=d[4];
++   const float* xt[T];
++   #pragma unroll
++   for(unsigned t=0;t<T;++t)xt[t]=x+size_t(order[first+std::min<uint32_t>(t,cnt-1u)])*k;
++   for(uint32_t rr=0;rr<rl;++rr){
++   const uint32_t row0=(rg*rl+rr)*RW;
++   if(row0>=span)break;
++   if(!valid||rcount==0){
++    // Every row of an invalid route (or an empty row range) is NaN, as in the existing kernels.
++    for(unsigned i=lane;i<RW*T;i+=32){const unsigned r=i/T,t=i%T;if(t<cnt&&row0+r<span)y[order[first+t]*span+row0+r]=nan;}
++    continue;
++   }
++   const uint8_t* wr[RW];
++   #pragma unroll
++   for(unsigned r=0;r<RW;++r)wr[r]=w+size_t(base+std::min(row0+r,rcount-1u))*rb;
++   float acc[RW][T];
++   #pragma unroll
++   for(unsigned r=0;r<RW;++r)
++    #pragma unroll
++    for(unsigned t=0;t<T;++t)acc[r][t]=0.f;
++   auto step=[&](uint32_t s,unsigned gv){
++    float v[RW][8];
++    #pragma unroll
++    for(unsigned r=0;r<RW;++r)F::decode(wr[r],s,lane,gv,v[r]);
++    #pragma unroll
++    for(unsigned t=0;t<T;++t){
++     if(t>=cnt)break; // uniform: the tile's slot count
++     float in[8];
++     if constexpr(F::chunk8){
++      const auto* p=reinterpret_cast<const sycl::vec<float,4>*>(xt[t]+(s*256u+lane*8u));const auto lo=p[0],hi=p[1];
++      #pragma unroll
++      for(unsigned j=0;j<4;++j){in[j]=lo[j];in[j+4]=hi[j];}
++     } else if(gv==8){
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wdeprecated-declarations"
++      const auto b=sg.template load<8>(sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::yes>(xt[t]+s*256u));
++#pragma clang diagnostic pop
++      #pragma unroll
++      for(unsigned j=0;j<8;++j)in[j]=b[j];
++     } else {
++      #pragma unroll
++      for(unsigned j=0;j<8;++j)in[j]=j<gv?xt[t][s*256u+j*32u+lane]:0.f;
++     }
++     #pragma unroll
++     for(unsigned r=0;r<RW;++r)
++      #pragma unroll
++      for(unsigned j=0;j<8;++j)if(j<gv){const float product=v[r][j]*in[j];acc[r][t]=acc[r][t]+product;}
++    }
++   };
++   const uint32_t full=k/256u;
++   for(uint32_t s=0;s<full;++s)step(s,8);
++   if(full*256u<k){
++    if constexpr(F::chunk8){if(full*256u+lane*8u+8u<=k)step(full,8);}
++    else step(full,(k-full*256u)/32u);
++   }
++   // Reduction: the adjacent-pair tree, butterfly-transposed over groups of G accumulators (prefill_reuse2.hpp).
++   constexpr unsigned N=RW*T,GA=N<32?N:32;
++   static_assert((N&(N-1))==0,"tile size must be a power of two");
++   float flat[N];
++   #pragma unroll
++   for(unsigned r=0;r<RW;++r)
++    #pragma unroll
++    for(unsigned t=0;t<T;++t)flat[r*T+t]=acc[r][t];
++   #pragma unroll
++   for(unsigned g0=0;g0<N;g0+=GA){
++    float a[GA];
++    #pragma unroll
++    for(unsigned i=0;i<GA;++i)a[i]=flat[g0+i];
++    #pragma unroll
++    for(unsigned w=1,n=GA;n>1;w*=2,n/=2){
++     const bool upper=(lane&w)!=0;
++     #pragma unroll
++     for(unsigned i=0;i<n/2;++i){
++      const float send=upper?a[2*i]:a[2*i+1];
++      const float recv=sycl::permute_group_by_xor(sg,send,w);
++      const float left=upper?recv:a[2*i],right=upper?a[2*i+1]:recv;
++      a[i]=left+right;
++     }
++    }
++    float sum=a[0];
++    #pragma unroll
++    for(unsigned w=GA;w<32;w*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+w)%32);if(((lane/GA)%(2*w/GA))==0)sum=sum+rhs;}
++    if(lane<GA){const unsigned i=g0+lane,r=i/T,t=i%T;
++     if(t<cnt&&row0+r<span)y[order[first+t]*span+row0+r]=row0+r<rcount?sum:nan;}
++   }
++   } // row tiles of this subgroup
++  }
++ }
++ auto get(sycl::ext::oneapi::experimental::properties_tag) const {
++#ifndef REUSE2_TEST_NO_GRF
++  if constexpr(GRF==256)return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>,sycl::ext::intel::experimental::grf_size<256>};
++  else
++#endif
++  return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>};
++ }
++};
++// Launch geometry: rtiles row tiles x G tile slots; G bounds the tiles a bucket can produce for n slots (every tile has
++// >= 1 slot; expert tiles <= ceil(n/T) + min(n, experts)); a subgroup loops over tiles g, g+G, ... below tile_count.
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF> struct Prepared {Tiles<F,RW,T,S,GRF> kernel;sycl::nd_range<1> range;};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF>
++Prepared<F,RW,T,S,GRF> prepare(const uint8_t* w,const float* x,float* y,const uint32_t* order,const uint32_t* tiles,const uint32_t* tile_count,
++                               uint32_t span,uint32_t k,uint32_t rb,uint32_t n,uint32_t experts){
++ // OWNRT_PREFILL_EXPERTS_GDIV=d launches 1/d of the bound; subgroups then loop over more tiles (default 4; measured
++ // 2026-10-26 at 80 rows: d = 1/4/8/16 -> 1.81/1.75/1.75/1.83 ms per row of routed sites).
++ static const uint32_t gdiv=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS_GDIV");const int v=e?std::atoi(e):4;return uint32_t(v<1?1:v>64?64:v);}();
++ const uint32_t bound=std::min(n,(n+T-1)/T+std::min(n,experts));
++ // OWNRT_PREFILL_EXPERTS_RLOOP=r: consecutive row tiles per subgroup (default 4; the tile setup is shared).
++ static const uint32_t rloop=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS_RLOOP");const int v=e?std::atoi(e):4;return uint32_t(v<1?1:v>64?64:v);}();
++ const uint32_t rtiles=(span+RW-1)/RW;
++ Tiles<F,RW,T,S,GRF> kernel{w,x,y,order,tiles,tile_count,span,k,rb,rtiles,std::max(1u,(bound+gdiv-1)/gdiv),rloop,(rtiles+rloop-1)/rloop};
++ const size_t groups=(size_t(kernel.rgroups)*kernel.G+S-1)/S;
++ return {kernel,sycl::nd_range<1>(groups*S*32,S*32)};
++}
++} // namespace xgroup

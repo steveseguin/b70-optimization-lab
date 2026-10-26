@@ -1,0 +1,27 @@
+--- a/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -155,7 +155,7 @@
+  else if(!prepared_inputs){size_t n=e.stream_bytes();require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);if(e.a.tp_replicate)e.put(1,"streams",shared+slot_bytes,n);}
+  }
+  double prepare_ms=Engine::ms(prepare_start);auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e.wait_ms;
+- std::array<int,48> captured{};size_t captured_count=0,issued=0;
++ std::array<int,48> captured{};size_t captured_count=0,issued=0;bool lab_deferred_export=false;
+  // Diagnostic only (OWNRT_DECODE_PROFILE=1): drain after every site and add its wall time to its op (linear sites by
+  // weight format), one line per HALF. Serializes the step, so it shows where time goes, never speed. No arithmetic change.
+  // OWNRT_DECODE_PROFILE=2: device timestamps instead. Per site, the summed kernel durations and the idle gap between
+@@ -199,6 +199,7 @@
+   if(ready?ready->layer_end:ends(l.label,".ffn.combine")) {
+    int layer=ready?ready->layer:std::stoi(l.label.substr(4));
+    if((!e.a.pipeline_enabled()&&e.a.rank==1&&e.a.draft_rank==0&&layer==(e.a.mini?3:47))||(e.a.pipeline_live_draft&&e.a.pipeline_final()&&layer==e.a.pipeline_boundaries.back()-1)){
++    if(decode_profile_mode>=2){lab_deferred_export=true;continue;} // LAB ONLY: keep rank-1 layer events for the profile
+     auto bytes=e.readback(0,e.buffers[0].at("streams").id,e.stream_bytes());
+     std::memcpy(shared+reverse_offset,bytes.data(),bytes.size());
+     __atomic_store_n(&reverse_ready(shared).position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);
+@@ -226,6 +227,7 @@
+   for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v[2]<<",\"busy_us\":"<<v[0]<<",\"gap_us\":"<<v[1]<<"}";comma=true;}o<<"}}\n";
+  }
+  e.drain();if(e.a.rank==0)p150::record("layer_body",request.position,false,enqueue_start);
++ if(lab_deferred_export){auto bytes=e.readback(0,e.buffers[0].at("streams").id,e.stream_bytes());std::memcpy(shared+reverse_offset,bytes.data(),bytes.size());__atomic_store_n(&reverse_ready(shared).position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);}
+  if(decode_profile){std::ofstream o(e.a.output/"decode-profile.jsonl",std::ios::app);o<<"{\"position\":"<<request.position<<",\"fixture\":"<<request.fixture<<",\"speculative\":"<<(request.speculative?"true":"false")<<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<",\"sites\":{";bool comma=false;
+   for(const auto& [k,v]:decode_spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
+  if(staged)candidate.token_history=e.finish_staged(request.position,e.buffers[0].count("token_history")>0);

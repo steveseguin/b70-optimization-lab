@@ -1,0 +1,11 @@
+device Intel(R) Arc(TM) Pro B70 Graphics
+  engine BlockRows<4> (production)               warm    53.3 us  cold    57.8 us (p25   57.2 p75   58.8)  bitwise-equal
+  decomp 0 (replica)                             warm    53.1 us  cold    57.8 us (p25   57.2 p75   58.4)  bitwise-equal
+  decomp x hoisted out of rows (16)              warm    52.4 us  cold    56.7 us (p25   56.1 p75   57.7)  bitwise-equal
+  no grid gather (1)                             warm    48.5 us  cold    53.6 us (p25   52.7 p75   54.3)  DIFFERS
+  no x load (2)                                  warm    51.6 us  cold    56.0 us (p25   55.5 p75   56.8)  DIFFERS
+  no index load (4)                              warm    44.2 us  cold    46.8 us (p25   46.0 p75   47.2)  DIFFERS
+  no sign word load (8)                          warm    48.4 us  cold    51.5 us (p25   50.6 p75   52.1)  DIFFERS
+  no idx+grid (5)                                warm    42.8 us  cold    45.2 us (p25   44.4 p75   45.6)  DIFFERS
+  no loads but d (15)                            warm    32.4 us  cold    34.8 us (p25   34.5 p75   35.2)  DIFFERS
+rc 0 nodes [renderD131 ] faults []

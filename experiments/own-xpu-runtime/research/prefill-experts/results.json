@@ -1,0 +1,1055 @@
+{
+ "schema": "ownrt.prefill-experts.results.v1",
+ "date": "2026-10-26",
+ "card": "0000:27:00.0 (renderD131), rank 1 alone (layers 24-47 + head), context 65536, split 24",
+ "base_launch": "service rank1-launch.json of run-20261026T104040Z (OWNRT_PREFILL_REUSE2=1, OWNRT_ATTN_HEADS=1, OWNRT_ATTN_COMBINE2=1, OWNRT_SELECT_TOPK=1, OWNRT_RESET_DEVICE_ZERO=1), FilterBdfPath 0000:27:00.0, binary replaced",
+ "driver": "tp_rank1_driver.py run --steps 4 --prompt N --batched --rows R",
+ "compare": "tp_rank1_driver.py compare: sha256 of all 1032 state buffers + history/fp32 fields",
+ "failed": [
+  {
+   "run": "x2-warm",
+   "build": "x2",
+   "rows": 128,
+   "error": "shape outside registered limits (ng::validate tokens <= 87)"
+  },
+  {
+   "run": "x2-off-t128",
+   "build": "x2",
+   "rows": 128,
+   "error": "shape outside registered limits (ng::validate tokens <= 87)"
+  },
+  {
+   "run": "x2-on-t128",
+   "build": "x2",
+   "rows": 128,
+   "error": "shape outside registered limits (ng::validate tokens <= 87)"
+  },
+  {
+   "run": "x8-warm",
+   "build": "x8",
+   "rows": 256,
+   "error": "specialised scratch extent (qsa_select needs 256 x 64 KiB > 8 MiB operator scratch); refused at the binding guard, no fault"
+  }
+ ],
+ "runs": [
+  {
+   "run": "ref-4096",
+   "note": "reference state: unmodified fresh canonical build, service env, 32-row chunks (cold JIT: timing not comparable)",
+   "binary": "/dev/shm/engine-build-lab-experts-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "51bf79e89642bb84043a210dba3c48c76c2a525676b708cd4af414ee2393dc6f",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 61659.6,
+   "load_s": 11.67,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-4096"
+  },
+  {
+   "run": "ref-t32",
+   "note": "baseline timing = service configuration (32-row chunks)",
+   "binary": "/dev/shm/engine-build-lab-experts-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "51bf79e89642bb84043a210dba3c48c76c2a525676b708cd4af414ee2393dc6f",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 26648.8,
+   "load_s": 11.81,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-t32",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "ref-t32b",
+   "note": "baseline timing repeat",
+   "binary": "/dev/shm/engine-build-lab-experts-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "51bf79e89642bb84043a210dba3c48c76c2a525676b708cd4af414ee2393dc6f",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 26751.3,
+   "load_s": 11.54,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-t32b",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "ref-t64",
+   "note": "unmodified build at 64-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "51bf79e89642bb84043a210dba3c48c76c2a525676b708cd4af414ee2393dc6f",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 64,
+   "prompt_ms": 26051.8,
+   "load_s": 11.53,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-t64",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "ref-p4090",
+   "note": "partial-chunk reference (4090 rows, 32-row chunks)",
+   "binary": "/dev/shm/engine-build-lab-experts-ref/sc117-engine",
+   "build": "ref",
+   "binary_sha256": "51bf79e89642bb84043a210dba3c48c76c2a525676b708cd4af414ee2393dc6f",
+   "env_delta": {},
+   "prompt_rows": 4090,
+   "chunk_rows": 32,
+   "prompt_ms": 27173.3,
+   "load_s": 13.37,
+   "tokens": [
+    98328,
+    1116,
+    60455,
+    627
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/ref-p4090"
+  },
+  {
+   "run": "dump-4096",
+   "note": "route dump for statistics (OWNRT_PREFILL_ROUTE_DUMP)",
+   "binary": "/dev/shm/engine-build-lab-experts-dump/sc117-engine",
+   "build": "dump",
+   "binary_sha256": "e3d48020cc53014eb7fa7643769635f294f6307c8a66acbdbe8075636ccd9172",
+   "env_delta": {
+    "OWNRT_PREFILL_ROUTE_DUMP": "/dev/shm/ownrt-lab-experts/routes-4096.bin"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 27085.4,
+   "load_s": 11.69,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/dump-4096",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x1-cycleprof",
+   "note": "profiled tile sweep, 32-row chunks (7 tiles + existing kernel cycled per chunk)",
+   "binary": "/dev/shm/engine-build-lab-experts-x1/sc117-engine",
+   "build": "x1",
+   "binary_sha256": "be4204b7625aeff5354ebad899c12dfe5a0cdcee073c6a4b47a47eb2dd3b4cb8",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 32,
+   "prompt_ms": 28393.7,
+   "load_s": 11.24,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x1-cycleprof",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x1-cycleprof64",
+   "note": "profiled tile sweep, 64-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x1/sc117-engine",
+   "build": "x1",
+   "binary_sha256": "be4204b7625aeff5354ebad899c12dfe5a0cdcee073c6a4b47a47eb2dd3b4cb8",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 64,
+   "prompt_ms": 25069.6,
+   "load_s": 11.62,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x1-cycleprof64",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x3-off-t80",
+   "note": "limits raised, grouping off, 80-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x3/sc117-engine",
+   "build": "x3",
+   "binary_sha256": "a220403f2f9848d28b1190e46b750c1e05be64be10fd315a10a32ecc4114ea24",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 26261.0,
+   "load_s": 11.91,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x3-off-t80",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x3-on-t80",
+   "note": "grouping on (2x4, launch divisor 1), 80-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x3/sc117-engine",
+   "build": "x3",
+   "binary_sha256": "a220403f2f9848d28b1190e46b750c1e05be64be10fd315a10a32ecc4114ea24",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 20590.2,
+   "load_s": 13.69,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x3-on-t80",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x3-cycleprof80",
+   "note": "profiled tile sweep, 80 rows, launch divisor 1",
+   "binary": "/dev/shm/engine-build-lab-experts-x3/sc117-engine",
+   "build": "x3",
+   "binary_sha256": "a220403f2f9848d28b1190e46b750c1e05be64be10fd315a10a32ecc4114ea24",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 24556.2,
+   "load_s": 15.21,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x3-cycleprof80",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x3-cycleprof80g4",
+   "note": "launch divisor 4",
+   "binary": "/dev/shm/engine-build-lab-experts-x3/sc117-engine",
+   "build": "x3",
+   "binary_sha256": "a220403f2f9848d28b1190e46b750c1e05be64be10fd315a10a32ecc4114ea24",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1",
+    "OWNRT_PREFILL_EXPERTS_GDIV": "4"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 24308.5,
+   "load_s": 11.42,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x3-cycleprof80g4",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x3-cycleprof80g8",
+   "note": "launch divisor 8",
+   "binary": "/dev/shm/engine-build-lab-experts-x3/sc117-engine",
+   "build": "x3",
+   "binary_sha256": "a220403f2f9848d28b1190e46b750c1e05be64be10fd315a10a32ecc4114ea24",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1",
+    "OWNRT_PREFILL_EXPERTS_GDIV": "8"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 24138.7,
+   "load_s": 11.59,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x3-cycleprof80g8",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x3-cycleprof80g16",
+   "note": "launch divisor 16",
+   "binary": "/dev/shm/engine-build-lab-experts-x3/sc117-engine",
+   "build": "x3",
+   "binary_sha256": "a220403f2f9848d28b1190e46b750c1e05be64be10fd315a10a32ecc4114ea24",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1",
+    "OWNRT_PREFILL_EXPERTS_GDIV": "16"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 24489.4,
+   "load_s": 11.61,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x3-cycleprof80g16",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x4-cycleprof80rl2",
+   "note": "row loop 2, divisor 4",
+   "binary": "/dev/shm/engine-build-lab-experts-x4/sc117-engine",
+   "build": "x4",
+   "binary_sha256": "2e689d151ef63bda1c60379ebb95228c94222cd448fa91aa9921ddfa858911ce",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1",
+    "OWNRT_PREFILL_EXPERTS_GDIV": "4",
+    "OWNRT_PREFILL_EXPERTS_RLOOP": "2"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 24257.5,
+   "load_s": 11.39,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x4-cycleprof80rl2",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x4-cycleprof80rl4",
+   "note": "row loop 4, divisor 4",
+   "binary": "/dev/shm/engine-build-lab-experts-x4/sc117-engine",
+   "build": "x4",
+   "binary_sha256": "2e689d151ef63bda1c60379ebb95228c94222cd448fa91aa9921ddfa858911ce",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1",
+    "OWNRT_PREFILL_EXPERTS_GDIV": "4",
+    "OWNRT_PREFILL_EXPERTS_RLOOP": "4"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 24382.4,
+   "load_s": 11.47,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x4-cycleprof80rl4",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x5-t80",
+   "note": "final kernels, 80-row chunks (ng limit unchanged)",
+   "binary": "/dev/shm/engine-build-lab-experts-x5/sc117-engine",
+   "build": "x5",
+   "binary_sha256": "a40ca4f51dc11d343a319867272a157e20a30c7a6fa48552a6fbd54380d57d86",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 19993.3,
+   "load_s": 11.39,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x5-t80",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x5-t80b",
+   "note": "repeat",
+   "binary": "/dev/shm/engine-build-lab-experts-x5/sc117-engine",
+   "build": "x5",
+   "binary_sha256": "a40ca4f51dc11d343a319867272a157e20a30c7a6fa48552a6fbd54380d57d86",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 20054.5,
+   "load_s": 11.34,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x5-t80b",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x5-off-t80",
+   "note": "final kernels switch off, 80-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x5/sc117-engine",
+   "build": "x5",
+   "binary_sha256": "a40ca4f51dc11d343a319867272a157e20a30c7a6fa48552a6fbd54380d57d86",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 26291.2,
+   "load_s": 11.27,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x5-off-t80",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x5-p4090",
+   "note": "partial chunk (4090 = 51 x 80 + 10 rows)",
+   "binary": "/dev/shm/engine-build-lab-experts-x5/sc117-engine",
+   "build": "x5",
+   "binary_sha256": "a40ca4f51dc11d343a319867272a157e20a30c7a6fa48552a6fbd54380d57d86",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4090,
+   "chunk_rows": 80,
+   "prompt_ms": 22026.7,
+   "load_s": 14.37,
+   "tokens": [
+    98328,
+    1116,
+    60455,
+    627
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x5-p4090",
+   "compare": {
+    "against": "ref-p4090",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x5-prof80",
+   "note": "per-site profile, on, 80 rows",
+   "binary": "/dev/shm/engine-build-lab-experts-x5/sc117-engine",
+   "build": "x5",
+   "binary_sha256": "a40ca4f51dc11d343a319867272a157e20a30c7a6fa48552a6fbd54380d57d86",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 20928.4,
+   "load_s": 14.01,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x5-prof80",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x5-off-prof80",
+   "note": "per-site profile, off, 80 rows",
+   "binary": "/dev/shm/engine-build-lab-experts-x5/sc117-engine",
+   "build": "x5",
+   "binary_sha256": "a40ca4f51dc11d343a319867272a157e20a30c7a6fa48552a6fbd54380d57d86",
+   "env_delta": {
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 80,
+   "prompt_ms": 27078.0,
+   "load_s": 11.43,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x5-off-prof80",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x6-off-t128",
+   "note": "FINAL build (ng limit 128), switch off, 128-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x6/sc117-engine",
+   "build": "x6",
+   "binary_sha256": "151bbf02cbcb15562c9f994a804f6f6cb62a2a01c6ea6c3d723d58b5ce9f0f88",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 128,
+   "prompt_ms": 26242.8,
+   "load_s": 11.31,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x6-off-t128",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x6-t128",
+   "note": "FINAL build, OWNRT_PREFILL_EXPERTS=1, 128-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x6/sc117-engine",
+   "build": "x6",
+   "binary_sha256": "151bbf02cbcb15562c9f994a804f6f6cb62a2a01c6ea6c3d723d58b5ce9f0f88",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 128,
+   "prompt_ms": 19251.2,
+   "load_s": 11.33,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x6-t128",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x6-t128b",
+   "note": "FINAL repeat",
+   "binary": "/dev/shm/engine-build-lab-experts-x6/sc117-engine",
+   "build": "x6",
+   "binary_sha256": "151bbf02cbcb15562c9f994a804f6f6cb62a2a01c6ea6c3d723d58b5ce9f0f88",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 128,
+   "prompt_ms": 19241.4,
+   "load_s": 11.34,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x6-t128b",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x6-p4090",
+   "note": "FINAL partial chunk (4090 = 31 x 128 + 122 rows)",
+   "binary": "/dev/shm/engine-build-lab-experts-x6/sc117-engine",
+   "build": "x6",
+   "binary_sha256": "151bbf02cbcb15562c9f994a804f6f6cb62a2a01c6ea6c3d723d58b5ce9f0f88",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4090,
+   "chunk_rows": 128,
+   "prompt_ms": 19247.7,
+   "load_s": 11.35,
+   "tokens": [
+    98328,
+    1116,
+    60455,
+    627
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x6-p4090",
+   "compare": {
+    "against": "ref-p4090",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x6-prof128",
+   "note": "FINAL per-site profile, 128 rows",
+   "binary": "/dev/shm/engine-build-lab-experts-x6/sc117-engine",
+   "build": "x6",
+   "binary_sha256": "151bbf02cbcb15562c9f994a804f6f6cb62a2a01c6ea6c3d723d58b5ce9f0f88",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 128,
+   "prompt_ms": 19902.7,
+   "load_s": 11.45,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x6-prof128",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x7-cycleprof128",
+   "note": "tile sweep at 128 rows (2x4,1x4,1x8,2x8,1x16,1x2 + existing)",
+   "binary": "/dev/shm/engine-build-lab-experts-x7/sc117-engine",
+   "build": "x7",
+   "binary_sha256": "4c1a4375baa81ff9654c23141ee4e026837eba1c78de06a8bb60c94a6ba094a8",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_EXPERTS_CYCLE": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 128,
+   "prompt_ms": 21787.1,
+   "load_s": 11.3,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x7-cycleprof128",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x9-t256",
+   "note": "FINAL build (x9: native select in 128-row groups, ng limit 256), OWNRT_PREFILL_EXPERTS=1, 256-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x9/sc117-engine",
+   "build": "x9",
+   "binary_sha256": "dc76b4e92c657e19bd757aa6627af1fbcea94d5b5f2cf66bc30b6166653004e1",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 18039.8,
+   "load_s": 11.28,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x9-t256",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x9-t256b",
+   "note": "FINAL repeat",
+   "binary": "/dev/shm/engine-build-lab-experts-x9/sc117-engine",
+   "build": "x9",
+   "binary_sha256": "dc76b4e92c657e19bd757aa6627af1fbcea94d5b5f2cf66bc30b6166653004e1",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 18073.4,
+   "load_s": 11.36,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x9-t256b",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x9-off-t256",
+   "note": "FINAL build switch off, 256-row chunks",
+   "binary": "/dev/shm/engine-build-lab-experts-x9/sc117-engine",
+   "build": "x9",
+   "binary_sha256": "dc76b4e92c657e19bd757aa6627af1fbcea94d5b5f2cf66bc30b6166653004e1",
+   "env_delta": {},
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 27843.0,
+   "load_s": 16.1,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x9-off-t256",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x9-p4090",
+   "note": "FINAL partial chunk (4090 = 15 x 256 + 250 rows)",
+   "binary": "/dev/shm/engine-build-lab-experts-x9/sc117-engine",
+   "build": "x9",
+   "binary_sha256": "dc76b4e92c657e19bd757aa6627af1fbcea94d5b5f2cf66bc30b6166653004e1",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1"
+   },
+   "prompt_rows": 4090,
+   "chunk_rows": 256,
+   "prompt_ms": 18212.7,
+   "load_s": 11.29,
+   "tokens": [
+    98328,
+    1116,
+    60455,
+    627
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x9-p4090",
+   "compare": {
+    "against": "ref-p4090",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  },
+  {
+   "run": "x9-prof256",
+   "note": "FINAL per-site profile, 256 rows",
+   "binary": "/dev/shm/engine-build-lab-experts-x9/sc117-engine",
+   "build": "x9",
+   "binary_sha256": "dc76b4e92c657e19bd757aa6627af1fbcea94d5b5f2cf66bc30b6166653004e1",
+   "env_delta": {
+    "OWNRT_PREFILL_EXPERTS": "1",
+    "OWNRT_PREFILL_PROFILE": "1",
+    "OWNRT_PREFILL_PROFILE_SHAPE": "1"
+   },
+   "prompt_rows": 4096,
+   "chunk_rows": 256,
+   "prompt_ms": 18486.4,
+   "load_s": 11.38,
+   "tokens": [
+    9715,
+    11766,
+    6818,
+    613
+   ],
+   "rc": 0,
+   "kernel_fault_lines": 0,
+   "evidence": "evidence/runs/x9-prof256",
+   "compare": {
+    "against": "ref-4096",
+    "rc": 0,
+    "compared": 1032,
+    "differ_count": 0,
+    "tokens_equal": true
+   }
+  }
+ ],
+ "halted": {
+  "run": "x10-warm",
+  "build": "x10",
+  "rows": 256,
+  "note": "tile sweep at 256 rows (exploratory build). The kernel journal after its start showed a card-27 copy-engine fault at 08:50:29: \"Fault response: Unsuccessful -ENOENT\" (ASID 3358, bcs) and \"Engine reset: engine_class=bcs\". The ownrt-lab-dense agent wrote HALT for its own bench_quant run, which ended at that second (HALT file 08:50:29.213); this engine first wrote to its output at 08:50:29.978 and contacted the device at 08:50:30.03. All device work stopped here; the sweep was not run.",
+  "kfaults": [
+   "Oct 26 08:50:29 steve-b70s kernel: xe 0000:27:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+   "Oct 26 08:50:29 steve-b70s kernel: xe 0000:27:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289"
+  ]
+ },
+ "final": {
+  "build": "x9",
+  "binary_sha256": "dc76b4e92c657e19bd757aa6627af1fbcea94d5b5f2cf66bc30b6166653004e1",
+  "chunk_rows": 256,
+  "env": "OWNRT_PREFILL_EXPERTS=1",
+  "prompt_ms": [
+   18039.8,
+   18073.4
+  ]
+ }
+}

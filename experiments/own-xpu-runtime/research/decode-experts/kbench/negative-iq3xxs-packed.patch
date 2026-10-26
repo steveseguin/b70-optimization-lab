@@ -1,0 +1,104 @@
+--- /dev/shm/ownrt-lab-dexp/kb/block.hpp.canonical	2026-10-26 08:04:37.691375009 -0400
++++ /dev/shm/ownrt-lab-dexp/kb/block.hpp.packed-negative	2026-10-26 08:04:37.692838496 -0400
+@@ -2,6 +2,7 @@
+ // Candidate only. Frozen generic control remains unchanged.
+ #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
+ #include "gsq-rco-iq3s/expert-iq3xxs-block/selection.hpp"
++#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ namespace iq3block {
+ using gsqn::Shape;using gsqn::Bound;
+ // Identical scalar decoder multiplication order; only block half conversion
+@@ -76,6 +77,80 @@
+   }));});
+  }
+ };
++// OWNRT_EXPERTS_V2 (lab 2026-10-26): packed logical lanes. Work-item m of a row owns the LPI adjacent logical lanes
++// m*LPI.. of BlockRowsOperation's mapping (k = block*256 + group*32 + lane), so each group's sign/scale word, grid index
++// byte(s) and grid entries are read once for them. Each logical lane keeps its exact sequence: blocks then groups in
++// order, the same weight value (((d*(0.5f+float(word>>28)))*0.5f)*float(mag))*float(sign) (its first two factors are
++// the same for every lane of the group, so they are formed once), product then add; then log2(LPI) adjacent-pair tree
++// levels in registers and the rest by shuffles, same operands, same order. Inactive rows write NaN.
++template<unsigned SG,unsigned LPI,unsigned RI,unsigned WGSG> class BlockPackedKernel;
++template<unsigned SG,unsigned LPI,unsigned RI,unsigned WGSG> struct BlockPackedOperation final:ownrt::SyclOperation {
++ Shape s{};
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
++  Bound b{s,static_cast<const uint8_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4])};
++  constexpr unsigned IPR=32/LPI,SETS=SG/IPR,RPS=SETS*RI;
++  const uint32_t rows=uint32_t(b.s.rows),columns=uint32_t(b.s.columns),row_bytes=uint32_t(b.s.row_bytes),experts=b.s.experts;
++  const uint32_t blocks=(rows+RPS-1)/RPS,total=blocks*b.s.count,groups=(total+WGSG-1)/WGSG;
++  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<BlockPackedKernel<SG,LPI,RI,WGSG>>(sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(SG)]]{
++   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/IPR,m=lane%IPR;
++   const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
++   const uint32_t slot=logical/blocks,first=(logical%blocks)*RPS+set*RI;
++   const auto r=b.routes[slot];const bool valid=iq3::valid_route(r,experts,rows,rows);
++   const float* x=reinterpret_cast<const float*>(b.x)+size_t(slot)*columns;
++   float acc[RI][LPI];const uint8_t* rp[RI];bool live[RI];
++   #pragma unroll
++   for(unsigned i=0;i<RI;++i){
++    #pragma unroll
++    for(unsigned j=0;j<LPI;++j)acc[i][j]=0;
++    const uint32_t row=first+i;live[i]=valid&&row<rows&&row<r.row_count;rp[i]=live[i]?b.w+(size_t(r.expert_id)*rows+r.row_begin+row)*row_bytes:b.w;}
++   const unsigned L0=m*LPI;
++   const uint32_t nblocks=columns/256u;
++   for(uint32_t block=0;block<nblocks;++block){
++    float d[RI];
++    #pragma unroll
++    for(unsigned i=0;i<RI;++i)d[i]=live[i]?iq3::half(iq3::u16(rp[i]+block*98u)):0.f;
++    #pragma unroll
++    for(unsigned group=0;group<8;++group){
++     const uint32_t k0=block*256u+group*32u+L0;float xv[LPI];
++     #pragma unroll
++     for(unsigned c=0;c<LPI/4;++c){const auto v=*reinterpret_cast<const sycl::vec<float,4>*>(x+k0+4*c);xv[4*c]=v[0];xv[4*c+1]=v[1];xv[4*c+2]=v[2];xv[4*c+3]=v[3];}
++     #pragma unroll
++     for(unsigned i=0;i<RI;++i){if(!live[i])continue;
++      const uint8_t* bp=rp[i]+block*98u;
++      const auto*half_words=reinterpret_cast<const uint16_t*>(bp+66+4*group);const uint32_t word=uint32_t(half_words[0])|uint32_t(half_words[1])<<16;
++      const uint32_t code=(word>>(7*(L0/8)))&127,mask=code|((std::popcount(code)%2)<<7);
++      const float scaled=(d[i]*(0.5f+float(word>>28)))*0.5f;
++      const uint32_t pair=reinterpret_cast<const uint16_t*>(bp+2+group*8)[L0/8];
++      uint32_t grid[LPI/4];
++      #pragma unroll
++      for(unsigned c=0;c<LPI/4;++c)grid[c]=iq3::iq3_grid[(pair>>(8*((L0/4+c)%2)))&255];
++      #pragma unroll
++      for(unsigned j=0;j<LPI;++j){
++       const uint32_t mag=(grid[j/4]>>(8*(j%4)))&255;const int sign=(mask>>((L0+j)%8))&1?-1:1;
++       const float weight=(scaled*float(mag))*float(sign);
++       const float product=weight*xv[j];acc[i][j]=acc[i][j]+product;}
++     }
++    }
++   }
++   #pragma unroll
++   for(unsigned i=0;i<RI;++i){
++    float t[LPI];
++    #pragma unroll
++    for(unsigned j=0;j<LPI;++j)t[j]=acc[i][j];
++    #pragma unroll
++    for(unsigned width=1;width<LPI;width*=2){
++     #pragma unroll
++     for(unsigned j=0;j<LPI;j+=2*width)t[j]=t[j]+t[j+width];}
++    float sum=t[0];
++    #pragma unroll
++    for(unsigned width=1;width<IPR;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(m%(2*width)==0)sum=sum+rhs;}
++    const uint32_t row=first+i;
++    if(m==0&&row<rows)reinterpret_cast<float*>(b.y)[size_t(slot)*rows+row]=live[i]?sum:iq3::bits_float(0x7fc00000);}
++   if(lane==0&&(logical%blocks)==0&&b.status)b.status[slot]=!valid;
++  }));});
++ }
++};
+ inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_IQ3_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
+ #endif
+ template<bool F> class BlockKernel;
+@@ -119,6 +194,12 @@
+  const auto shape=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
+  std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes,m.status};
+ #ifndef OWN_RT_HOST_ONLY
++ if(shape.f32&&!shape.row_major&&experts_v2::enabled("iq3xxs")&&shape.count<=experts_v2::max_slots&&reinterpret_cast<uintptr_t>(d.arena.row(m.x).pointer)%16==0){
++  // OWNRT_EXPERTS_V2_IQ3XXS: 0 = SG16 8 lanes/item (default), 1 = SG32 8 lanes/item, 2 = SG32 4 lanes/item.
++  static const int v=experts_v2::variant("OWNRT_EXPERTS_V2_IQ3XXS",0);
++  if(v==1){BlockPackedOperation<32,8,1,4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
++  if(v==2){BlockPackedOperation<32,4,1,4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
++  BlockPackedOperation<16,8,1,4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+  if(shape.f32&&!shape.row_major&&block_rows()){BlockRowsOperation<4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+ #endif
+  if(shape.f32){BlockOperation<true> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}

@@ -1,0 +1,15 @@
+device Intel(R) Arc(TM) Pro B70 Graphics
+  engine MultiplyBlockRows<2> (production)       warm    52.4 us  cold    56.2 us (p25   55.7 p75   57.2)  bitwise-equal
+  engine MultiplyBlockRows<1>                    warm    54.7 us  cold    57.9 us (p25   57.2 p75   58.5)  bitwise-equal
+  packed SG32 RI1 WG4 lut16                      warm    28.9 us  cold    44.6 us (p25   42.9 p75   45.7)  bitwise-equal
+  packed SG16 RI1 WG4 select-chain               warm    35.7 us  cold    39.7 us (p25   39.2 p75   40.1)  bitwise-equal
+  packed SG16 RI1 WG4 lut16                      warm    29.6 us  cold    38.2 us (p25   37.3 p75   38.8)  bitwise-equal
+  packed SG16 RI1 WG4 lut-pair                   warm    34.3 us  cold    42.3 us (p25   41.4 p75   42.7)  bitwise-equal
+  packed SG16 RI2 WG4 lut16                      warm    25.1 us  cold    39.6 us (p25   37.8 p75   40.1)  bitwise-equal
+  packed SG16 RI1 WG8 lut16                      warm    30.0 us  cold    38.1 us (p25   36.8 p75   38.5)  bitwise-equal
+  loads-first SG16 RI1 WG4 lut16                 warm    29.1 us  cold    45.0 us (p25   43.8 p75   45.8)  bitwise-equal
+  loads-first SG16 RI1 WG4 lut-pair              warm    34.3 us  cold    48.9 us (p25   47.7 p75   49.8)  bitwise-equal
+  loads-first SG32 RI1 WG4 lut16                 warm    27.9 us  cold    46.7 us (p25   44.7 p75   47.3)  bitwise-equal
+  loads-first SG16 RI2 WG4 lut16                 warm    25.8 us  cold    46.8 us (p25   44.7 p75   47.5)  bitwise-equal
+  loads-first SG16 RI1 WG4 select                warm    35.6 us  cold    43.9 us (p25   43.0 p75   44.6)  bitwise-equal
+rc 0 nodes [renderD131 ] faults []

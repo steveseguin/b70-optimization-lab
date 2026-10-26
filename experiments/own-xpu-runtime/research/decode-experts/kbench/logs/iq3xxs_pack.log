@@ -1,0 +1,14 @@
+device Intel(R) Arc(TM) Pro B70 Graphics
+  engine BlockRows<4> (production)               warm    51.8 us  cold    56.6 us (p25   55.9 p75   56.9)  bitwise-equal
+  packed SG32 LPI4 RI1 WG4                       warm    83.1 us  cold    92.1 us (p25   91.2 p75   93.1)  bitwise-equal
+  packed SG32 LPI8 RI1 WG4                       warm    59.7 us  cold    67.2 us (p25   66.5 p75   68.2)  bitwise-equal
+  packed SG16 LPI8 RI1 WG4                       warm    54.0 us  cold    61.5 us (p25   60.5 p75   62.2)  bitwise-equal
+  packed SG16 LPI8 RI2 WG4                       warm    64.1 us  cold    71.6 us (p25   70.9 p75   72.7)  bitwise-equal
+  packed SG16 LPI8 RI1 WG8                       warm    54.0 us  cold    61.2 us (p25   60.4 p75   62.1)  bitwise-equal
+  hoisted SG16 WG4                               warm    61.5 us  cold    70.0 us (p25   69.3 p75   71.1)  bitwise-equal
+  hoisted+prefetch SG16 WG4                      warm    62.1 us  cold    72.8 us (p25   72.1 p75   73.8)  bitwise-equal
+  hoisted SG32 WG4                               warm    62.4 us  cold    71.4 us (p25   70.5 p75   72.0)  bitwise-equal
+  hoisted+prefetch SG32 WG4                      warm    84.0 us  cold    96.0 us (p25   94.1 p75   96.9)  bitwise-equal
+  hoisted+prefetch SG16 WG8                      warm    63.0 us  cold    73.0 us (p25   72.5 p75   73.8)  bitwise-equal
+  packed SG16 LPI8 RI1 WG1                       warm    58.0 us  cold    65.3 us (p25   64.5 p75   66.2)  bitwise-equal
+rc 0 nodes [renderD131 ] faults []

@@ -1,0 +1,599 @@
+{
+ "schema": "ownrt.lab.dense-decode.v1",
+ "date": "2026-10-26",
+ "card": "0000:27:00.0",
+ "roofline_GBps": 600,
+ "roofline_note": "stream read of 512 MB random data on card 27: 602 GB/s",
+ "switch": {
+  "OWNRT_DENSE_DECODE_V2": "1: kopt BF16 rows (dense_v2.hpp), packed-block Q4_K/Q5_K/IQ4_XS rows (dense_decode_v2.hpp, denseblock + gsqn decode), p33 Q8_0 6144-column rows (p33_dense_v2.hpp)"
+ },
+ "service_env": "OWNRT_ATTN_HEADS=1 OWNRT_ATTN_COMBINE2=1 OWNRT_PREFILL_REUSE2=1 OWNRT_SELECT_TOPK=1 OWNRT_SELECT_FAST=1 OWNRT_RESET_DEVICE_ZERO=1 (all runs)",
+ "builds": {
+  "ref": {
+   "binary_sha256": "1655bcdedb12c83a61717a13e792c118425a014591d8f82b12b981cb520ecc56",
+   "binary": "/dev/shm/engine-build-lab-dense-ref/sc117-engine"
+  },
+  "c3": {
+   "binary_sha256": "db32ff3ddd3db5fe0985d560271ff27ede4981a22ff192155ac6a9e109ddf0be",
+   "binary": "/dev/shm/engine-build-lab-dense-c3/sc117-engine"
+  },
+  "c3P": {
+   "binary_sha256": "f79409f05ed4c1aa40834520167b506b833144ea49794ce76eadb3b850e0cf14",
+   "binary": "/dev/shm/engine-build-lab-dense-c3P/sc117-engine"
+  },
+  "refP": {
+   "binary_sha256": "9b49bfd4e7940cfe13f12ff7c0d5cd888f79323b5799180a04ac48950f4f825c",
+   "binary": "/dev/shm/engine-build-lab-dense-refP/sc117-engine"
+  }
+ },
+ "runs": [
+  {
+   "tag": "ref-p4096",
+   "binary": "/dev/shm/engine-build-lab-dense-ref/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1",
+    "OWNRT_PREFILL_REUSE2=1",
+    "OWNRT_SELECT_TOPK=1",
+    "OWNRT_SELECT_FAST=1",
+    "OWNRT_RESET_DEVICE_ZERO=1"
+   ],
+   "median_half_ms": 16.5336,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "fault_lines": 0,
+   "tokens_equal_ref": true
+  },
+  {
+   "tag": "c1-on-p4096",
+   "binary": "/dev/shm/engine-build-lab-dense-c1/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1",
+    "OWNRT_PREFILL_REUSE2=1",
+    "OWNRT_SELECT_TOPK=1",
+    "OWNRT_SELECT_FAST=1",
+    "OWNRT_RESET_DEVICE_ZERO=1",
+    "OWNRT_DENSE_DECODE_V2=1"
+   ],
+   "median_half_ms": 15.8599,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "fault_lines": 0,
+   "tokens_equal_ref": true
+  },
+  {
+   "tag": "c2-on-p4096",
+   "binary": "/dev/shm/engine-build-lab-dense-c2/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1",
+    "OWNRT_PREFILL_REUSE2=1",
+    "OWNRT_SELECT_TOPK=1",
+    "OWNRT_SELECT_FAST=1",
+    "OWNRT_RESET_DEVICE_ZERO=1",
+    "OWNRT_DENSE_DECODE_V2=1"
+   ],
+   "median_half_ms": 15.0949,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "fault_lines": 0,
+   "tokens_equal_ref": true
+  },
+  {
+   "tag": "c3-on-p4096",
+   "binary": "/dev/shm/engine-build-lab-dense-c3/sc117-engine",
+   "env": [
+    "OWNRT_ATTN_HEADS=1",
+    "OWNRT_ATTN_COMBINE2=1",
+    "OWNRT_PREFILL_REUSE2=1",
+    "OWNRT_SELECT_TOPK=1",
+    "OWNRT_SELECT_FAST=1",
+    "OWNRT_RESET_DEVICE_ZERO=1",
+    "OWNRT_DENSE_DECODE_V2=1"
+   ],
+   "median_half_ms": 15.0994,
+   "rc": 0,
+   "dri": [
+    "/dev/dri/renderD131"
+   ],
+   "fault_lines": 0,
+   "tokens_equal_ref": true
+  }
+ ],
+ "compares": {
+  "c1-on-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "c2-on-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "c3-on-p4096": {
+   "compared": 1032,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  }
+ },
+ "profile_span_us": {
+  "ref": 15782.3,
+  "c3": 14638.45
+ },
+ "roofline_table": [
+  {
+   "site": "gemv:Q6_K:logits",
+   "kernel": "p33.dense.segment",
+   "shape": "2560->248320 Q6_K (expanded; raw 521.5 MB)",
+   "count": 1,
+   "weight_mb": 794.62,
+   "floor_us": 1324.4,
+   "before_us": 1377.81,
+   "after_us": 1375.78,
+   "before_pct": 96,
+   "after_pct": 96,
+   "per_half_before_us": 1377.8,
+   "per_half_after_us": 1375.8
+  },
+  {
+   "site": "gemv:Q8_0:attention",
+   "kernel": "p33.dense.segment",
+   "shape": "6144->2560 Q8_0 (expanded; raw 16.71 MB)",
+   "count": 24,
+   "weight_mb": 17.69,
+   "floor_us": 29.5,
+   "before_us": 40.85,
+   "after_us": 38.25,
+   "before_pct": 72,
+   "after_pct": 77,
+   "per_half_before_us": 980.5,
+   "per_half_after_us": 918.0
+  },
+  {
+   "site": "gemv:Q6_K:gdn.qkv",
+   "kernel": "p33.dense.segment",
+   "shape": "2560->10240 Q6_K (expanded; raw 21.50 MB)",
+   "count": 8,
+   "weight_mb": 32.77,
+   "floor_us": 54.6,
+   "before_us": 70.97,
+   "after_us": 69.73,
+   "before_pct": 77,
+   "after_pct": 78,
+   "per_half_before_us": 567.8,
+   "per_half_after_us": 557.8
+  },
+  {
+   "site": "gemv:BF16:hc.f.low",
+   "kernel": "kopt Multiply (fused with hc.f.inject)",
+   "shape": "10240->320 (+4) BF16",
+   "count": 24,
+   "weight_mb": 6.55,
+   "floor_us": 10.9,
+   "before_us": 22.36,
+   "after_us": 18.0,
+   "before_pct": 49,
+   "after_pct": 61,
+   "per_half_before_us": 536.6,
+   "per_half_after_us": 432.0
+  },
+  {
+   "site": "gemv:BF16:hc.a.gate",
+   "kernel": "kopt Multiply",
+   "shape": "320->10240 BF16",
+   "count": 24,
+   "weight_mb": 6.55,
+   "floor_us": 10.9,
+   "before_us": 21.96,
+   "after_us": 17.1,
+   "before_pct": 50,
+   "after_pct": 64,
+   "per_half_before_us": 526.9,
+   "per_half_after_us": 410.3
+  },
+  {
+   "site": "gemv:BF16:hc.f.gate",
+   "kernel": "kopt Multiply",
+   "shape": "320->10240 BF16",
+   "count": 24,
+   "weight_mb": 6.55,
+   "floor_us": 10.9,
+   "before_us": 21.85,
+   "after_us": 16.44,
+   "before_pct": 50,
+   "after_pct": 66,
+   "per_half_before_us": 524.5,
+   "per_half_after_us": 394.6
+  },
+  {
+   "site": "gemv:BF16:hc.a.low",
+   "kernel": "kopt Multiply (fused with hc.a.inject)",
+   "shape": "10240->320 (+4) BF16",
+   "count": 24,
+   "weight_mb": 6.55,
+   "floor_us": 10.9,
+   "before_us": 21.1,
+   "after_us": 16.2,
+   "before_pct": 52,
+   "after_pct": 67,
+   "per_half_before_us": 506.5,
+   "per_half_after_us": 388.8
+  },
+  {
+   "site": "gemv:Q5_K:gdn.qkv",
+   "kernel": "denseblock",
+   "shape": "2560->10240 Q5_K",
+   "count": 7,
+   "weight_mb": 18.02,
+   "floor_us": 30.0,
+   "before_us": 66.45,
+   "after_us": 50.19,
+   "before_pct": 45,
+   "after_pct": 60,
+   "per_half_before_us": 465.2,
+   "per_half_after_us": 351.4
+  },
+  {
+   "site": "gemv:Q6_K:qsa.qgate",
+   "kernel": "p33.dense.segment",
+   "shape": "2560->12288 Q6_K (expanded; raw 25.80 MB)",
+   "count": 5,
+   "weight_mb": 39.32,
+   "floor_us": 65.5,
+   "before_us": 83.28,
+   "after_us": 81.93,
+   "before_pct": 79,
+   "after_pct": 80,
+   "per_half_before_us": 416.4,
+   "per_half_after_us": 409.6
+  },
+  {
+   "site": "gemv:Q8_0:shexpdown",
+   "kernel": "kopt Multiply (staged)",
+   "shape": "640->2560 Q8_0",
+   "count": 24,
+   "weight_mb": 1.74,
+   "floor_us": 2.9,
+   "before_us": 15.1,
+   "after_us": 15.01,
+   "before_pct": 19,
+   "after_pct": 19,
+   "per_half_before_us": 362.3,
+   "per_half_after_us": 360.3
+  },
+  {
+   "site": "gemv:Q6_K:gdn.z",
+   "kernel": "p33.dense.segment",
+   "shape": "2560->6144 Q6_K (expanded; raw 12.90 MB)",
+   "count": 8,
+   "weight_mb": 19.66,
+   "floor_us": 32.8,
+   "before_us": 41.66,
+   "after_us": 40.87,
+   "before_pct": 79,
+   "after_pct": 80,
+   "per_half_before_us": 333.3,
+   "per_half_after_us": 327.0
+  },
+  {
+   "site": "gemv:BF16:router",
+   "kernel": "kopt Multiply?",
+   "shape": "2560->512 BF16",
+   "count": 24,
+   "weight_mb": 2.62,
+   "floor_us": 4.4,
+   "before_us": 8.46,
+   "after_us": 7.82,
+   "before_pct": 52,
+   "after_pct": 56,
+   "per_half_before_us": 203.0,
+   "per_half_after_us": 187.7
+  },
+  {
+   "site": "gemv:Q4_K:gdn.z",
+   "kernel": "denseblock",
+   "shape": "2560->6144 Q4_K",
+   "count": 5,
+   "weight_mb": 8.85,
+   "floor_us": 14.7,
+   "before_us": 36.01,
+   "after_us": 24.95,
+   "before_pct": 41,
+   "after_pct": 59,
+   "per_half_before_us": 180.1,
+   "per_half_after_us": 124.7
+  },
+  {
+   "site": "gemv:IQ4_XS:gdn.qkv",
+   "kernel": "denseblock",
+   "shape": "2560->10240 IQ4_XS",
+   "count": 2,
+   "weight_mb": 13.93,
+   "floor_us": 23.2,
+   "before_us": 67.63,
+   "after_us": 53.88,
+   "before_pct": 34,
+   "after_pct": 43,
+   "per_half_before_us": 135.3,
+   "per_half_after_us": 107.8
+  },
+  {
+   "site": "gemv:BF16:gdn.a",
+   "kernel": "kopt Multiply",
+   "shape": "2560->48x2 BF16",
+   "count": 18,
+   "weight_mb": 0.49,
+   "floor_us": 0.8,
+   "before_us": 6.69,
+   "after_us": 4.22,
+   "before_pct": 12,
+   "after_pct": 19,
+   "per_half_before_us": 120.4,
+   "per_half_after_us": 75.9
+  },
+  {
+   "site": "gemv:Q5_K:gdn.z",
+   "kernel": "denseblock",
+   "shape": "2560->6144 Q5_K",
+   "count": 3,
+   "weight_mb": 10.81,
+   "floor_us": 18.0,
+   "before_us": 39.51,
+   "after_us": 29.29,
+   "before_pct": 46,
+   "after_pct": 62,
+   "per_half_before_us": 118.5,
+   "per_half_after_us": 87.9
+  },
+  {
+   "site": "gemv:Q6_K:shexpup",
+   "kernel": "kopt Multiply (staged)",
+   "shape": "2560->640 Q6_K",
+   "count": 8,
+   "weight_mb": 1.34,
+   "floor_us": 2.2,
+   "before_us": 11.65,
+   "after_us": 11.57,
+   "before_pct": 19,
+   "after_pct": 19,
+   "per_half_before_us": 93.2,
+   "per_half_after_us": 92.6
+  },
+  {
+   "site": "gemv:Q6_K:shexpgate",
+   "kernel": "kopt Multiply (staged)",
+   "shape": "2560->640 Q6_K",
+   "count": 7,
+   "weight_mb": 1.34,
+   "floor_us": 2.2,
+   "before_us": 12.54,
+   "after_us": 12.59,
+   "before_pct": 18,
+   "after_pct": 18,
+   "per_half_before_us": 87.8,
+   "per_half_after_us": 88.1
+  },
+  {
+   "site": "gemv:IQ4_XS:gdn.z",
+   "kernel": "denseblock",
+   "shape": "2560->6144 IQ4_XS",
+   "count": 2,
+   "weight_mb": 8.36,
+   "floor_us": 13.9,
+   "before_us": 40.99,
+   "after_us": 31.25,
+   "before_pct": 34,
+   "after_pct": 45,
+   "per_half_before_us": 82.0,
+   "per_half_after_us": 62.5
+  },
+  {
+   "site": "gemv:Q4_K:shexpgate",
+   "kernel": "denseblock",
+   "shape": "2560->640 Q4_K",
+   "count": 8,
+   "weight_mb": 0.92,
+   "floor_us": 1.5,
+   "before_us": 10.14,
+   "after_us": 6.78,
+   "before_pct": 15,
+   "after_pct": 23,
+   "per_half_before_us": 81.1,
+   "per_half_after_us": 54.3
+  },
+  {
+   "site": "gemv:Q5_K:qsa.qgate",
+   "kernel": "gsqn/denseblock",
+   "shape": "2560->12288 Q5_K",
+   "count": 1,
+   "weight_mb": 21.63,
+   "floor_us": 36.0,
+   "before_us": 78.59,
+   "after_us": 59.32,
+   "before_pct": 46,
+   "after_pct": 61,
+   "per_half_before_us": 78.6,
+   "per_half_after_us": 59.3
+  },
+  {
+   "site": "gemv:Q6_K:qsa.k",
+   "kernel": "kopt Multiply (staged)",
+   "shape": "2560->512 Q6_K",
+   "count": 6,
+   "weight_mb": 1.08,
+   "floor_us": 1.8,
+   "before_us": 11.52,
+   "after_us": 11.41,
+   "before_pct": 16,
+   "after_pct": 16,
+   "per_half_before_us": 69.1,
+   "per_half_after_us": 68.4
+  },
+  {
+   "site": "gemv:IQ4_XS:shexpgate",
+   "kernel": "denseblock",
+   "shape": "2560->640 IQ4_XS",
+   "count": 7,
+   "weight_mb": 0.87,
+   "floor_us": 1.5,
+   "before_us": 9.43,
+   "after_us": 7.03,
+   "before_pct": 15,
+   "after_pct": 21,
+   "per_half_before_us": 66.0,
+   "per_half_after_us": 49.2
+  },
+  {
+   "site": "gemv:BF16:qsa.iq",
+   "kernel": "kopt Multiply",
+   "shape": "2560->512 BF16",
+   "count": 6,
+   "weight_mb": 2.62,
+   "floor_us": 4.4,
+   "before_us": 10.44,
+   "after_us": 8.89,
+   "before_pct": 42,
+   "after_pct": 49,
+   "per_half_before_us": 62.7,
+   "per_half_after_us": 53.3
+  },
+  {
+   "site": "gemv:Q4_K:gdn.qkv",
+   "kernel": "denseblock",
+   "shape": "2560->10240 Q4_K",
+   "count": 1,
+   "weight_mb": 14.75,
+   "floor_us": 24.6,
+   "before_us": 59.48,
+   "after_us": 44.79,
+   "before_pct": 41,
+   "after_pct": 55,
+   "per_half_before_us": 59.5,
+   "per_half_after_us": 44.8
+  },
+  {
+   "site": "gemv:Q6_K:qsa.v",
+   "kernel": "kopt Multiply (staged)",
+   "shape": "2560->512 Q6_K",
+   "count": 6,
+   "weight_mb": 1.08,
+   "floor_us": 1.8,
+   "before_us": 9.79,
+   "after_us": 9.57,
+   "before_pct": 18,
+   "after_pct": 19,
+   "per_half_before_us": 58.7,
+   "per_half_after_us": 57.4
+  },
+  {
+   "site": "gemv:Q4_K:shexpup",
+   "kernel": "denseblock",
+   "shape": "2560->640 Q4_K",
+   "count": 6,
+   "weight_mb": 0.92,
+   "floor_us": 1.5,
+   "before_us": 8.7,
+   "after_us": 6.43,
+   "before_pct": 18,
+   "after_pct": 24,
+   "per_half_before_us": 52.2,
+   "per_half_after_us": 38.6
+  },
+  {
+   "site": "gemv:Q5_K:shexpup",
+   "kernel": "denseblock",
+   "shape": "2560->640 Q5_K",
+   "count": 5,
+   "weight_mb": 1.13,
+   "floor_us": 1.9,
+   "before_us": 9.45,
+   "after_us": 7.28,
+   "before_pct": 20,
+   "after_pct": 26,
+   "per_half_before_us": 47.2,
+   "per_half_after_us": 36.4
+  },
+  {
+   "site": "gemv:IQ4_XS:shexpup",
+   "kernel": "denseblock",
+   "shape": "2560->640 IQ4_XS",
+   "count": 5,
+   "weight_mb": 0.87,
+   "floor_us": 1.5,
+   "before_us": 8.99,
+   "after_us": 6.74,
+   "before_pct": 16,
+   "after_pct": 22,
+   "per_half_before_us": 44.9,
+   "per_half_after_us": 33.7
+  },
+  {
+   "site": "gemv:BF16:final.gate",
+   "kernel": "kopt Multiply",
+   "shape": "320->10240 BF16",
+   "count": 1,
+   "weight_mb": 6.55,
+   "floor_us": 10.9,
+   "before_us": 22.08,
+   "after_us": 16.77,
+   "before_pct": 49,
+   "after_pct": 65,
+   "per_half_before_us": 22.1,
+   "per_half_after_us": 16.8
+  },
+  {
+   "site": "gemv:Q5_K:shexpgate",
+   "kernel": "denseblock",
+   "shape": "2560->640 Q5_K",
+   "count": 2,
+   "weight_mb": 1.13,
+   "floor_us": 1.9,
+   "before_us": 10.76,
+   "after_us": 7.34,
+   "before_pct": 17,
+   "after_pct": 26,
+   "per_half_before_us": 21.5,
+   "per_half_after_us": 14.7
+  },
+  {
+   "site": "gemv:BF16:final.low",
+   "kernel": "kopt Multiply",
+   "shape": "10240->320 BF16",
+   "count": 1,
+   "weight_mb": 6.55,
+   "floor_us": 10.9,
+   "before_us": 19.58,
+   "after_us": 15.21,
+   "before_pct": 56,
+   "after_pct": 72,
+   "per_half_before_us": 19.6,
+   "per_half_after_us": 15.2
+  }
+ ],
+ "incident": {
+  "time": "2026-10-26 08:50:29",
+  "card": "0000:27:00.0",
+  "lines": [
+   "Fault response: Unsuccessful -ENOENT (ASID 3358, address 0x0000d556aa2a0000, bcs, FaultLevel 4)",
+   "Engine reset: engine_class=bcs, guc_id=6"
+  ],
+  "context": "my microbenchmark bench_quant aborted twice with UR_RESULT_ERROR_OUT_OF_RESOURCES (a bench-only variant requested 209 KB of local memory) and exited abruptly; the second abort coincided with the fault lines, in the same second the decode-experts agent engine (pid 294276) started. sc117-lan halted itself at 08:50:33. No engine run of mine was active. All device work stopped, nothing retried, no recovery action taken."
+ }
+}

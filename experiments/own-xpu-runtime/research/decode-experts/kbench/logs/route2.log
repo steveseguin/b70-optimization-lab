@@ -1,0 +1,8 @@
+device Intel(R) Arc(TM) Pro B70 Graphics
+  RouteFast replica                              warm     8.9 us  cold     9.8 us (p25    9.7 p75    9.8)  bitwise-equal
+  denominator once                               warm     9.0 us  cold     9.8 us (p25    9.8 p75    9.9)  bitwise-equal
+  denominator once + rank select                 warm    19.9 us  cold    20.8 us (p25   20.8 p75   20.9)  bitwise-equal
+  timing only: no selection (WRONG)              warm     4.9 us  cold     6.0 us (p25    5.9 p75    6.0)  DIFFERS
+  subgroup top-10 + subgroup-0 merge             warm     8.3 us  cold     8.4 us (p25    8.4 p75    8.5)  bitwise-equal
+  merge minus selection+tail (WRONG)             warm     4.3 us  cold     5.4 us (p25    5.4 p75    5.4)  DIFFERS
+rc 0 nodes [renderD131 ] faults []

@@ -1,0 +1,6 @@
+device Intel(R) Arc(TM) Pro B70 Graphics
+  engine MultiplyBlockRows<2> (production)       warm    51.7 us  cold    55.4 us (p25   54.9 p75   55.9)  bitwise-equal
+  packed SG16 RI1 WG4 lut16                      warm    29.3 us  cold    37.9 us (p25   37.1 p75   38.4)  bitwise-equal
+  stream floor WG128 (WRONG)                     warm     9.0 us  cold    27.4 us (p25   25.3 p75   27.7)  DIFFERS
+  stream floor WG256 (WRONG)                     warm     9.0 us  cold    27.3 us (p25   25.4 p75   27.6)  DIFFERS
+rc 0 nodes [renderD131 ] faults []

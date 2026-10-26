@@ -1,0 +1,403 @@
+{
+ "schema": "ownrt.decode-experts.v1",
+ "date": "2026-10-26",
+ "lab": "/dev/shm/ownrt-lab-dexp/engine",
+ "binaries": {
+  "reference": {
+   "path": "/dev/shm/engine-build-lab-dexp-ref/sc117-engine",
+   "sha256": "7abc6e2f110e5ab9003f64bb12c08e01295d5f3de8a1fb762a2635df76c971ad"
+  },
+  "final": {
+   "path": "/dev/shm/engine-build-lab-dexp-final2/sc117-engine",
+   "sha256": "fe64110f6feaeacb393f5d2665989482e8d8cf6d1c36f0af6cce7d6623914d4a",
+   "env": {
+    "OWNRT_EXPERTS_V2": "1"
+   }
+  }
+ },
+ "launch_base": "research/context-64k/rank1-card27-s24-ctx65536-launch.json + OWNRT_ATTN_HEADS=1 OWNRT_ATTN_COMBINE2=1 OWNRT_PREFILL_REUSE2=1",
+ "switch": {
+  "OWNRT_EXPERTS_V2": "1 = iq4nl,q20,iq4xs,guard,route,status,ew (or a comma list)",
+  "OWNRT_EXPERTS_V2_IQ4NL": "0 = select-chain levels instead of the work-group table"
+ },
+ "timing": {
+  "reference": [
+   {
+    "run": "f2-ref-1",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 16.74,
+    "half_completion_ms_median": 16.681,
+    "enqueue_loop_ms_median": 3.492,
+    "host_load_1m_median": 2.36,
+    "clean": true
+   },
+   {
+    "run": "f2-ref-2",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 16.748,
+    "half_completion_ms_median": 16.686,
+    "enqueue_loop_ms_median": 3.432,
+    "host_load_1m_median": 4.07,
+    "clean": true
+   },
+   {
+    "run": "f2-ref-3",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 17.473,
+    "half_completion_ms_median": 17.304,
+    "enqueue_loop_ms_median": 7.572,
+    "host_load_1m_median": 2.2,
+    "clean": false
+   },
+   {
+    "run": "f2-ref-4",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 16.658,
+    "half_completion_ms_median": 16.598,
+    "enqueue_loop_ms_median": 3.446,
+    "host_load_1m_median": 1.6,
+    "clean": true
+   }
+  ],
+  "final": [
+   {
+    "run": "f2-new-1",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 15.987,
+    "half_completion_ms_median": 15.895,
+    "enqueue_loop_ms_median": 4.757,
+    "host_load_1m_median": 4.78,
+    "clean": false
+   },
+   {
+    "run": "f2-new-2",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 15.538,
+    "half_completion_ms_median": 15.478,
+    "enqueue_loop_ms_median": 3.319,
+    "host_load_1m_median": 2.07,
+    "clean": true
+   },
+   {
+    "run": "f2-new-3",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 15.729,
+    "half_completion_ms_median": 15.633,
+    "enqueue_loop_ms_median": 4.339,
+    "host_load_1m_median": 8.37,
+    "clean": false
+   },
+   {
+    "run": "f2-new-4",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 15.528,
+    "half_completion_ms_median": 15.476,
+    "enqueue_loop_ms_median": 3.688,
+    "host_load_1m_median": 3.86,
+    "clean": true
+   },
+   {
+    "run": "f2-new-5",
+    "prompt": 4096,
+    "steps": 48,
+    "driver_half_ms_median": 15.792,
+    "half_completion_ms_median": 15.699,
+    "enqueue_loop_ms_median": 4.011,
+    "host_load_1m_median": 1.81,
+    "clean": false
+   }
+  ],
+  "p300": {
+   "reference": {
+    "run": "f2-ref-p300",
+    "prompt": 300,
+    "steps": 48,
+    "driver_half_ms_median": 16.36,
+    "half_completion_ms_median": 16.3,
+    "enqueue_loop_ms_median": 3.814,
+    "host_load_1m_median": 2.71,
+    "clean": false
+   },
+   "final": {
+    "run": "f2-new-p300",
+    "prompt": 300,
+    "steps": 48,
+    "driver_half_ms_median": 15.051,
+    "half_completion_ms_median": 14.989,
+    "enqueue_loop_ms_median": 3.383,
+    "host_load_1m_median": 1.56,
+    "clean": true
+   }
+  },
+  "default_off": {
+   "run": "f2-off-1",
+   "prompt": 4096,
+   "steps": 48,
+   "driver_half_ms_median": 17.156,
+   "half_completion_ms_median": 17.043,
+   "enqueue_loop_ms_median": 4.48,
+   "host_load_1m_median": 1.84,
+   "clean": false
+  },
+  "reference_clean_median": {
+   "n": 3,
+   "driver_half_ms": 16.74,
+   "half_completion_ms": 16.681
+  },
+  "final_clean_median": {
+   "n": 2,
+   "driver_half_ms": 15.533,
+   "half_completion_ms": 15.477
+  }
+ },
+ "exactness": {
+  "f2-new-1": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "f2-new-2": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "f2-new-3": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "f2-new-4": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "f2-new-5": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "f2-off-1": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "f2-new-p300": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "f2-prof": {
+   "compared": 1032,
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  }
+ },
+ "tokens_equal": true,
+ "per_site_device_us": [
+  {
+   "site": "routed_gemv:IQ2_S:expsgate",
+   "layers": 6,
+   "bytes_per_site": 5248000,
+   "roofline_us_537": 9.8,
+   "ref_us_per_site": 33.4,
+   "final_us_per_site": 32.5,
+   "ref_total_us": 200.4,
+   "final_total_us": 195.0
+  },
+  {
+   "site": "routed_gemv:IQ2_S:expsup",
+   "layers": 6,
+   "bytes_per_site": 5248000,
+   "roofline_us_537": 9.8,
+   "ref_us_per_site": 30.8,
+   "final_us_per_site": 30.7,
+   "ref_total_us": 184.6,
+   "final_total_us": 184.1
+  },
+  {
+   "site": "routed_gemv:IQ3_S:expsgate",
+   "layers": 8,
+   "bytes_per_site": 7040000,
+   "roofline_us_537": 13.1,
+   "ref_us_per_site": 37.2,
+   "final_us_per_site": 36.7,
+   "ref_total_us": 297.8,
+   "final_total_us": 293.8
+  },
+  {
+   "site": "routed_gemv:IQ3_S:expsup",
+   "layers": 8,
+   "bytes_per_site": 7040000,
+   "roofline_us_537": 13.1,
+   "ref_us_per_site": 35.2,
+   "final_us_per_site": 34.9,
+   "ref_total_us": 281.7,
+   "final_total_us": 279.0
+  },
+  {
+   "site": "routed_gemv:IQ3_XXS:expsgate",
+   "layers": 9,
+   "bytes_per_site": 6272000,
+   "roofline_us_537": 11.7,
+   "ref_us_per_site": 61.7,
+   "final_us_per_site": 61.0,
+   "ref_total_us": 554.9,
+   "final_total_us": 549.2
+  },
+  {
+   "site": "routed_gemv:IQ3_XXS:expsup",
+   "layers": 9,
+   "bytes_per_site": 6272000,
+   "roofline_us_537": 11.7,
+   "ref_us_per_site": 58.8,
+   "final_us_per_site": 58.5,
+   "ref_total_us": 529.1,
+   "final_total_us": 526.5
+  },
+  {
+   "site": "routed_gemv:IQ4_NL:expsdown",
+   "layers": 22,
+   "bytes_per_site": 9216000,
+   "roofline_us_537": 17.2,
+   "ref_us_per_site": 60.6,
+   "final_us_per_site": 37.6,
+   "ref_total_us": 1332.8,
+   "final_total_us": 826.2
+  },
+  {
+   "site": "routed_gemv:IQ4_XS:expsgate",
+   "layers": 1,
+   "bytes_per_site": 8704000,
+   "roofline_us_537": 16.2,
+   "ref_us_per_site": 106.2,
+   "final_us_per_site": 52.6,
+   "ref_total_us": 106.2,
+   "final_total_us": 52.6
+  },
+  {
+   "site": "routed_gemv:IQ4_XS:expsup",
+   "layers": 1,
+   "bytes_per_site": 8704000,
+   "roofline_us_537": 16.2,
+   "ref_us_per_site": 105.1,
+   "final_us_per_site": 51.3,
+   "ref_total_us": 105.1,
+   "final_total_us": 51.3
+  },
+  {
+   "site": "routed_gemv:Q2_0:expsdown",
+   "layers": 2,
+   "bytes_per_site": 4608000,
+   "roofline_us_537": 8.6,
+   "ref_us_per_site": 56.9,
+   "final_us_per_site": 28.9,
+   "ref_total_us": 113.8,
+   "final_total_us": 57.8
+  },
+  {
+   "site": "route",
+   "ref_total_us": 360.7,
+   "final_total_us": 292.8
+  },
+  {
+   "site": "expert_gather",
+   "ref_total_us": 181.8,
+   "final_total_us": 101.3
+  },
+  {
+   "site": "moe_combine",
+   "ref_total_us": 110.9,
+   "final_total_us": 100.4
+  },
+  {
+   "site": "check_status",
+   "ref_total_us": 169.7,
+   "final_total_us": 56.5
+  },
+  {
+   "site": "norm",
+   "ref_total_us": 395.0,
+   "final_total_us": 308.4
+  },
+  {
+   "site": "hc_combine",
+   "ref_total_us": 297.8,
+   "final_total_us": 239.2
+  }
+ ],
+ "device_span_us_median": {
+  "reference": 16187.2,
+  "final": 14982
+ },
+ "microbench_cold_us": {
+  "IQ4_NL down 10x2560x640": {
+   "engine": 56.2,
+   "packed_table_sg16": 38.2,
+   "packed_select_sg16": 39.7,
+   "read_floor": 27.4
+  },
+  "IQ3_XXS gate 10x640x2560": {
+   "engine": 57.0,
+   "packed_lpi8_sg16": 61.5,
+   "slm_grid": 63.3,
+   "uniform_index": 74.3,
+   "shuffle_index": 106.5,
+   "alu_floor_no_loads": 34.8,
+   "read_floor": 19.0
+  },
+  "IQ3_S gate": {
+   "engine": 35.4,
+   "packed": 56.8,
+   "r2": 38.8,
+   "r1": 40.4,
+   "r8": 45.4
+  },
+  "IQ2_S gate": {
+   "engine": 32.3,
+   "packed": 43.8,
+   "r2": 35.5,
+   "r1": 38.4,
+   "r8": 43.1
+  },
+  "IQ4_XS gate": {
+   "engine": 98.4,
+   "packed_sg32_lpi4": 51.8,
+   "packed_sg16_lpi8": 50.2
+  },
+  "Q2_0 down": {
+   "engine": 60.1,
+   "packed_sg32_lpi8": 34.9
+  },
+  "route 512/top10": {
+   "routefast": 9.8,
+   "merge": 8.4,
+   "rank_count": 20.8,
+   "softmax_only": 6.0
+  }
+ },
+ "device_incident": {
+  "fault": "card 27 (0000:27:00.0) GPU page fault + bcs engine reset at 2026-10-26 08:50:29 EDT; the live sc117-lan service halted itself",
+  "owner_of_faulting_process": "pid 294276, /dev/shm/ownrt-lab-experts (expert-grouped prefill lab), run x10-warm; not this lab",
+  "this_lab": "last run before the fault, f2-new-4 (engine pid 292295), exited at 08:50:26. f2-ref-4 (08:51:22-08:52:06, pid 296019) and f2-new-5 (08:52:07-08:52:49, pid 297503) were started after the fault because the per-run kernel-log check only scanned each run's own window. Both completed rc 0 on renderD131 only, with no new fault lines. Device work stopped on the coordinator's order at 08:53.",
+  "runs_after_fault": [
+   "f2-ref-4",
+   "f2-new-5"
+  ]
+ }
+}

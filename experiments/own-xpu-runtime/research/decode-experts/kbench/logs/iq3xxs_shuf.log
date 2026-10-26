@@ -1,0 +1,6 @@
+device Intel(R) Arc(TM) Pro B70 Graphics
+  engine BlockRows<4> (production)               warm    51.1 us  cold    55.6 us (p25   55.0 p75   56.2)  bitwise-equal
+  index by shuffle                               warm   104.2 us  cold   106.5 us (p25  106.1 p75  106.8)  bitwise-equal
+  index + sign word by shuffle                   warm   106.6 us  cold   118.8 us (p25  118.3 p75  119.4)  bitwise-equal
+  no index load (4, WRONG)                       warm    42.5 us  cold    45.4 us (p25   44.6 p75   45.8)  DIFFERS
+rc 0 nodes [renderD131 ] faults []
