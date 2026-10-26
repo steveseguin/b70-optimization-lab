@@ -1,0 +1,1337 @@
+diff -ruN -x __pycache__ engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp
+--- engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp	2026-10-26 06:36:50.779643866 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp	2026-10-26 08:59:04.603595354 -0400
+@@ -70,6 +70,14 @@
+  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+   require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
+   const auto b=bind(p);
++  if constexpr(F)if(gsqn::v2::enabled()&&!b.routes&&!b.s.routed&&b.s.count==1&&b.s.experts==1&&!b.s.per_slot&&!b.s.row_major&&gsqn::v2::fits<T>(b.w,b.s.rows,b.s.columns,b.s.row_bytes)){
++   // OWNRT_DENSE_DECODE_V2=1: same values, fewer memory messages, uniform per-block arithmetic (dense_decode_v2.hpp).
++   const uint32_t rows=uint32_t(b.s.rows),cols=uint32_t(b.s.columns),rb=uint32_t(b.s.row_bytes);const uint8_t* w=b.w;
++   const float* x=reinterpret_cast<const float*>(b.x);float* y=reinterpret_cast<float*>(b.y);
++   const unsigned R=gsqn::v2::rows_per_subgroup(rows);const size_t global=((rows+R-1)/R*32+127)/128*128;
++   if(R==4)return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(global,128),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{gsqn::v2::rows_fast<T,4>(w,x,y,rows,cols,rb,it);}));});
++   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(global,128),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{gsqn::v2::rows_fast<T,1>(w,x,y,rows,cols,rb,it);}));});
++  }
+   // Outer command owns by-value pointers/shape/dependencies. No caller span or
+   // operation object survives by reference in the prepared callback.
+   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<DenseBlockKernel<T,F>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+diff -ruN -x __pycache__ engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+--- engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp	2026-10-26 04:49:03.774823500 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp	2026-10-26 08:59:14.732136968 -0400
+@@ -140,6 +140,7 @@
+ #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
+ #include "gsq-rco-iq3s/dense-packed-block/engine/build/source/block.hpp"
+ #include "gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp"
++#include "gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp"
+ #include "gsq-rco-iq3s/integration/build/private/additive/upload.hpp"
+ #include "gsq-rco-iq3s/integration/build/private/additive/generic_host.hpp"
+ #include "gsq-rco-iq3s/integration/build/private/additive/bound.hpp"
+@@ -247,7 +248,7 @@
+       a.f32_activations=v=="f32";
+     }
+     else if (k == "--prefill-rows") {
+-      a.prefill_rows=std::stoi(value());require(a.prefill_rows>=0&&a.prefill_rows<=64,"prefill rows must be 0..64");
++      a.prefill_rows=std::stoi(value());require(a.prefill_rows>=0&&a.prefill_rows<=256,"prefill rows must be 0..256");
+     }
+     else if (k == "--prefill-shared") a.prefill_shared=value();
+     else if (k == "--draft-experts") {
+diff -ruN -x __pycache__ engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+--- engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp	2026-10-26 06:36:50.780047825 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp	2026-10-26 08:59:14.732443074 -0400
+@@ -16,6 +16,7 @@
+ std::map<std::string,std::string> prefill_role_of;     // plan buffer name -> role
+ std::vector<const flash::Launch*> prefill_sites;
+ Allocation prefill_positions=0,prefill_tokens=0;
++Allocation xg_order=0,xg_tiles=0,xg_count=0;size_t xg_capacity=0;
+ uint64_t prefill_chunks=0,prefill_rows_done=0;
+ static std::string prefill_role(const std::string& name) {
+   if(!name.starts_with("blk."))return name;
+@@ -53,6 +54,14 @@
+     for(size_t off=0;off<bytes*M;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes*M-off));
+     prefill_shadows[role]={id,bytes};total+=bytes*M;
+   }
++#ifndef OWN_RT_HOST_ONLY
++  if(xgroup::enabled()) { // expert-grouped routed sites: slot order, tile descriptors and tile count for top*M slots
++    xg_capacity=size_t(p.g.top)*M;
++    xg_order=allocate(0,"prefill:xg-order",xg_capacity*4,Category::scratch,Lifetime::transaction);
++    xg_tiles=allocate(0,"prefill:xg-tiles",xg_capacity*xgroup::desc_words*4,Category::scratch,Lifetime::transaction);
++    xg_count=allocate(0,"prefill:xg-count",64,Category::scratch,Lifetime::transaction);
++  }
++#endif
+   prefill_positions=allocate(0,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
+   prefill_tokens=allocate(0,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
+   std::ostringstream o;o<<"{\"rows\":"<<M<<",\"roles\":"<<role_bytes.size()<<",\"buffers\":"<<prefill_role_of.size()
+@@ -121,6 +130,26 @@
+   }
+   finish(0,site.submit(dev(0),site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);
+ }
++// QSA select rows per native launch: its specialised scratch holds tokens x ceil(context/4) floats in the 8 MiB
++// operator scratch (128 rows at context 65536). Longer chunks run the native select in groups of at most that many rows,
++// each from row g's views exactly as the grouped attention below (position/token views give row g its own position;
++// shadows are viewed at row g), with the extent its last row admits. Each row's arithmetic is its single-row select.
++int prefill_select_rows() const {return std::max(1,int(size_t(8)*1024*1024/(size_t(4)*((size_t(p.g.context)+3)/4))));}
++void prefill_native_group(const flash::Launch& l,int P0,int g,int rows) {
++  auto& d=dev(0);const int saved_extent=context_extent;
++  context_extent=std::min(p.g.context,((P0+g+rows-1+32)/32)*32);
++  auto site=prepare_site(l);context_extent=saved_extent;
++  std::vector<Allocation> viewed;size_t k=0;
++  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){
++    if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(name);site.bindings.at(k)=shadow;site.spec.row_bytes[k]=uint32_t(prefill_row_bytes(name));
++      if(!d.row_views.count(shadow)){d.row_views[shadow]={shadow,prefill_row_bytes(name),false};viewed.push_back(shadow);}}
++    ++k;}
++  site.spec.tokens=rows;site.spec.tmp_row_bytes=4096*4;
++  d.view_row=g;
++  try {finish(0,site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);}
++  catch(...){d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);throw;}
++  d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
++}
+ Allocation prefill_shadow(const std::string& name) const {return prefill_shadows.at(prefill_role_of.at(name)).id;}
+ size_t prefill_row_bytes(const std::string& name) const {const auto& s=buffers[0].at(name);return s.n*flash::scalar_bytes(s.type);}
+ // Rank 0 host inputs: per-row lookup rows (embedding, PLE) with the token history advanced row by row.
+@@ -145,7 +174,67 @@
+     require(m.count==unsigned(p.g.top)&&m.routes&&m.status,"prefill routed site");
+     m.routes=prefill_shadow(l.inputs[1]);m.status=prefill_shadow(l.outputs[1]);m.count=unsigned(p.g.top)*unsigned(M);
+   } else {require(m.count==1&&!m.routes,"prefill dense site");m.tokens=unsigned(M);}
+-  gsq_linear_matrix(l,m);
++  if(!(l.op=="routed_gemv"&&prefill_experts_site(l,m)))gsq_linear_matrix(l,m);
++  // Diagnostic only (OWNRT_PREFILL_ROUTE_DUMP=<file>): after each routed site, drain and append its M*top routes
++  // (record: u32 label length, label, u32 rows M, u32 slots, then slots x {expert_id,row_begin,row_count}).
++  static const char* route_dump=std::getenv("OWNRT_PREFILL_ROUTE_DUMP");
++  if(route_dump&&l.op=="routed_gemv") {
++    drain();auto raw=readback(0,m.routes,size_t(m.count)*sizeof(iq3::Route));
++    std::ofstream o(route_dump,std::ios::app|std::ios::binary);const uint32_t head[3]{uint32_t(l.label.size()),uint32_t(M),m.count};
++    o.write(reinterpret_cast<const char*>(head),4);o.write(l.label.data(),l.label.size());o.write(reinterpret_cast<const char*>(head+1),8);
++    o.write(reinterpret_cast<const char*>(raw.data()),raw.size());
++  }
++}
++// Expert-grouped routed site (OWNRT_PREFILL_EXPERTS=1, prefill_experts.hpp): the same decode values as the kernel that
++// gsq_linear_matrix would select for this site (IQ3_XXS block sites, gsqn packed rows, kopt routed rows), grouped by
++// expert so each expert row is decoded once per tile of slots. Returns false (existing path) for anything else.
++bool prefill_experts_site(const flash::Launch& l,const Matrix& m) {
++#ifdef OWN_RT_HOST_ONLY
++  (void)l;(void)m;return false;
++#else
++  if(!xgroup::enabled()||!xg_order)return false;
++  if(m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.tokens!=1||!m.routes||!m.status||!m.count||!m.experts)return false;
++  if((m.span&&m.span!=m.rows)||m.count>xg_capacity||!m.rows||m.rows>UINT32_MAX||!m.columns||m.columns>16384||m.columns%32)return false;
++  const unsigned t=unsigned(m.type);int family=-1;
++  if(dense_block_site(w,a,l))return false;
++  if(iq3_block_site(w,a,l))family=0;
++  else if(dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
++  else if(t==12||t==13||t==18||t==23||t==42)family=1;
++  else if(t==8||t==14||t==20||t==21||t==22)family=2;
++  else return false;
++  const auto fmt=iq3::layout(iq3::Type(t));if(!fmt.elements||m.columns%fmt.elements)return false;
++  if(family!=2&&t!=42&&m.columns%256)return false;
++  auto& d=dev(l.card);
++  if(reinterpret_cast<uintptr_t>(d.arena.row(m.x).pointer)%16||reinterpret_cast<uintptr_t>(d.arena.row(m.w).pointer)%16)return false;
++  static const char* names[]{"IQ3","ELEM","KOPT"};
++  const unsigned index=xgroup::config(names[family],xgroup::config_count,xgroup::default_tile(family,t));
++  if(index>=xgroup::config_count)return false;
++  const uint32_t rb=uint32_t(m.columns/fmt.elements*fmt.bytes),n=m.count,span=uint32_t(m.rows),k=uint32_t(m.columns);
++  const std::array<Allocation,8> ids{m.w,m.x,m.y,m.routes,m.status,xg_order,xg_tiles,xg_count};
++  std::pair<ownrt::Event,ownrt::Event> e;
++  using namespace xgroup;
++  if(family==0)e=issue<S32<Iq3Words>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);
++  else if(family==1){
++    switch(t){
++      case 12:e=issue<S32<Elem<12>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 13:e=issue<S32<Elem<13>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 18:e=issue<S32<Elem<18>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 23:e=issue<S32<Elem<23>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      default:e=issue<S32<Elem<42>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++    }
++  } else {
++    if(m.columns%8)return false;
++    switch(t){
++      case 8:e=issue<C8<Kopt<iq3::Type::Q8_0>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 14:e=issue<C8<Kopt<iq3::Type::Q6_K>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 20:e=issue<C8<Kopt<iq3::Type::IQ4_NL>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      case 21:e=issue<C8<Kopt<iq3::Type::IQ3_S>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++      default:e=issue<C8<Kopt<iq3::Type::IQ2_S>>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);break;
++    }
++  }
++  finish(l.card,{e.first,e.second,2},true);
++  return true;
++#endif
+ }
+ void prefill_set_views(bool on) {
+   auto& d=dev(0);d.row_views.clear();d.view_row=-1;
+@@ -181,7 +270,10 @@
+       const auto site_start=std::chrono::steady_clock::now();
+       bool banked_native=false;
+       if(l->op=="gemv"||l->op=="routed_gemv")prefill_linear(*l,M);
+-      else if(prefill_native(*l)){prefill_native_site(*l,P0,M);banked_native=l->op=="gdn"||l->op=="conv";}
++      else if(prefill_native(*l)){
++        if(l->op=="qsa_select"&&M>prefill_select_rows()){const int G=prefill_select_rows();for(int g=0;g<M;g+=G)prefill_native_group(*l,P0,g,std::min(G,M-g));}
++        else prefill_native_site(*l,P0,M);
++        banked_native=l->op=="gdn"||l->op=="conv";}
+       else if(l->op=="qsa_attention"&&prefill_attention_rows()>1) {
+         // Grouped rows (OWNRT_PREFILL_ATTN_ROWS=T, T<=4): one admit/tiles/combine launch set per T consecutive rows,
+         // from row g's views, with the extent of the group's last row. Each row keeps its own query, ids, slot count and
+diff -ruN -x __pycache__ engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp
+--- engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp	1969-12-31 19:00:00.000000000 -0500
++++ /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp	2026-10-26 08:59:14.733059342 -0400
+@@ -0,0 +1,74 @@
++#pragma once
++// Decode policies for the expert-grouped prefill tiles (prefill_experts.hpp): each returns, for its routed site class,
++// exactly the values the existing routed kernel computes (the same functions, called the same way).
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/prefill_experts.hpp"
++#include "stage2/packet6-kopt/reference.hpp"
++namespace xgroup {
++// IQ3_XXS block sites (iq3block::BlockRowsOperation): 98-byte blocks, block_element_words with the block's half scale.
++struct Iq3Words {static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned gv,float (&v)[8]){
++ const uint8_t* packed=row+step*98u;const float d=iq3::half(iq3::u16(packed));
++ #pragma unroll
++ for(unsigned g=0;g<8;++g)if(g<gv)v[g]=iq3block::block_element_words(packed,d,g,lane);}};
++// gsqn packed routed rows (PackedRowsOperation / PackedOperation, types 12, 13, 18, 23, 42): gsq::element_unchecked at
++// column k = 256*step + 32*g + lane of the row (Q2_0's dedicated loop computes the same float(code-1)*d).
++template<unsigned T> struct Elem {static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned gv,float (&v)[8]){
++ constexpr uint32_t elements=T==42?64:256,bytes=T==42?18:T==12?144:T==13?176:T==23?136:98;
++ #pragma unroll
++ for(unsigned g=0;g<8;++g)if(g<gv){const uint32_t k=step*256u+g*32u+lane;v[g]=gsq::element_unchecked(T,row+(k/elements)*bytes,k%elements);}}};
++// kopt routed rows (MultiplyBlockRows / Multiply): iq3::kopt::decode8<T> at the lane's 8-column chunk.
++template<iq3::Type T> struct Kopt {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){iq3::kopt::decode8<T>(row,k,v);}};
++// Engine operations. Bucket bindings: routes, status, order, tiles, tile_count. Tiles bindings: weights, F32 slot inputs
++// (slots x k), F32 outputs (slots x span), order, tiles, tile_count.
++struct BucketOp final:ownrt::SyclOperation {
++ uint32_t n=0,experts=0,rows=0,span=0,T=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
++  if(p.size()<5||!n||!T||!experts)throw std::invalid_argument("expert bucket geometry");
++  const Bucket k{static_cast<const iq3::Route*>(p[0]),static_cast<uint32_t*>(p[1]),static_cast<uint32_t*>(p[2]),static_cast<uint32_t*>(p[3]),
++                 static_cast<uint32_t*>(p[4]),n,experts,rows,span,T,{}};
++  const uint32_t nn=n;
++  return ownrt::prepared_submit(q,[=](sycl::handler& h){h.depends_on(deps);Bucket kk=k;kk.keys=sycl::local_accessor<uint32_t,1>(sycl::range<1>(nn),h);
++   h.parallel_for(sycl::nd_range<1>(bucket_items,bucket_items),packet26::checked(kk));});
++ }
++};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF> struct TilesOp final:ownrt::SyclOperation {
++ uint32_t span=0,k=0,rb=0,n=0,experts=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
++  if(p.size()<6||!span||!k||!n)throw std::invalid_argument("expert tiles geometry");
++  const auto prepared=prepare<F,RW,T,S,GRF>(static_cast<const uint8_t*>(p[0]),static_cast<const float*>(p[1]),static_cast<float*>(p[2]),
++   static_cast<const uint32_t*>(p[3]),static_cast<const uint32_t*>(p[4]),static_cast<const uint32_t*>(p[5]),span,k,rb,n,experts);
++  const auto kernel=prepared.kernel;const auto range=prepared.range;
++  return ownrt::prepared_submit(q,[=](sycl::handler& h){h.depends_on(deps);h.parallel_for(range,packet26::checked(kernel));});
++ }
++};
++template<unsigned RW,unsigned T,unsigned S,unsigned GRF> struct Cfg {static constexpr unsigned rw=RW,t=T,s=S,grf=GRF;};
++// The tile list (index = OWNRT_PREFILL_EXPERTS_<FAMILY>; config_count = the existing kernel). Cfg<RW rows, T slots, S
++// subgroups per work-group, GRF>. Production keeps the two tiles that won the 2026-10-26 sweeps (RESULT.md); build with
++// -DXGROUP_EXPLORE for the sweep list (4x2, 4x4, 4x8/256, 8x4/256 and 2x8 never won).
++#ifdef XGROUP_EXPLORE
++#define XGROUP_CONFIGS xgroup::Cfg<2,4,4,128>,xgroup::Cfg<1,4,4,128>,xgroup::Cfg<4,2,4,128>,xgroup::Cfg<4,4,4,128>,xgroup::Cfg<4,8,4,256>,\
++ xgroup::Cfg<8,4,4,256>,xgroup::Cfg<2,8,4,128>
++inline constexpr unsigned config_count=7;
++#else
++#define XGROUP_CONFIGS xgroup::Cfg<2,4,4,128>,xgroup::Cfg<1,4,4,128>
++inline constexpr unsigned config_count=2;
++#endif
++// Defaults (80-row chunks, rows per subgroup loop 4, launch divisor 4): 1 row x 4 slots for IQ3_XXS block sites, gsqn
++// packed rows and kopt IQ4_NL; 2 x 4 for the other kopt formats (IQ2_S, IQ3_S).
++inline unsigned default_tile(int family,unsigned type){return family==2&&type!=20?0u:1u;}
++// Bucket (with the configuration's T) then the configuration's tiles: two operations, events first..last.
++template<class F,class... Cs> std::pair<ownrt::Event,ownrt::Event> issue(ownrt::Device& d,unsigned index,const std::array<ownrt::Allocation,8>& ids,
++  uint32_t n,uint32_t experts,uint32_t rows,uint32_t span,uint32_t k,uint32_t rb){
++ // ids: weights, x, y, routes, status, order, tiles, tile_count
++ std::pair<ownrt::Event,ownrt::Event> r{};bool done=false;unsigned i=0;
++ auto one=[&]<class C>(C){if(i++!=index||done)return;
++  BucketOp b;b.n=n;b.experts=experts;b.rows=rows;b.span=span;b.T=C::t;std::array<ownrt::Allocation,5> bi{ids[3],ids[4],ids[5],ids[6],ids[7]};
++  r.first=d.compute(b,bi,{});
++  TilesOp<F,C::rw,C::t,C::s,C::grf> op;op.span=span;op.k=k;op.rb=rb;op.n=n;op.experts=experts;std::array<ownrt::Allocation,6> ti{ids[0],ids[1],ids[2],ids[5],ids[6],ids[7]};
++  r.second=d.compute(op,ti,{});done=true;};
++ (one(Cs{}),...);
++ if(!done)throw std::invalid_argument("expert tile configuration index");
++ return r;
++}
++}
++#endif
+diff -ruN -x __pycache__ engine/src/gsq-rco-iq3s/integration/build/private/additive/dense_decode_v2.hpp /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/integration/build/private/additive/dense_decode_v2.hpp
+--- engine/src/gsq-rco-iq3s/integration/build/private/additive/dense_decode_v2.hpp	1969-12-31 19:00:00.000000000 -0500
++++ /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/integration/build/private/additive/dense_decode_v2.hpp	2026-10-26 08:59:04.604050911 -0400
+@@ -0,0 +1,93 @@
++#pragma once
++// Dense packed-block decode GEMV (Q4_K = 12, Q5_K = 13, IQ4_XS = 23), lab 2026-10-26, OWNRT_DENSE_DECODE_V2=1 (default
++// off). Decode only: F32 activations/outputs, one dense matrix, shared input row. Every output keeps the value of
++// DenseBlockOperation / PackedOperation: lane l accumulates sum = sum + weight*x[k] from 0.f over k = 32j + l in order
++// (block j/8, group j%8), weight by block_element's / gsq::element's field equations, then the adjacent-pair tree over
++// the 32 lanes (node = lower lane block + upper lane block). Used for both decode submits (block.hpp, packed.hpp);
++// prefill row kernels (DenseBlockRows, PackedRows, reuse2) are untouched.
++#include <sycl/sycl.hpp>
++#include <cstdint>
++#include <cstdlib>
++namespace gsqn::v2 {
++inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_DECODE_V2");return e&&e[0]=='1';}();return on;}
++// rows_fast: the same values as block_element, decoded with fewer memory messages. Per block: one header load (Q4_K /
++// Q5_K: 16 bytes = d, dmin, the 12 scale bytes; IQ4_XS: 8 bytes = d, scales_h, scales_l), scale/min per group by
++// block_element's bit expressions, factor = d*float(scale) and offset = dmin*float(minimum) (Q4_K/Q5_K) or
++// factor = d*float(int(scale)-32) (IQ4_XS) exactly as there; per lane one qh byte (Q5_K) and one code byte per group
++// pair (or per group, IQ4_XS); weight = factor*float(code) - offset, or factor*float(level) with level = iq4_level(code)
++// (the same integers as block_element's table). R rows per subgroup share x and are reduced
++// together by a transposing butterfly (lane l ends with row row0 + (l & (R-1))).
++template<unsigned T,unsigned R> inline void rows_fast(const uint8_t* W,const float* x,float* y,uint32_t nrows,uint32_t columns,uint32_t row_bytes,sycl::nd_item<1> it){
++ static_assert(R==1||R==2||R==4);
++ constexpr unsigned LR=R==1?0:R==2?1:2;
++ constexpr uint32_t bytes=T==12?144:T==13?176:136;
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++ // Subgroup index from the group id and the subgroup id (both uniform): row offsets, block headers and the per-group
++ // scale arithmetic are then subgroup-uniform values.
++ const uint32_t row0=(uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(sg.get_group_linear_id()))*R;if(row0>=nrows)return;
++ uint32_t off[R];
++ #pragma unroll
++ for(unsigned r=0;r<R;++r)off[r]=(row0+r<nrows?row0+r:row0)*row_bytes;
++ float A[R];
++ #pragma unroll
++ for(unsigned r=0;r<R;++r)A[r]=0.f;
++ for(uint32_t block=0;block<columns/256;++block){
++  float xs[8];
++  #pragma unroll
++  for(unsigned g=0;g<8;++g)xs[g]=x[block*256+g*32+lane];
++  #pragma unroll
++  for(unsigned r=0;r<R;++r){
++   const uint8_t* b=W+off[r]+block*bytes;
++   if constexpr(T==12||T==13){
++    const sycl::vec<uint32_t,4> h=*reinterpret_cast<const sycl::vec<uint32_t,4>*>(b);
++    const float d=iq3::half(h[0]&0xffffu),dmin=iq3::half(h[0]>>16);
++    uint8_t s[12];
++    #pragma unroll
++    for(unsigned i=0;i<12;++i)s[i]=uint8_t(h[1+i/4]>>(8*(i%4)));
++    constexpr unsigned low_offset=T==12?16:48;
++    uint32_t qh=0;if constexpr(T==13)qh=b[16+lane];
++    uint32_t cb[4];
++    #pragma unroll
++    for(unsigned p=0;p<4;++p)cb[p]=b[low_offset+p*32+lane];
++    #pragma unroll
++    for(unsigned group=0;group<8;++group){
++     const unsigned scale=group<4?s[group]&63:(s[group+4]&15)|((s[group-4]>>6)<<4);
++     const unsigned minimum=group<4?s[group+4]&63:(s[group+4]>>4)|((s[group]>>6)<<4);
++     unsigned code=(cb[group/2]>>(4*(group%2)))&15;
++     if constexpr(T==13)code|=((qh>>group)&1)<<4;
++     const float factor=d*float(scale);const float offset=dmin*float(minimum);
++     const float product0=factor*float(code);const float weight=product0-offset;
++     const float product=weight*xs[group];A[r]=A[r]+product;
++    }
++   }else{
++    const sycl::vec<uint32_t,2> h=*reinterpret_cast<const sycl::vec<uint32_t,2>*>(b);
++    const float d=iq3::half(h[0]&0xffffu);const uint32_t sh=h[0]>>16,sl=h[1];
++    #pragma unroll
++    for(unsigned group=0;group<8;++group){
++     const unsigned scale=((sl>>(8*(group/2)+4*(group%2)))&15)|(((sh>>(2*group))&3)<<4);
++     const unsigned code=(b[8+group*16+lane%16]>>(4*(lane/16)))&15;
++     const float factor=d*float(int(scale)-32);
++     const float weight=factor*float(iq3::iq4_level(code));
++     const float product=weight*xs[group];A[r]=A[r]+product;
++    }
++   }
++  }
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<LR;++lv){const bool hi=((lane>>lv)&1u)!=0;
++  #pragma unroll
++  for(unsigned m=0;m<(R>>(lv+1));++m){const float lo_v=A[2*m],hi_v=A[2*m+1];const float send=hi?lo_v:hi_v,mine=hi?hi_v:lo_v;
++   const float recv=sycl::permute_group_by_xor(sg,send,1u<<lv);A[m]=hi?recv+mine:mine+recv;}}
++ #pragma unroll
++ for(unsigned lv=LR;lv<5;++lv){const float o=sycl::permute_group_by_xor(sg,A[0],1u<<lv);A[0]=((lane>>lv)&1u)?o+A[0]:A[0]+o;}
++ const uint32_t row=row0+(lane&(R-1));
++ if(lane<R&&row<nrows)y[row]=A[0];
++}
++// Rows per subgroup: 4 for 4096..8192 rows (z projections), else 1 (bench, 2026-10-26).
++inline unsigned rows_per_subgroup(size_t rows){return rows>=4096&&rows<=8192?4:1;}
++template<unsigned T> inline bool fits(const uint8_t* w,size_t rows,size_t columns,size_t row_bytes){
++ constexpr size_t bytes=T==12?144:T==13?176:136;
++ return columns%256==0&&columns/256*bytes==row_bytes&&rows*row_bytes<=UINT32_MAX&&columns<=UINT32_MAX&&
++  reinterpret_cast<uintptr_t>(w)%(T==23?8:16)==0&&row_bytes%(T==23?8:16)==0;
++}
++}
+diff -ruN -x __pycache__ engine/src/gsq-rco-iq3s/integration/build/private/additive/packed.hpp /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/integration/build/private/additive/packed.hpp
+--- engine/src/gsq-rco-iq3s/integration/build/private/additive/packed.hpp	2026-10-25 01:45:50.270327380 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/gsq-rco-iq3s/integration/build/private/additive/packed.hpp	2026-10-26 08:59:14.732610077 -0400
+@@ -5,6 +5,8 @@
+ #error "Engine runtime closure required"
+ #endif
+ #include "device_formats.hpp"
++#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
++#include "dense_decode_v2.hpp"
+ #include <array>
+ #include <utility>
+ namespace gsqn {
+@@ -22,7 +24,7 @@
+ template<bool F> inline float act_in(const uint16_t*x,size_t i){if constexpr(F)return reinterpret_cast<const float*>(x)[i];else return iq3::bits_float(uint32_t(x[i])<<16);}
+ template<bool F> inline void act_out(uint16_t*y,size_t i,float v){if constexpr(F)reinterpret_cast<float*>(y)[i]=v;else y[i]=iq3::bf16_bits(v);}
+ // Upper bound on token rows per launch (batched prefill chunk); routed sites carry 10 slots per token.
+-inline constexpr uint32_t max_tokens=64;
++inline constexpr uint32_t max_tokens=256;
+ struct Bound {Shape s;const uint8_t*w;const uint16_t*x;uint16_t*y;const iq3::Route*routes;uint32_t*status;};
+ template<unsigned T,bool F=false> inline float lane_sum(const Bound&b,const iq3::Route&r,size_t row,unsigned slot,unsigned lane){
+  constexpr size_t elements=T==42?64:256;constexpr size_t bytes=T==42?18:T==12?144:T==13?176:T==23?136:98;
+@@ -53,6 +55,14 @@
+  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+   require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
+   const auto b=bind(p);
++  if constexpr(F&&(T==12||T==13||T==23))if(v2::enabled()&&!b.routes&&!b.s.routed&&b.s.count==1&&b.s.experts==1&&!b.s.per_slot&&!b.s.row_major&&v2::fits<T>(b.w,b.s.rows,b.s.columns,b.s.row_bytes)){
++   // OWNRT_DENSE_DECODE_V2=1: dense decode rows, lane_sum's values and order (dense_decode_v2.hpp).
++   const uint32_t rows=uint32_t(b.s.rows),cols=uint32_t(b.s.columns),rb=uint32_t(b.s.row_bytes);const uint8_t* w=b.w;
++   const float* x=reinterpret_cast<const float*>(b.x);float* y=reinterpret_cast<float*>(b.y);
++   const unsigned R=v2::rows_per_subgroup(rows);const size_t global=((rows+R-1)/R*32+127)/128*128;
++   if(R==4)return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(global,128),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{v2::rows_fast<T,4>(w,x,y,rows,cols,rb,it);}));});
++   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(global,128),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{v2::rows_fast<T,1>(w,x,y,rows,cols,rb,it);}));});
++  }
+   // Outer command owns by-value pointers/shape/dependencies. No caller span or
+   // operation object survives by reference in the prepared callback.
+   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<PackedKernel<T,F>>(sycl::nd_range<1>(b.s.rows*b.s.count*32,32),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+@@ -118,6 +128,92 @@
+   }));});
+  }
+ };
++// OWNRT_EXPERTS_V2 (lab 2026-10-26): routed Q2_0 / IQ4_XS rows with packed logical lanes. Work-item m of a row owns the
++// LPI adjacent logical lanes m*LPI.. of PackedRowsOperation's mapping (k = lane + 32*i): their quant codes are one load
++// and the block (Q2_0) or 32-column group (IQ4_XS) scale is formed once. Each logical lane keeps its exact sequence (the
++// same element value as element_unchecked / the Q2_0 branch, k in the same order, product then add); then log2(LPI)
++// adjacent-pair tree levels in registers and the rest by shuffles, same operands, same order. Inactive rows write NaN.
++template<unsigned T,unsigned SG,unsigned LPI,unsigned RI,unsigned WGSG> class PackedLanesKernel;
++template<unsigned T,unsigned SG,unsigned LPI,unsigned RI,unsigned WGSG> struct PackedLanesOperation final:ownrt::SyclOperation {
++ static_assert(T==42||T==23,"packed lanes: Q2_0 or IQ4_XS");
++ Shape s{};
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
++  const Bound b{s,static_cast<const uint8_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4])};
++  constexpr unsigned IPR=32/LPI,SETS=SG/IPR,RPS=SETS*RI;
++  const uint32_t rows=uint32_t(b.s.rows),columns=uint32_t(b.s.columns),row_bytes=uint32_t(b.s.row_bytes),experts=b.s.experts;
++  const uint32_t blocks=(rows+RPS-1)/RPS,total=blocks*b.s.count,groups=(total+WGSG-1)/WGSG;
++  const bool per_slot=b.s.per_slot;
++  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<PackedLanesKernel<T,SG,LPI,RI,WGSG>>(sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(SG)]]{
++   const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/IPR,m=lane%IPR;
++   const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
++   const uint32_t slot=logical/blocks,first=(logical%blocks)*RPS+set*RI;
++   const auto r=b.routes[slot];const bool valid=iq3::valid_route(r,experts,rows,rows);
++   const float* x=reinterpret_cast<const float*>(b.x)+(per_slot?size_t(slot)*columns:0);
++   float acc[RI][LPI];const uint8_t* rp[RI];bool live[RI];
++   #pragma unroll
++   for(unsigned i=0;i<RI;++i){
++    #pragma unroll
++    for(unsigned j=0;j<LPI;++j)acc[i][j]=0;
++    const uint32_t row=first+i;live[i]=valid&&row<rows&&row<r.row_count;rp[i]=live[i]?b.w+(size_t(r.expert_id)*rows+r.row_begin+row)*row_bytes:b.w;}
++   const unsigned L0=m*LPI;
++   if constexpr(T==42){
++    for(uint32_t block=0;block<columns/64u;++block){
++     float d[RI];
++     #pragma unroll
++     for(unsigned i=0;i<RI;++i)d[i]=live[i]?iq3::half(iq3::u16(rp[i]+block*18u)):0.f;
++     #pragma unroll
++     for(unsigned h=0;h<2;++h){
++      const uint32_t k0=block*64u+32u*h+L0;float xv[LPI];
++      #pragma unroll
++      for(unsigned c=0;c<LPI/4;++c){const auto v=*reinterpret_cast<const sycl::vec<float,4>*>(x+k0+4*c);xv[4*c]=v[0];xv[4*c+1]=v[1];xv[4*c+2]=v[2];xv[4*c+3]=v[3];}
++      #pragma unroll
++      for(unsigned i=0;i<RI;++i){if(!live[i])continue;
++       const uint8_t* bp=rp[i]+block*18u+2u+L0/4+8u*h; // e=L0+j+32h: byte 2+e/4, bits 2*(e%4)=2*(j%4)
++       const uint32_t codes=LPI==8?uint32_t(*reinterpret_cast<const uint16_t*>(bp)):uint32_t(*bp);
++       #pragma unroll
++       for(unsigned j=0;j<LPI;++j){const unsigned code=(codes>>(2*j))&3;const float weight=float(int(code)-1)*d[i];
++        const float product=weight*xv[j];acc[i][j]=acc[i][j]+product;}}
++     }
++    }
++   } else {
++    for(uint32_t n=0;n<columns/32u;++n){
++     const uint32_t block=n/8u,group=n%8u,k0=n*32u+L0;float xv[LPI];
++     #pragma unroll
++     for(unsigned c=0;c<LPI/4;++c){const auto v=*reinterpret_cast<const sycl::vec<float,4>*>(x+k0+4*c);xv[4*c]=v[0];xv[4*c+1]=v[1];xv[4*c+2]=v[2];xv[4*c+3]=v[3];}
++     #pragma unroll
++     for(unsigned i=0;i<RI;++i){if(!live[i])continue;
++      const uint8_t* bp=rp[i]+block*136u;
++      const unsigned scale=((bp[4+group/2]>>(4*(group%2)))&15)|(((iq3::u16(bp+2)>>(2*group))&3)<<4);
++      const float factor=iq3::half(iq3::u16(bp))*float(int(scale)-32);
++      // i=32*group+L: byte 8+16*group+L%16, nibble L/16 (L=L0+j stays inside one 16-lane half).
++      const uint32_t* qp=reinterpret_cast<const uint32_t*>(bp+8+16*group+(L0%16));
++      uint32_t qw[LPI/4];
++      #pragma unroll
++      for(unsigned c=0;c<LPI/4;++c)qw[c]=qp[c];
++      #pragma unroll
++      for(unsigned j=0;j<LPI;++j){const unsigned code=(qw[j/4]>>(8*(j%4)+4*(L0/16)))&15;const float weight=factor*float(iq3::iq4_level(code));
++       const float product=weight*xv[j];acc[i][j]=acc[i][j]+product;}}
++    }
++   }
++   #pragma unroll
++   for(unsigned i=0;i<RI;++i){
++    float t[LPI];
++    #pragma unroll
++    for(unsigned j=0;j<LPI;++j)t[j]=acc[i][j];
++    #pragma unroll
++    for(unsigned width=1;width<LPI;width*=2){
++     #pragma unroll
++     for(unsigned j=0;j<LPI;j+=2*width)t[j]=t[j]+t[j+width];}
++    float sum=t[0];
++    #pragma unroll
++    for(unsigned width=1;width<IPR;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(m%(2*width)==0)sum=sum+rhs;}
++    const uint32_t row=first+i;
++    if(m==0&&row<rows)reinterpret_cast<float*>(b.y)[size_t(slot)*rows+row]=live[i]?sum:iq3::bits_float(0x7fc00000);}
++   if(lane==0&&(logical%blocks)==0&&b.status)b.status[slot]=!valid;
++  }));});
++ }
++};
+ inline bool routed_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_GSQ_ROUTED_ROWS");return !e||e[0]!='0';}();return on;}
+ #endif
+ inline Shape validate(ownrt::Device&d,const integrated::Matrix&m,InputMode input,Storage storage){
+@@ -137,6 +233,11 @@
+ }
+ template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes?m.routes:m.x,m.status?m.status:m.y};
+ #ifndef OWN_RT_HOST_ONLY
++ if constexpr(T==42||T==23) if(s.f32&&s.routed&&!s.row_major&&s.per_slot&&s.count<=experts_v2::max_slots&&experts_v2::enabled(T==42?"q20":"iq4xs")&&reinterpret_cast<uintptr_t>(d.arena.row(m.x).pointer)%16==0&&s.columns%64==0){
++  // Q2_0: 8 lanes per item, IQ4_XS: 4 lanes per item, 32-lane subgroups. Microbench cold (10 slots): Q2_0 down
++  // 60.1 -> 34.9 us, IQ4_XS gate 98.4 -> 51.8 us; rank-1 profile 114 -> 58 us (2 sites), 211 -> 103 us (2 sites).
++  if constexpr(T==42){PackedLanesOperation<T,32,8,1,4>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
++  else {PackedLanesOperation<T,32,4,1,4>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}}
+  if(s.f32&&s.routed&&!s.row_major&&routed_rows()){
+   // OWNRT_SMALLK_ROWS=1|2: rows per subgroup for columns <= 640 (same per-row arithmetic); default 4.
+   static const int small_k=[]{const char* e=std::getenv("OWNRT_SMALLK_ROWS");return e?std::atoi(e):4;}();
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/adapter.cpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp
+--- engine/src/stage2/packet194-expert-diet-engine/adapter.cpp	2026-10-25 13:04:01.955011228 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp	2026-10-26 08:59:04.588318675 -0400
+@@ -10,6 +10,7 @@
+ #include "stage2/packet194-expert-diet-engine/kernels.hpp"
+ #include "gsq-rco-iq3s/recurrent-f32/recurrent_policy.hpp"
+ #include "stage2/packet194-expert-diet-engine/specialised_submit.hpp"
++#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ #include "stage2/packet194-expert-diet-engine/round2_submit.hpp"
+ #include "stage2/packet194-expert-diet-engine/p33r2.hpp"
+ #include "stage2/packet194-expert-diet-engine/mock_order.hpp"
+@@ -318,6 +319,80 @@
+    }));});
+  }
+ };
++// OWNRT_EXPERTS_V2 "guard"/"route" (lab 2026-10-26): RouteFast with the active/sticky-error guard read once per
++// work-group (lane 0, through the local flag word, instead of by all 512 lanes) and, with MERGE, the ten arg-max rounds
++// split in two levels: each 32-lane subgroup first takes its own ten best by subgroup reductions (no work-group
++// barrier), then subgroup 0 runs the ten rounds over those 160 candidates. The order is RouteFast's (larger probability
++// bits, then the lower id) and every top-ten entry is in its subgroup's ten best, so the same ten ids come out in the
++// same order. The softmax, the outputs and the normalisation are RouteFast's code. Microbench: 9.8 -> 8.4 us (MERGE).
++template<int N,int Top,bool MERGE> struct RouteFast2 final:ownrt::SyclOperation {
++ static_assert(N%32==0&&(N/32)*Top%32==0,"route geometry");
++ Spec spec;explicit RouteFast2(Spec s):spec(s){}
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int rows=spec.tokens;
++  constexpr int C=(N/32)*Top;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(rows)*N,N)](sycl::handler& h){
++   sycl::local_accessor<float,1> ex(N,h),prob(N,h),sums(N/16,h);sycl::local_accessor<uint32_t,1> flags(2+(MERGE?2*C:0),h);
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++    const int r=int(it.get_group_linear_id()),j=int(it.get_local_linear_id());const RowBound rb{b,r,b.s};auto g=it.get_group();
++    uint32_t* bad=flags.get_multi_ptr<sycl::access::decorated::no>().get();
++    if(j==0){bad[0]=0;bad[1]=(!*rb.active()||rb.failed())?1u:0u;}
++    it.barrier(sycl::access::fence_space::local_space);
++    if(bad[1])return; // uniform across the work-group
++    const float x=rb.in(0).get(j);if(!std::isfinite(x))sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::work_group,sycl::access::address_space::local_space>(bad[0]).store(1);
++    it.barrier(sycl::access::fence_space::local_space);
++    if(bad[0]){if(j==0)rb.fail();return;}
++    const float maximum=sycl::reduce_over_group(g,x,sycl::maximum<float>());
++    ex[j]=detmath::exp(x-maximum);it.barrier(sycl::access::fence_space::local_space);
++    constexpr int chunks=(N+15)/16;
++    if(j<chunks)sums[j]=subtree<16>(N,j*16,[&](int i){return ex[i];});
++    it.barrier(sycl::access::fence_space::local_space);
++    const float den=subtree<256>(chunks,0,[&](int i){return sums[i];});
++    prob[j]=ex[j]/den;it.barrier(sycl::access::fence_space::local_space);
++    auto put=[&](int rank,int index){const float v=prob[index];rb.out(0).put(rank,index);rb.out(1).put(rank,v);
++     if(rb.s.no>=4)for(int k=0;k<3;++k){rb.out(2).put(rank*3+k,k==0?index:k==1?0:rb.s.g.mid);rb.out(3).put(rank*3+k,k==0?index:k==1?0:rb.s.g.h);}};
++    if constexpr(!MERGE){
++     bool taken=false;
++     for(int rank=0;rank<Top;++rank){
++      const uint32_t bits=sycl::bit_cast<uint32_t>(prob[j]);
++      const uint32_t top=sycl::reduce_over_group(g,taken?0u:bits+1u,sycl::maximum<uint32_t>());
++      const int index=sycl::reduce_over_group(g,(!taken&&bits+1u==top)?j:N,sycl::minimum<int>());
++      if(j==index)taken=true;
++      if(j==0)put(rank,index);
++     }
++    } else {
++     uint32_t* cbits=bad+2;uint32_t* cidx=cbits+C;
++     auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id()),sgi=int(sg.get_group_linear_id());
++     const uint32_t bits=sycl::bit_cast<uint32_t>(prob[j]);bool taken=false;
++     for(int k=0;k<Top;++k){
++      const uint32_t top=sycl::reduce_over_group(sg,taken?0u:bits+1u,sycl::maximum<uint32_t>());
++      const int index=sycl::reduce_over_group(sg,(!taken&&bits+1u==top)?j:N,sycl::minimum<int>());
++      if(j==index){taken=true;cbits[sgi*Top+k]=bits;cidx[sgi*Top+k]=uint32_t(j);}
++     }
++     it.barrier(sycl::access::fence_space::local_space);
++     if(sgi==0){
++      constexpr int PER=C/32;uint32_t cb[PER],ci[PER];bool tk[PER];
++      #pragma unroll
++      for(int c=0;c<PER;++c){cb[c]=cbits[lane+32*c];ci[c]=cidx[lane+32*c];tk[c]=false;}
++      for(int rank=0;rank<Top;++rank){
++       uint32_t best=0;
++       #pragma unroll
++       for(int c=0;c<PER;++c)best=std::max(best,tk[c]?0u:cb[c]+1u);
++       const uint32_t top=sycl::reduce_over_group(sg,best,sycl::maximum<uint32_t>());
++       uint32_t mi=uint32_t(N);
++       #pragma unroll
++       for(int c=0;c<PER;++c)if(!tk[c]&&cb[c]+1u==top)mi=std::min(mi,ci[c]);
++       const uint32_t index=sycl::reduce_over_group(sg,mi,sycl::minimum<uint32_t>());
++       #pragma unroll
++       for(int c=0;c<PER;++c)if(ci[c]==index)tk[c]=true;
++       if(lane==0)put(rank,int(index));
++      }
++     }
++    }
++    if(j==0){float sum=subtree<32>(Top,0,[&](int i){return rb.out(1).get(i);});for(int i=0;i<Top;++i)rb.out(1).put(i,rb.out(1).get(i)/sum);}
++   }));});
++ }
++};
+ // HC combine and expert gather, F32 mode, without the generic accessor: each item handles four consecutive elements with
+ // the SimpleNew expression unchanged (stream + branch*(2*sigmoid(inject/4)); exact copies for the gather), and routes and
+ // validity exactly as before (an invalid id sets the sticky error, as the second gather phase did). Rows of a prefill
+@@ -326,6 +401,18 @@
+  Spec spec;explicit CombineFast(Spec s):spec(s){}
+  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+   Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const size_t n=spec.sizes[spec.ni],w=size_t(spec.site.shape[1]),quads=n/4;const int rows=spec.tokens;
++  if(experts_v2::enabled("guard")){
++   // Guard read once per 32-lane subgroup (broadcast) instead of by every item; same arithmetic per item.
++   const size_t total=size_t(rows)*quads;
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((total+127)/128*128,128)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++    auto sg=it.get_sub_group();
++    if(sycl::group_broadcast(sg,sg.get_local_linear_id()==0?int(!*b.active()||b.failed()):0,0))return;
++    const size_t i=it.get_global_linear_id();if(i>=total)return;
++    const size_t r=i/quads,c=(i%quads)*4;const RowBound rb{b,int(r),b.s};
++    const float* stream=static_cast<const float*>(rb.in(0).p);const float* branch=static_cast<const float*>(rb.in(1).p);const float* inject=static_cast<const float*>(rb.in(2).p);float* out=static_cast<float*>(rb.out(0).p);
++    const float gate=2.f*ng::sigmoid(inject[c/w]/4.f);
++    for(int j=0;j<4;++j)out[c+j]=stream[c+j]+branch[(c+j)%w]*gate;}));});
++  }
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(size_t(rows)*quads)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> id){
+    const size_t r=id[0]/quads,c=(id[0]%quads)*4;const RowBound rb{b,int(r),b.s};
+    if(!*rb.active()||rb.failed())return;
+@@ -338,6 +425,20 @@
+  Spec spec;explicit GatherFast(Spec s):spec(s){}
+  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+   Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int top=spec.g.top;const size_t n=spec.no_materialize_gather?0:spec.sizes[spec.ni+2],h=spec.sizes[1],per=size_t(top)+n/4;const int rows=spec.tokens;
++  if(experts_v2::enabled("guard")){
++   // Guard read once per 32-lane subgroup (broadcast) instead of by every item; same work per item.
++   const size_t total=size_t(rows)*per;
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((total+127)/128*128,128)](sycl::handler& hd){hd.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++    auto sg=it.get_sub_group();
++    if(sycl::group_broadcast(sg,sg.get_local_linear_id()==0?int(!*b.active()||b.failed()):0,0))return;
++    const size_t i=it.get_global_linear_id();if(i>=total)return;
++    const size_t r=i/per,index=i%per;const RowBound rb{b,int(r),b.s};
++    if(index<size_t(top)){const int j=int(index);float v=rb.in(0).get(j);bool valid=std::isfinite(v)&&v>=0&&v<float(rb.s.g.experts)&&std::floor(v)==v;int ex=valid?int(v):0;
++     for(int k=0;k<3;++k){rb.out(0).put(j*3+k,k==0?ex:k==1?0:rb.s.g.mid);rb.out(1).put(j*3+k,k==0?ex:k==1?0:rb.s.g.h);}
++     if(!valid)rb.fail();return;}
++    const size_t c=(index-top)*4;const float* src=static_cast<const float*>(rb.in(1).p);float* dst=static_cast<float*>(rb.out(2).p);
++    for(int j=0;j<4;++j)dst[c+j]=src[(c+j)%h];}));});
++  }
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(size_t(rows)*per)](sycl::handler& hd){hd.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> id){
+    const size_t r=id[0]/per,index=id[0]%per;const RowBound rb{b,int(r),b.s};
+    if(!*rb.active()||rb.failed())return;
+@@ -348,6 +449,23 @@
+    for(int j=0;j<4;++j)dst[c+j]=src[(c+j)%h];}));});
+  }
+ };
++// OWNRT_EXPERTS_V2 "status" (lab 2026-10-26): the merged expert status check in one 32-lane subgroup. The generic
++// form (simple(): 128 lanes, an active and a sticky-error read, then a float tree sum of (status!=0) per input and
++// fail() when the total is nonzero) sets the error exactly when some status element is nonzero; here each lane ORs
++// its strided elements and any_of_group decides. Same guards (inactive or already failed: nothing), same single store.
++struct StatusFast final:ownrt::SyclOperation {
++ Spec spec;explicit StatusFast(Spec s):spec(s){}
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++   auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id());
++   if(sycl::group_broadcast(sg,lane==0?int(!*b.active()||b.failed()):0,0))return;
++   bool any=false;
++   for(int k=0;k+2<b.s.ni;++k){const View v=b.in(k);for(int j=lane;j<int(v.n);j+=32)any=any||v.get(j)!=0;}
++   if(sycl::any_of_group(sg,any)&&lane==0)b.fail();
++  }));});
++ }
++};
+ inline bool simple_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_SIMPLE_FAST");return !e||e[0]!='0';}();return on;}
+ // Argmax in one 1024-lane work-group per row: lane l scans indices l, l+1024, ... keeping its first maximum (strict >),
+ // then a work-group maximum of the values and a minimum of the indices that hold it. That is SimpleNew's result exactly
+@@ -444,6 +562,8 @@
+  if(s.implementation&&s.special==Special::normal){switch(s.op){
+  case Op::route:if(s.sizes[0]==512&&s.site.shape[1]==10){
+ #ifndef OWN_RT_HOST_ONLY
++  if(route_fast()&&experts_v2::enabled("route")){RouteFast2<512,10,true> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
++  if(route_fast()&&experts_v2::enabled("guard")){RouteFast2<512,10,false> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+   if(route_fast()){RouteFast<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+   if(route_group()){RouteGroup<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+ #endif
+@@ -498,6 +618,7 @@
+  bool tiny=s.g.h!=2560;
+  bool tiny_core=tiny&&s.special==Special::normal&&(s.op==Op::gdn||s.op==Op::gdn_norm_gate||s.op==Op::qsa_prepare||s.op==Op::qsa_append_pool||s.op==Op::qsa_select||s.op==Op::qsa_attention);
+  std::array<ownrt::Allocation,32> b{};std::copy(bindings.begin(),bindings.end(),b.begin());b[bindings.size()]=control;
++ if(!use_ng&&!tiny_core&&s.special==Special::check_status&&s.tokens==1&&experts_v2::enabled("status")){StatusFast k(s);auto e=d.compute(k,bindings,deps);return {e,e,1};}
+  if(!use_ng||tiny_core){Glue k(s,tiny_core?3:0);auto e=d.compute(k,std::span<const ownrt::Allocation>(b.data(),bindings.size()+1),deps);return {e,e,1};}
+  // Validate before submitting anything, so a bad shape cannot strand a partial chain.
+  ng::validate(shape);auto required=ng::required_bytes(shape);for(int j=0;j<19;++j)if(d.arena.row(a[j]).bytes<required[j])throw std::invalid_argument("adapter allocation too short at slot "+std::to_string(j));
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/experts_v2.hpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/experts_v2.hpp
+--- engine/src/stage2/packet194-expert-diet-engine/experts_v2.hpp	1969-12-31 19:00:00.000000000 -0500
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/experts_v2.hpp	2026-10-26 08:59:04.588641702 -0400
+@@ -0,0 +1,21 @@
++#pragma once
++// OWNRT_EXPERTS_V2 (lab 2026-10-26): routed expert GEMVs with packed logical lanes (default off). "1" enables the
++// verified set; otherwise a comma list of iq4nl,q20,iq4xs,guard,route,status,ew. Expert GEMVs: decode rows only (at most
++// 32 slots per launch). guard: the active/error guard read once per subgroup or work-group instead of per item in
++// CombineFast, GatherFast, RouteFast and the specialised body. route: two-level top-ten selection in RouteFast.
++// status: the merged expert status check in one subgroup. ew: the generic element-wise ops (activation, mix,
++// moe_combine) as plain per-item kernels (no team scratch or barriers; guard once per subgroup).
++#include <cstdlib>
++#include <string>
++namespace experts_v2 {
++// "1" = the verified set (every lever below; each is bitwise exact on the rank-1 gate).
++inline bool enabled(const char* format) {
++  static const std::string v=[]{const char* e=std::getenv("OWNRT_EXPERTS_V2");const std::string s=e?e:"";return s=="1"?std::string("iq4nl,q20,iq4xs,guard,route,status,ew"):s;}();
++  if(v.empty()||v=="0")return false;
++  return (","+v+",").find(std::string(",")+format+",")!=std::string::npos;
++}
++inline int variant(const char* name,int fallback) {
++  const char* e=std::getenv(name);return e?std::atoi(e):fallback;
++}
++constexpr unsigned max_slots=32;
++}
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/kernels.hpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/kernels.hpp
+--- engine/src/stage2/packet194-expert-diet-engine/kernels.hpp	2026-10-26 04:49:03.783305116 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/kernels.hpp	2026-10-26 08:59:14.732727879 -0400
+@@ -69,7 +69,7 @@
+  return 1024;
+ }
+ inline void validate(Shape s){
+- if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>87||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
++ if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>256||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>65536||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
+  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
+  if(s.flags&~(1|2|4|8|16|f32_activations_flag))throw std::invalid_argument("unknown shape flag");
+  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/native.cpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/native.cpp
+--- engine/src/stage2/packet194-expert-diet-engine/native.cpp	2026-10-25 00:34:41.589470551 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/native.cpp	2026-10-26 08:59:04.588599192 -0400
+@@ -4,6 +4,7 @@
+ #endif
+ #include "stage2/packet194-expert-diet-engine/native.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
++#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ namespace ng {
+ struct DeviceTeam {
+  sycl::nd_item<1> it;float* x;
+@@ -21,6 +22,26 @@
+  explicit Kernel(Shape s):shape(s){}
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const override{
+   Args a;std::copy(p.begin(),p.end(),a.p.begin());auto s=shape;
++  if((s.op==activation||s.op==mix||s.op==moe_combine)&&experts_v2::enabled("ew")){
++   // OWNRT_EXPERTS_V2 "ew" (lab 2026-10-26): the element-wise ops without the 128-lane team (no local scratch, no
++   // barriers): item idx computes group()'s expression for idx unchanged; the active/sticky-error guard is read once per
++   // 32-lane subgroup, and an out-of-range position fails once (item 0) and stops, as in group().
++   const size_t n=size_t(s.tokens)*size_t(s.width);
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((n+127)/128*128,128)](sycl::handler& h){
++    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{
++     Args b=a;b.f32=(s.flags&f32_activations_flag)!=0;auto sg=it.get_sub_group();
++     const int blocked=sycl::group_broadcast(sg,sg.get_local_linear_id()==0?int(!b.i(18)[0]||DeviceTeam{it,nullptr}.error(b)):0,0);
++     if(blocked)return;
++     const size_t idx=it.get_global_linear_id();
++     const int pos=b.i(17)[0];if(pos<0||pos>position_limit(s)-s.tokens){if(idx==0)DeviceTeam{it,nullptr}.fail(b);return;}
++     if(idx>=n)return;
++     const int r=int(idx/size_t(s.width)),k=int(idx%size_t(s.width));const int i=int(idx);
++     if(s.op==activation){float v=b.b(0,i);b.put(2,i,s.extra?silu(v)*b.b(1,i):detmath::silu_div4(v));}
++     else if(s.op==mix){float sum=0;for(int hh=0;hh<4;++hh)sum=sum+sigmoid(b.b(1,(r*4+hh)*s.width+k))*b.b(0,(r*4+hh)*s.width+k);b.put(2,i,sum/4.f);}
++     else{float sum=0;for(int e=0;e<s.extra;++e)sum=sum+b.b(0,(r*s.extra+e)*s.width+k)*b.f(1)[r*s.extra+e];b.put(4,i,b.rnd(sum)+b.rnd(b.b(2,i)*sigmoid(b.b(3,r))));}
++    }));
++   });
++  }
+   int work=s.op==gdn?32:128;
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(groups(s))*work,work)](sycl::handler& h){sycl::local_accessor<float,1> scratch(local_floats(s),h);
+    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]]{
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/p28/submit.hpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/p28/submit.hpp
+--- engine/src/stage2/packet194-expert-diet-engine/p28/submit.hpp	2026-10-24 17:14:46.416996048 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/p28/submit.hpp	2026-10-26 08:59:14.732808390 -0400
+@@ -3,7 +3,7 @@
+ #include "stage2/packet194-expert-diet-engine/p28/registry.hpp"
+ namespace p28 {
+ // Upper bound on dense token rows per launch (batched prefill chunk).
+-inline constexpr unsigned p28_max_tokens=64;
++inline constexpr unsigned p28_max_tokens=256;
+ struct Bound {
+  const uint8_t* w{};const uint8_t* peer{};const uint16_t* x{};uint16_t* y{};uint16_t* py{};
+  const iq3::Route* routes{};uint32_t* status{};uint32_t* ps{};float* scratch{};
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/p33_dense_v2.hpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/p33_dense_v2.hpp
+--- engine/src/stage2/packet194-expert-diet-engine/p33_dense_v2.hpp	1969-12-31 19:00:00.000000000 -0500
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/p33_dense_v2.hpp	2026-10-26 08:59:04.604118137 -0400
+@@ -0,0 +1,56 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#pragma once
++// p33.dense.segment decode rows, expanded Q6_K / Q8_0 storage (int8 codes, then one F32 scale per 16 / 32 columns),
++// F32 activations and outputs (lab 2026-10-26, OWNRT_DENSE_DECODE_V2=1, default off). Every output keeps the value of
++// Kernel<0,T,K,1,true> (one 32-lane subgroup per row): lane l walks the tiles 8l, 8l+256, ... in order and, per tile,
++// takes the tile's scale, value = scale*float(signed8(code)), product = value*x, sum = sum + product for the 8 columns
++// in order (dense_lane<T,K,true>), then the adjacent-pair tree over the 32 lanes. Here a subgroup carries R rows (row
++// bases subgroup-uniform), U tiles' loads are issued before their in-order arithmetic, and the R trees are reduced
++// together by a transposing butterfly (node = lower lane block + upper lane block). Token rows (prefill) untouched.
++#include "stage2/packet194-expert-diet-engine/p33_candidates.hpp"
++#include <sycl/sycl.hpp>
++#include <cstdint>
++#include <cstdlib>
++namespace p33::v2 {
++inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_DECODE_V2");return e&&e[0]=='1';}();return on;}
++template<iq3::Type T,unsigned K,unsigned R,unsigned U> inline void dense_rows(const uint8_t* W,const float* x,float* y,uint32_t rows,uint32_t rb,sycl::nd_item<1> it){
++ static_assert(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0);static_assert(K%256==0&&(R==1||R==2||R==4));
++ constexpr unsigned group=T==iq3::Type::Q6_K?16:32;constexpr unsigned LR=R==1?0:R==2?1:2;
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++ const uint32_t row0=(uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(sg.get_group_linear_id()))*R;if(row0>=rows)return;
++ const uint8_t* wr[R];
++ #pragma unroll
++ for(unsigned r=0;r<R;++r)wr[r]=W+size_t(row0+r<rows?row0+r:row0)*rb; // a missing row reads row0, never stored
++ float A[R];
++ #pragma unroll
++ for(unsigned r=0;r<R;++r)A[r]=0.f;
++ #pragma unroll 1
++ for(uint32_t base=0;base<K;base+=256*U){
++  float xs[U][8];uint32_t code[U][R][2];float scale[U][R];
++  #pragma unroll
++  for(unsigned u=0;u<U;++u){const uint32_t t=base+256*u+lane*8;if(base+256*u<K){
++   const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+t);const auto a0=xv[0],a1=xv[1];
++   #pragma unroll
++   for(unsigned j=0;j<4;++j){xs[u][j]=a0[j];xs[u][j+4]=a1[j];}
++   #pragma unroll
++   for(unsigned r=0;r<R;++r){const uint32_t* c=reinterpret_cast<const uint32_t*>(wr[r]+t);code[u][r][0]=c[0];code[u][r][1]=c[1];
++    scale[u][r]=iq3::bits_float(*reinterpret_cast<const uint32_t*>(wr[r]+K+4*(t/group)));}}}
++  #pragma unroll
++  for(unsigned u=0;u<U;++u)if(base+256*u<K){
++   #pragma unroll
++   for(unsigned r=0;r<R;++r){
++    #pragma unroll
++    for(unsigned j=0;j<8;++j){const float value=scale[u][r]*float(int(int8_t(uint8_t(code[u][r][j/4]>>(8*(j%4))))));
++     const float product=value*xs[u][j];A[r]=A[r]+product;}}}
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<LR;++lv){const bool hi=((lane>>lv)&1u)!=0;
++  #pragma unroll
++  for(unsigned m=0;m<(R>>(lv+1));++m){const float lo_v=A[2*m],hi_v=A[2*m+1];const float send=hi?lo_v:hi_v,mine=hi?hi_v:lo_v;
++   const float recv=sycl::permute_group_by_xor(sg,send,1u<<lv);A[m]=hi?recv+mine:mine+recv;}}
++ #pragma unroll
++ for(unsigned lv=LR;lv<5;++lv){const float o=sycl::permute_group_by_xor(sg,A[0],1u<<lv);A[0]=((lane>>lv)&1u)?o+A[0]:A[0]+o;}
++ const uint32_t row=row0+(lane&(R-1));
++ if(lane<R&&row<rows)y[row]=A[0];
++}
++}
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/p33_submit.cpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/p33_submit.cpp
+--- engine/src/stage2/packet194-expert-diet-engine/p33_submit.cpp	2026-10-26 06:36:50.780280142 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/p33_submit.cpp	2026-10-26 08:59:04.603878206 -0400
+@@ -4,6 +4,9 @@
+ #endif
+ #include "stage2/packet194-expert-diet-engine/p33_submit.hpp"
+ #include "stage2/packet194-expert-diet-engine/p33_candidates.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/p33_dense_v2.hpp"
++#endif
+ #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
+ #ifndef OWN_RT_HOST_ONLY
+ #include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
+@@ -117,8 +120,27 @@
+  }
+ };
+ #endif
++#ifndef OWN_RT_HOST_ONLY
++// OWNRT_DENSE_DECODE_V2=1 (lab 2026-10-26, default off): decode rows of the expanded Q8_0 6144-column matrices (the
++// attention output projections), two rows per subgroup, p33_dense_v2.hpp. Same values as Kernel<0,T,K,1,true>.
++template<iq3::Type T,unsigned K,unsigned R,unsigned U> struct DenseV2 final:ownrt::SyclOperation {
++ uint32_t rows=0,rb=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  const uint8_t* w=static_cast<const uint8_t*>(p[0]);const float* x=static_cast<const float*>(p[1]);float* y=static_cast<float*>(p[2]);
++  const uint32_t n=rows,b=rb;const size_t global=(size_t((n+R-1)/R)*32+127)/128*128;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++   v2::dense_rows<T,K,R,U>(w,x,y,n,b,it);})));});
++ }
++};
++inline bool v2_aligned(ownrt::Device& d,ownrt::Allocation a,uintptr_t n){return reinterpret_cast<uintptr_t>(d.arena.row(a).pointer)%n==0;}
++#endif
+ template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
+ #ifndef OWN_RT_HOST_ONLY
++ if constexpr(T==iq3::Type::Q8_0&&K==6144) if(v2::enabled()&&m.size()==1&&v==6&&m[0].activation==iq3::Type::F32&&m[0].output_type==iq3::Type::F32&&m[0].tokens==1&&m[0].count==1&&
++   m[0].experts==1&&!m[0].routes&&!m[0].status&&m[0].rows<=UINT32_MAX&&v2_aligned(d,m[0].w,16)&&v2_aligned(d,m[0].x,16)) {
++  const size_t rb=integrated::arithmetic::row_bytes(T,K,6);
++  if(rb%4==0&&rb<=UINT32_MAX){DenseV2<T,K,2,2> op;op.rows=uint32_t(m[0].rows);op.rb=uint32_t(rb);std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};auto e=d.compute(op,ids,{});return {e,e,1};}
++ }
+  if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&reuse2::enabled()) {
+   // Generation-2 token rows (OWNRT_PREFILL_REUSE2=1; tile OWNRT_PREFILL_REUSE2_P33=i): dense_lane's values and sequence.
+   const size_t rb=integrated::arithmetic::row_bytes(T,K,6);
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/prefill_experts.hpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/prefill_experts.hpp
+--- engine/src/stage2/packet194-expert-diet-engine/prefill_experts.hpp	1969-12-31 19:00:00.000000000 -0500
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/prefill_experts.hpp	2026-10-26 08:59:14.733168838 -0400
+@@ -0,0 +1,211 @@
++#pragma once
++// Expert-grouped routed token rows for batched prefill (lab, 2026-10-26). Default off: OWNRT_PREFILL_EXPERTS=1 selects
++// them for F32 routed sites of a prefill chunk; without it nothing here is ever launched.
++//
++// A chunk's routed site has n = rows x top slots, slot s reading input row x[s] and writing y[s*span + row] with route
++// s = {expert, row_begin, row_count}. The existing kernels decode the expert's weights once per slot. Here:
++//  1. Bucket (one work-group): status[s] = !valid(route) exactly as the existing kernels write it; slots with a valid
++//     full route (row_begin 0, row_count rows) are grouped by expert in slot order and cut into tiles of at most T slots;
++//     every other slot (invalid or partial route) gets a tile of its own with its own route. Integer work only.
++//  2. Tile kernel: one 32-lane subgroup owns RW weight rows of one tile's expert and the tile's slots (<= T). Per
++//     256-column step each lane decodes its 8 values of each row once, with the format's own decode expression, and
++//     applies them to each slot of the tile. Output (slot, row) of lane l sees the single-row sequence of the existing
++//     kernel for that format: steps ascending, the 8 values of a step ascending, product first, then sum = sum + product
++//     (lanes whose chunk lies past the row end skip the step); then the adjacent-pair subgroup tree (as a butterfly
++//     transpose, the same pairs in the same order: see prefill_reuse2.hpp). Rows past row_count, and every row of an
++//     invalid route, are written as the same quiet NaN (0x7fc00000) as the existing kernels.
++// Only which hardware thread performs an output's sequence changes.
++#include <sycl/sycl.hpp>
++#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
++#include <algorithm>
++#include <cstdint>
++#include <cstdlib>
++#include "stage2/packet2/kernels/math.hpp"
++#include "stage2/packet194-expert-diet-engine/prefill_reuse2.hpp"
++namespace xgroup {
++inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS");return e&&e[0]=='1';}();return on;}
++// Tile configuration for one site family, 0..count-1, or count for the existing kernel: OWNRT_PREFILL_EXPERTS_<FAMILY>=i
++// fixes it (default `fallback`); OWNRT_PREFILL_EXPERTS_CYCLE=1 (diagnostic) uses chunk % (count+1) (reuse2's chunk
++// counter), so one profiled run times every configuration and the existing kernel side by side. All are exact.
++inline unsigned config(const char* family,unsigned count,unsigned fallback){
++ static const bool cycle=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS_CYCLE");return e&&e[0]=='1';}();
++ if(cycle)return unsigned(reuse2::chunk_counter()%(count+1));
++ char name[96]="OWNRT_PREFILL_EXPERTS_";size_t n=22;for(const char* p=family;*p&&n+1<sizeof(name);++p)name[n++]=*p;name[n]=0;
++ const char* e=std::getenv(name);if(!e||!*e)return std::min(fallback,count);
++ const int v=std::atoi(e);return v>=0&&unsigned(v)<=count?unsigned(v):std::min(fallback,count);
++}
++inline constexpr uint32_t desc_words=5; // tile: weight row base (expert*rows + row_begin), row_count, first, count, valid
++inline constexpr uint32_t special=0xffffffffu;
++inline constexpr uint32_t bucket_items=512;
++// Bucket: one work-group of bucket_items work-items. keys: local n words.
++struct Bucket {
++ const iq3::Route* routes;uint32_t* status;uint32_t* order;uint32_t* tiles;uint32_t* tile_count;
++ uint32_t n,experts,rows,span,T;sycl::local_accessor<uint32_t,1> keys;
++ void operator()(sycl::nd_item<1> it) const {
++  const auto g=it.get_group();const uint32_t lid=uint32_t(it.get_local_linear_id());
++  for(uint32_t i=lid;i<n;i+=bucket_items){
++   const iq3::Route r=routes[i];const bool v=iq3::valid_route(r,experts,rows,span);
++   status[i]=v?0u:1u;keys[i]=v&&r.row_begin==0&&r.row_count==rows?r.expert_id:special;
++  }
++  sycl::group_barrier(g);
++  uint32_t mine=0,mytiles=0,myspecial=0;
++  for(uint32_t e=lid;e<experts;e+=bucket_items){uint32_t c=0;for(uint32_t i=0;i<n;++i)c+=keys[i]==e?1u:0u;mine+=c;mytiles+=(c+T-1)/T;}
++  for(uint32_t i=lid;i<n;i+=bucket_items)myspecial+=keys[i]==special?1u:0u;
++  const uint32_t slot_off=sycl::exclusive_scan_over_group(g,mine,sycl::plus<uint32_t>());
++  const uint32_t tile_off=sycl::exclusive_scan_over_group(g,mytiles,sycl::plus<uint32_t>());
++  const uint32_t special_off=sycl::exclusive_scan_over_group(g,myspecial,sycl::plus<uint32_t>());
++  const uint32_t std_slots=sycl::reduce_over_group(g,mine,sycl::plus<uint32_t>());
++  const uint32_t std_tiles=sycl::reduce_over_group(g,mytiles,sycl::plus<uint32_t>());
++  const uint32_t specials=sycl::reduce_over_group(g,myspecial,sycl::plus<uint32_t>());
++  uint32_t so=slot_off,to=tile_off;
++  for(uint32_t e=lid;e<experts;e+=bucket_items){
++   uint32_t c=0;
++   for(uint32_t i=0;i<n;++i)if(keys[i]==e){
++    if(c%T==0){uint32_t* d=tiles+(to+c/T)*desc_words;d[0]=e*rows;d[1]=rows;d[2]=so+c;d[3]=0;d[4]=1;}
++    order[so+c]=i;++c;
++   }
++   for(uint32_t j=0;j*T<c;++j)tiles[(to+j)*desc_words+3]=std::min(T,c-j*T);
++   so+=c;to+=(c+T-1)/T;
++  }
++  uint32_t k=special_off;
++  for(uint32_t i=lid;i<n;i+=bucket_items)if(keys[i]==special){
++   const iq3::Route r=routes[i];const bool v=iq3::valid_route(r,experts,rows,span);
++   const uint32_t p=std_slots+k,t=std_tiles+k;order[p]=i;
++   uint32_t* d=tiles+t*desc_words;d[0]=v?r.expert_id*rows+r.row_begin:0u;d[1]=v?r.row_count:0u;d[2]=p;d[3]=1;d[4]=v?1u:0u;++k;
++  }
++  if(lid==0)*tile_count=std_tiles+specials;
++ }
++};
++// Lane-column formats. Stride32 (S32): lane l owns columns 256*step + 32*g + l, g = 0..7; a ragged last step has
++// gv = (k - 256*step)/32 < 8 groups (k % 32 == 0). Chunk8 (C8): lane l owns columns 256*step + 8*l + j, j = 0..7; in a
++// ragged last step only the lanes whose chunk fits run it.
++// D::decode(row, step, lane, gv, v[8]) (S32) / D::decode8(row, column, v[8]) (C8) give the existing kernels' values.
++template<class D> struct S32 {static constexpr bool chunk8=false;
++ static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned gv,float (&v)[8]){D::decode(row,step,lane,gv,v);}};
++template<class D> struct C8 {static constexpr bool chunk8=true;
++ static void decode(const uint8_t* row,uint32_t step,unsigned lane,unsigned,float (&v)[8]){D::decode8(row,step*256u+lane*8u,v);}};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF> struct Tiles {
++ const uint8_t* w;const float* x;float* y;const uint32_t* order;const uint32_t* tiles;const uint32_t* tile_count;
++ uint32_t span,k,rb,rtiles,G,rl,rgroups; // rl consecutive row tiles per subgroup, rgroups = ceil(rtiles / rl)
++ void operator()(sycl::nd_item<1> it) const {
++  const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++  const uint32_t logical=uint32_t(it.get_group(0))*S+uint32_t(sg.get_group_linear_id());
++  if(logical>=rgroups*G)return; // whole subgroup: no barriers in this kernel
++  const uint32_t rg=logical%rgroups,first_tile=logical/rgroups,ntiles=*tile_count;
++  const float nan=iq3::bits_float(0x7fc00000);
++  for(uint32_t tile=first_tile;tile<ntiles;tile+=G){
++   const uint32_t* d=tiles+tile*desc_words;
++   const uint32_t base=d[0],rcount=d[1],first=d[2],cnt=d[3],valid=d[4];
++   const float* xt[T];
++   #pragma unroll
++   for(unsigned t=0;t<T;++t)xt[t]=x+size_t(order[first+std::min<uint32_t>(t,cnt-1u)])*k;
++   for(uint32_t rr=0;rr<rl;++rr){
++   const uint32_t row0=(rg*rl+rr)*RW;
++   if(row0>=span)break;
++   if(!valid||rcount==0){
++    // Every row of an invalid route (or an empty row range) is NaN, as in the existing kernels.
++    for(unsigned i=lane;i<RW*T;i+=32){const unsigned r=i/T,t=i%T;if(t<cnt&&row0+r<span)y[order[first+t]*span+row0+r]=nan;}
++    continue;
++   }
++   const uint8_t* wr[RW];
++   #pragma unroll
++   for(unsigned r=0;r<RW;++r)wr[r]=w+size_t(base+std::min(row0+r,rcount-1u))*rb;
++   float acc[RW][T];
++   #pragma unroll
++   for(unsigned r=0;r<RW;++r)
++    #pragma unroll
++    for(unsigned t=0;t<T;++t)acc[r][t]=0.f;
++   auto step=[&](uint32_t s,unsigned gv){
++    float v[RW][8];
++    #pragma unroll
++    for(unsigned r=0;r<RW;++r)F::decode(wr[r],s,lane,gv,v[r]);
++    #pragma unroll
++    for(unsigned t=0;t<T;++t){
++     if(t>=cnt)break; // uniform: the tile's slot count
++     float in[8];
++     if constexpr(F::chunk8){
++      const auto* p=reinterpret_cast<const sycl::vec<float,4>*>(xt[t]+(s*256u+lane*8u));const auto lo=p[0],hi=p[1];
++      #pragma unroll
++      for(unsigned j=0;j<4;++j){in[j]=lo[j];in[j+4]=hi[j];}
++     } else if(gv==8){
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wdeprecated-declarations"
++      const auto b=sg.template load<8>(sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::yes>(xt[t]+s*256u));
++#pragma clang diagnostic pop
++      #pragma unroll
++      for(unsigned j=0;j<8;++j)in[j]=b[j];
++     } else {
++      #pragma unroll
++      for(unsigned j=0;j<8;++j)in[j]=j<gv?xt[t][s*256u+j*32u+lane]:0.f;
++     }
++     #pragma unroll
++     for(unsigned r=0;r<RW;++r)
++      #pragma unroll
++      for(unsigned j=0;j<8;++j)if(j<gv){const float product=v[r][j]*in[j];acc[r][t]=acc[r][t]+product;}
++    }
++   };
++   const uint32_t full=k/256u;
++   for(uint32_t s=0;s<full;++s)step(s,8);
++   if(full*256u<k){
++    if constexpr(F::chunk8){if(full*256u+lane*8u+8u<=k)step(full,8);}
++    else step(full,(k-full*256u)/32u);
++   }
++   // Reduction: the adjacent-pair tree, butterfly-transposed over groups of G accumulators (prefill_reuse2.hpp).
++   constexpr unsigned N=RW*T,GA=N<32?N:32;
++   static_assert((N&(N-1))==0,"tile size must be a power of two");
++   float flat[N];
++   #pragma unroll
++   for(unsigned r=0;r<RW;++r)
++    #pragma unroll
++    for(unsigned t=0;t<T;++t)flat[r*T+t]=acc[r][t];
++   #pragma unroll
++   for(unsigned g0=0;g0<N;g0+=GA){
++    float a[GA];
++    #pragma unroll
++    for(unsigned i=0;i<GA;++i)a[i]=flat[g0+i];
++    #pragma unroll
++    for(unsigned w=1,n=GA;n>1;w*=2,n/=2){
++     const bool upper=(lane&w)!=0;
++     #pragma unroll
++     for(unsigned i=0;i<n/2;++i){
++      const float send=upper?a[2*i]:a[2*i+1];
++      const float recv=sycl::permute_group_by_xor(sg,send,w);
++      const float left=upper?recv:a[2*i],right=upper?a[2*i+1]:recv;
++      a[i]=left+right;
++     }
++    }
++    float sum=a[0];
++    #pragma unroll
++    for(unsigned w=GA;w<32;w*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+w)%32);if(((lane/GA)%(2*w/GA))==0)sum=sum+rhs;}
++    if(lane<GA){const unsigned i=g0+lane,r=i/T,t=i%T;
++     if(t<cnt&&row0+r<span)y[order[first+t]*span+row0+r]=row0+r<rcount?sum:nan;}
++   }
++   } // row tiles of this subgroup
++  }
++ }
++ auto get(sycl::ext::oneapi::experimental::properties_tag) const {
++#ifndef REUSE2_TEST_NO_GRF
++  if constexpr(GRF==256)return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>,sycl::ext::intel::experimental::grf_size<256>};
++  else
++#endif
++  return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<32>};
++ }
++};
++// Launch geometry: rtiles row tiles x G tile slots; G bounds the tiles a bucket can produce for n slots (every tile has
++// >= 1 slot; expert tiles <= ceil(n/T) + min(n, experts)); a subgroup loops over tiles g, g+G, ... below tile_count.
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF> struct Prepared {Tiles<F,RW,T,S,GRF> kernel;sycl::nd_range<1> range;};
++template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF>
++Prepared<F,RW,T,S,GRF> prepare(const uint8_t* w,const float* x,float* y,const uint32_t* order,const uint32_t* tiles,const uint32_t* tile_count,
++                               uint32_t span,uint32_t k,uint32_t rb,uint32_t n,uint32_t experts){
++ // OWNRT_PREFILL_EXPERTS_GDIV=d launches 1/d of the bound; subgroups then loop over more tiles (default 4; measured
++ // 2026-10-26 at 80 rows: d = 1/4/8/16 -> 1.81/1.75/1.75/1.83 ms per row of routed sites).
++ static const uint32_t gdiv=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS_GDIV");const int v=e?std::atoi(e):4;return uint32_t(v<1?1:v>64?64:v);}();
++ const uint32_t bound=std::min(n,(n+T-1)/T+std::min(n,experts));
++ // OWNRT_PREFILL_EXPERTS_RLOOP=r: consecutive row tiles per subgroup (default 4; the tile setup is shared).
++ static const uint32_t rloop=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERTS_RLOOP");const int v=e?std::atoi(e):4;return uint32_t(v<1?1:v>64?64:v);}();
++ const uint32_t rtiles=(span+RW-1)/RW;
++ Tiles<F,RW,T,S,GRF> kernel{w,x,y,order,tiles,tile_count,span,k,rb,rtiles,std::max(1u,(bound+gdiv-1)/gdiv),rloop,(rtiles+rloop-1)/rloop};
++ const size_t groups=(size_t(kernel.rgroups)*kernel.G+S-1)/S;
++ return {kernel,sycl::nd_range<1>(groups*S*32,S*32)};
++}
++} // namespace xgroup
+diff -ruN -x __pycache__ engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp
+--- engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp	2026-10-26 07:38:54.080025940 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp	2026-10-26 08:59:04.588509744 -0400
+@@ -7,6 +7,7 @@
+ #ifndef OWN_RT_HOST_ONLY
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+ #include "stage2/packet194-expert-diet-engine/select_fast.hpp"
++#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ #endif
+ namespace specialised {
+ #ifdef OWN_RT_HOST_ONLY
+@@ -19,6 +20,11 @@
+  int error(ng::Args a)const{return sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).load();}
+  void fail(ng::Args a)const{sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(a.i(15)[0]).store(1);}
+ };
++struct CachedGuard {
++ int value;
++ int error(ng::Args)const{return value;}
++ void fail(ng::Args a)const{Guard{}.fail(a);}
++};
+ // QSA select with one 32-lane subgroup per block item (body<select,Stage>'s values; work items -> subgroups).
+ // Stage 0: the 128-leaf adjacent tree of each head's score with lane l holding leaves 4l..4l+3 (in-lane levels 1-2,
+ // shuffles for 3-7), heads accumulated in order. Stage 1: the finiteness test and the rank count split across lanes
+@@ -147,6 +153,12 @@
+     h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){select_topk_row(s,a,it,scratch,idx.get_multi_ptr<sycl::access::decorated::no>().get(),val.get_multi_ptr<sycl::access::decorated::no>().get(),hist.get_multi_ptr<sycl::access::decorated::no>().get(),found.get_multi_ptr<sycl::access::decorated::no>().get(),Guard{});}));});
+   if constexpr(Code==ng::select)if(select_subgroups())
+    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(n*32),sycl::range<1>(32))](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{select_rows<Stage>(s,a,it,scratch,Guard{});}));});
++  if(experts_v2::enabled("guard"))
++   // The error flag read once per 32-lane subgroup (broadcast) instead of by every item: CachedGuard returns that value
++   // (fail() still stores to the flag). Items past n return in body's own index check.
++   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((n+127)/128*128,128)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++    auto sg=it.get_sub_group();const int err=sycl::group_broadcast(sg,sg.get_local_linear_id()==0?Guard{}.error(a):0,0);
++    body<Code,Stage,FixedWidth,FixedHeads>(s,a,it.get_global_linear_id(),scratch,CachedGuard{err});}));});
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body<Code,Stage,FixedWidth,FixedHeads>(s,a,i[0],scratch,Guard{});}));});
+  }
+ };
+diff -ruN -x __pycache__ engine/src/stage2/packet6-kopt/dense_v2.hpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet6-kopt/dense_v2.hpp
+--- engine/src/stage2/packet6-kopt/dense_v2.hpp	1969-12-31 19:00:00.000000000 -0500
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet6-kopt/dense_v2.hpp	2026-10-26 08:59:04.603972593 -0400
+@@ -0,0 +1,90 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#pragma once
++// Dense decode GEMV, raw BF16 weights, F32 activations and outputs (lab 2026-10-26, OWNRT_DENSE_DECODE_V2=1, default
++// off). Same value for every output as kopt Multiply (one 32-lane subgroup per row): lane l owns the 8-element chunks
++// starting at 8l, 8l+256, ... and accumulates acc = acc + w*x from 0.f in chunk and element order; the 32 lane sums
++// are added by the adjacent-pair tree (strides 1..16, node = lower lane block + upper lane block); lane 0 stores.
++// Here one subgroup carries R consecutive rows: every lane runs the unchanged per-row chunk loop for each of its R
++// rows (loads of U chunks issued before their in-order accumulation), and the R trees are reduced together by a
++// transposing butterfly (at the first log2(R) levels lanes l and l^z exchange the half of their pending rows the other
++// keeps; at the remaining levels both lanes hold the same row and add lower + upper). Lane l ends with row
++// row0 + (l & (R-1)). No local memory and no work-group barrier (raw rows were never staged).
++// Requirements (checked by the caller): k % 8 == 0 handled generally (ragged chunk as Multiply), rows of 16-byte
++// aligned BF16 (rb % 16 == 0, base aligned), x 16-byte aligned: Multiply's aligned F32 branch is taken for every
++// chunk there, so its ragged-chunk path is the only other one and is reproduced.
++#include <sycl/sycl.hpp>
++#include <array>
++#include <cstdint>
++#include <cstdlib>
++namespace iq3::kopt::dense_v2 {
++inline float bf16f(uint16_t v){return sycl::bit_cast<float>(uint32_t(v)<<16);}
++template<unsigned R,unsigned U> inline void bf16_rows(const uint8_t* W,const float* x,float* y,uint32_t rows,uint32_t k,uint32_t rb,sycl::nd_item<1> it,uint32_t sgid){
++ static_assert(R==1||R==2||R==4||R==8||R==16||R==32);
++ constexpr unsigned LR=R==1?0:R==2?1:R==4?2:R==8?3:R==16?4:5;
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++ const uint32_t row0=sgid*R;if(row0>=rows)return;
++ float A[R];
++ #pragma unroll
++ for(unsigned r=0;r<R;++r)A[r]=0.f;
++ uint32_t base=lane*8u;
++ // Full chunks, U at a time: loads first, then the products and adds in Multiply's order (chunk, element).
++ for(;base+(U-1)*256u+8u<=k;base+=U*256u){
++  float wide[U][8];
++  #pragma unroll
++  for(unsigned u=0;u<U;++u){const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base+u*256u);const auto a0=xv[0],a1=xv[1];
++   #pragma unroll
++   for(unsigned j=0;j<4;++j){wide[u][j]=a0[j];wide[u][j+4]=a1[j];}}
++  #pragma unroll
++  for(unsigned r=0;r<R;++r){
++   const uint32_t row=row0+r<rows?row0+r:row0; // a missing row reads row0 and is never stored
++   sycl::vec<uint16_t,8> w[U];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u)w[u]=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(row)*rb+size_t(base+u*256u)*2u);
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){
++    #pragma unroll
++    for(unsigned j=0;j<8;++j){const float product=bf16f(w[u][j])*wide[u][j];A[r]=A[r]+product;}}
++  }
++ }
++ // Remaining full chunks one at a time, then the ragged chunk (Multiply's tail), same order.
++ for(;base+8u<=k;base+=256u){
++  float wide[8];
++  {const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base);const auto a0=xv[0],a1=xv[1];
++   #pragma unroll
++   for(unsigned j=0;j<4;++j){wide[j]=a0[j];wide[j+4]=a1[j];}}
++  #pragma unroll
++  for(unsigned r=0;r<R;++r){const uint32_t row=row0+r<rows?row0+r:row0;
++   const auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(row)*rb+size_t(base)*2u);
++   #pragma unroll
++   for(unsigned j=0;j<8;++j){const float product=bf16f(w[j])*wide[j];A[r]=A[r]+product;}}
++ }
++ if(base<k){
++  #pragma unroll
++  for(unsigned r=0;r<R;++r){const uint32_t row=row0+r<rows?row0+r:row0;const uint16_t* wr=reinterpret_cast<const uint16_t*>(W+size_t(row)*rb);
++   float values[8],wide[8];
++   for(unsigned j=0;base+j<k;++j){values[j]=bf16f(wr[base+j]);wide[j]=x[base+j];}
++   for(unsigned j=0;base+j<k;++j){const float product=values[j]*wide[j];A[r]=A[r]+product;}}
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<LR;++lv){const bool hi=((lane>>lv)&1u)!=0;
++  #pragma unroll
++  for(unsigned m=0;m<(R>>(lv+1));++m){const float lo_v=A[2*m],hi_v=A[2*m+1];const float send=hi?lo_v:hi_v,mine=hi?hi_v:lo_v;
++   const float recv=sycl::permute_group_by_xor(sg,send,1u<<lv);A[m]=hi?recv+mine:mine+recv;}}
++ #pragma unroll
++ for(unsigned lv=LR;lv<5;++lv){const float o=sycl::permute_group_by_xor(sg,A[0],1u<<lv);A[0]=((lane>>lv)&1u)?o+A[0]:A[0]+o;}
++ const uint32_t row=row0+(lane&(R-1));
++ if(lane<R&&row<rows)y[row]=A[0];
++}
++// Up to four dense matrices in one launch (kopt fused siblings): subgroups are partitioned by first_sub, and every
++// matrix's rows run bf16_rows unchanged.
++struct Mat {const uint8_t* w;const float* x;float* y;uint32_t rows,k,rb,first_sub;};
++template<unsigned R,unsigned U> inline void bf16_multi(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it){
++ // Subgroup index from the group id and the subgroup id (both uniform), so per-matrix selection and row bases are
++ // subgroup-uniform values.
++ const uint32_t gsub=uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(it.get_sub_group().get_group_linear_id());unsigned j=0;
++ for(unsigned t=1;t<count;++t)if(gsub>=m[t].first_sub)j=t;
++ const Mat d=m[j];
++ bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
++}
++inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_DECODE_V2");return e&&e[0]=='1';}();return on;}
++}
+diff -ruN -x __pycache__ engine/src/stage2/packet6-kopt/kernels.cpp /dev/shm/ownrt-lab-b13/engine/src/stage2/packet6-kopt/kernels.cpp
+--- engine/src/stage2/packet6-kopt/kernels.cpp	2026-10-26 06:36:50.780609641 -0400
++++ /dev/shm/ownrt-lab-b13/engine/src/stage2/packet6-kopt/kernels.cpp	2026-10-26 08:59:14.732914119 -0400
+@@ -7,7 +7,9 @@
+ #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
+ #include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
+ #include "stage2/packet194-expert-diet-engine/detmath.hpp"
++#include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
++#include "stage2/packet6-kopt/dense_v2.hpp"
+ #include <algorithm>
+ #include <array>
+ #include <limits>
+@@ -140,6 +142,23 @@
+     for(unsigned j=1;j<matrices;++j)if(desc[j].type!=desc[0].type||desc[j].activation!=desc[0].activation||desc[j].output!=desc[0].output||desc[j].routed)throw std::invalid_argument("kopt fused matrices must share type/activation/output and be dense");
+     auto descriptors=desc;const unsigned count=matrices;auto ng=groups,stride=local_stride;
+     std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("packet26 capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++    if constexpr(T==Type::BF16&&SG==32)if(dense_v2::enabled()){
++      // OWNRT_DENSE_DECODE_V2=1 (lab 2026-10-26, default off): dense BF16 rows, F32 in/out, R rows per subgroup with the
++      // same per-row lane chunks, order and tree (dense_v2.hpp). Anything else keeps this kernel.
++      std::array<dense_v2::Mat,4> m{};bool ok=true;uint32_t subs=0,maxrows=0,maxk=0;
++      for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];
++        ok=ok&&!d.routed&&!d.diagnostic&&!d.row_major&&d.count==1&&d.experts==1&&d.span==d.rows&&d.activation==Type::F32&&d.output==Type::F32&&
++          d.rb==d.k*2&&d.rb%16==0&&d.rows<=UINT32_MAX&&d.k<=16384&&reinterpret_cast<uintptr_t>(pointers[d.w])%16==0&&reinterpret_cast<uintptr_t>(pointers[d.x])%16==0;
++        maxrows=std::max(maxrows,uint32_t(d.rows));maxk=std::max(maxk,uint32_t(d.k));}
++      if(ok){const bool small_k=maxk<=1024&&maxrows>=2048;const uint32_t R=small_k?4:1;
++        for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),subs};subs+=(uint32_t(d.rows)+R-1)/R;}
++        const size_t global=(size_t(subs)*32+127)/128*128;
++        if(small_k)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++          h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<4,4>(m,count,it);}));});
++        return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++          h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<1,8>(m,count,it);}));});
++      }
++    }
+     return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(ng*SG*rows_per_group),sycl::range<1>(SG*rows_per_group))](sycl::handler& h) {
+       sycl::local_accessor<uint8_t,1> storage(stride*rows_per_group,h);
+       h.parallel_for(p35_range0,
+@@ -468,6 +487,81 @@
+     throw std::invalid_argument("kopt block rows: decode8 formats only");
+   }
+ };
++// OWNRT_EXPERTS_V2 (lab 2026-10-26): routed IQ4_NL rows with packed logical lanes (F32, decode slots). Work-item t of a
++// row owns the four logical lanes 4t..4t+3 of Multiply's mapping (lane l: columns l*8+256*i), i.e. IQ4_NL block 8i+t of
++// every 256-column chunk: its 18 bytes are read once as 5 aligned words, its scale converted once. Each logical lane
++// keeps its exact sequence (decode8's values scale*float(level) for its 8 columns, product then add, chunks in order);
++// the first two adjacent-pair tree levels ((l0+l1)+(l2+l3)) run in registers, the remaining three by shuffles, with the
++// same operands in the same order. MODE 2: level as float from a 16-entry work-group table (the same float(iq4_level(n)));
++// MODE 0: iq4_level's select chain. Requires K%64==0 (even block count, so no word read leaves its row).
++// Microbench (10 x 2560 x 640, cold): 56.2 -> 38.2 us (table) / 39.7 us (select chain).
++template<unsigned SG,unsigned RI,unsigned WGSG,int MODE> struct MultiplyIQ4NLPacked:ownrt::SyclOperation {
++  Descriptor desc{};
++  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
++    auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt iq4nl packed capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++    constexpr unsigned SETS=SG/8,RPS=SETS*RI;
++    const uint32_t span=uint32_t(d.span),rows=uint32_t(d.rows),k=uint32_t(d.k),rb=uint32_t(d.rb),experts=d.experts,count=d.count;
++    const uint32_t blocks=(span+RPS-1)/RPS,total=blocks*count,groups=(total+WGSG-1)/WGSG;
++    const unsigned wi=d.w,xi=d.x,yi=d.y,ri=d.r,si=d.status;
++    return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG)](sycl::handler& h) {
++      h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
++        // MODE 2: the 16 level floats (float(iq4_level(n)), the same values) in kernel-scope work-group memory.
++        float* glut=nullptr;
++        if constexpr(MODE==2){glut=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[16]>(it.get_group());const unsigned li=unsigned(it.get_local_linear_id());if(li<16)glut[li]=float(iq4_level(li));sycl::group_barrier(it.get_group());}
++        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
++        const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
++        const uint32_t slot=logical/blocks,first=(logical%blocks)*RPS+set*RI;
++        const Route r=static_cast<const Route*>(pointers[ri])[slot];
++        const bool valid=valid_route(r,experts,rows,span);
++        if(first==0&&lane==0)static_cast<uint32_t*>(pointers[si])[slot]=valid?0:1;
++        const float* xs=static_cast<const float*>(pointers[xi])+size_t(slot)*k;const uint8_t* w=static_cast<const uint8_t*>(pointers[wi]);
++        float acc[RI][4];const uint8_t* rp[RI];bool live[RI];
++        #pragma unroll
++        for(unsigned i=0;i<RI;++i){
++          #pragma unroll
++          for(unsigned j=0;j<4;++j)acc[i][j]=0;
++          const uint32_t row=first+i;live[i]=valid&&row<span&&row<r.row_count;
++          rp[i]=live[i]?w+(size_t(r.expert_id)*rows+r.row_begin+row)*rb:w;}
++        const bool odd=t&1; // block 8i+t has the parity of t: its 18 bytes start 2 (odd) or 0 (even) bytes past a word
++        for(uint32_t b=t;b*32u<k;b+=8u) {
++          float xv[32];
++          {const sycl::vec<float,4>* xp=reinterpret_cast<const sycl::vec<float,4>*>(xs+b*32u);
++           #pragma unroll
++           for(unsigned c=0;c<8;++c){const auto v=xp[c];xv[4*c]=v[0];xv[4*c+1]=v[1];xv[4*c+2]=v[2];xv[4*c+3]=v[3];}}
++          #pragma unroll
++          for(unsigned i=0;i<RI;++i) {
++            if(!live[i])continue;
++            const uint32_t* wp=reinterpret_cast<const uint32_t*>(rp[i]+b*18u-(odd?2u:0u));
++            const uint32_t w0=wp[0],w1=wp[1],w2=wp[2],w3=wp[3],w4=wp[4];
++            const uint32_t sbits=odd?(w0>>16):(w0&0xffffu);
++            uint32_t qw[4];
++            qw[0]=odd?w1:(w0>>16)|(w1<<16);qw[1]=odd?w2:(w1>>16)|(w2<<16);qw[2]=odd?w3:(w2>>16)|(w3<<16);qw[3]=odd?w4:(w3>>16)|(w4<<16);
++            const float scale=half_scale(sbits);
++            #pragma unroll
++            for(unsigned j=0;j<4;++j) { // logical lane 4t+j: block bytes (8j..8j+7)%16, low (j<2) or high nibbles
++              #pragma unroll
++              for(unsigned jj=0;jj<8;++jj) {
++                const unsigned bi=(8*j+jj)%16;const uint32_t n=(qw[bi/4]>>(8*(bi%4)+4*(j/2)))&15u;
++                float level;
++                if constexpr(MODE==2)level=glut[n];else level=float(iq4_level(n));
++                const float value=scale*level;
++                const float product=value*xv[8*j+jj];acc[i][j]=acc[i][j]+product;
++              }
++            }
++          }
++        }
++        #pragma unroll
++        for(unsigned i=0;i<RI;++i) {
++          const float a01=acc[i][0]+acc[i][1],a23=acc[i][2]+acc[i][3];float sum=a01+a23;
++          #pragma unroll
++          for(unsigned width=1;width<8;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
++          const uint32_t row=first+i;
++          if(t==0&&row<span)static_cast<float*>(pointers[yi])[size_t(slot)*span+row]=live[i]?sum:bits_float(0x7fc00000);
++        }
++      }));
++    });
++  }
++};
+ // HC gate + mix in one launch (2026-10-25, single-row decode). Work-group j runs the gate rows h*width+j (h=0..3) of
+ // hidden index j, one per subgroup, with Multiply's unchanged single-row code (dot, staging, adjacent-pair tree), and
+ // writes them. One lane then forms mix[j] exactly as the generic mix kernel (ng::mix): sum=0, sum=sum+sigmoid(gate)*norm
+@@ -585,7 +679,7 @@
+ struct Reuse2Q6 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q6_K>(row,k,v);}};
+ struct Reuse2Q8 {static void decode8(const uint8_t* row,uint32_t k,float (&v)[8]){kopt::decode8<Type::Q8_0>(row,k,v);}};
+ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,uint32_t tokens,Type a,Type o,unsigned sg) {
+-  if(!tokens||tokens>64)throw std::invalid_argument("kopt token rows 1..64");
++  if(!tokens||tokens>256)throw std::invalid_argument("kopt token rows 1..256");
+   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,0},1,tokens,rows);op.desc[0].row_major=true;
+   if(a!=Type::F32||o!=Type::F32||tokens==1)return finish(d,op,ids);
+@@ -632,6 +726,14 @@
+     if(k<=640&&small_k==1){MultiplyBlockRows<1> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
+     MultiplyBlockRows<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});
+   }
++  if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&t==Type::IQ4_NL&&experts_v2::enabled("iq4nl")&&k%64==0&&count<=experts_v2::max_slots&&op.desc[0].rb%4==0) {
++    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
++    // Levels from a 16-float table in kernel-scope work-group memory (rank-1 profile, 22 sites: 1333 -> 825 us); 
++    // OWNRT_EXPERTS_V2_IQ4NL=0 takes iq4_level's select chain instead (958 us).
++    static const int v=experts_v2::variant("OWNRT_EXPERTS_V2_IQ4NL",1);
++    if(v==0){MultiplyIQ4NLPacked<16,1,4,0> pk;pk.desc=op.desc[0];return d.compute(pk,ids,{});}
++    MultiplyIQ4NLPacked<16,1,4,2> pk;pk.desc=op.desc[0];return d.compute(pk,ids,{});
++  }
+   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&t==Type::IQ4_NL) {
+     // IQ4_NL (K=640): one row per subgroup straight from global memory with the word decoder (microbench 99 -> 73 us).
+     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
