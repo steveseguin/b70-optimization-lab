@@ -6,6 +6,9 @@
 #include "stage2/packet194-expert-diet-engine/p28/dense.hpp"
 #include "stage2/packet194-expert-diet-engine/specialised.hpp"
 #ifndef OWN_RT_HOST_ONLY
+#include "stage2/packet194-expert-diet-engine/mtp_fp8_v2.hpp"
+#endif
+#ifndef OWN_RT_HOST_ONLY
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #endif
 namespace mtp36 {
@@ -58,10 +61,29 @@ template<unsigned K,unsigned F,bool Pair> struct Dense final:
  }
 #endif
 };
+#ifndef OWN_RT_HOST_ONLY
+// OWNRT_DRAFT_EXPERTS_V2=1 (rank0-lab 2026-10-26, default off): mtp_fp8_v2.hpp.
+template<unsigned K,bool Pair> struct DenseFP8v2 final:ownrt::SyclOperation {
+ Linear a;
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
+  const fp8v2::Rows b{static_cast<const uint8_t*>(p[0]),static_cast<const uint8_t*>(p[1]),static_cast<const uint16_t*>(p[2]),static_cast<uint16_t*>(p[3]),static_cast<uint16_t*>(p[4]),a.routes?static_cast<const iq3::Route*>(p[5]):nullptr,static_cast<uint32_t*>(p[6]),static_cast<uint32_t*>(p[7]),a.rows,a.batch,a.experts};
+  const size_t n=size_t(b.rows)*b.batch;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((n+3)/4)*128,128)](sycl::handler& h){h.parallel_for(p35_range0,checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+   fp8v2::rows<K,Pair>(b,n,it);})));});
+ }
+};
+#endif
 static void extent(ownrt::Device& d,Allocation a,size_t n){auto r=d.arena.row(a);if(!r.live||r.bytes<n||r.memory!=ownrt::Memory::device)throw std::invalid_argument("draft allocation extent");}
 template<unsigned K,unsigned I,bool Pair> Launch issue(ownrt::Device& d,const Linear& a){Dense<K,I,Pair> op;op.a=a;std::array<Allocation,8> ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y};auto e=d.compute(op,ids,{});return {e,e,1};}
 template<unsigned K> Launch typed(ownrt::Device& d,const Linear& a){if(a.int8)return a.paired?issue<K,1,true>(d,a):issue<K,1,false>(d,a);
- if(a.fp8){if constexpr(K%128==0)return a.paired?issue<K,2,true>(d,a):issue<K,2,false>(d,a);else throw std::invalid_argument("draft FP8 needs K%128==0");}
+ if(a.fp8){if constexpr(K%128==0){
+#ifndef OWN_RT_HOST_ONLY
+   if(fp8v2::enabled()&&reinterpret_cast<uintptr_t>(d.arena.row(a.x).pointer)%16==0&&reinterpret_cast<uintptr_t>(d.arena.row(a.w).pointer)%4==0&&(!a.paired||reinterpret_cast<uintptr_t>(d.arena.row(a.peer).pointer)%4==0)){
+    std::array<Allocation,8> ids{a.w,a.paired?a.peer:a.w,a.x,a.y,a.paired?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y};
+    if(a.paired){DenseFP8v2<K,true> op;op.a=a;auto e=d.compute(op,ids,{});return {e,e,1};}
+    DenseFP8v2<K,false> op;op.a=a;auto e=d.compute(op,ids,{});return {e,e,1};}
+#endif
+   return a.paired?issue<K,2,true>(d,a):issue<K,2,false>(d,a);}else throw std::invalid_argument("draft FP8 needs K%128==0");}
  return a.paired?issue<K,0,true>(d,a):issue<K,0,false>(d,a);}
 Launch linear(ownrt::Device& d,const Linear& a){
  if(a.int8&&a.fp8)throw std::invalid_argument("draft linear format");

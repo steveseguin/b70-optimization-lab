@@ -215,6 +215,9 @@ inline float sg_first_max(sycl::sub_group sg,float v){const int lane=sg.get_loca
 // memory, tile 64's padded right subtree (six +0.f), v/den, output * sigmoid(gate). Requires C <= 65 (budget 2048).
 // Every global read is issued before the guard. Lab 2026-10-26, n=2051: 44 -> 7 us (bench), 44.5 -> 7.9 us per layer
 // (rank-1 device profile).
+// F32=false (OWNRT_DRAFT_ATTN=1, lab 2026-10-26): BF16 activations (the rank-0 MTP draft); the output is combine<true>'s
+// put(bf(v)*sigmoid(gate)) instead of put(v*sigmoid(gate)); every other operation is the F32 kernel's.
+template<bool F32=true>
 inline sycl::event combine_blocked(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,const float*partial,const std::vector<sycl::event>&deps){
  const int C=splits(s);if(C>65)throw std::invalid_argument("combine_blocked tile count");
  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*24*8*128,128)](sycl::handler& handler){
@@ -263,7 +266,7 @@ inline sycl::event combine_blocked(sycl::queue&q,ng::Shape s,ng::Args a,const in
    else if(count<=64)v=(part[8+lane]+part[8+32+lane])+(part[8+64+lane]+part[8+96+lane]);
    else{float t=raw64*fac[64];for(int k=0;k<6;++k)t=t+0.f;v=((part[8+lane]+part[8+32+lane])+(part[8+64+lane]+part[8+96+lane]))+t;}
    v=v/den;
-   a.put(5,hh*256+dim,v*gate);
+   a.put(5,hh*256+dim,(F32?v:ng::Args::bf(v))*gate);
   }
  }));});
 }
@@ -281,6 +284,10 @@ inline bool combine_blocked_on(){static const bool on=[]{const char* e=std::gete
 // Loads that do not depend on the slot count (the row's slot ids, q) are issued before the guard; full tiles run a
 // body without per-slot conditionals. Partial layout unchanged. Lab 2026-10-26, n=2051: 184 -> 31 us L2-cold, 178 -> 20
 // us hot (bench); 192.8 -> 32.3 us per layer (rank-1 device profile).
+// F32=false (OWNRT_DRAFT_ATTN=1, lab 2026-10-26): BF16 Q/K/V (the rank-0 MTP draft), each value widened exactly
+// (bf16 << 16) where it is loaded: the products and trees are tiles<true>'s BF16 ones, which differ from the F32
+// kernel's only in those loads.
+template<bool F32=true>
 inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
  const int C=splits(s);
  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*2*C*512,512)](sycl::handler& handler){
@@ -289,11 +296,12 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
   const int G=int(it.get_group_linear_id()),c=G%C,kv=(G/C)%2,r=G/(C*2),S=s.budget+3,start=c*32;
   auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id()),sub=int(sg.get_group_linear_id());
   const int dq=sub&3,hg=sub>>2,hh=sub>>3,d=(sub&7)*32+lane;
-  const float*K=static_cast<const float*>(a.p[2]);const float*V=static_cast<const float*>(a.p[3]);const float*Q=static_cast<const float*>(a.p[0]);
+  using E=std::conditional_t<F32,float,uint16_t>;auto wide=[](E v){if constexpr(F32)return v;else return bf(v);};
+  const E*K=static_cast<const E*>(a.p[2]);const E*V=static_cast<const E*>(a.p[3]);const E*Q=static_cast<const E*>(a.p[0]);
   const int rawid=start+lane<S?a.i(4)[r*S+start+lane]:0;
   float qa[3][2];
   #pragma unroll
-  for(int hl=0;hl<3;++hl){const float*qp=Q+(r*24+kv*12+hg*3+hl)*256+64*dq+2*lane;qa[hl][0]=qp[0];qa[hl][1]=qp[1];}
+  for(int hl=0;hl<3;++hl){const E*qp=Q+(r*24+kv*12+hg*3+hl)*256+64*dq+2*lane;qa[hl][0]=wide(qp[0]);qa[hl][1]=wide(qp[1]);}
   const int n=counts[r];
   if(n<=0||blocked_wg(it,a))return;
   if(start>=n)return;
@@ -301,12 +309,18 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
   const int myid=lane<valid?rawid:0;
   auto scores=[&]<bool Full>(){
    float st[3][6];float res[3];
-   const float*krow=K+(myid*2+kv)*256+64*dq;
+   const E*krow=K+(myid*2+kv)*256+64*dq;
    #pragma unroll
    for(int ch=0;ch<8;++ch){
     sycl::vec<float,8> kk;
+    if constexpr(F32){
     if constexpr(Full)kk.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(krow+ch*8));
     else{kk=sycl::vec<float,8>(0.f);if(lane<valid)kk.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(krow+ch*8));}
+    }else{
+     sycl::vec<uint16_t,8> kb(uint16_t(0));
+     if(Full||lane<valid)kb.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(krow+ch*8));
+     #pragma unroll
+     for(int e=0;e<8;++e)kk[e]=bf(kb[e]);}
     #pragma unroll
     for(int e=0;e<8;++e){const int dd=ch*8+e;
      #pragma unroll
@@ -333,14 +347,14 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
   float wr[6];
   #pragma unroll
   for(int hl=0;hl<6;++hl)wr[hl]=W[(hh*6+hl)*32+lane];
-  const float*vcol=V+kv*256+d;
+  const E*vcol=V+kv*256+d;
   auto values=[&]<bool Full>(){
    float acc[6][5];float root[6];
    #pragma unroll
    for(int j=0;j<32;++j){
     const int id=sycl::select_from_group(sg,myid,j);
     float vv;
-    if constexpr(Full)vv=vcol[id*512];else vv=j<valid?vcol[id*512]:0.f;
+    if constexpr(Full)vv=wide(vcol[id*512]);else vv=j<valid?wide(vcol[id*512]):0.f;
     #pragma unroll
     for(int hl=0;hl<6;++hl){const float wj=sycl::select_from_group(sg,wr[hl],j);float leaf;
      if constexpr(Full)leaf=wj*vv;else leaf=j<valid?wj*vv:0.f;
@@ -353,6 +367,8 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
   if(valid==32)values.template operator()<true>();else values.template operator()<false>();
  }));});
 }
+// OWNRT_DRAFT_ATTN=1 (lab 2026-10-26, default off): tiles_heads<false> + combine_blocked<false> for BF16 QSA attention.
+inline bool bf16_attention_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_ATTN");return e&&e[0]=='1';}();return on;}
 inline bool tiles_heads_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_ATTN_HEADS");return e&&e[0]=='1';}();return on;}
 inline std::vector<sycl::event> candidate(sycl::queue&q,ng::Shape s,ng::Args a,int*counts,float*scratch,bool split){ng::validate(s);std::vector<sycl::event>e{admit(q,s,a,counts)};if(split){e.push_back(tiles<true>(q,s,a,counts,scratch,{e.back()}));e.push_back(combine<true>(q,s,a,counts,scratch,{e.back()}));}else{e.push_back(scores(q,s,a,counts,{e.back()}));e.push_back(softmax(q,s,a,counts,{e.back()}));e.push_back(tiles<false>(q,s,a,counts,scratch,{e.back()}));e.push_back(combine<false>(q,s,a,counts,scratch,{e.back()}));}return e;}
 }

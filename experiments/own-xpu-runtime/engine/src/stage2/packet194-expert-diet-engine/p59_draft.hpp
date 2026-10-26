@@ -94,7 +94,38 @@ template<unsigned K,bool I,bool Pair,unsigned V,unsigned Split>struct Dense fina
 };
 inline void extent(ownrt::Device&d,Allocation a,size_t n){const auto&r=d.arena.row(a);if(!r.live||r.memory!=ownrt::Memory::device||r.bytes<n)throw std::invalid_argument("p59 draft extent/lifetime");}
 template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+#ifndef OWN_RT_HOST_ONLY
+// OWNRT_DRAFT_MERGE=1 (rank0-lab 2026-10-26, default off): a BF16 projection applied to 4 batch rows (the draft's hidden
+// merge, mtp.fc_hidden over the 4 streams), one subgroup per weight row for all 4 batch rows: each 8-column weight chunk
+// is loaded once and applied to the 4 inputs. Every output keeps Dense<K,false,false,1,1>'s sequence (lane l: chunks
+// l*8, l*8+256, ... in order, p = widen(w)*widen(x), sum = sum + p; the adjacent-pair 32-lane tree) and its output/tail.
+template<unsigned K> struct DenseBatch4 final:Base {
+ Linear a;
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override {auto b=bind(a,p);const unsigned rows=b.rows;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((size_t(rows)*32+255)/256)*256,256)](sycl::handler& h){
+   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();const unsigned l=sg.get_local_linear_id();const size_t row=it.get_global_linear_id()/32;if(row>=rows)return;
+    const uint16_t* w=reinterpret_cast<const uint16_t*>(b.w)+row*K;float sum[4]={0.f,0.f,0.f,0.f};
+    for(unsigned k=l*8;k<K;k+=256){
+     sycl::vec<uint16_t,8> wv;wv.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(w+k));
+     #pragma unroll
+     for(unsigned t=0;t<4;++t){sycl::vec<uint16_t,8> xv;xv.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(b.x+size_t(t)*K+k));
+      #pragma unroll
+      for(unsigned j=0;j<8;++j){float v=widen(wv[j]);float pr=v*widen(xv[j]);sum[t]=sum[t]+pr;}}
+    }
+    #pragma unroll
+    for(unsigned t=0;t<4;++t)for(unsigned width=1;width<32;width*=2){float r=sycl::select_from_group(sg,sum[t],(l+width)%32);if(l%(2*width)==0)sum[t]+=r;}
+    if(l==0)for(unsigned t=0;t<4;++t){const unsigned i=unsigned(t*rows+row);tail(b,i,iq3::bf16_bits(sum[t]),b.tail==product?b.other[i]:uint16_t(0));}
+   }));});
+ }
+};
+inline bool merge_v2_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_MERGE");return e&&e[0]=='1';}();return on;}
+#endif
 template<unsigned K>inline integrated::Launch typed(ownrt::Device&d,const Linear&a){
+#ifndef OWN_RT_HOST_ONLY
+ if constexpr(K==2560) if(merge_v2_on()&&a.batch==4&&!a.int8&&!a.paired&&!a.routes&&a.experts==1&&(a.tail==none||a.tail==merge_add)&&reinterpret_cast<uintptr_t>(d.arena.row(a.x).pointer)%16==0&&reinterpret_cast<uintptr_t>(d.arena.row(a.w).pointer)%16==0){
+  DenseBatch4<K> op;op.a=a;std::array<Allocation,11>ids{a.w,a.w,a.x,a.y,a.y,a.x,a.y,a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+#endif
  if(a.int8){if constexpr(K==2560)return a.paired?issue<K,true,true,8>(d,a):issue<K,true,false,8>(d,a);if constexpr(K==640)return issue<K,true,false,16>(d,a);throw std::invalid_argument("p59 INT8 shape");}
  if(a.paired)return issue<K,false,true>(d,a);
  if constexpr(K>=6144)return issue<K,false,false,1,4>(d,a);

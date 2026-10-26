@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 26, 18:00 EDT — B18 measured 65.67 tok/s exact; hosting stopped for four-card optimization.**
+- Engine `728c70b3eec6`: rank-0 raw draft head, BF16 draft QSA attention, packed FP8 draft experts and four-stream
+  hidden merge. Every output id/hash and all MTP hits match B17.
+- Gates passed: 64K and 4096 oracles zero differences on both ranks; prefill 13/13; long/short continuation; prior-build
+  session compatibility. Suite 64.01 → 65.67 tok/s (+2.6%).
+- The owner authorized using all four cards and stopping hosting. `sc117-lan` is now stopped cleanly. Rank-0 lab lanes
+  own cards 23, 27, 43 and 47 independently; do not launch another job on a card without its lane owner's handoff.
+- Next: integrate only bitwise-exact interleaved winners. The first attention-output scheduling attempt was rejected;
+  its partition association and finite-value CPU test were corrected for one retest, not deployed.
+  [Draft result](experiments/own-xpu-runtime/research/rank0-lab/RESULT.md).
+
 **October 26, 16:30 EDT — SC117 service on engine `96473c90783c`: 64.01 tok/s exact; decode at 10.7K 64.9 tok/s.**
 - `OWNRT_DECODE_NEXT2=1`: IQ3_XXS gate/up, four elements per item. Also HC gate and BF16 split rows.
 - Gates passed.

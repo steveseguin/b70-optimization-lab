@@ -87,10 +87,11 @@ and `TimeoutStopSec=infinity`. It uses the same nice 19 and CPU set (0-3, 16-19)
 
 ## Service build (current)
 
-The tracked unit selects engine `51ebe7496793` (receipt
-[../../../engine/receipts/51ebe7496793.json](../../../engine/receipts/51ebe7496793.json)), built from the canonical
+The tracked unit selects engine `728c70b3eec6` (receipt
+[../../../engine/receipts/728c70b3eec6.json](../../../engine/receipts/728c70b3eec6.json)), built from the canonical
 source tree [../../../engine/](../../../engine/) through [adapter6.py](adapter6.py). Its configuration lives in
-[sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it.
+[sc117-lan.service](sc117-lan.service); each line there carries the measurement behind it. The service is currently
+stopped while all four cards run optimization lanes.
 A controlled research override may select another receipt. [CURRENT.md](../../../../../CURRENT.md) owns live state; the unit alone does not prove that a build is running or has passed its startup gates.
 - **Exact 32-bit mode (owner's choice: quality first).** Activations, router and expert outputs, HC streams and the
   attention KV cache are all F32. The weights are unchanged. The MTP draft keeps its own BF16 arithmetic; it only
@@ -120,13 +121,12 @@ A controlled research override may select another receipt. [CURRENT.md](../../..
   - `OWNRT_MISS=banks-batch` and `OWNRT_SNAPSHOT_HOST=static`: cheap speculation rollback.
   - `OWNRT_DRAFT_KERNELS`: packet59 draft kernels where faster.
   - `OWNRT_MERGE_CHECKS=1`: one expert status check per layer.
-- **Speed (2026-10-25):**
-  - about 48 tok/s in the retained 12-prompt service observations (ordinary median 47.89; not the certified benchmark);
-  - 3,000-token prompt: read in about 31 s, then about 45–49 tok/s;
-  - 1,000-token prompt: about 10 s, then about 49–50 tok/s.
+- **Speed (2026-10-26):** B18's retained cold 12-prompt service observation measured 65.67 tok/s median decode, with
+  every output id/hash and all MTP hits identical to B17's 64.01 tok/s suite; this is not a certified benchmark.
+  The rank-0 draft changes also reduced 4096-row lab replay from 6.03 s to 5.08 s.
+  How each step was found: [speed notes](../../../research/2026-10-25-decode-roofline.md), [rank-0 draft result](../../../research/rank0-lab/RESULT.md);
+  what not to retry: [DO-NOT-REPEAT](../../service-speed/DO-NOT-REPEAT.md).
 
-  How each step was found: [speed notes](../../../research/2026-10-25-decode-roofline.md); what not to retry:
-  [DO-NOT-REPEAT](../../service-speed/DO-NOT-REPEAT.md).
 - **Fidelity.** Against our exact CPU reference, the engine agrees at 99.90% of positions on the 12-prompt suite. All 6
   disagreements are near-ties, and their source is still open
   ([result](../../service-speed/e-reference/RESULT-F32.md)). Every speed change since then is byte-identical, so that

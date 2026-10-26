@@ -1,0 +1,27 @@
+{
+  "reference_binary_sha256": "96473c90783c1dfd6ef15b84e2139c6355009a1037a7d9afc52b2e4a8fed2e0a",
+  "candidate_switches": [
+    "OWNRT_DRAFT_HEAD_RAW=1",
+    "OWNRT_DRAFT_ATTN=1",
+    "OWNRT_DRAFT_EXPERTS_V2=1",
+    "OWNRT_DRAFT_MERGE=1"
+  ],
+  "context": 65536,
+  "target_split": 23,
+  "prompt_rows": 4096,
+  "prefill_rows": 256,
+  "runs": {
+    "f-ref": {"prompt_ms": 18250, "draft_replay_ms": 6023, "half_median_ms": 10.786, "draft_median_ms": 2.188},
+    "f-all": {"prompt_ms": 17297, "draft_replay_ms": 5076, "half_median_ms": 10.731, "draft_median_ms": 1.731},
+    "f-off": {"prompt_ms": 18220, "draft_replay_ms": 6028, "half_median_ms": 10.796, "draft_median_ms": 2.198}
+  },
+  "comparisons": [
+    {"pair": ["f-ref", "f-all"], "target_compared": 1029, "target_differ": 0, "draft_compared": 71, "draft_differ": 0, "draft_tokens_equal": true},
+    {"pair": ["f-ref", "f-off"], "target_compared": 1029, "target_differ": 0, "draft_compared": 71, "draft_differ": 0, "draft_tokens_equal": true},
+    {"pair": ["b-all300", "b-ref300"], "target_compared": 1029, "target_differ": 0, "draft_compared": 71, "draft_differ": 0, "draft_tokens_equal": true}
+  ],
+  "draft_head_raw": {"rows": 91392, "raw_bytes": 191923200, "expanded_bytes": 308904960, "checked_elements": 233963520, "mismatches": 0},
+  "gpu_fault_lines": 0,
+  "rejected_follow_up": {"switch": "OWNRT_DRAFT_ATTN_OUT", "control_draft_ms": 1.727, "candidate_draft_ms": 1.726, "target_differ": 0, "draft_differ": ["card0:draft:blk.0.attention"], "draft_tokens_equal": true, "decision": "reject; not in canonical engine or B18"},
+  "service_speed_claim": false
+}
