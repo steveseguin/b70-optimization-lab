@@ -68,8 +68,14 @@ inline void gdn_host(ng::Shape s,ng::Args a){
   }
  }
 }
+// OWNRT_GDN_PREP=1 (card-43 lab): token-one producer/consumer schedule. Sixteen
+// producer subgroups normalize each q/k key and evaluate the 48 gates once;
+// the incumbent 6144 independent state-row subgroups then consume those exact
+// F32 values. This is not the closed head-shared/rows-per-workgroup schedule.
+inline bool gdn_prep(ng::Shape s){static const bool on=[](){const char* e=std::getenv("OWNRT_GDN_PREP");return e&&e[0]=='1';}();return on&&s.op==ng::gdn&&s.tokens==1;}
+inline constexpr size_t gdn_prep_floats=16*256+2*48;
 inline int groups(ng::Shape s){return s.op==ng::select?s.tokens*((ng::launch_extent(s)+3)/4):ng::groups(s);}
-inline size_t scratch_floats(ng::Shape s){return s.op==ng::select?size_t(s.tokens)*((s.capacity+3)/4):1;}
+inline size_t scratch_floats(ng::Shape s){return s.op==ng::select?size_t(s.tokens)*((s.capacity+3)/4):gdn_prep(s)?gdn_prep_floats:1;}
 inline int local_floats(ng::Shape s){return s.op==ng::attention_softmax?s.budget+4:s.op==ng::attention_value?s.budget+3:256;}
 struct HostTeam:ng::HostTeam {};
 template<ng::Op Code,int Stage> inline void cpu_stage(ng::Shape s,ng::Args a,float* global){std::vector<float> local(round2::local_floats(s));for(int g=0;g<round2::groups(s);++g)group<Code,Stage>(s,a,g,global,ng::HostTeam{local.data()});}

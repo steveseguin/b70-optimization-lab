@@ -1,0 +1,18 @@
+{
+  "site": "gemv:Q6_K:gdn.qkv",
+  "shape": [10240, 2560],
+  "calls_per_half": 14,
+  "baseline_layout": "OWNRT_DENSE_RAW=1 raw Q6_K, R1U1, workgroup 128",
+  "baseline_profile_median_us_per_half": 631.772,
+  "baseline_us_per_call": 45.1265714286,
+  "weights_per_call": 26214400,
+  "raw_read_bytes_per_call": 21504000,
+  "expanded_codes_and_scales_bytes_per_call_for_reference": 32768000,
+  "raw_us_at_600_GBps": 35.84,
+  "baseline_effective_raw_GBps": 476.526,
+  "max_us_per_call_for_100us_half_win": 37.9837142857,
+  "required_raw_GBps_for_100us_half_win": 566.137,
+  "variant": "OWNRT_QKV_WG64=1; same R1U1 raw kernel and arithmetic, workgroup 64 only for 10240-row Q6_K decode",
+  "candidate_binary_sha256": "f5989b4a4ae79d8713a6812873bf25e6bbac7899e957fd43eefc45bd809d404c",
+  "baseline_binary_sha256": "221cfa5a4964a759247777a62ed61dfdc976a9fc43bd3fa23d7d885a028dda3a"
+}

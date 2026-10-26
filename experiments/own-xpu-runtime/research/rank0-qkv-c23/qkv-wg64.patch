@@ -1,0 +1,34 @@
+--- a/src/stage2/packet194-expert-diet-engine/p33_submit.cpp
++++ b/src/stage2/packet194-expert-diet-engine/p33_submit.cpp
+@@ -135,16 +135,18 @@
+ };
+ inline bool v2_aligned(ownrt::Device& d,ownrt::Allocation a,uintptr_t n){return reinterpret_cast<uintptr_t>(d.arena.row(a).pointer)%n==0;}
+ // OWNRT_DENSE_RAW=1 (lab 2026-10-26, default off): raw-size Q6_K / Q8_0 rows (dense_raw.hpp), p33_dense_raw.hpp kernels.
+-template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> struct DenseRaw final:ownrt::SyclOperation {
++// OWNRT_QKV_WG64=1: only the 10240-row Q6_K QKV decode uses two rather than four subgroups per workgroup.
++inline bool qkv_wg64(){static const bool on=[]{const char* e=std::getenv("OWNRT_QKV_WG64");return e&&e[0]=='1';}();return on;}
++template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G,unsigned WG=128> struct DenseRaw final:ownrt::SyclOperation {
+  uint32_t rows=0,rb=0,tokens=1;
+  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+-  const uint32_t groups=(rows+R-1)/R;const size_t global=(size_t(groups)*tokens*32+127)/128*128;
++  const uint32_t groups=(rows+R-1)/R;const size_t global=(size_t(groups)*tokens*32+WG-1)/WG*WG;
+   const raw::RowsKernel<T,K,R,U,G> kernel{static_cast<const uint8_t*>(p[0]),static_cast<const float*>(p[1]),static_cast<float*>(p[2]),rows,rb,groups,tokens};
+-  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked(kernel)));});
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,WG)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked(kernel)));});
+  }
+ };
+-template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> ownrt::Event raw_rows(ownrt::Device& d,const integrated::Matrix& m,uint32_t rb){
+- DenseRaw<T,K,R,U,G> op;op.rows=uint32_t(m.rows);op.rb=rb;op.tokens=m.tokens;std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};return d.compute(op,ids,{});
++template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G,unsigned WG=128> ownrt::Event raw_rows(ownrt::Device& d,const integrated::Matrix& m,uint32_t rb){
++ DenseRaw<T,K,R,U,G,WG> op;op.rows=uint32_t(m.rows);op.rb=rb;op.tokens=m.tokens;std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};return d.compute(op,ids,{});
+ }
+ // OWNRT_DRAFT_HEAD_RAW=1 (default off): the rank-0 draft head prefix, raw Q6_K rows with BF16 activations and outputs.
+ template<unsigned K,unsigned R,unsigned U> struct DenseRawBF16 final:ownrt::SyclOperation {
+@@ -176,6 +178,7 @@
+   }
+   // Defaults measured on card 27 (research/dense-raw/RESULT.md): Q6_K 1 row x 1 block pair, Q8_0 1 row x 2 tiles, 128 GRF.
+   const unsigned rug=raw::config(T,T==iq3::Type::Q6_K?111u:121u);ownrt::Event e{};
++  if constexpr(T==iq3::Type::Q6_K&&K==2560) if(m.tokens==1&&m.rows==10240&&qkv_wg64()){e=raw_rows<T,K,1,1,128,64>(d,m,uint32_t(rb));return {e,e,1};}
+   switch(rug){
+    case 111:e=raw_rows<T,K,1,1,128>(d,m,uint32_t(rb));break;
+    case 121:e=raw_rows<T,K,1,2,128>(d,m,uint32_t(rb));break;

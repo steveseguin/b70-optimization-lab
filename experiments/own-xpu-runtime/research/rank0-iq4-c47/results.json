@@ -1,0 +1,73 @@
+{
+  "schema": "ownrt.rank0-iq4-c47.v2",
+  "site": "routed_gemv:IQ4_NL:expsdown",
+  "assigned_pci": "0000:47:00.0",
+  "baseline_binary": "/dev/shm/engine-build-lab-r0-b/sc117-engine",
+  "baseline_sha256": "221cfa5a4964a759247777a62ed61dfdc976a9fc43bd3fa23d7d885a028dda3a",
+  "candidate_binary": "/dev/shm/engine-build-lab-r0-c47-iq4sg16b/sc117-engine",
+  "candidate_sha256": "74bd2024c4358492492db8b33fb0e2659e3688f23b616db87edd9ac623af5f8c",
+  "variant": {
+    "switch": "OWNRT_EXPERTS_V2_IQ4NL=2",
+    "change": "MultiplyIQ4NLPacked16: one row per supported SG16 subgroup; two adjacent logical lanes per work-item; even-item block loads broadcast to the paired item; unchanged per-output arithmetic and route/status behavior",
+    "patch": "rank0-iq4-sg16.patch"
+  },
+  "byte_floor": {
+    "shape_per_call": "10 slots x 2560 rows x 640 columns; 20 IQ4_NL blocks/row; 18 bytes/block",
+    "weight_bytes_per_call": 9216000,
+    "input_bytes_per_call": 25600,
+    "output_bytes_per_call": 102400,
+    "route_bytes_per_call": 120,
+    "status_bytes_per_call": 40,
+    "essential_bytes_per_call": 9344160,
+    "essential_bytes_per_16_calls": 149506560,
+    "floor_us_at_537_GBps": 17.400670391061453,
+    "aligned_word_weight_requests_per_call": 10240000,
+    "weight_bandwidth_GBps_at_37_3us": 247.07774798927613,
+    "aligned_request_bandwidth_GBps_at_37_3us": 274.5308310991957,
+    "prior_trivial_cold_reader_us_per_call": 27.4
+  },
+  "cpu": {
+    "test": "test_iq4nl_sg16.cpp",
+    "output": "SG16 packed CPU: outputs=960 mismatches=0 status_equal=1",
+    "coverage": "random and special half scales, partial/empty/invalid routes, exact 32-lane reference arithmetic"
+  },
+  "gpu": {
+    "control": {
+      "run": "s16a3r",
+      "half_median_ms": 10.95152401831001,
+      "draft_median_ms": 1.7519764369353652,
+      "steps": 48,
+      "prompt": 4096,
+      "rc": 0,
+      "fault_lines": 0
+    },
+    "candidate": {
+      "run": "s16a3n",
+      "half_median_ms": 11.211333505343646,
+      "draft_median_ms": 1.7445515259169042,
+      "steps": 48,
+      "prompt": 4096,
+      "rc": 0,
+      "fault_lines": 0
+    },
+    "half_delta_ms": 0.2598094870336354,
+    "half_delta_percent": 2.3723591949326517,
+    "comparison": {
+      "target_compared": 1029,
+      "target_differ_count": 0,
+      "draft_compared": 71,
+      "draft_differ_count": 0,
+      "draft_tokens_equal": true,
+      "only_one_side": 0,
+      "other_fields_differ": 0
+    },
+    "fault_lines": 0
+  },
+  "decision": "drop",
+  "reason": "Bitwise exact, but 0.260 ms/half slower; no material speedup and no further variant or GPU profile run.",
+  "development_notes": [
+    "The initial SG8 form was unsupported by the B70 and was not a performance result.",
+    "The first SG16 implementation used peer rather than even-source shuffles, failed exactness, and was discarded as invalid evidence; the corrected fresh binary above is the only reported performance result.",
+    "One fresh control attempt was OOM-killed during model loading with two peer engines resident. Peers paused launches to serialize host memory; the reported pair completed normally."
+  ]
+}

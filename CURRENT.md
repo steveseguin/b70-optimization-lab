@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 26 — B19 GDN candidate built and independently reproduced; service gates pending.**
+- `OWNRT_GDN_PREP=1`, engine `51f32b2655cc`: card-43 interleaved median 10.875 → 10.673 ms per rank-0 half;
+  canonical card-47 reproduction 10.867 → 10.708. Every comparison matched all 1,029 target and 71 draft buffers and
+  all guesses; zero GPU faults. Independent code review found no defect.
+- Q6_K GDN qkv WG64 and IQ4_NL packed-down SG16 both stayed exact but were not material wins and are dropped.
+- Hosting remains stopped. Card 27 is finishing Q8 attention; cards 23 and 47 are free. B19's two-rank startup will
+  run when the remaining lab engine drains and the 98.8 GB admission floor can pass. At most three rank-0 lab engines
+  may be resident together; a fourth OOMed during load before device contact.
+  [GDN result](experiments/own-xpu-runtime/research/rank0-gdn-c43/RESULT.md).
+
 **October 26, 18:00 EDT — B18 measured 65.67 tok/s exact; hosting stopped for four-card optimization.**
 - Engine `728c70b3eec6`: rank-0 raw draft head, BF16 draft QSA attention, packed FP8 draft experts and four-stream
   hidden merge. Every output id/hash and all MTP hits match B17.

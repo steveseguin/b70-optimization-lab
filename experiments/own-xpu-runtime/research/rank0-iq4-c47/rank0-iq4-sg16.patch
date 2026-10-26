@@ -1,0 +1,82 @@
+--- a/engine/src/stage2/packet6-kopt/kernels.cpp
++++ b/engine/src/stage2/packet6-kopt/kernels.cpp
+@@ -589,6 +589,64 @@
+     });
+   }
+ };
++// Supported-subgroup form of the packed schedule: one row per SG16, with work-item t owning logical lanes
++// 2t..2t+1. The even item loads each 18-byte block exactly as above; its peer receives the four code words
++// and converted scale by shuffles. Each logical lane retains its chunk/product/add order. The register add is
++// tree level one and the four shuffles are levels two through five, with unchanged operand order.
++struct MultiplyIQ4NLPacked16:ownrt::SyclOperation {
++ Descriptor desc{};
++ sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
++  auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt iq4nl packed16 capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++  constexpr unsigned SG=16,WGSG=4;
++  const uint32_t span=uint32_t(d.span),rows=uint32_t(d.rows),k=uint32_t(d.k),rb=uint32_t(d.rb),experts=d.experts,count=d.count;
++  const uint32_t total=span*count,groups=(total+WGSG-1)/WGSG;
++  const unsigned wi=d.w,xi=d.x,yi=d.y,ri=d.r,si=d.status;
++  return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG)](sycl::handler& h) {
++   h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
++    float* glut=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[16]>(it.get_group());const unsigned li=unsigned(it.get_local_linear_id());if(li<16)glut[li]=float(iq4_level(li));sycl::group_barrier(it.get_group());
++    auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++    const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
++    const uint32_t slot=logical/span,row=logical%span;
++    const Route r=static_cast<const Route*>(pointers[ri])[slot];const bool valid=valid_route(r,experts,rows,span),live=valid&&row<r.row_count;
++    if(row==0&&lane==0)static_cast<uint32_t*>(pointers[si])[slot]=valid?0:1;
++    const float* xs=static_cast<const float*>(pointers[xi])+size_t(slot)*k;
++    const uint8_t* rp=live?static_cast<const uint8_t*>(pointers[wi])+(size_t(r.expert_id)*rows+r.row_begin+row)*rb:static_cast<const uint8_t*>(pointers[wi]);
++    const unsigned t=lane/2;const bool high=lane&1;
++    float acc[2]={0,0};
++    for(uint32_t b=t;b*32u<k;b+=8u) {
++     float xv[16];
++     {const sycl::vec<float,4>* xp=reinterpret_cast<const sycl::vec<float,4>*>(xs+b*32u+(high?16u:0u));
++      #pragma unroll
++      for(unsigned c=0;c<4;++c){const auto v=xp[c];xv[4*c]=v[0];xv[4*c+1]=v[1];xv[4*c+2]=v[2];xv[4*c+3]=v[3];}}
++     uint32_t qw[4]={0,0,0,0};float scale=0;
++     if(live&&!high){
++      const bool odd=t&1;const uint32_t* wp=reinterpret_cast<const uint32_t*>(rp+b*18u-(odd?2u:0u));
++      const uint32_t w0=wp[0],w1=wp[1],w2=wp[2],w3=wp[3],w4=wp[4];
++      const uint32_t sbits=odd?(w0>>16):(w0&0xffffu);
++      qw[0]=odd?w1:(w0>>16)|(w1<<16);qw[1]=odd?w2:(w1>>16)|(w2<<16);qw[2]=odd?w3:(w2>>16)|(w3<<16);qw[3]=odd?w4:(w3>>16)|(w4<<16);
++      scale=half_scale(sbits);
++     }
++     const unsigned source=lane&~1u;
++     #pragma unroll
++     for(unsigned e=0;e<4;++e)qw[e]=sycl::select_from_group(sg,qw[e],source);
++     scale=sycl::select_from_group(sg,scale,source);
++     #pragma unroll
++     for(unsigned j=0;j<2;++j){
++      #pragma unroll
++      for(unsigned jj=0;jj<8;++jj){
++       const unsigned bi=8*j+jj;const uint32_t n=(qw[bi/4]>>(8*(bi%4)+4*(high?1:0)))&15u;
++       const float value=scale*glut[n];const float product=value*xv[8*j+jj];acc[j]=acc[j]+product;
++      }
++     }
++    }
++    float sum=acc[0]+acc[1];
++    #pragma unroll
++    for(unsigned width=1;width<16;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
++    if(lane==0)static_cast<float*>(pointers[yi])[logical]=live?sum:bits_float(0x7fc00000);
++   }));
++  });
++ }
++};
+ // OWNRT_DECODE_NEXT dense8 (lab 2026-10-26): Q8_0 decode rows with packed logical lanes (dense or routed, F32). As
+ // MultiplyIQ4NLPacked: work-item t of a row owns logical lanes 4t..4t+3 of Multiply's mapping (lane l: columns
+ // 8l+256i), i.e. Q8_0 block 8i+t of each 256-column chunk, read once as 9 aligned words (the block's 34 bytes; its
+@@ -841,10 +899,12 @@
+   }
+   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&t==Type::IQ4_NL&&experts_v2::enabled("iq4nl")&&k%64==0&&count<=experts_v2::max_slots&&op.desc[0].rb%4==0) {
+     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+-    // Levels from a 16-float table in kernel-scope work-group memory (rank-1 profile, 22 sites: 1333 -> 825 us); 
+-    // OWNRT_EXPERTS_V2_IQ4NL=0 takes iq4_level's select chain instead (958 us).
++    // Levels from a 16-float table in kernel-scope work-group memory (rank-1 profile, 22 sites: 1333 -> 825 us);
++    // OWNRT_EXPERTS_V2_IQ4NL=0 takes iq4_level's select chain, =2 uses one row per supported SG16
++    // subgroup with two adjacent logical lanes per item and the same arithmetic and route/status behavior.
+     static const int v=experts_v2::variant("OWNRT_EXPERTS_V2_IQ4NL",1);
+     if(v==0){MultiplyIQ4NLPacked<16,1,4,0> pk;pk.desc=op.desc[0];return d.compute(pk,ids,{});}
++    if(v==2){MultiplyIQ4NLPacked16 pk;pk.desc=op.desc[0];return d.compute(pk,ids,{});}
+     MultiplyIQ4NLPacked<16,1,4,2> pk;pk.desc=op.desc[0];return d.compute(pk,ids,{});
+   }
+   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&t==Type::IQ4_NL) {

@@ -1,0 +1,43 @@
+{
+  "verdict": "drop",
+  "variant": "OWNRT_QKV_WG64=1; raw Q6_K R1U1, workgroup 64 only at 10240-row QKV decode",
+  "card": "0000:23:00.0",
+  "dri_node": "/dev/dri/renderD130",
+  "gpu_runs": 8,
+  "unprofiled_interleaved_runs": 6,
+  "profiled_runs": 2,
+  "reference_half_ms": {
+    "ab-ref1": 10.80179400742054,
+    "ba-ref2": 11.046587955206633,
+    "ab-ref3": 10.810634004883468
+  },
+  "candidate_half_ms": {
+    "ab-cand1": 10.711074923165143,
+    "ba-cand2": 10.90199500322342,
+    "ab-cand3": 11.053942958824337
+  },
+  "paired_reference_minus_candidate_ms": [0.09071908425539732, 0.14459295198321342, -0.24330895394086838],
+  "median_paired_delta_ms": 0.09071908425539732,
+  "reference_median_of_run_medians_ms": 10.810634004883468,
+  "candidate_median_of_run_medians_ms": 10.90199500322342,
+  "profile_qkv_us_per_half": {
+    "reference": 626.6145,
+    "candidate": 622.8125,
+    "reference_minus_candidate": 3.802
+  },
+  "profile_span_us": {
+    "reference": 10312.45,
+    "candidate": 10306.15
+  },
+  "exactness": {
+    "full_comparisons": 7,
+    "target_buffers_per_comparison": 1029,
+    "target_differ_count": 0,
+    "draft_allocations_per_comparison": 71,
+    "draft_differ_count": 0,
+    "draft_tokens_equal": true
+  },
+  "kernel_faults": 0,
+  "cpu_test": "WG128 and WG64, 37 real QKV rows each plus 64 sentinels: 0 mismatches; GPU access blocked",
+  "reason": "QKV site saved only 3.802 us/half; unprofiled results were inconsistent and below the 0.1 ms/half target"
+}
